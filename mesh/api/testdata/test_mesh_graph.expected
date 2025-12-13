@@ -94,8 +94,9 @@
         "healthData" : "Healthy",
         "infraData" : {
           "auth" : {
-            "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -122,8 +123,9 @@
         "healthData" : "Healthy",
         "infraData" : {
           "auth" : {
-            "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -154,8 +156,9 @@
         "healthData" : "Healthy",
         "infraData" : {
           "auth" : {
-            "caFile" : "xxx",
+            "certFile" : "xxx",
             "insecureSkipVerify" : false,
+            "keyFile" : "xxx",
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",

@@ -1,13 +1,13 @@
 package httputil
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -75,7 +75,8 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 }
 
 type authRoundTripper struct {
-	auth       string
+	auth       *config.Auth
+	conf       *config.Config
 	originalRT http.RoundTripper
 }
 
@@ -85,7 +86,30 @@ type customHeadersRoundTripper struct {
 }
 
 func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", rt.auth)
+	// Build Authorization header dynamically on each request to support credential rotation
+	if rt.auth != nil {
+		switch rt.auth.Type {
+		case config.AuthTypeBearer:
+			if token, err := rt.conf.GetCredential(rt.auth.Token); err == nil && token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			} else if err != nil {
+				log.Errorf("Failed to read token for bearer authentication: %v", err)
+			}
+		case config.AuthTypeBasic:
+			username, uerr := rt.conf.GetCredential(rt.auth.Username)
+			if uerr != nil {
+				log.Errorf("Failed to read username for basic authentication: %v", uerr)
+				break
+			}
+			password, perr := rt.conf.GetCredential(rt.auth.Password)
+			if perr != nil {
+				log.Errorf("Failed to read password for basic authentication: %v", perr)
+				break
+			}
+			encoded := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+			req.Header.Set("Authorization", "Basic "+encoded)
+		}
+	}
 	return rt.originalRT.RoundTrip(req)
 }
 
@@ -97,17 +121,9 @@ func (rt *customHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	return rt.originalRT.RoundTrip(req)
 }
 
-func newAuthRoundTripper(auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
-	switch auth.Type {
-	case config.AuthTypeBearer:
-		token := auth.Token
-		return &authRoundTripper{auth: "Bearer " + token, originalRT: rt}
-	case config.AuthTypeBasic:
-		encoded := base64.StdEncoding.EncodeToString([]byte(auth.Username + ":" + auth.Password))
-		return &authRoundTripper{auth: "Basic " + encoded, originalRT: rt}
-	default:
-		return rt
-	}
+func newAuthRoundTripper(conf *config.Config, auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
+	// Always read credentials dynamically during RoundTrip
+	return &authRoundTripper{auth: auth, conf: conf, originalRT: rt}
 }
 
 func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTripper) http.RoundTripper {
@@ -143,39 +159,116 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 	// Chain together the RoundTrippers that we need, retaining the outer-most round tripper so we can return it.
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
 
+	// Part 1: Configure TLS if auth credentials OR custom CA bundle is present.
+	// Custom CA bundles (via conf.CertPool()) are independent of authentication - services
+	// may use self-signed certs or internal CAs without requiring auth credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
+	if auth != nil || hasCustomCA {
+		transportConfig.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, _, err := net.SplitHostPort(addr)
+			if err != nil {
+				host = addr
+			}
+			cfg, err := buildTLSConfig(conf, auth, host)
+			if err != nil {
+				return nil, err
+			}
+			dialer := tls.Dialer{Config: cfg}
+			return dialer.DialContext(ctx, network, addr)
+		}
+	}
+
+	// Part 2: Wrap with auth RoundTripper only if auth credentials are provided.
+	// This is separate from TLS configuration because auth and TLS are orthogonal concerns.
 	if auth != nil {
-		tlscfg, err := GetTLSConfig(conf, auth)
-		if err != nil {
-			return nil, err
-		}
-		if tlscfg != nil {
-			transportConfig.TLSClientConfig = tlscfg
-		}
-		outerRoundTripper = newAuthRoundTripper(auth, outerRoundTripper)
+		outerRoundTripper = newAuthRoundTripper(conf, auth, outerRoundTripper)
 	}
 
 	return outerRoundTripper, nil
 }
 
 func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
-	if auth.InsecureSkipVerify || auth.CAFile != "" {
-		certPool := conf.CertPool()
-		if auth.CAFile != "" {
-			cert, err := os.ReadFile(auth.CAFile)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get root CA certificates: %s", err)
-			}
+	// Return TLS config if there's anything to configure: auth credentials OR custom CA bundle.
+	// Custom CA bundles are independent of authentication credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
-			if ok := certPool.AppendCertsFromPEM(cert); !ok {
-				return nil, fmt.Errorf("supplied CA file could not be parsed")
-			}
+	if auth == nil {
+		// No auth provided, but check if custom CA bundle is configured
+		if hasCustomCA {
+			return buildTLSConfig(conf, nil, "")
 		}
-		return &tls.Config{
-			InsecureSkipVerify: auth.InsecureSkipVerify,
-			RootCAs:            certPool,
-		}, nil
+		return nil, nil
 	}
-	return nil, nil
+	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
+		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
+		// Check if custom CA bundle is configured to determine if TLS config is needed.
+		if hasCustomCA {
+			return buildTLSConfig(conf, auth, "")
+		}
+		return nil, nil
+	}
+	return buildTLSConfig(conf, auth, "")
+}
+
+// GetTLSConfigForServer returns a tls.Config that is pre-configured for the provided server name.
+// This should be preferred when the target hostname/IP is known ahead of time (e.g. for gRPC clients)
+// so that certificate verification can enforce the correct SAN.
+func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+	// Return TLS config if there's anything to configure: auth credentials OR custom CA bundle.
+	// Custom CA bundles are independent of authentication credentials.
+	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
+
+	if auth == nil && !hasCustomCA {
+		return nil, nil
+	}
+	return buildTLSConfig(conf, auth, serverName)
+}
+
+func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+	cfg := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	if serverName != "" {
+		cfg.ServerName = serverName
+	}
+
+	roots := conf.CertPool()
+
+	// When no auth is provided we still honour the configured/system roots.
+	if auth == nil {
+		cfg.RootCAs = roots
+		return cfg, nil
+	}
+
+	cfg.InsecureSkipVerify = auth.InsecureSkipVerify
+
+	if auth.CertFile != "" && auth.KeyFile != "" {
+		certFile := auth.CertFile
+		keyFile := auth.KeyFile
+		cfg.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			certContent, err := conf.GetCredential(certFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate cert=[%s]: %w", certFile, err)
+			}
+			keyContent, err := conf.GetCredential(keyFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate key=[%s]: %w", keyFile, err)
+			}
+			cert, err := tls.X509KeyPair([]byte(certContent), []byte(keyContent))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse client certificate cert=[%s], key=[%s]: %w", certFile, keyFile, err)
+			}
+			return &cert, nil
+		}
+	}
+
+	// Note: auth.CAFile is deprecated. Custom CA certificates should be configured
+	// via the kiali-cabundle ConfigMap instead. The CAFile setting is now ignored.
+
+	cfg.RootCAs = roots
+
+	return cfg, nil
 }
 
 func GuessKialiURL(conf *config.Config, r *http.Request) string {

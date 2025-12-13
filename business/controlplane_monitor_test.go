@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/certtest"
 )
 
 func TestRegistryServices(t *testing.T) {
@@ -240,7 +241,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
 		kubetest.FakeNamespace("istio-system"),
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName

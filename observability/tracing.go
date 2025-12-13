@@ -149,6 +149,8 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 	tracingOpt := config.Get().Server.Observability.Tracing
 
 	// OpenTelemetry collector
+	conf := config.Get()
+
 	if tracingOpt.Otel.Protocol == HTTP || tracingOpt.Otel.Protocol == HTTPS {
 		tracingOptions := otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
 			Enabled:         true,
@@ -168,18 +170,17 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 			)
 		} else {
 			log.Debugf("Creating OpenTelemetry collector with URL https://%s", collectorURL)
-			// That's mainly for testing
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: tracingOpt.Otel.SkipVerify,
+				RootCAs:            conf.CertPool(),
+			}
 			if tracingOpt.Otel.SkipVerify {
 				log.Trace("OpenTelemetry collector will not verify the remote certificate")
-				client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
-					otlptracehttp.WithTLSClientConfig(&tls.Config{InsecureSkipVerify: true}),
-					tracingOptions,
-				)
-			} else {
-				client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
-					tracingOptions,
-				)
 			}
+			client = otlptracehttp.NewClient(otlptracehttp.WithEndpoint(collectorURL),
+				otlptracehttp.WithTLSClientConfig(tlsConfig),
+				tracingOptions,
+			)
 		}
 		ctx := context.Background()
 		httpExporter, err2 := otlptrace.New(ctx, client)
@@ -194,24 +195,14 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 			opts := []otlptracegrpc.Option{otlptracegrpc.WithEndpoint(collectorURL), otlptracegrpc.WithDialOption()}
 
 			if tracingOpt.Otel.TLSEnabled {
+				tlsConfig := &tls.Config{
+					InsecureSkipVerify: tracingOpt.Otel.SkipVerify,
+					RootCAs:            conf.CertPool(),
+				}
 				if tracingOpt.Otel.SkipVerify {
 					log.Trace("OpenTelemetry collector will not verify the remote certificate")
-					tlsConfig := &tls.Config{
-						InsecureSkipVerify: true,
-					}
-					opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
-				} else {
-					certName := tracingOpt.Otel.CAName
-					if certName == "" {
-						return nil, fmt.Errorf("ca_name is required")
-					}
-					creds, errorTLS := credentials.NewClientTLSFromFile(certName, "")
-					if errorTLS != nil {
-						log.Fatalf("Error loading certificate: %s", errorTLS)
-						return nil, errorTLS
-					}
-					opts = append(opts, otlptracegrpc.WithTLSCredentials(creds))
 				}
+				opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 			} else {
 				opts = append(opts, otlptracegrpc.WithInsecure())
 			}

@@ -1,11 +1,10 @@
 package config
 
 import (
-	"crypto/x509"
-	_ "embed"
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -16,15 +15,13 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/util"
-	"github.com/kiali/kiali/util/filetest"
 )
 
-//go:embed testdata/test-ca.pem
-var testCA []byte
-
 func TestSecretFileOverrides(t *testing.T) {
-	// create a mock volume mount directory where the test secret content will go
+	// Temporarily override the package-level overrideSecretsDir variable for this test
+	originalSecretsDir := overrideSecretsDir
 	overrideSecretsDir = t.TempDir()
+	defer func() { overrideSecretsDir = originalSecretsDir }()
 
 	conf := NewConfig()
 	conf.ExternalServices.Grafana.Auth.Username = "grafanausername"
@@ -86,22 +83,151 @@ func TestSecretFileOverrides(t *testing.T) {
 
 	conf, _ = Unmarshal(yamlString)
 
-	// credentials are now set- values should be overridden
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausernameENV")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapasswordENV")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatokenENV")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, "persesusernameENV")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, "persespasswordENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususernameENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspasswordENV")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustokenENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, "tracingusernameENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpasswordENV")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtokenENV")
-	assert.Equal(t, conf.LoginToken.SigningKey, "signingkeyENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, "cdprometheususernameENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, "cdprometheuspasswordENV")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, "cdprometheustokenENV")
+	// Config values should now be file paths (not the content)
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, overrideSecretsDir+"/"+SecretFileGrafanaUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, overrideSecretsDir+"/"+SecretFileGrafanaPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, overrideSecretsDir+"/"+SecretFileGrafanaToken+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, overrideSecretsDir+"/"+SecretFilePersesUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, overrideSecretsDir+"/"+SecretFilePersesPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFilePrometheusUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFilePrometheusPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFilePrometheusToken+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, overrideSecretsDir+"/"+SecretFileTracingUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, overrideSecretsDir+"/"+SecretFileTracingPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, overrideSecretsDir+"/"+SecretFileTracingToken+"/value.txt")
+	assert.Equal(t, conf.LoginToken.SigningKey, overrideSecretsDir+"/"+SecretFileLoginTokenSigningKey+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusUsername+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusPassword+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusToken+"/value.txt")
+
+	// Verify the getter methods return the actual values from the files
+	username, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
+	assert.NoError(t, err)
+	assert.Equal(t, "grafanausernameENV", username)
+
+	password, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
+	assert.NoError(t, err)
+	assert.Equal(t, "grafanapasswordENV", password)
+
+	token, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
+	assert.NoError(t, err)
+	assert.Equal(t, "prometheustokenENV", token)
+}
+
+// TestLoadFromFile_OidcClientSecretFile verifies that when the OIDC client secret file exists,
+// LoadFromFile stores the file path (not the content) in conf.Auth.OpenId.ClientSecret,
+// and that GetCredential can then resolve the actual secret value.
+func TestLoadFromFile_OidcClientSecretFile(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create the OIDC secret file with test content
+	secretFile := filepath.Join(tmpDir, "oidc-secret")
+	expectedSecret := "test-oidc-client-secret"
+	require.NoError(t, os.WriteFile(secretFile, []byte(expectedSecret), 0o644))
+
+	// Override the oidcClientSecretFile variable for testing
+	originalPath := oidcClientSecretFile
+	oidcClientSecretFile = secretFile
+	defer func() { oidcClientSecretFile = originalPath }()
+
+	// Create a minimal config file
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte("{}"), 0o644))
+
+	// Load config - should detect oidcClientSecretFile and store the path
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	// Verify the path was stored (not the content)
+	require.Equal(t, secretFile, conf.Auth.OpenId.ClientSecret, "ClientSecret should contain the file path")
+
+	// Verify GetCredential can resolve the secret
+	secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
+	require.NoError(t, err)
+	require.Equal(t, expectedSecret, secret, "GetCredential should return the file content")
+}
+
+// TestLoadFromFile_OidcClientSecretFile_NotExists verifies that when the OIDC client secret
+// file does not exist, LoadFromFile does not set conf.Auth.OpenId.ClientSecret.
+func TestLoadFromFile_OidcClientSecretFile_NotExists(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Override the oidcClientSecretFile variable to a non-existent path
+	originalPath := oidcClientSecretFile
+	oidcClientSecretFile = filepath.Join(tmpDir, "non-existent-oidc-secret")
+	defer func() { oidcClientSecretFile = originalPath }()
+
+	// Create a minimal config file
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	require.NoError(t, os.WriteFile(configFile, []byte("{}"), 0o644))
+
+	// Load config - should NOT set ClientSecret since file doesn't exist
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	// Verify ClientSecret remains empty (default)
+	require.Empty(t, conf.Auth.OpenId.ClientSecret, "ClientSecret should be empty when file doesn't exist")
+}
+
+// Ensures calling Set with a config that already carries a credential manager
+// does not tear it down or replace it.
+func TestSetKeepsExistingCredentialManager(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	// First Set initializes credential manager if needed.
+	conf := NewConfig()
+	Set(conf)
+
+	firstMgr := Get().Credentials
+	if firstMgr == nil {
+		t.Fatalf("expected credential manager to be initialized")
+	}
+
+	// Calling Set with the same config (and same credential manager) should keep it.
+	Set(Get())
+	secondMgr := Get().Credentials
+
+	if secondMgr != firstMgr {
+		t.Fatalf("expected credential manager to remain the same")
+	}
+}
+
+// Ensures Set creates a new credential manager when the incoming config lacks one
+// and closes the previous manager.
+func TestSetCreatesNewCredentialManagerAndClosesOld(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	Set(conf)
+	firstMgr := Get().Credentials
+	if firstMgr == nil {
+		t.Fatalf("expected credential manager to be initialized")
+	}
+
+	// Clear credentials to force Set to provision a new manager.
+	conf2 := NewConfig()
+	conf2.Credentials = nil
+	Set(conf2)
+	secondMgr := Get().Credentials
+
+	if secondMgr == nil {
+		t.Fatalf("expected new credential manager to be initialized")
+	}
+	if secondMgr == firstMgr {
+		t.Fatalf("expected credential manager to be replaced")
+	}
+
+	// The old manager should have been closed.
+	select {
+	case <-firstMgr.done:
+		// closed as expected
+	default:
+		t.Fatalf("expected old credential manager to be closed")
+	}
 }
 
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
@@ -122,25 +248,37 @@ func createTestSecretFile(t *testing.T, parentDir string, name string, content s
 
 func TestSensitiveDataObfuscation(t *testing.T) {
 	conf := NewConfig()
+	conf.ExternalServices.Grafana.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Grafana.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Grafana.Auth.Username = "my-username"
 	conf.ExternalServices.Grafana.Auth.Password = "my-password"
 	conf.ExternalServices.Grafana.Auth.Token = "my-token"
+	conf.ExternalServices.Perses.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Perses.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Perses.Auth.Username = "my-username"
 	conf.ExternalServices.Perses.Auth.Password = "my-password"
+	conf.ExternalServices.Prometheus.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Prometheus.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Prometheus.Auth.Username = "my-username"
 	conf.ExternalServices.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.Prometheus.Auth.Token = "my-token"
+	conf.ExternalServices.Tracing.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.Tracing.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.Tracing.Auth.Username = "my-username"
 	conf.ExternalServices.Tracing.Auth.Password = "my-password"
 	conf.ExternalServices.Tracing.Auth.Token = "my-token"
 	conf.LoginToken.SigningKey = "my-signkey"
 	conf.LoginToken.ExpirationSeconds = 12345
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile = "my-certfile"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile = "my-keyfile"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username = "my-username"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password = "my-password"
 	conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token = "my-token"
 
 	printed := fmt.Sprintf("%v", conf)
 
+	assert.NotContains(t, printed, "my-certfile")
+	assert.NotContains(t, printed, "my-keyfile")
 	assert.NotContains(t, printed, "my-username")
 	assert.NotContains(t, printed, "my-password")
 	assert.NotContains(t, printed, "my-token")
@@ -148,18 +286,28 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Contains(t, printed, "12345")
 
 	// Test that the original values are unchanged
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Grafana.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Grafana.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Grafana.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Grafana.Auth.Token)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Perses.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Perses.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Perses.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Perses.Auth.Password)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Prometheus.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Prometheus.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Prometheus.Auth.Token)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.Tracing.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.Tracing.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.Tracing.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.Tracing.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
 	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
+	assert.Equal(t, "my-certfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile)
+	assert.Equal(t, "my-keyfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile)
 	assert.Equal(t, "my-username", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username)
 	assert.Equal(t, "my-password", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password)
 	assert.Equal(t, "my-token", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
@@ -407,6 +555,40 @@ func TestValidateAuthStrategy(t *testing.T) {
 		if err := Validate(conf); err == nil {
 			t.Errorf("Auth Strategy validation should have failed [%v]", conf.Auth.Strategy)
 		}
+	}
+}
+
+func TestValidateSigningKeyLength(t *testing.T) {
+	// Valid signing key lengths are 16, 24, or 32 bytes
+	validLengths := []int{16, 24, 32}
+	invalidLengths := []int{0, 1, 8, 15, 17, 23, 25, 31, 33, 64}
+
+	// Test valid lengths with non-anonymous strategy
+	for _, length := range validLengths {
+		conf := NewConfig()
+		conf.Auth.Strategy = AuthStrategyToken
+		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		if err := Validate(conf); err != nil {
+			t.Errorf("Signing key validation should have succeeded for length [%d]: %v", length, err)
+		}
+	}
+
+	// Test invalid lengths with non-anonymous strategy
+	for _, length := range invalidLengths {
+		conf := NewConfig()
+		conf.Auth.Strategy = AuthStrategyToken
+		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		if err := Validate(conf); err == nil {
+			t.Errorf("Signing key validation should have failed for length [%d]", length)
+		}
+	}
+
+	// Test that anonymous strategy doesn't require valid signing key length
+	conf := NewConfig()
+	conf.Auth.Strategy = AuthStrategyAnonymous
+	conf.LoginToken.SigningKey = "short" // Invalid length, but should pass for anonymous
+	if err := Validate(conf); err != nil {
+		t.Errorf("Signing key validation should have succeeded for anonymous strategy regardless of key length: %v", err)
 	}
 }
 
@@ -737,62 +919,6 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 				assert.Nil(err)
 			}
 			assert.Equal(tc.expectedNamespaces, actualNamespaces)
-		})
-	}
-}
-
-func TestLoadingCertPool(t *testing.T) {
-	systemPool, err := x509.SystemCertPool()
-	require.NoError(t, err)
-
-	addtionalCAPool := systemPool.Clone()
-	require.True(t, addtionalCAPool.AppendCertsFromPEM(testCA), "unable to add testCA to system pool")
-
-	invalidCA := filetest.TempFile(t, []byte("notarealCA")).Name()
-
-	cases := map[string]struct {
-		addtionalBundles []string
-		expected         *x509.CertPool
-		expectedErr      bool
-	}{
-		"No addtional CAs loads system Pool": {
-			expected: systemPool.Clone(),
-		},
-		"Addtional CAs loads system Pool": {
-			addtionalBundles: []string{"testdata/test-ca.pem"},
-			expected:         addtionalCAPool,
-		},
-		"Non-existant CA file does not return err and still loads system pool": {
-			addtionalBundles: []string{"non-existant"},
-			expected:         systemPool.Clone(),
-		},
-		"CA file with bogus contents returns err and still loads system pool": {
-			addtionalBundles: []string{invalidCA},
-			expected:         systemPool.Clone(),
-			expectedErr:      true,
-		},
-		// Need to test this for OpenShift serving cert that may come from multiple places.
-		"Loading the same CA multiple times": {
-			addtionalBundles: []string{"testdata/test-ca.pem", "testdata/test-ca.pem"},
-			expected:         addtionalCAPool,
-		},
-	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			require := require.New(t)
-
-			conf := NewConfig()
-
-			err = conf.loadCertPool(tc.addtionalBundles...)
-			if tc.expectedErr {
-				require.Error(err)
-			} else {
-				require.NoError(err)
-			}
-
-			actual := conf.CertPool()
-
-			require.True(tc.expected.Equal(actual))
 		})
 	}
 }
