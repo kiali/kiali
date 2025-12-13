@@ -656,40 +656,44 @@ func TestCredentialManager_CertPool(t *testing.T) {
 	cases := map[string]struct {
 		additionalBundles []string
 		expected          *x509.CertPool
-		expectedErr       bool
+		expectCustomCAs   bool
 	}{
 		"No additional CAs loads system pool": {
-			expected: systemPool.Clone(),
+			expected:        systemPool.Clone(),
+			expectCustomCAs: false,
 		},
 		"Additional CAs loads system pool plus custom CA": {
 			additionalBundles: []string{"testdata/test-ca.pem"},
 			expected:          additionalCAPool,
+			expectCustomCAs:   true,
 		},
 		"Non-existent CA file does not return err and still loads system pool": {
 			additionalBundles: []string{"non-existent"},
 			expected:          systemPool.Clone(),
+			expectCustomCAs:   false,
 		},
-		"CA file with bogus contents returns err": {
+		"CA file with bogus contents does not fail but has no custom CAs": {
 			additionalBundles: []string{invalidCA},
-			expectedErr:       true,
+			expected:          systemPool.Clone(), // Falls back to system pool
+			expectCustomCAs:   false,
 		},
 		// Need to test this for OpenShift serving cert that may come from multiple places.
 		"Loading the same CA multiple times": {
 			additionalBundles: []string{"testdata/test-ca.pem", "testdata/test-ca.pem"},
 			expected:          additionalCAPool,
+			expectCustomCAs:   true,
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
+			// NewCredentialManager no longer fails on invalid CAs
 			cm, err := NewCredentialManager(tc.additionalBundles)
-			if tc.expectedErr {
-				require.Error(err)
-				return
-			}
 			require.NoError(err)
 			t.Cleanup(cm.Close)
+
+			require.Equal(tc.expectCustomCAs, cm.HasCustomCAs())
 
 			actual := cm.GetCertPool()
 			if tc.expected == nil {

@@ -1166,7 +1166,8 @@ func Set(conf *Config) {
 		caBundles := getCABundlePaths(conf.Auth.Strategy)
 		newCreds, err := NewCredentialManager(caBundles)
 		if err != nil {
-			log.Errorf("failed to initialize credential manager; file-based credential rotation will not be available: %v", err)
+			// Only watcher creation failures reach here - invalid CAs are logged but don't fail
+			log.Errorf("Failed to initialize credential manager (file-based credential rotation will not be available): %v", err)
 		} else {
 			conf.Credentials = newCreds
 		}
