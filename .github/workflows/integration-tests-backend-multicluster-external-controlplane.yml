@@ -43,7 +43,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download go binary
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: kiali
         path: ~/go/bin/
