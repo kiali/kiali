@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { IRow, ThProps } from '@patternfly/react-table';
-import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+  TextInput
+} from '@patternfly/react-core';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { KialiIcon } from 'config/KialiIcon';
 import { t, useKialiTranslation } from 'utils/I18nUtils';
@@ -39,10 +48,12 @@ export const OperationBuilder: React.FC<Props> = (props: Props) => {
   const [newValues, setNewValues] = React.useState<string>('');
   const [operation, setOperation] = React.useState<{ [key: string]: string[] }>({});
   const [operationFields, setOperationFields] = React.useState<string[]>(INIT_OPERATION_FIELDS);
+  const [isOperationFieldSelectOpen, setIsOperationFieldSelectOpen] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
 
-  const onAddNewOperationField = (_event: React.FormEvent, value: string): void => {
+  const onAddNewOperationField = (value: string): void => {
+    setIsOperationFieldSelectOpen(false);
     setNewOperationField(value);
   };
 
@@ -114,16 +125,33 @@ export const OperationBuilder: React.FC<Props> = (props: Props) => {
         {
           key: 'operationKeyNew',
           cells: [
-            <FormSelect
-              value={newOperationField}
+            <Select
               id="addNewOperationField"
-              name="addNewOperationField"
-              onChange={onAddNewOperationField}
+              isOpen={isOperationFieldSelectOpen}
+              selected={newOperationField}
+              onSelect={(_event, value) => onAddNewOperationField(value as string)}
+              onOpenChange={setIsOperationFieldSelectOpen}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="addNewOperationField-toggle"
+                  ref={toggleRef}
+                  onClick={() => setIsOperationFieldSelectOpen(!isOperationFieldSelectOpen)}
+                  isExpanded={isOperationFieldSelectOpen}
+                  isFullWidth
+                >
+                  {newOperationField}
+                </MenuToggle>
+              )}
+              aria-label="Operation Field Select"
             >
-              {operationFields.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={`operation_${index}`} value={option} label={option} />
-              ))}
-            </FormSelect>,
+              <SelectList>
+                {operationFields.map((option, index) => (
+                  <SelectOption key={`operation_${index}`} value={option}>
+                    {option}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>,
 
             <TextInput
               value={newValues}
