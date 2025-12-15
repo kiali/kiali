@@ -226,10 +226,10 @@ func TestCredentialManager_AcceptsValidCertificateAfterRotation(t *testing.T) {
 	require.NoError(t, os.WriteFile(tmpFile, rotatedCA, 0600))
 
 	// Wait for rotation detection - verify the rotated cert is in the pool
-	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
+	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
-		return certtest.CertPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolContainsCert(pool, rotatedCert)
 	}, 2*time.Second, 50*time.Millisecond)
 }
 

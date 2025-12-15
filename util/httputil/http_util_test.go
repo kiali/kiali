@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"io"
 	"net"
 	"net/http"
@@ -547,24 +546,10 @@ func TestGetTLSConfig_UsesCertPool(t *testing.T) {
 
 	// Verify the custom CA is in RootCAs by checking the pool contains our CA
 	// Parse the CA cert to get its subject
-	block, _ := pem.Decode(caPEM)
-	if block == nil {
-		t.Fatal("failed to decode CA PEM")
-	}
-	caCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		t.Fatalf("parse CA cert: %v", err)
-	}
+	caCert := certtest.ParseCertPEM(t, caPEM)
 
-	// Check if the CA subject is in the RootCAs pool
-	found := false
-	for _, subject := range tlscfg.RootCAs.Subjects() { //nolint:staticcheck // Subjects() is deprecated but still useful for testing
-		if bytes.Equal(subject, caCert.RawSubject) {
-			found = true
-			break
-		}
-	}
-	if !found {
+	// Check if the CA is in the RootCAs pool
+	if !certtest.CertPoolContainsCert(tlscfg.RootCAs, caCert) {
 		t.Error("expected custom CA to be in RootCAs pool")
 	}
 }
@@ -624,23 +609,9 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 	}
 
 	// Verify the custom CA is in RootCAs
-	block, _ := pem.Decode(caPEM)
-	if block == nil {
-		t.Fatal("failed to decode CA PEM")
-	}
-	caCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		t.Fatalf("parse CA cert: %v", err)
-	}
+	caCert := certtest.ParseCertPEM(t, caPEM)
 
-	found := false
-	for _, subject := range tlscfg.RootCAs.Subjects() { //nolint:staticcheck // Subjects() is deprecated but still useful for testing
-		if bytes.Equal(subject, caCert.RawSubject) {
-			found = true
-			break
-		}
-	}
-	if !found {
+	if !certtest.CertPoolContainsCert(tlscfg.RootCAs, caCert) {
 		t.Error("expected custom CA to be in RootCAs pool")
 	}
 	t.Log("Positive test passed: GetTLSConfig returns valid config with custom CA bundle")
@@ -707,23 +678,9 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	}
 
 	// Verify the custom CA is in RootCAs
-	block, _ := pem.Decode(caPEM)
-	if block == nil {
-		t.Fatal("failed to decode CA PEM")
-	}
-	caCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		t.Fatalf("parse CA cert: %v", err)
-	}
+	caCert := certtest.ParseCertPEM(t, caPEM)
 
-	found := false
-	for _, subject := range tlscfg.RootCAs.Subjects() { //nolint:staticcheck // Subjects() is deprecated but still useful for testing
-		if bytes.Equal(subject, caCert.RawSubject) {
-			found = true
-			break
-		}
-	}
-	if !found {
+	if !certtest.CertPoolContainsCert(tlscfg.RootCAs, caCert) {
 		t.Error("expected custom CA to be in RootCAs pool")
 	}
 	t.Log("Positive test passed: GetTLSConfigForServer returns valid config with custom CA bundle and server name")

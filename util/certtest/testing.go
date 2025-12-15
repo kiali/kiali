@@ -1,7 +1,6 @@
 package certtest
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -368,9 +367,8 @@ func BuildTestCertificate(t *testing.T, cn string) []byte {
 	return pemBytes
 }
 
-// SubjectFromPEM extracts the RawSubject from a PEM-encoded certificate.
-// Useful for comparing certificate subjects in cert pools.
-func SubjectFromPEM(t *testing.T, pemBytes []byte) []byte {
+// ParseCertPEM parses a PEM-encoded certificate and returns the x509.Certificate.
+func ParseCertPEM(t *testing.T, pemBytes []byte) *x509.Certificate {
 	t.Helper()
 
 	block, _ := pem.Decode(pemBytes)
@@ -383,22 +381,29 @@ func SubjectFromPEM(t *testing.T, pemBytes []byte) []byte {
 		t.Fatalf("parse cert: %v", err)
 	}
 
-	return cert.RawSubject
+	return cert
 }
 
-// CertPoolHasSubject checks if a certificate pool contains a certificate with the given subject.
+// SubjectFromPEM extracts the RawSubject from a PEM-encoded certificate.
+// Useful for comparing certificate subjects in cert pools.
+func SubjectFromPEM(t *testing.T, pemBytes []byte) []byte {
+	t.Helper()
+	return ParseCertPEM(t, pemBytes).RawSubject
+}
+
+// CertPoolContainsCert checks if a certificate pool contains the given CA certificate.
+// For self-signed root CAs (typical in tests), this works by verifying the CA
+// certificate against the pool - if the CA is in the pool, verification succeeds.
 // Returns false if the pool is nil.
-func CertPoolHasSubject(pool *x509.CertPool, subject []byte) bool {
-	if pool == nil {
+func CertPoolContainsCert(pool *x509.CertPool, cert *x509.Certificate) bool {
+	if pool == nil || cert == nil {
 		return false
 	}
-	//nolint:staticcheck // SA1019: pool.Subjects is deprecated for system cert pools, but works fine for test cert pools
-	for _, s := range pool.Subjects() {
-		if bytes.Equal(s, subject) {
-			return true
-		}
+	opts := x509.VerifyOptions{
+		Roots: pool,
 	}
-	return false
+	_, err := cert.Verify(opts)
+	return err == nil
 }
 
 // FakeIstioCertificateConfigMap creates a fake Istio CA root certificate ConfigMap

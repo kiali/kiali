@@ -721,10 +721,10 @@ func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
 	require.NoError(t, os.WriteFile(caFile, rotatedCA, 0o600))
 
 	// Wait for fsnotify event and pool rebuild
-	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
+	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
-		return certtest.CertPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolContainsCert(pool, rotatedCert)
 	}, time.Second, 10*time.Millisecond, "pool should contain rotated CA")
 }
 
@@ -757,15 +757,15 @@ func TestCredentialManager_CertPoolGlobalConfig(t *testing.T) {
 
 	rotatedCA := certtest.BuildTestCertificate(t, "rotated-global")
 	require.NoError(t, os.WriteFile(caFile.Name(), rotatedCA, 0o600))
-	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
+	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 
 	require.Eventually(t, func() bool {
 		pool := Get().CertPool()
-		return certtest.CertPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolContainsCert(pool, rotatedCert)
 	}, time.Second, 10*time.Millisecond, "global config never observed rotated CA bundle")
 
 	pool := Get().CertPool()
-	require.True(t, certtest.CertPoolHasSubject(pool, rotatedSubject), "all callers should observe the rotated CA bundle")
+	require.True(t, certtest.CertPoolContainsCert(pool, rotatedCert), "all callers should observe the rotated CA bundle")
 }
 
 // TestCredentialManager_CertPoolSymlinkRotation tests that the certificate pool is correctly
@@ -809,9 +809,9 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	t.Cleanup(cm.Close)
 
 	// Verify initial CA is in the pool
-	initialSubject := certtest.SubjectFromPEM(t, initialCA)
+	initialCert := certtest.ParseCertPEM(t, initialCA)
 	pool := cm.GetCertPool()
-	require.True(t, certtest.CertPoolHasSubject(pool, initialSubject), "pool should contain initial CA")
+	require.True(t, certtest.CertPoolContainsCert(pool, initialCert), "pool should contain initial CA")
 
 	// Prepare rotated CA in second data directory
 	require.NoError(t, os.MkdirAll(dataDir2, 0o700))
@@ -825,10 +825,10 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	require.NoError(t, os.Rename(newDataLink, dataLink))
 
 	// Wait for fsnotify to detect ..data change and rebuild cert pool
-	rotatedSubject := certtest.SubjectFromPEM(t, rotatedCA)
+	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
-		return certtest.CertPoolHasSubject(pool, rotatedSubject)
+		return certtest.CertPoolContainsCert(pool, rotatedCert)
 	}, 2*time.Second, 50*time.Millisecond, "pool should contain rotated CA after symlink swap")
 }
 
@@ -1029,8 +1029,8 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.False(basePool.Equal(poolWithCA), "pool with additional CA should differ from base pool")
 
 		// Verify the additional CA is actually present in the pool
-		additionalSubject := certtest.SubjectFromPEM(t, additionalCAPEM)
-		require.True(certtest.CertPoolHasSubject(poolWithCA, additionalSubject), "pool should contain the additional CA")
+		additionalCert := certtest.ParseCertPEM(t, additionalCAPEM)
+		require.True(certtest.CertPoolContainsCert(poolWithCA, additionalCert), "pool should contain the additional CA")
 	})
 
 	t.Run("does not mutate the base pool", func(t *testing.T) {
@@ -1101,8 +1101,8 @@ func TestConfig_CertPoolWithAdditionalPEM(t *testing.T) {
 		require.NotNil(pool)
 
 		// Verify the additional CA was actually appended even in fallback mode
-		additionalSubject := certtest.SubjectFromPEM(t, additionalCAPEM)
-		require.True(certtest.CertPoolHasSubject(pool, additionalSubject), "fallback mode should still append the additional CA")
+		additionalCert := certtest.ParseCertPEM(t, additionalCAPEM)
+		require.True(certtest.CertPoolContainsCert(pool, additionalCert), "fallback mode should still append the additional CA")
 	})
 
 	t.Run("appends multiple CAs from single PEM bundle", func(t *testing.T) {
@@ -1152,8 +1152,8 @@ func TestCredentialManager_RejectsNonCACertificate(t *testing.T) {
 
 	// Verify the cert pool doesn't contain the non-CA certificate
 	pool := cm.GetCertPool()
-	nonCASubject := certtest.SubjectFromPEM(t, nonCACert)
-	require.False(t, certtest.CertPoolHasSubject(pool, nonCASubject),
+	nonCACertParsed := certtest.ParseCertPEM(t, nonCACert)
+	require.False(t, certtest.CertPoolContainsCert(pool, nonCACertParsed),
 		"pool should not contain non-CA certificate")
 }
 
@@ -1186,8 +1186,8 @@ func TestCredentialManager_MixedValidity_ValidThenInvalid(t *testing.T) {
 
 	// Verify valid CA is in the pool
 	pool := cm.GetCertPool()
-	validSubject := certtest.SubjectFromPEM(t, validCA)
-	require.True(t, certtest.CertPoolHasSubject(pool, validSubject),
+	validCert := certtest.ParseCertPEM(t, validCA)
+	require.True(t, certtest.CertPoolContainsCert(pool, validCert),
 		"pool should contain valid CA from first bundle")
 }
 
@@ -1218,8 +1218,8 @@ func TestCredentialManager_MixedValidity_InvalidThenValid(t *testing.T) {
 
 	// Verify valid CA is in the pool
 	pool := cm.GetCertPool()
-	validSubject := certtest.SubjectFromPEM(t, validCA)
-	require.True(t, certtest.CertPoolHasSubject(pool, validSubject),
+	validCert := certtest.ParseCertPEM(t, validCA)
+	require.True(t, certtest.CertPoolContainsCert(pool, validCert),
 		"pool should contain valid CA from second bundle")
 }
 
