@@ -544,4 +544,4 @@ spec:
 
 == Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/kiali/kiali.svg?variant=adaptive)](https://starchart.cc/kiali/kiali)
+image:https://starchart.cc/kiali/kiali.svg?variant=adaptive["Stargazers over time",link="https://starchart.cc/kiali/kiali"]
