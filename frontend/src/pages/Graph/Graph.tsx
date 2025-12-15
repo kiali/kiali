@@ -56,7 +56,7 @@ import {
   setNodeAttachments,
   setNodeLabel
 } from './GraphElems';
-import { elems, selectAnd, SelectAnd, setObserved } from 'helpers/GraphHelpers';
+import { elems, selectAnd, SelectAnd, setObserved, clearElemsCache } from 'helpers/GraphHelpers';
 import { layoutFactory } from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './Trace';
 import { TimeInMilliseconds } from 'types/Common';
@@ -183,6 +183,19 @@ const TopologyContent: React.FC<{
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphSettings;
   }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
+
+  // Memoize onHover callback to avoid recreating it for every node/edge
+  // This is especially important for ambient graphs with many waypoints
+  const onHover = React.useCallback(
+    (element: GraphElement, isMouseIn: boolean): void => {
+      if (isMouseIn) {
+        highlighter.onMouseIn(element);
+      } else {
+        highlighter.onMouseOut(element);
+      }
+    },
+    [highlighter]
+  );
 
   //
   // SelectedIds State
@@ -355,14 +368,6 @@ const TopologyContent: React.FC<{
       let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
-      const onHover = (element: GraphElement, isMouseIn: boolean): void => {
-        if (isMouseIn) {
-          highlighter.onMouseIn(element);
-        } else {
-          highlighter.onMouseOut(element);
-        }
-      };
-
       function addGroup(data: NodeData): NodeModel {
         data.onHover = onHover;
         const group: NodeModel = {
@@ -446,7 +451,6 @@ const TopologyContent: React.FC<{
           }
         }
       });
-
       // Compute rank result if enabled
       let scoringCriteria: ScoringCriteria[] = [];
 
@@ -496,16 +500,26 @@ const TopologyContent: React.FC<{
       }
 
       const model = generateDataModel();
+
       const modelMap = new Map<string, GraphModel>();
       model.nodes.forEach(n => modelMap.set(n.id, n));
       model.edges.forEach(e => modelMap.set(e.id, e));
 
-      controller.getElements().forEach(e => {
+      // Optimize merge: batch remove operations for better performance
+      // This is especially important for ambient graphs with many waypoints
+      const elementsToRemove: GraphElement[] = [];
+
+      // Use cached elems to avoid expensive getElements() call
+      const { nodes: existingNodes, edges: existingEdges } = elems(controller);
+      const allExistingElements = [...existingNodes, ...existingEdges] as GraphElement[];
+
+      allExistingElements.forEach(e => {
         const eModel = modelMap.get(e.getId());
         if (eModel) {
           switch (e.getType()) {
             case 'edge':
             case 'node':
+              // Merge existing data with new model data
               eModel.data = { ...e.getData(), ...eModel.data };
               break;
             case 'group':
@@ -515,12 +529,24 @@ const TopologyContent: React.FC<{
           }
         } else {
           if (e.getType() !== 'graph') {
-            setObserved(() => controller.removeElement(e));
+            elementsToRemove.push(e);
           }
         }
       });
 
+      // Batch remove operations for better performance
+      if (elementsToRemove.length > 0) {
+        setObserved(() => {
+          elementsToRemove.forEach(e => controller.removeElement(e));
+        });
+      }
       controller.fromModel(model);
+
+      // Clear elems cache after model update since elements have changed
+      clearElemsCache();
+
+      // Note: edgePointsCache in TrafficPointRenderer uses WeakMap with TTL
+      // so it will automatically expire stale entries
       setObserved(() => {
         controller.getGraph().setData({
           graphData: graphData,
@@ -529,10 +555,32 @@ const TopologyContent: React.FC<{
         });
       });
 
-      const { nodes } = elems(controller);
+      // Cache elems result to avoid multiple getElements() calls
+      const elemsResult = elems(controller);
+      const { nodes } = elemsResult;
 
-      // set decorators
-      nodes.forEach(n => setNodeAttachments(n, graphSettings));
+      // set decorators - only update if graphSettings changed or elements changed
+      // This is especially important for ambient graphs with many waypoints
+      if (graphData.elementsChanged) {
+        nodes.forEach(n => setNodeAttachments(n, graphSettings));
+      } else {
+        // Only update attachments for nodes that might have changed
+        // For ambient, waypoint attachments are the main concern
+        nodes.forEach(n => {
+          const data = n.getData() as NodeData;
+          // Check if this node might need attachment updates (waypoints, VS, etc)
+          if (
+            data.isWaypoint ||
+            data.hasIngressWaypoint ||
+            data.hasWorkloadEntry ||
+            data.hasCB ||
+            data.hasVS ||
+            data.isOutOfMesh
+          ) {
+            setNodeAttachments(n, graphSettings);
+          }
+        });
+      }
 
       // pre-select node-graph node, only when elems have changed (like on first render, or a structural change)
       const graphNode = graphData.fetchParams.node;
@@ -597,6 +645,7 @@ const TopologyContent: React.FC<{
     layoutName,
     onDeleteTrafficRouting,
     onLaunchWizard,
+    onHover,
     onReady,
     rankBy,
     setDetailsLevel,
@@ -608,6 +657,7 @@ const TopologyContent: React.FC<{
 
   React.useEffect(() => {
     if (focusNode) {
+      // Use cached elems if available
       const { nodes } = elems(controller);
       const node = nodes.find(n => n.getId() === focusNode.id);
       if (node) {
@@ -715,6 +765,131 @@ const TopologyContent: React.FC<{
 
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
+  // Memoize the control buttons to avoid recreating them on every render
+  // This improves performance, especially for ambient graphs with frequent updates
+  const controlButtons = React.useMemo(
+    () =>
+      createTopologyControlButtons({
+        ...defaultControlButtonsOptions,
+        fitToScreen: false,
+        zoomIn: false,
+        zoomOut: false,
+        customButtons: [
+          {
+            ariaLabel: 'Hide Healthy Edges',
+            callback: () => {
+              setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
+            },
+            icon: (
+              <KialiIcon.LongArrowRight
+                className={EdgeMode.UNHEALTHY === edgeMode ? toolbarActiveStyle : undefined}
+                status={EdgeMode.UNHEALTHY === edgeMode ? 'custom' : undefined}
+              />
+            ),
+            id: 'toolbar_edge_mode_unhealthy',
+            tooltip: 'Hide healthy edges'
+          },
+          {
+            ariaLabel: 'Hide All Edges',
+            id: 'toolbar_edge_mode_none',
+            icon: (
+              <KialiIcon.LongArrowRight
+                className={EdgeMode.NONE === edgeMode ? toolbarActiveStyle : undefined}
+                status={EdgeMode.NONE === edgeMode ? 'custom' : undefined}
+              />
+            ),
+            tooltip: 'Hide all edges',
+            callback: () => {
+              setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
+            }
+          },
+          {
+            ariaLabel: 'Dagre - boxing layout',
+            id: 'toolbar_layout_dagre',
+            icon: (
+              <KialiIcon.Topology
+                className={GraphLayout.Dagre === layoutName ? toolbarActiveStyle : undefined}
+                status={GraphLayout.Dagre === layoutName ? 'custom' : undefined}
+              />
+            ),
+            tooltip: 'Dagre - boxing layout',
+            callback: () => {
+              setLayoutName(GraphLayout.Dagre);
+            }
+          },
+          {
+            ariaLabel: 'Grid - non-boxing layout',
+            id: 'toolbar_layout_grid',
+            icon: (
+              <KialiIcon.Topology
+                className={GraphLayout.Grid === layoutName ? toolbarActiveStyle : undefined}
+                status={GraphLayout.Grid === layoutName ? 'custom' : undefined}
+              />
+            ),
+            tooltip: 'Grid - non-boxing layout',
+            callback: () => {
+              setLayoutName(GraphLayout.Grid);
+            }
+          },
+          {
+            ariaLabel: 'Concentric - non-boxing layout',
+            id: 'toolbar_layout_concentric',
+            icon: (
+              <KialiIcon.Topology
+                className={GraphLayout.Concentric === layoutName ? toolbarActiveStyle : undefined}
+                status={GraphLayout.Concentric === layoutName ? 'custom' : undefined}
+              />
+            ),
+            tooltip: 'Concentric - non-boxing layout',
+            callback: () => {
+              setLayoutName(GraphLayout.Concentric);
+            }
+          },
+          {
+            ariaLabel: 'Breadth First - non-boxing layout',
+            id: 'toolbar_layout_breadth_first',
+            icon: (
+              <KialiIcon.Topology
+                className={GraphLayout.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
+                status={GraphLayout.BreadthFirst === layoutName ? 'custom' : undefined}
+              />
+            ),
+            tooltip: 'Breadth First - non-boxing layout',
+            callback: () => {
+              setLayoutName(GraphLayout.BreadthFirst);
+            }
+          }
+        ],
+        // currently unused
+        zoomInCallback: () => {
+          controller && controller.getGraph().scaleBy(ZOOM_IN);
+        },
+        // currently unused
+        zoomOutCallback: () => {
+          controller && controller.getGraph().scaleBy(ZOOM_OUT);
+        },
+        // currently unused
+        fitToScreenCallback: () => {
+          controller.getGraph().fit(FIT_PADDING);
+        },
+        resetViewCallback: () => {
+          graphLayout(controller, LayoutType.Layout);
+        },
+        legend: true,
+        legendIcon: (
+          <KialiIcon.Map
+            className={showLegend ? toolbarActiveStyle : undefined}
+            status={showLegend ? 'custom' : undefined}
+          />
+        ),
+        legendTip: 'Legend',
+        legendCallback: () => {
+          if (toggleLegend) toggleLegend();
+        }
+      }),
+    [controller, edgeMode, layoutName, setEdgeMode, setLayoutName, showLegend, toggleLegend]
+  );
+
   return isMiniGraph ? (
     <>
       <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
@@ -730,127 +905,7 @@ const TopologyContent: React.FC<{
         controlBar={
           <TourStop info={GraphTourStops.Layout}>
             <TourStop info={GraphTourStops.Legend}>
-              <TopologyControlBar
-                data-test="topology-control-bar"
-                controlButtons={createTopologyControlButtons({
-                  ...defaultControlButtonsOptions,
-                  fitToScreen: false,
-                  zoomIn: false,
-                  zoomOut: false,
-                  customButtons: [
-                    {
-                      ariaLabel: 'Hide Healthy Edges',
-                      callback: () => {
-                        setEdgeMode(EdgeMode.UNHEALTHY === edgeMode ? EdgeMode.ALL : EdgeMode.UNHEALTHY);
-                      },
-                      icon: (
-                        <KialiIcon.LongArrowRight
-                          className={EdgeMode.UNHEALTHY === edgeMode ? toolbarActiveStyle : undefined}
-                          status={EdgeMode.UNHEALTHY === edgeMode ? 'custom' : undefined}
-                        />
-                      ),
-                      id: 'toolbar_edge_mode_unhealthy',
-                      tooltip: 'Hide healthy edges'
-                    },
-                    {
-                      ariaLabel: 'Hide All Edges',
-                      id: 'toolbar_edge_mode_none',
-                      icon: (
-                        <KialiIcon.LongArrowRight
-                          className={EdgeMode.NONE === edgeMode ? toolbarActiveStyle : undefined}
-                          status={EdgeMode.NONE === edgeMode ? 'custom' : undefined}
-                        />
-                      ),
-                      tooltip: 'Hide all edges',
-                      callback: () => {
-                        setEdgeMode(EdgeMode.NONE === edgeMode ? EdgeMode.ALL : EdgeMode.NONE);
-                      }
-                    },
-                    {
-                      ariaLabel: 'Dagre - boxing layout',
-                      id: 'toolbar_layout_dagre',
-                      icon: (
-                        <KialiIcon.Topology
-                          className={GraphLayout.Dagre === layoutName ? toolbarActiveStyle : undefined}
-                          status={GraphLayout.Dagre === layoutName ? 'custom' : undefined}
-                        />
-                      ),
-                      tooltip: 'Dagre - boxing layout',
-                      callback: () => {
-                        setLayoutName(GraphLayout.Dagre);
-                      }
-                    },
-                    {
-                      ariaLabel: 'Grid - non-boxing layout',
-                      id: 'toolbar_layout_grid',
-                      icon: (
-                        <KialiIcon.Topology
-                          className={GraphLayout.Grid === layoutName ? toolbarActiveStyle : undefined}
-                          status={GraphLayout.Grid === layoutName ? 'custom' : undefined}
-                        />
-                      ),
-                      tooltip: 'Grid - non-boxing layout',
-                      callback: () => {
-                        setLayoutName(GraphLayout.Grid);
-                      }
-                    },
-                    {
-                      ariaLabel: 'Concentric - non-boxing layout',
-                      id: 'toolbar_layout_concentric',
-                      icon: (
-                        <KialiIcon.Topology
-                          className={GraphLayout.Concentric === layoutName ? toolbarActiveStyle : undefined}
-                          status={GraphLayout.Concentric === layoutName ? 'custom' : undefined}
-                        />
-                      ),
-                      tooltip: 'Concentric - non-boxing layout',
-                      callback: () => {
-                        setLayoutName(GraphLayout.Concentric);
-                      }
-                    },
-                    {
-                      ariaLabel: 'Breadth First - non-boxing layout',
-                      id: 'toolbar_layout_breadth_first',
-                      icon: (
-                        <KialiIcon.Topology
-                          className={GraphLayout.BreadthFirst === layoutName ? toolbarActiveStyle : undefined}
-                          status={GraphLayout.BreadthFirst === layoutName ? 'custom' : undefined}
-                        />
-                      ),
-                      tooltip: 'Breadth First - non-boxing layout',
-                      callback: () => {
-                        setLayoutName(GraphLayout.BreadthFirst);
-                      }
-                    }
-                  ],
-                  // currently unused
-                  zoomInCallback: () => {
-                    controller && controller.getGraph().scaleBy(ZOOM_IN);
-                  },
-                  // currently unused
-                  zoomOutCallback: () => {
-                    controller && controller.getGraph().scaleBy(ZOOM_OUT);
-                  },
-                  // currently unused
-                  fitToScreenCallback: () => {
-                    controller.getGraph().fit(FIT_PADDING);
-                  },
-                  resetViewCallback: () => {
-                    graphLayout(controller, LayoutType.Layout);
-                  },
-                  legend: true,
-                  legendIcon: (
-                    <KialiIcon.Map
-                      className={showLegend ? toolbarActiveStyle : undefined}
-                      status={showLegend ? 'custom' : undefined}
-                    />
-                  ),
-                  legendTip: 'Legend',
-                  legendCallback: () => {
-                    if (toggleLegend) toggleLegend();
-                  }
-                })}
-              />
+              <TopologyControlBar data-test="topology-control-bar" controlButtons={controlButtons} />
             </TourStop>
           </TourStop>
         }

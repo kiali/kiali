@@ -136,8 +136,15 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   }, [data, detailsLevel]);
 
   const hasAnimation = !!data.animation;
-  const start = element.getStartPoint();
-  const end = element.getEndPoint();
+
+  // Memoize start/end points to avoid recalculating on every render
+  // getStartPoint/getEndPoint can trigger getPointAtLength internally which is expensive
+  const startEnd = React.useMemo(() => {
+    const start = element.getStartPoint();
+    const end = element.getEndPoint();
+    return { start, end };
+  }, [element]);
+
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
@@ -145,10 +152,10 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
         <AnimationEdge
           animationHash={data.animation?.getHash(data)}
           edge={element}
-          endX={end.x}
-          endY={end.y}
-          startX={start.x}
-          startY={start.y}
+          endX={startEnd.end.x}
+          endY={startEnd.end.y}
+          startX={startEnd.start.x}
+          startY={startEnd.start.y}
         />
       )}
     </g>

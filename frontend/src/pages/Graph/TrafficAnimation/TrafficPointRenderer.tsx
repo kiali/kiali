@@ -11,12 +11,33 @@ export abstract class TrafficPointRenderer {
   ): React.SVGProps<SVGElement>;
 }
 
+// Cache for edge points to avoid repeated getStartPoint/getEndPoint calls
+// These can trigger expensive getPointAtLength calculations
+const edgePointsCache = new WeakMap<Edge, { bendpoints: any[]; end: any; start: any; timestamp: number }>();
+const EDGE_POINTS_CACHE_TTL = 100; // 100ms cache
+
+function getCachedEdgePoints(edge: Edge): { bendpoints: any[]; end: any; start: any } {
+  const now = performance.now();
+  const cached = edgePointsCache.get(edge);
+
+  if (cached && now - cached.timestamp < EDGE_POINTS_CACHE_TTL) {
+    return { bendpoints: cached.bendpoints, end: cached.end, start: cached.start };
+  }
+
+  const start = edge.getStartPoint();
+  const end = edge.getEndPoint();
+  const bendpoints = edge.getBendpoints();
+  const result = { bendpoints, end, start };
+  edgePointsCache.set(edge, { ...result, timestamp: now });
+
+  return result;
+}
+
 function getMoveAnimation(edge: Edge, percentVisible: number): string {
-  const startPoint = edge.getStartPoint();
-  const endPoint = edge.getEndPoint();
+  const { bendpoints, end: endPoint, start: startPoint } = getCachedEdgePoints(edge);
   const moveAnimation = {};
 
-  if (edge.getBendpoints().length === 0) {
+  if (bendpoints.length === 0) {
     const moveX = endPoint.x - startPoint.x;
     const moveY = endPoint.y - startPoint.y;
 
@@ -32,7 +53,7 @@ function getMoveAnimation(edge: Edge, percentVisible: number): string {
     }
   } else {
     // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
-    const bendPoint = edge.getBendpoints()[0];
+    const bendPoint = bendpoints[0];
     const moveBendX = bendPoint.x - startPoint.x;
     const moveBendY = bendPoint.y - startPoint.y;
     const moveEndX = endPoint.x - startPoint.x;
@@ -96,7 +117,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
-    const startPoint = edge.getStartPoint();
+    const { start: startPoint } = getCachedEdgePoints(edge);
     const moveAnimation = getMoveAnimation(edge, this.percentVisible);
     // If requested, calculate offsets. The offset must be small to avoid more serious
     // calculation that would ensure perpendicular distance from the edge. Instead, we
@@ -165,7 +186,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
-    const startPoint = edge.getStartPoint();
+    const { start: startPoint } = getCachedEdgePoints(edge);
     const moveAnimation = getMoveAnimation(edge, this.percentVisible);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
