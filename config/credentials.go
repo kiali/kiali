@@ -586,10 +586,6 @@ func (cm *CredentialManager) evictFromCache(path string) {
 
 // watchParentDir ensures the parent directory of the given file path is being watched.
 func (cm *CredentialManager) watchParentDir(path string) error {
-	if cm.watcher == nil {
-		return fmt.Errorf("watcher not initialized")
-	}
-
 	dir := filepath.Dir(path)
 
 	cm.mu.RLock()
