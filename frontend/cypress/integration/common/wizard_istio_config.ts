@@ -100,7 +100,14 @@ When('user creates the istio config', () => {
 });
 
 When('user chooses {string} mode from the {string} select', (option: string, id: string) => {
-  cy.get(`select[id="${id}"]`).select(option);
+  cy.get('body').then($body => {
+    if ($body.find(`select[id="${id}"]`).length > 0) {
+      cy.get(`select[id="${id}"]`).select(option);
+    } else {
+      cy.get(`button[id="${id}-toggle"]`).click();
+      cy.get('.pf-v6-c-menu__list-item').contains(option).click();
+    }
+  });
 });
 
 Then('the {string} message should be displayed', (message: string) => {
