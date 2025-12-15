@@ -716,9 +716,12 @@ const TopologyContent: React.FC<{
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
-    <TopologyView data-test="topology-view-pf">
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
-    </TopologyView>
+    <>
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <TopologyView data-test="topology-view-pf">
+        <VisualizationSurface data-test="visualization-surface" state={{}} />
+      </TopologyView>
+    </>
   ) : (
     <>
       <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
