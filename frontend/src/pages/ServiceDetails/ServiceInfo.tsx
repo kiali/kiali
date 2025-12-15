@@ -251,18 +251,20 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       <>
         <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
           <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
-            <GridItem span={4}>
+            <GridItem span={4} style={{ overflow: 'auto' }}>
               <Stack hasGutter={true}>
                 <StackItem>
                   <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />
                 </StackItem>
 
                 {this.props.serviceDetails && (
-                  <ServiceNetwork
-                    serviceDetails={this.props.serviceDetails}
-                    gateways={this.props.gateways}
-                    validations={this.getServiceValidation()}
-                  />
+                  <StackItem>
+                    <ServiceNetwork
+                      serviceDetails={this.props.serviceDetails}
+                      gateways={this.props.gateways}
+                      validations={this.getServiceValidation()}
+                    />
+                  </StackItem>
                 )}
 
                 <StackItem style={{ paddingBottom: '20px' }}>

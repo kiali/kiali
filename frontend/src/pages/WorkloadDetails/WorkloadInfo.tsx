@@ -269,7 +269,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       <>
         <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
           <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
-            <GridItem span={4}>
+            <GridItem span={4} style={{ overflow: 'auto' }}>
               <Stack hasGutter={true}>
                 <StackItem>
                   <WorkloadDescription

@@ -64,7 +64,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     return (
       <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
         <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
-          <GridItem span={4}>
+          <GridItem span={4} style={{ overflow: 'auto' }}>
             <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
           </GridItem>
 
