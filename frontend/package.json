@@ -153,6 +153,8 @@
     "@types/react-redux": "7.1.7",
     "@types/react-router-dom": "^5.2.0",
     "@types/react-virtualized": "9.x",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "axios-mock-adapter": "^1.22.0",
     "cypress": "^13.6.1",
@@ -171,7 +173,7 @@
     "redux-mock-store": "1.5.4",
     "sass": "^1.63.6",
     "seedrandom": "^3.0.5",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.0"
   },
   "resolutions": {
     "esbuild": "^0.25.2",
