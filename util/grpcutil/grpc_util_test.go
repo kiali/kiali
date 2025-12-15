@@ -103,12 +103,11 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	// Use bufconn dialer
 	opts = append(opts, grpc.WithContextDialer(dialer))
 
-	// Establish a single connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, "bufnet", opts...) //nolint:staticcheck // DialContext is fine here with bufconn test dialer
+	// Establish a single connection (NewClient is lazy, connects on first RPC)
+	// Use passthrough scheme with bufconn dialer - the dialer ignores the address
+	conn, err := grpc.NewClient("passthrough:///bufnet", opts...)
 	if err != nil {
-		t.Fatalf("Failed to dial: %v", err)
+		t.Fatalf("Failed to create client: %v", err)
 	}
 	defer conn.Close()
 
@@ -196,11 +195,11 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	}
 	opts = append(opts, grpc.WithContextDialer(dialer))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, "bufnet", opts...) //nolint:staticcheck // DialContext is fine here with bufconn test dialer
+	// Establish a single connection (NewClient is lazy, connects on first RPC)
+	// Use passthrough scheme with bufconn dialer - the dialer ignores the address
+	conn, err := grpc.NewClient("passthrough:///bufnet", opts...)
 	if err != nil {
-		t.Fatalf("Failed to dial: %v", err)
+		t.Fatalf("Failed to create client: %v", err)
 	}
 	defer conn.Close()
 
@@ -316,15 +315,12 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 	}
 	optsWithoutCA = append(optsWithoutCA, grpc.WithContextDialer(dialer))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
 	// This should FAIL because the server's certificate is signed by our custom CA,
-	// which is not in the system trust store
-	connWithoutCA, err := grpc.DialContext(ctx, "bufnet", optsWithoutCA...) //nolint:staticcheck
+	// which is not in the system trust store. NewClient is lazy, so failure happens on RPC.
+	connWithoutCA, err := grpc.NewClient("passthrough:///bufnet", optsWithoutCA...)
 	if err == nil {
 		defer connWithoutCA.Close()
-		// Try to make a call - might fail here instead of at dial time
+		// Try to make a call - failure happens here with NewClient (lazy connection)
 		client := grpc_health_v1.NewHealthClient(connWithoutCA)
 		ctxCall, cancelCall := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelCall()
@@ -334,7 +330,7 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 		}
 		t.Logf("Negative test passed: RPC failed without custom CA: %v", errCall)
 	} else {
-		t.Logf("Negative test passed: Dial failed without custom CA: %v", err)
+		t.Logf("Negative test passed: NewClient failed without custom CA: %v", err)
 	}
 
 	// POSITIVE TEST: Now configure custom CA bundle and retry - should succeed
@@ -356,12 +352,9 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 	}
 	optsWithCA = append(optsWithCA, grpc.WithContextDialer(dialer))
 
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel2()
-
-	connWithCA, err := grpc.DialContext(ctx2, "bufnet", optsWithCA...) //nolint:staticcheck
+	connWithCA, err := grpc.NewClient("passthrough:///bufnet", optsWithCA...)
 	if err != nil {
-		t.Fatalf("Dial should succeed with custom CA: %v", err)
+		t.Fatalf("NewClient should succeed with custom CA: %v", err)
 	}
 	defer connWithCA.Close()
 
@@ -380,6 +373,149 @@ func TestGetAuthDialOptions_CustomCAWithoutAuth(t *testing.T) {
 	}
 
 	t.Log("Positive test passed: gRPC connection and RPC succeeded with custom CA bundle")
+}
+
+// TestGetAuthDialOptions_CARotation verifies that gRPC connections properly pick up
+// rotated CA bundles via fsnotify. This mirrors TestTracingClientHTTPSWithCARotation
+// for HTTP but tests gRPC CA bundle rotation.
+func TestGetAuthDialOptions_CARotation(t *testing.T) {
+	tmpDir := t.TempDir()
+	caFile := tmpDir + "/ca.pem"
+	const serverName = "grpc-service.example.com"
+
+	// Generate CA1 and server certificate signed by CA1
+	ca1, ca1PEM, ca1Key := certtest.MustGenCA(t, "TestCA1")
+	serverCert1PEM, serverKey1PEM := certtest.MustServerCertSignedByCA(t, ca1, ca1Key, []string{serverName})
+
+	// Write CA1 to file
+	if err := os.WriteFile(caFile, ca1PEM, 0600); err != nil {
+		t.Fatalf("Failed to write CA1 file: %v", err)
+	}
+
+	// Create config with CA bundle that watches the CA file
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager([]string{caFile})
+	if err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Close)
+
+	// Start gRPC server with CA1-signed certificate
+	stopServer1, dialer1 := startTLSGRPCServerWithCA(t, serverCert1PEM, serverKey1PEM)
+
+	// No authentication credentials - testing CA verification only
+	var auth *config.Auth = nil
+
+	// POSITIVE TEST 1: Connect to server with CA1 in bundle - should succeed
+	opts1, err := grpcutil.GetAuthDialOptions(conf, serverName, true, auth)
+	if err != nil {
+		t.Fatalf("GetAuthDialOptions for CA1: %v", err)
+	}
+	opts1 = append(opts1, grpc.WithContextDialer(dialer1))
+
+	conn1, err := grpc.NewClient("passthrough:///bufnet", opts1...)
+	if err != nil {
+		t.Fatalf("NewClient should succeed with CA1: %v", err)
+	}
+	defer conn1.Close()
+
+	client1 := grpc_health_v1.NewHealthClient(conn1)
+	ctxCheck1, cancelCheck1 := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancelCheck1()
+
+	resp1, err := client1.Check(ctxCheck1, &grpc_health_v1.HealthCheckRequest{})
+	if err != nil {
+		t.Fatalf("Health check should succeed with CA1: %v", err)
+	}
+	if resp1.Status != grpc_health_v1.HealthCheckResponse_SERVING {
+		t.Fatalf("Expected SERVING status, got %v", resp1.Status)
+	}
+	t.Log("Initial connection with CA1 succeeded")
+
+	// Stop server1
+	stopServer1()
+	conn1.Close()
+
+	// Generate CA2 and server certificate signed by CA2
+	ca2, ca2PEM, ca2Key := certtest.MustGenCA(t, "TestCA2")
+	serverCert2PEM, serverKey2PEM := certtest.MustServerCertSignedByCA(t, ca2, ca2Key, []string{serverName})
+
+	// Start new gRPC server with CA2-signed certificate
+	stopServer2, dialer2 := startTLSGRPCServerWithCA(t, serverCert2PEM, serverKey2PEM)
+	defer stopServer2()
+
+	// NEGATIVE TEST: Client still has CA1, server now uses CA2 - should FAIL
+	// The CA file has NOT been updated yet, so client's CertPool still contains CA1
+	opts2, err := grpcutil.GetAuthDialOptions(conf, serverName, true, auth)
+	if err != nil {
+		t.Fatalf("GetAuthDialOptions for negative test: %v", err)
+	}
+	opts2 = append(opts2, grpc.WithContextDialer(dialer2))
+
+	// NewClient is lazy, so failure happens on RPC, not at client creation
+	connNegative, err := grpc.NewClient("passthrough:///bufnet", opts2...)
+	if err == nil {
+		defer connNegative.Close()
+		// Try to make a call - failure happens here with NewClient (lazy connection)
+		clientNegative := grpc_health_v1.NewHealthClient(connNegative)
+		ctxNegative, cancelNegative := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancelNegative()
+		_, errCall := clientNegative.Check(ctxNegative, &grpc_health_v1.HealthCheckRequest{})
+		if errCall == nil {
+			t.Fatal("Expected connection/RPC to fail when CA1 doesn't match CA2-signed server cert, but it succeeded")
+		}
+		t.Logf("Negative test passed: RPC failed with CA mismatch: %v", errCall)
+	} else {
+		t.Logf("Negative test passed: NewClient failed with CA mismatch: %v", err)
+	}
+
+	// Now rotate CA file: write CA2 to the file (overwriting CA1)
+	if err := os.WriteFile(caFile, ca2PEM, 0600); err != nil {
+		t.Fatalf("Failed to rotate CA file to CA2: %v", err)
+	}
+
+	// POSITIVE TEST 2: Wait for fsnotify to detect the CA file change
+	// Poll until connection succeeds with the rotated CA
+	var conn3 *grpc.ClientConn
+	caRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
+		// Get fresh dial options (TLS config will use updated CA bundle)
+		opts3, err := grpcutil.GetAuthDialOptions(conf, serverName, true, auth)
+		if err != nil {
+			return false
+		}
+		opts3 = append(opts3, grpc.WithContextDialer(dialer2))
+
+		conn3, err = grpc.NewClient("passthrough:///bufnet", opts3...)
+		if err != nil {
+			return false
+		}
+
+		// Try an RPC to verify the connection actually works
+		client3 := grpc_health_v1.NewHealthClient(conn3)
+		ctxCheck3, cancelCheck3 := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancelCheck3()
+
+		resp3, errCheck := client3.Check(ctxCheck3, &grpc_health_v1.HealthCheckRequest{})
+		if errCheck != nil {
+			conn3.Close()
+			return false
+		}
+
+		if resp3.Status != grpc_health_v1.HealthCheckResponse_SERVING {
+			conn3.Close()
+			return false
+		}
+
+		return true
+	})
+
+	if !caRotated {
+		t.Fatal("gRPC CA rotation failed - connection did not succeed after CA file was rotated to CA2")
+	}
+	defer conn3.Close()
+
+	t.Log("CA rotation successful - gRPC connection succeeded after CA bundle was rotated via fsnotify")
 }
 
 // TestGetAuthDialOptions_ClientCertRotation verifies that gRPC client certificates
@@ -424,11 +560,9 @@ func TestGetAuthDialOptions_ClientCertRotation(t *testing.T) {
 	opts = append(opts, grpc.WithContextDialer(dialer))
 
 	// Establish connection with first certificate
-	ctx1, cancel1 := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel1()
-	conn1, err := grpc.DialContext(ctx1, "bufnet", opts...) //nolint:staticcheck
+	conn1, err := grpc.NewClient("passthrough:///bufnet", opts...)
 	if err != nil {
-		t.Fatalf("Dial with cert1: %v", err)
+		t.Fatalf("NewClient with cert1: %v", err)
 	}
 	defer conn1.Close()
 
@@ -452,11 +586,9 @@ func TestGetAuthDialOptions_ClientCertRotation(t *testing.T) {
 	// We need to establish a new connection because client certs are loaded during TLS handshake
 	var conn2 *grpc.ClientConn
 	certRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
-		ctx2, cancel2 := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel2()
-		conn2, err = grpc.DialContext(ctx2, "bufnet", opts...) //nolint:staticcheck
+		conn2, err = grpc.NewClient("passthrough:///bufnet", opts...)
 		if err != nil {
-			// Connection might fail during rotation, keep polling
+			// Client creation might fail during rotation, keep polling
 			return false
 		}
 		// Try an RPC to verify the cert works
