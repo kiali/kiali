@@ -170,7 +170,7 @@ func NewRouter(
 	}
 
 	// Initialize graph cache and refresh job manager for per-session graph caching
-	graphCacheConfig := graph.LoadGraphCacheConfig(*conf)
+	graphCacheConfig := graph.LoadGraphCacheConfig(conf)
 	graphCache := graph.NewGraphCache(context.Background(), graphCacheConfig)
 	refreshJobManager := graph.NewRefreshJobManager(context.Background())
 

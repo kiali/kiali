@@ -338,7 +338,7 @@ func TestLoadGraphCacheConfig(t *testing.T) {
 		},
 	}
 
-	graphCfg := LoadGraphCacheConfig(cfg)
+	graphCfg := LoadGraphCacheConfig(&cfg)
 
 	assert.True(t, graphCfg.Enabled)
 	assert.Equal(t, 30*time.Second, graphCfg.RefreshInterval)
@@ -358,7 +358,7 @@ func TestLoadGraphCacheConfig_InvalidDurations(t *testing.T) {
 		},
 	}
 
-	graphCfg := LoadGraphCacheConfig(cfg)
+	graphCfg := LoadGraphCacheConfig(&cfg)
 
 	// Should fall back to defaults
 	assert.True(t, graphCfg.Enabled)

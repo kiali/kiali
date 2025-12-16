@@ -315,7 +315,7 @@ func EstimateGraphMemory(trafficMap TrafficMap) float64 {
 }
 
 // LoadGraphCacheConfig loads graph cache configuration from Kiali config
-func LoadGraphCacheConfig(cfg config.Config) *GraphCacheConfig {
+func LoadGraphCacheConfig(cfg *config.Config) *GraphCacheConfig {
 	// Parse duration strings from config
 	refreshInterval, err := time.ParseDuration(cfg.KialiInternal.GraphCache.RefreshInterval)
 	if err != nil {
