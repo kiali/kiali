@@ -1,6 +1,16 @@
 import * as React from 'react';
 import { isK8sGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import { Button, ButtonVariant, FormGroup, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  FormGroup,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+  TextInput
+} from '@patternfly/react-core';
 import { isValid } from '../../../utils/Common';
 import { ListenerForm } from '../K8sGatewayForm';
 import { Td, Tr } from '@patternfly/react-table';
@@ -57,6 +67,10 @@ export const isValidSelector = (selector: string): boolean => {
 };
 
 export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerBuilderProps) => {
+  const [isProtocolSelectOpen, setIsProtocolSelectOpen] = React.useState<boolean>(false);
+  const [isFromSelectOpen, setIsFromSelectOpen] = React.useState<boolean>(false);
+  const [isTlsModeSelectOpen, setIsTlsModeSelectOpen] = React.useState<boolean>(false);
+
   const onAddHostname = (_event: React.FormEvent, value: string): void => {
     const l = props.listener;
     l.hostname = value.trim();
@@ -78,16 +92,18 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
     props.onChange(l, props.index);
   };
 
-  const onAddProtocol = (_event: React.FormEvent, value: string): void => {
+  const onAddProtocol = (value: string): void => {
     const l = props.listener;
     l.protocol = value.trim();
+    setIsProtocolSelectOpen(false);
 
     props.onChange(l, props.index);
   };
 
-  const onAddFrom = (_event: React.FormEvent, value: string): void => {
+  const onAddFrom = (value: string): void => {
     const l = props.listener;
     l.from = value.trim();
+    setIsFromSelectOpen(false);
 
     props.onChange(l, props.index);
   };
@@ -99,9 +115,10 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
     props.onChange(l, props.index);
   };
 
-  const onAddTlsMode = (_event: React.FormEvent, value: string): void => {
+  const onAddTlsMode = (value: string): void => {
     const listener = props.listener;
     listener.tlsMode = value.trim();
+    setIsTlsModeSelectOpen(false);
 
     props.onChange(listener, props.index);
   };
@@ -155,24 +172,63 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
         </Td>
 
         <Td>
-          <FormSelect
-            value={props.listener.protocol}
+          <Select
             id={`addPortProtocol_${props.index}`}
-            name="addPortProtocol"
-            onChange={onAddProtocol}
+            isOpen={isProtocolSelectOpen}
+            selected={props.listener.protocol}
+            onSelect={(_event, value) => onAddProtocol(value as string)}
+            onOpenChange={setIsProtocolSelectOpen}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id={`addPortProtocol_${props.index}-toggle`}
+                ref={toggleRef}
+                onClick={() => setIsProtocolSelectOpen(!isProtocolSelectOpen)}
+                isExpanded={isProtocolSelectOpen}
+                isFullWidth
+              >
+                {props.listener.protocol}
+              </MenuToggle>
+            )}
+            aria-label="Protocol Select"
           >
-            {protocols.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-            ))}
-          </FormSelect>
+            <SelectList>
+              {protocols.map((option, index) => (
+                <SelectOption key={`p_${index}`} value={option}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </Td>
 
         <Td>
-          <FormSelect value={props.listener.from} id={`addFrom_${props.index}`} name="addFrom" onChange={onAddFrom}>
-            {allowedRoutes.map((option, index) => (
-              <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-            ))}
-          </FormSelect>
+          <Select
+            id={`addFrom_${props.index}`}
+            isOpen={isFromSelectOpen}
+            selected={props.listener.from}
+            onSelect={(_event, value) => onAddFrom(value as string)}
+            onOpenChange={setIsFromSelectOpen}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                id={`addFrom_${props.index}-toggle`}
+                ref={toggleRef}
+                onClick={() => setIsFromSelectOpen(!isFromSelectOpen)}
+                isExpanded={isFromSelectOpen}
+                isFullWidth
+              >
+                {props.listener.from}
+              </MenuToggle>
+            )}
+            aria-label="From Select"
+          >
+            <SelectList>
+              {allowedRoutes.map((option, index) => (
+                <SelectOption key={`p_${index}`} value={option}>
+                  {option}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
         </Td>
 
         <Td>
@@ -200,16 +256,33 @@ export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerB
         <Tr>
           <Td colSpan={2}>
             <FormGroup label="TLS Mode" fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
-              <FormSelect
-                value={props.listener.tlsMode}
+              <Select
                 id={`addTlsMode_${props.index}`}
-                name="addTlsMode"
-                onChange={onAddTlsMode}
+                isOpen={isTlsModeSelectOpen}
+                selected={props.listener.tlsMode}
+                onSelect={(_event, value) => onAddTlsMode(value as string)}
+                onOpenChange={setIsTlsModeSelectOpen}
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    id={`addTlsMode_${props.index}-toggle`}
+                    ref={toggleRef}
+                    onClick={() => setIsTlsModeSelectOpen(!isTlsModeSelectOpen)}
+                    isExpanded={isTlsModeSelectOpen}
+                    isFullWidth
+                  >
+                    {props.listener.tlsMode}
+                  </MenuToggle>
+                )}
+                aria-label="TLS Mode Select"
               >
-                {tlsModes.map((option, index) => (
-                  <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-                ))}
-              </FormSelect>
+                <SelectList>
+                  {tlsModes.map((option, index) => (
+                    <SelectOption key={`p_${index}`} value={option}>
+                      {option}
+                    </SelectOption>
+                  ))}
+                </SelectList>
+              </Select>
             </FormGroup>
           </Td>
           {props.listener.tlsMode === TERMINATE && (
