@@ -187,19 +187,9 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 	// Custom CA bundles are independent of authentication credentials.
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
-	if auth == nil {
-		// No auth provided, but check if custom CA bundle is configured
-		if hasCustomCA {
-			return buildTLSConfigWithDynamicVerification(conf, nil, "")
-		}
-		return nil, nil
-	}
-	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
-		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
-		// Check if custom CA bundle is configured to determine if TLS config is needed.
-		if hasCustomCA {
-			return buildTLSConfigWithDynamicVerification(conf, auth, "")
-		}
+	// Need TLS config if: custom CA bundle exists OR auth has TLS-specific settings
+	needsTLS := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
+	if !needsTLS {
 		return nil, nil
 	}
 	return buildTLSConfigWithDynamicVerification(conf, auth, "")
@@ -213,19 +203,9 @@ func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName st
 	// Custom CA bundles are independent of authentication credentials.
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
-	if auth == nil {
-		// No auth provided, but check if custom CA bundle is configured
-		if hasCustomCA {
-			return buildTLSConfigWithDynamicVerification(conf, nil, serverName)
-		}
-		return nil, nil
-	}
-	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
-		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
-		// Check if custom CA bundle is configured to determine if TLS config is needed.
-		if hasCustomCA {
-			return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
-		}
+	// Need TLS config if: custom CA bundle exists OR auth has TLS-specific settings
+	needsTLS := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
+	if !needsTLS {
 		return nil, nil
 	}
 	return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
