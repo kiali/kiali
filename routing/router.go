@@ -35,6 +35,7 @@ import (
 
 // NewRouter creates the router with all API routes and the static files handler
 func NewRouter(
+	ctx context.Context,
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,
@@ -171,8 +172,8 @@ func NewRouter(
 
 	// Initialize graph cache and refresh job manager for per-session graph caching
 	graphCacheConfig := graph.LoadGraphCacheConfig(conf)
-	graphCache := graph.NewGraphCache(context.Background(), graphCacheConfig)
-	refreshJobManager := graph.NewRefreshJobManager(context.Background())
+	graphCache := graph.NewGraphCache(ctx, graphCacheConfig)
+	refreshJobManager := graph.NewRefreshJobManager(ctx)
 
 	if graphCacheConfig.Enabled {
 		zl.Info().Msgf("graph cache enabled: refresh_interval=%v, inactivity_timeout=%v, max_memory=%dMB",

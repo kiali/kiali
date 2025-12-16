@@ -62,7 +62,7 @@ func TestRootContextPath(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -126,7 +126,7 @@ func TestAnonymousMode(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
 
-	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -219,7 +219,7 @@ func TestSecureComm(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, err := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, err := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	require.NoError(err)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
@@ -333,7 +333,7 @@ func TestTracingConfigured(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

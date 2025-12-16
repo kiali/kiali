@@ -171,6 +171,7 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 			promClient := prometheus.NewOfflineClient(offlineDataPath, &manifest)
 
 			kialiServer, err := server.NewServer(
+				ctx,
 				nil, // controlPlaneMonitor
 				clientFactory,
 				kialiCache,
