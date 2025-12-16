@@ -4,10 +4,13 @@ import {
   ButtonVariant,
   FormGroup,
   FormHelperText,
-  FormSelect,
-  FormSelectOption,
   HelperText,
   HelperTextItem,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
   TextInput
 } from '@patternfly/react-core';
 import { IRow, Td, ThProps, Tr } from '@patternfly/react-table';
@@ -80,60 +83,44 @@ const deleteButtonStyle = kialiStyle({
 });
 
 export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
-  const onAddHosts = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.hosts = value.trim().length === 0 ? [] : value.split(',').map(host => host.trim());
+  const [isProtocolSelectOpen, setIsProtocolSelectOpen] = React.useState<boolean>(false);
+  const [isTlsModeSelectOpen, setIsTlsModeSelectOpen] = React.useState<boolean>(false);
 
-    props.onChange(server, props.index);
+  const onAddHosts = (_event: React.FormEvent, value: string): void => {
+    props.onChange(
+      { ...props.server, hosts: value.trim().length === 0 ? [] : value.split(',').map(host => host.trim()) },
+      props.index
+    );
   };
 
   const onAddPortNumber = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.number = value.trim();
-
-    props.onChange(server, props.index);
+    props.onChange({ ...props.server, number: value.trim() }, props.index);
   };
 
   const onAddPortName = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.name = value.trim();
-
-    props.onChange(server, props.index);
+    props.onChange({ ...props.server, name: value.trim() }, props.index);
   };
 
-  const onAddPortProtocol = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.protocol = value.trim();
-
-    props.onChange(server, props.index);
+  const onAddPortProtocol = (value: string): void => {
+    setIsProtocolSelectOpen(false);
+    props.onChange({ ...props.server, protocol: value.trim() }, props.index);
   };
 
-  const onAddTlsMode = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.tlsMode = value.trim();
-
-    props.onChange(server, props.index);
+  const onAddTlsMode = (value: string): void => {
+    setIsTlsModeSelectOpen(false);
+    props.onChange({ ...props.server, tlsMode: value.trim() }, props.index);
   };
 
   const onAddTlsServerCertificate = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.tlsServerCertificate = value.trim();
-
-    props.onChange(server, props.index);
+    props.onChange({ ...props.server, tlsServerCertificate: value.trim() }, props.index);
   };
 
   const onAddTlsPrivateKey = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.tlsPrivateKey = value.trim();
-
-    props.onChange(server, props.index);
+    props.onChange({ ...props.server, tlsPrivateKey: value.trim() }, props.index);
   };
 
   const onAddTlsCaCertificate = (_event: React.FormEvent, value: string): void => {
-    const server = props.server;
-    server.tlsCaCertificate = value.trim();
-
-    props.onChange(server, props.index);
+    props.onChange({ ...props.server, tlsCaCertificate: value.trim() }, props.index);
   };
 
   const portRows: IRow[] = [
@@ -159,16 +146,33 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
           validated={isValid(props.server.name.length > 0)}
         />,
 
-        <FormSelect
-          value={props.server.protocol}
+        <Select
           id={`addPortProtocol_${props.index}`}
-          name="addPortProtocol"
-          onChange={onAddPortProtocol}
+          isOpen={isProtocolSelectOpen}
+          selected={props.server.protocol}
+          onSelect={(_event, value) => onAddPortProtocol(value as string)}
+          onOpenChange={setIsProtocolSelectOpen}
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              id={`addPortProtocol_${props.index}-toggle`}
+              ref={toggleRef}
+              onClick={() => setIsProtocolSelectOpen(!isProtocolSelectOpen)}
+              isExpanded={isProtocolSelectOpen}
+              isFullWidth
+            >
+              {props.server.protocol}
+            </MenuToggle>
+          )}
+          aria-label="Protocol Select"
         >
-          {protocols.map((option, index) => (
-            <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-          ))}
-        </FormSelect>
+          <SelectList>
+            {protocols.map((option, index) => (
+              <SelectOption key={`p_${index}`} value={option}>
+                {option}
+              </SelectOption>
+            ))}
+          </SelectList>
+        </Select>
       ]
     }
   ];
@@ -207,11 +211,33 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
 
         {showTls && (
           <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
-            <FormSelect value={props.server.tlsMode} id="addTlsMode" name="addTlsMode" onChange={onAddTlsMode}>
-              {tlsModes.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={`p_${index}`} value={option} label={option} />
-              ))}
-            </FormSelect>
+            <Select
+              id="addTlsMode"
+              isOpen={isTlsModeSelectOpen}
+              selected={props.server.tlsMode}
+              onSelect={(_event, value) => onAddTlsMode(value as string)}
+              onOpenChange={setIsTlsModeSelectOpen}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="addTlsMode-toggle"
+                  ref={toggleRef}
+                  onClick={() => setIsTlsModeSelectOpen(!isTlsModeSelectOpen)}
+                  isExpanded={isTlsModeSelectOpen}
+                  isFullWidth
+                >
+                  {props.server.tlsMode}
+                </MenuToggle>
+              )}
+              aria-label="TLS Mode Select"
+            >
+              <SelectList>
+                {tlsModes.map((option, index) => (
+                  <SelectOption key={`p_${index}`} value={option}>
+                    {option}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>
           </FormGroup>
         )}
 
