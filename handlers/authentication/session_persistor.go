@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -78,13 +76,9 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 		return nil, errors.New("the expiration time of a session cannot be in the past")
 	}
 
-	// Generate unique session ID to allow multiple sessions per user
-	sessionID := uuid.New().String()
-
 	return &SessionData[T]{
 		ExpiresOn: expiresOn,
 		Key:       key,
-		SessionID: sessionID,
 		Strategy:  strategy,
 		Payload:   payload,
 	}, nil
