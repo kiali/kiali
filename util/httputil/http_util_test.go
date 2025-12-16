@@ -972,3 +972,151 @@ func isHostnameError(err error) bool {
 		bytes.Contains([]byte(errStr), []byte("doesn't contain any IP SANs")) ||
 		bytes.Contains([]byte(errStr), []byte("x509"))
 }
+
+// TestCreateTransport_UsesVerifyConnectionForDynamicCA verifies that CreateTransport
+// uses the VerifyConnection callback approach for dynamic CA rotation.
+// This allows Go to manage ALPN/HTTP2, session cache, and connection pooling properly.
+func TestCreateTransport_UsesVerifyConnectionForDynamicCA(t *testing.T) {
+	tmpDir := t.TempDir()
+	_, caPEM, _ := certtest.MustGenCA(t, "TestCA")
+
+	// Write CA to file
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	conf := config.NewConfig()
+	var err error
+	if conf.Credentials, err = config.NewCredentialManager([]string{caFile}); err != nil {
+		t.Fatalf("NewCredentialManager: %v", err)
+	}
+	t.Cleanup(conf.Credentials.Close)
+
+	// Create transport with custom CA but no auth
+	transport := &http.Transport{}
+	_, err = CreateTransport(conf, nil, transport, 5*time.Second, nil)
+	if err != nil {
+		t.Fatalf("CreateTransport: %v", err)
+	}
+
+	// Verify TLSClientConfig is set with VerifyConnection callback
+	if transport.TLSClientConfig == nil {
+		t.Fatal("expected TLSClientConfig to be set when custom CA is configured")
+	}
+	if transport.TLSClientConfig.VerifyConnection == nil {
+		t.Fatal("expected VerifyConnection callback to be set for dynamic CA verification")
+	}
+
+	// Verify InsecureSkipVerify is true (because we verify manually in VerifyConnection)
+	if !transport.TLSClientConfig.InsecureSkipVerify {
+		t.Error("expected InsecureSkipVerify=true because verification is done in VerifyConnection")
+	}
+
+	// Verify DialTLSContext is NOT set (we use TLSClientConfig instead)
+	if transport.DialTLSContext != nil {
+		t.Error("expected DialTLSContext to be nil - should use TLSClientConfig with VerifyConnection instead")
+	}
+}
+
+// TestVerifyServerCertificate_ValidCert tests the verifyServerCertificate function directly.
+func TestVerifyServerCertificate_ValidCert(t *testing.T) {
+	// Create CA and server certificate
+	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
+	_, _ = certtest.MustServerCertSignedByCA(t, ca, caKey, []string{"server.test"})
+
+	// Parse CA into pool
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caPEM) {
+		t.Fatal("failed to add CA to pool")
+	}
+
+	// Create ConnectionState with valid cert signed by CA
+	serverCertDER := certtest.MustGenLeafSignedWithKey(t, ca, caKey, "server.test")
+	serverCert, err := x509.ParseCertificate(serverCertDER)
+	if err != nil {
+		t.Fatalf("parse server cert: %v", err)
+	}
+
+	cs := tls.ConnectionState{
+		ServerName:       "server.test",
+		PeerCertificates: []*x509.Certificate{serverCert},
+	}
+
+	// Verify should succeed
+	if err := verifyServerCertificate(cs, pool); err != nil {
+		t.Fatalf("verification should succeed with valid cert: %v", err)
+	}
+}
+
+// TestVerifyServerCertificate_WrongCA tests that verification fails with wrong CA.
+func TestVerifyServerCertificate_WrongCA(t *testing.T) {
+	// Create CA1 and server certificate signed by CA1
+	ca1, _, ca1Key := certtest.MustGenCA(t, "CA1")
+	serverCertDER := certtest.MustGenLeafSignedWithKey(t, ca1, ca1Key, "server.test")
+	serverCert, err := x509.ParseCertificate(serverCertDER)
+	if err != nil {
+		t.Fatalf("parse server cert: %v", err)
+	}
+
+	// Create CA2 (different CA) and use its pool for verification
+	_, ca2PEM, _ := certtest.MustGenCA(t, "CA2")
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(ca2PEM) {
+		t.Fatal("failed to add CA2 to pool")
+	}
+
+	cs := tls.ConnectionState{
+		ServerName:       "server.test",
+		PeerCertificates: []*x509.Certificate{serverCert},
+	}
+
+	// Verify should FAIL - cert signed by CA1, but pool only has CA2
+	if err := verifyServerCertificate(cs, pool); err == nil {
+		t.Fatal("verification should fail when cert is signed by different CA")
+	}
+}
+
+// TestVerifyServerCertificate_WrongHostname tests that hostname verification is enforced.
+func TestVerifyServerCertificate_WrongHostname(t *testing.T) {
+	// Create CA and server certificate for "good.test"
+	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
+	serverCertDER := certtest.MustGenLeafSignedWithKey(t, ca, caKey, "good.test")
+	serverCert, err := x509.ParseCertificate(serverCertDER)
+	if err != nil {
+		t.Fatalf("parse server cert: %v", err)
+	}
+
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caPEM) {
+		t.Fatal("failed to add CA to pool")
+	}
+
+	// Connection claims to be "bad.test" but cert is for "good.test"
+	cs := tls.ConnectionState{
+		ServerName:       "bad.test",
+		PeerCertificates: []*x509.Certificate{serverCert},
+	}
+
+	// Verify should FAIL due to hostname mismatch
+	if err := verifyServerCertificate(cs, pool); err == nil {
+		t.Fatal("verification should fail when hostname doesn't match certificate")
+	}
+}
+
+// TestVerifyServerCertificate_NoCerts tests that verification fails with no certs.
+func TestVerifyServerCertificate_NoCerts(t *testing.T) {
+	pool := x509.NewCertPool()
+	cs := tls.ConnectionState{
+		ServerName:       "server.test",
+		PeerCertificates: nil, // No certificates
+	}
+
+	err := verifyServerCertificate(cs, pool)
+	if err == nil {
+		t.Fatal("verification should fail when no peer certificates provided")
+	}
+	if err.Error() != "server provided no certificates" {
+		t.Errorf("expected 'server provided no certificates' error, got: %v", err)
+	}
+}

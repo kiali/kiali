@@ -1,9 +1,10 @@
 package httputil
 
 import (
-	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -139,10 +140,8 @@ func newCustomHeadersRoundTripper(headers map[string]string, rt http.RoundTrippe
 
 // Creates a new HTTP Transport with TLS, Timeouts, and optional custom headers.
 //
-// Please remember that setting long timeouts is not recommended as it can make
-// idle connections stay open for as long as 2 * timeout. This should only be
-// done in cases where you know the request is very likely going to be reused at
-// some point in the near future.
+// The timeout parameter controls dial timeout only. IdleConnTimeout will use Go's
+// default (90 seconds) when transportConfig.IdleConnTimeout is 0.
 func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *http.Transport, timeout time.Duration, customHeaders map[string]string) (http.RoundTripper, error) {
 	// Limits the time spent establishing a TCP connection if a new one is
 	// needed. If DialContext is not set, Dial is used, we only create a new one
@@ -153,8 +152,6 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 		}).DialContext
 	}
 
-	transportConfig.IdleConnTimeout = timeout
-
 	// We might need some custom RoundTrippers to manipulate the requests (for auth and other custom request headers).
 	// Chain together the RoundTrippers that we need, retaining the outer-most round tripper so we can return it.
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
@@ -162,20 +159,18 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 	// Part 1: Configure TLS if auth credentials OR custom CA bundle is present.
 	// Custom CA bundles (via conf.CertPool()) are independent of authentication - services
 	// may use self-signed certs or internal CAs without requiring auth credentials.
+	//
+	// We use TLSClientConfig with VerifyConnection callback instead of DialTLSContext because:
+	// - Go manages ALPN/HTTP2, session cache, and connection pooling properly
+	// - VerifyConnection allows dynamic CA pool lookup on each handshake (supports rotation)
+	// - Future transport improvements from Go are automatically inherited
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 	if auth != nil || hasCustomCA {
-		transportConfig.DialTLSContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, _, err := net.SplitHostPort(addr)
-			if err != nil {
-				host = addr
-			}
-			cfg, err := buildTLSConfig(conf, auth, host)
-			if err != nil {
-				return nil, err
-			}
-			dialer := tls.Dialer{Config: cfg}
-			return dialer.DialContext(ctx, network, addr)
+		cfg, err := buildTLSConfigWithDynamicVerification(conf, auth, "")
+		if err != nil {
+			return nil, err
 		}
+		transportConfig.TLSClientConfig = cfg
 	}
 
 	// Part 2: Wrap with auth RoundTripper only if auth credentials are provided.
@@ -195,7 +190,7 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 	if auth == nil {
 		// No auth provided, but check if custom CA bundle is configured
 		if hasCustomCA {
-			return buildTLSConfig(conf, nil, "")
+			return buildTLSConfigWithDynamicVerification(conf, nil, "")
 		}
 		return nil, nil
 	}
@@ -203,11 +198,11 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
 		// Check if custom CA bundle is configured to determine if TLS config is needed.
 		if hasCustomCA {
-			return buildTLSConfig(conf, auth, "")
+			return buildTLSConfigWithDynamicVerification(conf, auth, "")
 		}
 		return nil, nil
 	}
-	return buildTLSConfig(conf, auth, "")
+	return buildTLSConfigWithDynamicVerification(conf, auth, "")
 }
 
 // GetTLSConfigForServer returns a tls.Config that is pre-configured for the provided server name.
@@ -218,32 +213,66 @@ func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName st
 	// Custom CA bundles are independent of authentication credentials.
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
-	if auth == nil && !hasCustomCA {
+	if auth == nil {
+		// No auth provided, but check if custom CA bundle is configured
+		if hasCustomCA {
+			return buildTLSConfigWithDynamicVerification(conf, nil, serverName)
+		}
 		return nil, nil
 	}
-	return buildTLSConfig(conf, auth, serverName)
+	if auth.CertFile == "" && auth.KeyFile == "" && !auth.InsecureSkipVerify {
+		// Auth object provided but contains no TLS-specific settings (no client certs or insecure skip).
+		// Check if custom CA bundle is configured to determine if TLS config is needed.
+		if hasCustomCA {
+			return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
+		}
+		return nil, nil
+	}
+	return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
 }
 
-func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+// buildTLSConfigWithDynamicVerification creates a TLS config that supports dynamic CA rotation.
+// Instead of setting RootCAs statically, it uses VerifyConnection callback to fetch the current
+// CA pool on each TLS handshake. This allows CA bundles to be rotated without restarting.
+//
+// This approach lets Go manage ALPN, HTTP/2, session cache, and connection pooling properly,
+// while still supporting credential rotation via fsnotify.
+//
+// The serverName parameter, if provided, will be set in the TLS config for proper SAN validation.
+// This is particularly important for gRPC clients where the target hostname is known ahead of time.
+func buildTLSConfigWithDynamicVerification(conf *config.Config, auth *config.Auth, serverName string) (*tls.Config, error) {
+	// Determine if verification should be skipped entirely
+	skipVerify := auth != nil && auth.InsecureSkipVerify
+
 	cfg := &tls.Config{
 		MinVersion: tls.VersionTLS12,
+		// Set baseline RootCAs for clarity and compatibility. While VerifyConnection
+		// performs the actual verification using fresh CAs on each handshake, setting
+		// RootCAs explicitly makes the config's intent clear and avoids edge cases where
+		// TLS libraries check for nil RootCAs as a sanity check.
+		RootCAs: conf.CertPool(),
+		// Disable built-in verification - we perform it dynamically in VerifyConnection
+		// to support CA rotation. This is NOT insecure; verification still happens, but
+		// we fetch the current CA pool on each handshake to enable rotation without restart.
+		InsecureSkipVerify: true,
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			// If InsecureSkipVerify was explicitly requested, skip all verification
+			if skipVerify {
+				return nil
+			}
+			// Get current CA pool (may have been rotated via fsnotify)
+			roots := conf.CertPool()
+			return verifyServerCertificate(cs, roots)
+		},
 	}
 
+	// Set ServerName if provided for proper SAN validation
 	if serverName != "" {
 		cfg.ServerName = serverName
 	}
 
-	roots := conf.CertPool()
-
-	// When no auth is provided we still honour the configured/system roots.
-	if auth == nil {
-		cfg.RootCAs = roots
-		return cfg, nil
-	}
-
-	cfg.InsecureSkipVerify = auth.InsecureSkipVerify
-
-	if auth.CertFile != "" && auth.KeyFile != "" {
+	// Set up client certificate callback (already supports rotation via GetCredential)
+	if auth != nil && auth.CertFile != "" && auth.KeyFile != "" {
 		certFile := auth.CertFile
 		keyFile := auth.KeyFile
 		cfg.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
@@ -263,12 +292,30 @@ func buildTLSConfig(conf *config.Config, auth *config.Auth, serverName string) (
 		}
 	}
 
-	// Note: auth.CAFile is deprecated. Custom CA certificates should be configured
-	// via the kiali-cabundle ConfigMap instead. The CAFile setting is now ignored.
-
-	cfg.RootCAs = roots
-
 	return cfg, nil
+}
+
+// verifyServerCertificate performs manual server certificate verification using the provided
+// CA pool. This is called from VerifyConnection callback to support dynamic CA rotation.
+func verifyServerCertificate(cs tls.ConnectionState, roots *x509.CertPool) error {
+	if len(cs.PeerCertificates) == 0 {
+		return errors.New("server provided no certificates")
+	}
+
+	opts := x509.VerifyOptions{
+		Roots:         roots,
+		Intermediates: x509.NewCertPool(),
+		DNSName:       cs.ServerName,
+	}
+
+	// Add intermediate certificates from the chain
+	for _, cert := range cs.PeerCertificates[1:] {
+		opts.Intermediates.AddCert(cert)
+	}
+
+	// Verify the leaf certificate
+	_, err := cs.PeerCertificates[0].Verify(opts)
+	return err
 }
 
 func GuessKialiURL(conf *config.Config, r *http.Request) string {
