@@ -109,7 +109,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	var httpTracingClient HTTPClientInterface
 	auth := cfgTracing.Auth
 	if auth.UseKialiToken {
-		auth.Token = token
+		auth.Token = config.Credential(token)
 	}
 
 	var u *url.URL

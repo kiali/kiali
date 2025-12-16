@@ -146,7 +146,7 @@ func KialiStatus() (bool, int, error) {
 func (c *KialiClient) GetAuth() *config.Auth {
 	if c.authStrategy == config.AuthStrategyOpenshift {
 		return &config.Auth{
-			Token:              c.kialiToken,
+			Token:              config.Credential(c.kialiToken),
 			Type:               config.AuthTypeBearer,
 			InsecureSkipVerify: true,
 		}

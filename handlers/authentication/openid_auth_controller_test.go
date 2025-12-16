@@ -1304,7 +1304,7 @@ func TestOIDCClientSecretRotation(t *testing.T) {
 
 	// Create config with OIDC client secret pointing to file
 	conf := config.NewConfig()
-	conf.Auth.OpenId.ClientSecret = secretFile
+	conf.Auth.OpenId.ClientSecret = config.Credential(secretFile)
 
 	// Initialize CredentialManager
 	var err error
@@ -1400,7 +1400,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		// Create config pointing to the secret file
 		conf := config.NewConfig()
 		conf.Auth.OpenId.ClientId = "test-client"
-		conf.Auth.OpenId.ClientSecret = secretFile // File path, not literal value
+		conf.Auth.OpenId.ClientSecret = config.Credential(secretFile) // File path, not literal value
 		conf.Auth.OpenId.InsecureSkipVerifyTLS = true
 
 		// Initialize CredentialManager
@@ -1452,7 +1452,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		// Create config with literal secret (not a file path)
 		conf := config.NewConfig()
 		conf.Auth.OpenId.ClientId = "test-client"
-		conf.Auth.OpenId.ClientSecret = expectedSecret // Literal value
+		conf.Auth.OpenId.ClientSecret = config.Credential(expectedSecret) // Literal value
 		conf.Auth.OpenId.InsecureSkipVerifyTLS = true
 
 		// Initialize CredentialManager
@@ -1490,7 +1490,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		// Create config pointing to non-existent file
 		conf := config.NewConfig()
 		conf.Auth.OpenId.ClientId = "test-client"
-		conf.Auth.OpenId.ClientSecret = nonExistentFile
+		conf.Auth.OpenId.ClientSecret = config.Credential(nonExistentFile)
 
 		// Initialize CredentialManager
 		conf.Credentials, _ = config.NewCredentialManager(nil)

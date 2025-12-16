@@ -48,21 +48,21 @@ func TestSecretFileOverrides(t *testing.T) {
 	require.NoError(t, err)
 
 	// we don't have the files yet - so nothing should be overridden from the original yaml
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, "grafanausername")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, "grafanapassword")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, "grafanatoken")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, "persesusername")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, "persespassword")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, "prometheususername")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, "prometheuspassword")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, "prometheustoken")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, "tracingusername")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, "tracingpassword")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, "tracingtoken")
-	assert.Equal(t, conf.LoginToken.SigningKey, "signingkey")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, "cd-prometheususername")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, "cd-prometheuspassword")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, "cd-prometheustoken")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, Credential("grafanausername"))
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, Credential("grafanapassword"))
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, Credential("grafanatoken"))
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, Credential("persesusername"))
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, Credential("persespassword"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, Credential("prometheususername"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, Credential("prometheuspassword"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, Credential("prometheustoken"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, Credential("tracingusername"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, Credential("tracingpassword"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, Credential("tracingtoken"))
+	assert.Equal(t, conf.LoginToken.SigningKey, Credential("signingkey"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, Credential("cd-prometheususername"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, Credential("cd-prometheuspassword"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, Credential("cd-prometheustoken"))
 
 	// mock some secrets bound to volume mounts
 	createTestSecretFile(t, overrideSecretsDir, SecretFileGrafanaUsername, "grafanausernameENV")
@@ -84,21 +84,21 @@ func TestSecretFileOverrides(t *testing.T) {
 	conf, _ = Unmarshal(yamlString)
 
 	// Config values should now be file paths (not the content)
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, overrideSecretsDir+"/"+SecretFileGrafanaUsername+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, overrideSecretsDir+"/"+SecretFileGrafanaPassword+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, overrideSecretsDir+"/"+SecretFileGrafanaToken+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, overrideSecretsDir+"/"+SecretFilePersesUsername+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, overrideSecretsDir+"/"+SecretFilePersesPassword+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFilePrometheusUsername+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFilePrometheusPassword+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFilePrometheusToken+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, overrideSecretsDir+"/"+SecretFileTracingUsername+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, overrideSecretsDir+"/"+SecretFileTracingPassword+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, overrideSecretsDir+"/"+SecretFileTracingToken+"/value.txt")
-	assert.Equal(t, conf.LoginToken.SigningKey, overrideSecretsDir+"/"+SecretFileLoginTokenSigningKey+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusUsername+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusPassword+"/value.txt")
-	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusToken+"/value.txt")
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Username, Credential(overrideSecretsDir+"/"+SecretFileGrafanaUsername+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Password, Credential(overrideSecretsDir+"/"+SecretFileGrafanaPassword+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Grafana.Auth.Token, Credential(overrideSecretsDir+"/"+SecretFileGrafanaToken+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Username, Credential(overrideSecretsDir+"/"+SecretFilePersesUsername+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Perses.Auth.Password, Credential(overrideSecretsDir+"/"+SecretFilePersesPassword+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Username, Credential(overrideSecretsDir+"/"+SecretFilePrometheusUsername+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Password, Credential(overrideSecretsDir+"/"+SecretFilePrometheusPassword+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Prometheus.Auth.Token, Credential(overrideSecretsDir+"/"+SecretFilePrometheusToken+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Username, Credential(overrideSecretsDir+"/"+SecretFileTracingUsername+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Password, Credential(overrideSecretsDir+"/"+SecretFileTracingPassword+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.Tracing.Auth.Token, Credential(overrideSecretsDir+"/"+SecretFileTracingToken+"/value.txt"))
+	assert.Equal(t, conf.LoginToken.SigningKey, Credential(overrideSecretsDir+"/"+SecretFileLoginTokenSigningKey+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username, Credential(overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusUsername+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password, Credential(overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusPassword+"/value.txt"))
+	assert.Equal(t, conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token, Credential(overrideSecretsDir+"/"+SecretFileCustomDashboardsPrometheusToken+"/value.txt"))
 
 	// Verify the getter methods return the actual values from the files
 	username, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
@@ -140,7 +140,7 @@ func TestLoadFromFile_OidcClientSecretFile(t *testing.T) {
 	t.Cleanup(conf.Close)
 
 	// Verify the path was stored (not the content)
-	require.Equal(t, secretFile, conf.Auth.OpenId.ClientSecret, "ClientSecret should contain the file path")
+	require.Equal(t, Credential(secretFile), conf.Auth.OpenId.ClientSecret, "ClientSecret should contain the file path")
 
 	// Verify GetCredential can resolve the secret
 	secret, err := conf.GetCredential(conf.Auth.OpenId.ClientSecret)
@@ -286,31 +286,31 @@ func TestSensitiveDataObfuscation(t *testing.T) {
 	assert.Contains(t, printed, "12345")
 
 	// Test that the original values are unchanged
-	assert.Equal(t, "my-certfile", conf.ExternalServices.Grafana.Auth.CertFile)
-	assert.Equal(t, "my-keyfile", conf.ExternalServices.Grafana.Auth.KeyFile)
-	assert.Equal(t, "my-username", conf.ExternalServices.Grafana.Auth.Username)
-	assert.Equal(t, "my-password", conf.ExternalServices.Grafana.Auth.Password)
-	assert.Equal(t, "my-token", conf.ExternalServices.Grafana.Auth.Token)
-	assert.Equal(t, "my-certfile", conf.ExternalServices.Perses.Auth.CertFile)
-	assert.Equal(t, "my-keyfile", conf.ExternalServices.Perses.Auth.KeyFile)
-	assert.Equal(t, "my-username", conf.ExternalServices.Perses.Auth.Username)
-	assert.Equal(t, "my-password", conf.ExternalServices.Perses.Auth.Password)
-	assert.Equal(t, "my-certfile", conf.ExternalServices.Prometheus.Auth.CertFile)
-	assert.Equal(t, "my-keyfile", conf.ExternalServices.Prometheus.Auth.KeyFile)
-	assert.Equal(t, "my-username", conf.ExternalServices.Prometheus.Auth.Username)
-	assert.Equal(t, "my-password", conf.ExternalServices.Prometheus.Auth.Password)
-	assert.Equal(t, "my-token", conf.ExternalServices.Prometheus.Auth.Token)
-	assert.Equal(t, "my-certfile", conf.ExternalServices.Tracing.Auth.CertFile)
-	assert.Equal(t, "my-keyfile", conf.ExternalServices.Tracing.Auth.KeyFile)
-	assert.Equal(t, "my-username", conf.ExternalServices.Tracing.Auth.Username)
-	assert.Equal(t, "my-password", conf.ExternalServices.Tracing.Auth.Password)
-	assert.Equal(t, "my-token", conf.ExternalServices.Tracing.Auth.Token)
-	assert.Equal(t, "my-signkey", conf.LoginToken.SigningKey)
-	assert.Equal(t, "my-certfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile)
-	assert.Equal(t, "my-keyfile", conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile)
-	assert.Equal(t, "my-username", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username)
-	assert.Equal(t, "my-password", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password)
-	assert.Equal(t, "my-token", conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
+	assert.Equal(t, Credential("my-certfile"), conf.ExternalServices.Grafana.Auth.CertFile)
+	assert.Equal(t, Credential("my-keyfile"), conf.ExternalServices.Grafana.Auth.KeyFile)
+	assert.Equal(t, Credential("my-username"), conf.ExternalServices.Grafana.Auth.Username)
+	assert.Equal(t, Credential("my-password"), conf.ExternalServices.Grafana.Auth.Password)
+	assert.Equal(t, Credential("my-token"), conf.ExternalServices.Grafana.Auth.Token)
+	assert.Equal(t, Credential("my-certfile"), conf.ExternalServices.Perses.Auth.CertFile)
+	assert.Equal(t, Credential("my-keyfile"), conf.ExternalServices.Perses.Auth.KeyFile)
+	assert.Equal(t, Credential("my-username"), conf.ExternalServices.Perses.Auth.Username)
+	assert.Equal(t, Credential("my-password"), conf.ExternalServices.Perses.Auth.Password)
+	assert.Equal(t, Credential("my-certfile"), conf.ExternalServices.Prometheus.Auth.CertFile)
+	assert.Equal(t, Credential("my-keyfile"), conf.ExternalServices.Prometheus.Auth.KeyFile)
+	assert.Equal(t, Credential("my-username"), conf.ExternalServices.Prometheus.Auth.Username)
+	assert.Equal(t, Credential("my-password"), conf.ExternalServices.Prometheus.Auth.Password)
+	assert.Equal(t, Credential("my-token"), conf.ExternalServices.Prometheus.Auth.Token)
+	assert.Equal(t, Credential("my-certfile"), conf.ExternalServices.Tracing.Auth.CertFile)
+	assert.Equal(t, Credential("my-keyfile"), conf.ExternalServices.Tracing.Auth.KeyFile)
+	assert.Equal(t, Credential("my-username"), conf.ExternalServices.Tracing.Auth.Username)
+	assert.Equal(t, Credential("my-password"), conf.ExternalServices.Tracing.Auth.Password)
+	assert.Equal(t, Credential("my-token"), conf.ExternalServices.Tracing.Auth.Token)
+	assert.Equal(t, Credential("my-signkey"), conf.LoginToken.SigningKey)
+	assert.Equal(t, Credential("my-certfile"), conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile)
+	assert.Equal(t, Credential("my-keyfile"), conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile)
+	assert.Equal(t, Credential("my-username"), conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username)
+	assert.Equal(t, Credential("my-password"), conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password)
+	assert.Equal(t, Credential("my-token"), conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token)
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
@@ -488,7 +488,7 @@ func TestValidateWebRoot(t *testing.T) {
 	// create a base config that we know is valid
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.LoginToken.SigningKey = Credential(util.RandomString(16))
 	conf.Auth.Strategy = "anonymous"
 
 	// now test some web roots, both valid ones and invalid ones
@@ -527,7 +527,7 @@ func TestValidateAuthStrategy(t *testing.T) {
 	// create a base config that we know is valid
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	conf := NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.LoginToken.SigningKey = Credential(util.RandomString(16))
 
 	// now test some auth strategies, both valid ones and invalid ones
 	validStrategies := []string{
@@ -567,7 +567,7 @@ func TestValidateSigningKeyLength(t *testing.T) {
 	for _, length := range validLengths {
 		conf := NewConfig()
 		conf.Auth.Strategy = AuthStrategyToken
-		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		conf.LoginToken.SigningKey = Credential(strings.Repeat("x", length))
 		if err := Validate(conf); err != nil {
 			t.Errorf("Signing key validation should have succeeded for length [%d]: %v", length, err)
 		}
@@ -577,7 +577,7 @@ func TestValidateSigningKeyLength(t *testing.T) {
 	for _, length := range invalidLengths {
 		conf := NewConfig()
 		conf.Auth.Strategy = AuthStrategyToken
-		conf.LoginToken.SigningKey = strings.Repeat("x", length)
+		conf.LoginToken.SigningKey = Credential(strings.Repeat("x", length))
 		if err := Validate(conf); err == nil {
 			t.Errorf("Signing key validation should have failed for length [%d]", length)
 		}

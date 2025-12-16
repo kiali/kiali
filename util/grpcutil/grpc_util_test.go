@@ -85,7 +85,7 @@ func TestGetAuthDialOptions_BearerTokenRotation(t *testing.T) {
 	}
 	auth := &config.Auth{
 		Type:               config.AuthTypeBearer,
-		Token:              tokenFile,
+		Token:              config.Credential(tokenFile),
 		InsecureSkipVerify: true,
 	}
 
@@ -177,8 +177,8 @@ func TestGetAuthDialOptions_BasicAuthRotation(t *testing.T) {
 	}
 	auth := &config.Auth{
 		Type:               config.AuthTypeBasic,
-		Username:           usernameFile,
-		Password:           passwordFile,
+		Username:           config.Credential(usernameFile),
+		Password:           config.Credential(passwordFile),
 		InsecureSkipVerify: true,
 	}
 
@@ -547,8 +547,8 @@ func TestGetAuthDialOptions_ClientCertRotation(t *testing.T) {
 	defer stopServer()
 
 	auth := &config.Auth{
-		CertFile:           certFile,
-		KeyFile:            keyFile,
+		CertFile:           config.Credential(certFile),
+		KeyFile:            config.Credential(keyFile),
 		InsecureSkipVerify: true, // Skip server verification to focus on client cert rotation
 	}
 

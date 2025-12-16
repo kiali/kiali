@@ -342,7 +342,7 @@ func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		auth.Token = kialiSAToken
+		auth.Token = config.Credential(kialiSAToken)
 	}
 
 	// make a copy of the prometheus DefaultRoundTripper to avoid race condition (issue #3518)

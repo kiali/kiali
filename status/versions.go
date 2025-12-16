@@ -107,7 +107,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 		if tracingConfig.Provider == config.JaegerProvider {
 			auth := tracingConfig.Auth
 			if auth.UseKialiToken {
-				auth.Token = homeClusterSAClient.GetToken()
+				auth.Token = config.Credential(homeClusterSAClient.GetToken())
 			}
 
 			// there is no known way to get the version from GRPC. So we'll try to change the URL to go over HTTP,
@@ -147,7 +147,7 @@ func tracingVersion(conf *config.Config, homeClusterSAClient kubernetes.ClientIn
 			if tracingConfig.Provider == config.TempoProvider {
 				auth := tracingConfig.Auth
 				if auth.UseKialiToken {
-					auth.Token = homeClusterSAClient.GetToken()
+					auth.Token = config.Credential(homeClusterSAClient.GetToken())
 				}
 				body, statusCode, _, err := httputil.HttpGet(fmt.Sprintf("%s/api/status/buildinfo", versionUrl), &auth, 10*time.Second, tracingConfig.CustomHeaders, nil, conf)
 				if err != nil || statusCode > 399 {
@@ -190,7 +190,7 @@ func grafanaVersion(ctx context.Context, grafana *grafana.Service, conf *config.
 		// Be sure to copy config.Auth and not modify the existing
 		auth := conf.ExternalServices.Grafana.Auth
 		if auth.UseKialiToken {
-			auth.Token = homeClusterSAClient.GetToken()
+			auth.Token = config.Credential(homeClusterSAClient.GetToken())
 		}
 		body, statusCode, _, err := httputil.HttpGet(versionUrl, &auth, 10*time.Second, nil, nil, conf)
 

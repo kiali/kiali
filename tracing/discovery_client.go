@@ -63,7 +63,7 @@ func DiagnoseTracingConfig(ctx context.Context, conf *config.Config, token strin
 	// Get Auth
 	auth := cfgTracing.Auth
 	if auth.UseKialiToken {
-		auth.Token = token
+		auth.Token = config.Credential(token)
 	}
 
 	ports, ll := discoverPortsWithDial(zl, parsedURL.Host, net.DialTimeout)

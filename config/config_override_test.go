@@ -49,7 +49,7 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify that Token was set to the file path
-	assert.Equal(t, tokenFile, conf.ExternalServices.Prometheus.Auth.Token,
+	assert.Equal(t, Credential(tokenFile), conf.ExternalServices.Prometheus.Auth.Token,
 		"Expected Token to be set to the secret file path")
 
 	// Verify we can read the token from the file
@@ -109,9 +109,9 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify that certificate files were set to the paths with preserved key names
-	assert.Equal(t, certFile, conf.ExternalServices.Prometheus.Auth.CertFile,
+	assert.Equal(t, Credential(certFile), conf.ExternalServices.Prometheus.Auth.CertFile,
 		"Expected CertFile to preserve key name 'tls.crt'")
-	assert.Equal(t, keyFile, conf.ExternalServices.Prometheus.Auth.KeyFile,
+	assert.Equal(t, Credential(keyFile), conf.ExternalServices.Prometheus.Auth.KeyFile,
 		"Expected KeyFile to preserve key name 'tls.key'")
 
 	// Verify we can read the content
@@ -173,9 +173,9 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify that credentials fell back to value.txt
-	assert.Equal(t, usernameFile, conf.ExternalServices.Grafana.Auth.Username,
+	assert.Equal(t, Credential(usernameFile), conf.ExternalServices.Grafana.Auth.Username,
 		"Expected Username to fall back to value.txt")
-	assert.Equal(t, passwordFile, conf.ExternalServices.Grafana.Auth.Password,
+	assert.Equal(t, Credential(passwordFile), conf.ExternalServices.Grafana.Auth.Password,
 		"Expected Password to fall back to value.txt")
 
 	// Verify we can read the credentials
@@ -222,7 +222,7 @@ external_services:
 	require.NotNil(t, conf)
 
 	// Verify that Token still has the literal value (not overridden)
-	assert.Equal(t, "my-literal-token", conf.ExternalServices.Prometheus.Auth.Token,
+	assert.Equal(t, Credential("my-literal-token"), conf.ExternalServices.Prometheus.Auth.Token,
 		"Expected Token to remain as literal value when no secret is mounted")
 
 	// Verify we can read the literal token
@@ -322,41 +322,41 @@ func TestSecretOverride_AllCredentials(t *testing.T) {
 	type secretTest struct {
 		secretFileName string
 		expectedValue  string
-		getConfigValue func(*Config) string
+		getConfigValue func(*Config) Credential
 	}
 
 	tests := []secretTest{
 		// Prometheus
-		{SecretFilePrometheusUsername, "xyz-prom-user", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Username }},
-		{SecretFilePrometheusPassword, "xyz-prom-pass", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Password }},
-		{SecretFilePrometheusToken, "xyz-prom-token", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.Token }},
-		{SecretFilePrometheusCert, "xyz-prom-cert", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.CertFile }},
-		{SecretFilePrometheusKey, "xyz-prom-key", func(c *Config) string { return c.ExternalServices.Prometheus.Auth.KeyFile }},
+		{SecretFilePrometheusUsername, "xyz-prom-user", func(c *Config) Credential { return c.ExternalServices.Prometheus.Auth.Username }},
+		{SecretFilePrometheusPassword, "xyz-prom-pass", func(c *Config) Credential { return c.ExternalServices.Prometheus.Auth.Password }},
+		{SecretFilePrometheusToken, "xyz-prom-token", func(c *Config) Credential { return c.ExternalServices.Prometheus.Auth.Token }},
+		{SecretFilePrometheusCert, "xyz-prom-cert", func(c *Config) Credential { return c.ExternalServices.Prometheus.Auth.CertFile }},
+		{SecretFilePrometheusKey, "xyz-prom-key", func(c *Config) Credential { return c.ExternalServices.Prometheus.Auth.KeyFile }},
 		// Grafana
-		{SecretFileGrafanaUsername, "xyz-graf-user", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Username }},
-		{SecretFileGrafanaPassword, "xyz-graf-pass", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Password }},
-		{SecretFileGrafanaToken, "xyz-graf-token", func(c *Config) string { return c.ExternalServices.Grafana.Auth.Token }},
-		{SecretFileGrafanaCert, "xyz-graf-cert", func(c *Config) string { return c.ExternalServices.Grafana.Auth.CertFile }},
-		{SecretFileGrafanaKey, "xyz-graf-key", func(c *Config) string { return c.ExternalServices.Grafana.Auth.KeyFile }},
+		{SecretFileGrafanaUsername, "xyz-graf-user", func(c *Config) Credential { return c.ExternalServices.Grafana.Auth.Username }},
+		{SecretFileGrafanaPassword, "xyz-graf-pass", func(c *Config) Credential { return c.ExternalServices.Grafana.Auth.Password }},
+		{SecretFileGrafanaToken, "xyz-graf-token", func(c *Config) Credential { return c.ExternalServices.Grafana.Auth.Token }},
+		{SecretFileGrafanaCert, "xyz-graf-cert", func(c *Config) Credential { return c.ExternalServices.Grafana.Auth.CertFile }},
+		{SecretFileGrafanaKey, "xyz-graf-key", func(c *Config) Credential { return c.ExternalServices.Grafana.Auth.KeyFile }},
 		// Tracing
-		{SecretFileTracingUsername, "xyz-trace-user", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Username }},
-		{SecretFileTracingPassword, "xyz-trace-pass", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Password }},
-		{SecretFileTracingToken, "xyz-trace-token", func(c *Config) string { return c.ExternalServices.Tracing.Auth.Token }},
-		{SecretFileTracingCert, "xyz-trace-cert", func(c *Config) string { return c.ExternalServices.Tracing.Auth.CertFile }},
-		{SecretFileTracingKey, "xyz-trace-key", func(c *Config) string { return c.ExternalServices.Tracing.Auth.KeyFile }},
+		{SecretFileTracingUsername, "xyz-trace-user", func(c *Config) Credential { return c.ExternalServices.Tracing.Auth.Username }},
+		{SecretFileTracingPassword, "xyz-trace-pass", func(c *Config) Credential { return c.ExternalServices.Tracing.Auth.Password }},
+		{SecretFileTracingToken, "xyz-trace-token", func(c *Config) Credential { return c.ExternalServices.Tracing.Auth.Token }},
+		{SecretFileTracingCert, "xyz-trace-cert", func(c *Config) Credential { return c.ExternalServices.Tracing.Auth.CertFile }},
+		{SecretFileTracingKey, "xyz-trace-key", func(c *Config) Credential { return c.ExternalServices.Tracing.Auth.KeyFile }},
 		// Perses
-		{SecretFilePersesUsername, "xyz-perses-user", func(c *Config) string { return c.ExternalServices.Perses.Auth.Username }},
-		{SecretFilePersesPassword, "xyz-perses-pass", func(c *Config) string { return c.ExternalServices.Perses.Auth.Password }},
-		{SecretFilePersesCert, "xyz-perses-cert", func(c *Config) string { return c.ExternalServices.Perses.Auth.CertFile }},
-		{SecretFilePersesKey, "xyz-perses-key", func(c *Config) string { return c.ExternalServices.Perses.Auth.KeyFile }},
+		{SecretFilePersesUsername, "xyz-perses-user", func(c *Config) Credential { return c.ExternalServices.Perses.Auth.Username }},
+		{SecretFilePersesPassword, "xyz-perses-pass", func(c *Config) Credential { return c.ExternalServices.Perses.Auth.Password }},
+		{SecretFilePersesCert, "xyz-perses-cert", func(c *Config) Credential { return c.ExternalServices.Perses.Auth.CertFile }},
+		{SecretFilePersesKey, "xyz-perses-key", func(c *Config) Credential { return c.ExternalServices.Perses.Auth.KeyFile }},
 		// Custom Dashboards Prometheus
-		{SecretFileCustomDashboardsPrometheusUsername, "xyz-cd-prom-user", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Username }},
-		{SecretFileCustomDashboardsPrometheusPassword, "xyz-cd-prom-pass", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Password }},
-		{SecretFileCustomDashboardsPrometheusToken, "xyz-cd-prom-token", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Token }},
-		{SecretFileCustomDashboardsPrometheusCert, "xyz-cd-prom-cert", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile }},
-		{SecretFileCustomDashboardsPrometheusKey, "xyz-cd-prom-key", func(c *Config) string { return c.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile }},
+		{SecretFileCustomDashboardsPrometheusUsername, "xyz-cd-prom-user", func(c *Config) Credential { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Username }},
+		{SecretFileCustomDashboardsPrometheusPassword, "xyz-cd-prom-pass", func(c *Config) Credential { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Password }},
+		{SecretFileCustomDashboardsPrometheusToken, "xyz-cd-prom-token", func(c *Config) Credential { return c.ExternalServices.CustomDashboards.Prometheus.Auth.Token }},
+		{SecretFileCustomDashboardsPrometheusCert, "xyz-cd-prom-cert", func(c *Config) Credential { return c.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile }},
+		{SecretFileCustomDashboardsPrometheusKey, "xyz-cd-prom-key", func(c *Config) Credential { return c.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile }},
 		// Login Token Signing Key
-		{SecretFileLoginTokenSigningKey, "xyz-16-byte-sign", func(c *Config) string { return c.LoginToken.SigningKey }},
+		{SecretFileLoginTokenSigningKey, "xyz-16-byte-sign", func(c *Config) Credential { return c.LoginToken.SigningKey }},
 	}
 
 	// Create temporary directories
@@ -387,7 +387,7 @@ func TestSecretOverride_AllCredentials(t *testing.T) {
 		configValue := test.getConfigValue(conf)
 
 		// Verify the override mechanism set the config value to a file path (not a literal)
-		assert.True(t, strings.HasPrefix(configValue, secretsBaseDir),
+		assert.True(t, strings.HasPrefix(configValue.String(), secretsBaseDir),
 			"Expected [%s] config value to be a file path under [%s], got: [%s]", test.secretFileName, secretsBaseDir, configValue)
 
 		// Verify GetCredential reads the file and returns the expected content

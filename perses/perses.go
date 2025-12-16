@@ -198,9 +198,9 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 			if err != nil {
 				log.Errorf("Error loggin %s", err.Error())
 			}
-			newAuth.Token = token
+			newAuth.Token = config.Credential(token)
 		} else {
-			newAuth.Token = s.sessionData.AccessToken
+			newAuth.Token = config.Credential(s.sessionData.AccessToken)
 		}
 
 		// Preserve TLS configuration
@@ -215,7 +215,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 		if auth.UseKialiToken {
 			// Use the Kiali service account token for authentication
-			newAuth.Token = s.homeClusterSAClient.GetToken()
+			newAuth.Token = config.Credential(s.homeClusterSAClient.GetToken())
 		} else {
 			// Use the configured token
 			newAuth.Token = auth.Token

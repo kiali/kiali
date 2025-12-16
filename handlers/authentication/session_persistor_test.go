@@ -355,7 +355,7 @@ func TestSigningKeyRotation(t *testing.T) {
 	tmpDir := t.TempDir()
 	keyFile := filepath.Join(tmpDir, "signing.key")
 	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
-	conf.LoginToken.SigningKey = keyFile
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
 
 	now := time.Now()
 	util.Clock = util.ClockMock{Time: now}
@@ -405,7 +405,7 @@ func TestOldSessionsFailAfterRotation(t *testing.T) {
 	tmpDir := t.TempDir()
 	keyFile := filepath.Join(tmpDir, "signing.key")
 	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
-	conf.LoginToken.SigningKey = keyFile
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
 
 	now := time.Now()
 	util.Clock = util.ClockMock{Time: now}
@@ -460,7 +460,7 @@ func TestMultipleRotations(t *testing.T) {
 	tmpDir := t.TempDir()
 	keyFile := filepath.Join(tmpDir, "signing.key")
 	require.NoError(os.WriteFile(keyFile, []byte("key1xxxxxxxxxxxx"), 0o600))
-	conf.LoginToken.SigningKey = keyFile
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
 
 	now := time.Now()
 	util.Clock = util.ClockMock{Time: now}
@@ -552,7 +552,7 @@ func TestReadSessionUsesCurrentKey(t *testing.T) {
 	tmpDir := t.TempDir()
 	keyFile := filepath.Join(tmpDir, "signing.key")
 	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
-	conf.LoginToken.SigningKey = keyFile
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
 
 	now := time.Now()
 	util.Clock = util.ClockMock{Time: now}
@@ -609,7 +609,7 @@ func TestRotationToInvalidKeyLength(t *testing.T) {
 	tmpDir := t.TempDir()
 	keyFile := filepath.Join(tmpDir, "signing.key")
 	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
-	conf.LoginToken.SigningKey = keyFile
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
 
 	now := time.Now()
 	util.Clock = util.ClockMock{Time: now}

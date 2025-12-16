@@ -376,7 +376,7 @@ func (iss *IstioStatusService) getAddonStatus(cluster string, name string, enabl
 	}
 
 	if auth.UseKialiToken {
-		auth.Token = iss.userClients[cluster].GetToken()
+		auth.Token = config.Credential(iss.userClients[cluster].GetToken())
 	}
 
 	status := kubernetes.ComponentHealthy

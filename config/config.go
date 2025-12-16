@@ -253,17 +253,27 @@ type Server struct {
 	WriteTimeout   time.Duration `yaml:"write_timeout,omitempty"`
 }
 
+// Credential represents a credential value that may be a literal string or a file path.
+// To resolve the actual credential content, use conf.GetCredential(field).
+// File paths (starting with '/') are read with caching and automatic rotation support.
+type Credential string
+
+// String returns the credential value as a string.
+func (c Credential) String() string {
+	return string(c)
+}
+
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
-	CertFile           string `yaml:"cert_file" json:"certFile"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
-	KeyFile            string `yaml:"key_file" json:"keyFile"`
-	Password           string `yaml:"password" json:"password"`
-	Token              string `yaml:"token" json:"token"`
-	Type               string `yaml:"type" json:"type"`
-	UseKialiToken      bool   `yaml:"use_kiali_token" json:"useKialiToken"`
-	Username           string `yaml:"username" json:"username"`
+	CAFile             string     `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
+	CertFile           Credential `yaml:"cert_file" json:"certFile"`
+	InsecureSkipVerify bool       `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	KeyFile            Credential `yaml:"key_file" json:"keyFile"`
+	Password           Credential `yaml:"password" json:"password"`
+	Token              Credential `yaml:"token" json:"token"`
+	Type               string     `yaml:"type" json:"type"`
+	UseKialiToken      bool       `yaml:"use_kiali_token" json:"useKialiToken"`
+	Username           Credential `yaml:"username" json:"username"`
 }
 
 func (a *Auth) Obfuscate() {
@@ -438,8 +448,8 @@ type ExternalServices struct {
 
 // LoginToken holds config used for generating the Kiali session tokens.
 type LoginToken struct {
-	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
-	SigningKey        string `yaml:"signing_key,omitempty"`
+	ExpirationSeconds int64      `yaml:"expiration_seconds,omitempty"`
+	SigningKey        Credential `yaml:"signing_key,omitempty"`
 }
 
 func (lt *LoginToken) Obfuscate() {
@@ -534,7 +544,7 @@ type OpenIdConfig struct {
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
 	ClientId                string            `yaml:"client_id,omitempty"`
-	ClientSecret            string            `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
+	ClientSecret            Credential        `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
 	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
 	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
 	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
@@ -1304,7 +1314,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// via secrets mounted on the file system rather than storing them directly in the config map itself.
 	// The names of the files in /kiali-override-secrets denote which credentials they are.
 	type overridesType struct {
-		configValue *string
+		configValue *Credential
 		fileName    string
 	}
 
@@ -1425,9 +1435,9 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		// First, check if the config value already contains a secret reference pattern (e.g., "secret:name:key")
 		// If so, the operator will have extracted the key name and we need to find the mounted file.
 		var fullFileName string
-		if *override.configValue != "" && strings.HasPrefix(*override.configValue, "secret:") {
+		if *override.configValue != "" && strings.HasPrefix(override.configValue.String(), "secret:") {
 			// Extract the key name from the secret reference (third part after second colon)
-			parts := strings.Split(*override.configValue, ":")
+			parts := strings.Split(override.configValue.String(), ":")
 			if len(parts) == 3 {
 				keyName := parts[2]
 				// Check if a file with this specific key name exists (for certificates)
@@ -1444,7 +1454,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		if fileExists(fullFileName) {
 			// File exists - set config value to the file path (not the content)
 			// The credentials will be read on-use via Config.GetCredential()
-			*override.configValue = fullFileName
+			*override.configValue = Credential(fullFileName)
 			log.Debugf("Credential file path configured: [%s]", fullFileName)
 		} else {
 			// File doesn't exist - check if this was expected to be an error
@@ -1462,7 +1472,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// a different volume mount (/kiali-secret) but follows the same pattern: if the file
 	// exists, store its path so GetCredential() can read it with auto-rotation support.
 	if fileExists(oidcClientSecretFile) {
-		conf.Auth.OpenId.ClientSecret = oidcClientSecretFile
+		conf.Auth.OpenId.ClientSecret = Credential(oidcClientSecretFile)
 		log.Debugf("OIDC client secret file path configured: [%s]", oidcClientSecretFile)
 	}
 
@@ -1674,14 +1684,12 @@ func Validate(conf *Config) error {
 	}
 
 	// Check the ciphering key for sessions
-	signingKey := conf.LoginToken.SigningKey
 	// If signing key is a file path, read the actual content for validation
-	if actualKey, err := conf.GetCredential(signingKey); err != nil {
+	signingKeyValue, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
 		return err
-	} else {
-		signingKey = actualKey
 	}
-	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
+	if err := validateSigningKey(signingKeyValue, auth.Strategy); err != nil {
 		return err
 	}
 
@@ -1920,15 +1928,15 @@ func (c *Config) Close() {
 // secret rotation), the cache is automatically refreshed without requiring a pod restart.
 //
 // If the CredentialManager is not initialized, falls back to direct file reads without caching.
-func (c *Config) GetCredential(value string) (string, error) {
+func (c *Config) GetCredential(value Credential) (string, error) {
 	if c.Credentials != nil {
-		return c.Credentials.Get(value)
+		return c.Credentials.Get(value.String())
 	}
 	// Fallback for configs without credential manager (e.g., some tests)
-	if value == "" || !strings.HasPrefix(value, "/") {
-		return value, nil
+	if value == "" || !strings.HasPrefix(value.String(), "/") {
+		return value.String(), nil
 	}
-	content, err := os.ReadFile(value)
+	content, err := os.ReadFile(value.String())
 	if err != nil {
 		return "", fmt.Errorf("failed to read credential from [%s]: %w", value, err)
 	}

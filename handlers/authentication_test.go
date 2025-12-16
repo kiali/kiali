@@ -33,7 +33,7 @@ func TestStrategyTokenAuthentication(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(16)
+	cfg.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	config.Set(cfg)
 
 	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
@@ -74,7 +74,7 @@ func TestStrategyTokenFails(t *testing.T) {
 	require := require.New(t)
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyToken
-	cfg.LoginToken.SigningKey = util.RandomString(16)
+	cfg.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	config.Set(cfg)
 
 	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "tutorial"}})
@@ -109,7 +109,7 @@ func TestLogoutWhenNoSession(t *testing.T) {
 	responseRecorder := httptest.NewRecorder()
 
 	conf := config.NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
@@ -138,7 +138,7 @@ func TestLogout(t *testing.T) {
 	})
 
 	conf := config.NewConfig()
-	conf.LoginToken.SigningKey = util.RandomString(16)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	k8s := kubetest.NewFakeK8sClient()
 	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
 	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
@@ -169,7 +169,7 @@ func TestStrategyHeaderOidcAuthentication(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(16)
+	cfg.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -212,7 +212,7 @@ func TestStrategyHeaderAuthentication(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(16)
+	cfg.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -255,7 +255,7 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	cfg := config.NewConfig()
 	cfg.Auth.Strategy = config.AuthStrategyHeader
-	cfg.LoginToken.SigningKey = util.RandomString(16)
+	cfg.LoginToken.SigningKey = config.Credential(util.RandomString(16))
 	config.Set(cfg)
 
 	clockTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)

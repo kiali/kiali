@@ -44,8 +44,8 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	conf.ExternalServices.Tracing.UseGRPC = true
 	conf.ExternalServices.Tracing.InternalURL = "http://tempo-server:9095"
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBasic
-	conf.ExternalServices.Tracing.Auth.Username = usernameFile
-	conf.ExternalServices.Tracing.Auth.Password = passwordFile
+	conf.ExternalServices.Tracing.Auth.Username = config.Credential(usernameFile)
+	conf.ExternalServices.Tracing.Auth.Password = config.Credential(passwordFile)
 
 	// Create client - this should succeed without trying to connect
 	client, err := NewClient(context.Background(), conf, "test-token", true)
@@ -109,7 +109,7 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	conf.ExternalServices.Tracing.UseGRPC = false
 	conf.ExternalServices.Tracing.InternalURL = "http://jaeger-server:16686/jaeger"
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
-	conf.ExternalServices.Tracing.Auth.Token = tokenFile
+	conf.ExternalServices.Tracing.Auth.Token = config.Credential(tokenFile)
 
 	// Create client - this should succeed without trying to connect
 	client, err := NewClient(context.Background(), conf, "test-token", true)
@@ -158,7 +158,7 @@ func TestTracingBearerTokenWithWhitespace(t *testing.T) {
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "jaeger"
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
-	conf.ExternalServices.Tracing.Auth.Token = tokenFile
+	conf.ExternalServices.Tracing.Auth.Token = config.Credential(tokenFile)
 
 	// Verify that the token is trimmed
 	token, err := conf.GetCredential(conf.ExternalServices.Tracing.Auth.Token)
@@ -214,7 +214,7 @@ func TestTracingUseKialiToken(t *testing.T) {
 
 	// The config's Auth.Token should remain unchanged (empty) because newClient
 	// creates a local copy of auth and modifies that copy, not the original config
-	assert.Equal(t, "", conf.ExternalServices.Tracing.Auth.Token,
+	assert.Equal(t, config.Credential(""), conf.ExternalServices.Tracing.Auth.Token,
 		"Config's Auth.Token should remain unchanged - newClient uses a local copy")
 }
 
@@ -251,7 +251,7 @@ func TestTracingClientHTTPBearerAuth(t *testing.T) {
 	conf.ExternalServices.Tracing.UseGRPC = false
 	conf.ExternalServices.Tracing.InternalURL = server.URL
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
-	conf.ExternalServices.Tracing.Auth.Token = tokenFile
+	conf.ExternalServices.Tracing.Auth.Token = config.Credential(tokenFile)
 
 	// Create tracing client
 	ctx := context.Background()
@@ -322,8 +322,8 @@ func TestTracingClientHTTPBasicAuth(t *testing.T) {
 	conf.ExternalServices.Tracing.UseGRPC = false
 	conf.ExternalServices.Tracing.InternalURL = server.URL
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBasic
-	conf.ExternalServices.Tracing.Auth.Username = usernameFile
-	conf.ExternalServices.Tracing.Auth.Password = passwordFile
+	conf.ExternalServices.Tracing.Auth.Username = config.Credential(usernameFile)
+	conf.ExternalServices.Tracing.Auth.Password = config.Credential(passwordFile)
 
 	// Create tracing client
 	ctx := context.Background()

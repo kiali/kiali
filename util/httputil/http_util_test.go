@@ -54,7 +54,7 @@ func TestAuthRoundTripper_BearerRotation(t *testing.T) {
 
 	auth := &config.Auth{
 		Type:  config.AuthTypeBearer,
-		Token: tokenFile,
+		Token: config.Credential(tokenFile),
 	}
 
 	inner := &recordingRoundTripper{}
@@ -106,8 +106,8 @@ func TestAuthRoundTripper_BasicRotation(t *testing.T) {
 
 	auth := &config.Auth{
 		Type:     config.AuthTypeBasic,
-		Username: userFile,
-		Password: passFile,
+		Username: config.Credential(userFile),
+		Password: config.Credential(passFile),
 	}
 
 	inner := &recordingRoundTripper{}
@@ -159,7 +159,7 @@ func TestHttpPost_BearerRotation(t *testing.T) {
 
 	auth := &config.Auth{
 		Type:  config.AuthTypeBearer,
-		Token: tokenFile,
+		Token: config.Credential(tokenFile),
 	}
 
 	// Create a test server that captures the Authorization header and echoes the request body
@@ -251,8 +251,8 @@ func TestHttpPost_BasicRotation(t *testing.T) {
 
 	auth := &config.Auth{
 		Type:     config.AuthTypeBasic,
-		Username: userFile,
-		Password: passFile,
+		Username: config.Credential(userFile),
+		Password: config.Credential(passFile),
 	}
 
 	// Create a test server that captures the Authorization header and echoes the request body
@@ -461,8 +461,8 @@ func TestGetTLSConfig_ClientCertRotation(t *testing.T) {
 	}
 
 	auth := &config.Auth{
-		CertFile: certFile,
-		KeyFile:  keyFile,
+		CertFile: config.Credential(certFile),
+		KeyFile:  config.Credential(keyFile),
 	}
 	tlscfg, err := GetTLSConfig(conf, auth)
 	if err != nil {

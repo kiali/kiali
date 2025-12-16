@@ -408,7 +408,7 @@ func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
 	}
 
 	// Test literal value
-	result, err := conf.GetCredential("literal-value")
+	result, err := conf.GetCredential(Credential("literal-value"))
 	if err != nil {
 		t.Errorf("Expected no error for literal, got: %v", err)
 	}
@@ -417,7 +417,7 @@ func TestConfig_GetCredential_WithCredentialManager(t *testing.T) {
 	}
 
 	// Test file path
-	result, err = conf.GetCredential(tmpFile)
+	result, err = conf.GetCredential(Credential(tmpFile))
 	if err != nil {
 		t.Errorf("Expected no error for file path, got: %v", err)
 	}
@@ -439,7 +439,7 @@ func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
 	}
 
 	// Test literal value
-	result, err := conf.GetCredential("literal-value")
+	result, err := conf.GetCredential(Credential("literal-value"))
 	if err != nil {
 		t.Errorf("Expected no error for literal, got: %v", err)
 	}
@@ -448,7 +448,7 @@ func TestConfig_GetCredential_WithoutCredentialManager(t *testing.T) {
 	}
 
 	// Test file path (should work via fallback, just without caching)
-	result, err = conf.GetCredential(tmpFile)
+	result, err = conf.GetCredential(Credential(tmpFile))
 	if err != nil {
 		t.Errorf("Expected no error for file path, got: %v", err)
 	}
@@ -541,7 +541,7 @@ func TestConfig_GetCredential_AuthToken_FilePath(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	conf.ExternalServices.Prometheus.Auth.Token = tmpFile
+	conf.ExternalServices.Prometheus.Auth.Token = Credential(tmpFile)
 	result, err := conf.GetCredential(conf.ExternalServices.Prometheus.Auth.Token)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
@@ -580,7 +580,7 @@ func TestConfig_GetCredential_AuthPassword_FilePath(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	conf.ExternalServices.Grafana.Auth.Password = tmpFile
+	conf.ExternalServices.Grafana.Auth.Password = Credential(tmpFile)
 	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Password)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
@@ -619,7 +619,7 @@ func TestConfig_GetCredential_AuthUsername_FilePath(t *testing.T) {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
 
-	conf.ExternalServices.Grafana.Auth.Username = tmpFile
+	conf.ExternalServices.Grafana.Auth.Username = Credential(tmpFile)
 	result, err := conf.GetCredential(conf.ExternalServices.Grafana.Auth.Username)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
