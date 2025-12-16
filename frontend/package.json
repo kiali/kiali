@@ -1,6 +1,7 @@
 {
   "name": "@kiali/kiali-ui",
   "version": "2.20.0",
+  "proxy": "http://127.0.0.1:8000",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
   "keywords": [
     "istio service mesh",
@@ -153,8 +154,6 @@
     "@types/react-redux": "7.1.7",
     "@types/react-router-dom": "^5.2.0",
     "@types/react-virtualized": "9.x",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "axios-mock-adapter": "^1.22.0",
     "cypress": "^13.6.1",
