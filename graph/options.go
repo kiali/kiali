@@ -137,7 +137,7 @@ type Options struct {
 	TelemetryOptions
 }
 
-func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
+func NewOptions(r *net_http.Request, businessLayer *business.Layer, conf *config.Config) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
 	aggregate := vars["aggregate"]
@@ -160,9 +160,8 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
 
-	// Extract session ID for caching (empty string for anonymous/unauthenticated users)
-	cfg := config.Get()
-	sessionID := authentication.GetSessionID(r, cfg.Auth.Strategy, cfg)
+	// Extract session ID from the request context
+	sessionID := authentication.GetSessionID(r)
 	// @TODO requires refactoring to use clusterNameFromQuery
 	cluster := params.Get("clusterName")
 	configVendor := params.Get("configVendor")
@@ -262,7 +261,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 		queryTimeProvided = true // Client requested specific time (historical query)
 	}
 	if refreshIntervalString == "" {
-		if parsed, err := time.ParseDuration(cfg.KialiInternal.GraphCache.RefreshInterval); err == nil {
+		if parsed, err := time.ParseDuration(conf.KialiInternal.GraphCache.RefreshInterval); err == nil {
 			refreshInterval = parsed
 		} else {
 			refreshInterval = -1 // Let invalid config just act like disable

@@ -70,7 +70,7 @@ func GraphNamespaces(
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
 
-		o := graph.NewOptions(r, business)
+		o := graph.NewOptions(r, business, conf)
 
 		code, payload := graphNamespacesWithCache(r.Context(), business, prom, o, graphCache, refreshJobManager)
 		respond(w, code, payload)
@@ -95,7 +95,7 @@ func GraphNode(
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
 
-		o := graph.NewOptions(r, business)
+		o := graph.NewOptions(r, business, conf)
 
 		code, payload := api.GraphNode(r.Context(), business, prom, o)
 		respond(w, code, payload)

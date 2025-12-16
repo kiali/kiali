@@ -64,6 +64,13 @@ func (u UserSessions) GetAuthInfos() map[string]*api.AuthInfo {
 // This is used for returning the token
 // swagger:model UserSessionData
 type UserSessionData struct {
+	// The authentication information of the user to access the cluster API
+	// It is usually only a bearer token that can be used to connect to the cluster API.
+	// However, it is possible to add more options, like impersonation attributes.
+	//
+	// required: true
+	AuthInfo *api.AuthInfo `json:"-"`
+
 	// The expired time for the token
 	// A string with the Datetime when the token will be expired
 	//
@@ -71,19 +78,16 @@ type UserSessionData struct {
 	// required: true
 	ExpiresOn time.Time `json:"expiresOn"`
 
+	// SessionID is a unique identifier for this session instance.
+	// Used internally for graph caching. Not exposed in API responses.
+	SessionID string `json:"-"`
+
 	// The username for the token
 	// A string with the user's username
 	//
 	// example: admin
 	// required: true
 	Username string `json:"username"`
-
-	// The authentication information of the user to access the cluster API
-	// It is usually only a bearer token that can be used to connect to the cluster API.
-	// However, it is possible to add more options, like impersonation attributes.
-	//
-	// required: true
-	AuthInfo *api.AuthInfo `json:"-"`
 }
 
 // AuthenticationFailureError is a helper Error to assist callers of the TokenAuthController.Authenticate

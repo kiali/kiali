@@ -426,31 +426,11 @@ func chunkString(s string, chunkSize int) []string {
 	return chunks
 }
 
-// GetSessionID extracts the unique session ID from a request.
-// For authenticated strategies, it reads the SessionID from the session cookie.
-// For anonymous strategy, it returns a shared constant session ID.
-// Returns empty string if no session is found.
-func GetSessionID(r *http.Request, authStrategy string, conf *config.Config) string {
-	// For anonymous authentication, all users share a single session ID
-	if authStrategy == config.AuthStrategyAnonymous {
-		return AnonymousSessionID
-	}
-
-	// For authenticated strategies, try to read the session cookie
-	// We don't know the payload type here, so we read as a generic map
-	persistor, err := NewCookieSessionPersistor[map[string]interface{}](conf)
-	if err != nil {
-		log.Warningf("Failed to create session persistor: %v", err)
-		return ""
-	}
-
-	// Read the session for the home cluster
-	sessionData, err := persistor.ReadSession(r, nil, conf.KubernetesConfig.ClusterName)
-	if err != nil {
-		// No session found or error reading - this is common for new requests
-		log.Tracef("No session found in request: %v", err)
-		return ""
-	}
-
-	return sessionData.SessionID
+// GetSessionID retrieves the session ID from the request context.
+// The session ID is set by AuthenticationHandler.Handle for all auth strategies:
+// - For authenticated strategies: the unique session ID from the session cookie
+// - For anonymous strategy: the shared AnonymousSessionID constant
+// - Returns empty string for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
+func GetSessionID(r *http.Request) string {
+	return GetSessionIDContext(r.Context())
 }

@@ -130,20 +130,24 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	// Expiration time is probably irrelevant for this auth strategy, but to keep the so-so same behavior
 	// before the auth refactor, we set expiration time to "now" if we don't have cookies.
 	var expiration time.Time
+	var sessionID string
 	var subject string
 	if sData == nil {
 		expiration = util.Clock.Now()
+		sessionID = ""
 		subject = ""
 	} else {
 		expiration = sData.ExpiresOn
+		sessionID = sData.SessionID
 		subject = sData.Payload.Subject
 	}
 
 	return UserSessions{
 		conf.KubernetesConfig.ClusterName: &UserSessionData{
-			ExpiresOn: expiration,
-			Username:  subject,
 			AuthInfo:  authInfo,
+			ExpiresOn: expiration,
+			SessionID: sessionID,
+			Username:  subject,
 		},
 	}, nil
 }

@@ -127,7 +127,8 @@ also not sure about a few other things desired features.
 
 Each user session maintains its own cached graph, uniquely identified by `sessionID`. This approach:
 
-- **Preserves permissions**: Each session uses the requesting user's auth token for Prometheus queries
+- **Preserves permissions**: Each session uses the requesting user's auth token. This is important to
+  ensure that the background graph generation results in restricting access as needed (inaccessible nodes, etc)
 - **Supports concurrent users**: Different users cache independently. Tabs in the same browser share a session (and cache); different browsers or incognito windows have separate sessions.
 - **Enables automatic eviction**:
   - Inactivity timeout: session not accessed within configurable period

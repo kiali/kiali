@@ -227,9 +227,10 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		// If RBAC is ENABLED, check that the user has privileges on the cluster.
 		for cluster := range c.clientFactory.GetSAClients() {
 			userSessions[cluster] = &UserSessionData{
-				ExpiresOn: sData.ExpiresOn,
-				Username:  sData.Payload.Subject,
 				AuthInfo:  &api.AuthInfo{Token: sData.Payload.Token},
+				ExpiresOn: sData.ExpiresOn,
+				SessionID: sData.SessionID,
+				Username:  sData.Payload.Subject,
 			}
 		}
 		userClients, err := c.clientFactory.GetClients(userSessions.GetAuthInfos())
@@ -251,9 +252,10 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		token := c.clientFactory.GetSAHomeClusterClient().GetToken()
 		for cluster := range c.clientFactory.GetSAClients() {
 			userSessions[cluster] = &UserSessionData{
-				ExpiresOn: sData.ExpiresOn,
-				Username:  sData.Payload.Subject,
 				AuthInfo:  &api.AuthInfo{Token: token},
+				ExpiresOn: sData.ExpiresOn,
+				SessionID: sData.SessionID,
+				Username:  sData.Payload.Subject,
 			}
 		}
 	}

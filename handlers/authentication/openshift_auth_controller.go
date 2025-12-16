@@ -198,6 +198,7 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
 	// then the received session has priority over the Kiali initiated session (stored in cookies).
+	// Note: 3rd-party sessions don't have a Kiali session ID (SessionID will be empty).
 	if authHeader := r.Header.Get("Authorization"); len(authHeader) != 0 && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		expires := util.Clock.Now().Add(time.Second * time.Duration(o.conf.LoginToken.ExpirationSeconds))
@@ -207,9 +208,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
-			ExpiresOn: expires,
-			Username:  user.Name,
 			AuthInfo:  &api.AuthInfo{Token: token},
+			ExpiresOn: expires,
+			SessionID: "",
+			Username:  user.Name,
 		}
 	} else if authToken := r.URL.Query().Get("oauth_token"); len(authToken) != 0 {
 		token := strings.TrimSpace(authToken)
@@ -220,9 +222,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
-			ExpiresOn: expires,
-			Username:  user.Name,
 			AuthInfo:  &api.AuthInfo{Token: token},
+			ExpiresOn: expires,
+			SessionID: "",
+			Username:  user.Name,
 		}
 	} else {
 		sessions, err := o.sessionStore.ReadAllSessions(r, w)
@@ -243,9 +246,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				return nil, err
 			}
 			userSessions[session.Key] = &UserSessionData{
-				ExpiresOn: session.ExpiresOn,
-				Username:  user.Name,
 				AuthInfo:  &api.AuthInfo{Token: session.Payload.AccessToken},
+				ExpiresOn: session.ExpiresOn,
+				SessionID: session.SessionID,
+				Username:  user.Name,
 			}
 		}
 	}

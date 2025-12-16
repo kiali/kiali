@@ -104,7 +104,8 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			log.Tracef("Access to the server endpoint is not secured with credentials - letting request come in. Url: [%s]", r.URL.String())
 			for cluster, client := range aHandler.kialiSAClients {
 				userSessions[cluster] = &authentication.UserSessionData{
-					AuthInfo: &api.AuthInfo{Token: client.GetToken()},
+					AuthInfo:  &api.AuthInfo{Token: client.GetToken()},
+					SessionID: authentication.AnonymousSessionID, // All anonymous users share a single session ID
 				}
 			}
 		}
@@ -117,6 +118,11 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				return
 			}
 			ctx := authentication.SetAuthInfoContext(r.Context(), userSessions.GetAuthInfos())
+			// Extract session ID from home cluster session and put it in context for graph caching
+			// SessionID may be empty for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
+			if homeSession, ok := userSessions[aHandler.conf.KubernetesConfig.ClusterName]; ok {
+				ctx = authentication.SetSessionIDContext(ctx, homeSession.SessionID)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		case http.StatusUnauthorized:
 			err := aHandler.authController.TerminateSession(r, w)
