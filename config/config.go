@@ -990,7 +990,7 @@ func NewConfig() (c *Config) {
 			GraphCache: GraphCacheConfig{
 				Enabled:           true,
 				InactivityTimeout: "10m",
-				MaxCacheMemoryMB:  100,
+				MaxCacheMemoryMB:  1000,
 				RefreshInterval:   "60s",
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
