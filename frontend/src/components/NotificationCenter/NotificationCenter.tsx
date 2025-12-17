@@ -8,6 +8,7 @@ import {
   EmptyStateBody,
   EmptyStateVariant,
   ExpandableSection,
+  ExpandableSectionToggle,
   MenuToggle,
   NotificationDrawer,
   NotificationDrawerBody,
@@ -140,6 +141,53 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     }
   };
 
+  const formatTimestamp = (date: Date): string => {
+    const now = moment();
+    const created = moment(date);
+    const diffMinutes = now.diff(created, 'minutes');
+
+    if (diffMinutes < 60) {
+      return created.fromNow();
+    }
+    return date.toLocaleString();
+  };
+
+  const formatDetail = (message: NotificationMessage): React.ReactNode => {
+    if (!message.detail) {
+      return '';
+    }
+
+    const detail = message.detail;
+    if (detail.length > 150 || detail.split('\n').length > 3) {
+      const toggleId = `toggle-${message.id}`;
+      const contentId = `content-${message.id}`;
+      return (
+        <>
+          <ExpandableSection
+            isExpanded={message.showDetail}
+            isDetached
+            direction="up"
+            toggleId={toggleId}
+            contentId={contentId}
+          >
+            <span style={{ whiteSpace: 'pre-wrap' }}>{detail}</span>
+          </ExpandableSection>
+          <ExpandableSectionToggle
+            isExpanded={message.showDetail}
+            onToggle={() => props.toggleMessageDetail(message)}
+            toggleId={toggleId}
+            contentId={contentId}
+            direction="up"
+          >
+            {message.showDetail ? t('Hide Detail') : t('Show Detail')}
+          </ExpandableSectionToggle>
+        </>
+      );
+    }
+
+    return <span style={{ whiteSpace: 'pre-wrap' }}>{message.detail}</span>;
+  };
+
   return (
     <NotificationDrawer ref={drawerRef}>
       <NotificationDrawerHeader count={getNumberUnread()} onClose={() => props.toggleNotificationCenter()}>
@@ -194,7 +242,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                     >
                       <NotificationDrawerListItemHeader title={message.content} variant={message.type}>
                         <TrashIcon
-                          style={{ cursor: 'pointer', marginTop: '0.75em' }}
+                          style={{ cursor: 'pointer', marginLeft: '0.5em', marginTop: '0.75em' }}
                           onClick={e => {
                             e.stopPropagation();
                             props.clearMessage(message);
@@ -202,16 +250,13 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                           aria-label={t('Clear message')}
                         />
                       </NotificationDrawerListItemHeader>
-                      <NotificationDrawerListItemBody timestamp={message.created.toLocaleString()}>
-                        <ExpandableSection
-                          isExpanded={message.showDetail}
-                          onToggle={() => props.toggleMessageDetail(message)}
-                          toggleContent={message.showDetail ? t('Hide Detail') : t('Show Detail')}
-                        >
-                          {message.detail}
-                        </ExpandableSection>
+                      <NotificationDrawerListItemBody timestamp={formatTimestamp(message.created)}>
+                        {formatDetail(message)}
                         {message.count > 1 && (
-                          <div>
+                          <div
+                            className="pf-v6-c-notification-drawer__list-item-timestamp"
+                            style={{ marginTop: '1em', marginBottom: 0 }}
+                          >
                             {message.count} {moment().from(message.firstTriggered)}
                           </div>
                         )}
