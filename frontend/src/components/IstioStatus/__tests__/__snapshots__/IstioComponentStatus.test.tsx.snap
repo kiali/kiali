@@ -3,7 +3,7 @@
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -13,7 +13,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -41,7 +41,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -51,7 +51,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -79,7 +79,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-addon"
   >
@@ -89,7 +89,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
       addon
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -117,7 +117,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-core"
   >
@@ -127,7 +127,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
       core
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -155,7 +155,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -165,7 +165,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -193,7 +193,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -203,7 +203,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -231,7 +231,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -241,7 +241,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
@@ -269,7 +269,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_fmek7us"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -279,7 +279,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
       prometheus
     </SplitItem>
     <Label
-      className="kiali_f1swp7hu"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon

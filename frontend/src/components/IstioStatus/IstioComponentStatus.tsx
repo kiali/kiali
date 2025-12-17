@@ -49,8 +49,8 @@ const validToIcon: { [valid: string]: IconProps } = {
 const splitItemStyle = kialiStyle({
   marginLeft: PFSpacer.sm,
   textAlign: 'left',
-  fontSize: PFFontSize.size12,
-  fontWeight: PFFontWeight.Regular
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.BodyDefault
 });
 
 const labelStyle = kialiStyle({
@@ -67,8 +67,8 @@ const labelStyle = kialiStyle({
     },
     '& .pf-v6-c-label__content': {
       color: 'var(--pf-t--global--text--color--primary--default)',
-      fontSize: PFFontSize.size12,
-      fontWeight: PFFontWeight.Regular
+      fontSize: PFFontSize.small,
+      fontWeight: PFFontWeight.BodyDefault
     }
   }
 });

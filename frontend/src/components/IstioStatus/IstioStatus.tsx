@@ -75,8 +75,8 @@ const clusterStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   paddingTop: PFSpacer.xs,
-  fontSize: PFFontSize.size14,
-  fontWeight: PFFontWeight.Regular
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.BodyDefault
 });
 
 const addonLabelStyle = kialiStyle({
@@ -84,8 +84,8 @@ const addonLabelStyle = kialiStyle({
   marginTop: PFSpacer.xs,
   marginBottom: PFSpacer.xs,
   marginLeft: PFSpacer.sm,
-  fontSize: PFFontSize.size12,
-  fontWeight: PFFontWeight.Semibold
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.HeadingDefault
 });
 
 const coreLabelStyle = kialiStyle({
@@ -93,8 +93,8 @@ const coreLabelStyle = kialiStyle({
   marginTop: PFSpacer.xs,
   marginBottom: PFSpacer.xs,
   marginLeft: PFSpacer.sm,
-  fontSize: PFFontSize.size12,
-  fontWeight: PFFontWeight.Semibold
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.HeadingDefault
 });
 
 const addonListStyle = kialiStyle({
@@ -111,8 +111,8 @@ const dividerStyle = kialiStyle({
 });
 
 const clusterStatusHeaderStyle = kialiStyle({
-  fontSize: PFFontSize.size14,
-  fontWeight: PFFontWeight.Semibold,
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.HeadingDefault,
   marginBottom: PFSpacer.xs
 });
 
