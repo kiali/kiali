@@ -22,6 +22,7 @@ import {
 } from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
+import { PFSpacer } from 'styles/PfSpacer';
 import { KialiDispatch } from 'types/Redux';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -72,44 +73,56 @@ const ValidToColor = {
 const clusterStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
-  paddingTop: '0.5rem'
+  paddingTop: PFSpacer.xs,
+  fontSize: '14px',
+  fontWeight: 400
 });
 
 const addonLabelStyle = kialiStyle({
   textAlign: 'left',
-  marginTop: '0.25rem',
-  marginBottom: '0.25rem',
-  marginLeft: '0.5rem'
+  marginTop: PFSpacer.xs,
+  marginBottom: PFSpacer.xs,
+  marginLeft: PFSpacer.sm,
+  fontSize: '12px',
+  fontWeight: 600
 });
 
 const coreLabelStyle = kialiStyle({
   textAlign: 'left',
-  marginTop: '0.25rem',
-  marginBottom: '0.25rem',
-  marginLeft: '0.5rem'
+  marginTop: PFSpacer.xs,
+  marginBottom: PFSpacer.xs,
+  marginLeft: PFSpacer.sm,
+  fontSize: '12px',
+  fontWeight: 600
 });
 
 const addonListStyle = kialiStyle({
-  paddingLeft: '0.75rem'
+  paddingLeft: PFSpacer.sm
 });
 
 const coreListStyle = kialiStyle({
-  paddingLeft: '0.75rem'
+  paddingLeft: PFSpacer.sm
 });
 
 const dividerStyle = kialiStyle({
   borderTop: `1px solid ${PFColors.Blue300}`,
-  marginTop: '0.5rem'
+  marginTop: PFSpacer.sm
+});
+
+const clusterStatusHeaderStyle = kialiStyle({
+  fontSize: '14px',
+  fontWeight: 600,
+  marginBottom: PFSpacer.xs
 });
 
 export const meshLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'flex-start',
-  marginTop: '0.75rem',
+  marginTop: PFSpacer.sm,
   textAlign: 'left',
   $nest: {
     '& > span': {
-      marginRight: '0.5rem'
+      marginRight: PFSpacer.sm
     }
   }
 });
@@ -334,7 +347,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
     return (
       <Content>
-        <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
+        <Content className={clusterStatusHeaderStyle}>{t('Cluster Status')}</Content>
         {sortedClusters.map(cl => {
           const components = props.statusMap[cl] || [];
           const isExpanded = expandedClusters.has(cl);
@@ -345,13 +358,13 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
                 <div className={clusterStyle} onClick={() => toggleCluster(cl)} style={{ cursor: 'pointer' }}>
                   <Button
                     variant={ButtonVariant.plain}
-                    style={{ padding: 0, marginRight: '0.25rem' }}
+                    style={{ padding: 0, marginRight: PFSpacer.xs }}
                     icon={isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
                   />
                   <PFBadge badge={PFBadges.Cluster} size="sm" />
                   {cl}
                   {cl === homeCluster?.name && (
-                    <span style={{ marginLeft: '0.25rem' }}>
+                    <span style={{ marginLeft: PFSpacer.xs }}>
                       <KialiIcon.Star />
                     </span>
                   )}

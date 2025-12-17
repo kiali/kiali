@@ -40,13 +40,13 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -72,18 +72,18 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Add-ons
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -103,7 +103,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -171,13 +171,13 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -203,18 +203,18 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Add-ons
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -234,7 +234,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -374,13 +374,13 @@ exports[`When both core and addon component have problems any component is in no
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -406,18 +406,18 @@ exports[`When both core and addon component have problems any component is in no
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Core
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -436,13 +436,13 @@ exports[`When both core and addon component have problems any component is in no
             </React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Add-ons
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -462,7 +462,7 @@ exports[`When both core and addon component have problems any component is in no
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -530,13 +530,13 @@ exports[`When both core and addon component have problems any component is in no
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -562,18 +562,18 @@ exports[`When both core and addon component have problems any component is in no
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Core
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -592,13 +592,13 @@ exports[`When both core and addon component have problems any component is in no
                   </React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Add-ons
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -618,7 +618,7 @@ exports[`When both core and addon component have problems any component is in no
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -758,13 +758,13 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -790,18 +790,18 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Core
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -821,7 +821,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -889,13 +889,13 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -921,18 +921,18 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Core
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -952,7 +952,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -1092,13 +1092,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -1124,18 +1124,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Add-ons
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -1161,7 +1161,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -1229,13 +1229,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -1261,18 +1261,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Add-ons
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -1298,7 +1298,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -1450,13 +1450,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -1482,18 +1482,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Core
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -1518,13 +1518,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Add-ons
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -1550,7 +1550,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -1618,13 +1618,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -1650,18 +1650,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Core
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -1686,13 +1686,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Add-ons
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -1718,7 +1718,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -1858,13 +1858,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -1890,18 +1890,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Core
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -1927,7 +1927,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -1995,13 +1995,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -2027,18 +2027,18 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Core
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -2064,7 +2064,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -2198,13 +2198,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -2230,18 +2230,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Core
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -2261,7 +2261,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -2329,13 +2329,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -2361,18 +2361,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Core
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -2392,7 +2392,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
@@ -2526,13 +2526,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     content={
       <Content>
         <Content
-          component="h4"
+          className="kiali_f1ytdcfa"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_fs8234v"
+            className="kiali_f1syfrcf"
           >
             <PFBadge
               badge={
@@ -2558,18 +2558,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             </span>
           </div>
           <Divider
-            className="kiali_fzazac4"
+            className="kiali_f1wxnwgd"
           />
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_fnez44j"
+                className="kiali_f139pqoy"
                 component="h6"
               >
                 Add-ons
               </Content>
               <div
-                className="kiali_f14rgqjc"
+                className="kiali_f1br0liu"
               >
                 <IstioStatusList
                   cluster="Kubernetes"
@@ -2589,7 +2589,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           </React.Fragment>
         </React.Fragment>
         <div
-          className="kiali_fpbzwk1"
+          className="kiali_f2klew6"
         >
           <span>
             More info at
@@ -2657,13 +2657,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           >
             <Content>
               <Content
-                component="h4"
+                className="kiali_f1ytdcfa"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_fs8234v"
+                  className="kiali_f1syfrcf"
                 >
                   <PFBadge
                     badge={
@@ -2689,18 +2689,18 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   </span>
                 </div>
                 <Divider
-                  className="kiali_fzazac4"
+                  className="kiali_f1wxnwgd"
                 />
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_fnez44j"
+                      className="kiali_f139pqoy"
                       component="h6"
                     >
                       Add-ons
                     </Content>
                     <div
-                      className="kiali_f14rgqjc"
+                      className="kiali_f1br0liu"
                     >
                       <IstioStatusList
                         cluster="Kubernetes"
@@ -2720,7 +2720,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 </React.Fragment>
               </React.Fragment>
               <div
-                className="kiali_fpbzwk1"
+                className="kiali_f2klew6"
               >
                 <span>
                   More info at
