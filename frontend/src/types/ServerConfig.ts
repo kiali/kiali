@@ -1,3 +1,4 @@
+import { ChatAIConfig } from './Chatbot';
 import { DurationInSeconds } from './Common';
 import { MeshCluster } from './Mesh';
 
@@ -157,6 +158,7 @@ export type OfflineRunConfig = {
 export interface ServerConfig {
   ambientEnabled: boolean;
   authStrategy: string;
+  chatAI: ChatAIConfig;
   clusterWideAccess: boolean;
   clusters: { [key: string]: MeshCluster }; // cluster => MeshCluster
   controlPlanes: { [key: string]: string }; // cluster => namespace

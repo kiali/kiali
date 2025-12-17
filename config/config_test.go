@@ -614,6 +614,217 @@ func TestValidateSigningKeyLength(t *testing.T) {
 	}
 }
 
+func TestValidateAI(t *testing.T) {
+	newValidConfig := func() *Config {
+		conf := NewConfig()
+		conf.ChatAI.Enabled = true
+		conf.ChatAI.DefaultProvider = "provider-1"
+		conf.ChatAI.Providers = []ProviderConfig{
+			{
+				Name:         "provider-1",
+				Type:         OpenAIProvider,
+				Config:       OpenAIProviderConfigDefault,
+				Enabled:      true,
+				DefaultModel: "model-1",
+				Key:          "provider-key",
+				Models: []AIModel{
+					{
+						Name:        "model-1",
+						Model:       "gpt-4",
+						Description: "default model",
+						Enabled:     true,
+						Endpoint:    "https://example.com",
+						Key:         "",
+					},
+				},
+			},
+		}
+		return conf
+	}
+
+	cases := map[string]struct {
+		mutate    func(conf *Config)
+		expectErr string
+	}{
+		"valid config": {
+			mutate:    nil,
+			expectErr: "",
+		},
+		"default provider disabled": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Enabled = false
+			},
+			expectErr: "default_provider",
+		},
+		"default model disabled": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Models[0].Enabled = false
+			},
+			expectErr: "default_model",
+		},
+		"no enabled providers": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Enabled = false
+			},
+			expectErr: "at least one enabled provider",
+		},
+		"enabled provider with no enabled models": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Models[0].Enabled = false
+				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
+					Name:        "model-2",
+					Model:       "gpt-4",
+					Description: "second model",
+					Enabled:     false,
+					Endpoint:    "https://example.com",
+					Key:         "",
+				})
+			},
+			expectErr: "at least one enabled model",
+		},
+		"invalid provider type": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = ProviderType("bad")
+			},
+			expectErr: "type",
+		},
+		"invalid provider config": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Config = ProviderConfigType("bad")
+			},
+			expectErr: "config",
+		},
+		"disabled provider skips validation": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+					Name:         "provider-2",
+					Type:         ProviderType("bad"),
+					Config:       ProviderConfigType("bad"),
+					Enabled:      false,
+					DefaultModel: "",
+					Models:       nil,
+				})
+			},
+			expectErr: "",
+		},
+		"default provider not found": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.DefaultProvider = "missing"
+			},
+			expectErr: "not found in providers",
+		},
+		"default model not found": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].DefaultModel = "missing"
+			},
+			expectErr: "not found in models",
+		},
+		"duplicate provider name": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+					Name:         "provider-1",
+					Type:         OpenAIProvider,
+					Config:       OpenAIProviderConfigDefault,
+					Enabled:      true,
+					DefaultModel: "model-2",
+					Key:          "provider-key-2",
+					Models: []AIModel{
+						{
+							Name:        "model-2",
+							Model:       "gpt-4",
+							Description: "another model",
+							Enabled:     true,
+							Endpoint:    "https://example.com",
+							Key:         "",
+						},
+					},
+				})
+			},
+			expectErr: "duplicate name",
+		},
+		"duplicate model name in provider": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
+					Name:        "model-1",
+					Model:       "gpt-4",
+					Description: "duplicate model",
+					Enabled:     true,
+					Endpoint:    "https://example.com",
+					Key:         "",
+				})
+			},
+			expectErr: "models contains duplicate name",
+		},
+		"duplicate model name across providers": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+					Name:         "provider-2",
+					Type:         OpenAIProvider,
+					Config:       OpenAIProviderConfigDefault,
+					Enabled:      true,
+					DefaultModel: "model-2",
+					Key:          "provider-key-2",
+					Models: []AIModel{
+						{
+							Name:        "model-1",
+							Model:       "gpt-4",
+							Description: "duplicate model across providers",
+							Enabled:     true,
+							Endpoint:    "https://example.com",
+							Key:         "",
+						},
+					},
+				})
+			},
+			expectErr: "chat_ai.models contains duplicate name",
+		},
+		"missing key when provider key empty": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Key = ""
+				conf.ChatAI.Providers[0].Models[0].Key = ""
+			},
+			expectErr: "requires a key",
+		},
+		"provider key empty but model has key": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Key = ""
+				conf.ChatAI.Providers[0].Models[0].Key = "model-key"
+			},
+			expectErr: "",
+		},
+		"disabled model skips key validation": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
+					Name:        "model-2",
+					Model:       "gpt-4",
+					Description: "disabled model",
+					Enabled:     false,
+					Endpoint:    "https://example.com",
+					Key:         "",
+				})
+			},
+			expectErr: "",
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			conf := newValidConfig()
+			if tc.mutate != nil {
+				tc.mutate(conf)
+			}
+
+			err := conf.ValidateAI()
+			if tc.expectErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.expectErr)
+		})
+	}
+}
+
 func TestIsRBACDisabled(t *testing.T) {
 	cases := map[string]struct {
 		authConfig         AuthConfig

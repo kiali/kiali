@@ -11,6 +11,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
+import { DispatchProp } from 'react-redux';
 import { namespaceEquals } from '../../utils/Common';
 import { SortField } from '../../types/SortFilters';
 import { ActiveFiltersInfo, ActiveTogglesInfo } from '../../types/Filters';
@@ -26,6 +27,7 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
+import { setAIContext } from 'helpers/ChatAI';
 
 type AppListPageState = FilterComponent.State<AppListItem> & {
   loaded: boolean;
@@ -37,9 +39,10 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type AppListPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
-};
+type AppListPageProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+  };
 
 class AppListPageComponent extends FilterComponent.Component<AppListPageProps, AppListPageState, AppListItem> {
   private promises = new PromisesRegistry();
@@ -149,10 +152,20 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         return AppListFilters.filterBy(appListItems, filters);
       })
       .then(appListItems => {
+        const sortedAppListItems = this.sortItemList(
+          appListItems,
+          this.state.currentSortField,
+          this.state.isSortAscending
+        );
         this.setState({
-          listItems: this.sortItemList(appListItems, this.state.currentSortField, this.state.isSortAscending),
+          listItems: sortedAppListItems,
           loaded: true
         });
+
+        setAIContext(
+          this.props.dispatch,
+          `App List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {

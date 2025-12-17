@@ -7,6 +7,7 @@ import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
+import { ChatResponse } from '../types/Chatbot';
 import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '../types/Graph';
 import {
   AppHealth,
@@ -80,6 +81,7 @@ import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
 import { PersesInfo } from '../types/PersesInfo';
+import { ChatRequest } from 'types/Chatbot';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -1427,4 +1429,17 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
     queryParams.clusterName = cluster;
   }
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
+};
+
+export const postChatAI = (provider: string, model: string, chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
+  return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(provider, model), undefined, chatRequest);
+};
+
+export const getChatConversations = (): Promise<ApiResponse<string[]>> => {
+  return newRequest<string[]>(HTTP_VERBS.GET, urls.chatConversations, {}, {});
+};
+
+export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiResponse<void>> => {
+  const conversationIDsParam = conversationIDs.join(',');
+  return newRequest<void>(HTTP_VERBS.DELETE, urls.chatConversations, { conversationIDs: conversationIDsParam }, {});
 };

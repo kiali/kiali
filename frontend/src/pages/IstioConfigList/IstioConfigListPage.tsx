@@ -27,17 +27,18 @@ import { RefreshButton } from '../../components/Refresh/RefreshButton';
 import { IstioActionsNamespaceDropdown } from '../../components/IstioActions/IstioActionsNamespaceDropdown';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { setAIContext } from 'helpers/ChatAI';
 
 interface ReduxProps {
   activeNamespaces: Namespace[];
   istioAPIEnabled: boolean;
 }
 
-type IstioConfigListPageProps = ReduxProps;
+type IstioConfigListPageProps = ReduxProps & DispatchProp;
 
 type IstioConfigListPageState = FilterComponent.State<IstioConfigItem>;
 
@@ -168,13 +169,23 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
       .then(configItems => filterByConfigValidation(configItems, configValidationFilters))
       .then(sorted => {
         // Update the view when data is fetched
-        this.setState({
-          listItems: IstioConfigListFilters.sortIstioItems(
-            this.state.listItems.concat(sorted),
-            this.state.currentSortField,
-            this.state.isSortAscending
-          )
-        });
+        const updatedList = IstioConfigListFilters.sortIstioItems(
+          this.state.listItems.concat(sorted),
+          this.state.currentSortField,
+          this.state.isSortAscending
+        );
+
+        this.setState(
+          {
+            listItems: updatedList
+          },
+          () => {
+            setAIContext(
+              this.props.dispatch,
+              `Istio Config List of namespaces ${namespaces.join(',')}`
+            );
+          }
+        );
       })
       .catch(istioError => {
         if (!istioError.isCanceled) {

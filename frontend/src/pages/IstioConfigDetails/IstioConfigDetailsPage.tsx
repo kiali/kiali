@@ -47,12 +47,13 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
+import { setAIContext } from 'helpers/ChatAI';
 
 const rightToolbarStyle = kialiStyle({
   zIndex: 500
@@ -95,9 +96,10 @@ interface ReduxProps {
   theme: string;
 }
 
-type IstioConfigDetailsProps = ReduxProps & {
-  istioConfigId: IstioConfigId;
-};
+type IstioConfigDetailsProps = ReduxProps &
+  DispatchProp & {
+    istioConfigId: IstioConfigId;
+  };
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
@@ -177,7 +179,13 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             yamlModified: '',
             currentTab: activeTab(tabName, this.defaultTab())
           },
-          () => this.resizeEditor()
+          () => {
+            setAIContext(
+              this.props.dispatch,
+              `Istio Config Details of ${this.props.istioConfigId.objectName} in namespace ${this.props.istioConfigId.namespace}`
+            );
+            this.resizeEditor();
+          }
         );
       })
       .catch(error => {

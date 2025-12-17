@@ -37,7 +37,7 @@ import { OverviewTrafficPolicies } from './OverviewTrafficPolicies';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import {
   durationSelector,
   languageSelector,
@@ -77,6 +77,7 @@ import { EmptyOverview } from './EmptyOverview';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { PersesInfo } from '../../types/PersesInfo';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { setAIContext } from 'helpers/ChatAI';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -168,9 +169,10 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type OverviewProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
-};
+type OverviewProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+  };
 
 export class OverviewPageComponent extends React.Component<OverviewProps, State> {
   private sFOverviewToolbar: StatefulFiltersRef = React.createRef();
@@ -302,15 +304,24 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
               type: type
             };
           },
-          () => {
-            this.fetchHealth(isAscending, sortField, type);
-            this.fetchTLS(isAscending, sortField);
-            this.fetchValidations(isAscending, sortField);
-            this.fetchControlPlanes();
+          async () => {
+            const tasks: Promise<void>[] = [
+              this.fetchHealth(isAscending, sortField, type),
+              this.fetchTLS(isAscending, sortField),
+              this.fetchValidations(isAscending, sortField),
+              this.fetchControlPlanes()
+            ];
 
             if (displayMode !== OverviewDisplayMode.COMPACT) {
-              this.fetchMetrics(direction);
+              tasks.push(this.fetchMetrics(direction));
             }
+
+            await Promise.allSettled(tasks);
+
+            setAIContext(
+              this.props.dispatch,
+              `Overview of namespaces ${this.state.namespaces.map(ns => ns.name).join(',')}`
+            );
           }
         );
       })
@@ -321,7 +332,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       });
   };
 
-  fetchHealth = (isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): void => {
+  fetchHealth = (isAscending: boolean, sortField: SortField<NamespaceInfo>, type: OverviewType): Promise<void> => {
     const duration = FilterHelper.currentDuration();
     const uniqueClusters = new Set<string>();
 
@@ -331,23 +342,31 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       }
     });
 
+    const promises: Promise<void>[] = [];
+
     uniqueClusters.forEach(cluster => {
-      this.promises
+      const p = this.promises
         .registerChained('health', undefined, () =>
           this.fetchHealthForCluster(this.state.namespaces, cluster, duration, type)
         )
-        .then(() => {
-          this.setState(prevState => {
-            let newNamespaces = prevState.namespaces.slice();
+        .then(
+          () =>
+            new Promise<void>(resolve => {
+              this.setState(prevState => {
+                let newNamespaces = prevState.namespaces.slice();
 
-            if (sortField.id === 'health') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-            }
+                if (sortField.id === 'health') {
+                  newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+                }
 
-            return { namespaces: newNamespaces };
-          });
-        });
+                return { namespaces: newNamespaces };
+              }, resolve);
+            })
+        );
+      promises.push(p);
     });
+
+    return Promise.all(promises).then(() => {});
   };
 
   fetchHealthForCluster = async (
@@ -416,7 +435,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => this.handleApiError('Could not fetch health', err));
   };
 
-  fetchMetrics = (direction: DirectionType): void => {
+  fetchMetrics = (direction: DirectionType): Promise<void> => {
     const duration = FilterHelper.currentDuration();
     const uniqueClusters = new Set<string>();
 
@@ -426,17 +445,23 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       }
     });
 
+    const promises: Promise<void>[] = [];
+
     uniqueClusters.forEach(cluster => {
-      this.promises
+      const p = this.promises
         .registerChained('metrics', undefined, () =>
           this.fetchMetricsForCluster(this.state.namespaces, cluster, duration, direction)
         )
-        .then(() => {
-          this.setState(prevState => {
-            return { namespaces: prevState.namespaces.slice() };
-          });
-        });
+        .then(
+          () =>
+            new Promise<void>(resolve => {
+              this.setState(prevState => ({ namespaces: prevState.namespaces.slice() }), resolve);
+            })
+        );
+      promises.push(p);
     });
+
+    return Promise.all(promises).then(() => {});
   };
 
   fetchMetricsForCluster = async (
@@ -500,7 +525,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => this.handleApiError('Could not fetch metrics', err));
   };
 
-  fetchTLS = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
+  fetchTLS = (isAscending: boolean, sortField: SortField<NamespaceInfo>): Promise<void> => {
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -509,21 +534,29 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       }
     });
 
+    const promises: Promise<void>[] = [];
+
     uniqueClusters.forEach(cluster => {
-      this.promises
+      const p = this.promises
         .registerChained('tls', undefined, () => this.fetchTLSForCluster(this.state.namespaces, cluster))
-        .then(() => {
-          this.setState(prevState => {
-            let newNamespaces = prevState.namespaces.slice();
+        .then(
+          () =>
+            new Promise<void>(resolve => {
+              this.setState(prevState => {
+                let newNamespaces = prevState.namespaces.slice();
 
-            if (sortField.id === 'mtls') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-            }
+                if (sortField.id === 'mtls') {
+                  newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+                }
 
-            return { namespaces: newNamespaces };
-          });
-        });
+                return { namespaces: newNamespaces };
+              }, resolve);
+            })
+        );
+      promises.push(p);
     });
+
+    return Promise.all(promises).then(() => {});
   };
 
   fetchTLSForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
@@ -568,7 +601,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       .catch(err => this.handleApiError('Could not fetch TLS status', err));
   };
 
-  fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
+  fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): Promise<void> => {
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -577,23 +610,31 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
       }
     });
 
+    const promises: Promise<void>[] = [];
+
     uniqueClusters.forEach(cluster => {
-      this.promises
+      const p = this.promises
         .registerChained('validation', undefined, () =>
           this.fetchValidationResultForCluster(this.state.namespaces, cluster)
         )
-        .then(() => {
-          this.setState(prevState => {
-            let newNamespaces = prevState.namespaces.slice();
+        .then(
+          () =>
+            new Promise<void>(resolve => {
+              this.setState(prevState => {
+                let newNamespaces = prevState.namespaces.slice();
 
-            if (sortField.id === 'validations') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
-            }
+                if (sortField.id === 'validations') {
+                  newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+                }
 
-            return { namespaces: newNamespaces };
-          });
-        });
+                return { namespaces: newNamespaces };
+              }, resolve);
+            })
+        );
+      promises.push(p);
     });
+
+    return Promise.all(promises).then(() => {});
   };
 
   fetchValidationResultForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
@@ -719,11 +760,17 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
   private fetchControlPlanes = async (): Promise<void> => {
     return API.getControlPlanes()
-      .then(response => {
-        this.setState({
-          controlPlanes: response.data
-        });
-      })
+      .then(
+        response =>
+          new Promise<void>(resolve => {
+            this.setState(
+              {
+                controlPlanes: response.data
+              },
+              resolve
+            );
+          })
+      )
       .catch(err => {
         addError('Error fetching control planes.', err);
       });

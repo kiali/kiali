@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
@@ -30,6 +30,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
+import { setAIContext } from 'helpers/ChatAI';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -46,10 +47,11 @@ type ReduxProps = {
   tracingInfo?: TracingInfo;
 };
 
-type WorkloadDetailsPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-  workloadId: WorkloadId;
-};
+type WorkloadDetailsPageProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds;
+    workloadId: WorkloadId;
+  };
 
 export const tabName = 'tab';
 export const defaultTab = 'info';
@@ -128,19 +130,27 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           this.setState({ waypointServiceFilter: details.data.services[0].name });
         }
 
-        this.setState({
-          workload: details.data,
-          health: WorkloadHealth.fromJson(
-            this.props.workloadId.namespace,
-            this.props.workloadId.workload,
-            details.data.health,
-            {
-              rateInterval: this.props.duration,
-              hasSidecar: details.data.istioSidecar,
-              hasAmbient: details.data.isAmbient
-            }
-          )
-        });
+        this.setState(
+          {
+            workload: details.data,
+            health: WorkloadHealth.fromJson(
+              this.props.workloadId.namespace,
+              this.props.workloadId.workload,
+              details.data.health,
+              {
+                rateInterval: this.props.duration,
+                hasSidecar: details.data.istioSidecar,
+                hasAmbient: details.data.isAmbient
+              }
+            )
+          },
+          () => {
+            setAIContext(
+              this.props.dispatch,
+              `Workload Details of ${this.props.workloadId.workload} in namespace ${this.props.workloadId.namespace}`
+            );
+          }
+        );
       })
       .catch(error => {
         addError('Could not fetch Workload.', error);

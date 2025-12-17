@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { Tab } from '@patternfly/react-core';
 
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -36,6 +36,7 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
+import { setAIContext } from 'helpers/ChatAI';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -53,10 +54,11 @@ interface ReduxProps {
   tracingInfo?: TracingInfo;
 }
 
-type ServiceDetailsProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds;
-  serviceId: ServiceId;
-};
+type ServiceDetailsProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds;
+    serviceId: ServiceId;
+  };
 
 const tabName = 'tab';
 const defaultTab = 'info';
@@ -145,10 +147,18 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       this.props.duration
     )
       .then(results => {
-        this.setState({
-          serviceDetails: results,
-          validations: results.validations
-        });
+        this.setState(
+          {
+            serviceDetails: results,
+            validations: results.validations
+          },
+          () => {
+            setAIContext(
+              this.props.dispatch,
+              `Service Details of ${this.props.serviceId.service} in namespace ${this.props.serviceId.namespace}`
+            );
+          }
+        );
       })
       .catch(error => {
         addError('Could not fetch Service Details.', error);

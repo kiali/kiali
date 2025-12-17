@@ -732,6 +732,57 @@ type Validations struct {
 	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
+// AiStoreConfig defines configuration for the AI store subsystem
+type AiStoreConfig struct {
+	Enabled           bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`                      // Default:  true
+	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "60m"
+	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
+	ReduceWithAI      bool   `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`          // Default: false
+	ReduceThreshold   int    `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`     // Default: 15 messages
+}
+
+type AIModel struct {
+	Name        string `yaml:"name" json:"name"`
+	Model       string `yaml:"model" json:"model"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Enabled     bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Endpoint    string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Key         string `yaml:"key,omitempty" json:"key,omitempty"`
+}
+
+type ProviderType string
+
+const (
+	OpenAIProvider ProviderType = "openai"
+)
+
+type ProviderConfigType string
+
+const (
+	OpenAIProviderConfigDefault ProviderConfigType = "default"
+	OpenAIProviderConfigGemini  ProviderConfigType = "gemini"
+	OpenAIProviderConfigAzure   ProviderConfigType = "azure"
+)
+
+type ProviderConfig struct {
+	Name         string             `yaml:"name" json:"name"`
+	Description  string             `yaml:"description,omitempty" json:"description,omitempty"`
+	Type         ProviderType       `yaml:"type" json:"type"`
+	Config       ProviderConfigType `yaml:"config" json:"config"`
+	Enabled      bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
+	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
+	Key          string             `yaml:"key,omitempty" json:"key,omitempty"`
+}
+
+// ChatAIConfig defines configuration for the ChatAI subsystem
+type ChatAIConfig struct {
+	DefaultProvider string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
+	Enabled         bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Providers       []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
+	StoreConfig     AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
+}
+
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
@@ -821,6 +872,7 @@ const (
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
@@ -870,6 +922,18 @@ func NewConfig() (c *Config) {
 			},
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,
+			},
+		},
+		ChatAI: ChatAIConfig{
+			Enabled:         false,
+			DefaultProvider: "",
+			Providers:       []ProviderConfig{},
+			StoreConfig: AiStoreConfig{
+				Enabled:           true,
+				InactivityTimeout: "60m",
+				MaxCacheMemoryMB:  1024,
+				ReduceWithAI:      false,
+				ReduceThreshold:   15,
 			},
 		},
 		Clustering: Clustering{
@@ -1178,6 +1242,109 @@ func (conf *Config) AddHealthDefault() {
 	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
 }
 
+func (conf *Config) ValidateAI() error {
+	if !conf.ChatAI.Enabled {
+		return nil
+	}
+
+	if conf.ChatAI.DefaultProvider == "" {
+		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
+	}
+
+	defaultProviderFound := false
+	enabledProviderFound := false
+	globalModelNames := make(map[string]struct{})
+	validProviderTypes := map[ProviderType]struct{}{
+		OpenAIProvider: {},
+	}
+	validProviderConfigTypes := map[ProviderConfigType]struct{}{
+		OpenAIProviderConfigDefault: {},
+		OpenAIProviderConfigAzure:   {},
+	}
+	seenNames := make(map[string]struct{})
+
+	for _, p := range conf.ChatAI.Providers {
+		if _, exists := seenNames[p.Name]; exists {
+			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
+		}
+		seenNames[p.Name] = struct{}{}
+
+		if p.Name == conf.ChatAI.DefaultProvider {
+			defaultProviderFound = true
+			if !p.Enabled {
+				return fmt.Errorf("chat_ai.default_provider %q must be enabled", conf.ChatAI.DefaultProvider)
+			}
+		}
+
+		if !p.Enabled {
+			continue
+		}
+
+		if _, valid := validProviderTypes[p.Type]; !valid {
+			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid", p.Name, p.Type)
+		}
+
+		if _, valid := validProviderConfigTypes[p.Config]; !valid {
+			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid", p.Name, p.Config)
+		}
+
+		if p.DefaultModel == "" {
+			return fmt.Errorf("chat_ai.providers[%q].default_model is required", p.Name)
+		}
+
+		defaultModelFound := false
+		providerModelNames := make(map[string]struct{})
+		enabledModelFound := false
+		for _, m := range p.Models {
+			if _, exists := providerModelNames[m.Name]; exists {
+				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
+			}
+			providerModelNames[m.Name] = struct{}{}
+
+			if _, exists := globalModelNames[m.Name]; exists {
+				return fmt.Errorf("chat_ai.models contains duplicate name %q", m.Name)
+			}
+			globalModelNames[m.Name] = struct{}{}
+
+			if m.Name == p.DefaultModel {
+				defaultModelFound = true
+				if !m.Enabled {
+					return fmt.Errorf("chat_ai.providers[%q].default_model %q must be enabled", p.Name, p.DefaultModel)
+				}
+			}
+
+			if m.Enabled {
+				enabledModelFound = true
+			} else {
+				continue
+			}
+
+			if m.Key == "" && p.Key == "" {
+				return fmt.Errorf("chat_ai.providers[%q].models[%q] requires a key when provider key is empty", p.Name, m.Name)
+			}
+		}
+
+		enabledProviderFound = true
+		if !enabledModelFound {
+			return fmt.Errorf("chat_ai.providers[%q] must have at least one enabled model", p.Name)
+		}
+
+		if !defaultModelFound {
+			return fmt.Errorf("chat_ai.providers[%q].default_model %q not found in models", p.Name, p.DefaultModel)
+		}
+	}
+
+	if !defaultProviderFound {
+		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
+	}
+
+	if !enabledProviderFound {
+		return fmt.Errorf("chat_ai.providers must contain at least one enabled provider")
+	}
+
+	return nil
+}
+
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
 func (conf *Config) AllNamespacesAccessible() bool {
 	return conf.Deployment.ClusterWideAccess
@@ -1231,6 +1398,11 @@ func Set(conf *Config) {
 	// Only close the previous credential manager if we actually swapped it out.
 	if oldCreds != nil && oldCreds != configuration.Credentials {
 		oldCreds.Close()
+	}
+
+	// Validate the chat_ai configuration
+	if err := conf.ValidateAI(); err != nil {
+		log.Fatalf("invalid chat_ai configuration: %v", err)
 	}
 
 	// init these one time, they don't change

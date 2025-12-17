@@ -15,8 +15,10 @@ import { MetricsStatsAction } from './MetricsStatsActions';
 import { IstioCertsInfoAction } from './IstioCertsInfoActions';
 import { MeshAction } from './MeshActions';
 import { MeshToolbarAction } from './MeshToolbarActions';
+import { ChatAIAction } from './ChatAIActions';
 
 export type KialiAppAction =
+  | ChatAIAction
   | ClusterAction
   | GlobalAction
   | GraphAction

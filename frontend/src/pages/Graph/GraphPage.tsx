@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
@@ -77,6 +77,7 @@ import { elementsChanged } from 'helpers/GraphHelpers';
 import { getValidGraphLayout } from 'utils/GraphUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
+import { setAIContext } from 'helpers/ChatAI';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -104,6 +105,7 @@ type ReduxDispatchProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (summaryData: SummaryData | null) => void;
+  dispatch: KialiDispatch;
 };
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
@@ -145,7 +147,8 @@ type ReduxStateProps = {
 type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 
 export type GraphPageProps = Partial<GraphURLPathProps> &
-  ReduxProps & {
+  ReduxProps &
+  DispatchProp & {
     lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
 
@@ -626,6 +629,10 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: graphTimestamp * 1000
       } as GraphData
     });
+    setAIContext(
+      this.props.dispatch,
+      `Graph of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+    );
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 
@@ -833,6 +840,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   endTour: bindActionCreators(TourActions.endTour, dispatch),
   onReady: (controller: Controller) => dispatch(GraphThunkActions.graphReady(controller)),
+  dispatch,
   setActiveNamespaces: (namespaces: Namespace[]) => dispatch(NamespaceActions.setActiveNamespaces(namespaces)),
   setEdgeMode: bindActionCreators(GraphActions.setEdgeMode, dispatch),
   setGraphDefinition: bindActionCreators(GraphActions.setGraphDefinition, dispatch),

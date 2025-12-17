@@ -21,6 +21,21 @@ import 'ace-builds/src-noconflict/ext-searchbox';
 // i18n
 import './i18n';
 
+// Ignore ResizeObserver error - it's a known issue in some browsers and PatternFly components
+// that doesn't actually impact functionality but can trigger error overlays in development.
+window.addEventListener('error', e => {
+  if (e.message === 'ResizeObserver loop completed with undelivered notifications.') {
+    const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay-div');
+    const resizeObserverErr = document.getElementById('webpack-dev-server-client-overlay');
+    if (resizeObserverErr) {
+      resizeObserverErr.setAttribute('style', 'display: none');
+    }
+    if (resizeObserverErrDiv) {
+      resizeObserverErrDiv.setAttribute('style', 'display: none');
+    }
+  }
+});
+
 declare global {
   interface Date {
     toLocaleStringWithConditionalDate(): string;

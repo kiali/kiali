@@ -72,6 +72,7 @@
   "CA Certificates": "Certificados CA",
   "Cancel": "Cancelar",
   "Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.": "Los cambios aquí no se guardan en el CR de Kiali. Si está satisfecho con los cambios, actualice el CR de Kiali usando su flujo de trabajo estándar.",
+  "Chat with AI": "Chat with AI",
   "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.": "Verifique los puertos habituales para el servicio de trazas y proporcione un subconjunto de la configuración de trazas basada en los servicios encontrados para external_services.tracing.",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "Elija las tasas de tráfico utilizadas para generar el gráfico. Cada protocolo compatible ofrece una o más opciones. Los protocolos no utilizados pueden omitirse.",
   "Circuit Breaker": "Interruptor de circuito",
