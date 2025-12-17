@@ -6,15 +6,16 @@
 // Font sizes used by Kiali for CSS styling
 // Reference: https://www.patternfly.org/design-foundations/typography
 export enum PFFontSize {
-  size12 = '12px',
-  size14 = '14px',
-  size16 = '16px'
+  small = 'var(--pf-t--global--font--size--body--sm)',
+  default = 'var(--pf-t--global--font--size--body--default)',
+  large = 'var(--pf-t--global--font--size--body--lg)'
 }
 
 // Font weights used by Kiali for CSS styling
 // Reference: https://www.patternfly.org/design-foundations/typography
 export enum PFFontWeight {
-  Regular = 400,
-  Semibold = 600,
-  Bold = 700
+  BodyDefault = 'var(--pf-t--global--font--weight--body--default)',
+  BodyBold = 'var(--pf-t--global--font--weight--body--bold)',
+  HeadingDefault = 'var(--pf-t--global--font--weight--heading--default)',
+  HeadingBold = 'var(--pf-t--global--font--weight--heading--bold)'
 }

@@ -40,13 +40,13 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -77,7 +77,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Add-ons
@@ -171,13 +171,13 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -208,7 +208,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Add-ons
@@ -374,13 +374,13 @@ exports[`When both core and addon component have problems any component is in no
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -411,7 +411,7 @@ exports[`When both core and addon component have problems any component is in no
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Core
@@ -436,7 +436,7 @@ exports[`When both core and addon component have problems any component is in no
             </React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Add-ons
@@ -530,13 +530,13 @@ exports[`When both core and addon component have problems any component is in no
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -567,7 +567,7 @@ exports[`When both core and addon component have problems any component is in no
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Core
@@ -592,7 +592,7 @@ exports[`When both core and addon component have problems any component is in no
                   </React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Add-ons
@@ -758,13 +758,13 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -795,7 +795,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Core
@@ -889,13 +889,13 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -926,7 +926,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Core
@@ -1092,13 +1092,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -1129,7 +1129,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Add-ons
@@ -1229,13 +1229,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -1266,7 +1266,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Add-ons
@@ -1450,13 +1450,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -1487,7 +1487,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Core
@@ -1518,7 +1518,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             </React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Add-ons
@@ -1618,13 +1618,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -1655,7 +1655,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Core
@@ -1686,7 +1686,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   </React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Add-ons
@@ -1858,13 +1858,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -1895,7 +1895,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Core
@@ -1995,13 +1995,13 @@ exports[`When there are not-ready components mixed with other not healthy compon
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -2032,7 +2032,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Core
@@ -2198,13 +2198,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -2235,7 +2235,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Core
@@ -2329,13 +2329,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -2366,7 +2366,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Core
@@ -2526,13 +2526,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     content={
       <Content>
         <Content
-          className="kiali_f1ytdcfa"
+          className="kiali_f4ximkg"
         >
           Cluster Status
         </Content>
         <React.Fragment>
           <div
-            className="kiali_f1syfrcf"
+            className="kiali_f1mkymqb"
           >
             <PFBadge
               badge={
@@ -2563,7 +2563,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           <React.Fragment>
             <React.Fragment>
               <Content
-                className="kiali_f139pqoy"
+                className="kiali_f1u5qgrb"
                 component="h6"
               >
                 Add-ons
@@ -2657,13 +2657,13 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           >
             <Content>
               <Content
-                className="kiali_f1ytdcfa"
+                className="kiali_f4ximkg"
               >
                 Cluster Status
               </Content>
               <React.Fragment>
                 <div
-                  className="kiali_f1syfrcf"
+                  className="kiali_f1mkymqb"
                 >
                   <PFBadge
                     badge={
@@ -2694,7 +2694,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <React.Fragment>
                   <React.Fragment>
                     <Content
-                      className="kiali_f139pqoy"
+                      className="kiali_f1u5qgrb"
                       component="h6"
                     >
                       Add-ons
