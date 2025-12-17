@@ -128,7 +128,10 @@ const (
 	// for all TLS connections.
 	openshiftOAuthServerCA = "/kiali-cabundle/oauth-server-ca.crt"
 
-	// openshiftServingCA is the OpenShift service CA injected by the service CA operator.
+	// openshiftServingCA is the OpenShift service CA. On OpenShift, the Kiali operator creates
+	// a ConfigMap with the service.beta.openshift.io/inject-cabundle annotation, which causes
+	// OpenShift's service-ca-operator to inject the cluster's service CA. This is then mounted
+	// to the Kiali pod via a projected volume at /kiali-cabundle/service-ca.crt.
 	openshiftServingCA = "/kiali-cabundle/service-ca.crt"
 
 	// openshiftServingCAFromSA is an alternate location for the OpenShift service CA
