@@ -238,16 +238,16 @@ func TestValidateConfiguration(t *testing.T) {
 	conf.ExternalServices.Tracing.Enabled = true
 	layer := getLayer(t, conf)
 
-	tracingConfig := config.TracingConfig{Enabled: true, InternalURL: "http://localhost", UseGRPC: false}
+	tracingConfig := config.TracingConfig{Enabled: true, InternalURL: "http://localhost:59999", UseGRPC: false}
 
-	validConfig := layer.Tracing.ValidateConfiguration(context.TODO(), config.NewConfig(), &tracingConfig, "")
+	validConfig := layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
 
 	assert.NotNil(validConfig)
 	assert.NotNil(validConfig.Error)
 	assert.Contains(validConfig.Error, "connection refused")
 
-	tracingConfig = config.TracingConfig{Enabled: false, InternalURL: "http://localhost", UseGRPC: false}
-	validConfig = layer.Tracing.ValidateConfiguration(context.TODO(), config.NewConfig(), &tracingConfig, "")
+	tracingConfig = config.TracingConfig{Enabled: false, InternalURL: "http://localhost:59999", UseGRPC: false}
+	validConfig = layer.Tracing.ValidateConfiguration(context.TODO(), conf, &tracingConfig, "")
 
 	assert.NotNil(validConfig)
 	assert.NotNil(validConfig.Error)
