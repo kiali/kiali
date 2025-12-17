@@ -61,6 +61,20 @@ export const globalStyle = kialiStyle({
         }
       }
     },
+    /**
+     * ChatBot docked mode should fit within the page drawer height
+     */
+    '& .pf-chatbot--docked': {
+      height: 'var(--kiali-chatbot-docked-height, 95vh) !important',
+      maxHeight: 'var(--kiali-chatbot-docked-height, 95vh) !important'
+    },
+
+    '& .pf-chatbot--fullscreen': {
+      height: 'var(--kiali-chatbot-fullscreen-height, 95vh) !important',
+      width: 'var(--kiali-chatbot-fullscreen-width, 95vw) !important',
+      maxHeight: 'var(--kiali-chatbot-fullscreen-height, 95vh) !important',
+      maxWidth: 'var(--kiali-chatbot-fullscreen-width, 95vw) !important'
+    },
 
     /**
      * Show graph legend

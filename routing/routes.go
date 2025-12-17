@@ -1709,6 +1709,29 @@ func NewRoutes(
 			HandlerFunc:   handlers.MetricsStats(conf, kialiCache, discovery, clientFactory, prom),
 			Authenticated: true,
 		},
+		// swagger:route POST /chat/ai chat aiChatAI
+		// ---
+		// Endpoint to chat with AI
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatAI",
+			log.ChatAILogName,
+			"POST",
+			"/api/chat/{modelName}/ai",
+			handlers.ChatAI(conf),
+			true,
+		},
 	}
 	return
 }

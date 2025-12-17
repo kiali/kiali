@@ -87,6 +87,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
+	github.com/sashabaranov/go-openai v1.41.2 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/vjeantet/grok v1.0.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
