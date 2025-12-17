@@ -87,33 +87,12 @@ export const setObserved = (setter: () => void): void => {
   })();
 };
 
-// Cache for elems to avoid repeated getElements() calls which are expensive
-let elemsCache: { controller: Controller; result: { edges: Edge[]; nodes: Node[] }; timestamp: number } | null = null;
-const CACHE_TTL = 16; // ~1 frame at 60fps
-
 export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
-  const now = performance.now();
-
-  // Use cache if available and recent
-  if (elemsCache && elemsCache.controller === c && now - elemsCache.timestamp < CACHE_TTL) {
-    return elemsCache.result;
-  }
-
   const elems = c.getElements();
-  const result = {
+  return {
     edges: elems.filter(e => isEdge(e)) as Edge[],
     nodes: elems.filter(e => isNode(e)) as Node[]
   };
-
-  // Update cache
-  elemsCache = { controller: c, timestamp: now, result };
-
-  return result;
-};
-
-// Clear cache when needed (e.g., after model updates)
-export const clearElemsCache = (): void => {
-  elemsCache = null;
 };
 
 export const ancestors = (node: Node): GraphElement[] => {

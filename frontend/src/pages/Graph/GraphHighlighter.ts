@@ -24,7 +24,7 @@ import { Edge, Node } from '@patternfly/react-topology';
 import { Controller, GraphElement } from '@patternfly/react-topology';
 import { BoxByType, NodeAttr } from 'types/Graph';
 import { NodeData } from './GraphElems';
-import { ancestors, predecessors, setObserved, successors, elems } from 'helpers/GraphHelpers';
+import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
 export class GraphHighlighter {
   controller: Controller;
@@ -70,10 +70,7 @@ export class GraphHighlighter {
 
   clearHighlighting = (): void => {
     setObserved(() => {
-      // Use cached elems to avoid expensive getElements() call
-      const { nodes, edges } = elems(this.controller);
-      const allElements = [...nodes, ...edges] as GraphElement[];
-      allElements.forEach(e => {
+      this.controller.getElements().forEach(e => {
         const data = e.getData() as NodeData;
         if (data.isHighlighted || data.isUnhighlighted) {
           e.setData({ ...data, isHighlighted: false, isUnhighlighted: false });
@@ -93,16 +90,10 @@ export class GraphHighlighter {
       });
 
       if (highlighted.unhighlightOthers) {
-        // Use cached elems to avoid expensive getElements() call
-        const { nodes, edges } = elems(this.controller);
-        const allElements = [...nodes, ...edges] as GraphElement[];
-        const highlightedIds = new Set(highlighted.toHighlight.map(e => e.getId()));
-        allElements.forEach(e => {
-          if (!highlightedIds.has(e.getId())) {
-            const data = e.getData() as NodeData;
-            if (!data.isHighlighted) {
-              e.setData({ ...data, isUnhighlighted: true });
-            }
+        this.controller.getElements().forEach(e => {
+          const data = e.getData() as NodeData;
+          if (!data.isHighlighted) {
+            e.setData({ ...data, isUnhighlighted: true });
           }
         });
       }
