@@ -23,6 +23,7 @@ import {
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { KialiDispatch } from 'types/Redux';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -74,8 +75,8 @@ const clusterStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   paddingTop: PFSpacer.xs,
-  fontSize: '14px',
-  fontWeight: 400
+  fontSize: PFFontSize.size14,
+  fontWeight: PFFontWeight.Regular
 });
 
 const addonLabelStyle = kialiStyle({
@@ -83,8 +84,8 @@ const addonLabelStyle = kialiStyle({
   marginTop: PFSpacer.xs,
   marginBottom: PFSpacer.xs,
   marginLeft: PFSpacer.sm,
-  fontSize: '12px',
-  fontWeight: 600
+  fontSize: PFFontSize.size12,
+  fontWeight: PFFontWeight.Semibold
 });
 
 const coreLabelStyle = kialiStyle({
@@ -92,8 +93,8 @@ const coreLabelStyle = kialiStyle({
   marginTop: PFSpacer.xs,
   marginBottom: PFSpacer.xs,
   marginLeft: PFSpacer.sm,
-  fontSize: '12px',
-  fontWeight: 600
+  fontSize: PFFontSize.size12,
+  fontWeight: PFFontWeight.Semibold
 });
 
 const addonListStyle = kialiStyle({
@@ -110,8 +111,8 @@ const dividerStyle = kialiStyle({
 });
 
 const clusterStatusHeaderStyle = kialiStyle({
-  fontSize: '14px',
-  fontWeight: 600,
+  fontSize: PFFontSize.size14,
+  fontWeight: PFFontWeight.Semibold,
   marginBottom: PFSpacer.xs
 });
 
