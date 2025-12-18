@@ -155,16 +155,15 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     setIsLayoutComplete(true);
   });
 
+  // Only include animationHash after layout is complete to maintain load optimization
+  const animationHashDependency = isLayoutComplete && hasAnimation ? animationHash : undefined;
+
   // Memoize start/end points to avoid recalculating on every render during initial load
   const memoizedStartEnd = React.useMemo(() => {
     const start = element.getStartPoint();
     const end = element.getEndPoint();
     return { start, end };
-  }, [
-    element,
-    // Only include animationHash after layout is complete to maintain load optimization
-    isLayoutComplete && hasAnimation ? animationHash : undefined
-  ]);
+  }, [element, animationHashDependency]);
 
   const startEnd =
     isLayoutComplete && hasAnimation
