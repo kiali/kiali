@@ -1,5 +1,6 @@
 import { defineConfig } from 'cypress';
 import { getAuthStrategy } from './cypress/plugins/setup';
+import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 
 /* eslint-disable import/no-default-export*/
 export default defineConfig({
@@ -15,6 +16,8 @@ export default defineConfig({
       config: Cypress.PluginConfigOptions
     ): Promise<Cypress.PluginConfigOptions> {
       config.env.cookie = false;
+
+      on('file:preprocessor', createBundler());
 
       // This name is non-standard and might change based on your environment hence the separate
       // env variable.
