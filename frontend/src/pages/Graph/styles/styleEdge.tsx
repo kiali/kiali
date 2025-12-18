@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
+import {
+  DefaultEdge,
+  Edge,
+  observer,
+  ScaleDetailsLevel,
+  WithSelectionProps,
+  useEventListener,
+  GRAPH_LAYOUT_END_EVENT,
+  GraphLayoutEndEventListener
+} from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -136,14 +145,31 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   }, [data, detailsLevel]);
 
   const hasAnimation = !!data.animation;
+  const animationHash = hasAnimation ? data.animation?.getHash(data) : undefined;
 
-  // Memoize start/end points to avoid recalculating on every render
-  // getStartPoint/getEndPoint can trigger getPointAtLength internally which is expensive
-  const startEnd = React.useMemo(() => {
+  // Track if initial layout is complete to maintain load optimization
+  const [isLayoutComplete, setIsLayoutComplete] = React.useState(false);
+
+  // Listen for layout end event to know when initial layout is complete
+  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, () => {
+    setIsLayoutComplete(true);
+  });
+
+  // Memoize start/end points to avoid recalculating on every render during initial load
+  const memoizedStartEnd = React.useMemo(() => {
     const start = element.getStartPoint();
     const end = element.getEndPoint();
     return { start, end };
-  }, [element]);
+  }, [
+    element,
+    // Only include animationHash after layout is complete to maintain load optimization
+    isLayoutComplete && hasAnimation ? animationHash : undefined
+  ]);
+
+  const startEnd =
+    isLayoutComplete && hasAnimation
+      ? { start: element.getStartPoint(), end: element.getEndPoint() }
+      : memoizedStartEnd;
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
