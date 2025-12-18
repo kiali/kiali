@@ -56,7 +56,7 @@ import (
 //
 // Certificate Pool:
 //   - Pass caBundlePaths to NewCredentialManager() to include custom CA bundles
-//   - Use GetCertPool() to get a clone of the managed certificate pool
+//   - Use GetCertPool() to get the managed certificate pool (treat it as read-only; it is swapped on rotation)
 //   - CA bundle files are watched and the pool is rebuilt automatically on changes
 //
 // Usage:
@@ -226,7 +226,8 @@ func (cm *CredentialManager) readCABundle(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-// GetCertPool returns a clone of the current certificate pool.
+// GetCertPool returns the current certificate pool.
+// Callers must treat the returned pool as read-only.
 func (cm *CredentialManager) GetCertPool() *x509.CertPool {
 	cm.mu.RLock()
 	pool := cm.certPool
@@ -237,7 +238,12 @@ func (cm *CredentialManager) GetCertPool() *x509.CertPool {
 		return x509.NewCertPool()
 	}
 
-	return pool.Clone()
+	// IMPORTANT: The returned pool must be treated as read-only by callers.
+	//
+	// This avoids per-call cloning costs (which can be substantial in hot paths like
+	// request-scoped TLS config creation). When CA bundles rotate, CredentialManager
+	// swaps the pool pointer with a newly built pool; it does not mutate existing pools.
+	return pool
 }
 
 // HasCustomCAs returns true if custom CA certificates were successfully loaded into the pool.
