@@ -159,11 +159,14 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const animationHashDependency = isLayoutComplete && hasAnimation ? animationHash : undefined;
 
   // Memoize start/end points to avoid recalculating on every render during initial load
-  const memoizedStartEnd = React.useMemo(() => {
-    const start = element.getStartPoint();
-    const end = element.getEndPoint();
-    return { start, end };
-  }, [element, animationHashDependency]);
+  const memoizedStartEnd = React.useMemo(
+    () => {
+      const start = element.getStartPoint();
+      const end = element.getEndPoint();
+      return { start, end };
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+    [element, animationHashDependency]
+  );
 
   const startEnd =
     isLayoutComplete && hasAnimation
