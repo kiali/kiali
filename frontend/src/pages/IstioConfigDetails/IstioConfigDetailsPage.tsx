@@ -180,13 +180,17 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             currentTab: activeTab(tabName, this.defaultTab())
           },
           () => {
-            setAIContext(this.props.dispatch, {
-              istioConfigDetails: {
-                details: this.state.istioObjectDetails,
-                validations: this.state.istioValidations,
-                cluster: this.state.cluster
-              }
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                istioConfigDetails: {
+                  details: this.state.istioObjectDetails,
+                  validations: this.state.istioValidations,
+                  cluster: this.state.cluster
+                }
+              },
+              `Istio Config Details of ${this.props.istioConfigId.objectName} in namespace ${this.props.istioConfigId.namespace}`
+            );
             this.resizeEditor();
           }
         );

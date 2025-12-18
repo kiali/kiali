@@ -153,13 +153,17 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             validations: results.validations
           },
           () => {
-            setAIContext(this.props.dispatch, {
-              serviceDetails: {
-                details: this.state.serviceDetails,
-                validations: this.state.validations,
-                cluster: this.state.cluster
-              }
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                serviceDetails: {
+                  details: this.state.serviceDetails,
+                  validations: this.state.validations,
+                  cluster: this.state.cluster
+                }
+              },
+              `Service Details of ${this.props.serviceId.service} in namespace ${this.props.serviceId.namespace}`
+            );
           }
         );
       })

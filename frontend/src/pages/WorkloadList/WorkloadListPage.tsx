@@ -211,9 +211,13 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           loaded: true
         });
 
-        setAIContext(this.props.dispatch, {
-          workloadList: sortedWorkloadsItems
-        });
+        setAIContext(
+          this.props.dispatch,
+          {
+            workloadList: sortedWorkloadsItems
+          },
+          `Workload List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {

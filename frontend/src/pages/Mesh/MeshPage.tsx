@@ -317,9 +317,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       }
     });
 
-    setAIContext(this.props.dispatch, {
-      mesh_definition: this.meshDataSource.meshDefinition
-    });
+    setAIContext(
+      this.props.dispatch,
+      {
+        mesh_definition: this.meshDataSource.meshDefinition
+      },
+      `Mesh status`
+    );
     this.props.setDefinition(this.meshDataSource.meshDefinition);
   };
 

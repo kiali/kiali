@@ -162,9 +162,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           loaded: true
         });
 
-        setAIContext(this.props.dispatch, {
-          appList: sortedAppListItems
-        });
+        setAIContext(
+          this.props.dispatch,
+          {
+            appList: sortedAppListItems
+          },
+          `App List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {

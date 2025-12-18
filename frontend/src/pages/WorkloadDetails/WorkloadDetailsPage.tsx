@@ -145,13 +145,17 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             )
           },
           () => {
-            setAIContext(this.props.dispatch, {
-              workloadDetails: {
-                details: this.state.workload,
-                health: this.state.health,
-                cluster: this.state.cluster
-              }
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                workloadDetails: {
+                  details: this.state.workload,
+                  health: this.state.health,
+                  cluster: this.state.cluster
+                }
+              },
+              `Workload Details of ${this.props.workloadId.workload} in namespace ${this.props.workloadId.namespace}`
+            );
           }
         );
       })

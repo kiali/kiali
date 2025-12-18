@@ -1,9 +1,13 @@
 import { MessageProps } from '@patternfly/chatbot';
 
+export type ContextRequest = {
+  page_description: string;
+  page_state: any;
+};
 type LLMRequest = {
   query: string;
   conversation_id?: string | null;
-  context?: string | null;
+  context: ContextRequest;
   media_type?: 'text/plain' | 'application/json';
 };
 

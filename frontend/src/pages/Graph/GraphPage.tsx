@@ -618,9 +618,13 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: graphTimestamp * 1000
       } as GraphData
     });
-    setAIContext(this.props.dispatch, {
-      graph_definition: this.graphDataSource.graphDefinition
-    });
+    setAIContext(
+      this.props.dispatch,
+      {
+        graph_definition: this.graphDataSource.graphDefinition
+      },
+      `Graph of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+    );
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 

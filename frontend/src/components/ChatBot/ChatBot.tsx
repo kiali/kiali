@@ -15,14 +15,14 @@ import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { useChatbot } from './useChatbot';
 import { ChatBotFooter } from './ChatBotFooter';
-import { ExtendedMessage, ModelAI } from 'types/Chatbot';
+import { ContextRequest, ExtendedMessage, ModelAI } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ToggleIcon } from './icons/ToogleIcon';
 
 type ReduxStateProps = {
   username: string;
-  context: any;
+  context: ContextRequest;
   models: ModelAI[];
   defaultModel: string;
 };

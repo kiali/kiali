@@ -116,14 +116,18 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
           },
           () => {
-            setAIContext(this.props.dispatch, {
-              appDetails: {
-                app: this.state.app,
-                health: this.state.health,
-                isSupported: this.state.isSupported,
-                cluster: this.state.cluster
-              }
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                appDetails: {
+                  app: this.state.app,
+                  health: this.state.health,
+                  isSupported: this.state.isSupported,
+                  cluster: this.state.cluster
+                }
+              },
+              `App Details of ${this.props.appId.app} in namespace ${this.props.appId.namespace}`
+            );
           }
         );
       })

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { AlertMessage, ChatRequest, ChatResponse, ExtendedMessage, ModelAI } from '../../types/Chatbot';
+import { AlertMessage, ChatRequest, ChatResponse, ContextRequest, ExtendedMessage, ModelAI } from '../../types/Chatbot';
 import {
   API_TIMEOUT,
   INITIAL_NOTICE,
@@ -96,7 +96,11 @@ export const useChatbot = (userName: string, model: ModelAI) => {
     return `${Date.now().toString(16)}-${random()}-${random()}`;
   };
 
-  const handleSend = async (query: string | number, context?: any, prompt: string | undefined = undefined) => {
+  const handleSend = async (
+    query: string | number,
+    context: ContextRequest,
+    prompt: string | undefined = undefined
+  ) => {
     const userMessage: ExtendedMessage = {
       role: 'user',
       content: prompt ? prompt : query.toString(),
@@ -113,12 +117,10 @@ export const useChatbot = (userName: string, model: ModelAI) => {
       setConversationId(nextConversationId);
     }
 
-    const ctxString = context == null ? null : typeof context === 'string' ? context : JSON.stringify(context);
-
     const chatRequest: ChatRequest = {
       conversation_id: nextConversationId,
       query: query.toString(),
-      context: ctxString
+      context: context
     };
     setIsLoading(true);
 

@@ -180,9 +180,13 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
             listItems: updatedList
           },
           () => {
-            setAIContext(this.props.dispatch, {
-              istioConfigList: updatedList
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                istioConfigList: updatedList
+              },
+              `Istio Config List of namespaces ${namespaces.join(',')}`
+            );
           }
         );
       })

@@ -318,19 +318,23 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
 
             await Promise.allSettled(tasks);
 
-            setAIContext(this.props.dispatch, {
-              overview: {
-                direction: this.state.direction,
-                displayMode: this.state.displayMode,
-                kind: this.state.kind,
-                loaded: this.state.loaded,
-                namespaces: this.state.namespaces,
-                nsTarget: this.state.nsTarget,
-                opTarget: this.state.opTarget,
-                showTrafficPoliciesModal: this.state.showTrafficPoliciesModal,
-                type: this.state.type
-              }
-            });
+            setAIContext(
+              this.props.dispatch,
+              {
+                overview: {
+                  direction: this.state.direction,
+                  displayMode: this.state.displayMode,
+                  kind: this.state.kind,
+                  loaded: this.state.loaded,
+                  namespaces: this.state.namespaces,
+                  nsTarget: this.state.nsTarget,
+                  opTarget: this.state.opTarget,
+                  showTrafficPoliciesModal: this.state.showTrafficPoliciesModal,
+                  type: this.state.type
+                }
+              },
+              `Overview of namespaces ${this.state.namespaces.map(ns => ns.name).join(',')}`
+            );
           }
         );
       })

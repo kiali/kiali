@@ -208,9 +208,13 @@ class ServiceListPageComponent extends FilterComponent.Component<
           loaded: true
         });
 
-        setAIContext(this.props.dispatch, {
-          serviceList: sortedServiceListItems
-        });
+        setAIContext(
+          this.props.dispatch,
+          {
+            serviceList: sortedServiceListItems
+          },
+          `Service List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {
