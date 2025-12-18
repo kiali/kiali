@@ -22,7 +22,7 @@ import {
   FocusNode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { addDanger, addError, addSuccess } from '../../utils/AlertUtils';
+import { addDanger, addError, addSuccess, addWarning } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
 import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
@@ -183,6 +183,7 @@ type WizardsData = {
 type GraphPageState = {
   graphData: GraphData;
   graphRefs?: GraphRefs;
+  initTime: number;
   isReady: boolean;
   showConfirmDeleteTrafficRouting: boolean;
   wizardsData: WizardsData;
@@ -331,6 +332,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: 0
       },
       isReady: false,
+      initTime: Date.now(),
       wizardsData: {
         showWizard: false,
         wizardType: '',
@@ -591,6 +593,16 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
   private handleReady = (refs: GraphRefs): void => {
     this.setState({ graphRefs: refs, isReady: true });
+
+    const loadingTime = (Date.now() - this.state.initTime) / 1000;
+    if (this.props.showTrafficAnimation && loadingTime > 10) {
+      const loadTimeSeconds = loadingTime.toFixed(1);
+      addWarning(
+        `The graph took ${loadTimeSeconds} seconds to load. Consider disabling traffic animation for better performance (>50%) on large graphs.`,
+        `Graph load time exceeded 10 seconds with traffic animation enabled`,
+        true
+      );
+    }
   };
 
   private handleEmptyGraphAction = (): void => {
@@ -741,6 +753,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   private loadGraphDataFromBackend = (): void => {
+    this.setState({ initTime: Date.now() });
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
       ? this.props.replayQueryTime
       : undefined;
