@@ -183,9 +183,14 @@ func TestOpenshiftAuthController(t *testing.T) {
 	})
 	require.True(nonceCookie.MaxAge < 0, "nonce cookie should have been dropped")
 	// Need to make sure that one is the session and one is the dropped nonce.
-	// Now use the one good cookie and create a malformed one then call validate and ensure that the malformed one gets dropped.
+	// Now use the one good cookie and create a malformed one then call validate.
+	// Note: The malformed cookie will be ignored (not returned as a valid session)
+	// but NOT actively dropped. This is intentional because we cannot distinguish
+	// between a malformed cookie and a valid chunk cookie - dropping cookies that
+	// fail to decrypt would corrupt chunked sessions.
+	// See: https://github.com/kiali/kiali/issues/8990
 	badCookie := &http.Cookie{
-		Name:    authentication.SessionCookieName + "-aes",
+		Name:    authentication.SessionCookieName + "-malformed",
 		Value:   "badvalue",
 		Expires: time.Now().Add(1 * time.Hour),
 	}
@@ -198,11 +203,10 @@ func TestOpenshiftAuthController(t *testing.T) {
 	_, err = authController.ValidateSession(r, w)
 	require.NoError(err)
 
+	// Malformed cookies are no longer dropped in ReadAllSessions to avoid
+	// corrupting chunked sessions. The malformed cookie is simply ignored.
 	cookies = w.Result().Cookies()
-	require.Len(cookies, 1)
-
-	badCookie = cookies[0]
-	require.True(badCookie.MaxAge < 0, "bad cookie should have been dropped")
+	require.Len(cookies, 0, "no cookies should be dropped; malformed cookies are ignored, not dropped")
 }
 
 func TestUnauthorizedUserSessionGetsDropped(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -759,21 +760,24 @@ func TestTerminateSessionClearsSessionWithTwoChunks(t *testing.T) {
 	expireTime := now.Add(time.Hour)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
-	request.AddCookie(&http.Cookie{
+	cookie := http.Cookie{
 		Name:    SessionCookieName,
 		Value:   "",
 		Expires: expireTime,
-	})
-	request.AddCookie(&http.Cookie{
+	}
+	request.AddCookie(&cookie)
+	cookie = http.Cookie{
 		Name:    NumberOfChunksCookieName,
 		Value:   "2",
 		Expires: expireTime,
-	})
-	request.AddCookie(&http.Cookie{
+	}
+	request.AddCookie(&cookie)
+	cookie = http.Cookie{
 		Name:    SessionCookieName + "-1",
 		Value:   "x",
 		Expires: expireTime,
-	})
+	}
+	request.AddCookie(&cookie)
 
 	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
 	require.NoError(err)
@@ -783,17 +787,287 @@ func TestTerminateSessionClearsSessionWithTwoChunks(t *testing.T) {
 
 	response := rr.Result()
 	require.Len(response.Cookies(), 3)
+	// Sort by name to ensure the order is correct
+	cookies := response.Cookies()
+	slices.SortStableFunc(cookies, func(a, b *http.Cookie) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	assert.Equal(t, SessionCookieName, cookies[0].Name)
+	assert.Equal(t, SessionCookieName+"-1", cookies[1].Name)
+	assert.Equal(t, NumberOfChunksCookieName, cookies[2].Name)
 
-	// Verify all cookies are dropped
-	droppedNames := make(map[string]bool)
-	for _, c := range response.Cookies() {
-		droppedNames[c.Name] = true
-		assert.True(t, c.Expires.Before(util.Clock.Now()), "cookie %s should be expired", c.Name)
-		assert.Equal(t, "/kiali-app", c.Path)
-		assert.Empty(t, c.Value)
+	for i := 0; i < 3; i++ {
+		assert.True(t, cookies[i].Expires.Before(util.Clock.Now()))
+		assert.Equal(t, "/kiali-app", cookies[i].Path)
+		assert.Empty(t, cookies[i].Value)
+	}
+}
+
+// TestReadAllSessions_DoesNotDropChunkCookies verifies that ReadAllSessions does not
+// corrupt a valid multi-cookie (chunked) session.
+//
+// Specifically, when a session payload is split across multiple cookies, we must not
+// mistakenly treat the continuation chunk cookies or the chunks-count cookie as if they
+// were independently decryptable sessions. If we did, we'd fail to decrypt and might
+// delete those cookies, breaking the session for subsequent requests.
+//
+// NOTE: This test failed on master prior to the fix for https://github.com/kiali/kiali/issues/8990.
+func TestReadAllSessions_DoesNotDropChunkCookies(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Create a payload large enough to require chunking.
+	largePayload := testSessionPayload{
+		FirstField: strings.Repeat("X", SessionCookieMaxSize*2),
 	}
 
-	assert.True(t, droppedNames[SessionCookieName], "main session cookie should be dropped")
-	assert.True(t, droppedNames[NumberOfChunksCookieName], "chunks count cookie should be dropped")
-	assert.True(t, droppedNames[SessionCookieName+"-1"], "chunk cookie should be dropped")
+	expiresTime := clockTime.Add(time.Hour)
+	cookies := newValidSessionCookies(t, persistor, "", conf.Auth.Strategy, expiresTime, largePayload)
+
+	// Verify that we have chunked cookies (chunk #0 cookie + continuation chunk cookies + chunks-count cookie)
+	cookieNames := make([]string, len(cookies))
+	for i, c := range cookies {
+		cookieNames[i] = c.Name
+	}
+	require.Contains(cookieNames, SessionCookieName)
+	require.Contains(cookieNames, SessionCookieName+"-1")
+	require.Contains(cookieNames, NumberOfChunksCookieName)
+
+	// Simulate a request with all these cookies.
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	for _, cookie := range cookies {
+		request.AddCookie(cookie)
+	}
+
+	// Call ReadAllSessions.
+	readRR := httptest.NewRecorder()
+	sessions, err := persistor.ReadAllSessions(request, readRR)
+
+	// ReadAllSessions must not drop any cookies while reading sessions.
+	assert.Empty(t, readRR.Result().Cookies(),
+		"ReadAllSessions should not drop any cookies when processing chunked sessions")
+
+	require.NoError(err)
+	require.Len(sessions, 1, "Should have exactly one session")
+	require.NotNil(sessions[0].Payload)
+	assert.Equal(t, largePayload.FirstField, sessions[0].Payload.FirstField)
+}
+
+// TestChunksCookieIsKeyedInCreateSession verifies that CreateSession creates a per-session
+// keyed chunks-count cookie.
+//
+// This prevents collisions when multiple sessions co-exist (e.g. multi-cluster), where two
+// different sessions might be chunked at the same time. Without keying, one session would
+// overwrite the other's chunk-count metadata and break session restoration.
+//
+// NOTE: This test failed on master prior to the fix for https://github.com/kiali/kiali/issues/8990.
+func TestChunksCookieIsKeyedInCreateSession(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	largePayload := testSessionPayload{
+		FirstField: strings.Repeat("X", SessionCookieMaxSize*2),
+	}
+
+	expiresTime := clockTime.Add(time.Hour)
+	cookies := newValidSessionCookies(t, persistor, "cluster1", conf.Auth.Strategy, expiresTime, largePayload)
+
+	expectedChunksCookieName := sessionCookieName(NumberOfChunksCookieName, "cluster1")
+
+	var chunksCookieName string
+	for _, cookie := range cookies {
+		if strings.Contains(cookie.Name, "chunks") {
+			chunksCookieName = cookie.Name
+			break
+		}
+	}
+
+	assert.Equal(t, expectedChunksCookieName, chunksCookieName,
+		"Chunks cookie should be keyed per session")
+}
+
+// TestTerminateSessionDropsKeyedChunksCookie verifies that TerminateSession cleans up all
+// cookies associated with a keyed chunked session, including the keyed chunks-count cookie.
+//
+// This ensures logout/session-termination fully removes the session, and also avoids leaving
+// stale chunk-count cookies that could interfere with later sessions.
+//
+// NOTE: This test failed on master prior to the fix for https://github.com/kiali/kiali/issues/8990.
+func TestTerminateSessionDropsKeyedChunksCookie(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	largePayload := testSessionPayload{
+		FirstField: strings.Repeat("X", SessionCookieMaxSize*2),
+	}
+
+	expiresTime := clockTime.Add(time.Hour)
+	createdCookies := newValidSessionCookies(t, persistor, "cluster1", conf.Auth.Strategy, expiresTime, largePayload)
+
+	terminateRequest := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	for _, cookie := range createdCookies {
+		terminateRequest.AddCookie(cookie)
+	}
+
+	terminateRR := httptest.NewRecorder()
+	persistor.TerminateSession(terminateRequest, terminateRR, "cluster1")
+
+	droppedCookies := terminateRR.Result().Cookies()
+	droppedCookieNames := make([]string, len(droppedCookies))
+	for i, c := range droppedCookies {
+		droppedCookieNames[i] = c.Name
+	}
+
+	keyedChunksCookieName := sessionCookieName(NumberOfChunksCookieName, "cluster1")
+	assert.Contains(t, droppedCookieNames, keyedChunksCookieName,
+		"TerminateSession should drop the keyed chunks cookie")
+
+	assert.Contains(t, droppedCookieNames, "kiali-token-cluster1")
+	assert.Contains(t, droppedCookieNames, "kiali-token-cluster1-1")
+}
+
+// TestMultipleKeyedSessionsDoNotCollide verifies that multiple keyed sessions can coexist in the
+// same request even when both sessions are chunked.
+//
+// It proves each session has its own chunks-count cookie and that both sessions can be restored
+// correctly from the combined cookie set.
+//
+// NOTE: This test failed on master prior to the fix for https://github.com/kiali/kiali/issues/8990.
+func TestMultipleKeyedSessionsDoNotCollide(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	expiresTime := clockTime.Add(time.Hour)
+
+	// Ensure both sessions are chunked, with different sizes.
+	cluster1Payload := testSessionPayload{
+		FirstField: strings.Repeat("X", SessionCookieMaxSize*2),
+	}
+	cluster2Payload := testSessionPayload{
+		FirstField: strings.Repeat("Y", SessionCookieMaxSize*3),
+	}
+
+	cluster1Cookies := newValidSessionCookies(t, persistor, "cluster1", conf.Auth.Strategy, expiresTime, cluster1Payload)
+	cluster2Cookies := newValidSessionCookies(t, persistor, "cluster2", conf.Auth.Strategy, expiresTime, cluster2Payload)
+
+	var chunks1CookieName string
+	for _, c := range cluster1Cookies {
+		if strings.Contains(c.Name, "chunks") {
+			chunks1CookieName = c.Name
+			break
+		}
+	}
+	var chunks2CookieName string
+	for _, c := range cluster2Cookies {
+		if strings.Contains(c.Name, "chunks") {
+			chunks2CookieName = c.Name
+			break
+		}
+	}
+	require.NotEmpty(chunks1CookieName, "Cluster1 should have a chunks cookie")
+	require.NotEmpty(chunks2CookieName, "Cluster2 should have a chunks cookie")
+
+	assert.Equal(t, "kiali-token-chunks-cluster1", chunks1CookieName)
+	assert.Equal(t, "kiali-token-chunks-cluster2", chunks2CookieName)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	for _, c := range cluster1Cookies {
+		request.AddCookie(c)
+	}
+	for _, c := range cluster2Cookies {
+		request.AddCookie(c)
+	}
+
+	sData1, err := persistor.ReadSession(request, httptest.NewRecorder(), "cluster1")
+	require.NoError(err)
+	require.NotNil(sData1)
+	require.NotNil(sData1.Payload)
+	assert.Equal(t, cluster1Payload.FirstField, sData1.Payload.FirstField)
+
+	sData2, err := persistor.ReadSession(request, httptest.NewRecorder(), "cluster2")
+	require.NoError(err)
+	require.NotNil(sData2)
+	require.NotNil(sData2.Payload)
+	assert.Equal(t, cluster2Payload.FirstField, sData2.Payload.FirstField)
+}
+
+// TestReadAllSessions_WorksWithNumericEndingKeys verifies that ReadAllSessions correctly returns
+// a session whose key ends with a numeric segment (e.g. "cluster-1").
+//
+// This guards against implementations that try to infer "chunk #0 cookie" vs "continuation chunk cookie"
+// solely from a numeric-looking cookie name suffix.
+func TestReadAllSessions_WorksWithNumericEndingKeys(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	payload := testSessionPayload{FirstField: "session-for-cluster-1"}
+	expiresTime := clockTime.Add(time.Hour)
+	cookies := newValidSessionCookies(t, persistor, "cluster-1", conf.Auth.Strategy, expiresTime, payload)
+
+	require.Len(cookies, 1, "Non-chunked session should have exactly 1 cookie")
+	assert.Equal(t, "kiali-token-cluster-1", cookies[0].Name)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	request.AddCookie(cookies[0])
+
+	readRR := httptest.NewRecorder()
+	sessions, err := persistor.ReadAllSessions(request, readRR)
+
+	require.NoError(err)
+	require.Len(sessions, 1, "Should find exactly one session")
+	require.NotNil(sessions[0].Payload)
+	assert.Equal(t, "cluster-1", sessions[0].Cluster)
+	assert.Equal(t, payload.FirstField, sessions[0].Payload.FirstField)
+
+	assert.Empty(t, readRR.Result().Cookies(), "No cookies should be dropped")
 }
