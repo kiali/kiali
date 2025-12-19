@@ -6,7 +6,7 @@ import { NotificationCenterActions } from '../../actions/NotificationCenterActio
 describe('NotificationCenterReducer reducer', () => {
   const RealDate = Date;
 
-  const mockDate = date => {
+  const mockDate = (date: any): any => {
     global.Date = jest.fn(() => date) as any;
     return date;
   };
@@ -78,7 +78,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: true,
               content: 'my new message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.WARNING,
               count: 1,
               firstTriggered: undefined,
@@ -109,7 +109,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.WARNING,
                   count: 1,
                   firstTriggered: undefined,
@@ -136,7 +136,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: true,
               content: 'my new message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.WARNING,
               count: 2,
               firstTriggered: date,
@@ -167,7 +167,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -178,7 +178,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.DANGER,
                   count: 1,
                   created: date
@@ -189,7 +189,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: false,
                   content: 'other',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.INFO,
                   count: 1,
                   created: date
@@ -215,7 +215,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: false,
               content: 'other message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.DANGER,
               count: 1,
               created: date
@@ -245,7 +245,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -256,7 +256,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: false,
                   content: 'other message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.DANGER,
                   count: 1,
                   created: date
@@ -267,7 +267,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: false,
                   content: 'other',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.INFO,
                   count: 1,
                   created: date
@@ -293,7 +293,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: false,
               content: 'my new message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.WARNING,
               count: 1,
               created: date
@@ -304,7 +304,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: false,
               content: 'other message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.DANGER,
               count: 1,
               created: date
@@ -315,7 +315,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: false,
               content: 'other',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.INFO,
               count: 1,
               created: date
@@ -345,7 +345,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: true,
                   content: 'my new message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.WARNING,
                   count: 1,
                   created: date
@@ -356,7 +356,7 @@ describe('NotificationCenterReducer reducer', () => {
                   isAlert: true,
                   content: 'other message',
                   detail: 'my detail',
-                  showDetail: false,
+                  showDetail: true,
                   type: MessageType.DANGER,
                   count: 1,
                   created: date
@@ -382,7 +382,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: false,
               content: 'my new message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.WARNING,
               count: 1,
               created: date
@@ -393,7 +393,7 @@ describe('NotificationCenterReducer reducer', () => {
               isAlert: true,
               content: 'other message',
               detail: 'my detail',
-              showDetail: false,
+              showDetail: true,
               type: MessageType.DANGER,
               count: 1,
               created: date

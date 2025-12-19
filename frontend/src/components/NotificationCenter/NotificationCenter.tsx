@@ -7,6 +7,8 @@ import {
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
+  ExpandableSection,
+  ExpandableSectionToggle,
   MenuToggle,
   NotificationDrawer,
   NotificationDrawerBody,
@@ -18,9 +20,17 @@ import {
   NotificationDrawerListItemBody,
   NotificationDrawerListItemHeader
 } from '@patternfly/react-core';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InfoCircleIcon
+} from '@patternfly/react-icons';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import SearchIcon from '@patternfly/react-icons/dist/esm/icons/search-icon';
+import TrashIcon from '@patternfly/react-icons/dist/esm/icons/trash-icon';
 import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
@@ -35,12 +45,12 @@ type ReduxStateProps = {
 };
 
 type ReduxDispatchProps = {
-  markAsRead: (message) => void;
   clearGroup: (group) => void;
   clearMessage: (message) => void;
+  markAsRead: (message) => void;
   markGroupAsRead: (group) => void;
-  toggleNotificationCenter: () => void;
   toggleMessageDetail: (message) => void;
+  toggleNotificationCenter: () => void;
 };
 
 type NotificationCenterProps = ReduxStateProps & ReduxDispatchProps;
@@ -65,32 +75,32 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     [toggleId: string]: boolean;
   }
 
-  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState<ActionsMenu | {}>({});
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState<ActionsMenu>({});
 
-  const onToggle = (id: string) => {
+  const onToggle = (id: string): void => {
     setIsActionsMenuOpen({ [id]: !isActionsMenuOpen[id] });
   };
 
-  const closeActionsMenu = () => setIsActionsMenuOpen({});
+  const closeActionsMenu = (): void => setIsActionsMenuOpen({});
 
-  const clearAll = () => {
+  const clearAll = (): void => {
     props.groups.forEach(g => {
       props.clearGroup(g);
     });
     setExpandedGroupIds(new Set());
   };
 
-  const markAllRead = () => {
+  const markAllRead = (): void => {
     props.groups.forEach(g => {
       props.markGroupAsRead(g);
     });
   };
 
-  const markRead = (message: NotificationMessage) => {
+  const markRead = (message: NotificationMessage): void => {
     props.markAsRead(message);
   };
 
-  const getNumberUnread = (group?: NotificationGroup) => {
+  const getNumberUnread = (group?: NotificationGroup): number => {
     if (!group) {
       let numUnread = 0;
       props.groups.forEach(g => {
@@ -102,7 +112,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     return group.messages.filter(m => !m.seen).length;
   };
 
-  const toggleGroupExpanded = (groupId: string) => (_event: React.MouseEvent, isExpanded: boolean) => {
+  const toggleGroupExpanded = (groupId: string, isExpanded): void => {
     setExpandedGroupIds(prev => {
       const newSet = new Set(prev);
       if (isExpanded) {
@@ -125,35 +135,80 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     </>
   );
 
-  const notificationDrawerDropdownItems = (message: NotificationMessage) => (
-    <>
-      <DropdownItem key="messageClear" onClick={() => props.clearMessage(message)}>
-        {t('Clear')}
-      </DropdownItem>
-      {message.detail && message.showDetail && (
-        <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
-          {t('Hide Detail')}
-        </DropdownItem>
-      )}
-      {message.detail && !message.showDetail && (
-        <DropdownItem key="messageDetail" onClick={() => props.toggleMessageDetail(message)}>
-          {t('Show Detail')}
-        </DropdownItem>
-      )}
-    </>
-  );
-
   const getGroupTitle = (group: NotificationGroup): React.ReactNode => {
+    let StatusIcon: React.ComponentClass<SVGIconProps>;
+    let iconColor: string;
     switch (group.variant) {
       case 'danger':
-        return <span style={{ color: PFColors.Danger }}>{t(group.title)}</span>;
+        StatusIcon = ExclamationCircleIcon;
+        iconColor = PFColors.Danger;
+        break;
       case 'warning':
-        return <span style={{ color: PFColors.Warning }}>{t(group.title)}</span>;
+        StatusIcon = ExclamationTriangleIcon;
+        iconColor = PFColors.Warning;
+        break;
       case 'success':
-        return <span style={{ color: PFColors.Success }}>{t(group.title)}</span>;
+        StatusIcon = CheckCircleIcon;
+        iconColor = PFColors.Success;
+        break;
       default:
-        return <span style={{ color: PFColors.Info }}>{t(group.title)}</span>;
+        StatusIcon = InfoCircleIcon;
+        iconColor = PFColors.Info;
     }
+    return (
+      <span>
+        <StatusIcon style={{ color: iconColor, marginRight: '0.5em' }} />
+        {t(group.title)}
+      </span>
+    );
+  };
+
+  const formatTimestamp = (date: Date): string => {
+    const now = moment();
+    const created = moment(date);
+    const diffMinutes = now.diff(created, 'minutes');
+
+    if (diffMinutes < 60) {
+      return created.fromNow();
+    }
+    return date.toLocaleString();
+  };
+
+  const formatDetail = (message: NotificationMessage): React.ReactNode => {
+    if (!message.detail) {
+      return '';
+    }
+
+    const detail = message.detail;
+    if (detail.length > 150 || detail.split('\n').length > 3) {
+      const toggleId = `toggle-${message.id}`;
+      const contentId = `content-${message.id}`;
+      return (
+        <>
+          <ExpandableSectionToggle
+            style={{ marginLeft: '-0.75em', paddingLeft: 0 }}
+            isExpanded={message.showDetail}
+            onToggle={() => props.toggleMessageDetail(message)}
+            toggleId={toggleId}
+            contentId={contentId}
+            direction="down"
+          >
+            {message.showDetail ? t('Hide Detail') : t('Show Detail')}
+          </ExpandableSectionToggle>
+          <ExpandableSection
+            isExpanded={message.showDetail}
+            isDetached
+            direction="up"
+            toggleId={toggleId}
+            contentId={contentId}
+          >
+            <span style={{ whiteSpace: 'pre-wrap' }}>{detail}</span>
+          </ExpandableSection>
+        </>
+      );
+    }
+
+    return <span style={{ whiteSpace: 'pre-wrap' }}>{message.detail}</span>;
   };
 
   return (
@@ -188,7 +243,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
               title={getGroupTitle(group)}
               isExpanded={expandedGroupIds.has(group.id)}
               count={getNumberUnread(group)}
-              onExpand={toggleGroupExpanded(group.id)}
+              onExpand={(_, isExpanded) => toggleGroupExpanded(group.id, isExpanded)}
             >
               <NotificationDrawerList isHidden={!expandedGroupIds.has(group.id)}>
                 {group.messages.length === 0 ? (
@@ -209,34 +264,35 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                       isRead={!message.seen}
                     >
                       <NotificationDrawerListItemHeader title={message.content} variant={message.type}>
-                        <Dropdown
-                          onSelect={closeActionsMenu}
-                          isOpen={isActionsMenuOpen[`toggle-${message.id}`] || false}
-                          id={`notification-${message.id}`}
-                          onOpenChange={(isOpen: boolean) => !isOpen && closeActionsMenu()}
-                          popperProps={{ position: 'right' }}
-                          toggle={(toggleRef: React.RefObject<any>) => (
-                            <MenuToggle
-                              ref={toggleRef}
-                              id={`toggle-${message.id}`}
-                              aria-label={t('Notification drawer actions')}
-                              variant="plain"
-                              onClick={() => onToggle(`toggle-${message.id}`)}
-                              isExpanded={isActionsMenuOpen[`toggle-${message.id}`] || false}
-                              icon={<EllipsisVIcon />}
-                            />
-                          )}
-                        >
-                          <DropdownList>{notificationDrawerDropdownItems(message)}</DropdownList>
-                        </Dropdown>
+                        <TrashIcon
+                          style={{ cursor: 'pointer', marginLeft: '0.5em', marginTop: '0.75em' }}
+                          onClick={e => {
+                            e.stopPropagation();
+                            props.clearMessage(message);
+                          }}
+                          aria-label={t('Clear message')}
+                        />
                       </NotificationDrawerListItemHeader>
-                      <NotificationDrawerListItemBody timestamp={message.created.toLocaleString()}>
-                        {message.showDetail && message.detail}
-                        {message.count > 1 && (
-                          <div>
-                            {message.count} {moment().from(message.firstTriggered)}
+                      <NotificationDrawerListItemBody>
+                        <div style={{ marginLeft: '1.6em', paddingLeft: 0 }}>
+                          {formatDetail(message)}
+                          <div
+                            className="pf-v6-c-notification-drawer__list-item-timestamp"
+                            style={{
+                              marginTop: '1em',
+                              marginBottom: 0,
+                              display: 'flex',
+                              justifyContent: 'space-between'
+                            }}
+                          >
+                            <span>{formatTimestamp(message.created)}</span>
+                            {message.count > 1 && (
+                              <span>
+                                {message.count} {moment().from(message.firstTriggered)}
+                              </span>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </NotificationDrawerListItemBody>
                     </NotificationDrawerListItem>
                   ))
