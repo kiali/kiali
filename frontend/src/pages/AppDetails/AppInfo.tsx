@@ -60,10 +60,11 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
     const miniGraphSpan = 8;
+    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1rem)` : '100%';
     return (
-      <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-        <Grid hasGutter={true} className={gridStyle}>
-          <GridItem span={4}>
+      <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
+        <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+          <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
             <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
           </GridItem>
 
