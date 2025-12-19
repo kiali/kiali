@@ -20,6 +20,13 @@ import {
   NotificationDrawerListItemBody,
   NotificationDrawerListItemHeader
 } from '@patternfly/react-core';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InfoCircleIcon
+} from '@patternfly/react-icons';
+import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import SearchIcon from '@patternfly/react-icons/dist/esm/icons/search-icon';
@@ -129,16 +136,31 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   );
 
   const getGroupTitle = (group: NotificationGroup): React.ReactNode => {
+    let StatusIcon: React.ComponentClass<SVGIconProps>;
+    let iconColor: string;
     switch (group.variant) {
       case 'danger':
-        return <span style={{ color: PFColors.Danger }}>{t(group.title)}</span>;
+        StatusIcon = ExclamationCircleIcon;
+        iconColor = PFColors.Danger;
+        break;
       case 'warning':
-        return <span style={{ color: PFColors.Warning }}>{t(group.title)}</span>;
+        StatusIcon = ExclamationTriangleIcon;
+        iconColor = PFColors.Warning;
+        break;
       case 'success':
-        return <span style={{ color: PFColors.Success }}>{t(group.title)}</span>;
+        StatusIcon = CheckCircleIcon;
+        iconColor = PFColors.Success;
+        break;
       default:
-        return <span style={{ color: PFColors.Info }}>{t(group.title)}</span>;
+        StatusIcon = InfoCircleIcon;
+        iconColor = PFColors.Info;
     }
+    return (
+      <span>
+        <StatusIcon style={{ color: iconColor, marginRight: '0.5em' }} />
+        {t(group.title)}
+      </span>
+    );
   };
 
   const formatTimestamp = (date: Date): string => {
@@ -163,6 +185,16 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
       const contentId = `content-${message.id}`;
       return (
         <>
+          <ExpandableSectionToggle
+            style={{ marginLeft: '-0.75em', paddingLeft: 0 }}
+            isExpanded={message.showDetail}
+            onToggle={() => props.toggleMessageDetail(message)}
+            toggleId={toggleId}
+            contentId={contentId}
+            direction="down"
+          >
+            {message.showDetail ? t('Hide Detail') : t('Show Detail')}
+          </ExpandableSectionToggle>
           <ExpandableSection
             isExpanded={message.showDetail}
             isDetached
@@ -172,15 +204,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
           >
             <span style={{ whiteSpace: 'pre-wrap' }}>{detail}</span>
           </ExpandableSection>
-          <ExpandableSectionToggle
-            isExpanded={message.showDetail}
-            onToggle={() => props.toggleMessageDetail(message)}
-            toggleId={toggleId}
-            contentId={contentId}
-            direction="up"
-          >
-            {message.showDetail ? t('Hide Detail') : t('Show Detail')}
-          </ExpandableSectionToggle>
         </>
       );
     }
@@ -250,16 +273,26 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                           aria-label={t('Clear message')}
                         />
                       </NotificationDrawerListItemHeader>
-                      <NotificationDrawerListItemBody timestamp={formatTimestamp(message.created)}>
-                        {formatDetail(message)}
-                        {message.count > 1 && (
+                      <NotificationDrawerListItemBody>
+                        <div style={{ marginLeft: '1.6em', paddingLeft: 0 }}>
+                          {formatDetail(message)}
                           <div
                             className="pf-v6-c-notification-drawer__list-item-timestamp"
-                            style={{ marginTop: '1em', marginBottom: 0 }}
+                            style={{
+                              marginTop: '1em',
+                              marginBottom: 0,
+                              display: 'flex',
+                              justifyContent: 'space-between'
+                            }}
                           >
-                            {message.count} {moment().from(message.firstTriggered)}
+                            <span>{formatTimestamp(message.created)}</span>
+                            {message.count > 1 && (
+                              <span>
+                                {message.count} {moment().from(message.firstTriggered)}
+                              </span>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </NotificationDrawerListItemBody>
                     </NotificationDrawerListItem>
                   ))
