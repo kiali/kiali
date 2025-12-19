@@ -3,11 +3,18 @@ package ai
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"net/http"
 
-	"github.com/kiali/kiali/business/ai/tools"
+	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -30,9 +37,9 @@ func NewOpenAIProvider(model *config.AIModel) *OpenAIProvider {
 	}
 }
 
-func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandlers []tools.ToolHandler) (*AIResponse, error) {
+func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandlers []mcp.ToolHandler, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*AIResponse, int) {
 	if req.Query == "" {
-		return nil, errors.New("query is required")
+		return &AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
 	pageState := "null"
 	if len(req.Context.PageState) > 0 {
@@ -41,7 +48,7 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 
 	// Prepare tool definitions and lookup
 	toolDefs := make([]openai.Tool, 0, len(toolHandlers))
-	handlerByName := make(map[string]tools.ToolHandler, len(toolHandlers))
+	handlerByName := make(map[string]mcp.ToolHandler, len(toolHandlers))
 	for _, h := range toolHandlers {
 		def := h.Definition()
 		toolDefs = append(toolDefs, def)
@@ -74,11 +81,11 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 	)
 	
 	if err != nil {
-		return nil, err
+		return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
 	
 	if len(resp.Choices) == 0 {
-		return nil, errors.New("openai returned no choices")
+		return &AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
 	msg := resp.Choices[0].Message
 
@@ -91,18 +98,18 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 			log.Debugf("Calling tool: %+v with arguments: %+v", toolCall.Function.Name, args)
 			handler, ok := handlerByName[toolCall.Function.Name]
 			if !ok {
-				return nil, errors.New("tool handler not found: " + toolCall.Function.Name)
+				return &AIResponse{Error: "tool handler not found: " + toolCall.Function.Name}, http.StatusInternalServerError
 			}
-			mcpResult, err := handler.Call(ctx, args)
-			log.Debugf("Tool result: %+v", mcpResult)
-			if err != nil {
-				return nil, err
+			mcpResult, code := handler.Call(ctx, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+			if code != http.StatusOK {
+				return &AIResponse{Error: "failed to call tool"}, http.StatusInternalServerError
 			}
 
 			toolContent, err := formatToolContent(mcpResult)
 			if err != nil {
-				return nil, err
+				return &AIResponse{Error: "failed to format tool content"}, http.StatusInternalServerError
 			}
+			log.Debugf("Tool result: %s", toolContent)
 
 			messages = append(messages, openai.ChatCompletionMessage{
 				Role:       openai.ChatMessageRoleTool,
@@ -117,14 +124,14 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 			Messages: messages,
 		})
 		if err != nil {
-			return nil, err
+			return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
 
-		return &AIResponse{Answer: finalResp.Choices[0].Message.Content}, nil
+		return &AIResponse{Answer: finalResp.Choices[0].Message.Content}, http.StatusOK
 	}
 
 	log.Debugf("OpenAI response: %+v", msg.Content)
-	return &AIResponse{Answer: msg.Content}, nil
+	return &AIResponse{Answer: msg.Content}, http.StatusOK
 }
 
 func formatToolContent(result interface{}) (string, error) {

@@ -21,4 +21,5 @@ type AIResponse struct {
 	//Citations  []string `json:"citations,omitempty"`
 	//UsedModels []string `json:"used_models,omitempty"`
 	//Truncated  bool     `json:"truncated,omitempty"`
+	Error      string    `json:"error,omitempty"`
 }

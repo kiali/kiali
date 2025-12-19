@@ -1729,7 +1729,7 @@ func NewRoutes(
 			log.ChatAILogName,
 			"POST",
 			"/api/chat/{modelName}/ai",
-			handlers.ChatAI(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
+			handlers.ChatAI(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
 	}

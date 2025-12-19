@@ -17,7 +17,6 @@ import (
 // needs to be saved across layers is saved in the Kiali Cache.
 type Layer struct {
 	App            AppService
-	AI             AiService
 	Health         HealthService
 	IstioConfig    IstioConfigService
 	IstioStatus    IstioStatusService
@@ -50,7 +49,6 @@ func newLayer(
 
 	// TODO: Modify the k8s argument to other services to pass the whole k8s map if needed
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, prom, grafana, userClients)
-	temporaryLayer.AI = NewAIService(temporaryLayer, conf, prom, grafana, userClients)
 	temporaryLayer.Health = NewHealthService(temporaryLayer, conf, prom, userClients)
 	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, saClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
 	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload)
