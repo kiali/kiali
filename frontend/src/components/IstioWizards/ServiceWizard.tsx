@@ -854,15 +854,15 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
 
     const isTrafficShifting =
