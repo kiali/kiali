@@ -100,9 +100,10 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 	}
 
 	return &UserSessionData{
-		ExpiresOn: timeExpire,
-		Username:  tokenSubject,
 		AuthInfo:  authInfo,
+		ExpiresOn: timeExpire,
+		SessionID: sessionData.SessionID,
+		Username:  tokenSubject,
 	}, nil
 }
 

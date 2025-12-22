@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -47,10 +49,6 @@ const (
 // ErrSessionNotFound is returned when a session or sessions do not exist.
 var ErrSessionNotFound = errors.New("not found")
 
-// AnonymousSessionID is the session ID used for anonymous/unauthenticated users.
-// All anonymous users share this single session ID.
-const AnonymousSessionID = "anonymous-shared"
-
 func sessionCookieName(cookieName, key string) string {
 	if key != "" {
 		cookieName = cookieName + "-" + key
@@ -63,7 +61,7 @@ func sessionCookieChunkName(cookieName string, chunkNum int) string {
 }
 
 // NewSessionData create a new session object that you can then pass to CreateSession.
-func NewSessionData[T any](key string, strategy string, expiresOn time.Time, payload *T) (*SessionData[T], error) {
+func NewSessionData[T any](cluster string, strategy string, expiresOn time.Time, payload *T) (*SessionData[T], error) {
 	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
 	// different strategy and drop any stale session. The payload is required because it does not make sense to start a session
 	// if there is no data to persist.
@@ -76,11 +74,16 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 		return nil, errors.New("the expiration time of a session cannot be in the past")
 	}
 
+	// Generate unique session ID to allow multiple sessions per user. Will differ even for multiple sessions
+	// on the same cluster.
+	sessionID := uuid.New().String()
+
 	return &SessionData[T]{
 		ExpiresOn: expiresOn,
-		Key:       key,
-		Strategy:  strategy,
+		Cluster:   cluster,
 		Payload:   payload,
+		SessionID: sessionID,
+		Strategy:  strategy,
 	}, nil
 }
 
@@ -117,20 +120,19 @@ type cookieSessionPersistor[T any] struct {
 // SessionData holds the data for a session and will be encrypted and stored in browser cookies.
 // If the data is too large to fit in a browser cookie, it will be chunked and split over multiple cookies.
 type SessionData[T any] struct {
+	// Cluster
+	Cluster string `json:"cluster,omitempty"`
+
 	// ExpiresOn is the time when the session expires. This can be zero meaning the session never expires.
 	ExpiresOn time.Time `json:"expiresOn"`
 
-	// Key should be a unique identifier for the session.
-	// For now this is just the cluster name.
-	Key string `json:"key,omitempty"`
-
-	// SessionID is a unique identifier for this specific session instance.
-	// This allows the same user to have multiple concurrent sessions (e.g., different browsers/tabs).
-	// Generated as a UUID when the session is created.
-	SessionID string `json:"sessionId"`
-
 	// Payload is the data being saved.
 	Payload *T `json:"payload,omitempty"`
+
+	// SessionID is a unique identifier for this specific session instance.
+	// This allows the same user to have multiple concurrent sessions (e.g. same user in different browsers).
+	// Generated as a UUID when the session is created.
+	SessionID string `json:"sessionId"`
 
 	// Strategy is the auth stretegy used to create the session.
 	// Must match the currently configured strategy to be considered valid.
@@ -175,11 +177,11 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 			// Notice that an "-aes" suffix is being used in the cookie names. This is for backwards compatibility and
 			// is/was meant to be able to differentiate between a session using cookies holding encrypted data, and the older
 			// less secure sessions using cookies holding JWTs.
-			cookieName = sessionCookieName(SessionCookieName, s.Key)
+			cookieName = sessionCookieName(SessionCookieName, s.Cluster)
 		} else {
 			// If there are more chunks of session data (usually because of larger tokens from the IdP),
 			// store the remainder data to numbered cookies.
-			cookieName = sessionCookieChunkName(sessionCookieName(SessionCookieName, s.Key), i)
+			cookieName = sessionCookieChunkName(sessionCookieName(SessionCookieName, s.Cluster), i)
 		}
 
 		authCookie := http.Cookie{
@@ -418,13 +420,4 @@ func chunkString(s string, chunkSize int) []string {
 		chunks = append(chunks, string(runes[i:nn]))
 	}
 	return chunks
-}
-
-// GetSessionID retrieves the session ID from the request context.
-// The session ID is set by AuthenticationHandler.Handle for all auth strategies:
-// - For authenticated strategies: the unique session ID from the session cookie
-// - For anonymous strategy: the shared AnonymousSessionID constant
-// - Returns empty string for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
-func GetSessionID(r *http.Request) string {
-	return GetSessionIDContext(r.Context())
 }

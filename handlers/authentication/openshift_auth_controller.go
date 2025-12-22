@@ -234,18 +234,18 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		for _, session := range sessions {
-			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Key)
+			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
 				if k8serrors.IsUnauthorized(err) {
 					// The token is invalid, we should clear the session.
 					// This could be an old session for a cluster with the same name.
 					log.Debug("Token saved in session is unauthorized to this cluster. This could be an old token from another cluster with an unexpired token. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Key)
+					o.sessionStore.TerminateSession(r, w, session.Cluster)
 					continue
 				}
 				return nil, err
 			}
-			userSessions[session.Key] = &UserSessionData{
+			userSessions[session.Cluster] = &UserSessionData{
 				AuthInfo:  &api.AuthInfo{Token: session.Payload.AccessToken},
 				ExpiresOn: session.ExpiresOn,
 				SessionID: session.SessionID,
@@ -283,7 +283,7 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 	}
 
 	for _, session := range sessions {
-		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Key)
+		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Cluster)
 		if err != nil {
 			err = TerminateSessionError{
 				Message:    fmt.Sprintf("Could not log out of OpenShift: %v", err),
@@ -291,7 +291,7 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 			}
 			log.Debugf("Unable to terminate session: %v", err)
 		} else {
-			o.sessionStore.TerminateSession(r, w, session.Key)
+			o.sessionStore.TerminateSession(r, w, session.Cluster)
 		}
 	}
 

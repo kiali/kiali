@@ -16,6 +16,10 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+// AnonymousSessionID is the session ID used for anonymous/unauthenticated users.
+// All anonymous users share this single session ID.
+const AnonymousSessionID = "anonymous-shared"
+
 type AuthenticationHandler struct {
 	conf                *config.Config
 	authController      authentication.AuthController
@@ -105,7 +109,7 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			for cluster, client := range aHandler.kialiSAClients {
 				userSessions[cluster] = &authentication.UserSessionData{
 					AuthInfo:  &api.AuthInfo{Token: client.GetToken()},
-					SessionID: authentication.AnonymousSessionID, // All anonymous users share a single session ID
+					SessionID: AnonymousSessionID, // All anonymous users share a single session ID
 				}
 			}
 		}

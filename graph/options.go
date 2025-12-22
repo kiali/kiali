@@ -161,7 +161,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer, conf *config
 	boxBy := params.Get("boxBy")
 
 	// Extract session ID from the request context
-	sessionID := authentication.GetSessionID(r)
+	sessionID := getSessionID(r)
 	// @TODO requires refactoring to use clusterNameFromQuery
 	cluster := params.Get("clusterName")
 	configVendor := params.Get("configVendor")
@@ -445,6 +445,15 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer, conf *config
 	}
 
 	return options
+}
+
+// getSessionID retrieves the session ID from the request context.
+// The session ID is set by AuthenticationHandler.Handle for all auth strategies:
+// - For authenticated strategies: the unique session ID from the session cookie
+// - For anonymous strategy: the shared AnonymousSessionID constant
+// - Returns empty string for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
+func getSessionID(r *net_http.Request) string {
+	return authentication.GetSessionIDContext(r.Context())
 }
 
 // GetGraphKind will return the kind of graph represented by the options.
