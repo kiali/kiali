@@ -81,12 +81,14 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 
 		// If not showing waypoints then delete edges going to a waypoint
 		if !a.ShowWaypoints {
-			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
+			// Make a copy to differentiate the idle nodes
+			edges := sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
 				return waypointNodes[edge.Dest.ID] == nil
 			})
-			if len(n.Edges) == 0 {
+			if len(edges) == 0 && len(n.Edges) != 0 {
 				potentialOrphans[n.ID] = true
 			}
+			n.Edges = edges
 			continue
 		}
 
@@ -120,8 +122,10 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 	}
 	// delete affected nodes with no incoming or outgoing edges
 	for id, noIncomingEdges := range potentialOrphans {
-		if noIncomingEdges && len(trafficMap[id].Edges) == 0 {
-			delete(trafficMap, id)
+		if noIncomingEdges {
+			if node, exists := trafficMap[id]; exists && len(node.Edges) == 0 {
+				delete(trafficMap, id)
+			}
 		}
 	}
 }
