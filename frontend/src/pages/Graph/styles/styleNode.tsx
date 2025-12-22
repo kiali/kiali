@@ -14,8 +14,8 @@ import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Triangle } from '../../Graph/elements/triangle';
-import { Plate } from '../../Graph/elements/plate';
+import { TriangleSharp } from '../../Graph/elements/triangle';
+import { PlateSharp } from '../../Graph/elements/plate';
 
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
@@ -66,9 +66,9 @@ const renderIcon = (element: Node): React.ReactNode => {
 const getNodeShape = (node: Node): React.FunctionComponent<ShapeProps> => {
   switch (node.getNodeShape()) {
     case NodeShape.rhombus:
-      return Triangle;
+      return TriangleSharp;
     case NodeShape.trapezoid:
-      return Plate;
+      return PlateSharp;
     default:
       return getShapeComponent(node);
   }

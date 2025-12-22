@@ -24,3 +24,8 @@ export const Triangle: React.FC<ShapeProps> = ({
 
   return <path className={className} ref={refs as React.LegacyRef<SVGPathElement>} d={points} filter={filter} />;
 };
+
+// Wrapper component for service nodes with cornerRadius = 0
+export const TriangleSharp: React.FC<ShapeProps> = props => {
+  return <Triangle {...props} cornerRadius={0} />;
+};
