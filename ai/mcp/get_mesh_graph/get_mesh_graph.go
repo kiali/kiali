@@ -17,21 +17,19 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/mesh"
 	meshApi "github.com/kiali/kiali/mesh/api"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 )
-
-
 
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
 	Namespaces   []string `json:"namespaces,omitempty"`
 	RateInterval string   `json:"rateInterval,omitempty"`
 	GraphType    string   `json:"graphType,omitempty"`
+	ClusterName  string   `json:"clusterName,omitempty"`
 }
-
-// MeshHealthSummary captures aggregated health data (placeholder for future use).
-type MeshHealthSummary struct{}
 
 // GetMeshGraphResponse encapsulates the mesh graph tool response.
 type GetMeshGraphResponse struct {
@@ -90,14 +88,23 @@ func Execute(ctx context.Context, args map[string]interface{}, business *busines
 	resp := GetMeshGraphResponse{
 		Errors: make(map[string]string),
 	}
-
+	// Default rate interval when not provided.
+	if toolArgs.RateInterval == "" {
+		toolArgs.RateInterval = DefaultRateInterval
+	}
 	// Default graph type when not provided.
 	if toolArgs.GraphType == "" {
 		toolArgs.GraphType = graph.GraphTypeVersionedApp
 	}
 
+	if v, ok := args["clusterName"].(string); ok {
+		toolArgs.ClusterName = strings.TrimSpace(v)
+	} else {
+		toolArgs.ClusterName = conf.KubernetesConfig.ClusterName
+	}
+
 	// Always fetch namespaces first so we can default to all when none are provided.
-	nsList, nsErr := business.Namespace.GetNamespaces(ctx)
+	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
 	if nsErr != nil {
 		resp.Errors["namespaces"] = nsErr.Error()
 	} else {
@@ -130,7 +137,22 @@ func Execute(ctx context.Context, args map[string]interface{}, business *busines
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	wg.Add(2)
+	wg.Add(3)
+	// Health
+	go func() {
+		defer wg.Done()
+		payload, code, errMsg := getHealth(ctx, conf, business, prom, toolArgs)
+		if code != http.StatusOK {
+			mu.Lock()
+			resp.Errors["health"] = errMsg
+			mu.Unlock()
+			return
+		}
+		summary := computeMeshHealthSummary(payload, toolArgs)
+		if summary != nil {
+			resp.MeshHealthSummary = summary
+		}
+	}()
 	// Graph
 	go func() {
 		defer wg.Done()
@@ -198,4 +220,54 @@ func Execute(ctx context.Context, args map[string]interface{}, business *busines
 	wg.Wait()
 
 	return resp, http.StatusOK
+}
+
+func getHealth(ctx context.Context, conf *config.Config, businessLayer *business.Layer, prom prometheus.ClientInterface,
+	toolArgs MeshGraphArgs) (models.ClustersNamespaceHealth, int, string) {
+	result := models.ClustersNamespaceHealth{
+		AppHealth:      map[string]*models.NamespaceAppHealth{},
+		WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
+		ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
+	}
+	healthType := "app"
+	if strings.EqualFold(toolArgs.GraphType, "versionedApp") {
+		healthType = "app"
+	} else if toolArgs.GraphType == "workload" || toolArgs.GraphType == "service" {
+		healthType = toolArgs.GraphType
+	} else {
+		// For "mesh" or any other graphType, default to "app"
+		healthType = "app"
+	}
+
+	for _, ns := range toolArgs.Namespaces {
+		queryTime := util.Clock.Now()
+		healthCriteria := business.NamespaceHealthCriteria{
+			Namespace:      ns,
+			Cluster:        toolArgs.ClusterName,
+			RateInterval:   toolArgs.RateInterval,
+			QueryTime:      queryTime,
+			IncludeMetrics: true,
+		}
+		switch healthType {
+		case "app":
+			health, err := businessLayer.Health.GetNamespaceAppHealth(ctx, healthCriteria)
+			if err != nil {
+				return result, http.StatusInternalServerError, "Error while fetching app health"
+			}
+			result.AppHealth[ns] = &health
+		case "service":
+			health, err := businessLayer.Health.GetNamespaceServiceHealth(ctx, healthCriteria)
+			if err != nil {
+				return result, http.StatusInternalServerError, "Error while fetching service health"
+			}
+			result.ServiceHealth[ns] = &health
+		case "workload":
+			health, err := businessLayer.Health.GetNamespaceWorkloadHealth(ctx, healthCriteria)
+			if err != nil {
+				return result, http.StatusInternalServerError, "Error while fetching workload health"
+			}
+			result.WorkloadHealth[ns] = &health
+		}
+	}
+	return result, http.StatusOK, ""
 }

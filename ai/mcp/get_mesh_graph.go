@@ -48,6 +48,10 @@ func (t MeshGraphTool) Definition() openai.Tool {
 				Type:        jsonschema.String,
 				Description: "Optional type of graph to return: 'versionedApp', 'app', 'service', 'workload'. Default is 'versionedApp'.",
 			},
+			"clusterName": {
+				Type:        jsonschema.String,
+				Description: "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig).",
+			},
 		},
 	}
 	return openai.Tool{
