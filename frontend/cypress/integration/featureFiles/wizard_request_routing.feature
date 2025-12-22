@@ -60,7 +60,7 @@ Feature: Service Details Wizard: Request Routing
   Scenario: Update a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
-    And user sees the "Update Request Routing" wizard
+    And user sees the "Update request routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
@@ -79,7 +79,7 @@ Feature: Service Details Wizard: Request Routing
   @core-2
   Scenario: Delete the Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "Delete Traffic Routing" actions
+    And user clicks in the "Delete traffic routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 

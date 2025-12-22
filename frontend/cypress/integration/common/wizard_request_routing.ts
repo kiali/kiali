@@ -65,6 +65,7 @@ When('user clicks in the {string} actions', (action: string) => {
       actionId = 'k8s_grpc_request_routing';
       break;
     case 'Delete Traffic Routing':
+    case 'Delete traffic routing':
       actionId = 'delete_traffic_routing';
       break;
   }
@@ -242,7 +243,7 @@ Then('user sees the {string} regex in the editor', (regexContent: string) => {
 When('user clicks on Advanced Options', () => {
   // In PatternFly 6, ExpandableSection doesn't use toggleId as button ID anymore
   // Find the button by its text content instead
-  cy.contains('button', 'Show AdvancedOptions').should('be.visible').click();
+  cy.contains('button', 'Show advanced options').should('be.visible').click();
 });
 
 When('user clicks on Add Gateway', () => {
