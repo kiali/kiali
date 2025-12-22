@@ -14,7 +14,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
   Scenario: Create a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s HTTP Routing" actions
-    And user sees the "Create K8s HTTP Routing" wizard
+    And user sees the "Create K8s HTTP routing" wizard
     And user clicks in the "Request Matching" tab
     And user clicks in the "headers" request matching dropdown
     And user types "end-user" in the matching header input

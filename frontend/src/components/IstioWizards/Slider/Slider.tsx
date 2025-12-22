@@ -182,14 +182,12 @@ export class Slider extends React.Component<SliderProps, SliderState> {
     );
 
     const MirrorIcon = (
-      <Tooltip position={TooltipPosition.top} content={<>Mirror % traffic to this Workload</>}>
-        <Button
-          icon={<MigrationIcon />}
-          className={lockButtonStyle}
-          variant={ButtonVariant.plain}
-          onClick={() => this.props.onMirror(!this.props.mirrored)}
-        ></Button>
-      </Tooltip>
+      <Button
+        icon={<MigrationIcon />}
+        className={lockButtonStyle}
+        variant={ButtonVariant.plain}
+        onClick={() => this.props.onMirror(!this.props.mirrored)}
+      />
     );
 
     return (
@@ -208,7 +206,7 @@ export class Slider extends React.Component<SliderProps, SliderState> {
                   data-test={`input-${this.props.id}`}
                 />
               </InputGroupItem>
-              <InputGroupText isDisabled={true}>{this.props.inputFormat}</InputGroupText>
+              <InputGroupText>{this.props.inputFormat}</InputGroupText>
             </InputGroup>
           )}
 

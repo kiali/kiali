@@ -214,17 +214,17 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     const workloadColumns: SortableTh[] = [
       {
-        title: t('Destination Workload'),
+        title: t('Destination workload'),
         width: 30,
         sortable: false
       },
       {
         sortable: false,
-        title: t('Traffic Weight'),
+        title: t('Traffic weight'),
         width: 70,
         headerContent: (
           <div className={evenlyCellStyle}>
-            {t('Traffic Weight')}
+            {t('Traffic weight')}
             {this.props.workloads.length > 1 ? (
               <Button
                 className={evenlyButtonStyle}
@@ -280,12 +280,12 @@ export class TrafficShifting extends React.Component<Props, State> {
 
     const mirrorColumns: SortableTh[] = [
       {
-        title: t('Mirrored Workload'),
+        title: t('Mirrored workload'),
         width: 30,
         sortable: false
       },
       {
-        title: t('Mirror Percentage'),
+        title: t('Mirror percentage'),
         width: 70,
         sortable: false
       }

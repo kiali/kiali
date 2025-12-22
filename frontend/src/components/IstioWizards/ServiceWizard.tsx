@@ -921,7 +921,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onClick={this.onPreview}
               data-test="preview"
             >
-              {t('Preview')}
+              {t('Create')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               {t('Cancel')}
@@ -1019,7 +1019,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
+              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               toggleId="advanced-options-expandable"
               onToggle={() => {
@@ -1097,7 +1097,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
+              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               onToggle={() => {
                 this.setState({
