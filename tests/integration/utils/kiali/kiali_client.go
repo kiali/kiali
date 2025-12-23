@@ -180,9 +180,9 @@ func TracingConfig() (*models.TracingInfo, int, error) {
 	}
 }
 
-func InternalMetricsGraphCache() (*handlers.InternalMetrics, int, error) {
-	url := fmt.Sprintf("%s/api/internal/metrics/graph/cache", client.kialiURL)
-	response := new(handlers.InternalMetrics)
+func GraphCacheMetrics() (*handlers.GraphCacheMetrics, int, error) {
+	url := fmt.Sprintf("%s/api/test/metrics/graph/cache", client.kialiURL)
+	response := new(handlers.GraphCacheMetrics)
 
 	code, err := getRequestAndUnmarshalInto(url, response)
 	if err == nil {

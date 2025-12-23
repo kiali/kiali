@@ -43,7 +43,7 @@ func TestGraphCache(t *testing.T) {
 	time.Sleep(20 * time.Second)
 
 	// Get internal metrics before calling the graph
-	metricsBefore, statusCode, err := kiali.InternalMetricsGraphCache()
+	metricsBefore, statusCode, err := kiali.GraphCacheMetrics()
 	require.NoError(err)
 	require.Equal(200, statusCode)
 
@@ -68,7 +68,7 @@ func TestGraphCache(t *testing.T) {
 
 	// Get internal metrics after calling the graph
 	// No need to wait for Prometheus scraping since we're querying Kiali directly
-	metricsAfter, statusCode, err := kiali.InternalMetricsGraphCache()
+	metricsAfter, statusCode, err := kiali.GraphCacheMetrics()
 	require.NoError(err)
 	require.Equal(200, statusCode)
 

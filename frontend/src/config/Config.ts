@@ -136,7 +136,7 @@ const conf = {
       controlPlanes: 'api/mesh/controlplanes',
       customDashboard: (namespace: string, template: string) =>
         `api/namespaces/${namespace}/customdashboard/${template}`,
-      disabledFeatures: 'api/internal/features/disabled',
+      disabledFeatures: 'api/config/disabled',
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
       istioCertsInfo: () => 'api/istio/certs',

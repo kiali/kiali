@@ -195,7 +195,7 @@ func NewRoutes(
 			handlers.Root(conf, clientFactory, kialiCache, grafana, perses, prom),
 			true,
 		},
-		// swagger:route GET /internal/metrics/graph/cache kiali internalMetricsGraphCache
+		// swagger:route GET /test/metrics/graph/cache test testGraphCacheMetrics
 		// ---
 		// Endpoint to get Kiali's graph cache metrics
 		//
@@ -205,12 +205,12 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
-		//      200: internalMetricsResponse
+		//      200: graphCacheMetricsResponse
 		{
-			"InternalMetricsGraphCache",
+			"TestGraphCacheMetrics",
 			log.StatusLogName,
 			"GET",
-			"/api/internal/metrics/graph/cache",
+			"/api/test/metrics/graph/cache",
 			handlers.GraphCacheMetricsHandler(),
 			true,
 		},
@@ -274,7 +274,7 @@ func NewRoutes(
 			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
-		// swagger:route GET /internal/features/disabled kiali getDisabledFeatures
+		// swagger:route GET /config/disabled kiali getDisabledFeatures
 		// ---
 		// Endpoint to get the disabled features of Kiali
 		//
@@ -290,7 +290,7 @@ func NewRoutes(
 			"DisabledFeatures",
 			log.ConfigLogName,
 			"GET",
-			"/api/internal/features/disabled",
+			"/api/config/disabled",
 			handlers.DisabledFeaturesHandler(conf, prom),
 			true,
 		},
