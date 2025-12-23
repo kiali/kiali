@@ -124,6 +124,7 @@ const conf = {
       appTraces: (namespace: string, app: string) => `api/namespaces/${namespace}/apps/${app}/traces`,
       authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
+      chatAI: (model: string) => `api/chat/${model}/ai`,
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,

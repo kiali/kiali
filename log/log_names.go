@@ -4,6 +4,7 @@ package log
 // see log.WithGroup for when these are typically used
 var (
 	AuthenticateLogName = "authenticate"
+	ChatAILogName       = "chatai"
 	ClustersLogName     = "clusters"
 	ConfigLogName       = "config"
 	GraphLogName        = "graph"

@@ -644,6 +644,21 @@ type Validations struct {
 	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
+// ChatAIConfig defines configuration for the ChatAI subsystem
+type ChatAIConfig struct {
+	Enabled bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	DefaultModel   string `yaml:"default_model,omitempty" json:"default_model,omitempty"`
+	Models  []AIModel `yaml:"models,omitempty" json:"models,omitempty"`
+}
+
+type AIModel struct {
+	Name        string `yaml:"name" json:"name"`
+	Model       string `yaml:"model" json:"model"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Endpoint    string `yaml:"endpoint" json:"endpoint"`
+	Token       string `yaml:"token" json:"token"`
+}
+
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
@@ -725,6 +740,7 @@ const (
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
@@ -767,6 +783,11 @@ func NewConfig() (c *Config) {
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,
 			},
+		},
+		ChatAI: ChatAIConfig{
+			Enabled: false,
+			DefaultModel: "",
+			Models: []AIModel{},
 		},
 		Clustering: Clustering{
 			IgnoreHomeCluster: false,
@@ -1067,6 +1088,54 @@ func (conf *Config) AddHealthDefault() {
 	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
 }
 
+func (conf *Config) ValidateAI() error {
+	if !conf.ChatAI.Enabled {
+		return nil
+	}
+
+	if conf.ChatAI.DefaultModel == "" {
+		return fmt.Errorf("chat_ai.default_model is required when chat_ai.enabled is true")
+	}
+
+	cleaned := make([]AIModel, 0, len(conf.ChatAI.Models))
+	foundDefault := false
+	defaultWasPresent := false
+	seenNames := make(map[string]struct{})
+
+	for _, m := range conf.ChatAI.Models {
+		if _, exists := seenNames[m.Name]; exists {
+			return fmt.Errorf("chat_ai.models contains duplicate name %q", m.Name)
+		}
+		seenNames[m.Name] = struct{}{}
+
+		if m.Name == conf.ChatAI.DefaultModel {
+			defaultWasPresent = true
+		}
+
+		missingAuth := m.Token == "" || m.Endpoint == ""
+		if missingAuth {
+			log.Warningf("chat_ai model %q removed: missing token or endpoint", m.Name)
+			continue
+		}
+
+		cleaned = append(cleaned, m)
+		if m.Name == conf.ChatAI.DefaultModel {
+			foundDefault = true
+		}
+	}
+
+	// If default model was defined but got removed or never existed, fail fast.
+	if !foundDefault {
+		if defaultWasPresent {
+			return fmt.Errorf("chat_ai.default_model %q removed because it lacks token or endpoint", conf.ChatAI.DefaultModel)
+		}
+		return fmt.Errorf("chat_ai.default_model %q not found in chat_ai.models", conf.ChatAI.DefaultModel)
+	}
+
+	conf.ChatAI.Models = cleaned
+	return nil
+}
+
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
 func (conf *Config) AllNamespacesAccessible() bool {
 	return conf.Deployment.ClusterWideAccess
@@ -1098,7 +1167,9 @@ func Set(conf *Config) {
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
 	configuration = *conf
-
+	if err := conf.ValidateAI(); err != nil {
+		log.Fatalf("invalid chat_ai configuration: %v", err)
+	}
 	// init these one time, they don't change
 	if appLabelNames == nil {
 		if conf.IstioLabels.AppLabelName != "" && conf.IstioLabels.VersionLabelName != "" {

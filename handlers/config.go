@@ -42,11 +42,23 @@ type DeploymentConfig struct {
 	ViewOnlyMode bool `json:"viewOnlyMode,omitempty"`
 }
 
+type ChatAIConfig struct {
+	Enabled bool `json:"enabled"`
+	DefaultModel string `json:"defaultModel"`
+	Models []AIModel `json:"models"`
+}
+
+type AIModel struct {
+	Name string `json:"name"`
+	Model string `json:"model"`
+	Description string `json:"description"`
+}
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
 	AuthStrategy          string                        `json:"authStrategy,omitempty"`
 	AmbientEnabled        bool                          `json:"ambientEnabled,omitempty"`
+	ChatAI                ChatAIConfig          		`json:"chatAI,omitempty"`
 	Clusters              map[string]models.KubeCluster `json:"clusters,omitempty"`
 	ClusterWideAccess     bool                          `json:"clusterWideAccess,omitempty"`
 	ControlPlanes         map[string]string             `json:"controlPlanes,omitempty"`
@@ -82,6 +94,11 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		promConfig := getPrometheusConfig(conf, prom, logger)
 		publicConfig := PublicConfig{
 			AuthStrategy:      conf.Auth.Strategy,
+			ChatAI:            ChatAIConfig{
+				Enabled: conf.ChatAI.Enabled,
+				DefaultModel: conf.ChatAI.DefaultModel,
+				Models: []AIModel{},
+			},
 			Clusters:          make(map[string]models.KubeCluster),
 			ClusterWideAccess: conf.Deployment.ClusterWideAccess,
 			ControlPlanes:     make(map[string]string),
@@ -107,7 +124,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			},
 			RunMode: conf.RunMode,
 		}
-
+		
 		if conf.RunMode == config.RunModeOffline {
 			publicConfig.RunConfig = conf.RunConfig
 		}
@@ -143,6 +160,15 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				}
 			}
 		}
+		models := []AIModel{}
+		for _, model := range conf.ChatAI.Models {
+			models = append(models, AIModel{
+				Name: model.Name,
+				Model: model.Model,
+				Description: model.Description,
+			})
+		}
+		publicConfig.ChatAI.Models = models
 
 		RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 	}

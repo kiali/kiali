@@ -80,6 +80,7 @@ import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
 import { PersesInfo } from '../types/PersesInfo';
+import { ChatRequest } from 'types/Chatbot';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -1427,4 +1428,8 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
     queryParams.clusterName = cluster;
   }
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
+};
+
+export const postChatAI = (model: string, chatRequest: ChatRequest): Promise<ApiResponse<any>> => {
+  return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(model), undefined, chatRequest);
 };

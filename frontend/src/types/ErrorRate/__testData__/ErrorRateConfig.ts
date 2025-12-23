@@ -70,6 +70,11 @@ export const generateRequestHealth = (
 export const serverRateConfig = {
   authStrategy: '',
   ambientEnabled: false,
+  chatAI: {
+    enabled: false,
+    models: [],
+    defaultModel: ''
+  },
   clusters: {},
   clusterWideAccess: true,
   controlPlanes: { Kubernetes: 'istio-system' },

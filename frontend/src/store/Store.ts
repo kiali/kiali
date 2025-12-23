@@ -31,6 +31,7 @@ import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
+import { ModelAI } from 'types/Chatbot';
 
 // Store is the Redux Data store
 
@@ -172,12 +173,20 @@ export interface TourState {
   activeTour?: TourInfo;
 }
 
+export interface ChatAIState {
+  enabled: boolean;
+  context: any;
+  models: ModelAI[];
+  defaultModel: string;
+}
 // This defines the Kiali Global Application State
 export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
   /** Page Settings */
   authentication: LoginState;
+  /** Chatbot Settings */
+  chatAi: ChatAIState;
   clusters: ClusterState;
   globalState: GlobalState;
   graph: GraphState;

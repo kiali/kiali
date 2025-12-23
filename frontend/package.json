@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "2.20.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -93,6 +94,7 @@
     "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' {} +"
   },
   "dependencies": {
+    "@patternfly/chatbot": "^6.4.1",
     "@patternfly/patternfly": "^6.4.0",
     "@patternfly/react-charts": "^8.4.0",
     "@patternfly/react-core": "^6.4.0",
@@ -177,7 +179,12 @@
     "esbuild": "^0.25.2",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
+    "react-markdown": "8.0.7",
     "workbox-webpack-plugin": "^7.1.0"
+  },
+  "overrides": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
   },
   "engines": {
     "node": ">=20.0.0",

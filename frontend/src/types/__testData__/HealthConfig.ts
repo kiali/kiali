@@ -4,6 +4,11 @@ import { getExpr } from '../../config/HealthConfig';
 export const healthConfig = {
   authStrategy: '',
   ambientEnabled: false,
+  chatAI: {
+    enabled: false,
+    models: [],
+    defaultModel: ''
+  },
   clusters: {},
   clusterWideAccess: true,
   controlPlanes: { Kubernetes: 'istio-system' },
