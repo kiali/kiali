@@ -81,14 +81,13 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 
 		// If not showing waypoints then delete edges going to a waypoint
 		if !a.ShowWaypoints {
-			// Make a copy to differentiate the idle nodes
-			edges := sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
+			n.Edges = sliceutil.Filter(n.Edges, func(edge *graph.Edge) bool {
 				return waypointNodes[edge.Dest.ID] == nil
 			})
-			if len(edges) == 0 && len(n.Edges) != 0 {
+
+			if n.Metadata[graph.IsIdle] != true && len(n.Edges) == 0 {
 				potentialOrphans[n.ID] = true
 			}
-			n.Edges = edges
 			continue
 		}
 
