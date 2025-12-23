@@ -3,19 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/tracing"
 )
 
 func ChatAI(
@@ -29,7 +29,7 @@ func ChatAI(
 	perses *perses.Service,
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {		
+	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		modelName := params["modelName"]
 
@@ -52,10 +52,19 @@ func ChatAI(
 
 		toolHandlers := []mcp.ToolHandler{
 			mcp.NewMeshGraphTool(),
-		}	
+			mcp.NewResourceDetailTool(),
+		}
 
 		resp, code := provider.SendChat(r.Context(), req, toolHandlers, businessLayer, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
-	
-		respond(w, code, resp)
+
+		if resp == nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI response is empty")
+			return
+		}
+		if code != http.StatusOK && resp.Error != "" {
+			RespondWithError(w, code, resp.Error)
+			return
+		}
+		RespondWithJSONIndent(w, code, resp)
 	}
 }
