@@ -3,7 +3,6 @@ package kiali
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"time"
@@ -172,6 +171,18 @@ func KialiConfig() (*handlers.PublicConfig, int, error) {
 func TracingConfig() (*models.TracingInfo, int, error) {
 	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
 	response := new(models.TracingInfo)
+
+	code, err := getRequestAndUnmarshalInto(url, response)
+	if err == nil {
+		return response, code, nil
+	} else {
+		return nil, code, err
+	}
+}
+
+func InternalMetricsGraphCache() (*handlers.InternalMetrics, int, error) {
+	url := fmt.Sprintf("%s/api/internal/metrics/graph/cache", client.kialiURL)
+	response := new(handlers.InternalMetrics)
 
 	code, err := getRequestAndUnmarshalInto(url, response)
 	if err == nil {
@@ -606,93 +617,4 @@ func ParamsAsString(params map[string]string) string {
 		result += k + "=" + v + "&"
 	}
 	return result
-}
-
-// GetPrometheusCounter queries Prometheus for the current value of a counter metric.
-// Prometheus URL should be provided via PROMETHEUS_URL environment variable.
-// If not set, defaults to http://localhost:9090.
-// This uses Prometheus's query API: /api/v1/query?query=<counterMetricName>
-func GetPrometheusCounter(counterMetricName string) (float64, error) {
-	// Get Prometheus URL from environment variable, default to localhost
-	prometheusBaseURL := os.Getenv("PROMETHEUS_URL")
-	if prometheusBaseURL == "" {
-		prometheusBaseURL = "http://localhost:9090"
-	}
-
-	prometheusURL := prometheusBaseURL + "/api/v1/query?query=" + counterMetricName
-
-	req, err := http.NewRequest("GET", prometheusURL, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	// Prometheus API doesn't require authentication in this setup
-	httpClient := &http.Client{Timeout: TIMEOUT}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return 0, fmt.Errorf("prometheus query API returned status %d", resp.StatusCode)
-	}
-
-	// Read the response body for debugging
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	// Debug: print first 200 chars of response if it doesn't look like JSON
-	if len(bodyBytes) > 0 && bodyBytes[0] != '{' {
-		preview := string(bodyBytes)
-		if len(preview) > 200 {
-			preview = preview[:200]
-		}
-		return 0, fmt.Errorf("prometheus returned non-JSON response (URL: %s). Response preview: %s", prometheusURL, preview)
-	}
-
-	// Parse the JSON response
-	var result struct {
-		Status string `json:"status"`
-		Data   struct {
-			ResultType string `json:"resultType"`
-			Result     []struct {
-				Metric map[string]string `json:"metric"`
-				Value  []interface{}     `json:"value"`
-			} `json:"result"`
-		} `json:"data"`
-	}
-
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
-		return 0, fmt.Errorf("failed to decode prometheus response: %v", err)
-	}
-
-	if result.Status != "success" {
-		return 0, fmt.Errorf("prometheus query failed with status: %s", result.Status)
-	}
-
-	if len(result.Data.Result) == 0 {
-		return 0, fmt.Errorf("metric %s not found in prometheus", counterMetricName)
-	}
-
-	// Extract the value from the first result
-	// Value is [timestamp, "value_as_string"]
-	if len(result.Data.Result[0].Value) < 2 {
-		return 0, fmt.Errorf("unexpected value format in prometheus response")
-	}
-
-	valueStr, ok := result.Data.Result[0].Value[1].(string)
-	if !ok {
-		return 0, fmt.Errorf("value is not a string in prometheus response")
-	}
-
-	var value float64
-	_, err = fmt.Sscanf(valueStr, "%f", &value)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse value: %v", err)
-	}
-
-	return value, nil
 }

@@ -368,11 +368,6 @@ setup_kind_singlecluster() {
       )
   fi
 
-  # Expose Prometheus via LoadBalancer for integration tests
-  infomsg "Exposing Prometheus via LoadBalancer..."
-  kubectl patch svc prometheus -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/prometheus --timeout=60s
-
   if [ "${DEPLOY_KIALI}" != "true" ]; then
     infomsg "Skipping Kiali deployment as requested"
     return

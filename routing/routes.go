@@ -195,6 +195,25 @@ func NewRoutes(
 			handlers.Root(conf, clientFactory, kialiCache, grafana, perses, prom),
 			true,
 		},
+		// swagger:route GET /internal/metrics/graph/cache kiali internalMetricsGraphCache
+		// ---
+		// Endpoint to get Kiali's graph cache metrics
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: internalMetricsResponse
+		{
+			"InternalMetricsGraphCache",
+			log.StatusLogName,
+			"GET",
+			"/api/internal/metrics/graph/cache",
+			handlers.GraphCacheMetricsHandler(),
+			true,
+		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
 		// ---
 		// Endpoint to get a diagnose for the tracing endpoint
@@ -255,9 +274,9 @@ func NewRoutes(
 			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
-		// swagger:route GET /crippled kiali getCrippledFeatures
+		// swagger:route GET /internal/features/disabled kiali getDisabledFeatures
 		// ---
-		// Endpoint to get the crippled features of Kiali
+		// Endpoint to get the disabled features of Kiali
 		//
 		//     Produces:
 		//     - application/json
@@ -266,13 +285,13 @@ func NewRoutes(
 		//
 		// responses:
 		//      500: internalError
-		//      200: statusInfo
+		//      200: disabledFeaturesResponse
 		{
-			"Crippled",
+			"DisabledFeatures",
 			log.ConfigLogName,
 			"GET",
-			"/api/crippled",
-			handlers.CrippledFeatures(conf, prom),
+			"/api/internal/features/disabled",
+			handlers.DisabledFeaturesHandler(conf, prom),
 			true,
 		},
 		// swagger:route GET /istio/permissions config getPermissions
