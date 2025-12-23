@@ -94,12 +94,23 @@ func (s *Service) discover(ctx context.Context) string {
 }
 
 func (s *Service) getToken(ctx context.Context) (token string, err error) {
-
 	loginURL := fmt.Sprintf("%s/api/auth/providers/native/login", s.URL(ctx))
 
+	username, err := s.conf.GetCredential(s.conf.ExternalServices.Perses.Auth.Username)
+	if err != nil {
+		log.Errorf("Failed to read Perses username: %v", err)
+		return "", fmt.Errorf("failed to read Perses username: %w", err)
+	}
+
+	password, err := s.conf.GetCredential(s.conf.ExternalServices.Perses.Auth.Password)
+	if err != nil {
+		log.Errorf("Failed to read Perses password: %v", err)
+		return "", fmt.Errorf("failed to read Perses password: %w", err)
+	}
+
 	reqBody := loginRequest{
-		Login:    s.conf.ExternalServices.Perses.Auth.Username,
-		Password: s.conf.ExternalServices.Perses.Auth.Password,
+		Login:    username,
+		Password: password,
 	}
 
 	bodyBytes, err := json.Marshal(reqBody)
@@ -114,7 +125,23 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 		return "", fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+
+	// Reuse shared transport logic so TLS settings and rotating secrets apply to login flow.
+	loginAuth := s.conf.ExternalServices.Perses.Auth
+	loginAuth.Type = config.AuthTypeNone
+	loginAuth.Username = ""
+	loginAuth.Password = ""
+	loginTransport, err := httputil.CreateTransport(s.conf, &loginAuth, &http.Transport{}, httputil.DefaultTimeout, nil)
+	if err != nil {
+		log.Errorf("Failed to create Perses login transport: %v", err)
+		return "", fmt.Errorf("failed to create Perses login transport: %w", err)
+	}
+	httpClient := http.Client{
+		Transport: loginTransport,
+		Timeout:   httputil.DefaultTimeout,
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Errorf("Failed to request login URL: %v", err)
 		return "", fmt.Errorf("failed to request login URL: %s", err.Error())
@@ -171,14 +198,14 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 			if err != nil {
 				log.Errorf("Error loggin %s", err.Error())
 			}
-			newAuth.Token = token
+			newAuth.Token = config.Credential(token)
 		} else {
-			newAuth.Token = s.sessionData.AccessToken
+			newAuth.Token = config.Credential(s.sessionData.AccessToken)
 		}
 
 		// Preserve TLS configuration
 		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-		newAuth.CAFile = auth.CAFile
+		// Note: CAFile is deprecated and is not copied
 
 		return &newAuth
 	}
@@ -188,7 +215,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 		if auth.UseKialiToken {
 			// Use the Kiali service account token for authentication
-			newAuth.Token = s.homeClusterSAClient.GetToken()
+			newAuth.Token = config.Credential(s.homeClusterSAClient.GetToken())
 		} else {
 			// Use the configured token
 			newAuth.Token = auth.Token
@@ -196,7 +223,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 
 		// Preserve TLS configuration
 		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-		newAuth.CAFile = auth.CAFile
+		// Note: CAFile is deprecated and is not copied
 
 		return &newAuth
 	}

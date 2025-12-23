@@ -89,19 +89,26 @@ func NewSessionData[T any](cluster string, strategy string, expiresOn time.Time,
 
 // NewCookieSessionPersistor creates a new CookieSessionPersistor.
 func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersistor[T], error) {
-	block, err := aes.NewCipher([]byte(conf.LoginToken.SigningKey))
+	// Validate that we can read the signing key and create a cipher from it.
+	// This ensures early failure if the key is invalid, but we don't cache the cipher
+	// so that key rotation is respected.
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		return nil, fmt.Errorf("error when creating the cookie persistor - failed to read signing key: %w", err)
+	}
+
+	block, err := aes.NewCipher([]byte(signingKey))
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to create cipher: %w", err)
 	}
 
-	aesGCM, err := cipher.NewGCM(block)
+	_, err = cipher.NewGCM(block)
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to create gcm: %w", err)
 	}
 
 	return &cookieSessionPersistor[T]{
-		aesGCM: aesGCM,
-		conf:   conf,
+		conf: conf,
 	}, nil
 }
 
@@ -113,8 +120,30 @@ func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersis
 // number of cookies that a website can set but we haven't heard of a user
 // facing problems because of reaching this limit.
 type cookieSessionPersistor[T any] struct {
-	aesGCM cipher.AEAD
-	conf   *config.Config
+	conf *config.Config
+}
+
+// getCipher fetches the current signing key from the credential manager and creates
+// a fresh AES-GCM cipher. This ensures that key rotation is respected without requiring
+// pod restarts. The credential manager caches the key efficiently, so this operation
+// is fast (just a mutex-protected map lookup plus cipher creation).
+func (p *cookieSessionPersistor[T]) getCipher() (cipher.AEAD, error) {
+	signingKey, err := p.conf.GetCredential(p.conf.LoginToken.SigningKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read signing key: %w", err)
+	}
+
+	block, err := aes.NewCipher([]byte(signingKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gcm: %w", err)
+	}
+
+	return aesGCM, nil
 }
 
 // SessionData holds the data for a session and will be encrypted and stored in browser cookies.
@@ -134,7 +163,7 @@ type SessionData[T any] struct {
 	// Generated as a UUID when the session is created.
 	SessionID string `json:"sessionId"`
 
-	// Strategy is the auth stretegy used to create the session.
+	// Strategy is the auth strategy used to create the session.
 	// Must match the currently configured strategy to be considered valid.
 	Strategy string `json:"strategy"`
 }
@@ -144,6 +173,12 @@ type SessionData[T any] struct {
 // the encrypted data is what is sent in cookies. The strategy, expiresOn and payload arguments
 // are all required.
 func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.ResponseWriter, s SessionData[T]) error {
+	// Get the current cipher (respects key rotation)
+	aesGCM, err := p.getCipher()
+	if err != nil {
+		return fmt.Errorf("error when creating the session: %w", err)
+	}
+
 	// Serialize this structure. The resulting string
 	// is what will be encrypted and stored in cookies.
 	sDataJson, err := json.Marshal(s)
@@ -154,12 +189,12 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 	// The sDataJson string holds the session data that we want to persist.
 	// It's time to encrypt this data which will result in an illegible sequence of bytes which are then
 	// encoded to base64 get a string that is suitable to store in browser cookies.
-	aesGcmNonce, err := util.CryptoRandomBytes(p.aesGCM.NonceSize())
+	aesGcmNonce, err := util.CryptoRandomBytes(aesGCM.NonceSize())
 	if err != nil {
 		return fmt.Errorf("error when creating credentials - failed to generate random bytes: %w", err)
 	}
 
-	cipherSessionData := p.aesGCM.Seal(aesGcmNonce, aesGcmNonce, sDataJson, nil)
+	cipherSessionData := aesGCM.Seal(aesGcmNonce, aesGcmNonce, sDataJson, nil)
 	base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
 
 	// The base64SessionData holds what we want to store in browser cookies.
@@ -216,6 +251,12 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 }
 
 func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.Request) (*SessionData[T], error) {
+	// Get the current cipher (respects key rotation)
+	aesGCM, err := p.getCipher()
+	if err != nil {
+		return nil, fmt.Errorf("error when reading the session: %w", err)
+	}
+
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
 	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
 	// if such cookie is not found in the request.
@@ -277,14 +318,14 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 		}
 	}
 
-	nonceSize := p.aesGCM.NonceSize()
+	nonceSize := aesGCM.NonceSize()
 	// Handle where cipherSessionData does not match nonceSize
 	if len(cipherSessionData) < nonceSize {
 		return nil, fmt.Errorf("unable to decrypt session")
 	}
 	nonce, cipherSessionData := cipherSessionData[:nonceSize], cipherSessionData[nonceSize:]
 
-	sessionDataJson, err := p.aesGCM.Open(nil, nonce, cipherSessionData, nil)
+	sessionDataJson, err := aesGCM.Open(nil, nonce, cipherSessionData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error when restoring the session - failed to decrypt: %w", err)
 	}
@@ -348,8 +389,8 @@ func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.Resp
 			log.Debugf("Reading session cookie: %s", cookie.Name)
 			sData, err := p.readKialiCookie(cookie.Name, r)
 			if err != nil {
-				if err == http.ErrNoCookie {
-					log.Debugf("Session cookie %s does not exist in request", cookie.Name)
+				if errors.Is(err, http.ErrNoCookie) {
+					log.Debugf("Session cookie [%s] does not exist in request", cookie.Name)
 				} else {
 					log.Infof("Error reading session cookie %s: %v", cookie.Name, err)
 					// If we can't read the cookie we should just drop it because it's probably malformed.

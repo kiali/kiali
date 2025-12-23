@@ -50,7 +50,7 @@ func TestRootContextPath(t *testing.T) {
 
 	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(10))
 	conf.Server.WebRoot = testCustomRoot
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
@@ -198,7 +198,7 @@ func TestSecureComm(t *testing.T) {
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
 	conf.Identity.PrivateKeyFile = testServerKeyFile
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(10))
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.Observability.Metrics.Enabled = true

@@ -379,21 +379,25 @@ func tracesToSpans(ctx context.Context, app models.TracingName, r *model.Tracing
 }
 
 func (in *TracingService) TracingDiagnose(ctx context.Context, token string) (trace *model.TracingDiagnose, err error) {
-	return tracing.TestNewClient(ctx, in.conf, token)
+	return tracing.DiagnoseTracingConfig(ctx, in.conf, token)
 }
 
 func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *config.Config, tracingConfig *config.TracingConfig, token string) *model.ConfigurationValidation {
 	validation := model.ConfigurationValidation{}
 
-	// Merge config
+	// Merge config - restore obfuscated values from the actual config
+	// Note: CAFile is deprecated and is not processed
+	if tracingConfig.Auth.CertFile == "xxx" {
+		tracingConfig.Auth.CertFile = conf.ExternalServices.Tracing.Auth.CertFile
+	}
+	if tracingConfig.Auth.KeyFile == "xxx" {
+		tracingConfig.Auth.KeyFile = conf.ExternalServices.Tracing.Auth.KeyFile
+	}
 	if tracingConfig.Auth.Password == "xxx" {
 		tracingConfig.Auth.Password = conf.ExternalServices.Tracing.Auth.Password
 	}
 	if tracingConfig.Auth.Token == "xxx" {
 		tracingConfig.Auth.Token = conf.ExternalServices.Tracing.Auth.Token
-	}
-	if tracingConfig.Auth.CAFile == "xxx" {
-		tracingConfig.Auth.CAFile = conf.ExternalServices.Tracing.Auth.CAFile
 	}
 	if tracingConfig.Auth.Username == "xxx" {
 		tracingConfig.Auth.Username = conf.ExternalServices.Tracing.Auth.Username

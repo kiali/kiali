@@ -2,9 +2,7 @@ package tracing
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +15,6 @@ import (
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/kiali/kiali/config"
@@ -36,7 +32,7 @@ type DialFunc func(network, address string, timeout time.Duration) (net.Conn, er
 
 var MakeRequestFunc = otel.MakeRequest
 
-func TestNewClient(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
+func DiagnoseTracingConfig(ctx context.Context, conf *config.Config, token string) (*model.TracingDiagnose, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	test := model.TracingDiagnose{}
 	logs := []model.LogLine{}
@@ -52,13 +48,10 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	url := cfgTracing.InternalURL
 	if url == "" {
 		url = cfgTracing.ExternalURL
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url %s because not in cluster", url)})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Using external url [%s] because not in cluster", url)})
 		if url == "" {
-			return nil, fmt.Errorf("external_url should't be empty (Not in cluster)")
+			return nil, fmt.Errorf("external_url should not be empty (Not in cluster)")
 		}
-	}
-	if url == "" {
-		return nil, fmt.Errorf("internal_url should't be empty")
 	}
 
 	parsedURL, ll, err := parseUrl(url)
@@ -70,7 +63,7 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	// Get Auth
 	auth := cfgTracing.Auth
 	if auth.UseKialiToken {
-		auth.Token = token
+		auth.Token = config.Credential(token)
 	}
 
 	ports, ll := discoverPortsWithDial(zl, parsedURL.Host, net.DialTimeout)
@@ -81,7 +74,6 @@ func TestNewClient(ctx context.Context, conf *config.Config, token string) (*mod
 	test.LogLine = append(logs, ll...)
 
 	return &test, nil
-
 }
 
 // Parse URL
@@ -187,21 +179,24 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 			{
 				// Try GRPC Tempo Client
 				// And this also requires HTTP Client
-				var dialOps []grpc.DialOption
-				if cfgTracing.Auth.Type == "basic" {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
-					dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
-						Header: fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(strings.Join([]string{cfgTracing.Auth.Username, cfgTracing.Auth.Password}, ":")))),
-					}))
-				} else {
-					dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
+				targetHost := parsedURLHostname(parsedUrl)
+				dialOps, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", auth)
+				if err != nil {
+					msg := fmt.Sprintf("Error creating gRPC dial options: %v", err)
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Dial Options port [%s] error", port), Result: msg})
+					break
 				}
 				grpcAddress := fmt.Sprintf("%s:%s", parsedUrl.Host, port)
-				clientConn, _ := grpc.NewClient(grpcAddress, dialOps...)
+				clientConn, err := grpc.NewClient(grpcAddress, dialOps...)
+				if err != nil {
+					msg := fmt.Sprintf("Error creating gRPC client connection: %v", err)
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client Connection port [%s] error", port), Result: msg})
+					break
+				}
 				streamClient, err := tempo.NewgRPCClient(clientConn)
 				if err != nil {
 					msg := fmt.Sprintf("Error creating gRPC Client %s", err.Error())
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 9095 error", Result: msg})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Tempo Client port [%s] error", port), Result: msg})
 					zl.Error().Msg(msg)
 				} else {
 					ok, err := streamClient.GetServices(ctx)
@@ -209,9 +204,9 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 						// TODO: Different config gRPC Port!!!
 						vc := model.ValidConfig{Url: grpcAddress, Provider: "tempo", UseGRPC: true}
 						validConfigs = append(validConfigs, vc)
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Tempo Client 9095 Ok", Result: "Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. "})
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Tempo Client port [%s] Ok", port), Result: "Valid gRPC Client found. Notice this config also requires any valid HTTP configuration. "})
 					} else {
-						logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Tempo Client 9095", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
+						logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("GetServices gRPC Tempo Client port [%s]", port), Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					}
 				}
 			}
@@ -246,13 +241,14 @@ func validateJaegerGRPC(ctx context.Context, conf *config.Config, auth *config.A
 func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.Auth, parsedUrl model.ParsedUrl, port string) (*model.ValidConfig, []model.LogLine, error) {
 	logs := []model.LogLine{}
 	cfgTracing := conf.ExternalServices.Tracing
-	opts, err := grpcutil.GetAuthDialOptions(conf, parsedUrl.Scheme == "https", auth)
+	targetHost := parsedURLHostname(parsedUrl)
+	opts, err := grpcutil.GetAuthDialOptions(conf, targetHost, parsedUrl.Scheme == "https", auth)
 	if err == nil {
 		address := parsedUrl.Host + ":" + port
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC Client port [%s]", port), Result: fmt.Sprintf("%s GRPC client info: address=%s, auth.type=%s", cfgTracing.Provider, address, auth.Type)})
 
 		if len(cfgTracing.CustomHeaders) > 0 {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC Client 16685", Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC Client port [%s]", port), Result: fmt.Sprintf("Adding [%v] custom headers to Tracing client", len(cfgTracing.CustomHeaders))})
 			ctx = metadata.NewOutgoingContext(ctx, metadata.New(cfgTracing.CustomHeaders))
 		}
 		conn, err := grpc.NewClient(address, opts...)
@@ -260,7 +256,7 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 			cc := model.NewQueryServiceClient(conn)
 			clientgRPC, err := jaeger.NewGRPCJaegerClient(cc)
 			if err != nil {
-				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685", Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client port [%s]", port), Result: fmt.Sprintf("Error creating gRPC Client: [%s]", err.Error())})
 			} else {
 				ok, err := clientgRPC.GetServices(ctx)
 				if ok {
@@ -269,22 +265,32 @@ func validateGRPCClient(ctx context.Context, conf *config.Config, auth *config.A
 						authType = "none"
 					}
 					validConfig := model.ValidConfig{AuthType: authType, Url: fmt.Sprintf("%s://%s", parsedUrl.Scheme, address), Provider: "jaeger", UseGRPC: true}
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create gRPC Client 16685 Ok", Result: "Valid gRPC Client found"})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create gRPC Client port [%s] Ok", port), Result: "Valid gRPC Client found"})
 					return &validConfig, logs, nil
 				} else {
-					logs = append(logs, model.LogLine{Time: time.Now(), Test: "GetServices gRPC Client 16685", Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
+					logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("GetServices gRPC Client port [%s]", port), Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					return nil, logs, fmt.Errorf("error getting gRPC Services: [%s]", err.Error())
 				}
 			}
 		} else {
-			logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("error creating client: %s", err.Error())})
+			logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC client port [%s]", port), Result: fmt.Sprintf("error creating client: %s", err.Error())})
 			return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 		}
 	} else {
-		logs = append(logs, model.LogLine{Time: time.Now(), Test: "gRPC client 16685", Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
+		logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("gRPC client port [%s]", port), Result: fmt.Sprintf("Error creating dial options: %s", err.Error())})
 		return nil, logs, fmt.Errorf("error creating client %s", err.Error())
 	}
 	return nil, logs, nil
+}
+
+func parsedURLHostname(parsedUrl model.ParsedUrl) string {
+	if parsedUrl.Url != nil && parsedUrl.Url.Hostname() != "" {
+		return parsedUrl.Url.Hostname()
+	}
+	if host, _, err := net.SplitHostPort(parsedUrl.Host); err == nil {
+		return host
+	}
+	return parsedUrl.Host
 }
 
 // validateJaegerHTTP validate specific path for Jaeger and HTTP endpoint
@@ -328,7 +334,7 @@ func validateTempoHTTP(ctx context.Context, client http.Client, zl *zerolog.Logg
 			if len(splitUrl) > 4 {
 				tenant = splitUrl[4]
 			} else {
-				logs = append(logs, model.LogLine{Time: time.Now(), Test: "Create http client in port 8080", Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
+				logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("Create http client in port [%s]", port), Result: fmt.Sprintf("tenant name not found: %s", parsedUrl.Path)})
 			}
 		}
 

@@ -6,7 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"slices"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -141,7 +142,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 	assert.Len(t, response.Cookies(), 3)
 	assert.Equal(t, SessionCookieName, response.Cookies()[0].Name)
 	assert.Equal(t, SessionCookieName+"-1", response.Cookies()[1].Name)
-	assert.Equal(t, SessionCookieName+"-chunks", response.Cookies()[2].Name)
+	assert.Equal(t, NumberOfChunksCookieName, response.Cookies()[2].Name)
 	assert.Equal(t, "2", response.Cookies()[2].Value)
 
 	for _, cookie := range response.Cookies() {
@@ -175,7 +176,7 @@ func TestNewSessionData(t *testing.T) {
 			strategy:  "",
 			expiresOn: oneDayFromNow,
 		},
-		"expriation time in the past that has already expired is rejected": {
+		"expiration time in the past is rejected": {
 			expectErr: true,
 			payload:   &testSessionPayload{},
 			strategy:  config.AuthStrategyToken,
@@ -339,6 +340,301 @@ func TestReadSessionRejectsDifferentSigningKey(t *testing.T) {
 	require.Nil(sData)
 }
 
+// TestSigningKeyRotation tests that rotating the signing key secret
+// invalidates the cached AES cipher so that newly created sessions use the updated key.
+func TestSigningKeyRotation(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = "test"
+
+	credMgr, err := config.NewCredentialManager(nil)
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Rotate the underlying file
+	require.NoError(os.WriteFile(keyFile, []byte("abcdefghijklmnop"), 0o600))
+
+	// Wait for the credential manager to observe the rotated key.
+	require.Eventually(func() bool {
+		value, err := conf.GetCredential(conf.LoginToken.SigningKey)
+		return err == nil && value == "abcdefghijklmnop"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	rr := httptest.NewRecorder()
+	payload := testSessionPayload{FirstField: "rotated"}
+	session, err := NewSessionData("test", "test", now.Add(time.Hour), &payload)
+	require.NoError(err)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	require.NoError(persistor.CreateSession(request, rr, *session))
+
+	// If rotation worked, decrypting with the new key should succeed.
+	for _, cookie := range rr.Result().Cookies() {
+		request.AddCookie(cookie)
+	}
+
+	_, err = persistor.ReadSession(request, httptest.NewRecorder(), "test")
+	require.NoError(err)
+}
+
+// TestOldSessionsFailAfterRotation tests that sessions created before key rotation
+// become invalid after the signing key is rotated, preventing attackers with the old
+// key from minting valid session cookies after rotation.
+func TestOldSessionsFailAfterRotation(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = "test"
+
+	credMgr, err := config.NewCredentialManager(nil)
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Create a session with the original key
+	payload := testSessionPayload{FirstField: "original"}
+	session, err := NewSessionData("test", "test", now.Add(time.Hour), &payload)
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/someendpoint", nil)
+	require.NoError(persistor.CreateSession(request, rr, *session))
+
+	// Save the cookies from the original session
+	oldCookies := rr.Result().Cookies()
+	require.Greater(len(oldCookies), 0)
+
+	// Rotate the underlying file to a different key
+	require.NoError(os.WriteFile(keyFile, []byte("newkey0123456789"), 0o600))
+
+	// Wait for the credential manager to observe the rotated key
+	require.Eventually(func() bool {
+		value, err := conf.GetCredential(conf.LoginToken.SigningKey)
+		return err == nil && value == "newkey0123456789"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// Try to read the old session - it should fail because it was encrypted with the old key
+	requestWithOldSession := httptest.NewRequest(http.MethodGet, "/api/someendpoint", nil)
+	for _, cookie := range oldCookies {
+		requestWithOldSession.AddCookie(cookie)
+	}
+
+	_, err = persistor.ReadSession(requestWithOldSession, httptest.NewRecorder(), "test")
+	require.Error(err, "old session should fail to decrypt with rotated key")
+}
+
+// TestMultipleRotations tests that key rotation works correctly across multiple key changes,
+// ensuring that only sessions created with the most recent key are valid.
+func TestMultipleRotations(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = "test"
+
+	credMgr, err := config.NewCredentialManager(nil)
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("key1xxxxxxxxxxxx"), 0o600))
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Create session1 with key1
+	payload1 := testSessionPayload{FirstField: "session1"}
+	session1, err := NewSessionData("session1", "test", now.Add(time.Hour), &payload1)
+	require.NoError(err)
+
+	rr1 := httptest.NewRecorder()
+	request1 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	require.NoError(persistor.CreateSession(request1, rr1, *session1))
+	cookies1 := rr1.Result().Cookies()
+
+	// Rotate to key2
+	require.NoError(os.WriteFile(keyFile, []byte("key2xxxxxxxxxxxx"), 0o600))
+	require.Eventually(func() bool {
+		value, err := conf.GetCredential(conf.LoginToken.SigningKey)
+		return err == nil && value == "key2xxxxxxxxxxxx"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// Create session2 with key2
+	payload2 := testSessionPayload{FirstField: "session2"}
+	session2, err := NewSessionData("session2", "test", now.Add(time.Hour), &payload2)
+	require.NoError(err)
+
+	rr2 := httptest.NewRecorder()
+	request2 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	require.NoError(persistor.CreateSession(request2, rr2, *session2))
+	cookies2 := rr2.Result().Cookies()
+
+	// Rotate to key3
+	require.NoError(os.WriteFile(keyFile, []byte("key3xxxxxxxxxxxx"), 0o600))
+	require.Eventually(func() bool {
+		value, err := conf.GetCredential(conf.LoginToken.SigningKey)
+		return err == nil && value == "key3xxxxxxxxxxxx"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// Create session3 with key3
+	payload3 := testSessionPayload{FirstField: "session3"}
+	session3, err := NewSessionData("session3", "test", now.Add(time.Hour), &payload3)
+	require.NoError(err)
+
+	rr3 := httptest.NewRecorder()
+	request3 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	require.NoError(persistor.CreateSession(request3, rr3, *session3))
+	cookies3 := rr3.Result().Cookies()
+
+	// Verify session3 (most recent) can be read
+	readRequest3 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	for _, cookie := range cookies3 {
+		readRequest3.AddCookie(cookie)
+	}
+	sData3, err := persistor.ReadSession(readRequest3, httptest.NewRecorder(), "session3")
+	require.NoError(err)
+	require.Equal("session3", sData3.Payload.FirstField)
+
+	// Verify session1 and session2 fail to read
+	readRequest1 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	for _, cookie := range cookies1 {
+		readRequest1.AddCookie(cookie)
+	}
+	_, err = persistor.ReadSession(readRequest1, httptest.NewRecorder(), "session1")
+	require.Error(err, "session1 should fail after multiple rotations")
+
+	readRequest2 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	for _, cookie := range cookies2 {
+		readRequest2.AddCookie(cookie)
+	}
+	_, err = persistor.ReadSession(readRequest2, httptest.NewRecorder(), "session2")
+	require.Error(err, "session2 should fail after rotation to key3")
+}
+
+// TestReadSessionUsesCurrentKey tests that ReadSession picks up the rotated key,
+// confirming both encrypt and decrypt paths use the live key from the credential manager.
+func TestReadSessionUsesCurrentKey(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = "test"
+
+	credMgr, err := config.NewCredentialManager(nil)
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Create session with key1
+	payload := testSessionPayload{FirstField: "test"}
+	session, err := NewSessionData("test", "test", now.Add(time.Hour), &payload)
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	require.NoError(persistor.CreateSession(request, rr, *session))
+
+	// Read the session successfully with key1
+	readRequest := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	for _, cookie := range rr.Result().Cookies() {
+		readRequest.AddCookie(cookie)
+	}
+	sData, err := persistor.ReadSession(readRequest, httptest.NewRecorder(), "test")
+	require.NoError(err)
+	require.Equal("test", sData.Payload.FirstField)
+
+	// Rotate to key2
+	require.NoError(os.WriteFile(keyFile, []byte("rotatedkey567890"), 0o600))
+	require.Eventually(func() bool {
+		value, err := conf.GetCredential(conf.LoginToken.SigningKey)
+		return err == nil && value == "rotatedkey567890"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// Try to read the same session again - should fail because ReadSession uses the rotated key
+	readRequest2 := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
+	for _, cookie := range rr.Result().Cookies() {
+		readRequest2.AddCookie(cookie)
+	}
+	_, err = persistor.ReadSession(readRequest2, httptest.NewRecorder(), "test")
+	require.Error(err, "reading old session with rotated key should fail")
+}
+
+// TestRotationToInvalidKeyLength tests that rotation to an invalid key
+// length is handled gracefully without crashing.
+func TestRotationToInvalidKeyLength(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyToken
+
+	credMgr, err := config.NewCredentialManager(nil)
+	require.NoError(err)
+	conf.Credentials = credMgr
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	keyFile := filepath.Join(tmpDir, "signing.key")
+	require.NoError(os.WriteFile(keyFile, []byte("kiali67890123456"), 0o600))
+	conf.LoginToken.SigningKey = config.Credential(keyFile)
+
+	now := time.Now()
+	util.Clock = util.ClockMock{Time: now}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Rotate to invalid key length (not 16/24/32 bytes)
+	require.NoError(os.WriteFile(keyFile, []byte("short"), 0o600))
+	require.Eventually(func() bool {
+		value, _ := conf.GetCredential(conf.LoginToken.SigningKey)
+		return value == "short"
+	}, 2*time.Second, 50*time.Millisecond)
+
+	// CreateSession should fail gracefully with clear error
+	payload := testSessionPayload{FirstField: "test"}
+	session, err := NewSessionData("test", config.AuthStrategyToken, now.Add(time.Hour), &payload)
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	err = persistor.CreateSession(nil, rr, *session)
+	require.Error(err, "should fail with invalid key length")
+	require.Contains(err.Error(), "cipher", "error should mention cipher failure")
+}
+
 // TestTerminateSessionClearsNonAesSession tests that the CookieSessionPersistor correctly clears
 // a session that was created with the old JWT method.
 func TestTerminateSessionClearsNonAesSession(t *testing.T) {
@@ -449,9 +745,9 @@ func TestTerminateSessionClearsAesSessionWithOneChunk(t *testing.T) {
 	}
 }
 
-// TestTerminateSessionClearsAesSessionWithTwoChunks tests that the CookieSessionPersistor correctly
+// TestTerminateSessionClearsSessionWithTwoChunks tests that the CookieSessionPersistor correctly
 // clears a session where the payload didn't fit in a single browser cookie.
-func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
+func TestTerminateSessionClearsSessionWithTwoChunks(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.Server.WebRoot = "/kiali-app"
@@ -463,24 +759,21 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 	expireTime := now.Add(time.Hour)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
-	cookie := http.Cookie{
-		Name:    SessionCookieName + "-aes",
+	request.AddCookie(&http.Cookie{
+		Name:    SessionCookieName,
 		Value:   "",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
-	cookie = http.Cookie{
+	})
+	request.AddCookie(&http.Cookie{
 		Name:    NumberOfChunksCookieName,
 		Value:   "2",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
-	cookie = http.Cookie{
-		Name:    SessionCookieName + "-aes-1",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:    SessionCookieName + "-1",
 		Value:   "x",
 		Expires: expireTime,
-	}
-	request.AddCookie(&cookie)
+	})
 
 	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
 	require.NoError(err)
@@ -490,18 +783,17 @@ func TestTerminateSessionClearsAesSessionWithTwoChunks(t *testing.T) {
 
 	response := rr.Result()
 	require.Len(response.Cookies(), 3)
-	// Sort by name to ensure the order is correct
-	cookies := response.Cookies()
-	slices.SortStableFunc(cookies, func(a, b *http.Cookie) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-	assert.Equal(t, SessionCookieName+"-aes", response.Cookies()[0].Name)
-	assert.Equal(t, NumberOfChunksCookieName, response.Cookies()[1].Name)
-	assert.Equal(t, SessionCookieName+"-aes-1", response.Cookies()[2].Name)
 
-	for i := 0; i < 3; i++ {
-		assert.True(t, response.Cookies()[i].Expires.Before(util.Clock.Now()))
-		assert.Equal(t, "/kiali-app", response.Cookies()[i].Path)
-		assert.Empty(t, response.Cookies()[i].Value)
+	// Verify all cookies are dropped
+	droppedNames := make(map[string]bool)
+	for _, c := range response.Cookies() {
+		droppedNames[c.Name] = true
+		assert.True(t, c.Expires.Before(util.Clock.Now()), "cookie %s should be expired", c.Name)
+		assert.Equal(t, "/kiali-app", c.Path)
+		assert.Empty(t, c.Value)
 	}
+
+	assert.True(t, droppedNames[SessionCookieName], "main session cookie should be dropped")
+	assert.True(t, droppedNames[NumberOfChunksCookieName], "chunks count cookie should be dropped")
+	assert.True(t, droppedNames[SessionCookieName+"-1"], "chunk cookie should be dropped")
 }

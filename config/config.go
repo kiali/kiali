@@ -4,7 +4,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"regexp"
 	"sort"
@@ -42,6 +41,19 @@ const (
 	SecretFileCustomDashboardsPrometheusPassword = "customdashboards-prometheus-password"
 	SecretFileCustomDashboardsPrometheusToken    = "customdashboards-prometheus-token"
 
+	// External services certificate files (for mTLS client certificates)
+	// Note: CA file constants removed - use kiali-cabundle ConfigMap instead
+	SecretFilePrometheusCert                 = "prometheus-cert"
+	SecretFilePrometheusKey                  = "prometheus-key"
+	SecretFileGrafanaCert                    = "grafana-cert"
+	SecretFileGrafanaKey                     = "grafana-key"
+	SecretFileTracingCert                    = "tracing-cert"
+	SecretFileTracingKey                     = "tracing-key"
+	SecretFilePersesCert                     = "perses-cert"
+	SecretFilePersesKey                      = "perses-key"
+	SecretFileCustomDashboardsPrometheusCert = "customdashboards-prometheus-cert"
+	SecretFileCustomDashboardsPrometheusKey  = "customdashboards-prometheus-key"
+
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
 )
@@ -63,7 +75,6 @@ const (
 const (
 	IstioMultiClusterHostSuffix = "global"
 	IstioNamespaceDefault       = "istio-system"
-	OidcClientSecretFile        = "/kiali-secret/oidc-secret"
 )
 
 const (
@@ -100,13 +111,47 @@ const (
 	Ztunnel                   = "ztunnel"
 )
 
+// CA bundle file paths used by CredentialManager.
+// These paths are checked based on auth strategy (see getCABundlePaths).
+// Files that don't exist are silently skipped.
 const (
+	// additionalCABundle is user-provided custom CA certificates.
 	additionalCABundle = "/kiali-cabundle/additional-ca-bundle.pem"
+
+	// openidServerCA is an optional CA originally intended for OpenID Connect servers.
+	// Like all CAs in this list, it's loaded into the global cert pool.
+	openidServerCA = "/kiali-cabundle/openid-server-ca.crt"
+
+	// openshiftOAuthServerCA is an optional CA from the kiali-oauth-cabundle ConfigMap.
+	// Originally intended for OAuth servers using external IdPs with self-signed certs,
+	// but like all CAs in this list, it's loaded into the global cert pool and trusted
+	// for all TLS connections.
+	openshiftOAuthServerCA = "/kiali-cabundle/oauth-server-ca.crt"
+
+	// openshiftServingCA is the OpenShift service CA. On OpenShift, the Kiali operator creates
+	// a ConfigMap with the service.beta.openshift.io/inject-cabundle annotation, which causes
+	// OpenShift's service-ca-operator to inject the cluster's service CA. This is then mounted
+	// to the Kiali pod via a projected volume at /kiali-cabundle/service-ca.crt.
 	openshiftServingCA = "/kiali-cabundle/service-ca.crt"
-	// This is an alternate location for the openshift serving cert. It's unclear which
-	// one to prefer so we try reading both.
+
+	// openshiftServingCAFromSA is an alternate location for the OpenShift service CA
+	// from the service account mount. We try reading both locations.
 	openshiftServingCAFromSA = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
 )
+
+// getCABundlePaths returns the CA bundle paths to use based on the auth strategy.
+// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
+// but the config is the very first thing loaded so we don't have access to a client.
+func getCABundlePaths(authStrategy string) []string {
+	switch authStrategy {
+	case AuthStrategyOpenshift:
+		return []string{additionalCABundle, openshiftOAuthServerCA, openshiftServingCA, openshiftServingCAFromSA}
+	case AuthStrategyOpenId:
+		return []string{additionalCABundle, openidServerCA}
+	default:
+		return []string{additionalCABundle}
+	}
+}
 
 // TracingProvider is the type of tracing provider that Kiali will connect to.
 type TracingProvider string
@@ -148,7 +193,10 @@ var (
 )
 
 // Defines where the files are located that contain the secrets content
-var overrideSecretsDir = "/kiali-override-secrets"
+var (
+	overrideSecretsDir   = "/kiali-override-secrets"
+	oidcClientSecretFile = "/kiali-secret/oidc-secret"
+)
 
 // Cluster is used to manually specify a cluster that there is no remote secret for.
 type Cluster struct {
@@ -167,10 +215,9 @@ type Metrics struct {
 	Port    int  `yaml:"port,omitempty"`
 }
 
-// OpenTelemetry collector configuration for tracing
+// OtelCollector is OpenTelemetry collector configuration for tracing.
 type OtelCollector struct {
-	CAName     string `yaml:"ca_name,omitempty"`
-	Protocol   string `yaml:"protocol,omitempty"` // http or https or grpc
+	Protocol   string `yaml:"protocol,omitempty"` // http, https, or grpc
 	SkipVerify bool   `yaml:"skip_verify,omitempty"`
 	TLSEnabled bool   `yaml:"tls_enabled,omitempty"`
 }
@@ -209,22 +256,35 @@ type Server struct {
 	WriteTimeout   time.Duration `yaml:"write_timeout,omitempty"`
 }
 
+// Credential represents a credential value that may be a literal string or a file path.
+// To resolve the actual credential content, use conf.GetCredential(field).
+// File paths (starting with '/') are read with caching and automatic rotation support.
+type Credential string
+
+// String returns the credential value as a string.
+func (c Credential) String() string {
+	return string(c)
+}
+
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string `yaml:"ca_file" json:"caFile"`
-	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
-	Password           string `yaml:"password" json:"password"`
-	Token              string `yaml:"token" json:"token"`
-	Type               string `yaml:"type" json:"type"`
-	UseKialiToken      bool   `yaml:"use_kiali_token" json:"useKialiToken"`
-	Username           string `yaml:"username" json:"username"`
+	CAFile             string     `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
+	CertFile           Credential `yaml:"cert_file" json:"certFile"`
+	InsecureSkipVerify bool       `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	KeyFile            Credential `yaml:"key_file" json:"keyFile"`
+	Password           Credential `yaml:"password" json:"password"`
+	Token              Credential `yaml:"token" json:"token"`
+	Type               string     `yaml:"type" json:"type"`
+	UseKialiToken      bool       `yaml:"use_kiali_token" json:"useKialiToken"`
+	Username           Credential `yaml:"username" json:"username"`
 }
 
 func (a *Auth) Obfuscate() {
-	a.Token = "xxx"
+	a.CertFile = "xxx"
+	a.KeyFile = "xxx"
 	a.Password = "xxx"
+	a.Token = "xxx"
 	a.Username = "xxx"
-	a.CAFile = "xxx"
 }
 
 // ThanosProxy describes configuration of the Thanos proxy component
@@ -391,8 +451,8 @@ type ExternalServices struct {
 
 // LoginToken holds config used for generating the Kiali session tokens.
 type LoginToken struct {
-	ExpirationSeconds int64  `yaml:"expiration_seconds,omitempty"`
-	SigningKey        string `yaml:"signing_key,omitempty"`
+	ExpirationSeconds int64      `yaml:"expiration_seconds,omitempty"`
+	SigningKey        Credential `yaml:"signing_key,omitempty"`
 }
 
 func (lt *LoginToken) Obfuscate() {
@@ -487,7 +547,7 @@ type OpenIdConfig struct {
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
 	ClientId                string            `yaml:"client_id,omitempty"`
-	ClientSecret            string            `yaml:"client_secret,omitempty"`
+	ClientSecret            Credential        `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
 	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
 	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
 	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
@@ -499,8 +559,6 @@ type OpenIdConfig struct {
 
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
-	certPool *x509.CertPool
-
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
 	ClusterWideAccess    bool                     `yaml:"cluster_wide_access,omitempty"`
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
@@ -735,6 +793,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
+	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
 	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
 	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
@@ -747,9 +806,9 @@ type Config struct {
 	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
 	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
-	Server                   Server                              `yaml:",omitempty"`
 	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
 	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
+	Server                   Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
@@ -782,7 +841,6 @@ func NewConfig() (c *Config) {
 		},
 		CustomDashboards: dashboards.GetBuiltInMonitoringDashboards(),
 		Deployment: DeploymentConfig{
-			certPool:           x509.NewCertPool(),
 			ClusterWideAccess:  true,
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
@@ -1020,7 +1078,6 @@ func NewConfig() (c *Config) {
 					CollectorURL:  "jaeger-collector.istio-system:4318",
 					Enabled:       false,
 					Otel: OtelCollector{
-						CAName:     "",
 						Protocol:   "http",
 						SkipVerify: false,
 						TLSEnabled: false,
@@ -1111,8 +1168,31 @@ func Get() (conf *Config) {
 func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
+
+	oldCreds := configuration.Credentials
+
+	// If the incoming config already has a CredentialManager, keep it as-is.
+	// This preserves active file watchers and avoids unnecessary teardown,
+	// which is important when the same config (with the same CredentialManager)
+	// is passed back to Set(). Only create a new CredentialManager if none exists.
+	if conf.Credentials == nil {
+		caBundles := getCABundlePaths(conf.Auth.Strategy)
+		newCreds, err := NewCredentialManager(caBundles)
+		if err != nil {
+			// Only watcher creation failures reach here - invalid CAs are logged but don't fail
+			log.Errorf("Failed to initialize credential manager (file-based credential rotation will not be available): %v", err)
+		} else {
+			conf.Credentials = newCreds
+		}
+	}
+
 	conf.AddHealthDefault()
 	configuration = *conf
+
+	// Only close the previous credential manager if we actually swapped it out.
+	if oldCreds != nil && oldCreds != configuration.Credentials {
+		oldCreds.Close()
+	}
 
 	// init these one time, they don't change
 	if appLabelNames == nil {
@@ -1175,44 +1255,22 @@ func (conf *Config) prepareDashboards() {
 	}
 }
 
-// loadCertPool loads system certs and additional CAs from config.
-func (conf *Config) loadCertPool(additionalCABundlePaths ...string) error {
-	if certPool, err := x509.SystemCertPool(); err != nil {
-		log.Warningf("Unable to load system cert pool. Falling back to empty cert pool. Error: %s", err)
-	} else {
-		conf.Deployment.certPool = certPool
-	}
-
-	for _, path := range additionalCABundlePaths {
-		if _, err := os.Stat(path); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				log.Debugf("Additional CA bundle %s does not exist. Skipping", path)
-			} else {
-				log.Debugf("Unable to read additional CA bundle %s. Skipping", path)
-			}
-			continue
-		}
-
-		log.Tracef("Adding CA bundle %s to pool", path)
-		bundle, err := os.ReadFile(path)
-		if err != nil {
-			return fmt.Errorf("unable to read CA bundle '%s': %s", path, err)
-		}
-
-		if !conf.Deployment.certPool.AppendCertsFromPEM(bundle) {
-			return fmt.Errorf("unable to append PEM bundle from file '%s': %s", path, err)
-		}
-	}
-
-	return nil
-}
-
 // Unmarshal parses the given YAML string and returns its Config object representation.
+// It also sets up supporting components such as the credential manager and certificate
+// pool, including additional CAs from the kiali-cabundle ConfigMap.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse yaml data. error=%v", err)
+		return nil, fmt.Errorf("failed to parse yaml data. error=%w", err)
+	}
+
+	// Initialize the credential manager for file-based credential support with auto-rotation
+	caBundles := getCABundlePaths(conf.Auth.Strategy)
+	conf.Credentials, err = NewCredentialManager(caBundles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize credential manager (CA bundles: [%s]): %w",
+			strings.Join(caBundles, ","), err)
 	}
 
 	// Determine what the accessible namespaces are. These are namespaces we must have permission to see
@@ -1224,22 +1282,13 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	if !conf.Deployment.ClusterWideAccess {
 		conf.Deployment.AccessibleNamespaces, err = conf.extractAccessibleNamespaceList()
 		if err != nil {
+			conf.Credentials.Close()
+			conf.Credentials = nil
 			return nil, err
 		}
 	}
 
 	conf.prepareDashboards()
-
-	additionalCABundles := []string{additionalCABundle}
-	// Auth strategy isn't a great proxy for whether the cluster is running on openshift or not
-	// but the config is the very first thing loaded so we don't have access to a client.
-	if conf.Auth.Strategy == AuthStrategyOpenshift {
-		additionalCABundles = append(additionalCABundles, openshiftServingCAFromSA, openshiftServingCA)
-	}
-	if err := conf.loadCertPool(additionalCABundles...); err != nil {
-		return nil, fmt.Errorf("unable to load cert pool. Check additional CAs specified at %s and ensure the file is properly formatted: %s",
-			strings.Join(additionalCABundles, ","), err)
-	}
 
 	// TODO: Still support deprecated settings, but remove this support in future versions
 	if conf.ExternalServices.Grafana.XInClusterURL != "" {
@@ -1268,34 +1317,19 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// via secrets mounted on the file system rather than storing them directly in the config map itself.
 	// The names of the files in /kiali-override-secrets denote which credentials they are.
 	type overridesType struct {
-		configValue *string
+		configValue *Credential
 		fileName    string
 	}
 
 	overrides := []overridesType{
+		// Prometheus credentials and certificates
 		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Username,
-			fileName:    SecretFileGrafanaUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.CertFile,
+			fileName:    SecretFilePrometheusCert,
 		},
 		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Password,
-			fileName:    SecretFileGrafanaPassword,
-		},
-		{
-			configValue: &conf.ExternalServices.Grafana.Auth.Token,
-			fileName:    SecretFileGrafanaToken,
-		},
-		{
-			configValue: &conf.ExternalServices.Perses.Auth.Username,
-			fileName:    SecretFilePersesUsername,
-		},
-		{
-			configValue: &conf.ExternalServices.Perses.Auth.Password,
-			fileName:    SecretFilePersesPassword,
-		},
-		{
-			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
-			fileName:    SecretFilePrometheusUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.KeyFile,
+			fileName:    SecretFilePrometheusKey,
 		},
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.Password,
@@ -1306,8 +1340,38 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFilePrometheusToken,
 		},
 		{
-			configValue: &conf.ExternalServices.Tracing.Auth.Username,
-			fileName:    SecretFileTracingUsername,
+			configValue: &conf.ExternalServices.Prometheus.Auth.Username,
+			fileName:    SecretFilePrometheusUsername,
+		},
+		// Grafana credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.CertFile,
+			fileName:    SecretFileGrafanaCert,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.KeyFile,
+			fileName:    SecretFileGrafanaKey,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Password,
+			fileName:    SecretFileGrafanaPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Token,
+			fileName:    SecretFileGrafanaToken,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.Username,
+			fileName:    SecretFileGrafanaUsername,
+		},
+		// Tracing credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.CertFile,
+			fileName:    SecretFileTracingCert,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.KeyFile,
+			fileName:    SecretFileTracingKey,
 		},
 		{
 			configValue: &conf.ExternalServices.Tracing.Auth.Password,
@@ -1318,12 +1382,34 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFileTracingToken,
 		},
 		{
-			configValue: &conf.LoginToken.SigningKey,
-			fileName:    SecretFileLoginTokenSigningKey,
+			configValue: &conf.ExternalServices.Tracing.Auth.Username,
+			fileName:    SecretFileTracingUsername,
+		},
+		// Perses credentials and certificates
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.CertFile,
+			fileName:    SecretFilePersesCert,
 		},
 		{
-			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username,
-			fileName:    SecretFileCustomDashboardsPrometheusUsername,
+			configValue: &conf.ExternalServices.Perses.Auth.KeyFile,
+			fileName:    SecretFilePersesKey,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Password,
+			fileName:    SecretFilePersesPassword,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.Username,
+			fileName:    SecretFilePersesUsername,
+		},
+		// Custom Dashboards Prometheus credentials and certificates
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile,
+			fileName:    SecretFileCustomDashboardsPrometheusCert,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.KeyFile,
+			fileName:    SecretFileCustomDashboardsPrometheusKey,
 		},
 		{
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Password,
@@ -1333,32 +1419,110 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Token,
 			fileName:    SecretFileCustomDashboardsPrometheusToken,
 		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.Username,
+			fileName:    SecretFileCustomDashboardsPrometheusUsername,
+		},
+		// Login Token signing key
+		{
+			configValue: &conf.LoginToken.SigningKey,
+			fileName:    SecretFileLoginTokenSigningKey,
+		},
 	}
 
+	// For each override, check if a secret file exists and set the config value to the file path.
+	// This enables automatic credential rotation as credentials are read on-use, not at startup.
 	for _, override := range overrides {
-		fullFileName := overrideSecretsDir + "/" + override.fileName + "/value.txt"
-		b, err := os.ReadFile(fullFileName)
-		if err == nil {
-			fileContents := string(b)
-			if fileContents != "" {
-				*override.configValue = fileContents
-				log.Debugf("Credentials loaded from secret file [%s]", fullFileName)
-			} else {
-				log.Errorf("The credentials were empty in secret file [%s]", fullFileName)
+		secretDir := overrideSecretsDir + "/" + override.fileName
+
+		// First, check if the config value already contains a secret reference pattern (e.g., "secret:name:key")
+		// If so, the operator will have extracted the key name and we need to find the mounted file.
+		var fullFileName string
+		if *override.configValue != "" && strings.HasPrefix(override.configValue.String(), "secret:") {
+			// Extract the key name from the secret reference (third part after second colon)
+			parts := strings.Split(override.configValue.String(), ":")
+			if len(parts) == 3 {
+				keyName := parts[2]
+				// Check if a file with this specific key name exists (for certificates)
+				fullFileName = secretDir + "/" + keyName
 			}
-		} else if !errors.Is(err, os.ErrNotExist) {
-			log.Errorf("Failed reading secret file [%s]: %v", fullFileName, err)
+		}
+
+		// If we didn't find a specific file, fall back to the standard value.txt
+		if fullFileName == "" || !fileExists(fullFileName) {
+			fullFileName = secretDir + "/value.txt"
+		}
+
+		// Check if the file exists
+		if fileExists(fullFileName) {
+			// File exists - set config value to the file path (not the content)
+			// The credentials will be read on-use via Config.GetCredential()
+			*override.configValue = Credential(fullFileName)
+			log.Debugf("Credential file path configured: [%s]", fullFileName)
+		} else {
+			// File doesn't exist - check if this was expected to be an error
+			if _, err := os.Stat(fullFileName); !errors.Is(err, os.ErrNotExist) {
+				log.Errorf("Failed checking secret file [%s]: %v", fullFileName, err)
+			} else {
+				// File simply doesn't exist - this is normal if the secret wasn't mounted
+				log.Tracef("Secret file [%s] not found - using configured value as-is", fullFileName)
+			}
 		}
 	}
 
+	// Handle OIDC client secret from mounted kiali-secret volume.
+	// Unlike the overrides above (which are in /kiali-override-secrets), this comes from
+	// a different volume mount (/kiali-secret) but follows the same pattern: if the file
+	// exists, store its path so GetCredential() can read it with auto-rotation support.
+	if fileExists(oidcClientSecretFile) {
+		conf.Auth.OpenId.ClientSecret = Credential(oidcClientSecretFile)
+		log.Debugf("OIDC client secret file path configured: [%s]", oidcClientSecretFile)
+	}
+
+	// Log deprecation warnings for deprecated ca_file settings
+	logCAFileDeprecationWarnings(conf)
+
 	return
+}
+
+// logCAFileDeprecationWarnings logs warnings if any deprecated ca_file settings are configured.
+// These settings are deprecated and will be ignored. Users should use the
+// kiali-cabundle ConfigMap instead.
+func logCAFileDeprecationWarnings(conf *Config) {
+	caFileSettings := []struct {
+		name  string
+		value string
+	}{
+		{"external_services.grafana.auth.ca_file", conf.ExternalServices.Grafana.Auth.CAFile},
+		{"external_services.perses.auth.ca_file", conf.ExternalServices.Perses.Auth.CAFile},
+		{"external_services.prometheus.auth.ca_file", conf.ExternalServices.Prometheus.Auth.CAFile},
+		{"external_services.custom_dashboards.prometheus.auth.ca_file", conf.ExternalServices.CustomDashboards.Prometheus.Auth.CAFile},
+		{"external_services.tracing.auth.ca_file", conf.ExternalServices.Tracing.Auth.CAFile},
+	}
+
+	for _, setting := range caFileSettings {
+		if setting.value != "" {
+			log.Warningf("DEPRECATION: [%s] is deprecated and will be ignored. "+
+				"To configure custom CA certificates, use the kiali-cabundle ConfigMap instead. "+
+				"See the TLS Configuration documentation for details.", setting.name)
+		}
+	}
+}
+
+// fileExists checks if a file exists and is not a directory.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if err != nil {
+		return false
+	}
+	return !info.IsDir()
 }
 
 // Marshal converts the Config object and returns its YAML string.
 func Marshal(conf *Config) (yamlString string, err error) {
 	yamlBytes, err := yaml.Marshal(&conf)
 	if err != nil {
-		return "", fmt.Errorf("failed to produce yaml. error=%v", err)
+		return "", fmt.Errorf("failed to produce yaml. error=%w", err)
 	}
 
 	yamlString = string(yamlBytes)
@@ -1370,23 +1534,12 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 	log.Debugf("Reading YAML config from [%s]", filename)
 	fileContent, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config file [%v]. error=%v", filename, err)
+		return nil, fmt.Errorf("failed to load config file [%v]. error=%w", filename, err)
 	}
 
 	conf, err = Unmarshal(string(fileContent))
 	if err != nil {
 		return
-	}
-
-	// Read OIDC secret, if present
-	if oidcSecret, oidcErr := os.ReadFile(OidcClientSecretFile); oidcErr == nil {
-		conf.Auth.OpenId.ClientSecret = string(oidcSecret)
-	} else {
-		if !os.IsNotExist(oidcErr) {
-			err = fmt.Errorf("failed to OIDC client secret file [%v]. error=%v", OidcClientSecretFile, oidcErr)
-		}
-
-		// ...else, if error indicates that secret does not exist, then ignore because the secret is optional
 	}
 
 	return
@@ -1396,7 +1549,7 @@ func LoadFromFile(filename string) (conf *Config, err error) {
 func SaveToFile(filename string, conf *Config) (err error) {
 	fileContent, err := Marshal(conf)
 	if err != nil {
-		return fmt.Errorf("failed to save config file [%v]. error=%v", filename, err)
+		return fmt.Errorf("failed to save config file [%v]. error=%w", filename, err)
 	}
 
 	log.Debugf("Writing YAML config to [%s]", filename)
@@ -1534,14 +1687,18 @@ func Validate(conf *Config) error {
 	}
 
 	// Check the ciphering key for sessions
-	signingKey := conf.LoginToken.SigningKey
-	if err := validateSigningKey(signingKey, auth.Strategy); err != nil {
+	// If signing key is a file path, read the actual content for validation
+	signingKeyValue, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		return err
+	}
+	if err := validateSigningKey(signingKeyValue, auth.Strategy); err != nil {
 		return err
 	}
 
 	// log a warning if the user is ignoring some validations
 	if len(conf.KialiFeatureFlags.Validations.Ignore) > 0 {
-		log.Infof("Some validation errors will be ignored %v. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
+		log.Infof("Some validation errors will be ignored [%v]. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
 	}
 
 	// log a info message if the user is disabling some features
@@ -1725,10 +1882,68 @@ func (config *Config) GetVersionLabelName(labels map[string]string) (string, boo
 }
 
 func (c *Config) CertPool() *x509.CertPool {
-	if pool := c.Deployment.certPool; pool != nil {
-		return pool.Clone()
+	if c.Credentials == nil {
+		// Fallback to system cert pool
+		log.Warning("CertPool requested but CredentialManager not initialized. Using system cert pool.")
+		systemPool, err := x509.SystemCertPool()
+		if err != nil {
+			log.Warningf("Unable to load system cert pool: %v", err)
+			return x509.NewCertPool()
+		}
+		return systemPool
 	}
-	return nil
+
+	return c.Credentials.GetCertPool()
+}
+
+// CertPoolWithAdditionalPEM returns a clone of the managed cert pool with additional CA certificates appended.
+// If additionalCA is empty, returns the standard CertPool.
+// This centralizes the "base pool + extra CA" pattern used when additional CA data needs to be trusted
+// alongside the global CA bundle (e.g., for OpenShift OAuth server CAs).
+func (c *Config) CertPoolWithAdditionalPEM(additionalCA []byte) (*x509.CertPool, error) {
+	pool := c.CertPool()
+	if len(additionalCA) == 0 {
+		return pool, nil
+	}
+
+	// Clone the pool to avoid modifying the shared pool
+	clonedPool := pool.Clone()
+	if !clonedPool.AppendCertsFromPEM(additionalCA) {
+		return nil, fmt.Errorf("unable to append additional CA bundle PEM")
+	}
+	return clonedPool, nil
+}
+
+// Close cleans up Config resources such as the credential file watcher.
+// Should be called during application shutdown.
+func (c *Config) Close() {
+	if c.Credentials != nil {
+		c.Credentials.Close()
+		c.Credentials = nil
+	}
+}
+
+// GetCredential reads a credential value, supporting both literal values and file paths.
+// If the value starts with "/", it's treated as a file path and read from disk with caching.
+// Otherwise, the literal value is returned as-is.
+//
+// This method supports automatic credential rotation - when files are updated (e.g., Kubernetes
+// secret rotation), the cache is automatically refreshed without requiring a pod restart.
+//
+// If the CredentialManager is not initialized, falls back to direct file reads without caching.
+func (c *Config) GetCredential(value Credential) (string, error) {
+	if c.Credentials != nil {
+		return c.Credentials.Get(value.String())
+	}
+	// Fallback for configs without credential manager (e.g., some tests)
+	if value == "" || !strings.HasPrefix(value.String(), "/") {
+		return value.String(), nil
+	}
+	content, err := os.ReadFile(value.String())
+	if err != nil {
+		return "", fmt.Errorf("failed to read credential from [%s]: %w", value, err)
+	}
+	return strings.TrimSpace(string(content)), nil
 }
 
 // LoadConfig loads config file if specified, otherwise, relies on environment variables to configure.

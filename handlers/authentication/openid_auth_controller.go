@@ -4,14 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -30,13 +28,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
-)
-
-const (
-	// OpenIdServerCAFile is a certificate file used to connect to the OpenID server.
-	// This is for cases when the authentication server is using TLS with a self-signed
-	// certificate.
-	OpenIdServerCAFile = "/kiali-cabundle/openid-server-ca.crt"
 )
 
 // cachedOpenIdKeySet stores the metadata obtained from the /.well-known/openid-configuration
@@ -341,6 +332,15 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := c.conf.GetCredential(c.conf.LoginToken.SigningKey)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error reading signing key: " + err.Error()))
+		return
+	}
+
 	// Build scopes string
 	scopes := strings.Join(getConfiguredOpenIdScopes(c.conf), " ")
 
@@ -399,7 +399,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
 	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
 	// the Kiali's signing key).
-	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), c.conf.LoginToken.SigningKey)))
+	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), signingKey)))
 
 	// Send redirection to browser
 	responseType := "code" // Request for the "authorization code" flow
@@ -758,12 +758,22 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 		return p
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := p.conf.GetCredential(p.conf.LoginToken.SigningKey)
+	if err != nil {
+		p.Error = &AuthenticationFailureError{
+			HttpStatus: http.StatusInternalServerError,
+			Reason:     "Error reading signing key: " + err.Error(),
+		}
+		return p
+	}
+
 	state := p.State
 
 	separator := strings.LastIndexByte(state, '-')
 	if separator != -1 {
 		csrfToken, timestamp := state[:separator], state[separator+1:]
-		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, p.conf.LoginToken.SigningKey)))
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, signingKey)))
 
 		if fmt.Sprintf("%x", csrfHash) != csrfToken {
 			p.Error = &AuthenticationFailureError{
@@ -803,12 +813,19 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
+	// Resolve the client secret via CredentialManager to support rotation
+	clientSecret, err := p.conf.GetCredential(cfg.ClientSecret)
+	if err != nil {
+		p.Error = fmt.Errorf("failed to read OpenID client secret: %w", err)
+		return p
+	}
+
 	// Exchange authorization code for a token
 	requestParams := url.Values{}
 	requestParams.Set("code", p.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
-	if len(cfg.ClientSecret) == 0 {
+	if len(clientSecret) == 0 {
 		requestParams.Set("client_id", cfg.ClientId)
 	}
 
@@ -818,8 +835,8 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
-	if len(cfg.ClientSecret) > 0 {
-		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
+	if len(clientSecret) > 0 {
+		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(clientSecret))
 	}
 
 	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -913,7 +930,9 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 }
 
 // createHttpClient is a helper for creating and configuring an http client that is ready
-// to do requests to the url in toUrl, which should be and endpoint of the OpenId server.
+// to do requests to the url in toUrl, which should be an endpoint of the OpenId server.
+// Custom CA certificates can be provided via the kiali-cabundle ConfigMap using either
+// the global additional-ca-bundle.pem key or the OpenID-specific openid-server-ca.crt key.
 func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 	cfg := conf.Auth.OpenId
 	parsedUrl, err := url.Parse(toUrl)
@@ -921,31 +940,14 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 		return nil, err
 	}
 
-	// Check if there is a user-configured custom certificate for the OpenID Server. Read it, if it exists
-	var cafile []byte
-	if _, customCaErr := os.Stat(OpenIdServerCAFile); customCaErr == nil {
-		var caReadErr error
-		if cafile, caReadErr = os.ReadFile(OpenIdServerCAFile); caReadErr != nil {
-			return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caReadErr)
-		}
-	} else if !errors.Is(customCaErr, os.ErrNotExist) {
-		log.Warningf("Unable to read the provided OpenID Server CA file (%s). Ignoring...", customCaErr.Error())
-	}
-
 	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS || cafile != nil {
-		var certPool *x509.CertPool
-		if cafile != nil {
-			certPool = x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(cafile); !ok {
-				return nil, fmt.Errorf("supplied OpenId CA file cannot be parsed")
-			}
-		}
 
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
-			RootCAs:            certPool,
-		}
+	// Use the global cert pool which includes system CAs and any additional CAs
+	// configured via the kiali-cabundle ConfigMap (including openid-server-ca.crt)
+	certPool := conf.CertPool()
+	httpTransport.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
+		RootCAs:            certPool,
 	}
 
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
@@ -964,9 +966,16 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 // isOpenIdCodeFlowPossible determines if the "authorization code" flow can be used
 // to do user authentication.
 func isOpenIdCodeFlowPossible(conf *config.Config) bool {
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		log.Warningf("Cannot use OpenId authorization code flow because signing key could not be read: %v", err)
+		return false
+	}
+
 	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
 	// encoded cookies.
-	switch len(conf.LoginToken.SigningKey) {
+	switch len(signingKey) {
 	case 16, 24, 32:
 	default:
 		log.Warningf("Cannot use OpenId authorization code flow because signing key is not 16, 24 nor 32 bytes long")

@@ -172,7 +172,7 @@ func unmarshal(yamlString string) (out MonitoringDashboardsList, err error) {
 	list := new(MonitoringDashboardsList)
 	err = yaml.Unmarshal([]byte(yamlString), &list)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse monitoring dashboard yaml data. error=%v", err)
+		return nil, fmt.Errorf("failed to parse monitoring dashboard yaml data. error=%w", err)
 	}
 	return *list, nil
 }
