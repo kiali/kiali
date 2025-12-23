@@ -81,7 +81,7 @@ func TestCreateSessionNoChunks(t *testing.T) {
 	persistor, err := NewCookieSessionPersistor[testSessionPayload](cfg)
 	require.NoError(err)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
-	session, err := NewSessionData("", cfg.Auth.Strategy, expiresTime, &payload)
+	session, err := NewSessionData("test-cluster", cfg.Auth.Strategy, expiresTime, &payload)
 	require.NoError(err)
 	err = persistor.CreateSession(nil, rr, *session)
 
@@ -94,7 +94,7 @@ func TestCreateSessionNoChunks(t *testing.T) {
 	assert.True(t, cookie.HttpOnly)
 	assert.False(t, cfg.IsServerHTTPS())
 	assert.False(t, cookie.Secure)
-	assert.Equal(t, SessionCookieName, cookie.Name)
+	assert.Equal(t, sessionCookieName(SessionCookieName, "test-cluster"), cookie.Name)
 	assert.Equal(t, "/kiali-app", cookie.Path)
 	assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 	assert.Equal(t, expiresTime, cookie.Expires)
@@ -133,7 +133,7 @@ func TestCreateSessionWithChunks(t *testing.T) {
 	persistor, err := NewCookieSessionPersistor[testSessionPayload](cfg)
 	require.NoError(t, err)
 	expiresTime := time.Date(2021, 12, 1, 1, 0, 0, 0, time.UTC)
-	session, err := NewSessionData("", cfg.Auth.Strategy, expiresTime, &payload)
+	session, err := NewSessionData("test-cluster", cfg.Auth.Strategy, expiresTime, &payload)
 	require.NoError(t, err)
 	err = persistor.CreateSession(nil, rr, *session)
 
@@ -141,9 +141,9 @@ func TestCreateSessionWithChunks(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Len(t, response.Cookies(), 3)
-	assert.Equal(t, SessionCookieName, response.Cookies()[0].Name)
-	assert.Equal(t, SessionCookieName+"-1", response.Cookies()[1].Name)
-	assert.Equal(t, NumberOfChunksCookieName, response.Cookies()[2].Name)
+	assert.Equal(t, sessionCookieName(SessionCookieName, "test-cluster"), response.Cookies()[0].Name)
+	assert.Equal(t, sessionCookieName(SessionCookieName, "test-cluster")+"-1", response.Cookies()[1].Name)
+	assert.Equal(t, sessionCookieName(NumberOfChunksCookieName, "test-cluster"), response.Cookies()[2].Name)
 	assert.Equal(t, "2", response.Cookies()[2].Value)
 
 	for _, cookie := range response.Cookies() {
@@ -161,24 +161,27 @@ func TestNewSessionData(t *testing.T) {
 	cases := map[string]struct {
 		expectErr bool
 		expiresOn time.Time
-		key       string
+		cluster   string
 		payload   *testSessionPayload
 		strategy  string
 	}{
 		"nil payload is rejected": {
 			expectErr: true,
+			cluster:   "test",
 			payload:   nil,
 			strategy:  config.AuthStrategyToken,
 			expiresOn: oneDayFromNow,
 		},
 		"empty strategy is rejected": {
 			expectErr: true,
+			cluster:   "test",
 			payload:   &testSessionPayload{},
 			strategy:  "",
 			expiresOn: oneDayFromNow,
 		},
 		"expiration time in the past is rejected": {
 			expectErr: true,
+			cluster:   "test",
 			payload:   &testSessionPayload{},
 			strategy:  config.AuthStrategyToken,
 			expiresOn: time.Now().Add(-time.Hour),
@@ -188,7 +191,7 @@ func TestNewSessionData(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
-			_, err := NewSessionData(tc.key, tc.strategy, tc.expiresOn, tc.payload)
+			_, err := NewSessionData(tc.cluster, tc.strategy, tc.expiresOn, tc.payload)
 			if tc.expectErr {
 				require.Error(err)
 			} else {
@@ -832,16 +835,16 @@ func TestReadAllSessions_DoesNotDropChunkCookies(t *testing.T) {
 	}
 
 	expiresTime := clockTime.Add(time.Hour)
-	cookies := newValidSessionCookies(t, persistor, "", conf.Auth.Strategy, expiresTime, largePayload)
+	cookies := newValidSessionCookies(t, persistor, "test-cluster", conf.Auth.Strategy, expiresTime, largePayload)
 
 	// Verify that we have chunked cookies (chunk #0 cookie + continuation chunk cookies + chunks-count cookie)
 	cookieNames := make([]string, len(cookies))
 	for i, c := range cookies {
 		cookieNames[i] = c.Name
 	}
-	require.Contains(cookieNames, SessionCookieName)
-	require.Contains(cookieNames, SessionCookieName+"-1")
-	require.Contains(cookieNames, NumberOfChunksCookieName)
+	require.Contains(cookieNames, sessionCookieName(SessionCookieName, "test-cluster"))
+	require.Contains(cookieNames, sessionCookieName(SessionCookieName, "test-cluster")+"-1")
+	require.Contains(cookieNames, sessionCookieName(NumberOfChunksCookieName, "test-cluster"))
 
 	// Simulate a request with all these cookies.
 	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
@@ -860,6 +863,7 @@ func TestReadAllSessions_DoesNotDropChunkCookies(t *testing.T) {
 	require.NoError(err)
 	require.Len(sessions, 1, "Should have exactly one session")
 	require.NotNil(sessions[0].Payload)
+	assert.Equal(t, "test-cluster", sessions[0].Cluster)
 	assert.Equal(t, largePayload.FirstField, sessions[0].Payload.FirstField)
 }
 
