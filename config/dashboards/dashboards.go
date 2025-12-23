@@ -180,6 +180,16 @@ const DEFAULT_DASHBOARDS_YAML = `
       - label: "graph_type"
         displayName: "Graph type"
   - chart:
+      name: "Graph cache hits"
+      spans: 4
+      metricName: "kiali_graph_cache_hits_total"
+      dataType: "raw"
+  - chart:
+      name: "Graph cache misses"
+      spans: 4
+      metricName: "kiali_graph_cache_misses_total"
+      dataType: "raw"
+  - chart:
       name: "Tracing processing duration"
       unit: "seconds"
       spans: 4

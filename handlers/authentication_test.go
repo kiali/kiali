@@ -366,6 +366,7 @@ func TestAuthenticationInfo(t *testing.T) {
 			currentSessions: authentication.UserSessions{
 				"test-cluster": &authentication.UserSessionData{
 					ExpiresOn: oneHourFromNow,
+					SessionID: "sessionid",
 					Username:  "test-user",
 					AuthInfo:  &api.AuthInfo{Token: "test"},
 				},
@@ -393,11 +394,13 @@ func TestAuthenticationInfo(t *testing.T) {
 			currentSessions: authentication.UserSessions{
 				"test-cluster": &authentication.UserSessionData{
 					ExpiresOn: oneHourFromNow,
+					SessionID: "sessionid1",
 					Username:  "test-user",
 					AuthInfo:  &api.AuthInfo{Token: "test"},
 				},
 				"test-cluster-2": &authentication.UserSessionData{
 					ExpiresOn: oneHourFromNow,
+					SessionID: "sessionid2",
 					Username:  "test-user-2",
 					AuthInfo:  &api.AuthInfo{Token: "test-2"},
 				},

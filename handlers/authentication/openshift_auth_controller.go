@@ -198,6 +198,7 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
 	// then the received session has priority over the Kiali initiated session (stored in cookies).
+	// Note: 3rd-party sessions don't have a Kiali session ID (SessionID will be empty).
 	if authHeader := r.Header.Get("Authorization"); len(authHeader) != 0 && strings.HasPrefix(authHeader, "Bearer ") {
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		expires := util.Clock.Now().Add(time.Second * time.Duration(o.conf.LoginToken.ExpirationSeconds))
@@ -207,9 +208,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
-			ExpiresOn: expires,
-			Username:  user.Name,
 			AuthInfo:  &api.AuthInfo{Token: token},
+			ExpiresOn: expires,
+			SessionID: "",
+			Username:  user.Name,
 		}
 	} else if authToken := r.URL.Query().Get("oauth_token"); len(authToken) != 0 {
 		token := strings.TrimSpace(authToken)
@@ -220,9 +222,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
-			ExpiresOn: expires,
-			Username:  user.Name,
 			AuthInfo:  &api.AuthInfo{Token: token},
+			ExpiresOn: expires,
+			SessionID: "",
+			Username:  user.Name,
 		}
 	} else {
 		sessions, err := o.sessionStore.ReadAllSessions(r, w)
@@ -231,21 +234,22 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		for _, session := range sessions {
-			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Key)
+			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
 				if k8serrors.IsUnauthorized(err) {
 					// The token is invalid, we should clear the session.
 					// This could be an old session for a cluster with the same name.
 					log.Debug("Token saved in session is unauthorized to this cluster. This could be an old token from another cluster with an unexpired token. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Key)
+					o.sessionStore.TerminateSession(r, w, session.Cluster)
 					continue
 				}
 				return nil, err
 			}
-			userSessions[session.Key] = &UserSessionData{
-				ExpiresOn: session.ExpiresOn,
-				Username:  user.Name,
+			userSessions[session.Cluster] = &UserSessionData{
 				AuthInfo:  &api.AuthInfo{Token: session.Payload.AccessToken},
+				ExpiresOn: session.ExpiresOn,
+				SessionID: session.SessionID,
+				Username:  user.Name,
 			}
 		}
 	}
@@ -279,7 +283,7 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 	}
 
 	for _, session := range sessions {
-		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Key)
+		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Cluster)
 		if err != nil {
 			err = TerminateSessionError{
 				Message:    fmt.Sprintf("Could not log out of OpenShift: %v", err),
@@ -287,7 +291,7 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 			}
 			log.Debugf("Unable to terminate session: %v", err)
 		} else {
-			o.sessionStore.TerminateSession(r, w, session.Key)
+			o.sessionStore.TerminateSession(r, w, session.Cluster)
 		}
 	}
 

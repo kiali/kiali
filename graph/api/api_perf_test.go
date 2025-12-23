@@ -1145,10 +1145,10 @@ func BenchmarkVersionedAppGraph(b *testing.B) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, biz)
+		options := graph.NewOptions(r, biz, config.Get())
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		options.Appenders.AppenderNames = []string{"deadNode", "istio", "serviceEntry", "meshCheck", "workloadEntry", "health"}
-		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
+		code, config, _ := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
 	})
 

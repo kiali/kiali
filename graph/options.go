@@ -15,6 +15,8 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/log"
 )
 
@@ -119,7 +121,10 @@ type TelemetryOptions struct {
 	IncludeIdleEdges     bool               // include edges with request rates of 0
 	InjectServiceNodes   bool               // inject destination service nodes between source and destination nodes.
 	Namespaces           NamespaceInfoMap
+	QueryTimeProvided    bool // true if queryTime was explicitly provided (historical query, bypass cache)
 	Rates                RequestedRates
+	RefreshInterval      time.Duration // requested refresh interval for background cache updates (<= 0 no refresh)
+	SessionID            string        // unique session identifier for caching (extracted from session cookie)
 	CommonOptions
 	NodeOptions
 }
@@ -132,7 +137,7 @@ type Options struct {
 	TelemetryOptions
 }
 
-func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
+func NewOptions(r *net_http.Request, businessLayer *business.Layer, conf *config.Config) Options {
 	// path variables (0 or more will be set)
 	vars := mux.Vars(r)
 	aggregate := vars["aggregate"]
@@ -149,9 +154,14 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	var includeIdleEdges bool
 	var injectServiceNodes bool
 	var queryTime int64
+	var queryTimeProvided bool
+	var refreshInterval time.Duration
 	ambientTraffic := params.Get("ambientTraffic")
 	appenders := RequestedAppenders{All: true}
 	boxBy := params.Get("boxBy")
+
+	// Extract session ID from the request context
+	sessionID := getSessionID(r)
 	// @TODO requires refactoring to use clusterNameFromQuery
 	cluster := params.Get("clusterName")
 	configVendor := params.Get("configVendor")
@@ -164,6 +174,7 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	rateGrpc := params.Get("rateGrpc")
 	rateHttp := params.Get("rateHttp")
 	rateTcp := params.Get("rateTcp")
+	refreshIntervalString := params.Get("refreshInterval")
 	telemetryVendor := params.Get("telemetryVendor")
 
 	if _, ok := params["appenders"]; ok {
@@ -240,13 +251,41 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	}
 	if queryTimeString == "" {
 		queryTime = time.Now().Unix()
+		queryTimeProvided = false
 	} else {
 		var queryTimeErr error
 		queryTime, queryTimeErr = strconv.ParseInt(queryTimeString, 10, 64)
 		if queryTimeErr != nil {
 			BadRequest(fmt.Sprintf("Invalid queryTime [%s]", queryTimeString))
 		}
+		queryTimeProvided = true // Client requested specific time (historical query)
 	}
+	if refreshIntervalString == "" {
+		if parsed, err := time.ParseDuration(conf.KialiInternal.GraphCache.RefreshInterval); err == nil {
+			refreshInterval = parsed
+		} else {
+			refreshInterval = -1 // Let invalid config just act like disable
+		}
+	} else {
+		refreshMillis, refreshErr := strconv.ParseInt(refreshIntervalString, 10, 64)
+		if refreshErr != nil {
+			BadRequest(fmt.Sprintf("Invalid refresh interval [%s]", refreshIntervalString))
+		}
+		// Negative or zero means disable caching for this request
+		if refreshMillis <= 0 {
+			refreshInterval = -1 // Special value to indicate cache bypass
+		} else {
+			refreshInterval = time.Duration(refreshMillis) * time.Millisecond
+			// Sanity check: minimum 10 seconds, maximum 15 minutes
+			if refreshInterval < 10*time.Second {
+				BadRequest("Refresh interval must be at least 10000ms (10 seconds), or 0 to disable caching")
+			}
+			if refreshInterval > 15*time.Minute {
+				BadRequest("Refresh interval must not exceed 900000ms (15 minutes)")
+			}
+		}
+	}
+	// Note: refreshInterval <= 0 means disable caching (bypass)
 	if telemetryVendor == "" {
 		telemetryVendor = defaultTelemetryVendor
 	} else if telemetryVendor != VendorIstio {
@@ -382,7 +421,10 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 			IncludeIdleEdges:     includeIdleEdges,
 			InjectServiceNodes:   injectServiceNodes,
 			Namespaces:           namespaceMap,
+			QueryTimeProvided:    queryTimeProvided,
 			Rates:                rates,
+			RefreshInterval:      refreshInterval,
+			SessionID:            sessionID,
 			CommonOptions: CommonOptions{
 				Duration:  time.Duration(duration),
 				GraphType: graphType,
@@ -403,6 +445,15 @@ func NewOptions(r *net_http.Request, businessLayer *business.Layer) Options {
 	}
 
 	return options
+}
+
+// getSessionID retrieves the session ID from the request context.
+// The session ID is set by AuthenticationHandler.Handle for all auth strategies:
+// - For authenticated strategies: the unique session ID from the session cookie
+// - For anonymous strategy: the shared AnonymousSessionID constant
+// - Returns empty string for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
+func getSessionID(r *net_http.Request) string {
+	return authentication.GetSessionIDContext(r.Context())
 }
 
 // GetGraphKind will return the kind of graph represented by the options.

@@ -1141,3 +1141,44 @@ func buildAppenderContext(ctx context.Context, appenderName string) context.Cont
 	ctx = log.ToContext(ctx, &zlWithAppender)
 	return ctx
 }
+
+// GraphOptionsMatch is required by the graph/TelemetryVendor interface
+func GraphOptionsMatch(a, b graph.TelemetryOptions) bool {
+	// check for changes in relevant param values
+
+	// Helper function to check if a parameter is present and matches
+	checkParam := func(paramName string) bool {
+		valA := a.Params.Get(paramName)
+		valB := b.Params.Get(paramName)
+
+		// If at least one has the param set, compare values
+		if valA != "" || valB != "" {
+			return valA == valB
+		}
+
+		// Neither has the param, so they match
+		return true
+	}
+
+	// Check responseTime parameter
+	if !checkParam("responseTime") {
+		return false
+	}
+
+	// Check throughputType parameter
+	if !checkParam("throughputType") {
+		return false
+	}
+
+	// Check aggregate parameter
+	if !checkParam("aggregate") {
+		return false
+	}
+
+	// Check waypoints parameter
+	if !checkParam("waypoints") {
+		return false
+	}
+
+	return true
+}

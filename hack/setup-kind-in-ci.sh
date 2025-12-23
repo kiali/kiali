@@ -368,6 +368,11 @@ setup_kind_singlecluster() {
       )
   fi
 
+  # Expose Prometheus via LoadBalancer for integration tests
+  infomsg "Exposing Prometheus via LoadBalancer..."
+  kubectl patch svc prometheus -n istio-system -p '{"spec": {"type": "LoadBalancer"}}'
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/prometheus --timeout=60s
+
   if [ "${DEPLOY_KIALI}" != "true" ]; then
     infomsg "Skipping Kiali deployment as requested"
     return
@@ -411,6 +416,7 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -504,6 +510,7 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
