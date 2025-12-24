@@ -495,7 +495,7 @@ func checkDashboardOpenShift(conn PersesConnectionInfo, project, searchPattern s
 
 	if conn.InternalURL != "" && conn.InternalURL != conn.BaseExternalURL {
 		// Internal cluster access - use direct Perses API
-		query = fmt.Sprintf("%s/api/proxy/plugin/monitoring-console-plugin/perses/api/v1/projects/%s/dashboards/%s", conn.InternalURL, project, searchPattern)
+		query = fmt.Sprintf("%s/api/v1/projects/%s/dashboards/%s", conn.InternalURL, project, searchPattern)
 		log.Debugf("[Perses] Openshift Dashboard supplier (internal) checking: %s", query)
 		resp, code, _, err = httputil.HttpGet(query, auth, time.Second*10, nil, nil, config.Get())
 	} else {
