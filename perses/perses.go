@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -118,13 +119,11 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 		return "", fmt.Errorf("failed to marshal login request body: %s", err.Error())
 	}
 
-	// Create auth object with TLS configuration (no authentication type needed for login)
-	auth := &config.Auth{
-		Type:               config.AuthTypeNone,
-		InsecureSkipVerify: s.conf.ExternalServices.Perses.Auth.InsecureSkipVerify,
-		CAFile:             s.conf.ExternalServices.Perses.Auth.CAFile,
+	req, err := http.NewRequest("POST", loginURL, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		log.Errorf("Failed to create HTTP request: %v", err)
+		return "", fmt.Errorf("failed to create HTTP request: %s", err.Error())
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 
 	// Reuse shared transport logic so TLS settings and rotating secrets apply to login flow.
@@ -143,15 +142,16 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 	}
 
 	resp, err := httpClient.Do(req)
-
 	if err != nil {
 		log.Errorf("Failed to request login URL: %v", err)
 		return "", fmt.Errorf("failed to request login URL: %s", err.Error())
 	}
+	defer resp.Body.Close()
 
-	if statusCode != http.StatusOK {
-		log.Errorf("Failed to read response: status code %d", statusCode)
-		return "", fmt.Errorf("failed to read response: %d", statusCode)
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		log.Errorf("Failed to read response: %v", err)
+		return "", fmt.Errorf("failed to read response: %d", resp.StatusCode)
 	}
 
 	var loginResp sessionData
@@ -186,9 +186,6 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 	auth := s.conf.ExternalServices.Perses.Auth
 
 	if auth.Type == config.AuthTypeNone {
-		// Preserve TLS configuration even when no authentication is needed
-		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-		newAuth.CAFile = auth.CAFile
 		return &newAuth
 	}
 
@@ -232,9 +229,6 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 	}
 
 	log.Errorf("Auth type not supported %s", auth.Type)
-	// Preserve TLS configuration even when auth type is not supported
-	newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
-	newAuth.CAFile = auth.CAFile
 	return &newAuth
 }
 
@@ -348,21 +342,10 @@ func (s *Service) VersionURL(ctx context.Context) string {
 			InternalURL:     persesConfig.InternalURL,
 		}
 	}
-	// we want to use the internal URL - but if it isn't known, try health_check_url or the external URL
+	// we want to use the internal URL - but if it isn't known, try the external URL
 	baseUrl := connectionInfo.InternalURL
 	if connectionInfo.InternalURL == "" {
-		// If InternalURL is not defined, try to use health_check_url if available
-		if persesConfig.HealthCheckUrl != "" {
-			// health_check_url might already include the path, so check if it ends with /api/v1/health
-			if strings.HasSuffix(persesConfig.HealthCheckUrl, "/api/v1/health") {
-				return persesConfig.HealthCheckUrl
-			}
-			// Otherwise, use it as base URL
-			baseUrl = strings.TrimSuffix(persesConfig.HealthCheckUrl, "/")
-		} else {
-			// Fallback to external URL
-			baseUrl = connectionInfo.BaseExternalURL
-		}
+		baseUrl = connectionInfo.BaseExternalURL
 	}
 
 	if baseUrl == "" {
