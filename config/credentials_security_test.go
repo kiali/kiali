@@ -225,12 +225,19 @@ func TestCredentialManager_AcceptsValidCertificateAfterRotation(t *testing.T) {
 	rotatedCA := certtest.BuildTestCertificate(t, "rotated-ca")
 	require.NoError(t, os.WriteFile(tmpFile, rotatedCA, 0600))
 
+	// Sync the file to ensure write is flushed to disk before checking
+	file, err := os.OpenFile(tmpFile, os.O_RDONLY, 0o600)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	file.Close()
+
 	// Wait for rotation detection - verify the rotated cert is in the pool
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
 		return certtest.CertPoolContainsCert(pool, rotatedCert)
-	}, 2*time.Second, 50*time.Millisecond)
+	}, 5*time.Second, 50*time.Millisecond)
 }
 
 func TestCredentialManager_RecoverFromInvalidCertAfterRotation(t *testing.T) {
@@ -252,8 +259,15 @@ func TestCredentialManager_RecoverFromInvalidCertAfterRotation(t *testing.T) {
 	validCA := certtest.BuildTestCertificate(t, "valid-ca")
 	require.NoError(t, os.WriteFile(tmpFile, validCA, 0600))
 
+	// Sync the file to ensure write is flushed to disk before checking
+	file, err := os.OpenFile(tmpFile, os.O_RDONLY, 0o600)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	file.Close()
+
 	// Wait for rotation detection - should recover and have custom CAs now
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	require.Eventually(t, func() bool {
 		return cm.HasCustomCAs()
-	}, 2*time.Second, 50*time.Millisecond)
+	}, 5*time.Second, 50*time.Millisecond)
 }

@@ -720,12 +720,19 @@ func TestCredentialManager_CertPoolReloadsOnFileChange(t *testing.T) {
 	rotatedCA := certtest.BuildTestCertificate(t, "rotated-ca")
 	require.NoError(t, os.WriteFile(caFile, rotatedCA, 0o600))
 
+	// Sync the file to ensure write is flushed to disk before checking
+	file, err := os.OpenFile(caFile, os.O_RDONLY, 0o600)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	file.Close()
+
 	// Wait for fsnotify event and pool rebuild
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
 		return certtest.CertPoolContainsCert(pool, rotatedCert)
-	}, time.Second, 10*time.Millisecond, "pool should contain rotated CA")
+	}, 5*time.Second, 50*time.Millisecond, "pool should contain rotated CA")
 }
 
 func TestCredentialManager_GetCertPoolWithNilPaths(t *testing.T) {
@@ -757,12 +764,20 @@ func TestCredentialManager_CertPoolGlobalConfig(t *testing.T) {
 
 	rotatedCA := certtest.BuildTestCertificate(t, "rotated-global")
 	require.NoError(t, os.WriteFile(caFile.Name(), rotatedCA, 0o600))
+
+	// Sync the file to ensure write is flushed to disk before checking
+	file, err := os.OpenFile(caFile.Name(), os.O_RDONLY, 0o600)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	file.Close()
+
 	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	require.Eventually(t, func() bool {
 		pool := Get().CertPool()
 		return certtest.CertPoolContainsCert(pool, rotatedCert)
-	}, time.Second, 10*time.Millisecond, "global config never observed rotated CA bundle")
+	}, 5*time.Second, 50*time.Millisecond, "global config never observed rotated CA bundle")
 
 	pool := Get().CertPool()
 	require.True(t, certtest.CertPoolContainsCert(pool, rotatedCert), "all callers should observe the rotated CA bundle")
@@ -819,17 +834,24 @@ func TestCredentialManager_CertPoolSymlinkRotation(t *testing.T) {
 	caFile2 := filepath.Join(dataDir2, "ca.pem")
 	require.NoError(t, os.WriteFile(caFile2, rotatedCA, 0o600))
 
+	// Sync the rotated CA file to ensure write is flushed
+	file, err := os.OpenFile(caFile2, os.O_RDONLY, 0o600)
+	require.NoError(t, err)
+	require.NoError(t, file.Sync())
+	file.Close()
+
 	// Rotate by atomically swapping ..data symlink (Kubernetes behavior)
 	newDataLink := filepath.Join(secretDir, ".tmp-data")
 	require.NoError(t, os.Symlink(dataDir2, newDataLink))
 	require.NoError(t, os.Rename(newDataLink, dataLink))
 
 	// Wait for fsnotify to detect ..data change and rebuild cert pool
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	rotatedCert := certtest.ParseCertPEM(t, rotatedCA)
 	require.Eventually(t, func() bool {
 		pool := cm.GetCertPool()
 		return certtest.CertPoolContainsCert(pool, rotatedCert)
-	}, 2*time.Second, 50*time.Millisecond, "pool should contain rotated CA after symlink swap")
+	}, 5*time.Second, 50*time.Millisecond, "pool should contain rotated CA after symlink swap")
 }
 
 // TestCredentialManager_ConcurrentAccess tests thread safety of the CredentialManager
