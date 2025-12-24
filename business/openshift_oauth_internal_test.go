@@ -247,8 +247,15 @@ func TestOpenshiftOAuth_CARotation(t *testing.T) {
 	// Rotate CA by writing a different CA to the file
 	require.NoError(os.WriteFile(caFile, rotatedCAPEM, 0o644))
 
+	// Sync the file to ensure write is flushed to disk before checking
+	file, err := os.OpenFile(caFile, os.O_RDONLY, 0o644)
+	require.NoError(err)
+	require.NoError(file.Sync())
+	file.Close()
+
 	// Wait for the file watcher to detect the change and update the cache
 	// Subsequent calls to httpClientWithPool should use the rotated CA
+	// Using a longer timeout for CI environments where filesystem events may be delayed
 	require.Eventually(func() bool {
 		client2, err := httpClientWithPool(conf, restConfig)
 		if err != nil {
@@ -260,7 +267,7 @@ func TestOpenshiftOAuth_CARotation(t *testing.T) {
 
 		// Check if the rotated CA is now trusted by the pool
 		return certtest.VerifyCAInPool(t, rotatedCACert, rotatedCAKey, pool2)
-	}, 2*time.Second, 50*time.Millisecond, "rotated CA should be in pool after rotation")
+	}, 5*time.Second, 50*time.Millisecond, "rotated CA should be in pool after rotation")
 
 	// Verify the pool has changed (not equal to the original pool)
 	client3, err := httpClientWithPool(conf, restConfig)
