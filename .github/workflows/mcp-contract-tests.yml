@@ -1,0 +1,188 @@
+name: MCP Contract Tests
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+  push:
+    paths:
+    - 'kiali/routing/routes.go'
+    branches:
+    - master
+    - 'v*.*'
+  pull_request:
+    paths:
+    - 'kiali/routing/routes.go'
+    branches:
+    - master
+    - 'v*.*'
+  workflow_dispatch:
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref_name }}
+
+jobs:
+  mcp_contract_tests:
+    name: MCP Contract Tests (kubernetes-mcp-server)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - name: Check out Kiali code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ env.BUILD_BRANCH }}
+        path: kiali
+
+    - name: Install Helm
+      uses: Azure/setup-helm@v4.3.1
+      with:
+        version: 'v3.18.4'
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: kiali/go.mod
+        cache: true
+        cache-dependency-path: kiali/go.sum
+
+    - name: Install Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install KinD
+      uses: engineerd/setup-kind@v0.7.0
+      with:
+        version: "v0.20.0"
+
+    - name: Download go binary
+      id: download-binary
+      uses: actions/download-artifact@v7
+      with:
+        name: kiali
+        path: ~/go/bin/
+      continue-on-error: true
+
+    - name: Build Kiali binary if artifact not available
+      if: steps.download-binary.outcome == 'failure'
+      working-directory: kiali
+      run: |
+        # Build binary if artifact is not available (e.g., when triggered directly)
+        make build
+        mkdir -p ~/go/bin
+        cp kiali ~/go/bin/
+
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
+
+    - name: Setup KinD cluster with Istio and Kiali
+      working-directory: kiali
+      env:
+        CLUSTER_TYPE: kind
+        KIND_NAME: ci
+        DORP: docker
+        AUTH_STRATEGY: anonymous
+        DEPLOY_KIALI: "true"
+        ISTIO_VERSION: ${{ inputs.istio_version }}
+      run: |
+        # Build Kiali images first
+        export CLUSTER_TYPE=kind
+        export KIND_NAME=ci
+        export DORP=docker
+        make build-ui build test cluster-push
+
+        # Setup cluster with Istio and Kiali
+        hack/setup-kind-in-ci.sh \
+          --auth-strategy anonymous \
+          --deploy-kiali true \
+          --docker-or-podman docker \
+          $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+
+    - name: Install Bookinfo demo
+      working-directory: kiali
+      run: |
+        export CLIENT_EXE=kubectl
+        export ISTIO_NAMESPACE=istio-system
+        hack/istio/install-bookinfo-demo.sh \
+          --client-exe kubectl \
+          --istio-namespace istio-system \
+          --namespace bookinfo \
+          --traffic-generator
+
+    - name: Get Kiali external URL from MetalLB
+      id: get_kiali_url
+      run: |
+        # Wait for Kiali LoadBalancer to get an external IP
+        echo "Waiting for Kiali LoadBalancer to get external IP..."
+        kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=300s
+
+        # Get the external IP from MetalLB
+        KIALI_IP=$(kubectl get svc kiali -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        if [ -z "$KIALI_IP" ]; then
+          echo "ERROR: Failed to get Kiali LoadBalancer IP"
+          kubectl get svc kiali -n istio-system
+          exit 1
+        fi
+
+        # Kiali service uses port 80, so the URL is http://IP/kiali
+        KIALI_URL="http://${KIALI_IP}/kiali"
+        echo "Kiali URL: $KIALI_URL"
+        echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
+
+        # Verify Kiali is accessible
+        echo "Verifying Kiali is accessible..."
+        for i in {1..30}; do
+          if curl -f -s "${KIALI_URL}/api/status" > /dev/null 2>&1; then
+            echo "Kiali is accessible at ${KIALI_URL}"
+            break
+          fi
+          if [ $i -eq 30 ]; then
+            echo "ERROR: Kiali is not accessible after 30 attempts"
+            exit 1
+          fi
+          sleep 2
+        done
+
+    - name: Check out kubernetes-mcp-server
+      uses: actions/checkout@v6
+      with:
+        repository: containers/kubernetes-mcp-server
+        path: kubernetes-mcp-server
+
+    - name: Set up Go for kubernetes-mcp-server
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: kubernetes-mcp-server/go.mod
+        cache: true
+        cache-dependency-path: kubernetes-mcp-server/go.sum
+
+    - name: Run MCP contract tests
+      working-directory: kubernetes-mcp-server
+      env:
+        KIALI_URL: ${{ env.KIALI_URL }}
+      run: |
+        cd pkg/kiali/tests/contract
+        go test -v
+
+    - name: Get debug info when tests fail
+      if: failure()
+      working-directory: kiali
+      run: |
+        mkdir -p debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output || true
+
+    - name: Upload debug info artifact
+      if: failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: debug-info-mcp-contract-tests
+        path: kiali/debug-output
+
