@@ -58,7 +58,7 @@ import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
 import { Namespace } from '../types/Namespace';
-import { KialiCrippledFeatures, ServerConfig } from '../types/ServerConfig';
+import { KialiDisabledFeatures, ServerConfig } from '../types/ServerConfig';
 import { StatusState } from '../types/StatusState';
 import {
   ServiceDetailsInfo,
@@ -1399,8 +1399,8 @@ export function deleteServiceTrafficRouting(
   return Promise.all(deletePromises);
 }
 
-export const getCrippledFeatures = (): Promise<ApiResponse<KialiCrippledFeatures>> => {
-  return newRequest<KialiCrippledFeatures>(HTTP_VERBS.GET, urls.crippledFeatures, {}, {});
+export const getDisabledFeatures = (): Promise<ApiResponse<KialiDisabledFeatures>> => {
+  return newRequest<KialiDisabledFeatures>(HTTP_VERBS.GET, urls.disabledFeatures, {}, {});
 };
 
 export const getControlPlanes = (): Promise<ApiResponse<ControlPlane[]>> => {

@@ -212,7 +212,17 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 	return promConfig
 }
 
-type KialiCrippledFeatures struct {
+func checkErr(err error, message string, logger *zerolog.Logger) bool {
+	if err != nil {
+		logger.Error().Msgf("%s: %v", message, err)
+		return false
+	}
+	return true
+}
+
+// DisabledFeatures holds information about Kiali features that are disabled
+// due to missing Istio metrics in Prometheus.
+type DisabledFeatures struct {
 	RequestSize             bool `json:"requestSize"`
 	RequestSizeAverage      bool `json:"requestSizeAverage"`
 	RequestSizePercentiles  bool `json:"requestSizePercentiles"`
@@ -224,7 +234,9 @@ type KialiCrippledFeatures struct {
 	ResponseTimePercentiles bool `json:"responseTimePercentiles"`
 }
 
-func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) http.HandlerFunc {
+// DisabledFeaturesHandler returns information about Kiali features that are disabled
+// due to missing Istio metrics in Prometheus.
+func DisabledFeaturesHandler(conf *config.Config, client prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger := log.FromRequest(r)
 
@@ -243,25 +255,25 @@ func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) ht
 			"istio_response_bytes_sum",
 		}
 
-		// assume nothing crippled on error
-		crippledFeatures := KialiCrippledFeatures{}
+		// assume nothing disabled on error
+		disabledFeatures := DisabledFeatures{}
 
 		// TODO: Getting metric names is not yet supported in offline mode.
 		if conf.RunMode == config.RunModeOffline {
-			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
 			return
 		}
 
 		existingMetrics, err := client.GetExistingMetricNames(r.Context(), requiredMetrics)
 		if !checkErr(err, "", logger) {
 			log.Error(err)
-			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
 		}
 
-		// if we have all of the metrics then nothing is crippled, just return
-		// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be crippled
+		// if we have all of the metrics then nothing is disabled, just return
+		// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be disabled
 		if len(existingMetrics) == len(requiredMetrics) || len(existingMetrics) == 0 {
-			RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+			RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
 		}
 
 		exists := make(map[string]bool, len(existingMetrics))
@@ -269,26 +281,18 @@ func CrippledFeatures(conf *config.Config, client prometheus.ClientInterface) ht
 			exists[metric] = true
 		}
 
-		crippledFeatures.RequestSize = !exists["istio_request_bytes_sum"]
-		crippledFeatures.RequestSizeAverage = crippledFeatures.RequestSize || !exists["istio_request_bytes_count"]
-		crippledFeatures.RequestSizePercentiles = crippledFeatures.RequestSizeAverage || !exists["istio_request_bytes_bucket"]
+		disabledFeatures.RequestSize = !exists["istio_request_bytes_sum"]
+		disabledFeatures.RequestSizeAverage = disabledFeatures.RequestSize || !exists["istio_request_bytes_count"]
+		disabledFeatures.RequestSizePercentiles = disabledFeatures.RequestSizeAverage || !exists["istio_request_bytes_bucket"]
 
-		crippledFeatures.ResponseSize = !exists["istio_response_bytes_sum"]
-		crippledFeatures.ResponseSizeAverage = crippledFeatures.ResponseSize || !exists["istio_response_bytes_count"]
-		crippledFeatures.ResponseSizePercentiles = crippledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
+		disabledFeatures.ResponseSize = !exists["istio_response_bytes_sum"]
+		disabledFeatures.ResponseSizeAverage = disabledFeatures.ResponseSize || !exists["istio_response_bytes_count"]
+		disabledFeatures.ResponseSizePercentiles = disabledFeatures.ResponseSizeAverage || !exists["istio_response_bytes_bucket"]
 
-		crippledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
-		crippledFeatures.ResponseTimeAverage = crippledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
-		crippledFeatures.ResponseTimePercentiles = crippledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
+		disabledFeatures.ResponseTime = !exists["istio_request_duration_milliseconds_sum"]
+		disabledFeatures.ResponseTimeAverage = disabledFeatures.ResponseTime || !exists["istio_request_duration_milliseconds_count"]
+		disabledFeatures.ResponseTimePercentiles = disabledFeatures.ResponseTimeAverage || !exists["istio_request_duration_milliseconds_bucket"]
 
-		RespondWithJSONIndent(w, http.StatusOK, crippledFeatures)
+		RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
 	}
-}
-
-func checkErr(err error, message string, logger *zerolog.Logger) bool {
-	if err != nil {
-		logger.Error().Msgf("%s: %v", message, err)
-		return false
-	}
-	return true
 }
