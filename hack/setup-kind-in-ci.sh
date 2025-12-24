@@ -663,7 +663,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -676,7 +676,7 @@ setup_kind_multicluster() {
     if [ -n "${certs_dir}" ]; then
       external_certs_dir_arg="--certs-dir ${certs_dir}"
     fi
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-mgmt"
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
@@ -684,7 +684,7 @@ setup_kind_multicluster() {
     ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"
