@@ -240,7 +240,7 @@ func NewClientsFromKubeConfig(conf *kialiconfig.Config, kubeConfigPath string, r
 	for _, ctx := range contextNames {
 		kubeContext := kubeConfig.Contexts[ctx]
 		if kubeContext == nil {
-			return nil, fmt.Errorf("current context not set in kubeconfig file: %s", kubeConfigPath)
+			return nil, fmt.Errorf("context %s not found in kubeconfig file: %s", ctx, kubeConfigPath)
 		}
 		contexts[ctx] = kubeContext
 	}
