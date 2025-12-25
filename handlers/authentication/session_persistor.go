@@ -60,6 +60,49 @@ func sessionCookieChunkName(cookieName string, chunkNum int) string {
 	return fmt.Sprintf("%s-%d", cookieName, chunkNum)
 }
 
+// extractKeyFromSessionCookieName extracts the session key from the base session cookie name
+// (the cookie that holds chunk #0).
+// For example, "kiali-token-cluster1" returns "cluster1", and "kiali-token" returns "".
+func extractKeyFromSessionCookieName(cookieName string) string {
+	if cookieName == SessionCookieName {
+		return ""
+	}
+	return strings.TrimPrefix(cookieName, SessionCookieName+"-")
+}
+
+// isPotentialSessionCookie returns true if the cookie name could be a session cookie.
+// This excludes cookies we KNOW are not sessions:
+//   - Chunks count cookies (kiali-token-chunks*)
+//   - Nonce cookies (containing "nonce")
+//
+// Note: This function intentionally does NOT try to distinguish between the base session
+// cookie (chunk #0) and continuation chunk cookies based on numeric suffixes. The reason is
+// that session keys can end with numbers (e.g., "cluster-1"), making the cookie name "kiali-token-cluster-1"
+// ambiguous - it could be either:
+//  1. A base session cookie (chunk #0) for key "cluster-1"
+//  2. Chunk #1 of a session with key "cluster"
+//
+// Instead of guessing, we try to read all potential session cookies. Chunk cookies will
+// fail decryption (they contain partial data) and are simply skipped without being dropped.
+func isPotentialSessionCookie(cookieName string) bool {
+	// Filter out nonce cookies - these are handled by auth controllers, not the persistor
+	if strings.Contains(cookieName, "nonce") {
+		return false
+	}
+
+	// Filter out chunks count cookies - these are metadata, not session data
+	if strings.HasPrefix(cookieName, NumberOfChunksCookieName) {
+		return false
+	}
+
+	// Must start with session cookie name prefix
+	if !strings.HasPrefix(cookieName, SessionCookieName) {
+		return false
+	}
+
+	return true
+}
+
 // NewSessionData create a new session object that you can then pass to CreateSession.
 func NewSessionData[T any](cluster string, strategy string, expiresOn time.Time, payload *T) (*SessionData[T], error) {
 	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
@@ -209,9 +252,7 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 		var cookieName string
 		if i == 0 {
 			// Set a cookie with the regular cookie name with the first chunk of session data.
-			// Notice that an "-aes" suffix is being used in the cookie names. This is for backwards compatibility and
-			// is/was meant to be able to differentiate between a session using cookies holding encrypted data, and the older
-			// less secure sessions using cookies holding JWTs.
+			// The cookie holds encrypted session data using the AES-GCM algorithm.
 			cookieName = sessionCookieName(SessionCookieName, s.Cluster)
 		} else {
 			// If there are more chunks of session data (usually because of larger tokens from the IdP),
@@ -235,8 +276,9 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 		// Set a cookie with the number of chunks of the session data.
 		// This is to protect against reading spurious chunks of data if there is
 		// any failure when killing the session or logging out.
+		// The chunks cookie is keyed per session to avoid collisions between multiple sessions.
 		chunksCookie := http.Cookie{
-			Name:     NumberOfChunksCookieName,
+			Name:     sessionCookieName(NumberOfChunksCookieName, s.Cluster),
 			Value:    strconv.Itoa(len(sessionDataChunks)),
 			Expires:  s.ExpiresOn,
 			HttpOnly: true,
@@ -258,22 +300,24 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 	}
 
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
-	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
-	// if such cookie is not found in the request.
+	// It's assumed no active session if the cookie is not found in the request.
 	authCookie, err := r.Cookie(cookieName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read the cookie %s: %w", cookieName, err)
+		return nil, fmt.Errorf("unable to read the cookie [%s]: %w", cookieName, err)
 	}
 
-	// Initially, take the value of the "-aes" cookie as the session data.
-	// This helps a smoother transition from a previous version of Kiali where
-	// no support for multiple cookies existed and no "-chunks" cookie was set.
-	// With this, we tolerate the absence of the "-chunks" cookie to not force
-	// users to re-authenticate if somebody was already logged into Kiali.
+	// Initially, take the value of the session cookie as the session data.
+	// This supports sessions that fit in a single cookie (no chunks).
+	// We tolerate the absence of the chunks cookie to not force users to
+	// re-authenticate if the session data fits in one cookie.
 	base64SessionData := authCookie.Value
 
+	// Extract the session key from the cookie name to find the keyed chunks cookie
+	sessionKey := extractKeyFromSessionCookieName(cookieName)
+	chunksCookieName := sessionCookieName(NumberOfChunksCookieName, sessionKey)
+
 	// Check if session data is broken in chunks. If it is, read all chunks
-	numChunksCookie, chunksCookieErr := r.Cookie(NumberOfChunksCookieName)
+	numChunksCookie, chunksCookieErr := r.Cookie(chunksCookieName)
 	if chunksCookieErr == nil {
 		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
 		if convErr != nil {
@@ -282,7 +326,7 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 
 		// It's known that major browsers have a limit of 180 cookies per domain.
 		if numChunks <= 0 || numChunks > 180 {
-			return nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
+			return nil, fmt.Errorf("number of session cookies is [%d], but limit is 1 through 180", numChunks)
 		}
 
 		// Read session data chunks and save into a buffer
@@ -293,7 +337,7 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 		for i := 1; i < numChunks; i++ {
 			authChunkCookie, chunkErr := r.Cookie(sessionCookieChunkName(cookieName, i))
 			if chunkErr != nil {
-				return nil, fmt.Errorf("failed to read session cookie chunk number %d: %w", i, chunkErr)
+				return nil, fmt.Errorf("failed to read session cookie chunk number [%d]: %w", i, chunkErr)
 			}
 
 			sessionDataBuffer.WriteString(authChunkCookie.Value)
@@ -346,13 +390,12 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 // created.
 func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.ResponseWriter, key string) (*SessionData[T], error) {
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
-	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
-	// if such cookie is not found in the request.
+	// It's assumed no active session if the cookie is not found in the request.
 	cookieName := sessionCookieName(SessionCookieName, key)
 	sData, err := p.readKialiCookie(cookieName, r)
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			return nil, fmt.Errorf("session %w: cookie %s does not exist in request", ErrSessionNotFound, cookieName)
+			return nil, fmt.Errorf("session [%w]: cookie [%s] does not exist in request", ErrSessionNotFound, cookieName)
 		}
 		return nil, err
 	}
@@ -360,10 +403,10 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 	// Check that the currently configured strategy matches the strategy set in the session.
 	// This is to prevent taking a session as valid if somebody re-configured Kiali with a different auth strategy.
 	if sData.Strategy != p.conf.Auth.Strategy {
-		log.Debugf("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, p.conf.Auth.Strategy)
+		log.Debugf("Session is invalid because it was created with authentication strategy [%s], but current authentication strategy is [%s]", sData.Strategy, p.conf.Auth.Strategy)
 		p.TerminateSession(r, w, key) // Kill the spurious session
 
-		return nil, fmt.Errorf("session strategy %s does not match current strategy %s", sData.Strategy, p.conf.Auth.Strategy)
+		return nil, fmt.Errorf("session strategy [%s] does not match current strategy [%s]", sData.Strategy, p.conf.Auth.Strategy)
 	}
 
 	// Check that the session has not expired.
@@ -373,7 +416,7 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 		log.Debugf("Session is invalid because it expired on %s", sData.ExpiresOn.Format(time.RFC822))
 		p.TerminateSession(r, w, key) // Clean the expired session
 
-		return nil, fmt.Errorf("session expired on %s", sData.ExpiresOn.Format(time.RFC822))
+		return nil, fmt.Errorf("session expired on [%s]", sData.ExpiresOn.Format(time.RFC822))
 	}
 
 	return sData, nil
@@ -381,21 +424,25 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 
 // ReadAllSessions reads all session cookies from the request and returns the session data.
 // Returns an ErrNotFound if no session cookies are found.
+//
+// This function attempts to read all cookies that could potentially be session cookies.
+// Cookies that fail to decrypt (e.g., chunk cookies containing partial data) are skipped
+// without being dropped. This is important because:
+//  1. Dropping chunk cookies would corrupt the parent session
+//  2. Session keys can end with numbers (e.g., "cluster-1"), making it impossible to
+//     distinguish between a base session cookie (chunk #0) and a continuation chunk cookie by name alone
 func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.ResponseWriter) ([]*SessionData[T], error) {
 	var sessions []*SessionData[T]
 	for _, cookie := range r.Cookies() {
-		// Don't read nonce cookies. These are not managed by this persistor.
-		if (strings.HasPrefix(cookie.Name, SessionCookieName) || strings.HasPrefix(cookie.Name, NumberOfChunksCookieName)) && !strings.HasPrefix(cookie.Name, NonceCookieName) {
-			log.Debugf("Reading session cookie: %s", cookie.Name)
+		// Try to read all potential session cookies (excluding chunks count and nonce cookies)
+		if isPotentialSessionCookie(cookie.Name) {
+			log.Debugf("Attempting to read potential session cookie: %s", cookie.Name)
 			sData, err := p.readKialiCookie(cookie.Name, r)
 			if err != nil {
-				if errors.Is(err, http.ErrNoCookie) {
-					log.Debugf("Session cookie [%s] does not exist in request", cookie.Name)
-				} else {
-					log.Infof("Error reading session cookie %s: %v", cookie.Name, err)
-					// If we can't read the cookie we should just drop it because it's probably malformed.
-					p.dropCookie(r, w, cookie.Name)
-				}
+				// Don't drop cookies that fail to decrypt - they might be valid chunk cookies
+				// or session cookies encrypted with an old key (after rotation).
+				// Dropping them would corrupt sessions.
+				log.Debugf("Skipping cookie [%s] (not a valid session or failed to decrypt): %v", cookie.Name, err)
 				continue
 			}
 			sessions = append(sessions, sData)
@@ -403,7 +450,7 @@ func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.Resp
 	}
 
 	if len(sessions) == 0 {
-		return nil, fmt.Errorf("sessions %w: no session cookies were found in request", ErrSessionNotFound)
+		return nil, fmt.Errorf("sessions [%w]: no session cookies were found in request", ErrSessionNotFound)
 	}
 
 	return sessions, nil
