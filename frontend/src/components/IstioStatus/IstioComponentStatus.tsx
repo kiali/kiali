@@ -10,6 +10,8 @@ import {
 import { Label, Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
@@ -45,9 +47,10 @@ const validToIcon: { [valid: string]: IconProps } = {
 };
 
 const splitItemStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  marginTop: '0.125rem',
-  textAlign: 'left'
+  marginLeft: PFSpacer.sm,
+  textAlign: 'left',
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.BodyDefault
 });
 
 const labelStyle = kialiStyle({
@@ -55,7 +58,7 @@ const labelStyle = kialiStyle({
   backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
   $nest: {
     '& .pf-v6-c-label__icon': {
-      marginRight: '0.125rem',
+      marginRight: PFSpacer.xs,
       $nest: {
         '& svg': {
           color: 'inherit'
@@ -63,7 +66,9 @@ const labelStyle = kialiStyle({
       }
     },
     '& .pf-v6-c-label__content': {
-      color: 'var(--pf-t--global--text--color--primary--default)'
+      color: 'var(--pf-t--global--text--color--primary--default)',
+      fontSize: PFFontSize.small,
+      fontWeight: PFFontWeight.BodyDefault
     }
   }
 });
@@ -86,7 +91,7 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
     const iconColor = compIcon.color || PFColors.Success;
 
     compIcon.className = kialiStyle({
-      marginTop: '0.25rem',
+      marginTop: PFSpacer.xs,
       color: `${iconColor} !important`,
       $nest: {
         '& svg': {
