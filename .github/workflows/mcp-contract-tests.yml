@@ -69,6 +69,10 @@ jobs:
     - name: Ensure kiali binary is executable
       run: chmod +x ~/go/bin/kiali
 
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: yarn install --frozen-lockfile
+
     - name: Setup KinD cluster with Istio and Kiali
       run: hack/run-integration-tests.sh --test-suite frontend-core-1 --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
