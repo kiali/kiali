@@ -35,82 +35,42 @@ jobs:
   mcp_contract_tests:
     name: MCP Contract Tests (kubernetes-mcp-server)
     runs-on: ubuntu-latest
+    env:
+      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
+      # prevents extra Cypress installation progress messages
+      CI: 1
+      # avoid warnings like "tput: No value for $TERM and no -T specified"
+      TERM: xterm
     continue-on-error: true
     steps:
     - name: Check out Kiali code
       uses: actions/checkout@v6
       with:
-        ref: ${{ env.BUILD_BRANCH }}
-        path: kiali
+        ref: ${{ inputs.build_branch }}
 
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
       with:
         version: 'v3.18.4'
 
-    - name: Set up Go
-      uses: actions/setup-go@v6
+    - name: Setup node
+      uses: actions/setup-node@v6
       with:
-        go-version-file: kiali/go.mod
-        cache: true
-        cache-dependency-path: kiali/go.sum
-
-    - name: Install Docker
-      uses: docker/setup-buildx-action@v3
+        node-version: "20"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
 
     - name: Download go binary
-      id: download-binary
       uses: actions/download-artifact@v7
       with:
         name: kiali
         path: ~/go/bin/
-      continue-on-error: true
-
-    - name: Build Kiali binary if artifact not available
-      if: steps.download-binary.outcome == 'failure'
-      working-directory: kiali
-      run: |
-        # Build binary if artifact is not available (e.g., when triggered directly)
-        make build
-        mkdir -p ~/go/bin
-        cp kiali ~/go/bin/
 
     - name: Ensure kiali binary is executable
       run: chmod +x ~/go/bin/kiali
 
     - name: Setup KinD cluster with Istio and Kiali
-      working-directory: kiali
-      env:
-        CLUSTER_TYPE: kind
-        KIND_NAME: ci
-        DORP: docker
-        AUTH_STRATEGY: anonymous
-        DEPLOY_KIALI: "true"
-        ISTIO_VERSION: ${{ inputs.istio_version }}
-      run: |
-        # Build Kiali images first
-        export CLUSTER_TYPE=kind
-        export KIND_NAME=ci
-        export DORP=docker
-        make build-ui build test cluster-push
-
-        # Setup cluster with Istio and Kiali
-        hack/setup-kind-in-ci.sh \
-          --auth-strategy anonymous \
-          --deploy-kiali true \
-          --docker-or-podman docker \
-          $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
-
-    - name: Install Bookinfo demo
-      working-directory: kiali
-      run: |
-        export CLIENT_EXE=kubectl
-        export ISTIO_NAMESPACE=istio-system
-        hack/istio/install-bookinfo-demo.sh \
-          --client-exe kubectl \
-          --istio-namespace istio-system \
-          --namespace bookinfo \
-          --traffic-generator
+      run: hack/run-integration-tests.sh --test-suite frontend-core-1 --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
