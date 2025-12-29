@@ -74,7 +74,7 @@ jobs:
       run: yarn install --frozen-lockfile
 
     - name: Setup KinD cluster with Istio and Kiali
-      run: hack/run-integration-tests.sh --test-suite frontend-core-1 --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
