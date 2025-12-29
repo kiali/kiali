@@ -25,6 +25,12 @@ type Options struct {
 
 	// PopulationStrategy determines how many connections from ingress i.e. dense or sparse.
 	PopulationStrategy *string
+
+	// AmbientMode enables ambient mesh mode with waypoint proxies.
+	AmbientMode *bool
+
+	// SingleNamespace puts all apps in the same namespace instead of random namespaces.
+	SingleNamespace *string
 }
 
 // PopStratValue implements flag.Value interface so pop strategy can be used

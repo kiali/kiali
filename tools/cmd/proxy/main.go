@@ -29,6 +29,8 @@ var (
 	numAppsFlag      int
 	numIngressesFlag int
 	popStratFlag     generator.PopStratValue = generator.Sparse
+	ambientModeFlag  bool
+	namespaceFlag    string
 )
 
 // Proxy specific flags
@@ -54,6 +56,8 @@ func init() {
 	flag.IntVar(&numAppsFlag, "apps", 5, "number of apps to create")
 	flag.IntVar(&numIngressesFlag, "ingresses", 1, "number of ingresses to create")
 	flag.Var(&popStratFlag, "population-strategy", "whether the graph should have many or few connections")
+	flag.BoolVar(&ambientModeFlag, "ambient", false, "enable ambient mesh mode with waypoint proxies in the graph")
+	flag.StringVar(&namespaceFlag, "namespace", "", "put all apps in a single namespace")
 }
 
 func loadGraphFromFile(filename string) (*common.Config, error) {
@@ -144,6 +148,12 @@ func main() {
 		NumberOfApps:    &numAppsFlag,
 		NumberOfIngress: &numIngressesFlag,
 		IncludeBoxing:   &boxFlag,
+		AmbientMode:     &ambientModeFlag,
+	}
+
+	// Set single namespace if specified
+	if namespaceFlag != "" {
+		opts.SingleNamespace = &namespaceFlag
 	}
 
 	kubeCfg, err := cmd.GetKubeConfig()
@@ -162,6 +172,9 @@ func main() {
 	var graph *common.Config
 	if dataDirFlag == "" {
 		log.Info("Populating graph data...")
+		if ambientModeFlag {
+			log.Info("Ambient mode enabled - graph will include waypoint proxy")
+		}
 		g := gen.Generate()
 		graph = &g
 	} else {
