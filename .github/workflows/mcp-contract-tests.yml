@@ -97,14 +97,27 @@ jobs:
         echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
 
         # Verify Kiali is accessible
-        echo "Verifying Kiali is accessible..."
+        echo "Verifying Kiali is accessible at ${KIALI_URL}..."
         for i in {1..30}; do
-          if curl -f -s "${KIALI_URL}/api/status" > /dev/null 2>&1; then
+          CURL_OUTPUT=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${KIALI_URL}/api/status" 2>&1)
+          HTTP_CODE=$(echo "$CURL_OUTPUT" | grep "HTTP_CODE:" | cut -d: -f2)
+          RESPONSE_BODY=$(echo "$CURL_OUTPUT" | sed '/HTTP_CODE:/d')
+
+          if [ "$HTTP_CODE" = "200" ]; then
             echo "Kiali is accessible at ${KIALI_URL}"
             break
+          else
+            echo "Attempt $i/30: HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Curl output:"
+              echo "$CURL_OUTPUT"
+            fi
           fi
+
           if [ $i -eq 30 ]; then
             echo "ERROR: Kiali is not accessible after 30 attempts"
+            echo "Final curl output:"
+            echo "$CURL_OUTPUT"
             exit 1
           fi
           sleep 2
