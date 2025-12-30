@@ -35,6 +35,15 @@ export const istioAceEditorStyle = kialiStyle({
   }
 } as NestedCSSProperties);
 
+// Specific z-index for drawer panel for the context tooltip
+export const drawerPanelStyle = kialiStyle({
+  $nest: {
+    '& .pf-v6-c-drawer__panel': {
+      zIndex: 90
+    }
+  }
+} as NestedCSSProperties);
+
 export const istioValidationErrorStyle = kialiStyle({
   position: 'absolute'
   // Removing colors due PF6 dark mode changes
