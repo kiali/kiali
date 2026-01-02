@@ -106,14 +106,43 @@ export type WizardAction =
   | 'k8s_grpc_request_routing';
 export type WizardMode = 'create' | 'update';
 
-export const WIZARD_TITLES = {
-  [WIZARD_REQUEST_ROUTING]: t('Request Routing'),
-  [WIZARD_FAULT_INJECTION]: t('Fault Injection'),
-  [WIZARD_TRAFFIC_SHIFTING]: t('Traffic Shifting'),
-  [WIZARD_TCP_TRAFFIC_SHIFTING]: t('TCP Traffic Shifting'),
-  [WIZARD_REQUEST_TIMEOUTS]: t('Request Timeouts'),
-  [WIZARD_K8S_REQUEST_ROUTING]: t('K8s HTTP Routing'),
-  [WIZARD_K8S_GRPC_REQUEST_ROUTING]: t('K8s GRPC Routing')
+// WizardTitle is split in two because on the context menu
+// we want everything capitalized but on the modal we only
+// want the acronyms capitalized.
+export type WizardTitle = {
+  modalTitle: string;
+  title: string;
+};
+
+export const WIZARD_TITLES: Record<WizardAction, WizardTitle> = {
+  [WIZARD_REQUEST_ROUTING]: {
+    title: t('Request Routing'),
+    modalTitle: t('request routing')
+  },
+  [WIZARD_FAULT_INJECTION]: {
+    title: t('Fault Injection'),
+    modalTitle: t('fault injection')
+  },
+  [WIZARD_TRAFFIC_SHIFTING]: {
+    title: t('Traffic Shifting'),
+    modalTitle: t('traffic shifting')
+  },
+  [WIZARD_TCP_TRAFFIC_SHIFTING]: {
+    title: t('TCP Traffic Shifting'),
+    modalTitle: t('TCP traffic shifting')
+  },
+  [WIZARD_REQUEST_TIMEOUTS]: {
+    title: t('Request Timeouts'),
+    modalTitle: t('request timeouts')
+  },
+  [WIZARD_K8S_REQUEST_ROUTING]: {
+    title: t('K8s HTTP Routing'),
+    modalTitle: t('K8s HTTP routing')
+  },
+  [WIZARD_K8S_GRPC_REQUEST_ROUTING]: {
+    title: t('K8s GRPC Routing'),
+    modalTitle: t('K8s GRPC routing')
+  }
 };
 
 export type ServiceWizardProps = {
