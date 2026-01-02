@@ -49,7 +49,7 @@ import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/Ki
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
-import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { drawerPanelStyle, istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
@@ -572,7 +572,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     ) : null;
 
     return (
-      <div className={`object-drawer ${editorDrawer}`}>
+      <div className={`object-drawer ${editorDrawer} ${drawerPanelStyle}`}>
         {showCards ? (
           <Drawer isExpanded={this.state.isExpanded} isInline={true}>
             <DrawerContent panelContent={showCards ? panelContent : undefined}>
