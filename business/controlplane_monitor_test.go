@@ -67,26 +67,23 @@ func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destination
 
 func istiodTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
+
+	// Note: This test server is used by polling code running in background goroutines.
+	// Avoid using t.Fatalf/t.FailNow from inside the handler goroutine (it can cause flakes)
+	// and ignore benign write errors that can happen when the client disconnects mid-response.
+	registryzBytes := kubernetes.ReadFile(t, "../tests/data/registry/registry-registryz.json")
+	synczBytes := kubernetes.ReadFile(t, "../tests/data/registry/registry-syncz.json")
+
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var file string
 		switch r.URL.Path {
 		case "/debug/registryz":
-			file = "../tests/data/registry/registry-registryz.json"
+			_, _ = w.Write(registryzBytes)
 		case "/debug/syncz":
-			file = "../tests/data/registry/registry-syncz.json"
-		case "/debug":
+			_, _ = w.Write(synczBytes)
+		case "/debug", "/ready":
 			w.WriteHeader(http.StatusOK)
-			return
-		case "/ready":
-			w.WriteHeader(http.StatusOK)
-			return
 		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			t.Logf("Unexpected request path: %s", r.URL.Path)
-			return
-		}
-		if _, err := w.Write(kubernetes.ReadFile(t, file)); err != nil {
-			t.Fatalf("Error writing response: %s", err)
+			http.Error(w, "Unexpected request path: "+r.URL.Path, http.StatusInternalServerError)
 		}
 	}))
 	t.Cleanup(testServer.Close)
