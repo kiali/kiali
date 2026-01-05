@@ -1111,11 +1111,16 @@ func getOpenIdJwks(conf *config.Config) (*jose.JSONWebKeySet, error) {
 	return fetchedKeySet.(*jose.JSONWebKeySet), nil
 }
 
-// getOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
-// downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
-// validations are performed and the parsed metadata is returned. Since the metadata should be
-// rare to change, the retrieved metadata is cached on first call and subsequent calls return
-// the cached metadata.
+// getOpenIdMetadata returns the OpenID provider metadata used by the authorization code flow.
+//
+// Endpoint selection precedence (issue #8777):
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint),
+//     use those explicit endpoints (userinfo is optional; jwks_uri should be provided when using explicit endpoints).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward
+//     compatibility, but still discover the remaining endpoints from the issuer.
+//  3. Otherwise, perform OIDC discovery via `/.well-known/openid-configuration`.
+//
+// The result is cached after the first successful call; subsequent calls return the cached metadata.
 func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	if cachedOpenIdMetadata != nil {
 		return cachedOpenIdMetadata, nil
@@ -1234,6 +1239,16 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	return fetchedMetadata.(*openIdMetadata), nil
 }
 
+// getOpenIdAuthorizationEndpoint returns the URL used to start the OpenID authorization code flow.
+//
+// Precedence:
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint), use the override
+//     authorization endpoint (supports environments where discovery is blocked; see issue #8777).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward compatibility.
+//  3. Otherwise, fall back to OIDC discovery via `getOpenIdMetadata()` and return `metadata.AuthURL`.
+//
+// Note: When only the deprecated `authorization_endpoint` is set, other endpoints (token/jwks/userinfo) are still
+// obtained later via discovery when needed.
 func getOpenIdAuthorizationEndpoint(conf *config.Config) (string, error) {
 	cfg := conf.Auth.OpenId
 
