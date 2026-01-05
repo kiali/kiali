@@ -922,3 +922,185 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 		})
 	}
 }
+
+// TestOpenIdConfigDefaults tests that deprecated OIDC endpoint field is initialized to empty string
+func TestOpenIdConfigDefaults(t *testing.T) {
+	conf := NewConfig()
+
+	// Test that deprecated authorization_endpoint field is initialized to empty string
+	// Note: TokenEndpoint, UserInfoEndpoint, JwksUri never existed in OpenIdConfig
+	assert.Equal(t, "", conf.Auth.OpenId.AuthorizationEndpoint)
+}
+
+// TestOpenIdConfigUnmarshaling tests that deprecated authorization_endpoint field can be unmarshaled
+func TestOpenIdConfigUnmarshaling(t *testing.T) {
+	yamlConfig := `
+auth:
+  strategy: "openid"
+  openid:
+    issuer_uri: "https://example.com"
+    client_id: "kiali-client"
+    client_secret: "secret"
+    authorization_endpoint: "https://example.com/auth"
+`
+
+	conf, err := Unmarshal(yamlConfig)
+	require.NoError(t, err)
+
+	assert.Equal(t, "openid", conf.Auth.Strategy)
+	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
+	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
+	assert.Equal(t, Credential("secret"), conf.Auth.OpenId.ClientSecret)
+	assert.Equal(t, "https://example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
+}
+
+// TestOpenIdConfigMarshalUnmarshal tests that deprecated authorization_endpoint field is preserved during marshal/unmarshal
+func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
+	// Create a config with explicit OIDC endpoint using deprecated field
+	conf := NewConfig()
+	conf.Auth.Strategy = "openid"
+	conf.Auth.OpenId.IssuerUri = "https://example.com"
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Auth.OpenId.ClientSecret = Credential("secret")
+	conf.Auth.OpenId.AuthorizationEndpoint = "https://example.com/auth"
+
+	// Marshal to YAML
+	yamlData, err := Marshal(conf)
+	require.NoError(t, err)
+
+	// Unmarshal back to config
+	conf2, err := Unmarshal(yamlData)
+	require.NoError(t, err)
+
+	// Verify all fields are preserved
+	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
+	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
+	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
+	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
+	assert.Equal(t, conf.Auth.OpenId.AuthorizationEndpoint, conf2.Auth.OpenId.AuthorizationEndpoint)
+}
+
+// TestOpenIdDiscoveryOverrideDefaults tests that DiscoveryOverride fields are initialized to empty
+func TestOpenIdDiscoveryOverrideDefaults(t *testing.T) {
+	conf := NewConfig()
+
+	// Test that DiscoveryOverride fields are initialized to empty strings
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
+}
+
+// TestOpenIdDiscoveryOverrideUnmarshaling tests that DiscoveryOverride can be unmarshaled from YAML
+func TestOpenIdDiscoveryOverrideUnmarshaling(t *testing.T) {
+	yamlConfig := `
+auth:
+  strategy: "openid"
+  openid:
+    issuer_uri: "https://example.com"
+    client_id: "kiali-client"
+    client_secret: "secret"
+    discovery_override:
+      authorization_endpoint: "https://custom.example.com/auth"
+      token_endpoint: "https://custom.example.com/token"
+      userinfo_endpoint: "https://custom.example.com/userinfo"
+      jwks_uri: "https://custom.example.com/jwks"
+`
+
+	conf, err := Unmarshal(yamlConfig)
+	require.NoError(t, err)
+
+	assert.Equal(t, "openid", conf.Auth.Strategy)
+	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
+	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
+	assert.Equal(t, Credential("secret"), conf.Auth.OpenId.ClientSecret)
+	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
+	assert.Equal(t, "https://custom.example.com/userinfo", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "https://custom.example.com/jwks", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
+}
+
+// TestOpenIdDiscoveryOverrideMarshalUnmarshal tests that DiscoveryOverride is preserved during marshal/unmarshal
+func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
+	// Create a config with DiscoveryOverride
+	conf := NewConfig()
+	conf.Auth.Strategy = "openid"
+	conf.Auth.OpenId.IssuerUri = "https://example.com"
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Auth.OpenId.ClientSecret = Credential("secret")
+	conf.Auth.OpenId.DiscoveryOverride = DiscoveryOverrideConfig{
+		AuthorizationEndpoint: "https://custom.example.com/auth",
+		TokenEndpoint:         "https://custom.example.com/token",
+		UserInfoEndpoint:      "https://custom.example.com/userinfo",
+		JwksUri:               "https://custom.example.com/jwks",
+	}
+
+	// Marshal to YAML
+	yamlData, err := Marshal(conf)
+	require.NoError(t, err)
+
+	// Unmarshal back to config
+	conf2, err := Unmarshal(yamlData)
+	require.NoError(t, err)
+
+	// Verify all fields are preserved
+	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
+	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
+	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
+	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint, conf2.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint, conf2.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint, conf2.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.JwksUri, conf2.Auth.OpenId.DiscoveryOverride.JwksUri)
+}
+
+// TestOpenIdDiscoveryOverridePartial tests that partial DiscoveryOverride configuration works
+func TestOpenIdDiscoveryOverridePartial(t *testing.T) {
+	yamlConfig := `
+auth:
+  strategy: "openid"
+  openid:
+    issuer_uri: "https://example.com"
+    client_id: "kiali-client"
+    client_secret: "secret"
+    discovery_override:
+      authorization_endpoint: "https://custom.example.com/auth"
+      token_endpoint: "https://custom.example.com/token"
+`
+
+	conf, err := Unmarshal(yamlConfig)
+	require.NoError(t, err)
+
+	// Only the specified endpoints should be set
+	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
+	// Unspecified endpoints should be empty
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
+}
+
+// TestOpenIdDiscoveryOverrideTakesPrecedence tests that DiscoveryOverride takes precedence over deprecated fields
+func TestOpenIdDiscoveryOverrideTakesPrecedence(t *testing.T) {
+	yamlConfig := `
+auth:
+  strategy: "openid"
+  openid:
+    issuer_uri: "https://example.com"
+    client_id: "kiali-client"
+    client_secret: "secret"
+    authorization_endpoint: "https://deprecated.example.com/auth"
+    discovery_override:
+      authorization_endpoint: "https://override.example.com/auth"
+      token_endpoint: "https://override.example.com/token"
+`
+
+	conf, err := Unmarshal(yamlConfig)
+	require.NoError(t, err)
+
+	// Both deprecated and new fields should be set (for backward compatibility)
+	// But the new DiscoveryOverride fields should have the override values
+	// Note: token_endpoint never existed as a deprecated field, only in DiscoveryOverride
+	assert.Equal(t, "https://deprecated.example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
+	assert.Equal(t, "https://override.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "https://override.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
+}
