@@ -23,6 +23,7 @@ type SliderProps = {
   locked: boolean;
   max: number;
   maxLimit: number;
+  maxWidth?: string;
   min: number;
   mirrored: boolean;
   onLock: (locked: boolean) => void;
@@ -182,12 +183,19 @@ export class Slider extends React.Component<SliderProps, SliderState> {
     );
 
     const MirrorIcon = (
-      <Button
-        icon={<MigrationIcon />}
-        className={lockButtonStyle}
-        variant={ButtonVariant.plain}
-        onClick={() => this.props.onMirror(!this.props.mirrored)}
-      />
+      <Tooltip
+        position={TooltipPosition.top}
+        content={
+          <>{this.props.mirrored ? 'Cancel mirroring traffic to this workload' : 'Mirror traffic to this workload'}</>
+        }
+      >
+        <Button
+          icon={<MigrationIcon />}
+          className={lockButtonStyle}
+          variant={ButtonVariant.plain}
+          onClick={() => this.props.onMirror(!this.props.mirrored)}
+        />
+      </Tooltip>
     );
 
     return (

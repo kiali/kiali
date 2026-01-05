@@ -3,12 +3,20 @@ import { Slider } from './Slider/Slider';
 import { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
-import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  ExpandableSection,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
-import { BalanceScaleIcon } from '@patternfly/react-icons';
+import { BalanceScaleIcon, MigrationIcon } from '@patternfly/react-icons';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -27,6 +35,7 @@ export type WorkloadWeight = {
 };
 
 type State = {
+  mirroringSectionExpanded: boolean;
   workloads: WorkloadWeight[];
 };
 
@@ -50,12 +59,21 @@ const evenlyCellStyle = kialiStyle({
   alignItems: 'flex-end'
 });
 
+const mirroringSectionStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
+const emptyStateStyle = kialiStyle({
+  padding: '1rem'
+});
+
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
 
 export class TrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      mirroringSectionExpanded: false,
       workloads: []
     };
   }
@@ -192,6 +210,8 @@ export class TrafficShifting extends React.Component<Props, State> {
         }
 
         return {
+          // Auto-expand section when mirroring is enabled
+          mirroringSectionExpanded: mirrored ? true : prevState.mirroringSectionExpanded,
           workloads: prevState.workloads
         };
       },
@@ -260,6 +280,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               value={workload.weight}
               min={0}
               max={workload.maxWeight}
+              maxWidth="195px"
               maxLimit={100}
               onSlide={value => {
                 this.onWeight(workload.name, value as number);
@@ -278,6 +299,34 @@ export class TrafficShifting extends React.Component<Props, State> {
         };
       });
 
+    const mirroredWorkload = this.state.workloads.find(w => w.mirrored);
+
+    // Build the section title with workload info when collapsed
+    const mirroringSectionTitle = mirroredWorkload
+      ? `${t('Mirroring traffic')} (${mirroredWorkload.name}; ${mirroredWorkload.weight}%)`
+      : t('Mirroring traffic');
+
+    const mirroringEmptyStateText = (
+      <>
+        {t('Click the ')} <MigrationIcon />{' '}
+        {t(
+          'icon next to a workload above to mirror traffic to it. Traffic mirroring duplicates incoming requests to the mirrored workload. This allows you to test or analyze a new version safely.'
+        )}
+      </>
+    );
+
+    const mirroringEmptyState = (
+      <EmptyState
+        headingLevel="h6"
+        titleText={t('No mirrored workload selected.')}
+        variant={EmptyStateVariant.lg}
+        className={emptyStateStyle}
+      >
+        <EmptyStateBody>{mirroringEmptyStateText}</EmptyStateBody>
+      </EmptyState>
+    );
+
+    // Use the same column structure as workloadColumns but without header content
     const mirrorColumns: SortableTh[] = [
       {
         title: t('Mirrored workload'),
@@ -291,42 +340,42 @@ export class TrafficShifting extends React.Component<Props, State> {
       }
     ];
 
-    const mirrorRows = this.state.workloads
-      .filter(workload => workload.mirrored)
-      .map(workload => {
-        return {
-          cells: [
-            <div>
-              <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
-              {workload.name}
-            </div>,
-
-            <Slider
-              id={`slider-${workload.name}`}
-              key={`slider-${workload.name}`}
-              tooltip={true}
-              input={true}
-              inputFormat="%"
-              value={workload.weight}
-              min={0}
-              max={workload.maxWeight}
-              maxLimit={100}
-              onSlide={value => {
-                this.onWeight(workload.name, value as number);
-              }}
-              onSlideStop={value => {
-                this.onWeight(workload.name, value as number);
-              }}
-              locked={this.state.workloads.length > 1 ? workload.locked : true}
-              showLock={this.state.workloads.length > 2}
-              onLock={locked => this.onLock(workload.name, locked)}
-              mirrored={workload.mirrored}
-              showMirror={this.props.showMirror}
-              onMirror={mirrored => this.onMirror(workload.name, mirrored)}
-            />
-          ]
-        };
-      });
+    const mirrorRows = mirroredWorkload
+      ? [
+          {
+            cells: [
+              <div>
+                <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
+                {mirroredWorkload.name}
+              </div>,
+              <Slider
+                id={`slider-mirror-${mirroredWorkload.name}`}
+                key={`slider-mirror-${mirroredWorkload.name}`}
+                tooltip={false}
+                input={true}
+                inputFormat="%"
+                value={mirroredWorkload.weight}
+                min={0}
+                max={100}
+                maxWidth="195px"
+                maxLimit={100}
+                onSlide={value => {
+                  this.onWeight(mirroredWorkload.name, value as number);
+                }}
+                onSlideStop={value => {
+                  this.onWeight(mirroredWorkload.name, value as number);
+                }}
+                locked={false}
+                showLock={false}
+                onLock={() => {}}
+                mirrored={true}
+                showMirror={true}
+                onMirror={() => this.onMirror(mirroredWorkload.name, false)}
+              />
+            ]
+          }
+        ]
+      : [];
 
     return (
       <>
@@ -337,8 +386,26 @@ export class TrafficShifting extends React.Component<Props, State> {
           verticalAlign="middle"
         />
 
-        {mirrorRows.length > 0 && (
-          <SimpleTable label={t('Mirrors')} columns={mirrorColumns} rows={mirrorRows} verticalAlign="middle" />
+        {this.props.showMirror && this.state.workloads.length > 1 && (
+          <ExpandableSection
+            className={mirroringSectionStyle}
+            isExpanded={this.state.mirroringSectionExpanded}
+            toggleText={mirroringSectionTitle}
+            onToggle={() => {
+              this.setState({ mirroringSectionExpanded: !this.state.mirroringSectionExpanded });
+            }}
+          >
+            {mirroredWorkload ? (
+              <SimpleTable
+                label={t('Mirrored workload')}
+                columns={mirrorColumns}
+                rows={mirrorRows}
+                verticalAlign="middle"
+              />
+            ) : (
+              mirroringEmptyState
+            )}
+          </ExpandableSection>
         )}
 
         {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
