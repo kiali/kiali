@@ -78,7 +78,7 @@ jobs:
         weeks_mod3 = int(weeks_elapsed % 3)
 
         # Only release when weeks_elapsed >= 0 (past the base date) and weeks_mod3 == 0
-        print (weeks_elapsed >= 0 and weeks_mod3 == 0) # True in case of release
+        print(weeks_elapsed >= 0 and weeks_mod3 == 0) # True in case of release
         EOF
 
     - name: Determine release type
@@ -87,7 +87,7 @@ jobs:
         if [ -z ${{ github.event.inputs.release_type }} ];
         then
           DO_RELEASE=$(python minor.py)
-          if [[ $DO_RELEASE == "1" ]]
+          if [[ $DO_RELEASE == "True" ]]
           then
             echo "release_type=minor" >> $GITHUB_ENV
           else
