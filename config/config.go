@@ -555,12 +555,9 @@ type OpenIdConfig struct {
 	ApiToken                string            `yaml:"api_token,omitempty"`
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
 	// Deprecated: use DiscoveryOverride.AuthorizationEndpoint
-	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
-	ClientId              string `yaml:"client_id,omitempty"`
-	// ClientSecret can be either a literal secret value or an absolute file path. Prefer mounting the secret as a file
-	// (e.g. /kiali-secret/oidc-secret). When loading from file, Kiali will automatically use the mounted secret file
-	// if it exists, overriding any configured value.
-	ClientSecret          Credential              `yaml:"client_secret,omitempty"`
+	AuthorizationEndpoint string                  `yaml:"authorization_endpoint,omitempty"`
+	ClientId              string                  `yaml:"client_id,omitempty"`
+	ClientSecret          Credential              `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
 	DisableRBAC           bool                    `yaml:"disable_rbac,omitempty"`
 	DiscoveryOverride     DiscoveryOverrideConfig `yaml:"discovery_override,omitempty"`
 	HTTPProxy             string                  `yaml:"http_proxy,omitempty"`

@@ -940,7 +940,6 @@ auth:
   openid:
     issuer_uri: "https://example.com"
     client_id: "kiali-client"
-    client_secret: "secret"
     authorization_endpoint: "https://example.com/auth"
 `
 
@@ -950,7 +949,6 @@ auth:
 	assert.Equal(t, "openid", conf.Auth.Strategy)
 	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
 	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
-	assert.Equal(t, Credential("secret"), conf.Auth.OpenId.ClientSecret)
 	assert.Equal(t, "https://example.com/auth", conf.Auth.OpenId.AuthorizationEndpoint)
 }
 
@@ -961,7 +959,6 @@ func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
 	conf.Auth.Strategy = "openid"
 	conf.Auth.OpenId.IssuerUri = "https://example.com"
 	conf.Auth.OpenId.ClientId = "kiali-client"
-	conf.Auth.OpenId.ClientSecret = Credential("secret")
 	conf.Auth.OpenId.AuthorizationEndpoint = "https://example.com/auth"
 
 	// Marshal to YAML
@@ -976,7 +973,6 @@ func TestOpenIdConfigMarshalUnmarshal(t *testing.T) {
 	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
 	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
 	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
-	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
 	assert.Equal(t, conf.Auth.OpenId.AuthorizationEndpoint, conf2.Auth.OpenId.AuthorizationEndpoint)
 }
 
@@ -999,7 +995,6 @@ auth:
   openid:
     issuer_uri: "https://example.com"
     client_id: "kiali-client"
-    client_secret: "secret"
     discovery_override:
       authorization_endpoint: "https://custom.example.com/auth"
       token_endpoint: "https://custom.example.com/token"
@@ -1013,7 +1008,6 @@ auth:
 	assert.Equal(t, "openid", conf.Auth.Strategy)
 	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
 	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
-	assert.Equal(t, Credential("secret"), conf.Auth.OpenId.ClientSecret)
 	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	assert.Equal(t, "https://custom.example.com/userinfo", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
@@ -1027,7 +1021,6 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	conf.Auth.Strategy = "openid"
 	conf.Auth.OpenId.IssuerUri = "https://example.com"
 	conf.Auth.OpenId.ClientId = "kiali-client"
-	conf.Auth.OpenId.ClientSecret = Credential("secret")
 	conf.Auth.OpenId.DiscoveryOverride = DiscoveryOverrideConfig{
 		AuthorizationEndpoint: "https://custom.example.com/auth",
 		TokenEndpoint:         "https://custom.example.com/token",
@@ -1047,7 +1040,6 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
 	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
 	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
-	assert.Equal(t, conf.Auth.OpenId.ClientSecret, conf2.Auth.OpenId.ClientSecret)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint, conf2.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint, conf2.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint, conf2.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
@@ -1062,7 +1054,6 @@ auth:
   openid:
     issuer_uri: "https://example.com"
     client_id: "kiali-client"
-    client_secret: "secret"
     discovery_override:
       authorization_endpoint: "https://custom.example.com/auth"
       token_endpoint: "https://custom.example.com/token"
@@ -1087,7 +1078,6 @@ auth:
   openid:
     issuer_uri: "https://example.com"
     client_id: "kiali-client"
-    client_secret: "secret"
     authorization_endpoint: "https://deprecated.example.com/auth"
     discovery_override:
       authorization_endpoint: "https://override.example.com/auth"
