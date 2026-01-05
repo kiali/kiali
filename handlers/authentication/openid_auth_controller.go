@@ -345,16 +345,12 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	scopes := strings.Join(getConfiguredOpenIdScopes(c.conf), " ")
 
 	// Determine authorization endpoint
-	authorizationEndpoint := c.conf.Auth.OpenId.AuthorizationEndpoint
-	if len(authorizationEndpoint) == 0 {
-		openIdMetadata, err := getOpenIdMetadata(c.conf)
-		if err != nil {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
-			return
-		}
-		authorizationEndpoint = openIdMetadata.AuthURL
+	authorizationEndpoint, err := getOpenIdAuthorizationEndpoint(c.conf)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
+		return
 	}
 
 	// Create a "nonce" code and set a cookie with the code
@@ -1236,6 +1232,29 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	}
 
 	return fetchedMetadata.(*openIdMetadata), nil
+}
+
+func getOpenIdAuthorizationEndpoint(conf *config.Config) (string, error) {
+	cfg := conf.Auth.OpenId
+
+	// Prefer explicit endpoints when fully configured (issue #8777).
+	// If only partially configured, fall back to auto-discovery.
+	if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+		return cfg.DiscoveryOverride.AuthorizationEndpoint, nil
+	}
+
+	// Backward compatibility for the deprecated field.
+	// Note: This only provides the authorization endpoint; the token/jwks/userinfo endpoints still require discovery.
+	if cfg.AuthorizationEndpoint != "" {
+		return cfg.AuthorizationEndpoint, nil
+	}
+
+	openIdMetadata, err := getOpenIdMetadata(conf)
+	if err != nil {
+		return "", err
+	}
+
+	return openIdMetadata.AuthURL, nil
 }
 
 // getProxyForUrl returns a function which, in turn, returns the URL of the proxy server that should
