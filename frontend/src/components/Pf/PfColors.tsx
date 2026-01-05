@@ -55,13 +55,11 @@ export enum PFColors {
   Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',
 
-  // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
-  Danger = 'var(--pf-t--global--icon--color--severity--critical--default)',
-  Info = 'var(--pf-t--global--icon--color--severity--none--default)',
-  InfoBackground = 'var(--pf-t--color--blue--70)',
-  Success = 'var(--pf-t--chart--color--green--300)',
-  SuccessBackground = 'var(--pf-t--color--green--70)',
-  Warning = 'var(--pf-t--global--icon--color--severity--moderate--default)',
+  // status colors https://www.patternfly.org/design-foundations/colors/#status-and-state-colors
+  Danger = 'var(--pf-t--global--icon--color--status--danger--default)',
+  Info = 'var(--pf-t--global--icon--color--status--info--default)',
+  Success = 'var(--pf-t--global--icon--color--status--success--default)',
+  Warning = 'var(--pf-t--global--icon--color--status--warning--default)',
 
   // chart-specific color values, for rates charts where 4xx is really Danger not Warning
   ChartDanger = 'var(--pf-t--chart--color--red-orange--500)',
