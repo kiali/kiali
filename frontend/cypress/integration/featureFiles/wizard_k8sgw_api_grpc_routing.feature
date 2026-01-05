@@ -14,7 +14,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
   Scenario: Create a K8s GRPC Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s GRPC Routing" actions
-    And user sees the "Create K8s GRPC Routing" wizard
+    And user sees the "Create K8s GRPC routing" wizard
     And user clicks in the "Request Matching" tab
     And user clicks in the "headers" request matching dropdown
     And user types "end-user" in the matching header input
@@ -45,7 +45,7 @@ Feature: Service Details Wizard: K8s GRPC Routing
   Scenario: Update a K8s GRPC Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "K8s GRPC Routing" actions
-    And user sees the "Update K8s GRPC Routing" wizard
+    And user sees the "Update K8s GRPC routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "K8s Gateways" tab
     And user clicks on Add Gateway
