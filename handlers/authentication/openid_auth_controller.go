@@ -1139,12 +1139,9 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 			jwksUri = cfg.DiscoveryOverride.JwksUri
 			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
 		} else if cfg.AuthorizationEndpoint != "" {
-			// Fall back to deprecated authorization_endpoint if set (for backward compatibility)
-			// Note: Only authorization_endpoint existed in the old config, other endpoints were never supported
+			// Backward compatibility: the deprecated authorization_endpoint is only used when starting the flow (redirect).
+			// Metadata (and the remaining endpoints: token/jwks/userinfo) still come from the issuer's discovery document.
 			log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
-			authEndpoint = cfg.AuthorizationEndpoint
-			// For deprecated config, we still need to discover other endpoints
-			// tokenEndpoint, jwksUri, userInfoEndpoint will be discovered from issuer_uri
 		}
 
 		if authEndpoint != "" && tokenEndpoint != "" {
@@ -1261,6 +1258,7 @@ func getOpenIdAuthorizationEndpoint(conf *config.Config) (string, error) {
 	// Backward compatibility for the deprecated field.
 	// Note: This only provides the authorization endpoint; the token/jwks/userinfo endpoints still require discovery.
 	if cfg.AuthorizationEndpoint != "" {
+		log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
 		return cfg.AuthorizationEndpoint, nil
 	}
 
