@@ -65,9 +65,10 @@ When('user clicks in the {string} actions', (action: string) => {
       actionId = 'k8s_grpc_request_routing';
       break;
     case 'Delete Traffic Routing':
-    case 'Delete traffic routing':
       actionId = 'delete_traffic_routing';
       break;
+    default:
+      throw new Error(`Unknown action: ${action}`);
   }
 
   it('spinner should disappear', { retries: 3 }, () => {

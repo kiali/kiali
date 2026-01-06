@@ -8,12 +8,13 @@ Feature: Service Details Wizard: K8s HTTP Routing
   Background:
     Given user is at administrator perspective
 
+  # TODO: Each of these tests should be independent of one another. A failure in one causes cascading failures in the others.
   @gateway-api
   @bookinfo-app
   @core-2
   Scenario: Create a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "K8s HTTP routing" actions
+    And user clicks in the "K8s HTTP Routing" actions
     And user sees the "Create K8s HTTP routing" wizard
     And user clicks in the "Request Matching" tab
     And user clicks in the "headers" request matching dropdown
@@ -44,7 +45,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
   @core-2
   Scenario: Update a K8s HTTP Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "K8s HTTP routing" actions
+    And user clicks in the "K8s HTTP Routing" actions
     And user sees the "Update K8s HTTP routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "K8s Gateways" tab
@@ -66,7 +67,7 @@ Feature: Service Details Wizard: K8s HTTP Routing
   @core-2
   Scenario: Delete the K8s Gateway Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "Delete Traffic routing" actions
+    And user clicks in the "Delete Traffic Routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
