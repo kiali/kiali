@@ -855,6 +855,101 @@ export const getClustersWorkloadHealth = async (
   );
 };
 
+export const getClustersHealth = async (
+  namespaces: string,
+  duration: DurationInSeconds,
+  cluster?: string,
+  queryTime?: TimeInSeconds
+): Promise<{
+  appHealth: Map<string, NamespaceAppHealth>;
+  serviceHealth: Map<string, NamespaceServiceHealth>;
+  workloadHealth: Map<string, NamespaceWorkloadHealth>;
+}> => {
+  const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
+    namespaces: namespaces,
+    // empty type means load app,workload,services health
+    type: ''
+  };
+
+  if (duration) {
+    params.rateInterval = `${String(duration)}s`;
+  }
+
+  if (queryTime) {
+    params.queryTime = String(queryTime);
+  }
+
+  if (cluster) {
+    params.clusterName = cluster;
+  }
+
+  return newRequest<any>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(response => {
+    const appHealth = new Map<string, NamespaceAppHealth>();
+    const serviceHealth = new Map<string, NamespaceServiceHealth>();
+    const workloadHealth = new Map<string, NamespaceWorkloadHealth>();
+
+    // Process app health
+    const namespaceAppHealth = response.data['namespaceAppHealth'];
+    if (namespaceAppHealth) {
+      Object.keys(namespaceAppHealth).forEach(ns => {
+        if (!appHealth[ns]) {
+          appHealth[ns] = {};
+        }
+        Object.keys(namespaceAppHealth[ns]).forEach(k => {
+          if (namespaceAppHealth[ns][k]) {
+            const ah = AppHealth.fromJson(namespaces, k, namespaceAppHealth[ns][k], {
+              rateInterval: duration
+            });
+            appHealth[ns][k] = ah;
+          }
+        });
+      });
+    }
+
+    // Process service health
+    const namespaceServiceHealth = response.data['namespaceServiceHealth'];
+    if (namespaceServiceHealth) {
+      Object.keys(namespaceServiceHealth).forEach(ns => {
+        if (!serviceHealth[ns]) {
+          serviceHealth[ns] = {};
+        }
+        Object.keys(namespaceServiceHealth[ns]).forEach(k => {
+          if (namespaceServiceHealth[ns][k]) {
+            const sh = ServiceHealth.fromJson(namespaces, k, namespaceServiceHealth[ns][k], {
+              rateInterval: duration
+            });
+            serviceHealth[ns][k] = sh;
+          }
+        });
+      });
+    }
+
+    // Process workload health
+    const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
+    if (namespaceWorkloadHealth) {
+      Object.keys(namespaceWorkloadHealth).forEach(ns => {
+        if (!workloadHealth[ns]) {
+          workloadHealth[ns] = {};
+        }
+        Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
+          if (namespaceWorkloadHealth[ns][k]) {
+            const wh = WorkloadHealth.fromJson(namespaces, k, namespaceWorkloadHealth[ns][k], {
+              rateInterval: duration
+            });
+            workloadHealth[ns][k] = wh;
+          }
+        });
+      });
+    }
+
+    return {
+      appHealth,
+      serviceHealth,
+      workloadHealth
+    };
+  });
+};
+
 export const getGrafanaInfo = (): Promise<ApiResponse<GrafanaInfo>> => {
   return newRequest<GrafanaInfo>(HTTP_VERBS.GET, urls.grafana, {}, {});
 };
