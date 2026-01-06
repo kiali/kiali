@@ -5,6 +5,7 @@ import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
+import * as NamespacesRenderers from '../../pages/Namespaces/NamespacesRenderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace, serverConfig } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
@@ -70,7 +71,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
 const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
-  title: 'Config',
+  title: 'Istio config',
   sortable: true,
   width: 10,
   renderer: Renderers.istioConfig
@@ -219,6 +220,48 @@ const namespaces: Resource = {
   badge: PFBadges.Namespace
 };
 
+const statusNoTraffic: ResourceType<NamespaceInfo> = {
+  name: 'Status',
+  param: 'h',
+  title: 'Status',
+  sortable: true,
+  width: 20,
+  renderer: NamespacesRenderers.statusNamespaces
+};
+
+const categoryNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Category',
+  param: 'cat',
+  title: 'Category',
+  sortable: true,
+  width: 10,
+  renderer: NamespacesRenderers.category
+};
+
+const nsItemNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Namespace',
+  param: 'ns',
+  title: 'Namespace',
+  sortable: true,
+  width: 20,
+  renderer: NamespacesRenderers.nsItem
+};
+
+const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'TLS',
+  param: 'tls',
+  title: 'TLS config',
+  sortable: true,
+  width: 10,
+  renderer: NamespacesRenderers.tlsNamespaces
+};
+
+const namespacesList: Resource = {
+  name: 'namespaces',
+  columns: [nsItemNamespaces, categoryNamespaces, statusNoTraffic, tlsStatusNamespaces, istioConfiguration, labels],
+  badge: PFBadges.Namespace
+};
+
 const workloads: Resource = {
   name: 'workloads',
   columns: [health, item, namespace, cluster, workloadType, labels, details],
@@ -245,6 +288,7 @@ const istio: Resource = {
 type Config = {
   applications: Resource;
   istio: Resource;
+  namespaces: Resource;
   overview: Resource;
   services: Resource;
   workloads: Resource;
@@ -253,6 +297,7 @@ type Config = {
 const conf: Config = {
   applications: applications,
   istio: istio,
+  namespaces: namespacesList,
   overview: namespaces,
   services: services,
   workloads: workloads
