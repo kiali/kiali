@@ -537,7 +537,6 @@ type OpenShiftConfig struct {
 	InsecureSkipVerifyTLS bool   `yaml:"insecure_skip_verify_tls,omitempty"`
 }
 
-// OpenIdConfig contains specific configuration for authentication using an OpenID provider
 // DiscoveryOverrideConfig contains explicit OIDC endpoints to override auto-discovery
 type DiscoveryOverrideConfig struct {
 	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
