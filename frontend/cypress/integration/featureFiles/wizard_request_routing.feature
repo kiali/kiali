@@ -79,7 +79,7 @@ Feature: Service Details Wizard: Request Routing
   @core-2
   Scenario: Delete the Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
-    And user clicks in the "Delete traffic routing" actions
+    And user clicks in the "Delete Traffic Routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
@@ -117,7 +117,7 @@ Feature: Service Details Wizard: Request Routing
   @multi-cluster
   Scenario: Delete the Request Routing scenario in a local cluster
     When user is at the details page for the "service" "bookinfo/details" located in the "east" cluster
-    And user clicks in the "Delete traffic routing" actions
+    And user clicks in the "Delete Traffic Routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
 
@@ -159,6 +159,6 @@ Feature: Service Details Wizard: Request Routing
   @multi-primary
   Scenario: Delete the Request Routing scenario in a remote cluster
     When user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
-    And user clicks in the "Delete traffic routing" actions
+    And user clicks in the "Delete Traffic Routing" actions
     And user confirms delete the configuration
     Then user sees the "Istio Config" table with empty message
