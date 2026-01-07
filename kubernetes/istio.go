@@ -60,7 +60,7 @@ type ComponentStatus struct {
 	// Mesh name or ID that this component belongs to.
 	// This is derived from the control plane's MeshId or TrustDomain.
 	// Empty if the mesh information cannot be determined.
-	Mesh string `json:"mesh,omitempty"`
+	MeshId string `json:"meshId,omitempty"`
 }
 
 type IstioComponentStatus []ComponentStatus

@@ -73,12 +73,12 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	}
 
 	// Build efficient lookup maps
-	meshLookup := iss.buildMeshLookupMaps(mesh)
+	namespaceMeshMap := iss.buildNamespaceMeshMap(mesh)
 
 	result := kubernetes.IstioComponentStatus{}
 
 	for cluster := range iss.userClients {
-		ics, err := iss.getIstioComponentStatus(ctx, cluster, mesh, meshLookup)
+		ics, err := iss.getIstioComponentStatus(ctx, cluster, mesh, namespaceMeshMap)
 		if err != nil {
 			// istiod should be running
 			return nil, err
@@ -94,7 +94,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	return result, nil
 }
 
-func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string, mesh *models.Mesh, meshLookup *meshLookupMaps) (kubernetes.IstioComponentStatus, error) {
+func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string, mesh *models.Mesh, namespaceMeshMap namespaceMeshMap) (kubernetes.IstioComponentStatus, error) {
 	// Fetching workloads from component namespaces
 	// If there's some explicit config then use that. Otherwise autodiscover.
 	if len(iss.conf.ExternalServices.Istio.ComponentStatuses.Components) > 0 {
@@ -104,7 +104,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 			return kubernetes.IstioComponentStatus{}, err
 		}
 
-		return iss.getStatusOf(workloads, cluster, meshLookup), nil
+		return iss.getStatusOf(workloads, cluster, namespaceMeshMap), nil
 	}
 
 	log.Trace("Istio components config not set. Autodetecting components.")
@@ -121,7 +121,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 				Namespace: cp.IstiodNamespace,
 				Status:    cp.Status,
 				IsCore:    true,
-				Mesh:      cpMeshId,
+				MeshId:    cpMeshId,
 			})
 		}
 		for _, cl := range cp.ManagedClusters {
@@ -145,7 +145,7 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 				Namespace: "",
 				Status:    kubernetes.ComponentNotFound,
 				IsCore:    true,
-				Mesh:      "",
+				MeshId:    "",
 			})
 		}
 	}
@@ -163,14 +163,14 @@ func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, clus
 
 	// Get mesh ID for each gateway based on its namespace
 	for _, gateway := range gateways {
-		gatewayMeshId := meshLookup.getMeshIdForNamespace(gateway.Cluster, gateway.Namespace)
+		gatewayMeshId := namespaceMeshMap[makeNamespaceKey(gateway.Cluster, gateway.Namespace)]
 		istiodStatus = append(istiodStatus, kubernetes.ComponentStatus{
 			Cluster:   gateway.Cluster,
 			Name:      gateway.Name,
 			Namespace: gateway.Namespace,
 			Status:    GetWorkloadStatus(*gateway),
 			IsCore:    false,
-			Mesh:      gatewayMeshId,
+			MeshId:    gatewayMeshId,
 		})
 	}
 
@@ -259,35 +259,20 @@ func makeNamespaceKey(cluster, namespace string) string {
 	return cluster + ":" + namespace
 }
 
-// buildMeshLookupMaps builds efficient lookup maps from mesh data to avoid repeated iterations.
+// buildNamespaceMeshMap builds efficient lookup map from mesh data to avoid repeated iterations.
 // Handles the hierarchy: multiple clusters -> each cluster can have multiple meshes -> each mesh can have multiple control planes.
-func (iss *IstioStatusService) buildMeshLookupMaps(mesh *models.Mesh) *meshLookupMaps {
-	lookup := &meshLookupMaps{
-		namespaceToMesh: make(map[string]string),
-	}
+func (iss *IstioStatusService) buildNamespaceMeshMap(mesh *models.Mesh) namespaceMeshMap {
+	nsMeshMap := make(namespaceMeshMap)
 
 	for _, cp := range mesh.ControlPlanes {
 		meshId := getMeshId(&cp)
 
 		// Map control plane namespace (e.g., istio-system) - this is the most reliable mapping
 		// Components in the control plane namespace belong to that control plane's mesh
-		cpNamespaceKey := makeNamespaceKey(cp.Cluster.Name, cp.IstiodNamespace)
-		lookup.namespaceToMesh[cpNamespaceKey] = meshId
+		nsMeshMap[makeNamespaceKey(cp.Cluster.Name, cp.IstiodNamespace)] = meshId
 	}
 
-	return lookup
-}
-
-// getMeshIdForNamespace returns the mesh ID for a component in a given namespace and cluster.
-// This is the only reliable method as it accurately determines mesh ID based on namespace.
-// Returns empty string if the namespace is not found in the lookup maps.
-func (ml *meshLookupMaps) getMeshIdForNamespace(cluster string, namespace string) string {
-	nsKey := makeNamespaceKey(cluster, namespace)
-	if meshId, found := ml.namespaceToMesh[nsKey]; found {
-		return meshId
-	}
-	// Return empty string if mesh ID not found
-	return ""
+	return nsMeshMap
 }
 
 func istioCoreComponents(conf *config.Config) map[string]config.ComponentStatus {
@@ -299,7 +284,7 @@ func istioCoreComponents(conf *config.Config) map[string]config.ComponentStatus 
 	return components
 }
 
-func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster string, meshLookup *meshLookupMaps) kubernetes.IstioComponentStatus {
+func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster string, namespaceMeshMap namespaceMeshMap) kubernetes.IstioComponentStatus {
 	statusComponents := istioCoreComponents(iss.conf)
 	isc := kubernetes.IstioComponentStatus{}
 	// cf tracks which non-multicluster components (by appLabel) have been found
@@ -342,7 +327,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 		}
 
 		// Get mesh ID for this component based on its namespace
-		componentMeshId := meshLookup.getMeshIdForNamespace(cluster, namespace)
+		componentMeshId := namespaceMeshMap[makeNamespaceKey(cluster, namespace)]
 
 		status := GetWorkloadStatus(*workload)
 		// Add status
@@ -352,7 +337,7 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 			Name:      workload.Name,
 			Status:    status,
 			IsCore:    stat.IsCore,
-			Mesh:      componentMeshId,
+			MeshId:    componentMeshId,
 		})
 		addedComponents[componentKey] = true
 
@@ -372,14 +357,14 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 					namespace = stat.Namespace
 				}
 				// Get mesh ID for missing component based on its namespace
-				componentMeshId := meshLookup.getMeshIdForNamespace(cluster, namespace)
+				componentMeshId := namespaceMeshMap[makeNamespaceKey(cluster, namespace)]
 				isc = append(isc, kubernetes.ComponentStatus{
 					Cluster:   cluster,
 					Namespace: namespace,
 					Name:      comp,
 					Status:    kubernetes.ComponentNotFound,
 					IsCore:    stat.IsCore,
-					Mesh:      componentMeshId,
+					MeshId:    componentMeshId,
 				})
 			}
 		}

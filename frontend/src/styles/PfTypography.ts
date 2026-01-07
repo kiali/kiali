@@ -7,8 +7,8 @@
 // Reference: https://www.patternfly.org/design-foundations/typography
 export enum PFFontSize {
   default = 'var(--pf-t--global--font--size--body--default)',
-  large = 'var(--pf-t--global--font--size--body--lg)'
-  small = 'var(--pf-t--global--font--size--body--sm)',
+  large = 'var(--pf-t--global--font--size--body--lg)',
+  small = 'var(--pf-t--global--font--size--body--sm)'
 }
 
 // Font weights used by Kiali for CSS styling
@@ -16,6 +16,6 @@ export enum PFFontSize {
 export enum PFFontWeight {
   BodyBold = 'var(--pf-t--global--font--weight--body--bold)',
   BodyDefault = 'var(--pf-t--global--font--weight--body--default)',
-  HeadingBold = 'var(--pf-t--global--font--weight--heading--bold)'
-  HeadingDefault = 'var(--pf-t--global--font--weight--heading--default)',
+  HeadingBold = 'var(--pf-t--global--font--weight--heading--bold)',
+  HeadingDefault = 'var(--pf-t--global--font--weight--heading--default)'
 }

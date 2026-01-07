@@ -234,8 +234,8 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     const allComponents = Object.values(props.statusMap).flat();
     const meshes = new Set<string>();
     allComponents.forEach(comp => {
-      if (comp.mesh) {
-        meshes.add(comp.mesh);
+      if (comp.meshId) {
+        meshes.add(comp.meshId);
       }
     });
     return meshes.size > 1;
@@ -247,9 +247,9 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   ): { addon: ComponentStatus[]; core: ComponentStatus[]; mesh: ComponentStatus[] } => {
     const nonhealthy = components.filter((c: ComponentStatus) => c.status !== Status.Healthy);
     return {
-      addon: nonhealthy.filter((s: ComponentStatus) => !s.isCore && !s.mesh),
+      addon: nonhealthy.filter((s: ComponentStatus) => !s.isCore && !s.meshId),
       core: nonhealthy.filter((s: ComponentStatus) => s.isCore),
-      mesh: nonhealthy.filter((s: ComponentStatus) => !s.isCore && s.mesh)
+      mesh: nonhealthy.filter((s: ComponentStatus) => !s.isCore && s.meshId)
     };
   };
 
