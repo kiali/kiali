@@ -237,11 +237,8 @@ func getComponentNamespaces(conf *config.Config) []string {
 	return nss
 }
 
-// meshLookupMaps contains pre-built lookup maps for efficient mesh ID resolution
-type meshLookupMaps struct {
-	// namespaceToMesh maps "cluster:namespace" to mesh ID
-	namespaceToMesh map[string]string
-}
+// namespaceMeshMap provides fast lookup from cluster:namespace to meshID
+type namespaceMeshMap map[string]string
 
 // getMeshId returns the mesh ID from a control plane's mesh config.
 // It uses MeshId if available, otherwise falls back to TrustDomain.
