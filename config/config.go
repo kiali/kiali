@@ -541,7 +541,7 @@ type OpenShiftConfig struct {
 type DiscoveryOverrideConfig struct {
 	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
 	TokenEndpoint         string `yaml:"token_endpoint,omitempty"`
-	UserInfoEndpoint      string `yaml:"userinfo_endpoint,omitempty"`
+	UserinfoEndpoint      string `yaml:"userinfo_endpoint,omitempty"`
 	JwksUri               string `yaml:"jwks_uri,omitempty"`
 }
 
@@ -840,7 +840,7 @@ func NewConfig() (c *Config) {
 				DiscoveryOverride: DiscoveryOverrideConfig{
 					AuthorizationEndpoint: "",
 					TokenEndpoint:         "",
-					UserInfoEndpoint:      "",
+					UserinfoEndpoint:      "",
 					JwksUri:               "",
 				},
 				InsecureSkipVerifyTLS: false,

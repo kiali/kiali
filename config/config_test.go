@@ -983,7 +983,7 @@ func TestOpenIdDiscoveryOverrideDefaults(t *testing.T) {
 	// Test that DiscoveryOverride fields are initialized to empty strings
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
-	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
 }
 
@@ -1010,7 +1010,7 @@ auth:
 	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
 	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
-	assert.Equal(t, "https://custom.example.com/userinfo", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "https://custom.example.com/userinfo", conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, "https://custom.example.com/jwks", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
 }
 
@@ -1024,7 +1024,7 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	conf.Auth.OpenId.DiscoveryOverride = DiscoveryOverrideConfig{
 		AuthorizationEndpoint: "https://custom.example.com/auth",
 		TokenEndpoint:         "https://custom.example.com/token",
-		UserInfoEndpoint:      "https://custom.example.com/userinfo",
+		UserinfoEndpoint:      "https://custom.example.com/userinfo",
 		JwksUri:               "https://custom.example.com/jwks",
 	}
 
@@ -1042,7 +1042,7 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint, conf2.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint, conf2.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
-	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint, conf2.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint, conf2.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.JwksUri, conf2.Auth.OpenId.DiscoveryOverride.JwksUri)
 }
 
@@ -1066,7 +1066,7 @@ auth:
 	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	// Unspecified endpoints should be empty
-	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
 }
 

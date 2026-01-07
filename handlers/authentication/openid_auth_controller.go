@@ -1137,7 +1137,7 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
 			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
 			jwksUri = cfg.DiscoveryOverride.JwksUri
-			userInfoEndpoint = cfg.DiscoveryOverride.UserInfoEndpoint
+			userInfoEndpoint = cfg.DiscoveryOverride.UserinfoEndpoint
 		} else if cfg.AuthorizationEndpoint != "" { //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
 			// Backward compatibility: the deprecated authorization_endpoint is only used when starting the flow (redirect).
 			// Metadata (and the remaining endpoints: token/jwks/userinfo) still come from the issuer's discovery document.

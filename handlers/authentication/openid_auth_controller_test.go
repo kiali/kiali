@@ -1766,7 +1766,7 @@ func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverrid
 	assert.Equal(t, "", metadata.UserInfoURL, "UserInfoURL should be empty when not provided in DiscoveryOverride")
 
 	// Test with UserInfoEndpoint provided in DiscoveryOverride
-	conf.Auth.OpenId.DiscoveryOverride.UserInfoEndpoint = "https://example.com/userinfo"
+	conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint = "https://example.com/userinfo"
 	config.Set(conf)
 	cachedOpenIdMetadata = nil // Reset cache
 
