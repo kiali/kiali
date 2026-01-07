@@ -6,9 +6,9 @@
 // Font sizes used by Kiali for CSS styling
 // Reference: https://www.patternfly.org/design-foundations/typography
 export enum PFFontSize {
-  small = 'var(--pf-t--global--font--size--body--sm)',
   default = 'var(--pf-t--global--font--size--body--default)',
   large = 'var(--pf-t--global--font--size--body--lg)'
+  small = 'var(--pf-t--global--font--size--body--sm)',
 }
 
 // Font weights used by Kiali for CSS styling
