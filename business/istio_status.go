@@ -256,7 +256,7 @@ func getMeshId(cp *models.ControlPlane) string {
 
 // makeNamespaceKey creates a "cluster:namespace" key for namespace-based lookups.
 func makeNamespaceKey(cluster, namespace string) string {
-	return strings.Join([]string{cluster, namespace}, ":")
+	return cluster + ":" + namespace
 }
 
 // buildMeshLookupMaps builds efficient lookup maps from mesh data to avoid repeated iterations.
