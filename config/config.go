@@ -575,8 +575,27 @@ type DeploymentConfig struct {
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
+	TLSConfig            DeploymentTLSConfig      `yaml:"tls_config,omitempty" json:"tlsConfig,omitempty"`
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
 }
+
+// DeploymentTLSConfig describes the TLS policy source and explicit policy values.
+// When Source is "config" these values are enforced directly. When Source is "auto"
+// the OpenShift TLSSecurityProfile will be used on OpenShift clusters.
+type DeploymentTLSConfig struct {
+	CipherSuites []string        `yaml:"cipher_suites,omitempty" json:"cipherSuites,omitempty"`
+	MaxVersion   string          `yaml:"max_version,omitempty" json:"maxVersion,omitempty"`
+	MinVersion   string          `yaml:"min_version,omitempty" json:"minVersion,omitempty"`
+	Source       TLSConfigSource `yaml:"source,omitempty" json:"source,omitempty"`
+}
+
+// TLSConfigSource selects where TLS policy is sourced from.
+type TLSConfigSource string
+
+const (
+	TLSConfigSourceAuto   TLSConfigSource = "auto"
+	TLSConfigSourceConfig TLSConfigSource = "config"
+)
 
 // we need to play games with a custom unmarshaller/marshaller for metav1.LabelSelector because it has no yaml struct tags so
 // it is not processing it the way we want by default (it isn't using camelCase; the fields are lowercase - e.g. matchlabels/matchexpressions)
@@ -818,6 +837,7 @@ type Config struct {
 	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
 	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
 	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
+	ResolvedTLSPolicy        TLSPolicy                           `yaml:"-" json:"-"`
 	Server                   Server                              `yaml:",omitempty"`
 }
 
@@ -861,7 +881,10 @@ func NewConfig() (c *Config) {
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
 			Namespace:          IstioNamespaceDefault,
-			ViewOnlyMode:       false,
+			TLSConfig: DeploymentTLSConfig{
+				Source: TLSConfigSourceConfig,
+			},
+			ViewOnlyMode: false,
 		},
 		ExternalServices: ExternalServices{
 			CustomDashboards: CustomDashboardsConfig{
@@ -1677,6 +1700,12 @@ func (conf Config) IsValidationsEnabled() bool {
 func Validate(conf *Config) error {
 	if conf.Server.Port < 0 {
 		return fmt.Errorf("server port is negative: %v", conf.Server.Port)
+	}
+
+	switch conf.Deployment.TLSConfig.Source {
+	case TLSConfigSourceAuto, TLSConfigSourceConfig:
+	default:
+		return fmt.Errorf("invalid deployment.tls_config.source [%v]; must be 'auto' or 'config'", conf.Deployment.TLSConfig.Source)
 	}
 
 	webRoot := conf.Server.WebRoot

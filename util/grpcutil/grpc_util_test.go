@@ -631,3 +631,85 @@ func startTLSGRPCServerWithClientAuth(t *testing.T) (stop func(), dialer func(co
 		return lis.Dial()
 	}
 }
+
+func startTLSGRPCServerWithPolicyTLS(t *testing.T, min, max uint16) (stop func(), dialer func(context.Context, string) (net.Conn, error)) {
+	lis := bufconn.Listen(bufSize)
+	// Use a self-signed server cert; clients will skip verification in this test.
+	tlsCfg := certtest.MustGenerateSelfSignedServerTLS(t)
+	tlsCfg.MinVersion = min
+	tlsCfg.MaxVersion = max
+	s := grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsCfg)))
+	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
+
+	go func() {
+		_ = s.Serve(lis)
+	}()
+
+	return func() { s.Stop(); _ = lis.Close() }, func(ctx context.Context, s string) (net.Conn, error) {
+		return lis.Dial()
+	}
+}
+
+// TestGetAuthDialOptions_EnforcesTLSVersion ensures TLS policy is enforced for gRPC
+// dial options even without auth or custom CAs.
+func TestGetAuthDialOptions_EnforcesTLSVersion(t *testing.T) {
+	// TLS1.3-only server
+	stop, dialer := startTLSGRPCServerWithPolicyTLS(t, tls.VersionTLS13, tls.VersionTLS13)
+	defer stop()
+
+	cm, err := config.NewCredentialManager(nil)
+	if err != nil {
+		t.Fatalf("credential manager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+
+	// Policy restricted to TLS1.2 should fail
+	confFail := config.NewConfig()
+	confFail.Credentials = cm
+	confFail.ResolvedTLSPolicy = config.TLSPolicy{
+		MinVersion: tls.VersionTLS12,
+		MaxVersion: tls.VersionTLS12,
+		Source:     config.TLSConfigSourceConfig,
+	}
+	authSkip := &config.Auth{InsecureSkipVerify: true}
+
+	optsFail, err := grpcutil.GetAuthDialOptions(confFail, "bufconn.local", true, authSkip)
+	if err != nil {
+		t.Fatalf("GetAuthDialOptions fail case: %v", err)
+	}
+	optsFail = append(optsFail, grpc.WithContextDialer(dialer))
+	if conn, err := grpc.NewClient("passthrough:///bufnet", optsFail...); err == nil {
+		defer conn.Close()
+		client := grpc_health_v1.NewHealthClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if _, errCall := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{}); errCall == nil {
+			t.Fatal("expected TLS version mismatch to fail gRPC call")
+		}
+	}
+
+	// Policy TLS1.3 should succeed
+	confOK := config.NewConfig()
+	confOK.Credentials = cm
+	confOK.ResolvedTLSPolicy = config.TLSPolicy{
+		MinVersion: tls.VersionTLS13,
+		MaxVersion: tls.VersionTLS13,
+		Source:     config.TLSConfigSourceConfig,
+	}
+	optsOK, err := grpcutil.GetAuthDialOptions(confOK, "bufconn.local", true, authSkip)
+	if err != nil {
+		t.Fatalf("GetAuthDialOptions success case: %v", err)
+	}
+	optsOK = append(optsOK, grpc.WithContextDialer(dialer))
+	connOK, err := grpc.NewClient("passthrough:///bufnet", optsOK...)
+	if err != nil {
+		t.Fatalf("expected TLS1.3 client to connect: %v", err)
+	}
+	defer connOK.Close()
+	client := grpc_health_v1.NewHealthClient(connOK)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if _, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{}); err != nil {
+		t.Fatalf("expected health check to succeed with TLS1.3 policy: %v", err)
+	}
+}

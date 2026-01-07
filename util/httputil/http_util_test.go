@@ -568,7 +568,7 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 		t.Fatalf("write ca: %v", err)
 	}
 
-	// NEGATIVE TEST: First try without custom CA configured
+	// NEGATIVE TEST: First try without custom CA configured - policy should still be applied
 	confWithoutCA := config.NewConfig()
 	var err error
 	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
@@ -580,10 +580,13 @@ func TestGetTLSConfig_CustomCAWithoutAuth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetTLSConfig without CA: %v", err)
 	}
-	if tlscfgWithoutCA != nil {
-		t.Fatal("Expected nil TLS config when no CA bundle and no auth, but got non-nil")
+	if tlscfgWithoutCA == nil {
+		t.Fatal("Expected TLS config even when no CA bundle and no auth to enforce default policy")
 	}
-	t.Log("Negative test passed: GetTLSConfig correctly returns nil when nothing to configure")
+	if tlscfgWithoutCA.MinVersion != tls.VersionTLS12 {
+		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfgWithoutCA.MinVersion)
+	}
+	t.Log("Negative test passed: GetTLSConfig returns policy-enforced config even without CA/auth")
 
 	// POSITIVE TEST: Now configure custom CA bundle
 	confWithCA := config.NewConfig()
@@ -632,7 +635,7 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 
 	const serverName = "grpc-service.example.com"
 
-	// NEGATIVE TEST: First try without custom CA configured
+	// NEGATIVE TEST: First try without custom CA configured - policy should still be applied
 	confWithoutCA := config.NewConfig()
 	var err error
 	if confWithoutCA.Credentials, err = config.NewCredentialManager(nil); err != nil {
@@ -644,10 +647,13 @@ func TestGetTLSConfigForServer_CustomCAWithoutAuth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetTLSConfigForServer without CA: %v", err)
 	}
-	if tlscfgWithoutCA != nil {
-		t.Fatal("Expected nil TLS config when no CA bundle and no auth, but got non-nil")
+	if tlscfgWithoutCA == nil {
+		t.Fatal("Expected TLS config even when no CA bundle and no auth to enforce default policy")
 	}
-	t.Log("Negative test passed: GetTLSConfigForServer correctly returns nil when nothing to configure")
+	if tlscfgWithoutCA.MinVersion != tls.VersionTLS12 {
+		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfgWithoutCA.MinVersion)
+	}
+	t.Log("Negative test passed: GetTLSConfigForServer returns policy-enforced config even without CA/auth")
 
 	// POSITIVE TEST: Now configure custom CA bundle
 	confWithCA := config.NewConfig()
@@ -707,10 +713,13 @@ func TestGetTLSConfig_CAFileIgnored(t *testing.T) {
 		t.Fatalf("GetTLSConfig: %v", err)
 	}
 
-	// Since CAFile is deprecated and ignored, and no other TLS options are set,
-	// GetTLSConfig should return nil (no TLS configuration needed)
-	if tlscfg != nil {
-		t.Fatalf("expected nil TLS config since CAFile is deprecated, got non-nil")
+	// Since CAFile is deprecated and ignored, the TLS config should still be
+	// present to enforce the default policy (min TLS1.2).
+	if tlscfg == nil {
+		t.Fatalf("expected TLS config to enforce default policy even though CAFile is ignored")
+	}
+	if tlscfg.MinVersion != tls.VersionTLS12 {
+		t.Fatalf("expected default min TLS1.2 when no policy is set, got [%x]", tlscfg.MinVersion)
 	}
 }
 
@@ -868,6 +877,174 @@ func TestCertPool_HostnameVerification(t *testing.T) {
 	// Verify it's a hostname verification error
 	if !isHostnameError(err) {
 		t.Fatalf("expected hostname verification error, got: %v", err)
+	}
+}
+
+func TestTLSConfigPolicyTLS13Enforcement_ConfigSource(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// CA and server cert for 127.0.0.1
+	ca, caPEM, caKey := certtest.MustGenCA(t, "TLS13CA")
+	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
+	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
+	if err != nil {
+		t.Fatalf("load server keypair: %v", err)
+	}
+
+	// TLS1.3-only server
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", &tls.Config{
+		Certificates: []tls.Certificate{pair},
+		MinVersion:   tls.VersionTLS13,
+		MaxVersion:   tls.VersionTLS13,
+	})
+	if err != nil {
+		t.Fatalf("listen tls: %v", err)
+	}
+	defer ln.Close()
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go func(c net.Conn) {
+				defer c.Close()
+				_, _ = c.Write([]byte("ok"))
+			}(conn)
+		}
+	}()
+
+	// Write CA to file for credential manager
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	buildConf := func(minVersion, maxVersion string) *config.Config {
+		conf := config.NewConfig()
+		conf.Deployment.TLSConfig.Source = config.TLSConfigSourceConfig
+		conf.Deployment.TLSConfig.MinVersion = minVersion
+		conf.Deployment.TLSConfig.MaxVersion = maxVersion
+		cm, err := config.NewCredentialManager([]string{caFile})
+		if err != nil {
+			t.Fatalf("credential manager: %v", err)
+		}
+		t.Cleanup(cm.Close)
+		conf.Credentials = cm
+		return conf
+	}
+
+	dialWithConf := func(conf *config.Config) error {
+		tlscfg, err := GetTLSConfig(conf, nil)
+		if err != nil {
+			return err
+		}
+		conn, err := tls.Dial("tcp", ln.Addr().String(), tlscfg)
+		if err == nil {
+			conn.Close()
+		}
+		return err
+	}
+
+	// Success: policy forces TLS1.3
+	if err := dialWithConf(func() *config.Config {
+		conf := buildConf("TLSv1.3", "")
+		conf.ResolvedTLSPolicy = config.TLSPolicy{
+			MinVersion: tls.VersionTLS13,
+			MaxVersion: tls.VersionTLS13,
+			Source:     config.TLSConfigSourceConfig,
+		}
+		return conf
+	}()); err != nil {
+		t.Fatalf("expected TLS1.3 client to succeed: %v", err)
+	}
+
+	// Fail: policy restricts to TLS1.2 only
+	if err := dialWithConf(func() *config.Config {
+		conf := buildConf("TLSv1.2", "TLSv1.2")
+		conf.ResolvedTLSPolicy = config.TLSPolicy{
+			MinVersion: tls.VersionTLS12,
+			MaxVersion: tls.VersionTLS12,
+			Source:     config.TLSConfigSourceConfig,
+		}
+		return conf
+	}()); err == nil {
+		t.Fatal("expected TLS1.2-only client to fail against TLS1.3-only server")
+	}
+}
+
+// TestCreateTransport_PolicyAppliedWithoutAuthOrCA verifies that the resolved TLS policy
+// is applied even when no auth credentials or custom CAs are configured.
+func TestCreateTransport_PolicyAppliedWithoutAuthOrCA(t *testing.T) {
+	conf := config.NewConfig()
+	cm, err := config.NewCredentialManager(nil)
+	if err != nil {
+		t.Fatalf("credential manager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+	conf.Credentials = cm
+	conf.ResolvedTLSPolicy = config.TLSPolicy{
+		MinVersion: tls.VersionTLS13,
+		MaxVersion: tls.VersionTLS13,
+		Source:     config.TLSConfigSourceConfig,
+	}
+
+	transport := &http.Transport{}
+	rt, err := CreateTransport(conf, nil, transport, 5*time.Second, nil)
+	if err != nil {
+		t.Fatalf("CreateTransport: %v", err)
+	}
+	tr, ok := rt.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected *http.Transport, got %T", rt)
+	}
+	if tr.TLSClientConfig == nil {
+		t.Fatal("expected TLSClientConfig to be set")
+	}
+	if tr.TLSClientConfig.MinVersion != tls.VersionTLS13 || tr.TLSClientConfig.MaxVersion != tls.VersionTLS13 {
+		t.Fatalf("expected TLS1.3-only policy, got min [%x] max [%x]", tr.TLSClientConfig.MinVersion, tr.TLSClientConfig.MaxVersion)
+	}
+}
+
+// TestCreateTransport_SkipVerifyStillEnforcesPolicy verifies that InsecureSkipVerify is
+// preserved but does not bypass TLS version enforcement.
+func TestCreateTransport_SkipVerifyStillEnforcesPolicy(t *testing.T) {
+	conf := config.NewConfig()
+	cm, err := config.NewCredentialManager(nil)
+	if err != nil {
+		t.Fatalf("credential manager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+	conf.Credentials = cm
+	conf.ResolvedTLSPolicy = config.TLSPolicy{
+		MinVersion: tls.VersionTLS12,
+		MaxVersion: tls.VersionTLS12,
+		Source:     config.TLSConfigSourceConfig,
+	}
+
+	auth := &config.Auth{InsecureSkipVerify: true}
+	transport := &http.Transport{}
+	rt, err := CreateTransport(conf, auth, transport, 5*time.Second, nil)
+	if err != nil {
+		t.Fatalf("CreateTransport: %v", err)
+	}
+	// Unwrap auth round tripper
+	authRT, ok := rt.(*authRoundTripper)
+	if !ok {
+		t.Fatalf("expected *authRoundTripper, got %T", rt)
+	}
+	tr, ok := authRT.originalRT.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected inner *http.Transport, got %T", authRT.originalRT)
+	}
+	if tr.TLSClientConfig == nil {
+		t.Fatal("expected TLSClientConfig to be set")
+	}
+	if !tr.TLSClientConfig.InsecureSkipVerify {
+		t.Fatal("expected InsecureSkipVerify to be preserved")
+	}
+	if tr.TLSClientConfig.MinVersion != tls.VersionTLS12 || tr.TLSClientConfig.MaxVersion != tls.VersionTLS12 {
+		t.Fatalf("expected TLS1.2-only policy, got min [%x] max [%x]", tr.TLSClientConfig.MinVersion, tr.TLSClientConfig.MaxVersion)
 	}
 }
 
@@ -1118,5 +1295,35 @@ func TestVerifyServerCertificate_NoCerts(t *testing.T) {
 	}
 	if err.Error() != "server provided no certificates" {
 		t.Errorf("expected 'server provided no certificates' error, got: %v", err)
+	}
+}
+
+func TestGetTLSConfigAppliesPolicyWithoutAuthOrCA(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.TLSConfig.Source = config.TLSConfigSourceConfig
+	conf.ResolvedTLSPolicy = config.TLSPolicy{
+		MinVersion: tls.VersionTLS13,
+		MaxVersion: tls.VersionTLS13,
+		Source:     config.TLSConfigSourceConfig,
+	}
+	cm, err := config.NewCredentialManager(nil)
+	if err != nil {
+		t.Fatalf("credential manager: %v", err)
+	}
+	t.Cleanup(cm.Close)
+	conf.Credentials = cm
+
+	tlscfg, err := GetTLSConfig(conf, nil)
+	if err != nil {
+		t.Fatalf("GetTLSConfig returned error: %v", err)
+	}
+	if tlscfg == nil {
+		t.Fatal("expected TLS config to be returned")
+	}
+	if tlscfg.MinVersion != tls.VersionTLS13 || tlscfg.MaxVersion != tls.VersionTLS13 {
+		t.Fatalf("expected TLS1.3-only policy, got min [%x] max [%x]", tlscfg.MinVersion, tlscfg.MaxVersion)
+	}
+	if len(tlscfg.CipherSuites) != 0 {
+		t.Fatalf("expected no cipher suites for TLS1.3, got [%d]", len(tlscfg.CipherSuites))
 	}
 }
