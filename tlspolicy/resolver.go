@@ -37,7 +37,7 @@ func Resolve(ctx context.Context, conf *config.Config, client kubernetes.ClientI
 		return policyFromOpenShift(ctx, client)
 	default:
 		return config.TLSPolicy{}, fmt.Errorf(
-			"invalid deployment.tls_config.source [%s]; must be one of: %s, %s",
+			"invalid deployment.tls_config.source [%s]; must be one of: [%s], [%s]",
 			source, config.TLSConfigSourceAuto, config.TLSConfigSourceConfig)
 	}
 }
@@ -58,7 +58,10 @@ func policyFromConfig(cfg config.DeploymentTLSConfig) (config.TLSPolicy, error) 
 		return config.TLSPolicy{}, fmt.Errorf("deployment.tls_config.max_version [%s] is lower than min_version [%s]", cfg.MaxVersion, cfg.MinVersion)
 	}
 
-	if minVersion == tls.VersionTLS13 || maxVersion == tls.VersionTLS13 {
+	// When minVersion is explicitly set to TLS 1.3, we enforce TLS 1.3-only mode.
+	// This ensures cipher suites are managed by Go (TLS 1.3 cipher suites are not configurable).
+	// If the user wants a range (e.g., TLS 1.2 to TLS 1.3), they should set min < TLS 1.3.
+	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
 			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
@@ -66,6 +69,8 @@ func policyFromConfig(cfg config.DeploymentTLSConfig) (config.TLSPolicy, error) 
 		}, nil
 	}
 
+	// For TLS 1.2 and mixed TLS 1.2/1.3 ranges, configure cipher suites.
+	// Note: cipher suites only apply to TLS 1.2 connections; TLS 1.3 uses Go's defaults.
 	ciphers, err := parseCipherSuites(cfg.CipherSuites)
 	if err != nil {
 		return config.TLSPolicy{}, err
@@ -166,7 +171,7 @@ func getTLSProfileSpec(profile *configv1.TLSSecurityProfile) (*configv1.TLSProfi
 		}
 		return &profile.Custom.TLSProfileSpec, nil
 	default:
-		return nil, fmt.Errorf("unknown TLS profile type [%s]", profile.Type)
+		return nil, fmt.Errorf("unknown TLS profile type: [%s]", profile.Type)
 	}
 }
 
@@ -223,10 +228,10 @@ func parseCipherSuites(names []string) ([]uint16, error) {
 		result = append(result, suite)
 	}
 	if len(result) == 0 {
-		return nil, fmt.Errorf("no supported TLS cipher suites found from list: %v", unsupported)
+		return nil, fmt.Errorf("no supported TLS cipher suites found from list: [%v]", unsupported)
 	}
 	if len(unsupported) > 0 {
-		log.Warningf("Skipping unsupported TLS cipher suites (not available in Go stdlib): %v", unsupported)
+		log.Warningf("Skipping unsupported TLS cipher suites (not available in Go stdlib): [%v]", unsupported)
 	}
 	return result, nil
 }
