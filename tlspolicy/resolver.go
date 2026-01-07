@@ -236,7 +236,7 @@ func parseCipherSuites(names []string) ([]uint16, error) {
 		return nil, fmt.Errorf("no supported TLS cipher suites found from list: [%v]", unsupported)
 	}
 	if len(unsupported) > 0 {
-		log.Warningf("Skipping unsupported TLS cipher suites (not available in Go stdlib): [%v]", unsupported)
+		log.Errorf("Skipping unsupported TLS cipher suites (not available in Go stdlib): [%v]", unsupported)
 	}
 	return result, nil
 }
