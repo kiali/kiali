@@ -131,6 +131,11 @@ func policyFromProfile(spec *configv1.TLSProfileSpec, source config.TLSConfigSou
 	// the profile mandates TLS 1.3 as minimum, we enforce TLS 1.3 exclusively.
 	maxVersion := uint16(0)
 
+	// Validate version constraints (should not really occur with valid OpenShift profiles)
+	if maxVersion != 0 && maxVersion < minVersion {
+		return config.TLSPolicy{}, fmt.Errorf("OpenShift TLSSecurityProfile has invalid version constraints: max_version [%x] is lower than min_version [%x]", maxVersion, minVersion)
+	}
+
 	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
 			MinVersion: tls.VersionTLS13,
