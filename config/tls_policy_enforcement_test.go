@@ -608,3 +608,55 @@ func TestTLSPolicyEnforcement_PreservesOtherConfigFields(t *testing.T) {
 		t.Fatalf("ApplyTo should preserve ServerName, got [%s]", cfg.ServerName)
 	}
 }
+
+// TestTLSPolicyEnforcement_ConcurrentAccess verifies that ApplyTo can be called
+// safely from multiple goroutines without race conditions or panics.
+func TestTLSPolicyEnforcement_ConcurrentAccess(t *testing.T) {
+	policy := TLSPolicy{
+		MinVersion:   tls.VersionTLS12,
+		MaxVersion:   tls.VersionTLS13,
+		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+		Source:       TLSConfigSourceConfig,
+	}
+
+	// Run ApplyTo concurrently from 100 goroutines
+	const numGoroutines = 100
+	done := make(chan bool, numGoroutines)
+
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Errorf("ApplyTo panicked during concurrent access: %v", r)
+				}
+				done <- true
+			}()
+
+			// Each goroutine creates its own tls.Config and applies the policy
+			cfg := &tls.Config{
+				NextProtos:         []string{"h2", "http/1.1"},
+				InsecureSkipVerify: false,
+			}
+			policy.ApplyTo(cfg)
+
+			// Verify policy was applied correctly
+			if cfg.MinVersion != tls.VersionTLS12 {
+				t.Errorf("concurrent ApplyTo: expected MinVersion TLS1.2, got [%x]", cfg.MinVersion)
+			}
+			if cfg.MaxVersion != tls.VersionTLS13 {
+				t.Errorf("concurrent ApplyTo: expected MaxVersion TLS1.3, got [%x]", cfg.MaxVersion)
+			}
+			if len(cfg.CipherSuites) != 1 {
+				t.Errorf("concurrent ApplyTo: expected 1 cipher suite, got [%d]", len(cfg.CipherSuites))
+			}
+			if len(cfg.NextProtos) != 2 {
+				t.Errorf("concurrent ApplyTo: NextProtos should be preserved, got [%v]", cfg.NextProtos)
+			}
+		}()
+	}
+
+	// Wait for all goroutines to complete
+	for i := 0; i < numGoroutines; i++ {
+		<-done
+	}
+}
