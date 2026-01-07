@@ -121,11 +121,12 @@ func policyFromProfile(spec *configv1.TLSProfileSpec, source config.TLSConfigSou
 	if err != nil {
 		return config.TLSPolicy{}, err
 	}
-	// MaxVersion is not part of TLSSecurityProfile; allow Go to pick the highest version
-	// unless the profile mandates TLS 1.3 only.
+	// MaxVersion is not part of OpenShift TLSSecurityProfile; we set it to 0 to allow Go
+	// to negotiate the highest version supported by both client and server. However, when
+	// the profile mandates TLS 1.3 as minimum, we enforce TLS 1.3 exclusively.
 	maxVersion := uint16(0)
 
-	if minVersion == tls.VersionTLS13 || maxVersion == tls.VersionTLS13 {
+	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
 			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
