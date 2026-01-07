@@ -171,6 +171,12 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 			return nil, err
 		}
 		transportConfig.TLSClientConfig = cfg
+	} else {
+		// Even without auth or custom CA bundles, enforce the resolved TLS policy
+		// so outbound HTTPS clients cannot negotiate weaker versions/ciphers.
+		cfg := &tls.Config{}
+		conf.ResolvedTLSPolicy.ApplyTo(cfg)
+		transportConfig.TLSClientConfig = cfg
 	}
 
 	// Part 2: Wrap with auth RoundTripper only if auth credentials are provided.
@@ -188,11 +194,14 @@ func GetTLSConfig(conf *config.Config, auth *config.Auth) (*tls.Config, error) {
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
 	// Need TLS config if: custom CA bundle exists OR auth has TLS-specific settings
-	needsTLS := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
-	if !needsTLS {
-		return nil, nil
+	needsDynamic := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
+	if needsDynamic {
+		return buildTLSConfigWithDynamicVerification(conf, auth, "")
 	}
-	return buildTLSConfigWithDynamicVerification(conf, auth, "")
+
+	cfg := &tls.Config{}
+	conf.ResolvedTLSPolicy.ApplyTo(cfg)
+	return cfg, nil
 }
 
 // GetTLSConfigForServer returns a tls.Config that is pre-configured for the provided server name.
@@ -204,11 +213,14 @@ func GetTLSConfigForServer(conf *config.Config, auth *config.Auth, serverName st
 	hasCustomCA := conf.Credentials != nil && conf.Credentials.HasCustomCAs()
 
 	// Need TLS config if: custom CA bundle exists OR auth has TLS-specific settings
-	needsTLS := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
-	if !needsTLS {
-		return nil, nil
+	needsDynamic := hasCustomCA || (auth != nil && (auth.CertFile != "" || auth.KeyFile != "" || auth.InsecureSkipVerify))
+	if needsDynamic {
+		return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
 	}
-	return buildTLSConfigWithDynamicVerification(conf, auth, serverName)
+
+	cfg := &tls.Config{ServerName: serverName}
+	conf.ResolvedTLSPolicy.ApplyTo(cfg)
+	return cfg, nil
 }
 
 // buildTLSConfigWithDynamicVerification creates a TLS config that supports dynamic CA rotation.
@@ -225,7 +237,6 @@ func buildTLSConfigWithDynamicVerification(conf *config.Config, auth *config.Aut
 	skipVerify := auth != nil && auth.InsecureSkipVerify
 
 	cfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
 		// Set baseline RootCAs for clarity and compatibility. While VerifyConnection
 		// performs the actual verification using fresh CAs on each handshake, setting
 		// RootCAs explicitly makes the config's intent clear and avoids edge cases where
@@ -245,6 +256,7 @@ func buildTLSConfigWithDynamicVerification(conf *config.Config, auth *config.Aut
 			return verifyServerCertificate(cs, roots)
 		},
 	}
+	conf.ResolvedTLSPolicy.ApplyTo(cfg)
 
 	// Set ServerName if provided for proper SAN validation
 	if serverName != "" {
