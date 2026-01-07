@@ -537,6 +537,14 @@ type OpenShiftConfig struct {
 	InsecureSkipVerifyTLS bool   `yaml:"insecure_skip_verify_tls,omitempty"`
 }
 
+// DiscoveryOverrideConfig contains explicit OIDC endpoints to override auto-discovery
+type DiscoveryOverrideConfig struct {
+	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
+	TokenEndpoint         string `yaml:"token_endpoint,omitempty"`
+	UserinfoEndpoint      string `yaml:"userinfo_endpoint,omitempty"`
+	JwksUri               string `yaml:"jwks_uri,omitempty"`
+}
+
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
 type OpenIdConfig struct {
 	AdditionalRequestParams map[string]string `yaml:"additional_request_params,omitempty"`
@@ -545,16 +553,18 @@ type OpenIdConfig struct {
 	ApiProxyCAData          string            `yaml:"api_proxy_ca_data,omitempty"`
 	ApiToken                string            `yaml:"api_token,omitempty"`
 	AuthenticationTimeout   int               `yaml:"authentication_timeout,omitempty"`
-	AuthorizationEndpoint   string            `yaml:"authorization_endpoint,omitempty"`
-	ClientId                string            `yaml:"client_id,omitempty"`
-	ClientSecret            Credential        `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
-	DisableRBAC             bool              `yaml:"disable_rbac,omitempty"`
-	HTTPProxy               string            `yaml:"http_proxy,omitempty"`
-	HTTPSProxy              string            `yaml:"https_proxy,omitempty"`
-	InsecureSkipVerifyTLS   bool              `yaml:"insecure_skip_verify_tls,omitempty"`
-	IssuerUri               string            `yaml:"issuer_uri,omitempty"`
-	Scopes                  []string          `yaml:"scopes,omitempty"`
-	UsernameClaim           string            `yaml:"username_claim,omitempty"`
+	// Deprecated: use DiscoveryOverride.AuthorizationEndpoint
+	AuthorizationEndpoint string                  `yaml:"authorization_endpoint,omitempty"`
+	ClientId              string                  `yaml:"client_id,omitempty"`
+	ClientSecret          Credential              `yaml:"-"` // Runtime only - set from mounted file at /kiali-secret/oidc-secret, never from ConfigMap
+	DisableRBAC           bool                    `yaml:"disable_rbac,omitempty"`
+	DiscoveryOverride     DiscoveryOverrideConfig `yaml:"discovery_override,omitempty"`
+	HTTPProxy             string                  `yaml:"http_proxy,omitempty"`
+	HTTPSProxy            string                  `yaml:"https_proxy,omitempty"`
+	InsecureSkipVerifyTLS bool                    `yaml:"insecure_skip_verify_tls,omitempty"`
+	IssuerUri             string                  `yaml:"issuer_uri,omitempty"`
+	Scopes                []string                `yaml:"scopes,omitempty"`
+	UsernameClaim         string                  `yaml:"username_claim,omitempty"`
 }
 
 // DeploymentConfig provides details on how Kiali was deployed.
@@ -827,10 +837,16 @@ func NewConfig() (c *Config) {
 				ClientId:                "",
 				ClientSecret:            "",
 				DisableRBAC:             false,
-				InsecureSkipVerifyTLS:   false,
-				IssuerUri:               "",
-				Scopes:                  []string{"openid", "profile", "email"},
-				UsernameClaim:           "sub",
+				DiscoveryOverride: DiscoveryOverrideConfig{
+					AuthorizationEndpoint: "",
+					TokenEndpoint:         "",
+					UserinfoEndpoint:      "",
+					JwksUri:               "",
+				},
+				InsecureSkipVerifyTLS: false,
+				IssuerUri:             "",
+				Scopes:                []string{"openid", "profile", "email"},
+				UsernameClaim:         "sub",
 			},
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,

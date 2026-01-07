@@ -345,16 +345,12 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	scopes := strings.Join(getConfiguredOpenIdScopes(c.conf), " ")
 
 	// Determine authorization endpoint
-	authorizationEndpoint := c.conf.Auth.OpenId.AuthorizationEndpoint
-	if len(authorizationEndpoint) == 0 {
-		openIdMetadata, err := getOpenIdMetadata(c.conf)
-		if err != nil {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
-			return
-		}
-		authorizationEndpoint = openIdMetadata.AuthURL
+	authorizationEndpoint, err := getOpenIdAuthorizationEndpoint(c.conf)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
+		return
 	}
 
 	// Create a "nonce" code and set a cookie with the code
@@ -1115,11 +1111,16 @@ func getOpenIdJwks(conf *config.Config) (*jose.JSONWebKeySet, error) {
 	return fetchedKeySet.(*jose.JSONWebKeySet), nil
 }
 
-// getOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
-// downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
-// validations are performed and the parsed metadata is returned. Since the metadata should be
-// rare to change, the retrieved metadata is cached on first call and subsequent calls return
-// the cached metadata.
+// getOpenIdMetadata returns the OpenID provider metadata used by the authorization code flow.
+//
+// Endpoint selection precedence (issue #8777):
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint),
+//     use those explicit endpoints (userinfo is optional; jwks_uri should be provided when using explicit endpoints).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward
+//     compatibility, but still discover the remaining endpoints from the issuer.
+//  3. Otherwise, perform OIDC discovery via `/.well-known/openid-configuration`.
+//
+// The result is cached after the first successful call; subsequent calls return the cached metadata.
 func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	if cachedOpenIdMetadata != nil {
 		return cachedOpenIdMetadata, nil
@@ -1127,6 +1128,41 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
+
+		// Check if we have explicit endpoint configuration
+		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
+
+		// Use discovery_override for explicit endpoint configuration
+		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
+			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
+			jwksUri = cfg.DiscoveryOverride.JwksUri
+			userInfoEndpoint = cfg.DiscoveryOverride.UserinfoEndpoint
+		} else if cfg.AuthorizationEndpoint != "" { //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+			// Backward compatibility: the deprecated authorization_endpoint is only used when starting the flow (redirect).
+			// Metadata (and the remaining endpoints: token/jwks/userinfo) still come from the issuer's discovery document.
+			log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
+		}
+
+		if authEndpoint != "" && tokenEndpoint != "" {
+			// Use explicit configuration for security-hardened environments
+			log.Infof("Using explicit OpenID endpoints for restricted environment")
+
+			metadata := &openIdMetadata{
+				Issuer:      cfg.IssuerUri,
+				AuthURL:     authEndpoint,
+				TokenURL:    tokenEndpoint,
+				JWKSURL:     jwksUri,
+				UserInfoURL: userInfoEndpoint,
+				// Assume "code" is supported when explicit config is provided
+				ResponseTypesSupported: []string{"code"},
+			}
+
+			return metadata, nil
+		}
+
+		// Original auto-discovery logic continues here...
+		log.Infof("Using OpenID auto-discovery from provider")
 
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
@@ -1198,6 +1234,40 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	}
 
 	return fetchedMetadata.(*openIdMetadata), nil
+}
+
+// getOpenIdAuthorizationEndpoint returns the URL used to start the OpenID authorization code flow.
+//
+// Precedence:
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint), use the override
+//     authorization endpoint (supports environments where discovery is blocked; see issue #8777).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward compatibility.
+//  3. Otherwise, fall back to OIDC discovery via `getOpenIdMetadata()` and return `metadata.AuthURL`.
+//
+// Note: When only the deprecated `authorization_endpoint` is set, other endpoints (token/jwks/userinfo) are still
+// obtained later via discovery when needed.
+func getOpenIdAuthorizationEndpoint(conf *config.Config) (string, error) {
+	cfg := conf.Auth.OpenId
+
+	// Prefer explicit endpoints when fully configured (issue #8777).
+	// If only partially configured, fall back to auto-discovery.
+	if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+		return cfg.DiscoveryOverride.AuthorizationEndpoint, nil
+	}
+
+	// Backward compatibility for the deprecated field.
+	// Note: This only provides the authorization endpoint; the token/jwks/userinfo endpoints still require discovery.
+	if cfg.AuthorizationEndpoint != "" { //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+		log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
+		return cfg.AuthorizationEndpoint, nil //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+	}
+
+	openIdMetadata, err := getOpenIdMetadata(conf)
+	if err != nil {
+		return "", err
+	}
+
+	return openIdMetadata.AuthURL, nil
 }
 
 // getProxyForUrl returns a function which, in turn, returns the URL of the proxy server that should
