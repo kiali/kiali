@@ -141,8 +141,8 @@ jobs:
       env:
         KIALI_URL: ${{ env.KIALI_URL }}
       run: |
-        cd pkg/kiali/tests/contract
-        go test -v
+        cd pkg/kiali/tests
+        go test api_backend_test.go -v
 
     - name: Get debug info when tests fail
       if: failure()
