@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: ""
+      kubernetes_mcp_server_ref:
+        description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
+        required: false
+        type: string
+        default: "main"
   push:
     paths:
     - 'kiali/routing/routes.go'
@@ -26,6 +31,12 @@ on:
     - master
     - 'v*.*'
   workflow_dispatch:
+    inputs:
+      kubernetes_mcp_server_ref:
+        description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
+        required: false
+        type: string
+        default: "main"
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
@@ -128,6 +139,7 @@ jobs:
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
+        ref: refs/pull/617/head
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@v6
