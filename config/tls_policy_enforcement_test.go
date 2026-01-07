@@ -335,10 +335,10 @@ func TestTLSPolicyEnforcement_SkipVerifyDoesNotBypassVersionCiphers(t *testing.T
 
 		// Verify version constraint is applied despite skip-verify
 		if clientTLSConfig.MinVersion != tls.VersionTLS12 {
-			t.Fatalf("expected MinVersion TLS1.2, got %x", clientTLSConfig.MinVersion)
+			t.Fatalf("expected MinVersion TLS1.2, got [%x]", clientTLSConfig.MinVersion)
 		}
 		if clientTLSConfig.MaxVersion != tls.VersionTLS12 {
-			t.Fatalf("expected MaxVersion TLS1.2, got %x", clientTLSConfig.MaxVersion)
+			t.Fatalf("expected MaxVersion TLS1.2, got [%x]", clientTLSConfig.MaxVersion)
 		}
 
 		// Connection should FAIL due to version mismatch even though skip-verify is true
@@ -487,7 +487,7 @@ func TestTLSPolicyEnforcement_EmptyPolicyDefaultsToTLS12(t *testing.T) {
 	policy.ApplyTo(cfg)
 
 	if cfg.MinVersion != tls.VersionTLS12 {
-		t.Fatalf("empty policy should default to TLS 1.2 minimum, got %x", cfg.MinVersion)
+		t.Fatalf("empty policy should default to TLS 1.2 minimum, got [%x]", cfg.MinVersion)
 	}
 }
 
@@ -512,18 +512,19 @@ func TestTLSPolicyEnforcement_PolicyOverridesCfgValues(t *testing.T) {
 
 	// Policy should override all values
 	if cfg.MinVersion != tls.VersionTLS12 {
-		t.Fatalf("policy should override cfg.MinVersion, got %x", cfg.MinVersion)
+		t.Fatalf("policy should override cfg.MinVersion, got [%x]", cfg.MinVersion)
 	}
 	if cfg.MaxVersion != tls.VersionTLS12 {
-		t.Fatalf("policy should override cfg.MaxVersion, got %x", cfg.MaxVersion)
+		t.Fatalf("policy should override cfg.MaxVersion, got [%x]", cfg.MaxVersion)
 	}
 	if len(cfg.CipherSuites) != 1 || cfg.CipherSuites[0] != tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 {
-		t.Fatalf("policy should override cfg.CipherSuites, got %v", cfg.CipherSuites)
+		t.Fatalf("policy should override cfg.CipherSuites, got [%v]", cfg.CipherSuites)
 	}
 }
 
 // TestTLSPolicyEnforcement_TLS13ClearsCustomCiphers verifies that when the policy
-// specifies TLS 1.3, custom cipher suites are cleared (Go manages TLS 1.3 ciphers).
+// specifies TLS 1.3-only mode (minVersion is TLS 1.3), custom cipher suites are cleared
+// because Go manages TLS 1.3 ciphers automatically.
 func TestTLSPolicyEnforcement_TLS13ClearsCustomCiphers(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -531,7 +532,6 @@ func TestTLSPolicyEnforcement_TLS13ClearsCustomCiphers(t *testing.T) {
 		maxVersion uint16
 	}{
 		{"TLS1.3 min only", tls.VersionTLS13, 0},
-		{"TLS1.3 max only", 0, tls.VersionTLS13},
 		{"TLS1.3 min and max", tls.VersionTLS13, tls.VersionTLS13},
 	}
 
@@ -547,11 +547,37 @@ func TestTLSPolicyEnforcement_TLS13ClearsCustomCiphers(t *testing.T) {
 			cfg := &tls.Config{}
 			policy.ApplyTo(cfg)
 
-			// For TLS 1.3, custom ciphers should be cleared
+			// For TLS 1.3-only mode, custom ciphers should be cleared
 			if cfg.CipherSuites != nil {
-				t.Fatalf("TLS 1.3 should clear CipherSuites, got %v", cfg.CipherSuites)
+				t.Fatalf("TLS 1.3-only mode should clear CipherSuites, got [%v]", cfg.CipherSuites)
 			}
 		})
+	}
+}
+
+// TestTLSPolicyEnforcement_MixedTLS12To13PreservesCiphers verifies that when the policy
+// allows a range from TLS 1.2 to TLS 1.3, cipher suites are preserved for TLS 1.2 connections.
+func TestTLSPolicyEnforcement_MixedTLS12To13PreservesCiphers(t *testing.T) {
+	expectedCipher := tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	policy := TLSPolicy{
+		MinVersion:   tls.VersionTLS12,
+		MaxVersion:   tls.VersionTLS13,
+		CipherSuites: []uint16{expectedCipher},
+		Source:       TLSConfigSourceConfig,
+	}
+
+	cfg := &tls.Config{}
+	policy.ApplyTo(cfg)
+
+	// For TLS 1.2-1.3 range, cipher suites should be preserved for TLS 1.2 connections
+	if cfg.MinVersion != tls.VersionTLS12 {
+		t.Fatalf("expected MinVersion TLS 1.2, got [%x]", cfg.MinVersion)
+	}
+	if cfg.MaxVersion != tls.VersionTLS13 {
+		t.Fatalf("expected MaxVersion TLS 1.3, got [%x]", cfg.MaxVersion)
+	}
+	if len(cfg.CipherSuites) != 1 || cfg.CipherSuites[0] != expectedCipher {
+		t.Fatalf("mixed TLS 1.2/1.3 range should preserve cipher suites, got [%v]", cfg.CipherSuites)
 	}
 }
 
@@ -573,12 +599,12 @@ func TestTLSPolicyEnforcement_PreservesOtherConfigFields(t *testing.T) {
 
 	// These should be preserved
 	if len(cfg.NextProtos) != 2 || cfg.NextProtos[0] != "h2" {
-		t.Fatalf("ApplyTo should preserve NextProtos, got %v", cfg.NextProtos)
+		t.Fatalf("ApplyTo should preserve NextProtos, got [%v]", cfg.NextProtos)
 	}
 	if !cfg.InsecureSkipVerify {
 		t.Fatal("ApplyTo should preserve InsecureSkipVerify")
 	}
 	if cfg.ServerName != "test.example.com" {
-		t.Fatalf("ApplyTo should preserve ServerName, got %s", cfg.ServerName)
+		t.Fatalf("ApplyTo should preserve ServerName, got [%s]", cfg.ServerName)
 	}
 }

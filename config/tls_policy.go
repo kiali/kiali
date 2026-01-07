@@ -62,8 +62,9 @@ func (p TLSPolicy) ApplyTo(cfg *tls.Config) {
 		cfg.MaxVersion = p.MaxVersion
 	}
 
-	// TLS 1.3 ignores CipherSuites; leave nil to allow Go defaults.
-	if cfg.MinVersion == tls.VersionTLS13 || cfg.MaxVersion == tls.VersionTLS13 {
+	// TLS 1.3-only mode: Clear cipher suites to allow Go to manage them.
+	// For mixed TLS 1.2/1.3 ranges, keep cipher suites (they apply to TLS 1.2 connections).
+	if cfg.MinVersion == tls.VersionTLS13 {
 		cfg.CipherSuites = nil
 		return
 	}
