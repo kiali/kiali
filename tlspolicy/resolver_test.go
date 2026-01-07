@@ -151,3 +151,15 @@ func TestResolveRejectsInsecureTLSAsMaxVersion(t *testing.T) {
 		}
 	}
 }
+
+func TestResolveRejectsMaxLessThanMin(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.TLSConfig.Source = config.TLSConfigSourceConfig
+	conf.Deployment.TLSConfig.MinVersion = "TLSv1.3"
+	conf.Deployment.TLSConfig.MaxVersion = "TLSv1.2"
+
+	_, err := Resolve(context.Background(), conf, nil)
+	if err == nil {
+		t.Fatalf("expected error when max_version [TLSv1.2] is lower than min_version [TLSv1.3]")
+	}
+}
