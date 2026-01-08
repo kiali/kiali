@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
-import { TimeInMilliseconds } from '../../types/Common';
 import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
 import { MessageType } from '../../types/NotificationCenter';
 import { Namespace } from '../../types/Namespace';
@@ -33,6 +31,7 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
+import { TimeInMilliseconds } from 'types/Common';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
@@ -47,16 +46,8 @@ type ReduxDispatchProps = {
   setIstioStatus: (statusMap: ClusterStatusMap) => void;
 };
 
-type StatusIcons = {
-  ErrorIcon?: React.ComponentClass<SVGIconProps>;
-  HealthyIcon?: React.ComponentClass<SVGIconProps>;
-  InfoIcon?: React.ComponentClass<SVGIconProps>;
-  WarningIcon?: React.ComponentClass<SVGIconProps>;
-};
-
 type Props = ReduxStateProps &
   ReduxDispatchProps & {
-    icons?: StatusIcons;
     lastRefreshAt: TimeInMilliseconds;
   };
 

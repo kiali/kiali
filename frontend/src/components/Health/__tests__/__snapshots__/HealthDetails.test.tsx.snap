@@ -24,7 +24,7 @@ exports[`HealthDetails renders deployments failure 1`] = `
           }
         >
           <Icon
-            className="icon-failure kiali_f7f7cpt"
+            className="icon-failure kiali_f1mvcfqu"
             status="danger"
           >
             <ExclamationCircleIcon />

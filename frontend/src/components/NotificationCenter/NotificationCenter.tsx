@@ -18,7 +18,8 @@ import {
   NotificationDrawerList,
   NotificationDrawerListItem,
   NotificationDrawerListItemBody,
-  NotificationDrawerListItemHeader
+  NotificationDrawerListItemHeader,
+  Tooltip
 } from '@patternfly/react-core';
 import {
   CheckCircleIcon,
@@ -264,14 +265,16 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                       isRead={!message.seen}
                     >
                       <NotificationDrawerListItemHeader title={message.content} variant={message.type}>
-                        <TrashIcon
-                          style={{ cursor: 'pointer', marginLeft: '0.5em', marginTop: '0.75em' }}
-                          onClick={e => {
-                            e.stopPropagation();
-                            props.clearMessage(message);
-                          }}
-                          aria-label={t('Clear message')}
-                        />
+                        <Tooltip key="clear_message" content={t('Clear')}>
+                          <TrashIcon
+                            style={{ cursor: 'pointer', marginLeft: '0.5em', marginTop: '0.75em' }}
+                            onClick={e => {
+                              e.stopPropagation();
+                              props.clearMessage(message);
+                            }}
+                            aria-label={t('Clear message')}
+                          />
+                        </Tooltip>
                       </NotificationDrawerListItemHeader>
                       <NotificationDrawerListItemBody>
                         <div style={{ marginLeft: '1.6em', paddingLeft: 0 }}>
