@@ -33,9 +33,9 @@ export type AlertMessage = {
 };
 
 export type ReferencedDocument = {
-  url: string;
+  link: string;
   title: string;
-  span: string;
+  body: string;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {

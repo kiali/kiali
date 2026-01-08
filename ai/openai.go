@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/business"
@@ -21,8 +22,13 @@ import (
 
 // OpenAIProvider implements AIProvider using go-openai.
 type OpenAIProvider struct {
-	client    *openai.Client
-	model     string
+	client *openai.Client
+	model  string
+}
+
+type rawAIResponse struct {
+	Answer    string     `json:"answer"`
+	Citations []Citation `json:"citations"`
 }
 
 func NewOpenAIProvider(model *config.AIModel) *OpenAIProvider {
@@ -109,7 +115,6 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 			if err != nil {
 				return &AIResponse{Error: "failed to format tool content"}, http.StatusInternalServerError
 			}
-			log.Debugf("Tool result: %s", toolContent)
 
 			messages = append(messages, openai.ChatCompletionMessage{
 				Role:       openai.ChatMessageRoleTool,
@@ -126,12 +131,37 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 		if err != nil {
 			return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
-
-		return &AIResponse{Answer: finalResp.Choices[0].Message.Content}, http.StatusOK
+		return parseResponse(finalResp.Choices[0].Message.Content), http.StatusOK
 	}
 
-	log.Debugf("OpenAI response: %+v", msg.Content)
-	return &AIResponse{Answer: msg.Content}, http.StatusOK
+	return parseResponse(msg.Content), http.StatusOK
+}
+
+func parseResponse(content string) *AIResponse {
+	log.Debugf("OpenAI response: %+v", content)
+
+	// Clean markdown code blocks if present
+	cleanContent := strings.TrimSpace(content)
+	if strings.HasPrefix(cleanContent, "```json") && strings.HasSuffix(cleanContent, "```") {
+		cleanContent = strings.TrimPrefix(cleanContent, "```json")
+		cleanContent = strings.TrimSuffix(cleanContent, "```")
+	} else if strings.HasPrefix(cleanContent, "```") && strings.HasSuffix(cleanContent, "```") {
+		cleanContent = strings.TrimPrefix(cleanContent, "```")
+		cleanContent = strings.TrimSuffix(cleanContent, "```")
+	}
+	cleanContent = strings.TrimSpace(cleanContent)
+
+	var raw rawAIResponse
+	if err := json.Unmarshal([]byte(cleanContent), &raw); err != nil {
+		// Fallback for non-JSON or invalid JSON
+		log.Warningf("Failed to unmarshal AI response: %v", err)
+		return &AIResponse{Answer: content}
+	}
+
+	return &AIResponse{
+		Answer:    raw.Answer,
+		Citations: raw.Citations,
+	}
 }
 
 func formatToolContent(result interface{}) (string, error) {

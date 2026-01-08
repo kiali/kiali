@@ -69,24 +69,26 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             {alertMessage.message}
           </ChatbotAlert>
         )}
-        {messages.map(({ referenced_documents, scrollToHere, collapse, ...message }: ExtendedMessage, index) => (
+        {messages.map(({ referenced_documents, scrollToHere, collapse, ...message }: ExtendedMessage, index) => {
+          return (
           <div key={`chatbot_message_div_${index}`}>
             {scrollToHere && <div key={`chatbot_message_container_scroll_div_${index}`} ref={messagesEndRef} />}
             <div key={`chatbot_message_container_div_${index}`}>
               {collapse ? (
                 <>
                   <ExpandableSection toggleText="Show more">
-                    <Message key={`chatbot_message_${index}`} {...message} isLoading={isLoading && !message.content} />
+                    <Message key={`chatbot_message_${index}`} {...message} isLoading={isLoading && !message.content} sources={referenced_documents && referenced_documents.length > 0 ? {sources: referenced_documents.map(document => ({link: document.link, title: document.title, body: document.body, isExternal: true}))} : undefined}/>
                   </ExpandableSection>
                 </>
               ) : (
                 <>
-                  <Message key={`chatbot_message_${index}`} {...message} />
+                  <Message key={`chatbot_message_${index}`} {...message} sources={referenced_documents && referenced_documents.length > 0 ? {sources: referenced_documents.map(document => ({link: document.link, title: document.title, body: document.body, isExternal: true}))} : undefined}/>
                 </>
               )}
             </div>
           </div>
-        ))}
+          )
+        })}
         {messages.at(-1)?.role === 'user' && isLoading ? (
           <Message key="bott_message_9999" {...botMessage('...')} isLoading={true} />
         ) : (

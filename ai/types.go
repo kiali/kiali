@@ -14,12 +14,15 @@ type AIRequest struct {
 	Context        AIContext `json:"context,omitempty"`
 }
 
+// Citation represents a citation to a document.
+type Citation struct {
+	Link string `json:"link"`
+	Title string `json:"title"`
+	Body string `json:"body"`
+}
 // AIResponse represents the provider reply (shape aligns with frontend expectations).
 type AIResponse struct {
 	Answer     string   `json:"answer"`
-	// TODO: Add citations and used models
-	//Citations  []string `json:"citations,omitempty"`
-	//UsedModels []string `json:"used_models,omitempty"`
-	//Truncated  bool     `json:"truncated,omitempty"`
+	Citations  []Citation `json:"citations,omitempty"`
 	Error      string    `json:"error,omitempty"`
 }
