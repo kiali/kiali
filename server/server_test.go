@@ -211,7 +211,7 @@ func TestSecureComm(t *testing.T) {
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
-	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
+	metricsURL := fmt.Sprintf("https://%v:%v/", testHostname, testMetricsPort)
 	profilerURL := serverURL + "/debug/pprof/"
 	assert.True(t, conf.IsServerHTTPS())
 
