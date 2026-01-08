@@ -24,24 +24,40 @@ export const istioAceEditorStyle = kialiStyle({
           position: 'absolute'
         }
       }
+    },
+    // annotation tooltips should appear above menu and drawer
+    '& .ace_tooltip': {
+      zIndex: '1000 !important',
+      maxWidth: '800px',
+      wordWrap: 'break-word',
+      whiteSpace: 'normal'
+    }
+  }
+} as NestedCSSProperties);
+
+// Specific z-index for drawer panel for the context tooltip
+export const drawerPanelStyle = kialiStyle({
+  $nest: {
+    '& .pf-v6-c-drawer__panel': {
+      zIndex: 90
     }
   }
 } as NestedCSSProperties);
 
 export const istioValidationErrorStyle = kialiStyle({
-  position: 'absolute',
+  position: 'absolute'
   // Removing colors due PF6 dark mode changes
   //background: 'rgba(204, 0, 0, 0.5)'
 });
 
 export const istioValidationWarningStyle = kialiStyle({
-  position: 'absolute',
+  position: 'absolute'
   // Removing colors due PF6 dark mode changes
   //background: 'rgba(236, 122, 8, 0.5)'
 });
 
 export const istioValidationInfoStyle = kialiStyle({
-  position: 'absolute',
+  position: 'absolute'
   // Removing colors due PF6 dark mode changes
   //background: PFColors.ColorLight300
 });
