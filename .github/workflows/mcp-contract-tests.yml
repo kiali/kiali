@@ -139,7 +139,7 @@ jobs:
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
-        ref: refs/pull/617/head
+        ref: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@v6
