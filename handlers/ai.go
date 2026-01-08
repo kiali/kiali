@@ -53,6 +53,7 @@ func ChatAI(
 		toolHandlers := []mcp.ToolHandler{
 			mcp.NewMeshGraphTool(),
 			mcp.NewResourceDetailTool(),
+			mcp.NewManageIstioConfigTool(),
 		}
 
 		resp, code := provider.SendChat(r.Context(), req, toolHandlers, businessLayer, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)

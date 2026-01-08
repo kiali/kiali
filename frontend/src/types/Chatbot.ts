@@ -11,8 +11,17 @@ type LLMRequest = {
   media_type?: 'text/plain' | 'application/json';
 };
 
+export type ActionKind = 'navigation' | 'tool';
+
+export type Action = {
+  title: string;
+  kind: ActionKind;
+  payload: string;
+};
+
 type LLMResponse = {
   answer: string;
+  actions: Action[];
   citations: ReferencedDocument[];
   used_models: ModelResponse;
   truncated?: boolean;
@@ -39,6 +48,7 @@ export type ReferencedDocument = {
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
+  actions?: Action[];
   referenced_documents: ReferencedDocument[];
   scrollToHere?: boolean;
   collapse?: boolean;

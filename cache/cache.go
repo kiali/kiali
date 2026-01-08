@@ -13,6 +13,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	openai "github.com/sashabaranov/go-openai"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
@@ -40,6 +41,14 @@ const (
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
 	CanListWebhooks(cluster string) bool
+
+	// AIConversation stores the conversation history for a user.
+	SetAIConversation(conversationID string, conversation *[]openai.ChatCompletionMessage)
+	// RemoveAIConversation removes the conversation history for a user.
+	RemoveAIConversation(conversationID string)
+	// GetAIConversation returns the conversation history for a user.
+	GetAIConversation(conversationID string) (*[]openai.ChatCompletionMessage, bool)
+
 	GetBuildInfo() models.BuildInfo
 	// SetBuildInfo is not threadsafe. Expected to just be called once at startup.
 	SetBuildInfo(buildInfo models.BuildInfo)
@@ -109,6 +118,7 @@ type KialiCache interface {
 
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
+	aiConversationStore store.Store[string, []openai.ChatCompletionMessage]
 	// This isn't expected to change so it's not protected by a mutex.
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
@@ -171,6 +181,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
+		aiConversationStore:     store.NewExpirationStore(ctx, store.New[string, []openai.ChatCompletionMessage](), util.AsPtr(conf.KialiInternal.CacheExpiration.AIConversation), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		clients:                 kialiSAClients,
 		conf:                    conf,
@@ -576,6 +587,22 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 
 	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
+}
+
+func (c *kialiCacheImpl) SetAIConversation(conversationID string, conversation *[]openai.ChatCompletionMessage) {
+	c.aiConversationStore.Set(conversationID, *conversation)
+}
+
+func (c *kialiCacheImpl) RemoveAIConversation(conversationID string) {
+	c.aiConversationStore.Remove(conversationID)
+}
+
+func (c *kialiCacheImpl) GetAIConversation(conversationID string) (*[]openai.ChatCompletionMessage, bool) {
+	conversation, found := c.aiConversationStore.Get(conversationID)
+	if !found {
+		return nil, false
+	}
+	return &conversation, true
 }
 
 func (c *kialiCacheImpl) GetBuildInfo() models.BuildInfo {

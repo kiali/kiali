@@ -34,7 +34,7 @@ func (t ResourceDetailTool) Definition() openai.Tool {
 		Properties: map[string]jsonschema.Definition{
 			"resource_type": {
 				Type:        jsonschema.String,
-				Description: "Type of resource to get details for (service, workload)",
+				Description: "Type of resource to get list/details for (service, workload)",
 			},
 			"namespaces": {
 				Type:        jsonschema.String,

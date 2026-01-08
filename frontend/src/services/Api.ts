@@ -7,6 +7,7 @@ import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
+import { ChatResponse } from '../types/Chatbot';
 import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '../types/Graph';
 import {
   AppHealth,
@@ -1430,6 +1431,6 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
 };
 
-export const postChatAI = (model: string, chatRequest: ChatRequest): Promise<ApiResponse<any>> => {
+export const postChatAI = (model: string, chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
   return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(model), undefined, chatRequest);
 };

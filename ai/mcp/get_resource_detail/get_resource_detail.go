@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/grafana"
@@ -68,17 +69,17 @@ func Execute(ctx context.Context, args map[string]interface{}, businessLayer *bu
 	}
 	// Get resource details
 	if resourceName != "" && len(strings.Split(namespaces, ",")) == 1{
+		log.Debugf("Getting resource details for resource name: %s and namespace: %s", resourceName, strings.Split(namespaces, ",")[0])
 		resp, status, err := getResourceDetails(ctx, businessLayer, resourceArgs, strings.Split(namespaces, ",")[0])
 		if status != http.StatusOK {
 			return err.Error(), status
 		}
 		return resp, http.StatusOK
-	}else {
-		return fmt.Errorf("resource name and just one namespace must be provided"), http.StatusBadRequest
 	}
-	resp, status, err := getList(ctx, businessLayer, resourceArgs)
-	if status != http.StatusOK {
-		return err.Error(), status
+	log.Debugf("Getting resource list for resource type: %s", resourceArgs.ResourceType)
+	resp, _, err := getList(ctx, businessLayer, resourceArgs)
+	if err != nil {
+		return err.Error(), http.StatusInternalServerError
 	}
 
 	return resp, http.StatusOK

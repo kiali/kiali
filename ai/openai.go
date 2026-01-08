@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,6 +28,7 @@ type OpenAIProvider struct {
 }
 
 type rawAIResponse struct {
+	Actions   []Action   `json:"actions"`
 	Answer    string     `json:"answer"`
 	Citations []Citation `json:"citations"`
 }
@@ -44,12 +46,44 @@ func NewOpenAIProvider(model *config.AIModel) *OpenAIProvider {
 }
 
 func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandlers []mcp.ToolHandler, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*AIResponse, int) {
+	if req.ConversationID == "" {
+		return &AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
+	}
+
 	if req.Query == "" {
 		return &AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
+
 	pageState := "null"
 	if len(req.Context.PageState) > 0 {
 		pageState = string(req.Context.PageState)
+	}
+
+	var conversation []openai.ChatCompletionMessage
+	ptr, found := kialiCache.GetAIConversation(req.ConversationID)
+	if found && ptr != nil {
+		log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
+		conversation = *ptr
+		conversation = append(conversation, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: req.Query,
+		})
+	} else {
+		log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
+		conversation = []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "Page State (JSON):\n" + pageState + "\nPage Description:\n" + req.Context.PageDescription,
+			},
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: SystemInstruction,
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: req.Query,
+			},
+		}
 	}
 
 	// Prepare tool definitions and lookup
@@ -61,43 +95,26 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 		handlerByName[def.Function.Name] = h
 	}
 
-	messages := []openai.ChatCompletionMessage{
-		{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: "Page State (JSON):\n" + pageState + "\nPage Description:\n" + req.Context.PageDescription,
-		},
-		{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: SystemInstruction,
-		},
-		{
-			Role:    openai.ChatMessageRoleUser,
-			Content: req.Query, 
-		},
-	}
-	log.Debugf("Message query: %+v related with the conversation %+v and view %+v", req.Query, req.ConversationID, req.Context.PageDescription)
-
 	resp, err := p.client.CreateChatCompletion(
 		ctx,
 		openai.ChatCompletionRequest{
 			Model:    p.model,
-			Messages: messages,
+			Messages: conversation,
 			Tools:    toolDefs,
 		},
 	)
-	
+
 	if err != nil {
 		return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
-	
+
 	if len(resp.Choices) == 0 {
 		return &AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
 	msg := resp.Choices[0].Message
+	conversation = append(conversation, msg)
 
 	if len(msg.ToolCalls) > 0 {
-		messages = append(messages, msg)
-
 		for _, toolCall := range msg.ToolCalls {
 			var args map[string]interface{}
 			_ = json.Unmarshal([]byte(toolCall.Function.Arguments), &args)
@@ -108,7 +125,7 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 			}
 			mcpResult, code := handler.Call(ctx, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 			if code != http.StatusOK {
-				return &AIResponse{Error: "failed to call tool"}, http.StatusInternalServerError
+				return &AIResponse{Error: fmt.Sprintf("tool %s returned error: %s", toolCall.Function.Name, mcpResult)}, code
 			}
 
 			toolContent, err := formatToolContent(mcpResult)
@@ -116,25 +133,39 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 				return &AIResponse{Error: "failed to format tool content"}, http.StatusInternalServerError
 			}
 
-			messages = append(messages, openai.ChatCompletionMessage{
+			conversation = append(conversation, openai.ChatCompletionMessage{
 				Role:       openai.ChatMessageRoleTool,
 				Content:    toolContent,
 				Name:       toolCall.Function.Name,
 				ToolCallID: toolCall.ID,
 			})
 		}
-
+		log.Debugf("Conversation: %+v", conversation)
 		finalResp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 			Model:    p.model,
-			Messages: messages,
+			Messages: conversation,
 		})
+		log.Debugf("Final response: %+v", finalResp)
 		if err != nil {
 			return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
-		return parseResponse(finalResp.Choices[0].Message.Content), http.StatusOK
+		response := parseResponse(finalResp.Choices[0].Message.Content)
+		log.Debugf("Response after parsing: %+v", response)
+		conversation = append(conversation, openai.ChatCompletionMessage{
+			Role:    finalResp.Choices[0].Message.Role,
+			Content: response.Answer,
+		})
+		kialiCache.SetAIConversation(req.ConversationID, &conversation)
+		return response, http.StatusOK
 	}
-
-	return parseResponse(msg.Content), http.StatusOK
+	response := parseResponse(msg.Content)
+	log.Debugf("Response after parsing: %+v", response)
+	conversation = append(conversation, openai.ChatCompletionMessage{
+		Role:    msg.Role,
+		Content: response.Answer,
+	})
+	kialiCache.SetAIConversation(req.ConversationID, &conversation)
+	return response, http.StatusOK
 }
 
 func parseResponse(content string) *AIResponse {
@@ -159,6 +190,7 @@ func parseResponse(content string) *AIResponse {
 	}
 
 	return &AIResponse{
+		Actions: raw.Actions,
 		Answer:    raw.Answer,
 		Citations: raw.Citations,
 	}

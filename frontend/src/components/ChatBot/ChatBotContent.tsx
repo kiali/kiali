@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { router } from '../../app/History';
 import { ChatbotAlert, ChatbotContent, ChatbotWelcomePrompt, Message, MessageBox } from '@patternfly/chatbot';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
-import { ExpandableSection } from '@patternfly/react-core';
+import { AlertMessage, ChatResponse, ExtendedMessage, ReferencedDocument, Action } from 'types/Chatbot';
+import { Button, ExpandableSection } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
+import { PuzzlePieceIcon } from '@patternfly/react-icons';
 
 type ChatBotContentProps = {
   username: string;
@@ -52,6 +55,59 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
     generatePrompts();
   }, [generatePrompts]);
 
+
+  const getActions = (actions: Action[]) => {
+    const attachments: React.ReactNode[] = [];
+    actions.forEach(action =>  attachments.push(
+      <Button 
+      key={action.title} 
+      variant="tertiary"
+      icon={action.kind === 'navigation' ? <ExternalLinkAltIcon /> : <PuzzlePieceIcon />}
+      onClick={() => action.kind === 'navigation' ? router.navigate(action.payload) : console.log("Call tool", action.payload)}>
+        {action.title}
+      </Button>
+      )
+    );
+    return attachments;
+  }
+
+  const getMessage = (
+    message: Omit<ExtendedMessage, 'referenced_documents' | 'scrollToHere' | 'collapse' | 'actions'>,     
+    index: number, referenced_documents: ReferencedDocument[], actions?: Action[], collapse?: boolean) => {  
+      const messageProps: any = {
+        key: `chatbot_message_${index}`,
+        sources: referenced_documents && referenced_documents.length > 0 ? {sources: referenced_documents.map(document => ({link: document.link, title: document.title, body: document.body, isExternal: true}))} : undefined
+      };
+      
+      if (message.role !== 'user') {
+        messageProps.botWord = "Kiali AI";
+        messageProps.loadingWord = "Thinking...";
+      }
+
+      const messageActions = actions && actions.length > 0 ? (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+          {getActions(actions)}
+        </div>
+      ) : undefined;
+
+      return (
+        <>
+          {collapse ? (
+            <ExpandableSection toggleText="Show more">
+              <>
+              <Message {...messageProps} {...message}/>
+              {messageActions}
+              </>
+            </ExpandableSection>
+          ) : (
+            <>
+            <Message {...messageProps} {...message}/>
+            {messageActions}
+            </>
+          )}
+        </>
+      );
+  }
   return (
     <ChatbotContent>
       <MessageBox>
@@ -69,28 +125,18 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             {alertMessage.message}
           </ChatbotAlert>
         )}
-        {messages.map(({ referenced_documents, scrollToHere, collapse, ...message }: ExtendedMessage, index) => {
+        {messages.map(({ actions, referenced_documents, scrollToHere, collapse, ...message }: ExtendedMessage, index) => {
           return (
           <div key={`chatbot_message_div_${index}`}>
             {scrollToHere && <div key={`chatbot_message_container_scroll_div_${index}`} ref={messagesEndRef} />}
             <div key={`chatbot_message_container_div_${index}`}>
-              {collapse ? (
-                <>
-                  <ExpandableSection toggleText="Show more">
-                    <Message key={`chatbot_message_${index}`} {...message} isLoading={isLoading && !message.content} sources={referenced_documents && referenced_documents.length > 0 ? {sources: referenced_documents.map(document => ({link: document.link, title: document.title, body: document.body, isExternal: true}))} : undefined}/>
-                  </ExpandableSection>
-                </>
-              ) : (
-                <>
-                  <Message key={`chatbot_message_${index}`} {...message} sources={referenced_documents && referenced_documents.length > 0 ? {sources: referenced_documents.map(document => ({link: document.link, title: document.title, body: document.body, isExternal: true}))} : undefined}/>
-                </>
-              )}
+            {getMessage(message, index, referenced_documents, actions, collapse)}             
             </div>
           </div>
           )
         })}
         {messages.at(-1)?.role === 'user' && isLoading ? (
-          <Message key="bott_message_9999" {...botMessage('...')} isLoading={true} />
+          <Message botWord="Kiali AI" key="bott_message_9999" {...botMessage('...')} isLoading={true} />
         ) : (
           <></>
         )}

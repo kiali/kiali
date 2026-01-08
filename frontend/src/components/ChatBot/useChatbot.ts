@@ -133,6 +133,9 @@ export const useChatbot = (userName: string, model: ModelAI) => {
 
         const newBotMessage: any = botMessage(chatResponse, query.toString());
         newBotMessage.referenced_documents = referenced_documents;
+        newBotMessage.actions = chatResponse.actions;        
+        console.log("chatResponse", chatResponse);
+        console.log("newBotMessage", newBotMessage);
         addMessage(newBotMessage);
       } else {
         setAlertMessage({
