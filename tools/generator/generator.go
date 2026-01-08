@@ -60,6 +60,12 @@ type Generator struct {
 	// PopulationStrategy determines how many connections from ingress i.e. dense or sparse.
 	PopulationStrategy string
 
+	// AmbientMode enables ambient mesh mode with waypoint proxies.
+	AmbientMode bool
+
+	// SingleNamespace puts all apps in the same namespace instead of random namespaces.
+	SingleNamespace string
+
 	kubeClient      kubernetes.Interface
 	namespaceLister corev1listers.NamespaceLister
 }
@@ -73,6 +79,8 @@ func New(opts Options) (*Generator, error) {
 		NumberOfApps:       10,
 		NumberOfIngress:    1,
 		PopulationStrategy: Dense,
+		AmbientMode:        false,
+		SingleNamespace:    "",
 	}
 
 	// Kube specific options
@@ -106,6 +114,12 @@ func New(opts Options) (*Generator, error) {
 	if opts.PopulationStrategy != nil {
 		g.PopulationStrategy = *opts.PopulationStrategy
 	}
+	if opts.AmbientMode != nil {
+		g.AmbientMode = *opts.AmbientMode
+	}
+	if opts.SingleNamespace != nil {
+		g.SingleNamespace = *opts.SingleNamespace
+	}
 
 	return &g, nil
 }
@@ -130,11 +144,19 @@ func (g *Generator) EnsureNamespaces(graphConfig common.Config) error {
 // 1. Workloads send requests to services.
 // 2. Services send requests to the workloads in their app.
 // 3. Ingress workloads are root nodes.
+// 4. In ambient mode, waypoint proxies handle traffic between workloads.
 func (g *Generator) Generate() common.Config {
 	nodes := g.generate()
 	traffic := graph.NewTrafficMap()
 	for _, node := range nodes {
 		traffic[node.ID] = node
+	}
+
+	// Mark all nodes as ambient if ambient mode is enabled
+	if g.AmbientMode {
+		for _, node := range traffic {
+			node.Metadata[graph.IsAmbient] = true
+		}
 	}
 
 	// Hard coding some of these for now. In the future, the generator can
@@ -179,18 +201,30 @@ func (g *Generator) genAppsWithIngress(index int, numApps int) []*graph.Node {
 	}
 	iNodes := []*graph.Node{g.newWorkloadNode(ingress, "latest")}
 
+	// Determine the namespace for apps
+	appNamespace := g.SingleNamespace
+
 	// Then create the rest of them.
 	for i := 1; i <= numApps; i++ {
-		app := app{
-			Cluster: g.Cluster,
-			Name:    fmt.Sprintf("app-%d", i),
+		ns := appNamespace
+		if ns == "" {
 			// Creates at most a namespace per app.
 			// Multiple apps can land in the same namespace.
-			// TODO: Provide option to control this.
-			Namespace: getRandomNamespace(1, g.NumberOfApps),
+			ns = getRandomNamespace(1, g.NumberOfApps)
+		}
+		app := app{
+			Cluster:   g.Cluster,
+			Name:      fmt.Sprintf("app-%d", i),
+			Namespace: ns,
 		}
 		appNodes := g.genApp(app)
 		nodes = append(nodes, appNodes...)
+	}
+
+	// In ambient mode, add a waypoint proxy
+	if g.AmbientMode && appNamespace != "" {
+		waypointNodes := g.genWaypointProxy(appNamespace)
+		nodes = append(nodes, waypointNodes...)
 	}
 
 	// Add edges from the ingress workload to each of the app's service node.
@@ -320,4 +354,29 @@ func generateNamespaceName(numNamespace int) string {
 func getRandomNamespace(from, to int) string {
 	numNamespace := from + rand.Intn(to)
 	return generateNamespaceName(numNamespace)
+}
+
+// genWaypointProxy creates waypoint proxy nodes for ambient mode.
+func (g *Generator) genWaypointProxy(namespace string) []*graph.Node {
+	var nodes []*graph.Node
+
+	// Create waypoint workload node
+	waypointApp := app{
+		Cluster:   g.Cluster,
+		Name:      "waypoint",
+		Namespace: namespace,
+	}
+	waypointNode := g.newWaypointWorkloadNode(waypointApp)
+	nodes = append(nodes, waypointNode)
+
+	return nodes
+}
+
+// newWaypointWorkloadNode creates a waypoint proxy workload node.
+func (g *Generator) newWaypointWorkloadNode(app app) *graph.Node {
+	workload := app.Name
+	node, _ := graph.NewNode(app.Cluster, app.Namespace, "", app.Namespace, workload, app.Name, "", g.GraphType)
+	node.Metadata[graph.IsWaypoint] = true
+	node.Metadata[graph.IsAmbient] = true
+	return node
 }
