@@ -10,9 +10,20 @@ import { KialiAppState } from '../../store/Store';
 import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
 import { IstioStatusActions } from '../../actions/IstioStatusActions';
 import { connect } from 'react-redux';
-import { Content, ContentVariants, Tooltip, TooltipPosition, Label } from '@patternfly/react-core';
+import {
+  Content,
+  ContentVariants,
+  Tooltip,
+  TooltipPosition,
+  Label,
+  Button,
+  ButtonVariant,
+  Divider
+} from '@patternfly/react-core';
 import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { KialiDispatch } from 'types/Redux';
 import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -24,6 +35,8 @@ import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
+
+const ISSUE_COUNT_THRESHOLD = 3;
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
@@ -60,16 +73,57 @@ const ValidToColor = {
 
 const clusterStyle = kialiStyle({
   display: 'flex',
-  alignItems: 'center'
+  alignItems: 'center',
+  paddingTop: PFSpacer.xs,
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.BodyDefault
+});
+
+const addonLabelStyle = kialiStyle({
+  textAlign: 'left',
+  marginTop: PFSpacer.xs,
+  marginBottom: PFSpacer.xs,
+  marginLeft: PFSpacer.sm,
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.HeadingDefault
+});
+
+const coreLabelStyle = kialiStyle({
+  textAlign: 'left',
+  marginTop: PFSpacer.xs,
+  marginBottom: PFSpacer.xs,
+  marginLeft: PFSpacer.sm,
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.HeadingDefault
+});
+
+const addonListStyle = kialiStyle({
+  paddingLeft: PFSpacer.sm
+});
+
+const coreListStyle = kialiStyle({
+  paddingLeft: PFSpacer.sm
+});
+
+const dividerStyle = kialiStyle({
+  borderTop: `1px solid ${PFColors.Blue300}`,
+  marginTop: PFSpacer.sm
+});
+
+const clusterStatusHeaderStyle = kialiStyle({
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.HeadingDefault,
+  marginBottom: PFSpacer.xs
 });
 
 export const meshLinkStyle = kialiStyle({
   display: 'flex',
-  justifyContent: 'center',
-  marginTop: '0.75rem',
+  justifyContent: 'flex-start',
+  marginTop: PFSpacer.sm,
+  textAlign: 'left',
   $nest: {
     '& > span': {
-      marginRight: '0.5rem'
+      marginRight: PFSpacer.sm
     }
   }
 });
@@ -97,6 +151,7 @@ const tooltipStyle = kialiStyle({
 export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
+  const [expandedClusters, setExpandedClusters] = React.useState<Set<string>>(new Set());
 
   const { namespaces, setIstioStatus, lastRefreshAt } = props;
 
@@ -138,32 +193,205 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
           statusSeverity[cs.status] +
           (cs.isCore && statusSeverity[cs.status] !== statusSeverity[Status.Healthy] ? 10 : 0)
       )
-    ); // non health core component has much higher severity
+    ); // non-health core component has much higher severity
 
-  const sortedClusters = Object.keys(props.statusMap).sort((a, b) => {
-    const worstA = getSeverity(props.statusMap[a]);
-    const worstB = getSeverity(props.statusMap[b]);
-    return worstB - worstA;
-  });
+  const healthyComponents = (): boolean => {
+    const values = Object.values(props.statusMap).flat();
+    return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
+      return healthy && compStatus.status === Status.Healthy;
+    }, true);
+  };
+
+  const allHealthy = healthyComponents();
+  const sortedClusters = React.useMemo(() => {
+    return Object.keys(props.statusMap)
+      .filter(cl => {
+        // When all components are healthy, show all clusters
+        // When there are failures, only show clusters with failures
+        if (allHealthy) {
+          return true;
+        }
+        const components = props.statusMap[cl] || [];
+        return components.some(comp => comp.status !== Status.Healthy);
+      })
+      .sort((a, b) => {
+        // Prioritize home cluster if it has failures
+        const isHomeA = a === homeCluster?.name;
+        const isHomeB = b === homeCluster?.name;
+        if (isHomeA && !isHomeB) return -1;
+        if (!isHomeA && isHomeB) return 1;
+
+        // Otherwise sort by severity
+        const worstA = getSeverity(props.statusMap[a]);
+        const worstB = getSeverity(props.statusMap[b]);
+        return worstB - worstA;
+      })
+      .slice(0, 5); // Show 5 clusters
+  }, [props.statusMap, allHealthy]);
+
+  // Check if there are multiple distinct meshes across all components
+  const hasMultipleMeshes = (): boolean => {
+    const allComponents = Object.values(props.statusMap).flat();
+    const meshes = new Set<string>();
+    allComponents.forEach(comp => {
+      if (comp.meshId) {
+        meshes.add(comp.meshId);
+      }
+    });
+    return meshes.size > 1;
+  };
+
+  // Split components into core and addon
+  const splitComponents = (
+    components: ComponentStatus[]
+  ): { addon: ComponentStatus[]; core: ComponentStatus[]; mesh: ComponentStatus[] } => {
+    const nonhealthy = components.filter((c: ComponentStatus) => c.status !== Status.Healthy);
+    return {
+      addon: nonhealthy.filter((s: ComponentStatus) => !s.isCore && !s.meshId),
+      core: nonhealthy.filter((s: ComponentStatus) => s.isCore),
+      mesh: nonhealthy.filter((s: ComponentStatus) => !s.isCore && s.meshId)
+    };
+  };
+
+  // Render core and addon components
+  const renderComponents = (components: ComponentStatus[], cluster: string, isMultiMesh: boolean): React.ReactNode => {
+    const { addon, core, mesh } = splitComponents(components);
+    const addonCount = addon.length;
+    const coreCount = core.length;
+    const meshCount = mesh.length;
+
+    // Sort core components by the worst status first
+    const sortedCore = [...core].sort((a, b) => {
+      const severityA = statusSeverity[a.status] + (a.isCore ? 10 : 0);
+      const severityB = statusSeverity[b.status] + (b.isCore ? 10 : 0);
+      return severityB - severityA;
+    });
+
+    // Sort mesh components by the worst status first
+    const sortedMesh = [...mesh].sort((a, b) => {
+      const severityA = statusSeverity[a.status];
+      const severityB = statusSeverity[b.status];
+      return severityB - severityA;
+    });
+
+    // Sort addon components by the worst status first
+    const sortedAddon = [...addon].sort((a, b) => {
+      const severityA = statusSeverity[a.status];
+      const severityB = statusSeverity[b.status];
+      return severityB - severityA;
+    });
+
+    // Always combine core and mesh, core first, then mesh
+    const combinedCoreMesh = [...sortedCore, ...sortedMesh];
+    const combinedCount = coreCount + meshCount;
+    const displayCoreMesh = combinedCoreMesh.slice(0, ISSUE_COUNT_THRESHOLD);
+    const displayAddon = sortedAddon.slice(0, ISSUE_COUNT_THRESHOLD);
+
+    const formatLabel = (baseLabel: string, count: number): string => {
+      if (count > ISSUE_COUNT_THRESHOLD) {
+        return t(`${baseLabel} ({{count}} issues)`, { count });
+      }
+      return t(baseLabel);
+    };
+
+    return (
+      <>
+        {displayCoreMesh.length > 0 && (
+          <>
+            <Content component={ContentVariants.h6} className={coreLabelStyle}>
+              {formatLabel(isMultiMesh ? 'Mesh' : 'Core', combinedCount)}
+            </Content>
+            <div className={coreListStyle}>
+              <IstioStatusList status={displayCoreMesh} cluster={cluster} />
+            </div>
+          </>
+        )}
+        {displayAddon.length > 0 && (
+          <>
+            <Content component={ContentVariants.h6} className={addonLabelStyle}>
+              {formatLabel('Add-ons', addonCount)}
+            </Content>
+            <div className={addonListStyle}>
+              <IstioStatusList status={displayAddon} cluster={cluster} />
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
+
+  // Initialize first cluster as expanded when clusters change
+  React.useEffect(() => {
+    setExpandedClusters(prev => {
+      // Only initialize if we have multiple clusters and nothing is expanded yet
+      if (sortedClusters.length > 1 && prev.size === 0) {
+        return new Set([sortedClusters[0]]);
+      }
+      return prev;
+    });
+  }, [sortedClusters]);
+
+  const toggleCluster = (clusterName: string): void => {
+    setExpandedClusters(prev => {
+      // If clicking on an already expanded cluster, collapse it
+      if (prev.has(clusterName)) {
+        return new Set();
+      }
+      // Otherwise, expand only this cluster (accordion behavior)
+      return new Set([clusterName]);
+    });
+  };
 
   const tooltipContent = (): React.ReactNode => {
+    const showMeshGrouping = hasMultipleMeshes();
+    const hasMultipleClusters = sortedClusters.length > 1;
+
     return (
       <Content>
-        <Content component={ContentVariants.h4}>{t('Cluster Status')}</Content>
-        {sortedClusters.map(cl => (
-          <React.Fragment key={cl}>
-            <div className={clusterStyle}>
-              <PFBadge badge={PFBadges.Cluster} size="sm" />
-              {cl}
-              {cl === homeCluster?.name && (
-                <span style={{ marginLeft: '0.25rem' }}>
-                  <KialiIcon.Star />
-                </span>
-              )}
-            </div>
-            <IstioStatusList status={props.statusMap[cl] || []} cluster={cl} />
-          </React.Fragment>
-        ))}
+        <Content className={clusterStatusHeaderStyle}>{t('Cluster Status')}</Content>
+        {sortedClusters.map(cl => {
+          const components = props.statusMap[cl] || [];
+          const isExpanded = expandedClusters.has(cl);
+
+          if (hasMultipleClusters) {
+            return (
+              <React.Fragment key={cl}>
+                <div className={clusterStyle} onClick={() => toggleCluster(cl)} style={{ cursor: 'pointer' }}>
+                  <Button
+                    variant={ButtonVariant.plain}
+                    style={{ padding: 0, marginRight: PFSpacer.xs }}
+                    icon={isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
+                  />
+                  <PFBadge badge={PFBadges.Cluster} size="sm" />
+                  {cl}
+                  {cl === homeCluster?.name && (
+                    <span style={{ marginLeft: PFSpacer.xs }}>
+                      <KialiIcon.Star />
+                    </span>
+                  )}
+                </div>
+                <Divider className={dividerStyle} />
+                {isExpanded && renderComponents(components, cl, showMeshGrouping)}
+              </React.Fragment>
+            );
+          }
+
+          return (
+            <React.Fragment key={cl}>
+              <div className={clusterStyle}>
+                <PFBadge badge={PFBadges.Cluster} size="sm" />
+                {cl}
+                {cl === homeCluster?.name && (
+                  <span style={{ marginLeft: '0.25rem' }}>
+                    <KialiIcon.Star />
+                  </span>
+                )}
+              </div>
+              <Divider className={dividerStyle} />
+              {renderComponents(components, cl, showMeshGrouping)}
+            </React.Fragment>
+          );
+        })}
         {!pathname.endsWith('/mesh') && isControlPlaneAccessible() && (
           <div className={meshLinkStyle}>
             <span>{t('More info at')}</span>
@@ -195,13 +423,6 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     });
 
     return ValidToColor[`${coreUnhealthy}-${addonUnhealthy}-${notReady}`];
-  };
-
-  const healthyComponents = (): boolean => {
-    const values = Object.values(props.statusMap).flat();
-    return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
-      return healthy && compStatus.status === Status.Healthy;
-    }, true);
   };
 
   const tooltipPosition = TooltipPosition.top;
