@@ -103,6 +103,9 @@ func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Clie
 		log.Debug("Insecure connection to oAuth server.")
 	}
 
+	// Apply the resolved TLS policy to enforce version/cipher constraints
+	conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
+
 	return &http.Client{
 		Timeout:   restConfig.Timeout,
 		Transport: &http.Transport{TLSClientConfig: tlsConfig},

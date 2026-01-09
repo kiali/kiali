@@ -174,6 +174,8 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 				InsecureSkipVerify: tracingOpt.Otel.SkipVerify,
 				RootCAs:            conf.CertPool(),
 			}
+			// Apply the resolved TLS policy to enforce version/cipher constraints
+			conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
 			if tracingOpt.Otel.SkipVerify {
 				log.Trace("OpenTelemetry collector will not verify the remote certificate")
 			}
@@ -199,6 +201,8 @@ func getExporter(collectorURL string) (sdktrace.SpanExporter, error) {
 					InsecureSkipVerify: tracingOpt.Otel.SkipVerify,
 					RootCAs:            conf.CertPool(),
 				}
+				// Apply the resolved TLS policy to enforce version/cipher constraints
+				conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
 				if tracingOpt.Otel.SkipVerify {
 					log.Trace("OpenTelemetry collector will not verify the remote certificate")
 				}

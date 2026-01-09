@@ -82,11 +82,11 @@ func NewServer(ctx context.Context,
 	http.DefaultServeMux = mux
 	http.Handle("/", handler)
 
-	// Clients must use TLS 1.2 or higher
+	// Server TLS is configured according to the resolved policy.
 	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS12,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
+	conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
 
 	// The /debug/pprof/profiler by default needs a write timeout larger than 30s. But also, you can pass in &seconds=XY on the pprof URL
 	// and ask for any profile to extend to those number of seconds you specify, which could be larger than 30s.
