@@ -80,19 +80,16 @@ export const NamespaceStatusesCombined: React.FC<Props> = (props: Props) => {
   };
 
   const renderStatus = (status: NamespaceStatus | undefined, targetPage: Paths): React.ReactNode => {
-    if (!status) {
-      return null;
-    }
+    const nbItems = status
+      ? status.inError.length +
+        status.inWarning.length +
+        status.inSuccess.length +
+        status.notAvailable.length +
+        status.inNotReady.length
+      : 0;
 
-    const nbItems =
-      status.inError.length +
-      status.inWarning.length +
-      status.inSuccess.length +
-      status.notAvailable.length +
-      status.inNotReady.length;
-
-    const worstStatus = getWorstStatus(status);
-    const tooltipContent = buildTooltipContent(status);
+    const worstStatus = status ? getWorstStatus(status) : null;
+    const tooltipContent = status ? buildTooltipContent(status) : null;
 
     let typeName: string;
     switch (targetPage) {
@@ -110,15 +107,15 @@ export const NamespaceStatusesCombined: React.FC<Props> = (props: Props) => {
     }
 
     return (
-      <div style={{ marginBottom: '0.5rem', textAlign: 'left' }}>
+      <div style={{ marginBottom: '0.125rem', textAlign: 'left' }}>
         {worstStatus ? (
           <Tooltip aria-label="Status details" position={TooltipPosition.auto} content={tooltipContent}>
-            <div style={{ display: 'inline-block', marginRight: '0.5rem', cursor: 'pointer' }}>
+            <div style={{ display: 'inline-block', marginRight: '1rem', cursor: 'pointer' }}>
               {createIcon(worstStatus)}
             </div>
           </Tooltip>
         ) : (
-          <div style={{ display: 'inline-block', marginRight: '0.5rem' }}>N/A</div>
+          <div style={{ display: 'inline-block', marginRight: '0.25rem' }}>N/A</div>
         )}
         <div style={{ display: 'inline-block' }}>
           {nbItems} {typeName}

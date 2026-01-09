@@ -4,6 +4,22 @@ import { t } from 'utils/I18nUtils';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
+    id: 'category',
+    title: t('Category'),
+    isNumeric: false,
+    param: 'cat',
+    compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
+      // Control plane comes before Data plane
+      if (a.isControlPlane && !b.isControlPlane) {
+        return -1;
+      } else if (!a.isControlPlane && b.isControlPlane) {
+        return 1;
+      }
+      // If same category, sort by name
+      return a.name.localeCompare(b.name);
+    }
+  },
+  {
     id: 'namespace',
     title: t('Name'),
     isNumeric: false,
@@ -155,22 +171,6 @@ export const sortFields: SortField<NamespaceInfo>[] = [
       } else {
         return 0;
       }
-    }
-  },
-  {
-    id: 'category',
-    title: t('Category'),
-    isNumeric: false,
-    param: 'cat',
-    compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
-      // Control plane comes before Data plane
-      if (a.isControlPlane && !b.isControlPlane) {
-        return -1;
-      } else if (!a.isControlPlane && b.isControlPlane) {
-        return 1;
-      }
-      // If same category, sort by name
-      return a.name.localeCompare(b.name);
     }
   }
 ];

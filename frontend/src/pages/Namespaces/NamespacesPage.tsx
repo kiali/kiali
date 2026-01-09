@@ -18,7 +18,7 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
-import { HistoryManager } from '../../app/History';
+import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
@@ -197,8 +197,21 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             };
           });
 
-        const isAscending = FilterHelper.isCurrentSortAscending();
-        const sortField = FilterHelper.currentSortField(Sorts.sortFields);
+        // Default to category sort (ascending) if no sort is specified in URL
+        const urlSort = HistoryManager.getParam(URLParam.SORT);
+        const urlDirection = HistoryManager.getParam(URLParam.DIRECTION);
+        const isAscending = urlSort && urlDirection ? FilterHelper.isCurrentSortAscending() : true;
+        const sortField = urlSort
+          ? FilterHelper.currentSortField(Sorts.sortFields)
+          : Sorts.sortFields.find(sf => sf.id === 'category') || Sorts.sortFields[0];
+
+        // Set URL params if not present to ensure default sort is reflected in URL
+        if (!urlSort) {
+          HistoryManager.setParam(URLParam.SORT, sortField.param);
+        }
+        if (!urlDirection) {
+          HistoryManager.setParam(URLParam.DIRECTION, 'asc');
+        }
 
         // Set state before actually fetching health
         this.setState(

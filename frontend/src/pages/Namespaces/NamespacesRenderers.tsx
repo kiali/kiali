@@ -10,6 +10,7 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { MTLSIconTypes } from '../../components/MTls/NamespaceMTLSStatus';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { getCategoryText } from './Filters';
 
 const statusDescriptors = new Map<string, StatusDescriptor>([
   [
@@ -47,24 +48,20 @@ const tlsIconStyle = kialiStyle({
 });
 
 export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  if (ns.statusApp || ns.statusService || ns.statusWorkload) {
-    return (
-      <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-        <NamespaceStatusesCombined
-          name={ns.name}
-          statusApp={ns.statusApp}
-          statusService={ns.statusService}
-          statusWorkload={ns.statusWorkload}
-        />
-      </Td>
-    );
-  }
-
-  return <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} />;
+  return (
+    <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      <NamespaceStatusesCombined
+        name={ns.name}
+        statusApp={ns.statusApp}
+        statusService={ns.statusService}
+        statusWorkload={ns.statusWorkload}
+      />
+    </Td>
+  );
 };
 
 export const category: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  const categoryText = ns.isControlPlane ? 'Control plane' : 'Data plane';
+  const categoryText = getCategoryText(ns.isControlPlane);
   return (
     <Td role="gridcell" dataLabel="Category" key={`VirtuaItem_Category_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       {categoryText}
