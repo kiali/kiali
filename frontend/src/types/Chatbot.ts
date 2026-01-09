@@ -1,6 +1,7 @@
 import { MessageProps } from '@patternfly/chatbot';
 
 export type ContextRequest = {
+  page_url: string;
   page_description: string;
   page_state: any;
 };
@@ -25,6 +26,7 @@ type LLMResponse = {
   citations: ReferencedDocument[];
   used_models: ModelResponse;
   truncated?: boolean;
+  error?: string;
 };
 
 export type ChatRequest = LLMRequest;

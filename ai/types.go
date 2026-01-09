@@ -5,11 +5,13 @@ import "encoding/json"
 type AIContext struct {
 	PageDescription string          `json:"page_description"`
 	PageState       json.RawMessage `json:"page_state"`
+	PageURL         string          `json:"page_url"`
 }
 
 // AIRequest holds the user query and optional context.
 type AIRequest struct {
 	ConversationID string    `json:"conversation_id,omitempty"`
+	Username       string    `json:"username,omitempty"`
 	Query          string    `json:"query"`
 	Context        AIContext `json:"context,omitempty"`
 }

@@ -133,26 +133,26 @@ export const useChatbot = (userName: string, model: ModelAI) => {
 
         const newBotMessage: any = botMessage(chatResponse, query.toString());
         newBotMessage.referenced_documents = referenced_documents;
-        newBotMessage.actions = chatResponse.actions;        
-        console.log("chatResponse", chatResponse);
-        console.log("newBotMessage", newBotMessage);
+        newBotMessage.actions = chatResponse.actions;
         addMessage(newBotMessage);
       } else {
+        const errorMessage = resp.data?.error || `Bot returned status_code ${resp.status}`;
         setAlertMessage({
           title: 'Error',
-          message: `Bot returned status_code ${resp.status}`,
+          message: errorMessage,
           variant: 'danger'
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       if (isTimeoutError(e)) {
         addMessage(timeoutMessage());
       } else if (isTooManyRequestsError(e)) {
         await show429Message();
       } else {
+        const errorMessage = e.response?.data?.error || e.message || e.toString();
         setAlertMessage({
           title: 'Error',
-          message: `An unexpected error occurred: ${e}`,
+          message: `An unexpected error occurred: ${errorMessage}`,
           variant: 'danger'
         });
       }

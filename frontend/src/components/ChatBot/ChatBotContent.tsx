@@ -95,7 +95,7 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
           {collapse ? (
             <ExpandableSection toggleText="Show more">
               <>
-              <Message {...messageProps} {...message}/>
+              <Message {...messageProps} {...message} />
               {messageActions}
               </>
             </ExpandableSection>

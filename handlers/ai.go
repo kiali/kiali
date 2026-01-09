@@ -38,6 +38,16 @@ func ChatAI(
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
+			authInfo, err := getAuthInfo(r)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+				return
+			}
+			req.Username = authInfo[conf.KubernetesConfig.ClusterName].Username
+		} else {
+			req.Username = "anonymous"
+		}
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())

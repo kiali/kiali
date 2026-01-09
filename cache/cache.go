@@ -43,11 +43,11 @@ type KialiCache interface {
 	CanListWebhooks(cluster string) bool
 
 	// AIConversation stores the conversation history for a user.
-	SetAIConversation(conversationID string, conversation *[]openai.ChatCompletionMessage)
+	SetAIConversation(username string, conversationID string, conversation *[]openai.ChatCompletionMessage)
 	// RemoveAIConversation removes the conversation history for a user.
-	RemoveAIConversation(conversationID string)
+	RemoveAIConversation(username string, conversationID string)
 	// GetAIConversation returns the conversation history for a user.
-	GetAIConversation(conversationID string) (*[]openai.ChatCompletionMessage, bool)
+	GetAIConversation(username string, conversationID string) (*[]openai.ChatCompletionMessage, bool)
 
 	GetBuildInfo() models.BuildInfo
 	// SetBuildInfo is not threadsafe. Expected to just be called once at startup.
@@ -118,7 +118,7 @@ type KialiCache interface {
 
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
-	aiConversationStore store.Store[string, []openai.ChatCompletionMessage]
+	aiConversationStore     store.Store[string, map[string][]openai.ChatCompletionMessage]
 	// This isn't expected to change so it's not protected by a mutex.
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
@@ -181,7 +181,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
-		aiConversationStore:     store.NewExpirationStore(ctx, store.New[string, []openai.ChatCompletionMessage](), util.AsPtr(conf.KialiInternal.CacheExpiration.AIConversation), nil),
+		aiConversationStore:     store.NewExpirationStore(ctx, store.New[string, map[string][]openai.ChatCompletionMessage](), util.AsPtr(conf.KialiInternal.CacheExpiration.AIConversation), nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		clients:                 kialiSAClients,
 		conf:                    conf,
@@ -589,16 +589,29 @@ func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) 
 	c.namespaceStore.Set(key, ns)
 }
 
-func (c *kialiCacheImpl) SetAIConversation(conversationID string, conversation *[]openai.ChatCompletionMessage) {
-	c.aiConversationStore.Set(conversationID, *conversation)
+func (c *kialiCacheImpl) SetAIConversation(username string, conversationID string, conversation *[]openai.ChatCompletionMessage) {
+	aiConversations, found := c.aiConversationStore.Get(username)
+	if !found {
+		aiConversations = make(map[string][]openai.ChatCompletionMessage)
+	}
+	aiConversations[conversationID] = *conversation
+	c.aiConversationStore.Set(username, aiConversations)
 }
 
-func (c *kialiCacheImpl) RemoveAIConversation(conversationID string) {
-	c.aiConversationStore.Remove(conversationID)
+func (c *kialiCacheImpl) RemoveAIConversation(username string, conversationID string) {
+	aiConversations, found := c.aiConversationStore.Get(username)
+	if found {
+		delete(aiConversations, conversationID)
+		c.aiConversationStore.Set(username, aiConversations)
+	}
 }
 
-func (c *kialiCacheImpl) GetAIConversation(conversationID string) (*[]openai.ChatCompletionMessage, bool) {
-	conversation, found := c.aiConversationStore.Get(conversationID)
+func (c *kialiCacheImpl) GetAIConversation(username string, conversationID string) (*[]openai.ChatCompletionMessage, bool) {
+	aiConversations, found := c.aiConversationStore.Get(username)
+	if !found {
+		return nil, false
+	}
+	conversation, found := aiConversations[conversationID]
 	if !found {
 		return nil, false
 	}

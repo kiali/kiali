@@ -8,10 +8,19 @@ export const setAIContext = (dispatch: KialiDispatch, context: any, pageDescript
     return;
   }
 
+  let pageUrl = window.location.pathname;
+  if (pageUrl.startsWith('/console')) {
+    pageUrl = pageUrl.replace('/console', '');
+  }
+  if (pageUrl.startsWith('/kiali')) {
+    pageUrl = pageUrl.replace('/kiali', '');
+  }
+
   dispatch(
     ChatAIActions.setContext({
       page_description: pageDescription,
-      page_state: context
+      page_state: context,
+      page_url: pageUrl
     })
   );
 };

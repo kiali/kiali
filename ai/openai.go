@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/prompts"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -54,37 +55,32 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 		return &AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
 
-	pageState := "null"
-	if len(req.Context.PageState) > 0 {
-		pageState = string(req.Context.PageState)
-	}
-
 	var conversation []openai.ChatCompletionMessage
-	ptr, found := kialiCache.GetAIConversation(req.ConversationID)
+	ptr, found := kialiCache.GetAIConversation(req.Username, req.ConversationID)
 	if found && ptr != nil {
 		log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
 		conversation = *ptr
-		conversation = append(conversation, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleUser,
-			Content: req.Query,
-		})
 	} else {
 		log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
 		conversation = []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
-				Content: "Page State (JSON):\n" + pageState + "\nPage Description:\n" + req.Context.PageDescription,
-			},
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: SystemInstruction,
-			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: req.Query,
+				Content: prompts.SystemInstruction,
 			},
 		}
 	}
+	contextBytes, _ := json.Marshal(req.Context)
+	// Adding context to the conversation. This is the system message that is sent to the AI.
+	conversation = append(conversation, openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleSystem,
+		Content: fmt.Sprintf("CONTEXT (JSON):\n%s\n\n",
+			string(contextBytes)),
+	})
+	// Adding user query to the conversation. This is the user message that is sent to the AI.
+	conversation = append(conversation, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: req.Query,
+	})
 
 	// Prepare tool definitions and lookup
 	toolDefs := make([]openai.Tool, 0, len(toolHandlers))
@@ -101,6 +97,7 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 			Model:    p.model,
 			Messages: conversation,
 			Tools:    toolDefs,
+			Temperature: 0.2,
 		},
 	)
 
@@ -113,7 +110,8 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 	}
 	msg := resp.Choices[0].Message
 	conversation = append(conversation, msg)
-
+	var response *AIResponse
+	var role string = msg.Role
 	if len(msg.ToolCalls) > 0 {
 		for _, toolCall := range msg.ToolCalls {
 			var args map[string]interface{}
@@ -140,31 +138,37 @@ func (p *OpenAIProvider) SendChat(ctx context.Context, req AIRequest, toolHandle
 				ToolCallID: toolCall.ID,
 			})
 		}
+		// Add prompt reminders for actions and citations before final response
+		conversation = prompts.AddPromptReminders(conversation)
+
 		log.Debugf("Conversation: %+v", conversation)
 		finalResp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 			Model:    p.model,
 			Messages: conversation,
+			ResponseFormat: &openai.ChatCompletionResponseFormat{
+				Type: openai.ChatCompletionResponseFormatTypeJSONSchema,
+				JSONSchema: &openai.ChatCompletionResponseFormatJSONSchema{
+					Name:   "ai_response",
+					Schema: json.RawMessage(fmt.Sprintf("{\"type\":\"object\",\"properties\":{\"answer\":{\"type\":\"string\"},\"citations\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"link\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"link\",\"title\",\"body\"],\"additionalProperties\":false}},\"actions\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"payload\":{\"type\":\"string\"}},\"required\":[\"title\",\"kind\",\"payload\"],\"additionalProperties\":false}}},\"required\":[\"answer\",\"citations\",\"actions\"],\"additionalProperties\":false}")),
+					Strict: true,
+				},
+			},
 		})
 		log.Debugf("Final response: %+v", finalResp)
 		if err != nil {
 			return &AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
-		response := parseResponse(finalResp.Choices[0].Message.Content)
-		log.Debugf("Response after parsing: %+v", response)
-		conversation = append(conversation, openai.ChatCompletionMessage{
-			Role:    finalResp.Choices[0].Message.Role,
-			Content: response.Answer,
-		})
-		kialiCache.SetAIConversation(req.ConversationID, &conversation)
-		return response, http.StatusOK
+		response = parseResponse(finalResp.Choices[0].Message.Content)
+		role = finalResp.Choices[0].Message.Role
+	} else {
+		response = parseResponse(msg.Content)
 	}
-	response := parseResponse(msg.Content)
 	log.Debugf("Response after parsing: %+v", response)
 	conversation = append(conversation, openai.ChatCompletionMessage{
-		Role:    msg.Role,
+		Role:   role,
 		Content: response.Answer,
 	})
-	kialiCache.SetAIConversation(req.ConversationID, &conversation)
+	kialiCache.SetAIConversation(req.Username, req.ConversationID, &conversation)
 	return response, http.StatusOK
 }
 
