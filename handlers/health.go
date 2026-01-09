@@ -77,28 +77,42 @@ func ClusterHealth(
 			}
 
 			healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
-			switch p.Type {
-			case "app":
-				health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
-				if err != nil {
-					handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
-					return
+
+			// Determine which types to fetch
+			typesToFetch := []string{}
+			if p.Type == "" {
+				// Empty type means fetch all types
+				typesToFetch = []string{"app", "service", "workload"}
+			} else {
+				// Specific type requested
+				typesToFetch = []string{p.Type}
+			}
+
+			// Fetch health for each requested type
+			for _, healthType := range typesToFetch {
+				switch healthType {
+				case "app":
+					health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
+					if err != nil {
+						handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
+						return
+					}
+					result.AppHealth[ns] = &health
+				case "service":
+					health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
+					if err != nil {
+						handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
+						return
+					}
+					result.ServiceHealth[ns] = &health
+				case "workload":
+					health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
+					if err != nil {
+						handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
+						return
+					}
+					result.WorkloadHealth[ns] = &health
 				}
-				result.AppHealth[ns] = &health
-			case "service":
-				health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
-				if err != nil {
-					handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
-					return
-				}
-				result.ServiceHealth[ns] = &health
-			case "workload":
-				health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
-				if err != nil {
-					handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
-					return
-				}
-				result.WorkloadHealth[ns] = &health
 			}
 		}
 		RespondWithJSON(w, http.StatusOK, result)
@@ -142,10 +156,10 @@ func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request, var
 // swagger:parameters namespaceHealth
 type namespaceHealthParams struct {
 	baseHealthParams
-	// The type of health, "app", "service" or "workload".
+	// The type of health, "app", "service" or "workload". Empty string returns all types.
 	//
 	// in: query
-	// pattern: ^(app|service|workload)$
+	// pattern: ^(app|service|workload|)$
 	// default: app
 	Type string `json:"type"`
 }
@@ -153,14 +167,17 @@ type namespaceHealthParams struct {
 func (p *namespaceHealthParams) extract(conf *config.Config, r *http.Request, namespace string) (bool, string) {
 	vars := mux.Vars(r)
 	p.baseExtract(conf, r, vars)
-	p.Type = "app"
 	p.Namespace = namespace
 	queryParams := r.URL.Query()
-	if healthType := queryParams.Get("type"); healthType != "" {
+	healthType := queryParams.Get("type")
+	if healthType != "" {
 		if healthType != "app" && healthType != "service" && healthType != "workload" {
-			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload']"
+			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload'] or empty to get all types"
 		}
 		p.Type = healthType
+	} else {
+		// Empty string means fetch all types
+		p.Type = ""
 	}
 	return true, ""
 }

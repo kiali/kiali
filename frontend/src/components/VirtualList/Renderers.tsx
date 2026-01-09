@@ -363,7 +363,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
 ) => {
   let path = window.location.pathname;
   path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
-  const labelFilt = path === 'overview' ? NsLabelFilter : labelFilter;
+  const labelFilt = path === 'overview' || path === 'namespaces' ? NsLabelFilter : labelFilter;
   const filters = FilterHelper.getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
 
   return (
