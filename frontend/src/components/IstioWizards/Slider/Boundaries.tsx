@@ -6,6 +6,7 @@ import { classes } from 'typestyle';
 
 type BoundariesProps = {
   max: number;
+  maxWidth?: string;
   min: number;
   mirrored: boolean;
   reversed: boolean;
@@ -22,7 +23,7 @@ export class Boundaries extends React.Component<BoundariesProps, {}> {
   };
 
   render(): React.ReactNode {
-    const { children, min, max, reversed, showBoundaries, slider } = this.props;
+    const { children, min, max, maxWidth, reversed, showBoundaries, slider } = this.props;
 
     const minElement = <b>{min}</b>;
     const maxElement = <b>{max}</b>;
@@ -41,7 +42,7 @@ export class Boundaries extends React.Component<BoundariesProps, {}> {
     }
 
     return (
-      <div className={classes(sliderCss.style, sliderStyle, this.props.mirrored && sliderMirroredStyle)}>
+      <div className={classes(sliderCss.style, sliderStyle(maxWidth), this.props.mirrored && sliderMirroredStyle)}>
         {leftBoundary}
         {slider}
         {rightBoundary}

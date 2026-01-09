@@ -14,7 +14,7 @@ Feature: Service Details Wizard: Request Routing
   Scenario: Create a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
-    And user sees the "Create Request Routing" wizard
+    And user sees the "Create request routing" wizard
     And user clicks in the "Request Matching" tab
     And user clicks in the "headers" request matching dropdown
     And user types "end-user" in the matching header input
@@ -60,7 +60,7 @@ Feature: Service Details Wizard: Request Routing
   Scenario: Update a Request Routing scenario
     When user opens the namespace "bookinfo" and "reviews" service details page
     And user clicks in the "Request Routing" actions
-    And user sees the "Update Request Routing" wizard
+    And user sees the "Update request routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
@@ -88,7 +88,7 @@ Feature: Service Details Wizard: Request Routing
     When user deletes Request Routing named "details" and the resource is no longer available in any cluster
     When user opens the namespace "bookinfo" and the "east" "details" service details page
     And user clicks in the "Request Routing" actions
-    And user sees the "Create Request Routing" wizard
+    And user sees the "Create request routing" wizard
     And user clicks in the "Request Matching" tab
     And user adds a route
     And user previews the configuration
@@ -102,7 +102,7 @@ Feature: Service Details Wizard: Request Routing
     When user deletes gateway named "ratings-gateway" and the resource is no longer available in any cluster
     And user is at the details page for the "service" "bookinfo/details" located in the "east" cluster
     And user clicks in the "Request Routing" actions
-    And user sees the "Update Request Routing" wizard
+    And user sees the "Update request routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway
@@ -127,7 +127,7 @@ Feature: Service Details Wizard: Request Routing
     When user deletes Request Routing named "ratings" and the resource is no longer available in any cluster
     When user opens the namespace "bookinfo" and the "west" "ratings" service details page
     And user clicks in the "Request Routing" actions
-    And user sees the "Create Request Routing" wizard
+    And user sees the "Create request routing" wizard
     And user clicks in the "Request Matching" tab
     And user adds a route
     And user previews the configuration
@@ -143,7 +143,7 @@ Feature: Service Details Wizard: Request Routing
     When user deletes gateway named "ratings-gateway" and the resource is no longer available in any cluster
     And user is at the details page for the "service" "bookinfo/ratings" located in the "west" cluster
     And user clicks in the "Request Routing" actions
-    And user sees the "Update Request Routing" wizard
+    And user sees the "Update request routing" wizard
     And user clicks on Advanced Options
     And user clicks in the "Gateways" tab
     And user clicks on Add Gateway

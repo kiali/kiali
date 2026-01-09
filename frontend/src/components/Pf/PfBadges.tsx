@@ -57,7 +57,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   MirroredWorkload: {
     badge: 'MI',
     tt: 'Mirrored Workload',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple200 }
   } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
   NetworkTraffic: {
@@ -109,7 +109,7 @@ export const kialiBadge = kialiStyle({
   color: PFColors.White,
   borderRadius: '20px',
   flexShrink: 0,
-  fontFamily: "var(--pf-t--global--font--family--body)",
+  fontFamily: 'var(--pf-t--global--font--family--body)',
   fontSize: 'var(--kiali-global--font-size)',
   lineHeight: '16px',
   marginRight: '4px',
@@ -124,7 +124,7 @@ export const kialiBadgeSmall = kialiStyle({
   color: PFColors.White,
   borderRadius: '20px',
   flexShrink: 0,
-  fontFamily: "var(--pf-t--global--font--family--body)",
+  fontFamily: 'var(--pf-t--global--font--family--body)',
   fontSize: '12px',
   lineHeight: '13px',
   marginRight: '5px',
