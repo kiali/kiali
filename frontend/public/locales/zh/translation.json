@@ -182,6 +182,7 @@
   "Fault Injection not valid": "故障注入无效",
   "Filter": "Filter",
   "Filter by Application Health": "Filter by Application Health",
+  "Filter by Category": "Filter by Category",
   "Filter by Health": "Filter by Health",
   "Filter by mTLS": "Filter by mTLS",
   "Filter by Namespace": "Filter by Namespace",

@@ -78,6 +78,19 @@ const healthValues: FilterValue[] = [
   { id: HEALTHY.name, title: HEALTHY.name }
 ];
 
+export enum NamespaceCategory {
+  DATA_PLANE = 'Data plane',
+  CONTROL_PLANE = 'Control plane'
+}
+
+export const getCategoryText = (isControlPlane?: boolean): string => {
+  return isControlPlane ? t(NamespaceCategory.CONTROL_PLANE) : t(NamespaceCategory.DATA_PLANE);
+};
+
+export const getCategoryValue = (isControlPlane?: boolean): string => {
+  return isControlPlane ? NamespaceCategory.CONTROL_PLANE : NamespaceCategory.DATA_PLANE;
+};
+
 const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters => {
   if (healthFilters.filters.length === 0) {
     return {
@@ -162,4 +175,31 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   }
 };
 
-export const availableFilters: RunnableFilter<NamespaceInfo>[] = [nameFilter, healthFilter, mtlsFilter, labelFilter];
+const categoryValues: FilterValue[] = [
+  { id: NamespaceCategory.DATA_PLANE, title: t(NamespaceCategory.DATA_PLANE) },
+  { id: NamespaceCategory.CONTROL_PLANE, title: t(NamespaceCategory.CONTROL_PLANE) }
+];
+
+export const categoryFilter: RunnableFilter<NamespaceInfo> = {
+  category: t('Category'),
+  placeholder: t('Filter by Category'),
+  filterType: AllFilterTypes.select,
+  action: FILTER_ACTION_APPEND,
+  filterValues: categoryValues,
+  run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
+    if (filters.filters.length === 0) {
+      return true;
+    }
+
+    const categoryValue = getCategoryValue(ns.isControlPlane);
+    return filters.filters.some(f => f.value === categoryValue);
+  }
+};
+
+export const availableFilters: RunnableFilter<NamespaceInfo>[] = [
+  nameFilter,
+  healthFilter,
+  categoryFilter,
+  mtlsFilter,
+  labelFilter
+];

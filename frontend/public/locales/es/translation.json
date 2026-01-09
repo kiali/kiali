@@ -196,6 +196,7 @@
   "Fault Injection not valid": "Inyección de error no válida",
   "Filter": "Filtrar",
   "Filter by Application Health": "Filtrar por la salud de la aplicación",
+  "Filter by Category": "Filter by Category",
   "Filter by Health": "Filter by Health",
   "Filter by mTLS": "Filtrar por mTLS",
   "Filter by Namespace": "Filtrar por el espacio de nombres",
