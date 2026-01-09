@@ -420,11 +420,6 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
 
     # This envvar is used by the backend tests
     export URL="${KIALI_URL}"
-
-    # Set Prometheus URL for tests that query Prometheus directly
-    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/prometheus
-    PROMETHEUS_IP="$(kubectl get svc prometheus -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-    export PROMETHEUS_URL="http://${PROMETHEUS_IP}:9090"
   fi
 
   if [ "${SETUP_ONLY}" == "true" ]; then
