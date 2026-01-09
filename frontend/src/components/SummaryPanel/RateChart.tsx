@@ -64,8 +64,8 @@ export class RateChart extends React.Component<Props, State> {
 
     const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
     const verticalAxisStyle = singleBar
-      ? { tickLabels: { fontSize: fontSize } }
-      : { tickLabels: { fontSize: fontSize, padding: 2 } };
+      ? { tickLabels: { fontSize: fontSize, textAnchor: 'end' as const, padding: 5 } }
+      : { tickLabels: { fontSize: fontSize, textAnchor: 'end' as const, padding: 5 } };
 
     return (
       <Chart
@@ -141,11 +141,11 @@ export const renderRateChartHttp = (
   percentNR: number
 ): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
-    { name: 'OK', x: 'rate', y: percent2xx, color: PFColors.Success },
-    { name: '3xx', x: 'rate', y: percent3xx, color: PFColors.Info },
-    { name: '4xx', x: 'rate', y: percent4xx, color: PFColors.ChartWarning }, // 4xx client error, use close but distinct color
-    { name: '5xx', x: 'rate', y: percent5xx, color: PFColors.ChartDanger },
-    { name: 'No Response', x: 'rate', y: percentNR, color: PFColors.ChartOther } // No Response, just use black
+    { name: 'OK', x: 'Rate', y: percent2xx, color: PFColors.Success },
+    { name: '3xx', x: 'Rate', y: percent3xx, color: PFColors.Info },
+    { name: '4xx', x: 'Rate', y: percent4xx, color: PFColors.ChartWarning }, // 4xx client error, use close but distinct color
+    { name: '5xx', x: 'Rate', y: percent5xx, color: PFColors.ChartDanger },
+    { name: 'No Response', x: 'Rate', y: percentNR, color: PFColors.ChartOther } // No Response, just use black
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -161,8 +161,8 @@ export const renderRateChartHttp = (
 
 export const renderRateChartGrpc = (percentOK: number, percentErr: number): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
-    { name: 'OK', x: 'rate', y: percentOK, color: PFColors.Success },
-    { name: 'Err', x: 'rate', y: percentErr, color: PFColors.Danger }
+    { name: 'OK', x: 'Rate', y: percentOK, color: PFColors.Success },
+    { name: 'Err', x: 'Rate', y: percentErr, color: PFColors.Danger }
   ].map(dp => {
     return {
       datapoints: [dp],
