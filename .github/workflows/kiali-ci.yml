@@ -179,3 +179,12 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  mcp_contract_tests:
+    name: MCP Contract Tests (kubernetes-mcp-server)
+    uses: ./.github/workflows/mcp-contract-tests.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ""
