@@ -63,9 +63,7 @@ export class RateChart extends React.Component<Props, State> {
     const fontSizePx = cssVariables.kialiFontSizePx;
 
     const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
-    const verticalAxisStyle = singleBar
-      ? { tickLabels: { fontSize: fontSize, textAnchor: 'end' as const, padding: 5 } }
-      : { tickLabels: { fontSize: fontSize, textAnchor: 'end' as const, padding: 5 } };
+    const verticalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 2 } };
 
     return (
       <Chart
