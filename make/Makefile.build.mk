@@ -52,7 +52,7 @@ build-ui-test: build-ui
 # Uses .air.toml configuration file. Set KIALI_RUN_ARGS to append additional arguments.
 run-backend: go-check .ensure-air-exists
 	@echo "Starting Kiali backend with air (hot reloading enabled)..."
-	air -c ${ROOTDIR}/.air.toml ${KIALI_RUN_ARGS:+-- run ${KIALI_RUN_ARGS}}
+	air -c ${ROOTDIR}/.air.toml run ${KIALI_RUN_ARGS}
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch: go-check

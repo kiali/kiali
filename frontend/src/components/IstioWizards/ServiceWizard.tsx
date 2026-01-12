@@ -854,16 +854,23 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     const titleAction =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
       this.props.type.length > 0
         ? this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type])}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type])}`
+          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
+
+    const isTrafficShifting =
+      this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING;
+
+    const modalDescription = isTrafficShifting
+      ? t('Determine how traffic is distributed across different workloads.')
+      : undefined;
 
     return (
       <>
@@ -893,8 +900,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         </Modal>
 
         <Modal
-          width={'75%'}
+          maxWidth={'641px'}
+          variant={ModalVariant.medium}
           title={titleModal}
+          description={modalDescription}
           aria-label={titleModal}
           data-test={`${this.props.type}_modal`}
           isOpen={this.state.showWizard}
@@ -912,7 +921,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               onClick={this.onPreview}
               data-test="preview"
             >
-              {t('Preview')}
+              {t('Create')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               {t('Cancel')}
@@ -1010,7 +1019,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
+              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               toggleId="advanced-options-expandable"
               onToggle={() => {
@@ -1088,7 +1097,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             <ExpandableSection
               className={advancedOptionsStyle}
               isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('AdvancedOptions')}`}
+              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
               contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
               onToggle={() => {
                 this.setState({

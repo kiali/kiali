@@ -41,6 +41,7 @@ const innerScrollContainerStyle = kialiStyle({
 });
 
 export interface SortableTh extends ThProps {
+  headerContent?: React.ReactNode;
   sortable: boolean;
 }
 
@@ -139,8 +140,9 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
               width={column.width}
               sort={getSortParams(column, index)}
               info={column.info}
+              className={column.className}
             >
-              {column.title}
+              {'headerContent' in column ? column.headerContent ?? column.title : column.title}
             </Th>
           ))}
         </Tr>
