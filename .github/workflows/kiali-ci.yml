@@ -74,7 +74,6 @@ jobs:
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
@@ -149,3 +148,4 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ""
+
