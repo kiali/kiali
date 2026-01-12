@@ -61,7 +61,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 	conf.ResolvedTLSPolicy = policy
 	config.Set(conf)
-	log.Infof("TLS policy source [%s] min_version [%x] max_version [%x] cipher_suites count=[%d]", policy.Source, policy.MinVersion, policy.MaxVersion, len(policy.CipherSuites))
+	log.Infof("TLS policy source [%s] min_version [%s] max_version [%s] cipher_suites count=[%d]", policy.Source, policy.MinVersionName(), policy.MaxVersionName(), len(policy.CipherSuites))
 
 	mgr, kubeCaches, err := newManager(ctx, conf, logger, clientFactory)
 	if err != nil {

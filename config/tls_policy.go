@@ -17,6 +17,8 @@ type TLSPolicy struct {
 // tlsVersionName returns a human-readable name for a TLS version constant.
 func tlsVersionName(v uint16) string {
 	switch v {
+	case 0:
+		return "not set"
 	case tls.VersionTLS10:
 		return "TLS 1.0"
 	case tls.VersionTLS11:
@@ -28,6 +30,16 @@ func tlsVersionName(v uint16) string {
 	default:
 		return "unknown"
 	}
+}
+
+// MinVersionName returns a human-readable name for the minimum TLS version.
+func (p TLSPolicy) MinVersionName() string {
+	return tlsVersionName(p.MinVersion)
+}
+
+// MaxVersionName returns a human-readable name for the maximum TLS version.
+func (p TLSPolicy) MaxVersionName() string {
+	return tlsVersionName(p.MaxVersion)
 }
 
 // ApplyTo applies the policy to the given tls.Config, preserving existing
