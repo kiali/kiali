@@ -289,7 +289,7 @@ const waitForWaypointTracesInApi = (
   namespace: string,
   workload: string,
   clusterName?: string,
-  maxRetries = 10,
+  maxRetries = 30,
   retryCount = 0
 ): void => {
   if (retryCount >= maxRetries) {
