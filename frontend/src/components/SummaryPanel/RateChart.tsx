@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-	Chart,
-	ChartBar,
-	ChartStack,
-	ChartAxis,
-	ChartTooltip,
-	ChartLegend
-} from '@patternfly/react-charts/victory';
+import { Chart, ChartBar, ChartStack, ChartAxis, ChartTooltip, ChartLegend } from '@patternfly/react-charts/victory';
 
 import { PFColors } from '../../components/Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
@@ -19,8 +12,8 @@ export const legendTopMargin = 20;
 
 type Props = {
   baseName: string;
-  series: VCLines<RichDataPoint>;
   height: number;
+  series: VCLines<RichDataPoint>;
   xLabelsWidth: number;
 };
 
@@ -34,7 +27,7 @@ export class RateChart extends React.Component<Props, State> {
     this.state = { hiddenSeries: new Set() };
   }
 
-  render() {
+  render(): React.ReactNode {
     const singleBar = this.props.series[0].datapoints.length === 1;
     let height = this.props.height + legendTopMargin + legendHeight;
     const padding = {
@@ -46,9 +39,9 @@ export class RateChart extends React.Component<Props, State> {
     const events: VCEvent[] = [];
     this.props.series.forEach((_, idx) => {
       addLegendEvent(events, {
-        legendName: this.props.baseName + '-legend',
+        legendName: `${this.props.baseName}-legend`,
         idx: idx,
-        serieID: [this.props.baseName + '-bars-' + idx],
+        serieID: [`${this.props.baseName}-bars-${idx}`],
         onClick: __ => {
           // Same event can be fired for several targets, so make sure we only apply it once
           if (!this.state.hiddenSeries.delete(idx)) {
@@ -70,9 +63,7 @@ export class RateChart extends React.Component<Props, State> {
     const fontSizePx = cssVariables.kialiFontSizePx;
 
     const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
-    const verticalAxisStyle = singleBar
-      ? { tickLabels: { fontSize: fontSize } }
-      : { tickLabels: { fontSize: fontSize, padding: 2 } };
+    const verticalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 2 } };
 
     return (
       <Chart
@@ -95,8 +86,8 @@ export class RateChart extends React.Component<Props, State> {
             }
             return (
               <ChartBar
-                key={this.props.baseName + '-bars-' + idx}
-                name={this.props.baseName + '-bars-' + idx}
+                key={`${this.props.baseName}-bars-${idx}`}
+                name={`${this.props.baseName}-bars-${idx}`}
                 data={datum.datapoints.map(dp => {
                   return {
                     ...dp,
@@ -121,7 +112,7 @@ export class RateChart extends React.Component<Props, State> {
         />
         <ChartLegend
           style={{ labels: { fontSize: Number(fontSizePx) } }}
-          name={this.props.baseName + '-legend'}
+          name={`${this.props.baseName}-legend`}
           data={this.props.series.map((s, idx) => {
             if (this.state.hiddenSeries.has(idx)) {
               return { ...s.legendItem, symbol: { fill: PFColors.Color200 } };
@@ -132,8 +123,8 @@ export class RateChart extends React.Component<Props, State> {
           y={height - legendHeight}
           height={legendHeight}
           width={SUMMARY_PANEL_CHART_WIDTH}
-          gutter={14}
-          symbolSpacer={8}
+          gutter={10}
+          symbolSpacer={6}
         />
       </Chart>
     );
@@ -146,13 +137,13 @@ export const renderRateChartHttp = (
   percent4xx: number,
   percent5xx: number,
   percentNR: number
-) => {
+): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
-    { name: 'OK', x: 'rate', y: percent2xx, color: PFColors.Success },
-    { name: '3xx', x: 'rate', y: percent3xx, color: PFColors.Info },
-    { name: '4xx', x: 'rate', y: percent4xx, color: PFColors.ChartWarning }, // 4xx client error, use close but distinct color
-    { name: '5xx', x: 'rate', y: percent5xx, color: PFColors.ChartDanger },
-    { name: 'No Response', x: 'rate', y: percentNR, color: PFColors.ChartOther } // No Response, just use black
+    { name: 'OK', x: 'Rate', y: percent2xx, color: PFColors.Success },
+    { name: '3xx', x: 'Rate', y: percent3xx, color: PFColors.Info },
+    { name: '4xx', x: 'Rate', y: percent4xx, color: PFColors.ChartWarning }, // 4xx client error, use close but distinct color
+    { name: '5xx', x: 'Rate', y: percent5xx, color: PFColors.ChartDanger },
+    { name: 'No Response', x: 'Rate', y: percentNR, color: PFColors.ChartOther } // No Response, just use black
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -163,13 +154,13 @@ export const renderRateChartHttp = (
       }
     };
   });
-  return <RateChart baseName={'rate-http'} height={80} xLabelsWidth={0} series={vcLines} />;
+  return <RateChart baseName={'rate-http'} height={80} xLabelsWidth={25} series={vcLines} />;
 };
 
-export const renderRateChartGrpc = (percentOK: number, percentErr: number) => {
+export const renderRateChartGrpc = (percentOK: number, percentErr: number): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
-    { name: 'OK', x: 'rate', y: percentOK, color: PFColors.Success },
-    { name: 'Err', x: 'rate', y: percentErr, color: PFColors.Danger }
+    { name: 'OK', x: 'Rate', y: percentOK, color: PFColors.Success },
+    { name: 'Err', x: 'Rate', y: percentErr, color: PFColors.Danger }
   ].map(dp => {
     return {
       datapoints: [dp],
@@ -194,7 +185,7 @@ export const renderInOutRateChartHttp = (
   percent4xxOut: number,
   percent5xxOut: number,
   percentNROut: number
-) => {
+): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
     {
       name: 'OK',
@@ -258,7 +249,7 @@ export const renderInOutRateChartGrpc = (
   percentErrIn: number,
   percentOKOut: number,
   percentErrOut: number
-) => {
+): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
     {
       name: 'OK',
