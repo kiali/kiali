@@ -289,7 +289,7 @@ const waitForWaypointTracesInApi = (
   namespace: string,
   workload: string,
   clusterName?: string,
-  maxRetries = 30,
+  maxRetries = 10,
   retryCount = 0
 ): void => {
   if (retryCount >= maxRetries) {
@@ -329,7 +329,7 @@ const waitForWaypointTracesInApi = (
 };
 
 Then('the waypoint tracing data is ready', () => {
-  waitForWaypointTracesInApi('bookinfo', 'waypoint');
+  waitForWaypointTracesInApi('bookinfo', 'bookinfo-gateway-istio');
 });
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
