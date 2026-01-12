@@ -74,9 +74,49 @@ jobs:
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  integration_tests_backend:
+    name: Run backend integration tests
+    uses: ./.github/workflows/integration-tests-backend.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_1:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-1.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_2:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-2.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_optional:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
+    needs: [build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_ambient_multi_primary:
+    name: Run frontend Ambient Multi-Primary integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
     needs: [build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -148,4 +188,5 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ""
+
 
