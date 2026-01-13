@@ -33,4 +33,27 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
     And the waypoint node "waypoint" is visible in the graph for the "west" cluster
     And user sees graph workloads from both clusters
 
+  Scenario: [Traffic Graph] Verify L7 waypoint traffic across clusters
+    Given user is at the "graph" page
+    When user graphs "bookinfo" namespaces
+    And user selects "WORKLOAD" graph type
+    Then user sees the "bookinfo" namespace
+    When user "opens" traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "ambientWaypoint" traffic option
+    And user "closes" traffic menu
+    Then 9 edges appear in the graph
+    And there is traffic from cluster "east" and cluster "west"
+    # TODO: At the moment (Istio 1.28) The telemetry is incomplete, no interconnection between edges in the clusters
+    # Once is fixed, validate the interconnection
+
+  Scenario: [Waypoint enrolled] Verify productpage-v1 workload is enrolled in east cluster
+    Given user is at the details page for the "workload" "bookinfo/productpage-v1" located in the "east" cluster
+    Then the user sees the L7 "waypoint" link
+
+  Scenario: [Waypoint enrolled] Verify ratings-v1 workload is enrolled in west cluster
+    Given user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "west" cluster
+    Then the user sees the L7 "waypoint" link
+    And the waypoint link points to the "west" cluster
+
 

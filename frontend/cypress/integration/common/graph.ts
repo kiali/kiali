@@ -291,3 +291,44 @@ Then(
       });
   }
 );
+
+Then('there is traffic from cluster {string} and cluster {string}', (cluster1: string, cluster2: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges, nodes } = elems(controller);
+
+      // Only consider edges that actually have traffic.
+      const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic !== undefined);
+
+      const nodeById = new Map(nodes.map(n => [n.getId(), n]));
+      const clustersWithTraffic = new Set<string>();
+
+      trafficEdges.forEach(edge => {
+        const srcId = edge.getData()?.source as string | undefined;
+        const dstId = edge.getData()?.target as string | undefined;
+
+        const srcNode = srcId ? nodeById.get(srcId) : undefined;
+        const dstNode = dstId ? nodeById.get(dstId) : undefined;
+
+        const srcCluster = srcNode?.getData()?.cluster as string | undefined;
+        const dstCluster = dstNode?.getData()?.cluster as string | undefined;
+
+        if (srcCluster) {
+          clustersWithTraffic.add(srcCluster);
+        }
+        if (dstCluster) {
+          clustersWithTraffic.add(dstCluster);
+        }
+      });
+
+      expect(Array.from(clustersWithTraffic)).to.include(cluster1);
+      expect(Array.from(clustersWithTraffic)).to.include(cluster2);
+    });
+});

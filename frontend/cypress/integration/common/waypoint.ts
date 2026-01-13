@@ -48,7 +48,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     throw new Error(`Condition not met after ${maxRetries} retries`);
   }
 
-  let totalEdges = 10;
+  let totalEdges = 9;
   if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
   }
@@ -233,6 +233,21 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
   cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click({ force: true });
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
+});
+
+Then('the waypoint link points to the {string} cluster', (cluster: string) => {
+  cy.get(`[data-test=waypoint-link]`).should('exist');
+
+  cy.get(`[data-test=waypoint-link]`).then($waypointLink => {
+    // Depending on the component, the data-test might be set on the <a> itself
+    // or on a container that contains the <a>.
+    const $anchor = $waypointLink.filter('a').add($waypointLink.find('a')).first();
+
+    expect($anchor.length, 'waypoint link anchor').to.be.greaterThan(0);
+
+    const href = $anchor.attr('href') ?? '';
+    expect(href).to.include(`clusterName=${cluster}`);
+  });
 });
 
 Then('the user sees the {string} option in the pod tooltip, and is {string}', (option: string, value: string) => {
