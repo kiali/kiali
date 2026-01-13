@@ -49,7 +49,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   }
 
   let totalEdges = 10;
-  if (ambientTraffic == 'waypoint') {
+  if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
   }
   cy.request({
