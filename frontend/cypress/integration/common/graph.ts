@@ -262,3 +262,32 @@ Then('user sees graph workloads from both clusters', () => {
       assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
     });
 });
+
+Then(
+  'the waypoint node {string} is visible in the graph for the {string} cluster',
+  (workload: string, cluster: string) => {
+    cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+      .should('have.length', '1')
+      .then($graph => {
+        const { state } = $graph[0];
+
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const matches = nodes.filter(node => {
+          const data = node.getData();
+          return (
+            data.isBox === undefined &&
+            data.cluster === cluster &&
+            data.workload === workload &&
+            (data.isWaypoint === true || data.isWaypoint === 'true')
+          );
+        });
+
+        expect(matches.length).to.be.at.least(1);
+      });
+  }
+);

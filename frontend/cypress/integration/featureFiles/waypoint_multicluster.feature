@@ -1,0 +1,36 @@
+@waypoint-multicluster
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
+
+  Validates that a waypoint proxy is installed in an ambient multi-primary setup and that the traffic graph
+  can correctly show waypoint proxies across clusters.
+
+  Background:
+    Given user is at administrator perspective
+    And the waypoint "waypoint" in namespace "bookinfo" in cluster "east" is healthy
+    And the waypoint "waypoint" in namespace "bookinfo" in cluster "west" is healthy
+
+  Scenario: [Setup] namespace is labeled with waypoint label
+    Then "bookinfo" namespace is labeled with the waypoint label for "kind-east" and "kind-west" contexts
+    And the graph page has enough data for L7
+    And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
+
+  Scenario: [Traffic Graph] Waypoint proxies are hidden by default and can be shown across clusters
+    Given user is at the "graph" page
+    And "bookinfo" namespace is labeled with the waypoint label
+    When user graphs "bookinfo" namespaces
+    And user selects "WORKLOAD" graph type
+    Then user sees the "bookinfo" namespace
+    And the "waypoint" node "doesn't" exists
+    Then user "opens" traffic menu
+    And user "enables" "ambient" traffic option
+    And user "enables" "ambientTotal" traffic option
+    And user "closes" traffic menu
+    When user "opens" display menu
+    And user "enables" "waypoint proxies" option
+    And user "closes" display menu
+    Then the waypoint node "waypoint" is visible in the graph for the "east" cluster
+    And the waypoint node "waypoint" is visible in the graph for the "west" cluster
+    And user sees graph workloads from both clusters
+
+

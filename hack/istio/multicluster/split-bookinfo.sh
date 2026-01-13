@@ -12,6 +12,67 @@ source ${SCRIPT_DIR}/env.sh $*
 
 set -euo pipefail
 
+create_waypoint() {
+
+  local waypoint_yaml
+
+  waypoint_yaml=$(mktemp)
+  cat <<EOF > "${waypoint_yaml}"
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/waypoint-for: service
+  name: waypoint
+  namespace: ${BOOKINFO_NAMESPACE}
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+EOF
+
+  # Apply waypoint Gateway to both clusters
+  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" apply -f "${waypoint_yaml}"
+
+  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" apply -f "${waypoint_yaml}"
+
+  # Label waypoint service in both clusters (best-effort; the service may not exist immediately)
+  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite || true
+
+  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite || true
+}
+
+configure_waypoint() {
+  echo "==== CONFIGURING WAYPOINT FOR BOOKINFO NAMESPACE IN BOTH CLUSTERS"
+
+  # Label bookinfo namespace in both clusters
+  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
+
+  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
+  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
+
+  rm -f "${waypoint_yaml}"
+  echo "==== WAYPOINT CONFIGURATION COMPLETE"
+}
+
+# "only-waypoint" mode: used by tests to reuse the waypoint setup without reinstalling bookinfo or changing workloads.
+if [ "${ONLY_WAYPOINT}" == "true" ]; then
+  if [ "${AMBIENT}" != "true" ]; then
+    echo "ERROR: --only-waypoint is only valid when --ambient is true"
+    exit 1
+  fi
+  create_waypoint
+  configure_waypoint
+  exit 0
+fi
+
 if [ "${BOOKINFO_ENABLED}" != "true" ]; then
   echo "Will not install bookinfo demo"
   return 0
@@ -141,57 +202,16 @@ if [ "${AMBIENT}" != "true" ]; then
     create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
   fi
 else
+  # This will just create the waypoint, but won't be configured
+  create_waypoint
+
   ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc ratings -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
   ${CLIENT_EXE} label --context="${CLUSTER2_CONTEXT}" svc reviews -n ${BOOKINFO_NAMESPACE} istio.io/global="true"
 fi
 
 # Configure waypoint for bookinfo namespace if requested
 if [ "${AMBIENT}" == "true" ] && [ "${WAYPOINT}" == "true" ]; then
-  echo "==== CONFIGURING WAYPOINT FOR BOOKINFO NAMESPACE IN BOTH CLUSTERS"
-  
-  # Create waypoint Gateway YAML
-  WAYPOINT_YAML=$(mktemp)
-  cat <<EOF > "$WAYPOINT_YAML"
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  labels:
-    istio.io/waypoint-for: service
-  name: waypoint
-  namespace: ${BOOKINFO_NAMESPACE}
-spec:
-  gatewayClassName: istio-waypoint
-  listeners:
-  - name: mesh
-    port: 15008
-    protocol: HBONE
-EOF
-
-  # Apply waypoint Gateway to both clusters
-  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" apply -f "$WAYPOINT_YAML"
-  
-  echo "==== APPLYING WAYPOINT GATEWAY TO CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" apply -f "$WAYPOINT_YAML"
-  
-  # Label bookinfo namespace in both clusters
-  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
-  
-  echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
-  
-  # Label waypoint service in both clusters
-  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER1_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite
-  
-  echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
-  ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite
-  
-  # Clean up temp file
-  rm -f "$WAYPOINT_YAML"
-  
-  echo "==== WAYPOINT CONFIGURATION COMPLETE"
+  configure_waypoint
 fi
 
 echo "Bookinfo application will be available soon at http://${INGRESS_HOST}/productpage"

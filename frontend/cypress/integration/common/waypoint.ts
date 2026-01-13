@@ -11,7 +11,7 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
     throw new Error(`Condition not met after ${maxRetries} retries`);
   }
 
-  cy.request({ method: 'GET', url: '/api/namespaces' }).then(response => {
+  cy.request({ method: 'GET', url: 'api/namespaces' }).then(response => {
     expect(response.status).to.equal(200);
 
     const ns = response.body;
@@ -39,24 +39,46 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   });
 };
 
-const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCount = 0): void => {
+const waitForBookinfoWaypointTrafficGeneratedInGraph = (
+  ambientTraffic: string,
+  maxRetries = 30,
+  retryCount = 0
+): void => {
   if (retryCount >= maxRetries) {
     throw new Error(`Condition not met after ${maxRetries} retries`);
   }
 
+  let totalEdges = 10;
+  if (ambientTraffic == 'waypoint') {
+    totalEdges = 8;
+  }
   cy.request({
     method: 'GET',
-    url:
-      '/api/namespaces/graph?duration=60s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&ambientTraffic=waypoint&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+    url: 'api/namespaces/graph',
+    qs: {
+      duration: '60s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: false,
+      ambientTraffic: ambientTraffic,
+      appenders: 'deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: 'bookinfo'
+    }
   }).then(response => {
-    expect(response.status).to.equal(200);
+    // In some environments the response status can be wrapped; normalize to a number to avoid false negatives.
+    expect(Number(response.status)).to.equal(200);
     const elements = response.body.elements;
 
-    if (elements?.edges?.length > 10) {
+    if (elements?.edges?.length > totalEdges) {
       return;
     } else {
       return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(maxRetries, retryCount + 1);
+        return waitForBookinfoWaypointTrafficGeneratedInGraph(ambientTraffic, maxRetries, retryCount + 1);
       });
     }
   });
@@ -75,9 +97,54 @@ const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   );
 };
 
+const waitForWorkloadTracesInApi = (
+  namespace: string,
+  workload: string,
+  clusterName?: string,
+  maxRetries = 18,
+  retryCount = 0
+): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, workload=${workload} cluster=${
+        clusterName ?? ''
+      })`
+    );
+  }
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    // last 10 minutes (micros)
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+  if (clusterName) {
+    qs.clusterName = clusterName;
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `api/namespaces/${namespace}/workloads/${workload}/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const traces = response.body?.data;
+    if (Array.isArray(traces) && traces.length > 0) {
+      return;
+    }
+
+    return cy
+      .wait(10000)
+      .then(() => waitForWorkloadTracesInApi(namespace, workload, clusterName, maxRetries, retryCount + 1));
+  });
+};
+
 const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
   const maxRetries = 30;
-  let url = `/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
+  let url = `api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
   if (cluster) {
     url += `&cluster=${cluster}`;
   }
@@ -122,8 +189,31 @@ Then('{string} namespace is labeled with the waypoint label', (namespace: string
   waitForWorkloadEnrolled();
 });
 
+Then(
+  '{string} namespace is labeled with the waypoint label for {string} and {string} contexts',
+  (namespace: string, cluster1Context: string, cluster2Context: string) => {
+    cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint --context="${cluster1Context}"`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint --context="${cluster2Context}"`, {
+      failOnNonZeroExit: false
+    });
+    waitForWorkloadEnrolled();
+  }
+);
+
 Then('the graph page has enough data', () => {
-  waitForBookinfoWaypointTrafficGeneratedInGraph();
+  waitForBookinfoWaypointTrafficGeneratedInGraph('ztunnel');
+});
+
+Then('the graph page has enough data for L7', () => {
+  waitForBookinfoWaypointTrafficGeneratedInGraph('waypoint');
+});
+
+Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
+  // This is intended for the @waypoint suite only: traces can take a while to show up (ingestion delay).
+  // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
+  waitForWorkloadTracesInApi(namespace, workload);
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
