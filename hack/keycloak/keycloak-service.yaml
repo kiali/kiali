@@ -1,0 +1,19 @@
+# Service to expose Keycloak as LoadBalancer.
+# We could use ingress but we'd also need to deploy a separate ingress controller.
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: keycloak
+  labels:
+    app: keycloak
+spec:
+  type: LoadBalancer
+  ports:
+  - name: https
+    port: 443
+    targetPort: 8443
+    protocol: TCP
+  selector:
+    app.kubernetes.io/managed-by: keycloak-operator
+    app.kubernetes.io/component: server
