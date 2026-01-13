@@ -92,7 +92,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -212,7 +212,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -404,7 +404,7 @@ exports[`When both core and addon component have problems any component is in no
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -524,7 +524,7 @@ exports[`When both core and addon component have problems any component is in no
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -716,7 +716,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -836,7 +836,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -1028,7 +1028,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -1148,7 +1148,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -1364,7 +1364,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -1496,7 +1496,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -1688,7 +1688,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -1808,7 +1808,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -1988,7 +1988,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -2102,7 +2102,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
@@ -2282,7 +2282,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           />
         </React.Fragment>
         <div
-          className="kiali_f1kewvaf"
+          className="kiali_ffwk5dl"
         >
           <span>
             More info at
@@ -2396,7 +2396,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 />
               </React.Fragment>
               <div
-                className="kiali_f1kewvaf"
+                className="kiali_ffwk5dl"
               >
                 <span>
                   More info at
