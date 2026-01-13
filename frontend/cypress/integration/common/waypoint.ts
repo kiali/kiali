@@ -70,8 +70,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
       namespaces: 'bookinfo'
     }
   }).then(response => {
-    // In some environments the response status can be wrapped; normalize to a number to avoid false negatives.
-    expect(Number(response.status)).to.equal(200);
+    expect(response.status).to.equal(200);
     const elements = response.body.elements;
 
     if (elements?.edges?.length > totalEdges) {
@@ -211,7 +210,6 @@ Then('the graph page has enough data for L7', () => {
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
-  // This is intended for the @waypoint suite only: traces can take a while to show up (ingestion delay).
   // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
   waitForWorkloadTracesInApi(namespace, workload);
 });
