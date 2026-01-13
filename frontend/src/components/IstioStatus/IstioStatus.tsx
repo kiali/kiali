@@ -70,6 +70,12 @@ export const meshLinkStyle = kialiStyle({
   $nest: {
     '& > span': {
       marginRight: '0.5rem'
+    },
+    '& a': {
+      color: PFColors.Link
+    },
+    '.pf-v6-theme-dark & a': {
+      color: PFColors.Blue500
     }
   }
 });

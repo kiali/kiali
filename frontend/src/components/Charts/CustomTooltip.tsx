@@ -12,7 +12,7 @@ canvasContext.font = '14px overpass';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }): React.ReactElement => {
-  const x = props.x - 11 - props.textWidth / 2;
+  const x = props.x - 16 - props.textWidth / 2;
   const textsWithHead = props.head ? [props.head].concat(props.text) : props.text;
   const startY = yMargin + props.y - (textsWithHead.length * dy) / 2;
 
