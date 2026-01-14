@@ -63,19 +63,13 @@ const clusterStyle = kialiStyle({
   alignItems: 'center'
 });
 
-export const meshLinkStyle = kialiStyle({
+const meshLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
   marginTop: '0.75rem',
   $nest: {
     '& > span': {
       marginRight: '0.5rem'
-    },
-    '& a': {
-      color: PFColors.Link
-    },
-    '.pf-v6-theme-dark & a': {
-      color: PFColors.Blue500
     }
   }
 });
