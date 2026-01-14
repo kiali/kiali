@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Unset GIT_DIR to avoid issues when git gui sets it to a relative path
+unset GIT_DIR
+
 # Change to the repo root directory regardless of where this script is invoked from
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
