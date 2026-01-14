@@ -383,17 +383,12 @@ ensureMulticlusterApplicationsAreHealthy() {
 
     if [ "$elapsed" -ge "$timeout" ]; then
       infomsg "Timeout reached without meeting the condition."
+      infomsg "Response: ${response}"
       exit 1
     fi
 
     response=$(curl -s "$url")
-
-    # Add debug output
-    echo "DEBUG: API URL: $url"
-    echo "DEBUG: API Response: $response"
-
-    # Make jq null-safe to avoid crash
-    has_http_200=$(echo "$response" | jq '[(.applications // [])[] | select(.name=="reviews" and .cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
+    has_http_200=$(echo "$response" | jq '[.applications[]? | select(.name=="reviews" and .cluster=="west" and .health.requests.inbound.http."200" > 0)] | length > 0')
 
     if [ "$has_http_200" = "true" ]; then
       infomsg "'reviews' app in 'west' cluster is healthy enough."
