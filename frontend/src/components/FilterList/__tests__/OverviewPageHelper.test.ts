@@ -1,6 +1,6 @@
 import * as FilterHelper from '../FilterHelper';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
-import * as Filters from '../../../pages/Overview/Filters';
+import * as Filters from '../../../pages/LegacyOverview/Filters';
 import { FilterSelected } from '../../Filters/StatefulFilters';
 
 const allNamespaces: NamespaceInfo[] = [

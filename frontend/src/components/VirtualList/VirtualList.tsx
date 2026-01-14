@@ -26,7 +26,7 @@ import { Namespace } from '../../types/Namespace';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
-import * as OverviewSorts from '../../pages/Overview/Sorts';
+import * as OverviewSorts from '../../pages/LegacyOverview/Sorts';
 import * as NamespacesSorts from '../../pages/Namespaces/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';

@@ -76,7 +76,9 @@ import {
   UnknownIcon,
   UserClockIcon,
   WarningTriangleIcon,
-  ProcessAutomationIcon
+  ProcessAutomationIcon,
+  ArrowRightIcon,
+  CheckCircleIcon
 } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
@@ -103,6 +105,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   AngleLeft: (props: IconProps) => createIcon(props, AngleLeftIcon),
   AngleRight: (props: IconProps) => createIcon(props, AngleRightIcon),
   Applications: (props: IconProps) => createIcon(props, ApplicationsIcon),
+  ArrowRight: (props: IconProps) => createIcon(props, ArrowRightIcon),
   Back: (props: IconProps) => createIcon(props, ArrowLeftIcon),
   Bell: (props: IconProps) => createIcon(props, BellIcon),
   Check: (props: IconProps) => createIcon(props, CheckIcon),
@@ -159,6 +162,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Services: (props: IconProps) => createIcon(props, ServiceIcon),
   Star: (props: IconProps) => createIcon(props, StarIcon),
   Stop: (props: IconProps) => createIcon(props, StopIcon),
+  Success: (props: IconProps) => createIcon(props, CheckCircleIcon, PFColors.Success),
   Sun: (props: IconProps) => createIcon(props, SunIcon),
   Sync: (props: IconProps) => createIcon(props, SyncAltIcon),
   Tenant: (props: IconProps) => createIcon(props, TenantIcon),
@@ -182,7 +186,15 @@ export const createIcon = (
 
   const iconColor = props.color ?? colorIcon;
 
-  const iconStyle = iconColor ? kialiStyle({ color: iconColor }) : undefined;
+  const iconStyle = iconColor
+    ? kialiStyle({
+        $nest: {
+          '& svg': {
+            fill: iconColor
+          }
+        }
+      })
+    : undefined;
 
   return (
     <Icon

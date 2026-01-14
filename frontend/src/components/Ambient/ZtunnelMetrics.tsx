@@ -5,7 +5,7 @@ import { addError } from '../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { location, router } from 'app/History';
-import { DirectionType } from '../../pages/Overview/OverviewToolbar';
+import { DirectionType } from '../../pages/LegacyOverview/OverviewToolbar';
 import { serverConfig } from '../../config';
 import * as MetricsHelper from '../Metrics/Helper';
 import { Dashboard } from '../Charts/Dashboard';

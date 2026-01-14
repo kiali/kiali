@@ -1,5 +1,5 @@
 import { store } from '../../store/ConfigStore';
-import { Show } from '../../pages/Overview/OverviewPage';
+import { Show } from '../../pages/LegacyOverview/OverviewPage';
 import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
 import { HEALTHY } from '../../types/Health';
 

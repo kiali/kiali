@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { EmptyState, EmptyStateBody, EmptyStateVariant,  } from '@patternfly/react-core';
+import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
@@ -26,7 +26,9 @@ export class EmptyOverview extends React.Component<EmptyOverviewProps, EmptyOver
   render(): React.ReactNode {
     if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('Manual refresh required')}
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('Manual refresh required')}
           id="empty-vl-manual"
           data-test="manual-refresh"
           variant={EmptyStateVariant.lg}
@@ -43,7 +45,13 @@ export class EmptyOverview extends React.Component<EmptyOverviewProps, EmptyOver
 
     if (this.props.filteredNamespaces.length === 0) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('No unfiltered namespaces')} id="empty-vl-manual" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('No unfiltered namespaces')}
+          id="empty-vl-manual"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             {t('Either all namespaces are being filtered or the user has no permission to access namespaces.')}
           </EmptyStateBody>
