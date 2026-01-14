@@ -2,8 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { clusterParameterExists } from './navigation';
 
 const openTab = (tab: string): void => {
-  cy.get('.pf-v6-c-tabs__list').should('be.visible');
-  cy.get('.pf-v6-c-tabs__list').contains(tab).click();
+  cy.contains('.pf-v6-c-tabs__list button', tab).should('be.visible').click();
 };
 
 Then('sd::user sees a list with content {string}', (tab: string) => {
