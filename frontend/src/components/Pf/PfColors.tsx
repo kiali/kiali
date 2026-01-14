@@ -54,6 +54,8 @@ export enum PFColors {
   Badge = 'var(	pf-t--color--blue--30)',
   Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',
+  LinkTooltipDarkTheme = 'var(--pf-t--global--text--color--link--100)',
+  LinkTooltipLightTheme = 'var(--pf-t--color--blue--20)', // code broken, should be --pf-t--global--dark--text--color--link--100
 
   // Health/Alert colors https://www.patternfly.org/v4/design-guidelines/styles/colors
   Danger = 'var(--pf-t--global--icon--color--severity--critical--default)',
