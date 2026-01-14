@@ -337,22 +337,33 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     const showMeshGrouping = hasMultipleMeshes();
     const hasMultipleClusters = sortedClusters.length > 1;
 
+    const hasFailingComponents = (comps: ComponentStatus[]): boolean => {
+      return comps.some(comp => comp.status !== Status.Healthy);
+    };
+
     return (
       <Content>
         <Content className={clusterStatusHeaderStyle}>{t('Cluster Status')}</Content>
         {sortedClusters.map(cl => {
           const components = props.statusMap[cl] || [];
           const isExpanded = expandedClusters.has(cl);
+          const hasFailures = hasFailingComponents(components);
 
           if (hasMultipleClusters) {
             return (
               <React.Fragment key={cl}>
-                <div className={clusterStyle} onClick={() => toggleCluster(cl)} style={{ cursor: 'pointer' }}>
-                  <Button
-                    variant={ButtonVariant.plain}
-                    style={{ padding: 0, marginRight: PFSpacer.xs }}
-                    icon={isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
-                  />
+                <div
+                  className={clusterStyle}
+                  onClick={hasFailures ? () => toggleCluster(cl) : undefined}
+                  style={{ cursor: hasFailures ? 'pointer' : 'default' }}
+                >
+                  {hasFailures && (
+                    <Button
+                      variant={ButtonVariant.plain}
+                      style={{ padding: 0, marginRight: PFSpacer.xs }}
+                      icon={isExpanded ? <KialiIcon.AngleDown /> : <KialiIcon.AngleRight />}
+                    />
+                  )}
                   <PFBadge badge={PFBadges.Cluster} size="sm" />
                   {cl}
                   {cl === homeCluster?.name && (
