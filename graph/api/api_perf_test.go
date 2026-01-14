@@ -8,12 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	cmdapi "k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+	cmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"

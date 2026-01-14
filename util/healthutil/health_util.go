@@ -3,9 +3,8 @@ package healthutil
 import (
 	"strconv"
 
-	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-
 	"istio.io/api/meta/v1alpha1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 )
 
 // Reused an Istio code
