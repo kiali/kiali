@@ -73,8 +73,8 @@ format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
 			${GOFMT} -w $$gofile; \
-	done; \
-	$(shell ./hack/fix_imports.sh)
+	done
+	@./hack/fix_imports.sh
 
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test: go-check

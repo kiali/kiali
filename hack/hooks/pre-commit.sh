@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-cd ..
+
+# Change to the repo root directory regardless of where this script is invoked from
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 if ! which yamlfmt &> /dev/null; then
   echo "You do not have yamlfmt - installing it now."
@@ -10,21 +12,54 @@ if ! which yamlfmt &> /dev/null; then
   go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 fi
 
-#### GO Formatting ####
-go_files=$(git diff --staged --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
-
-if [ -n "$go_files" ]; then
-  go_unformatted=$(gofmt -l $go_files)
+if ! which goimports &> /dev/null; then
+  echo "You do not have goimports - installing it now."
+  if ! which go &> /dev/null; then
+    echo "You do not have 'go' in your PATH - please install it. Aborting."
+    exit 1
+  fi
+  go install golang.org/x/tools/cmd/goimports@latest
 fi
 
-if [ -n "$go_unformatted" ]; then
-  echo "Formatting staged GO files:"
-  gofmt -w $go_unformatted
-  echo $go_unformatted | tr " " "\n"
+#### GO Formatting ####
+go_files=$(git diff --cached --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
+
+if [ -n "$go_files" ]; then
+  echo "Formatting staged GO files with gofmt..."
+  gofmt -w $go_files
+
+  echo "Fixing imports with goimports..."
+  for gofile in $go_files; do
+    # Remove empty lines in import blocks (same logic as fix_imports.sh)
+    awk -i inplace '
+    {
+      if ($0 == "import (") {
+        in_imports = 1
+        print $0
+      }
+      else if (in_imports == 1) {
+        if ($0 == ")") {
+          in_imports = 0
+          print $0
+        }
+        else if ($0 != "") {
+          print $0
+        }
+      }
+      else {
+        print $0
+      }
+    }
+    ' $gofile
+    goimports -w -local "github.com/kiali/kiali" $gofile
+  done
+
+  # Check if formatting changed any files
+  go_unformatted=$(git diff --name-only $go_files)
 fi
 
 #### YAML Formatting ####
-yaml_files=$(git diff --staged --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
+yaml_files=$(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
 
 if [ -n "$yaml_files" ]; then
   yaml_unformatted=$(yamlfmt -dry -quiet $yaml_files 2>&1 | sed 's/^.*://')
@@ -49,6 +84,7 @@ i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation.json')
 #### Git commit check ####
 if [ -n "$yaml_unformatted" ] || [ -n "$go_unformatted" ]; then
   echo "Some files have been formatted - the git commit is aborted."
+  echo "Please stage the formatted files and commit again."
   exit 1
 fi
 

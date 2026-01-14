@@ -26,6 +26,15 @@ jobs:
     - name: Lint Install
       run: make lint-install
 
+    - name: Verify code formatting
+      run: |
+        make format
+        if [[ $(git diff --stat) != '' ]]; then
+          echo "Code is not properly formatted. Please run 'make format' and commit the changes."
+          git diff
+          exit 1
+        fi
+
     - name: Verify code linting
       run: make lint
 
