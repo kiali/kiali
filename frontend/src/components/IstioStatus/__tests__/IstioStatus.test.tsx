@@ -273,3 +273,125 @@ describe('When all components are good', () => {
     testIcon(wrapper, 'istio-status-success', 'success');
   });
 });
+
+describe('When there are multiple clusters', () => {
+  beforeEach(() => {
+    serverConfig.clusters = {
+      CLUSTER_DEFAULT: {
+        accessible: true,
+        apiEndpoint: '',
+        isKialiHome: true,
+        kialiInstances: [],
+        name: CLUSTER_DEFAULT,
+        secretName: 'test-secret'
+      },
+      'cluster-2': {
+        accessible: true,
+        apiEndpoint: '',
+        isKialiHome: false,
+        kialiInstances: [],
+        name: 'cluster-2',
+        secretName: 'test-secret-2'
+      }
+    };
+    setServerConfig(serverConfig);
+  });
+
+  it('cluster with failing components shows expand/collapse arrow', () => {
+    const wrapper = mount(
+      <MemoryRouter>
+        <IstioStatusComponent
+          statusMap={{
+            [CLUSTER_DEFAULT]: [
+              {
+                cluster: CLUSTER_DEFAULT,
+                name: 'istiod',
+                status: Status.Unhealthy,
+                isCore: true
+              }
+            ],
+            'cluster-2': [
+              {
+                cluster: 'cluster-2',
+                name: 'istiod',
+                status: Status.Healthy,
+                isCore: true
+              }
+            ]
+          }}
+          lastRefreshAt={848152}
+          namespaces={[
+            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+          ]}
+          setIstioStatus={jest.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    const tooltip = wrapper.find('Tooltip').first();
+    const tooltipContentFn = tooltip.prop('content') as () => React.ReactNode;
+    const tooltipContent = tooltipContentFn();
+    const contentWrapper = mount(<>{tooltipContent}</>);
+
+    // Find cluster with failures - should have expand/collapse button
+    const clusterWithFailures = contentWrapper
+      .find('div')
+      .filterWhere(n => n.text().includes(CLUSTER_DEFAULT) && n.prop('onClick'));
+    expect(clusterWithFailures.length).toBeGreaterThan(0);
+    const button = clusterWithFailures.first().find('Button');
+    expect(button.exists()).toBe(true);
+  });
+
+  it('cluster without failing components does not show expand/collapse arrow', () => {
+    const wrapper = mount(
+      <MemoryRouter>
+        <IstioStatusComponent
+          statusMap={{
+            [CLUSTER_DEFAULT]: [
+              {
+                cluster: CLUSTER_DEFAULT,
+                name: 'istiod',
+                status: Status.Unhealthy,
+                isCore: true
+              }
+            ],
+            'cluster-2': [
+              {
+                cluster: 'cluster-2',
+                name: 'istiod',
+                status: Status.Healthy,
+                isCore: true
+              },
+              {
+                cluster: 'cluster-2',
+                name: 'grafana',
+                status: Status.Healthy,
+                isCore: false
+              }
+            ]
+          }}
+          lastRefreshAt={848152}
+          namespaces={[
+            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+          ]}
+          setIstioStatus={jest.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    const tooltip = wrapper.find('Tooltip').first();
+    const tooltipContentFn = tooltip.prop('content') as () => React.ReactNode;
+    const tooltipContent = tooltipContentFn();
+    const contentWrapper = mount(<>{tooltipContent}</>);
+
+    // Find cluster without failures - should NOT have expand/collapse button
+    const clusterWithoutFailures = contentWrapper
+      .find('div')
+      .filterWhere(n => n.text().includes('cluster-2') && !n.prop('onClick'));
+    expect(clusterWithoutFailures.length).toBeGreaterThan(0);
+    const button = clusterWithoutFailures.first().find('Button');
+    expect(button.exists()).toBe(false);
+  });
+});
