@@ -197,13 +197,13 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             };
           });
 
-        // Default to category sort (ascending) if no sort is specified in URL
+        // Default to namespace sort (ascending) if no sort is specified in URL
         const urlSort = HistoryManager.getParam(URLParam.SORT);
         const urlDirection = HistoryManager.getParam(URLParam.DIRECTION);
         const isAscending = urlSort && urlDirection ? FilterHelper.isCurrentSortAscending() : true;
         const sortField = urlSort
           ? FilterHelper.currentSortField(Sorts.sortFields)
-          : Sorts.sortFields.find(sf => sf.id === 'category') || Sorts.sortFields[0];
+          : Sorts.sortFields.find(sf => sf.id === 'namespace') || Sorts.sortFields[0];
 
         // Set URL params if not present to ensure default sort is reflected in URL
         if (!urlSort) {

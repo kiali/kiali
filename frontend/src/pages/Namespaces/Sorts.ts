@@ -5,9 +5,9 @@ import { t } from 'utils/I18nUtils';
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
     id: 'category',
-    title: t('Category'),
+    title: t('Type'),
     isNumeric: false,
-    param: 'cat',
+    param: 'type',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
       // Control plane comes before Data plane
       if (a.isControlPlane && !b.isControlPlane) {

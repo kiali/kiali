@@ -1,3 +1,4 @@
+import * as React from 'react';
 import deepFreeze from 'deep-freeze';
 import { AppListItem } from '../../types/AppList';
 import { AppWorkload } from 'types/App';
@@ -49,6 +50,7 @@ export const noAmbientLabels = (r: SortResource): boolean => {
 };
 
 export type ResourceType<R extends RenderResource> = {
+  headerContent?: React.ReactNode;
   name: string;
   param?: string;
   renderer?: Renderer<R>;
@@ -220,22 +222,22 @@ const namespaces: Resource = {
   badge: PFBadges.Namespace
 };
 
-const statusNoTraffic: ResourceType<NamespaceInfo> = {
-  name: 'Status',
+const namespacesHealth: ResourceType<NamespaceInfo> = {
+  name: 'Health',
   param: 'h',
-  title: 'Status',
+  title: 'Health',
   sortable: true,
   width: 20,
   renderer: NamespacesRenderers.statusNamespaces
 };
 
-const categoryNamespaces: ResourceType<NamespaceInfo> = {
-  name: 'Category',
-  param: 'cat',
-  title: 'Category',
+const typeNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Type',
+  param: 'type',
+  title: 'Type',
   sortable: true,
   width: 10,
-  renderer: NamespacesRenderers.category
+  renderer: NamespacesRenderers.type
 };
 
 const nsItemNamespaces: ResourceType<NamespaceInfo> = {
@@ -248,9 +250,9 @@ const nsItemNamespaces: ResourceType<NamespaceInfo> = {
 };
 
 const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
-  name: 'TLS',
-  param: 'tls',
-  title: 'TLS config',
+  name: 'mTLS',
+  param: 'm',
+  title: 'mTLS',
   sortable: true,
   width: 10,
   renderer: NamespacesRenderers.tlsNamespaces
@@ -258,7 +260,7 @@ const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
 
 const namespacesList: Resource = {
   name: 'namespaces',
-  columns: [nsItemNamespaces, categoryNamespaces, statusNoTraffic, tlsStatusNamespaces, istioConfiguration, labels],
+  columns: [nsItemNamespaces, typeNamespaces, namespacesHealth, tlsStatusNamespaces, istioConfiguration, labels],
   badge: PFBadges.Namespace
 };
 

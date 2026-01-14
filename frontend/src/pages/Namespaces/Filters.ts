@@ -181,8 +181,8 @@ const categoryValues: FilterValue[] = [
 ];
 
 export const categoryFilter: RunnableFilter<NamespaceInfo> = {
-  category: t('Category'),
-  placeholder: t('Filter by Category'),
+  category: t('Type'),
+  placeholder: t('Filter by Type'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: categoryValues,

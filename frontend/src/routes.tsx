@@ -31,16 +31,16 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [/^\/overview\/(.*)/]
   },
   {
-    id: 'namespaces',
-    title: t('Namespaces'),
-    to: `/${Paths.NAMESPACES}`,
-    pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
-  },
-  {
     id: 'traffic_graph',
     title: t('Traffic Graph'),
     to: '/graph/namespaces',
     pathsActive: [/^\/graph\/(.*)/]
+  },
+  {
+    id: 'namespaces',
+    title: t('Namespaces'),
+    to: `/${Paths.NAMESPACES}`,
+    pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
   },
   {
     id: 'applications',

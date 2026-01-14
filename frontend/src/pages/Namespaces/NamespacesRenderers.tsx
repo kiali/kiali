@@ -10,7 +10,10 @@ import { MTLSStatuses } from '../../types/TLSStatus';
 import { MTLSIconTypes } from '../../components/MTls/NamespaceMTLSStatus';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { getCategoryText } from './Filters';
+import { ControlPlaneBadge } from './ControlPlaneBadge';
+import { DataPlaneBadge } from './DataPlaneBadge';
+import { NotPartOfMeshBadge } from './NotPartOfMeshBadge';
+import { serverConfig } from '../../config/ServerConfig';
 
 const statusDescriptors = new Map<string, StatusDescriptor>([
   [
@@ -49,7 +52,7 @@ const tlsIconStyle = kialiStyle({
 
 export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   return (
-    <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+    <Td role="gridcell" dataLabel="Health" key={`VirtuaItem_Status_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       <NamespaceStatusesCombined
         name={ns.name}
         statusApp={ns.statusApp}
@@ -60,11 +63,27 @@ export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => 
   );
 };
 
-export const category: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  const categoryText = getCategoryText(ns.isControlPlane);
+export const type: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  // Determine if namespace is a data plane namespace
+  // A namespace is a data plane namespace if:
+  // - It's not a control plane namespace
+  // - AND it has the injection label enabled OR has the revision label set
+  const isDataPlane =
+    !ns.isControlPlane &&
+    ns.labels &&
+    (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
+      (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+        ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''));
+
   return (
-    <Td role="gridcell" dataLabel="Category" key={`VirtuaItem_Category_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      {categoryText}
+    <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      {ns.isControlPlane ? (
+        <ControlPlaneBadge isAmbient={ns.isAmbient} />
+      ) : isDataPlane ? (
+        <DataPlaneBadge />
+      ) : (
+        <NotPartOfMeshBadge />
+      )}
     </Td>
   );
 };
@@ -86,12 +105,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
 export const tlsNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   if (!ns.tlsStatus) {
     return (
-      <Td
-        role="gridcell"
-        dataLabel="TLS config"
-        key={`VirtualItem_tls_${ns.name}`}
-        style={{ verticalAlign: 'middle' }}
-      />
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }} />
     );
   }
 
@@ -99,17 +113,12 @@ export const tlsNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
   if (!statusDescriptor.showStatus) {
     return (
-      <Td
-        role="gridcell"
-        dataLabel="TLS config"
-        key={`VirtualItem_tls_${ns.name}`}
-        style={{ verticalAlign: 'middle' }}
-      />
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }} />
     );
   }
 
   return (
-    <Td role="gridcell" dataLabel="TLS config" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+    <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       <MTLSIcon
         icon={statusDescriptor.icon}
         iconClassName={tlsIconStyle}

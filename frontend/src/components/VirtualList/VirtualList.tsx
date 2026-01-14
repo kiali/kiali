@@ -262,7 +262,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                 width={column.width}
                 textCenter={column.textCenter}
               >
-                {column.title}
+                {column.headerContent || column.title}
               </Th>
             ))}
           </Tr>
