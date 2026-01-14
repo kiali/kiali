@@ -93,18 +93,18 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v1.65" ]; then
-    ISTIO_VERSION="1.16.0"
-  elif [ "${TARGET_BRANCH}" == "v1.73" ]; then
-    ISTIO_VERSION="1.18.0"
+  if [ "${TARGET_BRANCH}" == "v1.73" ]; then
+    ISTIO_VERSION="1.18.7"
+  elif [ "${TARGET_BRANCH}" == "v2.4" ]; then
+    ISTIO_VERSION="1.23.6"
   fi
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.16.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
-elif [ "${ISTIO_VERSION}" == "v1.18.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
+if [[ "${ISTIO_VERSION}" == 1.18.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
+elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
