@@ -101,13 +101,32 @@ echo "ARCH=${ARCH}"
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 
 # Waits for workloads in the specified namespace to be ready
+# If a deployment fails (exceeds progressDeadlineSeconds), retry by restarting it
 wait_for_workloads () {
   local namespace=$1
+  local max_retries=3
   local workloads=$(${CLIENT_EXE} get deployments -n $namespace -o jsonpath='{.items[*].metadata.name}')
   for workload in ${workloads}
   do
-    echo "Waiting for workload: '${workload}' to be ready"
-    ${CLIENT_EXE} rollout status deployment "${workload}" -n "${namespace}"
+    local retry=0
+    while [ $retry -lt $max_retries ]; do
+      echo "Waiting for workload: '${workload}' to be ready (attempt $((retry + 1))/$max_retries)"
+      if ${CLIENT_EXE} rollout status deployment "${workload}" -n "${namespace}" --timeout=180s; then
+        break
+      else
+        retry=$((retry + 1))
+        if [ $retry -lt $max_retries ]; then
+          echo "Deployment '${workload}' failed to become ready, restarting..."
+          ${CLIENT_EXE} rollout restart deployment "${workload}" -n "${namespace}"
+          sleep 10
+        else
+          echo "Deployment '${workload}' failed after $max_retries attempts"
+          ${CLIENT_EXE} describe deployment "${workload}" -n "${namespace}"
+          ${CLIENT_EXE} get pods -n "${namespace}" -l app="${workload}" -o wide
+          exit 1
+        fi
+      fi
+    done
   done
 }
 
