@@ -3,6 +3,14 @@ import { openTab } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
 
+// Build an absolute URL that preserves the Cypress baseUrl path prefix (e.g. "/kiali" in CI).
+// NOTE: Passing "/api/..." directly (or resolving it with new URL) drops any baseUrl path prefix.
+const withBaseUrl = (path: string): string => {
+  const baseUrl = (Cypress.config('baseUrl') ?? '').replace(/\/$/, '');
+  const cleanPath = path.replace(/^\//, '');
+  return `${baseUrl}/${cleanPath}`;
+};
+
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
@@ -14,7 +22,8 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
   }
 
   const url = '/api/namespaces';
-  cy.request({ method: 'GET', url }).then(response => {
+  const requestUrl = withBaseUrl(url);
+  cy.request({ method: 'GET', url: requestUrl }).then(response => {
     expect(response.status).to.equal(200);
 
     const ns = response.body;
@@ -41,7 +50,7 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForWorkloadEnrolled',
-          message: `retry=${retryCount}/${maxRetries} url=${url} baseUrl=${Cypress.config(
+          message: `retry=${retryCount}/${maxRetries} url=${requestUrl} baseUrl=${Cypress.config(
             'baseUrl'
           )} bookinfoLabels=${JSON.stringify(bookinfoLabels ?? {})} namespacesCount=${
             Array.isArray(ns) ? ns.length : -1
@@ -73,9 +82,10 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     totalEdges = 8;
   }
   const url = '/api/namespaces/graph';
+  const requestUrl = withBaseUrl(url);
   cy.request({
     method: 'GET',
-    url,
+    url: requestUrl,
     qs: {
       duration: '60s',
       graphType: 'versionedApp',
@@ -100,7 +110,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForGraphTraffic',
-          message: `retry=${retryCount}/${maxRetries} url=${url} ambientTraffic=${ambientTraffic} edges=${
+          message: `retry=${retryCount}/${maxRetries} url=${requestUrl} ambientTraffic=${ambientTraffic} edges=${
             elements?.edges?.length ?? -1
           } expected>${totalEdges} baseUrl=${Cypress.config('baseUrl')}`
         });
@@ -153,9 +163,10 @@ const waitForWorkloadTracesInApi = (
   }
 
   const url = `/api/namespaces/${namespace}/workloads/${workload}/traces`;
+  const requestUrl = withBaseUrl(url);
   cy.request({
     method: 'GET',
-    url,
+    url: requestUrl,
     qs,
     failOnStatusCode: false
   }).then(response => {
@@ -168,7 +179,7 @@ const waitForWorkloadTracesInApi = (
     if (retryCount === 0 || retryCount % 5 === 0) {
       Cypress.log({
         name: 'waitForWorkloadTraces',
-        message: `retry=${retryCount}/${maxRetries} url=${url} clusterName=${clusterName ?? ''} tracesCount=${
+        message: `retry=${retryCount}/${maxRetries} url=${requestUrl} clusterName=${clusterName ?? ''} tracesCount=${
           Array.isArray(traces) ? traces.length : -1
         } baseUrl=${Cypress.config('baseUrl')}`
       });
@@ -186,23 +197,21 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
   if (cluster) {
     url += `&cluster=${cluster}`;
   }
+  const requestUrl = withBaseUrl(url);
 
   const wait = (retryCount: number, lastResponseSummary = ''): void => {
     if (retryCount >= maxRetries) {
       throw new Error(
         `Condition not met after ${maxRetries} retries (waitForHealthyWaypoint name=${name} ns=${namespace} cluster=${
           cluster ?? ''
-        }, baseUrl=${Cypress.config('baseUrl')}, url=${url}, lastResponse=${lastResponseSummary})`
+        }, baseUrl=${Cypress.config('baseUrl')}, url=${requestUrl}, lastResponse=${lastResponseSummary})`
       );
     }
     cy.request({
       method: 'GET',
-      url: url,
+      url: requestUrl,
       failOnStatusCode: false
     }).then(response => {
-      const baseUrl = Cypress.config('baseUrl') ?? '';
-      const fullUrl = new URL(url, baseUrl).toString();
-
       const responseBody = response.body;
       const responseBodyStr =
         responseBody === undefined
@@ -212,7 +221,23 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
           : JSON.stringify(responseBody);
       const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
-      const responseSummary = `status=${response.status} fullUrl=${fullUrl} body=${responseBodyShort}`;
+      const workload = responseBody;
+      const pods = Array.isArray(workload?.pods) ? workload.pods : [];
+      const podsLen = pods.length;
+      const proxySummary =
+        podsLen > 0
+          ? pods
+              .slice(0, 3)
+              .map(p => {
+                const ps = p?.proxyStatus ?? {};
+                return `${p?.name ?? 'pod'}(CDS=${ps.CDS ?? ''},EDS=${ps.EDS ?? ''},LDS=${ps.LDS ?? ''},RDS=${
+                  ps.RDS ?? ''
+                })`;
+              })
+              .join(',')
+          : 'no-pods';
+
+      const responseSummary = `status=${response.status} fullUrl=${requestUrl} pods=${podsLen} proxy=${proxySummary} body=${responseBodyShort}`;
 
       if (response.status !== 200) {
         if (retryCount === 0 || retryCount % 5 === 0) {
@@ -224,16 +249,14 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
         return cy.wait(30000).then(() => wait(retryCount + 1, responseSummary));
       }
 
-      const workload = responseBody;
-
-      if (workload.pods.length > 0 && workload.pods.every(pod => proxyStatusHealthy(pod))) {
+      if (podsLen > 0 && pods.every(pod => proxyStatusHealthy(pod))) {
         return;
       }
 
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForHealthyWaypoint',
-          message: `retry=${retryCount}/${maxRetries} ${responseSummary} pods=${workload?.pods?.length ?? -1}`
+          message: `retry=${retryCount}/${maxRetries} ${responseSummary}`
         });
       }
 
