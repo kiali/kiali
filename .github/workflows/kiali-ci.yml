@@ -69,6 +69,7 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: "1.23.6"
 
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
@@ -81,14 +82,6 @@ jobs:
   integration_tests_frontend:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
-    needs: [initialize, build_backend, build_frontend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multicluster_primary_remote:
-    name: Run frontend multicluster primary-remote integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
     needs: [initialize, build_backend, build_frontend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
