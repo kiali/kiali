@@ -126,9 +126,16 @@ const isSyncedOrIgnored = (status: string | undefined): boolean => {
   return status?.toLowerCase() === 'synced' || status?.toLowerCase() === 'ignored';
 };
 
+// In some ambient setups, waypoints can report CDS as "Stale" transiently (or even persistently)
+// while still being usable. We keep EDS/LDS/RDS strict but allow CDS to be Stale.
+const isSyncedOrIgnoredOrStale = (status: string | undefined): boolean => {
+  const s = status?.toLowerCase();
+  return s === 'synced' || s === 'ignored' || s === 'stale';
+};
+
 const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   return (
-    isSyncedOrIgnored(proxyStatus?.CDS) &&
+    isSyncedOrIgnoredOrStale(proxyStatus?.CDS) &&
     isSyncedOrIgnored(proxyStatus?.EDS) &&
     isSyncedOrIgnored(proxyStatus?.LDS) &&
     isSyncedOrIgnored(proxyStatus?.RDS)
