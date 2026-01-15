@@ -97,8 +97,10 @@ func (e badOidcRequest) Error() string {
 // According to RFC 7636, the code verifier should be a random string of 43-128 characters
 // from the unreserved characters [A-Z] / [a-z] / [0-9] / "-" / "." / "_" / "~".
 func generatePKCECodeVerifier() (string, error) {
+	// RFC 7636 compliant character set: unreserved characters only
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
 	// Generate 43 characters (minimum length recommended by RFC 7636)
-	return util.CryptoRandomString(43)
+	return util.CryptoRandomStringWithCharset(43, charset)
 }
 
 // generatePKCECodeChallenge generates the code challenge from a code verifier.
