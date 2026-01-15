@@ -1583,7 +1583,7 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 
 // codeVerifierCookieName returns the cookie name for storing the PKCE code verifier.
 func codeVerifierCookieName(clusterName string) string {
-	return SessionCookieName + "-pkce-verifier-" + clusterName
+	return PkceVerifierCookieName + "-" + clusterName
 }
 
 // Interface guard to ensure that headerAuthController implements the AuthController interface.

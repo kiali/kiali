@@ -41,6 +41,8 @@ const (
 	// when user is starting authentication with the external server. This code
 	// is used to mitigate replay attacks.
 	NonceCookieName = "kiali-token-nonce"
+	// PkceVerifierCookieName is the cookie name used to store a PKCE code verifier.
+	PkceVerifierCookieName = "kiali-token-pkce-verifier"
 	// NumberOfChunksCookieName is the name of the cookie that holds the number of chunks of a session.
 	// This may or may not be set depending on the size of the session data.
 	NumberOfChunksCookieName = "kiali-token-chunks"
