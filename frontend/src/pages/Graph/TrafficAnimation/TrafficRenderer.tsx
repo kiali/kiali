@@ -542,9 +542,7 @@ export class TrafficAnimation {
     const start = edge.getStartPoint();
     const bendpoints = edge.getBendpoints();
     const end = edge.getEndPoint();
-    const controlPoints: Array<Point> = [start];
-    controlPoints.push(...bendpoints);
-    controlPoints.push(end);
+    const controlPoints: Array<Point> = [start, ...bendpoints, end];
 
     return controlPoints;
   }
