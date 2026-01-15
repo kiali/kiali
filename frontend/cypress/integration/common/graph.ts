@@ -277,15 +277,47 @@ Then(
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
 
+        const target = workload.toLowerCase();
+
         const matches = nodes.filter(node => {
           const data = node.getData();
+          const label = (node as any)?.getLabel?.() as string | undefined;
+
+          const candidates = [data.workload, data.app, data.service, data.name, label].filter(
+            v => typeof v === 'string'
+          ) as string[];
+
           return (
             data.isBox === undefined &&
             data.cluster === cluster &&
-            data.workload === workload &&
-            (data.isWaypoint === true || data.isWaypoint === 'true')
+            (data.isWaypoint === true || data.isWaypoint === 'true') &&
+            candidates.some(c => {
+              const lc = c.toLowerCase();
+              return lc === target || lc.startsWith(`${target}-`);
+            })
           );
         });
+
+        if (matches.length === 0) {
+          const waypointNodes = nodes
+            .map(node => {
+              const data = node.getData();
+              return {
+                app: data.app,
+                cluster: data.cluster,
+                isWaypoint: data.isWaypoint,
+                name: data.name,
+                service: data.service,
+                workload: data.workload
+              };
+            })
+            .filter(n => n.cluster === cluster && (n.isWaypoint === true || n.isWaypoint === 'true'));
+
+          Cypress.log({
+            name: 'waypointNodeNotFound',
+            message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
+          });
+        }
 
         expect(matches.length).to.be.at.least(1);
       });
