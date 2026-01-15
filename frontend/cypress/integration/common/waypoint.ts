@@ -14,7 +14,7 @@ const withBaseUrl = (path: string): string => {
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
-const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
+const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retryCount = 0): void => {
   if (retryCount >= maxRetries) {
     throw new Error(
       `Condition not met after ${maxRetries} retries (waitForWorkloadEnrolled, baseUrl=${Cypress.config('baseUrl')})`
@@ -31,7 +31,7 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
     let bookinfoLabels: Record<string, string> | undefined;
 
     ns.forEach(namespace => {
-      if (namespace.name === 'bookinfo') {
+      if (namespace.name === targetNamespace) {
         const labels = namespace.labels;
         bookinfoLabels = labels;
         Object.keys(labels).forEach(key => {
@@ -54,17 +54,18 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
             'baseUrl'
           )} bookinfoLabels=${JSON.stringify(bookinfoLabels ?? {})} namespacesCount=${
             Array.isArray(ns) ? ns.length : -1
-          }`
+          } targetNamespace=${targetNamespace}`
         });
       }
       return cy.wait(10000).then(() => {
-        return waitForWorkloadEnrolled(maxRetries, retryCount + 1);
+        return waitForWorkloadEnrolled(targetNamespace, maxRetries, retryCount + 1);
       });
     }
   });
 };
 
 const waitForBookinfoWaypointTrafficGeneratedInGraph = (
+  targetNamespace: string,
   ambientTraffic: string,
   maxRetries = 30,
   retryCount = 0
@@ -98,7 +99,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
       rateGrpc: 'requests',
       rateHttp: 'requests',
       rateTcp: 'sent',
-      namespaces: 'bookinfo'
+      namespaces: targetNamespace
     }
   }).then(response => {
     expect(response.status).to.equal(200);
@@ -112,11 +113,16 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
           name: 'waitForGraphTraffic',
           message: `retry=${retryCount}/${maxRetries} url=${requestUrl} ambientTraffic=${ambientTraffic} edges=${
             elements?.edges?.length ?? -1
-          } expected>${totalEdges} baseUrl=${Cypress.config('baseUrl')}`
+          } expected>${totalEdges} baseUrl=${Cypress.config('baseUrl')} targetNamespace=${targetNamespace}`
         });
       }
       return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(ambientTraffic, maxRetries, retryCount + 1);
+        return waitForBookinfoWaypointTrafficGeneratedInGraph(
+          targetNamespace,
+          ambientTraffic,
+          maxRetries,
+          retryCount + 1
+        );
       });
     }
   });
@@ -289,7 +295,7 @@ Then('all waypoints are healthy', () => {
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
-  waitForWorkloadEnrolled();
+  waitForWorkloadEnrolled(namespace);
 });
 
 Then(
@@ -301,16 +307,20 @@ Then(
     cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint --context="${cluster2Context}"`, {
       failOnNonZeroExit: false
     });
-    waitForWorkloadEnrolled();
+    waitForWorkloadEnrolled(namespace);
   }
 );
 
 Then('the graph page has enough data', () => {
-  waitForBookinfoWaypointTrafficGeneratedInGraph('ztunnel');
+  waitForBookinfoWaypointTrafficGeneratedInGraph('bookinfo', 'ztunnel');
 });
 
 Then('the graph page has enough data for L7', () => {
-  waitForBookinfoWaypointTrafficGeneratedInGraph('waypoint');
+  waitForBookinfoWaypointTrafficGeneratedInGraph('bookinfo', 'waypoint');
+});
+
+Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
+  waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {

@@ -12,6 +12,8 @@ source ${SCRIPT_DIR}/env.sh $*
 
 set -euo pipefail
 
+: "${ONLY_WAYPOINT:=false}"
+
 create_waypoint() {
 
   local waypoint_yaml
@@ -46,6 +48,8 @@ EOF
 
   echo "==== LABELING WAYPOINT SERVICE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
   ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label svc waypoint -n ${BOOKINFO_NAMESPACE} istio.io/global=true --overwrite || true
+
+  rm -f "${waypoint_yaml}"
 }
 
 configure_waypoint() {
@@ -57,8 +61,6 @@ configure_waypoint() {
 
   echo "==== LABELING BOOKINFO NAMESPACE IN CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
   ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
-
-  rm -f "${waypoint_yaml}"
   echo "==== WAYPOINT CONFIGURATION COMPLETE"
 }
 

@@ -7,20 +7,15 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
 
   Background:
     Given user is at administrator perspective
-    And the waypoint "waypoint" in namespace "bookinfo" in cluster "east" is healthy
-    And the waypoint "waypoint" in namespace "bookinfo" in cluster "west" is healthy
-
-  Scenario: [Setup] namespace is labeled with waypoint label
-    Then "bookinfo" namespace is labeled with the waypoint label for "kind-east" and "kind-west" contexts
-    And the graph page has enough data for L7
-    And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
+    And the waypoint "waypoint" in namespace "bookinfo-waypoints" in cluster "east" is healthy
+    And the waypoint "waypoint" in namespace "bookinfo-waypoints" in cluster "west" is healthy
+    And the graph page has enough data for L7 in the "bookinfo-waypoints" namespace
 
   Scenario: [Traffic Graph] Waypoint proxies are hidden by default and can be shown across clusters
     Given user is at the "graph" page
-    And "bookinfo" namespace is labeled with the waypoint label
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo-waypoints" namespaces
     And user selects "WORKLOAD" graph type
-    Then user sees the "bookinfo" namespace
+    Then user sees the "bookinfo-waypoints" namespace
     And the "waypoint" node "doesn't" exists
     Then user "opens" traffic menu
     And user "enables" "ambient" traffic option
@@ -35,9 +30,9 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
 
   Scenario: [Traffic Graph] Verify L7 waypoint traffic across clusters
     Given user is at the "graph" page
-    When user graphs "bookinfo" namespaces
+    When user graphs "bookinfo-waypoints" namespaces
     And user selects "WORKLOAD" graph type
-    Then user sees the "bookinfo" namespace
+    Then user sees the "bookinfo-waypoints" namespace
     When user "opens" traffic menu
     And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
@@ -48,11 +43,11 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
     # Once is fixed, validate the interconnection
 
   Scenario: [Waypoint enrolled] Verify productpage-v1 workload is enrolled in east cluster
-    Given user is at the details page for the "workload" "bookinfo/productpage-v1" located in the "east" cluster
+    Given user is at the details page for the "workload" "bookinfo-waypoints/productpage-v1" located in the "east" cluster
     Then the user sees the L7 "waypoint" link
 
   Scenario: [Waypoint enrolled] Verify ratings-v1 workload is enrolled in west cluster
-    Given user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "west" cluster
+    Given user is at the details page for the "workload" "bookinfo-waypoints/ratings-v1" located in the "west" cluster
     Then the user sees the L7 "waypoint" link
     And the waypoint link points to the "west" cluster
 
