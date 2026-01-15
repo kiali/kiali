@@ -395,6 +395,10 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 
 	guessedKialiURL := httputil.GuessKialiURL(c.conf, r)
 	secureFlag := c.conf.IsServerHTTPS() || strings.HasPrefix(guessedKialiURL, "https:")
+	// Note: Both nonce and PKCE code verifier cookies use SameSiteLaxMode (not Strict) because the OIDC
+	// callback is a cross-site top-level GET navigation from the identity provider. SameSiteStrictMode
+	// would prevent the cookies from being sent during this callback, breaking authentication. Security
+	// is maintained through state parameter validation (CSRF) and PKCE verification at the token endpoint.
 	nowTime := util.Clock.Now()
 	expirationTime := nowTime.Add(time.Duration(c.conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
 	nonceCookie := http.Cookie{
@@ -628,6 +632,12 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
+	}
+
+	// The code verifier cookie should always be present since Kiali sets it before redirecting to the
+	// OIDC provider. Failing early with a clear message is better than getting a cryptic error from the token endpoint.
+	if p.CodeVerifier == "" {
+		p.Error = &badOidcRequest{Detail: "no PKCE code verifier present - login window may have timed out or cookies were blocked"}
 	}
 
 	return p
@@ -893,10 +903,12 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 	if len(clientSecret) == 0 {
 		requestParams.Set("client_id", cfg.ClientId)
 	}
-	// Include PKCE code_verifier if present
-	if len(p.CodeVerifier) > 0 {
-		requestParams.Set("code_verifier", p.CodeVerifier)
+	// Include PKCE code_verifier (required since we always send code_challenge)
+	if len(p.CodeVerifier) == 0 {
+		p.Error = fmt.Errorf("PKCE code_verifier is missing - this should have been caught earlier in the flow")
+		return p
 	}
+	requestParams.Set("code_verifier", p.CodeVerifier)
 
 	tokenRequest, err := http.NewRequest(http.MethodPost, oidcMeta.TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {

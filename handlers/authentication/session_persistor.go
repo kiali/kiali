@@ -482,8 +482,8 @@ func (p *cookieSessionPersistor[T]) TerminateSession(r *http.Request, w http.Res
 		// - Session cookie
 		// - Number of chunks cookie
 		// - Cookie chunks - mmmmmm
-		// Don't drop nonce cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
-		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") {
+		// Don't drop nonce or PKCE verifier cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
+		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") && !strings.Contains(cookie.Name, "pkce-verifier") {
 			p.dropCookie(r, w, cookie.Name)
 		}
 	}

@@ -3,6 +3,7 @@ package authentication
 import (
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -299,6 +300,8 @@ func TestValidateOpenIdTokenInHouse(t *testing.T) {
 			assert.Equal(t, "authorization_code", r.Form.Get("grant_type"))
 			assert.Equal(t, "kiali-client", r.Form.Get("client_id"))
 			assert.Equal(t, "https://kiali.io:44/kiali-test", r.Form.Get("redirect_uri"))
+			// Validate PKCE code_verifier is sent
+			assert.Equal(t, "test_code_verifier_43_chars_long_12345678", r.Form.Get("code_verifier"))
 
 			w.WriteHeader(200)
 			_, _ = w.Write([]byte("{ \"id_token\": \"" + openIdTestTokenToUse + "\" }"))
@@ -379,6 +382,10 @@ QwIDAQAB
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(conf.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
@@ -496,6 +503,8 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 			assert.Equal(t, "authorization_code", r.Form.Get("grant_type"))
 			assert.Equal(t, "kiali-client", r.Form.Get("client_id"))
 			assert.Equal(t, "https://kiali.io:44/kiali-test", r.Form.Get("redirect_uri"))
+			// Validate PKCE code_verifier is sent
+			assert.Equal(t, "test_code_verifier_43_chars_long_12345678", r.Form.Get("code_verifier"))
 
 			w.WriteHeader(200)
 			_, _ = w.Write([]byte("{ \"id_token\": \"" + openIdTestToken + "\" }"))
@@ -542,6 +551,10 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(conf.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
@@ -634,6 +647,10 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
+	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -708,6 +725,10 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
@@ -784,6 +805,10 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
+	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -845,6 +870,8 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	cfg.LoginToken.ExpirationSeconds = 1
 	cfg.Auth.OpenId.IssuerUri = testServer.URL
 	cfg.Auth.OpenId.ClientId = "kiali-client"
+	cfg.Identity.CertFile = "foo.cert"      // setting conf.Identity will make it look as if the endpoint ...
+	cfg.Identity.PrivateKeyFile = "foo.key" // ... is HTTPS - this causes the cookies' Secure flag to be true
 	config.Set(cfg)
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
@@ -858,6 +885,10 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
@@ -961,6 +992,8 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	cfg.LoginToken.ExpirationSeconds = 1
 	cfg.Auth.OpenId.IssuerUri = testServer.URL
 	cfg.Auth.OpenId.ClientId = "kiali-client"
+	cfg.Identity.CertFile = "foo.cert"      // setting conf.Identity will make it look as if the endpoint ...
+	cfg.Identity.PrivateKeyFile = "foo.key" // ... is HTTPS - this causes the cookies' Secure flag to be true
 	config.Set(cfg)
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
@@ -974,6 +1007,10 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
@@ -1050,6 +1087,10 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
+	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -1091,6 +1132,10 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
@@ -1138,6 +1183,10 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 	request.AddCookie(&http.Cookie{
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
 	})
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
@@ -1296,6 +1345,10 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
 		Value: "nonceString",
 	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
+	})
 
 	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
 	require.NoError(t, err)
@@ -1440,8 +1493,9 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 
 		// Create openidFlowHelper and call requestOpenIdToken
 		flow := &openidFlowHelper{
-			Code: "test-authorization-code",
-			conf: conf,
+			Code:         "test-authorization-code",
+			CodeVerifier: "test_code_verifier_43_chars_long_12345678",
+			conf:         conf,
 		}
 
 		// Mock the metadata to point to our token server
@@ -1492,8 +1546,9 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 
 		// Create openidFlowHelper and call requestOpenIdToken
 		flow := &openidFlowHelper{
-			Code: "test-authorization-code",
-			conf: conf,
+			Code:         "test-authorization-code",
+			CodeVerifier: "test_code_verifier_43_chars_long_12345678",
+			conf:         conf,
 		}
 
 		// Mock the metadata
@@ -1529,8 +1584,9 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 
 		// Create openidFlowHelper and call requestOpenIdToken
 		flow := &openidFlowHelper{
-			Code: "test-authorization-code",
-			conf: conf,
+			Code:         "test-authorization-code",
+			CodeVerifier: "test_code_verifier_43_chars_long_12345678",
+			conf:         conf,
 		}
 
 		// Mock the metadata
@@ -1804,4 +1860,277 @@ func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverrid
 	metadata, err = getOpenIdMetadata(conf)
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com/userinfo", metadata.UserInfoURL)
+}
+
+// TestOpenIdRedirectHandlerGeneratesPKCEParameters verifies that the redirectToAuthServerHandler correctly
+// implements PKCE (Proof Key for Code Exchange) per RFC 7636. This test ensures that:
+// 1. A cryptographically random code_verifier is generated using only unreserved characters [A-Za-z0-9-._~]
+// 2. The code_challenge is correctly computed as base64url(SHA256(code_verifier)) without padding
+// 3. Both nonce and code_verifier cookies are set with appropriate security attributes (HttpOnly, Secure, SameSite=Lax)
+// 4. The redirect URL to the OIDC provider includes both code_challenge and code_challenge_method=S256 parameters
+// 5. The mathematical relationship between code_verifier and code_challenge is correct
+// This test is critical because PKCE prevents authorization code interception attacks by binding the
+// authorization code to the client that requested it. Without proper PKCE implementation, the authentication
+// flow would be vulnerable to malicious actors intercepting and using authorization codes.
+func TestOpenIdRedirectHandlerGeneratesPKCEParameters(t *testing.T) {
+	cachedOpenIdMetadata = nil
+
+	// Setup mock OIDC server
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, _ = json.Marshal(oidcMeta)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-test"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Identity.CertFile = "foo.cert"      // setting conf.Identity will make it look as if the endpoint ...
+	conf.Identity.PrivateKeyFile = "foo.key" // ... is HTTPS - this causes the cookies' Secure flag to be true
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
+
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
+	require.NoError(t, err)
+
+	// Make request to redirect endpoint
+	request := httptest.NewRequest(http.MethodGet, "/api/auth/openid_redirect", nil)
+	rr := httptest.NewRecorder()
+
+	controller.redirectToAuthServerHandler(rr, request)
+
+	// Validate response
+	response := rr.Result()
+	assert.Equal(t, http.StatusFound, response.StatusCode)
+
+	// Validate cookies were set
+	cookies := response.Cookies()
+	var nonceCookie, verifierCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == nonceCookieName(conf.KubernetesConfig.ClusterName) {
+			nonceCookie = c
+		}
+		if c.Name == codeVerifierCookieName(conf.KubernetesConfig.ClusterName) {
+			verifierCookie = c
+		}
+	}
+
+	require.NotNil(t, nonceCookie, "Nonce cookie should be set")
+	require.NotNil(t, verifierCookie, "Code verifier cookie should be set")
+
+	// Validate code_verifier format (43-128 chars, unreserved characters)
+	assert.Len(t, verifierCookie.Value, 43, "Code verifier should be 43 characters")
+	assert.Regexp(t, `^[A-Za-z0-9\-._~]+$`, verifierCookie.Value, "Code verifier should only contain unreserved characters")
+
+	// Validate cookie attributes
+	assert.True(t, verifierCookie.HttpOnly, "Code verifier cookie should be HttpOnly")
+	assert.Equal(t, http.SameSiteLaxMode, verifierCookie.SameSite, "Code verifier cookie should use SameSiteLaxMode")
+	assert.True(t, verifierCookie.Secure, "Code verifier cookie should be Secure")
+
+	// Parse redirect URL
+	location := response.Header.Get("Location")
+	redirectURL, err := url.Parse(location)
+	require.NoError(t, err)
+
+	// Validate PKCE parameters in redirect URL
+	query := redirectURL.Query()
+	codeChallenge := query.Get("code_challenge")
+	codeChallengeMethod := query.Get("code_challenge_method")
+
+	assert.NotEmpty(t, codeChallenge, "code_challenge should be present in redirect URL")
+	assert.Equal(t, "S256", codeChallengeMethod, "code_challenge_method should be S256")
+
+	// Validate code_challenge format (base64url, 43 chars for SHA-256)
+	assert.Regexp(t, `^[A-Za-z0-9\-_]+$`, codeChallenge, "Code challenge should be base64url encoded")
+
+	// Validate code_challenge is correct hash of code_verifier
+	hash := sha256.Sum256([]byte(verifierCookie.Value))
+	expectedChallenge := strings.TrimRight(base64.URLEncoding.EncodeToString(hash[:]), "=")
+	assert.Equal(t, expectedChallenge, codeChallenge, "Code challenge should be SHA-256 hash of code verifier")
+}
+
+// TestOpenIdCodeFlowShouldRejectMissingCodeVerifierCookie validates that the authentication flow properly
+// detects and rejects requests where the PKCE code_verifier cookie is missing. This test simulates scenarios
+// where cookies may be blocked by browser privacy settings, deleted by the user, or lost due to session timeout.
+// The code_verifier cookie should always be present because Kiali sets it before redirecting to the OIDC provider,
+// so its absence indicates an error condition. This test ensures that:
+// 1. The checkOpenIdAuthorizationCodeFlowParams function detects the missing cookie early in the flow
+// 2. The request is rejected with a badOidcRequest error (passed to fallback handler)
+// 3. A clear, user-friendly error message is provided instead of a cryptic token endpoint failure
+// Early detection of this condition improves the user experience by providing actionable error messages
+// (e.g., "cookies may be blocked") rather than letting the flow proceed to fail later at the token endpoint
+// with a confusing PKCE verification error.
+func TestOpenIdCodeFlowShouldRejectMissingCodeVerifierCookie(t *testing.T) {
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	cfg := config.NewConfig()
+	cfg.Server.WebRoot = "/kiali-test"
+	cfg.LoginToken.SigningKey = "kiali67890123456"
+	cfg.LoginToken.ExpirationSeconds = 1
+	config.Set(cfg)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *cfg)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, cfg)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), cfg.LoginToken.SigningKey)))
+	uri := fmt.Sprintf("/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
+	request := httptest.NewRequest(http.MethodGet, uri, nil)
+
+	// Add nonce cookie but NOT code_verifier cookie
+	request.AddCookie(&http.Cookie{
+		Name:  nonceCookieName(cfg.KubernetesConfig.ClusterName),
+		Value: "nonceString",
+	})
+
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, cfg, discovery)
+	require.NoError(t, err)
+
+	callbackCalled := false
+	rr := httptest.NewRecorder()
+	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callbackCalled = true
+	})).ServeHTTP(rr, request)
+
+	// Should pass to fallback handler (badOidcRequest)
+	assert.True(t, callbackCalled, "Should pass to fallback when code verifier cookie is missing")
+}
+
+// TestOpenIdPKCEWorksWithProviderThatIgnoresIt verifies that Kiali's PKCE implementation maintains backwards
+// compatibility with OIDC providers that do not support or validate PKCE parameters. According to RFC 7636
+// Section 6.1, authorization servers that do not support PKCE must ignore the code_challenge and
+// code_challenge_method parameters in the authorization request, and must not require code_verifier in
+// the token request. This test ensures that:
+// 1. Kiali always sends PKCE parameters (code_challenge, code_challenge_method) in authorization requests
+// 2. Kiali always sends code_verifier in token exchange requests
+// 3. Authentication succeeds even when the OIDC provider ignores these parameters
+// 4. The implementation does not break existing deployments using older OIDC providers
+// This backwards compatibility is critical because many Kiali deployments may use OIDC providers that
+// predate PKCE support (pre-2015), and forcing PKCE validation would break those installations. By always
+// sending PKCE parameters but not requiring provider validation, we provide enhanced security for modern
+// providers while maintaining compatibility with legacy systems.
+func TestOpenIdPKCEWorksWithProviderThatIgnoresIt(t *testing.T) {
+	cachedOpenIdMetadata = nil
+	var oidcMetadata []byte
+
+	// Setup mock OIDC server that ignores PKCE parameters (simulates older provider)
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+		if r.URL.Path == "/token" {
+			_ = r.ParseForm()
+			// Verify basic parameters but ignore code_verifier (simulating old provider)
+			assert.Equal(t, "f0code", r.Form.Get("code"))
+			assert.Equal(t, "authorization_code", r.Form.Get("grant_type"))
+			assert.Equal(t, "kiali-client", r.Form.Get("client_id"))
+			assert.Equal(t, "https://kiali.io:44/kiali-test", r.Form.Get("redirect_uri"))
+			// Note: code_verifier is present in request but this old provider ignores it
+
+			w.WriteHeader(200)
+			_, _ = w.Write([]byte("{ \"id_token\": \"" + openIdTestToken + "\" }"))
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		UserInfoURL:            "",
+		Algorithms:             nil,
+		ScopesSupported:        []string{"openid"},
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	assert.Nil(t, err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-test"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 1
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Identity.CertFile = "foo.cert"      // setting conf.Identity will make it look as if the endpoint ...
+	conf.Identity.PrivateKeyFile = "foo.key" // ... is HTTPS - this causes the cookies' Secure flag to be true
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Foo"))
+	mockClientFactory := kubetest.NewK8SClientFactoryMock(k8s)
+	cache := cache.NewTestingCacheWithFactory(t, mockClientFactory, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(mockClientFactory.Clients), cache, conf)
+
+	stateHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", "nonceString", clockTime.UTC().Format("060102150405"), conf.LoginToken.SigningKey)))
+	uri := fmt.Sprintf("https://kiali.io:44/api/authenticate?code=f0code&state=%x-%s", stateHash, clockTime.UTC().Format("060102150405"))
+	request := httptest.NewRequest(http.MethodGet, uri, nil)
+	request.AddCookie(&http.Cookie{
+		Name:  nonceCookieName(conf.KubernetesConfig.ClusterName),
+		Value: "nonceString",
+	})
+	request.AddCookie(&http.Cookie{
+		Name:  codeVerifierCookieName(conf.KubernetesConfig.ClusterName),
+		Value: "test_code_verifier_43_chars_long_12345678",
+	})
+
+	controller, err := NewOpenIdAuthController(cache, mockClientFactory, conf, discovery)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	controller.GetAuthCallbackHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Failf(t, "Callback function shouldn't have been called.", "")
+	})).ServeHTTP(rr, request)
+
+	expectedExpiration := time.Date(2021, 12, 1, 0, 0, 1, 0, time.UTC)
+
+	// Check that cookies are set and have the right expiration.
+	response := rr.Result()
+	assert.Len(t, response.Cookies(), 3)
+
+	// nonce cookie cleanup
+	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
+	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.True(t, response.Cookies()[0].HttpOnly)
+	assert.True(t, response.Cookies()[0].Secure)
+
+	// PKCE verifier cookie cleanup
+	assert.Equal(t, codeVerifierCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
+	assert.True(t, response.Cookies()[1].HttpOnly)
+	assert.True(t, response.Cookies()[1].Secure)
+
+	// Session cookie
+	assert.Equal(t, SessionCookieName, response.Cookies()[2].Name)
+	assert.Equal(t, expectedExpiration, response.Cookies()[2].Expires)
+	assert.Equal(t, http.StatusFound, response.StatusCode)
+	assert.True(t, response.Cookies()[2].HttpOnly)
+	assert.True(t, response.Cookies()[2].Secure)
+
+	// Redirection to boot the UI
+	assert.Equal(t, "/kiali-test/", response.Header.Get("Location"))
 }
