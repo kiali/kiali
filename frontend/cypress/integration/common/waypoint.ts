@@ -187,20 +187,44 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
     url += `&cluster=${cluster}`;
   }
 
-  const wait = (retryCount: number): void => {
+  const wait = (retryCount: number, lastResponseSummary = ''): void => {
     if (retryCount >= maxRetries) {
       throw new Error(
         `Condition not met after ${maxRetries} retries (waitForHealthyWaypoint name=${name} ns=${namespace} cluster=${
           cluster ?? ''
-        }, baseUrl=${Cypress.config('baseUrl')})`
+        }, baseUrl=${Cypress.config('baseUrl')}, url=${url}, lastResponse=${lastResponseSummary})`
       );
     }
     cy.request({
       method: 'GET',
-      url: url
+      url: url,
+      failOnStatusCode: false
     }).then(response => {
-      expect(response.status).to.equal(200);
-      const workload = response.body;
+      const baseUrl = Cypress.config('baseUrl') ?? '';
+      const fullUrl = new URL(url, baseUrl).toString();
+
+      const responseBody = response.body;
+      const responseBodyStr =
+        responseBody === undefined
+          ? 'undefined'
+          : typeof responseBody === 'string'
+          ? responseBody
+          : JSON.stringify(responseBody);
+      const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
+
+      const responseSummary = `status=${response.status} fullUrl=${fullUrl} body=${responseBodyShort}`;
+
+      if (response.status !== 200) {
+        if (retryCount === 0 || retryCount % 5 === 0) {
+          Cypress.log({
+            name: 'waitForHealthyWaypoint',
+            message: `retry=${retryCount}/${maxRetries} ${responseSummary}`
+          });
+        }
+        return cy.wait(10000).then(() => wait(retryCount + 1, responseSummary));
+      }
+
+      const workload = responseBody;
 
       if (workload.pods.length > 0 && workload.pods.every(pod => proxyStatusHealthy(pod))) {
         return;
@@ -209,14 +233,12 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForHealthyWaypoint',
-          message: `retry=${retryCount}/${maxRetries} url=${url} pods=${
-            workload?.pods?.length ?? -1
-          } baseUrl=${Cypress.config('baseUrl')}`
+          message: `retry=${retryCount}/${maxRetries} ${responseSummary} pods=${workload?.pods?.length ?? -1}`
         });
       }
 
       return cy.wait(10000).then(() => {
-        return wait(retryCount + 1);
+        return wait(retryCount + 1, responseSummary);
       });
     });
   };
