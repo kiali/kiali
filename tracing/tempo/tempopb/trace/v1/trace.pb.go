@@ -6,12 +6,14 @@ package v1
 import (
 	encoding_binary "encoding/binary"
 	fmt "fmt"
-	proto "github.com/gogo/protobuf/proto"
-	v11 "github.com/kiali/kiali/tracing/tempo/tempopb/common/v1"
-	v1 "github.com/kiali/kiali/tracing/tempo/tempopb/resource/v1"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	proto "github.com/gogo/protobuf/proto"
+
+	v11 "github.com/kiali/kiali/tracing/tempo/tempopb/common/v1"
+	v1 "github.com/kiali/kiali/tracing/tempo/tempopb/resource/v1"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

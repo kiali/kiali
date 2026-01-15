@@ -9,7 +9,6 @@ import (
 	extentionsv1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-
 	securityv1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetryv1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	"k8s.io/apimachinery/pkg/runtime"
