@@ -107,7 +107,7 @@ const clusterStatusHeaderStyle = kialiStyle({
   marginBottom: PFSpacer.xs
 });
 
-export const meshLinkStyle = kialiStyle({
+const meshLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'flex-start',
   marginTop: PFSpacer.sm,

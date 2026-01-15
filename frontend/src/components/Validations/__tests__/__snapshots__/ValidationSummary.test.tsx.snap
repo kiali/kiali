@@ -4,12 +4,11 @@ exports[`ValidationSummary renders N/A when all istio components are valid 1`] =
 <Tooltip
   aria-label="Validations list"
   content={
-    <Content
+    <div
       className="kiali_fz2k14t"
-      component="p"
     >
       No Istio config objects found
-    </Content>
+    </div>
   }
   enableFlip={true}
   position="auto"
@@ -31,18 +30,17 @@ exports[`ValidationSummary renders error icon when all istio components are vali
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         1
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -66,18 +64,17 @@ exports[`ValidationSummary renders error icon when all istio components are vali
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         3
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -104,17 +101,16 @@ exports[`ValidationSummary renders error icon when all services are valid 1`] = 
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Service validation result
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -138,17 +134,16 @@ exports[`ValidationSummary renders error icon when all services are valid 2`] = 
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Service validation result
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -175,18 +170,17 @@ exports[`ValidationSummary renders success icon when all istio components are va
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         1
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -210,18 +204,17 @@ exports[`ValidationSummary renders success icon when all istio components are va
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         4
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -245,17 +238,16 @@ exports[`ValidationSummary renders success icon when all services are valid 1`] 
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Service validation result
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -279,18 +271,17 @@ exports[`ValidationSummary renders warning icon when all istio components are va
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         1
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -314,18 +305,17 @@ exports[`ValidationSummary renders warning icon when all istio components are va
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Istio config objects analyzed: 
         3
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -349,17 +339,16 @@ exports[`ValidationSummary renders warning icon when all services are valid 1`] 
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Service validation result
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
@@ -383,17 +372,16 @@ exports[`ValidationSummary renders warning icon when all services are valid 2`] 
   aria-label="Validations list"
   content={
     <React.Fragment>
-      <Content
-        component="p"
+      <div
         style={
           Object {
+            "fontWeight": "bold",
             "textAlign": "left",
-            "textEmphasis": "strong",
           }
         }
       >
         Service validation result
-      </Content>
+      </div>
       <div
         className="kiali_fstk0tp"
       >
