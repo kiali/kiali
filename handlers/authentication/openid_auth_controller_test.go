@@ -393,7 +393,7 @@ QwIDAQAB
 
 	// Check that cookies are set and have the right expiration.
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 2)
+	assert.Len(t, response.Cookies(), 3)
 
 	// nonce cookie cleanup
 	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
@@ -401,12 +401,18 @@ QwIDAQAB
 	assert.True(t, response.Cookies()[0].HttpOnly)
 	assert.True(t, response.Cookies()[0].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
 
-	// Session cookie
-	assert.Equal(t, SessionCookieName, response.Cookies()[1].Name)
-	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
-	assert.Equal(t, http.StatusFound, response.StatusCode)
+	// PKCE verifier cookie cleanup
+	assert.Equal(t, codeVerifierCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 	assert.True(t, response.Cookies()[1].HttpOnly)
-	assert.True(t, response.Cookies()[1].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
+	assert.True(t, response.Cookies()[1].Secure)
+
+	// Session cookie
+	assert.Equal(t, SessionCookieName, response.Cookies()[2].Name)
+	assert.Equal(t, expectedExpiration, response.Cookies()[2].Expires)
+	assert.Equal(t, http.StatusFound, response.StatusCode)
+	assert.True(t, response.Cookies()[2].HttpOnly)
+	assert.True(t, response.Cookies()[2].Secure) // the test URL is https://kiali.io:44/kiali-test ; https: means it should be Secure
 
 	// Redirection to boot the UI
 	assert.Equal(t, "/kiali-test/", response.Header.Get("Location"))
@@ -421,10 +427,11 @@ QwIDAQAB
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// Check that there is only one cookie (nonce) - the other AES cookie should be missing because the audience claim was bad
+	// Check that there are two cookies (nonce + PKCE cleanup) - the session cookie should be missing because the audience claim was bad
 	response = rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
+	assert.Equal(t, codeVerifierCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
 	assert.Equal(t, "/kiali-test/?openid_error=the+OpenID+token+was+rejected%3A+the+OpenId+token+is+not+targeted+for+Kiali%3B+got+aud+%5Bbad-aud-client%5D", response.Header.Get("Location"))
 }
 
@@ -549,7 +556,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 
 	// Check that cookies are set and have the right expiration.
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 2)
+	assert.Len(t, response.Cookies(), 3)
 
 	// nonce cookie cleanup
 	assert.Equal(t, nonceCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
@@ -557,12 +564,18 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 	assert.True(t, response.Cookies()[0].HttpOnly)
 	assert.True(t, response.Cookies()[0].Secure)
 
-	// Session cookie
-	assert.Equal(t, SessionCookieName, response.Cookies()[1].Name)
-	assert.Equal(t, expectedExpiration, response.Cookies()[1].Expires)
-	assert.Equal(t, http.StatusFound, response.StatusCode)
+	// PKCE verifier cookie cleanup
+	assert.Equal(t, codeVerifierCookieName(conf.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 	assert.True(t, response.Cookies()[1].HttpOnly)
 	assert.True(t, response.Cookies()[1].Secure)
+
+	// Session cookie
+	assert.Equal(t, SessionCookieName, response.Cookies()[2].Name)
+	assert.Equal(t, expectedExpiration, response.Cookies()[2].Expires)
+	assert.Equal(t, http.StatusFound, response.StatusCode)
+	assert.True(t, response.Cookies()[2].HttpOnly)
+	assert.True(t, response.Cookies()[2].Secure)
 
 	// Redirection to boot the UI
 	assert.Equal(t, "/kiali-test/", response.Header.Get("Location"))
@@ -630,11 +643,13 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
@@ -703,11 +718,13 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
@@ -776,11 +793,13 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	u, _ := url.Parse(response.Header.Get("Location"))
@@ -849,11 +868,13 @@ func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	u, _ := url.Parse(response.Header.Get("Location"))
@@ -963,11 +984,13 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
@@ -1036,11 +1059,13 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T)
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	u, _ := url.Parse(response.Header.Get("Location"))
@@ -1081,11 +1106,13 @@ func TestOpenIdCodeFlowShouldRejectInvalidState(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
@@ -1126,11 +1153,13 @@ func TestOpenIdCodeFlowShouldRejectBadStateFormat(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
@@ -1276,11 +1305,13 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 		assert.Failf(t, "Callback function shouldn't have been called.", "")
 	})).ServeHTTP(rr, request)
 
-	// nonce cookie cleanup
+	// nonce and PKCE cookie cleanup
 	response := rr.Result()
-	assert.Len(t, response.Cookies(), 1)
+	assert.Len(t, response.Cookies(), 2)
 	assert.Equal(t, nonceCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[0].Name)
 	assert.True(t, clockTime.After(response.Cookies()[0].Expires))
+	assert.Equal(t, codeVerifierCookieName(cfg.KubernetesConfig.ClusterName), response.Cookies()[1].Name)
+	assert.True(t, clockTime.After(response.Cookies()[1].Expires))
 
 	// Redirection to boot the UI
 	q := url.Values{}
