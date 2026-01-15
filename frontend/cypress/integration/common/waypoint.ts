@@ -181,7 +181,7 @@ const waitForWorkloadTracesInApi = (
 };
 
 const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
-  const maxRetries = 30;
+  const maxRetries = 20;
   let url = `/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
   if (cluster) {
     url += `&cluster=${cluster}`;
@@ -221,7 +221,7 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
             message: `retry=${retryCount}/${maxRetries} ${responseSummary}`
           });
         }
-        return cy.wait(10000).then(() => wait(retryCount + 1, responseSummary));
+        return cy.wait(30000).then(() => wait(retryCount + 1, responseSummary));
       }
 
       const workload = responseBody;

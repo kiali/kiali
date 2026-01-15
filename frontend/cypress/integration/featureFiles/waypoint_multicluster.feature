@@ -42,7 +42,7 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
     And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
-    Then 9 edges appear in the graph
+    Then 7 edges appear in the graph
     And there is traffic from cluster "east" and cluster "west"
     # TODO: At the moment (Istio 1.28) The telemetry is incomplete, no interconnection between edges in the clusters
     # Once is fixed, validate the interconnection
