@@ -143,6 +143,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
   const [expandedClusters, setExpandedClusters] = React.useState<Set<string>>(new Set());
+  const [tooltipKey, setTooltipKey] = React.useState<number>(0);
 
   const { namespaces, setIstioStatus, lastRefreshAt } = props;
 
@@ -176,6 +177,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     // retrieve status for all clusters
     fetchStatus();
   }, [pathname, lastRefreshAt, fetchStatus]);
+
+  React.useEffect(() => {
+    // Force tooltip to close on route changes by remounting it with a new key
+    setTooltipKey(prev => prev + 1);
+  }, [pathname]);
 
   const getSeverity = (components: ComponentStatus[]): number =>
     Math.max(
@@ -397,7 +403,15 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         {!pathname.endsWith('/mesh') && isControlPlaneAccessible() && (
           <div className={meshLinkStyle}>
             <span>{t('More info at')}</span>
-            <Link to="/mesh">{t('Mesh page')}</Link>
+            <Link
+              to="/mesh"
+              onClick={() => {
+                // Force tooltip to close by remounting with a new key
+                setTooltipKey(prev => prev + 1);
+              }}
+            >
+              {t('Mesh page')}
+            </Link>
           </div>
         )}
       </Content>
@@ -453,6 +467,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
   return (
     <Tooltip
+      key={tooltipKey}
       data-test="component-status-tooltip"
       position={tooltipPosition}
       enableFlip={true}
