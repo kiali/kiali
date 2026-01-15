@@ -109,6 +109,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -118,6 +119,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -157,7 +159,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-2"
+          id="pf-tooltip-4"
           role="tooltip"
           style={
             Object {
@@ -240,6 +242,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -468,6 +471,7 @@ exports[`When both core and addon component have problems any component is in no
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -477,6 +481,7 @@ exports[`When both core and addon component have problems any component is in no
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -516,7 +521,7 @@ exports[`When both core and addon component have problems any component is in no
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-3"
+          id="pf-tooltip-6"
           role="tooltip"
           style={
             Object {
@@ -624,6 +629,7 @@ exports[`When both core and addon component have problems any component is in no
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -827,6 +833,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -836,6 +843,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -875,7 +883,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-1"
+          id="pf-tooltip-2"
           role="tooltip"
           style={
             Object {
@@ -958,6 +966,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -1037,6 +1046,702 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                     />
                   </svg>
                 </ExclamationCircleIcon>
+              </span>
+              <span
+                className="pf-v6-c-label__text"
+              >
+                Kubernetes
+              </span>
+            </span>
+          </span>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
+`;
+
+exports[`When there are multiple clusters cluster with failing components shows expand/collapse arrow 1`] = `
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istiod",
+          "status": "Unhealthy",
+        },
+      ],
+      "cluster-2": Array [
+        Object {
+          "cluster": "cluster-2",
+          "isCore": true,
+          "name": "istiod",
+          "status": "Healthy",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    className="kiali_f4l84oj"
+    content={
+      <Content>
+        <Content
+          className="kiali_f4ximkg"
+        >
+          Cluster Status
+        </Content>
+        <React.Fragment>
+          <div
+            className="kiali_f1mkymqb"
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-t--color--blue--30)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "0.25rem",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <Divider
+            className="kiali_f1wxnwgd"
+          />
+          <React.Fragment>
+            <React.Fragment>
+              <Content
+                className="kiali_f1u5qgrb"
+                component="h6"
+              >
+                Core
+              </Content>
+              <div
+                className="kiali_f1br0liu"
+              >
+                <IstioStatusList
+                  cluster="Kubernetes"
+                  status={
+                    Array [
+                      Object {
+                        "cluster": "Kubernetes",
+                        "isCore": true,
+                        "name": "istiod",
+                        "status": "Unhealthy",
+                      },
+                    ]
+                  }
+                />
+              </div>
+            </React.Fragment>
+          </React.Fragment>
+        </React.Fragment>
+        <div
+          className="kiali_f2klew6"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            onClick={[Function]}
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </Content>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    key="1"
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v6-c-tooltip kiali_f4l84oj"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-20"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <Content>
+              <Content
+                className="kiali_f4ximkg"
+              >
+                Cluster Status
+              </Content>
+              <React.Fragment>
+                <div
+                  className="kiali_f1mkymqb"
+                >
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "C",
+                        "style": Object {
+                          "backgroundColor": "var(--pf-t--color--blue--30)",
+                        },
+                        "tt": "Cluster",
+                      }
+                    }
+                    size="sm"
+                  />
+                  Kubernetes
+                  <span
+                    style={
+                      Object {
+                        "marginLeft": "0.25rem",
+                      }
+                    }
+                  >
+                    <Star />
+                  </span>
+                </div>
+                <Divider
+                  className="kiali_f1wxnwgd"
+                />
+                <React.Fragment>
+                  <React.Fragment>
+                    <Content
+                      className="kiali_f1u5qgrb"
+                      component="h6"
+                    >
+                      Core
+                    </Content>
+                    <div
+                      className="kiali_f1br0liu"
+                    >
+                      <IstioStatusList
+                        cluster="Kubernetes"
+                        status={
+                          Array [
+                            Object {
+                              "cluster": "Kubernetes",
+                              "isCore": true,
+                              "name": "istiod",
+                              "status": "Unhealthy",
+                            },
+                          ]
+                        }
+                      />
+                    </div>
+                  </React.Fragment>
+                </React.Fragment>
+              </React.Fragment>
+              <div
+                className="kiali_f2klew6"
+              >
+                <span>
+                  More info at
+                </span>
+                <Link
+                  onClick={[Function]}
+                  to="/mesh"
+                >
+                  Mesh page
+                </Link>
+              </div>
+            </Content>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            data-test="istio-status-danger"
+            status="danger"
+          >
+            Kubernetes
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
+        style={
+          Object {
+            "display": "contents",
+          }
+        }
+      >
+        <Label
+          data-test="istio-status-danger"
+          status="danger"
+        >
+          <span
+            className="pf-v6-c-label pf-m-filled pf-m-danger"
+            data-test="istio-status-danger"
+          >
+            <span
+              className="pf-v6-c-label__content"
+            >
+              <span
+                className="pf-v6-c-label__icon"
+              >
+                <ExclamationCircleIcon>
+                  <svg
+                    aria-hidden={true}
+                    aria-labelledby={null}
+                    className="pf-v6-svg"
+                    fill="currentColor"
+                    height="1em"
+                    role="img"
+                    viewBox="0 0 512 512"
+                    width="1em"
+                  >
+                    <path
+                      d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                    />
+                  </svg>
+                </ExclamationCircleIcon>
+              </span>
+              <span
+                className="pf-v6-c-label__text"
+              >
+                Kubernetes
+              </span>
+            </span>
+          </span>
+        </Label>
+      </div>
+    </Popper>
+  </Tooltip>
+</IstioStatusComponent>
+`;
+
+exports[`When there are multiple clusters clusters without failing components do not show expand/collapse arrow 1`] = `
+<IstioStatusComponent
+  lastRefreshAt={848152}
+  namespaces={
+    Array [
+      Object {
+        "cluster": "Kubernetes",
+        "name": "bookinfo",
+      },
+      Object {
+        "cluster": "Kubernetes",
+        "name": "istio-system",
+      },
+    ]
+  }
+  setIstioStatus={[MockFunction]}
+  statusMap={
+    Object {
+      "Kubernetes": Array [
+        Object {
+          "cluster": "Kubernetes",
+          "isCore": true,
+          "name": "istiod",
+          "status": "Healthy",
+        },
+      ],
+      "cluster-2": Array [
+        Object {
+          "cluster": "cluster-2",
+          "isCore": true,
+          "name": "istiod",
+          "status": "Healthy",
+        },
+        Object {
+          "cluster": "cluster-2",
+          "isCore": false,
+          "name": "grafana",
+          "status": "Healthy",
+        },
+      ],
+    }
+  }
+>
+  <Tooltip
+    className="kiali_f4l84oj"
+    content={
+      <Content>
+        <Content
+          className="kiali_f4ximkg"
+        >
+          Cluster Status
+        </Content>
+        <React.Fragment>
+          <div
+            className="kiali_f1mkymqb"
+            style={
+              Object {
+                "cursor": "default",
+              }
+            }
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-t--color--blue--30)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            Kubernetes
+            <span
+              style={
+                Object {
+                  "marginLeft": "var(--pf-t--global--spacer--xs)",
+                }
+              }
+            >
+              <Star />
+            </span>
+          </div>
+          <Divider
+            className="kiali_f1wxnwgd"
+          />
+          <React.Fragment />
+        </React.Fragment>
+        <React.Fragment>
+          <div
+            className="kiali_f1mkymqb"
+            style={
+              Object {
+                "cursor": "default",
+              }
+            }
+          >
+            <PFBadge
+              badge={
+                Object {
+                  "badge": "C",
+                  "style": Object {
+                    "backgroundColor": "var(--pf-t--color--blue--30)",
+                  },
+                  "tt": "Cluster",
+                }
+              }
+              size="sm"
+            />
+            cluster-2
+          </div>
+          <Divider
+            className="kiali_f1wxnwgd"
+          />
+        </React.Fragment>
+        <div
+          className="kiali_f2klew6"
+        >
+          <span>
+            More info at
+          </span>
+          <Link
+            onClick={[Function]}
+            to="/mesh"
+          >
+            Mesh page
+          </Link>
+        </div>
+      </Content>
+    }
+    data-test="component-status-tooltip"
+    enableFlip={true}
+    key="1"
+    maxWidth="25rem"
+    position="top"
+  >
+    <Popper
+      animationDuration={300}
+      appendTo={[Function]}
+      distance={15}
+      enableFlip={true}
+      entryDelay={300}
+      exitDelay={300}
+      flipBehavior={
+        Array [
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "top",
+          "right",
+          "bottom",
+        ]
+      }
+      isVisible={false}
+      minWidth="revert"
+      onBlur={[Function]}
+      onDocumentClick={false}
+      onDocumentKeyDown={[Function]}
+      onFocus={[Function]}
+      onHidden={[Function]}
+      onMouseEnter={[Function]}
+      onMouseLeave={[Function]}
+      onPopperMouseEnter={[Function]}
+      onPopperMouseLeave={[Function]}
+      onTriggerEnter={[Function]}
+      placement="top"
+      popper={
+        <div
+          aria-live="off"
+          className="pf-v6-c-tooltip kiali_f4l84oj"
+          data-test="component-status-tooltip"
+          id="pf-tooltip-22"
+          role="tooltip"
+          style={
+            Object {
+              "maxWidth": "25rem",
+            }
+          }
+        >
+          <TooltipArrow />
+          <TooltipContent
+            isLeftAligned={false}
+          >
+            <Content>
+              <Content
+                className="kiali_f4ximkg"
+              >
+                Cluster Status
+              </Content>
+              <React.Fragment>
+                <div
+                  className="kiali_f1mkymqb"
+                  style={
+                    Object {
+                      "cursor": "default",
+                    }
+                  }
+                >
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "C",
+                        "style": Object {
+                          "backgroundColor": "var(--pf-t--color--blue--30)",
+                        },
+                        "tt": "Cluster",
+                      }
+                    }
+                    size="sm"
+                  />
+                  Kubernetes
+                  <span
+                    style={
+                      Object {
+                        "marginLeft": "var(--pf-t--global--spacer--xs)",
+                      }
+                    }
+                  >
+                    <Star />
+                  </span>
+                </div>
+                <Divider
+                  className="kiali_f1wxnwgd"
+                />
+                <React.Fragment />
+              </React.Fragment>
+              <React.Fragment>
+                <div
+                  className="kiali_f1mkymqb"
+                  style={
+                    Object {
+                      "cursor": "default",
+                    }
+                  }
+                >
+                  <PFBadge
+                    badge={
+                      Object {
+                        "badge": "C",
+                        "style": Object {
+                          "backgroundColor": "var(--pf-t--color--blue--30)",
+                        },
+                        "tt": "Cluster",
+                      }
+                    }
+                    size="sm"
+                  />
+                  cluster-2
+                </div>
+                <Divider
+                  className="kiali_f1wxnwgd"
+                />
+              </React.Fragment>
+              <div
+                className="kiali_f2klew6"
+              >
+                <span>
+                  More info at
+                </span>
+                <Link
+                  onClick={[Function]}
+                  to="/mesh"
+                >
+                  Mesh page
+                </Link>
+              </div>
+            </Content>
+          </TooltipContent>
+        </div>
+      }
+      popperRef={
+        Object {
+          "current": null,
+        }
+      }
+      positionModifiers={
+        Object {
+          "bottom": "pf-m-bottom",
+          "bottom-end": "pf-m-bottom-right",
+          "bottom-start": "pf-m-bottom-left",
+          "left": "pf-m-left",
+          "left-end": "pf-m-left-bottom",
+          "left-start": "pf-m-left-top",
+          "right": "pf-m-right",
+          "right-end": "pf-m-right-bottom",
+          "right-start": "pf-m-right-top",
+          "top": "pf-m-top",
+          "top-end": "pf-m-top-right",
+          "top-start": "pf-m-top-left",
+        }
+      }
+      trigger={
+        <React.Fragment>
+          <Label
+            data-test="istio-status-success"
+            status="success"
+          >
+            Kubernetes
+          </Label>
+        </React.Fragment>
+      }
+      zIndex={9999}
+    >
+      <div
+        style={
+          Object {
+            "display": "contents",
+          }
+        }
+      >
+        <Label
+          data-test="istio-status-success"
+          status="success"
+        >
+          <span
+            className="pf-v6-c-label pf-m-filled pf-m-success"
+            data-test="istio-status-success"
+          >
+            <span
+              className="pf-v6-c-label__content"
+            >
+              <span
+                className="pf-v6-c-label__icon"
+              >
+                <CheckCircleIcon>
+                  <svg
+                    aria-hidden={true}
+                    aria-labelledby={null}
+                    className="pf-v6-svg"
+                    fill="currentColor"
+                    height="1em"
+                    role="img"
+                    viewBox="0 0 512 512"
+                    width="1em"
+                  >
+                    <path
+                      d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                    />
+                  </svg>
+                </CheckCircleIcon>
               </span>
               <span
                 className="pf-v6-c-label__text"
@@ -1167,6 +1872,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -1176,6 +1882,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -1215,7 +1922,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-5"
+          id="pf-tooltip-10"
           role="tooltip"
           style={
             Object {
@@ -1304,6 +2011,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -1556,6 +2264,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -1565,6 +2274,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -1604,7 +2314,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-6"
+          id="pf-tooltip-12"
           role="tooltip"
           style={
             Object {
@@ -1724,6 +2434,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -1933,6 +2644,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -1942,6 +2654,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -1981,7 +2694,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-4"
+          id="pf-tooltip-8"
           role="tooltip"
           style={
             Object {
@@ -2070,6 +2783,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -2267,6 +2981,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -2276,6 +2991,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -2315,7 +3031,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-8"
+          id="pf-tooltip-16"
           role="tooltip"
           style={
             Object {
@@ -2398,6 +3114,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
@@ -2595,6 +3312,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
             More info at
           </span>
           <Link
+            onClick={[Function]}
             to="/mesh"
           >
             Mesh page
@@ -2604,6 +3322,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
     }
     data-test="component-status-tooltip"
     enableFlip={true}
+    key="1"
     maxWidth="25rem"
     position="top"
   >
@@ -2643,7 +3362,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           aria-live="off"
           className="pf-v6-c-tooltip kiali_f4l84oj"
           data-test="component-status-tooltip"
-          id="pf-tooltip-7"
+          id="pf-tooltip-14"
           role="tooltip"
           style={
             Object {
@@ -2726,6 +3445,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                   More info at
                 </span>
                 <Link
+                  onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page

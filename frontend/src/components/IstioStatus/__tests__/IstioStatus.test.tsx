@@ -273,3 +273,112 @@ describe('When all components are good', () => {
     testIcon(wrapper, 'istio-status-success', 'success');
   });
 });
+
+describe('When there are multiple clusters', () => {
+  beforeEach(() => {
+    serverConfig.clusters = {
+      CLUSTER_DEFAULT: {
+        accessible: true,
+        apiEndpoint: '',
+        isKialiHome: true,
+        kialiInstances: [],
+        name: CLUSTER_DEFAULT,
+        secretName: 'test-secret'
+      },
+      'cluster-2': {
+        accessible: true,
+        apiEndpoint: '',
+        isKialiHome: false,
+        kialiInstances: [],
+        name: 'cluster-2',
+        secretName: 'test-secret-2'
+      }
+    };
+    setServerConfig(serverConfig);
+  });
+
+  it('cluster with failing components shows expand/collapse arrow', () => {
+    const wrapper = mount(
+      <MemoryRouter>
+        <IstioStatusComponent
+          statusMap={{
+            [CLUSTER_DEFAULT]: [
+              {
+                cluster: CLUSTER_DEFAULT,
+                name: 'istiod',
+                status: Status.Unhealthy,
+                isCore: true
+              }
+            ],
+            'cluster-2': [
+              {
+                cluster: 'cluster-2',
+                name: 'istiod',
+                status: Status.Healthy,
+                isCore: true
+              }
+            ]
+          }}
+          lastRefreshAt={848152}
+          namespaces={[
+            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+          ]}
+          setIstioStatus={jest.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    testSnapshot(wrapper);
+    testTooltip(wrapper);
+    testIcon(wrapper, 'istio-status-danger', 'danger');
+  });
+
+  it('clusters without failing components do not show expand/collapse arrow', () => {
+    const wrapper = mount(
+      <MemoryRouter>
+        <IstioStatusComponent
+          statusMap={{
+            [CLUSTER_DEFAULT]: [
+              {
+                cluster: CLUSTER_DEFAULT,
+                name: 'istiod',
+                status: Status.Healthy,
+                isCore: true
+              }
+            ],
+            'cluster-2': [
+              {
+                cluster: 'cluster-2',
+                name: 'istiod',
+                status: Status.Healthy,
+                isCore: true
+              },
+              {
+                cluster: 'cluster-2',
+                name: 'grafana',
+                status: Status.Healthy,
+                isCore: false
+              }
+            ]
+          }}
+          lastRefreshAt={848152}
+          namespaces={[
+            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+          ]}
+          setIstioStatus={jest.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    testSnapshot(wrapper);
+    testTooltip(wrapper);
+    testIcon(wrapper, 'istio-status-success', 'success');
+
+    // When all clusters are healthy, they all show up but without expand/collapse buttons
+    // Verify there are no expand/collapse buttons (plain variant buttons)
+    const buttons = wrapper.find('Button[variant="plain"]');
+    expect(buttons).toHaveLength(0);
+  });
+});
