@@ -945,6 +945,7 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 		InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
 		RootCAs:            certPool,
 	}
+	conf.ResolvedTLSPolicy.ApplyTo(httpTransport.TLSClientConfig)
 
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
 		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPSProxy)

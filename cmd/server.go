@@ -46,6 +46,7 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/server"
+	"github.com/kiali/kiali/tlspolicy"
 	"github.com/kiali/kiali/tracing"
 )
 
@@ -53,6 +54,14 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	logger := log.Logger()
 	// log startup information
 	log.Infof("Kiali: Version: %v, Commit: %v, Go: %v", version, commitHash, goVersion)
+
+	policy, err := tlspolicy.Resolve(ctx, conf, clientFactory.GetSAHomeClusterClient())
+	if err != nil {
+		log.Fatalf("Unable to resolve TLS policy: %s", err)
+	}
+	conf.ResolvedTLSPolicy = policy
+	config.Set(conf)
+	log.Infof("TLS policy source [%s] min_version [%s] max_version [%s] cipher_suites count=[%d]", policy.Source, policy.MinVersionName(), policy.MaxVersionName(), len(policy.CipherSuites))
 
 	mgr, kubeCaches, err := newManager(ctx, conf, logger, clientFactory)
 	if err != nil {

@@ -558,6 +558,28 @@ func TestValidateAuthStrategy(t *testing.T) {
 	}
 }
 
+func TestValidateTLSConfigSource(t *testing.T) {
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = Credential(util.RandomString(16))
+	conf.Auth.Strategy = AuthStrategyAnonymous
+
+	// valid: explicit config and auto
+	for _, src := range []string{string(TLSConfigSourceConfig), string(TLSConfigSourceAuto)} {
+		conf.Deployment.TLSConfig.Source = TLSConfigSource(src)
+		if err := Validate(conf); err != nil {
+			t.Fatalf("expected tls_config.source [%s] to validate: %v", src, err)
+		}
+	}
+
+	// invalid source (empty and bogus)
+	for _, src := range []TLSConfigSource{"", TLSConfigSource("bogus")} {
+		conf.Deployment.TLSConfig.Source = src
+		if err := Validate(conf); err == nil {
+			t.Fatalf("expected invalid tls_config.source [%s] to fail validation", src)
+		}
+	}
+}
+
 func TestValidateSigningKeyLength(t *testing.T) {
 	// Valid signing key lengths are 16, 24, or 32 bytes
 	validLengths := []int{16, 24, 32}
