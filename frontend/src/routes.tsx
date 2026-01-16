@@ -6,6 +6,7 @@ import { ServiceListPage } from './pages/ServiceList/ServiceListPage';
 import { IstioConfigListPage } from './pages/IstioConfigList/IstioConfigListPage';
 import { AppListPage } from './pages/AppList/AppListPage';
 import { OverviewPage } from './pages/Overview/OverviewPage';
+import { NamespacesPage } from './pages/Namespaces/NamespacesPage';
 import { MeshPage } from 'pages/Mesh/MeshPage';
 import { ServiceDetailsRoute } from 'routes/ServiceDetailsRoute';
 import { WorkloadDetailsRoute } from 'routes/WorkloadDetailsRoute';
@@ -34,6 +35,12 @@ const navMenuItems: MenuItem[] = [
     title: t('Traffic Graph'),
     to: '/graph/namespaces',
     pathsActive: [/^\/graph\/(.*)/]
+  },
+  {
+    id: 'namespaces',
+    title: t('Namespaces'),
+    to: `/${Paths.NAMESPACES}`,
+    pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
   },
   {
     id: 'applications',
@@ -75,6 +82,10 @@ const pathRoutes: RouteObject[] = [
   {
     path: '/overview',
     element: <OverviewPage />
+  },
+  {
+    path: `/${Paths.NAMESPACES}`,
+    element: <NamespacesPage />
   },
   {
     path: `/graph/node/namespaces/:namespace/${Paths.AGGREGATES}/:aggregate/:aggregateValue`,
