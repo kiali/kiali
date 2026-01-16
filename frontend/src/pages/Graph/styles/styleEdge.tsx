@@ -1,14 +1,5 @@
 import * as React from 'react';
-import {
-  DefaultEdge,
-  Edge,
-  observer,
-  ScaleDetailsLevel,
-  WithSelectionProps,
-  useEventListener,
-  GRAPH_LAYOUT_END_EVENT,
-  GraphLayoutEndEventListener
-} from '@patternfly/react-topology';
+import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -144,34 +135,9 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
+  const start = element.getStartPoint();
+  const end = element.getEndPoint();
   const hasAnimation = !!data.animation;
-  const animationHash = hasAnimation ? data.animation?.getHash(data) : undefined;
-
-  // Track if initial layout is complete to maintain load optimization
-  const [isLayoutComplete, setIsLayoutComplete] = React.useState(false);
-
-  // Listen for layout end event to know when initial layout is complete
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, () => {
-    setIsLayoutComplete(true);
-  });
-
-  // Only include animationHash after layout is complete to maintain load optimization
-  const animationHashDependency = isLayoutComplete && hasAnimation ? animationHash : undefined;
-
-  // Memoize start/end points to avoid recalculating on every render during initial load
-  const memoizedStartEnd = React.useMemo(
-    () => {
-      const start = element.getStartPoint();
-      const end = element.getEndPoint();
-      return { start, end };
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [element, animationHashDependency]
-  );
-
-  const startEnd =
-    isLayoutComplete && hasAnimation
-      ? { start: element.getStartPoint(), end: element.getEndPoint() }
-      : memoizedStartEnd;
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
@@ -180,10 +146,10 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
         <AnimationEdge
           animationHash={data.animation?.getHash(data)}
           edge={element}
-          endX={startEnd.end.x}
-          endY={startEnd.end.y}
-          startX={startEnd.start.x}
-          startY={startEnd.start.y}
+          endX={end.x}
+          endY={end.y}
+          startX={start.x}
+          startY={start.y}
         />
       )}
     </g>
