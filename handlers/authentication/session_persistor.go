@@ -41,6 +41,8 @@ const (
 	// when user is starting authentication with the external server. This code
 	// is used to mitigate replay attacks.
 	NonceCookieName = "kiali-token-nonce"
+	// PkceVerifierCookieName is the cookie name used to store a PKCE code verifier.
+	PkceVerifierCookieName = "kiali-token-pkce-verifier"
 	// NumberOfChunksCookieName is the name of the cookie that holds the number of chunks of a session.
 	// This may or may not be set depending on the size of the session data.
 	NumberOfChunksCookieName = "kiali-token-chunks"
@@ -482,8 +484,8 @@ func (p *cookieSessionPersistor[T]) TerminateSession(r *http.Request, w http.Res
 		// - Session cookie
 		// - Number of chunks cookie
 		// - Cookie chunks - mmmmmm
-		// Don't drop nonce cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
-		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") {
+		// Don't drop nonce or PKCE verifier cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
+		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") && !strings.Contains(cookie.Name, "pkce-verifier") {
 			p.dropCookie(r, w, cookie.Name)
 		}
 	}
