@@ -1,3 +1,4 @@
+import * as React from 'react';
 import deepFreeze from 'deep-freeze';
 import { AppListItem } from '../../types/AppList';
 import { AppWorkload } from 'types/App';
@@ -5,6 +6,7 @@ import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
+import * as NamespacesRenderers from '../../pages/Namespaces/NamespacesRenderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace, serverConfig } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
@@ -48,6 +50,7 @@ export const noAmbientLabels = (r: SortResource): boolean => {
 };
 
 export type ResourceType<R extends RenderResource> = {
+  headerContent?: React.ReactNode;
   name: string;
   param?: string;
   renderer?: Renderer<R>;
@@ -70,7 +73,7 @@ const tlsStatus: ResourceType<NamespaceInfo> = {
 const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
-  title: 'Config',
+  title: 'Istio config',
   sortable: true,
   width: 10,
   renderer: Renderers.istioConfig
@@ -219,6 +222,48 @@ const namespaces: Resource = {
   badge: PFBadges.Namespace
 };
 
+const namespacesHealth: ResourceType<NamespaceInfo> = {
+  name: 'Health',
+  param: 'h',
+  title: 'Health',
+  sortable: true,
+  width: 20,
+  renderer: NamespacesRenderers.statusNamespaces
+};
+
+const typeNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Type',
+  param: 'type',
+  title: 'Type',
+  sortable: true,
+  width: 10,
+  renderer: NamespacesRenderers.type
+};
+
+const nsItemNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Namespace',
+  param: 'ns',
+  title: 'Namespace',
+  sortable: true,
+  width: 20,
+  renderer: NamespacesRenderers.nsItem
+};
+
+const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'mTLS',
+  param: 'm',
+  title: 'mTLS',
+  sortable: true,
+  width: 10,
+  renderer: NamespacesRenderers.tlsNamespaces
+};
+
+const namespacesList: Resource = {
+  name: 'namespaces',
+  columns: [nsItemNamespaces, typeNamespaces, namespacesHealth, tlsStatusNamespaces, istioConfiguration, labels],
+  badge: PFBadges.Namespace
+};
+
 const workloads: Resource = {
   name: 'workloads',
   columns: [health, item, namespace, cluster, workloadType, labels, details],
@@ -245,6 +290,7 @@ const istio: Resource = {
 type Config = {
   applications: Resource;
   istio: Resource;
+  namespaces: Resource;
   overview: Resource;
   services: Resource;
   workloads: Resource;
@@ -253,6 +299,7 @@ type Config = {
 const conf: Config = {
   applications: applications,
   istio: istio,
+  namespaces: namespacesList,
   overview: namespaces,
   services: services,
   workloads: workloads

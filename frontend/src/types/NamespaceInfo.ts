@@ -16,6 +16,9 @@ export type NamespaceInfo = {
   outboundPolicyMode?: string;
   revision?: string;
   status?: NamespaceStatus;
+  statusApp?: NamespaceStatus;
+  statusService?: NamespaceStatus;
+  statusWorkload?: NamespaceStatus;
   tlsStatus?: TLSStatus;
   validations?: ValidationStatus;
 };

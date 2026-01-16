@@ -88,10 +88,10 @@ export interface RequestHealth {
 export interface Status {
   className: string;
   color: string;
-  status: string;
   icon: React.ComponentClass<SVGIconProps>;
   name: string;
   priority: number;
+  status: string;
 }
 
 export interface ProxyStatus {
@@ -636,6 +636,12 @@ export const healthNotAvailable = (): AppHealth => {
 export type NamespaceAppHealth = { [app: string]: AppHealth };
 export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
 export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
+
+export type NamespaceHealth = {
+  appHealth: NamespaceAppHealth;
+  serviceHealth: NamespaceServiceHealth;
+  workloadHealth: NamespaceWorkloadHealth;
+};
 
 export type WithAppHealth<T> = T & { health: AppHealth };
 export type WithServiceHealth<T> = T & { health: ServiceHealth };
