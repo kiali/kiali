@@ -287,85 +287,88 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
           chunk.forEach(nsInfo => {
             if ((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) {
-              // Process app health
-              if (result.appHealth && result.appHealth[nsInfo.name]) {
-                const nsStatus: NamespaceStatus = {
-                  inNotReady: [],
-                  inError: [],
-                  inWarning: [],
-                  inSuccess: [],
-                  notAvailable: []
-                };
-                Object.keys(result.appHealth[nsInfo.name]).forEach(k => {
-                  const health: Health = result.appHealth[nsInfo.name][k];
-                  const status = health.getGlobalStatus();
-                  if (status === FAILURE) {
-                    nsStatus.inError.push(k);
-                  } else if (status === DEGRADED) {
-                    nsStatus.inWarning.push(k);
-                  } else if (status === HEALTHY) {
-                    nsStatus.inSuccess.push(k);
-                  } else if (status === NOT_READY) {
-                    nsStatus.inNotReady.push(k);
-                  } else {
-                    nsStatus.notAvailable.push(k);
-                  }
-                });
-                nsInfo.statusApp = nsStatus;
-              }
+              const nsHealth = result.get(nsInfo.name);
+              if (nsHealth) {
+                // Process app health
+                if (nsHealth.appHealth && Object.keys(nsHealth.appHealth).length > 0) {
+                  const nsStatus: NamespaceStatus = {
+                    inNotReady: [],
+                    inError: [],
+                    inWarning: [],
+                    inSuccess: [],
+                    notAvailable: []
+                  };
+                  Object.keys(nsHealth.appHealth).forEach(k => {
+                    const health: Health = nsHealth.appHealth[k];
+                    const status = health.getGlobalStatus();
+                    if (status === FAILURE) {
+                      nsStatus.inError.push(k);
+                    } else if (status === DEGRADED) {
+                      nsStatus.inWarning.push(k);
+                    } else if (status === HEALTHY) {
+                      nsStatus.inSuccess.push(k);
+                    } else if (status === NOT_READY) {
+                      nsStatus.inNotReady.push(k);
+                    } else {
+                      nsStatus.notAvailable.push(k);
+                    }
+                  });
+                  nsInfo.statusApp = nsStatus;
+                }
 
-              // Process service health
-              if (result.serviceHealth && result.serviceHealth[nsInfo.name]) {
-                const nsStatus: NamespaceStatus = {
-                  inNotReady: [],
-                  inError: [],
-                  inWarning: [],
-                  inSuccess: [],
-                  notAvailable: []
-                };
-                Object.keys(result.serviceHealth[nsInfo.name]).forEach(k => {
-                  const health: Health = result.serviceHealth[nsInfo.name][k];
-                  const status = health.getGlobalStatus();
-                  if (status === FAILURE) {
-                    nsStatus.inError.push(k);
-                  } else if (status === DEGRADED) {
-                    nsStatus.inWarning.push(k);
-                  } else if (status === HEALTHY) {
-                    nsStatus.inSuccess.push(k);
-                  } else if (status === NOT_READY) {
-                    nsStatus.inNotReady.push(k);
-                  } else {
-                    nsStatus.notAvailable.push(k);
-                  }
-                });
-                nsInfo.statusService = nsStatus;
-              }
+                // Process service health
+                if (nsHealth.serviceHealth && Object.keys(nsHealth.serviceHealth).length > 0) {
+                  const nsStatus: NamespaceStatus = {
+                    inNotReady: [],
+                    inError: [],
+                    inWarning: [],
+                    inSuccess: [],
+                    notAvailable: []
+                  };
+                  Object.keys(nsHealth.serviceHealth).forEach(k => {
+                    const health: Health = nsHealth.serviceHealth[k];
+                    const status = health.getGlobalStatus();
+                    if (status === FAILURE) {
+                      nsStatus.inError.push(k);
+                    } else if (status === DEGRADED) {
+                      nsStatus.inWarning.push(k);
+                    } else if (status === HEALTHY) {
+                      nsStatus.inSuccess.push(k);
+                    } else if (status === NOT_READY) {
+                      nsStatus.inNotReady.push(k);
+                    } else {
+                      nsStatus.notAvailable.push(k);
+                    }
+                  });
+                  nsInfo.statusService = nsStatus;
+                }
 
-              // Process workload health
-              if (result.workloadHealth && result.workloadHealth[nsInfo.name]) {
-                const nsStatus: NamespaceStatus = {
-                  inNotReady: [],
-                  inError: [],
-                  inWarning: [],
-                  inSuccess: [],
-                  notAvailable: []
-                };
-                Object.keys(result.workloadHealth[nsInfo.name]).forEach(k => {
-                  const health: Health = result.workloadHealth[nsInfo.name][k];
-                  const status = health.getGlobalStatus();
-                  if (status === FAILURE) {
-                    nsStatus.inError.push(k);
-                  } else if (status === DEGRADED) {
-                    nsStatus.inWarning.push(k);
-                  } else if (status === HEALTHY) {
-                    nsStatus.inSuccess.push(k);
-                  } else if (status === NOT_READY) {
-                    nsStatus.inNotReady.push(k);
-                  } else {
-                    nsStatus.notAvailable.push(k);
-                  }
-                });
-                nsInfo.statusWorkload = nsStatus;
+                // Process workload health
+                if (nsHealth.workloadHealth && Object.keys(nsHealth.workloadHealth).length > 0) {
+                  const nsStatus: NamespaceStatus = {
+                    inNotReady: [],
+                    inError: [],
+                    inWarning: [],
+                    inSuccess: [],
+                    notAvailable: []
+                  };
+                  Object.keys(nsHealth.workloadHealth).forEach(k => {
+                    const health: Health = nsHealth.workloadHealth[k];
+                    const status = health.getGlobalStatus();
+                    if (status === FAILURE) {
+                      nsStatus.inError.push(k);
+                    } else if (status === DEGRADED) {
+                      nsStatus.inWarning.push(k);
+                    } else if (status === HEALTHY) {
+                      nsStatus.inSuccess.push(k);
+                    } else if (status === NOT_READY) {
+                      nsStatus.inNotReady.push(k);
+                    } else {
+                      nsStatus.notAvailable.push(k);
+                    }
+                  });
+                  nsInfo.statusWorkload = nsStatus;
+                }
               }
             }
           });

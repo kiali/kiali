@@ -11,6 +11,7 @@ import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '.
 import {
   AppHealth,
   NamespaceAppHealth,
+  NamespaceHealth,
   NamespaceHealthQuery,
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
@@ -860,11 +861,7 @@ export const getClustersHealth = async (
   duration: DurationInSeconds,
   cluster?: string,
   queryTime?: TimeInSeconds
-): Promise<{
-  appHealth: Map<string, NamespaceAppHealth>;
-  serviceHealth: Map<string, NamespaceServiceHealth>;
-  workloadHealth: Map<string, NamespaceWorkloadHealth>;
-}> => {
+): Promise<Map<string, NamespaceHealth>> => {
   const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
     namespaces: namespaces,
     // empty type means load app,workload,services health
@@ -884,69 +881,74 @@ export const getClustersHealth = async (
   }
 
   return newRequest<any>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(response => {
-    const appHealth = new Map<string, NamespaceAppHealth>();
-    const serviceHealth = new Map<string, NamespaceServiceHealth>();
-    const workloadHealth = new Map<string, NamespaceWorkloadHealth>();
+    const namespaceHealthMap = new Map<string, NamespaceHealth>();
 
-    // Process app health
+    // Get all unique namespace names from all three health types
+    const allNamespaces = new Set<string>();
     const namespaceAppHealth = response.data['namespaceAppHealth'];
+    const namespaceServiceHealth = response.data['namespaceServiceHealth'];
+    const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
+
     if (namespaceAppHealth) {
-      Object.keys(namespaceAppHealth).forEach(ns => {
-        if (!appHealth[ns]) {
-          appHealth[ns] = {};
-        }
+      Object.keys(namespaceAppHealth).forEach(ns => allNamespaces.add(ns));
+    }
+    if (namespaceServiceHealth) {
+      Object.keys(namespaceServiceHealth).forEach(ns => allNamespaces.add(ns));
+    }
+    if (namespaceWorkloadHealth) {
+      Object.keys(namespaceWorkloadHealth).forEach(ns => allNamespaces.add(ns));
+    }
+
+    // Process each namespace
+    allNamespaces.forEach(ns => {
+      const appHealth: NamespaceAppHealth = {};
+      const serviceHealth: NamespaceServiceHealth = {};
+      const workloadHealth: NamespaceWorkloadHealth = {};
+
+      // Process app health for this namespace
+      if (namespaceAppHealth && namespaceAppHealth[ns]) {
         Object.keys(namespaceAppHealth[ns]).forEach(k => {
           if (namespaceAppHealth[ns][k]) {
-            const ah = AppHealth.fromJson(namespaces, k, namespaceAppHealth[ns][k], {
+            const ah = AppHealth.fromJson(ns, k, namespaceAppHealth[ns][k], {
               rateInterval: duration
             });
-            appHealth[ns][k] = ah;
+            appHealth[k] = ah;
           }
         });
-      });
-    }
+      }
 
-    // Process service health
-    const namespaceServiceHealth = response.data['namespaceServiceHealth'];
-    if (namespaceServiceHealth) {
-      Object.keys(namespaceServiceHealth).forEach(ns => {
-        if (!serviceHealth[ns]) {
-          serviceHealth[ns] = {};
-        }
+      // Process service health for this namespace
+      if (namespaceServiceHealth && namespaceServiceHealth[ns]) {
         Object.keys(namespaceServiceHealth[ns]).forEach(k => {
           if (namespaceServiceHealth[ns][k]) {
-            const sh = ServiceHealth.fromJson(namespaces, k, namespaceServiceHealth[ns][k], {
+            const sh = ServiceHealth.fromJson(ns, k, namespaceServiceHealth[ns][k], {
               rateInterval: duration
             });
-            serviceHealth[ns][k] = sh;
+            serviceHealth[k] = sh;
           }
         });
-      });
-    }
+      }
 
-    // Process workload health
-    const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
-    if (namespaceWorkloadHealth) {
-      Object.keys(namespaceWorkloadHealth).forEach(ns => {
-        if (!workloadHealth[ns]) {
-          workloadHealth[ns] = {};
-        }
+      // Process workload health for this namespace
+      if (namespaceWorkloadHealth && namespaceWorkloadHealth[ns]) {
         Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
           if (namespaceWorkloadHealth[ns][k]) {
-            const wh = WorkloadHealth.fromJson(namespaces, k, namespaceWorkloadHealth[ns][k], {
+            const wh = WorkloadHealth.fromJson(ns, k, namespaceWorkloadHealth[ns][k], {
               rateInterval: duration
             });
-            workloadHealth[ns][k] = wh;
+            workloadHealth[k] = wh;
           }
         });
-      });
-    }
+      }
 
-    return {
-      appHealth,
-      serviceHealth,
-      workloadHealth
-    };
+      namespaceHealthMap.set(ns, {
+        appHealth,
+        serviceHealth,
+        workloadHealth
+      });
+    });
+
+    return namespaceHealthMap;
   });
 };
 
