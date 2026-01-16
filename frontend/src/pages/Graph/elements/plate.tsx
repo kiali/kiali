@@ -15,7 +15,7 @@ export const Plate: React.FC<ShapeProps> = ({
   width,
   height,
   filter,
-  cornerRadius = 5,
+  cornerRadius = 3,
   dndDropRef
 }) => {
   const anchorRef = useSvgAnchor();
