@@ -713,6 +713,12 @@ export type NamespaceAppHealth = { [app: string]: AppHealth };
 export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
 export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
 
+export type NamespaceHealth = {
+  appHealth: NamespaceAppHealth;
+  serviceHealth: NamespaceServiceHealth;
+  workloadHealth: NamespaceWorkloadHealth;
+};
+
 export type WithAppHealth<T> = T & { health: AppHealth };
 export type WithServiceHealth<T> = T & { health: ServiceHealth };
 export type WithWorkloadHealth<T> = T & { health: WorkloadHealth };

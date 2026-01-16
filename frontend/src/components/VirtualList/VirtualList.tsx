@@ -26,7 +26,8 @@ import { Namespace } from '../../types/Namespace';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as FilterHelper from '../FilterList/FilterHelper';
-import * as Sorts from '../../pages/Overview/Sorts';
+import * as OverviewSorts from '../../pages/Overview/Sorts';
+import * as NamespacesSorts from '../../pages/Namespaces/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
@@ -132,7 +133,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     }
 
     HistoryManager.setParam(URLParam.SORT, String(this.state.columns[index].param));
-    this.props.sort && this.props.sort(FilterHelper.currentSortField(Sorts.sortFields), direction === 'asc');
+    // Use Namespaces Sorts for 'namespaces' type (Namespaces page), Overview Sorts for 'overview' type and others
+    const sortFields = this.props.type === 'namespaces' ? NamespacesSorts.sortFields : OverviewSorts.sortFields;
+    this.props.sort && this.props.sort(FilterHelper.currentSortField(sortFields), direction === 'asc');
   };
 
   componentDidMount(): void {
@@ -259,7 +262,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
                 width={column.width}
                 textCenter={column.textCenter}
               >
-                {column.title}
+                {column.headerContent || column.title}
               </Th>
             ))}
           </Tr>
@@ -300,11 +303,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        {this.props.actions ? (
-          table
-        ) : (
-          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
-        )}
+        <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
       </div>
     );
   }
