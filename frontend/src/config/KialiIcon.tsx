@@ -78,7 +78,8 @@ import {
   WarningTriangleIcon,
   ProcessAutomationIcon,
   ArrowRightIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ExclamationTriangleIcon
 } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
@@ -121,6 +122,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Equalizer: (props: IconProps) => createIcon(props, EqualizerIcon),
   Error: (props: IconProps) => createIcon(props, ErrorCircleOIcon, PFColors.Danger),
   ExclamationCircle: (props: IconProps) => createIcon(props, ExclamationCircleIcon, PFColors.Danger),
+  ExclamationTriangle: (props: IconProps) => createIcon(props, ExclamationTriangleIcon, PFColors.Warning),
   Expand: (props: IconProps) => createIcon(props, ExpandIcon),
   ExpandArrows: (props: IconProps) => createIcon(props, ExpandArrowsAltIcon),
   ExternalLink: (props: IconProps) => createIcon(props, ExternalLinkAltIcon),

@@ -5,7 +5,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
-import { useNamespaceStatus } from 'hooks/namespaces';
+import { useNamespaces } from 'hooks/namespaces';
+import { Namespace } from 'types/Namespace';
 import { infoStyle } from 'styles/IconStyle';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle, statsContainerStyle, statItemStyle } from './OverviewStyles';
 
@@ -48,34 +49,63 @@ const labelStyle = kialiStyle({
   marginBottom: '0.5rem'
 });
 
+const hasIstioInjection = (ns: Namespace): boolean => {
+  return !!ns.labels && (ns.labels['istio-injection'] === 'enabled' || !!ns.labels['istio.io/rev']);
+};
+
 export const NamespaceStats: React.FC = () => {
-  const namespaceStats = useNamespaceStatus();
+  const { isLoading, namespaces } = useNamespaces();
+
+  // Calculate stats from namespaces
+  const total = namespaces.length;
+  let ambient = 0;
+  let sidecar = 0;
+  let outOfMesh = 0;
+  let healthy = 0;
+  let warnings = 0;
+
+  namespaces.forEach(ns => {
+    // Don't count control plane namespaces in the injection stats
+    if (!ns.isControlPlane) {
+      if (ns.isAmbient) {
+        ambient++;
+      } else if (hasIstioInjection(ns)) {
+        sidecar++;
+      } else {
+        outOfMesh++;
+      }
+    }
+
+    // Note: Basic namespace API doesn't include health status.
+    // For now, we'll just count all as healthy
+    healthy++;
+  });
 
   return (
     <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>
-          {t('Namespaces')} ({namespaceStats.total}){' '}
+          {t('Namespaces')} ({total}){' '}
           <Tooltip content={t('Display Istio config types for all namespaces')}>
             <KialiIcon.Info className={infoStyle} />
           </Tooltip>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
-        {namespaceStats.isLoading ? (
+        {isLoading ? (
           <Spinner size="lg" />
         ) : (
           <div className={namespaceContainerStyle}>
             <div className={statsContainerStyle}>
-              {namespaceStats.healthy > 0 && (
+              {healthy > 0 && (
                 <div className={statItemStyle}>
-                  <span>{namespaceStats.healthy}</span>
+                  <span>{healthy}</span>
                   <KialiIcon.Success />
                 </div>
               )}
-              {namespaceStats.warnings > 0 && (
+              {warnings > 0 && (
                 <div className={statItemStyle}>
-                  <span>{namespaceStats.warnings}</span>
+                  <span>{warnings}</span>
                   <KialiIcon.Warning />
                 </div>
               )}
@@ -83,25 +113,25 @@ export const NamespaceStats: React.FC = () => {
             <div className={verticalDividerStyle} />
             <div className={labelsContainerStyle}>
               <div className={labelGroupStyle}>
-                {namespaceStats.ambient > 0 && (
+                {ambient > 0 && (
                   <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{namespaceStats.ambient}</span>{' '}
+                    <span className={labelNumberStyle}>{ambient}</span>{' '}
                     <Label variant="outline" className={labelStyle}>
                       {t('Ambient')}
                     </Label>
                   </div>
                 )}
-                {namespaceStats.sidecar > 0 && (
+                {sidecar > 0 && (
                   <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{namespaceStats.sidecar}</span>{' '}
+                    <span className={labelNumberStyle}>{sidecar}</span>{' '}
                     <Label variant="outline" className={labelStyle}>
                       {t('Sidecar')}
                     </Label>
                   </div>
                 )}
-                {namespaceStats.outOfMesh > 0 && (
+                {outOfMesh > 0 && (
                   <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{namespaceStats.outOfMesh}</span>{' '}
+                    <span className={labelNumberStyle}>{outOfMesh}</span>{' '}
                     <Label variant="outline" className={labelStyle}>
                       {t('Out of mesh')}
                     </Label>

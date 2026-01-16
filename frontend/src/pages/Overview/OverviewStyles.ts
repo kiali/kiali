@@ -12,10 +12,6 @@ export const cardBodyStyle = kialiStyle({
   flex: 1
 });
 
-export const insightsCardStyle = kialiStyle({
-  minHeight: '500px'
-});
-
 // Common link and icon styles
 export const linkStyle = kialiStyle({
   color: PFColors.Link

@@ -6,36 +6,44 @@ import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useClusterStatus } from 'hooks/clusters';
+import { Status } from 'types/IstioStatus';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle, statsContainerStyle, statItemStyle } from './OverviewStyles';
 
 export const ClusterStats: React.FC = () => {
-  const clusterStats = useClusterStatus();
+  const { isLoading, statusMap } = useClusterStatus();
+
+  // Calculate stats from statusMap
+  const total = Object.keys(statusMap).length;
+  const healthy = Object.values(statusMap).filter(components =>
+    components.every(comp => comp.status === Status.Healthy)
+  ).length;
+  const unhealthy = total - healthy;
 
   return (
     <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>
-          {t('Clusters')} ({clusterStats.total})
+          {t('Clusters')} ({total})
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
-        {clusterStats.isLoading ? (
+        {isLoading ? (
           <Spinner size="lg" />
         ) : (
           <div className={statsContainerStyle}>
-            {clusterStats.healthy > 0 && (
+            {healthy > 0 && (
               <div className={statItemStyle}>
-                <span>{clusterStats.healthy}</span>
+                <span>{healthy}</span>
                 <KialiIcon.Success />
               </div>
             )}
-            {clusterStats.unhealthy > 0 && (
+            {unhealthy > 0 && (
               <div className={statItemStyle}>
-                <span>{clusterStats.unhealthy}</span>
+                <span>{unhealthy}</span>
                 <KialiIcon.Error />
               </div>
             )}
-            {clusterStats.unhealthy > 0 && <KialiIcon.Warning />}
+            {unhealthy > 0 && <KialiIcon.Warning />}
           </div>
         )}
       </CardBody>

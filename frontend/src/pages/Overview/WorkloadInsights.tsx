@@ -5,11 +5,11 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
-import { cardStyle, insightsCardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
+import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
 
 export const WorkloadInsights: React.FC = () => {
   return (
-    <Card className={`${cardStyle} ${insightsCardStyle}`}>
+    <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>{t('Workload insights')}</CardTitle>
       </CardHeader>

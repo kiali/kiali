@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as API from '../services/Api';
-import { ComponentStatus, Status } from '../types/IstioStatus';
+import { ComponentStatus } from '../types/IstioStatus';
 import { istioStatusSelector } from '../store/Selectors';
 import { IstioStatusActions } from '../actions/IstioStatusActions';
 import { useKialiDispatch, useKialiSelector } from './redux';
@@ -11,12 +11,9 @@ import { useKialiTranslation } from '../utils/I18nUtils';
 
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
-export type ClusterStats = {
-  healthy: number;
+export type ClusterStatusResult = {
   isLoading: boolean;
   statusMap: ClusterStatusMap;
-  total: number;
-  unhealthy: number;
 };
 
 type UseClusterStatusOptions = {
@@ -24,7 +21,7 @@ type UseClusterStatusOptions = {
   onRefresh?: () => void;
 };
 
-export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStats => {
+export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStatusResult => {
   const { t } = useKialiTranslation();
   const dispatch = useKialiDispatch();
   const statusMapFromRedux = useKialiSelector(istioStatusSelector);
@@ -81,21 +78,8 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
     fetchStatus();
   }, [lastRefreshAt, fetchStatus]);
 
-  // Use Redux data
-  const statusMap = statusMapFromRedux;
-
-  // Calculate statistics
-  const total = Object.keys(statusMap).length;
-  const healthy = Object.entries(statusMap).filter(([_, components]) =>
-    components.every(comp => comp.status === Status.Healthy)
-  ).length;
-  const unhealthy = total - healthy;
-
   return {
-    healthy,
     isLoading,
-    statusMap,
-    total,
-    unhealthy
+    statusMap: statusMapFromRedux
   };
 };

@@ -212,6 +212,7 @@ export interface ControlPlane {
   managedClusters?: { name: string }[];
   managedNamespaces?: NamespaceInfo[];
   revision: string;
+  status?: string;
   tag?: Tag;
   thresholds: any;
   version?: {

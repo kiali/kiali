@@ -4,37 +4,43 @@ import { Link } from 'react-router-dom-v5-compat';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
-import { useControlPlaneStatus } from 'hooks/controlPlanes';
+import { useControlPlanes } from 'hooks/controlPlanes';
+import { Status } from 'types/IstioStatus';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle, statsContainerStyle, statItemStyle } from './OverviewStyles';
 
 export const ControlPlaneStats: React.FC = () => {
-  const controlPlaneStats = useControlPlaneStatus();
+  const { controlPlanes, isLoading } = useControlPlanes();
+
+  // Calculate stats from controlPlanes
+  const total = controlPlanes.length;
+  const healthy = controlPlanes.filter(cp => cp.status === Status.Healthy).length;
+  const unhealthy = total - healthy;
 
   return (
     <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>
-          {t('Control planes')} ({controlPlaneStats.total})
+          {t('Control planes')} ({total})
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
-        {controlPlaneStats.isLoading ? (
+        {isLoading ? (
           <Spinner size="lg" />
         ) : (
           <div className={statsContainerStyle}>
-            {controlPlaneStats.healthy > 0 && (
+            {healthy > 0 && (
               <div className={statItemStyle}>
-                <span>{controlPlaneStats.healthy}</span>
+                <span>{healthy}</span>
                 <KialiIcon.Success />
               </div>
             )}
-            {controlPlaneStats.unhealthy > 0 && (
+            {unhealthy > 0 && (
               <div className={statItemStyle}>
-                <span>{controlPlaneStats.unhealthy}</span>
+                <span>{unhealthy}</span>
                 <KialiIcon.Error />
               </div>
             )}
-            {controlPlaneStats.unhealthy > 0 && <KialiIcon.Warning />}
+            {unhealthy > 0 && <KialiIcon.Warning />}
           </div>
         )}
       </CardBody>
