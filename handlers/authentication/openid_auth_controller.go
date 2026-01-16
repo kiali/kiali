@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -90,6 +91,25 @@ type badOidcRequest struct {
 // Error returns the text representation of an badOidcRequest error.
 func (e badOidcRequest) Error() string {
 	return e.Detail
+}
+
+// generatePKCECodeVerifier generates a cryptographically random code verifier for PKCE.
+// According to RFC 7636, the code verifier should be a random string of 43-128 characters
+// from the unreserved characters [A-Z] / [a-z] / [0-9] / "-" / "." / "_" / "~".
+func generatePKCECodeVerifier() (string, error) {
+	// RFC 7636 compliant character set: unreserved characters only
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+	// Generate 43 characters (minimum length recommended by RFC 7636)
+	return util.CryptoRandomStringWithCharset(43, charset)
+}
+
+// generatePKCECodeChallenge generates the code challenge from a code verifier.
+// According to RFC 7636, the code challenge is the Base64URL encoding (without padding)
+// of the SHA-256 hash of the code verifier.
+func generatePKCECodeChallenge(codeVerifier string) string {
+	hash := sha256.Sum256([]byte(codeVerifier))
+	// Base64URL encoding without padding (RFC 7636 requires base64url encoding)
+	return strings.TrimRight(base64.URLEncoding.EncodeToString(hash[:]), "=")
 }
 
 // OpenIdAuthController contains the backing logic to implement
@@ -363,8 +383,22 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	// Generate PKCE code verifier and challenge
+	codeVerifier, err := generatePKCECodeVerifier()
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to generate PKCE code verifier"))
+		return
+	}
+	codeChallenge := generatePKCECodeChallenge(codeVerifier)
+
 	guessedKialiURL := httputil.GuessKialiURL(c.conf, r)
 	secureFlag := c.conf.IsServerHTTPS() || strings.HasPrefix(guessedKialiURL, "https:")
+	// Note: Both nonce and PKCE code verifier cookies use SameSiteLaxMode (not Strict) because the OIDC
+	// callback is a cross-site top-level GET navigation from the identity provider. SameSiteStrictMode
+	// would prevent the cookies from being sent during this callback, breaking authentication. Security
+	// is maintained through state parameter validation (CSRF) and PKCE verification at the token endpoint.
 	nowTime := util.Clock.Now()
 	expirationTime := nowTime.Add(time.Duration(c.conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
 	nonceCookie := http.Cookie{
@@ -377,6 +411,18 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		Value:    nonceCode,
 	}
 	http.SetCookie(w, &nonceCookie)
+
+	// Set PKCE code verifier cookie
+	codeVerifierCookie := http.Cookie{
+		Expires:  expirationTime,
+		HttpOnly: true,
+		Secure:   secureFlag,
+		Name:     codeVerifierCookieName(c.conf.KubernetesConfig.ClusterName),
+		Path:     c.conf.Server.WebRoot,
+		SameSite: http.SameSiteLaxMode,
+		Value:    codeVerifier,
+	}
+	http.SetCookie(w, &codeVerifierCookie)
 
 	// Instead of sending the nonce code to the IdP, send a cryptographic hash.
 	// This way, if an attacker manages to steal the id_token returned by the IdP, he still
@@ -399,7 +445,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 
 	// Send redirection to browser
 	responseType := "code" // Request for the "authorization code" flow
-	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
+	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s&code_challenge=%s&code_challenge_method=S256",
 		authorizationEndpoint,
 		url.QueryEscape(c.conf.Auth.OpenId.ClientId),
 		responseType,
@@ -407,6 +453,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		url.QueryEscape(scopes),
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
 		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
+		url.QueryEscape(codeChallenge),
 	)
 
 	if len(c.conf.Auth.OpenId.AdditionalRequestParams) > 0 {
@@ -464,6 +511,14 @@ type openidFlowHelper struct {
 	// of the id_token.
 	UseAccessToken bool
 
+	// CodeVerifier is the PKCE code verifier generated during the initial authorization request.
+	// It is used to verify the authorization code during the token exchange.
+	CodeVerifier string
+
+	// CodeChallenge is the SHA-256 hash of the CodeVerifier, base64url-encoded.
+	// It is sent in the authorization request to implement PKCE.
+	CodeChallenge string
+
 	// Error is nil unless there was an error during some phase of the authentication. A non-nil
 	// value cancels the authentication request.
 	Error error
@@ -500,6 +555,18 @@ func (p *openidFlowHelper) callbackCleanup(r *http.Request, w http.ResponseWrite
 	}
 	http.SetCookie(w, &deleteNonceCookie)
 
+	// Delete the code verifier cookie since we no longer need it.
+	deleteCodeVerifierCookie := http.Cookie{
+		Name:     codeVerifierCookieName(p.conf.KubernetesConfig.ClusterName),
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   secureFlag,
+		Path:     p.conf.Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteCodeVerifierCookie)
+
 	return p
 }
 
@@ -522,6 +589,12 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 		hash := sha256.Sum224([]byte(nonceCookie.Value))
 		p.NonceHash = make([]byte, sha256.Size224)
 		copy(p.NonceHash, hash[:])
+	}
+
+	// Get the PKCE code verifier
+	var codeVerifierCookie *http.Cookie
+	if codeVerifierCookie, err = r.Cookie(codeVerifierCookieName(p.conf.KubernetesConfig.ClusterName)); err == nil {
+		p.CodeVerifier = codeVerifierCookie.Value
 	}
 
 	// Parse/fetch received form data
@@ -559,6 +632,12 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
+	}
+
+	// The code verifier cookie should always be present since Kiali sets it before redirecting to the
+	// OIDC provider. Failing early with a clear message is better than getting a cryptic error from the token endpoint.
+	if p.CodeVerifier == "" {
+		p.Error = &badOidcRequest{Detail: "no PKCE code verifier present - login window may have timed out or cookies were blocked"}
 	}
 
 	return p
@@ -824,6 +903,12 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 	if len(clientSecret) == 0 {
 		requestParams.Set("client_id", cfg.ClientId)
 	}
+	// Include PKCE code_verifier (required since we always send code_challenge)
+	if len(p.CodeVerifier) == 0 {
+		p.Error = fmt.Errorf("PKCE code_verifier is missing - this should have been caught earlier in the flow")
+		return p
+	}
+	requestParams.Set("code_verifier", p.CodeVerifier)
 
 	tokenRequest, err := http.NewRequest(http.MethodPost, oidcMeta.TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {
@@ -1495,6 +1580,11 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 	}
 
 	return http.StatusOK, "", nil
+}
+
+// codeVerifierCookieName returns the cookie name for storing the PKCE code verifier.
+func codeVerifierCookieName(clusterName string) string {
+	return PkceVerifierCookieName + "-" + clusterName
 }
 
 // Interface guard to ensure that headerAuthController implements the AuthController interface.
