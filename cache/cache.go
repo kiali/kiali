@@ -52,6 +52,15 @@ type KialiCache interface {
 	GetGateways() (models.Workloads, bool)
 	SetGateways(models.Workloads)
 
+	// GetHealth returns cached health data for a namespace.
+	// Returns nil and false if not found.
+	GetHealth(cluster, namespace string) (*models.CachedHealthData, bool)
+
+	// SetHealth stores health data in cache.
+	// Can be called by background job OR by individual handlers
+	// to update specific entries independently.
+	SetHealth(cluster, namespace string, data *models.CachedHealthData)
+
 	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
 
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
@@ -126,6 +135,9 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
 	gatewayStore store.Store[string, models.Workloads]
 
+	// Cache pre-computed health data per cluster:namespace
+	healthStore store.Store[string, *models.CachedHealthData]
+
 	// There's only ever one IstioStatus but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheIstioStatusKey.
 	istioStatusStore store.Store[string, kubernetes.IstioComponentStatus]
@@ -177,6 +189,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		conf:                    conf,
 		zl:                      zl,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
+		healthStore:             store.New[string, *models.CachedHealthData](),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
 		kubeCache:               kubeCache,
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
@@ -410,6 +423,18 @@ func (c *kialiCacheImpl) GetGateways() (models.Workloads, bool) {
 // SetGateways Sets a list of all gateway workloads by cluster and namespace
 func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 	c.gatewayStore.Set(kialiCacheGatewaysKey, gateways)
+}
+
+// GetHealth returns cached health data for a namespace
+func (c *kialiCacheImpl) GetHealth(cluster, namespace string) (*models.CachedHealthData, bool) {
+	key := models.HealthCacheKey(cluster, namespace)
+	return c.healthStore.Get(key)
+}
+
+// SetHealth stores health data in cache
+func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.CachedHealthData) {
+	key := models.HealthCacheKey(cluster, namespace)
+	c.healthStore.Set(key, data)
 }
 
 // GatewayAPIClasses returns list of K8s GatewayAPIClass objects

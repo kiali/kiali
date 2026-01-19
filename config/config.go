@@ -873,7 +873,7 @@ type Tolerance struct {
 	Direction string  `yaml:"direction,omitempty" json:"direction"`
 }
 
-// Rate config
+// Rate holds configuration for customizing health computation. It specifies allowable rates for certain traffic types
 type Rate struct {
 	Namespace string      `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Kind      string      `yaml:"kind,omitempty" json:"kind,omitempty"`
@@ -881,9 +881,24 @@ type Rate struct {
 	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
-// HealthConfig rates
+// HealthCompute provides configuration for health pre-computation and caching
+type HealthCompute struct {
+	// Duration is the time period over which health is calculated.
+	// Used as the rate interval for Prometheus queries.
+	// 0 means auto-calculate from elapsed time since last run.
+	// Default: 0
+	Duration time.Duration `yaml:"duration,omitempty"`
+
+	// RefreshInterval is the interval between health cache refreshes.
+	// Default: 2m
+	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
+}
+
+// HealthConfig holds both custom rate configurations for computing health, as well as the configuration about
+// the health computation job itself.
 type HealthConfig struct {
-	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
+	Compute HealthCompute `yaml:"compute,omitempty" json:"compute,omitempty"`
+	Rate    []Rate        `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
 // Profiler provides settings about the profiler that can be used to debug the Kiali server internals.
@@ -1066,6 +1081,12 @@ func NewConfig() (c *Config) {
 				},
 				UseGRPC:              true,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
+			},
+		},
+		HealthConfig: HealthConfig{
+			Compute: HealthCompute{
+				Duration:        0, // 0 means auto-calculate from elapsed time
+				RefreshInterval: 2 * time.Minute,
 			},
 		},
 		IstioLabels: IstioLabels{
