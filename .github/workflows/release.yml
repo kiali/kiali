@@ -73,7 +73,7 @@ jobs:
 
         diff = now - base
 
-        # Use integer division (//) to avoid floating point precision issues (equivalent to math.floor)
+        # Use floor division (//) which correctly avoids rounding negative values to 0
         days_elapsed = diff // (24*60*60)
         weeks_elapsed = days_elapsed // 7
         weeks_mod3 = weeks_elapsed % 3
