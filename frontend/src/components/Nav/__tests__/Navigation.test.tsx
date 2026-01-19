@@ -33,6 +33,7 @@ describe('Masthead Navigation', () => {
             kiosk={''}
             theme={Theme.LIGHT}
             showNotificationCenter={false}
+            chatbotEnabled={false}
           />
         </MemoryRouter>
       </Provider>
@@ -53,6 +54,7 @@ describe('Masthead Navigation', () => {
             kiosk={'true'}
             theme={Theme.LIGHT}
             showNotificationCenter={false}
+            chatbotEnabled={false}
           />
         </MemoryRouter>
       </Provider>

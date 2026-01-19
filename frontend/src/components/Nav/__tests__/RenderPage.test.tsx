@@ -27,6 +27,7 @@ const router = createMemoryRouter([
         kiosk={''}
         theme={Theme.LIGHT}
         showNotificationCenter={false}
+        chatbotEnabled={false}
       />
     ),
     children: pathRoutes
