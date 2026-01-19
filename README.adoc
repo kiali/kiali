@@ -52,22 +52,17 @@ Notes:
 * `endpoint` is required for the `azure` config and optional for others.
 * Provider and model names are used in secret volume names; avoid special characters.
 
-For example: 
+For example, first create the secret containing your API key:
 
 [source,shell]
 ----
 kubectl -n istio-system create secret generic my-key-secret --from-literal=openai-gemini=<token>
 ----
 
-So the Helm values file will have something like the following content:
+Then configure `chat_ai` to reference the secret. The Kiali Operator and Helm charts automatically mount secrets referenced in `chat_ai` configuration - no need to configure `deployment.custom_secrets`:
 
 [source,yaml]
 ----
-deployment:
-  custom_secrets:
-  - name: "my-key-secret"
-    mount: "/kiali-override-secrets/chat-ai-model-openai-gemini"
-
 chat_ai:
   enabled: true
   default_provider: "openai"
@@ -85,7 +80,7 @@ chat_ai:
           description: "Model provided by Google with OpenAI API Support"
           endpoint: "https://generativelanguage.googleapis.com/v1beta/openai"
           key: "secret:my-key-secret:openai-gemini"
-----          
+----
 
 Store in AI is required to keep context retention (Enabled by default). See link:./design/KEPS/ai-store/proposal.md[AI STORE README] for details.
 

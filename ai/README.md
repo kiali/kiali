@@ -21,6 +21,32 @@ AI is configured under `chat_ai` in `config/config.go`. Key fields:
 
 Validation rules are enforced in `Config.ValidateAI()`. Disabled providers/models are ignored during validation, but defaults must exist and be enabled.
 
+### API Key Configuration
+
+Provider and model API keys can be configured in two ways:
+
+1. **Inline key** (not recommended for production):
+   ```yaml
+   chat_ai:
+     providers:
+     - name: my-provider
+       key: "sk-abc123..."
+   ```
+
+2. **Secret reference** (recommended):
+   ```yaml
+   chat_ai:
+     providers:
+     - name: my-provider
+       key: "secret:my-secret-name:api-key"
+   ```
+
+The secret reference syntax is `secret:<secret-name>:<key-in-secret>`. When using secret references:
+- The Kiali Operator and Helm charts automatically mount the referenced secrets
+- No need to configure `deployment.custom_secrets` separately
+- Secrets must exist in the Kiali deployment namespace
+- Only secrets for enabled providers and models are mounted
+
 ## MCP tools (summary)
 
 The AI uses MCP tools to interact with Kiali and the mesh:
