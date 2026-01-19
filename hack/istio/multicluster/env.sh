@@ -205,10 +205,6 @@ CLUSTER2_AMBIENT="${CLUSTER2_AMBIENT:-true}"
 # If waypoint should be configured for bookinfo namespace (only valid when AMBIENT is true)
 # Default: false
 WAYPOINT="${WAYPOINT:-false}"
-#
-# If true, scripts like split-bookinfo.sh will only configure the waypoint resources/labels (and skip installing bookinfo).
-# Default: false
-ONLY_WAYPOINT="${ONLY_WAYPOINT:-false}"
 
 # Use groups for OpenId authorization (single cluster)
 AUTH_GROUPS="${AUTH_GROUPS:-}"
@@ -550,11 +546,6 @@ while [[ $# -gt 0 ]]; do
       WAYPOINT="$2"
       shift;shift
       ;;
-    -ow|--only-waypoint)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--only-waypoint must be 'true' or 'false'" && exit 1
-      ONLY_WAYPOINT="$2"
-      shift;shift
-      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -629,7 +620,6 @@ Valid command line arguments:
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
   -te|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
   -w|--waypoint <bool>: If "true", configure waypoint for the bookinfo namespace (Default: false; only valid when --ambient is true)
-  -ow|--only-waypoint <bool>: If "true", only configure waypoint resources/labels (skip bookinfo install steps) (Default: false)
   -h|--help: this message
 HELPMSG
       exit 1

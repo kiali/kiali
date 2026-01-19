@@ -311,11 +311,9 @@ if [ "${AMBIENT}" == "true" ] && [ "${WAYPOINT}" == "true" ]; then
   echo "==== INSTALLING BASELINE BOOKINFO (NO NAMESPACE WAYPOINT) IN NAMESPACE [${BOOKINFO_NAMESPACE}]"
   _orig_bookinfo_namespace="${BOOKINFO_NAMESPACE}"
   _orig_waypoint="${WAYPOINT}"
-  _orig_only_waypoint="${ONLY_WAYPOINT}"
 
   BOOKINFO_NAMESPACE="${_orig_bookinfo_namespace}"
   WAYPOINT="false"
-  ONLY_WAYPOINT="false"
   source ${SCRIPT_DIR}/split-bookinfo.sh
 
   # Install a second Bookinfo instance in a dedicated namespace for waypoint/L7 tests.
@@ -324,12 +322,10 @@ if [ "${AMBIENT}" == "true" ] && [ "${WAYPOINT}" == "true" ]; then
   echo "==== INSTALLING WAYPOINT BOOKINFO IN NAMESPACE [${BOOKINFO_WAYPOINT_NAMESPACE}]"
   BOOKINFO_NAMESPACE="${BOOKINFO_WAYPOINT_NAMESPACE}"
   WAYPOINT="true"
-  ONLY_WAYPOINT="false"
   source ${SCRIPT_DIR}/split-bookinfo.sh
 
   BOOKINFO_NAMESPACE="${_orig_bookinfo_namespace}"
   WAYPOINT="${_orig_waypoint}"
-  ONLY_WAYPOINT="${_orig_only_waypoint}"
 else
   source ${SCRIPT_DIR}/split-bookinfo.sh
 fi

@@ -3,14 +3,6 @@ import { openTab } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
 
-// Build an absolute URL that preserves the Cypress baseUrl path prefix (e.g. "/kiali" in CI).
-// NOTE: Passing "/api/..." directly (or resolving it with new URL) drops any baseUrl path prefix.
-const withBaseUrl = (path: string): string => {
-  const baseUrl = (Cypress.config('baseUrl') ?? '').replace(/\/$/, '');
-  const cleanPath = path.replace(/^\//, '');
-  return `${baseUrl}/${cleanPath}`;
-};
-
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
@@ -21,9 +13,7 @@ const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retry
     );
   }
 
-  const url = '/api/namespaces';
-  const requestUrl = withBaseUrl(url);
-  cy.request({ method: 'GET', url: requestUrl }).then(response => {
+  cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/namespaces` }).then(response => {
     expect(response.status).to.equal(200);
 
     const ns = response.body;
@@ -50,11 +40,11 @@ const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retry
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForWorkloadEnrolled',
-          message: `retry=${retryCount}/${maxRetries} url=${requestUrl} baseUrl=${Cypress.config(
+          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
             'baseUrl'
-          )} bookinfoLabels=${JSON.stringify(bookinfoLabels ?? {})} namespacesCount=${
-            Array.isArray(ns) ? ns.length : -1
-          } targetNamespace=${targetNamespace}`
+          )}/api/namespaces baseUrl=${Cypress.config('baseUrl')} bookinfoLabels=${JSON.stringify(
+            bookinfoLabels ?? {}
+          )} namespacesCount=${Array.isArray(ns) ? ns.length : -1} targetNamespace=${targetNamespace}`
         });
       }
       return cy.wait(10000).then(() => {
@@ -82,11 +72,10 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
   }
-  const url = '/api/namespaces/graph';
-  const requestUrl = withBaseUrl(url);
+
   cy.request({
     method: 'GET',
-    url: requestUrl,
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
     qs: {
       duration: '60s',
       graphType: 'versionedApp',
@@ -111,7 +100,9 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
       if (retryCount === 0 || retryCount % 5 === 0) {
         Cypress.log({
           name: 'waitForGraphTraffic',
-          message: `retry=${retryCount}/${maxRetries} url=${requestUrl} ambientTraffic=${ambientTraffic} edges=${
+          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+            'baseUrl'
+          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${
             elements?.edges?.length ?? -1
           } expected>${totalEdges} baseUrl=${Cypress.config('baseUrl')} targetNamespace=${targetNamespace}`
         });
@@ -132,16 +123,9 @@ const isSyncedOrIgnored = (status: string | undefined): boolean => {
   return status?.toLowerCase() === 'synced' || status?.toLowerCase() === 'ignored';
 };
 
-// In some ambient setups, waypoints can report CDS as "Stale" transiently (or even persistently)
-// while still being usable. We keep EDS/LDS/RDS strict but allow CDS to be Stale.
-const isSyncedOrIgnoredOrStale = (status: string | undefined): boolean => {
-  const s = status?.toLowerCase();
-  return s === 'synced' || s === 'ignored' || s === 'stale';
-};
-
 const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   return (
-    isSyncedOrIgnoredOrStale(proxyStatus?.CDS) &&
+    isSyncedOrIgnored(proxyStatus?.CDS) &&
     isSyncedOrIgnored(proxyStatus?.EDS) &&
     isSyncedOrIgnored(proxyStatus?.LDS) &&
     isSyncedOrIgnored(proxyStatus?.RDS)
@@ -175,11 +159,9 @@ const waitForWorkloadTracesInApi = (
     qs.clusterName = clusterName;
   }
 
-  const url = `/api/namespaces/${namespace}/workloads/${workload}/traces`;
-  const requestUrl = withBaseUrl(url);
   cy.request({
     method: 'GET',
-    url: requestUrl,
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
     qs,
     failOnStatusCode: false
   }).then(response => {
@@ -192,7 +174,9 @@ const waitForWorkloadTracesInApi = (
     if (retryCount === 0 || retryCount % 5 === 0) {
       Cypress.log({
         name: 'waitForWorkloadTraces',
-        message: `retry=${retryCount}/${maxRetries} url=${requestUrl} clusterName=${clusterName ?? ''} tracesCount=${
+        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+          'baseUrl'
+        )}/api/namespaces/${namespace}/workloads/${workload}/traces clusterName=${clusterName ?? ''} tracesCount=${
           Array.isArray(traces) ? traces.length : -1
         } baseUrl=${Cypress.config('baseUrl')}`
       });
@@ -206,11 +190,12 @@ const waitForWorkloadTracesInApi = (
 
 const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
   const maxRetries = 20;
-  let url = `/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
+  let requestUrl = `${Cypress.config(
+    'baseUrl'
+  )}/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
   if (cluster) {
-    url += `&cluster=${cluster}`;
+    requestUrl += `&cluster=${cluster}`;
   }
-  const requestUrl = withBaseUrl(url);
 
   const wait = (retryCount: number, lastResponseSummary = ''): void => {
     if (retryCount >= maxRetries) {

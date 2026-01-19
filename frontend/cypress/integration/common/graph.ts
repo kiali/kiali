@@ -290,7 +290,7 @@ Then(
           return (
             data.isBox === undefined &&
             data.cluster === cluster &&
-            (data.isWaypoint === true || data.isWaypoint === 'true') &&
+            data.isWaypoint === true &&
             candidates.some(c => {
               const lc = c.toLowerCase();
               return lc === target || lc.startsWith(`${target}-`);
@@ -311,7 +311,7 @@ Then(
                 workload: data.workload
               };
             })
-            .filter(n => n.cluster === cluster && (n.isWaypoint === true || n.isWaypoint === 'true'));
+            .filter(n => n.cluster === cluster && n.isWaypoint === true);
 
           Cypress.log({
             name: 'waypointNodeNotFound',

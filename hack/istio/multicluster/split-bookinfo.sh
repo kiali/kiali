@@ -12,8 +12,6 @@ source ${SCRIPT_DIR}/env.sh $*
 
 set -euo pipefail
 
-: "${ONLY_WAYPOINT:=false}"
-
 create_waypoint() {
 
   local waypoint_yaml
@@ -63,17 +61,6 @@ configure_waypoint() {
   ${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" label ns ${BOOKINFO_NAMESPACE} istio.io/use-waypoint=waypoint --overwrite
   echo "==== WAYPOINT CONFIGURATION COMPLETE"
 }
-
-# "only-waypoint" mode: used by tests to reuse the waypoint setup without reinstalling bookinfo or changing workloads.
-if [ "${ONLY_WAYPOINT}" == "true" ]; then
-  if [ "${AMBIENT}" != "true" ]; then
-    echo "ERROR: --only-waypoint is only valid when --ambient is true"
-    exit 1
-  fi
-  create_waypoint
-  configure_waypoint
-  exit 0
-fi
 
 if [ "${BOOKINFO_ENABLED}" != "true" ]; then
   echo "Will not install bookinfo demo"
