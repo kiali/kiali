@@ -72,3 +72,42 @@ jobs:
       with:
         name: debug-info-${{ github.job }}
         path: debug-output
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: junit-rest-report
+        path: tests/integration/junit-rest-report.xml
+        if-no-files-found: warn
+
+  report-to-reportportal:
+    name: Report to ReportPortal
+    needs: integration_tests_backend
+    if: always()
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/dno/droute:latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.build_branch }}
+
+    - name: Download test results
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-rest-report
+        path: tests/integration/
+
+    - name: Report to ReportPortal
+      continue-on-error: true
+      uses: ./.github/actions/report-to-reportportal
+      with:
+        test_suite: 'backend'
+        test_results_dir: 'tests/integration'
+        test_file_name: 'junit-rest-report.xml'
+        istio_version: ${{ inputs.istio_version }}
+        data_plane_mode: 'sidecar'
+        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
+        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
