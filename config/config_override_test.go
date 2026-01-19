@@ -598,6 +598,59 @@ chat_ai:
 	assert.Equal(t, "azure-provider-key", azureKey)
 }
 
+// TestSecretOverride_ChatAIInlineKey tests that inline keys are preserved (no secret is mounted for keys)
+func TestSecretOverride_ChatAIInlineKey(t *testing.T) {
+	// Create temporary config file with inline keys for provider and model
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	configContent := `
+server:
+  port: 20001
+chat_ai:
+  enabled: true
+  default_provider: openai
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    default_model: gpt4
+    key: my-inline-provider-key
+    models:
+    - name: gpt4
+      model: gpt-4
+      enabled: true
+      key: my-inline-model-key
+`
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
+	require.NoError(t, err)
+
+	// Load config
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	require.NotNil(t, conf)
+
+	// Verify that provider Key still has the inline value (not overridden)
+	require.Len(t, conf.ChatAI.Providers, 1)
+	assert.Equal(t, Credential("my-inline-provider-key"), conf.ChatAI.Providers[0].Key,
+		"Expected provider Key to remain as inline value when no secret is mounted")
+
+	// Verify we can read the inline provider key
+	providerKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "my-inline-provider-key", providerKey)
+
+	// Verify that model Key still has the inline value (not overridden)
+	require.Len(t, conf.ChatAI.Providers[0].Models, 1)
+	assert.Equal(t, Credential("my-inline-model-key"), conf.ChatAI.Providers[0].Models[0].Key,
+		"Expected model Key to remain as inline value when no secret is mounted")
+
+	// Verify we can read the inline model key
+	modelKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "my-inline-model-key", modelKey)
+}
+
 // TestSecretOverride_ChatAISanitization tests that provider/model names are sanitized correctly
 func TestSecretOverride_ChatAISanitization(t *testing.T) {
 	// Create temporary config file with names that need sanitization
