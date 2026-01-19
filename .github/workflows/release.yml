@@ -73,9 +73,10 @@ jobs:
 
         diff = now - base
 
-        days_elapsed = int(diff / (24*60*60))
-        weeks_elapsed = int(days_elapsed / 7)
-        weeks_mod3 = int(weeks_elapsed % 3)
+        # Use integer division (//) to avoid floating point precision issues (equivalent to math.floor)
+        days_elapsed = diff // (24*60*60)
+        weeks_elapsed = days_elapsed // 7
+        weeks_mod3 = weeks_elapsed % 3
 
         # Only release when weeks_elapsed >= 0 (past the base date) and weeks_mod3 == 0
         print(weeks_elapsed >= 0 and weeks_mod3 == 0) # True in case of release
