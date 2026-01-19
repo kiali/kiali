@@ -1,20 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChatbotAlert, ChatbotContent, ChatbotDisplayMode, ChatbotWelcomePrompt, Message, MessageBox } from '@patternfly/chatbot';
+import {
+  ChatbotAlert,
+  ChatbotContent,
+  ChatbotDisplayMode,
+  ChatbotWelcomePrompt,
+  Message,
+  MessageBox
+} from '@patternfly/chatbot';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
-import {  AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
-import { ChatMessage } from './ChatMessage';
+import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
+import { ChatMessage } from './ChatMessage/ChatMessage';
 
 type ChatBotContentProps = {
-  username: string;
   alertMessage?: AlertMessage;
-  handleSend: (query: string | number, context: any, title?: string) => void;
-  setAlertMessage: (alertMessage?: AlertMessage) => void;
-  messages: ExtendedMessage[];
-  isLoading: boolean;
   botMessage: (response: ChatResponse | string, _?: string) => ExtendedMessage;
   context: any;
   displayMode: ChatbotDisplayMode;
+  handleSend: (query: string | number, context: any, title?: string) => void;
+  isLoading: boolean;
+  messages: ExtendedMessage[];
+  setAlertMessage: (alertMessage?: AlertMessage) => void;
+  username: string;
 };
 
 export const ChatBotContent: React.FC<ChatBotContentProps> = ({
@@ -32,11 +39,9 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
   const category = pathname.split('/')[1];
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [promptData, setPromptData] = useState<any>(DataPrompts[category] || []);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToBottom = (): void => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
-  const generatePrompts = React.useCallback(() => {
+  const generatePrompts = React.useCallback((): void => {
     setPromptData(
       (DataPrompts[category] || []).map(prompt => ({
         title: prompt.title,
@@ -52,13 +57,13 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
 
   useEffect(() => {
     generatePrompts();
-  }, [generatePrompts]); 
- 
+  }, [generatePrompts]);
+
   return (
     <ChatbotContent>
       <MessageBox>
         <ChatbotWelcomePrompt
-          title={'Welcome to Kiali Chatbot ' + username}
+          title={`Welcome to Kiali Chatbot ${username}`}
           description="How may I help you today?"
           prompts={promptData}
         />
@@ -70,8 +75,8 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
           >
             {alertMessage.message}
           </ChatbotAlert>
-        )}        
-         {messages.map(
+        )}
+        {messages.map(
           ({ referenced_documents, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
             console.log('actions', actions);
             return (
