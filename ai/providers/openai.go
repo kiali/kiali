@@ -32,8 +32,8 @@ type OpenAIProvider struct {
 	model  string
 }
 
-func NewOpenAIProvider(provider *config.ProviderConfig, model *config.AIModel) *OpenAIProvider {
-	cfg, err := getProviderConfig(provider, model)
+func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) *OpenAIProvider {
+	cfg, err := getProviderConfig(conf, provider, model)
 	if err != nil {
 		log.Errorf("Failed to get provider config: %v", err)
 		return nil

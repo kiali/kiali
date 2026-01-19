@@ -56,7 +56,31 @@ const (
 
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
+
+	// Chat AI credential secret prefixes (used to build dynamic volume names)
+	secretFileChatAIProviderPrefix = "chat-ai-provider"
+	secretFileChatAIModelPrefix    = "chat-ai-model"
 )
+
+var secretNameSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
+
+func sanitizeSecretName(name string) string {
+	sanitized := strings.ToLower(name)
+	sanitized = secretNameSanitizer.ReplaceAllString(sanitized, "-")
+	sanitized = strings.Trim(sanitized, "-")
+	if sanitized == "" {
+		return "unknown"
+	}
+	return sanitized
+}
+
+func chatAIProviderSecretFileName(providerName string) string {
+	return fmt.Sprintf("%s-%s", secretFileChatAIProviderPrefix, sanitizeSecretName(providerName))
+}
+
+func chatAIModelSecretFileName(providerName, modelName string) string {
+	return fmt.Sprintf("%s-%s-%s", secretFileChatAIModelPrefix, sanitizeSecretName(providerName), sanitizeSecretName(modelName))
+}
 
 // The valid auth strategies and values for cookie handling
 const (
@@ -742,12 +766,12 @@ type AiStoreConfig struct {
 }
 
 type AIModel struct {
-	Name        string `yaml:"name" json:"name"`
-	Model       string `yaml:"model" json:"model"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	Enabled     bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Endpoint    string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
-	Key         string `yaml:"key,omitempty" json:"key,omitempty"`
+	Name        string     `yaml:"name" json:"name"`
+	Model       string     `yaml:"model" json:"model"`
+	Description string     `yaml:"description,omitempty" json:"description,omitempty"`
+	Enabled     bool       `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Endpoint    string     `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Key         Credential `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
 type ProviderType string
@@ -772,7 +796,7 @@ type ProviderConfig struct {
 	Enabled      bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
 	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
-	Key          string             `yaml:"key,omitempty" json:"key,omitempty"`
+	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
@@ -1410,6 +1434,23 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
+	if len(obf.ChatAI.Providers) > 0 {
+		providers := make([]ProviderConfig, len(obf.ChatAI.Providers))
+		copy(providers, obf.ChatAI.Providers)
+		for i := range providers {
+			providers[i].Key = "xxx"
+			if len(providers[i].Models) == 0 {
+				continue
+			}
+			models := make([]AIModel, len(providers[i].Models))
+			copy(models, providers[i].Models)
+			for j := range models {
+				models[j].Key = "xxx"
+			}
+			providers[i].Models = models
+		}
+		obf.ChatAI.Providers = providers
+	}
 	return
 }
 
@@ -1622,6 +1663,20 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.LoginToken.SigningKey,
 			fileName:    SecretFileLoginTokenSigningKey,
 		},
+	}
+
+	for i := range conf.ChatAI.Providers {
+		provider := &conf.ChatAI.Providers[i]
+		overrides = append(overrides, overridesType{
+			configValue: &provider.Key,
+			fileName:    chatAIProviderSecretFileName(provider.Name),
+		})
+		for j := range provider.Models {
+			overrides = append(overrides, overridesType{
+				configValue: &provider.Models[j].Key,
+				fileName:    chatAIModelSecretFileName(provider.Name, provider.Models[j].Name),
+			})
+		}
 	}
 
 	// For each override, check if a secret file exists and set the config value to the file path.

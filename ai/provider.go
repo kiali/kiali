@@ -37,7 +37,7 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	}
 	switch provider.Type {
 	case config.OpenAIProvider:
-		return providers.NewOpenAIProvider(provider, model), nil
+		return providers.NewOpenAIProvider(conf, provider, model), nil
 	default:
 		return nil, fmt.Errorf("unsupported provider type %q", provider.Type)
 	}
