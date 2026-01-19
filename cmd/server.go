@@ -90,6 +90,9 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Fatalf("Error creating Prometheus client: %s", err)
 	}
 
+	// Create health cache monitor for pre-computing health data
+	hcm := business.NewHealthCacheMonitor(cache, clientFactory, conf, discovery, prom)
+
 	// Create shared tracing client shared by all tracing requests in the business layer.
 	// Because tracing is not an essential component, we don't want to block startup
 	// of the server if the tracing client fails to initialize. tracing.NewClient will
@@ -153,6 +156,9 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	if conf.ExternalServices.Istio.IstioAPIEnabled {
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
+
+	// Start health cache monitor for pre-computing health data
+	hcm.Start(ctx)
 
 	// Start listening to requests
 	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, prom, tracingLoader, discovery, staticAssetFS)

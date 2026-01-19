@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,6 +20,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
@@ -56,7 +55,7 @@ func fakeService(namespace, name string) *core_v1.Service {
 	}
 }
 
-// TestNamespaceAppHealth is unit test (testing request handling, not the prometheus client behaviour)
+// TestClustersHealth is unit test (testing request handling with cached health data)
 func TestClustersHealth(t *testing.T) {
 	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), fakeService("ns", "httpbin"), setupMockData()}
 	for _, obj := range kubetest.FakePodList() {
@@ -65,15 +64,22 @@ func TestClustersHealth(t *testing.T) {
 	}
 	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
 	k8s.OpenShift = true
-	ts, prom := setupClustersHealthEndpoint(t, k8s)
+	ts, kialiCache := setupClustersHealthEndpoint(t, k8s)
 
 	url := ts.URL + "/api/clusters/health"
 	mockClock()
 
 	conf := config.NewConfig()
 
-	// Test 17s on rate interval to check that rate interval is adjusted correctly.
-	prom.On("GetAllRequestRates", mock.Anything, "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
+	// Pre-populate cache with health data (simulating what HealthCacheMonitor does)
+	cachedHealth := &models.CachedHealthData{
+		AppHealth:  models.NamespaceAppHealth{},
+		Cluster:    conf.KubernetesConfig.ClusterName,
+		ComputedAt: util.Clock.Now(),
+		Duration:   "2m",
+		Namespace:  "ns",
+	}
+	kialiCache.SetHealth(conf.KubernetesConfig.ClusterName, "ns", cachedHealth)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -83,27 +89,28 @@ func TestClustersHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
+	// Verify the X-Kiali-Health-Cached header is present
+	assert.Equal(t, "true", resp.Header.Get(HealthCachedHeader))
 }
 
-func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
+func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, cache.KialiCache) {
 	conf := config.NewConfig()
 	prom := new(prometheustest.PromClientMock)
 
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
-	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	cpm := &business.FakeControlPlaneMonitor{}
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), kialiCache, conf)
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaService := grafana.NewService(conf, cf.GetSAHomeClusterClient())
 
-	handler := ClusterHealth(conf, cache, cf, prom, traceLoader, discovery, cpm, grafana)
+	handler := ClusterHealth(conf, kialiCache, cf, prom, traceLoader, discovery, cpm, grafanaService)
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/clusters/health", WithFakeAuthInfo(conf, handler))
 
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
-	return ts, prom
+	return ts, kialiCache
 }
 
 func setupMockData() *core_v1.Namespace {
