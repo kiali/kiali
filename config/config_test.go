@@ -662,26 +662,6 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "default_model",
 		},
-		"no enabled providers": {
-			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Enabled = false
-			},
-			expectErr: "at least one enabled provider",
-		},
-		"enabled provider with no enabled models": {
-			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Models[0].Enabled = false
-				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
-					Name:        "model-2",
-					Model:       "gpt-4",
-					Description: "second model",
-					Enabled:     false,
-					Endpoint:    "https://example.com",
-					Key:         "",
-				})
-			},
-			expectErr: "at least one enabled model",
-		},
 		"invalid provider type": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers[0].Type = ProviderType("bad")

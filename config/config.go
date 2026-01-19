@@ -1252,7 +1252,6 @@ func (conf *Config) ValidateAI() error {
 	}
 
 	defaultProviderFound := false
-	enabledProviderFound := false
 	globalModelNames := make(map[string]struct{})
 	validProviderTypes := map[ProviderType]struct{}{
 		OpenAIProvider: {},
@@ -1294,7 +1293,6 @@ func (conf *Config) ValidateAI() error {
 
 		defaultModelFound := false
 		providerModelNames := make(map[string]struct{})
-		enabledModelFound := false
 		for _, m := range p.Models {
 			if _, exists := providerModelNames[m.Name]; exists {
 				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
@@ -1313,20 +1311,9 @@ func (conf *Config) ValidateAI() error {
 				}
 			}
 
-			if m.Enabled {
-				enabledModelFound = true
-			} else {
-				continue
-			}
-
-			if m.Key == "" && p.Key == "" {
+			if m.Key == "" && p.Key == "" && m.Enabled {
 				return fmt.Errorf("chat_ai.providers[%q].models[%q] requires a key when provider key is empty", p.Name, m.Name)
 			}
-		}
-
-		enabledProviderFound = true
-		if !enabledModelFound {
-			return fmt.Errorf("chat_ai.providers[%q] must have at least one enabled model", p.Name)
 		}
 
 		if !defaultModelFound {
@@ -1336,10 +1323,6 @@ func (conf *Config) ValidateAI() error {
 
 	if !defaultProviderFound {
 		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
-	}
-
-	if !enabledProviderFound {
-		return fmt.Errorf("chat_ai.providers must contain at least one enabled provider")
 	}
 
 	return nil

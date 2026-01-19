@@ -35,7 +35,6 @@ type AIStoreImpl struct {
 	ctx           context.Context
 	mu            sync.RWMutex
 	conversations map[string]*AIChatConversation // map key is sessionID
-	cleanupJob    *CleanupJob
 }
 
 // NewAIStore creates a new AI store instance
@@ -54,10 +53,6 @@ func NewAIStore(ctx context.Context, config *AiStoreConfig) types.AIStore {
 		config:        config,
 		ctx:           ctx,
 		conversations: make(map[string]*AIChatConversation),
-	}
-	self.cleanupJob = NewCleanupJob(ctx, self, config.InactivityTimeout/4)
-	if config.Enabled {
-		self.cleanupJob.Start()
 	}
 	return self
 }
