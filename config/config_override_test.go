@@ -396,3 +396,267 @@ func TestSecretOverride_AllCredentials(t *testing.T) {
 		assert.Equal(t, test.expectedValue, credential, "Value mismatch for %s", test.secretFileName)
 	}
 }
+
+// TestSecretOverride_ChatAIProviderKey tests that chat_ai provider key secrets are detected and used
+func TestSecretOverride_ChatAIProviderKey(t *testing.T) {
+	// Create temporary config file with chat_ai provider
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	configContent := `
+server:
+  port: 20001
+chat_ai:
+  enabled: true
+  default_provider: openai
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    default_model: gpt4
+    models:
+    - name: gpt4
+      model: gpt-4
+      enabled: true
+`
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
+	require.NoError(t, err)
+
+	// Create temporary secret directory structure
+	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
+	providerSecretDir := filepath.Join(secretsBaseDir, chatAIProviderSecretFileName("openai"))
+	err = os.MkdirAll(providerSecretDir, 0755)
+	require.NoError(t, err)
+
+	// Write secret value
+	secretFile := filepath.Join(providerSecretDir, "value.txt")
+	err = os.WriteFile(secretFile, []byte("my-openai-api-key"), 0600)
+	require.NoError(t, err)
+
+	// Temporarily override the secrets directory
+	originalSecretsDir := overrideSecretsDir
+	overrideSecretsDir = secretsBaseDir
+	defer func() { overrideSecretsDir = originalSecretsDir }()
+
+	// Load config
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	require.NotNil(t, conf)
+
+	// Verify that provider Key was set to the file path
+	require.Len(t, conf.ChatAI.Providers, 1)
+	assert.Equal(t, Credential(secretFile), conf.ChatAI.Providers[0].Key,
+		"Expected provider Key to be set to the secret file path")
+
+	// Verify we can read the key from the file
+	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "my-openai-api-key", key)
+}
+
+// TestSecretOverride_ChatAIModelKey tests that chat_ai model key secrets are detected and used
+func TestSecretOverride_ChatAIModelKey(t *testing.T) {
+	// Create temporary config file with chat_ai model
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	configContent := `
+server:
+  port: 20001
+chat_ai:
+  enabled: true
+  default_provider: openai
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    default_model: gpt4
+    models:
+    - name: gpt4
+      model: gpt-4
+      enabled: true
+`
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
+	require.NoError(t, err)
+
+	// Create temporary secret directory structure
+	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
+	modelSecretDir := filepath.Join(secretsBaseDir, chatAIModelSecretFileName("openai", "gpt4"))
+	err = os.MkdirAll(modelSecretDir, 0755)
+	require.NoError(t, err)
+
+	// Write secret value
+	secretFile := filepath.Join(modelSecretDir, "value.txt")
+	err = os.WriteFile(secretFile, []byte("my-gpt4-model-key"), 0600)
+	require.NoError(t, err)
+
+	// Temporarily override the secrets directory
+	originalSecretsDir := overrideSecretsDir
+	overrideSecretsDir = secretsBaseDir
+	defer func() { overrideSecretsDir = originalSecretsDir }()
+
+	// Load config
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	require.NotNil(t, conf)
+
+	// Verify that model Key was set to the file path
+	require.Len(t, conf.ChatAI.Providers, 1)
+	require.Len(t, conf.ChatAI.Providers[0].Models, 1)
+	assert.Equal(t, Credential(secretFile), conf.ChatAI.Providers[0].Models[0].Key,
+		"Expected model Key to be set to the secret file path")
+
+	// Verify we can read the key from the file
+	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "my-gpt4-model-key", key)
+}
+
+// TestSecretOverride_ChatAIMultiple tests that multiple chat_ai provider and model secrets work together
+func TestSecretOverride_ChatAIMultiple(t *testing.T) {
+	// Create temporary config file with multiple providers and models
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	configContent := `
+server:
+  port: 20001
+chat_ai:
+  enabled: true
+  default_provider: openai
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    default_model: gpt4
+    models:
+    - name: gpt4
+      model: gpt-4
+      enabled: true
+    - name: gpt35
+      model: gpt-3.5-turbo
+      enabled: true
+  - name: azure
+    type: openai
+    config: azure
+    enabled: true
+    default_model: azure-gpt4
+    models:
+    - name: azure-gpt4
+      model: gpt-4
+      enabled: true
+`
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
+	require.NoError(t, err)
+
+	// Create temporary secret directory structure
+	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
+
+	// Create provider-level key for openai
+	openaiProviderDir := filepath.Join(secretsBaseDir, chatAIProviderSecretFileName("openai"))
+	require.NoError(t, os.MkdirAll(openaiProviderDir, 0755))
+	openaiProviderFile := filepath.Join(openaiProviderDir, "value.txt")
+	require.NoError(t, os.WriteFile(openaiProviderFile, []byte("openai-provider-key"), 0600))
+
+	// Create model-level key for gpt35 (overrides provider key)
+	gpt35ModelDir := filepath.Join(secretsBaseDir, chatAIModelSecretFileName("openai", "gpt35"))
+	require.NoError(t, os.MkdirAll(gpt35ModelDir, 0755))
+	gpt35ModelFile := filepath.Join(gpt35ModelDir, "value.txt")
+	require.NoError(t, os.WriteFile(gpt35ModelFile, []byte("gpt35-model-key"), 0600))
+
+	// Create provider-level key for azure
+	azureProviderDir := filepath.Join(secretsBaseDir, chatAIProviderSecretFileName("azure"))
+	require.NoError(t, os.MkdirAll(azureProviderDir, 0755))
+	azureProviderFile := filepath.Join(azureProviderDir, "value.txt")
+	require.NoError(t, os.WriteFile(azureProviderFile, []byte("azure-provider-key"), 0600))
+
+	// Temporarily override the secrets directory
+	originalSecretsDir := overrideSecretsDir
+	overrideSecretsDir = secretsBaseDir
+	defer func() { overrideSecretsDir = originalSecretsDir }()
+
+	// Load config
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	require.NotNil(t, conf)
+
+	// Verify openai provider key
+	require.Len(t, conf.ChatAI.Providers, 2)
+	openaiKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "openai-provider-key", openaiKey)
+
+	// Verify gpt35 model key (model-level override)
+	require.Len(t, conf.ChatAI.Providers[0].Models, 2)
+	gpt35Key, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[1].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "gpt35-model-key", gpt35Key)
+
+	// Verify azure provider key
+	azureKey, err := conf.GetCredential(conf.ChatAI.Providers[1].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "azure-provider-key", azureKey)
+}
+
+// TestSecretOverride_ChatAISanitization tests that provider/model names are sanitized correctly
+func TestSecretOverride_ChatAISanitization(t *testing.T) {
+	// Create temporary config file with names that need sanitization
+	tmpDir := t.TempDir()
+	configFile := filepath.Join(tmpDir, "config.yaml")
+	configContent := `
+server:
+  port: 20001
+chat_ai:
+  enabled: true
+  default_provider: My_Provider
+  providers:
+  - name: My_Provider
+    type: openai
+    config: default
+    enabled: true
+    default_model: My Model
+    models:
+    - name: My Model
+      model: test-model
+      enabled: true
+`
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
+	require.NoError(t, err)
+
+	// Create temporary secret directory structure
+	// Names should be sanitized: "My_Provider" -> "my-provider", "My Model" -> "my-model"
+	secretsBaseDir := filepath.Join(tmpDir, "kiali-override-secrets")
+	providerSecretDir := filepath.Join(secretsBaseDir, chatAIProviderSecretFileName("My_Provider"))
+	err = os.MkdirAll(providerSecretDir, 0755)
+	require.NoError(t, err)
+
+	// Verify the sanitization produces expected directory name
+	expectedProviderDir := "chat-ai-provider-my-provider"
+	assert.Equal(t, expectedProviderDir, chatAIProviderSecretFileName("My_Provider"),
+		"Provider name sanitization mismatch")
+
+	expectedModelDir := "chat-ai-model-my-provider-my-model"
+	assert.Equal(t, expectedModelDir, chatAIModelSecretFileName("My_Provider", "My Model"),
+		"Model name sanitization mismatch")
+
+	// Write secret value
+	secretFile := filepath.Join(providerSecretDir, "value.txt")
+	err = os.WriteFile(secretFile, []byte("sanitized-key"), 0600)
+	require.NoError(t, err)
+
+	// Temporarily override the secrets directory
+	originalSecretsDir := overrideSecretsDir
+	overrideSecretsDir = secretsBaseDir
+	defer func() { overrideSecretsDir = originalSecretsDir }()
+
+	// Load config
+	conf, err := LoadFromFile(configFile)
+	require.NoError(t, err)
+	require.NotNil(t, conf)
+
+	// Verify that provider Key was set to the file path with sanitized name
+	require.Len(t, conf.ChatAI.Providers, 1)
+	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	assert.NoError(t, err)
+	assert.Equal(t, "sanitized-key", key)
+}
