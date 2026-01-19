@@ -3,8 +3,8 @@
 ## Current Status
 
 - **Phase**: 2 - Requirements Definition
-- **Status**: Phase 2 Complete - Under Review
-- **Last Updated**: 2025-11-25 (Session Paused)
+- **Status**: Phase 2 Complete - Review In Progress
+- **Last Updated**: 2026-01-19 (Session Paused)
 
 ## Project Overview
 
@@ -80,13 +80,13 @@ _(None yet - will document any failed approaches to avoid repetition)_
   - This rules out Approaches 2, 3, 4 (all have on-demand computation scenarios)
   - Approach 5 guarantees availability + adds observability benefits
 - **Key aspects**:
-  - Background job runs every 2 minutes (configurable)
+  - Background job runs every 5 minutes (configurable)
   - Stores full health data in KialiCache
   - Exports health status/grade as Prometheus metrics (not raw error rates)
   - No historical queries in initial scope
   - Leverages existing Kiali metrics infrastructure
   - Addresses cardinality by only exporting computed health status
-  - Maximum staleness: 2 minutes (configurable)
+  - Maximum staleness: 5 minutes (configurable)
 
 ## Current Phase Progress
 
@@ -101,7 +101,7 @@ _(None yet - will document any failed approaches to avoid repetition)_
 - ✅ Designed cache structure (keys, values, expiration)
 - ✅ Specified 7 Prometheus metrics (3 health + 4 operational)
 - ✅ Documented API contracts (zero breaking changes guarantee)
-- ✅ Created configuration schema with 7 parameters
+- ✅ Created configuration schema with 5 parameters
 - ✅ Designed HealthCacheService architecture
 - ✅ Identified 5 integration points with existing code
 - ✅ Defined 5 non-functional requirements
@@ -110,6 +110,7 @@ _(None yet - will document any failed approaches to avoid repetition)_
 - ✅ Broke implementation into 5 phases with time estimates
 
 **Key Discovery**:
+
 - Confirmed health data is NOT currently stored anywhere
 - Everything computed fresh on every request
 - Clean slate for implementation (no legacy code to migrate)
@@ -127,35 +128,47 @@ _(None yet - will document any failed approaches to avoid repetition)_
 
 **Open Questions** (need decisions before implementation):
 
-1. Cache miss behavior: Return 503 vs fallback? (Recommend: 503)
+1. ✅ **DECIDED**: Cache miss behavior - Return "Unknown" health status (not an error)
 2. Metrics cardinality limits: How to handle? (Recommend: assume OK initially)
 3. Historical queries: Support queryTime? (Recommend: not in Phase 1)
 4. ✅ **DECIDED**: Rate intervals - Dynamically calculated from refresh interval
    - If refresh_interval=2m, use rate_interval="2m" for Prometheus queries
    - User-requested rateInterval parameter ignored (returns cached data)
    - Simplifies cache key (no rateInterval dimension)
-5. Feature flag: Enabled by default? (Recommend: yes)
+5. ✅ **DECIDED**: Feature flag - Always enabled (no disable option)
 
 ## Notes for Next Session
 
-**Phase 2 Complete - Under Review**
+**Phase 2 Complete - Review In Progress**
 
-User is reviewing requirements document. When resuming, say **"Start session"** and continue review or proceed to Phase 3.
+User is reviewing requirements document. When resuming, continue review or proceed to Phase 3.
 
-**Recent Changes** (2025-11-25):
-- ✅ Simplified cache key: removed rateInterval (now `health:{cluster}:{namespace}:{type}`)
-- ✅ Made rate interval dynamic: calculated from refresh_interval
-- ✅ Added `rate_interval_strategy` configuration option
-- ✅ Clarified API behavior: user-requested rateInterval parameter is ignored
-- ✅ Updated all sections to reflect dynamic rate interval approach
+**Recent Changes** (2026-01-19 Review Session):
 
-When resuming, say **"Start session"** or **"Continue reviewing requirements"**
+- ✅ Changed default refresh interval to 2 minutes
+- ✅ Removed cache expiration (background job continuously overwrites)
+- ✅ Clarified job interval is time between completions, not max duration
+- ✅ Clarified "accessible namespaces" means Kiali's service account access
+- ✅ Cache miss returns "Unknown" health status (not an error)
+- ✅ FR4 metrics honor `Observability.Metrics.Enabled` config
+- ✅ Removed hot reload requirement (changes require restart)
+- ✅ Rate interval is fixed configurable (default 0 = auto from elapsed time)
+- ✅ Removed enable/disable feature flag (always active)
+- ✅ Individual cache entries can be updated independently (for detail pages)
+
+**Open Questions Decided:**
+
+- Q1: Cache miss → return "Unknown" status ✅
+- Q4: Rate interval → configurable, default 0 = auto from elapsed time ✅
+- Q5: Feature flag → always enabled (no disable) ✅
+
+When resuming, continue review or say **"Proceed to Phase 3"**
 
 ### What's Been Defined:
 
 - ✅ Complete requirements document (PHASE2_REQUIREMENTS.md)
 - ✅ Cache design: `health:{cluster}:{namespace}:{type}` (simplified - no rateInterval)
-- ✅ Rate interval dynamically calculated from refresh interval (e.g., refresh=2m → rate=2m)
+- ✅ Rate interval configurable (default: 0 = auto from elapsed time), not affected by client parameters
 - ✅ 3 health metrics + 4 operational metrics
 - ✅ HealthCacheService architecture
 - ✅ 5-phase implementation plan
@@ -177,6 +190,6 @@ When resuming, say **"Start session"** or **"Continue reviewing requirements"**
 - **Development Estimate**: 4-5 days (Phase 1: 2d, Phase 2: 1d, Phase 3: 1d, Phase 4: 1d, Phase 5: 0.5-1d)
 - **Cache Key Format**: `health:{cluster}:{namespace}:{type}`
 - **Refresh Interval**: 2 minutes (configurable)
-- **Cache Expiration**: 6 minutes (3x refresh interval)
-- **Max Staleness**: 2 minutes
+- **Cache Expiration**: None (background job continuously overwrites)
+- **Staleness Detection**: Via timestamp stored with cached values
 - **Metric Cardinality**: ~15k-45k time series (manageable)

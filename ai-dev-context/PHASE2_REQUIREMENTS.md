@@ -38,30 +38,34 @@
 
 **Acceptance**:
 
-- Background job runs on configured interval
-- All accessible namespaces are processed
-- Job completion time < refresh interval (doesn't fall behind)
+- Background job runs on configured interval (interval is time between job completions)
+- All namespaces accessible to Kiali's service account are processed (not user-specific access)
 - Failed namespace computations don't stop overall refresh
 
 ---
 
 ### FR2: Cache Storage
 
-**Requirement**: System SHALL store computed health data in KialiCache with appropriate expiration.
+**Requirement**: System SHALL store computed health data in KialiCache.
 
 **Details**:
 
 - Store complete health objects (same structure as current API returns)
 - Cache key structure: `health:{cluster}:{namespace}:{type}`
-- All cached health uses the default rate interval (configured, typically "10m")
-- Cache expiration: 3x refresh interval (6 minutes default) for staleness tolerance
+- All cached health uses the configured rate interval (0=auto from elapsed time, or fixed value)
+- No cache expiration - background job continuously overwrites with fresh data
+- Store computation timestamp with each cached value for staleness detection
 - Thread-safe access to cache
 - Cache survives across multiple refresh cycles
+- Individual cache entries can be updated independently (not just by the background job)
+  - Example: Detail page handlers can compute fresh health and update the specific cache entry
+  - This allows detail pages to show current data while list pages use cached values
 
 **Acceptance**:
 
 - Health data retrievable from cache by key
-- Cache entries expire after configured TTL
+- Cached values include computation timestamp
+- Individual entries updatable independently of background job
 - No data races or corruption under concurrent access
 - Cache persists between background refresh cycles
 
@@ -74,7 +78,7 @@
 **Details**:
 
 - Handler reads from cache instead of computing on-demand
-- If cache miss (should be rare): return error indicating data not yet available
+- If cache miss (should be rare): return health with "unknown" status (not an error)
 - API response structure remains identical
 - Response times < 500ms for 100 namespaces
 - Add optional response header indicating cache age
@@ -97,35 +101,40 @@
 - Export health grade/status (NOT raw error rates)
 - Metrics updated during each background refresh
 - Integrate with existing Kiali metrics endpoint
+- Honor existing `Server.Observability.Metrics.Enabled` configuration - if disabled, no health metrics exported
 - Keep cardinality manageable (< 50k time series)
 - Metrics available for Prometheus scraping immediately after computation
 
 **Acceptance**:
 
-- Metrics visible at `/metrics` endpoint
+- Metrics visible at `/metrics` endpoint (when `Observability.Metrics.Enabled` is true)
 - Prometheus can scrape and store metrics successfully
 - Cardinality stays within bounds (< 50k time series in test environment)
 - Metrics update on each background refresh cycle
+- No health metrics exported when `Observability.Metrics.Enabled` is false
 
 ---
 
 ### FR5: Configuration Control
 
-**Requirement**: System SHALL support configuration of refresh interval, cache TTL, and enable/disable flags.
+**Requirement**: System SHALL support configuration of refresh interval, rate interval, and metrics export flag.
 
 **Details**:
 
 - Configurable refresh interval (default: 2 minutes)
-- Configurable cache expiration (default: 6 minutes)
-- Feature flag to enable/disable background computation
-- Feature flag to enable/disable metrics export
-- Hot reload of configuration (pick up changes without restart)
+- Configurable rate interval for Prometheus queries (default: 0)
+- When rate interval is 0 (default): automatically calculated as elapsed time since previous run
+- First run (no previous): uses refresh interval as the rate interval
+- When rate interval is non-zero: uses the configured fixed value
+- Rate interval is server-configured - client parameters do not change it
+- Health pre-computation is always active (no enable/disable flag)
+- Feature flag to enable/disable metrics export (honors `Observability.Metrics.Enabled`)
+- Configuration changes require Kiali restart (no hot reload needed)
 
 **Acceptance**:
 
-- Configuration changes take effect within one refresh cycle
+- Configuration changes take effect after Kiali restart
 - Invalid configuration values rejected with clear error messages
-- System degrades gracefully when feature disabled (falls back to on-demand)
 - Configuration documented in config schema
 
 ---
@@ -144,7 +153,7 @@
 
 **Acceptance**:
 
-- Health computed for all accessible clusters
+- Health computed for all clusters accessible to Kiali
 - Unavailable cluster doesn't block processing of other clusters
 - Cache keys include cluster identifier
 - Metrics include cluster dimension
@@ -172,7 +181,7 @@ health:cluster2:istio-system:app
 
 - Clear hierarchical structure
 - Easy to query/invalidate by cluster or namespace
-- Rate interval not needed in key (dynamically calculated from refresh interval)
+- Rate interval not needed in key (fixed configuration value used for all queries)
 - Consistent with existing cache key patterns in Kiali
 - Simpler key structure reduces complexity
 
@@ -215,7 +224,7 @@ type CachedHealthData struct {
 }
 ```
 
-**Note**: `RateInterval` is stored in metadata for informational purposes and is dynamically calculated based on the refresh interval (e.g., if refresh interval is 2m, rate interval might be "2m" or "4m").
+**Note**: `RateInterval` is stored in metadata for informational purposes. When config is 0 (default), this stores the calculated elapsed time since previous run. When config is non-zero, stores the fixed configuration value.
 
 **Rationale**:
 
@@ -249,6 +258,8 @@ type KialiCache interface {
     GetHealth(cluster, namespace, healthType string) (*CachedHealthData, bool)
 
     // SetHealth stores health data in cache
+    // Can be called by background job OR by individual handlers (e.g., detail pages)
+    // to update specific entries independently
     SetHealth(cluster, namespace, healthType string, data *CachedHealthData)
 
     // Health returns the underlying health store for direct access if needed
@@ -389,9 +400,9 @@ Leverage existing Kiali metrics infrastructure:
 ```
 - namespaces (optional): Comma-separated list of namespace names
 - type (optional): "app", "service", or "workload" (default: "app")
-- rateInterval (optional): Rate interval string (default: "10m")
-  - NOTE: Cached health computed using refresh-interval-based rate interval
-  - User-requested rateInterval parameter is IGNORED (returns cached data regardless)
+- rateInterval (optional): Rate interval string
+  - NOTE: This parameter is IGNORED - cached health uses server-configured rate interval
+  - Default config (0): rate interval = elapsed time since previous run
   - Future enhancement could support on-demand computation for non-cached intervals
 - queryTime (optional): Unix timestamp for historical queries
   - NOTE: Ignored in Phase 1; always returns current cached data
@@ -426,24 +437,17 @@ X-Kiali-Health-Cache-Age: 45
 X-Kiali-Health-Cached: true
 ```
 
-**Error Handling**:
+**Cache Miss Handling**:
 
-**Cache Miss Scenario** (should be rare):
+**Cache Miss Scenario** (should be rare - only at startup before first refresh completes):
 
-```json
-{
-  "error": "Health data not yet available, background computation in progress",
-  "code": 503
-}
-```
+- Return normal HTTP 200 response
+- Health status for affected entities set to "Unknown" (value 3)
+- This is a valid state, not an error condition
+- Client displays "Unknown" health indicator
+- After first background refresh completes, cache will be populated
 
-Return HTTP 503 (Service Unavailable) with `Retry-After` header.
-
-**Fallback Option** (for discussion):
-
-- Option A: Return 503 and let client retry
-- Option B: Compute on-demand as fallback (defeats purpose of pre-computation)
-- **Recommendation**: Option A (strict pre-computation, no cache misses)
+**Rationale**: A cache miss means "we don't know the health yet" which is semantically "Unknown" status, not a system error. This keeps the API contract simple and avoids forcing clients to handle error cases differently.
 
 ---
 
@@ -453,23 +457,17 @@ Return HTTP 503 (Service Unavailable) with `Retry-After` header.
 
 ```yaml
 health:
-  # Enable/disable background health computation
-  cache_enabled: true
-
-  # Background refresh interval
+  # Background refresh interval (health pre-computation is always active)
   cache_refresh_interval: 2m
 
-  # Cache expiration (should be > refresh_interval)
-  # Recommended: 3x refresh interval
-  cache_expiration: 6m
+  # Rate interval for Prometheus health queries
+  # 0 (default): automatically calculated as elapsed time since previous run
+  # Non-zero value (e.g., "10m"): uses fixed interval
+  rate_interval: 0
 
   # Enable/disable Prometheus metrics export for health data
+  # Only applies when Server.Observability.Metrics.Enabled is also true
   metrics_export_enabled: true
-
-  # Prometheus query rate interval calculation
-  # Options: "match_refresh" (use refresh_interval), "2x_refresh", or explicit value like "5m"
-  # Default: "match_refresh" means if refresh_interval=2m, query Prometheus for last 2m
-  rate_interval_strategy: "match_refresh"
 
   # Maximum time allowed for background refresh to complete
   # If exceeded, log warning but continue
@@ -483,17 +481,16 @@ health:
 ### Config Validation Rules
 
 - `cache_refresh_interval` must be >= 30s (minimum)
-- `cache_expiration` must be >= `cache_refresh_interval` × 1.5
+- `rate_interval` must be 0 (auto) or a valid Prometheus duration (e.g., "5m", "10m")
 - `refresh_timeout` must be >= `cache_refresh_interval`
-- `rate_interval_strategy` must be "match_refresh", "2x_refresh", or valid Prometheus duration
 
 ### Environment Variable Overrides
 
 Follow existing Kiali patterns:
 
 ```bash
-HEALTH_CACHE_ENABLED=false
-HEALTH_CACHE_REFRESH_INTERVAL=5m
+HEALTH_CACHE_REFRESH_INTERVAL=2m
+HEALTH_RATE_INTERVAL=0
 HEALTH_METRICS_EXPORT_ENABLED=true
 ```
 
@@ -532,7 +529,7 @@ func (s *HealthCacheService) refreshNamespaceHealth(cluster, namespace string)
 ### Background Job Algorithm
 
 ```
-Main Loop (runs every cache_refresh_interval):
+Main Loop:
   1. Get list of all clusters from cache
   2. For each cluster:
      a. Get list of all namespaces in cluster
@@ -549,8 +546,10 @@ Main Loop (runs every cache_refresh_interval):
         - Export metrics
      c. Update operational metrics (refresh time, success/fail counts)
   3. Log completion summary
-  4. Wait for next interval
+  4. Wait cache_refresh_interval before starting next cycle
 ```
+
+**Note**: The refresh interval is the delay _between_ job completions, not the cycle time. If a job takes 1 minute and the interval is 2 minutes, the next job starts 2 minutes after the previous one completes (3 minutes from the previous start).
 
 **Error Handling**:
 
@@ -610,8 +609,10 @@ func (hs *HealthService) GetHealthFromCache(
     cluster, namespace, healthType string,
 ) (*CachedHealthData, bool)
 
-// CalculateRateInterval computes the rate interval based on refresh interval and strategy
-func (hs *HealthService) CalculateRateInterval() string
+// GetRateInterval returns the rate interval to use for queries
+// If config is 0: calculates elapsed time since last run
+// If config is non-zero: returns the configured fixed value
+func (hs *HealthService) GetRateInterval(lastRunTime time.Time) string
 ```
 
 **No Changes Required**: Background job calls existing methods
@@ -635,7 +636,7 @@ func (hs *HealthService) CalculateRateInterval() string
 // New flow:
 // 1. Loop through namespaces
 // 2. Read health from cache
-// 3. If cache miss: return 503
+// 3. If cache miss: return health with "Unknown" status
 // 4. Return results
 ```
 
@@ -661,7 +662,7 @@ func (hs *HealthService) CalculateRateInterval() string
 **Store Configuration**:
 
 - Use `store.Store[string, *CachedHealthData]`
-- Set expiration based on config: `health.cache_expiration`
+- No expiration needed - background job continuously refreshes data
 - Thread-safe access (store already provides this)
 
 ---
@@ -698,13 +699,11 @@ func (hs *HealthService) CalculateRateInterval() string
 
 ```go
 type Health struct {
-    CacheEnabled           bool          `yaml:"cache_enabled" json:"cacheEnabled"`
     CacheRefreshInterval   time.Duration `yaml:"cache_refresh_interval" json:"cacheRefreshInterval"`
-    CacheExpiration        time.Duration `yaml:"cache_expiration" json:"cacheExpiration"`
-    MetricsExportEnabled   bool          `yaml:"metrics_export_enabled" json:"metricsExportEnabled"`
-    RateIntervalStrategy   string        `yaml:"rate_interval_strategy" json:"rateIntervalStrategy"`
-    RefreshTimeout         time.Duration `yaml:"refresh_timeout" json:"refreshTimeout"`
     ClusterProcessingDelay time.Duration `yaml:"cluster_processing_delay" json:"clusterProcessingDelay"`
+    MetricsExportEnabled   bool          `yaml:"metrics_export_enabled" json:"metricsExportEnabled"`
+    RateInterval           string        `yaml:"rate_interval" json:"rateInterval"`
+    RefreshTimeout         time.Duration `yaml:"refresh_timeout" json:"refreshTimeout"`
 }
 ```
 
@@ -716,7 +715,7 @@ type Health struct {
 
 - **Latency**: P95 < 200ms, P99 < 500ms for ClusterHealth requests
 - **Throughput**: Support 100+ concurrent health requests without degradation
-- **Refresh Time**: Background refresh completes within configured interval
+- **Refresh Time**: Background refresh completes in reasonable time (interval is delay between completions)
 - **Prometheus Load**: No more than 1 query per namespace per type per refresh cycle
 
 ---
@@ -726,7 +725,7 @@ type Health struct {
 - **Cache Hit Rate**: > 99% after system warm-up (first refresh cycle)
 - **Error Recovery**: Individual failures don't stop overall refresh
 - **Graceful Degradation**: System continues if single cluster unavailable
-- **Data Consistency**: Cache always reflects latest refresh, no stale data served beyond TTL
+- **Data Consistency**: Cache always reflects latest refresh (timestamp stored for staleness detection)
 
 ---
 
@@ -774,8 +773,8 @@ type Health struct {
 
 - [ ] Background job starts automatically when Kiali starts
 - [ ] Job runs on configured interval (default: 2 minutes)
-- [ ] Job processes all clusters and namespaces
-- [ ] Job completes within refresh interval (doesn't fall behind)
+- [ ] Job processes all clusters and namespaces accessible to Kiali's service account
+- [ ] Interval timer starts after job completion (not during)
 - [ ] Job stops gracefully when Kiali shuts down
 
 ---
@@ -784,7 +783,7 @@ type Health struct {
 
 - [ ] All namespace health data stored in cache after first refresh
 - [ ] Cache keys follow defined format
-- [ ] Cache entries expire after configured TTL
+- [ ] Cached values include computation timestamp for staleness detection
 - [ ] Cache data matches structure of existing API responses
 - [ ] Cache survives across multiple refresh cycles
 
@@ -815,8 +814,8 @@ type Health struct {
 - [ ] All config parameters can be set via YAML
 - [ ] All config parameters can be overridden via environment variables
 - [ ] Invalid configuration rejected with clear error messages
-- [ ] Config changes picked up within one refresh cycle
-- [ ] Feature can be disabled (falls back to on-demand computation)
+- [ ] Config changes take effect after Kiali restart
+- [ ] Health pre-computation starts automatically when Kiali starts
 
 ---
 
@@ -888,7 +887,7 @@ type Health struct {
 - Mock Prometheus client (don't make real queries)
 - Mock Kubernetes client (don't access real cluster)
 - Mock cache for handler tests
-- Mock time for expiration tests
+- Mock time for staleness detection tests
 
 ---
 
@@ -920,18 +919,18 @@ type Health struct {
 
 4. **Configuration Changes**
 
-   - Start with cache enabled
-   - Change refresh interval
-   - Verify new interval takes effect
-   - Disable cache
-   - Verify fallback behavior
+   - Start with cache enabled and specific refresh interval
+   - Restart Kiali with different refresh interval
+   - Verify new interval takes effect after restart
+   - Verify metrics export can be disabled separately
+   - Verify cache still works when metrics export disabled
 
-5. **Cache Expiration**
+5. **Cache Staleness Detection**
 
-   - Set short expiration (1 minute)
-   - Wait for expiration
-   - Verify old data removed
-   - Verify new data populated on next refresh
+   - Verify cached values include computation timestamp
+   - Verify timestamp updates on each refresh
+   - Verify staleness can be calculated from timestamp
+   - Verify cache age reported correctly in response headers (if enabled)
 
 6. **Graceful Shutdown**
    - Start background job
@@ -954,7 +953,8 @@ type Health struct {
 1. **Refresh Duration**
 
    - Measure time to complete full refresh cycle
-   - Target: < 2 minutes (within configured interval)
+   - Measure time to complete full refresh cycle
+   - Log/metric for observability (no hard requirement)
    - Run 10 cycles, verify consistent timing
 
 2. **API Latency**
@@ -991,9 +991,9 @@ type Health struct {
 - [ ] Verify metrics visible in Prometheus UI
 - [ ] Verify health data visible in Kiali UI (no visible change to user)
 - [ ] Verify logs show refresh cycles
-- [ ] Verify configuration changes take effect
+- [ ] Verify configuration changes take effect after restart
 - [ ] Verify graceful shutdown doesn't leave orphaned goroutines
-- [ ] Verify cache disabled mode works (fallback to on-demand)
+- [ ] Verify health pre-computation runs automatically on startup
 - [ ] Test with single cluster and multi-cluster
 - [ ] Test with many namespaces (100+)
 - [ ] Test with empty cluster (no namespaces)
@@ -1048,7 +1048,7 @@ type Health struct {
 1. Modify ClusterHealth handler
 
    - Add cache read logic
-   - Handle cache miss (return 503)
+   - Handle cache miss (return "Unknown" health status)
    - Add optional response headers
    - Preserve exact response structure
    - Write unit tests
@@ -1056,7 +1056,7 @@ type Health struct {
 2. Integration testing
 
    - Test cache hit path
-   - Test cache miss path
+   - Test cache miss returns "Unknown" health status
    - Test response structure unchanged
    - Test multi-cluster queries
 
@@ -1160,14 +1160,17 @@ type Health struct {
 - A) Return 503 and force client to retry
 - B) Fall back to on-demand computation
 - C) Return partial data (what's in cache) with indicator
+- D) Return health with "Unknown" status
 
-**Recommendation**: Option A (strict pre-computation)
+**Decision**: ✅ **DECIDED - Option D**: Return "Unknown" health status
 
-- Aligns with "no cache misses" requirement
-- Simpler implementation
-- Clearer semantics
+**Rationale**:
 
-**Decision**: [ ] Pending
+- Cache miss means "we don't know the health yet" - semantically this IS "Unknown"
+- Not an error condition - just a valid state (system just started)
+- Keeps API contract simple - always returns 200 with health data
+- Clients don't need special error handling logic
+- After first refresh cycle completes, cache will be populated
 
 ---
 
@@ -1202,31 +1205,22 @@ type Health struct {
 
 ### Q4: Rate Interval Flexibility
 
-**Question**: Should we cache health for multiple rate intervals?
+**Question**: Should we support multiple rate intervals or allow client to specify?
 
-- A) Yes, cache for 5m, 10m, 1h (common intervals)
-- B) No, only cache for default (10m), compute others on-demand
-- C) Make it configurable
+- A) Yes, cache for multiple intervals (5m, 10m, 1h)
+- B) Single fixed configurable rate interval, ignore client parameter
+- C) Dynamic calculation based on elapsed time since last run
+- D) Configurable: either fixed value OR auto-calculated from elapsed time
 
-**Recommendation**: Option B initially (keep it simple)
-
-**Decision**: ✅ **DECIDED - Option B**: Only cache for default rate interval
+**Decision**: ✅ **DECIDED - Option D**: Configurable with auto-calculation default
 
 **Rationale**:
 
+- Default (rate_interval=0): automatically calculates elapsed time since previous run
+- Each run covers exactly the period since last calculation (no gaps or overlaps)
+- Non-zero value: uses fixed interval for predictable behavior
+- Client-requested rateInterval API parameter is ignored
 - Simplifies cache key structure (no rateInterval in key)
-- Reduces cache memory usage
-- Users typically use default interval in UI
-- Non-default intervals rare, acceptable to compute on-demand if requested
-- Can be enhanced later if needed
-
-**Implementation Notes**:
-
-- If user requests health with non-default rate interval, API should:
-  - Option A: Return cached data anyway (ignore requested interval)
-  - Option B: Return error indicating only default interval cached
-  - Option C: Fall back to on-demand computation for that request
-- **Recommended**: Option A (return cached data, document behavior)
 
 ---
 
@@ -1236,11 +1230,16 @@ type Health struct {
 
 - A) Enabled by default (opt-out)
 - B) Disabled by default (opt-in)
-- C) Enabled by default with automatic fallback on errors
+- C) Always enabled (no disable option)
 
-**Recommendation**: Option A (enabled by default, given it solves real problem)
+**Decision**: ✅ **DECIDED - Option C**: Always enabled
 
-**Decision**: [ ] Pending
+**Rationale**:
+
+- Health pre-computation is a core feature, not optional
+- Simplifies implementation (no fallback logic needed)
+- API always returns cached values
+- Reduces configuration complexity
 
 ---
 
@@ -1265,7 +1264,7 @@ type Health struct {
 ### Operational Metrics
 
 - Cache hit rate: > 99%
-- Background refresh duration: < 2 minutes
+- Background refresh duration: < 5 minutes
 - Memory overhead: < 50MB
 - Metric cardinality: < 50k time series
 - Failed namespace computations: < 1%
@@ -1310,7 +1309,7 @@ type Health struct {
 **Mitigation**:
 
 - Monitor cache size via metrics
-- Set reasonable TTL for cache expiration
+- Monitor cache staleness via timestamps
 - Consider namespace filtering (only cache accessed namespaces)
 - Profile memory usage during testing
 
