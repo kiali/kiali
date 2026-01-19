@@ -2,7 +2,7 @@
 
 ## Current Phase: 2 - Requirements Definition
 
-## Phase Status: ✅ COMPLETE - Under Review
+## Phase Status: ✅ COMPLETE - Review In Progress (2026-01-19)
 
 ## Phase Goal: Define detailed requirements for Approach 5 implementation
 
@@ -80,7 +80,7 @@
 3. ✅ Designed cache structure and key format
 4. ✅ Specified Prometheus metrics (3 health metrics + 4 operational metrics)
 5. ✅ Documented API contracts (zero breaking changes)
-6. ✅ Created configuration schema with 7 parameters
+6. ✅ Created configuration schema with 5 parameters
 7. ✅ Designed background job architecture (HealthCacheService)
 8. ✅ Identified all integration points (5 components)
 9. ✅ Defined 5 non-functional requirements (performance, reliability, observability, scalability, maintainability)
@@ -93,19 +93,22 @@
 **Current State**: Health data is NOT stored anywhere currently - computed fresh on every request
 
 **Cache Design**:
+
 - Key format: `health:{cluster}:{namespace}:{type}` (simplified - no rateInterval)
-- Rate interval dynamically calculated from refresh interval (e.g., refresh=2m → rate="2m")
-- Configurable strategy: "match_refresh", "2x_refresh", or explicit value
+- Rate interval configurable (default: 0 = auto-calculated from elapsed time since last run)
+- Non-zero value uses fixed interval; client parameters do not affect rate interval
 - Store complete health objects with metadata (computation time, rate interval used)
-- TTL: 3x refresh interval (6 minutes default)
+- No TTL/expiration (background job continuously overwrites)
 
 **Metrics Design**:
+
 - 3 health status metrics (app, service, workload)
 - Values: 0=healthy, 1=degraded, 2=failure, 3=unknown
 - Cardinality: ~15k-45k time series (manageable)
 - Operational metrics for job monitoring
 
 **Implementation Breakdown**:
+
 - Phase 1: Core infrastructure (2 days)
 - Phase 2: Handler integration (1 day)
 - Phase 3: Metrics export (1 day)
@@ -115,8 +118,8 @@
 
 ## Open Questions (Need Decisions)
 
-**Q1: Cache Miss Behavior** - Return 503 vs fallback to on-demand?  
-**Recommendation**: Return 503 (strict pre-computation)
+**Q1: Cache Miss Behavior** ✅ **DECIDED** - Return "Unknown" health status  
+**Decision**: Cache miss = "Unknown" status (not an error, valid state at startup)
 
 **Q2: Metrics Cardinality** - What if it exceeds limits?  
 **Recommendation**: Assume infrastructure can handle it initially
@@ -125,22 +128,25 @@
 **Recommendation**: Return current cached data (ignore queryTime for now)
 
 **Q4: Rate Interval Flexibility** ✅ **DECIDED** - Cache multiple intervals?  
-**Decision**: Rate interval dynamically calculated from refresh interval
-- If refresh_interval=2m, Prometheus queries use rate_interval="2m"
-- Configurable via `rate_interval_strategy`: "match_refresh" (default), "2x_refresh", or explicit
+**Decision**: Rate interval configurable with auto-calculation default
+
+- Default (rate_interval=0): calculates elapsed time since previous run
+- Non-zero value: uses fixed interval
+- Client-requested rateInterval API parameter is ignored
 - Simplifies cache key (no rateInterval dimension)
 - User-requested rateInterval API parameter is ignored (returns cached data)
 - More accurate: health data matches actual refresh cadence
 
-**Q5: Feature Flag Strategy** - Enabled by default?  
-**Recommendation**: Yes, enabled by default
+**Q5: Feature Flag Strategy** ✅ **DECIDED** - Always enabled  
+**Decision**: Health pre-computation is always active (no disable option)
 
 ## Recent Session Work (2025-11-25)
 
 **Refinements Made**:
+
 1. ✅ Simplified cache key structure (removed rateInterval dimension)
 2. ✅ Made rate interval dynamic based on refresh_interval
-3. ✅ Added `rate_interval_strategy` config option ("match_refresh", "2x_refresh", or explicit)
+3. ✅ Added `rate_interval` config option (default 0 = auto-calculated from elapsed time)
 4. ✅ Clarified that user-requested rateInterval API parameter is ignored
 5. ✅ Updated all affected sections in requirements document
 
@@ -151,6 +157,7 @@
 **When Review Complete**: Transition to Phase 3 (Detailed Design)
 
 Phase 3 will include:
+
 1. File-by-file implementation plan
 2. Detailed code structure for each component
 3. Interface definitions
@@ -165,6 +172,7 @@ Phase 3 will include:
 **Phase 2 Complete - Under Review**
 
 User is reviewing PHASE2_REQUIREMENTS.md. Key decisions made:
+
 - Cache key: `health:{cluster}:{namespace}:{type}` (no rateInterval)
 - Rate interval: Dynamically calculated from refresh interval
 - User API parameter `rateInterval`: Ignored (returns cached data)
