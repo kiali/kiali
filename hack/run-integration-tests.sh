@@ -244,6 +244,11 @@ else
   HELM_CHARTS_DIR_ARG=""
 fi
 
+# Install go-junit-report if not already installed
+if ! command -v go-junit-report &> /dev/null; then
+  go install github.com/jstemmer/go-junit-report@latest
+fi
+
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
@@ -440,7 +445,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
 
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v -failfast
+  go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
@@ -475,7 +480,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
 
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
-  go test -v -failfast
+  go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
