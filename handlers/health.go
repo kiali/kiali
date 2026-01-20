@@ -94,6 +94,9 @@ func ClusterHealth(
 				continue
 			}
 
+			// Cache hit
+			log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
+
 			// Use cached data
 			switch healthType {
 			case "app":

@@ -16,42 +16,42 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// HealthCacheMonitor is an interface for the health cache background job.
+// HealthMonitor is an interface for the health background job.
 // This is an interface for testing purposes.
-type HealthCacheMonitor interface {
+type HealthMonitor interface {
 	// Start starts the background health refresh job.
 	Start(ctx context.Context)
-	// RefreshHealthCache performs a single refresh of the health cache.
-	RefreshHealthCache(ctx context.Context) error
+	// RefreshHealth performs a single refresh of the health cache.
+	RefreshHealth(ctx context.Context) error
 }
 
-// FakeHealthCacheMonitor is a no-op implementation for testing.
-type FakeHealthCacheMonitor struct{}
+// FakeHealthMonitor is a no-op implementation for testing.
+type FakeHealthMonitor struct{}
 
-func (f *FakeHealthCacheMonitor) Start(ctx context.Context)                    {}
-func (f *FakeHealthCacheMonitor) RefreshHealthCache(ctx context.Context) error { return nil }
+func (f *FakeHealthMonitor) Start(ctx context.Context)               {}
+func (f *FakeHealthMonitor) RefreshHealth(ctx context.Context) error { return nil }
 
-// NewHealthCacheMonitor creates a new HealthCacheMonitor.
-func NewHealthCacheMonitor(
+// NewHealthMonitor creates a new HealthMonitor.
+func NewHealthMonitor(
 	cache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,
 	conf *config.Config,
 	discovery istio.MeshDiscovery,
 	prom prometheus.ClientInterface,
-) *healthCacheMonitor {
-	return &healthCacheMonitor{
+) *healthMonitor {
+	return &healthMonitor{
 		cache:         cache,
 		clientFactory: clientFactory,
 		conf:          conf,
 		discovery:     discovery,
 		lastRun:       time.Time{},
-		logger:        log.Logger().With().Str("component", "health-cache-monitor").Logger(),
+		logger:        log.Logger().With().Str("component", "health-monitor").Logger(),
 		prom:          prom,
 	}
 }
 
-// healthCacheMonitor pre-computes health for all namespaces and caches the results.
-type healthCacheMonitor struct {
+// healthMonitor pre-computes health for all namespaces and caches the results.
+type healthMonitor struct {
 	cache         cache.KialiCache
 	clientFactory kubernetes.ClientFactory
 	conf          *config.Config
@@ -62,34 +62,34 @@ type healthCacheMonitor struct {
 }
 
 // Start starts the background health refresh loop.
-func (m *healthCacheMonitor) Start(ctx context.Context) {
+func (m *healthMonitor) Start(ctx context.Context) {
 	interval := m.conf.HealthConfig.Compute.RefreshInterval
-	m.logger.Info().Msgf("Starting health cache monitor with refresh interval: %s", interval)
+	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s", interval)
 
 	// Prime the cache with an initial refresh
-	if err := m.RefreshHealthCache(ctx); err != nil {
-		m.logger.Error().Err(err).Msg("Initial health cache refresh failed")
+	if err := m.RefreshHealth(ctx); err != nil {
+		m.logger.Error().Err(err).Msg("Initial health refresh failed")
 	}
 
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				m.logger.Info().Msg("Stopping health cache monitor")
+				m.logger.Info().Msg("Stopping health monitor")
 				return
 			case <-time.After(interval):
-				if err := m.RefreshHealthCache(ctx); err != nil {
-					m.logger.Error().Err(err).Msg("Health cache refresh failed")
+				if err := m.RefreshHealth(ctx); err != nil {
+					m.logger.Error().Err(err).Msg("Health refresh failed")
 				}
 			}
 		}
 	}()
 }
 
-// RefreshHealthCache performs a single refresh of the entire health cache.
-func (m *healthCacheMonitor) RefreshHealthCache(ctx context.Context) error {
+// RefreshHealth performs a single refresh of the entire health cache.
+func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 	startTime := time.Now()
-	m.logger.Debug().Msg("Starting health cache refresh")
+	m.logger.Debug().Msg("Starting health refresh")
 
 	// Calculate rate interval
 	healthDuration := m.calculateDuration()
@@ -101,6 +101,12 @@ func (m *healthCacheMonitor) RefreshHealthCache(ctx context.Context) error {
 		return nil
 	}
 
+	// Create a single Layer for the entire refresh cycle (reused across all namespaces)
+	layer, err := m.createHealthLayer()
+	if err != nil {
+		return fmt.Errorf("failed to create layer for health refresh: %w", err)
+	}
+
 	totalNamespaces := 0
 	totalErrors := 0
 
@@ -109,7 +115,7 @@ func (m *healthCacheMonitor) RefreshHealthCache(ctx context.Context) error {
 			return ctx.Err()
 		}
 
-		nsCount, errCount := m.refreshClusterHealth(ctx, cluster.Name, healthDuration)
+		nsCount, errCount := m.refreshClusterHealth(ctx, layer, cluster.Name, healthDuration)
 		totalNamespaces += nsCount
 		totalErrors += errCount
 	}
@@ -123,26 +129,46 @@ func (m *healthCacheMonitor) RefreshHealthCache(ctx context.Context) error {
 		Int("errors", totalErrors).
 		Dur("elapsed", elapsed).
 		Str("healthDuration", healthDuration).
-		Msg("Health cache refresh completed")
+		Msg("Health refresh completed")
 
 	return nil
 }
 
+// createHealthLayer creates a full Layer for health computation using SA clients.
+// This Layer is reused for all namespace health computations in a refresh cycle.
+func (m *healthMonitor) createHealthLayer() (*Layer, error) {
+	userClients := m.clientFactory.GetSAClientsAsUserClientInterfaces()
+
+	// Use the existing NewLayerWithSAClients which creates a complete Layer
+	// Pass nil for tracing client and grafana since health computation doesn't need them
+	// Pass FakeControlPlaneMonitor since health computation doesn't need control plane monitoring
+	return NewLayerWithSAClients(
+		m.conf,
+		m.cache,
+		m.prom,
+		nil, // traceClient - not needed for health
+		&FakeControlPlaneMonitor{},
+		nil, // grafana - not needed for health
+		m.discovery.(*istio.Discovery),
+		userClients,
+	)
+}
+
 // refreshClusterHealth refreshes health for all namespaces in a cluster.
 // Returns the number of namespaces processed and the number of errors.
-func (m *healthCacheMonitor) refreshClusterHealth(ctx context.Context, cluster, duration string) (int, int) {
+func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, cluster, duration string) (int, int) {
 	log := m.logger.With().Str("cluster", cluster).Logger()
 	log.Debug().Msg("Refreshing health for cluster")
 
-	// Get SA client for this cluster
-	client := m.clientFactory.GetSAClient(cluster)
-	if client == nil {
+	// Verify we have access to this cluster
+	if m.clientFactory.GetSAClient(cluster) == nil {
 		log.Error().Msg("No SA client for cluster")
 		return 0, 1
 	}
 
-	// Get namespaces accessible to Kiali's service account
-	namespaces, err := m.getNamespacesForCluster(ctx, cluster)
+	// Get namespaces accessible to Kiali using the Layer's NamespaceService
+	// This respects Kiali's namespace filtering configuration
+	namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get namespaces for cluster")
 		return 0, 1
@@ -154,7 +180,7 @@ func (m *healthCacheMonitor) refreshClusterHealth(ctx context.Context, cluster, 
 			return len(namespaces), errorCount
 		}
 
-		if err := m.refreshNamespaceHealth(ctx, cluster, ns.Name, duration); err != nil {
+		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
 		}
@@ -163,35 +189,8 @@ func (m *healthCacheMonitor) refreshClusterHealth(ctx context.Context, cluster, 
 	return len(namespaces), errorCount
 }
 
-// getNamespacesForCluster returns namespaces accessible to Kiali's service account.
-func (m *healthCacheMonitor) getNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
-	// Get namespaces from discovery (uses SA client)
-	// This respects any namespace filtering configured in Kiali
-	client := m.clientFactory.GetSAClient(cluster)
-	if client == nil {
-		return nil, fmt.Errorf("no SA client for cluster %s", cluster)
-	}
-
-	// Get all namespaces via the SA client
-	nsList, err := client.GetNamespaces("")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get namespaces: %w", err)
-	}
-
-	// Convert to models.Namespace
-	namespaces := make([]models.Namespace, 0, len(nsList))
-	for _, ns := range nsList {
-		namespaces = append(namespaces, models.Namespace{
-			Cluster: cluster,
-			Name:    ns.Name,
-		})
-	}
-
-	return namespaces, nil
-}
-
 // refreshNamespaceHealth computes and caches health for a single namespace.
-func (m *healthCacheMonitor) refreshNamespaceHealth(ctx context.Context, cluster, namespace, duration string) error {
+func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer, cluster, namespace, duration string) error {
 	log := m.logger.With().
 		Str("cluster", cluster).
 		Str("namespace", namespace).
@@ -199,23 +198,6 @@ func (m *healthCacheMonitor) refreshNamespaceHealth(ctx context.Context, cluster
 	log.Debug().Msg("Computing health for namespace")
 
 	queryTime := time.Now()
-
-	// Create a Layer using SA clients for this computation
-	saClients := m.clientFactory.GetSAClients()
-	userClients := m.clientFactory.GetSAClientsAsUserClientInterfaces()
-
-	// Create a temporary Layer for health computation
-	layer, err := newLayerWithSAClientsForHealth(
-		m.conf,
-		m.cache,
-		m.prom,
-		userClients,
-		saClients,
-		m.discovery,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create layer: %w", err)
-	}
 
 	criteria := NamespaceHealthCriteria{
 		Cluster:        cluster,
@@ -263,7 +245,7 @@ func (m *healthCacheMonitor) refreshNamespaceHealth(ctx context.Context, cluster
 
 // calculateDuration calculates the health duration based on configuration.
 // If Duration is 0, it calculates based on elapsed time since last run.
-func (m *healthCacheMonitor) calculateDuration() string {
+func (m *healthMonitor) calculateDuration() string {
 	configuredInterval := m.conf.HealthConfig.Compute.Duration
 
 	// If configured interval is non-zero, use it
@@ -297,26 +279,4 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm", seconds/60)
 	}
 	return fmt.Sprintf("%ds", seconds)
-}
-
-// newLayerWithSAClientsForHealth creates a Layer for health computation using SA clients.
-// This is a simplified version that only initializes the services needed for health.
-func newLayerWithSAClientsForHealth(
-	conf *config.Config,
-	kialiCache cache.KialiCache,
-	prom prometheus.ClientInterface,
-	userClients map[string]kubernetes.UserClientInterface,
-	saClients map[string]kubernetes.ClientInterface,
-	discovery istio.MeshDiscovery,
-) (*Layer, error) {
-	layer := &Layer{}
-
-	// Initialize only the services needed for health computation
-	layer.Health = NewHealthService(layer, conf, prom, userClients)
-	layer.Namespace = NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
-	layer.Svc = SvcService{conf: conf, kialiCache: kialiCache, businessLayer: layer, prom: prom, userClients: userClients}
-	layer.Workload = *NewWorkloadService(kialiCache, conf, nil, saClients, layer, prom, userClients)
-	layer.App = NewAppService(layer, conf, prom, nil, userClients)
-
-	return layer, nil
 }

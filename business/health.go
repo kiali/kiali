@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -15,10 +16,11 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
+func NewHealthService(businessLayer *Layer, conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
 	return HealthService{
 		businessLayer: businessLayer,
 		conf:          conf,
+		kialiCache:    kialiCache,
 		prom:          prom,
 		userClients:   userClients,
 	}
@@ -28,6 +30,7 @@ func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus
 type HealthService struct {
 	businessLayer *Layer
 	conf          *config.Config
+	kialiCache    cache.KialiCache
 	prom          prometheus.ClientInterface
 	userClients   map[string]kubernetes.UserClientInterface
 }
@@ -56,7 +59,14 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, cluste
 	defer end()
 
 	rqHealth, err := in.getServiceRequestsHealth(ctx, namespace, cluster, service, rateInterval, queryTime, svc)
-	return models.ServiceHealth{Requests: rqHealth}, err
+	health := models.ServiceHealth{Requests: rqHealth}
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateServiceHealth(cluster, namespace, service, &health)
+	}
+
+	return health, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
@@ -72,7 +82,14 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 	)
 	defer end()
 
-	return in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+	health, err := in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateAppHealth(cluster, namespace, app, &health)
+	}
+
+	return health, err
 }
 
 func (in *HealthService) getAppHealth(ctx context.Context, namespace, cluster, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
@@ -113,20 +130,32 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	)
 	defer end()
 
+	var health models.WorkloadHealth
+
 	// Perf: do not bother fetching request rate if workload has no sidecar
 	if !w.IstioSidecar && !w.IsGateway() {
-		return models.WorkloadHealth{
+		health = models.WorkloadHealth{
 			WorkloadStatus: w.CastWorkloadStatus(),
 			Requests:       models.NewEmptyRequestHealth(),
-		}, nil
+		}
+		// Update cache with the computed health
+		in.kialiCache.UpdateWorkloadHealth(cluster, namespace, workload, &health)
+		return health, nil
 	}
 
 	// Add Telemetry info
 	rate, err := in.getWorkloadRequestsHealth(ctx, namespace, cluster, workload, rateInterval, queryTime, w)
-	return models.WorkloadHealth{
+	health = models.WorkloadHealth{
 		WorkloadStatus: w.CastWorkloadStatus(),
 		Requests:       rate,
-	}, err
+	}
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateWorkloadHealth(cluster, namespace, workload, &health)
+	}
+
+	return health, err
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)

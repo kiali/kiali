@@ -11,6 +11,7 @@ import (
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
@@ -21,11 +22,12 @@ import (
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
-func NewAppService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.UserClientInterface) AppService {
+func NewAppService(businessLayer *Layer, conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface, grafana *grafana.Service, userClients map[string]kubernetes.UserClientInterface) AppService {
 	return AppService{
 		businessLayer: businessLayer,
 		conf:          conf,
 		grafana:       grafana,
+		kialiCache:    kialiCache,
 		prom:          prom,
 		userClients:   userClients,
 	}
@@ -36,6 +38,7 @@ type AppService struct {
 	businessLayer *Layer
 	conf          *config.Config
 	grafana       *grafana.Service
+	kialiCache    cache.KialiCache
 	prom          prometheus.ClientInterface
 	userClients   map[string]kubernetes.UserClientInterface
 }
@@ -130,6 +133,12 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		}
 	}
 
+	// Try to get cached health for this namespace
+	var cachedHealth *models.CachedHealthData
+	if criteria.IncludeHealth {
+		cachedHealth, _ = in.kialiCache.GetHealth(cluster, namespace)
+	}
+
 	for keyApp, valueApp := range allApps {
 		appItem := &models.AppListItem{
 			Name:   keyApp,
@@ -185,9 +194,26 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			}
 		}
 		if criteria.IncludeHealth {
-			appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
-			if err != nil {
-				log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
+			// Try cache first, fall back to on-demand calculation
+			if cachedHealth != nil {
+				if health, found := cachedHealth.AppHealth[appItem.Name]; found {
+					log.Debugf("App health cache hit for cluster=%s namespace=%s app=%s", cluster, namespace, appItem.Name)
+					appItem.Health = *health
+				} else {
+					// Cache miss for this specific app - compute on-demand (also updates cache)
+					log.Debugf("App health cache miss for cluster=%s namespace=%s app=%s", cluster, namespace, appItem.Name)
+					appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, namespace, cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
+					if err != nil {
+						log.Errorf("Error fetching Health in namespace %s for app %s: %s", namespace, appItem.Name, err)
+					}
+				}
+			} else {
+				// No cached data for namespace - compute on-demand (also updates cache)
+				log.Debugf("App health cache miss (no namespace data) for cluster=%s namespace=%s app=%s", cluster, namespace, appItem.Name)
+				appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, namespace, cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
+				if err != nil {
+					log.Errorf("Error fetching Health in namespace %s for app %s: %s", namespace, appItem.Name, err)
+				}
 			}
 		}
 		appItem.Cluster = cluster
@@ -282,6 +308,19 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		}
 	}
 
+	// Pre-fetch cached health for namespaces we'll be processing
+	cachedHealthByCluster := make(map[string]*models.CachedHealthData)
+	if criteria.IncludeHealth {
+		for _, clusterApps := range allApps {
+			for _, valueApp := range clusterApps {
+				if _, exists := cachedHealthByCluster[valueApp.cluster]; !exists {
+					cachedHealth, _ := in.kialiCache.GetHealth(valueApp.cluster, criteria.Namespace)
+					cachedHealthByCluster[valueApp.cluster] = cachedHealth
+				}
+			}
+		}
+	}
+
 	for _, clusterApps := range allApps {
 		for keyApp, valueApp := range clusterApps {
 			appItem := &models.AppListItem{
@@ -339,9 +378,27 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				}
 			}
 			if criteria.IncludeHealth {
-				appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
-				if err != nil {
-					log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
+				// Try cache first, fall back to on-demand calculation
+				cachedHealth := cachedHealthByCluster[valueApp.cluster]
+				if cachedHealth != nil {
+					if health, found := cachedHealth.AppHealth[appItem.Name]; found {
+						log.Debugf("App health cache hit for cluster=%s namespace=%s app=%s", valueApp.cluster, criteria.Namespace, appItem.Name)
+						appItem.Health = *health
+					} else {
+						// Cache miss for this specific app - compute on-demand (also updates cache)
+						log.Debugf("App health cache miss for cluster=%s namespace=%s app=%s", valueApp.cluster, criteria.Namespace, appItem.Name)
+						appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
+						if err != nil {
+							log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
+						}
+					}
+				} else {
+					// No cached data for namespace - compute on-demand (also updates cache)
+					log.Debugf("App health cache miss (no namespace data) for cluster=%s namespace=%s app=%s", valueApp.cluster, criteria.Namespace, appItem.Name)
+					appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, criteria.Namespace, valueApp.cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
+					if err != nil {
+						log.Errorf("Error fetching Health in namespace %s for app %s: %s", criteria.Namespace, appItem.Name, err)
+					}
 				}
 			}
 			appItem.Cluster = valueApp.cluster

@@ -353,6 +353,12 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		return *workloadList, err
 	}
 
+	// Try to get cached health for this namespace (used if IncludeHealth is true)
+	var cachedHealth *models.CachedHealthData
+	if criteria.IncludeHealth {
+		cachedHealth, _ = in.cache.GetHealth(cluster, namespace)
+	}
+
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w, in.conf)
@@ -360,9 +366,26 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
-			if err != nil {
-				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+			// Try cache first, fall back to on-demand calculation
+			if cachedHealth != nil {
+				if health, found := cachedHealth.WorkloadHealth[wItem.Name]; found {
+					log.Debugf("Workload health cache hit for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
+					wItem.Health = *health
+				} else {
+					// Cache miss for this specific workload - compute on-demand (also updates cache)
+					log.Debugf("Workload health cache miss for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
+					wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+					if err != nil {
+						log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+					}
+				}
+			} else {
+				// No cached data for namespace - compute on-demand (also updates cache)
+				log.Debugf("Workload health cache miss (no namespace data) for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
+				wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+				if err != nil {
+					log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+				}
 			}
 		}
 		wItem.Cluster = cluster

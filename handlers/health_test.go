@@ -71,7 +71,7 @@ func TestClustersHealth(t *testing.T) {
 
 	conf := config.NewConfig()
 
-	// Pre-populate cache with health data (simulating what HealthCacheMonitor does)
+	// Pre-populate cache with health data (simulating what HealthMonitor does)
 	cachedHealth := &models.CachedHealthData{
 		AppHealth:  models.NamespaceAppHealth{},
 		Cluster:    conf.KubernetesConfig.ClusterName,
