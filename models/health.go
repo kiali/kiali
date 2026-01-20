@@ -22,15 +22,26 @@ type NamespaceServiceHealth map[string]*ServiceHealth
 // NamespaceWorkloadsHealth is a list of workload name x health for a given namespace
 type NamespaceWorkloadHealth map[string]*WorkloadHealth
 
+// CalculatedHealthStatus represents the calculated health status with additional context
+// This is populated by the backend's health calculation logic.
+type CalculatedHealthStatus struct {
+	ErrorRatio float64      `json:"errorRatio,omitempty"` // Actual error ratio as percentage (0-100)
+	Status     HealthStatus `json:"status"`               // Calculated health status (Healthy, Degraded, Failure, NotReady, NA)
+}
+
 // ServiceHealth contains aggregated health from various sources, for a given service
 type ServiceHealth struct {
 	Requests RequestHealth `json:"requests"`
+	// Status is the calculated health status. Populated by the backend when available.
+	Status *CalculatedHealthStatus `json:"status,omitempty"`
 }
 
 // AppHealth contains aggregated health from various sources, for a given app
 type AppHealth struct {
-	WorkloadStatuses []*WorkloadStatus `json:"workloadStatuses"`
-	Requests         RequestHealth     `json:"requests"`
+	Requests RequestHealth `json:"requests"`
+	// Status is the calculated health status. Populated by the backend when available.
+	Status           *CalculatedHealthStatus `json:"status,omitempty"`
+	WorkloadStatuses []*WorkloadStatus       `json:"workloadStatuses"`
 }
 
 func NewEmptyRequestHealth() RequestHealth {
@@ -68,8 +79,10 @@ func EmptyWorkloadHealth() *WorkloadHealth {
 
 // WorkloadHealth contains aggregated health from various sources, for a given workload
 type WorkloadHealth struct {
-	WorkloadStatus *WorkloadStatus `json:"workloadStatus"`
-	Requests       RequestHealth   `json:"requests"`
+	Requests RequestHealth `json:"requests"`
+	// Status is the calculated health status. Populated by the backend when available.
+	Status         *CalculatedHealthStatus `json:"status,omitempty"`
+	WorkloadStatus *WorkloadStatus         `json:"workloadStatus"`
 }
 
 // WorkloadStatus gives
@@ -82,10 +95,10 @@ type WorkloadHealth struct {
 // - desired = 1, current = 10, available = 0 would means that a user scaled down a workload from 10 to 1
 // - but in the operaton 10 pods showed problems, so no pod is available/ready but user will see 10 pods under a workload
 type WorkloadStatus struct {
-	Name              string `json:"name"`
-	DesiredReplicas   int32  `json:"desiredReplicas"`
-	CurrentReplicas   int32  `json:"currentReplicas"`
 	AvailableReplicas int32  `json:"availableReplicas"`
+	CurrentReplicas   int32  `json:"currentReplicas"`
+	DesiredReplicas   int32  `json:"desiredReplicas"`
+	Name              string `json:"name"`
 	SyncedProxies     int32  `json:"syncedProxies"`
 }
 
@@ -103,11 +116,11 @@ type ProxyStatus struct {
 // - Inbound//Outbound are the rates of requests by protocol and status_code.
 // Example:   Inbound: { "http": {"200": 1.5, "400": 2.3}, "grpc": {"1": 1.2} }
 type RequestHealth struct {
+	HealthAnnotations  map[string]string             `json:"healthAnnotations"`
 	Inbound            map[string]map[string]float64 `json:"inbound"`
 	Outbound           map[string]map[string]float64 `json:"outbound"`
-	HealthAnnotations  map[string]string             `json:"healthAnnotations"`
-	inboundSource      map[string]map[string]float64
 	inboundDestination map[string]map[string]float64
+	inboundSource      map[string]map[string]float64
 }
 
 // AggregateInbound adds the provided metric sample to internal inbound counters and updates error ratios

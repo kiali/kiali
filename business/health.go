@@ -19,6 +19,7 @@ import (
 func NewHealthService(businessLayer *Layer, conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
 	return HealthService{
 		businessLayer: businessLayer,
+		calculator:    NewHealthCalculator(conf),
 		conf:          conf,
 		kialiCache:    kialiCache,
 		prom:          prom,
@@ -29,6 +30,7 @@ func NewHealthService(businessLayer *Layer, conf *config.Config, kialiCache cach
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	businessLayer *Layer
+	calculator    *HealthCalculator
 	conf          *config.Config
 	kialiCache    cache.KialiCache
 	prom          prometheus.ClientInterface
@@ -61,6 +63,13 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, cluste
 	rqHealth, err := in.getServiceRequestsHealth(ctx, namespace, cluster, service, rateInterval, queryTime, svc)
 	health := models.ServiceHealth{Requests: rqHealth}
 
+	// Calculate and set the health status
+	if err == nil {
+		annotations := rqHealth.HealthAnnotations
+		calculated := in.calculator.CalculateServiceHealth(namespace, service, &health, annotations)
+		health.Status = &calculated
+	}
+
 	// Update cache with the computed health
 	if err == nil {
 		in.kialiCache.UpdateServiceHealth(cluster, namespace, service, &health)
@@ -83,6 +92,13 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 	defer end()
 
 	health, err := in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+
+	// Calculate and set the health status
+	if err == nil {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateAppHealth(namespace, app, &health, annotations)
+		health.Status = &calculated
+	}
 
 	// Update cache with the computed health
 	if err == nil {
@@ -138,6 +154,9 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 			WorkloadStatus: w.CastWorkloadStatus(),
 			Requests:       models.NewEmptyRequestHealth(),
 		}
+		// Calculate and set the health status
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, workload, &health, w.HealthAnnotations)
+		health.Status = &calculated
 		// Update cache with the computed health
 		in.kialiCache.UpdateWorkloadHealth(cluster, namespace, workload, &health)
 		return health, nil
@@ -148,6 +167,13 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	health = models.WorkloadHealth{
 		WorkloadStatus: w.CastWorkloadStatus(),
 		Requests:       rate,
+	}
+
+	// Calculate and set the health status
+	if err == nil {
+		annotations := rate.HealthAnnotations
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, workload, &health, annotations)
+		health.Status = &calculated
 	}
 
 	// Update cache with the computed health
@@ -221,6 +247,13 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 		}
 		// Fill with collected request rates
 		fillAppRequestRates(allHealth, rates, appSidecars)
+	}
+
+	// Calculate and set status for each app
+	for appName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateAppHealth(namespace, appName, health, annotations)
+		health.Status = &calculated
 	}
 
 	return allHealth, nil
@@ -298,6 +331,14 @@ func (in *HealthService) getNamespaceServiceHealth(ctx context.Context, services
 			health.Requests.CombineReporters()
 		}
 	}
+
+	// Calculate and set status for each service
+	for svcName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateServiceHealth(namespace, svcName, health, annotations)
+		health.Status = &calculated
+	}
+
 	return allHealth
 }
 
@@ -361,6 +402,13 @@ func (in *HealthService) getNamespaceWorkloadHealth(ctx context.Context, ws mode
 		}
 		// Fill with collected request rates
 		fillWorkloadRequestRates(allHealth, rates, wlSidecars)
+	}
+
+	// Calculate and set status for each workload
+	for wkName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, wkName, health, annotations)
+		health.Status = &calculated
 	}
 
 	return allHealth, nil
