@@ -218,8 +218,24 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	// Check if we need to add health
 
 	if criteria.IncludeHealth {
+		// Try to get cached health for this namespace
+		cachedHealth, _ := in.kialiCache.GetHealth(cluster, criteria.Namespace)
+
 		for i, sv := range services.Services {
-			// TODO: Fix health for multi-cluster
+			// Try cache first, fall back to on-demand calculation
+			if cachedHealth != nil {
+				if health, found := cachedHealth.ServiceHealth[sv.Name]; found {
+					log.Debugf("Service health cache hit for cluster=%s namespace=%s service=%s", cluster, criteria.Namespace, sv.Name)
+					services.Services[i].Health = *health
+					continue
+				}
+			}
+			// Cache miss - compute on-demand (also updates cache)
+			if cachedHealth != nil {
+				log.Debugf("Service health cache miss for cluster=%s namespace=%s service=%s", cluster, criteria.Namespace, sv.Name)
+			} else {
+				log.Debugf("Service health cache miss (no namespace data) for cluster=%s namespace=%s service=%s", cluster, criteria.Namespace, sv.Name)
+			}
 			services.Services[i].Health, err = in.businessLayer.Health.GetServiceHealth(ctx, criteria.Namespace, sv.Cluster, sv.Name, criteria.RateInterval, criteria.QueryTime, sv.ParseToService())
 			if err != nil {
 				log.Errorf("Error fetching health per service %s: %s", sv.Name, err)

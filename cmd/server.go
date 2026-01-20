@@ -90,9 +90,6 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Fatalf("Error creating Prometheus client: %s", err)
 	}
 
-	// Create health cache monitor for pre-computing health data
-	hcm := business.NewHealthCacheMonitor(cache, clientFactory, conf, discovery, prom)
-
 	// Create shared tracing client shared by all tracing requests in the business layer.
 	// Because tracing is not an essential component, we don't want to block startup
 	// of the server if the tracing client fails to initialize. tracing.NewClient will
@@ -126,6 +123,9 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Fatalf("Error creating business layer: %s", err)
 	}
 
+	// Create health monitor for pre-computing health data, started below after cache initialization
+	hcm := business.NewHealthMonitor(cache, clientFactory, conf, discovery, prom)
+
 	if conf.IsValidationsEnabled() {
 		if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
 			log.Fatal(err)
@@ -157,7 +157,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
-	// Start health cache monitor for pre-computing health data
+	// Start health monitor for pre-computing health data
 	hcm.Start(ctx)
 
 	// Start listening to requests
