@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 
 	"github.com/kiali/kiali/cache"
@@ -14,6 +15,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // HealthMonitor is an interface for the health background job.
@@ -160,6 +162,13 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	log := m.logger.With().Str("cluster", cluster).Logger()
 	log.Debug().Msg("Refreshing health for cluster")
 
+	// Track cluster refresh duration if metrics are enabled
+	var timer *prom.Timer
+	if m.conf.Server.Observability.Metrics.Enabled {
+		timer = internalmetrics.GetHealthRefreshDurationTimer(cluster)
+		defer timer.ObserveDuration()
+	}
+
 	// Verify we have access to this cluster
 	if m.clientFactory.GetSAClient(cluster) == nil {
 		log.Error().Msg("No SA client for cluster")
@@ -240,7 +249,44 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 	}
 
 	m.cache.SetHealth(cluster, namespace, cachedData)
+
+	// Export health status metrics if enabled
+	if m.conf.Server.Observability.Metrics.Enabled {
+		m.exportHealthStatusMetrics(cluster, namespace, appHealth, serviceHealth, workloadHealth)
+	}
+
 	return nil
+}
+
+// exportHealthStatusMetrics exports health status for each individual item as Prometheus metrics
+// using the state cardinality pattern (one metric per state, exactly one set to 1).
+// Uses the pre-calculated Status field from the health data.
+func (m *healthMonitor) exportHealthStatusMetrics(
+	cluster, namespace string,
+	appHealth models.NamespaceAppHealth,
+	serviceHealth models.NamespaceServiceHealth,
+	workloadHealth models.NamespaceWorkloadHealth,
+) {
+	// Export app health metrics using pre-calculated status
+	for appName, health := range appHealth {
+		if health.Status != nil {
+			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeApp, appName, string(health.Status.Status))
+		}
+	}
+
+	// Export service health metrics using pre-calculated status
+	for svcName, health := range serviceHealth {
+		if health.Status != nil {
+			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeService, svcName, string(health.Status.Status))
+		}
+	}
+
+	// Export workload health metrics using pre-calculated status
+	for wkName, health := range workloadHealth {
+		if health.Status != nil {
+			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName, string(health.Status.Status))
+		}
+	}
 }
 
 // calculateDuration calculates the health duration based on configuration.

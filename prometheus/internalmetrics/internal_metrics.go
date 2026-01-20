@@ -19,8 +19,11 @@ import (
 const (
 	labelAppender         = "appender"
 	labelCheckerName      = "checker"
+	labelCluster          = "cluster"
 	labelGraphKind        = "graph_kind"
 	labelGraphType        = "graph_type"
+	labelHealthStatus     = "status"
+	labelHealthType       = "health_type"
 	labelModel            = "ai_model"
 	labelName             = "name"
 	labelNamespace        = "namespace"
@@ -50,6 +53,10 @@ type MetricsType struct {
 	GraphGenerationTime            *prometheus.HistogramVec
 	GraphMarshalTime               *prometheus.HistogramVec
 	GraphNodes                     *prometheus.GaugeVec
+	HealthCacheHitsTotal           *prometheus.CounterVec
+	HealthCacheMissesTotal         *prometheus.CounterVec
+	HealthRefreshDuration          *prometheus.HistogramVec
+	HealthStatus                   *prometheus.GaugeVec
 	KubernetesClients              *prometheus.GaugeVec
 	PrometheusProcessingTime       *prometheus.HistogramVec
 	SingleValidationProcessingTime *prometheus.HistogramVec
@@ -196,6 +203,35 @@ var Metrics = MetricsType{
 			Help: "The number of total evictions for the graph cache.",
 		},
 	),
+	HealthCacheHitsTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_health_cache_hits_total",
+			Help: "The number of health cache hits.",
+		},
+		[]string{labelHealthType},
+	),
+	HealthCacheMissesTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_health_cache_misses_total",
+			Help: "The number of health cache misses.",
+		},
+		[]string{labelHealthType},
+	),
+	HealthRefreshDuration: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "kiali_health_refresh_duration_seconds",
+			Help:    "The time required to refresh health data.",
+			Buckets: prometheus.ExponentialBuckets(0.1, 2, 10), // 0.1s to ~51s
+		},
+		[]string{labelCluster},
+	),
+	HealthStatus: prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "kiali_health_status",
+			Help: "Health status of individual apps, services, and workloads using state cardinality pattern. For each item, exactly one status is set to 1, others are 0. Labels: cluster, namespace, health_type (app/service/workload), name, status (Healthy/Degraded/Failure/Not Ready/NA).",
+		},
+		[]string{labelCluster, labelNamespace, labelHealthType, labelName, labelHealthStatus},
+	),
 	TracingProcessingTime: prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "kiali_tracing_processing_duration_seconds",
@@ -306,6 +342,10 @@ func RegisterInternalMetrics() {
 		Metrics.GraphGenerationTime,
 		Metrics.GraphMarshalTime,
 		Metrics.GraphNodes,
+		Metrics.HealthCacheHitsTotal,
+		Metrics.HealthCacheMissesTotal,
+		Metrics.HealthRefreshDuration,
+		Metrics.HealthStatus,
 		Metrics.KubernetesClients,
 		Metrics.PrometheusProcessingTime,
 		Metrics.SingleValidationProcessingTime,
@@ -557,4 +597,74 @@ func GetTracingProcessingTimePrometheusTimer(queryGroup string) *prometheus.Time
 		labelQueryGroup: queryGroup,
 	}))
 	return timer
+}
+
+//
+// Health metrics helper functions
+//
+
+// HealthType represents the type of health (app, service, workload)
+type HealthType string
+
+const (
+	HealthTypeApp      HealthType = "app"
+	HealthTypeService  HealthType = "service"
+	HealthTypeWorkload HealthType = "workload"
+)
+
+// GetHealthRefreshDurationTimer returns a timer for measuring health refresh duration.
+func GetHealthRefreshDurationTimer(cluster string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.HealthRefreshDuration.With(prometheus.Labels{
+		labelCluster: cluster,
+	}))
+	return timer
+}
+
+// IncrementHealthCacheHits increments the health cache hits counter for a given type.
+func IncrementHealthCacheHits(healthType HealthType) {
+	Metrics.HealthCacheHitsTotal.With(prometheus.Labels{
+		labelHealthType: string(healthType),
+	}).Inc()
+}
+
+// IncrementHealthCacheMisses increments the health cache misses counter for a given type.
+func IncrementHealthCacheMisses(healthType HealthType) {
+	Metrics.HealthCacheMissesTotal.With(prometheus.Labels{
+		labelHealthType: string(healthType),
+	}).Inc()
+}
+
+// HealthStatuses is the list of all possible health status values
+var HealthStatuses = []string{"Healthy", "Degraded", "Failure", "Not Ready", "NA"}
+
+// SetHealthStatusForItem sets the health status for an individual item using the state cardinality pattern.
+// Exactly one status will be set to 1, all others will be set to 0.
+func SetHealthStatusForItem(cluster, namespace string, healthType HealthType, name, currentStatus string) {
+	for _, status := range HealthStatuses {
+		value := 0.0
+		if status == currentStatus {
+			value = 1.0
+		}
+		Metrics.HealthStatus.With(prometheus.Labels{
+			labelCluster:      cluster,
+			labelNamespace:    namespace,
+			labelHealthType:   string(healthType),
+			labelName:         name,
+			labelHealthStatus: status,
+		}).Set(value)
+	}
+}
+
+// DeleteHealthStatusForItem removes all health status metrics for an item.
+// This can be used when an item is deleted or no longer exists.
+func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType, name string) {
+	for _, status := range HealthStatuses {
+		Metrics.HealthStatus.Delete(prometheus.Labels{
+			labelCluster:      cluster,
+			labelNamespace:    namespace,
+			labelHealthType:   string(healthType),
+			labelName:         name,
+			labelHealthStatus: status,
+		})
+	}
 }

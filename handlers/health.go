@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
@@ -77,12 +78,16 @@ func ClusterHealth(
 
 		// Serve from cache
 		allFromCache := true
+		metricsEnabled := conf.Server.Observability.Metrics.Enabled
 		for _, ns := range nss {
 			cachedData, found := kialiCache.GetHealth(cluster, ns)
 			if !found {
 				// Cache miss - return "unknown" status for this namespace
 				allFromCache = false
 				log.Debugf("Health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
+				if metricsEnabled {
+					internalmetrics.IncrementHealthCacheMisses(healthTypeToMetricType(healthType))
+				}
 				switch healthType {
 				case "app":
 					result.AppHealth[ns] = &models.NamespaceAppHealth{}
@@ -96,6 +101,9 @@ func ClusterHealth(
 
 			// Cache hit
 			log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
+			if metricsEnabled {
+				internalmetrics.IncrementHealthCacheHits(healthTypeToMetricType(healthType))
+			}
 
 			// Use cached data
 			switch healthType {
@@ -167,4 +175,18 @@ func adjustRateInterval(ctx context.Context, business *business.Layer, namespace
 	}
 
 	return interval, nil
+}
+
+// healthTypeToMetricType converts a health type string to the internalmetrics.HealthType
+func healthTypeToMetricType(healthType string) internalmetrics.HealthType {
+	switch healthType {
+	case "app":
+		return internalmetrics.HealthTypeApp
+	case "service":
+		return internalmetrics.HealthTypeService
+	case "workload":
+		return internalmetrics.HealthTypeWorkload
+	default:
+		return internalmetrics.HealthTypeApp
+	}
 }
