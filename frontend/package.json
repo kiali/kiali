@@ -190,7 +190,7 @@
     "react-dom": "^17.0.1"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=20.6.0",
     "yarn": ">=1.0.0"
   },
   "browserslist": [
