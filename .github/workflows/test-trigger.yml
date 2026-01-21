@@ -16,8 +16,8 @@ jobs:
     name: Test 1
     runs-on: ubuntu-latest
     steps:
-      - run: |
-        echo "Test" > test-artifact
+      - run: echo "Test"
+      - run: echo "Test" > test-artifact
       - name: Upload test results
         uses: actions/upload-artifact@v6
         with:
