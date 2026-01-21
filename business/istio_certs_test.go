@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -428,4 +430,160 @@ iMXzPzS/OeYyKQ==
 	_, err := ics.GetCertsInfo()
 
 	assert.Error(t, err)
+}
+
+// TestGetTlsMinVersionFromEnvVar verifies that GetTlsMinVersion() returns the value
+// from the istiod deployment's TLS_MIN_PROTOCOL_VERSION env var when the ConfigMap
+// does not have meshMTLS.minProtocolVersion set. This tests the Maistra/OSSM
+// compatibility path (OSSM-12250).
+func TestGetTlsMinVersionFromEnvVar(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	config.Set(conf)
+
+	istiodDeployment := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app": "istiod"},
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				Spec: core_v1.PodSpec{
+					Containers: []core_v1.Container{
+						{
+							Name: "discovery",
+							Env: []core_v1.EnvVar{
+								{
+									Name:  "TLS_MIN_PROTOCOL_VERSION",
+									Value: "TLSv1_3",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	// ConfigMap without meshMTLS.minProtocolVersion
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiodDeployment,
+		istioConfigMap,
+	)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	layer := NewWithBackends(clients, clients, nil, nil)
+	ics := layer.IstioCerts
+
+	tlsVersion, err := ics.GetTlsMinVersion()
+	require.NoError(err)
+	require.Equal("TLSv1_3", tlsVersion)
+}
+
+// TestGetTlsMinVersionFromConfigMap verifies that GetTlsMinVersion() returns the value
+// from the ConfigMap when meshMTLS.minProtocolVersion is set there.
+func TestGetTlsMinVersionFromConfigMap(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	config.Set(conf)
+
+	istiodDeployment := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app": "istiod"},
+		},
+	}
+	// ConfigMap with meshMTLS.minProtocolVersion set
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+meshMtls:
+  minProtocolVersion: TLSV1_2
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiodDeployment,
+		istioConfigMap,
+	)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	layer := NewWithBackends(clients, clients, nil, nil)
+	ics := layer.IstioCerts
+
+	tlsVersion, err := ics.GetTlsMinVersion()
+	require.NoError(err)
+	require.Equal("TLSV1_2", tlsVersion)
+}
+
+// TestGetTlsMinVersionNotAvailable verifies that GetTlsMinVersion() returns "N/A"
+// when neither the ConfigMap nor the istiod env var has a TLS min version set.
+func TestGetTlsMinVersionNotAvailable(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "Kubernetes"
+	config.Set(conf)
+
+	istiodDeployment := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istiod",
+			Namespace: "istio-system",
+			Labels:    map[string]string{"app": "istiod"},
+		},
+	}
+	// ConfigMap without meshMTLS.minProtocolVersion
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		istiodDeployment,
+		istioConfigMap,
+	)
+
+	SetupBusinessLayer(t, k8s, *conf)
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	layer := NewWithBackends(clients, clients, nil, nil)
+	ics := layer.IstioCerts
+
+	tlsVersion, err := ics.GetTlsMinVersion()
+	require.NoError(err)
+	require.Equal("N/A", tlsVersion)
 }

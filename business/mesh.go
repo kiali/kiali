@@ -24,6 +24,7 @@ import (
 const (
 	IstiodExternalEnvKey           = "EXTERNAL_ISTIOD"
 	IstiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
+	IstiodTLSMinVersionEnvKey      = "TLS_MIN_PROTOCOL_VERSION"
 	IstioInjectionLabel            = "istio-injection"
 	IstioRevisionLabel             = "istio.io/rev"
 	IstioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
@@ -178,6 +179,13 @@ func (in *MeshService) GetMesh(ctx context.Context) (*Mesh, error) {
 							controlPlane.ManagesExternal = true
 						case envVarIsSet(IstiodScopeGatewayEnvKey, env):
 							controlPlane.Config.IsGatewayToNamespace = true
+						case env.Name == IstiodTLSMinVersionEnvKey && env.Value != "":
+							// In Maistra/OSSM, the TLS min version is configured via this env var
+							// rather than meshConfig.meshMTLS.minProtocolVersion. Only use this
+							// if the ConfigMap didn't already provide a value.
+							if controlPlane.Config.MeshMTLS.MinProtocolVersion == "" {
+								controlPlane.Config.MeshMTLS.MinProtocolVersion = env.Value
+							}
 						}
 					}
 				}

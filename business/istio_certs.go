@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"sort"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -160,7 +162,33 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 	return certs, nil
 }
 
+// GetTlsMinVersion returns the minimum TLS protocol version configured for the mesh.
+// It first tries to get the value from the mesh data (which includes both the ConfigMap
+// and istiod deployment env vars for Maistra/OSSM compatibility).
+// Falls back to reading the ConfigMap directly if mesh data is unavailable.
 func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
+	// Try to get the TLS min version from the mesh data, which already aggregates
+	// the ConfigMap value and the istiod deployment env var (for Maistra/OSSM).
+	mesh, err := ics.businessLayer.Mesh.GetMesh(context.TODO())
+	if err != nil {
+		log.Debugf("Unable to get mesh data for TLS min version, falling back to ConfigMap: %v", err)
+		return ics.getTlsMinVersionFromConfigMap()
+	}
+
+	// Return the value from the first control plane that has it set.
+	// In practice, all control planes in a mesh should have the same TLS min version.
+	for _, cp := range mesh.ControlPlanes {
+		if cp.Config.MeshMTLS.MinProtocolVersion != "" {
+			return cp.Config.MeshMTLS.MinProtocolVersion, nil
+		}
+	}
+
+	return "N/A", nil
+}
+
+// getTlsMinVersionFromConfigMap reads the TLS min version directly from the Istio ConfigMap.
+// This is a fallback method when mesh data is unavailable.
+func (ics *IstioCertsService) getTlsMinVersionFromConfigMap() (string, error) {
 	cfg := config.Get()
 
 	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
