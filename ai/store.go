@@ -126,12 +126,12 @@ func (s *AIStoreImpl) checkMemoryLimits(sessionID string, conversationID string,
 	// Subtract old conversation memory if replacing
 	if sessionConversation, exists := s.conversations[sessionID]; exists {
 		sessionConversation.mu.Lock()
-		defer sessionConversation.mu.Unlock()
 		if conversation, exists := sessionConversation.Conversation[conversationID]; exists {
 			sessionConversation.Conversation[conversationID].Mu.Lock()
-			defer sessionConversation.Conversation[conversationID].Mu.Unlock()
 			currentMemory -= conversation.EstimatedMB
+			sessionConversation.Conversation[conversationID].Mu.Unlock()
 		}
+		sessionConversation.mu.Unlock()
 	}
 
 	// Calculate projected memory
