@@ -32,17 +32,16 @@ type OpenAIProvider struct {
 	model  string
 }
 
-func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) *OpenAIProvider {
+func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*OpenAIProvider, error) {
 	cfg, err := getProviderConfig(conf, provider, model)
 	if err != nil {
-		log.Errorf("Failed to get provider config: %v", err)
-		return nil
+		return nil, fmt.Errorf("get provider config: %w", err)
 	}
 
 	return &OpenAIProvider{
 		client: openai.NewClientWithConfig(cfg),
 		model:  model.Model,
-	}
+	}, nil
 }
 
 func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHandlers []mcp.ToolHandler,
