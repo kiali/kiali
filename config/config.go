@@ -1283,6 +1283,7 @@ func (conf *Config) ValidateAI() error {
 	validProviderConfigTypes := map[ProviderConfigType]struct{}{
 		OpenAIProviderConfigDefault: {},
 		OpenAIProviderConfigAzure:   {},
+		OpenAIProviderConfigGemini:  {},
 	}
 	seenNames := make(map[string]struct{})
 
