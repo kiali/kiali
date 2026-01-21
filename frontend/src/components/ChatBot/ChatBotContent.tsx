@@ -78,7 +78,6 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
         )}
         {messages.map(
           ({ referenced_documents, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
-            console.log('actions', actions);
             return (
               <ChatMessage
                 key={`chatbot_message_${index}`}
