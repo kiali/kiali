@@ -132,7 +132,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 	role := msg.Role
 	if len(msg.ToolCalls) > 0 {
 		// Execute tool calls in parallel since they don't depend on each other
-		toolResults := p.executeToolCallsInParallel(r, msg.ToolCalls, handlerByName, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		toolResults := p.executeToolCallsInParallel(ctx, r, msg.ToolCalls, handlerByName, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return newContextCanceledResponse(err)
 		}
@@ -180,8 +180,14 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 		// Clean conversation by removing tool messages that are not useful for storage
 		conversation = p.cleanConversation(conversation)
 		if aiStore.ReduceWithAI() {
+			if err := ctx.Err(); err != nil {
+				return newContextCanceledResponse(err)
+			}
 			// Reduce the conversation with AI
 			conversation = p.reduceConversation(ctx, conversation, aiStore.ReduceThreshold())
+			if err := ctx.Err(); err != nil {
+				return newContextCanceledResponse(err)
+			}
 		}
 		ptr.Mu.Lock()
 		ptr.Conversation = conversation
@@ -213,6 +219,7 @@ type toolCallResult struct {
 
 // executeToolCallsInParallel executes all tool calls in parallel and returns results in order
 func (p *OpenAIProvider) executeToolCallsInParallel(
+	ctx context.Context,
 	r *http.Request,
 	toolCalls []openai.ToolCall,
 	handlerByName map[string]mcp.ToolHandler,
@@ -235,6 +242,13 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
 			citations := []get_citations.Citation{}
+			if err := ctx.Err(); err != nil {
+				results[index] = toolCallResult{
+					err:  err,
+					code: http.StatusRequestTimeout,
+				}
+				return
+			}
 
 			var args map[string]interface{}
 			_ = json.Unmarshal([]byte(call.Function.Arguments), &args)
@@ -254,6 +268,13 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 				results[index] = toolCallResult{
 					err:  fmt.Errorf("tool %s returned error: %s", call.Function.Name, mcpResult),
 					code: code,
+				}
+				return
+			}
+			if err := ctx.Err(); err != nil {
+				results[index] = toolCallResult{
+					err:  err,
+					code: http.StatusRequestTimeout,
 				}
 				return
 			}
@@ -285,6 +306,13 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 				results[index] = toolCallResult{
 					err:  fmt.Errorf("failed to format tool content: %w", err),
 					code: http.StatusInternalServerError,
+				}
+				return
+			}
+			if err := ctx.Err(); err != nil {
+				results[index] = toolCallResult{
+					err:  err,
+					code: http.StatusRequestTimeout,
 				}
 				return
 			}
