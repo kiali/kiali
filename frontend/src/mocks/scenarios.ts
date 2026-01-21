@@ -14,7 +14,8 @@ export interface ScenarioConfig {
   // Cluster configuration
   clusters: ClusterConfig[];
 
-  // Health configuration
+  // Health configuration - can be namespaces or specific items (app/workload names)
+  degradedItems: string[]; // Items that are degraded (e.g., 'reviews', 'hotels')
   degradedNamespaces: string[];
 
   // Traffic configuration
@@ -26,6 +27,7 @@ export interface ScenarioConfig {
   // Istio config
   mtlsEnabled: boolean;
   tracingEnabled: boolean;
+  unhealthyItems: string[]; // Items that are unhealthy (e.g., 'ratings', 'flights')
   unhealthyNamespaces: string[];
   validationErrors: number;
   validationWarnings: number;
@@ -51,7 +53,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     ],
     healthyNamespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal', 'travel-control'],
     degradedNamespaces: [],
+    degradedItems: [],
     unhealthyNamespaces: [],
+    unhealthyItems: [],
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: false,
@@ -70,16 +74,21 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
         namespaces: ['bookinfo', 'istio-system', 'default', 'travel-agency', 'travel-portal']
       }
     ],
-    healthyNamespaces: ['istio-system'],
-    degradedNamespaces: ['travel-agency'],
-    unhealthyNamespaces: ['bookinfo', 'travel-portal'],
-    errorRate: 25,
-    latencyMultiplier: 1,
+    // Mix of healthy and unhealthy - all namespaces have healthy items
+    healthyNamespaces: [],
+    degradedNamespaces: [],
+    unhealthyNamespaces: [],
+    // Specific items that are unhealthy (red) - will have errors and 0 replicas
+    unhealthyItems: ['reviews', 'ratings', 'flights', 'viaggi', 'grafana'],
+    // Specific items that are degraded (yellow) - will have some errors but available
+    degradedItems: ['hotels', 'voyages', 'prometheus'],
+    errorRate: 30,
+    latencyMultiplier: 2,
     ambientEnabled: false,
     tracingEnabled: true,
     mtlsEnabled: true,
-    validationErrors: 5,
-    validationWarnings: 3
+    validationErrors: 3,
+    validationWarnings: 5
   },
 
   multicluster: {
@@ -105,7 +114,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     ],
     healthyNamespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal', 'travel-control'],
     degradedNamespaces: [],
+    degradedItems: [],
     unhealthyNamespaces: [],
+    unhealthyItems: [],
     errorRate: 2,
     latencyMultiplier: 1,
     ambientEnabled: false,
@@ -126,7 +137,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     ],
     healthyNamespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal', 'alpha', 'beta'],
     degradedNamespaces: [],
+    degradedItems: [],
     unhealthyNamespaces: [],
+    unhealthyItems: [],
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: true,
@@ -153,20 +166,41 @@ export const getScenarioConfig = (): ScenarioConfig => {
   return scenarios[getCurrentScenario()];
 };
 
-// Export for use in handlers
-export const scenarioConfig = getScenarioConfig();
-
 // Helper to check namespace health status
 export const getNamespaceHealthStatus = (namespace: string): 'healthy' | 'degraded' | 'unhealthy' => {
-  const config = scenarioConfig;
+  const config = getScenarioConfig();
   if (config.unhealthyNamespaces.includes(namespace)) return 'unhealthy';
   if (config.degradedNamespaces.includes(namespace)) return 'degraded';
   return 'healthy';
 };
 
+// Helper to check individual item (app/workload/service) health status
+// itemName can be workload name (e.g., 'reviews-v1') or app/service name (e.g., 'reviews')
+export const getItemHealthStatus = (itemName: string, namespace?: string): 'healthy' | 'degraded' | 'unhealthy' => {
+  const config = getScenarioConfig();
+
+  // Extract base name (remove version suffix like -v1, -v2, etc.)
+  const baseName = itemName.replace(/-v\d+$/, '');
+
+  // Check if this specific item is unhealthy or degraded
+  if (config.unhealthyItems.includes(baseName) || config.unhealthyItems.includes(itemName)) {
+    return 'unhealthy';
+  }
+  if (config.degradedItems.includes(baseName) || config.degradedItems.includes(itemName)) {
+    return 'degraded';
+  }
+
+  // Fall back to namespace-level health if no item-level config
+  if (namespace) {
+    return getNamespaceHealthStatus(namespace);
+  }
+
+  return 'healthy';
+};
+
 // Helper to get all namespaces across all clusters
 export const getAllNamespaces = (): Array<{ cluster: string; isAmbient: boolean; name: string }> => {
-  const config = scenarioConfig;
+  const config = getScenarioConfig();
   const namespaces: Array<{ cluster: string; isAmbient: boolean; name: string }> = [];
 
   config.clusters.forEach(cluster => {
@@ -184,10 +218,11 @@ export const getAllNamespaces = (): Array<{ cluster: string; isAmbient: boolean;
 
 // Helper to check if running in multicluster mode
 export const isMultiCluster = (): boolean => {
-  return scenarioConfig.clusters.length > 1;
+  return getScenarioConfig().clusters.length > 1;
 };
 
 // Helper to get home cluster
 export const getHomeCluster = (): ClusterConfig => {
-  return scenarioConfig.clusters.find(c => c.isHome) || scenarioConfig.clusters[0];
+  const config = getScenarioConfig();
+  return config.clusters.find(c => c.isHome) || config.clusters[0];
 };

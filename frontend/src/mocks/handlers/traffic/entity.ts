@@ -26,7 +26,7 @@ export const generateAppGraph = (clusterName: string, namespace: string, appName
             version: 'v1',
             workload: `${appName}-v1`,
             traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '8.00' } }],
-            healthData: createAppHealthData(`${appName}-v1`)
+            healthData: createAppHealthData(`${appName}-v1`, namespace)
           }
         },
         // Inbound: istio-ingressgateway
@@ -124,7 +124,7 @@ export const generateServiceGraph = (clusterName: string, namespace: string, ser
             namespace: namespace,
             service: serviceName,
             traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '10.00' } }],
-            healthData: createServiceHealthData()
+            healthData: createServiceHealthData(serviceName, namespace)
           }
         },
         // Inbound: productpage app
@@ -138,7 +138,7 @@ export const generateServiceGraph = (clusterName: string, namespace: string, ser
             version: 'v1',
             workload: 'productpage-v1',
             traffic: [{ protocol: 'http', rates: { httpOut: '10.00' } }],
-            healthData: createAppHealthData('productpage-v1')
+            healthData: createAppHealthData('productpage-v1', namespace)
           }
         },
         // Outbound: workload backing the service

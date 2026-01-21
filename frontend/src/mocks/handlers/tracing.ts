@@ -1,5 +1,48 @@
 import { http, HttpResponse } from 'msw';
 
+// Tag interface
+interface SpanTag {
+  key: string;
+  type: string;
+  value: string | number;
+}
+
+// Span info interface
+interface SpanInfo {
+  component: string;
+  direction: 'inbound' | 'outbound';
+  hasError: boolean;
+  method: string;
+  statusCode: number;
+  url: string;
+}
+
+// Mock span interface
+interface MockSpan {
+  app: string;
+  cluster: string;
+  component: string;
+  depth: number;
+  duration: number;
+  hasChildren: boolean;
+  info: SpanInfo;
+  logs: unknown[];
+  namespace: string;
+  operationName: string;
+  pod: string;
+  process: { serviceName: string; tags: SpanTag[] };
+  processID: string;
+  references: Array<{ refType: 'CHILD_OF'; span: null; spanID: string; traceID: string }>;
+  relativeStartTime: number;
+  spanID: string;
+  startTime: number;
+  tags: SpanTag[];
+  traceID: string;
+  type: 'envoy';
+  warnings: unknown[];
+  workload: string;
+}
+
 // Mock tracing configuration
 const mockTracingInfo = {
   enabled: true,
@@ -33,7 +76,7 @@ const createMockSpan = (
   namespace = 'bookinfo',
   app = 'productpage',
   workload = 'productpage-v1'
-): unknown => ({
+): MockSpan => ({
   traceID: traceId,
   spanID: spanId,
   operationName,
@@ -95,9 +138,9 @@ const createMockSpan = (
 interface MockTrace {
   duration: number;
   endTime: number;
-  processes: Record<string, { serviceName: string; tags: Array<{ key: string; type: string; value: string }> }>;
+  processes: Record<string, { serviceName: string; tags: SpanTag[] }>;
   services: Array<{ name: string; numberOfSpans: number }>;
-  spans: ReturnType<typeof createMockSpan>[];
+  spans: MockSpan[];
   startTime: number;
   traceID: string;
   traceName: string;
@@ -257,13 +300,9 @@ const generateMockTraces = (serviceName: string, namespace: string, count = 100)
 };
 
 // Generate mock spans (flat list for metrics overlay)
-const generateMockSpans = (
-  serviceName: string,
-  namespace: string,
-  count = 200
-): ReturnType<typeof createMockSpan>[] => {
+const generateMockSpans = (serviceName: string, namespace: string, count = 200): MockSpan[] => {
   const now = Date.now() * 1000;
-  const spans: ReturnType<typeof createMockSpan>[] = [];
+  const spans: MockSpan[] = [];
 
   for (let i = 0; i < count; i++) {
     const traceId = generateTraceId();

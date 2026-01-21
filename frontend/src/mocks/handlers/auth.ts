@@ -1,9 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { AuthInfo, AuthStrategy } from '../../types/Auth';
-import { scenarioConfig } from '../scenarios';
+import { getScenarioConfig } from '../scenarios';
 
-// Generate cluster info from scenario
+// Generate cluster info from scenario - called dynamically
 const generateClusterInfo = (): Record<string, { name: string }> => {
+  const scenarioConfig = getScenarioConfig();
   const clusterInfo: Record<string, { name: string }> = {};
   scenarioConfig.clusters.forEach(cluster => {
     clusterInfo[cluster.name] = {
@@ -13,14 +14,15 @@ const generateClusterInfo = (): Record<string, { name: string }> => {
   return clusterInfo;
 };
 
-const mockAuthInfo: AuthInfo = {
+// Generate auth info dynamically
+const generateAuthInfo = (): AuthInfo => ({
   sessionInfo: {
     username: 'mock-user',
-    expiresOn: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+    expiresOn: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     clusterInfo: generateClusterInfo()
   },
   strategy: AuthStrategy.anonymous
-};
+});
 
 const mockLoginSession = {
   expiresOn: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
@@ -28,9 +30,9 @@ const mockLoginSession = {
 };
 
 export const authHandlers = [
-  // Auth info
+  // Auth info - generated dynamically based on scenario
   http.get('*/api/auth/info', () => {
-    return HttpResponse.json(mockAuthInfo);
+    return HttpResponse.json(generateAuthInfo());
   }),
 
   // Login/authenticate

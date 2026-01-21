@@ -157,7 +157,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         app: 'productpage',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '142.47', tcpOut: '142.47' } }],
-        healthData: createServiceHealthData(),
+        healthData: createServiceHealthData('productpage', 'bookinfo'),
         parent: 'box-app-productpage'
       }
     },
@@ -172,7 +172,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'productpage-v1',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '142.47', tcpOut: '213.70' } }],
-        healthData: createAppHealthData('productpage-v1'),
+        healthData: createAppHealthData('productpage-v1', 'bookinfo'),
         parent: 'box-app-productpage'
       }
     }
@@ -190,7 +190,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         app: 'details',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '71.24', tcpOut: '71.24' } }],
-        healthData: createServiceHealthData(),
+        healthData: createServiceHealthData('details', 'bookinfo'),
         parent: 'box-app-details'
       }
     },
@@ -205,7 +205,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'details-v1',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '71.24' } }],
-        healthData: createAppHealthData('details-v1'),
+        healthData: createAppHealthData('details-v1', 'bookinfo'),
         parent: 'box-app-details'
       }
     }
@@ -223,7 +223,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         app: 'reviews',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '142.47', tcpOut: '142.47' } }],
-        healthData: createServiceHealthData(),
+        healthData: createServiceHealthData('reviews', 'bookinfo'),
         parent: 'box-app-reviews'
       }
     },
@@ -238,7 +238,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'reviews-v1',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '47.49' } }],
-        healthData: createAppHealthData('reviews-v1'),
+        healthData: createAppHealthData('reviews-v1', 'bookinfo'),
         parent: 'box-app-reviews'
       }
     },
@@ -253,7 +253,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'reviews-v2',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '47.49', tcpOut: '47.49' } }],
-        healthData: createAppHealthData('reviews-v2'),
+        healthData: createAppHealthData('reviews-v2', 'bookinfo'),
         parent: 'box-app-reviews'
       }
     },
@@ -268,7 +268,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'reviews-v3',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '47.49', tcpOut: '47.49' } }],
-        healthData: createAppHealthData('reviews-v3'),
+        healthData: createAppHealthData('reviews-v3', 'bookinfo'),
         parent: 'box-app-reviews'
       }
     }
@@ -286,7 +286,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         app: 'ratings',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '94.98', tcpOut: '94.98' } }],
-        healthData: createServiceHealthData(),
+        healthData: createServiceHealthData('ratings', 'bookinfo'),
         parent: 'box-app-ratings'
       }
     },
@@ -301,7 +301,7 @@ export const generateAmbientTrafficGraph = (clusterName: string): TrafficGraphRe
         workload: 'ratings-v1',
         isAmbient: true,
         traffic: [{ protocol: 'tcp', rates: { tcpIn: '94.98' } }],
-        healthData: createAppHealthData('ratings-v1'),
+        healthData: createAppHealthData('ratings-v1', 'bookinfo'),
         parent: 'box-app-ratings'
       }
     }

@@ -1,9 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import { scenarioConfig } from '../scenarios';
+import { getScenarioConfig } from '../scenarios';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 
 // Generate Istio status for all clusters in the scenario
 const generateIstioStatus = (): ComponentStatus[] => {
+  const scenarioConfig = getScenarioConfig();
   const statuses: ComponentStatus[] = [];
 
   scenarioConfig.clusters.forEach(cluster => {
@@ -54,7 +55,7 @@ const generateIstioStatus = (): ComponentStatus[] => {
 const mockIstioStatus = generateIstioStatus();
 
 // Helper to create mock Istio object metadata
-const createIstioMetadata = (name: string, namespace: string): unknown => ({
+const createIstioMetadata = (name: string, namespace: string): Record<string, unknown> => ({
   name,
   namespace,
   creationTimestamp: new Date().toISOString(),
@@ -194,8 +195,8 @@ const createValidation = (
   name: string,
   gvk: { Group: string; Kind: string; Version: string },
   valid = true,
-  checks: unknown[] = []
-): unknown => ({
+  checks: Record<string, unknown>[] = []
+): Record<string, unknown> => ({
   name,
   objectGVK: gvk,
   valid,
@@ -415,13 +416,30 @@ export const istioHandlers = [
       'travel-control': 1
     };
 
-    const createValidationStatus = (namespace: string): unknown => ({
-      cluster: 'cluster-default',
-      namespace,
-      errors: 0,
-      warnings: namespace === 'travel-agency' ? 1 : 0, // Add a warning for demo
-      objectCount: objectCounts[namespace] || 0
-    });
+    const createValidationStatus = (namespace: string): Record<string, unknown> => {
+      // Use scenario config to determine errors/warnings for unhealthy namespaces
+      const scenarioConfig = getScenarioConfig();
+      const isUnhealthy = scenarioConfig.unhealthyNamespaces.includes(namespace);
+      const isDegraded = scenarioConfig.degradedNamespaces.includes(namespace);
+
+      let errors = 0;
+      let warnings = 0;
+
+      if (isUnhealthy) {
+        errors = Math.max(1, Math.floor(scenarioConfig.validationErrors / 2));
+        warnings = Math.max(1, Math.floor(scenarioConfig.validationWarnings / 2));
+      } else if (isDegraded) {
+        warnings = Math.max(1, scenarioConfig.validationWarnings);
+      }
+
+      return {
+        cluster: 'cluster-default',
+        namespace,
+        errors,
+        warnings,
+        objectCount: objectCounts[namespace] || 0
+      };
+    };
 
     if (namespaces) {
       const nsList = namespaces.split(',').map(ns => ns.trim());

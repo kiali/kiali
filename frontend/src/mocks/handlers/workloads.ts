@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { InstanceType } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
+import { getScenarioConfig, getItemHealthStatus } from '../scenarios';
 
 // Helper to generate time series datapoints
 const generateDatapoints = (baseValue: number, variance: number, points = 61): Array<[number, number]> => {
@@ -15,7 +16,7 @@ const generateDatapoints = (baseValue: number, variance: number, points = 61): A
 };
 
 // Generate mock IstioMetricsMap
-const generateMockMetrics = (direction: string): unknown => {
+const generateMockMetrics = (direction: string): Record<string, unknown> => {
   const reporter = direction === 'inbound' ? 'destination' : 'source';
 
   const requestCount: Metric = {
@@ -124,7 +125,7 @@ const generateMockMetrics = (direction: string): unknown => {
 };
 
 // Generate mock DashboardModel
-const generateMockDashboard = (entityType: string, direction: string): unknown => {
+const generateMockDashboard = (entityType: string, direction: string): Record<string, unknown> => {
   const reporter = direction === 'inbound' ? 'destination' : 'source';
   const directionLabel = direction === 'inbound' ? 'Inbound' : 'Outbound';
 
@@ -314,6 +315,60 @@ const generateMockDashboard = (entityType: string, direction: string): unknown =
   };
 };
 
+// Interface for workload list item
+interface MockWorkloadListItem {
+  appLabel: boolean;
+  cluster: string;
+  gvk: { Group: string; Kind: string; Version: string };
+  health: Record<string, unknown>;
+  instanceType: InstanceType;
+  isAmbient: boolean;
+  isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
+  istioReferences: unknown[];
+  istioSidecar: boolean;
+  labels: { app: string; version: string };
+  name: string;
+  namespace: string;
+  versionLabel: boolean;
+}
+
+// Interface for service list item
+interface MockServiceListItem {
+  cluster: string;
+  health: Record<string, unknown>;
+  instanceType: InstanceType;
+  isAmbient: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
+  istioReferences: unknown[];
+  istioSidecar: boolean;
+  kialiWizard: string;
+  labels: { app: string };
+  name: string;
+  namespace: string;
+  ports: Record<string, number>;
+  serviceRegistry: string;
+  validation: Record<string, unknown>;
+}
+
+// Interface for app list item
+interface MockAppListItem {
+  cluster: string;
+  health: Record<string, unknown>;
+  instanceType: InstanceType;
+  isAmbient: boolean;
+  isGateway: boolean;
+  isWaypoint: boolean;
+  isZtunnel: boolean;
+  istioReferences: unknown[];
+  istioSidecar: boolean;
+  labels: { app: string };
+  name: string;
+  namespace: string;
+}
+
 // Mock GVK for Deployment
 const deploymentGVK = {
   Group: 'apps',
@@ -321,39 +376,57 @@ const deploymentGVK = {
   Version: 'v1'
 };
 
-const createMockWorkloadListItem = (name: string, namespace: string, app: string, version: string): unknown => ({
-  name,
-  namespace,
-  cluster: 'cluster-default',
-  gvk: deploymentGVK,
-  instanceType: InstanceType.Workload,
-  istioSidecar: true,
-  isAmbient: false,
-  isGateway: false,
-  isWaypoint: false,
-  isZtunnel: false,
-  istioReferences: [],
-  labels: {
-    app,
-    version
-  },
-  appLabel: true,
-  versionLabel: true,
-  health: {
-    workloadStatus: {
-      name,
-      desiredReplicas: 1,
-      currentReplicas: 1,
-      availableReplicas: 1,
-      syncedProxies: 1
-    },
-    requests: {
-      inbound: { http: { '200': 100 } },
-      outbound: { http: { '200': 100 } },
-      healthAnnotations: {}
-    }
+const createMockWorkloadListItem = (
+  name: string,
+  namespace: string,
+  app: string,
+  version: string
+): MockWorkloadListItem => {
+  const healthStatus = getItemHealthStatus(name, namespace);
+  const errorRate = getScenarioConfig().errorRate;
+
+  // Calculate HTTP responses based on health
+  let httpResponses: Record<string, number> = { '200': 100 };
+  if (healthStatus === 'unhealthy') {
+    httpResponses = { '200': 100 - errorRate - 10, '500': errorRate, '503': 10 };
+  } else if (healthStatus === 'degraded') {
+    httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
-});
+
+  return {
+    name,
+    namespace,
+    cluster: 'cluster-default',
+    gvk: deploymentGVK,
+    instanceType: InstanceType.Workload,
+    istioSidecar: true,
+    isAmbient: false,
+    isGateway: false,
+    isWaypoint: false,
+    isZtunnel: false,
+    istioReferences: [],
+    labels: {
+      app,
+      version
+    },
+    appLabel: true,
+    versionLabel: true,
+    health: {
+      workloadStatus: {
+        name,
+        desiredReplicas: 1,
+        currentReplicas: 1,
+        availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
+        syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+      },
+      requests: {
+        inbound: { http: httpResponses },
+        outbound: { http: httpResponses },
+        healthAnnotations: {}
+      }
+    }
+  };
+};
 
 // GVK for Service
 const serviceGVK = {
@@ -362,186 +435,185 @@ const serviceGVK = {
   Version: 'v1'
 };
 
-const createMockServiceListItem = (name: string, namespace: string): unknown => ({
-  name,
-  namespace,
-  cluster: 'cluster-default',
-  instanceType: InstanceType.Service,
-  istioSidecar: true,
-  isAmbient: false,
-  isWaypoint: false,
-  isZtunnel: false,
-  istioReferences: [],
-  kialiWizard: '',
-  serviceRegistry: 'Kubernetes',
-  labels: {
-    app: name
-  },
-  ports: {
-    http: 9080
-  },
-  health: {
-    requests: {
-      inbound: { http: { '200': 100 } },
-      outbound: { http: { '200': 100 } },
-      healthAnnotations: {}
-    }
-  },
-  validation: {
-    name: name,
-    objectGVK: serviceGVK,
-    valid: true,
-    checks: []
-  }
-});
+const createMockServiceListItem = (name: string, namespace: string): MockServiceListItem => {
+  const healthStatus = getItemHealthStatus(name, namespace);
+  const errorRate = getScenarioConfig().errorRate;
 
-const createMockAppListItem = (name: string, namespace: string): unknown => ({
-  name,
-  namespace,
-  cluster: 'cluster-default',
-  instanceType: InstanceType.App,
-  istioSidecar: true,
-  isAmbient: false,
-  isGateway: false,
-  isWaypoint: false,
-  isZtunnel: false,
-  istioReferences: [],
-  labels: {
-    app: name
-  },
-  health: {
-    requests: {
-      inbound: { http: { '200': 100 } },
-      outbound: { http: { '200': 100 } },
-      healthAnnotations: {}
+  // Calculate HTTP responses based on health
+  let httpResponses: Record<string, number> = { '200': 100 };
+  if (healthStatus === 'unhealthy') {
+    httpResponses = { '200': 100 - errorRate - 10, '500': errorRate, '503': 10 };
+  } else if (healthStatus === 'degraded') {
+    httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
+  }
+
+  return {
+    name,
+    namespace,
+    cluster: 'cluster-default',
+    instanceType: InstanceType.Service,
+    istioSidecar: true,
+    isAmbient: false,
+    isWaypoint: false,
+    isZtunnel: false,
+    istioReferences: [],
+    kialiWizard: '',
+    serviceRegistry: 'Kubernetes',
+    labels: {
+      app: name
     },
-    workloadStatuses: [
-      {
-        name: `${name}-v1`,
-        desiredReplicas: 1,
-        currentReplicas: 1,
-        availableReplicas: 1,
-        syncedProxies: 1
+    ports: {
+      http: 9080
+    },
+    health: {
+      requests: {
+        inbound: { http: httpResponses },
+        outbound: { http: httpResponses },
+        healthAnnotations: {}
       }
-    ]
+    },
+    validation: {
+      name: name,
+      objectGVK: serviceGVK,
+      valid: healthStatus !== 'unhealthy',
+      checks:
+        healthStatus === 'unhealthy' ? [{ message: 'Service has high error rate', severity: 'error', path: '' }] : []
+    }
+  };
+};
+
+const createMockAppListItem = (name: string, namespace: string): MockAppListItem => {
+  const healthStatus = getItemHealthStatus(name, namespace);
+  const errorRate = getScenarioConfig().errorRate;
+
+  // Calculate HTTP responses based on health
+  let httpResponses: Record<string, number> = { '200': 100 };
+  if (healthStatus === 'unhealthy') {
+    httpResponses = { '200': 100 - errorRate - 10, '500': errorRate, '503': 10 };
+  } else if (healthStatus === 'degraded') {
+    httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
+
+  return {
+    name,
+    namespace,
+    cluster: 'cluster-default',
+    instanceType: InstanceType.App,
+    istioSidecar: true,
+    isAmbient: false,
+    isGateway: false,
+    isWaypoint: false,
+    isZtunnel: false,
+    istioReferences: [],
+    labels: {
+      app: name
+    },
+    health: {
+      requests: {
+        inbound: { http: httpResponses },
+        outbound: { http: httpResponses },
+        healthAnnotations: {}
+      },
+      workloadStatuses: [
+        {
+          name: `${name}-v1`,
+          desiredReplicas: 1,
+          currentReplicas: 1,
+          availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
+          syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+        }
+      ]
+    }
+  };
+};
+
+// Generate workloads dynamically based on scenario - called per request
+const getWorkloadsByNamespace = (): Record<string, MockWorkloadListItem[]> => ({
+  bookinfo: [
+    createMockWorkloadListItem('productpage-v1', 'bookinfo', 'productpage', 'v1'),
+    createMockWorkloadListItem('details-v1', 'bookinfo', 'details', 'v1'),
+    createMockWorkloadListItem('reviews-v1', 'bookinfo', 'reviews', 'v1'),
+    createMockWorkloadListItem('reviews-v2', 'bookinfo', 'reviews', 'v2'),
+    createMockWorkloadListItem('reviews-v3', 'bookinfo', 'reviews', 'v3'),
+    createMockWorkloadListItem('ratings-v1', 'bookinfo', 'ratings', 'v1')
+  ],
+  'istio-system': [
+    createMockWorkloadListItem('istiod', 'istio-system', 'istiod', 'default'),
+    createMockWorkloadListItem('istio-ingressgateway', 'istio-system', 'istio-ingressgateway', 'default')
+  ],
+  'travel-agency': [
+    createMockWorkloadListItem('travels-v1', 'travel-agency', 'travels', 'v1'),
+    createMockWorkloadListItem('hotels-v1', 'travel-agency', 'hotels', 'v1'),
+    createMockWorkloadListItem('cars-v1', 'travel-agency', 'cars', 'v1'),
+    createMockWorkloadListItem('flights-v1', 'travel-agency', 'flights', 'v1')
+  ],
+  'travel-portal': [
+    createMockWorkloadListItem('voyages-v1', 'travel-portal', 'voyages', 'v1'),
+    createMockWorkloadListItem('viaggi-v1', 'travel-portal', 'viaggi', 'v1')
+  ]
 });
 
-// Create workloads for bookinfo namespace
-const bookinfoWorkloads = [
-  createMockWorkloadListItem('productpage-v1', 'bookinfo', 'productpage', 'v1'),
-  createMockWorkloadListItem('details-v1', 'bookinfo', 'details', 'v1'),
-  createMockWorkloadListItem('reviews-v1', 'bookinfo', 'reviews', 'v1'),
-  createMockWorkloadListItem('reviews-v2', 'bookinfo', 'reviews', 'v2'),
-  createMockWorkloadListItem('reviews-v3', 'bookinfo', 'reviews', 'v3'),
-  createMockWorkloadListItem('ratings-v1', 'bookinfo', 'ratings', 'v1')
-];
+// Generate services dynamically based on scenario - called per request
+const getServicesByNamespace = (): Record<string, MockServiceListItem[]> => ({
+  bookinfo: [
+    createMockServiceListItem('productpage', 'bookinfo'),
+    createMockServiceListItem('details', 'bookinfo'),
+    createMockServiceListItem('reviews', 'bookinfo'),
+    createMockServiceListItem('ratings', 'bookinfo')
+  ],
+  'istio-system': [
+    createMockServiceListItem('istiod', 'istio-system'),
+    createMockServiceListItem('istio-ingressgateway', 'istio-system')
+  ],
+  'travel-agency': [
+    createMockServiceListItem('travels', 'travel-agency'),
+    createMockServiceListItem('hotels', 'travel-agency'),
+    createMockServiceListItem('cars', 'travel-agency'),
+    createMockServiceListItem('flights', 'travel-agency')
+  ],
+  'travel-portal': [
+    createMockServiceListItem('voyages', 'travel-portal'),
+    createMockServiceListItem('viaggi', 'travel-portal')
+  ]
+});
 
-// Create workloads for istio-system namespace
-const istioSystemWorkloads = [
-  createMockWorkloadListItem('istiod', 'istio-system', 'istiod', 'default'),
-  createMockWorkloadListItem('istio-ingressgateway', 'istio-system', 'istio-ingressgateway', 'default')
-];
+// Generate apps dynamically based on scenario - called per request
+const getAppsByNamespace = (): Record<string, MockAppListItem[]> => ({
+  bookinfo: [
+    createMockAppListItem('productpage', 'bookinfo'),
+    createMockAppListItem('details', 'bookinfo'),
+    createMockAppListItem('reviews', 'bookinfo'),
+    createMockAppListItem('ratings', 'bookinfo')
+  ],
+  'istio-system': [
+    createMockAppListItem('istiod', 'istio-system'),
+    createMockAppListItem('istio-ingressgateway', 'istio-system')
+  ],
+  'travel-agency': [
+    createMockAppListItem('travels', 'travel-agency'),
+    createMockAppListItem('hotels', 'travel-agency'),
+    createMockAppListItem('cars', 'travel-agency'),
+    createMockAppListItem('flights', 'travel-agency')
+  ],
+  'travel-portal': [createMockAppListItem('voyages', 'travel-portal'), createMockAppListItem('viaggi', 'travel-portal')]
+});
 
-// Create workloads for travel-agency namespace
-const travelAgencyWorkloads = [
-  createMockWorkloadListItem('travels-v1', 'travel-agency', 'travels', 'v1'),
-  createMockWorkloadListItem('hotels-v1', 'travel-agency', 'hotels', 'v1'),
-  createMockWorkloadListItem('cars-v1', 'travel-agency', 'cars', 'v1'),
-  createMockWorkloadListItem('flights-v1', 'travel-agency', 'flights', 'v1')
-];
-
-// Create workloads for travel-portal namespace
-const travelPortalWorkloads = [
-  createMockWorkloadListItem('voyages-v1', 'travel-portal', 'voyages', 'v1'),
-  createMockWorkloadListItem('viaggi-v1', 'travel-portal', 'viaggi', 'v1')
-];
-
-// All workloads map by namespace
-const workloadsByNamespace: Record<string, typeof bookinfoWorkloads> = {
-  bookinfo: bookinfoWorkloads,
-  'istio-system': istioSystemWorkloads,
-  'travel-agency': travelAgencyWorkloads,
-  'travel-portal': travelPortalWorkloads
-};
-
-// Create services for bookinfo namespace
-const bookinfoServices = [
-  createMockServiceListItem('productpage', 'bookinfo'),
-  createMockServiceListItem('details', 'bookinfo'),
-  createMockServiceListItem('reviews', 'bookinfo'),
-  createMockServiceListItem('ratings', 'bookinfo')
-];
-
-const istioSystemServices = [
-  createMockServiceListItem('istiod', 'istio-system'),
-  createMockServiceListItem('istio-ingressgateway', 'istio-system')
-];
-
-const travelAgencyServices = [
-  createMockServiceListItem('travels', 'travel-agency'),
-  createMockServiceListItem('hotels', 'travel-agency'),
-  createMockServiceListItem('cars', 'travel-agency'),
-  createMockServiceListItem('flights', 'travel-agency')
-];
-
-const travelPortalServices = [
-  createMockServiceListItem('voyages', 'travel-portal'),
-  createMockServiceListItem('viaggi', 'travel-portal')
-];
-
-const servicesByNamespace: Record<string, typeof bookinfoServices> = {
-  bookinfo: bookinfoServices,
-  'istio-system': istioSystemServices,
-  'travel-agency': travelAgencyServices,
-  'travel-portal': travelPortalServices
-};
-
-// Create apps for bookinfo namespace
-const bookinfoApps = [
-  createMockAppListItem('productpage', 'bookinfo'),
-  createMockAppListItem('details', 'bookinfo'),
-  createMockAppListItem('reviews', 'bookinfo'),
-  createMockAppListItem('ratings', 'bookinfo')
-];
-
-const istioSystemApps = [
-  createMockAppListItem('istiod', 'istio-system'),
-  createMockAppListItem('istio-ingressgateway', 'istio-system')
-];
-
-const travelAgencyApps = [
-  createMockAppListItem('travels', 'travel-agency'),
-  createMockAppListItem('hotels', 'travel-agency'),
-  createMockAppListItem('cars', 'travel-agency'),
-  createMockAppListItem('flights', 'travel-agency')
-];
-
-const travelPortalApps = [
-  createMockAppListItem('voyages', 'travel-portal'),
-  createMockAppListItem('viaggi', 'travel-portal')
-];
-
-const appsByNamespace: Record<string, typeof bookinfoApps> = {
-  bookinfo: bookinfoApps,
-  'istio-system': istioSystemApps,
-  'travel-agency': travelAgencyApps,
-  'travel-portal': travelPortalApps
-};
-
-// Helper to get workloads for requested namespaces
-const getWorkloadsForNamespaces = (namespaces: string): typeof bookinfoWorkloads => {
+// Helper to get workloads for requested namespaces - generates fresh data per request
+const getWorkloadsForNamespaces = (namespaces: string): MockWorkloadListItem[] => {
   const nsList = namespaces.split(',').map(ns => ns.trim());
+  const workloadsByNamespace = getWorkloadsByNamespace();
   return nsList.flatMap(ns => workloadsByNamespace[ns] || []);
 };
 
-const getServicesForNamespaces = (namespaces: string): typeof bookinfoServices => {
+const getServicesForNamespaces = (namespaces: string): MockServiceListItem[] => {
   const nsList = namespaces.split(',').map(ns => ns.trim());
+  const servicesByNamespace = getServicesByNamespace();
   return nsList.flatMap(ns => servicesByNamespace[ns] || []);
 };
 
-const getAppsForNamespaces = (namespaces: string): typeof bookinfoApps => {
+const getAppsForNamespaces = (namespaces: string): MockAppListItem[] => {
   const nsList = namespaces.split(',').map(ns => ns.trim());
+  const appsByNamespace = getAppsByNamespace();
   return nsList.flatMap(ns => appsByNamespace[ns] || []);
 };
 
@@ -601,6 +673,7 @@ export const workloadHandlers = [
   // Namespace workloads
   http.get('*/api/namespaces/:namespace/workloads', ({ params }) => {
     const { namespace } = params;
+    const workloadsByNamespace = getWorkloadsByNamespace();
     const workloads = workloadsByNamespace[namespace as string] || [];
 
     return HttpResponse.json({
@@ -614,7 +687,8 @@ export const workloadHandlers = [
   // Workload detail
   http.get('*/api/namespaces/:namespace/workloads/:workload', ({ params }) => {
     const { workload, namespace } = params;
-    const nsWorkloads = workloadsByNamespace[namespace as string] || bookinfoWorkloads;
+    const workloadsByNamespace = getWorkloadsByNamespace();
+    const nsWorkloads = workloadsByNamespace[namespace as string] || workloadsByNamespace['bookinfo'];
     const found = nsWorkloads.find(w => w.name === workload);
 
     if (found) {
@@ -672,6 +746,7 @@ export const workloadHandlers = [
   // Namespace services
   http.get('*/api/namespaces/:namespace/services', ({ params }) => {
     const { namespace } = params;
+    const servicesByNamespace = getServicesByNamespace();
     const services = servicesByNamespace[namespace as string] || [];
 
     // Build validations map
@@ -683,8 +758,8 @@ export const workloadHandlers = [
       serviceValidations.service[key] = {
         name: svc.name,
         objectGVK: serviceGVK,
-        valid: true,
-        checks: []
+        valid: svc.validation.valid,
+        checks: svc.validation.checks
       };
     });
 
@@ -699,10 +774,12 @@ export const workloadHandlers = [
   // Service detail
   http.get('*/api/namespaces/:namespace/services/:service', ({ params }) => {
     const { service, namespace } = params;
-    const nsServices = servicesByNamespace[namespace as string] || bookinfoServices;
+    const servicesByNamespace = getServicesByNamespace();
+    const nsServices = servicesByNamespace[namespace as string] || servicesByNamespace['bookinfo'];
     const found = nsServices.find(s => s.name === service);
 
     if (found) {
+      const workloadsByNamespace = getWorkloadsByNamespace();
       const nsWorkloads = workloadsByNamespace[namespace as string] || [];
       const relatedWorkloads = nsWorkloads
         .filter(w => w.labels.app === service)
@@ -812,6 +889,7 @@ export const workloadHandlers = [
   // Namespace apps
   http.get('*/api/namespaces/:namespace/apps', ({ params }) => {
     const { namespace } = params;
+    const appsByNamespace = getAppsByNamespace();
     const applications = appsByNamespace[namespace as string] || [];
 
     return HttpResponse.json({
@@ -824,10 +902,12 @@ export const workloadHandlers = [
   // App detail
   http.get('*/api/namespaces/:namespace/apps/:app', ({ params }) => {
     const { app, namespace } = params;
-    const nsApps = appsByNamespace[namespace as string] || bookinfoApps;
+    const appsByNamespace = getAppsByNamespace();
+    const nsApps = appsByNamespace[namespace as string] || appsByNamespace['bookinfo'];
     const found = nsApps.find(a => a.name === app);
 
     if (found) {
+      const workloadsByNamespace = getWorkloadsByNamespace();
       const nsWorkloads = workloadsByNamespace[namespace as string] || [];
       const relatedWorkloads = nsWorkloads.filter(w => w.labels.app === app);
 

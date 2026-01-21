@@ -1,6 +1,6 @@
 // Traffic graph handlers
 import { http, HttpResponse } from 'msw';
-import { scenarioConfig, isMultiCluster, getHomeCluster } from '../scenarios';
+import { getScenarioConfig, isMultiCluster, getHomeCluster } from '../scenarios';
 import { generateSingleClusterTrafficGraph } from './traffic/traffic-singlecluster';
 import { generateMultiClusterTrafficGraph } from './traffic/traffic-multicluster';
 import { generateAmbientTrafficGraph } from './traffic/traffic-ambient';
@@ -24,7 +24,7 @@ const generateTrafficGraphData = (): TrafficGraphData => {
     const result = generateMultiClusterTrafficGraph();
     nodes = result.nodes;
     edges = result.edges;
-  } else if (scenarioConfig.ambientEnabled) {
+  } else if (getScenarioConfig().ambientEnabled) {
     const result = generateAmbientTrafficGraph(homeCluster.name);
     nodes = result.nodes;
     edges = result.edges;

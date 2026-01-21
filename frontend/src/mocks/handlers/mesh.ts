@@ -1,9 +1,23 @@
 // Mesh graph generation
 import { http, HttpResponse } from 'msw';
-import { scenarioConfig, isMultiCluster } from '../scenarios';
+import { getScenarioConfig, getItemHealthStatus, isMultiCluster } from '../scenarios';
+import { Status } from '../../types/IstioStatus';
+
+// Map health status string to Status enum value
+const getHealthData = (itemName: string, namespace: string): Status => {
+  const healthStatus = getItemHealthStatus(itemName, namespace);
+  switch (healthStatus) {
+    case 'unhealthy':
+      return Status.Unhealthy;
+    case 'degraded':
+      return Status.NotReady;
+    default:
+      return Status.Healthy;
+  }
+};
 
 // Mesh config shared across clusters
-const getMeshConfig = (): unknown => ({
+const getMeshConfig = (): Record<string, unknown> => ({
   certificates: [
     {
       configMapName: 'istio-ca-root-cert',
@@ -60,7 +74,8 @@ const getMeshConfig = (): unknown => ({
   }
 });
 
-const generateMeshGraphData = (): unknown => {
+const generateMeshGraphData = (): Record<string, unknown> => {
+  const scenarioConfig = getScenarioConfig();
   const nodes: any[] = [];
   const edges: any[] = [];
   const meshConfig = getMeshConfig();
@@ -183,7 +198,7 @@ const generateMeshGraphData = (): unknown => {
           infraName: 'Grafana',
           infraType: 'grafana',
           isExternal: false,
-          healthData: 'Healthy',
+          healthData: getHealthData('grafana', 'istio-system'),
           version: '12.0.1',
           parent: istioSystemBoxId,
           infraData: {
@@ -238,7 +253,7 @@ const generateMeshGraphData = (): unknown => {
           infraName: 'Prometheus',
           infraType: 'metricStore',
           isExternal: false,
-          healthData: 'Healthy',
+          healthData: getHealthData('prometheus', 'istio-system'),
           version: '3.5.0',
           parent: istioSystemBoxId,
           infraData: {

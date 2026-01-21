@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { ServerConfig, RunMode } from '../../types/ServerConfig';
-import { scenarioConfig } from '../scenarios';
+import { getScenarioConfig } from '../scenarios';
 
 // Cluster config type
 type ClusterConfigType = Record<
@@ -21,8 +21,9 @@ type ClusterConfigType = Record<
   }
 >;
 
-// Generate clusters config from scenario
+// Generate clusters config from scenario - called dynamically
 const generateClustersConfig = (): ClusterConfigType => {
+  const scenarioConfig = getScenarioConfig();
   const clusters: Record<
     string,
     {
@@ -65,8 +66,9 @@ const generateClustersConfig = (): ClusterConfigType => {
   return clusters;
 };
 
-// Generate control planes from scenario
+// Generate control planes from scenario - called dynamically
 const generateControlPlanes = (): Record<string, string> => {
+  const scenarioConfig = getScenarioConfig();
   const controlPlanes: Record<string, string> = {};
   scenarioConfig.clusters.forEach(cluster => {
     controlPlanes[cluster.name] = 'istio-system';
@@ -74,116 +76,120 @@ const generateControlPlanes = (): Record<string, string> => {
   return controlPlanes;
 };
 
-const mockServerConfig: ServerConfig = {
-  ambientEnabled: scenarioConfig.ambientEnabled,
-  authStrategy: 'anonymous',
-  clusterWideAccess: true,
-  clusters: generateClustersConfig(),
-  controlPlanes: generateControlPlanes(),
-  deployment: {
-    viewOnlyMode: false
-  },
-  gatewayAPIClasses: [
-    {
-      className: 'istio',
-      name: 'Istio'
-    }
-  ],
-  gatewayAPIEnabled: true,
-  healthConfig: {
-    rate: [
+// Generate server config dynamically based on scenario
+const generateServerConfig = (): ServerConfig => {
+  const scenarioConfig = getScenarioConfig();
+  return {
+    ambientEnabled: scenarioConfig.ambientEnabled,
+    authStrategy: 'anonymous',
+    clusterWideAccess: true,
+    clusters: generateClustersConfig(),
+    controlPlanes: generateControlPlanes(),
+    deployment: {
+      viewOnlyMode: false
+    },
+    gatewayAPIClasses: [
       {
-        tolerance: [
-          {
-            code: '5XX',
-            degraded: 0.1,
-            failure: 20,
-            protocol: 'http',
-            direction: '.*'
-          },
-          {
-            code: '4XX',
-            degraded: 10,
-            failure: 20,
-            protocol: 'http',
-            direction: '.*'
-          },
-          {
-            code: '-',
-            degraded: 0.1,
-            failure: 20,
-            protocol: 'grpc',
-            direction: '.*'
-          }
-        ]
+        className: 'istio',
+        name: 'Istio'
       }
-    ]
-  },
-  ignoreHomeCluster: false,
-  installationTag: 'Kiali Mock',
-  istioAPIInstalled: false,
-  istioAnnotations: {
-    ambientAnnotation: 'ambient.istio.io/redirection',
-    ambientAnnotationEnabled: 'enabled',
-    istioInjectionAnnotation: 'sidecar.istio.io/inject'
-  },
-  istioGatewayInstalled: true,
-  istioIdentityDomain: 'svc.cluster.local',
-  istioLabels: {
-    ambientNamespaceLabel: 'istio.io/dataplane-mode',
-    ambientNamespaceLabelValue: 'ambient',
-    ambientWaypointGatewayLabel: 'gateway.networking.k8s.io/gateway-name',
-    ambientWaypointLabel: 'gateway.istio.io/managed',
-    ambientWaypointLabelValue: 'istio.io-mesh-controller',
-    appLabelName: 'app',
-    injectionLabelName: 'istio-injection',
-    injectionLabelRev: 'istio.io/rev',
-    versionLabelName: 'version'
-  },
-  kialiFeatureFlags: {
-    disabledFeatures: [],
-    istioAnnotationAction: true,
-    istioInjectionAction: true,
-    istioUpgradeAction: true,
-    uiDefaults: {
-      graph: {
-        findOptions: [],
-        hideOptions: [],
-        settings: {
-          animation: 'point'
-        },
-        traffic: {
-          ambient: 'total',
-          grpc: 'requests',
-          http: 'requests',
-          tcp: 'sent'
+    ],
+    gatewayAPIEnabled: true,
+    healthConfig: {
+      rate: [
+        {
+          tolerance: [
+            {
+              code: '5XX',
+              degraded: 0.1,
+              failure: 20,
+              protocol: 'http',
+              direction: '.*'
+            },
+            {
+              code: '4XX',
+              degraded: 10,
+              failure: 20,
+              protocol: 'http',
+              direction: '.*'
+            },
+            {
+              code: '-',
+              degraded: 0.1,
+              failure: 20,
+              protocol: 'grpc',
+              direction: '.*'
+            }
+          ]
         }
-      },
-      i18n: {
-        language: 'en',
-        showSelector: true
-      },
-      list: {
-        includeHealth: true,
-        includeIstioResources: true,
-        includeValidations: true,
-        showIncludeToggles: false
-      },
-      mesh: {
-        findOptions: [],
-        hideOptions: []
-      },
-      tracing: {
-        limit: 100
+      ]
+    },
+    ignoreHomeCluster: false,
+    installationTag: 'Kiali Mock',
+    istioAPIInstalled: false,
+    istioAnnotations: {
+      ambientAnnotation: 'ambient.istio.io/redirection',
+      ambientAnnotationEnabled: 'enabled',
+      istioInjectionAnnotation: 'sidecar.istio.io/inject'
+    },
+    istioGatewayInstalled: true,
+    istioIdentityDomain: 'svc.cluster.local',
+    istioLabels: {
+      ambientNamespaceLabel: 'istio.io/dataplane-mode',
+      ambientNamespaceLabelValue: 'ambient',
+      ambientWaypointGatewayLabel: 'gateway.networking.k8s.io/gateway-name',
+      ambientWaypointLabel: 'gateway.istio.io/managed',
+      ambientWaypointLabelValue: 'istio.io-mesh-controller',
+      appLabelName: 'app',
+      injectionLabelName: 'istio-injection',
+      injectionLabelRev: 'istio.io/rev',
+      versionLabelName: 'version'
+    },
+    kialiFeatureFlags: {
+      disabledFeatures: [],
+      istioAnnotationAction: true,
+      istioInjectionAction: true,
+      istioUpgradeAction: true,
+      uiDefaults: {
+        graph: {
+          findOptions: [],
+          hideOptions: [],
+          settings: {
+            animation: 'point'
+          },
+          traffic: {
+            ambient: 'total',
+            grpc: 'requests',
+            http: 'requests',
+            tcp: 'sent'
+          }
+        },
+        i18n: {
+          language: 'en',
+          showSelector: true
+        },
+        list: {
+          includeHealth: true,
+          includeIstioResources: true,
+          includeValidations: true,
+          showIncludeToggles: false
+        },
+        mesh: {
+          findOptions: [],
+          hideOptions: []
+        },
+        tracing: {
+          limit: 100
+        }
       }
-    }
-  },
-  logLevel: 'info',
-  prometheus: {
-    globalScrapeInterval: 15,
-    storageTsdbRetention: 86400
-  },
-  runMode: RunMode.APP
+    },
+    logLevel: 'info',
+    prometheus: {
+      globalScrapeInterval: 15,
+      storageTsdbRetention: 86400
+    },
+    runMode: RunMode.APP
+  };
 };
 
 const mockDisabledFeatures = {
@@ -200,7 +206,7 @@ const mockDisabledFeatures = {
 
 export const configHandlers = [
   http.get('*/api/config', () => {
-    return HttpResponse.json(mockServerConfig);
+    return HttpResponse.json(generateServerConfig());
   }),
 
   http.get('*/api/config/disabled', () => {

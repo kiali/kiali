@@ -1,7 +1,7 @@
 // Multicluster traffic graph
 // Split bookinfo topology: cluster-east (productpage + details), cluster-west (reviews + ratings)
-import { scenarioConfig } from '../../scenarios';
-import { createAppHealthData, createServiceHealthData } from './common';
+import { getScenarioConfig } from '../../scenarios';
+import { createAppHealthData, createServiceHealthData, createEdgeTraffic } from './common';
 
 interface ClusterConfig {
   accessible: boolean;
@@ -20,6 +20,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
   const edges: any[] = [];
   let edgeIdCounter = 0;
 
+  const scenarioConfig = getScenarioConfig();
   const clustersWithBookinfo = scenarioConfig.clusters.filter(c => c.namespaces.includes('bookinfo'));
   const eastCluster = clustersWithBookinfo.find(c => c.isHome) || clustersWithBookinfo[0];
   const westCluster = clustersWithBookinfo.find(c => !c.isHome) || clustersWithBookinfo[1];
@@ -120,7 +121,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v1',
           workload: 'productpage-v1',
           traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '15.00' } }],
-          healthData: createAppHealthData('productpage-v1'),
+          healthData: createAppHealthData('productpage-v1', 'bookinfo'),
           isRoot: true,
           parent: `box-app-productpage-${east}`
         }
@@ -134,7 +135,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           service: 'productpage',
           app: 'productpage',
           traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '10.00' } }],
-          healthData: createServiceHealthData(),
+          healthData: createServiceHealthData('productpage', 'bookinfo'),
           parent: `box-app-productpage-${east}`
         }
       }
@@ -152,7 +153,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v1',
           workload: 'details-v1',
           traffic: [{ protocol: 'http', rates: { httpIn: '5.00' } }],
-          healthData: createAppHealthData('details-v1'),
+          healthData: createAppHealthData('details-v1', 'bookinfo'),
           parent: `box-app-details-${east}`
         }
       },
@@ -165,24 +166,20 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           service: 'details',
           app: 'details',
           traffic: [{ protocol: 'http', rates: { httpIn: '5.00', httpOut: '5.00' } }],
-          healthData: createServiceHealthData(),
+          healthData: createServiceHealthData('details', 'bookinfo'),
           parent: `box-app-details-${east}`
         }
       }
     );
 
-    // Edges within cluster-east
+    // Edges within cluster-east - use createEdgeTraffic for scenario-aware responses
     edges.push(
       {
         data: {
           id: `e${edgeIdCounter++}`,
           source: `gateway-${east}`,
           target: `pp-svc-${east}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '10.00', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'productpage:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('productpage', 'productpage:9080', '10.00', 'bookinfo')
         }
       },
       {
@@ -190,11 +187,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `pp-svc-${east}`,
           target: `pp-app-${east}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '10.00', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'productpage:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('productpage', 'productpage:9080', '10.00', 'bookinfo')
         }
       },
       {
@@ -202,11 +195,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `pp-app-${east}`,
           target: `det-svc-${east}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '5.00', httpPercentReq: '33.3' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'details:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('details', 'details:9080', '5.00', 'bookinfo')
         }
       },
       {
@@ -214,11 +203,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `det-svc-${east}`,
           target: `det-app-${east}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '5.00', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'details:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('details', 'details:9080', '5.00', 'bookinfo')
         }
       }
     );
@@ -254,7 +239,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           service: 'reviews',
           app: 'reviews',
           traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '10.00' } }],
-          healthData: createServiceHealthData(),
+          healthData: createServiceHealthData('reviews', 'bookinfo'),
           parent: `box-app-reviews-${west}`
         }
       },
@@ -268,7 +253,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v1',
           workload: 'reviews-v1',
           traffic: [{ protocol: 'http', rates: { httpIn: '3.33' } }],
-          healthData: createAppHealthData('reviews-v1'),
+          healthData: createAppHealthData('reviews-v1', 'bookinfo'),
           parent: `box-app-reviews-${west}`
         }
       },
@@ -282,7 +267,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v2',
           workload: 'reviews-v2',
           traffic: [{ protocol: 'http', rates: { httpIn: '3.33', httpOut: '3.33' } }],
-          healthData: createAppHealthData('reviews-v2'),
+          healthData: createAppHealthData('reviews-v2', 'bookinfo'),
           parent: `box-app-reviews-${west}`
         }
       },
@@ -296,7 +281,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v3',
           workload: 'reviews-v3',
           traffic: [{ protocol: 'http', rates: { httpIn: '3.34', httpOut: '3.34' } }],
-          healthData: createAppHealthData('reviews-v3'),
+          healthData: createAppHealthData('reviews-v3', 'bookinfo'),
           parent: `box-app-reviews-${west}`
         }
       }
@@ -314,7 +299,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           version: 'v1',
           workload: 'ratings-v1',
           traffic: [{ protocol: 'http', rates: { httpIn: '6.67' } }],
-          healthData: createAppHealthData('ratings-v1'),
+          healthData: createAppHealthData('ratings-v1', 'bookinfo'),
           parent: `box-app-ratings-${west}`
         }
       },
@@ -327,24 +312,20 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           service: 'ratings',
           app: 'ratings',
           traffic: [{ protocol: 'http', rates: { httpIn: '6.67', httpOut: '6.67' } }],
-          healthData: createServiceHealthData(),
+          healthData: createServiceHealthData('ratings', 'bookinfo'),
           parent: `box-app-ratings-${west}`
         }
       }
     );
 
-    // Edges within cluster-west
+    // Edges within cluster-west - use createEdgeTraffic for scenario-aware responses
     edges.push(
       {
         data: {
           id: `e${edgeIdCounter++}`,
           source: `rev-svc-${west}`,
           target: `rev-v1-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '3.33', httpPercentReq: '33.3' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'reviews:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.33', 'bookinfo')
         }
       },
       {
@@ -352,11 +333,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `rev-svc-${west}`,
           target: `rev-v2-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '3.33', httpPercentReq: '33.3' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'reviews:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.33', 'bookinfo')
         }
       },
       {
@@ -364,11 +341,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `rev-svc-${west}`,
           target: `rev-v3-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '3.34', httpPercentReq: '33.4' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'reviews:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.34', 'bookinfo')
         }
       },
       {
@@ -376,11 +349,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `rev-v2-${west}`,
           target: `rat-svc-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '3.33', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'ratings:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('ratings', 'ratings:9080', '3.33', 'bookinfo')
         }
       },
       {
@@ -388,11 +357,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `rev-v3-${west}`,
           target: `rat-svc-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '3.34', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'ratings:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('ratings', 'ratings:9080', '3.34', 'bookinfo')
         }
       },
       {
@@ -400,11 +365,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
           id: `e${edgeIdCounter++}`,
           source: `rat-svc-${west}`,
           target: `rat-app-${west}`,
-          traffic: {
-            protocol: 'http',
-            rates: { http: '6.67', httpPercentReq: '100.0' },
-            responses: { '200': { flags: { '-': '100.0' }, hosts: { 'ratings:9080': '100.0' } } }
-          }
+          traffic: createEdgeTraffic('ratings', 'ratings:9080', '6.67', 'bookinfo')
         }
       }
     );
@@ -419,13 +380,7 @@ export const generateMultiClusterTrafficGraph = (): TrafficGraphResult => {
         id: `e-cross-${edgeIdCounter++}`,
         source: `pp-app-${east}`,
         target: `rev-svc-${west}`,
-        traffic: {
-          protocol: 'http',
-          rates: { http: '10.00', httpPercentReq: '66.7' },
-          responses: {
-            '200': { flags: { '-': '100.0' }, hosts: { 'reviews.bookinfo.svc.cluster.local:9080': '100.0' } }
-          }
-        }
+        traffic: createEdgeTraffic('reviews', 'reviews.bookinfo.svc.cluster.local:9080', '10.00', 'bookinfo')
       }
     });
   }

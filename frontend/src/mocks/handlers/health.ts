@@ -1,10 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import { scenarioConfig, getNamespaceHealthStatus } from '../scenarios';
+import { getScenarioConfig, getItemHealthStatus } from '../scenarios';
 
 // Create health status based on scenario
-const createHealthyStatus = (workloadName?: string, namespace?: string): unknown => {
-  const healthStatus = namespace ? getNamespaceHealthStatus(namespace) : 'healthy';
-  const errorRate = scenarioConfig.errorRate;
+const createHealthyStatus = (workloadName?: string, namespace?: string): Record<string, unknown> => {
+  const healthStatus = workloadName ? getItemHealthStatus(workloadName, namespace) : 'healthy';
+  const errorRate = getScenarioConfig().errorRate;
 
   // Calculate HTTP response distribution based on health
   let http200 = 100;
@@ -45,9 +45,9 @@ const createHealthyStatus = (workloadName?: string, namespace?: string): unknown
   };
 };
 
-const createWorkloadHealthStatus = (workloadName: string, namespace?: string): unknown => {
-  const healthStatus = namespace ? getNamespaceHealthStatus(namespace) : 'healthy';
-  const errorRate = scenarioConfig.errorRate;
+const createWorkloadHealthStatus = (workloadName: string, namespace?: string): Record<string, unknown> => {
+  const healthStatus = getItemHealthStatus(workloadName, namespace);
+  const errorRate = getScenarioConfig().errorRate;
 
   let http200 = 100;
   let http500 = 0;
@@ -83,93 +83,96 @@ const createWorkloadHealthStatus = (workloadName: string, namespace?: string): u
   };
 };
 
-const mockClustersHealth = {
+// Generate health data dynamically based on scenario
+const generateClustersHealth = (): Record<string, unknown> => ({
   namespaceAppHealth: {
     bookinfo: {
-      productpage: createHealthyStatus('productpage-v1'),
-      details: createHealthyStatus('details-v1'),
-      reviews: createHealthyStatus('reviews-v1'),
-      ratings: createHealthyStatus('ratings-v1')
+      productpage: createHealthyStatus('productpage-v1', 'bookinfo'),
+      details: createHealthyStatus('details-v1', 'bookinfo'),
+      reviews: createHealthyStatus('reviews-v1', 'bookinfo'),
+      ratings: createHealthyStatus('ratings-v1', 'bookinfo')
     },
     'istio-system': {
-      istiod: createHealthyStatus('istiod'),
-      'istio-ingressgateway': createHealthyStatus('istio-ingressgateway')
+      istiod: createHealthyStatus('istiod', 'istio-system'),
+      'istio-ingressgateway': createHealthyStatus('istio-ingressgateway', 'istio-system')
     },
     'travel-agency': {
-      travels: createHealthyStatus('travels-v1'),
-      hotels: createHealthyStatus('hotels-v1'),
-      cars: createHealthyStatus('cars-v1'),
-      flights: createHealthyStatus('flights-v1')
+      travels: createHealthyStatus('travels-v1', 'travel-agency'),
+      hotels: createHealthyStatus('hotels-v1', 'travel-agency'),
+      cars: createHealthyStatus('cars-v1', 'travel-agency'),
+      flights: createHealthyStatus('flights-v1', 'travel-agency')
     },
     'travel-portal': {
-      voyages: createHealthyStatus('voyages-v1'),
-      viaggi: createHealthyStatus('viaggi-v1')
+      voyages: createHealthyStatus('voyages-v1', 'travel-portal'),
+      viaggi: createHealthyStatus('viaggi-v1', 'travel-portal')
     }
   },
   namespaceServiceHealth: {
     bookinfo: {
-      productpage: createHealthyStatus(),
-      details: createHealthyStatus(),
-      reviews: createHealthyStatus(),
-      ratings: createHealthyStatus()
+      productpage: createHealthyStatus(undefined, 'bookinfo'),
+      details: createHealthyStatus(undefined, 'bookinfo'),
+      reviews: createHealthyStatus(undefined, 'bookinfo'),
+      ratings: createHealthyStatus(undefined, 'bookinfo')
     },
     'istio-system': {
-      istiod: createHealthyStatus(),
-      'istio-ingressgateway': createHealthyStatus()
+      istiod: createHealthyStatus(undefined, 'istio-system'),
+      'istio-ingressgateway': createHealthyStatus(undefined, 'istio-system')
     },
     'travel-agency': {
-      travels: createHealthyStatus(),
-      hotels: createHealthyStatus(),
-      cars: createHealthyStatus(),
-      flights: createHealthyStatus()
+      travels: createHealthyStatus(undefined, 'travel-agency'),
+      hotels: createHealthyStatus(undefined, 'travel-agency'),
+      cars: createHealthyStatus(undefined, 'travel-agency'),
+      flights: createHealthyStatus(undefined, 'travel-agency')
     },
     'travel-portal': {
-      voyages: createHealthyStatus(),
-      viaggi: createHealthyStatus()
+      voyages: createHealthyStatus(undefined, 'travel-portal'),
+      viaggi: createHealthyStatus(undefined, 'travel-portal')
     }
   },
   namespaceWorkloadHealth: {
     bookinfo: {
-      'productpage-v1': createWorkloadHealthStatus('productpage-v1'),
-      'details-v1': createWorkloadHealthStatus('details-v1'),
-      'reviews-v1': createWorkloadHealthStatus('reviews-v1'),
-      'reviews-v2': createWorkloadHealthStatus('reviews-v2'),
-      'reviews-v3': createWorkloadHealthStatus('reviews-v3'),
-      'ratings-v1': createWorkloadHealthStatus('ratings-v1')
+      'productpage-v1': createWorkloadHealthStatus('productpage-v1', 'bookinfo'),
+      'details-v1': createWorkloadHealthStatus('details-v1', 'bookinfo'),
+      'reviews-v1': createWorkloadHealthStatus('reviews-v1', 'bookinfo'),
+      'reviews-v2': createWorkloadHealthStatus('reviews-v2', 'bookinfo'),
+      'reviews-v3': createWorkloadHealthStatus('reviews-v3', 'bookinfo'),
+      'ratings-v1': createWorkloadHealthStatus('ratings-v1', 'bookinfo')
     },
     'istio-system': {
-      istiod: createWorkloadHealthStatus('istiod'),
-      'istio-ingressgateway': createWorkloadHealthStatus('istio-ingressgateway')
+      istiod: createWorkloadHealthStatus('istiod', 'istio-system'),
+      'istio-ingressgateway': createWorkloadHealthStatus('istio-ingressgateway', 'istio-system')
     },
     'travel-agency': {
-      'travels-v1': createWorkloadHealthStatus('travels-v1'),
-      'hotels-v1': createWorkloadHealthStatus('hotels-v1'),
-      'cars-v1': createWorkloadHealthStatus('cars-v1'),
-      'flights-v1': createWorkloadHealthStatus('flights-v1')
+      'travels-v1': createWorkloadHealthStatus('travels-v1', 'travel-agency'),
+      'hotels-v1': createWorkloadHealthStatus('hotels-v1', 'travel-agency'),
+      'cars-v1': createWorkloadHealthStatus('cars-v1', 'travel-agency'),
+      'flights-v1': createWorkloadHealthStatus('flights-v1', 'travel-agency')
     },
     'travel-portal': {
-      'voyages-v1': createWorkloadHealthStatus('voyages-v1'),
-      'viaggi-v1': createWorkloadHealthStatus('viaggi-v1')
+      'voyages-v1': createWorkloadHealthStatus('voyages-v1', 'travel-portal'),
+      'viaggi-v1': createWorkloadHealthStatus('viaggi-v1', 'travel-portal')
     }
   }
-};
+});
 
 // Get health for specific namespaces
-const getHealthForNamespaces = (
-  namespaces: string,
-  type: 'app' | 'service' | 'workload'
-): Record<string, Record<string, unknown>> => {
+const getHealthForNamespaces = (namespaces: string, type: 'app' | 'service' | 'workload'): Record<string, unknown> => {
   const nsList = namespaces.split(',').map(ns => ns.trim());
+  const clustersHealth = generateClustersHealth() as {
+    namespaceAppHealth: Record<string, Record<string, unknown>>;
+    namespaceServiceHealth: Record<string, Record<string, unknown>>;
+    namespaceWorkloadHealth: Record<string, Record<string, unknown>>;
+  };
   const healthMap = {
-    app: mockClustersHealth.namespaceAppHealth,
-    service: mockClustersHealth.namespaceServiceHealth,
-    workload: mockClustersHealth.namespaceWorkloadHealth
+    app: clustersHealth.namespaceAppHealth,
+    service: clustersHealth.namespaceServiceHealth,
+    workload: clustersHealth.namespaceWorkloadHealth
   }[type];
 
   const result: Record<string, Record<string, unknown>> = {};
   nsList.forEach(ns => {
-    if (healthMap[ns as keyof typeof healthMap]) {
-      result[ns] = healthMap[ns as keyof typeof healthMap];
+    if (healthMap[ns]) {
+      result[ns] = healthMap[ns];
     }
   });
 
@@ -198,24 +201,25 @@ export const healthHandlers = [
     }
 
     // Return all health types if no type specified
-    return HttpResponse.json(mockClustersHealth);
+    return HttpResponse.json(generateClustersHealth());
   }),
 
   // App health
   http.get('*/api/namespaces/:namespace/apps/:app/health', ({ params }) => {
-    const { app } = params;
-    return HttpResponse.json(createHealthyStatus(`${app}-v1`));
+    const { namespace, app } = params;
+    return HttpResponse.json(createHealthyStatus(`${app}-v1`, namespace as string));
   }),
 
   // Service health
-  http.get('*/api/namespaces/:namespace/services/:service/health', () => {
-    return HttpResponse.json(createHealthyStatus());
+  http.get('*/api/namespaces/:namespace/services/:service/health', ({ params }) => {
+    const { namespace } = params;
+    return HttpResponse.json(createHealthyStatus(undefined, namespace as string));
   }),
 
   // Workload health
   http.get('*/api/namespaces/:namespace/workloads/:workload/health', ({ params }) => {
-    const { workload } = params;
-    return HttpResponse.json(createWorkloadHealthStatus(workload as string));
+    const { namespace, workload } = params;
+    return HttpResponse.json(createWorkloadHealthStatus(workload as string, namespace as string));
   }),
 
   // TLS endpoints
@@ -292,7 +296,7 @@ export const healthHandlers = [
       return datapoints;
     };
 
-    const createMetric = (name: string, baseValue: number, variance: number): unknown[] => [
+    const createMetric = (name: string, baseValue: number, variance: number): Record<string, unknown>[] => [
       {
         datapoints: generateDatapoints(baseValue, variance),
         labels: {
