@@ -31,7 +31,7 @@ jobs:
       uses: ./.github/actions/report-to-reportportal
       with:
         test_suite: 'backend'
-        test_results_dir: ${{ GITHUB_WORKSPACE }}
+        test_results_dir: ${{ github.workspace }}
         test_file_name: 'test-artifact'
         istio_version: 'default'
         data_plane_mode: 'sidecar'
