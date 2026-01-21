@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -118,6 +119,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 	if err != nil {
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
+	if err := ctx.Err(); err != nil {
+		return newContextCanceledResponse(err)
+	}
 
 	if len(resp.Choices) == 0 {
 		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
@@ -129,6 +133,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 	if len(msg.ToolCalls) > 0 {
 		// Execute tool calls in parallel since they don't depend on each other
 		toolResults := p.executeToolCallsInParallel(r, msg.ToolCalls, handlerByName, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		if err := ctx.Err(); err != nil {
+			return newContextCanceledResponse(err)
+		}
 
 		// Add tool results to conversation in the original order
 		for _, result := range toolResults {
@@ -143,6 +150,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 			}
 			conversation = append(conversation, result.message)
 		}
+		if err := ctx.Err(); err != nil {
+			return newContextCanceledResponse(err)
+		}
 
 		finalResp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
 			Model:    p.model,
@@ -150,6 +160,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 		})
 		if err != nil {
 			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
+		if err := ctx.Err(); err != nil {
+			return newContextCanceledResponse(err)
 		}
 		response.Answer = parseResponse(finalResp.Choices[0].Message.Content)
 		role = finalResp.Choices[0].Message.Role
@@ -161,6 +174,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 		Content: response.Answer,
 	})
 	if aiStore.Enabled() {
+		if err := ctx.Err(); err != nil {
+			return newContextCanceledResponse(err)
+		}
 		// Clean conversation by removing tool messages that are not useful for storage
 		conversation = p.cleanConversation(conversation)
 		if aiStore.ReduceWithAI() {
@@ -177,6 +193,13 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 	}
 	log.Debugf("AI Chat Response for conversation ID: %s: %+v", req.ConversationID, response)
 	return response, http.StatusOK
+}
+
+func newContextCanceledResponse(err error) (*types.AIResponse, int) {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return &types.AIResponse{Error: err.Error()}, http.StatusRequestTimeout
+	}
+	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
 }
 
 // toolCallResult holds the result of a tool call execution
