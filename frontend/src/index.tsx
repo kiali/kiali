@@ -39,16 +39,40 @@ Date.prototype.toLocaleStringWithConditionalDate = function () {
 document.body.classList.add(cssVariables.style);
 document.body.classList.add(globalStyle);
 
-setRouter([
-  {
-    element: <App />,
-    children: pathRoutes
+/**
+ * Render the application.
+ */
+const renderApp = (): void => {
+  setRouter([
+    {
+      element: <App />,
+      children: pathRoutes
+    }
+  ]);
+
+  // redirect to the router basename if the pathname does not include it
+  if (!window.location.pathname.includes(rootBasename)) {
+    router.navigate(`/${window.location.search}`, { replace: true });
   }
-]);
 
-// redirect to the router basename if the pathname does not include it
-if (!window.location.pathname.includes(rootBasename)) {
-  router.navigate(`/${window.location.search}`, { replace: true });
+  ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);
+};
+
+if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_MOCK_API === 'true') {
+  // Enable API mocking with MSW (Mock Service Worker).
+  // This allows frontend development without a running backend.
+  import('./mocks/browser').then(({ worker }) => {
+    worker
+      .start({
+        onUnhandledRequest: 'warn',
+        quiet: false
+      })
+      .then(() => {
+        console.log('[MSW] Mock Service Worker enabled - API requests will be intercepted');
+        renderApp();
+      });
+  });
+} else {
+  // No mocking - render immediately
+  renderApp();
 }
-
-ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);

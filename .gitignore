@@ -108,3 +108,6 @@ frontend/cypress/results
 
 # locales
 frontend/public/locales/en
+
+# Mock Service Worker (generated for development only)
+frontend/public/mockServiceWorker.js
