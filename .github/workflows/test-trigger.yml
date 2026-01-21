@@ -12,8 +12,8 @@ on:
     - "**/*.adoc"
 
 jobs:
-  Test 1:
-    name: Test 1
+  test_1:
+    name: Test1
     runs-on: ubuntu-latest
     steps:
       - run: echo "Test"
