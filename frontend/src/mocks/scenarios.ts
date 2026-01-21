@@ -153,11 +153,12 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
 // Get current scenario from environment
 export const getCurrentScenario = (): MockScenario => {
   const scenario = process.env.REACT_APP_MOCK_SCENARIO as MockScenario;
+
   if (scenario && scenarios[scenario]) {
-    console.log(`[MSW] Using mock scenario: ${scenario}`);
     return scenario;
   }
-  console.log('[MSW] Using default mock scenario: healthy');
+
+  // Default to healthy scenario if no scenario is specified
   return 'healthy';
 };
 

@@ -131,14 +131,15 @@ The mock handlers are located in `src/mocks/handlers/` and organized by feature:
 
 * `auth.ts` - Authentication and session info
 * `config.ts` - Server configuration
-* `graph.ts` - Traffic and mesh graph data
 * `health.ts` - Health status and metrics
 * `istio.ts` - Istio configuration and validations
+* `mesh.ts` - Mesh graph data
 * `namespaces.ts` - Namespace list
 * `tracing.ts` - Distributed tracing data
+* `traffic.ts` - Traffic graph data
 * `workloads.ts` - Workloads, services, and dashboards
 
-Scenario configuration is defined in `src/mocks/scenarios/index.ts`.
+Scenario configuration is defined in `src/mocks/scenarios.ts`.
 
 ==== Adding New Mock Handlers
 

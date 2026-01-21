@@ -52,8 +52,6 @@ const generateIstioStatus = (): ComponentStatus[] => {
   return statuses;
 };
 
-const mockIstioStatus = generateIstioStatus();
-
 // Helper to create mock Istio object metadata
 const createIstioMetadata = (name: string, namespace: string): Record<string, unknown> => ({
   name,
@@ -370,7 +368,7 @@ const mockCertsInfo = [
 export const istioHandlers = [
   // Istio status
   http.get('*/api/istio/status', () => {
-    return HttpResponse.json(mockIstioStatus);
+    return HttpResponse.json(generateIstioStatus());
   }),
 
   // Istio config for namespace

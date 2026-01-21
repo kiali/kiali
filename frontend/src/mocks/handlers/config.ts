@@ -24,23 +24,7 @@ type ClusterConfigType = Record<
 // Generate clusters config from scenario - called dynamically
 const generateClustersConfig = (): ClusterConfigType => {
   const scenarioConfig = getScenarioConfig();
-  const clusters: Record<
-    string,
-    {
-      accessible: boolean;
-      apiEndpoint: string;
-      isKialiHome: boolean;
-      kialiInstances: Array<{
-        namespace: string;
-        operatorResource: string;
-        serviceName: string;
-        url: string;
-        version: string;
-      }>;
-      name: string;
-      secretName: string;
-    }
-  > = {};
+  const clusters: ClusterConfigType = {};
 
   scenarioConfig.clusters.forEach(cluster => {
     clusters[cluster.name] = {
