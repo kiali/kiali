@@ -1,0 +1,27 @@
+name: Test trigger
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+    - master
+    - v*.*
+    paths-ignore:
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
+
+jobs:
+  Test 1:
+    name: Test 1
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+        echo "Test" > test-artifact
+      - name: Upload test results
+        uses: actions/upload-artifact@v6
+        with:
+          name: junit-rest-report
+          path: test-artifact
+
+

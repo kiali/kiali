@@ -1,0 +1,37 @@
+name: Test Uploader
+
+on:
+  workflow_run:
+    workflows: ["Test trigger"]
+    types:
+      - completed
+
+jobs:
+  report-to-reportportal:
+    name: Report Backend Tests to ReportPortal
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    container:
+      image: quay.io/dno/droute:latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+
+    - name: Download test results
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-rest-report
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Report to ReportPortal
+      continue-on-error: true
+      uses: ./.github/actions/report-to-reportportal
+      with:
+        test_suite: 'backend'
+        test_results_dir: ${{ GITHUB_WORKSPACE }}
+        test_file_name: 'test-artifact'
+        istio_version: 'default'
+        data_plane_mode: 'sidecar'
+        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
+        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
