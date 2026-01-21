@@ -23,11 +23,10 @@ type AIChatConversation struct {
 }
 
 type AiStoreConfig struct {
-	Enabled           bool
-	InactivityTimeout time.Duration // How long to keep inactive conversations
-	MaxCacheMemoryMB  int           // Maximum memory for all conversations
-	ReduceWithAI      bool          // Reduce conversations with AI if memory limit is reached
-	ReduceThreshold   int           // Threshold for reducing conversations
+	Enabled          bool
+	MaxCacheMemoryMB int  // Maximum memory for all conversations
+	ReduceWithAI     bool // Reduce conversations with AI if memory limit is reached
+	ReduceThreshold  int  // Threshold for reducing conversations
 }
 
 type AIStoreImpl struct {
@@ -42,11 +41,10 @@ func NewAIStore(ctx context.Context, config *AiStoreConfig) types.AIStore {
 	if config == nil {
 		// Default configuration
 		config = &AiStoreConfig{
-			Enabled:           true,
-			InactivityTimeout: 60 * time.Minute,
-			MaxCacheMemoryMB:  1024,
-			ReduceWithAI:      false,
-			ReduceThreshold:   15,
+			Enabled:          true,
+			MaxCacheMemoryMB: 1024,
+			ReduceWithAI:     false,
+			ReduceThreshold:  15,
 		}
 	}
 	self := &AIStoreImpl{
@@ -255,12 +253,6 @@ func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []st
 
 // LoadAIStoreConfig loads AI store configuration from Kiali config
 func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration strings from config
-	inactivityTimeout, err := time.ParseDuration(cfg.ChatAI.StoreConfig.InactivityTimeout)
-	if err != nil {
-		log.Warningf("Invalid chat_ai.store_config.inactivity_timeout '%s', using default 60m", cfg.ChatAI.StoreConfig.InactivityTimeout)
-		inactivityTimeout = 10 * time.Minute
-	}
-
 	maxMemory := cfg.ChatAI.StoreConfig.MaxCacheMemoryMB
 	if maxMemory <= 0 {
 		log.Warningf("Invalid chat_ai.store_config.max_cache_memory_mb %d, using default 1024", maxMemory)
@@ -268,11 +260,10 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 	}
 
 	return &AiStoreConfig{
-		Enabled:           cfg.ChatAI.StoreConfig.Enabled,
-		InactivityTimeout: inactivityTimeout,
-		MaxCacheMemoryMB:  maxMemory,
-		ReduceWithAI:      cfg.ChatAI.StoreConfig.ReduceWithAI,
-		ReduceThreshold:   cfg.ChatAI.StoreConfig.ReduceThreshold,
+		Enabled:          cfg.ChatAI.StoreConfig.Enabled,
+		MaxCacheMemoryMB: maxMemory,
+		ReduceWithAI:     cfg.ChatAI.StoreConfig.ReduceWithAI,
+		ReduceThreshold:  cfg.ChatAI.StoreConfig.ReduceThreshold,
 	}
 }
 
