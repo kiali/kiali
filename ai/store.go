@@ -80,8 +80,8 @@ func (s *AIStoreImpl) GetConversation(sessionID string, conversationID string) (
 	if !found {
 		return nil, false
 	}
-	sessionConversation.mu.RLock()
-	defer sessionConversation.mu.RUnlock()
+	sessionConversation.mu.Lock()
+	defer sessionConversation.mu.Unlock()
 	sessionConversation.LastAccessed = time.Now()
 	conversation, found := sessionConversation.Conversation[conversationID]
 	if !found {
