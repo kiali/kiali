@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // AIChatConversation represents a user's cached conversation with metadata
@@ -114,6 +115,7 @@ func (s *AIStoreImpl) SetConversation(sessionID string, conversationID string, c
 		s.conversations[sessionID].LastAccessed = time.Now()
 	}
 	s.conversations[sessionID].Conversation[conversationID] = conversation
+	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
 	return nil
 }
 
@@ -195,11 +197,13 @@ func (s *AIStoreImpl) evictLRUConversations(targetMB float64) {
 			session.memoryMB)
 
 		delete(s.conversations[session.sessionID].Conversation, session.conversationID)
+		internalmetrics.GetAIStoreEvictionsTotalMetric().Inc()
 		freedMB += session.memoryMB
 		evictedCount++
 	}
 
 	log.Debugf("Freed %.2f MB by evicting %d AI store conversations", freedMB, evictedCount)
+	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
 
 }
 
@@ -212,6 +216,14 @@ func (s *AIStoreImpl) totalMemoryMBLocked() float64 {
 		}
 	}
 	return totalMB
+}
+
+func (s *AIStoreImpl) totalConversationsLocked() int {
+	total := 0
+	for _, sessionConversations := range s.conversations {
+		total += len(sessionConversations.Conversation)
+	}
+	return total
 }
 
 // GetSessionIDs returns the list of session IDs
@@ -248,6 +260,7 @@ func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []st
 			log.Debugf("Conversation [%s] not found for session [%s]", conversationID, sessionID)
 		}
 	}
+	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
 	return nil
 }
 

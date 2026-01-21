@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 )
 
@@ -78,6 +79,9 @@ func ChatAI(
 			mcp.NewCitationsTool(),
 		}
 
+		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
+		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
+		defer requestTimer.ObserveDuration()
 		resp, code := provider.SendChat(r, req, toolHandlers, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
 
 		if resp == nil {

@@ -17,21 +17,27 @@ import (
 
 // These constants define the different label names for the different metric timeseries
 const (
+	labelAppender         = "appender"
+	labelCheckerName      = "checker"
 	labelGraphKind        = "graph_kind"
 	labelGraphType        = "graph_type"
-	labelWithServiceNodes = "with_service_nodes"
-	labelAppender         = "appender"
-	labelRoute            = "route"
-	labelQueryGroup       = "query_group"
-	labelCheckerName      = "checker"
+	labelModel            = "ai_model"
+	labelName             = "name"
 	labelNamespace        = "namespace"
+	labelProvider         = "ai_provider"
+	labelQueryGroup       = "query_group"
+	labelRoute            = "route"
 	labelService          = "service"
 	labelType             = "type"
-	labelName             = "name"
+	labelWithServiceNodes = "with_service_nodes"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
+	AIRequestDurationSeconds       *prometheus.HistogramVec
+	AIRequestsTotal                *prometheus.CounterVec
+	AIStoreConversationsTotal      prometheus.Gauge
+	AIStoreEvictionsTotal          prometheus.Counter
 	APIFailures                    *prometheus.CounterVec
 	APIProcessingTime              *prometheus.HistogramVec
 	CacheHitsTotal                 *prometheus.CounterVec
@@ -55,6 +61,32 @@ type MetricsType struct {
 // These metrics can be accessed directly to update their values, or
 // you can use available utility functions defined below.
 var Metrics = MetricsType{
+	AIStoreConversationsTotal: prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "kiali_ai_store_conversations_total",
+			Help: "The current number of conversations stored in the AI store.",
+		},
+	),
+	AIStoreEvictionsTotal: prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "kiali_ai_store_evictions_total",
+			Help: "The total number of conversations evicted from the AI store.",
+		},
+	),
+	AIRequestsTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_ai_requests_total",
+			Help: "The total number of AI requests sent by provider and model.",
+		},
+		[]string{labelProvider, labelModel},
+	),
+	AIRequestDurationSeconds: prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "kiali_ai_request_duration_seconds",
+			Help: "The time required to process an AI request by provider and model.",
+		},
+		[]string{labelProvider, labelModel},
+	),
 	GraphNodes: prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "kiali_graph_nodes",
@@ -260,6 +292,10 @@ func RegisterInternalMetrics() {
 	prometheus.MustRegister(
 		Metrics.APIFailures,
 		Metrics.APIProcessingTime,
+		Metrics.AIRequestDurationSeconds,
+		Metrics.AIRequestsTotal,
+		Metrics.AIStoreConversationsTotal,
+		Metrics.AIStoreEvictionsTotal,
 		Metrics.CacheHitsTotal,
 		Metrics.CacheRequestsTotal,
 		Metrics.CheckerProcessingTime,
@@ -465,6 +501,29 @@ func GetCacheHitsTotalMetric(cache string) prometheus.Counter {
 	return Metrics.CacheHitsTotal.With(prometheus.Labels{
 		labelName: cache,
 	})
+}
+
+func GetAIRequestsTotalMetric(provider string, model string) prometheus.Counter {
+	return Metrics.AIRequestsTotal.With(prometheus.Labels{
+		labelProvider: provider,
+		labelModel:    model,
+	})
+}
+
+func GetAIRequestDurationPrometheusTimer(provider string, model string) *prometheus.Timer {
+	timer := prometheus.NewTimer(Metrics.AIRequestDurationSeconds.With(prometheus.Labels{
+		labelProvider: provider,
+		labelModel:    model,
+	}))
+	return timer
+}
+
+func SetAIStoreConversationsTotal(count int) {
+	Metrics.AIStoreConversationsTotal.Set(float64(count))
+}
+
+func GetAIStoreEvictionsTotalMetric() prometheus.Counter {
+	return Metrics.AIStoreEvictionsTotal
 }
 
 func GetGraphCacheHitsTotalMetric() prometheus.Counter {
