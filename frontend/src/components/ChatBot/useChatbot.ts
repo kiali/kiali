@@ -50,7 +50,13 @@ export const tooManyRequestsMessage = (): ExtendedMessage => fixedMessage(TOO_MA
 
 const delay = (ms: number): Promise<void> => new Promise(res => setTimeout(res, ms));
 
-const escapeHtml = (unsafe: string): string => unsafe.replace(/`/g, '*');
+const escapeHtml = (unsafe: string): string =>
+  unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 type UseChatbotResult = {
   alertMessage: AlertMessage | undefined;
