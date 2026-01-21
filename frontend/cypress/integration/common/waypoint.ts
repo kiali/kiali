@@ -201,7 +201,7 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
     'baseUrl'
   )}/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
   if (cluster) {
-    requestUrl += `&cluster=${cluster}`;
+    requestUrl += `&clusterName=${cluster}`;
   }
 
   const wait = (retryCount: number, lastResponseSummary = ''): void => {
