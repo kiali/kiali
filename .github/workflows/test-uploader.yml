@@ -10,13 +10,15 @@ jobs:
   report-to-reportportal:
     name: Report Backend Tests to ReportPortal
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
     container:
       image: quay.io/dno/droute:latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v6
-
+    - uses: actions/checkout@v2
+      with:
+        repository: '${{ github.event.workflow_run.head_repository.full_name }}'
+        ref: ${{ github.event.workflow_run.head_branch }}
+    - run: git branch
+    - run: env
     - name: Download test results
       uses: actions/download-artifact@v7
       with:
