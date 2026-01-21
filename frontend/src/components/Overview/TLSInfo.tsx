@@ -71,8 +71,9 @@ class TLSInfoComponent extends React.Component<Props> {
               position={TooltipPosition.right}
               content={
                 <div style={{ textAlign: 'left' }}>
-                  The meshConfig.meshMTLS.minProtocolVersion field specifies the minimum TLS version for the TLS
-                  connections among Istio workloads. N/A if it was not set.
+                  The minimum TLS version for connections among Istio workloads. This is read from
+                  meshConfig.meshMTLS.minProtocolVersion or the istiod TLS_MIN_PROTOCOL_VERSION environment variable.
+                  N/A if not configured.
                 </div>
               }
             >
