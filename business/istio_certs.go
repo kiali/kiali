@@ -1,6 +1,7 @@
 package business
 
 import (
+	"context"
 	"sort"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -160,9 +162,14 @@ func (ics *IstioCertsService) getChironCertificates(certsConfig []certConfig) ([
 	return certs, nil
 }
 
+// GetTlsMinVersion returns the minimum TLS protocol version configured for the mesh.
+// It first tries to read from the Istio ConfigMap (upstream Istio method).
+// If not found, it falls back to reading the TLS_MIN_PROTOCOL_VERSION env var
+// from the istiod deployment (Maistra/OSSM method).
 func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
 	cfg := config.Get()
 
+	// First, try to get the value from the ConfigMap (upstream Istio method)
 	istioConfigMap, err := ics.k8s.GetConfigMap(cfg.IstioNamespace, IstioConfigMapName(*cfg, ""))
 	if err != nil {
 		return "N/A", err
@@ -174,8 +181,40 @@ func (ics *IstioCertsService) GetTlsMinVersion() (string, error) {
 		return "N/A", err
 	}
 
-	if mtlsMinV.MeshMTLS.MTLSMinVersion == "" {
-		return "N/A", nil
+	if mtlsMinV.MeshMTLS.MTLSMinVersion != "" {
+		return mtlsMinV.MeshMTLS.MTLSMinVersion, nil
 	}
-	return mtlsMinV.MeshMTLS.MTLSMinVersion, nil
+
+	// Fallback: try to get from mesh data which includes istiod env vars (Maistra/OSSM method)
+	// Use a helper to safely attempt this without panicking if infrastructure isn't available.
+	if version := ics.getTlsMinVersionFromMesh(); version != "" {
+		return version, nil
+	}
+
+	return "N/A", nil
+}
+
+// getTlsMinVersionFromMesh attempts to get the TLS min version from mesh data.
+// Returns empty string if unable to retrieve the value (handles panics gracefully).
+func (ics *IstioCertsService) getTlsMinVersionFromMesh() (version string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debugf("Recovered from panic while getting TLS min version from mesh: %v", r)
+			version = ""
+		}
+	}()
+
+	mesh, err := ics.businessLayer.Mesh.GetMesh(context.TODO())
+	if err != nil {
+		log.Debugf("Unable to get mesh data for TLS min version: %v", err)
+		return ""
+	}
+
+	for _, cp := range mesh.ControlPlanes {
+		if cp.Config.MeshMTLS.MinProtocolVersion != "" {
+			return cp.Config.MeshMTLS.MinProtocolVersion
+		}
+	}
+
+	return ""
 }
