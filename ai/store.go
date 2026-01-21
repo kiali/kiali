@@ -273,7 +273,7 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 	}
 
 	return &AiStoreConfig{
-		Enabled:          cfg.ChatAI.StoreConfig.Enabled,
+		Enabled:          cfg.ChatAI.Enabled && cfg.ChatAI.StoreConfig.Enabled,
 		MaxCacheMemoryMB: maxMemory,
 		ReduceWithAI:     cfg.ChatAI.StoreConfig.ReduceWithAI,
 		ReduceThreshold:  cfg.ChatAI.StoreConfig.ReduceThreshold,
