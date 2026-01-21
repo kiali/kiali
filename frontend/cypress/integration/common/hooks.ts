@@ -259,3 +259,50 @@ After(() => {
     });
   }
 });
+
+After({ tags: '@graph-cache-metrics' }, () => {
+  const primaryResource = (Cypress.env('KIALI_PRIMARY_RESOURCE') as string | undefined) ?? '';
+  const prev = (Cypress.env('GRAPH_CACHE_PREV') as string | undefined) ?? '';
+  const prevBool = prev === 'true';
+
+  const restartKiali = (): void => {
+    cy.exec(
+      'kubectl rollout restart deployment/kiali -n istio-system && kubectl rollout status deployment/kiali -n istio-system --timeout=180s',
+      { timeout: 300000, failOnNonZeroExit: false }
+    );
+  };
+
+  if (primaryResource) {
+    const parts = primaryResource.split('/');
+    const crNamespace = parts[0];
+    const crName = parts[1];
+
+    cy.exec(
+      `kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '{"spec":{"kiali_internal":{"graph_cache":{"enabled":${prevBool}}}}}'`,
+      { failOnNonZeroExit: false }
+    ).then(() => restartKiali());
+    return;
+  }
+
+  // Helm installation - restore via ConfigMap.
+  // If the previous value was empty (not set), delete the enabled key; otherwise set it back.
+  cy.exec(
+    'kubectl get configmap kiali -n istio-system -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml',
+    {
+      failOnNonZeroExit: false
+    }
+  ).then(() => {
+    if (prev === '') {
+      cy.exec("yq -i 'del(.kiali_internal.graph_cache.enabled)' /tmp/kiali-config.yaml", { failOnNonZeroExit: false });
+    } else {
+      cy.exec(`yq -i '.kiali_internal.graph_cache.enabled = ${prevBool}' /tmp/kiali-config.yaml`, {
+        failOnNonZeroExit: false
+      });
+    }
+
+    cy.exec(
+      'kubectl create configmap kiali -n istio-system --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -',
+      { failOnNonZeroExit: false }
+    ).then(() => restartKiali());
+  });
+});

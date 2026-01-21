@@ -585,3 +585,156 @@ Then('the {string} service {string} exists', (serviceName: string, action: strin
       }
     });
 });
+
+type GraphCacheMetrics = {
+  graphCacheEvictions: number;
+  graphCacheHits: number;
+  graphCacheMisses: number;
+};
+
+Given('graph cache is enabled', () => {
+  // Enable graph cache just for this scenario.
+  // We support both operator (Kiali CR exists) and Helm (only ConfigMap) installations.
+  // Store previous value in Cypress env for cleanup in an After hook.
+
+  const restartKiali = (): void => {
+    cy.exec(
+      'kubectl rollout restart deployment/kiali -n istio-system && kubectl rollout status deployment/kiali -n istio-system --timeout=180s',
+      { timeout: 300000 }
+    );
+  };
+
+  cy.exec(
+    // If Kiali is managed by the operator, the deployment will have the primary-resource annotation like "kiali-operator/kiali".
+    'kubectl get deployment/kiali -n istio-system -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"',
+    { failOnNonZeroExit: false }
+  ).then(result => {
+    const primaryResource = result.stdout.trim();
+
+    if (primaryResource) {
+      const parts = primaryResource.split('/');
+      const crNamespace = parts[0];
+      const crName = parts[1];
+      Cypress.env('KIALI_PRIMARY_RESOURCE', primaryResource);
+
+      cy.exec(
+        `kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.kiali_internal.graph_cache.enabled}"`,
+        { failOnNonZeroExit: false }
+      ).then(r => {
+        const prev = r.stdout.trim();
+        Cypress.env('GRAPH_CACHE_PREV', prev);
+      });
+
+      cy.exec(
+        `kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '{"spec":{"kiali_internal":{"graph_cache":{"enabled":true}}}}'`
+      ).then(() => restartKiali());
+
+      return;
+    }
+
+    // Helm installation - update the Kiali ConfigMap.
+    Cypress.env('KIALI_PRIMARY_RESOURCE', '');
+
+    // Dump current config.yaml
+    cy.exec(
+      'kubectl get configmap kiali -n istio-system -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml'
+    );
+
+    // Capture previous value (if missing, this returns empty string)
+    cy.exec('yq \'.kiali_internal.graph_cache.enabled // ""\' /tmp/kiali-config.yaml', {
+      failOnNonZeroExit: false
+    }).then(r => {
+      Cypress.env('GRAPH_CACHE_PREV', r.stdout.trim());
+    });
+
+    // Enable and apply updated configmap
+    cy.exec("yq -i '.kiali_internal.graph_cache.enabled = true' /tmp/kiali-config.yaml");
+    cy.exec(
+      'kubectl create configmap kiali -n istio-system --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -'
+    ).then(() => restartKiali());
+  });
+});
+
+Given('graph cache metrics are recorded', () => {
+  cy.request('api/test/metrics/graph/cache').then(resp => {
+    expect(resp.status).to.eq(200);
+    const before = resp.body as GraphCacheMetrics;
+    cy.wrap(before, { log: false }).as('graphCacheMetricsBefore');
+    cy.log(`graph cache metrics (before): ${JSON.stringify(before)}`);
+  });
+});
+
+When(
+  'user opens the graph page for {string} with refresh {int}ms and refreshes it {int} times',
+  (namespace: string, refreshMs: number, refreshTimes: number) => {
+    cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
+    cy.visit({
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+    });
+
+    cy.url().then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphNamespaces');
+      }
+    });
+    ensureKialiFinishedLoading();
+
+    for (let i = 0; i < refreshTimes; i++) {
+      // Click the Refresh button in the time range toolbar (no full page reload).
+      cy.get('[data-test="refresh-button"]').first().click();
+      cy.url().then(url => {
+        if (!url.includes('/ossmconsole/')) {
+          cy.wait('@graphNamespaces');
+        }
+      });
+      ensureKialiFinishedLoading();
+    }
+  }
+);
+
+// Backwards-compatible alias (feature wording says "reloads", but we don't do a full page reload).
+When(
+  'user opens the graph page for {string} with refresh {int}ms and reloads it {int} times',
+  (namespace: string, refreshMs: number, refreshTimes: number) => {
+    cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
+    cy.visit({
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+    });
+
+    cy.url().then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphNamespaces');
+      }
+    });
+    ensureKialiFinishedLoading();
+
+    for (let i = 0; i < refreshTimes; i++) {
+      cy.get('[data-test="refresh-button"]').first().click();
+      cy.url().then(url => {
+        if (!url.includes('/ossmconsole/')) {
+          cy.wait('@graphNamespaces');
+        }
+      });
+      ensureKialiFinishedLoading();
+    }
+  }
+);
+
+Then('graph cache metrics should show at least {int} miss and {int} hits', (minMisses: number, minHits: number) => {
+  cy.get('@graphCacheMetricsBefore').then(beforeObj => {
+    const before = beforeObj as GraphCacheMetrics;
+
+    cy.request('api/test/metrics/graph/cache').then(resp => {
+      expect(resp.status).to.eq(200);
+      const after = resp.body as GraphCacheMetrics;
+
+      cy.log(`graph cache metrics (before): ${JSON.stringify(before)}`);
+      cy.log(`graph cache metrics (after): ${JSON.stringify(after)}`);
+
+      expect(after.graphCacheMisses).to.be.at.least(before.graphCacheMisses + minMisses);
+      expect(after.graphCacheHits).to.be.at.least(before.graphCacheHits + minHits);
+    });
+  });
+});
