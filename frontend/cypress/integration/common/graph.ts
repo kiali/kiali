@@ -337,7 +337,7 @@ Then('there is traffic from cluster {string} and cluster {string}', (cluster1: s
       const { edges, nodes } = elems(controller);
 
       // Only consider edges that actually have traffic.
-      const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic !== undefined);
+      const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic === true);
 
       const nodeById = new Map(nodes.map(n => [n.getId(), n]));
       const clustersWithTraffic = new Set<string>();
