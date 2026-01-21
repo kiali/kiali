@@ -28,6 +28,11 @@ func TestGraphCache(t *testing.T) {
 	// Enable graph cache for testing.
 	conf.KialiInternal.GraphCache.Enabled = true
 
+	// This is to avoid Graph cache bypassed (missing sessionID) [enabled=true, refreshInterval=1m0s, queryTimeProvided=false]
+	// In OpenShift
+	// getSessionID Returns empty string for 3rd-party auth (e.g., OpenShift Bearer header/oauth_token)
+	conf.Auth.Strategy = "anonymous"
+
 	t.Cleanup(func() {
 		log.Debugf("Updating kiali config to original state")
 		require.NoError(instance.UpdateConfig(ctx, &originalConf))
