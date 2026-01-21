@@ -121,7 +121,7 @@ func loadDocuments(domain string) ([]Document, error) {
 	var documents []Document
 
 	// Add Kiali documents if domain is empty, "kiali", or "all"
-	if domain == "kiali" || domain == "all" {
+	if domain == "kiali" || domain == "all" || domain == "" {
 		for _, doc := range docsByDomain.Kiali {
 			doc.Domain = "kiali"
 			documents = append(documents, doc)
@@ -129,7 +129,7 @@ func loadDocuments(domain string) ([]Document, error) {
 	}
 
 	// Add Istio documents if domain is empty, "istio", or "all"
-	if domain == "istio" || domain == "all" {
+	if domain == "istio" || domain == "all" || domain == "" {
 		for _, doc := range docsByDomain.Istio {
 			doc.Domain = "istio"
 			documents = append(documents, doc)

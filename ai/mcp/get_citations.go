@@ -39,7 +39,7 @@ func (t CitationsTool) Definition() openai.Tool {
 			"domain": {
 				Type:        jsonschema.String,
 				Description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains.",
-				Enum:        []string{"kiali", "istio", "all"},
+				Enum:        []string{"kiali", "istio", "all", ""},
 			},
 		},
 	}
