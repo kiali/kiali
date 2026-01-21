@@ -14,7 +14,7 @@ import { ChatMessage } from './ChatMessage/ChatMessage';
 
 type ChatBotContentProps = {
   alertMessage?: AlertMessage;
-  botMessage: (response: ChatResponse | string, _?: string) => ExtendedMessage;
+  botMessage: (response: ChatResponse | string) => ExtendedMessage;
   context: any;
   displayMode: ChatbotDisplayMode;
   handleSend: (query: string | number, context: any, title?: string) => void;

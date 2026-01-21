@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import axios from 'axios';
 import {
   AlertMessage,
@@ -25,7 +25,7 @@ import { saveConversation } from 'utils/ConversationStorage';
 
 const botName = document.getElementById('bot_name')?.innerText ?? KIALI_PRODUCT_NAME;
 
-const getTimestamp = () => {
+const getTimestamp = (): string => {
   const date = new Date();
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 };
@@ -39,19 +39,36 @@ export const fixedMessage = (content: string): ExtendedMessage => ({
   referenced_documents: []
 });
 
-const isTimeoutError = (e: any) => axios.isAxiosError(e) && e.message === `timeout of ${API_TIMEOUT}ms exceeded`;
+const isTimeoutError = (e: any): boolean =>
+  axios.isAxiosError(e) && e.message === `timeout of ${API_TIMEOUT}ms exceeded`;
 
-const isTooManyRequestsError = (e: any) => axios.isAxiosError(e) && e.response?.status === 429;
+const isTooManyRequestsError = (e: any): boolean => axios.isAxiosError(e) && e.response?.status === 429;
 
 export const timeoutMessage = (): ExtendedMessage => fixedMessage(TIMEOUT_MSG);
 
 export const tooManyRequestsMessage = (): ExtendedMessage => fixedMessage(TOO_MANY_REQUESTS_MSG);
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+const delay = (ms: number): Promise<void> => new Promise(res => setTimeout(res, ms));
 
 const escapeHtml = (unsafe: string): string => unsafe.replace(/`/g, '*');
 
-export const useChatbot = (userName: string, provider: ProviderAI, model: ModelAI) => {
+type UseChatbotResult = {
+  alertMessage: AlertMessage | undefined;
+  botMessage: (response: ChatResponse | string) => ExtendedMessage;
+  conversationId: string | null | undefined;
+  handleSend: (query: string | number, context: ContextRequest, prompt?: string) => Promise<void>;
+  isLoading: boolean;
+  messages: ExtendedMessage[];
+  selectedModel: ModelAI;
+  selectedProvider: ProviderAI;
+  setAlertMessage: Dispatch<SetStateAction<AlertMessage | undefined>>;
+  setConversationId: Dispatch<SetStateAction<string | null | undefined>>;
+  setMessages: Dispatch<SetStateAction<ExtendedMessage[]>>;
+  setSelectedModel: Dispatch<SetStateAction<ModelAI>>;
+  setSelectedProvider: Dispatch<SetStateAction<ProviderAI>>;
+};
+
+export const useChatbot = (userName: string, provider: ProviderAI, model: ModelAI): UseChatbotResult => {
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<ModelAI>(model);
@@ -59,7 +76,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
   const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>(INITIAL_NOTICE);
   const [conversationId, setConversationId] = useState<string | null | undefined>(undefined);
 
-  const addMessage = (newMessage: ExtendedMessage, addAfter?: ExtendedMessage) => {
+  const addMessage = (newMessage: ExtendedMessage, addAfter?: ExtendedMessage): void => {
     setMessages((msgs: ExtendedMessage[]) => {
       // Clear actions from all previous messages while preserving object references for comparison
       const clearedMsgs = msgs.map(msg => {
@@ -87,7 +104,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     });
   };
 
-  const show429Message = async () => {
+  const show429Message = async (): Promise<void> => {
     // Insert a 3-sec delay before showing the "Too Many Request" message
     // for reducing the number of chat requests when the server is busy.
     await delay(3000);
@@ -96,7 +113,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     };
     addMessage(newBotMessage);
   };
-  const botMessage = (response: ChatResponse | string, _ = ''): ExtendedMessage => {
+  const botMessage = (response: ChatResponse | string): ExtendedMessage => {
     const message: ExtendedMessage = {
       role: 'bot',
       content: typeof response === 'object' ? escapeHtml(response.answer) : escapeHtml(response),
@@ -114,7 +131,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     if (g.crypto && typeof g.crypto.randomUUID === 'function') {
       return g.crypto.randomUUID();
     }
-    const random = () => Math.random().toString(16).slice(2);
+    const random = (): string => Math.random().toString(16).slice(2);
     return `${Date.now().toString(16)}-${random()}-${random()}`;
   };
 
@@ -122,7 +139,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     query: string | number,
     context: ContextRequest,
     prompt: string | undefined = undefined
-  ) => {
+  ): Promise<void> => {
     const userMessage: ExtendedMessage = {
       role: 'user',
       content: prompt ? prompt : query.toString(),
@@ -153,11 +170,13 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
         const chatResponse: ChatResponse = resp.data;
         const referenced_documents = chatResponse.citations;
 
-        const newBotMessage: any = botMessage(chatResponse, query.toString());
+        const newBotMessage: any = botMessage(chatResponse);
         newBotMessage.referenced_documents = referenced_documents;
         if (chatResponse.actions && chatResponse.actions.length > 0) {
-          if (localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true' 
-          && chatResponse.actions.filter(action => action.kind === 'navigation').length === 1) {
+          if (
+            localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true' &&
+            chatResponse.actions.filter(action => action.kind === 'navigation').length === 1
+          ) {
             router.navigate(chatResponse.actions.filter(action => action.kind === 'navigation')[0].payload);
           } else {
             newBotMessage.actions = chatResponse.actions;
@@ -172,13 +191,17 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
           variant: 'danger'
         });
       }
-    } catch (e: any) {
+    } catch (e) {
       if (isTimeoutError(e)) {
         addMessage(timeoutMessage());
       } else if (isTooManyRequestsError(e)) {
         await show429Message();
       } else {
-        const errorMessage = e?.response?.data?.error || e?.message || String(e);
+        const errorMessage = axios.isAxiosError(e)
+          ? e.response?.data?.error || e.message
+          : e instanceof Error
+          ? e.message
+          : String(e);
         setAlertMessage({
           title: 'Error',
           message: `An unexpected error occurred: ${errorMessage}`,
