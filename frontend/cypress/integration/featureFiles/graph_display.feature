@@ -414,6 +414,7 @@ Feature: Kiali Graph page - Display menu
 
   @bookinfo-app
   @core-1
+  @skip-ossmc
   Scenario: Graph cache metrics increase across repeated graph API requests
     Given graph cache is enabled
     And graph cache metrics are recorded
