@@ -260,7 +260,15 @@ const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
 
 const namespacesList: Resource = {
   name: 'namespaces',
-  columns: [nsItemNamespaces, typeNamespaces, namespacesHealth, tlsStatusNamespaces, istioConfiguration, labels],
+  columns: [
+    nsItemNamespaces,
+    typeNamespaces,
+    cluster,
+    namespacesHealth,
+    tlsStatusNamespaces,
+    istioConfiguration,
+    labels
+  ],
   badge: PFBadges.Namespace
 };
 
