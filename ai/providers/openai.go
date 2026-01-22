@@ -45,8 +45,7 @@ func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, mod
 	}, nil
 }
 
-func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHandlers []mcp.ToolHandler,
-	business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
+func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
 	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
 	if req.ConversationID == "" {
 		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
@@ -99,9 +98,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, toolHand
 	})
 
 	// Prepare tool definitions and lookup
-	toolDefs := make([]openai.Tool, 0, len(toolHandlers))
-	handlerByName := make(map[string]mcp.ToolHandler, len(toolHandlers))
-	for _, h := range toolHandlers {
+	toolDefs := make([]openai.Tool, 0, len(mcp.DefaultToolHandlers))
+	handlerByName := make(map[string]mcp.ToolHandler, len(mcp.DefaultToolHandlers))
+	for _, h := range mcp.DefaultToolHandlers {
 		def := h.Definition()
 		toolDefs = append(toolDefs, def)
 		handlerByName[def.Function.Name] = h

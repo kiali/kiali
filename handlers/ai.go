@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/ai"
-	"github.com/kiali/kiali/ai/mcp"
 	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -71,18 +70,10 @@ func ChatAI(
 			return
 		}
 
-		toolHandlers := []mcp.ToolHandler{
-			mcp.NewMeshGraphTool(),
-			mcp.NewResourceDetailTool(),
-			mcp.NewManageIstioConfigTool(),
-			mcp.NewActionUITool(),
-			mcp.NewCitationsTool(),
-		}
-
 		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
 		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
 		defer requestTimer.ObserveDuration()
-		resp, code := provider.SendChat(r, req, toolHandlers, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
+		resp, code := provider.SendChat(r, req, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
 
 		if resp == nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI response is empty")

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
@@ -20,8 +19,7 @@ import (
 // AIProvider exposes a minimal interface to send chat requests.
 type AIProvider interface {
 	SendChat(r *http.Request,
-		req types.AIRequest,
-		toolHandlers []mcp.ToolHandler, business *business.Layer, prom prometheus.ClientInterface,
+		req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface,
 		clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int)
 }
 

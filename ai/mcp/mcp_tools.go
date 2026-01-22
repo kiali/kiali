@@ -15,6 +15,14 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+var DefaultToolHandlers = []ToolHandler{
+	NewMeshGraphTool(),
+	NewResourceDetailTool(),
+	NewManageIstioConfigTool(),
+	NewActionUITool(),
+	NewCitationsTool(),
+}
+
 // ToolHandler defines the contract for a tool: its definition and how to execute it.
 type ToolHandler interface {
 	Definition() openai.Tool
