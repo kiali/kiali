@@ -265,9 +265,13 @@ After({ tags: '@graph-cache-metrics' }, () => {
   const prev = (Cypress.env('GRAPH_CACHE_PREV') as string | undefined) ?? '';
   const prevBool = prev === 'true';
 
+  const kialiDeploymentName = (Cypress.env('KIALI_DEPLOYMENT_NAME') as string | undefined) ?? 'kiali';
+  const kialiDeploymentNamespace = (Cypress.env('KIALI_DEPLOYMENT_NAMESPACE') as string | undefined) ?? 'istio-system';
+  const kialiConfigMapName = (Cypress.env('KIALI_CONFIGMAP_NAME') as string | undefined) ?? 'kiali';
+
   const restartKiali = (): void => {
     cy.exec(
-      'kubectl rollout restart deployment/kiali -n istio-system && kubectl rollout status deployment/kiali -n istio-system --timeout=180s',
+      `kubectl rollout restart deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} && kubectl rollout status deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} --timeout=180s`,
       { timeout: 300000, failOnNonZeroExit: false }
     );
   };
@@ -287,7 +291,7 @@ After({ tags: '@graph-cache-metrics' }, () => {
   // Helm installation - restore via ConfigMap.
   // If the previous value was empty (not set), delete the enabled key; otherwise set it back.
   cy.exec(
-    'kubectl get configmap kiali -n istio-system -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml',
+    `kubectl get configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`,
     {
       failOnNonZeroExit: false
     }
@@ -301,7 +305,7 @@ After({ tags: '@graph-cache-metrics' }, () => {
     }
 
     cy.exec(
-      'kubectl create configmap kiali -n istio-system --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -',
+      `kubectl create configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`,
       { failOnNonZeroExit: false }
     ).then(() => restartKiali());
   });
