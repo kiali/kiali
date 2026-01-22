@@ -413,7 +413,7 @@ Feature: Kiali Graph page - Display menu
     And user sees graph workloads from both clusters
 
   @bookinfo-app
-  @core-2
+  @core-1
   Scenario: Graph cache metrics increase across repeated graph API requests
     Given graph cache is enabled
     And graph cache metrics are recorded
