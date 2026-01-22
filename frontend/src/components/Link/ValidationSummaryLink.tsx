@@ -32,7 +32,7 @@ export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) =>
         namespaces={[props.namespace]}
         warnings={props.warnings > 0}
         errors={props.errors > 0}
-        issues={props.warnings || props.errors ? props.objectCount : undefined}
+        issues={props.warnings || props.errors ? (props.warnings + props.errors) : undefined}
       >
         {props.children}
       </IstioConfigListLink>
