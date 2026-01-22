@@ -52,10 +52,6 @@ const rendererInfoStyle = kialiStyle({
   marginRight: '0',
   marginTop: '0'
 });
-const workloadInfoStyle = kialiStyle({
-  verticalAlign: '-0.125rem'
-});
-// Links
 
 const getLink = (item: TResource, config: Resource, query?: string): string => {
   let url = config.name === 'istio' ? getIstioLink(item) : `/namespaces/${item.namespace}/${config.name}/${item.name}`;
@@ -117,11 +113,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
       <ul>
         {isWorkload && (
           <li>
-            <WorkloadConfigValidation
-              namespace={item.namespace}
-              validations={item.validations}
-              className={classes(workloadInfoStyle)}
-            />
+            <WorkloadConfigValidation namespace={item.namespace} validations={item.validations} />
           </li>
         )}
 

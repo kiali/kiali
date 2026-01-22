@@ -22,8 +22,7 @@ const iconStyle = kialiStyle({
 });
 
 const healthIconStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  verticalAlign: '-0.075rem'
+  marginLeft: '0.5rem'
 });
 
 export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescriptionProps) => {

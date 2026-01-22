@@ -71,7 +71,8 @@ const rightToolbarStyle = kialiStyle({
 });
 
 const timeToolbarStyle = kialiStyle({
-  textAlign: 'right'
+  display: 'flex',
+  justifyContent: 'end'
 });
 
 const refreshStyle = kialiStyle({

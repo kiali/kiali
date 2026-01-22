@@ -20,7 +20,6 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
-import { classes } from 'typestyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 import { getAppLabelName } from 'config/ServerConfig';
 
@@ -54,13 +53,8 @@ const blockElementStyle = kialiStyle({
   marginTop: '0.125rem'
 });
 
-const workloadInfoStyle = kialiStyle({
-  verticalAlign: '-0.125rem'
-});
-
 const healthIconStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  verticalAlign: '-0.075rem'
+  marginLeft: '0.5rem'
 });
 
 const additionalItemStyle = kialiStyle({
@@ -186,7 +180,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             position={TooltipPosition.right}
             content={<div style={{ textAlign: 'left' }}>{workloadProperties}</div>}
           >
-            <KialiIcon.Info className={classes(infoStyle, workloadInfoStyle)} />
+            <KialiIcon.Info className={infoStyle} />
           </Tooltip>
 
           <span className={healthIconStyle}>
@@ -197,7 +191,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             <MissingSidecar
               dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${props.namespace}-namespace`}
               tooltip={true}
-              className={classes(infoStyle, workloadInfoStyle)}
+              className={infoStyle}
               text=""
             />
           )}
@@ -239,7 +233,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
         <WorkloadConfigValidation
           validations={workload.validations!['workload'][validationKey(workload.name, workload.namespace)]}
           namespace={props.namespace}
-          className={classes(workloadInfoStyle, blockElementStyle)}
+          className={blockElementStyle}
           iconSize={'md'}
           detailed={true}
         />

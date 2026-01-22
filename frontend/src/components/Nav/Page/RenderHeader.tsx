@@ -17,15 +17,15 @@ const breadcrumbStyle = kialiStyle({
 });
 
 const rightToolbarStyle = kialiStyle({
-  marginLeft: 'auto'
+  marginLeft: 'auto',
+  display: 'flex',
+  gap: '0.5rem'
 });
 
 const actionsToolbarStyle = kialiStyle({
-  float: 'right',
-  padding: '0.75rem 1.25rem 0.85rem 0.25rem',
-  marginTop: '-1rem',
-  backgroundColor: PFColors.BackgroundColor100,
-  borderBottom: `1px solid ${PFColors.BorderColor100}`
+  position: 'absolute',
+  right: '3rem',
+  zIndex: 1
 });
 
 type ReduxProps = {

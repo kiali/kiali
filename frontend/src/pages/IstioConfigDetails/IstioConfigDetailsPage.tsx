@@ -55,10 +55,6 @@ import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { setAIContext } from 'helpers/ChatAI';
 
-const rightToolbarStyle = kialiStyle({
-  zIndex: 500
-});
-
 const editorDrawer = kialiStyle({
   margin: 0
 });
@@ -625,14 +621,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const istioObject = getIstioObject(this.state.istioObjectDetails);
 
     return (
-      <span className={rightToolbarStyle}>
-        <IstioActionDropdown
-          objectKind={istioObject ? istioObject.kind : undefined}
-          objectName={this.props.istioConfigId.objectName}
-          canDelete={canDelete}
-          onDelete={this.onDelete}
-        />
-      </span>
+      <IstioActionDropdown
+        objectKind={istioObject ? istioObject.kind : undefined}
+        objectName={this.props.istioConfigId.objectName}
+        canDelete={canDelete}
+        onDelete={this.onDelete}
+      />
     );
   };
 
