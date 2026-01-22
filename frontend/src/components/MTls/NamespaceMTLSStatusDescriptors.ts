@@ -40,7 +40,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.PARTIALLY,
     {
-      message: 'mTLS is partially enabled for this namespace',
+      message: 'mTLS is partially enabled for this namespace. Connection can be either plaintext or mTLS tunnel',
       color: 'grey',
       name: 'Permissive',
       icon: MTLSIconTypes.LOCK_OPEN,
@@ -60,7 +60,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.UNSET,
     {
-      message: 'mTLS is not modified by this namespace. Defaults to Mesh mTLS',
+      message: 'Inherit from parent, if has one. Otherwise treated as PERMISSIVE',
       color: 'black',
       name: 'Unset',
       icon: MTLSIconTypes.LOCK_OPEN,
