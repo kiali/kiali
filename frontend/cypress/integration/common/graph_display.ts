@@ -412,7 +412,7 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
   cy.get('div#graph-display-menu')
     .find(`input#${option}`)
-    .should(optionState.replaceAll(' ', '.'))
+    .should(optionState.replace(/ /g, '.'))
     .and(`be.${checkState}`);
 });
 
@@ -474,7 +474,7 @@ Then(
   (namespace: string) => {
     cy.get('#graph-side-panel')
       .find(`#ns-${namespace}`)
-      .within($ns => {
+      .within(() => {
         // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
         cy.get(
           ':is([data-test="icon-correct-validation"], [data-test="icon-warning-validation"], [data-test="icon-error-validation"])'
@@ -482,14 +482,16 @@ Then(
       });
 
     cy.get('@istioConfigRequest-east').then(resp => {
+      const response = (resp as unknown) as Cypress.Response<any>;
       let totalObjectsEast = 0;
-      Object.keys(resp.body.resources).forEach(resourceKey => {
-        totalObjectsEast += resp.body.resources[resourceKey].length;
+      Object.keys(response.body.resources).forEach(resourceKey => {
+        totalObjectsEast += response.body.resources[resourceKey].length;
       });
       cy.get('@istioConfigRequest-west').then(resp => {
+        const response = (resp as unknown) as Cypress.Response<any>;
         let totalObjectsWest = 0;
-        Object.keys(resp.body.resources).forEach(resourceKey => {
-          totalObjectsEast += resp.body.resources[resourceKey].length;
+        Object.keys(response.body.resources).forEach(resourceKey => {
+          totalObjectsWest += response.body.resources[resourceKey].length;
         });
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
@@ -625,7 +627,7 @@ const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> => {
       const resolveConfigMap = (namespace: string, deploymentName: string): Cypress.Chainable<KialiRuntimeInfo> => {
         return cy
           .exec(
-            `kubectl get deployment ${deploymentName} -n ${namespace} -o jsonpath="{range .spec.template.spec.volumes[?(@.configMap)]}{.configMap.name}{\'\\n\'}{end}"`,
+            `kubectl get deployment ${deploymentName} -n ${namespace} -o jsonpath="{range .spec.template.spec.volumes[?(@.configMap)]}{.configMap.name}{'\\n'}{end}"`,
             { failOnNonZeroExit: false, log: false }
           )
           .then(volRes => {
@@ -668,7 +670,7 @@ const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> => {
         // No labeled deployment found. As a fallback, look for a deployment literally named "kiali" in any namespace.
         return cy
           .exec(
-            'kubectl get deployment -A -o jsonpath="{range .items[?(@.metadata.name==\\"kiali\\")]}{.metadata.namespace}{\'/\'}{.metadata.name}{\'\\n\'}{end}"',
+            `kubectl get deployment -A -o jsonpath="{range .items[?(@.metadata.name==\\"kiali\\")]}{.metadata.namespace}{'/'}{.metadata.name}{'\\n'}{end}"`,
             { failOnNonZeroExit: false, log: false }
           )
           .then(fallbackRes => {
@@ -840,7 +842,7 @@ When(
 
 Then('graph cache metrics should show at least {int} miss and {int} hits', (minMisses: number, minHits: number) => {
   cy.get('@graphCacheMetricsBefore').then(beforeObj => {
-    const before = beforeObj as GraphCacheMetrics;
+    const before = (beforeObj as unknown) as GraphCacheMetrics;
 
     cy.request('api/test/metrics/graph/cache').then(resp => {
       expect(resp.status).to.eq(200);
