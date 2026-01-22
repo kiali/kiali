@@ -619,6 +619,7 @@ Valid command line arguments:
   -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
   -te|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
+  -w|--waypoint <bool>: If "true", configure waypoint for the bookinfo namespace (Default: false; only valid when --ambient is true)
   -h|--help: this message
 HELPMSG
       exit 1

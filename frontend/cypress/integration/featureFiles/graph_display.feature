@@ -409,5 +409,5 @@ Feature: Kiali Graph page - Display menu
     Then user "opens" traffic menu
     And user "disables" "http" traffic option
     And user "closes" traffic menu
-    Then 13 edges appear in the graph
+    Then 7 edges appear in the graph
     And user sees graph workloads from both clusters

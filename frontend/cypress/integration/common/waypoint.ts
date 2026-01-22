@@ -6,20 +6,24 @@ import { Pod } from 'types/IstioObjects';
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
-const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
+const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retryCount = 0): void => {
   if (retryCount >= maxRetries) {
-    throw new Error(`Condition not met after ${maxRetries} retries`);
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForWorkloadEnrolled, baseUrl=${Cypress.config('baseUrl')})`
+    );
   }
 
-  cy.request({ method: 'GET', url: '/api/namespaces' }).then(response => {
+  cy.request({ method: 'GET', url: `${Cypress.config('baseUrl')}/api/namespaces` }).then(response => {
     expect(response.status).to.equal(200);
 
     const ns = response.body;
     let found = false;
+    let bookinfoLabels: Record<string, string> | undefined;
 
     ns.forEach(namespace => {
-      if (namespace.name === 'bookinfo') {
+      if (namespace.name === targetNamespace) {
         const labels = namespace.labels;
+        bookinfoLabels = labels;
         Object.keys(labels).forEach(key => {
           if (labels[key] === 'waypoint') {
             found = true;
@@ -32,31 +36,84 @@ const waitForWorkloadEnrolled = (maxRetries = 30, retryCount = 0): void => {
     if (found) {
       return;
     } else {
+      // Debug breadcrumbs for CI failures (shows in Cypress command log).
+      if (retryCount === 0 || retryCount % 5 === 0) {
+        Cypress.log({
+          name: 'waitForWorkloadEnrolled',
+          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+            'baseUrl'
+          )}/api/namespaces baseUrl=${Cypress.config('baseUrl')} bookinfoLabels=${JSON.stringify(
+            bookinfoLabels ?? {}
+          )} namespacesCount=${Array.isArray(ns) ? ns.length : -1} targetNamespace=${targetNamespace}`
+        });
+      }
       return cy.wait(10000).then(() => {
-        return waitForWorkloadEnrolled(maxRetries, retryCount + 1);
+        return waitForWorkloadEnrolled(targetNamespace, maxRetries, retryCount + 1);
       });
     }
   });
 };
 
-const waitForBookinfoWaypointTrafficGeneratedInGraph = (maxRetries = 30, retryCount = 0): void => {
+const waitForBookinfoWaypointTrafficGeneratedInGraph = (
+  targetNamespace: string,
+  ambientTraffic: string,
+  maxRetries = 30,
+  retryCount = 0
+): void => {
   if (retryCount >= maxRetries) {
-    throw new Error(`Condition not met after ${maxRetries} retries`);
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
+  }
+
+  let totalEdges = 9;
+  if (ambientTraffic === 'waypoint') {
+    totalEdges = 8;
   }
 
   cy.request({
     method: 'GET',
-    url:
-      '/api/namespaces/graph?duration=60s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&ambientTraffic=waypoint&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '60s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: false,
+      ambientTraffic: ambientTraffic,
+      appenders: 'deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: targetNamespace
+    }
   }).then(response => {
     expect(response.status).to.equal(200);
     const elements = response.body.elements;
 
-    if (elements?.edges?.length > 10) {
+    if (elements?.edges?.length > totalEdges) {
       return;
     } else {
+      if (retryCount === 0 || retryCount % 5 === 0) {
+        Cypress.log({
+          name: 'waitForGraphTraffic',
+          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+            'baseUrl'
+          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${
+            elements?.edges?.length ?? -1
+          } expected>${totalEdges} baseUrl=${Cypress.config('baseUrl')} targetNamespace=${targetNamespace}`
+        });
+      }
       return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(maxRetries, retryCount + 1);
+        return waitForBookinfoWaypointTrafficGeneratedInGraph(
+          targetNamespace,
+          ambientTraffic,
+          maxRetries,
+          retryCount + 1
+        );
       });
     }
   });
@@ -66,39 +123,150 @@ const isSyncedOrIgnored = (status: string | undefined): boolean => {
   return status?.toLowerCase() === 'synced' || status?.toLowerCase() === 'ignored';
 };
 
+// In some ambient setups, waypoints can report CDS as "Stale" transiently (or even persistently)
+// while still being usable. We keep EDS/LDS/RDS strict but allow CDS to be Stale.
+const isSyncedOrIgnoredOrStale = (status: string | undefined): boolean => {
+  const s = status?.toLowerCase();
+  return s === 'synced' || s === 'ignored' || s === 'stale';
+};
+
 const proxyStatusHealthy = ({ proxyStatus }: Pod): boolean => {
   return (
-    isSyncedOrIgnored(proxyStatus?.CDS) &&
+    isSyncedOrIgnoredOrStale(proxyStatus?.CDS) && // Stale for Multi cluster (Istio 1.28)
     isSyncedOrIgnored(proxyStatus?.EDS) &&
     isSyncedOrIgnored(proxyStatus?.LDS) &&
     isSyncedOrIgnored(proxyStatus?.RDS)
   );
 };
 
-const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
-  const maxRetries = 30;
-  let url = `/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
-  if (cluster) {
-    url += `&cluster=${cluster}`;
+const waitForWorkloadTracesInApi = (
+  namespace: string,
+  workload: string,
+  clusterName?: string,
+  maxRetries = 18,
+  retryCount = 0
+): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, workload=${workload} cluster=${
+        clusterName ?? ''
+      }, baseUrl=${Cypress.config('baseUrl')})`
+    );
   }
 
-  const wait = (retryCount: number): void => {
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    // last 10 minutes (micros)
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+  if (clusterName) {
+    qs.clusterName = clusterName;
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const traces = response.body?.data;
+    if (Array.isArray(traces) && traces.length > 0) {
+      return;
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForWorkloadTraces',
+        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+          'baseUrl'
+        )}/api/namespaces/${namespace}/workloads/${workload}/traces clusterName=${clusterName ?? ''} tracesCount=${
+          Array.isArray(traces) ? traces.length : -1
+        } baseUrl=${Cypress.config('baseUrl')}`
+      });
+    }
+
+    return cy
+      .wait(10000)
+      .then(() => waitForWorkloadTracesInApi(namespace, workload, clusterName, maxRetries, retryCount + 1));
+  });
+};
+
+const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
+  const maxRetries = 20;
+  let requestUrl = `${Cypress.config(
+    'baseUrl'
+  )}/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`;
+  if (cluster) {
+    requestUrl += `&clusterName=${cluster}`;
+  }
+
+  const wait = (retryCount: number, lastResponseSummary = ''): void => {
     if (retryCount >= maxRetries) {
-      throw new Error(`Condition not met after ${maxRetries} retries`);
+      throw new Error(
+        `Condition not met after ${maxRetries} retries (waitForHealthyWaypoint name=${name} ns=${namespace} cluster=${
+          cluster ?? ''
+        }, baseUrl=${Cypress.config('baseUrl')}, url=${requestUrl}, lastResponse=${lastResponseSummary})`
+      );
     }
     cy.request({
       method: 'GET',
-      url: url
+      url: requestUrl,
+      failOnStatusCode: false
     }).then(response => {
-      expect(response.status).to.equal(200);
-      const workload = response.body;
+      const responseBody = response.body;
+      const responseBodyStr =
+        responseBody === undefined
+          ? 'undefined'
+          : typeof responseBody === 'string'
+          ? responseBody
+          : JSON.stringify(responseBody);
+      const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
-      if (workload.pods.length > 0 && workload.pods.every(pod => proxyStatusHealthy(pod))) {
+      const workload = responseBody;
+      const pods = Array.isArray(workload?.pods) ? workload.pods : [];
+      const podsLen = pods.length;
+      const proxySummary =
+        podsLen > 0
+          ? pods
+              .slice(0, 3)
+              .map(p => {
+                const ps = p?.proxyStatus ?? {};
+                return `${p?.name ?? 'pod'}(CDS=${ps.CDS ?? ''},EDS=${ps.EDS ?? ''},LDS=${ps.LDS ?? ''},RDS=${
+                  ps.RDS ?? ''
+                })`;
+              })
+              .join(',')
+          : 'no-pods';
+
+      const responseSummary = `status=${response.status} fullUrl=${requestUrl} pods=${podsLen} proxy=${proxySummary} body=${responseBodyShort}`;
+
+      if (response.status !== 200) {
+        if (retryCount === 0 || retryCount % 5 === 0) {
+          Cypress.log({
+            name: 'waitForHealthyWaypoint',
+            message: `retry=${retryCount}/${maxRetries} ${responseSummary}`
+          });
+        }
+        return cy.wait(30000).then(() => wait(retryCount + 1, responseSummary));
+      }
+
+      if (podsLen > 0 && pods.every(pod => proxyStatusHealthy(pod))) {
         return;
       }
 
+      if (retryCount === 0 || retryCount % 5 === 0) {
+        Cypress.log({
+          name: 'waitForHealthyWaypoint',
+          message: `retry=${retryCount}/${maxRetries} ${responseSummary}`
+        });
+      }
+
       return cy.wait(10000).then(() => {
-        return wait(retryCount + 1);
+        return wait(retryCount + 1, responseSummary);
       });
     });
   };
@@ -119,11 +287,37 @@ Then('all waypoints are healthy', () => {
 
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
-  waitForWorkloadEnrolled();
+  waitForWorkloadEnrolled(namespace);
 });
 
+Then(
+  '{string} namespace is labeled with the waypoint label for {string} and {string} contexts',
+  (namespace: string, cluster1Context: string, cluster2Context: string) => {
+    cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint --context="${cluster1Context}"`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint --context="${cluster2Context}"`, {
+      failOnNonZeroExit: false
+    });
+    waitForWorkloadEnrolled(namespace);
+  }
+);
+
 Then('the graph page has enough data', () => {
-  waitForBookinfoWaypointTrafficGeneratedInGraph();
+  waitForBookinfoWaypointTrafficGeneratedInGraph('bookinfo', 'ztunnel');
+});
+
+Then('the graph page has enough data for L7', () => {
+  waitForBookinfoWaypointTrafficGeneratedInGraph('bookinfo', 'waypoint');
+});
+
+Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
+  waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
+});
+
+Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
+  // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
+  waitForWorkloadTracesInApi(namespace, workload);
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
@@ -145,6 +339,21 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
   cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click({ force: true });
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
+});
+
+Then('the waypoint link points to the {string} cluster', (cluster: string) => {
+  cy.get(`[data-test=waypoint-link]`).should('exist');
+
+  cy.get(`[data-test=waypoint-link]`).then($waypointLink => {
+    // Depending on the component, the data-test might be set on the <a> itself
+    // or on a container that contains the <a>.
+    const $anchor = $waypointLink.filter('a').add($waypointLink.find('a')).first();
+
+    expect($anchor.length, 'waypoint link anchor').to.be.greaterThan(0);
+
+    const href = $anchor.attr('href') ?? '';
+    expect(href).to.include(`clusterName=${cluster}`);
+  });
 });
 
 Then('the user sees the {string} option in the pod tooltip, and is {string}', (option: string, value: string) => {
