@@ -24,7 +24,8 @@ export const generateAppGraph = (clusterName: string, namespace: string, appName
             namespace: namespace,
             app: appName,
             version: 'v1',
-            workload: `${appName}-v1`,
+            // Note: Don't set 'workload' field here - MiniGraphCard uses it to determine node type
+            // and would incorrectly navigate to workload detail instead of staying on app detail
             traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '8.00' } }],
             healthData: createAppHealthData(`${appName}-v1`, namespace)
           }
@@ -136,7 +137,7 @@ export const generateServiceGraph = (clusterName: string, namespace: string, ser
             namespace: namespace,
             app: 'productpage',
             version: 'v1',
-            workload: 'productpage-v1',
+            // Note: Don't set 'workload' field for app nodes - MiniGraphCard uses it to determine node type
             traffic: [{ protocol: 'http', rates: { httpOut: '10.00' } }],
             healthData: createAppHealthData('productpage-v1', namespace)
           }

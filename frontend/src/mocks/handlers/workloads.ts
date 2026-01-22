@@ -331,6 +331,12 @@ interface MockWorkloadListItem {
   labels: { app: string; version: string };
   name: string;
   namespace: string;
+  validations?: {
+    checks: Array<{ code?: string; message: string; path: string; severity: string }>;
+    name: string;
+    objectGVK: { Group: string; Kind: string; Version: string };
+    valid: boolean;
+  };
   versionLabel: boolean;
 }
 
@@ -393,6 +399,49 @@ const createMockWorkloadListItem = (
     httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
 
+  // Build validations based on health status or specific workload names
+  // Always show validations for reviews workloads (for testing), or based on health status
+  let validations: MockWorkloadListItem['validations'] = undefined;
+  const baseName = name.replace(/-v\d+$/, '');
+
+  if (healthStatus === 'unhealthy' || baseName === 'reviews') {
+    // Reviews workloads always show errors for testing visibility
+    validations = {
+      name,
+      objectGVK: deploymentGVK,
+      valid: false,
+      checks: [
+        {
+          code: 'KIA1004',
+          message: 'This subset is not found from the host',
+          path: 'spec/subsets[0]',
+          severity: 'error'
+        },
+        {
+          code: 'KIA1006',
+          message: 'More than one Virtual Service for same host',
+          path: 'spec/hosts',
+          severity: 'error'
+        }
+      ]
+    };
+  } else if (healthStatus === 'degraded' || baseName === 'ratings') {
+    // Ratings workloads always show warnings for testing visibility
+    validations = {
+      name,
+      objectGVK: deploymentGVK,
+      valid: false,
+      checks: [
+        {
+          code: 'KIA0505',
+          message: 'Destination Rule enabling namespace-wide mTLS is missing',
+          path: '',
+          severity: 'warning'
+        }
+      ]
+    };
+  }
+
   return {
     name,
     namespace,
@@ -411,6 +460,7 @@ const createMockWorkloadListItem = (
     },
     appLabel: true,
     versionLabel: true,
+    validations,
     health: {
       workloadStatus: {
         name,
@@ -624,10 +674,21 @@ export const workloadHandlers = [
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const workloads = getWorkloadsForNamespaces(namespaces);
 
+    // Build validations map: { workload: { "name.namespace": ObjectValidation } }
+    const workloadValidations: Record<string, Record<string, unknown>> = {
+      workload: {}
+    };
+    workloads.forEach(wl => {
+      if (wl.validations) {
+        const key = `${wl.name}.${wl.namespace}`;
+        workloadValidations.workload[key] = wl.validations;
+      }
+    });
+
     return HttpResponse.json({
       cluster: 'cluster-default',
       workloads,
-      validations: {}
+      validations: workloadValidations
     });
   }),
 
@@ -676,11 +737,22 @@ export const workloadHandlers = [
     const workloadsByNamespace = getWorkloadsByNamespace();
     const workloads = workloadsByNamespace[namespace as string] || [];
 
+    // Build validations map: { workload: { "name.namespace": ObjectValidation } }
+    const workloadValidations: Record<string, Record<string, unknown>> = {
+      workload: {}
+    };
+    workloads.forEach(wl => {
+      if (wl.validations) {
+        const key = `${wl.name}.${wl.namespace}`;
+        workloadValidations.workload[key] = wl.validations;
+      }
+    });
+
     return HttpResponse.json({
       cluster: 'cluster-default',
       namespace,
       workloads,
-      validations: {}
+      validations: workloadValidations
     });
   }),
 
@@ -911,10 +983,28 @@ export const workloadHandlers = [
       const nsWorkloads = workloadsByNamespace[namespace as string] || [];
       const relatedWorkloads = nsWorkloads.filter(w => w.labels.app === app);
 
+      // Transform workloads to AppWorkload format
+      const appWorkloads = relatedWorkloads.map(w => ({
+        workloadName: w.name,
+        gvk: w.gvk,
+        isAmbient: w.isAmbient,
+        isGateway: w.isGateway,
+        isWaypoint: w.isWaypoint,
+        isZtunnel: w.isZtunnel,
+        istioSidecar: w.istioSidecar,
+        labels: w.labels,
+        namespace: w.namespace,
+        serviceAccountNames: [`${w.labels.app}-service-account`]
+      }));
+
       return HttpResponse.json({
-        ...found,
-        namespace: { name: namespace },
-        workloads: relatedWorkloads,
+        name: found.name,
+        cluster: found.cluster,
+        instanceType: found.instanceType,
+        isAmbient: found.isAmbient,
+        health: found.health,
+        namespace: { name: namespace, cluster: 'cluster-default' },
+        workloads: appWorkloads,
         serviceNames: [app],
         runtimes: []
       });

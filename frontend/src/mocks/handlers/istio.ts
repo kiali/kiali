@@ -211,29 +211,51 @@ const authPolicyGVK = { Group: 'security.istio.io', Kind: 'AuthorizationPolicy',
 
 // Validations map: { [gvkTypeString]: { [name.namespace]: ObjectValidation } }
 // Key format is: name.namespace (e.g., "bookinfo-vs.bookinfo")
-const mockValidations = {
-  'networking.istio.io/v1, Kind=VirtualService': {
-    'bookinfo-vs.bookinfo': createValidation('bookinfo-vs', virtualServiceGVK, true),
-    'reviews-vs.bookinfo': createValidation('reviews-vs', virtualServiceGVK, true)
-  },
-  'networking.istio.io/v1, Kind=DestinationRule': {
-    'productpage-dr.bookinfo': createValidation('productpage-dr', destinationRuleGVK, true),
-    'reviews-dr.bookinfo': createValidation('reviews-dr', destinationRuleGVK, true),
-    'ratings-dr.bookinfo': createValidation('ratings-dr', destinationRuleGVK, true)
-  },
-  'networking.istio.io/v1, Kind=Gateway': {
-    'bookinfo-gateway.bookinfo': createValidation('bookinfo-gateway', gatewayGVK, true)
-  },
-  'security.istio.io/v1, Kind=PeerAuthentication': {
-    'default.istio-system': createValidation('default', peerAuthGVK, true)
-  },
-  'security.istio.io/v1, Kind=AuthorizationPolicy': {
-    'allow-bookinfo.bookinfo': createValidation('allow-bookinfo', authPolicyGVK, true)
-  }
+// Returns validations based on scenario - unhealthy scenario shows validation errors
+const generateMockValidations = (): Record<string, Record<string, Record<string, unknown>>> => {
+  const scenarioConfig = getScenarioConfig();
+  const isUnhealthyScenario = scenarioConfig.unhealthyItems.length > 0 || scenarioConfig.unhealthyNamespaces.length > 0;
+  const isValid = !isUnhealthyScenario;
+
+  const errorChecks = [
+    {
+      code: 'KIA0101',
+      message: 'DestinationRule not found for this host',
+      path: 'spec/http[0]/route[0]/destination/host',
+      severity: 'error'
+    }
+  ];
+
+  return {
+    'networking.istio.io/v1, Kind=VirtualService': {
+      'bookinfo-vs.bookinfo': createValidation('bookinfo-vs', virtualServiceGVK, isValid, isValid ? [] : errorChecks),
+      'reviews-vs.bookinfo': createValidation('reviews-vs', virtualServiceGVK, isValid, isValid ? [] : errorChecks)
+    },
+    'networking.istio.io/v1, Kind=DestinationRule': {
+      'productpage-dr.bookinfo': createValidation(
+        'productpage-dr',
+        destinationRuleGVK,
+        isValid,
+        isValid ? [] : errorChecks
+      ),
+      'reviews-dr.bookinfo': createValidation('reviews-dr', destinationRuleGVK, isValid, isValid ? [] : errorChecks),
+      'ratings-dr.bookinfo': createValidation('ratings-dr', destinationRuleGVK, isValid, isValid ? [] : errorChecks)
+    },
+    'networking.istio.io/v1, Kind=Gateway': {
+      'bookinfo-gateway.bookinfo': createValidation('bookinfo-gateway', gatewayGVK, isValid, isValid ? [] : errorChecks)
+    },
+    'security.istio.io/v1, Kind=PeerAuthentication': {
+      'default.istio-system': createValidation('default', peerAuthGVK, isValid, isValid ? [] : errorChecks)
+    },
+    'security.istio.io/v1, Kind=AuthorizationPolicy': {
+      'allow-bookinfo.bookinfo': createValidation('allow-bookinfo', authPolicyGVK, isValid, isValid ? [] : errorChecks)
+    }
+  };
 };
 
 // IstioConfigList format expected by the frontend
-const mockIstioConfigList = {
+// Returns config list dynamically based on scenario
+const generateMockIstioConfigList = (): Record<string, unknown> => ({
   permissions: {
     'networking.istio.io/v1, Kind=VirtualService': { create: true, update: true, delete: true },
     'networking.istio.io/v1, Kind=DestinationRule': { create: true, update: true, delete: true },
@@ -248,8 +270,8 @@ const mockIstioConfigList = {
     'security.istio.io/v1, Kind=PeerAuthentication': mockPeerAuthentications,
     'security.istio.io/v1, Kind=AuthorizationPolicy': mockAuthorizationPolicies
   },
-  validations: mockValidations
-};
+  validations: generateMockValidations()
+});
 
 // Namespace-specific istio config in IstioConfigList format (used by workload details)
 const mockNamespaceIstioConfig = {
@@ -378,7 +400,7 @@ export const istioHandlers = [
 
   // All istio configs - returns IstioConfigList format
   http.get('*/api/istio/config', () => {
-    return HttpResponse.json(mockIstioConfigList);
+    return HttpResponse.json(generateMockIstioConfigList());
   }),
 
   // Istio permissions
@@ -498,6 +520,12 @@ export const istioHandlers = [
     // Build the apiVersion from group and version
     const apiVersion = groupStr ? `${groupStr}/${versionStr}` : versionStr;
 
+    // Only show validation issues in unhealthy scenario
+    const scenarioConfig = getScenarioConfig();
+    const isUnhealthyScenario =
+      scenarioConfig.unhealthyItems.length > 0 || scenarioConfig.unhealthyNamespaces.length > 0;
+    const hasValidationIssues = isUnhealthyScenario;
+
     // Create mock resource based on kind
     let spec: Record<string, unknown> = {};
 
@@ -562,6 +590,25 @@ export const istioHandlers = [
       };
     }
 
+    // Build status with validationMessages for Istio's built-in analysis
+    const status: Record<string, unknown> = {};
+    if (hasValidationIssues) {
+      status.validationMessages = [
+        {
+          documentationUrl: 'https://istio.io/latest/docs/reference/config/analysis/ist0101/',
+          level: 'WARNING',
+          type: { code: 'IST0101' },
+          description: 'Referenced host not found: "reviews.bookinfo.svc.cluster.local"'
+        },
+        {
+          documentationUrl: 'https://istio.io/latest/docs/reference/config/analysis/ist0106/',
+          level: 'ERROR',
+          type: { code: 'IST0106' },
+          description: 'Schema validation error: gateway must have at least one server'
+        }
+      ];
+    }
+
     const resource = {
       apiVersion,
       kind: kindStr,
@@ -576,7 +623,8 @@ export const istioHandlers = [
         },
         annotations: {}
       },
-      spec
+      spec,
+      ...(Object.keys(status).length > 0 && { status })
     };
 
     // Build references based on the kind
@@ -652,6 +700,31 @@ export const istioHandlers = [
       ];
     }
 
+    // Build Kiali validation checks
+    const validationChecks: Array<{ code: string; message: string; path: string; severity: string }> = [];
+    if (hasValidationIssues) {
+      validationChecks.push(
+        {
+          code: 'KIA0505',
+          message: 'Destination Rule enabling namespace-wide mTLS is missing',
+          path: '',
+          severity: 'warning'
+        },
+        {
+          code: 'KIA1004',
+          message: 'This host has no matching workloads',
+          path: 'spec/hosts[0]',
+          severity: 'error'
+        },
+        {
+          code: 'KIA1107',
+          message: 'Subset not found',
+          path: 'spec/http[0]/route[0]/destination',
+          severity: 'warning'
+        }
+      );
+    }
+
     return HttpResponse.json({
       cluster: 'cluster-default',
       namespace: {
@@ -668,8 +741,8 @@ export const istioHandlers = [
       validation: {
         name: nameStr,
         objectGVK: { Group: groupStr, Version: versionStr, Kind: kindStr },
-        valid: true,
-        checks: []
+        valid: !hasValidationIssues,
+        checks: validationChecks
       }
     });
   })
