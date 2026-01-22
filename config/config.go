@@ -548,6 +548,7 @@ type CacheExpirationConfig struct {
 type KialiInternalConfig struct {
 	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 	GraphCache             GraphCacheConfig      `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig     `yaml:"health_cache,omitempty"`
 	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
@@ -850,6 +851,11 @@ type GraphCacheConfig struct {
 	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "10m"
 	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
 	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
+}
+
+// HealthCacheConfig configures background health pre-computation and caching
+type HealthCacheConfig struct {
+	Enabled bool `yaml:"enabled" json:"enabled"` // Default: true
 }
 
 // KialiFeatureFlags available from the CR
@@ -1204,6 +1210,9 @@ func NewConfig() (c *Config) {
 				InactivityTimeout: "10m",
 				MaxCacheMemoryMB:  1000,
 				RefreshInterval:   "60s",
+			},
+			HealthCache: HealthCacheConfig{
+				Enabled: true,
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},

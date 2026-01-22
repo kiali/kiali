@@ -124,7 +124,10 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 
 	// Create health monitor for pre-computing health data, started below after cache initialization
-	hcm := business.NewHealthMonitor(cache, clientFactory, conf, discovery, prom)
+	var hcm business.HealthMonitor
+	if conf.KialiInternal.HealthCache.Enabled {
+		hcm = business.NewHealthMonitor(cache, clientFactory, conf, discovery, prom)
+	}
 
 	if conf.IsValidationsEnabled() {
 		if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
@@ -157,8 +160,12 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		cpm.PollIstiodForProxyStatus(ctx)
 	}
 
-	// Start health monitor for pre-computing health data
-	hcm.Start(ctx)
+	// Start health monitor for pre-computing health data (if enabled)
+	if hcm != nil {
+		hcm.Start(ctx)
+	} else {
+		log.Info("Health cache is disabled; skipping health pre-computation.")
+	}
 
 	// Start listening to requests
 	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, prom, tracingLoader, discovery, staticAssetFS)

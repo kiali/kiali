@@ -76,51 +76,108 @@ func ClusterHealth(
 			WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
 		}
 
-		// Serve from cache
-		allFromCache := true
+		// Check if health cache is enabled
+		healthCacheEnabled := conf.KialiInternal.HealthCache.Enabled
 		metricsEnabled := conf.Server.Observability.Metrics.Enabled
-		for _, ns := range nss {
-			cachedData, found := kialiCache.GetHealth(cluster, ns)
-			if !found {
-				// Cache miss - return "unknown" status for this namespace
-				allFromCache = false
-				log.Debugf("Health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
-				if metricsEnabled {
-					internalmetrics.IncrementHealthCacheMisses(healthTypeToMetricType(healthType))
+
+		if healthCacheEnabled {
+			// Serve from cache
+			allFromCache := true
+			for _, ns := range nss {
+				cachedData, found := kialiCache.GetHealth(cluster, ns)
+				if !found {
+					// Cache miss - return "unknown" status for this namespace
+					allFromCache = false
+					log.Debugf("Health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
+					if metricsEnabled {
+						internalmetrics.IncrementHealthCacheMisses(healthTypeToMetricType(healthType))
+					}
+					switch healthType {
+					case "app":
+						result.AppHealth[ns] = &models.NamespaceAppHealth{}
+					case "service":
+						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+					case "workload":
+						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+					}
+					continue
 				}
+
+				// Cache hit
+				log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
+				if metricsEnabled {
+					internalmetrics.IncrementHealthCacheHits(healthTypeToMetricType(healthType))
+				}
+
+				// Use cached data
 				switch healthType {
 				case "app":
-					result.AppHealth[ns] = &models.NamespaceAppHealth{}
+					result.AppHealth[ns] = &cachedData.AppHealth
 				case "service":
-					result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+					result.ServiceHealth[ns] = &cachedData.ServiceHealth
 				case "workload":
-					result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+					result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
 				}
-				continue
 			}
 
-			// Cache hit
-			log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
-			if metricsEnabled {
-				internalmetrics.IncrementHealthCacheHits(healthTypeToMetricType(healthType))
+			// Set header to indicate data came from cache
+			if allFromCache && len(nss) > 0 {
+				w.Header().Set(HealthCachedHeader, "true")
+			} else {
+				w.Header().Set(HealthCachedHeader, "false")
 			}
-
-			// Use cached data
-			switch healthType {
-			case "app":
-				result.AppHealth[ns] = &cachedData.AppHealth
-			case "service":
-				result.ServiceHealth[ns] = &cachedData.ServiceHealth
-			case "workload":
-				result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
-			}
-		}
-
-		// Set header to indicate data came from cache
-		if allFromCache && len(nss) > 0 {
-			w.Header().Set(HealthCachedHeader, "true")
 		} else {
+			// Health cache disabled - compute on-demand
 			w.Header().Set(HealthCachedHeader, "false")
+
+			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
+				return
+			}
+
+			queryTime := util.Clock.Now()
+			rateInterval := params.Get("rateInterval")
+			if rateInterval == "" {
+				rateInterval = defaultHealthRateInterval
+			}
+
+			for _, ns := range nss {
+				criteria := business.NamespaceHealthCriteria{
+					Cluster:        cluster,
+					IncludeMetrics: true,
+					Namespace:      ns,
+					QueryTime:      queryTime,
+					RateInterval:   rateInterval,
+				}
+
+				switch healthType {
+				case "app":
+					health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), criteria)
+					if err != nil {
+						log.Warningf("Error computing app health for namespace %s: %v", ns, err)
+						result.AppHealth[ns] = &models.NamespaceAppHealth{}
+					} else {
+						result.AppHealth[ns] = &health
+					}
+				case "service":
+					health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), criteria)
+					if err != nil {
+						log.Warningf("Error computing service health for namespace %s: %v", ns, err)
+						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+					} else {
+						result.ServiceHealth[ns] = &health
+					}
+				case "workload":
+					health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), criteria)
+					if err != nil {
+						log.Warningf("Error computing workload health for namespace %s: %v", ns, err)
+						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+					} else {
+						result.WorkloadHealth[ns] = &health
+					}
+				}
+			}
 		}
 
 		RespondWithJSON(w, http.StatusOK, result)
