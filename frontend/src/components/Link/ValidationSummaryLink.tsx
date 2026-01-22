@@ -18,7 +18,7 @@ type Props = ReduxProps & {
 };
 
 export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) => {
-  let link: React.ReactElement = <div style={{ display: 'inline-block' }}>N/A</div>;
+  let link: React.ReactElement = <div style={{ display: 'inline-block' }}>n/a</div>;
 
   if (props.objectCount && props.objectCount > 0) {
     // Kiosk actions are used when the kiosk specifies a parent,
@@ -28,7 +28,12 @@ export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) =>
         {props.children}
       </Link>
     ) : (
-      <IstioConfigListLink namespaces={[props.namespace]} warnings={props.warnings > 0} errors={props.errors > 0}>
+      <IstioConfigListLink
+        namespaces={[props.namespace]}
+        warnings={props.warnings > 0}
+        errors={props.errors > 0}
+        issues={props.warnings || props.errors ? props.objectCount : undefined}
+      >
         {props.children}
       </IstioConfigListLink>
     );
