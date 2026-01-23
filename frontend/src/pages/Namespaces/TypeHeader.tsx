@@ -25,7 +25,7 @@ export const TypeHeader: React.FC = () => {
           <strong>{t('DP')}</strong> - {t('Data plane')}: {t('Namespace is part of the mesh')}
         </div>
         <div>
-          <strong>-</strong> - {t('Not part of the mesh')}: {t('Namespace is not part of the mesh')}
+          <strong>Empty</strong> - {t('Namespace is not part of the mesh')}
         </div>
       </div>
     </div>
