@@ -26,7 +26,7 @@ const tlsLabelStyle = kialiStyle({
   display: 'inline-flex',
   alignItems: 'center',
   paddingTop: '2px',
-  paddingBottom: '4px'
+  paddingBottom: '2px'
 });
 
 export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
