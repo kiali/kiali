@@ -27,15 +27,12 @@ export const MTLSStatus: React.FC<MTLSStatusProps> = (props: MTLSStatusProps) =>
 
   if (statusDescriptor.showStatus) {
     return (
-      <span>
-        <MTLSIcon
-          icon={statusDescriptor.icon}
-          iconClassName={props.className ?? ''}
-          tooltipText={statusDescriptor.message}
-          tooltipPosition={props.overlayPosition ?? TooltipPosition.left}
-        />
-        {`  ${statusDescriptor.message}`}
-      </span>
+      <MTLSIcon
+        icon={statusDescriptor.icon}
+        iconClassName={props.className ?? ''}
+        tooltipText={statusDescriptor.message}
+        tooltipPosition={props.overlayPosition ?? TooltipPosition.left}
+      />
     );
   }
 

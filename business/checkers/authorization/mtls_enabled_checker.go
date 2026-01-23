@@ -6,7 +6,6 @@ import (
 	api_security_v1 "istio.io/api/security/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
-
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"

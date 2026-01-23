@@ -6,6 +6,7 @@ infomsg() {
 
 # Suites
 AMBIENT=""
+AUTH_STRATEGY=""
 BACKEND="backend"
 BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 BOOKINFO_ONLY="false"
@@ -41,6 +42,10 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -am|--ambient)
       AMBIENT="${2}"
+      shift;shift
+      ;;
+    -au|--auth-strategy)
+      AUTH_STRATEGY="${2}"
       shift;shift
       ;;
     -bo|--bookinfo-only)
@@ -137,6 +142,8 @@ Valid command line arguments:
   -am|--ambient <true|false>
     If true, install istio ambient profile. Just valid for multi primary suite (alpha).
     Default: false
+  -au|--auth-strategy <anonymous>
+    Allows to change to anonymous for the backend test suit
   -bo|--bookinfo-only <true|false>
     If true, only install bookinfo demo instead of all demos.
     Default: false
@@ -205,6 +212,7 @@ fi
 cat <<EOM
 === SETTINGS ===
 AMBIENT=$AMBIENT
+AUTH_STRATEGY=$AUTH_STRATEGY
 BOOKINFO_ONLY=$BOOKINFO_ONLY
 CLUSTER_TYPE=$CLUSTER_TYPE
 CLUSTER2_AMBIENT=$CLUSTER2_AMBIENT
@@ -234,6 +242,11 @@ if [ -n "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR_ARG="--helm-charts-dir ${HELM_CHARTS_DIR}"
 else
   HELM_CHARTS_DIR_ARG=""
+fi
+
+# Install go-junit-report if not already installed
+if ! command -v go-junit-report &> /dev/null; then
+  go install github.com/jstemmer/go-junit-report@latest
 fi
 
 # Determine where this script is and make it the cwd
@@ -411,7 +424,11 @@ fi
 infomsg "Running ${TEST_SUITE} integration tests"
 if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    AUTH_PARAM=""
+    if [ "${TESTS_ONLY}" == "false" ]; then
+      AUTH_PARAM="--auth-strategy anonymous"
+    fi
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -428,7 +445,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
 
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v -failfast
+  go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
@@ -463,7 +480,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
 
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
-  go test -v -failfast
+  go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled

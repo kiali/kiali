@@ -145,7 +145,7 @@ func KialiStatus() (bool, int, error) {
 func (c *KialiClient) GetAuth() *config.Auth {
 	if c.authStrategy == config.AuthStrategyOpenshift {
 		return &config.Auth{
-			Token:              c.kialiToken,
+			Token:              config.Credential(c.kialiToken),
 			Type:               config.AuthTypeBearer,
 			InsecureSkipVerify: true,
 		}
@@ -171,6 +171,18 @@ func KialiConfig() (*handlers.PublicConfig, int, error) {
 func TracingConfig() (*models.TracingInfo, int, error) {
 	url := fmt.Sprintf("%s/api/tracing", client.kialiURL)
 	response := new(models.TracingInfo)
+
+	code, err := getRequestAndUnmarshalInto(url, response)
+	if err == nil {
+		return response, code, nil
+	} else {
+		return nil, code, err
+	}
+}
+
+func GraphCacheMetrics() (*handlers.GraphCacheMetrics, int, error) {
+	url := fmt.Sprintf("%s/api/test/metrics/graph/cache", client.kialiURL)
+	response := new(handlers.GraphCacheMetrics)
 
 	code, err := getRequestAndUnmarshalInto(url, response)
 	if err == nil {

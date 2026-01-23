@@ -305,7 +305,30 @@ fi
 source ${SCRIPT_DIR}/setup-tracing.sh
 
 # Install bookinfo across cluster if enabled
-source ${SCRIPT_DIR}/split-bookinfo.sh
+if [ "${AMBIENT}" == "true" ] && [ "${WAYPOINT}" == "true" ]; then
+  # Install baseline Bookinfo in the default namespace without enrolling the namespace into a waypoint.
+  # This keeps existing L4 test expectations intact (they target the default bookinfo namespace).
+  echo "==== INSTALLING BASELINE BOOKINFO (NO NAMESPACE WAYPOINT) IN NAMESPACE [${BOOKINFO_NAMESPACE}]"
+  _orig_bookinfo_namespace="${BOOKINFO_NAMESPACE}"
+  _orig_waypoint="${WAYPOINT}"
+
+  BOOKINFO_NAMESPACE="${_orig_bookinfo_namespace}"
+  WAYPOINT="false"
+  source ${SCRIPT_DIR}/split-bookinfo.sh
+
+  # Install a second Bookinfo instance in a dedicated namespace for waypoint/L7 tests.
+  # This allows running L4 and waypoint tests in the same CI job without changing L4 traffic.
+  BOOKINFO_WAYPOINT_NAMESPACE="${BOOKINFO_WAYPOINT_NAMESPACE:-bookinfo-waypoints}"
+  echo "==== INSTALLING WAYPOINT BOOKINFO IN NAMESPACE [${BOOKINFO_WAYPOINT_NAMESPACE}]"
+  BOOKINFO_NAMESPACE="${BOOKINFO_WAYPOINT_NAMESPACE}"
+  WAYPOINT="true"
+  source ${SCRIPT_DIR}/split-bookinfo.sh
+
+  BOOKINFO_NAMESPACE="${_orig_bookinfo_namespace}"
+  WAYPOINT="${_orig_waypoint}"
+else
+  source ${SCRIPT_DIR}/split-bookinfo.sh
+fi
 
 if [ "${AMBIENT}" == "true" ]; then
   echo "==== Installing Istio Ambient hello world demo"

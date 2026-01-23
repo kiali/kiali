@@ -149,7 +149,7 @@ export const getNodeShape = (data: NodeData): NodeShape => {
     case NodeType.SERVICE:
       return data.isServiceEntry ? NodeShape.trapezoid : NodeShape.rhombus;
     case NodeType.WORKLOAD:
-      return NodeShape.circle;
+      return NodeShape.ellipse;
     default:
       return NodeShape.ellipse;
   }

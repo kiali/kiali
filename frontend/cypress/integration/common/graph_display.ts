@@ -412,7 +412,7 @@ Then('the {string} option should {string} and {string}', (option: string, option
 
   cy.get('div#graph-display-menu')
     .find(`input#${option}`)
-    .should(optionState.replaceAll(' ', '.'))
+    .should(optionState.replace(/ /g, '.'))
     .and(`be.${checkState}`);
 });
 
@@ -474,7 +474,7 @@ Then(
   (namespace: string) => {
     cy.get('#graph-side-panel')
       .find(`#ns-${namespace}`)
-      .within($ns => {
+      .within(() => {
         // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
         cy.get(
           ':is([data-test="icon-correct-validation"], [data-test="icon-warning-validation"], [data-test="icon-error-validation"])'
@@ -482,14 +482,16 @@ Then(
       });
 
     cy.get('@istioConfigRequest-east').then(resp => {
+      const response = (resp as unknown) as Cypress.Response<any>;
       let totalObjectsEast = 0;
-      Object.keys(resp.body.resources).forEach(resourceKey => {
-        totalObjectsEast += resp.body.resources[resourceKey].length;
+      Object.keys(response.body.resources).forEach(resourceKey => {
+        totalObjectsEast += response.body.resources[resourceKey].length;
       });
       cy.get('@istioConfigRequest-west').then(resp => {
+        const response = (resp as unknown) as Cypress.Response<any>;
         let totalObjectsWest = 0;
-        Object.keys(resp.body.resources).forEach(resourceKey => {
-          totalObjectsEast += resp.body.resources[resourceKey].length;
+        Object.keys(response.body.resources).forEach(resourceKey => {
+          totalObjectsWest += response.body.resources[resourceKey].length;
         });
         const totalObjects = totalObjectsEast + totalObjectsWest;
         cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
@@ -584,4 +586,273 @@ Then('the {string} service {string} exists', (serviceName: string, action: strin
         assert.equal(foundNode.length, 0);
       }
     });
+});
+
+type GraphCacheMetrics = {
+  graphCacheEvictions: number;
+  graphCacheHits: number;
+  graphCacheMisses: number;
+};
+
+type KialiRuntimeInfo = {
+  configMapName: string;
+  deploymentName: string;
+  namespace: string;
+};
+
+const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> => {
+  // Prefer the most common namespaces first, but fall back to any deployment we can find.
+  const preferredNamespaces = ['istio-system', 'kiali', 'kiali-operator'];
+
+  return cy
+    .exec(
+      "kubectl get deployment -A -l app.kubernetes.io/name=kiali -o jsonpath=\"{range .items[*]}{.metadata.namespace}{'/'}{.metadata.name}{'\\n'}{end}\"",
+      { failOnNonZeroExit: false, log: false }
+    )
+    .then(res => {
+      const lines = res.stdout
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean);
+
+      let chosen: string | undefined;
+      for (const ns of preferredNamespaces) {
+        chosen = lines.find(l => l.startsWith(`${ns}/`));
+        if (chosen) {
+          break;
+        }
+      }
+      chosen = chosen ?? lines[0];
+
+      const resolveConfigMap = (namespace: string, deploymentName: string): Cypress.Chainable<KialiRuntimeInfo> => {
+        return cy
+          .exec(
+            `kubectl get deployment ${deploymentName} -n ${namespace} -o jsonpath="{range .spec.template.spec.volumes[?(@.configMap)]}{.configMap.name}{'\\n'}{end}"`,
+            { failOnNonZeroExit: false, log: false }
+          )
+          .then(volRes => {
+            const fromVolumes = volRes.stdout
+              .split('\n')
+              .map(v => v.trim())
+              .filter(Boolean);
+
+            // Try configmaps referenced by the deployment first, then a couple of common names.
+            const candidates = [...fromVolumes, deploymentName, 'kiali'].filter((v, i, a) => v && a.indexOf(v) === i);
+
+            const findConfigMapWithConfigYaml = (idx: number): Cypress.Chainable<string> => {
+              if (idx >= candidates.length) {
+                return cy.wrap('kiali', { log: false });
+              }
+
+              const cmName = candidates[idx];
+              return cy
+                .exec(`kubectl get configmap ${cmName} -n ${namespace} -o jsonpath="{.data.config\\\\.yaml}"`, {
+                  failOnNonZeroExit: false,
+                  log: false
+                })
+                .then(cmRes => {
+                  if (cmRes.code === 0 && cmRes.stdout.trim() !== '') {
+                    return cy.wrap(cmName, { log: false });
+                  }
+                  return findConfigMapWithConfigYaml(idx + 1);
+                });
+            };
+
+            return findConfigMapWithConfigYaml(0).then(configMapName => ({
+              configMapName,
+              deploymentName,
+              namespace
+            }));
+          });
+      };
+
+      if (!chosen) {
+        // No labeled deployment found. As a fallback, look for a deployment literally named "kiali" in any namespace.
+        return cy
+          .exec(
+            `kubectl get deployment -A -o jsonpath="{range .items[?(@.metadata.name==\\"kiali\\")]}{.metadata.namespace}{'/'}{.metadata.name}{'\\n'}{end}"`,
+            { failOnNonZeroExit: false, log: false }
+          )
+          .then(fallbackRes => {
+            const fallbackLines = fallbackRes.stdout
+              .split('\n')
+              .map(l => l.trim())
+              .filter(Boolean);
+
+            let fallbackChosen: string | undefined;
+            for (const ns of preferredNamespaces) {
+              fallbackChosen = fallbackLines.find(l => l.startsWith(`${ns}/`));
+              if (fallbackChosen) {
+                break;
+              }
+            }
+            fallbackChosen = fallbackChosen ?? fallbackLines[0];
+
+            if (!fallbackChosen) {
+              throw new Error(
+                'Unable to locate Kiali deployment. Tried label app.kubernetes.io/name=kiali and fallback deployment named "kiali" in any namespace.'
+              );
+            }
+
+            const [namespace, deploymentName] = fallbackChosen.split('/');
+            return resolveConfigMap(namespace, deploymentName);
+          });
+      }
+
+      const [namespace, deploymentName] = chosen.split('/');
+      return resolveConfigMap(namespace, deploymentName);
+    });
+};
+
+Given('graph cache is enabled', () => {
+  // Enable graph cache just for this scenario.
+  // We support both operator (Kiali CR exists) and Helm (only ConfigMap) installations.
+  // Store previous value in Cypress env for cleanup in an After hook.
+
+  discoverKialiRuntimeInfo().then(info => {
+    Cypress.env('KIALI_CONFIGMAP_NAME', info.configMapName);
+    Cypress.env('KIALI_DEPLOYMENT_NAME', info.deploymentName);
+    Cypress.env('KIALI_DEPLOYMENT_NAMESPACE', info.namespace);
+
+    const restartKiali = (): void => {
+      cy.exec(
+        `kubectl rollout restart deployment/${info.deploymentName} -n ${info.namespace} && kubectl rollout status deployment/${info.deploymentName} -n ${info.namespace} --timeout=180s`,
+        { timeout: 300000 }
+      );
+    };
+
+    cy.exec(
+      // If Kiali is managed by the operator, the deployment will have the primary-resource annotation like "kiali-operator/kiali".
+      `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+      { failOnNonZeroExit: false }
+    ).then(result => {
+      const primaryResource = result.stdout.trim();
+
+      if (primaryResource) {
+        const parts = primaryResource.split('/');
+        const crNamespace = parts[0];
+        const crName = parts[1];
+        Cypress.env('KIALI_PRIMARY_RESOURCE', primaryResource);
+
+        cy.exec(
+          `kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.kiali_internal.graph_cache.enabled}"`,
+          { failOnNonZeroExit: false }
+        ).then(r => {
+          const prev = r.stdout.trim();
+          Cypress.env('GRAPH_CACHE_PREV', prev);
+        });
+
+        cy.exec(
+          `kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '{"spec":{"kiali_internal":{"graph_cache":{"enabled":true}}}}'`
+        ).then(() => restartKiali());
+
+        return;
+      }
+
+      // Helm installation - update the Kiali ConfigMap.
+      Cypress.env('KIALI_PRIMARY_RESOURCE', '');
+
+      // Dump current config.yaml
+      cy.exec(
+        `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
+      );
+
+      // Capture previous value (if missing, this returns empty string)
+      cy.exec('yq \'.kiali_internal.graph_cache.enabled // ""\' /tmp/kiali-config.yaml', {
+        failOnNonZeroExit: false
+      }).then(r => {
+        Cypress.env('GRAPH_CACHE_PREV', r.stdout.trim());
+      });
+
+      // Enable and apply updated configmap
+      cy.exec("yq -i '.kiali_internal.graph_cache.enabled = true' /tmp/kiali-config.yaml");
+      cy.exec(
+        `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
+      ).then(() => restartKiali());
+    });
+  });
+});
+
+Given('graph cache metrics are recorded', () => {
+  cy.request('api/test/metrics/graph/cache').then(resp => {
+    expect(resp.status).to.eq(200);
+    const before = resp.body as GraphCacheMetrics;
+    cy.wrap(before, { log: false }).as('graphCacheMetricsBefore');
+    cy.log(`graph cache metrics (before): ${JSON.stringify(before)}`);
+  });
+});
+
+When(
+  'user opens the graph page for {string} with refresh {int}ms and refreshes it {int} times',
+  (namespace: string, refreshMs: number, refreshTimes: number) => {
+    cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
+    cy.visit({
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+    });
+
+    cy.url().then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphNamespaces');
+      }
+    });
+    ensureKialiFinishedLoading();
+
+    for (let i = 0; i < refreshTimes; i++) {
+      // Click the Refresh button in the time range toolbar (no full page reload).
+      cy.get('[data-test="refresh-button"]').first().click();
+      cy.url().then(url => {
+        if (!url.includes('/ossmconsole/')) {
+          cy.wait('@graphNamespaces');
+        }
+      });
+      ensureKialiFinishedLoading();
+    }
+  }
+);
+
+// Backwards-compatible alias (feature wording says "reloads", but we don't do a full page reload).
+When(
+  'user opens the graph page for {string} with refresh {int}ms and reloads it {int} times',
+  (namespace: string, refreshMs: number, refreshTimes: number) => {
+    cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
+
+    cy.visit({
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+    });
+
+    cy.url().then(url => {
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphNamespaces');
+      }
+    });
+    ensureKialiFinishedLoading();
+
+    for (let i = 0; i < refreshTimes; i++) {
+      cy.get('[data-test="refresh-button"]').first().click();
+      cy.url().then(url => {
+        if (!url.includes('/ossmconsole/')) {
+          cy.wait('@graphNamespaces');
+        }
+      });
+      ensureKialiFinishedLoading();
+    }
+  }
+);
+
+Then('graph cache metrics should show at least {int} miss and {int} hits', (minMisses: number, minHits: number) => {
+  cy.get('@graphCacheMetricsBefore').then(beforeObj => {
+    const before = (beforeObj as unknown) as GraphCacheMetrics;
+
+    cy.request('api/test/metrics/graph/cache').then(resp => {
+      expect(resp.status).to.eq(200);
+      const after = resp.body as GraphCacheMetrics;
+
+      cy.log(`graph cache metrics (before): ${JSON.stringify(before)}`);
+      cy.log(`graph cache metrics (after): ${JSON.stringify(after)}`);
+
+      expect(after.graphCacheMisses).to.be.at.least(before.graphCacheMisses + minMisses);
+      expect(after.graphCacheHits).to.be.at.least(before.graphCacheHits + minHits);
+    });
+  });
 });

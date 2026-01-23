@@ -69,6 +69,7 @@ export interface FetchParams {
   namespaces: Namespace[];
   node?: NodeParamsType;
   queryTime?: TimeInMilliseconds; // default now
+  refreshInterval?: number;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showOperationNodes: boolean;
@@ -184,6 +185,10 @@ export class GraphDataSource {
 
     if (fetchParams.queryTime) {
       restParams.queryTime = String(Math.floor(fetchParams.queryTime / 1000));
+    }
+
+    if (fetchParams.refreshInterval !== undefined && fetchParams.refreshInterval >= 10000) {
+      restParams.refreshInterval = String(fetchParams.refreshInterval);
     }
 
     // Some appenders are expensive so only specify an appender if needed.

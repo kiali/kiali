@@ -135,9 +135,10 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     return newData;
   }, [data, detailsLevel]);
 
-  const hasAnimation = !!data.animation;
   const start = element.getStartPoint();
   const end = element.getEndPoint();
+  const hasAnimation = !!data.animation;
+
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />

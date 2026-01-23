@@ -245,23 +245,26 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     // This height needs to be propagated to minigraph to proper resize in height
     // Graph resizes correctly on width
     const miniGraphSpan = 8;
+    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1rem)` : '100%';
 
     return (
       <>
-        <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-          <Grid hasGutter={true} className={gridStyle}>
-            <GridItem span={4}>
+        <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
+          <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+            <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
               <Stack hasGutter={true}>
                 <StackItem>
                   <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />
                 </StackItem>
 
                 {this.props.serviceDetails && (
-                  <ServiceNetwork
-                    serviceDetails={this.props.serviceDetails}
-                    gateways={this.props.gateways}
-                    validations={this.getServiceValidation()}
-                  />
+                  <StackItem>
+                    <ServiceNetwork
+                      serviceDetails={this.props.serviceDetails}
+                      gateways={this.props.gateways}
+                      validations={this.getServiceValidation()}
+                    />
+                  </StackItem>
                 )}
 
                 <StackItem style={{ paddingBottom: '20px' }}>

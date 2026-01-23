@@ -20,6 +20,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
@@ -34,6 +35,7 @@ import (
 
 // NewRouter creates the router with all API routes and the static files handler
 func NewRouter(
+	ctx context.Context,
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,
@@ -168,8 +170,20 @@ func NewRouter(
 		authController = headerAuth
 	}
 
+	// Initialize graph cache and refresh job manager for per-session graph caching
+	graphCacheConfig := graph.LoadGraphCacheConfig(conf)
+	graphCache := graph.NewGraphCache(ctx, graphCacheConfig)
+	refreshJobManager := graph.NewRefreshJobManager(ctx)
+
+	if graphCacheConfig.Enabled {
+		zl.Info().Msgf("graph cache enabled: refresh_interval=%v, inactivity_timeout=%v, max_memory=%dMB",
+			graphCacheConfig.RefreshInterval, graphCacheConfig.InactivityTimeout, graphCacheConfig.MaxCacheMemoryMB)
+	} else {
+		zl.Info().Msg("graph cache disabled")
+	}
+
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, perses, discovery)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, perses, discovery, graphCache, refreshJobManager)
 	// Add any auth routes to the app router.
 	apiRoutes.Routes = append(apiRoutes.Routes, authRoutes...)
 

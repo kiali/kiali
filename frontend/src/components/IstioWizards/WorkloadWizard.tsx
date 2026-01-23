@@ -1,12 +1,7 @@
 import * as React from 'react';
 import { WIZARD_TITLES, WorkloadWizardProps, WorkloadWizardState } from './WizardActions';
-import {
-	Button,
-	ButtonVariant
-} from '@patternfly/react-core';
-import {
-	Modal
-} from '@patternfly/react-core/deprecated';
+import { Button, ButtonVariant } from '@patternfly/react-core';
+import { Modal } from '@patternfly/react-core/deprecated';
 import { t } from 'utils/I18nUtils';
 
 // NOTE: This class is not used but I will keep it in the repo as skeleton as we'll add again WorkloadWizards for other
@@ -19,7 +14,7 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     };
   }
 
-  componentDidUpdate(prevProps: WorkloadWizardProps) {
+  componentDidUpdate(prevProps: WorkloadWizardProps): void {
     if (prevProps.show !== this.props.show) {
       this.setState({
         showWizard: this.props.show
@@ -27,7 +22,7 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     }
   }
 
-  onClose = (changed: boolean) => {
+  onClose = (changed: boolean): void => {
     this.setState(
       {
         showWizard: false,
@@ -37,7 +32,7 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     );
   };
 
-  onCreateUpdate = () => {
+  onCreateUpdate = (): void => {
     switch (this.props.type) {
     }
   };
@@ -46,12 +41,12 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     return true;
   };
 
-  render() {
+  render(): React.ReactElement {
     return (
       <>
         <Modal
           width={'75%'}
-          title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type] : ''}
+          title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''}
           aria-label="workload wizard"
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
@@ -65,7 +60,7 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
               {t('Create')}
             </Button>,
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-                {t('Cancel')}
+              {t('Cancel')}
             </Button>
           ]}
         >

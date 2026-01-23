@@ -21,15 +21,16 @@ type Props = ChartProps & {
   name: string;
   series: VCLines<RichDataPoint>;
   showLegend?: boolean;
+  showTooltipTime?: boolean;
   showXAxisValues?: boolean;
   showYAxis?: boolean;
-  tooltipFormat?: (dp: VCDataPoint) => string;
   thresholds?: VCLines<RichDataPoint>;
+  tooltipFormat?: (dp: VCDataPoint) => string;
 };
 
 type State = {
-  width: number;
   hiddenSeries: Set<number>;
+  width: number;
 };
 
 export const INTERPOLATION_STRATEGY = 'monotoneX';
@@ -45,13 +46,13 @@ export class SparklineChart extends React.Component<Props, State> {
     this.state = { width: props.width || 1, hiddenSeries: new Set() };
   }
 
-  private handleResize = () => {
+  private handleResize = (): void => {
     if (this.containerRef && this.containerRef.current) {
       this.setState({ width: this.containerRef.current.clientWidth });
     }
   };
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.containerRef) {
       setTimeout(() => {
         this.handleResize();
@@ -60,20 +61,20 @@ export class SparklineChart extends React.Component<Props, State> {
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.containerRef) {
       window.removeEventListener('resize', this.handleResize);
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.containerRef) {
       return <div ref={this.containerRef}>{this.renderChart()}</div>;
     }
     return this.renderChart();
   }
 
-  private renderChart() {
+  private renderChart(): React.ReactNode {
     const legendHeight = 30;
     let height = this.props.height || 300;
     let padding = { top: 0, bottom: 0, left: 0, right: 0 };
@@ -91,9 +92,9 @@ export class SparklineChart extends React.Component<Props, State> {
       height += legendHeight;
       this.props.series.forEach((_, idx) => {
         addLegendEvent(events, {
-          legendName: this.props.name + '-legend',
+          legendName: `${this.props.name}-legend`,
           idx: idx,
-          serieID: [this.props.name + '-area-' + idx],
+          serieID: [`${this.props.name}-area-${idx}`],
           onClick: () => {
             if (!this.state.hiddenSeries.delete(idx)) {
               // Was not already hidden => add to set
@@ -114,8 +115,8 @@ export class SparklineChart extends React.Component<Props, State> {
     const container = (
       <ChartVoronoiContainer
         labels={obj => (this.props.tooltipFormat ? this.props.tooltipFormat(obj.datum) : obj.datum.y)}
-        labelComponent={<CustomTooltip />}
-        voronoiBlacklist={this.props.series.map((_, idx) => this.props.name + '-scatter-' + idx)}
+        labelComponent={<CustomTooltip showTime={this.props.showTooltipTime} />}
+        voronoiBlacklist={this.props.series.map((_, idx) => `${this.props.name}-scatter-${idx}`)}
       />
     );
     const hiddenAxisStyle = {
@@ -160,8 +161,8 @@ export class SparklineChart extends React.Component<Props, State> {
           }
           return (
             <ChartScatter
-              name={this.props.name + '-scatter-' + idx}
-              key={this.props.name + '-scatter-' + idx}
+              name={`${this.props.name}-scatter-${idx}`}
+              key={`${this.props.name}-scatter-${idx}`}
               data={serie.datapoints}
               style={{ data: { fill: serie.color } }}
               size={({ active }) => (active ? 5 : 2)}
@@ -174,8 +175,8 @@ export class SparklineChart extends React.Component<Props, State> {
           }
           return (
             <ChartArea
-              name={this.props.name + '-area-' + idx}
-              key={this.props.name + '-area-' + idx}
+              name={`${this.props.name}-area-${idx}`}
+              key={`${this.props.name}-area-${idx}`}
               data={serie.datapoints}
               style={{
                 data: {
@@ -191,7 +192,7 @@ export class SparklineChart extends React.Component<Props, State> {
         })}
         {this.props.showLegend && (
           <ChartLegend
-            name={this.props.name + '-legend'}
+            name={`${this.props.name}-legend`}
             data={this.props.series.map((s, idx) => {
               if (this.state.hiddenSeries.has(idx)) {
                 return { ...s.legendItem, symbol: { fill: PFColors.Color200 } };

@@ -541,3 +541,7 @@ spec:
       mode: DISABLE
 ...
 ----
+
+== Stargazers over time
+
+image:https://starchart.cc/kiali/kiali.svg?variant=adaptive["Stargazers over time",link="https://starchart.cc/kiali/kiali"]

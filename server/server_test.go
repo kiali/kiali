@@ -50,7 +50,7 @@ func TestRootContextPath(t *testing.T) {
 
 	rnd.New(rnd.NewSource(time.Now().UnixNano()))
 	conf := new(config.Config)
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(10))
 	conf.Server.WebRoot = testCustomRoot
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
@@ -62,7 +62,7 @@ func TestRootContextPath(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -126,7 +126,7 @@ func TestAnonymousMode(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
 
-	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -198,7 +198,7 @@ func TestSecureComm(t *testing.T) {
 	conf := new(config.Config)
 	conf.Identity.CertFile = testServerCertFile
 	conf.Identity.PrivateKeyFile = testServerKeyFile
-	conf.LoginToken.SigningKey = util.RandomString(10)
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(10))
 	conf.Server.Address = testHostname
 	conf.Server.Port = testPort
 	conf.Server.Observability.Metrics.Enabled = true
@@ -211,7 +211,7 @@ func TestSecureComm(t *testing.T) {
 	serverURL := fmt.Sprintf("https://%v", testServerHostPort)
 	apiURLWithAuthentication := serverURL + "/api/authenticate"
 	apiURL := serverURL + "/api"
-	metricsURL := fmt.Sprintf("http://%v:%v/", testHostname, testMetricsPort)
+	metricsURL := fmt.Sprintf("https://%v:%v/", testHostname, testMetricsPort)
 	profilerURL := serverURL + "/debug/pprof/"
 	assert.True(t, conf.IsServerHTTPS())
 
@@ -219,7 +219,7 @@ func TestSecureComm(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, err := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, err := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	require.NoError(err)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
@@ -333,7 +333,7 @@ func TestTracingConfigured(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, _ := NewServer(cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

@@ -22,7 +22,7 @@ import {
   FocusNode
 } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { addDanger, addError, addSuccess } from '../../utils/AlertUtils';
+import { addDanger, addError, addInfo, addSuccess } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
 import { GraphToolbar } from '../Graph/GraphToolbar/GraphToolbar';
 import { EmptyGraphLayout } from '../../pages/Graph/EmptyGraphLayout';
@@ -240,6 +240,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   private readonly errorBoundaryRef: any;
   private focusNode?: FocusNode;
   private graphDataSource: GraphDataSource;
+  private initTime: number;
 
   static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
     const aggregate = props.aggregate;
@@ -314,6 +315,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   constructor(props: GraphPageProps) {
     super(props);
     this.errorBoundaryRef = React.createRef();
+    this.initTime = Date.now();
     const focusNodeId = getFocusSelector();
     if (focusNodeId) {
       this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
@@ -591,6 +593,15 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
   private handleReady = (refs: GraphRefs): void => {
     this.setState({ graphRefs: refs, isReady: true });
+
+    const loadingTime = (Date.now() - this.initTime) / 1000;
+    if (this.props.showTrafficAnimation && loadingTime > 10) {
+      addInfo(
+        'The graph took longer than 10s to render. Consider disabling traffic animation for faster rendering of large graphs.',
+        'Consider configuring Kiali to use "dash" animation, which is simpler but faster',
+        false
+      );
+    }
   };
 
   private handleEmptyGraphAction = (): void => {
@@ -741,6 +752,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   };
 
   private loadGraphDataFromBackend = (): void => {
+    this.initTime = Date.now();
     const queryTime: TimeInMilliseconds | undefined = !!this.props.replayQueryTime
       ? this.props.replayQueryTime
       : undefined;
@@ -757,6 +769,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       namespaces: this.props.node ? [this.props.node.namespace] : this.props.activeNamespaces,
       node: this.props.node,
       queryTime: queryTime,
+      refreshInterval: this.props.refreshInterval,
       showIdleEdges: this.props.showIdleEdges,
       showIdleNodes: this.props.showIdleNodes,
       showOperationNodes: this.props.showOperationNodes,

@@ -262,3 +262,105 @@ Then('user sees graph workloads from both clusters', () => {
       assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
     });
 });
+
+Then(
+  'the waypoint node {string} is visible in the graph for the {string} cluster',
+  (workload: string, cluster: string) => {
+    cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+      .should('have.length', '1')
+      .then($graph => {
+        const { state } = $graph[0];
+
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { nodes } = elems(controller);
+
+        const target = workload.toLowerCase();
+
+        const matches = nodes.filter(node => {
+          const data = node.getData();
+          const label = (node as any)?.getLabel?.() as string | undefined;
+
+          const candidates = [data.workload, data.app, data.service, data.name, label].filter(
+            v => typeof v === 'string'
+          ) as string[];
+
+          return (
+            data.isBox === undefined &&
+            data.cluster === cluster &&
+            data.isWaypoint === true &&
+            candidates.some(c => {
+              const lc = c.toLowerCase();
+              return lc === target || lc.startsWith(`${target}-`);
+            })
+          );
+        });
+
+        if (matches.length === 0) {
+          const waypointNodes = nodes
+            .map(node => {
+              const data = node.getData();
+              return {
+                app: data.app,
+                cluster: data.cluster,
+                isWaypoint: data.isWaypoint,
+                name: data.name,
+                service: data.service,
+                workload: data.workload
+              };
+            })
+            .filter(n => n.cluster === cluster && n.isWaypoint === true);
+
+          Cypress.log({
+            name: 'waypointNodeNotFound',
+            message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
+          });
+        }
+
+        expect(matches.length).to.be.at.least(1);
+      });
+  }
+);
+
+Then('there is traffic from cluster {string} and cluster {string}', (cluster1: string, cluster2: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const { edges, nodes } = elems(controller);
+
+      // Only consider edges that actually have traffic.
+      const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic === true);
+
+      const nodeById = new Map(nodes.map(n => [n.getId(), n]));
+      const clustersWithTraffic = new Set<string>();
+
+      trafficEdges.forEach(edge => {
+        const srcId = edge.getData()?.source as string | undefined;
+        const dstId = edge.getData()?.target as string | undefined;
+
+        const srcNode = srcId ? nodeById.get(srcId) : undefined;
+        const dstNode = dstId ? nodeById.get(dstId) : undefined;
+
+        const srcCluster = srcNode?.getData()?.cluster as string | undefined;
+        const dstCluster = dstNode?.getData()?.cluster as string | undefined;
+
+        if (srcCluster) {
+          clustersWithTraffic.add(srcCluster);
+        }
+        if (dstCluster) {
+          clustersWithTraffic.add(dstCluster);
+        }
+      });
+
+      expect(Array.from(clustersWithTraffic)).to.include(cluster1);
+      expect(Array.from(clustersWithTraffic)).to.include(cluster2);
+    });
+});

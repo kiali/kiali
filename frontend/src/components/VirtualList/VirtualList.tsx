@@ -54,7 +54,8 @@ const EMBEDDED_PADDING = 42 + 100;
 const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
 
 const innerScrollContainerStyle = kialiStyle({
-  maxHeight: '95%',
+  flex: 1,
+  overflow: 'auto',
   paddingRight: '0.5rem'
 });
 
@@ -154,7 +155,10 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   getScrollStyle = (height: number): string => {
     if (globalScrollbar === 'false') {
       return kialiStyle({
+        display: 'flex',
+        flexDirection: 'column',
         height: height,
+        overflow: 'hidden',
         width: '100%'
       });
     }

@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { IRow, ThProps } from '@patternfly/react-table';
-import { Button, ButtonVariant, FormSelect, FormSelectOption, TextInput } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+  TextInput
+} from '@patternfly/react-core';
 import { isValidIp } from '../../../../utils/IstioConfigUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../../components/Pf/PfColors';
@@ -47,11 +56,13 @@ export const SourceBuilder: React.FC<Props> = (props: Props) => {
   const [newValues, setNewValues] = React.useState<string>('');
   const [source, setSource] = React.useState<{ [key: string]: string[] }>({});
   const [sourceFields, setSourceFields] = React.useState<string[]>(INIT_SOURCE_FIELDS);
+  const [isSourceFieldSelectOpen, setIsSourceFieldSelectOpen] = React.useState<boolean>(false);
 
   const { t } = useKialiTranslation();
 
-  const onAddNewSourceField = (_event: React.FormEvent, value: string): void => {
+  const onAddNewSourceField = (value: string): void => {
     setNewSourceField(value);
+    setIsSourceFieldSelectOpen(false);
   };
 
   const onAddNewValues = (_event: React.FormEvent, value: string): void => {
@@ -143,16 +154,33 @@ export const SourceBuilder: React.FC<Props> = (props: Props) => {
         {
           key: 'sourceKeyNew',
           cells: [
-            <FormSelect
-              value={newSourceField}
+            <Select
               id="addNewSourceField"
-              name="addNewSourceField"
-              onChange={onAddNewSourceField}
+              isOpen={isSourceFieldSelectOpen}
+              selected={newSourceField}
+              onSelect={(_event, value) => onAddNewSourceField(value as string)}
+              onOpenChange={setIsSourceFieldSelectOpen}
+              toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                <MenuToggle
+                  id="addNewSourceField-toggle"
+                  ref={toggleRef}
+                  onClick={() => setIsSourceFieldSelectOpen(!isSourceFieldSelectOpen)}
+                  isExpanded={isSourceFieldSelectOpen}
+                  isFullWidth
+                >
+                  {newSourceField}
+                </MenuToggle>
+              )}
+              aria-label="Source Field Select"
             >
-              {sourceFields.map((option, index) => (
-                <FormSelectOption isDisabled={false} key={`source_${index}`} value={option} label={option} />
-              ))}
-            </FormSelect>,
+              <SelectList>
+                {sourceFields.map((option, index) => (
+                  <SelectOption key={`source_${index}`} value={option}>
+                    {option}
+                  </SelectOption>
+                ))}
+              </SelectList>
+            </Select>,
             <>
               <TextInput
                 value={newValues}

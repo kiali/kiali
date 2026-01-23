@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Content, ContentVariants, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
 
 interface ValidationSummaryProps {
@@ -66,15 +66,13 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
   let tooltipContent: React.ReactNode = undefined;
 
   if (props.type === 'istio') {
-    const tooltipNA = <Content component="p" className={tooltipSentenceStyle}>No Istio config objects found</Content>;
+    const tooltipNA = <div className={tooltipSentenceStyle}>No Istio config objects found</div>;
 
-    const tooltipNoValidationAvailable = <Content component="p" className={tooltipListStyle}>No Istio config validation available</Content>;
+    const tooltipNoValidationAvailable = <div className={tooltipListStyle}>No Istio config validation available</div>;
 
     const tooltipSummary = (
       <>
-        <Content style={{ textAlign: 'left', textEmphasis: 'strong' }} component={ContentVariants.p}>
-          Istio config objects analyzed: {props.objectCount}
-        </Content>
+        <div style={{ textAlign: 'left', fontWeight: 'bold' }}>Istio config objects analyzed: {props.objectCount}</div>
 
         <div className={tooltipListStyle}>
           {severitySummary().map(cat => (
@@ -83,9 +81,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
         </div>
 
         {props.reconciledCondition?.status && (
-          <Content style={{ textAlign: 'left', textEmphasis: 'strong' }} component={ContentVariants.p}>
-            The object is reconciled
-          </Content>
+          <div style={{ textAlign: 'left', fontWeight: 'bold' }}>The object is reconciled</div>
         )}
       </>
     );
@@ -104,9 +100,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
     // Tooltip Content for service validation
     tooltipContent = (
       <>
-        <Content style={{ textAlign: 'left', textEmphasis: 'strong' }} component={ContentVariants.p}>
-          Service validation result
-        </Content>
+        <div style={{ textAlign: 'left', fontWeight: 'bold' }}>Service validation result</div>
 
         <div className={tooltipListStyle}>
           {severitySummary().map(cat => (

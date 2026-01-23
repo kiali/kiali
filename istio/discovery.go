@@ -1178,7 +1178,7 @@ func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
 	}
 
 	flagSet := pflag.NewFlagSet("istiod", pflag.ContinueOnError)
-	flagSet.ParseErrorsWhitelist.UnknownFlags = true
+	flagSet.ParseErrorsAllowlist.UnknownFlags = true
 
 	monitoringAddr := flagSet.String("monitoringAddr", "", "Monitoring address in format :port")
 

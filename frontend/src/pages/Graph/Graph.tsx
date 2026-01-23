@@ -80,7 +80,12 @@ const ZOOM_OUT = 3 / 4;
 const FIT_PADDING = 90;
 
 let initialLayout = false;
+let isReady = false;
 let layoutInProgress: LayoutType | undefined;
+
+export function graphIsReady(): boolean {
+  return isReady;
+}
 
 export function graphLayout(controller: Controller, layoutType: LayoutType, reset = true): void {
   if (!controller?.hasGraph()) {
@@ -309,6 +314,7 @@ const TopologyContent: React.FC<{
         trafficAnimation.start();
       }
 
+      isReady = true;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
     }
 
@@ -633,6 +639,7 @@ const TopologyContent: React.FC<{
   React.useEffect(() => {
     console.debug(`TG: controller changed`);
     initialLayout = true;
+    isReady = false;
   }, [controller]);
 
   React.useEffect(() => {
@@ -716,9 +723,12 @@ const TopologyContent: React.FC<{
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
-    <TopologyView data-test="topology-view-pf">
-      <VisualizationSurface data-test="visualization-surface" state={{}} />
-    </TopologyView>
+    <>
+      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <TopologyView data-test="topology-view-pf">
+        <VisualizationSurface data-test="visualization-surface" state={{}} />
+      </TopologyView>
+    </>
   ) : (
     <>
       <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />

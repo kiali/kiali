@@ -4,14 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
-	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -30,13 +29,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
-)
-
-const (
-	// OpenIdServerCAFile is a certificate file used to connect to the OpenID server.
-	// This is for cases when the authentication server is using TLS with a self-signed
-	// certificate.
-	OpenIdServerCAFile = "/kiali-cabundle/openid-server-ca.crt"
 )
 
 // cachedOpenIdKeySet stores the metadata obtained from the /.well-known/openid-configuration
@@ -99,6 +91,25 @@ type badOidcRequest struct {
 // Error returns the text representation of an badOidcRequest error.
 func (e badOidcRequest) Error() string {
 	return e.Detail
+}
+
+// generatePKCECodeVerifier generates a cryptographically random code verifier for PKCE.
+// According to RFC 7636, the code verifier should be a random string of 43-128 characters
+// from the unreserved characters [A-Z] / [a-z] / [0-9] / "-" / "." / "_" / "~".
+func generatePKCECodeVerifier() (string, error) {
+	// RFC 7636 compliant character set: unreserved characters only
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+	// Generate 43 characters (minimum length recommended by RFC 7636)
+	return util.CryptoRandomStringWithCharset(43, charset)
+}
+
+// generatePKCECodeChallenge generates the code challenge from a code verifier.
+// According to RFC 7636, the code challenge is the Base64URL encoding (without padding)
+// of the SHA-256 hash of the code verifier.
+func generatePKCECodeChallenge(codeVerifier string) string {
+	hash := sha256.Sum256([]byte(codeVerifier))
+	// Base64URL encoding without padding (RFC 7636 requires base64url encoding)
+	return strings.TrimRight(base64.URLEncoding.EncodeToString(hash[:]), "=")
 }
 
 // OpenIdAuthController contains the backing logic to implement
@@ -227,9 +238,10 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		// If RBAC is ENABLED, check that the user has privileges on the cluster.
 		for cluster := range c.clientFactory.GetSAClients() {
 			userSessions[cluster] = &UserSessionData{
-				ExpiresOn: sData.ExpiresOn,
-				Username:  sData.Payload.Subject,
 				AuthInfo:  &api.AuthInfo{Token: sData.Payload.Token},
+				ExpiresOn: sData.ExpiresOn,
+				SessionID: sData.SessionID,
+				Username:  sData.Payload.Subject,
 			}
 		}
 		userClients, err := c.clientFactory.GetClients(userSessions.GetAuthInfos())
@@ -251,9 +263,10 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		token := c.clientFactory.GetSAHomeClusterClient().GetToken()
 		for cluster := range c.clientFactory.GetSAClients() {
 			userSessions[cluster] = &UserSessionData{
-				ExpiresOn: sData.ExpiresOn,
-				Username:  sData.Payload.Subject,
 				AuthInfo:  &api.AuthInfo{Token: token},
+				ExpiresOn: sData.ExpiresOn,
+				SessionID: sData.SessionID,
+				Username:  sData.Payload.Subject,
 			}
 		}
 	}
@@ -339,20 +352,25 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := c.conf.GetCredential(c.conf.LoginToken.SigningKey)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error reading signing key: " + err.Error()))
+		return
+	}
+
 	// Build scopes string
 	scopes := strings.Join(getConfiguredOpenIdScopes(c.conf), " ")
 
 	// Determine authorization endpoint
-	authorizationEndpoint := c.conf.Auth.OpenId.AuthorizationEndpoint
-	if len(authorizationEndpoint) == 0 {
-		openIdMetadata, err := getOpenIdMetadata(c.conf)
-		if err != nil {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
-			return
-		}
-		authorizationEndpoint = openIdMetadata.AuthURL
+	authorizationEndpoint, err := getOpenIdAuthorizationEndpoint(c.conf)
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Error fetching OpenID provider metadata: " + err.Error()))
+		return
 	}
 
 	// Create a "nonce" code and set a cookie with the code
@@ -365,8 +383,22 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		return
 	}
 
+	// Generate PKCE code verifier and challenge
+	codeVerifier, err := generatePKCECodeVerifier()
+	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to generate PKCE code verifier"))
+		return
+	}
+	codeChallenge := generatePKCECodeChallenge(codeVerifier)
+
 	guessedKialiURL := httputil.GuessKialiURL(c.conf, r)
 	secureFlag := c.conf.IsServerHTTPS() || strings.HasPrefix(guessedKialiURL, "https:")
+	// Note: Both nonce and PKCE code verifier cookies use SameSiteLaxMode (not Strict) because the OIDC
+	// callback is a cross-site top-level GET navigation from the identity provider. SameSiteStrictMode
+	// would prevent the cookies from being sent during this callback, breaking authentication. Security
+	// is maintained through state parameter validation (CSRF) and PKCE verification at the token endpoint.
 	nowTime := util.Clock.Now()
 	expirationTime := nowTime.Add(time.Duration(c.conf.Auth.OpenId.AuthenticationTimeout) * time.Second)
 	nonceCookie := http.Cookie{
@@ -379,6 +411,18 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		Value:    nonceCode,
 	}
 	http.SetCookie(w, &nonceCookie)
+
+	// Set PKCE code verifier cookie
+	codeVerifierCookie := http.Cookie{
+		Expires:  expirationTime,
+		HttpOnly: true,
+		Secure:   secureFlag,
+		Name:     codeVerifierCookieName(c.conf.KubernetesConfig.ClusterName),
+		Path:     c.conf.Server.WebRoot,
+		SameSite: http.SameSiteLaxMode,
+		Value:    codeVerifier,
+	}
+	http.SetCookie(w, &codeVerifierCookie)
 
 	// Instead of sending the nonce code to the IdP, send a cryptographic hash.
 	// This way, if an attacker manages to steal the id_token returned by the IdP, he still
@@ -397,11 +441,11 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 	// Although this "binds" the id_token returned by the IdP with the CSRF mitigation, this should be OK
 	// because we are including a "secret" key (i.e. should an attacker steal the nonce code, he still needs to know
 	// the Kiali's signing key).
-	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), c.conf.LoginToken.SigningKey)))
+	csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", nonceCode, nowTime.UTC().Format("060102150405"), signingKey)))
 
 	// Send redirection to browser
 	responseType := "code" // Request for the "authorization code" flow
-	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s",
+	redirectUri := fmt.Sprintf("%s?client_id=%s&response_type=%s&redirect_uri=%s&scope=%s&nonce=%s&state=%s&code_challenge=%s&code_challenge_method=S256",
 		authorizationEndpoint,
 		url.QueryEscape(c.conf.Auth.OpenId.ClientId),
 		responseType,
@@ -409,6 +453,7 @@ func (c OpenIdAuthController) redirectToAuthServerHandler(w http.ResponseWriter,
 		url.QueryEscape(scopes),
 		url.QueryEscape(fmt.Sprintf("%x", nonceHash)),
 		url.QueryEscape(fmt.Sprintf("%x-%s", csrfHash, nowTime.UTC().Format("060102150405"))),
+		url.QueryEscape(codeChallenge),
 	)
 
 	if len(c.conf.Auth.OpenId.AdditionalRequestParams) > 0 {
@@ -466,6 +511,14 @@ type openidFlowHelper struct {
 	// of the id_token.
 	UseAccessToken bool
 
+	// CodeVerifier is the PKCE code verifier generated during the initial authorization request.
+	// It is used to verify the authorization code during the token exchange.
+	CodeVerifier string
+
+	// CodeChallenge is the SHA-256 hash of the CodeVerifier, base64url-encoded.
+	// It is sent in the authorization request to implement PKCE.
+	CodeChallenge string
+
 	// Error is nil unless there was an error during some phase of the authentication. A non-nil
 	// value cancels the authentication request.
 	Error error
@@ -502,6 +555,18 @@ func (p *openidFlowHelper) callbackCleanup(r *http.Request, w http.ResponseWrite
 	}
 	http.SetCookie(w, &deleteNonceCookie)
 
+	// Delete the code verifier cookie since we no longer need it.
+	deleteCodeVerifierCookie := http.Cookie{
+		Name:     codeVerifierCookieName(p.conf.KubernetesConfig.ClusterName),
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   secureFlag,
+		Path:     p.conf.Server.WebRoot,
+		SameSite: http.SameSiteStrictMode,
+		Value:    "",
+	}
+	http.SetCookie(w, &deleteCodeVerifierCookie)
+
 	return p
 }
 
@@ -524,6 +589,12 @@ func (p *openidFlowHelper) extractOpenIdCallbackParams(r *http.Request) *openidF
 		hash := sha256.Sum224([]byte(nonceCookie.Value))
 		p.NonceHash = make([]byte, sha256.Size224)
 		copy(p.NonceHash, hash[:])
+	}
+
+	// Get the PKCE code verifier
+	var codeVerifierCookie *http.Cookie
+	if codeVerifierCookie, err = r.Cookie(codeVerifierCookieName(p.conf.KubernetesConfig.ClusterName)); err == nil {
+		p.CodeVerifier = codeVerifierCookie.Value
 	}
 
 	// Parse/fetch received form data
@@ -561,6 +632,12 @@ func (p *openidFlowHelper) checkOpenIdAuthorizationCodeFlowParams() *openidFlowH
 
 	if p.Code == "" {
 		p.Error = &badOidcRequest{Detail: "no authorization code is present"}
+	}
+
+	// The code verifier cookie should always be present since Kiali sets it before redirecting to the
+	// OIDC provider. Failing early with a clear message is better than getting a cryptic error from the token endpoint.
+	if p.CodeVerifier == "" {
+		p.Error = &badOidcRequest{Detail: "no PKCE code verifier present - login window may have timed out or cookies were blocked"}
 	}
 
 	return p
@@ -756,12 +833,22 @@ func (p *openidFlowHelper) validateOpenIdState() *openidFlowHelper {
 		return p
 	}
 
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := p.conf.GetCredential(p.conf.LoginToken.SigningKey)
+	if err != nil {
+		p.Error = &AuthenticationFailureError{
+			HttpStatus: http.StatusInternalServerError,
+			Reason:     "Error reading signing key: " + err.Error(),
+		}
+		return p
+	}
+
 	state := p.State
 
 	separator := strings.LastIndexByte(state, '-')
 	if separator != -1 {
 		csrfToken, timestamp := state[:separator], state[separator+1:]
-		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, p.conf.LoginToken.SigningKey)))
+		csrfHash := sha256.Sum224([]byte(fmt.Sprintf("%s+%s+%s", p.Nonce, timestamp, signingKey)))
 
 		if fmt.Sprintf("%x", csrfHash) != csrfToken {
 			p.Error = &AuthenticationFailureError{
@@ -801,14 +888,27 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
+	// Resolve the client secret via CredentialManager to support rotation
+	clientSecret, err := p.conf.GetCredential(cfg.ClientSecret)
+	if err != nil {
+		p.Error = fmt.Errorf("failed to read OpenID client secret: %w", err)
+		return p
+	}
+
 	// Exchange authorization code for a token
 	requestParams := url.Values{}
 	requestParams.Set("code", p.Code)
 	requestParams.Set("grant_type", "authorization_code")
 	requestParams.Set("redirect_uri", redirect_uri)
-	if len(cfg.ClientSecret) == 0 {
+	if len(clientSecret) == 0 {
 		requestParams.Set("client_id", cfg.ClientId)
 	}
+	// Include PKCE code_verifier (required since we always send code_challenge)
+	if len(p.CodeVerifier) == 0 {
+		p.Error = fmt.Errorf("PKCE code_verifier is missing - this should have been caught earlier in the flow")
+		return p
+	}
+	requestParams.Set("code_verifier", p.CodeVerifier)
 
 	tokenRequest, err := http.NewRequest(http.MethodPost, oidcMeta.TokenURL, strings.NewReader(requestParams.Encode()))
 	if err != nil {
@@ -816,8 +916,8 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 		return p
 	}
 
-	if len(cfg.ClientSecret) > 0 {
-		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(cfg.ClientSecret))
+	if len(clientSecret) > 0 {
+		tokenRequest.SetBasicAuth(url.QueryEscape(cfg.ClientId), url.QueryEscape(clientSecret))
 	}
 
 	tokenRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -911,7 +1011,9 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 }
 
 // createHttpClient is a helper for creating and configuring an http client that is ready
-// to do requests to the url in toUrl, which should be and endpoint of the OpenId server.
+// to do requests to the url in toUrl, which should be an endpoint of the OpenId server.
+// Custom CA certificates can be provided via the kiali-cabundle ConfigMap using either
+// the global additional-ca-bundle.pem key or the OpenID-specific openid-server-ca.crt key.
 func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 	cfg := conf.Auth.OpenId
 	parsedUrl, err := url.Parse(toUrl)
@@ -919,32 +1021,16 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 		return nil, err
 	}
 
-	// Check if there is a user-configured custom certificate for the OpenID Server. Read it, if it exists
-	var cafile []byte
-	if _, customCaErr := os.Stat(OpenIdServerCAFile); customCaErr == nil {
-		var caReadErr error
-		if cafile, caReadErr = os.ReadFile(OpenIdServerCAFile); caReadErr != nil {
-			return nil, fmt.Errorf("failed to read the OpenId CA certificate: %w", caReadErr)
-		}
-	} else if !errors.Is(customCaErr, os.ErrNotExist) {
-		log.Warningf("Unable to read the provided OpenID Server CA file (%s). Ignoring...", customCaErr.Error())
-	}
-
 	httpTransport := &http.Transport{}
-	if cfg.InsecureSkipVerifyTLS || cafile != nil {
-		var certPool *x509.CertPool
-		if cafile != nil {
-			certPool = x509.NewCertPool()
-			if ok := certPool.AppendCertsFromPEM(cafile); !ok {
-				return nil, fmt.Errorf("supplied OpenId CA file cannot be parsed")
-			}
-		}
 
-		httpTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
-			RootCAs:            certPool,
-		}
+	// Use the global cert pool which includes system CAs and any additional CAs
+	// configured via the kiali-cabundle ConfigMap (including openid-server-ca.crt)
+	certPool := conf.CertPool()
+	httpTransport.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: cfg.InsecureSkipVerifyTLS,
+		RootCAs:            certPool,
 	}
+	conf.ResolvedTLSPolicy.ApplyTo(httpTransport.TLSClientConfig)
 
 	if cfg.HTTPProxy != "" || cfg.HTTPSProxy != "" {
 		proxyFunc := getProxyForUrl(parsedUrl, cfg.HTTPProxy, cfg.HTTPSProxy)
@@ -962,9 +1048,16 @@ func createHttpClient(conf *config.Config, toUrl string) (*http.Client, error) {
 // isOpenIdCodeFlowPossible determines if the "authorization code" flow can be used
 // to do user authentication.
 func isOpenIdCodeFlowPossible(conf *config.Config) bool {
+	// Read the signing key (may be from file if using credential rotation)
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		log.Warningf("Cannot use OpenId authorization code flow because signing key could not be read: %v", err)
+		return false
+	}
+
 	// Kiali's signing key length must be 16, 24 or 32 bytes in order to be able to use
 	// encoded cookies.
-	switch len(conf.LoginToken.SigningKey) {
+	switch len(signingKey) {
 	case 16, 24, 32:
 	default:
 		log.Warningf("Cannot use OpenId authorization code flow because signing key is not 16, 24 nor 32 bytes long")
@@ -1104,11 +1197,16 @@ func getOpenIdJwks(conf *config.Config) (*jose.JSONWebKeySet, error) {
 	return fetchedKeySet.(*jose.JSONWebKeySet), nil
 }
 
-// getOpenIdMetadata fetches the OpenId metadata using the configured Issuer URI and
-// downloading the metadata from the well-known path '/.well-known/openid-configuration'. Some
-// validations are performed and the parsed metadata is returned. Since the metadata should be
-// rare to change, the retrieved metadata is cached on first call and subsequent calls return
-// the cached metadata.
+// getOpenIdMetadata returns the OpenID provider metadata used by the authorization code flow.
+//
+// Endpoint selection precedence (issue #8777):
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint),
+//     use those explicit endpoints (userinfo is optional; jwks_uri should be provided when using explicit endpoints).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward
+//     compatibility, but still discover the remaining endpoints from the issuer.
+//  3. Otherwise, perform OIDC discovery via `/.well-known/openid-configuration`.
+//
+// The result is cached after the first successful call; subsequent calls return the cached metadata.
 func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	if cachedOpenIdMetadata != nil {
 		return cachedOpenIdMetadata, nil
@@ -1116,6 +1214,41 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
 		cfg := conf.Auth.OpenId
+
+		// Check if we have explicit endpoint configuration
+		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
+
+		// Use discovery_override for explicit endpoint configuration
+		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
+			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
+			jwksUri = cfg.DiscoveryOverride.JwksUri
+			userInfoEndpoint = cfg.DiscoveryOverride.UserinfoEndpoint
+		} else if cfg.AuthorizationEndpoint != "" { //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+			// Backward compatibility: the deprecated authorization_endpoint is only used when starting the flow (redirect).
+			// Metadata (and the remaining endpoints: token/jwks/userinfo) still come from the issuer's discovery document.
+			log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
+		}
+
+		if authEndpoint != "" && tokenEndpoint != "" {
+			// Use explicit configuration for security-hardened environments
+			log.Infof("Using explicit OpenID endpoints for restricted environment")
+
+			metadata := &openIdMetadata{
+				Issuer:      cfg.IssuerUri,
+				AuthURL:     authEndpoint,
+				TokenURL:    tokenEndpoint,
+				JWKSURL:     jwksUri,
+				UserInfoURL: userInfoEndpoint,
+				// Assume "code" is supported when explicit config is provided
+				ResponseTypesSupported: []string{"code"},
+			}
+
+			return metadata, nil
+		}
+
+		// Original auto-discovery logic continues here...
+		log.Infof("Using OpenID auto-discovery from provider")
 
 		// Remove trailing slash from issuer URI, if needed
 		trimmedIssuerUri := strings.TrimRight(cfg.IssuerUri, "/")
@@ -1187,6 +1320,40 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 	}
 
 	return fetchedMetadata.(*openIdMetadata), nil
+}
+
+// getOpenIdAuthorizationEndpoint returns the URL used to start the OpenID authorization code flow.
+//
+// Precedence:
+//  1. If `auth.openid.discovery_override` is fully specified (authorization_endpoint + token_endpoint), use the override
+//     authorization endpoint (supports environments where discovery is blocked; see issue #8777).
+//  2. Otherwise, if the deprecated `auth.openid.authorization_endpoint` is set, use it for backward compatibility.
+//  3. Otherwise, fall back to OIDC discovery via `getOpenIdMetadata()` and return `metadata.AuthURL`.
+//
+// Note: When only the deprecated `authorization_endpoint` is set, other endpoints (token/jwks/userinfo) are still
+// obtained later via discovery when needed.
+func getOpenIdAuthorizationEndpoint(conf *config.Config) (string, error) {
+	cfg := conf.Auth.OpenId
+
+	// Prefer explicit endpoints when fully configured (issue #8777).
+	// If only partially configured, fall back to auto-discovery.
+	if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
+		return cfg.DiscoveryOverride.AuthorizationEndpoint, nil
+	}
+
+	// Backward compatibility for the deprecated field.
+	// Note: This only provides the authorization endpoint; the token/jwks/userinfo endpoints still require discovery.
+	if cfg.AuthorizationEndpoint != "" { //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+		log.Warning("OpenID configuration is using deprecated field 'authorization_endpoint'. Please migrate to the new 'discovery_override.authorization_endpoint' configuration.")
+		return cfg.AuthorizationEndpoint, nil //nolint:staticcheck // SA1019: backward compatibility for deprecated auth.openid.authorization_endpoint (redirect-only)
+	}
+
+	openIdMetadata, err := getOpenIdMetadata(conf)
+	if err != nil {
+		return "", err
+	}
+
+	return openIdMetadata.AuthURL, nil
 }
 
 // getProxyForUrl returns a function which, in turn, returns the URL of the proxy server that should
@@ -1413,6 +1580,11 @@ func verifyOpenIdUserAccess(token string, clientFactory kubernetes.ClientFactory
 	}
 
 	return http.StatusOK, "", nil
+}
+
+// codeVerifierCookieName returns the cookie name for storing the PKCE code verifier.
+func codeVerifierCookieName(clusterName string) string {
+	return PkceVerifierCookieName + "-" + clusterName
 }
 
 // Interface guard to ensure that headerAuthController implements the AuthController interface.

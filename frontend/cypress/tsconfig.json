@@ -2,6 +2,8 @@
   "extends": "../tsconfig",
   "compilerOptions": {
     "esModuleInterop": true,
+    "inlineSourceMap": false,
+    "sourceMap": false,
     "target": "es5",
     "lib": ["es2019", "dom"],
     "resolveJsonModule": true,

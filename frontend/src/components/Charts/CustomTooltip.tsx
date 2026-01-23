@@ -1,15 +1,8 @@
 import * as React from 'react';
-import {
-  ChartTooltip,
-  ChartTooltipProps,
-  ChartLabel,
-  ChartPoint,
-  ChartCursorFlyout
-} from '@patternfly/react-charts/victory';
+import { ChartTooltip, ChartTooltipProps, ChartLabel, ChartPoint } from '@patternfly/react-charts/victory';
 import { VCDataPoint } from 'types/VictoryChartInfo';
 
 const dy = 15;
-const headSize = 2 * dy;
 const yMargin = 8;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,11 +11,10 @@ const canvasContext: any = document.createElement('canvas').getContext('2d');
 canvasContext.font = '14px overpass';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }) => {
-  const x = props.x - 11 - props.textWidth / 2;
-  const textsWithHead = props.head ? [props.head, ' '].concat(props.text) : props.text;
-  const headSize = props.head ? 2 * dy : 0;
-  const startY = yMargin + props.y - (textsWithHead.length * dy) / 2 + headSize;
+const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }): React.ReactElement => {
+  const x = props.x - 16 - props.textWidth / 2;
+  const textsWithHead = props.head ? [props.head].concat(props.text) : props.text;
+  const startY = yMargin + props.y - (textsWithHead.length * dy) / 2;
 
   return (
     <>
@@ -33,10 +25,10 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
             const symbol = pt.symbol || 'square';
             return (
               <ChartPoint
-                key={'item-' + idx}
+                key={`item-${idx}`}
                 style={{ fill: pt.color, type: symbol }}
                 x={x}
-                y={startY + dy * idx}
+                y={startY + (props.head ? dy : 0) + dy * idx}
                 symbol={symbol}
                 size={5.5}
               />
@@ -50,9 +42,8 @@ const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: nu
 const getHeader = (activePoints?: VCDataPoint[]): string | undefined => {
   if (activePoints && activePoints.length > 0) {
     const x = activePoints[0].x;
-    if (typeof x === 'object') {
-      // Assume date
-      return x.toLocaleStringWithConditionalDate();
+    if (typeof x === 'object' && (x as any).toLocaleStringWithConditionalDate) {
+      return (x as any).toLocaleStringWithConditionalDate();
     }
   }
   return undefined;
@@ -60,24 +51,24 @@ const getHeader = (activePoints?: VCDataPoint[]): string | undefined => {
 
 export type HookedTooltipProps<T> = ChartTooltipProps & {
   activePoints?: (VCDataPoint & T)[];
-  onOpen?: (items: VCDataPoint[]) => void;
   onClose?: () => void;
+  onOpen?: (items: VCDataPoint[]) => void;
 };
 
 export class HookedChartTooltip<T> extends React.Component<HookedTooltipProps<T>> {
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.props.onOpen && this.props.activePoints) {
       this.props.onOpen(this.props.activePoints);
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.props.onClose) {
       this.props.onClose();
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     return <ChartTooltip {...this.props} />;
   }
 }
@@ -87,11 +78,11 @@ type Props = HookedTooltipProps<{}> & {
 };
 
 type State = {
-  texts: string[];
   head?: string;
-  textWidth: number;
-  width: number;
   height: number;
+  textWidth: number;
+  texts: string[];
+  width: number;
 };
 
 export class CustomTooltip extends React.Component<Props, State> {
@@ -99,12 +90,14 @@ export class CustomTooltip extends React.Component<Props, State> {
     const head = props.showTime ? getHeader(props.activePoints) : undefined;
     const texts: string[] =
       props.text && Array.isArray(props.text) ? (props.text as string[]) : !props.text ? [] : [props.text as string];
-    let height = texts.length * dy + 2 * yMargin;
-    if (head) {
-      height += headSize;
-    }
-    const textWidth = Math.max(...texts.map(t => canvasContext.measureText(t).width));
-    const width = 50 + (head ? Math.max(textWidth, canvasContext.measureText(head).width) : textWidth);
+
+    const totalLines = texts.length + (head ? 1 : 0);
+    const height = totalLines * dy + 2 * yMargin;
+
+    const textWidth = Math.max(...texts.map(t => canvasContext.measureText(t).width), 0);
+    const headWidth = head ? canvasContext.measureText(head).width : 0;
+    const width = 50 + Math.max(textWidth, headWidth);
+
     return {
       head: head,
       texts: texts,
@@ -119,14 +112,14 @@ export class CustomTooltip extends React.Component<Props, State> {
     this.state = CustomTooltip.getDerivedStateFromProps(p);
   }
 
-  render() {
+  render(): React.ReactNode {
     return (
       <HookedChartTooltip
         {...this.props}
         text={this.state.texts}
         flyoutWidth={this.state.width}
         flyoutHeight={this.state.height}
-        flyoutComponent={<ChartCursorFlyout />}
+        constrainToVisibleArea={true}
         labelComponent={<CustomLabel head={this.state.head} textWidth={this.state.textWidth} />}
       />
     );

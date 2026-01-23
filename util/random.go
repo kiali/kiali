@@ -54,3 +54,20 @@ func CryptoRandomString(n int) (string, error) {
 	}
 	return string(bytes), nil
 }
+
+// CryptoRandomStringWithCharset returns a securely generated random string using a custom character set.
+// It will return an error if the system's secure random number generator fails to function correctly,
+// in which case the caller should not continue.
+func CryptoRandomStringWithCharset(n int, charset string) (string, error) {
+	if len(charset) == 0 {
+		return "", nil
+	}
+	bytes, err := CryptoRandomBytes(n)
+	if err != nil {
+		return "", err
+	}
+	for i, b := range bytes {
+		bytes[i] = charset[b%byte(len(charset))]
+	}
+	return string(bytes), nil
+}

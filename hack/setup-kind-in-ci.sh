@@ -144,18 +144,22 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
 if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v1.65" ]; then
-    ISTIO_VERSION="1.16.0"
-  elif [ "${TARGET_BRANCH}" == "v1.73" ]; then
-    ISTIO_VERSION="1.18.0"
+  if [ "${TARGET_BRANCH}" == "v1.73" ]; then
+    ISTIO_VERSION="1.18.7"
+  elif [ "${TARGET_BRANCH}" == "v2.4" ]; then
+    ISTIO_VERSION="1.23.6"
+  elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
+    ISTIO_VERSION="1.26.8"
   fi
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == "1.16.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
-elif [ "${ISTIO_VERSION}" == "v1.18.0" ]; then
-  KIND_NODE_IMAGE="kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
+if [ "${ISTIO_VERSION}" == 1.18.* ]; then
+  KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
+elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
+elif [[ "${ISTIO_VERSION}" == 1.26.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
@@ -411,6 +415,7 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -504,6 +509,7 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
+    --set kiali_internal.graph_cache.enabled="false" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -656,7 +662,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -669,7 +675,7 @@ setup_kind_multicluster() {
     if [ -n "${certs_dir}" ]; then
       external_certs_dir_arg="--certs-dir ${certs_dir}"
     fi
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" ${kind_node_image:-} ${hub_arg:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-mgmt"
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
@@ -677,7 +683,7 @@ setup_kind_multicluster() {
     ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh ${kind_node_image:-} ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}"
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"

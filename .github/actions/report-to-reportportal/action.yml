@@ -1,0 +1,68 @@
+name: 'Report to ReportPortal'
+description: 'Upload test results to ReportPortal'
+inputs:
+  test_suite:
+    description: 'Test suite name'
+    required: true
+  test_results_dir:
+    description: 'Directory containing test results'
+    required: false
+    default: '/tmp/artifacts'
+  test_file_name:
+    description: 'Test results file name'
+    required: false
+    default: 'junit.xml'
+  istio_version:
+    description: 'Istio version'
+    required: false
+    default: 'unknown'
+  data_plane_mode:
+    description: 'Data plane mode'
+    required: false
+    default: 'unknown'
+  data_router_username:
+    description: 'Data Router username (secret)'
+    required: true
+  data_router_password:
+    description: 'Data Router password (secret)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Extract Kiali version
+      shell: bash
+      run: |
+        # Extract VERSION from Makefile and get major.minor (e.g., v2.21.0-SNAPSHOT -> 2.21)
+        VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
+        echo "KIALI_VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Download ReportPortal script
+      shell: bash
+      run: |
+        curl -sSL -o /tmp/send_report_portal_results.sh \
+          https://raw.githubusercontent.com/openshift-service-mesh/ci-utils/main/report_portal/send_report_portal_results.sh
+        chmod +x /tmp/send_report_portal_results.sh
+
+    - name: Set EXTRA_ATTRIBUTES
+      shell: bash
+      run: |
+        echo "EXTRA_ATTRIBUTES=[{\"key\": \"build_type\", \"value\": \"pr_build\"}, {\"key\": \"kiali_version\", \"value\": \"${{ env.KIALI_VERSION }}\"}, {\"key\": \"istio_version\", \"value\": \"${{ inputs.istio_version }}\"}, {\"key\": \"data_plane_mode\", \"value\": \"${{ inputs.data_plane_mode }}\"}]" >> $GITHUB_ENV
+
+    - name: Send results to ReportPortal
+      shell: bash
+      env:
+        REPORT_PORTAL_HOSTNAME: reportportal-ossm.apps.dno.ocp-hub.prod.psi.redhat.com
+        REPORT_PORTAL_PROJECT: osssm_general
+        DATA_ROUTER_USERNAME: ${{ inputs.data_router_username }}
+        DATA_ROUTER_PASSWORD: ${{ inputs.data_router_password }}
+        TEST_RESULTS_DIR: ${{ inputs.test_results_dir }}
+        TEST_FILE_NAME: ${{ inputs.test_file_name }}
+        TEST_SUITE: ${{ inputs.test_suite }}
+        TESTRUN_NAME: Kiali ${{ inputs.test_suite }} test run
+        TESTRUN_DESCRIPTION: Kiali ${{ inputs.test_suite }} test run
+        INSTALLATION_METHOD: helm
+        PRODUCT_STAGE: upstream
+        TEST_REPO: ${{ github.repository }}
+        EXTRA_ATTRIBUTES: ${{ env.EXTRA_ATTRIBUTES }}
+      run: /tmp/send_report_portal_results.sh --verbose

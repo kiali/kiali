@@ -32,37 +32,9 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/testutils"
+	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/slicetest"
 )
-
-func FakeCertificateConfigMap(namespace string) *core_v1.ConfigMap {
-	return &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "istio-ca-root-cert",
-			Namespace: namespace,
-		},
-		Data: map[string]string{
-			"root-cert.pem": `-----BEGIN CERTIFICATE-----
-MIIC/DCCAeSgAwIBAgIQVv6mINjF1kQJS2O98zkkNzANBgkqhkiG9w0BAQsFADAY
-MRYwFAYDVQQKEw1jbHVzdGVyLmxvY2FsMB4XDTIxMDcyNzE0MzcwMFoXDTMxMDcy
-NTE0MzcwMFowGDEWMBQGA1UEChMNY2x1c3Rlci5sb2NhbDCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBAMwHN+LAkWbC9qyAlXQ4Zwn+Yhgc4eCPuw9LQVjW
-b9al44H5sV/1QIog8wOjDHx32k2lTXvdxRgOJd+ENXMQ9DmU6C9oeWhMZAmAvp4M
-NBaYnY4BRcWAPqIhEb/26zRA9pXjPVJX+aN45R1EJWsJxP6ZPkmZZKILnYY6VwqU
-wbbB3lp34HQruvkpePUo4Bux+N+DfQsu1g/C6UMbQlY/kl1d1KaTS4bYQAP1d4eT
-sPxw5Rf9WRSQcGaAWiPbUxVBtA0LYCbHzOacAAwvYhJgvbinr73RiqKUMR5BV/p3
-lyKyVDyrVXXbVNsQhsT/lM5e55DaQEJKyldgklSGseVYHy0CAwEAAaNCMEAwDgYD
-VR0PAQH/BAQDAgIEMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYEFK7ZOPXlxd78
-xUpOGYDaqgC/sdevMA0GCSqGSIb3DQEBCwUAA4IBAQACLa2gNuIxQWf4qiCxsbIj
-qddqbjHBGOWVAcyFRk/k7ydmellkI5BcMJEhlPT7TBUutcjvX8lCsup+xGy47NpH
-hRp4hxUYodGXLXQ2HfI+3CgAARBEIBXjh/73UDFcMtH/G6EtGfFEw8ZgbyaDQ9Ft
-c10h5QnbMUBFWdmvwSFvbJwZoTlFM+skogwv+d55sujZS83jbZHs7lZlDy0hDYIm
-tMAWt4FEJnLPrfFtCFJgddiXDYGtX/Apvqac2riSAFg8mQB5WRtxKH7TK9Qhvca7
-V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
------END CERTIFICATE-----`,
-		},
-	}
-}
 
 func fakeIstiodDeployment(cluster string, manageExternal bool) *apps_v1.Deployment {
 	deployment := &apps_v1.Deployment{
@@ -172,7 +144,7 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 	objects := []runtime.Object{
 		&istioDeploymentMock,
 		&sidecarConfigMapMock,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 		kialiNs,
 	}
 
@@ -343,7 +315,7 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 	// Create a MeshService and invoke GetClusters. This should cache the result.
 	k8s := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("foo"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 		istioDeploymentMock,
 		kialiSvc,
 	)
@@ -404,7 +376,7 @@ trustDomain: cluster.local
 		istiodDeployment,
 		istioConfigMap,
 		sideCarConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 
@@ -459,7 +431,7 @@ trustDomain: cluster.local
 		istiodDeployment,
 		istioConfigMap,
 		sideCarConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	cache := cache.NewTestingCache(t, k8s, *conf)
 
@@ -613,7 +585,7 @@ func TestMeshResolvesNetwork(t *testing.T) {
 				kubetest.FakeNamespace("istio-system"),
 				istiodDeployment,
 				istioConfigMap,
-				FakeCertificateConfigMap("istio-system"),
+				certtest.FakeIstioCertificateConfigMap("istio-system"),
 				tc.sideCarInjectorConfigMap,
 			)
 			cache := cache.NewTestingCache(t, k8s, *conf)
@@ -689,7 +661,7 @@ trustDomain: cluster.local
 		istio_1_18_ConfigMap,
 		istiod_1_19_Deployment,
 		istio_1_19_ConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
@@ -747,7 +719,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	remoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -799,7 +771,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	remoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -808,7 +780,7 @@ trustDomain: cluster.local
 			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
 		kubetest.FakeNamespace("bookinfo"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
@@ -853,7 +825,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	remoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -862,7 +834,7 @@ trustDomain: cluster.local
 			Labels:      map[string]string{"kubernetes.io/metadata.name": "istio-system"},
 		}},
 		kubetest.FakeNamespace("bookinfo"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{"east": eastClient, "remote": remoteClient}
@@ -900,14 +872,14 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("east", false),
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	westClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
 		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("west", false),
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: eastClient, "west": westClient}
@@ -955,7 +927,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("east", true),
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	eastRemoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -970,7 +942,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("bookinfo"),
 		fakeIstiodDeployment("west", true),
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	westRemoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -1054,8 +1026,8 @@ trustDomain: cluster.local
 		externalControlPlane,
 		istioConfigMap,
 		istioConfigMapExternalControlPlane,
-		istio.FakeCertificateConfigMap("external-istiod"),
-		istio.FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("external-istiod"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	dataPlaneClient := kubetest.NewFakeK8sClient(
@@ -1224,7 +1196,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("istio-system"),
 		istiodDeployment,
 		istioConfigMap,
-		istio.FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	remoteClient := kubetest.NewFakeK8sClient(
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{
@@ -1426,7 +1398,7 @@ func TestIstiodResourceThresholds(t *testing.T) {
 			k8s := kubetest.NewFakeK8sClient(
 				kubetest.FakeNamespace("istio-system"),
 				istiodDeployment,
-				FakeCertificateConfigMap("istio-system"),
+				certtest.FakeIstioCertificateConfigMap("istio-system"),
 				&core_v1.ConfigMap{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "istio",
@@ -1546,7 +1518,7 @@ func TestCanConnectToIstiod(t *testing.T) {
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
-			FakeCertificateConfigMap("istio-system"),
+			certtest.FakeIstioCertificateConfigMap("istio-system"),
 			kubetest.FakeNamespace("istio-system"),
 		),
 		testURL: testServer.URL,
@@ -1582,7 +1554,7 @@ func TestCanConnectToUnreachableIstiod(t *testing.T) {
 			runningIstiodPod("default"),
 			fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false),
 			fakeIstioConfigMap("default"),
-			FakeCertificateConfigMap("istio-system"),
+			certtest.FakeIstioCertificateConfigMap("istio-system"),
 			kubetest.FakeNamespace("istio-system"),
 		),
 	}
@@ -1620,7 +1592,7 @@ func TestUpdateStatusMultipleRevsWithoutHealthyPods(t *testing.T) {
 		istiod_1_19,
 		fakeIstioConfigMap("default"),
 		fakeIstioConfigMap("1-19-0"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
@@ -1665,7 +1637,7 @@ func TestUpdateStatusMultipleHealthyRevs(t *testing.T) {
 		fakeIstioConfigMap("1-19-0"),
 		defaultPod,
 		istiod_1_19_pod,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
@@ -1745,7 +1717,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1762,7 +1734,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1779,7 +1751,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1796,7 +1768,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1813,7 +1785,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1830,7 +1802,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1876,7 +1848,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						fakeIstioConfigMap("1.22.0"),
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1.23.0"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1899,7 +1871,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						istioConfigMap,
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1929,7 +1901,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						istioConfigMap,
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1952,7 +1924,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -1975,7 +1947,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -2021,7 +1993,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1-23-0"),
 						fakeIstioConfigMap("1-24-0"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -2045,13 +2017,13 @@ func TestDiscoverWithTags(t *testing.T) {
 						primary,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("default"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 					"remote": {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 						defaultWebhook,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -2086,13 +2058,13 @@ func TestDiscoverWithTags(t *testing.T) {
 						primary,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1-23-0"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 					"remote": {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						tagProd,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -2139,7 +2111,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						east,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1-23-0"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 					"west": {
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
@@ -2148,7 +2120,7 @@ func TestDiscoverWithTags(t *testing.T) {
 						west,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 						fakeIstioConfigMap("1-23-0"),
-						FakeCertificateConfigMap("istio-system"),
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 				}
 			},
@@ -2242,7 +2214,7 @@ func TestDiscoverTagsWithoutWebhookPermissions(t *testing.T) {
 		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "default"}}},
 		istiodDeployment,
 		istioConfigMap,
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 	client := &accessReviewClient{
 		ClientInterface: k8s,
@@ -2317,8 +2289,8 @@ func TestDiscoverTagsWithExternalCluster(t *testing.T) {
 			externalConfigMap,
 			fakeIstioConfigMap("default"),
 			fakeIstiodDeployment("external", false),
-			FakeCertificateConfigMap("istio-system"),
-			FakeCertificateConfigMap("external"),
+			certtest.FakeIstioCertificateConfigMap("istio-system"),
+			certtest.FakeIstioCertificateConfigMap("external"),
 		)),
 		"remote": approvingClient(kubetest.NewFakeK8sClient(
 			&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
@@ -2405,7 +2377,7 @@ func TestDiscoverWithMaistra(t *testing.T) {
 				&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
 				fakeIstioConfigMap("default"),
 				fakeIstioConfigMap("basic"),
-				FakeCertificateConfigMap("istio-system"),
+				certtest.FakeIstioCertificateConfigMap("istio-system"),
 			)
 			cache := cache.NewTestingCache(t, client, *conf)
 			discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
@@ -2621,7 +2593,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("default"),
 		istiodDeployment,
 		istioConfigMap,
-		istio.FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{
@@ -2682,7 +2654,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("default"),
 		istiodDeploymentCluster1,
 		istioConfigMapCluster1,
-		istio.FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	// Create istiod deployment for cluster2 with different namespace
@@ -2703,7 +2675,7 @@ trustDomain: cluster.local
 		kubetest.FakeNamespace("production"),
 		istiodDeploymentCluster2,
 		istioConfigMapCluster2,
-		istio.FakeCertificateConfigMap("istio-control"),
+		certtest.FakeIstioCertificateConfigMap("istio-control"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{
@@ -2772,7 +2744,7 @@ func TestNamespaceMapWithClusterWideAccessFalse(t *testing.T) {
 		defaultIstiod,
 		defaultWebhook,
 		fakeIstioConfigMap("default"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
@@ -2847,7 +2819,7 @@ func TestNamespaceMapWithTagsAndClusterWideAccessFalse(t *testing.T) {
 		istiod,
 		tagProd,
 		fakeIstioConfigMap("1-23-0"),
-		FakeCertificateConfigMap("istio-system"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
 
 	client := &accessReviewClient{

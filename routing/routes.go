@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
@@ -47,6 +48,8 @@ func NewRoutes(
 	grafana *grafana.Service,
 	perses *perses.Service,
 	discovery *istio.Discovery,
+	graphCache graph.GraphCache,
+	refreshJobManager *graph.RefreshJobManager,
 ) (r *Routes) {
 	r = new(Routes)
 
@@ -192,6 +195,25 @@ func NewRoutes(
 			handlers.Root(conf, clientFactory, kialiCache, grafana, perses, prom),
 			true,
 		},
+		// swagger:route GET /test/metrics/graph/cache test testGraphCacheMetrics
+		// ---
+		// Endpoint to get Kiali's graph cache metrics
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      200: graphCacheMetricsResponse
+		{
+			"TestGraphCacheMetrics",
+			log.StatusLogName,
+			"GET",
+			"/api/test/metrics/graph/cache",
+			handlers.GraphCacheMetricsHandler(),
+			true,
+		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
 		// ---
 		// Endpoint to get a diagnose for the tracing endpoint
@@ -252,9 +274,9 @@ func NewRoutes(
 			handlers.Config(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
-		// swagger:route GET /crippled kiali getCrippledFeatures
+		// swagger:route GET /config/disabled kiali getDisabledFeatures
 		// ---
-		// Endpoint to get the crippled features of Kiali
+		// Endpoint to get the disabled features of Kiali
 		//
 		//     Produces:
 		//     - application/json
@@ -263,13 +285,13 @@ func NewRoutes(
 		//
 		// responses:
 		//      500: internalError
-		//      200: statusInfo
+		//      200: disabledFeaturesResponse
 		{
-			"Crippled",
+			"DisabledFeatures",
 			log.ConfigLogName,
 			"GET",
-			"/api/crippled",
-			handlers.CrippledFeatures(conf, prom),
+			"/api/config/disabled",
+			handlers.DisabledFeaturesHandler(conf, prom),
 			true,
 		},
 		// swagger:route GET /istio/permissions config getPermissions
@@ -1285,7 +1307,7 @@ func NewRoutes(
 			log.GraphLogName,
 			"GET",
 			"/api/namespaces/graph",
-			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery),
+			handlers.GraphNamespaces(conf, kialiCache, clientFactory, prom, cpm, traceClientLoader, grafana, discovery, graphCache, refreshJobManager),
 			true,
 		},
 		// swagger:route GET /namespaces/{namespace}/aggregates/{aggregate}/{aggregateValue}/graph graphs graphAggregate

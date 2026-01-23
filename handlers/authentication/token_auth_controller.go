@@ -157,9 +157,10 @@ func (c *tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sData.Payload.Token)) // Internal header used to propagate the subject of the request for audit purposes
 	return UserSessions{
 		c.conf.KubernetesConfig.ClusterName: &UserSessionData{
-			ExpiresOn: sData.ExpiresOn,
-			Username:  extractSubjectFromK8sToken(sData.Payload.Token),
 			AuthInfo:  &api.AuthInfo{Token: sData.Payload.Token},
+			ExpiresOn: sData.ExpiresOn,
+			SessionID: sData.SessionID,
+			Username:  extractSubjectFromK8sToken(sData.Payload.Token),
 		},
 	}, nil
 }

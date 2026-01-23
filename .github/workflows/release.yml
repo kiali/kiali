@@ -11,9 +11,9 @@ on:
         required: true
         type: choice
         options:
-        - major
-        - minor
         - patch
+        - minor
+        - major
       release_branch:
         description: Branch to release
         required: true
@@ -67,16 +67,19 @@ jobs:
         cat <<-EOF > minor.py
         import datetime
 
-        base = int(datetime.datetime.strptime("24/04/2022", "%d/%m/%Y").timestamp())
+        # The base date is set so that releases occur every 3 weeks starting from January 26, 2026
+        base = int(datetime.datetime.strptime("26/01/2026", "%d/%m/%Y").timestamp())
         now = int(datetime.datetime.now().timestamp())
 
         diff = now - base
 
-        days_elapsed = int(diff / (24*60*60))
-        weeks_elapsed = int(days_elapsed / 7)
-        weeks_mod3 = int(weeks_elapsed % 3)
+        # Use floor division (//) which correctly avoids rounding negative values to 0
+        days_elapsed = diff // (24*60*60)
+        weeks_elapsed = days_elapsed // 7
+        weeks_mod3 = weeks_elapsed % 3
 
-        print(weeks_mod3)
+        # Only release when weeks_elapsed >= 0 (past the base date) and weeks_mod3 == 0
+        print(weeks_elapsed >= 0 and weeks_mod3 == 0) # True in case of release
         EOF
 
     - name: Determine release type
@@ -85,7 +88,7 @@ jobs:
         if [ -z ${{ github.event.inputs.release_type }} ];
         then
           DO_RELEASE=$(python minor.py)
-          if [[ $DO_RELEASE == "1" ]]
+          if [[ $DO_RELEASE == "True" ]]
           then
             echo "release_type=minor" >> $GITHUB_ENV
           else
@@ -225,7 +228,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: build
         path: frontend/build
@@ -236,7 +239,7 @@ jobs:
         ./hack/build-cross-platform.sh -v -o dist
 
     - name: Upload cross-platform binaries
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: cross-platform-binaries
         path: dist/kiali-*
@@ -265,7 +268,7 @@ jobs:
           #   binary_name: kiali-windows-amd64.exe
     steps:
     - name: Download cross-platform binaries
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: cross-platform-binaries
         path: dist
@@ -323,13 +326,13 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: build
         path: frontend/build
 
     - name: Download cross-platform binaries
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v7
       with:
         name: cross-platform-binaries
         path: dist

@@ -8,12 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	cmdapi "k8s.io/client-go/tools/clientcmd/api"
-
 	"github.com/gorilla/mux"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+	cmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -1145,10 +1144,10 @@ func BenchmarkVersionedAppGraph(b *testing.B) {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/graph", func(w http.ResponseWriter, r *http.Request) {
-		options := graph.NewOptions(r, biz)
+		options := graph.NewOptions(r, biz, config.Get())
 		options.Rates.Ambient = graph.AmbientTrafficNone
 		options.Appenders.AppenderNames = []string{"deadNode", "istio", "serviceEntry", "meshCheck", "workloadEntry", "health"}
-		code, config := graphNamespacesIstio(r.Context(), biz, client, options)
+		code, config, _ := graphNamespacesIstio(r.Context(), biz, client, options)
 		respond(w, code, config)
 	})
 

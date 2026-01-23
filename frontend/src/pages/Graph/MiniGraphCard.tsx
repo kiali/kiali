@@ -40,6 +40,25 @@ import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/Work
 import { Workload } from 'types/Workload';
 import { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const cardStyle = kialiStyle({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column'
+});
+
+const cardBodyStyle = kialiStyle({
+  flex: '1 1 auto',
+  display: 'flex',
+  flexDirection: 'column'
+});
+
+const graphContainerStyle = kialiStyle({
+  flex: '1 1 auto',
+  display: 'flex',
+  flexDirection: 'column'
+});
 
 type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
@@ -149,7 +168,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     return (
       <>
-        <Card style={{ height: '100%' }} id={'MiniGraphCard'} data-test="mini-graph">
+        <Card id={'MiniGraphCard'} data-test="mini-graph" className={cardStyle}>
           <CardHeader
             actions={{
               actions: (
@@ -188,8 +207,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
             <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
           </CardHeader>
 
-          <CardBody>
-            <div id="pft-graph" style={{ height: '100%' }}>
+          <CardBody className={cardBodyStyle}>
+            <div id="pft-graph" className={graphContainerStyle}>
               <EmptyGraphLayout
                 elements={this.state.graphData}
                 isLoading={isLoading}

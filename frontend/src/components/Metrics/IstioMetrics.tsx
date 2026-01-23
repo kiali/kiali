@@ -27,7 +27,7 @@ import { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
 import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { KialiCrippledFeatures } from 'types/ServerConfig';
+import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
@@ -38,7 +38,7 @@ import { PersesLinks } from './PersesLinks';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
 type MetricsState = {
-  crippledFeatures?: KialiCrippledFeatures;
+  disabledFeatures?: KialiDisabledFeatures;
   dashboard?: DashboardModel;
   grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
@@ -138,8 +138,8 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   componentDidMount(): void {
-    API.getCrippledFeatures().then(response => {
-      this.setState({ crippledFeatures: response.data });
+    API.getDisabledFeatures().then(response => {
+      this.setState({ disabledFeatures: response.data });
     });
 
     this.fetchGrafanaInfo();
@@ -406,14 +406,14 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
   private renderOptionsBar(): React.ReactNode {
     const hasHistogramsAverage =
-      !this.state.crippledFeatures?.requestSizeAverage ||
-      !this.state.crippledFeatures?.responseSizeAverage ||
-      !this.state.crippledFeatures?.responseTimeAverage;
+      !this.state.disabledFeatures?.requestSizeAverage ||
+      !this.state.disabledFeatures?.responseSizeAverage ||
+      !this.state.disabledFeatures?.responseTimeAverage;
 
     const hasHistogramsPercentiles =
-      !this.state.crippledFeatures?.requestSizePercentiles ||
-      !this.state.crippledFeatures?.responseSizePercentiles ||
-      !this.state.crippledFeatures?.responseTimePercentiles;
+      !this.state.disabledFeatures?.requestSizePercentiles ||
+      !this.state.disabledFeatures?.responseSizePercentiles ||
+      !this.state.disabledFeatures?.responseTimePercentiles;
 
     return (
       <div ref={this.toolbarRef}>

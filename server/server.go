@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/fs"
@@ -35,7 +36,8 @@ type Server struct {
 
 // NewServer creates a new server configured with the given settings.
 // Start and Stop it with the corresponding functions.
-func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
+func NewServer(ctx context.Context,
+	controlPlaneMonitor business.ControlPlaneMonitor,
 	clientFactory kubernetes.ClientFactory,
 	cache cache.KialiCache,
 	conf *config.Config,
@@ -47,7 +49,7 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	perses := perses.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	// create a router that will route all incoming API server requests to different handlers
-	router, err := routing.NewRouter(conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, perses, discovery, staticAssetFS)
+	router, err := routing.NewRouter(ctx, conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, perses, discovery, staticAssetFS)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +82,11 @@ func NewServer(controlPlaneMonitor business.ControlPlaneMonitor,
 	http.DefaultServeMux = mux
 	http.Handle("/", handler)
 
-	// Clients must use TLS 1.2 or higher
+	// Server TLS is configured according to the resolved policy.
 	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS12,
 		NextProtos: []string{"h2", "http/1.1"},
 	}
+	conf.ResolvedTLSPolicy.ApplyTo(tlsConfig)
 
 	// The /debug/pprof/profiler by default needs a write timeout larger than 30s. But also, you can pass in &seconds=XY on the pprof URL
 	// and ask for any profile to extend to those number of seconds you specify, which could be larger than 30s.
@@ -150,6 +152,7 @@ func (s *Server) Stop() {
 	log.Infof("Server endpoint will stop at [%v]", s.httpServer.Addr)
 	s.httpServer.Close()
 	observability.StopTracer(s.tracer)
+	s.conf.Close()
 }
 
 func corsAllowed(next http.Handler) http.Handler {

@@ -72,7 +72,8 @@ export const OverviewCardDataPlaneNamespace: React.FC<Props> = (props: Props) =>
             showYAxis={true}
             showXAxisValues={true}
             padding={{ top: 10, left: 30, right: 30, bottom: 30 }}
-            tooltipFormat={dp => `${(dp.x as Date).toLocaleStringWithConditionalDate()}\n${dp.y.toFixed(2)} ${dp.name}`}
+            tooltipFormat={dp => `${dp.y.toFixed(2)} ${dp.name}`}
+            showTooltipTime={true}
             series={series}
             labelName="ops"
           />

@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
@@ -39,6 +41,8 @@ const (
 	// when user is starting authentication with the external server. This code
 	// is used to mitigate replay attacks.
 	NonceCookieName = "kiali-token-nonce"
+	// PkceVerifierCookieName is the cookie name used to store a PKCE code verifier.
+	PkceVerifierCookieName = "kiali-token-pkce-verifier"
 	// NumberOfChunksCookieName is the name of the cookie that holds the number of chunks of a session.
 	// This may or may not be set depending on the size of the session data.
 	NumberOfChunksCookieName = "kiali-token-chunks"
@@ -58,8 +62,51 @@ func sessionCookieChunkName(cookieName string, chunkNum int) string {
 	return fmt.Sprintf("%s-%d", cookieName, chunkNum)
 }
 
+// extractKeyFromSessionCookieName extracts the session key from the base session cookie name
+// (the cookie that holds chunk #0).
+// For example, "kiali-token-cluster1" returns "cluster1", and "kiali-token" returns "".
+func extractKeyFromSessionCookieName(cookieName string) string {
+	if cookieName == SessionCookieName {
+		return ""
+	}
+	return strings.TrimPrefix(cookieName, SessionCookieName+"-")
+}
+
+// isPotentialSessionCookie returns true if the cookie name could be a session cookie.
+// This excludes cookies we KNOW are not sessions:
+//   - Chunks count cookies (kiali-token-chunks*)
+//   - Nonce cookies (containing "nonce")
+//
+// Note: This function intentionally does NOT try to distinguish between the base session
+// cookie (chunk #0) and continuation chunk cookies based on numeric suffixes. The reason is
+// that session keys can end with numbers (e.g., "cluster-1"), making the cookie name "kiali-token-cluster-1"
+// ambiguous - it could be either:
+//  1. A base session cookie (chunk #0) for key "cluster-1"
+//  2. Chunk #1 of a session with key "cluster"
+//
+// Instead of guessing, we try to read all potential session cookies. Chunk cookies will
+// fail decryption (they contain partial data) and are simply skipped without being dropped.
+func isPotentialSessionCookie(cookieName string) bool {
+	// Filter out nonce cookies - these are handled by auth controllers, not the persistor
+	if strings.Contains(cookieName, "nonce") {
+		return false
+	}
+
+	// Filter out chunks count cookies - these are metadata, not session data
+	if strings.HasPrefix(cookieName, NumberOfChunksCookieName) {
+		return false
+	}
+
+	// Must start with session cookie name prefix
+	if !strings.HasPrefix(cookieName, SessionCookieName) {
+		return false
+	}
+
+	return true
+}
+
 // NewSessionData create a new session object that you can then pass to CreateSession.
-func NewSessionData[T any](key string, strategy string, expiresOn time.Time, payload *T) (*SessionData[T], error) {
+func NewSessionData[T any](cluster string, strategy string, expiresOn time.Time, payload *T) (*SessionData[T], error) {
 	// Validate that there is a payload and a strategy. The strategy is required just in case Kiali is reconfigured with a
 	// different strategy and drop any stale session. The payload is required because it does not make sense to start a session
 	// if there is no data to persist.
@@ -72,29 +119,41 @@ func NewSessionData[T any](key string, strategy string, expiresOn time.Time, pay
 		return nil, errors.New("the expiration time of a session cannot be in the past")
 	}
 
+	// Generate unique session ID to allow multiple sessions per user. Will differ even for multiple sessions
+	// on the same cluster.
+	sessionID := uuid.New().String()
+
 	return &SessionData[T]{
 		ExpiresOn: expiresOn,
-		Key:       key,
-		Strategy:  strategy,
+		Cluster:   cluster,
 		Payload:   payload,
+		SessionID: sessionID,
+		Strategy:  strategy,
 	}, nil
 }
 
 // NewCookieSessionPersistor creates a new CookieSessionPersistor.
 func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersistor[T], error) {
-	block, err := aes.NewCipher([]byte(conf.LoginToken.SigningKey))
+	// Validate that we can read the signing key and create a cipher from it.
+	// This ensures early failure if the key is invalid, but we don't cache the cipher
+	// so that key rotation is respected.
+	signingKey, err := conf.GetCredential(conf.LoginToken.SigningKey)
+	if err != nil {
+		return nil, fmt.Errorf("error when creating the cookie persistor - failed to read signing key: %w", err)
+	}
+
+	block, err := aes.NewCipher([]byte(signingKey))
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to create cipher: %w", err)
 	}
 
-	aesGCM, err := cipher.NewGCM(block)
+	_, err = cipher.NewGCM(block)
 	if err != nil {
 		return nil, fmt.Errorf("error when creating the cookie persistor - failed to create gcm: %w", err)
 	}
 
 	return &cookieSessionPersistor[T]{
-		aesGCM: aesGCM,
-		conf:   conf,
+		conf: conf,
 	}, nil
 }
 
@@ -106,24 +165,50 @@ func NewCookieSessionPersistor[T any](conf *config.Config) (*cookieSessionPersis
 // number of cookies that a website can set but we haven't heard of a user
 // facing problems because of reaching this limit.
 type cookieSessionPersistor[T any] struct {
-	aesGCM cipher.AEAD
-	conf   *config.Config
+	conf *config.Config
+}
+
+// getCipher fetches the current signing key from the credential manager and creates
+// a fresh AES-GCM cipher. This ensures that key rotation is respected without requiring
+// pod restarts. The credential manager caches the key efficiently, so this operation
+// is fast (just a mutex-protected map lookup plus cipher creation).
+func (p *cookieSessionPersistor[T]) getCipher() (cipher.AEAD, error) {
+	signingKey, err := p.conf.GetCredential(p.conf.LoginToken.SigningKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read signing key: %w", err)
+	}
+
+	block, err := aes.NewCipher([]byte(signingKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gcm: %w", err)
+	}
+
+	return aesGCM, nil
 }
 
 // SessionData holds the data for a session and will be encrypted and stored in browser cookies.
 // If the data is too large to fit in a browser cookie, it will be chunked and split over multiple cookies.
 type SessionData[T any] struct {
+	// Cluster
+	Cluster string `json:"cluster,omitempty"`
+
 	// ExpiresOn is the time when the session expires. This can be zero meaning the session never expires.
 	ExpiresOn time.Time `json:"expiresOn"`
-
-	// Key should be a unique identifier for the session.
-	// For now this is just the cluster name.
-	Key string `json:"key,omitempty"`
 
 	// Payload is the data being saved.
 	Payload *T `json:"payload,omitempty"`
 
-	// Strategy is the auth stretegy used to create the session.
+	// SessionID is a unique identifier for this specific session instance.
+	// This allows the same user to have multiple concurrent sessions (e.g. same user in different browsers).
+	// Generated as a UUID when the session is created.
+	SessionID string `json:"sessionId"`
+
+	// Strategy is the auth strategy used to create the session.
 	// Must match the currently configured strategy to be considered valid.
 	Strategy string `json:"strategy"`
 }
@@ -133,6 +218,12 @@ type SessionData[T any] struct {
 // the encrypted data is what is sent in cookies. The strategy, expiresOn and payload arguments
 // are all required.
 func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.ResponseWriter, s SessionData[T]) error {
+	// Get the current cipher (respects key rotation)
+	aesGCM, err := p.getCipher()
+	if err != nil {
+		return fmt.Errorf("error when creating the session: %w", err)
+	}
+
 	// Serialize this structure. The resulting string
 	// is what will be encrypted and stored in cookies.
 	sDataJson, err := json.Marshal(s)
@@ -143,12 +234,12 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 	// The sDataJson string holds the session data that we want to persist.
 	// It's time to encrypt this data which will result in an illegible sequence of bytes which are then
 	// encoded to base64 get a string that is suitable to store in browser cookies.
-	aesGcmNonce, err := util.CryptoRandomBytes(p.aesGCM.NonceSize())
+	aesGcmNonce, err := util.CryptoRandomBytes(aesGCM.NonceSize())
 	if err != nil {
 		return fmt.Errorf("error when creating credentials - failed to generate random bytes: %w", err)
 	}
 
-	cipherSessionData := p.aesGCM.Seal(aesGcmNonce, aesGcmNonce, sDataJson, nil)
+	cipherSessionData := aesGCM.Seal(aesGcmNonce, aesGcmNonce, sDataJson, nil)
 	base64SessionData := base64.StdEncoding.EncodeToString(cipherSessionData)
 
 	// The base64SessionData holds what we want to store in browser cookies.
@@ -163,14 +254,12 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 		var cookieName string
 		if i == 0 {
 			// Set a cookie with the regular cookie name with the first chunk of session data.
-			// Notice that an "-aes" suffix is being used in the cookie names. This is for backwards compatibility and
-			// is/was meant to be able to differentiate between a session using cookies holding encrypted data, and the older
-			// less secure sessions using cookies holding JWTs.
-			cookieName = sessionCookieName(SessionCookieName, s.Key)
+			// The cookie holds encrypted session data using the AES-GCM algorithm.
+			cookieName = sessionCookieName(SessionCookieName, s.Cluster)
 		} else {
 			// If there are more chunks of session data (usually because of larger tokens from the IdP),
 			// store the remainder data to numbered cookies.
-			cookieName = sessionCookieChunkName(sessionCookieName(SessionCookieName, s.Key), i)
+			cookieName = sessionCookieChunkName(sessionCookieName(SessionCookieName, s.Cluster), i)
 		}
 
 		authCookie := http.Cookie{
@@ -189,8 +278,9 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 		// Set a cookie with the number of chunks of the session data.
 		// This is to protect against reading spurious chunks of data if there is
 		// any failure when killing the session or logging out.
+		// The chunks cookie is keyed per session to avoid collisions between multiple sessions.
 		chunksCookie := http.Cookie{
-			Name:     NumberOfChunksCookieName,
+			Name:     sessionCookieName(NumberOfChunksCookieName, s.Cluster),
 			Value:    strconv.Itoa(len(sessionDataChunks)),
 			Expires:  s.ExpiresOn,
 			HttpOnly: true,
@@ -205,23 +295,31 @@ func (p *cookieSessionPersistor[T]) CreateSession(r *http.Request, w http.Respon
 }
 
 func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.Request) (*SessionData[T], error) {
-	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
-	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
-	// if such cookie is not found in the request.
-	authCookie, err := r.Cookie(cookieName)
+	// Get the current cipher (respects key rotation)
+	aesGCM, err := p.getCipher()
 	if err != nil {
-		return nil, fmt.Errorf("unable to read the cookie %s: %w", cookieName, err)
+		return nil, fmt.Errorf("error when reading the session: %w", err)
 	}
 
-	// Initially, take the value of the "-aes" cookie as the session data.
-	// This helps a smoother transition from a previous version of Kiali where
-	// no support for multiple cookies existed and no "-chunks" cookie was set.
-	// With this, we tolerate the absence of the "-chunks" cookie to not force
-	// users to re-authenticate if somebody was already logged into Kiali.
+	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
+	// It's assumed no active session if the cookie is not found in the request.
+	authCookie, err := r.Cookie(cookieName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read the cookie [%s]: %w", cookieName, err)
+	}
+
+	// Initially, take the value of the session cookie as the session data.
+	// This supports sessions that fit in a single cookie (no chunks).
+	// We tolerate the absence of the chunks cookie to not force users to
+	// re-authenticate if the session data fits in one cookie.
 	base64SessionData := authCookie.Value
 
+	// Extract the session key from the cookie name to find the keyed chunks cookie
+	sessionKey := extractKeyFromSessionCookieName(cookieName)
+	chunksCookieName := sessionCookieName(NumberOfChunksCookieName, sessionKey)
+
 	// Check if session data is broken in chunks. If it is, read all chunks
-	numChunksCookie, chunksCookieErr := r.Cookie(NumberOfChunksCookieName)
+	numChunksCookie, chunksCookieErr := r.Cookie(chunksCookieName)
 	if chunksCookieErr == nil {
 		numChunks, convErr := strconv.Atoi(numChunksCookie.Value)
 		if convErr != nil {
@@ -230,7 +328,7 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 
 		// It's known that major browsers have a limit of 180 cookies per domain.
 		if numChunks <= 0 || numChunks > 180 {
-			return nil, fmt.Errorf("number of session cookies is %d, but limit is 1 through 180", numChunks)
+			return nil, fmt.Errorf("number of session cookies is [%d], but limit is 1 through 180", numChunks)
 		}
 
 		// Read session data chunks and save into a buffer
@@ -241,7 +339,7 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 		for i := 1; i < numChunks; i++ {
 			authChunkCookie, chunkErr := r.Cookie(sessionCookieChunkName(cookieName, i))
 			if chunkErr != nil {
-				return nil, fmt.Errorf("failed to read session cookie chunk number %d: %w", i, chunkErr)
+				return nil, fmt.Errorf("failed to read session cookie chunk number [%d]: %w", i, chunkErr)
 			}
 
 			sessionDataBuffer.WriteString(authChunkCookie.Value)
@@ -266,14 +364,14 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 		}
 	}
 
-	nonceSize := p.aesGCM.NonceSize()
+	nonceSize := aesGCM.NonceSize()
 	// Handle where cipherSessionData does not match nonceSize
 	if len(cipherSessionData) < nonceSize {
 		return nil, fmt.Errorf("unable to decrypt session")
 	}
 	nonce, cipherSessionData := cipherSessionData[:nonceSize], cipherSessionData[nonceSize:]
 
-	sessionDataJson, err := p.aesGCM.Open(nil, nonce, cipherSessionData, nil)
+	sessionDataJson, err := aesGCM.Open(nil, nonce, cipherSessionData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error when restoring the session - failed to decrypt: %w", err)
 	}
@@ -294,13 +392,12 @@ func (p *cookieSessionPersistor[T]) readKialiCookie(cookieName string, r *http.R
 // created.
 func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.ResponseWriter, key string) (*SessionData[T], error) {
 	// This CookieSessionPersistor only deals with sessions using cookies holding encrypted data.
-	// Thus, presence for a cookie with the "-aes" suffix is checked and it's assumed no active session
-	// if such cookie is not found in the request.
+	// It's assumed no active session if the cookie is not found in the request.
 	cookieName := sessionCookieName(SessionCookieName, key)
 	sData, err := p.readKialiCookie(cookieName, r)
 	if err != nil {
 		if errors.Is(err, http.ErrNoCookie) {
-			return nil, fmt.Errorf("session %w: cookie %s does not exist in request", ErrSessionNotFound, cookieName)
+			return nil, fmt.Errorf("session [%w]: cookie [%s] does not exist in request", ErrSessionNotFound, cookieName)
 		}
 		return nil, err
 	}
@@ -308,10 +405,10 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 	// Check that the currently configured strategy matches the strategy set in the session.
 	// This is to prevent taking a session as valid if somebody re-configured Kiali with a different auth strategy.
 	if sData.Strategy != p.conf.Auth.Strategy {
-		log.Debugf("Session is invalid because it was created with authentication strategy %s, but current authentication strategy is %s", sData.Strategy, p.conf.Auth.Strategy)
+		log.Debugf("Session is invalid because it was created with authentication strategy [%s], but current authentication strategy is [%s]", sData.Strategy, p.conf.Auth.Strategy)
 		p.TerminateSession(r, w, key) // Kill the spurious session
 
-		return nil, fmt.Errorf("session strategy %s does not match current strategy %s", sData.Strategy, p.conf.Auth.Strategy)
+		return nil, fmt.Errorf("session strategy [%s] does not match current strategy [%s]", sData.Strategy, p.conf.Auth.Strategy)
 	}
 
 	// Check that the session has not expired.
@@ -321,7 +418,7 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 		log.Debugf("Session is invalid because it expired on %s", sData.ExpiresOn.Format(time.RFC822))
 		p.TerminateSession(r, w, key) // Clean the expired session
 
-		return nil, fmt.Errorf("session expired on %s", sData.ExpiresOn.Format(time.RFC822))
+		return nil, fmt.Errorf("session expired on [%s]", sData.ExpiresOn.Format(time.RFC822))
 	}
 
 	return sData, nil
@@ -329,21 +426,25 @@ func (p *cookieSessionPersistor[T]) ReadSession(r *http.Request, w http.Response
 
 // ReadAllSessions reads all session cookies from the request and returns the session data.
 // Returns an ErrNotFound if no session cookies are found.
+//
+// This function attempts to read all cookies that could potentially be session cookies.
+// Cookies that fail to decrypt (e.g., chunk cookies containing partial data) are skipped
+// without being dropped. This is important because:
+//  1. Dropping chunk cookies would corrupt the parent session
+//  2. Session keys can end with numbers (e.g., "cluster-1"), making it impossible to
+//     distinguish between a base session cookie (chunk #0) and a continuation chunk cookie by name alone
 func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.ResponseWriter) ([]*SessionData[T], error) {
 	var sessions []*SessionData[T]
 	for _, cookie := range r.Cookies() {
-		// Don't read nonce cookies. These are not managed by this persistor.
-		if (strings.HasPrefix(cookie.Name, SessionCookieName) || strings.HasPrefix(cookie.Name, NumberOfChunksCookieName)) && !strings.HasPrefix(cookie.Name, NonceCookieName) {
-			log.Debugf("Reading session cookie: %s", cookie.Name)
+		// Try to read all potential session cookies (excluding chunks count and nonce cookies)
+		if isPotentialSessionCookie(cookie.Name) {
+			log.Debugf("Attempting to read potential session cookie: %s", cookie.Name)
 			sData, err := p.readKialiCookie(cookie.Name, r)
 			if err != nil {
-				if err == http.ErrNoCookie {
-					log.Debugf("Session cookie %s does not exist in request", cookie.Name)
-				} else {
-					log.Infof("Error reading session cookie %s: %v", cookie.Name, err)
-					// If we can't read the cookie we should just drop it because it's probably malformed.
-					p.dropCookie(r, w, cookie.Name)
-				}
+				// Don't drop cookies that fail to decrypt - they might be valid chunk cookies
+				// or session cookies encrypted with an old key (after rotation).
+				// Dropping them would corrupt sessions.
+				log.Debugf("Skipping cookie [%s] (not a valid session or failed to decrypt): %v", cookie.Name, err)
 				continue
 			}
 			sessions = append(sessions, sData)
@@ -351,7 +452,7 @@ func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.Resp
 	}
 
 	if len(sessions) == 0 {
-		return nil, fmt.Errorf("sessions %w: no session cookies were found in request", ErrSessionNotFound)
+		return nil, fmt.Errorf("sessions [%w]: no session cookies were found in request", ErrSessionNotFound)
 	}
 
 	return sessions, nil
@@ -383,8 +484,8 @@ func (p *cookieSessionPersistor[T]) TerminateSession(r *http.Request, w http.Res
 		// - Session cookie
 		// - Number of chunks cookie
 		// - Cookie chunks - mmmmmm
-		// Don't drop nonce cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
-		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") {
+		// Don't drop nonce or PKCE verifier cookies because these are not saved inside the persistor. They are handled inside of the auth controllers.
+		if (strings.HasPrefix(cookie.Name, sessionCookieName(SessionCookieName, key)) || cookie.Name == sessionCookieName(NumberOfChunksCookieName, key)) && !strings.Contains(cookie.Name, "nonce") && !strings.Contains(cookie.Name, "pkce-verifier") {
 			p.dropCookie(r, w, cookie.Name)
 		}
 	}

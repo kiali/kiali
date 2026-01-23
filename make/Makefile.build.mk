@@ -52,7 +52,7 @@ build-ui-test: build-ui
 # Uses .air.toml configuration file. Set KIALI_RUN_ARGS to append additional arguments.
 run-backend: go-check .ensure-air-exists
 	@echo "Starting Kiali backend with air (hot reloading enabled)..."
-	air -c ${ROOTDIR}/.air.toml ${KIALI_RUN_ARGS:+-- run ${KIALI_RUN_ARGS}}
+	air -c ${ROOTDIR}/.air.toml run ${KIALI_RUN_ARGS}
 
 ## build-linux-multi-arch: Build Kiali binary with arch suffix for multi-arch
 build-linux-multi-arch: go-check
@@ -73,8 +73,8 @@ format:
 	@# Exclude more paths find . \( -path './vendor' -o -path <new_path_to_exclude> \) -prune -o -type f -iname '*.go' -print
 	@for gofile in $$(find . -path './vendor' -prune -o -type f -iname '*.go' -print); do \
 			${GOFMT} -w $$gofile; \
-	done; \
-	$(shell ./hack/fix_imports.sh)
+	done
+	@./hack/fix_imports.sh
 
 ## build-system-test: Building executable for system tests with code coverage enabled
 build-system-test: go-check

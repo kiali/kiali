@@ -32,7 +32,7 @@ export const NotificationAlerts: React.FC<NotificationAlertsProps> = (props: Not
             key={`toast_${alert.id}`}
             variant={variant}
             title={alert.content}
-            timeout={true}
+            timeout={6000}
             actionClose={<AlertActionCloseButton onClose={() => props.onDismiss(alert, true)} />}
           />
         );

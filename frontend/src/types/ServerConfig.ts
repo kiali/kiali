@@ -100,8 +100,8 @@ export interface GatewayAPIClass {
 }
 
 // Not based exactly on Kiali configuration but rather whether things like prometheus config
-// allow for certain Kiali features. True means the feature is crippled, false means supported.
-export interface KialiCrippledFeatures {
+// allow for certain Kiali features. True means the feature is disabled, false means supported.
+export interface KialiDisabledFeatures {
   requestSize: boolean;
   requestSizeAverage: boolean;
   requestSizePercentiles: boolean;

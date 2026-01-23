@@ -3,7 +3,7 @@
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -13,19 +13,19 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f7aox2p kiali_f7f7cpt"
+          className="kiali_fqzjpeg kiali_f1mvcfqu"
         >
           <ExclamationCircleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--danger--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--danger--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -41,7 +41,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -51,19 +51,19 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f7aox2p kiali_f7f7cpt"
+          className="kiali_fqzjpeg kiali_f1mvcfqu"
         >
           <ExclamationCircleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--critical--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--danger--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--danger--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -79,7 +79,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-addon"
   >
@@ -89,19 +89,19 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
       addon
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fpvem4w kiali_f15a1iio"
+          className="kiali_f49xmp9 kiali_f1ageo3n"
         >
           <InProgressIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--none--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--info--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--info--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -117,7 +117,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-core"
   >
@@ -127,19 +127,19 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
       core
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fpvem4w kiali_f15a1iio"
+          className="kiali_f49xmp9 kiali_f1ageo3n"
         >
           <InProgressIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--none--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--none--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--info--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--info--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -155,7 +155,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-isito-ingress"
   >
@@ -165,19 +165,19 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       isito-ingress
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1k0q3ly kiali_fza77py"
+          className="kiali_fngrjuo kiali_f6kk0cu"
         >
           <CheckCircleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--chart--color--green--300)",
-          "borderColor": "var(--pf-t--chart--color--green--300)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--success--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--success--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -193,7 +193,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -203,19 +203,19 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       prometheus
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1k0q3ly kiali_fza77py"
+          className="kiali_fngrjuo kiali_f6kk0cu"
         >
           <CheckCircleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--chart--color--green--300)",
-          "borderColor": "var(--pf-t--chart--color--green--300)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--success--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--success--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -231,7 +231,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -241,19 +241,19 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       prometheus
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1hzj123 kiali_feaah3f"
+          className="kiali_f3dfrvt kiali_f1wuzvd3"
         >
           <ExclamationTriangleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--warning--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--warning--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -269,7 +269,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
 <Fragment>
   <Split
-    className="kiali_f14xnozi"
+    className="kiali_f1km8g7f"
     hasGutter={true}
     key="cell-status-icon-prometheus"
   >
@@ -279,19 +279,19 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
       prometheus
     </SplitItem>
     <Label
-      className="kiali_fpln1nr"
+      className="kiali_f1ha75wd"
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1hzj123 kiali_feaah3f"
+          className="kiali_f3dfrvt kiali_f1wuzvd3"
         >
           <ExclamationTriangleIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
-          "borderColor": "var(--pf-t--global--icon--color--severity--moderate--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--warning--default)",
+          "borderColor": "var(--pf-t--global--icon--color--status--warning--default)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }

@@ -13,7 +13,7 @@ export const Triangle: React.FC<ShapeProps> = ({
   width,
   height,
   filter,
-  cornerRadius = 5,
+  cornerRadius = 3,
   dndDropRef
 }) => {
   const anchorRef = useSvgAnchor();
@@ -23,4 +23,10 @@ export const Triangle: React.FC<ShapeProps> = ({
   }, [cornerRadius, height, width]);
 
   return <path className={className} ref={refs as React.LegacyRef<SVGPathElement>} d={points} filter={filter} />;
+};
+
+// Wrapper component for service nodes with cornerRadius = 0.  No corner radius renders faster
+// than nodes with rounded edges.
+export const TriangleSharp: React.FC<ShapeProps> = props => {
+  return <Triangle {...props} cornerRadius={0} />;
 };
