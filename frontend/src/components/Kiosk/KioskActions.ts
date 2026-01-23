@@ -1,6 +1,5 @@
 import { store } from '../../store/ConfigStore';
-import { Show } from '../../pages/LegacyOverview/OverviewPage';
-import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, Show, TimeRange } from '../../types/Common';
 import { HEALTHY } from '../../types/Health';
 
 // Specific actions that should be communicated to the parent of the Kiosk

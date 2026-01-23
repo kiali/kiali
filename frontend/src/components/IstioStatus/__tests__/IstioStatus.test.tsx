@@ -1,24 +1,32 @@
 import * as React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
-import { IstioStatusComponent } from '../IstioStatus';
+import { IstioStatusComponent, ClusterStatusMap } from '../IstioStatus';
 import { mountToJson } from 'enzyme-to-json';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 import { serverConfig } from '../../../config';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
+// Mock the useClusterStatus hook
+let mockStatusMap: ClusterStatusMap = {};
+
+jest.mock('../../../hooks/clusters', () => ({
+  useClusterStatus: () => ({
+    statusMap: mockStatusMap,
+    isLoading: false
+  })
+}));
+
 const mockIcon = (componentList: ComponentStatus[]): ReactWrapper => {
+  mockStatusMap = { Kubernetes: componentList };
   return mount(
     <MemoryRouter>
       <IstioStatusComponent
-        statusMap={{ Kubernetes: componentList }}
-        lastRefreshAt={848152}
         namespaces={[
           { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
           { name: 'istio-system', cluster: CLUSTER_DEFAULT }
         ]}
-        setIstioStatus={jest.fn()}
       />
     </MemoryRouter>
   );
@@ -298,33 +306,31 @@ describe('When there are multiple clusters', () => {
   });
 
   it('cluster with failing components shows expand/collapse arrow', () => {
+    mockStatusMap = {
+      [CLUSTER_DEFAULT]: [
+        {
+          cluster: CLUSTER_DEFAULT,
+          name: 'istiod',
+          status: Status.Unhealthy,
+          isCore: true
+        }
+      ],
+      'cluster-2': [
+        {
+          cluster: 'cluster-2',
+          name: 'istiod',
+          status: Status.Healthy,
+          isCore: true
+        }
+      ]
+    };
     const wrapper = mount(
       <MemoryRouter>
         <IstioStatusComponent
-          statusMap={{
-            [CLUSTER_DEFAULT]: [
-              {
-                cluster: CLUSTER_DEFAULT,
-                name: 'istiod',
-                status: Status.Unhealthy,
-                isCore: true
-              }
-            ],
-            'cluster-2': [
-              {
-                cluster: 'cluster-2',
-                name: 'istiod',
-                status: Status.Healthy,
-                isCore: true
-              }
-            ]
-          }}
-          lastRefreshAt={848152}
           namespaces={[
             { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
             { name: 'istio-system', cluster: CLUSTER_DEFAULT }
           ]}
-          setIstioStatus={jest.fn()}
         />
       </MemoryRouter>
     );
@@ -335,39 +341,37 @@ describe('When there are multiple clusters', () => {
   });
 
   it('clusters without failing components do not show expand/collapse arrow', () => {
+    mockStatusMap = {
+      [CLUSTER_DEFAULT]: [
+        {
+          cluster: CLUSTER_DEFAULT,
+          name: 'istiod',
+          status: Status.Healthy,
+          isCore: true
+        }
+      ],
+      'cluster-2': [
+        {
+          cluster: 'cluster-2',
+          name: 'istiod',
+          status: Status.Healthy,
+          isCore: true
+        },
+        {
+          cluster: 'cluster-2',
+          name: 'grafana',
+          status: Status.Healthy,
+          isCore: false
+        }
+      ]
+    };
     const wrapper = mount(
       <MemoryRouter>
         <IstioStatusComponent
-          statusMap={{
-            [CLUSTER_DEFAULT]: [
-              {
-                cluster: CLUSTER_DEFAULT,
-                name: 'istiod',
-                status: Status.Healthy,
-                isCore: true
-              }
-            ],
-            'cluster-2': [
-              {
-                cluster: 'cluster-2',
-                name: 'istiod',
-                status: Status.Healthy,
-                isCore: true
-              },
-              {
-                cluster: 'cluster-2',
-                name: 'grafana',
-                status: Status.Healthy,
-                isCore: false
-              }
-            ]
-          }}
-          lastRefreshAt={848152}
           namespaces={[
             { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
             { name: 'istio-system', cluster: CLUSTER_DEFAULT }
           ]}
-          setIstioStatus={jest.fn()}
         />
       </MemoryRouter>
     );

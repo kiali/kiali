@@ -5,18 +5,18 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
 import { OutboundTrafficPolicy, ValidationStatus } from 'types/IstioObjects';
-import { OverviewNamespaceAction, OverviewNamespaceActions } from 'pages/LegacyOverview/OverviewNamespaceActions';
+import { NamespaceAction, NamespaceActions } from '../../Namespaces/NamespaceActions';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
-import { DirectionType, OverviewType } from 'pages/LegacyOverview/OverviewToolbar';
+import { DirectionType, Show } from 'types/Common';
+import { MeshResourceType, switchMeshResourceType } from 'types/Mesh';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
-import { Show } from 'pages/LegacyOverview/OverviewPage';
-import { AmbientBadge } from 'components/Ambient/AmbientBadge';
+import { AmbientBadge } from 'components/Badge/AmbientBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { OverviewCardDataPlaneNamespace } from 'pages/LegacyOverview/OverviewCardDataPlaneNamespace';
+import { NamespaceTrafficChart } from '../components/NamespaceTrafficChart';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
@@ -24,8 +24,7 @@ import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import { addDanger } from '../../../utils/AlertUtils';
-import { OverviewStatus } from 'pages/LegacyOverview/OverviewStatus';
-import { switchType } from 'pages/LegacyOverview/OverviewHelper';
+import { MeshHealthIndicator } from '../components/MeshHealthIndicator';
 import { TLSStatus } from 'types/TLSStatus';
 import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
@@ -64,7 +63,7 @@ const defaultState: TargetPanelDataPlaneNamespaceState = {
 };
 
 // TODO: Should these remain fixed values?
-const healthType: OverviewType = 'app';
+const healthType: MeshResourceType = 'app';
 
 const cardGridStyle = kialiStyle({
   textAlign: 'center',
@@ -122,9 +121,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     const nsInfo = this.state.nsInfo;
     const ns = nsInfo.name;
     const actions = this.getNamespaceActions();
-    const namespaceActions = (
-      <OverviewNamespaceActions key={`namespaceAction_${ns}`} namespace={ns} actions={actions} />
-    );
+    const namespaceActions = <NamespaceActions key={`namespaceAction_${ns}`} namespace={ns} actions={actions} />;
 
     return (
       <Card isCompact={true} className={cardGridStyle} data-test={`${ns}-mesh-target`}>
@@ -195,10 +192,10 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
   // Limits to just "Show" options, management should probably be done in Overview (for now at least),
   // not just buried in the side panel of the mesh page.
-  private getNamespaceActions = (): OverviewNamespaceAction[] => {
+  private getNamespaceActions = (): NamespaceAction[] => {
     // Today actions are fixed, but soon actions may depend of the state of a namespace
     // So we keep this wrapped in a showActions function.
-    const namespaceActions: OverviewNamespaceAction[] = isParentKiosk(this.props.kiosk)
+    const namespaceActions: NamespaceAction[] = isParentKiosk(this.props.kiosk)
       ? [
           {
             isGroup: true,
@@ -472,7 +469,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       const namespace = this.props.targetNamespace;
 
       return (
-        <OverviewCardDataPlaneNamespace
+        <NamespaceTrafficChart
           key={`${namespace}-${direction}`}
           duration={this.props.duration}
           direction={direction}
@@ -486,7 +483,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
   };
 
   private renderStatus = (): React.ReactNode => {
-    const targetPage = switchType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
+    const targetPage = switchMeshResourceType(healthType, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
     const namespace = this.props.targetNamespace;
     const status = this.state.status;
     let nbItems = 0;
@@ -503,9 +500,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     let text: string;
 
     if (nbItems === 1) {
-      text = switchType(healthType, '1 application', '1 service', '1 workload');
+      text = switchMeshResourceType(healthType, '1 application', '1 service', '1 workload');
     } else {
-      text = `${nbItems}${switchType(healthType, ' applications', ' services', ' workloads')}`;
+      text = `${nbItems}${switchMeshResourceType(healthType, ' applications', ' services', ' workloads')}`;
     }
 
     const mainLink = (
@@ -533,7 +530,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
 
           <div style={{ display: 'inline-block' }} data-test="overview-app-health">
             {status && status.inNotReady.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${namespace}-not-ready`}
                 namespace={namespace}
                 status={NOT_READY}
@@ -543,7 +540,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             )}
 
             {status && status.inError.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${namespace}-failure`}
                 namespace={namespace}
                 status={FAILURE}
@@ -553,7 +550,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             )}
 
             {status && status.inWarning.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${namespace}-degraded`}
                 namespace={namespace}
                 status={DEGRADED}
@@ -563,7 +560,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             )}
 
             {status && status.inSuccess.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${namespace}-healthy`}
                 namespace={namespace}
                 status={HEALTHY}

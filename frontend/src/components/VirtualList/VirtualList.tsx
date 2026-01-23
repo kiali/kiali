@@ -25,9 +25,8 @@ import { connect } from 'react-redux';
 import { Namespace } from '../../types/Namespace';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import * as FilterHelper from '../FilterList/FilterHelper';
-import * as OverviewSorts from '../../pages/LegacyOverview/Sorts';
-import * as NamespacesSorts from '../../pages/Namespaces/Sorts';
+import { currentSortField } from '../FilterList/FilterHelper';
+import { sortFields } from '../../pages/Namespaces/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
@@ -133,9 +132,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     }
 
     HistoryManager.setParam(URLParam.SORT, String(this.state.columns[index].param));
-    // Use Namespaces Sorts for 'namespaces' type (Namespaces page), Overview Sorts for 'overview' type and others
-    const sortFields = this.props.type === 'namespaces' ? NamespacesSorts.sortFields : OverviewSorts.sortFields;
-    this.props.sort && this.props.sort(FilterHelper.currentSortField(sortFields), direction === 'asc');
+    this.props.sort && this.props.sort(currentSortField(sortFields), direction === 'asc');
   };
 
   componentDidMount(): void {

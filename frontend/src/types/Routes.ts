@@ -2,13 +2,14 @@ import * as React from 'react';
 
 export interface MenuItem {
   id: string;
+  pathsActive?: RegExp[];
+  separator?: boolean;
   title: string;
   to: string;
-  pathsActive?: RegExp[];
 }
 
 export interface Path {
-  path: string;
   component?: any;
+  path: string;
   render?: () => React.ReactNode;
 }

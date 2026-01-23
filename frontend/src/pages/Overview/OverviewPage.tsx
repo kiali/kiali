@@ -12,8 +12,7 @@ import { WorkloadInsights } from './WorkloadInsights';
 
 const titleContainerStyle = kialiStyle({
   borderBottom: `1px solid ${PFColors.BorderColor100}`,
-  margin: '0 -1.25rem 1.25rem -1.25rem',
-  padding: '0 1.25rem'
+  marginBottom: '1.25rem'
 });
 
 const titleStyle = kialiStyle({

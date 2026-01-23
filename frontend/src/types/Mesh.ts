@@ -308,3 +308,16 @@ export const MeshAttr = {
 export function isExternal(name: string): boolean {
   return name === '_external_';
 }
+
+// MeshResourceType represents the type of resource (app, workload, or service)
+export type MeshResourceType = 'app' | 'workload' | 'service';
+
+// Helper function to switch on MeshResourceType
+export const switchMeshResourceType = <T, U, V>(
+  type: MeshResourceType,
+  caseApp: T,
+  caseService: U,
+  caseWorkload: V
+): T | U | V => {
+  return type === 'app' ? caseApp : type === 'service' ? caseService : caseWorkload;
+};

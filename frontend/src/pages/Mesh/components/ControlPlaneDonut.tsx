@@ -1,5 +1,5 @@
-import { ChartDonut, ChartLabel, ChartLegend } from '@patternfly/react-charts/victory';
 import * as React from 'react';
+import { ChartDonut, ChartLabel, ChartLegend } from '@patternfly/react-charts/victory';
 import { ControlPlane } from 'types/Mesh';
 import { kialiStyle } from 'styles/StyleUtils';
 
@@ -48,6 +48,7 @@ export const ControlPlaneDonut: React.FC<Props> = ({ controlPlanes }) => {
       : total;
   const height = 180;
   const width = 300;
+
   return (
     <div data-test="controlplane-donut">
       <div>Namespaces managed by Control Planes</div>
