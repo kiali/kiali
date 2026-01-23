@@ -79,7 +79,7 @@ func ClusterHealth(
 			healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
 
 			// Determine which types to fetch
-			var typesToFetch []string
+			typesToFetch := []string{}
 			if p.Type == "" {
 				// Empty type means fetch all types
 				typesToFetch = []string{"app", "service", "workload"}
