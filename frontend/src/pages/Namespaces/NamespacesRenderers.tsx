@@ -24,7 +24,9 @@ const tlsIconStyle = kialiStyle({
 
 const tlsLabelStyle = kialiStyle({
   display: 'inline-flex',
-  alignItems: 'center'
+  alignItems: 'center',
+  paddingTop: '4px',
+  paddingBottom: '4px'
 });
 
 export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
@@ -95,7 +97,9 @@ export const tlsNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   if (!isInMesh) {
     return (
       <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-        <Label variant="outline">Not applicable</Label>
+        <Label variant="outline" className={tlsLabelStyle}>
+          Not applicable
+        </Label>
       </Td>
     );
   }
