@@ -13,6 +13,7 @@ import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { TypeHeader } from '../../pages/Namespaces/TypeHeader';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -237,7 +238,8 @@ const typeNamespaces: ResourceType<NamespaceInfo> = {
   title: 'Type',
   sortable: true,
   width: 10,
-  renderer: NamespacesRenderers.type
+  renderer: NamespacesRenderers.type,
+  headerContent: React.createElement(TypeHeader)
 };
 
 const nsItemNamespaces: ResourceType<NamespaceInfo> = {
