@@ -67,13 +67,14 @@ export const type: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   // Determine if namespace is a data plane namespace
   // A namespace is a data plane namespace if:
   // - It's not a control plane namespace
-  // - AND it has the injection label enabled OR has the revision label set
+  // - AND (it has the injection label enabled OR has the revision label set OR is ambient)
   const isDataPlane =
     !ns.isControlPlane &&
-    ns.labels &&
-    (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
-      (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
-        ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''));
+    (ns.isAmbient ||
+      (ns.labels &&
+        (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
+          (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+            ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''))));
 
   return (
     <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
