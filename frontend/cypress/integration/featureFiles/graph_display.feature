@@ -411,3 +411,12 @@ Feature: Kiali Graph page - Display menu
     And user "closes" traffic menu
     Then 7 edges appear in the graph
     And user sees graph workloads from both clusters
+
+  @bookinfo-app
+  @core-1
+  @skip-ossmc
+  Scenario: Graph cache metrics increase across repeated graph API requests
+    Given graph cache is enabled
+    And graph cache metrics are recorded
+    When user opens the graph page for "bookinfo" with refresh 60000ms and reloads it 3 times
+    Then graph cache metrics should show at least 1 miss and 2 hits
