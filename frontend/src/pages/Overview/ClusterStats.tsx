@@ -43,7 +43,6 @@ export const ClusterStats: React.FC = () => {
                 <KialiIcon.Error />
               </div>
             )}
-            {unhealthy > 0 && <KialiIcon.Warning />}
           </div>
         )}
       </CardBody>

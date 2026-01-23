@@ -3,6 +3,7 @@ import { Card, CardBody, CardFooter, CardHeader, CardTitle, Spinner } from '@pat
 import { Link } from 'react-router-dom-v5-compat';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useControlPlanes } from 'hooks/controlPlanes';
 import { Status } from 'types/IstioStatus';
@@ -40,12 +41,11 @@ export const ControlPlaneStats: React.FC = () => {
                 <KialiIcon.Error />
               </div>
             )}
-            {unhealthy > 0 && <KialiIcon.Warning />}
           </div>
         )}
       </CardBody>
       <CardFooter>
-        <Link to="/legacy-overview" className={linkStyle}>
+        <Link to={`/${Paths.MESH}`} className={linkStyle}>
           {t('View control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
         </Link>
       </CardFooter>

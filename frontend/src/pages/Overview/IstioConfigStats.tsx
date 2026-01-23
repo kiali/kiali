@@ -32,13 +32,13 @@ export const IstioConfigStats: React.FC = () => {
             {istioConfigStats.warnings > 0 && (
               <div className={statItemStyle}>
                 <span>{istioConfigStats.warnings}</span>
-                <KialiIcon.Info />
+                <KialiIcon.Warning />
               </div>
             )}
             {istioConfigStats.errors > 0 && (
               <div className={statItemStyle}>
                 <span>{istioConfigStats.errors}</span>
-                <KialiIcon.Warning />
+                <KialiIcon.Error />
               </div>
             )}
           </div>

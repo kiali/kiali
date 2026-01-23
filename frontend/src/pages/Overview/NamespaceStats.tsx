@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { Namespace } from 'types/Namespace';
@@ -62,7 +63,7 @@ export const NamespaceStats: React.FC = () => {
   let sidecar = 0;
   let outOfMesh = 0;
   let healthy = 0;
-  let warnings = 0;
+  let unhealthy = 0;
 
   namespaces.forEach(ns => {
     // Don't count control plane namespaces in the injection stats
@@ -103,9 +104,9 @@ export const NamespaceStats: React.FC = () => {
                   <KialiIcon.Success />
                 </div>
               )}
-              {warnings > 0 && (
+              {unhealthy > 0 && (
                 <div className={statItemStyle}>
-                  <span>{warnings}</span>
+                  <span>{unhealthy}</span>
                   <KialiIcon.Warning />
                 </div>
               )}
@@ -143,7 +144,7 @@ export const NamespaceStats: React.FC = () => {
         )}
       </CardBody>
       <CardFooter>
-        <Link to="/legacy-overview" className={linkStyle}>
+        <Link to={`/${Paths.NAMESPACES}`} className={linkStyle}>
           {t('View Namespaces')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
         </Link>
       </CardFooter>
