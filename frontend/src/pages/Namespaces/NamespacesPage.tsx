@@ -26,7 +26,7 @@ import { EmptyNamespaces } from './EmptyNamespaces';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
-import { nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
+import { TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -434,7 +434,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             const tlsStatus = tlsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
             if (tlsStatus) {
               nsInfo.tlsStatus = {
-                status: nsWideMTLSStatus(tlsStatus.status, this.props.meshStatus),
+                status: tlsStatus.status,
                 autoMTLSEnabled: tlsStatus.autoMTLSEnabled,
                 minTLS: tlsStatus.minTLS
               };

@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { Td } from '@patternfly/react-table';
-import { TooltipPosition } from '@patternfly/react-core';
+import { Label, TooltipPosition } from '@patternfly/react-core';
 import { Renderer, Resource } from '../../components/VirtualList/Config';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { NamespaceStatusesCombined } from './NamespaceStatusesCombined';
 import { MTLSIcon } from '../../components/MTls/MTLSIcon';
 import { StatusDescriptor, emptyDescriptor } from '../../components/MTls/MTLSStatus';
-import { MTLSStatuses } from '../../types/TLSStatus';
-import { MTLSIconTypes } from '../../components/MTls/NamespaceMTLSStatus';
+import { namespaceMTLSStatusDescriptors } from '../../components/MTls/NamespaceMTLSStatusDescriptors';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { ControlPlaneBadge } from './ControlPlaneBadge';
@@ -15,39 +14,19 @@ import { DataPlaneBadge } from './DataPlaneBadge';
 import { NotPartOfMeshBadge } from './NotPartOfMeshBadge';
 import { serverConfig } from '../../config/ServerConfig';
 
-const statusDescriptors = new Map<string, StatusDescriptor>([
-  [
-    MTLSStatuses.ENABLED,
-    {
-      message: 'mTLS is enabled for this namespace',
-      icon: MTLSIconTypes.LOCK_FULL,
-      showStatus: true
-    }
-  ],
-  [
-    MTLSStatuses.ENABLED_EXTENDED,
-    {
-      message: 'mTLS is enabled for this namespace, extended from Mesh-wide config',
-      icon: MTLSIconTypes.LOCK_FULL,
-      showStatus: true
-    }
-  ],
-  [
-    MTLSStatuses.PARTIALLY,
-    {
-      message: 'mTLS is partially enabled for this namespace',
-      icon: MTLSIconTypes.LOCK_HOLLOW,
-      showStatus: true
-    }
-  ],
-  [MTLSStatuses.DISABLED, emptyDescriptor],
-  [MTLSStatuses.NOT_ENABLED, emptyDescriptor]
-]);
-
 const tlsIconStyle = kialiStyle({
-  marginTop: '-0.125rem',
-  marginRight: '0.75rem',
-  width: '0.75rem'
+  marginTop: '-1px',
+  marginRight: '0.35rem',
+  width: '1em',
+  height: '1em',
+  verticalAlign: 'middle'
+});
+
+const tlsLabelStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  paddingTop: '2px',
+  paddingBottom: '2px'
 });
 
 export const statusNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
@@ -103,13 +82,35 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Reso
 };
 
 export const tlsNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  const isControlPlane = !!ns.isControlPlane;
+  const isDataPlane =
+    !isControlPlane &&
+    !!ns.labels &&
+    (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
+      (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+        ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''));
+
+  // If the namespace is not part of the mesh, mTLS does not apply.
+  // Consider ambient namespaces as part of the mesh too.
+  const isInMesh = isControlPlane || isDataPlane || !!ns.isAmbient;
+
+  if (!isInMesh) {
+    return (
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+        <Label variant="outline" className={tlsLabelStyle}>
+          Not applicable
+        </Label>
+      </Td>
+    );
+  }
+
   if (!ns.tlsStatus) {
     return (
       <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }} />
     );
   }
 
-  const statusDescriptor = statusDescriptors.get(ns.tlsStatus.status) ?? emptyDescriptor;
+  const statusDescriptor: StatusDescriptor = namespaceMTLSStatusDescriptors.get(ns.tlsStatus.status) ?? emptyDescriptor;
 
   if (!statusDescriptor.showStatus) {
     return (
@@ -119,12 +120,16 @@ export const tlsNamespaces: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
   return (
     <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      <MTLSIcon
-        icon={statusDescriptor.icon}
-        iconClassName={tlsIconStyle}
-        tooltipText={statusDescriptor.message}
-        tooltipPosition={TooltipPosition.auto}
-      />
+      <Label variant="outline" className={tlsLabelStyle}>
+        <MTLSIcon
+          icon={statusDescriptor.icon}
+          iconClassName={tlsIconStyle}
+          color={statusDescriptor.color}
+          tooltipText={statusDescriptor.message}
+          tooltipPosition={TooltipPosition.auto}
+        />
+        {statusDescriptor.name}
+      </Label>
     </Td>
   );
 };
