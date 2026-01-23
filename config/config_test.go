@@ -643,8 +643,9 @@ func TestValidateAI(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		mutate    func(conf *Config)
-		expectErr string
+		mutate       func(conf *Config)
+		expectErr    string
+		postValidate func(t *testing.T, conf *Config)
 	}{
 		"valid config": {
 			mutate:    nil,
@@ -668,11 +669,26 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "type",
 		},
+		"empty provider type": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = ""
+			},
+			expectErr: "type",
+		},
 		"invalid provider config": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers[0].Config = ProviderConfigType("bad")
 			},
 			expectErr: "config",
+		},
+		"empty provider config defaults": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Config = ""
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+			},
 		},
 		"disabled provider skips validation": {
 			mutate: func(conf *Config) {
@@ -797,6 +813,9 @@ func TestValidateAI(t *testing.T) {
 			err := conf.ValidateAI()
 			if tc.expectErr == "" {
 				require.NoError(t, err)
+				if tc.postValidate != nil {
+					tc.postValidate(t, conf)
+				}
 				return
 			}
 			require.Error(t, err)

@@ -777,7 +777,8 @@ type AIModel struct {
 type ProviderType string
 
 const (
-	OpenAIProvider ProviderType = "openai"
+	OpenAIProvider      ProviderType = "openai"
+	DefaultProviderType ProviderType = ""
 )
 
 type ProviderConfigType string
@@ -786,6 +787,7 @@ const (
 	OpenAIProviderConfigDefault ProviderConfigType = "default"
 	OpenAIProviderConfigGemini  ProviderConfigType = "gemini"
 	OpenAIProviderConfigAzure   ProviderConfigType = "azure"
+	DefaultProviderConfigType   ProviderConfigType = "default"
 )
 
 type ProviderConfig struct {
@@ -1287,7 +1289,8 @@ func (conf *Config) ValidateAI() error {
 	}
 	seenNames := make(map[string]struct{})
 
-	for _, p := range conf.ChatAI.Providers {
+	for i := range conf.ChatAI.Providers {
+		p := &conf.ChatAI.Providers[i]
 		if _, exists := seenNames[p.Name]; exists {
 			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
 		}
@@ -1304,10 +1307,18 @@ func (conf *Config) ValidateAI() error {
 			continue
 		}
 
+		if p.Type == "" {
+			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, DefaultProviderType)
+			p.Type = DefaultProviderType
+		}
 		if _, valid := validProviderTypes[p.Type]; !valid {
 			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid", p.Name, p.Type)
 		}
 
+		if p.Config == "" {
+			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q", p.Name, DefaultProviderConfigType)
+			p.Config = DefaultProviderConfigType
+		}
 		if _, valid := validProviderConfigTypes[p.Config]; !valid {
 			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid", p.Name, p.Config)
 		}
