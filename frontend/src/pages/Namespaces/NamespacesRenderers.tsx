@@ -25,7 +25,7 @@ const tlsIconStyle = kialiStyle({
 const tlsLabelStyle = kialiStyle({
   display: 'inline-flex',
   alignItems: 'center',
-  paddingTop: '4px',
+  paddingTop: '2px',
   paddingBottom: '4px'
 });
 
