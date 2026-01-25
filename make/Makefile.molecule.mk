@@ -147,9 +147,46 @@ endif
 ## molecule-build: Builds an image to run Molecule without requiring the host to have python/pip installed. If it already exists, and you want to build it again, set env var FORCE_MOLECULE_BUILD to "true".
 molecule-build: .ensure-operator-repo-exists .prepare-force-molecule-build
 ifeq ($(DORP),docker)
-	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then docker build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
+	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then \
+	  docker build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; \
+	else \
+	  echo "Will not rebuild kiali-molecule image."; \
+	fi
 else
-	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then podman build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; else echo "Will not rebuild kiali-molecule image."; fi
+	@set -o pipefail; \
+	if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then \
+	  attempt=1; \
+	  max_attempts=120; \
+	  success=""; \
+	  while [ $$attempt -le $$max_attempts ]; do \
+	    echo "Building molecule image (attempt $$attempt/$$max_attempts)..."; \
+	    tmpfile=$$(mktemp); \
+	    if podman build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker 2>&1 | tee "$$tmpfile"; then \
+	      echo "Molecule image build succeeded."; \
+	      success="true"; \
+	      rm -f "$$tmpfile"; \
+	      break; \
+	    elif grep -iq "Skipping Galaxy server" "$$tmpfile" || \
+	         grep -Eiq 'ERROR.*galaxy' "$$tmpfile" || \
+	         grep -Eiq 'HTTP Code: 5[0-9][0-9].*galaxy' "$$tmpfile" || \
+	         grep -Eiq 'galaxy\.ansible\.com.*Internal Server Error' "$$tmpfile"; then \
+	      echo "Molecule image build failed due to Ansible Galaxy server issue. Will retry after 60 seconds..."; \
+	      attempt=$$((attempt + 1)); \
+	      rm -f "$$tmpfile"; \
+	      sleep 60; \
+	    else \
+	      echo "Molecule image build failed with a non-transient error. Will not retry."; \
+	      rm -f "$$tmpfile"; \
+	      exit 1; \
+	    fi; \
+	  done; \
+	  if [ "$$success" != "true" ]; then \
+	    echo "Molecule image build failed after $$max_attempts attempts. Giving up."; \
+	    exit 1; \
+	  fi; \
+	else \
+	  echo "Will not rebuild kiali-molecule image."; \
+	fi
 endif
 
 ifndef MOLECULE_ADD_HOST_ARGS
