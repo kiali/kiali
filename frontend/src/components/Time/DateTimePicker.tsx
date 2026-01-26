@@ -1,71 +1,57 @@
 import * as React from 'react';
-import { kialiStyle } from 'styles/StyleUtils';
-import DatePicker from 'react-datepicker';
-import style from './DateTimePicker.module.scss';
+import { DatePicker, TimePicker, Flex, FlexItem } from '@patternfly/react-core';
 
-const pickerStyle = kialiStyle({
-  height: '36px',
-  paddingLeft: '.75em',
-  width: '10em'
-});
-
-const calendarStyle = kialiStyle({
-  $nest: {
-    '&.react-datepicker': {
-      fontFamily: "var(--pf-t--global--font--family--body)",
-      fontSize: "var(--pf-t--global--font--size--md)"
-    },
-
-    // provide more space for time container given bigger font
-    '& .react-datepicker__time-container': {
-      width: '110px',
-      $nest: {
-        '& .react-datepicker__time .react-datepicker__time-box': {
-          width: '100%'
-        }
-      }
-    },
-
-    '& .react-datepicker__navigation--next--with-time:not(.react-datepicker__navigation--next--with-today-button)': {
-      right: '118px'
-    }
-  }
-});
-
-const popperStyle = kialiStyle({
-  $nest: {
-    '&.react-datepicker-popper': {
-      zIndex: 100
-    }
-  }
-});
+// PF6 components handle styling internally, so we can remove the legacy kialiStyle blocks.
 
 export const DateTimePicker = (props: any) => {
+  const { selected, onChange, minDate, maxDate } = props;
+
+  const handleDateChange = (_event: React.FormEvent<HTMLInputElement>, _value: string, date?: Date) => {
+    if (date && onChange) {
+      // Preserve time when date changes
+      const current = selected ? new Date(selected) : new Date();
+      date.setHours(current.getHours());
+      date.setMinutes(current.getMinutes());
+      date.setSeconds(0);
+      onChange(date);
+    }
+  };
+
+  const handleTimeChange = (_event: React.FormEvent<HTMLInputElement>, _time: string, hour?: number, minute?: number) => {
+    if (onChange && hour !== undefined && minute !== undefined) {
+      // Preserve date when time changes
+      const current = selected ? new Date(selected) : new Date();
+      current.setHours(hour);
+      current.setMinutes(minute);
+      current.setSeconds(0);
+      onChange(current);
+    }
+  };
+
   return (
-    <div className={style.dateTimePicker}>
-      <DatePicker
-        className={pickerStyle}
-        calendarClassName={calendarStyle}
-        popperClassName={popperStyle}
-        dateFormat="MMM dd, hh:mm aa"
-        popperPlacement="bottom-start"
-        popperModifiers={{
-          offset: {
-            enabled: true,
-            offset: '5px, 10px'
-          },
-          preventOverflow: {
-            enabled: true,
-            escapeWithReference: false,
-            boundariesElement: 'viewport'
-          }
-        }}
-        showTimeSelect={true}
-        timeCaption="Time"
-        timeFormat="hh:mm aa"
-        timeIntervals={5}
-        {...props}
-      />
-    </div>
+    <Flex direction={{ default: 'row' }} spacer={{ default: 'spacerSm' }}>
+      <FlexItem>
+        <DatePicker
+          value={selected ? new Date(selected).toISOString().split('T')[0] : ''}
+          onChange={handleDateChange}
+          validators={[
+            (date: Date) => {
+              if (minDate && date < minDate) return 'Date is before minimum allowed date';
+              if (maxDate && date > maxDate) return 'Date is after maximum allowed date';
+              return '';
+            }
+          ]}
+          aria-label="Date picker"
+        />
+      </FlexItem>
+      <FlexItem>
+        <TimePicker
+          time={selected ? new Date(selected).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''}
+          onChange={handleTimeChange}
+          aria-label="Time picker"
+          is24Hour
+        />
+      </FlexItem>
+    </Flex>
   );
 };
