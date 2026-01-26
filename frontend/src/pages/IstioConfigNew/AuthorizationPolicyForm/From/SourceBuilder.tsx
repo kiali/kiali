@@ -34,7 +34,7 @@ const INIT_SOURCE_FIELDS = [
 ].sort();
 
 const noSourceStyle = kialiStyle({
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const columns: ThProps[] = [

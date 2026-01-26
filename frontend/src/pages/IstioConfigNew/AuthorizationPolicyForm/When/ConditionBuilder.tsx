@@ -36,7 +36,7 @@ const columns: ThProps[] = [
 ];
 
 const noValidKeyStyle = kialiStyle({
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const conditionFixedKeys = [

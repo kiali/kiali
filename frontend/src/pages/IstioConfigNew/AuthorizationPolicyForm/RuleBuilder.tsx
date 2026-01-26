@@ -23,7 +23,7 @@ export type Rule = {
 
 const warningStyle = kialiStyle({
   marginLeft: '1.5rem',
-  color: PFColors.Red100,
+  color: PFColors.Red500,
   textAlign: 'center'
 });
 
@@ -111,7 +111,6 @@ export const RuleBuilder: React.FC<Props> = (props: Props) => {
         <Switch
           id="addFromSwitch"
           label=" "
-          
           isChecked={addFromSwitch}
           onChange={() => setAddFromSwitch(!addFromSwitch)}
         />
@@ -130,13 +129,7 @@ export const RuleBuilder: React.FC<Props> = (props: Props) => {
       )}
 
       <FormGroup label={t('To')} fieldId="addToSwitch">
-        <Switch
-          id="addToSwitch"
-          label=" "
-          
-          isChecked={addToSwitch}
-          onChange={() => setAddToSwitch(!addToSwitch)}
-        />
+        <Switch id="addToSwitch" label=" " isChecked={addToSwitch} onChange={() => setAddToSwitch(!addToSwitch)} />
       </FormGroup>
 
       {addToSwitch && (
@@ -155,7 +148,6 @@ export const RuleBuilder: React.FC<Props> = (props: Props) => {
         <Switch
           id="addWhenSwitch"
           label=" "
-          
           isChecked={addWhenSwitch}
           onChange={() => setAddWhenSwitch(!addWhenSwitch)}
         />
