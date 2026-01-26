@@ -59,7 +59,7 @@ const columns: ThProps[] = [
 
 const noPortsStyle = kialiStyle({
   marginTop: '1rem',
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const addPortsStyle = kialiStyle({
