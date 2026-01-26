@@ -31,7 +31,8 @@
     "coverage",
     "webpack",
     "jest",
-    "src/setupTests.ts"
+    "src/setupTests.ts",
+    "src/mocks/**/*"
   ],
   "include": ["src"]
 }

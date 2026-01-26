@@ -82,9 +82,91 @@ If Kiali is configured with a specific web root, make sure to append it to the U
 
 Run `yarn start` and try it!
 
+=== Mock API with MSW (Mock Service Worker)
+
+For frontend development without a running backend, Kiali supports API mocking using link:https://mswjs.io/[Mock Service Worker (MSW)]. This allows you to develop and test the UI with realistic mock data.
+
+==== Starting with Mock API
+
+[source,shell]
+----
+# Start with default mock scenario (healthy)
+yarn start:mock
+----
+
+The mock service worker will intercept all API requests and return mock data that simulates a real Kiali backend.
+
+==== Mock Scenarios
+
+Different scenarios are available to simulate various environments:
+
+[cols="1,3"]
+|===
+|Scenario |Description
+
+|`healthy` (default)
+|All services healthy, no errors or warnings
+
+|`unhealthy`
+|Some services with errors and validation issues
+
+|`multicluster`
+|Multiple clusters (cluster-east, cluster-west, cluster-central) with cross-cluster traffic
+
+|`ambient`
+|Ambient mesh enabled with waypoint proxies
+|===
+
+To use a specific scenario, set the `REACT_APP_MOCK_SCENARIO` environment variable:
+
+[source,shell]
+----
+# Example: Run with multicluster scenario
+REACT_APP_MOCK_SCENARIO=multicluster yarn start:mock
+----
+
+==== Mock Data Structure
+
+The mock handlers are located in `src/mocks/handlers/` and organized by feature:
+
+* `auth.ts` - Authentication and session info
+* `config.ts` - Server configuration
+* `health.ts` - Health status and metrics
+* `istio.ts` - Istio configuration and validations
+* `mesh.ts` - Mesh graph data
+* `namespaces.ts` - Namespace list
+* `tracing.ts` - Distributed tracing data
+* `traffic.ts` - Traffic graph data
+* `workloads.ts` - Workloads, services, and dashboards
+
+Scenario configuration is defined in `src/mocks/scenarios.ts`.
+
+==== Adding New Mock Handlers
+
+To add a new mock endpoint:
+
+1. Create or modify a handler file in `src/mocks/handlers/`
+2. Use MSW's `http` module to define request handlers:
+
+[source,typescript]
+----
+import { http, HttpResponse } from 'msw';
+
+export const myHandlers = [
+  http.get('*/api/my-endpoint', () => {
+    return HttpResponse.json({ data: 'mock response' });
+  })
+];
+----
+
+3. Export the handlers in `src/mocks/handlers/index.ts`
+
+[NOTE]
+The `mockServiceWorker.js` file is auto-generated and not committed to the repository. It's created automatically when running `yarn start:mock`.
+
 === Internationalization (i18n)
 
-Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language. 
+Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language.
 
 **Adding a new language**
 

@@ -88,6 +88,8 @@
     "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
     "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
+    "msw:init": "[ -f public/mockServiceWorker.js ] || npx msw init public/ --save=false",
+    "start:mock": "npm run msw:init && sh -ac '. ./.env.upstream; REACT_APP_MOCK_API=true npm run start:kiali'",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
     "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'",
     "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' {} +"
@@ -165,6 +167,7 @@
     "jest-canvas-mock": "2.2.0",
     "junit-report-merger": "^3.0.5",
     "mocha-junit-reporter": "^2.2.1",
+    "msw": "^2.12.7",
     "prettier": "2.0.5",
     "pretty-quick": "2.0.1",
     "react-scripts": "^5.0.1",
@@ -191,5 +194,10 @@
   "cypress-cucumber-preprocessor": {
     "stepDefinitions": "cypress/integration/**/*.{js,ts}",
     "filterSpecs": true
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
