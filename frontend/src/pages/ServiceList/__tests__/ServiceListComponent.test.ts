@@ -1,9 +1,31 @@
-import { ServiceHealth, WithServiceHealth } from '../../../types/Health';
+import { ServiceHealth, WithServiceHealth, CalculatedHealthStatus } from '../../../types/Health';
 import { RequestHealth } from '../../../types/Health';
 import { ServiceListItem } from '../../../types/ServiceList';
 import * as ServiceListFilters from '../FiltersAndSorts';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
+
+// Helper to calculate error ratio from inbound requests
+const calculateErrorRatio = (inbound: { [key: string]: { [key: string]: number } }): number => {
+  let total = 0;
+  let errors = 0;
+  for (const protocol of Object.keys(inbound)) {
+    for (const code of Object.keys(inbound[protocol])) {
+      total += inbound[protocol][code];
+      if (code.startsWith('4') || code.startsWith('5')) {
+        errors += inbound[protocol][code];
+      }
+    }
+  }
+  return total > 0 ? (errors / total) * 100 : 0;
+};
+
+// Helper to determine status from error ratio using default thresholds
+const getStatusFromErrorRatio = (errorRatio: number): string => {
+  if (errorRatio >= 20) return 'Failure';
+  if (errorRatio >= 0.1) return 'Degraded';
+  return 'Healthy';
+};
 
 /*
 - name of service
@@ -19,11 +41,25 @@ const makeService = (
   outbound: { [key: string]: { [key: string]: number } }
 ): WithServiceHealth<ServiceListItem> => {
   const reqErrs: RequestHealth = { inbound: inbound, outbound: outbound, healthAnnotations: {} };
-  const health = new ServiceHealth('bookinfo', 'reviews', reqErrs, {
-    rateInterval: 60,
-    hasSidecar: true,
-    hasAmbient: false
-  });
+
+  // Calculate backend status to simulate what the backend would provide
+  const errorRatio = calculateErrorRatio(inbound);
+  const backendStatus: CalculatedHealthStatus = {
+    status: getStatusFromErrorRatio(errorRatio),
+    errorRatio: errorRatio
+  };
+
+  const health = new ServiceHealth(
+    'bookinfo',
+    'reviews',
+    reqErrs,
+    {
+      rateInterval: 60,
+      hasSidecar: true,
+      hasAmbient: false
+    },
+    backendStatus
+  );
 
   return {
     name: name,

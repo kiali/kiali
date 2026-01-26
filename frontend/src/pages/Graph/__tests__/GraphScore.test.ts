@@ -38,6 +38,14 @@ describe('scoreNodes', () => {
           className: 'any',
           status: 'warning'
         }),
+        getBackendStatus: () => ({
+          name: 'any',
+          color: 'any',
+          priority: 1,
+          icon: WarningTriangleIcon,
+          className: 'any',
+          status: 'warning'
+        }),
         getStatusConfig: () => undefined,
         getTrafficStatus: () => undefined,
         getWorkloadStatus: () => undefined
