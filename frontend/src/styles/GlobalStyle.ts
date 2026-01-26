@@ -29,6 +29,10 @@ export const globalStyle = kialiStyle({
       height: '100%'
     },
 
+    '& .pf-v6-c-page__main-container': {
+      height: '100%'
+    },
+
     '& img': {
       verticalAlign: 'middle'
     },

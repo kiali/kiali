@@ -1,15 +1,15 @@
-import { Label, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
-import { AmbientBadge } from '../../components/Ambient/AmbientBadge';
+import { Label, Tooltip } from '@patternfly/react-core';
+import { AmbientBadge } from './AmbientBadge';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { Theme } from 'types/Common';
+import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // Tooltip has reversed theme (light theme = dark background), so link colors are inverted
-export const badgeTooltipLinkStyle = kialiStyle({
+const badgeTooltipLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
   marginTop: '0.75rem',
@@ -24,7 +24,7 @@ interface ControlPlaneBadgeProps {
   isAmbient?: boolean;
 }
 
-export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ isAmbient = false }) => {
+export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = (props: ControlPlaneBadgeProps) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
@@ -52,11 +52,13 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ isAmbient 
         }
       >
         <Label style={{ marginLeft: '0.5rem' }} color="green" isCompact data-test="control-plane-badge">
-          {t('Control plane')}
+          {t('CP')}
         </Label>
       </Tooltip>
 
-      {isAmbient && <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>}
+      {props.isAmbient && (
+        <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
+      )}
     </>
   );
 };

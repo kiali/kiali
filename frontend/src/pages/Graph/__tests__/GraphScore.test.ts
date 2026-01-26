@@ -31,6 +31,7 @@ describe('scoreNodes', () => {
           items: []
         },
         getGlobalStatus: () => ({
+          id: 'any',
           name: 'any',
           color: 'any',
           priority: 1,

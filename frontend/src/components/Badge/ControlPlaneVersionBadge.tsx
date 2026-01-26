@@ -1,17 +1,31 @@
-import { Label, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
+import { Label, Tooltip } from '@patternfly/react-core';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { badgeTooltipLinkStyle } from './ControlPlaneBadge';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { Theme } from 'types/Common';
 import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
 
-type Props = {
+// Tooltip has reversed theme (light theme = dark background), so link colors are inverted
+const badgeTooltipLinkStyle = kialiStyle({
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: '0.75rem',
+  $nest: {
+    '& > span': {
+      marginRight: '0.5rem'
+    }
+  }
+});
+
+interface ControlPlaneVersionBadgeProps {
   version: string;
-};
+}
 
-export const ControlPlaneVersionBadge: React.FC<Props> = (props: Props) => {
+export const ControlPlaneVersionBadge: React.FC<ControlPlaneVersionBadgeProps> = (
+  props: ControlPlaneVersionBadgeProps
+) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
@@ -36,7 +50,7 @@ export const ControlPlaneVersionBadge: React.FC<Props> = (props: Props) => {
       }
       maxWidth="25rem"
     >
-      <Label style={{ marginLeft: '0.5rem' }} color={'orange'} isCompact data-test="control-plane-revision-badge">
+      <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact data-test="control-plane-revision-badge">
         {props.version}
       </Label>
     </Tooltip>

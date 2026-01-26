@@ -42,7 +42,7 @@ import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
-import { getValidMeshLayout, MeshLayout } from './layouts/layoutFactory';
+import { getValidMeshLayout, MeshLayout } from './layouts/LayoutFactory';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { setAIContext } from 'helpers/ChatAI';
 
