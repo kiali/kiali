@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	openai "github.com/sashabaranov/go-openai"
-
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -280,7 +278,7 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 	}
 }
 
-func EstimateConversationMemory(conversation []openai.ChatCompletionMessage) float64 {
+func EstimateConversationMemory(conversation []types.ConversationMessage) float64 {
 	estimatedMB := 0.0
 	for _, message := range conversation {
 		estimatedMB += EstimateMessageMemory(message)
@@ -288,6 +286,6 @@ func EstimateConversationMemory(conversation []openai.ChatCompletionMessage) flo
 	return estimatedMB
 }
 
-func EstimateMessageMemory(message openai.ChatCompletionMessage) float64 {
+func EstimateMessageMemory(message types.ConversationMessage) float64 {
 	return float64(len(message.Content)) / 1024 / 1024
 }

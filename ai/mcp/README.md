@@ -343,8 +343,8 @@ Tools are registered in the AI provider and made available to the AI model. Each
 
 ```go
 type ToolHandler interface {
-    Definition() openai.Tool
-    Call(ctx context.Context, args map[string]interface{}, ...) (interface{}, int)
+    Definition() openai.ChatCompletionToolUnionParam
+    Call(r *http.Request, args map[string]interface{}, ...) (interface{}, int)
 }
 ```
 

@@ -1,27 +1,15 @@
 package providers
 
 import (
-	"reflect"
 	"testing"
 
-	openai "github.com/sashabaranov/go-openai"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
 )
 
-// getAuthToken extracts the unexported authToken field from openai.ClientConfig using reflection
-func getAuthToken(cfg openai.ClientConfig) string {
-	v := reflect.ValueOf(cfg)
-	field := v.FieldByName("authToken")
-	if !field.IsValid() {
-		return ""
-	}
-	return field.String()
-}
-
-func TestGetProviderConfig_ModelKeyTakesPrecedence(t *testing.T) {
+func TestResolveProviderKey_ModelKeyTakesPrecedence(t *testing.T) {
 	conf := config.NewConfig()
 	provider := &config.ProviderConfig{
 		Name:   "test-provider",
@@ -35,15 +23,15 @@ func TestGetProviderConfig_ModelKeyTakesPrecedence(t *testing.T) {
 		Key:   "model-key-value",
 	}
 
-	clientConfig, err := getProviderConfig(conf, provider, model)
+	key, err := resolveProviderKey(conf, provider, model)
 	require.NoError(t, err)
 
 	// Verify model key was used, not provider key
-	assert.Equal(t, "model-key-value", getAuthToken(clientConfig),
+	assert.Equal(t, "model-key-value", key,
 		"Model key should take precedence over provider key")
 }
 
-func TestGetProviderConfig_FallbackToProviderKey(t *testing.T) {
+func TestResolveProviderKey_FallbackToProviderKey(t *testing.T) {
 	conf := config.NewConfig()
 	provider := &config.ProviderConfig{
 		Name:   "test-provider",
@@ -57,15 +45,15 @@ func TestGetProviderConfig_FallbackToProviderKey(t *testing.T) {
 		Key:   "", // Empty - should fall back to provider key
 	}
 
-	clientConfig, err := getProviderConfig(conf, provider, model)
+	key, err := resolveProviderKey(conf, provider, model)
 	require.NoError(t, err)
 
 	// Verify provider key was used as fallback
-	assert.Equal(t, "provider-key-value", getAuthToken(clientConfig),
+	assert.Equal(t, "provider-key-value", key,
 		"Should fall back to provider key when model key is empty")
 }
 
-func TestGetProviderConfig_BothKeysEmpty(t *testing.T) {
+func TestResolveProviderKey_BothKeysEmpty(t *testing.T) {
 	conf := config.NewConfig()
 	provider := &config.ProviderConfig{
 		Name:   "test-provider",
@@ -79,12 +67,12 @@ func TestGetProviderConfig_BothKeysEmpty(t *testing.T) {
 		Key:   "",
 	}
 
-	_, err := getProviderConfig(conf, provider, model)
+	_, err := resolveProviderKey(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "requires a key")
 }
 
-func TestGetProviderConfig_NilConfig(t *testing.T) {
+func TestGetProviderOptions_NilConfig(t *testing.T) {
 	provider := &config.ProviderConfig{
 		Name: "test-provider",
 		Key:  "some-key",
@@ -93,12 +81,12 @@ func TestGetProviderConfig_NilConfig(t *testing.T) {
 		Name: "test-model",
 	}
 
-	_, err := getProviderConfig(nil, provider, model)
+	_, err := getProviderOptions(nil, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "config is required")
 }
 
-func TestGetProviderConfig_AzureRequiresEndpoint(t *testing.T) {
+func TestGetProviderOptions_AzureRequiresEndpoint(t *testing.T) {
 	conf := config.NewConfig()
 	provider := &config.ProviderConfig{
 		Name:   "azure-provider",
@@ -112,12 +100,12 @@ func TestGetProviderConfig_AzureRequiresEndpoint(t *testing.T) {
 		Endpoint: "", // Empty - should error for Azure
 	}
 
-	_, err := getProviderConfig(conf, provider, model)
+	_, err := getProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "endpoint is required for azure")
 }
 
-func TestGetProviderConfig_UnsupportedProviderConfig(t *testing.T) {
+func TestGetProviderOptions_UnsupportedProviderConfig(t *testing.T) {
 	conf := config.NewConfig()
 	provider := &config.ProviderConfig{
 		Name:   "test-provider",
@@ -130,7 +118,7 @@ func TestGetProviderConfig_UnsupportedProviderConfig(t *testing.T) {
 		Model: "gpt-4",
 	}
 
-	_, err := getProviderConfig(conf, provider, model)
+	_, err := getProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported provider config type")
 }

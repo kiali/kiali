@@ -3,8 +3,7 @@ package mcp
 import (
 	"net/http"
 
-	openai "github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/jsonschema"
+	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
 	"github.com/kiali/kiali/business"
@@ -28,35 +27,36 @@ func NewResourceDetailTool() ResourceDetailTool {
 	return ResourceDetailTool{name: GetResourceDetailToolName}
 }
 
-func (t ResourceDetailTool) Definition() openai.Tool {
-	parameters := jsonschema.Definition{
-		Type: jsonschema.Object,
-		Properties: map[string]jsonschema.Definition{
-			"resource_type": {
-				Type:        jsonschema.String,
-				Description: "Type of resource to get list/details",
-				Enum:        []string{"service", "workload", "app", "istio"},
+func (t ResourceDetailTool) Definition() openai.ChatCompletionToolUnionParam {
+	parameters := openai.FunctionParameters{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"resource_type": map[string]interface{}{
+				"type":        "string",
+				"description": "Type of resource to get list/details",
+				"enum":        []string{"service", "workload", "app", "istio"},
 			},
-			"namespaces": {
-				Type:        jsonschema.String,
-				Description: "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces",
+			"namespaces": map[string]interface{}{
+				"type":        "string",
+				"description": "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces",
 			},
-			"resource_name": {
-				Type:        jsonschema.String,
-				Description: "Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
+			"resource_name": map[string]interface{}{
+				"type":        "string",
+				"description": "Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
 			},
-			"cluster_name": {
-				Type:        jsonschema.String,
-				Description: "Name of the cluster to get resources from. If not provided, will use the cluster name in the Kiali configuration (KubeConfig).",
+			"cluster_name": map[string]interface{}{
+				"type":        "string",
+				"description": "Name of the cluster to get resources from. If not provided, will use the cluster name in the Kiali configuration (KubeConfig).",
 			},
 		},
 	}
-	return openai.Tool{
-		Type: openai.ToolTypeFunction,
-		Function: &openai.FunctionDefinition{
-			Name:        GetResourceDetailToolName,
-			Description: "Gets lists or detailed info for Kubernetes resources (services, workloads) within the mesh",
-			Parameters:  parameters,
+	return openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        GetResourceDetailToolName,
+				Description: openai.String("Gets lists or detailed info for Kubernetes resources (services, workloads) within the mesh"),
+				Parameters:  parameters,
+			},
 		},
 	}
 }

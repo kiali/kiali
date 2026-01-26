@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
@@ -27,20 +27,20 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-// OpenAIProvider implements AIProvider using go-openai.
+// OpenAIProvider implements AIProvider using openai-go.
 type OpenAIProvider struct {
-	client *openai.Client
+	client openai.Client
 	model  string
 }
 
 func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*OpenAIProvider, error) {
-	cfg, err := getProviderConfig(conf, provider, model)
+	opts, err := getProviderOptions(conf, provider, model)
 	if err != nil {
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
 
 	return &OpenAIProvider{
-		client: openai.NewClientWithConfig(cfg),
+		client: openai.NewClient(opts...),
 		model:  model.Model,
 	}, nil
 }
@@ -55,7 +55,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
 	ctx := r.Context()
-	var conversation []openai.ChatCompletionMessage
+	var conversation []types.ConversationMessage
 	var ptr *types.Conversation
 	var sessionID string
 	if aiStore.Enabled() {
@@ -76,41 +76,49 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	}
 
 	if len(conversation) == 0 {
-		conversation = []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: types.SystemInstruction,
-			},
+		conversation = []types.ConversationMessage{
+			newConversationMessage(
+				openai.SystemMessage(types.SystemInstruction),
+				"system",
+				"",
+				types.SystemInstruction,
+			),
 		}
 	}
 
 	contextBytes, _ := json.Marshal(req.Context)
 	// Adding context to the conversation. This is the system message that is sent to the AI.
-	conversation = append(conversation, openai.ChatCompletionMessage{
-		Role: openai.ChatMessageRoleSystem,
-		Content: fmt.Sprintf("CONTEXT (JSON):\n%s\n\n",
-			string(contextBytes)),
-	})
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	conversation = append(conversation, newConversationMessage(
+		openai.SystemMessage(contextContent),
+		"system",
+		"",
+		contextContent,
+	))
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	conversation = append(conversation, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleUser,
-		Content: req.Query,
-	})
+	conversation = append(conversation, newConversationMessage(
+		openai.UserMessage(req.Query),
+		"user",
+		"",
+		req.Query,
+	))
 
 	// Prepare tool definitions and lookup
-	toolDefs := make([]openai.Tool, 0, len(mcp.DefaultToolHandlers))
+	toolDefs := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
 	handlerByName := make(map[string]mcp.ToolHandler, len(mcp.DefaultToolHandlers))
 	for _, h := range mcp.DefaultToolHandlers {
 		def := h.Definition()
 		toolDefs = append(toolDefs, def)
-		handlerByName[def.Function.Name] = h
+		if def.OfFunction != nil {
+			handlerByName[def.OfFunction.Function.Name] = h
+		}
 	}
 
-	resp, err := p.client.CreateChatCompletion(
+	resp, err := p.client.Chat.Completions.New(
 		r.Context(),
-		openai.ChatCompletionRequest{
-			Model:    p.model,
-			Messages: conversation,
+		openai.ChatCompletionNewParams{
+			Model:    openai.ChatModel(p.model),
+			Messages: buildChatParams(conversation),
 			Tools:    toolDefs,
 		},
 	)
@@ -126,9 +134,14 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
 	msg := resp.Choices[0].Message
-	conversation = append(conversation, msg)
+	conversation = append(conversation, newConversationMessage(
+		msg.ToParam(),
+		string(msg.Role),
+		"",
+		msg.Content,
+	))
 	response := &types.AIResponse{}
-	role := msg.Role
+	role := string(msg.Role)
 	if len(msg.ToolCalls) > 0 {
 		// Execute tool calls in parallel since they don't depend on each other
 		toolResults := p.executeToolCallsInParallel(ctx, r, msg.ToolCalls, handlerByName, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
@@ -153,9 +166,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			return newContextCanceledResponse(err)
 		}
 
-		finalResp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-			Model:    p.model,
-			Messages: conversation,
+		finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Model:    openai.ChatModel(p.model),
+			Messages: buildChatParams(conversation),
 		})
 		if err != nil {
 			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
@@ -164,14 +177,16 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			return newContextCanceledResponse(err)
 		}
 		response.Answer = parseResponse(finalResp.Choices[0].Message.Content)
-		role = finalResp.Choices[0].Message.Role
+		role = string(finalResp.Choices[0].Message.Role)
 	} else {
 		response.Answer = parseResponse(msg.Content)
 	}
-	conversation = append(conversation, openai.ChatCompletionMessage{
-		Role:    role,
-		Content: response.Answer,
-	})
+	conversation = append(conversation, newConversationMessage(
+		openai.AssistantMessage(response.Answer),
+		role,
+		"",
+		response.Answer,
+	))
 	if aiStore.Enabled() {
 		if err := ctx.Err(); err != nil {
 			return newContextCanceledResponse(err)
@@ -209,7 +224,7 @@ func newContextCanceledResponse(err error) (*types.AIResponse, int) {
 
 // toolCallResult holds the result of a tool call execution
 type toolCallResult struct {
-	message   openai.ChatCompletionMessage
+	message   types.ConversationMessage
 	err       error
 	code      int
 	actions   []get_action_ui.Action
@@ -220,7 +235,7 @@ type toolCallResult struct {
 func (p *OpenAIProvider) executeToolCallsInParallel(
 	ctx context.Context,
 	r *http.Request,
-	toolCalls []openai.ToolCall,
+	toolCalls []openai.ChatCompletionMessageToolCallUnion,
 	handlerByName map[string]mcp.ToolHandler,
 	business *business.Layer,
 	prom prometheus.ClientInterface,
@@ -237,7 +252,7 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 	// Execute all tool calls in parallel
 	for i, toolCall := range toolCalls {
 		wg.Add(1)
-		go func(index int, call openai.ToolCall) {
+		go func(index int, call openai.ChatCompletionMessageToolCallUnion) {
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
 			citations := []get_citations.Citation{}
@@ -245,6 +260,14 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 				results[index] = toolCallResult{
 					err:  err,
 					code: http.StatusRequestTimeout,
+				}
+				return
+			}
+
+			if call.Type != "function" {
+				results[index] = toolCallResult{
+					err:  fmt.Errorf("unsupported tool call type: %s", call.Type),
+					code: http.StatusBadRequest,
 				}
 				return
 			}
@@ -317,12 +340,12 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 			}
 
 			results[index] = toolCallResult{
-				message: openai.ChatCompletionMessage{
-					Role:       openai.ChatMessageRoleTool,
-					Content:    toolContent,
-					Name:       call.Function.Name,
-					ToolCallID: call.ID,
-				},
+				message: newConversationMessage(
+					openai.ToolMessage(toolContent, call.ID),
+					"tool",
+					call.Function.Name,
+					toolContent,
+				),
 				code:      http.StatusOK,
 				actions:   actions,
 				citations: citations,
@@ -338,17 +361,17 @@ func (p *OpenAIProvider) executeToolCallsInParallel(
 
 // cleanConversation removes tool messages with names that are not useful for storage
 // This helps reduce storage size by removing tool call responses that don't add value to the conversation context
-func (p *OpenAIProvider) cleanConversation(conversation []openai.ChatCompletionMessage) []openai.ChatCompletionMessage {
+func (p *OpenAIProvider) cleanConversation(conversation []types.ConversationMessage) []types.ConversationMessage {
 	// List of tool names that are not useful to store in conversation history
 	excludedToolNames := map[string]bool{
 		mcp.GetCitationsToolName: true,
 		mcp.GetActionUIToolName:  true,
 	}
 
-	cleaned := make([]openai.ChatCompletionMessage, 0, len(conversation))
+	cleaned := make([]types.ConversationMessage, 0, len(conversation))
 	for _, msg := range conversation {
 		// Remove tool messages where the tool name is in the exclusion list
-		if msg.Role == openai.ChatMessageRoleTool {
+		if msg.Role == "tool" {
 			if excludedToolNames[msg.Name] {
 				log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
 				continue
@@ -360,7 +383,7 @@ func (p *OpenAIProvider) cleanConversation(conversation []openai.ChatCompletionM
 	return cleaned
 }
 
-func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []openai.ChatCompletionMessage, reduceThreshold int) []openai.ChatCompletionMessage {
+func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
 	// Threshold: Only reduce if conversation gets long (e.g., > 10 messages)
 	// You could also use a token counter here for more precision.
 	if len(conversation) < reduceThreshold {
@@ -370,7 +393,7 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 	// We want to keep these "Instructional" messages separate from the "Dialogue"
 	anchorIndex := 0
 	for i, msg := range conversation {
-		if i < 2 && msg.Role == openai.ChatMessageRoleSystem {
+		if i < 2 && msg.Role == "system" {
 			anchorIndex = i // Keep up to the first two system messages (Instructions + Kiali Context)
 		} else {
 			break
@@ -389,17 +412,11 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 	toSummarize := conversation[anchorIndex+1 : splitPoint]
 	recentMessages := conversation[splitPoint:]
 
-	resp, err := p.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: p.model,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: "You are a technical assistant for Kiali (Istio Service Mesh). Summarize the preceding troubleshooting steps, tool outputs, and user intents into a concise technical summary. Preserve key findings like pod names, error codes, or metrics.",
-			},
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: fmt.Sprintf("Summarize the following chat history: %+v", toSummarize),
-			},
+	resp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model: openai.ChatModel(p.model),
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage("You are a technical assistant for Kiali (Istio Service Mesh). Summarize the preceding troubleshooting steps, tool outputs, and user intents into a concise technical summary. Preserve key findings like pod names, error codes, or metrics."),
+			openai.UserMessage(fmt.Sprintf("Summarize the following chat history: %+v", toSummarize)),
 		},
 	})
 	if err != nil {
@@ -409,12 +426,15 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 
 	summary := resp.Choices[0].Message.Content
 
-	var reduced []openai.ChatCompletionMessage
+	var reduced []types.ConversationMessage
 	reduced = append(reduced, instructions...)
-	reduced = append(reduced, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleAssistant,
-		Content: fmt.Sprintf("Summary of previous interactions: %s", summary),
-	})
+	summaryContent := fmt.Sprintf("Summary of previous interactions: %s", summary)
+	reduced = append(reduced, newConversationMessage(
+		openai.AssistantMessage(summaryContent),
+		"assistant",
+		"",
+		summaryContent,
+	))
 	reduced = append(reduced, recentMessages...)
 	return reduced
 }
@@ -436,5 +456,22 @@ func formatToolContent(result interface{}) (string, error) {
 			return "", err
 		}
 		return string(bytes), nil
+	}
+}
+
+func buildChatParams(conversation []types.ConversationMessage) []openai.ChatCompletionMessageParamUnion {
+	params := make([]openai.ChatCompletionMessageParamUnion, 0, len(conversation))
+	for _, msg := range conversation {
+		params = append(params, msg.Param)
+	}
+	return params
+}
+
+func newConversationMessage(param openai.ChatCompletionMessageParamUnion, role, name, content string) types.ConversationMessage {
+	return types.ConversationMessage{
+		Content: content,
+		Name:    name,
+		Param:   param,
+		Role:    role,
 	}
 }

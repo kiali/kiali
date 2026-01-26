@@ -3,8 +3,7 @@ package mcp
 import (
 	"net/http"
 
-	openai "github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/jsonschema"
+	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/ai/mcp/get_mesh_graph"
 	"github.com/kiali/kiali/business"
@@ -28,39 +27,40 @@ func NewMeshGraphTool() MeshGraphTool {
 	return MeshGraphTool{name: GetMeshGraphToolName}
 }
 
-func (t MeshGraphTool) Definition() openai.Tool {
-	parameters := jsonschema.Definition{
-		Type: jsonschema.Object,
-		Properties: map[string]jsonschema.Definition{
-			"namespace": {
-				Type:        jsonschema.String,
-				Description: "Optional single namespace to include in the graph (alternative to namespaces)",
+func (t MeshGraphTool) Definition() openai.ChatCompletionToolUnionParam {
+	parameters := openai.FunctionParameters{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"namespace": map[string]interface{}{
+				"type":        "string",
+				"description": "Optional single namespace to include in the graph (alternative to namespaces)",
 			},
-			"namespaces": {
-				Type:        jsonschema.String,
-				Description: "Optional comma-separated list of namespaces to include in the graph",
+			"namespaces": map[string]interface{}{
+				"type":        "string",
+				"description": "Optional comma-separated list of namespaces to include in the graph",
 			},
-			"rateInterval": {
-				Type:        jsonschema.String,
-				Description: "Optional rate interval for fetching (e.g., '10m', '5m', '1h'). Default is '10m'.",
+			"rateInterval": map[string]interface{}{
+				"type":        "string",
+				"description": "Optional rate interval for fetching (e.g., '10m', '5m', '1h'). Default is '10m'.",
 			},
-			"graphType": {
-				Type:        jsonschema.String,
-				Description: "Optional type of graph to return. Default is 'versionedApp'.",
-				Enum:        []string{"versionedApp", "app", "service", "workload"},
+			"graphType": map[string]interface{}{
+				"type":        "string",
+				"description": "Optional type of graph to return. Default is 'versionedApp'.",
+				"enum":        []string{"versionedApp", "app", "service", "workload"},
 			},
-			"clusterName": {
-				Type:        jsonschema.String,
-				Description: "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig).",
+			"clusterName": map[string]interface{}{
+				"type":        "string",
+				"description": "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig).",
 			},
 		},
 	}
-	return openai.Tool{
-		Type: openai.ToolTypeFunction,
-		Function: &openai.FunctionDefinition{
-			Name:        GetMeshGraphToolName,
-			Description: "Returns the topology of a specific namespaces, health, status of the mesh and namespaces. Includes a mesh health summary overview with aggregated counts of healthy, degraded, and failing apps, workloads, and services. Use this for high-level overviews",
-			Parameters:  parameters,
+	return openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        GetMeshGraphToolName,
+				Description: openai.String("Returns the topology of a specific namespaces, health, status of the mesh and namespaces. Includes a mesh health summary overview with aggregated counts of healthy, degraded, and failing apps, workloads, and services. Use this for high-level overviews"),
+				Parameters:  parameters,
+			},
 		},
 	}
 }

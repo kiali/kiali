@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_citations"
@@ -35,10 +35,18 @@ type AIResponse struct {
 	Mu        sync.Mutex               `json:"-"`
 }
 
+// ConversationMessage represents a stored message in a conversation.
+type ConversationMessage struct {
+	Content string
+	Name    string
+	Param   openai.ChatCompletionMessageParamUnion
+	Role    string
+}
+
 // Conversation represents a stored conversation
 type Conversation struct {
-	Conversation []openai.ChatCompletionMessage // map key is conversationID
-	LastAccessed time.Time                      // When last retrieved by user this conversation
-	EstimatedMB  float64                        // Estimated memory usage in MB
-	Mu           sync.RWMutex                   // Protects LastAccessed field
+	Conversation []ConversationMessage // map key is conversationID
+	LastAccessed time.Time             // When last retrieved by user this conversation
+	EstimatedMB  float64               // Estimated memory usage in MB
+	Mu           sync.RWMutex          // Protects LastAccessed field
 }

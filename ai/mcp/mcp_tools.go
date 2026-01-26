@@ -3,7 +3,7 @@ package mcp
 import (
 	"net/http"
 
-	openai "github.com/sashabaranov/go-openai"
+	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -25,6 +25,6 @@ var DefaultToolHandlers = []ToolHandler{
 
 // ToolHandler defines the contract for a tool: its definition and how to execute it.
 type ToolHandler interface {
-	Definition() openai.Tool
+	Definition() openai.ChatCompletionToolUnionParam
 	Call(r *http.Request, args map[string]interface{}, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int)
 }
