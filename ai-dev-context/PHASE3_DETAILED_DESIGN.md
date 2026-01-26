@@ -1,7 +1,7 @@
 # Phase 3: Detailed Design - Health Pre-Computation
 
-**Date**: 2026-01-19  
-**Status**: In Progress
+**Date**: 2026-01-19 (Updated: 2026-01-26)  
+**Status**: Implementation Complete - Ready for Integration Testing
 
 ---
 
@@ -17,6 +17,7 @@
 8. [Prometheus Metrics](#prometheus-metrics)
 9. [Backend Health Status Calculation Design](#backend-health-status-calculation-design)
 10. [Testing Strategy](#testing-strategy)
+11. [Frontend Changes (Completed)](#frontend-changes-completed)
 
 ---
 
@@ -1238,12 +1239,126 @@ Response includes additional `status` field when requested.
 
 ---
 
+## Frontend Changes (Completed)
+
+This section documents the frontend changes implemented to support backend-calculated health status.
+
+### Overview
+
+List pages (Apps, Workloads, Services) now use backend-calculated health status instead of computing health client-side. This simplifies the frontend, ensures consistency with Prometheus metrics, and removes the need for users to select a duration on list pages.
+
+### Files Modified
+
+| File | Changes |
+| ---- | ------- |
+| `frontend/src/types/Health.ts` | Added `CalculatedHealthStatus` interface, `statusFromString()` helper, `getBackendStatus()` method, and `fromBackendStatus()` factory methods |
+| `frontend/src/pages/AppList/AppListPage.tsx` | Removed `TimeDurationComponent`, replaced with `Refresh` only; removed `duration` from props |
+| `frontend/src/pages/AppList/AppListClass.tsx` | Use `AppHealth.fromBackendStatus()` instead of `fromJson()` |
+| `frontend/src/pages/WorkloadList/WorkloadListPage.tsx` | Removed `TimeDurationComponent`; use `WorkloadHealth.fromBackendStatus()` |
+| `frontend/src/pages/ServiceList/ServiceListPage.tsx` | Removed `TimeDurationComponent`; use `ServiceHealth.fromBackendStatus()` |
+| `frontend/src/pages/AppList/FiltersAndSorts.ts` | Health sorting uses `getBackendStatus()` and `backendStatus.errorRatio` |
+| `frontend/src/pages/WorkloadList/FiltersAndSorts.ts` | Health sorting uses `getBackendStatus()` and `backendStatus.errorRatio` |
+| `frontend/src/pages/ServiceList/FiltersAndSorts.ts` | Health sorting uses `getBackendStatus()` and `backendStatus.errorRatio` |
+| `frontend/src/components/Filters/CommonFilters.ts` | Health filtering uses `getBackendStatus()` |
+| `frontend/src/types/AppList.ts` | Removed `rateInterval` from `AppListQuery` |
+| `frontend/src/types/Workload.ts` | Removed `rateInterval` from `WorkloadListQuery` |
+| `frontend/src/types/ServiceList.ts` | Removed `rateInterval` from `ServiceListQuery` |
+
+### New Types and Methods
+
+#### `CalculatedHealthStatus` Interface
+
+```typescript
+export interface CalculatedHealthStatus {
+  status: string;      // "Healthy", "Degraded", "Failure", "Not Ready", "NA", "Unknown"
+  errorRatio?: number; // 0.0 to 1.0, used for sorting
+}
+```
+
+#### `statusFromString()` Helper
+
+Converts backend status string to frontend `Status` object:
+
+```typescript
+export const statusFromString = (status: string): Status => {
+  switch (status) {
+    case 'Healthy': return HEALTHY;
+    case 'Degraded': return DEGRADED;
+    case 'Failure': return FAILURE;
+    case 'Not Ready': return NOT_READY;
+    default: return NA;
+  }
+};
+```
+
+#### `getBackendStatus()` Method
+
+Returns backend-provided status without client-side fallback:
+
+```typescript
+getBackendStatus(): Status {
+  if (this.backendStatus?.status) {
+    return statusFromString(this.backendStatus.status);
+  }
+  return NA;
+}
+```
+
+#### `fromBackendStatus()` Factory Methods
+
+Simplified factory methods for list pages that only need backend status:
+
+```typescript
+// AppHealth
+public static fromBackendStatus = (json: any): AppHealth => {
+  const health = new AppHealth('', '', [], { inbound: {}, outbound: {}, healthAnnotations: {} }, { rateInterval: 0 });
+  health.backendStatus = json.status;
+  return health;
+};
+
+// ServiceHealth and WorkloadHealth have similar implementations
+```
+
+### UI Changes
+
+1. **Duration Dropdown Removed**: List pages no longer show a duration dropdown since health is pre-computed with a configured duration on the backend.
+
+2. **Refresh Button Retained**: The refresh button and refresh interval dropdown remain, allowing users to control how often the page fetches data.
+
+3. **Sorting and Filtering**: Health-based sorting and filtering now use `getBackendStatus()` which returns the backend-calculated status directly.
+
+### API Changes
+
+1. **`rateInterval` Parameter Removed**: List page API calls no longer include `rateInterval` query parameter since the backend uses a fixed, configured duration for cached health.
+
+2. **Health Response Structure**: The backend now includes a `status` field in health responses:
+   ```json
+   {
+     "workloadStatuses": [...],
+     "requests": {...},
+     "status": {
+       "status": "Healthy",
+       "errorRatio": 0.0
+     }
+   }
+   ```
+
+### Backward Compatibility
+
+- Detail pages continue to use `fromJson()` with full `HealthContext` for on-demand health calculation
+- The `getGlobalStatus()` method still falls back to client-side calculation if `backendStatus` is not present
+- Overview page and other pages using `getGlobalStatus()` work with both old and new backend responses
+
+---
+
 ## Next Steps
 
 1. ~~Review this design document~~ ✓
 2. ~~Clarify any questions or concerns~~ ✓ (All decisions made)
-3. Begin implementation with Step 1 (Configuration)
+3. ~~Implement backend health calculation~~ ✓
+4. ~~Implement frontend simplification~~ ✓
+5. Integration testing with full backend/frontend stack
 
 ---
 
-**Document Status**: Design Complete - Ready for Implementation
+**Document Status**: Implementation Complete - Ready for Integration Testing
