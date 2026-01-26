@@ -46,7 +46,7 @@ func (t ActionUITool) Definition() openai.ChatCompletionToolUnionParam {
 			},
 			"graph": map[string]interface{}{
 				"type":        "string",
-				"description": "Optional. Mesh if user request mesh or traffic graph (Values: mesh|graph) if user request traffic graph of a namespace or list of namespaces. Default graph is traffic",
+				"description": "Optional. If resourceType is graph, you can specify the type of graph to return: Mesh if user request mesh or traffic graph (Values: mesh|traffic). Mesh graph no required namespaces parameter, traffic graph have an optional namespaces parameter. Default graph is traffic",
 				"enum":        []string{"mesh", "traffic"},
 			},
 			"graphType": map[string]interface{}{
