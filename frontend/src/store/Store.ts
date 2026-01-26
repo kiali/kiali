@@ -30,7 +30,7 @@ import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
-import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
+import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 
 // Store is the Redux Data store
 

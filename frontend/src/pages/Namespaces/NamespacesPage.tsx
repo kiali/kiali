@@ -12,26 +12,32 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { NamespacesToolbar } from './NamespacesToolbar';
-import { RenderComponentScroll } from '../../components/Nav/Page';
+import { RenderContent } from '../../components/Nav/Page';
+import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
-import { FilterSelected, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
-import * as FilterHelper from '../../components/FilterList/FilterHelper';
+import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
+import {
+  isCurrentSortAscending,
+  currentSortField,
+  runFilters,
+  currentDuration
+} from '../../components/FilterList/FilterHelper';
 import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
-import * as Sorts from './Sorts';
-import * as Filters from './Filters';
+import { sortFields, sortFunc } from './Sorts';
+import { availableFilters, nameFilter } from './Filters';
 import { EmptyNamespaces } from './EmptyNamespaces';
-import { kialiStyle } from 'styles/StyleUtils';
 import { isMultiCluster } from '../../config';
+import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY, Health } from '../../types/Health';
-import { Show } from './Types';
+import { Show } from 'types/Common';
 import { ApiError } from 'types/Api';
 import { router } from '../../app/History';
 import { Paths } from '../../config';
@@ -41,10 +47,9 @@ import { store } from '../../store/ConfigStore';
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
 
-const gridStyleList = kialiStyle({
-  padding: '0 !important',
-  marginTop: 0,
-  flex: '1'
+const rightToolbarStyle = kialiStyle({
+  position: 'absolute',
+  right: '3rem'
 });
 
 /**
@@ -156,10 +161,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     this.promises.cancelAll();
   }
 
-  sortFields = (): SortField<NamespaceInfo>[] => {
-    return Sorts.sortFields;
-  };
-
   onChange = (): void => {
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
@@ -172,9 +173,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     this.promises
       .register('namespaces', API.getNamespaces())
       .then(namespacesResponse => {
-        const nameFilters = FilterSelected.getSelected().filters.filter(
-          f => f.category === Filters.nameFilter.category
-        );
+        const nameFilters = FilterSelected.getSelected().filters.filter(f => f.category === nameFilter.category);
 
         const allNamespaces: NamespaceInfo[] = namespacesResponse.data
           .filter(ns => {
@@ -200,10 +199,10 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         // Default to namespace sort (ascending) if no sort is specified in URL
         const urlSort = HistoryManager.getParam(URLParam.SORT);
         const urlDirection = HistoryManager.getParam(URLParam.DIRECTION);
-        const isAscending = urlSort && urlDirection ? FilterHelper.isCurrentSortAscending() : true;
+        const isAscending = urlSort && urlDirection ? isCurrentSortAscending() : true;
         const sortField = urlSort
-          ? FilterHelper.currentSortField(Sorts.sortFields)
-          : Sorts.sortFields.find(sf => sf.id === 'namespace') || Sorts.sortFields[0];
+          ? currentSortField(sortFields)
+          : sortFields.find(sf => sf.id === 'namespace') || sortFields[0];
 
         // Set URL params if not present to ensure default sort is reflected in URL
         if (!urlSort) {
@@ -217,7 +216,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         this.setState(
           {
             loaded: true,
-            namespaces: Sorts.sortFunc(allNamespaces, sortField, isAscending)
+            namespaces: sortFunc(allNamespaces, sortField, isAscending)
           },
           () => {
             this.fetchHealth(isAscending, sortField);
@@ -234,7 +233,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   fetchHealth = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
-    const duration = FilterHelper.currentDuration();
+    const duration = currentDuration();
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -253,7 +252,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             let newNamespaces = prevState.namespaces.slice();
 
             if (sortField.id === 'health') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+              newNamespaces = sortFunc(newNamespaces, sortField, isAscending);
             }
 
             return { namespaces: newNamespaces };
@@ -394,7 +393,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             let newNamespaces = prevState.namespaces.slice();
 
             if (sortField.id === 'mtls') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+              newNamespaces = sortFunc(newNamespaces, sortField, isAscending);
             }
 
             return { namespaces: newNamespaces };
@@ -464,7 +463,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             let newNamespaces = prevState.namespaces.slice();
 
             if (sortField.id === 'validations') {
-              newNamespaces = Sorts.sortFunc(newNamespaces, sortField, isAscending);
+              newNamespaces = sortFunc(newNamespaces, sortField, isAscending);
             }
 
             return { namespaces: newNamespaces };
@@ -517,7 +516,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   sort = (sortField: SortField<NamespaceInfo>, isAscending: boolean): void => {
     this.setState(prevState => {
       return {
-        namespaces: Sorts.sortFunc(prevState.namespaces, sortField, isAscending)
+        namespaces: sortFunc(prevState.namespaces, sortField, isAscending)
       };
     });
   };
@@ -625,11 +624,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   render(): React.ReactNode {
-    const filteredNamespaces = FilterHelper.runFilters(
-      this.state.namespaces,
-      Filters.availableFilters,
-      FilterSelected.getSelected()
-    );
+    const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
 
     const namespaceActions = filteredNamespaces.map((ns, i) => {
       const actions = this.getNamespaceActions(ns);
@@ -640,18 +635,20 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
     return (
       <>
-        <NamespacesToolbar
-          onChange={this.onChange}
-          onRefresh={this.load}
-          sort={this.sort}
-          statefulFilterRef={this.sFNamespacesToolbar}
+        <DefaultSecondaryMasthead
+          hideNamespaceSelector={true}
+          rightToolbar={
+            <div className={rightToolbarStyle}>
+              <TimeDurationComponent key="DurationDropdown" id="namespaces-list-duration-dropdown" disabled={false} />
+            </div>
+          }
         />
         <EmptyNamespaces
           filteredNamespaces={filteredNamespaces}
           loaded={this.state.loaded}
           refreshInterval={this.props.refreshInterval}
         >
-          <RenderComponentScroll className={gridStyleList}>
+          <RenderContent>
             <VirtualList
               rows={filteredNamespaces}
               sort={this.sort}
@@ -659,8 +656,14 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               actions={namespaceActions}
               hiddenColumns={hiddenColumns}
               type="namespaces"
-            />
-          </RenderComponentScroll>
+            >
+              <StatefulFilters
+                initialFilters={availableFilters}
+                onFilterChange={this.onChange}
+                ref={this.sFNamespacesToolbar}
+              />
+            </VirtualList>
+          </RenderContent>
         </EmptyNamespaces>
       </>
     );

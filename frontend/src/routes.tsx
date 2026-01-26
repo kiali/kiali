@@ -37,22 +37,16 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [/^\/graph\/(.*)/]
   },
   {
+    id: 'mesh',
+    separator: true,
+    title: t('Mesh'),
+    to: `/${Paths.MESH}`
+  },
+  {
     id: 'namespaces',
     title: t('Namespaces'),
     to: `/${Paths.NAMESPACES}`,
     pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
-  },
-  {
-    id: 'applications',
-    title: t('Applications'),
-    to: `/${Paths.APPLICATIONS}`,
-    pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.APPLICATIONS}/(.*)`)]
-  },
-  {
-    id: 'workloads',
-    title: t('Workloads'),
-    to: `/${Paths.WORKLOADS}`,
-    pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.WORKLOADS}/(.*)`)]
   },
   {
     id: 'services',
@@ -61,7 +55,14 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.SERVICES}/(.*)`)]
   },
   {
+    id: 'workloads',
+    title: t('Workloads'),
+    to: `/${Paths.WORKLOADS}`,
+    pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.WORKLOADS}/(.*)`)]
+  },
+  {
     id: 'istio',
+    separator: true,
     title: t('Istio Config'),
     to: `/${Paths.ISTIO}`,
     pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.ISTIO}/(.*)`), new RegExp(`/${Paths.ISTIO}/new/(.*)`)]
@@ -69,18 +70,13 @@ const navMenuItems: MenuItem[] = [
   {
     id: 'tracing',
     title: t('Distributed Tracing'),
-    to: '/tracing'
-  },
-  {
-    id: 'mesh',
-    title: t('Mesh'),
-    to: '/mesh'
+    to: `/${Paths.TRACING}`
   }
 ];
 
 const pathRoutes: RouteObject[] = [
   {
-    path: '/overview',
+    path: `/${Paths.OVERVIEW}`,
     element: <OverviewPage />
   },
   {

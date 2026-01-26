@@ -17,7 +17,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fqzjpeg kiali_f1mvcfqu"
+          className="kiali_fqzjpeg kiali_f1q8dfts"
         >
           <ExclamationCircleIcon />
         </Icon>
@@ -55,7 +55,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fqzjpeg kiali_f1mvcfqu"
+          className="kiali_fqzjpeg kiali_f1q8dfts"
         >
           <ExclamationCircleIcon />
         </Icon>
@@ -93,7 +93,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f49xmp9 kiali_f1ageo3n"
+          className="kiali_f49xmp9 kiali_f1leo02d"
         >
           <InProgressIcon />
         </Icon>
@@ -131,7 +131,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f49xmp9 kiali_f1ageo3n"
+          className="kiali_f49xmp9 kiali_f1leo02d"
         >
           <InProgressIcon />
         </Icon>
@@ -169,7 +169,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fngrjuo kiali_f6kk0cu"
+          className="kiali_fngrjuo kiali_f1wrxx94"
         >
           <CheckCircleIcon />
         </Icon>
@@ -207,7 +207,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fngrjuo kiali_f6kk0cu"
+          className="kiali_fngrjuo kiali_f1wrxx94"
         >
           <CheckCircleIcon />
         </Icon>
@@ -245,7 +245,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f3dfrvt kiali_f1wuzvd3"
+          className="kiali_f3dfrvt kiali_f1cbc381"
         >
           <ExclamationTriangleIcon />
         </Icon>
@@ -283,7 +283,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f3dfrvt kiali_f1wuzvd3"
+          className="kiali_f3dfrvt kiali_f1cbc381"
         >
           <ExclamationTriangleIcon />
         </Icon>
