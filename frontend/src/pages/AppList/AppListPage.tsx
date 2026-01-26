@@ -5,11 +5,11 @@ import * as AppListFilters from './FiltersAndSorts';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { AppListItem } from '../../types/AppList';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
+import { IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { DispatchProp } from 'react-redux';
 import { namespaceEquals } from '../../utils/Common';
@@ -20,7 +20,7 @@ import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
-import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { Refresh } from '../../components/Refresh/Refresh';
 import { isMultiCluster, serverConfig } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -28,6 +28,12 @@ import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
+});
 
 type AppListPageState = FilterComponent.State<AppListItem> & {
   loaded: boolean;
@@ -35,7 +41,6 @@ type AppListPageState = FilterComponent.State<AppListItem> & {
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
-  duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
 };
 
@@ -75,7 +80,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-          this.props.duration !== prevProps.duration ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
             this.props.refreshInterval !== RefreshIntervalPause) ||
           this.state.currentSortField !== prevCurrentSortField ||
@@ -116,13 +120,13 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     });
 
     if (this.props.activeNamespaces.length !== 0) {
-      this.fetchApps(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
+      this.fetchApps(Array.from(uniqueClusters), activeFilters, activeToggles);
     } else {
       this.setState({ listItems: [], loaded: true });
     }
   }
 
-  fetchApps(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo, rateInterval: number): void {
+  fetchApps(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo): void {
     const perfKey = 'ClustersApps';
     const appsPromises = clusters.map(cluster => {
       const health = toggles.get('health') ? 'true' : 'false';
@@ -132,8 +136,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
           health: health,
-          istioResources: istioResources,
-          rateInterval: `${String(rateInterval)}s`
+          istioResources: istioResources
         },
         cluster
       );
@@ -146,7 +149,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
         responses.forEach(response => {
           endPerfTimer(perfKey);
-          appListItems = appListItems.concat(AppListClass.getAppItems(response.data, rateInterval));
+          appListItems = appListItems.concat(AppListClass.getAppItems(response.data));
         });
 
         return AppListFilters.filterBy(appListItems, filters);
@@ -186,9 +189,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={
-            <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
-          }
+          rightToolbar={<Refresh className={refreshStyle} id="app-list-refresh" disabled={false} manageURL={true} />}
         />
         <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
           <RenderContent>
@@ -214,7 +215,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });
 

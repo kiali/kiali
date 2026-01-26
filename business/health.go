@@ -111,18 +111,18 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 func (in *HealthService) getAppHealth(ctx context.Context, namespace, cluster, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
-	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if there are no workloads or no workload has HTTP/request traffic
+	hasHTTPTraffic := false
 	for _, w := range ws {
-		if w.IstioSidecar || w.IsGateway() {
-			hasSidecar = true
+		if w.HasHTTPTraffic() {
+			hasHTTPTraffic = true
 			break
 		}
 	}
 
 	// Fetch services requests rates
 	var errRate error
-	if hasSidecar {
+	if hasHTTPTraffic {
 		rate, err := in.getAppRequestsHealth(ctx, namespace, cluster, app, rateInterval, queryTime)
 		health.Requests = rate
 		errRate = err
@@ -148,8 +148,8 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 
 	var health models.WorkloadHealth
 
-	// Perf: do not bother fetching request rate if workload has no sidecar
-	if !w.IstioSidecar && !w.IsGateway() {
+	// Perf: do not bother fetching request rate if workload has no HTTP/request traffic capability
+	if !w.HasHTTPTraffic() {
 		health = models.WorkloadHealth{
 			WorkloadStatus: w.CastWorkloadStatus(),
 			Requests:       models.NewEmptyRequestHealth(),
@@ -217,9 +217,9 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	cluster := criteria.Cluster
 	allHealth := make(models.NamespaceAppHealth)
 
-	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	sidecarPresent := false
-	appSidecars := make(map[string]bool)
+	// Perf: do not bother fetching request rate if no workloads or no workload has HTTP/request traffic
+	hasHTTPTraffic := false
+	appHTTPTraffic := make(map[string]bool)
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -229,9 +229,9 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 			if entities != nil {
 				h.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
 				for _, w := range entities.Workloads {
-					if w.IstioSidecar || w.IsGateway() {
-						sidecarPresent = true
-						appSidecars[app] = true
+					if w.HasHTTPTraffic() {
+						hasHTTPTraffic = true
+						appHTTPTraffic[app] = true
 						break
 					}
 				}
@@ -239,14 +239,14 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 		}
 	}
 
-	if sidecarPresent && criteria.IncludeMetrics {
+	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(context.Background(), namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillAppRequestRates(allHealth, rates, appSidecars)
+		fillAppRequestRates(allHealth, rates, appHTTPTraffic)
 	}
 
 	// Calculate and set status for each app
@@ -375,33 +375,33 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 }
 
 func (in *HealthService) getNamespaceWorkloadHealth(ctx context.Context, ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
-	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if no workloads or no workload has HTTP traffic
+	hasHTTPTraffic := false
 	namespace := criteria.Namespace
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 	cluster := criteria.Cluster
-	wlSidecars := make(map[string]bool)
+	wlHTTPTraffic := make(map[string]bool)
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
 		allHealth[w.Name] = models.EmptyWorkloadHealth()
 		allHealth[w.Name].Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
 		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
-		if w.IstioSidecar || w.IsGateway() {
-			hasSidecar = true
-			wlSidecars[w.Name] = true
+		if w.HasHTTPTraffic() {
+			hasHTTPTraffic = true
+			wlHTTPTraffic[w.Name] = true
 		}
 	}
 
-	if hasSidecar && criteria.IncludeMetrics {
+	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillWorkloadRequestRates(allHealth, rates, wlSidecars)
+		fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
 	}
 
 	// Calculate and set status for each workload
@@ -415,14 +415,14 @@ func (in *HealthService) getNamespaceWorkloadHealth(ctx context.Context, ws mode
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector, appSidecars map[string]bool) {
+func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector, appHTTPTraffic map[string]bool) {
 	lblDest := model.LabelName("destination_canonical_service")
 	lblSrc := model.LabelName("source_canonical_service")
 
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		// include requests only to apps which have a sidecar
-		if _, ok := appSidecars[name]; ok {
+		// include requests only to apps which have HTTP traffic capability
+		if _, ok := appHTTPTraffic[name]; ok {
 			if health, ok := allHealth[name]; ok {
 				health.Requests.AggregateInbound(sample)
 			}
@@ -438,13 +438,13 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector, wlSidecars map[string]bool) {
+func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector, wlHTTPTraffic map[string]bool) {
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		// include requests only to workloads which have a sidecar
-		if _, ok := wlSidecars[name]; ok {
+		// include requests only to workloads which have HTTP traffic capability
+		if _, ok := wlHTTPTraffic[name]; ok {
 			if health, ok := allHealth[name]; ok {
 				health.Requests.AggregateInbound(sample)
 			}
