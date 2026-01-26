@@ -66,6 +66,11 @@ const generateServerConfig = (): ServerConfig => {
   return {
     ambientEnabled: scenarioConfig.ambientEnabled,
     authStrategy: 'anonymous',
+    chatAI: {
+      enabled: false,
+      providers: [],
+      defaultProvider: ''
+    },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
     controlPlanes: generateControlPlanes(),
