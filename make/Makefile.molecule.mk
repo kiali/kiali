@@ -148,7 +148,7 @@ endif
 molecule-build: .ensure-operator-repo-exists .prepare-force-molecule-build
 ifeq ($(DORP),docker)
 	@if [ "${FORCE_MOLECULE_BUILD}" == "true" ]; then \
-	  docker build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker; \
+	  docker build --no-cache -t kiali-molecule:latest -f ${ROOTDIR}/operator/molecule/docker/Dockerfile ${ROOTDIR}/operator; \
 	else \
 	  echo "Will not rebuild kiali-molecule image."; \
 	fi
@@ -161,7 +161,7 @@ else
 	  while [ $$attempt -le $$max_attempts ]; do \
 	    echo "Building molecule image (attempt $$attempt/$$max_attempts)..."; \
 	    tmpfile=$$(mktemp); \
-	    if podman build --no-cache -t kiali-molecule:latest ${ROOTDIR}/operator/molecule/docker 2>&1 | tee "$$tmpfile"; then \
+	    if podman build --no-cache -t kiali-molecule:latest -f ${ROOTDIR}/operator/molecule/docker/Dockerfile ${ROOTDIR}/operator 2>&1 | tee "$$tmpfile"; then \
 	      echo "Molecule image build succeeded."; \
 	      success="true"; \
 	      rm -f "$$tmpfile"; \

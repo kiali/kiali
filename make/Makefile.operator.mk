@@ -215,7 +215,7 @@ endif
 	@if [ ! -z "${ANSIBLE_PYTHON_INTERPRETER}" ]; then echo "ANSIBLE_PYTHON_INTERPRETER is [${ANSIBLE_PYTHON_INTERPRETER}]. Make sure that refers to a Python3 installation. If you do not have Python3 in that location, you must ensure you have Python3 and ANSIBLE_PYTHON_INTERPRETER is set to '-e ansible_python_interpreter=<full path to your python3 executable>"; fi
 	@echo "Ensure the CRDs exist"; ${OC} apply -f ${HELM_CHARTS_REPO}/kiali-operator/crds/crds.yaml
 	@echo "Create a dummy [${OPERATOR_PLAYBOOK_KIND}] CR"; ${OC} apply -f ${ROOTDIR}/operator/dev-playbook-config/${OPERATOR_PLAYBOOK_KIND}/dev-cr.yaml
-	ansible-galaxy collection install operator_sdk.util kubernetes.core
+	ansible-galaxy collection install -r ${OPERATOR_DIR}/requirements.yml
 	ALLOW_AD_HOC_KIALI_NAMESPACE=true \
 	ALLOW_AD_HOC_KIALI_IMAGE=true \
 	ALLOW_AD_HOC_OSSMCONSOLE_IMAGE=true \
