@@ -1,0 +1,25 @@
+name: Report to ReportPortal
+
+on:
+  workflow_run:
+    workflows: ["Kiali CI"]
+
+jobs:
+  report-to-reportportal:
+    name: Report Backend Tests to ReportPortal
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    container:
+      image: quay.io/dno/droute:latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+
+    - name: Download test results
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-rest-report
+        path: tests/integration/
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
