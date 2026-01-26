@@ -28,7 +28,7 @@ type Props = ReduxProps & {
   statusWorkload?: NamespaceStatus;
 };
 
-const NamespaceStatusesCombinedComponent: React.FC<Props> = (props: Props) => {
+const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
   const setFilters = (status: Status): void => {
@@ -180,4 +180,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const NamespaceStatusesCombined = connect(mapStateToProps)(NamespaceStatusesCombinedComponent);
+export const NamespaceHealthStatus = connect(mapStateToProps)(NamespaceHealthStatusComponent);

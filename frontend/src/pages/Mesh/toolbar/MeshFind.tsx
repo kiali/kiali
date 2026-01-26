@@ -43,7 +43,7 @@ import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { layoutMesh } from '../Mesh';
 import { infoStyle } from 'styles/IconStyle';
-import { MeshLayoutType, MeshLayout } from '../layouts/layoutFactory';
+import { MeshLayoutType, MeshLayout } from '../layouts/LayoutFactory';
 
 type ReduxStateProps = {
   findValue: string;

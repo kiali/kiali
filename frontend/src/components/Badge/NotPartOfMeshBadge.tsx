@@ -1,5 +1,5 @@
-import { Label, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
+import { Label, Tooltip } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 export const NotPartOfMeshBadge: React.FC = () => {

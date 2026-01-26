@@ -1,12 +1,12 @@
 import * as FilterHelper from '../FilterHelper';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
-import * as Filters from '../../../pages/Overview/Filters';
+import * as Filters from '../../../pages/Namespaces/Filters';
 import { FilterSelected } from '../../Filters/StatefulFilters';
 
 const allNamespaces: NamespaceInfo[] = [
   {
     name: 'a',
-    status: {
+    statusApp: {
       inNotReady: [],
       inError: [],
       inWarning: ['a-tres'],
@@ -16,7 +16,7 @@ const allNamespaces: NamespaceInfo[] = [
   },
   {
     name: 'b',
-    status: {
+    statusApp: {
       inNotReady: [],
       inError: ['b-tres'],
       inWarning: ['b-dos'],
@@ -26,7 +26,7 @@ const allNamespaces: NamespaceInfo[] = [
   },
   {
     name: 'c',
-    status: {
+    statusApp: {
       inNotReady: [],
       inError: [],
       inWarning: [],
@@ -36,7 +36,7 @@ const allNamespaces: NamespaceInfo[] = [
   }
 ];
 
-describe('Overview Page', () => {
+describe('Namespaces Page', () => {
   it('filters Healthy namespaces', () => {
     FilterSelected.setSelected({
       filters: [

@@ -491,7 +491,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div>
-        <DefaultSecondaryMasthead showClusterSelector={false} hideNamespaceSelector={true} />
+        <DefaultSecondaryMasthead hideNamespaceSelector={true} />
       </div>
 
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>

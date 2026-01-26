@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom-v5-compat';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import * as FilterHelper from '../FilterList/FilterHelper';
+import { Label as PFLabel, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { getFiltersFromURL } from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import { Renderer, Resource, SortResource, TResource, GVKToBadge } from './Config';
@@ -16,14 +16,11 @@ import { ActiveFilter } from '../../types/Filters';
 import { renderAPILogo } from '../Logo/Logos';
 import { Health } from '../../types/Health';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { NamespaceMTLSStatus } from '../MTls/NamespaceMTLSStatus';
 import { ValidationSummary } from '../Validations/ValidationSummary';
-import { OverviewToolbar } from '../../pages/Overview/OverviewToolbar';
-import { OverviewCardDataPlaneNamespace } from '../../pages/Overview/OverviewCardDataPlaneNamespace';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { IstioObjectLink, GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
-import { labelFilter as NsLabelFilter } from '../../pages/Overview/Filters';
+import { labelFilter as NsLabelFilter } from '../../pages/Namespaces/Filters';
 import { ValidationSummaryLink } from '../Link/ValidationSummaryLink';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -35,9 +32,7 @@ import {
   kindToStringIncludeK8s
 } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
-import { isMultiCluster } from 'config/ServerConfig';
-import { ControlPlaneBadge } from 'pages/Overview/ControlPlaneBadge';
-import { NamespaceStatuses } from 'pages/Overview/NamespaceStatuses';
+import { isMultiCluster, serverConfig } from 'config/ServerConfig';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -46,11 +41,33 @@ import { InstanceType } from 'types/Common';
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
 import { WorkloadConfigValidation } from '../Validations/WorkloadConfigValidation';
+import { NamespaceHealthStatus } from '../../pages/Namespaces/NamespaceHealthStatus';
+import { MTLSIcon } from '../MTls/MTLSIcon';
+import { emptyDescriptor } from '../MTls/MTLSStatus';
+import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescriptors';
+import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
+import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
+import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
 
 const rendererInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',
   marginRight: '0',
   marginTop: '0'
+});
+
+const tlsIconStyle = kialiStyle({
+  marginTop: '-1px',
+  marginRight: '0.35rem',
+  width: '1em',
+  height: '1em',
+  verticalAlign: 'middle'
+});
+
+const tlsLabelStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  paddingTop: '2px',
+  paddingBottom: '2px'
 });
 
 const getLink = (item: TResource, config: Resource, query?: string): string => {
@@ -173,14 +190,6 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   );
 };
 
-export const tls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  return (
-    <Td role="gridcell" dataLabel="TLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      {ns.tlsStatus ? <NamespaceMTLSStatus status={ns.tlsStatus.status} /> : undefined}
-    </Td>
-  );
-};
-
 export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   let validations: ValidationStatus = { namespace: ns.name, objectCount: 0, errors: 0, warnings: 0 };
 
@@ -213,54 +222,6 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   );
 
   return status;
-};
-
-export const status: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  if (ns.status) {
-    return (
-      <Td
-        role="gridcell"
-        dataLabel="Status"
-        key={`VirtuaItem_Status_${ns.name}`}
-        textCenter
-        style={{ verticalAlign: 'middle' }}
-      >
-        {ns.status && (
-          <NamespaceStatuses
-            key={`${ns.name}_status`}
-            name={ns.name}
-            status={ns.status}
-            type={OverviewToolbar.currentOverviewType()}
-          />
-        )}
-
-        <OverviewCardDataPlaneNamespace
-          key={`${ns.name}_chart`}
-          duration={FilterHelper.currentDuration()}
-          direction={OverviewToolbar.currentDirectionType()}
-          metrics={ns.metrics}
-          errorMetrics={ns.errorMetrics}
-        />
-      </Td>
-    );
-  }
-
-  return <Td role="gridcell" dataLabel="Status" key={`VirtuaItem_Status_${ns.name}`} />;
-};
-
-export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo, _config: Resource, badge: PFBadgeType) => {
-  return (
-    <Td
-      role="gridcell"
-      dataLabel="Namespace"
-      key={`VirtuaItem_NamespaceItem_${ns.name}`}
-      style={{ verticalAlign: 'middle' }}
-    >
-      <PFBadge badge={badge} />
-      {ns.name}
-      {ns.isControlPlane && <ControlPlaneBadge isAmbient={ns.isAmbient} />}
-    </Td>
-  );
 };
 
 export const item: Renderer<TResource> = (item: TResource, config: Resource, badge: PFBadgeType) => {
@@ -356,7 +317,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   let path = window.location.pathname;
   path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
   const labelFilt = path === 'overview' || path === 'namespaces' ? NsLabelFilter : labelFilter;
-  const filters = FilterHelper.getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
+  const filters = getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
 
   return (
     <Td
@@ -370,9 +331,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
           const label = `${key}=${value}`;
           const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
 
-          const isExactlyLabelFilter = FilterHelper.getFiltersFromURL([labelFilt]).filters.some(f =>
-            f.value.includes(label)
-          );
+          const isExactlyLabelFilter = getFiltersFromURL([labelFilt]).filters.some(f => f.value.includes(label));
 
           const labelComponent = (
             <Label
@@ -501,6 +460,114 @@ export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceLis
       ) : (
         <>N/A</>
       )}
+    </Td>
+  );
+};
+
+// Namespace-specific renderers
+
+export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  return (
+    <Td
+      role="gridcell"
+      dataLabel="Namespace"
+      key={`VirtuaItem_NamespaceItem_${ns.name}`}
+      style={{ verticalAlign: 'middle' }}
+    >
+      <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
+      {ns.name}
+    </Td>
+  );
+};
+
+export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  // Determine if namespace is a data plane namespace
+  // A namespace is a data plane namespace if:
+  // - It's not a control plane namespace
+  // - AND (it has the injection label enabled OR has the revision label set OR is ambient)
+  const isDataPlane =
+    !ns.isControlPlane &&
+    (ns.isAmbient ||
+      (ns.labels &&
+        (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
+          (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+            ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''))));
+
+  return (
+    <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      {ns.isControlPlane ? (
+        <ControlPlaneBadge isAmbient={ns.isAmbient} />
+      ) : isDataPlane ? (
+        <DataPlaneBadge />
+      ) : (
+        <NotPartOfMeshBadge />
+      )}
+    </Td>
+  );
+};
+
+export const nsHealth: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  return (
+    <Td role="gridcell" dataLabel="Health" key={`VirtuaItem_Status_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      <NamespaceHealthStatus
+        name={ns.name}
+        statusApp={ns.statusApp}
+        statusService={ns.statusService}
+        statusWorkload={ns.statusWorkload}
+      />
+    </Td>
+  );
+};
+
+export const nsTls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  const isControlPlane = !!ns.isControlPlane;
+  const isDataPlane =
+    !isControlPlane &&
+    !!ns.labels &&
+    (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
+      (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+        ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''));
+
+  // If the namespace is not part of the mesh, mTLS does not apply.
+  // Consider ambient namespaces as part of the mesh too.
+  const isInMesh = isControlPlane || isDataPlane || !!ns.isAmbient;
+
+  if (!isInMesh) {
+    return (
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+        <PFLabel variant="outline" className={tlsLabelStyle}>
+          Not applicable
+        </PFLabel>
+      </Td>
+    );
+  }
+
+  if (!ns.tlsStatus) {
+    return (
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }} />
+    );
+  }
+
+  const statusDescriptor = namespaceMTLSStatusDescriptors.get(ns.tlsStatus.status) ?? emptyDescriptor;
+
+  if (!statusDescriptor.showStatus) {
+    return (
+      <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }} />
+    );
+  }
+
+  return (
+    <Td role="gridcell" dataLabel="mTLS" key={`VirtualItem_tls_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      <PFLabel variant="outline" className={tlsLabelStyle}>
+        <MTLSIcon
+          icon={statusDescriptor.icon}
+          iconClassName={tlsIconStyle}
+          color={statusDescriptor.color}
+          tooltipText={statusDescriptor.message}
+          tooltipPosition={TooltipPosition.auto}
+        />
+        {statusDescriptor.name}
+      </PFLabel>
     </Td>
   );
 };

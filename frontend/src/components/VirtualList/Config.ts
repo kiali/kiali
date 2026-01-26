@@ -6,7 +6,6 @@ import { WorkloadListItem, Workload } from '../../types/Workload';
 import { ServiceListItem } from '../../types/ServiceList';
 import { dicTypeToGVK, IstioConfigItem } from '../../types/IstioConfigList';
 import * as Renderers from './Renderers';
-import * as NamespacesRenderers from '../../pages/Namespaces/NamespacesRenderers';
 import { Health } from '../../types/Health';
 import { isIstioNamespace, serverConfig } from 'config/ServerConfig';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
@@ -65,15 +64,6 @@ export type ResourceType<R extends RenderResource> = {
 };
 
 // NamespaceInfo
-const tlsStatus: ResourceType<NamespaceInfo> = {
-  name: 'TLS',
-  param: 'tls',
-  title: 'TLS',
-  sortable: true,
-  width: 10,
-  renderer: Renderers.tls
-};
-
 const istioConfiguration: ResourceType<NamespaceInfo> = {
   name: 'IstioConfiguration',
   param: 'ic',
@@ -81,24 +71,6 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
   sortable: true,
   width: 10,
   renderer: Renderers.istioConfig
-};
-
-const status: ResourceType<NamespaceInfo> = {
-  name: 'Status',
-  param: 'h',
-  title: 'Status',
-  sortable: true,
-  width: 50,
-  textCenter: true,
-  renderer: Renderers.status
-};
-
-const nsItem: ResourceType<NamespaceInfo> = {
-  name: 'Namespace',
-  param: 'ns',
-  title: 'Namespace',
-  sortable: true,
-  renderer: Renderers.nsItem
 };
 
 // General
@@ -220,47 +192,41 @@ export type Resource = {
   name: string;
 };
 
-const namespaces: Resource = {
-  name: 'namespaces',
-  columns: [tlsStatus, nsItem, cluster, istioConfiguration, labels, status],
-  badge: PFBadges.Namespace
-};
-
 const namespacesHealth: ResourceType<NamespaceInfo> = {
   name: 'Health',
   param: 'h',
-  title: 'Health',
+  renderer: Renderers.nsHealth,
   sortable: true,
-  width: 20,
-  renderer: NamespacesRenderers.statusNamespaces
+  title: 'Health',
+  width: 20
 };
 
 const typeNamespaces: ResourceType<NamespaceInfo> = {
+  headerContent: React.createElement(TypeHeader),
   name: 'Type',
   param: 'type',
-  title: 'Type',
+  renderer: Renderers.nsType,
   sortable: true,
-  width: 10,
-  renderer: NamespacesRenderers.type,
-  headerContent: React.createElement(TypeHeader)
+  title: 'Type',
+  width: 10
 };
 
 const nsItemNamespaces: ResourceType<NamespaceInfo> = {
   name: 'Namespace',
   param: 'ns',
-  title: 'Namespace',
+  renderer: Renderers.nsItem,
   sortable: true,
-  width: 20,
-  renderer: NamespacesRenderers.nsItem
+  title: 'Namespace',
+  width: 20
 };
 
 const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
   name: 'mTLS',
   param: 'm',
-  title: 'mTLS',
+  renderer: Renderers.nsTls,
   sortable: true,
-  width: 10,
-  renderer: NamespacesRenderers.tlsNamespaces
+  title: 'mTLS',
+  width: 10
 };
 
 const namespacesList: Resource = {
@@ -304,7 +270,6 @@ type Config = {
   applications: Resource;
   istio: Resource;
   namespaces: Resource;
-  overview: Resource;
   services: Resource;
   workloads: Resource;
 };
@@ -313,7 +278,6 @@ const conf: Config = {
   applications: applications,
   istio: istio,
   namespaces: namespacesList,
-  overview: namespaces,
   services: services,
   workloads: workloads
 };

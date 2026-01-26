@@ -113,6 +113,7 @@ export interface Status {
   className: string;
   color: string;
   icon: React.ComponentClass<SVGIconProps>;
+  id: string;
   name: string;
   priority: number;
   status: string;
@@ -129,6 +130,7 @@ export const FAILURE: Status = {
   className: 'icon-failure',
   color: PFColors.Danger,
   icon: ExclamationCircleIcon,
+  id: 'Failure',
   name: t('Failure'),
   priority: 4,
   status: 'danger'
@@ -137,46 +139,51 @@ export const FAILURE: Status = {
 export const DEGRADED: Status = {
   className: 'icon-degraded',
   color: PFColors.Warning,
-  name: t('Degraded'),
   icon: ExclamationTriangleIcon,
-  status: 'warning',
-  priority: 3
+  id: 'Degraded',
+  name: t('Degraded'),
+  priority: 3,
+  status: 'warning'
 };
 
 export const INFO: Status = {
   className: 'icon-info',
   color: PFColors.Info,
   icon: InfoCircleIcon,
+  id: 'Info',
   name: t('Info'),
-  status: 'info',
-  priority: 2
+  priority: 2,
+  status: 'info'
 };
 
 export const NOT_READY: Status = {
   className: 'icon-idle',
   color: PFColors.Info,
   icon: MinusCircleIcon,
+  id: 'Not Ready',
   name: t('Not Ready'),
-  status: 'custom',
-  priority: 2
+  priority: 2,
+  status: 'custom'
 };
 
 export const HEALTHY: Status = {
   className: 'icon-healthy',
   color: PFColors.Success,
   icon: CheckCircleIcon,
-  status: 'success',
+  id: 'Healthy',
   name: t('Healthy'),
-  priority: 1
+  priority: 1,
+  status: 'success'
 };
 
 export const NA: Status = {
   className: 'icon-na',
   color: PFColors.Color200,
-  name: t('No health information'),
   icon: UnknownIcon,
-  status: 'custom',
-  priority: 0
+  id: 'No health information',
+  name: t('No health information'),
+  priority: 0,
+  status: 'custom'
 };
 
 interface Thresholds {

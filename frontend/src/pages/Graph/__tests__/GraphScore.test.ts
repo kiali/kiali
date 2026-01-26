@@ -31,6 +31,7 @@ describe('scoreNodes', () => {
           items: []
         },
         getStatus: () => ({
+          id: 'Degraded',
           name: 'any',
           color: 'any',
           priority: 1,

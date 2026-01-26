@@ -24,6 +24,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                         "className": "icon-degraded",
                         "color": "var(--pf-t--global--icon--color--status--warning--default)",
                         "icon": [Function],
+                        "id": "Degraded",
                         "name": "Degraded",
                         "priority": 3,
                         "status": "warning",
@@ -35,6 +36,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     "className": "icon-degraded",
                     "color": "var(--pf-t--global--icon--color--status--warning--default)",
                     "icon": [Function],
+                    "id": "Degraded",
                     "name": "Degraded",
                     "priority": 3,
                     "status": "warning",
@@ -49,6 +51,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
+                        "id": "No health information",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -61,6 +64,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
+                        "id": "No health information",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -73,6 +77,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     "className": "icon-na",
                     "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
+                    "id": "No health information",
                     "name": "No health information",
                     "priority": 0,
                     "status": "custom",
@@ -86,6 +91,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   "className": "icon-na",
                   "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
+                  "id": "No health information",
                   "name": "No health information",
                   "priority": 0,
                   "status": "custom",
@@ -109,7 +115,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
 >
   <span>
     <Icon
-      className="icon-degraded kiali_f1wuzvd3"
+      className="icon-degraded kiali_f1cbc381"
       status="warning"
     >
       <ExclamationTriangleIcon />
@@ -142,6 +148,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-healthy",
                         "color": "var(--pf-t--global--icon--color--status--success--default)",
                         "icon": [Function],
+                        "id": "Healthy",
                         "name": "Healthy",
                         "priority": 1,
                         "status": "success",
@@ -153,6 +160,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-healthy",
                         "color": "var(--pf-t--global--icon--color--status--success--default)",
                         "icon": [Function],
+                        "id": "Healthy",
                         "name": "Healthy",
                         "priority": 1,
                         "status": "success",
@@ -164,6 +172,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "className": "icon-healthy",
                     "color": "var(--pf-t--global--icon--color--status--success--default)",
                     "icon": [Function],
+                    "id": "Healthy",
                     "name": "Healthy",
                     "priority": 1,
                     "status": "success",
@@ -178,6 +187,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
+                        "id": "No health information",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -190,6 +200,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
+                        "id": "No health information",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -202,6 +213,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "className": "icon-na",
                     "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
+                    "id": "No health information",
                     "name": "No health information",
                     "priority": 0,
                     "status": "custom",
@@ -215,6 +227,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "className": "icon-na",
                   "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
+                  "id": "No health information",
                   "name": "No health information",
                   "priority": 0,
                   "status": "custom",
@@ -238,7 +251,7 @@ exports[`HealthIndicator renders healthy 1`] = `
 >
   <span>
     <Icon
-      className="icon-healthy kiali_f6kk0cu"
+      className="icon-healthy kiali_f1wrxx94"
       status="success"
     >
       <CheckCircleIcon />

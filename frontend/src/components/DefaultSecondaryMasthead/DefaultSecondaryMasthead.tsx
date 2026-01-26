@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
-const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
+const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -18,7 +18,6 @@ type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
-  showClusterSelector?: boolean;
 };
 
 const containerStyle = kialiStyle({
