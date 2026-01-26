@@ -758,11 +758,10 @@ type Validations struct {
 
 // AiStoreConfig defines configuration for the AI store subsystem
 type AiStoreConfig struct {
-	Enabled           bool   `yaml:"enabled,omitempty" json:"enabled,omitempty"`                      // Default:  true
-	InactivityTimeout string `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "60m"
-	MaxCacheMemoryMB  int    `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
-	ReduceWithAI      bool   `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`          // Default: false
-	ReduceThreshold   int    `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`     // Default: 15 messages
+	Enabled          bool `yaml:"enabled,omitempty" json:"enabled,omitempty"`                      // Default:  true
+	MaxCacheMemoryMB int  `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
+	ReduceWithAI     bool `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`          // Default: false
+	ReduceThreshold  int  `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`     // Default: 15 messages
 }
 
 type AIModel struct {
@@ -955,11 +954,10 @@ func NewConfig() (c *Config) {
 			DefaultProvider: "",
 			Providers:       []ProviderConfig{},
 			StoreConfig: AiStoreConfig{
-				Enabled:           true,
-				InactivityTimeout: "60m",
-				MaxCacheMemoryMB:  1024,
-				ReduceWithAI:      false,
-				ReduceThreshold:   15,
+				Enabled:          true,
+				MaxCacheMemoryMB: 1024,
+				ReduceWithAI:     false,
+				ReduceThreshold:  15,
 			},
 		},
 		Clustering: Clustering{

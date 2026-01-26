@@ -89,7 +89,6 @@ Store in AI is required to keep context retention (Enabled by default). See link
 chat_ai:
   store_config:
     enabled: true
-    inactivity_timeout: "60m"
     max_cache_memory_mb: 1024
     reduce_with_ai: false
     reduce_threshold: 15
