@@ -103,7 +103,6 @@
     "@patternfly/react-icons": "^6.4.0",
     "@patternfly/react-table": "^6.4.0",
     "@patternfly/react-topology": "^6.4.0",
-    "ajv": "^8.17.1",
     "axios": "^1.12.2",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
