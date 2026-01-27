@@ -1,5 +1,15 @@
 import React from 'react';
-import { Brand, Bullseye, DropdownGroup, DropdownItem, DropdownList, FormSelect, FormSelectOption, FormSelectOptionGroup, Tooltip } from '@patternfly/react-core';
+import {
+  Brand,
+  Bullseye,
+  DropdownGroup,
+  DropdownItem,
+  DropdownList,
+  FormSelect,
+  FormSelectOption,
+  FormSelectOptionGroup,
+  Tooltip
+} from '@patternfly/react-core';
 import {
   ChatbotDisplayMode,
   ChatbotHeader,
@@ -18,20 +28,22 @@ import { ModelAI, ProviderAI } from 'types/Chatbot';
 
 type ChatBotHeaderProps = {
   displayMode: ChatbotDisplayMode;
+  historyRef: React.RefObject<HTMLButtonElement>;
   isDrawerOpen: boolean;
-  onToggleDrawer: () => void;
+  models: ModelAI[];
+  onCloseChat: () => void;
   onSelectDisplayMode: (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined
   ) => void;
-  onCloseChat: () => void;
-  historyRef: React.RefObject<HTMLButtonElement>;
-  models: ModelAI[];
-  providers: ProviderAI[];
-  selectedProvider: ProviderAI;
-  selectedModel: ModelAI;
   onSelectModel: (model: ModelAI) => void;
   onSelectProvider: (provider: ProviderAI) => void;
+  onToggleDrawer: () => void;
+  providers: ProviderAI[];
+  selectedMockConversation?: string;
+  selectedModel: ModelAI;
+  selectedProvider: ProviderAI;
+  setSelectedMockConversation?: (conversation: string) => void;
 };
 
 export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
@@ -62,17 +74,23 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
     </>
   );
 
-  const onSelectProviderModel = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+  const onSelectProviderModel = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     const [providerName, modelName] = value.split(':');
     onSelectProvider(providers.filter(provider => provider.name === providerName)[0]);
     onSelectModel(models.filter(model => model.name === modelName)[0]);
   };
 
-  const generateContentTooltip = (provider: ProviderAI, model: ModelAI) => {
-    return <div>
-      <div>Provider: {provider.name} ({provider.description})</div>
-      <div>Model: {model.name} ({model.description})</div>
-    </div>;
+  const generateContentTooltip = (provider: ProviderAI, model: ModelAI): React.ReactElement => {
+    return (
+      <div>
+        <div>
+          Provider: {provider.name} ({provider.description})
+        </div>
+        <div>
+          Model: {model.name} ({model.description})
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -82,19 +100,17 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
         <ChatbotHeaderTitle displayMode={displayMode} showOnFullScreen={horizontalLogo} showOnDefault={iconLogo} />
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
-      <Tooltip content={generateContentTooltip(selectedProvider, selectedModel)}>
-        <FormSelect value={`${selectedProvider.name}:${selectedModel.name}`} onChange={onSelectProviderModel}>
-          {providers.map(provider => (
-            <FormSelectOptionGroup key={provider.name} label={`Provider: ${provider.name}`}>
-              {provider.models.map(model => (
-                
-                <FormSelectOption key={model.name} value={`${provider.name}:${model.name}`} label={model.name}/>
-                
-              ))}
-            </FormSelectOptionGroup>
-          ))}
-        </FormSelect>  
-        </Tooltip>    
+        <Tooltip content={generateContentTooltip(selectedProvider, selectedModel)}>
+          <FormSelect value={`${selectedProvider.name}:${selectedModel.name}`} onChange={onSelectProviderModel}>
+            {providers.map(provider => (
+              <FormSelectOptionGroup key={provider.name} label={`Provider: ${provider.name}`}>
+                {provider.models.map(model => (
+                  <FormSelectOption key={model.name} value={`${provider.name}:${model.name}`} label={model.name} />
+                ))}
+              </FormSelectOptionGroup>
+            ))}
+          </FormSelect>
+        </Tooltip>
         <ChatbotHeaderOptionsDropdown onSelect={onSelectDisplayMode}>
           <DropdownGroup label="Display Mode">
             <DropdownList>

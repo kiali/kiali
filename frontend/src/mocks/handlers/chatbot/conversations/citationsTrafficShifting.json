@@ -1,0 +1,10 @@
+{
+  "answer": "This page doesn't have any information about traffic shifting. It provides a high-level overview of namespaces.\n\nTraffic shifting is a technique used to gradually migrate traffic from one version of a microservice to another. This is often used for canary deployments, where a new version of a service is rolled out to a small percentage of users before being rolled out to everyone. This allows you to test the new version in production with minimal impact if there are any issues.\n\nFor more information, see the Istio documentation on [Traffic Shifting](https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/).",
+  "citations": [
+    {
+      "link": "https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/",
+      "title": "Istio Traffic Shifting (Canary Rollouts)",
+      "body": "Task guide for gradually migrating traffic from an old version of a microservice to a new one (Canary Deployment) using VirtualServices and percentage-based weights."
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "answer": "All namespaces are healthy, except for the `default` namespace, which has an \"Unknown\" status. This is because there are no applications, workloads, or services in the `default` namespace.\n\nHere is the health status of each namespace:\n- **bookinfo**: Healthy\n- **default**: Unknown\n- **hostpath-provisioner**: Healthy\n- **istio-cni**: Healthy\n- **istio-system**: Healthy\n- **ossmconsole**: Healthy\n- **tempo**: Healthy\n\nDo you want to take a closer look at any of these namespaces?"
+}

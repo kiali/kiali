@@ -1,0 +1,10 @@
+{
+  "actions": [
+    {
+      "title": "View workload Details",
+      "kind": "navigation",
+      "payload": "/namespaces/bookinfo/workloads/reviews-v2?tab=in_metrics"
+    }
+  ],
+  "answer": "I can show you the inbound and outbound metrics for the `reviews-v2` workload.\n\n[View metrics for reviews-v2](/namespaces/bookinfo/workloads/reviews-v2?tab=in_metrics)"
+}

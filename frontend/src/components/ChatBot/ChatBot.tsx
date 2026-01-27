@@ -15,6 +15,7 @@ import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { useChatbot } from './useChatbot';
 import { ChatBotFooter } from './ChatBotFooter';
+import { ChatBotMock } from './ChatBotMock';
 import { ContextRequest, ExtendedMessage, ProviderAI } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
@@ -23,10 +24,10 @@ import * as API from 'services/Api';
 import { saveConversation, loadConversations, loadConversation } from 'utils/ConversationStorage';
 
 type ReduxStateProps = {
-  username: string;
   context: ContextRequest;
-  providers: ProviderAI[];
   defaultProvider: string;
+  providers: ProviderAI[];
+  username: string;
 };
 
 type ChatBotProps = ReduxStateProps;
@@ -36,12 +37,12 @@ conversationList[CHAT_HISTORY_HEADER] = [];
 
 export const conversationStore: Map<string, ExtendedMessage[]> = new Map();
 
-const resetConversationState = () => {
+const resetConversationState = (): void => {
   conversationList[CHAT_HISTORY_HEADER] = [];
   conversationStore.clear();
 };
 
-const findMatchingItems = (targetValue: string) => {
+const findMatchingItems = (targetValue: string): { [key: string]: Conversation[] } => {
   let filteredConversations = Object.entries(conversationList).reduce((acc: any, [key, items]) => {
     const filteredItems = items.filter(item => {
       const target = targetValue.toLowerCase();
@@ -67,7 +68,9 @@ const findMatchingItems = (targetValue: string) => {
   }, {});
   // append message if no items are found
   if (Object.keys(filteredConversations).length === 0) {
-    filteredConversations = [{ id: '13', noIcon: true, text: 'No results found' }];
+    filteredConversations = {
+      [CHAT_HISTORY_HEADER]: [{ id: '13', noIcon: true, text: 'No results found' }]
+    };
   }
   return filteredConversations;
 };
@@ -89,13 +92,11 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
     isLoading,
     setAlertMessage,
     setMessages
-  } = useChatbot(
-    props.username, 
-    defaultProvider,
-    defaultModel);
+  } = useChatbot(props.username, defaultProvider, defaultModel);
 
   const theme = useKialiTheme();
   const isDarkTheme = theme === Theme.DARK;
+
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<ChatbotDisplayMode>(ChatbotDisplayMode.default);
@@ -104,7 +105,18 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   );
   const [backendConversationIds, setBackendConversationIds] = useState<string[]>([]);
   const historyRef = useRef<HTMLButtonElement>(null);
+  // Mock API
+  const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
+  const [selectedMockConversation, setSelectedMockConversation] = useState<string>('Select one Mock Conversation');
 
+  const handleSelectMockConversation = (conversation: string): void => {
+    if (conversation === 'Select one Mock Conversation') {
+      return;
+    }
+    setSelectedMockConversation(conversation);
+    handleSend(conversation, props.context);
+  };
+  // End Mock API
   // Filter conversations to only show those matching backend IDs
   const updateConversationList = useCallback(() => {
     const chatHistory: Conversation[] = [];
@@ -123,7 +135,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   }, [backendConversationIds]);
 
   // Load conversations from backend and storage
-  const loadConversationsFromBackend = useCallback(async () => {
+  const loadConversationsFromBackend = useCallback(async (): Promise<void> => {
     try {
       const response = await API.getChatConversations();
       if (response.data) {
@@ -175,7 +187,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
     }
   }, []);
 
-  const setCurrentConversation = (newConversationId: string | undefined, newMessages: ExtendedMessage[]) => {
+  const setCurrentConversation = (newConversationId: string | undefined, newMessages: ExtendedMessage[]): void => {
     if (messages.length > 0 && conversationId) {
       conversationStore.set(conversationId, messages);
       // Save conversation to storage
@@ -193,7 +205,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
     }
   };
 
-  const onHandleSend = (msg: string | number) => {
+  const onHandleSend = (msg: string | number): void => {
     handleSend(msg, props.context);
   };
 
@@ -265,7 +277,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   const onSelectDisplayMode = (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined
-  ) => {
+  ): void => {
     setDisplayMode(value as ChatbotDisplayMode);
   };
 
@@ -335,7 +347,15 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 selectedProvider={selectedProvider}
                 onSelectProvider={setSelectedProvider}
                 onSelectModel={setSelectedModel}
+                selectedMockConversation={selectedMockConversation}
+                setSelectedMockConversation={handleSelectMockConversation}
               />
+              {isMockApi && (
+                <ChatBotMock
+                  handleSelectMockConversation={handleSelectMockConversation}
+                  selectedMockConversation={selectedMockConversation}
+                />
+              )}
               <ChatBotContent
                 username={props.username}
                 displayMode={displayMode}

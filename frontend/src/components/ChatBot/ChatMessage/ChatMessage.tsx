@@ -5,6 +5,7 @@ import { Action, ExtendedMessage, ReferencedDocument } from 'types/Chatbot';
 import { router } from 'app/History';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { FileAttachment } from './FileAttachment';
+import { ChatMessageMarkdown } from './ChatMessageMarkdown';
 
 type ChatMessageProps = {
   actions: Action[];
@@ -72,9 +73,36 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     const NavigationAction = actions && actions.filter(action => action.kind === 'navigation').length > 0;
     const FileAction = actions && actions.filter(action => action.kind === 'file').length > 0;
 
+    const safeContent =
+      typeof message.content === 'string' ? message.content : message.content ? String(message.content) : '';
+    const markdownContent = safeContent ? (
+      <ChatMessageMarkdown
+        content={safeContent}
+        codeBlockProps={message.codeBlockProps}
+        openLinkInNewTab={messageProps.openLinkInNewTab}
+      />
+    ) : null;
+    const mergedExtraContent =
+      markdownContent || message.extraContent
+        ? {
+            ...message.extraContent,
+            beforeMainContent: (
+              <>
+                {message.extraContent?.beforeMainContent}
+                {markdownContent}
+              </>
+            )
+          }
+        : message.extraContent;
+    const safeMessage: typeof message = {
+      ...message,
+      content: markdownContent ? '' : safeContent,
+      extraContent: mergedExtraContent
+    };
+
     const messageContent = (
       <>
-        <Message {...message} {...messageProps} />
+        <Message {...safeMessage} {...messageProps} />
         {actions && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem 5rem' }}>
             {NavigationAction && (

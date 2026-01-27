@@ -1,5 +1,6 @@
 // Combine all mock handlers
 import { authHandlers } from './handlers/auth';
+import { chatbotHandlers } from './handlers/chatbot/chatbot';
 import { configHandlers } from './handlers/config';
 import { healthHandlers } from './handlers/health';
 import { istioHandlers } from './handlers/istio';
@@ -12,6 +13,7 @@ import { workloadHandlers } from './handlers/workloads';
 
 export const handlers = [
   ...authHandlers,
+  ...chatbotHandlers,
   ...configHandlers,
   ...healthHandlers,
   ...istioHandlers,

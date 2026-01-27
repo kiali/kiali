@@ -3,6 +3,7 @@
 
 export type MockScenario =
   | 'healthy' // All services healthy (default)
+  | 'ai' // Chat AI enabled
   | 'unhealthy' // Some services with errors
   | 'multicluster' // Multiple clusters
   | 'ambient'; // Ambient mesh enabled
@@ -10,6 +11,9 @@ export type MockScenario =
 export interface ScenarioConfig {
   // Feature flags
   ambientEnabled: boolean;
+
+  // Chat AI configuration
+  chatAI?: ChatbotAI;
 
   // Cluster configuration
   clusters: ClusterConfig[];
@@ -40,9 +44,74 @@ export interface ClusterConfig {
   namespaces: string[];
 }
 
+export interface ChatbotAI {
+  defaultProvider?: string;
+  enabled?: boolean;
+  providers?: {
+    defaultModel?: string;
+    description?: string;
+    models?: {
+      description?: string;
+      model?: string;
+      name: string;
+    }[];
+    name: string;
+  }[];
+}
 // Scenario definitions
 const scenarios: Record<MockScenario, ScenarioConfig> = {
   healthy: {
+    clusters: [
+      {
+        name: 'cluster-default',
+        isHome: true,
+        accessible: true,
+        namespaces: ['bookinfo', 'istio-system', 'default', 'travel-agency', 'travel-portal', 'travel-control']
+      }
+    ],
+    healthyNamespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal', 'travel-control'],
+    degradedNamespaces: [],
+    degradedItems: [],
+    unhealthyNamespaces: [],
+    unhealthyItems: [],
+    errorRate: 0,
+    latencyMultiplier: 1,
+    ambientEnabled: false,
+    tracingEnabled: true,
+    mtlsEnabled: true,
+    validationErrors: 0,
+    validationWarnings: 0
+  },
+
+  ai: {
+    chatAI: {
+      enabled: true,
+      defaultProvider: 'openai',
+      providers: [
+        {
+          name: 'openai',
+          description: 'OpenAI API Provider',
+          defaultModel: 'gemini',
+          models: [
+            {
+              name: 'gemini',
+              description: 'Model provided by Google with OpenAI API Support',
+              model: 'gemini-2.5-pro'
+            },
+            {
+              name: 'gpt-5-nano-2025-08-07',
+              description: 'Model provided by OpenAI',
+              model: 'gpt-5-nano-2025-08-07'
+            },
+            {
+              name: 'gpt-failure-endpoint',
+              description: 'GPT-4o',
+              model: 'gpt-4o'
+            }
+          ]
+        }
+      ]
+    },
     clusters: [
       {
         name: 'cluster-default',

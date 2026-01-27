@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import axios from 'axios';
 import {
   AlertMessage,
@@ -75,12 +75,19 @@ type UseChatbotResult = {
 };
 
 export const useChatbot = (userName: string, provider: ProviderAI, model: ModelAI): UseChatbotResult => {
+  const isMountedRef = useRef(true);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<ModelAI>(model);
   const [selectedProvider, setSelectedProvider] = useState<ProviderAI>(provider);
   const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>(INITIAL_NOTICE);
   const [conversationId, setConversationId] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const addMessage = (newMessage: ExtendedMessage, addAfter?: ExtendedMessage): void => {
     setMessages((msgs: ExtendedMessage[]) => {
@@ -120,9 +127,14 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     addMessage(newBotMessage);
   };
   const botMessage = (response: ChatResponse | string): ExtendedMessage => {
+    const rawContent =
+      typeof response === 'object' ? (typeof response.answer === 'string' ? response.answer : '') : response;
+    const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
+    const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
+    const content = isMockApi ? safeContent : escapeHtml(safeContent);
     const message: ExtendedMessage = {
       role: 'bot',
-      content: typeof response === 'object' ? escapeHtml(response.answer) : escapeHtml(response),
+      content,
       name: botName,
       avatar: logo,
       timestamp: getTimestamp(),
@@ -179,43 +191,62 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
         const newBotMessage: any = botMessage(chatResponse);
         newBotMessage.referenced_documents = referenced_documents;
         if (chatResponse.actions && chatResponse.actions.length > 0) {
-          if (
-            localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true' &&
-            chatResponse.actions.filter(action => action.kind === 'navigation').length === 1
-          ) {
-            router.navigate(chatResponse.actions.filter(action => action.kind === 'navigation')[0].payload);
+          const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
+          const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
+
+          if (!newBotMessage.content?.trim() && navigationActions.length > 0) {
+            newBotMessage.content =
+              alwaysNavigate && navigationActions.length === 1
+                ? 'Ok, navigating to the link.'
+                : 'Here is the link provided for the UI view.';
+          }
+
+          if (alwaysNavigate && navigationActions.length === 1) {
+            router.navigate(navigationActions[0].payload);
           } else {
             newBotMessage.actions = chatResponse.actions;
           }
         }
-        addMessage(newBotMessage);
+        if (isMountedRef.current) {
+          addMessage(newBotMessage);
+        }
       } else {
         const errorMessage = resp.data?.error || `Bot returned status_code ${resp.status}`;
-        setAlertMessage({
-          title: 'Error',
-          message: errorMessage,
-          variant: 'danger'
-        });
+        if (isMountedRef.current) {
+          setAlertMessage({
+            title: 'Error',
+            message: errorMessage,
+            variant: 'danger'
+          });
+        }
       }
     } catch (e) {
       if (isTimeoutError(e)) {
-        addMessage(timeoutMessage());
+        if (isMountedRef.current) {
+          addMessage(timeoutMessage());
+        }
       } else if (isTooManyRequestsError(e)) {
-        await show429Message();
+        if (isMountedRef.current) {
+          await show429Message();
+        }
       } else {
         const errorMessage = axios.isAxiosError(e)
           ? e.response?.data?.error || e.message
           : e instanceof Error
           ? e.message
           : String(e);
-        setAlertMessage({
-          title: 'Error',
-          message: `An unexpected error occurred: ${errorMessage}`,
-          variant: 'danger'
-        });
+        if (isMountedRef.current) {
+          setAlertMessage({
+            title: 'Error',
+            message: `An unexpected error occurred: ${errorMessage}`,
+            variant: 'danger'
+          });
+        }
       }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
