@@ -578,6 +578,16 @@ func GetGraphCacheEvictionsTotalMetric() prometheus.Counter {
 	return Metrics.GraphCacheEvictionsTotal
 }
 
+// GetHealthCacheHitsTotalMetric returns the health cache hits counter vec.
+func GetHealthCacheHitsTotalMetric() *prometheus.CounterVec {
+	return Metrics.HealthCacheHitsTotal
+}
+
+// GetHealthCacheMissesTotalMetric returns the health cache misses counter vec.
+func GetHealthCacheMissesTotalMetric() *prometheus.CounterVec {
+	return Metrics.HealthCacheMissesTotal
+}
+
 // GetTracingProcessingTimePrometheusTimer returns a timer that can be used to store
 // a value for the Tracing query processing time metric. The timer is ticking immediately
 // when this function returns.

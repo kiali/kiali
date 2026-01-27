@@ -142,3 +142,12 @@ Feature: Kiali Apps List page
     When user sorts the list by column "Cluster" in "descending" order
     Then the list is sorted by column "Cluster" in "descending" order
 
+  @bookinfo-app
+  @core-1
+  @skip-ossmc
+  @health-cache-metrics
+  Scenario: Health cache metrics increase when visiting apps list page
+    Given health cache is enabled
+    And health cache metrics are recorded
+    When user visits the apps list page for "bookinfo" namespace
+    Then health cache metrics should show at least 1 hit
