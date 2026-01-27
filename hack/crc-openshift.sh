@@ -357,6 +357,62 @@ wait_for_cluster_operators() {
   done
 }
 
+install_hydra_openshift() {
+  infomsg "Installing Ory Hydra for OpenID Connect support on OpenShift..."
+
+  # Find the Hydra install script relative to this script
+  local hydra_install_script="${SCRIPT_ROOT}/ory-hydra/scripts/install-hydra.sh"
+  if [ ! -f "${hydra_install_script}" ]; then
+    infomsg "ERROR: Hydra install script not found at: ${hydra_install_script}"
+    exit 1
+  fi
+
+  # Install Hydra with OpenShift configuration
+  # Routes will be created automatically, TLS handled at Route level
+  bash "${hydra_install_script}" \
+    --cluster-type openshift \
+    --client-exe "${CRC_OC}" \
+    --hydra-version "${HYDRA_VERSION}"
+
+  if [ "$?" != "0" ]; then
+    infomsg "ERROR: Failed to install Ory Hydra"
+    exit 1
+  fi
+
+  # Wait for all Hydra pods to be ready (exclude Completed jobs from count)
+  infomsg "Waiting for Hydra pods to be ready..."
+  for i in {1..60}; do
+    local ready_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "1/1.*Running" || echo "0")
+    local total_running_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "Running" || echo "0")
+    if [ "${ready_pods}" -ge 3 ] && [ "${ready_pods}" -eq "${total_running_pods}" ]; then
+      infomsg "All Hydra pods are ready (${ready_pods}/${total_running_pods})"
+      break
+    fi
+    infomsg "Waiting for Hydra pods... (${ready_pods}/${total_running_pods} ready, attempt $i/60)"
+    sleep 5
+  done
+
+  # Verify Routes are accessible
+  infomsg "Verifying Hydra Routes are accessible..."
+  local hydra_public_route=$(${CRC_OC} get route hydra-public -n ory -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+  if [ -n "${hydra_public_route}" ]; then
+    for i in {1..30}; do
+      if curl -k -s "https://${hydra_public_route}/.well-known/openid-configuration" > /dev/null 2>&1; then
+        infomsg "Hydra OIDC endpoint is accessible at: https://${hydra_public_route}"
+        break
+      fi
+      infomsg "Waiting for Hydra OIDC endpoint... (attempt $i/30)"
+      sleep 2
+    done
+  else
+    infomsg "WARNING: Could not determine Hydra public route"
+  fi
+
+  infomsg "Ory Hydra installation complete!"
+  infomsg "Routes:"
+  ${CRC_OC} get routes -n ory
+}
+
 change_crc_domain_name() {
   check_crc_running
   if [ "${_CRC_RUNNING}" != "true" ]; then
@@ -532,6 +588,12 @@ DEFAULT_ENABLE_CLUSTER_MONITORING="false"
 # Enables network mode "user" which uses the local host networking
 DEFAULT_ENABLE_USER_NETWORK_MODE="false"
 
+# Enables Ory Hydra OIDC provider installation (for OpenID Connect testing)
+DEFAULT_HYDRA_ENABLED="false"
+
+# The version of Hydra to install
+DEFAULT_HYDRA_VERSION="v2.2.0"
+
 # process command line args to override environment
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -629,6 +691,14 @@ while [[ $# -gt 0 ]]; do
       ENABLE_USER_NETWORK_MODE="$2"
       shift;shift
       ;;
+    -he|--hydra-enabled)
+      HYDRA_ENABLED="$2"
+      shift;shift
+      ;;
+    -hv|--hydra-version)
+      HYDRA_VERSION="$2"
+      shift;shift
+      ;;
     -p|--pull-secret-file)
       PULL_SECRET_FILE="$2"
       shift;shift
@@ -685,6 +755,14 @@ Valid options:
       If true, the network mode will be changed to "user" and will enable CRC to use the local host's networking.
       Default: ${DEFAULT_ENABLE_USER_NETWORK_MODE}
       Used only for the 'start' command.
+  -he|--hydra-enabled (true|false)
+      If true, Ory Hydra will be installed for OpenID Connect authentication testing.
+      Default: ${DEFAULT_HYDRA_ENABLED}
+      Used only for the 'start' command.
+  -hv|--hydra-version <version>
+      The version of Ory Hydra to install (e.g., v2.2.0).
+      Default: ${DEFAULT_HYDRA_VERSION}
+      Used only for the 'start' command when --hydra-enabled is true.
   -h|--help : this message
   -p|--pull-secret-file <filename>
       Specifies the file containing your Image pull secret.
@@ -755,6 +833,8 @@ CRC_OC_BIN="${CRC_ROOT_DIR}/bin/oc/oc"
 DOWNLOAD_BUNDLE="${DOWNLOAD_BUNDLE:-${DEFAULT_DOWNLOAD_BUNDLE}}"
 ENABLE_CLUSTER_MONITORING="${ENABLE_CLUSTER_MONITORING:-${DEFAULT_ENABLE_CLUSTER_MONITORING}}"
 ENABLE_USER_NETWORK_MODE="${ENABLE_USER_NETWORK_MODE:-${DEFAULT_ENABLE_USER_NETWORK_MODE}}"
+HYDRA_ENABLED="${HYDRA_ENABLED:-${DEFAULT_HYDRA_ENABLED}}"
+HYDRA_VERSION="${HYDRA_VERSION:-${DEFAULT_HYDRA_VERSION}}"
 
 # VM configuration
 CRC_CPUS=${CRC_CPUS:-${DEFAULT_CRC_CPUS}}
@@ -813,6 +893,8 @@ debug "ENVIRONMENT:
   CRC_VIRTUAL_DISK_SIZE=$CRC_VIRTUAL_DISK_SIZE
   ENABLE_CLUSTER_MONITORING=$ENABLE_CLUSTER_MONITORING
   ENABLE_USER_NETWORK_MODE=$ENABLE_USER_NETWORK_MODE
+  HYDRA_ENABLED=$HYDRA_ENABLED
+  HYDRA_VERSION=$HYDRA_VERSION
   OPENSHIFT_BIN_PATH=$OPENSHIFT_BIN_PATH
   "
 
@@ -972,6 +1054,11 @@ if [ "$_CMD" = "start" ]; then
     ${CRC_OC} patch config.imageregistry.operator.openshift.io/cluster --patch '{"spec":{"defaultRoute":true}}' --type=merge
   else
     debug "The image registry operator has exposed the internal image registry"
+  fi
+
+  # Install Ory Hydra if enabled (for OpenID Connect testing)
+  if [ "${HYDRA_ENABLED}" == "true" ]; then
+    install_hydra_openshift
   fi
 
   # show the status message
