@@ -346,13 +346,6 @@ hydra:
           enabled: true
           allowed_origins:
             - "*"
-      tls:
-        enabled: true
-        cert:
-          path: /etc/hydra/certs/cert.pem
-        key:
-          path: /etc/hydra/certs/key.pem
-      public:
         tls:
           enabled: true
           cert:
