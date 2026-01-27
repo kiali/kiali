@@ -253,11 +253,23 @@ func (c *HealthCalculator) aggregateMatchingCodes(codes map[string]float64, code
 }
 
 // applyThresholds determines the health status based on error ratio and thresholds
+// This matches frontend behavior where:
+// - Only check thresholds if there are errors (errorRatio > 0)
+// - When degraded=0 (not set), any error > 0% triggers degraded
+// - When failure=0 (not set), skip failure check
 func (c *HealthCalculator) applyThresholds(errorRatio, degraded, failure float64) models.HealthStatus {
-	if errorRatio >= failure && failure > 0 {
+	if errorRatio <= 0 {
+		// No errors, healthy
+		return models.HealthStatusHealthy
+	}
+
+	// There are errors, check thresholds
+	if failure > 0 && errorRatio >= failure {
 		return models.HealthStatusFailure
 	}
-	if errorRatio >= degraded && degraded > 0 {
+	if errorRatio >= degraded {
+		// When degraded=0, any errorRatio > 0 will satisfy this (since we already
+		// checked errorRatio > 0 above)
 		return models.HealthStatusDegraded
 	}
 	return models.HealthStatusHealthy
