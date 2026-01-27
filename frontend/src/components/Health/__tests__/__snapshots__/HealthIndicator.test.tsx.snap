@@ -12,7 +12,9 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
       <HealthDetails
         health={
           AppHealth {
-            "backendStatus": undefined,
+            "backendStatus": Object {
+              "status": "Degraded",
+            },
             "health": Object {
               "items": Array [
                 Object {
@@ -128,7 +130,9 @@ exports[`HealthIndicator renders healthy 1`] = `
       <HealthDetails
         health={
           AppHealth {
-            "backendStatus": undefined,
+            "backendStatus": Object {
+              "status": "Healthy",
+            },
             "health": Object {
               "items": Array [
                 Object {
