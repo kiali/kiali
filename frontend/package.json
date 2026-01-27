@@ -90,7 +90,7 @@
     "i18next": "^23.10.1",
     "i18next-http-backend": "^2.5.0",
     "js-yaml": "^4.1.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "micro-memoize": "4.0.9",
     "moment": "^2.29.4",
     "react": "^17.0.1",
