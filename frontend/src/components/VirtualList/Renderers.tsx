@@ -25,6 +25,7 @@ import { ValidationSummaryLink } from '../Link/ValidationSummaryLink';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
+import { t } from 'utils/I18nUtils';
 import {
   getGVKTypeString,
   getIstioObjectGVK,
@@ -48,6 +49,22 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
+
+// Store unique revisions count for namespaces to determine if revision column should show values
+// Initialize to -1 to indicate "not calculated yet" vs 0 which means "no revisions"
+let uniqueRevisionsCount = -1;
+
+export const setUniqueRevisionsCount = (count: number): void => {
+  uniqueRevisionsCount = count;
+};
+
+export const getUniqueRevisionsCount = (): number => {
+  return uniqueRevisionsCount;
+};
+
+export const resetUniqueRevisionsCount = (): void => {
+  uniqueRevisionsCount = -1;
+};
 
 const rendererInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',
@@ -509,6 +526,90 @@ export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       ) : (
         <NotPartOfMeshBadge />
       )}
+    </Td>
+  );
+};
+
+export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
+  let revision: string | undefined;
+  if (ns.labels) {
+    if (ns.labels[serverConfig.istioLabels.injectionLabelRev]) {
+      revision = ns.labels[serverConfig.istioLabels.injectionLabelRev];
+    } else if (ns.labels['istio.io/rev']) {
+      revision = ns.labels['istio.io/rev'];
+    }
+  }
+  if (!revision || revision === '') {
+    revision = ns.revision;
+  }
+  return revision;
+};
+
+export const isDataPlaneNamespace = (ns: NamespaceInfo): boolean => {
+  const hasInjectionEnabled = !!(ns.labels && ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled');
+  const hasRevisionLabel = !!(
+    ns.labels &&
+    ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
+    ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''
+  );
+  const isDataPlane = !ns.isControlPlane && (ns.isAmbient || hasInjectionEnabled || hasRevisionLabel);
+  return isDataPlane && !ns.isAmbient;
+};
+
+export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
+  if (uniqueRevisionsCount === -1) {
+    return (
+      <Td
+        role="gridcell"
+        dataLabel="Revision"
+        key={`VirtuaItem_Revision_${ns.name}`}
+        style={{ verticalAlign: 'middle' }}
+      >
+        {' '}
+      </Td>
+    );
+  }
+
+  const revision = getNamespaceRevision(ns);
+  const isDataPlane = isDataPlaneNamespace(ns);
+
+  if (!isDataPlane) {
+    return (
+      <Td
+        role="gridcell"
+        dataLabel="Revision"
+        key={`VirtuaItem_Revision_${ns.name}`}
+        style={{ verticalAlign: 'middle' }}
+      >
+        <PFLabel color="grey" isCompact>
+          {t('Not applicable')}
+        </PFLabel>
+      </Td>
+    );
+  }
+
+  if (!revision || revision === '') {
+    return (
+      <Td
+        role="gridcell"
+        dataLabel="Revision"
+        key={`VirtuaItem_Revision_${ns.name}`}
+        style={{ verticalAlign: 'middle' }}
+      >
+        <PFLabel color="grey" isCompact>
+          {t('Not applicable')}
+        </PFLabel>
+      </Td>
+    );
+  }
+
+  return (
+    <Td role="gridcell" dataLabel="Revision" key={`VirtuaItem_Revision_${ns.name}`} style={{ verticalAlign: 'middle' }}>
+      <Tooltip content={<span>{t('Istio revision {{version}}', { version: revision })}</span>}>
+        <PFLabel color="orange" isCompact data-test="data-plane-revision-badge">
+          {revision}
+        </PFLabel>
+      </Tooltip>
     </Td>
   );
 };

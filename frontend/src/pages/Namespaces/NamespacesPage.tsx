@@ -19,6 +19,13 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import {
+  setUniqueRevisionsCount,
+  resetUniqueRevisionsCount,
+  getUniqueRevisionsCount,
+  getNamespaceRevision,
+  isDataPlaneNamespace
+} from '../../components/VirtualList/Renderers';
+import {
   isCurrentSortAscending,
   currentSortField,
   runFilters,
@@ -667,12 +674,28 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   render(): React.ReactNode {
     const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
 
+    resetUniqueRevisionsCount();
+
+    const uniqueRevisions = new Set<string>();
+    filteredNamespaces.forEach(ns => {
+      if (isDataPlaneNamespace(ns)) {
+        const revision = getNamespaceRevision(ns);
+        const revisionValue = revision && revision !== '' ? revision : 'default';
+        uniqueRevisions.add(revisionValue);
+      }
+    });
+
+    setUniqueRevisionsCount(uniqueRevisions.size);
+
     const namespaceActions = filteredNamespaces.map((ns, i) => {
       const actions = this.getNamespaceActions(ns);
       return <NamespaceActions key={`namespaceAction_${i}`} namespace={ns.name} actions={actions} />;
     });
 
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
+    if (getUniqueRevisionsCount() < 1) {
+      hiddenColumns.push('revision');
+    }
 
     return (
       <>
