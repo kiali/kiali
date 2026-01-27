@@ -830,6 +830,34 @@ func TestCalculateEdgeStatusWithTolerances(t *testing.T) {
 			},
 			expectedStatus: models.HealthStatusFailure, // 5xx at 12% > 10% failure threshold
 		},
+		{
+			// This tests the default 5XX tolerance which has Failure=10, Degraded=0 (not set)
+			// When degraded=0, any error > 0% should be degraded (matching frontend behavior)
+			name: "Degraded threshold 0 - any error triggers degraded",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 96}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 4}}, // 4% error, below failure=10
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 0, Failure: 10}, // Degraded=0 means any error
+			},
+			expectedStatus: models.HealthStatusDegraded, // 4% error with degraded=0 should be degraded
+		},
+		{
+			// Verify that 0% error is still healthy even with degraded=0
+			name: "Degraded threshold 0 - no errors is healthy",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 100}},
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 0, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusHealthy, // 0% error is healthy
+		},
 	}
 
 	for _, tc := range testCases {

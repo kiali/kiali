@@ -531,10 +531,20 @@ func (a *HealthAppender) calculateEdgeStatusWithTolerances(
 			errorRatio := (errorCount / totalRequests) * 100
 
 			var status models.HealthStatus
-			if tol.Failure > 0 && errorRatio >= float64(tol.Failure) {
-				status = models.HealthStatusFailure
-			} else if tol.Degraded > 0 && errorRatio >= float64(tol.Degraded) {
-				status = models.HealthStatusDegraded
+			// Match frontend behavior:
+			// - Only enter status checks if there are any errors (errorRatio > 0)
+			// - When degraded=0 (not set), any error > 0% triggers degraded
+			// - When failure=0 (not set), skip failure check
+			if errorRatio > 0 {
+				if tol.Failure > 0 && errorRatio >= float64(tol.Failure) {
+					status = models.HealthStatusFailure
+				} else if errorRatio >= float64(tol.Degraded) {
+					// When degraded=0, any errorRatio > 0 will satisfy this (0 >= 0 is true,
+					// but we're inside the errorRatio > 0 block, so there are actual errors)
+					status = models.HealthStatusDegraded
+				} else {
+					status = models.HealthStatusHealthy
+				}
 			} else {
 				status = models.HealthStatusHealthy
 			}
