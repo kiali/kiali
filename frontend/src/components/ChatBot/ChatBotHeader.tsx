@@ -30,7 +30,6 @@ type ChatBotHeaderProps = {
   displayMode: ChatbotDisplayMode;
   historyRef: React.RefObject<HTMLButtonElement>;
   isDrawerOpen: boolean;
-  models: ModelAI[];
   onCloseChat: () => void;
   onSelectDisplayMode: (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -53,7 +52,6 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
   onSelectDisplayMode,
   onCloseChat,
   historyRef,
-  models,
   providers,
   selectedProvider,
   selectedModel,
@@ -76,8 +74,16 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
 
   const onSelectProviderModel = (_event: React.FormEvent<HTMLSelectElement>, value: string): void => {
     const [providerName, modelName] = value.split(':');
-    onSelectProvider(providers.filter(provider => provider.name === providerName)[0]);
-    onSelectModel(models.filter(model => model.name === modelName)[0]);
+    const provider = providers.find(candidate => candidate.name === providerName);
+    if (!provider) {
+      return;
+    }
+    const model = provider.models.find(candidate => candidate.name === modelName) ?? provider.models[0];
+    if (!model) {
+      return;
+    }
+    onSelectProvider(provider);
+    onSelectModel(model);
   };
 
   const generateContentTooltip = (provider: ProviderAI, model: ModelAI): React.ReactElement => {
@@ -93,6 +99,10 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
     );
   };
 
+  if (!selectedProvider || !selectedModel) {
+    return null;
+  }
+
   return (
     <ChatbotHeader>
       <ChatbotHeaderMain>
@@ -101,11 +111,19 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
         <Tooltip content={generateContentTooltip(selectedProvider, selectedModel)}>
-          <FormSelect value={`${selectedProvider.name}:${selectedModel.name}`} onChange={onSelectProviderModel}>
+          <FormSelect
+            id={`provider-model-select`}
+            value={`${selectedProvider.name}:${selectedModel.name}`}
+            onChange={onSelectProviderModel}
+          >
             {providers.map(provider => (
               <FormSelectOptionGroup key={provider.name} label={`Provider: ${provider.name}`}>
                 {provider.models.map(model => (
-                  <FormSelectOption key={model.name} value={`${provider.name}:${model.name}`} label={model.name} />
+                  <FormSelectOption
+                    key={model.name}
+                    value={`${provider.name}:${model.name}`}
+                    label={`${provider.name}:${model.name}`}
+                  />
                 ))}
               </FormSelectOptionGroup>
             ))}

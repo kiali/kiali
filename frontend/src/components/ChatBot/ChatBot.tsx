@@ -342,7 +342,6 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 onCloseChat={() => setChatbotVisible(!chatbotVisible)}
                 historyRef={historyRef}
                 providers={props.providers}
-                models={selectedProvider.models}
                 selectedModel={selectedModel}
                 selectedProvider={selectedProvider}
                 onSelectProvider={setSelectedProvider}
