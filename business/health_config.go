@@ -114,12 +114,17 @@ func compileCodePattern(pattern, defaultPattern string) *regexp.Regexp {
 
 // GetMatchingRate returns the Rate config that matches the given entity (namespace, name, kind).
 // Returns nil if no match is found (should not happen if defaults are configured correctly).
+// Rates are checked in order, so more specific rates should be defined before more general ones.
 func (m *HealthRateMatcher) GetMatchingRate(namespace, name, kind string) *config.Rate {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	for i, compiled := range m.cache {
-		if compiled.namespace.MatchString(namespace) &&
+	// Iterate in order (0 to len-1) to respect rate priority
+	// More specific rates should be defined first in the config
+	for i := 0; i < len(m.conf.HealthConfig.Rate); i++ {
+		compiled := m.cache[i]
+		if compiled != nil &&
+			compiled.namespace.MatchString(namespace) &&
 			compiled.name.MatchString(name) &&
 			compiled.kind.MatchString(kind) {
 			return &m.conf.HealthConfig.Rate[i]
