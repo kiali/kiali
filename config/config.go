@@ -1276,7 +1276,7 @@ func (conf *Config) ValidateAI() error {
 	}
 
 	defaultProviderFound := false
-	globalModelNames := make(map[string]struct{})
+
 	validProviderTypes := map[ProviderType]struct{}{
 		OpenAIProvider: {},
 	}
@@ -1332,11 +1332,6 @@ func (conf *Config) ValidateAI() error {
 				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
 			}
 			providerModelNames[m.Name] = struct{}{}
-
-			if _, exists := globalModelNames[m.Name]; exists {
-				return fmt.Errorf("chat_ai.models contains duplicate name %q", m.Name)
-			}
-			globalModelNames[m.Name] = struct{}{}
 
 			if m.Name == p.DefaultModel {
 				defaultModelFound = true

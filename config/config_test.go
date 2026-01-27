@@ -722,7 +722,7 @@ func TestValidateAI(t *testing.T) {
 					Type:         OpenAIProvider,
 					Config:       OpenAIProviderConfigDefault,
 					Enabled:      true,
-					DefaultModel: "model-2",
+					DefaultModel: "model-1",
 					Key:          "provider-key-2",
 					Models: []AIModel{
 						{
@@ -751,20 +751,20 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "models contains duplicate name",
 		},
-		"duplicate model name across providers": {
+		"same model name across providers": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-2",
 					Type:         OpenAIProvider,
 					Config:       OpenAIProviderConfigDefault,
 					Enabled:      true,
-					DefaultModel: "model-2",
+					DefaultModel: "model-1",
 					Key:          "provider-key-2",
 					Models: []AIModel{
 						{
 							Name:        "model-1",
 							Model:       "gpt-4",
-							Description: "duplicate model across providers",
+							Description: "same model across providers",
 							Enabled:     true,
 							Endpoint:    "https://example.com",
 							Key:         "",
@@ -772,7 +772,7 @@ func TestValidateAI(t *testing.T) {
 					},
 				})
 			},
-			expectErr: "chat_ai.models contains duplicate name",
+			expectErr: "",
 		},
 		"missing key when provider key empty": {
 			mutate: func(conf *Config) {
