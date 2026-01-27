@@ -13,6 +13,7 @@ import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { TypeHeader } from '../../pages/Namespaces/TypeHeader';
+import { HealthHeader } from '../../pages/Namespaces/HealthHeader';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -195,7 +196,8 @@ const namespacesHealth: ResourceType<NamespaceInfo> = {
   renderer: Renderers.nsHealth,
   sortable: true,
   title: 'Health',
-  width: 20
+  width: 20,
+  headerContent: React.createElement(HealthHeader)
 };
 
 const typeNamespaces: ResourceType<NamespaceInfo> = {
