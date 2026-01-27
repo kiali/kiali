@@ -17,6 +17,7 @@
    2. [Cache Structure](#cache-structure)
    3. [Cache Consumers](#cache-consumers)
    4. [On-Demand Fallback](#on-demand-fallback)
+   5. [Prometheus Health Metrics](#prometheus-health-metrics)
 6. [Graph Health Implementation](#graph-health-implementation)
    1. [Node Health Calculation](#node-health-calculation)
    2. [Edge Health Calculation](#edge-health-calculation)
@@ -31,13 +32,6 @@
    3. [Always Include Health Appender](#always-include-health-appender)
    4. [Edge Health on Backend](#edge-health-on-backend)
    5. [Removing hasHealthConfig from Payload](#removing-hashealthconfig-from-payload)
-9. [Implementation Details](#implementation-details)
-   1. [Backend Changes](#backend-changes)
-   2. [Frontend Changes](#frontend-changes)
-   3. [Bug Fix: Degraded Threshold of Zero](#bug-fix-degraded-threshold-of-zero)
-10. [Testing](#testing)
-11. [Future Considerations](#future-considerations)
-12. [Roadmap](#roadmap)
 
 # Summary
 
@@ -296,6 +290,75 @@ If cache is missing (cold start, new entity, cache expiry), health is computed o
 
 - The computed health is returned to the caller
 - Optionally, the cache can be updated with the computed value
+
+## Prometheus Health Metrics
+
+A key benefit of pre-computing health on the backend is the ability to export health status as Prometheus metrics. This enables external monitoring, alerting, and integration with existing observability infrastructure.
+
+### Exported Metrics
+
+The following metrics are exported when health pre-computation is enabled:
+
+| Metric                                  | Type      | Description                                                |
+| --------------------------------------- | --------- | ---------------------------------------------------------- |
+| `kiali_health_status`                   | Gauge     | Health status per entity using state cardinality pattern   |
+| `kiali_health_cache_hits_total`         | Counter   | Number of health cache hits by type (app/service/workload) |
+| `kiali_health_cache_misses_total`       | Counter   | Number of health cache misses by type                      |
+| `kiali_health_refresh_duration_seconds` | Histogram | Time required to refresh health data per cluster           |
+
+### Health Status Metric
+
+The `kiali_health_status` metric uses the **state cardinality pattern** for efficient alerting. For each entity, exactly one status is set to 1 while all others are 0:
+
+```promql
+kiali_health_status{
+  cluster="cluster1",
+  namespace="bookinfo",
+  health_type="app",      # app, service, or workload
+  name="reviews",
+  status="Degraded"       # Healthy, Degraded, Failure, Not Ready, or NA
+} 1
+```
+
+This pattern enables simple alerting rules:
+
+```yaml
+# Alert on any entity in Failure status
+- alert: KialiHealthFailure
+  expr: kiali_health_status{status="Failure"} == 1
+  for: 5m
+  labels:
+    severity: critical
+  annotations:
+    summary: "{{ $labels.health_type }} {{ $labels.name }} in {{ $labels.namespace }} is in Failure state"
+
+# Alert on degraded entities
+- alert: KialiHealthDegraded
+  expr: kiali_health_status{status="Degraded"} == 1
+  for: 10m
+  labels:
+    severity: warning
+```
+
+### Cache Performance Metrics
+
+Cache hit/miss metrics help operators understand health cache effectiveness:
+
+```promql
+# Cache hit rate by type
+sum(rate(kiali_health_cache_hits_total[5m])) by (health_type) /
+(sum(rate(kiali_health_cache_hits_total[5m])) by (health_type) +
+ sum(rate(kiali_health_cache_misses_total[5m])) by (health_type))
+```
+
+### Refresh Duration Metrics
+
+The refresh duration histogram tracks health computation performance per cluster:
+
+```promql
+# 95th percentile refresh duration
+histogram_quantile(0.95, rate(kiali_health_refresh_duration_seconds_bucket[5m]))
+```
 
 # Graph Health Implementation
 
