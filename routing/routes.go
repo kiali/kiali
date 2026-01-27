@@ -5,6 +5,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	ai "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -50,6 +51,7 @@ func NewRoutes(
 	discovery *istio.Discovery,
 	graphCache graph.GraphCache,
 	refreshJobManager *graph.RefreshJobManager,
+	aiStore ai.AIStore,
 ) (r *Routes) {
 	r = new(Routes)
 
@@ -1730,6 +1732,81 @@ func NewRoutes(
 			Pattern:       "/api/stats/metrics",
 			HandlerFunc:   handlers.MetricsStats(conf, kialiCache, discovery, clientFactory, prom),
 			Authenticated: true,
+		},
+		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI
+		// ---
+		// Endpoint to chat with AI
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatAI",
+			log.ChatAILogName,
+			"POST",
+			"/api/chat/{provider}/{model}/ai",
+			handlers.ChatAI(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
+			true,
+		},
+		// swagger:route GET /chat/conversations chat aiChatAI
+		// ---
+		// Endpoint to get the list of conversations for the user
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatConversations",
+			log.ChatAILogName,
+			"GET",
+			"/api/chat/conversations",
+			handlers.ChatConversations(conf, aiStore),
+			true,
+		},
+		// swagger:route DELETE /chat/conversations chat aiChatAI
+		// ---
+		// Endpoint to delete conversations for the user
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		//     Parameters:
+		//       - name: conversationIDs
+		//         in: query
+		//         description: Comma-separated list of conversation IDs to delete
+		//         required: true
+		//         type: string
+		//
+		// responses:
+		//      500: internalError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"DeleteChatConversations",
+			log.ChatAILogName,
+			"DELETE",
+			"/api/chat/conversations",
+			handlers.DeleteChatConversations(conf, aiStore),
+			true,
 		},
 	}
 	return

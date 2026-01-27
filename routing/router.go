@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 	zerolog "github.com/rs/zerolog/log"
 
+	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -182,8 +183,22 @@ func NewRouter(
 		zl.Info().Msg("graph cache disabled")
 	}
 
+	// Initialize AI store
+	aiStoreConfig := ai.LoadAIStoreConfig(conf)
+	aiStore := ai.NewAIStore(ctx, aiStoreConfig)
+	if !conf.ChatAI.Enabled {
+		zl.Info().Msg("[ChatAI] DISABLED")
+	} else {
+		zl.Info().Msg("[ChatAI] ENABLED")
+		if aiStoreConfig.Enabled {
+			zl.Info().Msgf("[ChatAI Store] ENABLED: max_memory=%dMB", aiStoreConfig.MaxCacheMemoryMB)
+		} else {
+			zl.Info().Msg("[ChatAI Store] DISABLED")
+		}
+	}
+
 	// Build our API server routes and install them.
-	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, perses, discovery, graphCache, refreshJobManager)
+	apiRoutes := NewRoutes(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, authController, grafana, perses, discovery, graphCache, refreshJobManager, aiStore)
 	// Add any auth routes to the app router.
 	apiRoutes.Routes = append(apiRoutes.Routes, authRoutes...)
 

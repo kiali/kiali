@@ -1,0 +1,10 @@
+{
+  "answer": "Of course.\n\nIn the context of Kubernetes and Istio, a **workload** is an application or a component of an application running on the cluster. It's the general term for the object that manages and runs your application's containers.\n\nHere's a breakdown:\n\n1.  **The Smallest Unit (Pod):** The most basic unit in Kubernetes is a **Pod**, which is a group of one or more containers that run together. You rarely create Pods directly.\n\n2.  **Managing the Pods (The Workload):** Instead, you create higher-level objects that manage the lifecycle of these Pods. These managing objects are what we call **workloads**. Common types include:\n    *   **Deployment:** The most common type. It's ideal for stateless applications (like your `reviews-v2` web service). It ensures a specified number of replica Pods are always running and handles updates smoothly.\n    *   **StatefulSet:** Used for stateful applications that need stable, unique network identifiers and persistent storage (e.g., databases).\n    *   **DaemonSet:** Ensures that a copy of a Pod runs on every (or some specific) node in the cluster. This is useful for logging or monitoring agents.\n    *   **Job/CronJob:** For tasks that run to completion, either once or on a schedule.\n\n3.  **Beyond Kubernetes:** Istio can extend this concept to include applications running outside of Kubernetes, such as on Virtual Machines (VMs) or bare-metal servers. This is done using a configuration called a `WorkloadEntry` ¹.\n\nSo, in your case, **`reviews-v2`** is a workload, most likely a **Deployment**, that is responsible for running the Pods containing version 2 of your `reviews` microservice.",
+  "citations": [
+    {
+      "link": "https://istio.io/latest/docs/reference/config/networking/workload-entry/",
+      "title": "Istio WorkloadEntry Reference",
+      "body": "Reference for the WorkloadEntry CRD, used to onboard non-Kubernetes workloads (VMs, bare metal) into the Istio Service Mesh."
+    }
+  ]
+}

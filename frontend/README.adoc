@@ -115,6 +115,9 @@ Different scenarios are available to simulate various environments:
 
 |`ambient`
 |Ambient mesh enabled with waypoint proxies
+
+|`ai`
+|ChatAI conversations
 |===
 
 To use a specific scenario, set the `REACT_APP_MOCK_SCENARIO` environment variable:
@@ -138,8 +141,16 @@ The mock handlers are located in `src/mocks/handlers/` and organized by feature:
 * `tracing.ts` - Distributed tracing data
 * `traffic.ts` - Traffic graph data
 * `workloads.ts` - Workloads, services, and dashboards
+* `chatbot/` - AI Chatbot feature
 
 Scenario configuration is defined in `src/mocks/scenarios.ts`.
+
+==== Adding Conversations to ChatAI Mock
+
+To add a new conversation to the mock:
+
+1. Create a JSON file in `mocks/handlers/chatbot/conversations` following the Uppercase pattern. For example: actionNavigationOverview.json
+2. Use `yarn generate:chatbot-conversations` to generate the index, and don't forget to add it to the commit (`mocks/handlers/chatbot/conversations.index.ts`).
 
 ==== Adding New Mock Handlers
 

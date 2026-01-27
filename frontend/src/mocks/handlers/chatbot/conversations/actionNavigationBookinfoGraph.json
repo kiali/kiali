@@ -1,0 +1,10 @@
+{
+  "actions": [
+    {
+      "title": "View Traffic Graph for :bookinfo",
+      "kind": "navigation",
+      "payload": "/graph/namespaces?namespaces=bookinfo\u0026graphType=versionedApp"
+    }
+  ],
+  "answer": "Ok, navigating to the graph for the bookinfo namespace."
+}

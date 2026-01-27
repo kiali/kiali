@@ -18,7 +18,7 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
@@ -29,6 +29,7 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
+import { setAIContext } from 'helpers/ChatAI';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;
@@ -40,9 +41,10 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type ServiceListPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
-};
+type ServiceListPageProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+  };
 
 class ServiceListPageComponent extends FilterComponent.Component<
   ServiceListPageProps,
@@ -195,10 +197,21 @@ class ServiceListPageComponent extends FilterComponent.Component<
       .then(serviceListItems => {
         this.promises.cancel('sort');
 
+        const sortedServiceListItems = this.sortItemList(
+          serviceListItems,
+          this.state.currentSortField,
+          this.state.isSortAscending
+        );
+
         this.setState({
-          listItems: this.sortItemList(serviceListItems, this.state.currentSortField, this.state.isSortAscending),
+          listItems: sortedServiceListItems,
           loaded: true
         });
+
+        setAIContext(
+          this.props.dispatch,
+          `Service List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {

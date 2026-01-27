@@ -56,7 +56,31 @@ const (
 
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
+
+	// Chat AI credential secret prefixes (used to build dynamic volume names)
+	secretFileChatAIProviderPrefix = "chat-ai-provider"
+	secretFileChatAIModelPrefix    = "chat-ai-model"
 )
+
+var secretNameSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
+
+func sanitizeSecretName(name string) string {
+	sanitized := strings.ToLower(name)
+	sanitized = secretNameSanitizer.ReplaceAllString(sanitized, "-")
+	sanitized = strings.Trim(sanitized, "-")
+	if sanitized == "" {
+		return "unknown"
+	}
+	return sanitized
+}
+
+func chatAIProviderSecretFileName(providerName string) string {
+	return fmt.Sprintf("%s-%s", secretFileChatAIProviderPrefix, sanitizeSecretName(providerName))
+}
+
+func chatAIModelSecretFileName(providerName, modelName string) string {
+	return fmt.Sprintf("%s-%s-%s", secretFileChatAIModelPrefix, sanitizeSecretName(providerName), sanitizeSecretName(modelName))
+}
 
 // The valid auth strategies and values for cookie handling
 const (
@@ -732,6 +756,58 @@ type Validations struct {
 	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
+// AiStoreConfig defines configuration for the AI store subsystem
+type AiStoreConfig struct {
+	Enabled          bool `yaml:"enabled,omitempty" json:"enabled,omitempty"`                      // Default:  true
+	MaxCacheMemoryMB int  `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
+	ReduceWithAI     bool `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`          // Default: false
+	ReduceThreshold  int  `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`     // Default: 15 messages
+}
+
+type AIModel struct {
+	Name        string     `yaml:"name" json:"name"`
+	Model       string     `yaml:"model" json:"model"`
+	Description string     `yaml:"description,omitempty" json:"description,omitempty"`
+	Enabled     bool       `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Endpoint    string     `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Key         Credential `yaml:"key,omitempty" json:"key,omitempty"`
+}
+
+type ProviderType string
+
+const (
+	OpenAIProvider      ProviderType = "openai"
+	DefaultProviderType ProviderType = ""
+)
+
+type ProviderConfigType string
+
+const (
+	OpenAIProviderConfigDefault ProviderConfigType = "default"
+	OpenAIProviderConfigGemini  ProviderConfigType = "gemini"
+	OpenAIProviderConfigAzure   ProviderConfigType = "azure"
+	DefaultProviderConfigType   ProviderConfigType = "default"
+)
+
+type ProviderConfig struct {
+	Name         string             `yaml:"name" json:"name"`
+	Description  string             `yaml:"description,omitempty" json:"description,omitempty"`
+	Type         ProviderType       `yaml:"type" json:"type"`
+	Config       ProviderConfigType `yaml:"config" json:"config"`
+	Enabled      bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
+	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
+	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
+}
+
+// ChatAIConfig defines configuration for the ChatAI subsystem
+type ChatAIConfig struct {
+	DefaultProvider string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
+	Enabled         bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Providers       []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
+	StoreConfig     AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
+}
+
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
@@ -821,6 +897,7 @@ const (
 type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
+	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
@@ -870,6 +947,17 @@ func NewConfig() (c *Config) {
 			},
 			OpenShift: OpenShiftConfig{
 				InsecureSkipVerifyTLS: false,
+			},
+		},
+		ChatAI: ChatAIConfig{
+			Enabled:         false,
+			DefaultProvider: "",
+			Providers:       []ProviderConfig{},
+			StoreConfig: AiStoreConfig{
+				Enabled:          true,
+				MaxCacheMemoryMB: 1024,
+				ReduceWithAI:     false,
+				ReduceThreshold:  15,
 			},
 		},
 		Clustering: Clustering{
@@ -1178,6 +1266,97 @@ func (conf *Config) AddHealthDefault() {
 	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
 }
 
+func (conf *Config) ValidateAI() error {
+	if !conf.ChatAI.Enabled {
+		return nil
+	}
+
+	if conf.ChatAI.DefaultProvider == "" {
+		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
+	}
+
+	defaultProviderFound := false
+
+	validProviderTypes := map[ProviderType]struct{}{
+		OpenAIProvider: {},
+	}
+	validProviderConfigTypes := map[ProviderConfigType]struct{}{
+		OpenAIProviderConfigDefault: {},
+		OpenAIProviderConfigAzure:   {},
+		OpenAIProviderConfigGemini:  {},
+	}
+	seenNames := make(map[string]struct{})
+
+	for i := range conf.ChatAI.Providers {
+		p := &conf.ChatAI.Providers[i]
+		if _, exists := seenNames[p.Name]; exists {
+			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
+		}
+		seenNames[p.Name] = struct{}{}
+
+		if p.Name == conf.ChatAI.DefaultProvider {
+			defaultProviderFound = true
+			if !p.Enabled {
+				return fmt.Errorf("chat_ai.default_provider %q must be enabled", conf.ChatAI.DefaultProvider)
+			}
+		}
+
+		if !p.Enabled {
+			continue
+		}
+
+		if p.Type == "" {
+			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, DefaultProviderType)
+			p.Type = DefaultProviderType
+		}
+		if _, valid := validProviderTypes[p.Type]; !valid {
+			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid", p.Name, p.Type)
+		}
+
+		if p.Config == "" {
+			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q", p.Name, DefaultProviderConfigType)
+			p.Config = DefaultProviderConfigType
+		}
+		if _, valid := validProviderConfigTypes[p.Config]; !valid {
+			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid", p.Name, p.Config)
+		}
+
+		if p.DefaultModel == "" {
+			return fmt.Errorf("chat_ai.providers[%q].default_model is required", p.Name)
+		}
+
+		defaultModelFound := false
+		providerModelNames := make(map[string]struct{})
+		for _, m := range p.Models {
+			if _, exists := providerModelNames[m.Name]; exists {
+				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
+			}
+			providerModelNames[m.Name] = struct{}{}
+
+			if m.Name == p.DefaultModel {
+				defaultModelFound = true
+				if !m.Enabled {
+					return fmt.Errorf("chat_ai.providers[%q].default_model %q must be enabled", p.Name, p.DefaultModel)
+				}
+			}
+
+			if m.Key == "" && p.Key == "" && m.Enabled {
+				return fmt.Errorf("chat_ai.providers[%q].models[%q] requires a key when provider key is empty", p.Name, m.Name)
+			}
+		}
+
+		if !defaultModelFound {
+			return fmt.Errorf("chat_ai.providers[%q].default_model %q not found in models", p.Name, p.DefaultModel)
+		}
+	}
+
+	if !defaultProviderFound {
+		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
+	}
+
+	return nil
+}
+
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
 func (conf *Config) AllNamespacesAccessible() bool {
 	return conf.Deployment.ClusterWideAccess
@@ -1233,6 +1412,11 @@ func Set(conf *Config) {
 		oldCreds.Close()
 	}
 
+	// Validate the chat_ai configuration
+	if err := conf.ValidateAI(); err != nil {
+		log.Fatalf("invalid chat_ai configuration: %v", err)
+	}
+
 	// init these one time, they don't change
 	if appLabelNames == nil {
 		if conf.IstioLabels.AppLabelName != "" && conf.IstioLabels.VersionLabelName != "" {
@@ -1255,6 +1439,23 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
+	if len(obf.ChatAI.Providers) > 0 {
+		providers := make([]ProviderConfig, len(obf.ChatAI.Providers))
+		copy(providers, obf.ChatAI.Providers)
+		for i := range providers {
+			providers[i].Key = "xxx"
+			if len(providers[i].Models) == 0 {
+				continue
+			}
+			models := make([]AIModel, len(providers[i].Models))
+			copy(models, providers[i].Models)
+			for j := range models {
+				models[j].Key = "xxx"
+			}
+			providers[i].Models = models
+		}
+		obf.ChatAI.Providers = providers
+	}
 	return
 }
 
@@ -1467,6 +1668,20 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.LoginToken.SigningKey,
 			fileName:    SecretFileLoginTokenSigningKey,
 		},
+	}
+
+	for i := range conf.ChatAI.Providers {
+		provider := &conf.ChatAI.Providers[i]
+		overrides = append(overrides, overridesType{
+			configValue: &provider.Key,
+			fileName:    chatAIProviderSecretFileName(provider.Name),
+		})
+		for j := range provider.Models {
+			overrides = append(overrides, overridesType{
+				configValue: &provider.Models[j].Key,
+				fileName:    chatAIModelSecretFileName(provider.Name, provider.Models[j].Name),
+			})
+		}
 	}
 
 	// For each override, check if a secret file exists and set the config value to the file path.

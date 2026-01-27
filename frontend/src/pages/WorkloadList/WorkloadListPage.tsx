@@ -16,7 +16,7 @@ import { addError } from '../../utils/AlertUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
@@ -28,6 +28,7 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
+import { setAIContext } from 'helpers/ChatAI';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
   loaded: boolean;
@@ -39,9 +40,10 @@ type ReduxProps = {
   refreshInterval: IntervalInMilliseconds;
 };
 
-type WorkloadListPageProps = ReduxProps & {
-  lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
-};
+type WorkloadListPageProps = ReduxProps &
+  DispatchProp & {
+    lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
+  };
 
 class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListPageProps,
@@ -198,10 +200,21 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       .then(workloadsItems => {
         this.promises.cancel('sort');
 
+        const sortedWorkloadsItems = this.sortItemList(
+          workloadsItems,
+          this.state.currentSortField,
+          this.state.isSortAscending
+        );
+
         this.setState({
-          listItems: this.sortItemList(workloadsItems, this.state.currentSortField, this.state.isSortAscending),
+          listItems: sortedWorkloadsItems,
           loaded: true
         });
+
+        setAIContext(
+          this.props.dispatch,
+          `Workload List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
+        );
       })
       .catch(err => {
         if (!err.isCanceled) {

@@ -15,6 +15,7 @@ import { nameFilter } from '../Filters';
 import { DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 import { ExternalServiceInfo, TempoUrlFormat } from '../../../types/StatusState';
+import { KialiDispatch } from 'types/Redux';
 
 const mockAPIToPromise = (func: keyof typeof API, obj: any, encapsData: boolean): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -155,6 +156,7 @@ describe('Overview page', () => {
         kiosk={''}
         minTLS={''}
         istioAPIEnabled={false}
+        dispatch={jest.fn() as KialiDispatch}
       />
     );
     expect(shallowToJson(wrapper)).toMatchSnapshot();

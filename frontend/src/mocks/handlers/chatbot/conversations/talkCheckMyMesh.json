@@ -1,0 +1,3 @@
+{
+  "answer": "Your mesh is generally healthy, but there are some minor issues.\n\n**Component Status:**\n*   **Istiod:** Healthy\n*   **Prometheus:** Healthy\n*   **Kiali:** Healthy\n*   **Grafana:** Unreachable\n\n**Application Health:**\n*   All applications in the `bookinfo` namespace appear to be running.\n*   However, I'm seeing a small percentage of HTTP 503 errors (~1.3%) in the traffic from `reviews-v2` and `reviews-v3` to the `ratings-v1` service."
+}

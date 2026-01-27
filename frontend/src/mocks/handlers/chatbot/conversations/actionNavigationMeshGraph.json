@@ -1,0 +1,10 @@
+{
+  "actions": [
+    {
+      "title": "View Mesh Graph",
+      "kind": "navigation",
+      "payload": "/mesh"
+    }
+  ],
+  "answer": ""
+}

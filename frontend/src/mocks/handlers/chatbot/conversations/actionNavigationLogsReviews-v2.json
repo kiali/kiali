@@ -1,0 +1,10 @@
+{
+  "actions": [
+    {
+      "title": "View workload Details",
+      "kind": "navigation",
+      "payload": "/namespaces/bookinfo/workloads/reviews-v2?tab=logs"
+    }
+  ],
+  "answer": "Here are the logs for the `reviews-v2` workload.\n\n[View logs for reviews-v2](/namespaces/bookinfo/workloads/reviews-v2?tab=logs)"
+}

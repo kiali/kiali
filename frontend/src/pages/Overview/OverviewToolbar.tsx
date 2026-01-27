@@ -79,7 +79,7 @@ const timeToolbarStyle = kialiStyle({
 const actionsToolbarStyle = kialiStyle({
   paddingTop: '1rem',
   display: 'flex',
-  justifyContent: 'end',
+  justifyContent: 'flex-end',
   alignItems: 'center'
 });
 

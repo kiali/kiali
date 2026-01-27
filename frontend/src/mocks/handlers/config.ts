@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { ServerConfig, RunMode } from '../../types/ServerConfig';
 import { getScenarioConfig } from '../scenarios';
+import { ChatAIConfig } from 'types/Chatbot';
 
 // Cluster config type
 type ClusterConfigType = Record<
@@ -60,12 +61,40 @@ const generateControlPlanes = (): Record<string, string> => {
   return controlPlanes;
 };
 
+const generateChatAIConfig = (): ChatAIConfig => {
+  const scenarioConfig = getScenarioConfig();
+  if (!scenarioConfig.chatAI) {
+    return {
+      enabled: false,
+      providers: [],
+      defaultProvider: ''
+    };
+  }
+  return {
+    enabled: scenarioConfig.chatAI.enabled ?? false,
+    providers:
+      scenarioConfig.chatAI.providers?.map(provider => ({
+        name: provider.name,
+        description: provider.description ?? '',
+        defaultModel: provider.defaultModel ?? '',
+        models:
+          provider.models?.map(model => ({
+            name: model.name,
+            description: model.description ?? '',
+            model: model.model ?? ''
+          })) ?? []
+      })) ?? [],
+    defaultProvider: scenarioConfig.chatAI.defaultProvider ?? ''
+  };
+};
+
 // Generate server config dynamically based on scenario
 const generateServerConfig = (): ServerConfig => {
   const scenarioConfig = getScenarioConfig();
   return {
     ambientEnabled: scenarioConfig.ambientEnabled,
     authStrategy: 'anonymous',
+    chatAI: generateChatAIConfig(),
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
     controlPlanes: generateControlPlanes(),

@@ -57,6 +57,11 @@ const computeValidDurations = (cfg: ComputedServerConfig): void => {
 const defaultServerConfig: ComputedServerConfig = {
   ambientEnabled: false,
   authStrategy: '',
+  chatAI: {
+    enabled: false,
+    providers: [],
+    defaultProvider: ''
+  },
   clusters: {},
   clusterWideAccess: true,
   controlPlanes: { Kubernetes: 'istio-system' },

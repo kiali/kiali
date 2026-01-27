@@ -31,6 +31,8 @@ import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import { getKialiTheme } from 'utils/ThemeUtils';
 import { i18n } from 'i18n';
+import { ChatAIActions } from 'actions/ChatAIActions';
+import { ChatAIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -49,6 +51,7 @@ interface ReduxDispatchProps {
   setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   statusRefresh: (statusState: StatusState) => void;
+  setChatAI: (chatAI: ChatAIConfig) => void;
 }
 
 type AuthenticationControllerReduxProps = ReduxStateProps & ReduxDispatchProps;
@@ -195,6 +198,7 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
+      this.props.setChatAI(configs[1].data.chatAI);
       this.applyUIDefaults();
 
       if (this.props.landingRoute) {
@@ -363,7 +367,8 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setRefreshInterval: bindActionCreators(UserSettingsActions.setRefreshInterval, dispatch),
   setTracingInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
-  statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch)
+  statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch),
+  setChatAI: bindActionCreators(ChatAIActions.setChatAI, dispatch)
 });
 
 export const AuthenticationController = connect(mapStateToProps, mapDispatchToProps)(AuthenticationControllerComponent);

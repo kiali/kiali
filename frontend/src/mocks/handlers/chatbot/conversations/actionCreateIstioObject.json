@@ -1,0 +1,11 @@
+{
+  "actions": [
+    {
+      "fileName": "dr_reviews.yaml",
+      "title": "Preview of files to create",
+      "kind": "file",
+      "payload": "{\"spec\": {\"host\": \"reviews\", \"subsets\": [{\"labels\": {\"version\": \"v1\"}, \"name\": \"v1\"}, {\"labels\": {\"version\": \"v2\"}, \"name\": \"v2\"}, {\"labels\": {\"version\": \"v3\"}, \"name\": \"v3\"}]}}"
+    }
+  ],
+  "answer": "I will create a traffic shifting rule for the service reviews in the bookinfo namespace with the following distribution: 80% of the traffic to v1 and 20% to v2.\n\nFirst, I'll create a DestinationRule to define the versions of the reviews service. Here is the YAML for your review:\n\nHere's a preview of the `DestinationRule` for `reviews`:\n~~~yaml\nspec:\n  host: reviews\n  subsets:\n    - labels:\n        version: v1\n      name: v1\n    - labels:\n        version: v2\n      name: v2\n    - labels:\n        version: v3\n      name: v3\n~~~\n\nAre you sure you want to create this Istio object?"
+}

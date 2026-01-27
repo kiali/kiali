@@ -40,6 +40,7 @@ const (
 // TODO: Consider removing the interface altogether in favor of just exporting the struct.
 type KialiCache interface {
 	CanListWebhooks(cluster string) bool
+
 	GetBuildInfo() models.BuildInfo
 	// SetBuildInfo is not threadsafe. Expected to just be called once at startup.
 	SetBuildInfo(buildInfo models.BuildInfo)

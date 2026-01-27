@@ -98,6 +98,23 @@ delete_cluster_resources() {
   done
 }
 
+msg "Uninstalling Helm releases for kiali and kiali-operator..."
+if command -v helm &> /dev/null; then
+  for release_info in $(helm list --all-namespaces -o json 2>/dev/null | jq -r '.[] | select(.name | test("kiali")) | "\(.name):\(.namespace)"' 2>/dev/null || true)
+  do
+    release_name=$(echo $release_info | cut -d: -f1)
+    release_namespace=$(echo $release_info | cut -d: -f2)
+    if [ -n "${release_name}" ] && [ -n "${release_namespace}" ]; then
+      msg "Uninstalling Helm release [${release_name}] in namespace [${release_namespace}]"
+      if [ "${DRY_RUN}" == "false" ]; then
+        helm uninstall ${release_name} -n ${release_namespace} --wait 2>/dev/null || true
+      fi
+    fi
+  done
+else
+  msg "WARNING: helm not found in PATH. Skipping Helm release cleanup. This may cause issues with CRD reinstallation."
+fi
+
 msg "Deleting Kiali CRs..."
 for k in $(${CLIENT_EXE} get kiali --ignore-not-found=true --all-namespaces -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | sed 's/  */:/g')
 do

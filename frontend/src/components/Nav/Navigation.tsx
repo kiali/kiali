@@ -29,6 +29,7 @@ import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
+import { ChatBot } from 'components/ChatBot/ChatBot';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -37,6 +38,7 @@ type ReduxStateProps = {
   showNotificationCenter: boolean;
   theme: string;
   tracingUrl?: string;
+  chatbotEnabled: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -139,6 +141,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
+      {!kioskMode && props.chatbotEnabled && <ChatBot />}
     </Page>
   );
 };
@@ -149,7 +152,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   navCollapsed: state.userSettings.interface.navCollapse,
   showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
+  chatbotEnabled: state.chatAi.enabled
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
