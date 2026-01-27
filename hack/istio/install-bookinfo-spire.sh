@@ -116,14 +116,86 @@ update_bookinfo_deployments() {
         patch_deployment_for_spire "$deployment"
     done
     
-    log_info "Waiting for deployments to roll out..."
+    log_info "Waiting for deployments to be ready..."
     for deployment in $deployments; do
         if [[ "$deployment" == *"traffic-generator"* ]]; then
             continue
         fi
-        ${CLIENT_EXE} rollout status deployment/${deployment} -n ${NAMESPACE} --timeout=120s || {
-            log_warn "Deployment ${deployment} may still be rolling out"
-        }
+        
+        # Check deployment status
+        local ready=$(${CLIENT_EXE} get deployment ${deployment} -n ${NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+        local desired=$(${CLIENT_EXE} get deployment ${deployment} -n ${NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+        local updated=$(${CLIENT_EXE} get deployment ${deployment} -n ${NAMESPACE} -o jsonpath='{.status.updatedReplicas}' 2>/dev/null || echo "0")
+        local unavailable=$(${CLIENT_EXE} get deployment ${deployment} -n ${NAMESPACE} -o jsonpath='{.status.unavailableReplicas}' 2>/dev/null || echo "0")
+        local replicas=$(${CLIENT_EXE} get deployment ${deployment} -n ${NAMESPACE} -o jsonpath='{.status.replicas}' 2>/dev/null || echo "0")
+        
+        # If deployment is already ready and updated, and no unavailable replicas, skip rollout wait
+        if [ "$ready" == "$desired" ] && [ "$updated" == "$desired" ] && [ "$unavailable" == "0" ] && [ "$desired" != "0" ]; then
+            log_info "Deployment ${deployment} is already ready (${ready}/${desired} replicas)"
+            continue
+        fi
+        
+        # Check if there are multiple replicasets (indicating a rollout in progress)
+        local replicaset_count=$(${CLIENT_EXE} get replicaset -n ${NAMESPACE} -l app=${deployment} --no-headers 2>/dev/null | wc -l || echo "0")
+        if [ "$replicaset_count" -gt "1" ]; then
+            log_info "Deployment ${deployment} has multiple replicasets, rollout in progress (ready: ${ready}/${desired}, updated: ${updated}/${desired}, replicas: ${replicas})"
+        fi
+        
+        # Get new replicaset (most recently created)
+        local new_rs=$(${CLIENT_EXE} get replicaset -n ${NAMESPACE} -l app=${deployment} --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null || echo "")
+        
+        # Check if new pods are failing - if updatedReplicas is 0 but we have unavailable replicas, pods might be failing
+        if [ "$updated" == "0" ] && [ "$unavailable" != "0" ] && [ "$replicas" != "0" ]; then
+            log_warn "Deployment ${deployment} appears to have failing pods. Checking pod status..."
+            ${CLIENT_EXE} get pods -n ${NAMESPACE} -l app=${deployment} --field-selector=status.phase!=Running,status.phase!=Succeeded 2>/dev/null | head -5 || true
+        fi
+        
+        # Check if new replicaset exists but has 0 current replicas (pods not starting)
+        if [ -n "$new_rs" ]; then
+            local new_rs_desired=$(${CLIENT_EXE} get replicaset ${new_rs} -n ${NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+            local new_rs_current=$(${CLIENT_EXE} get replicaset ${new_rs} -n ${NAMESPACE} -o jsonpath='{.status.replicas}' 2>/dev/null || echo "0")
+            if [ "$new_rs_desired" != "0" ] && [ "$new_rs_current" == "0" ]; then
+                log_warn "New replicaset ${new_rs} has ${new_rs_desired} desired but 0 current replicas. Checking pod events..."
+                ${CLIENT_EXE} get events -n ${NAMESPACE} --field-selector involvedObject.kind=ReplicaSet,involvedObject.name=${new_rs} --sort-by='.lastTimestamp' 2>/dev/null | tail -5 || true
+            fi
+        fi
+        
+        # Only wait for rollout if deployment is actually rolling out
+        if [ "$updated" != "$desired" ] || [ "$unavailable" != "0" ] || [ "$ready" != "$desired" ]; then
+            # Check if rollout appears stuck (new replicaset exists but has 0 current replicas for too long)
+            local rollout_stuck=false
+            if [ -n "$new_rs" ]; then
+                local new_rs_desired=$(${CLIENT_EXE} get replicaset ${new_rs} -n ${NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+                local new_rs_current=$(${CLIENT_EXE} get replicaset ${new_rs} -n ${NAMESPACE} -o jsonpath='{.status.replicas}' 2>/dev/null || echo "0")
+                if [ "$new_rs_desired" != "0" ] && [ "$new_rs_current" == "0" ]; then
+                    # Check if old replicaset is still running (rollout stuck)
+                    local old_rs=$(${CLIENT_EXE} get replicaset -n ${NAMESPACE} -l app=${deployment} --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-2].metadata.name}' 2>/dev/null || echo "")
+                    if [ -n "$old_rs" ] && [ "$old_rs" != "$new_rs" ]; then
+                        local old_rs_ready=$(${CLIENT_EXE} get replicaset ${old_rs} -n ${NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+                        if [ "$old_rs_ready" != "0" ]; then
+                            log_warn "Deployment ${deployment} rollout appears stuck: new replicaset ${new_rs} has 0 pods, old replicaset ${old_rs} still has ${old_rs_ready} ready pods"
+                            rollout_stuck=true
+                        fi
+                    fi
+                fi
+            fi
+            
+            if [ "$rollout_stuck" == "true" ]; then
+                log_warn "Skipping rollout wait for ${deployment} - rollout appears stuck. Check pod events for details."
+                log_info "To debug, run: ${CLIENT_EXE} get events -n ${NAMESPACE} --field-selector involvedObject.name=${new_rs}"
+            else
+                log_info "Waiting for deployment ${deployment} to roll out (ready: ${ready}/${desired}, updated: ${updated}/${desired}, unavailable: ${unavailable})..."
+                ${CLIENT_EXE} rollout status deployment/${deployment} -n ${NAMESPACE} --timeout=120s || {
+                    log_warn "Deployment ${deployment} rollout timed out or failed"
+                    log_info "Current status: ready=${ready}, desired=${desired}, updated=${updated}, unavailable=${unavailable}, replicas=${replicas}"
+                    # Show pod status for debugging
+                    log_info "Pod status for ${deployment}:"
+                    ${CLIENT_EXE} get pods -n ${NAMESPACE} -l app=${deployment} 2>/dev/null | head -10 || true
+                }
+            fi
+        else
+            log_info "Deployment ${deployment} is ready, no rollout in progress"
+        fi
     done
 }
 
