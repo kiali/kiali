@@ -3,6 +3,8 @@
 **Date**: 2026-01-19 (Updated: 2026-01-26)  
 **Status**: Implementation Complete - Ready for Integration Testing
 
+> **Session Update (2026-01-26)**: Added Traffic Graph Health section documenting the migration of graph node and edge health calculation to the backend.
+
 ---
 
 ## Table of Contents
@@ -18,6 +20,7 @@
 9. [Backend Health Status Calculation Design](#backend-health-status-calculation-design)
 10. [Testing Strategy](#testing-strategy)
 11. [Frontend Changes (Completed)](#frontend-changes-completed)
+12. [Traffic Graph Health (Completed)](#traffic-graph-health-completed)
 
 ---
 
@@ -1291,18 +1294,20 @@ export const statusFromString = (status: string): Status => {
 };
 ```
 
-#### `getBackendStatus()` Method
+#### `getStatus()` Method
 
-Returns backend-provided status without client-side fallback:
+Returns backend-provided status (consolidated from former `getGlobalStatus()` and `getBackendStatus()`):
 
 ```typescript
-getBackendStatus(): Status {
+getStatus(): Status {
   if (this.backendStatus?.status) {
     return statusFromString(this.backendStatus.status);
   }
   return NA;
 }
 ```
+
+> **Note**: Previously there were two methods: `getGlobalStatus()` which had a client-side fallback calculation, and `getBackendStatus()` which only returned backend status. These have been consolidated into a single `getStatus()` method that returns the backend-provided status or `NA` if not available.
 
 #### `fromBackendStatus()` Factory Methods
 
@@ -1345,9 +1350,9 @@ public static fromBackendStatus = (json: any): AppHealth => {
 
 ### Backward Compatibility
 
-- Detail pages continue to use `fromJson()` with full `HealthContext` for on-demand health calculation
-- The `getGlobalStatus()` method still falls back to client-side calculation if `backendStatus` is not present
-- Overview page and other pages using `getGlobalStatus()` work with both old and new backend responses
+- Detail pages continue to use `fromJson()` with full `HealthContext` for parsing raw health data
+- The `getStatus()` method returns `NA` if `backendStatus` is not present (no client-side fallback)
+- All pages have been updated to use `getStatus()` which returns the backend-calculated status
 
 ---
 
@@ -1357,7 +1362,161 @@ public static fromBackendStatus = (json: any): AppHealth => {
 2. ~~Clarify any questions or concerns~~ ✓ (All decisions made)
 3. ~~Implement backend health calculation~~ ✓
 4. ~~Implement frontend simplification~~ ✓
-5. Integration testing with full backend/frontend stack
+5. ~~Migrate traffic graph health to backend~~ ✓
+6. ~~Consolidate frontend health API (`getStatus()`)~~ ✓
+7. Integration testing with full backend/frontend stack
+
+---
+
+---
+
+## Traffic Graph Health (Completed)
+
+This section documents the migration of traffic graph health calculation from the frontend to the backend.
+
+### Overview
+
+The traffic graph previously calculated health status for nodes and edges on the frontend. This has been moved entirely to the backend's `HealthAppender`, which now:
+
+1. **Always runs** - The health appender is no longer conditional; it's included in every graph request
+2. **Calculates node health status** - Based on workload replica status and request health metrics
+3. **Calculates edge health status** - Based on traffic error rates and health tolerances
+
+This consolidates all health status logic in the backend, reduces frontend complexity, and optimizes the graph payload.
+
+### Backend Changes
+
+#### Modified Files
+
+| File | Changes |
+| ---- | ------- |
+| `graph/meta.go` | Added `EdgeHealthStatus` as a new `MetadataKey` |
+| `graph/telemetry/istio/appender/health.go` | Added edge health calculation logic |
+| `graph/config/common/common.go` | Added `HealthStatus` field to `EdgeData`, removed `HasHealthConfig` from `NodeData` |
+| `business/health_calculator.go` | Added `GetTolerancesForDirection()` method for edge health calculation |
+
+#### Edge Health Calculation
+
+The `HealthAppender` now calculates edge health using the following approach:
+
+```go
+func (a *HealthAppender) calculateEdgeHealthStatus(trafficMap graph.TrafficMap, calculator *business.HealthCalculator) {
+    for _, n := range trafficMap {
+        for _, e := range n.Edges {
+            status := a.calculateSingleEdgeHealth(e, calculator)
+            if status != models.HealthStatusNA {
+                e.Metadata[graph.EdgeHealthStatus] = string(status)
+            }
+        }
+    }
+}
+```
+
+Edge health is determined by:
+1. Getting the protocol and response data from edge metadata
+2. Retrieving health annotations from source and destination nodes
+3. Calculating tolerances for outbound (source) and inbound (destination) directions
+4. Applying tolerances to calculate error-based health status
+5. Returning the worst status between outbound and inbound perspectives
+
+#### New EdgeData Field
+
+```go
+type EdgeData struct {
+    // ... existing fields ...
+    HealthStatus string `json:"healthStatus,omitempty"` // the health status of the edge
+}
+```
+
+#### Removed NodeData Field
+
+The `HasHealthConfig` field was removed from `NodeData` as it's no longer needed by the frontend.
+
+### Frontend Changes
+
+#### Removed Files
+
+| File | Reason |
+| ---- | ------ |
+| `frontend/src/types/ErrorRate/GraphEdgeStatus.ts` | Edge health now calculated on backend |
+| `frontend/src/types/ErrorRate/TrafficHealth.ts` | Traffic health now calculated on backend |
+| `frontend/src/types/ErrorRate/__tests__/GraphEdgeStatus.test.ts` | Tests for removed file |
+| `frontend/src/types/ErrorRate/__tests__/TrafficHealth.test.ts` | Tests for removed file |
+
+#### Modified Files
+
+| File | Changes |
+| ---- | ------- |
+| `frontend/src/services/GraphDataSource.ts` | Health appender now always included (unconditional) |
+| `frontend/src/pages/Graph/GraphElems.tsx` | `assignEdgeHealth()` simplified to no-op (status comes from backend) |
+| `frontend/src/components/TrafficList/TrafficDetails.tsx` | Added `healthStatus` to `TrafficItem`, removed `healthAnnotation` from node interfaces |
+| `frontend/src/components/TrafficList/TrafficListComponent.tsx` | `getHealthStatus()` now uses backend-provided `item.healthStatus` |
+| `frontend/src/types/Graph.ts` | Added `healthStatus` to `GraphEdgeData`, removed `hasHealthConfig` from `GraphNodeData` |
+| `frontend/src/types/ErrorRate/index.ts` | Removed `getTrafficHealth` export |
+| `frontend/src/types/ErrorRate/utils.ts` | Simplified `aggregate()` function |
+
+### API Changes
+
+#### Health Appender Always Active
+
+Previously, the frontend conditionally included the `health` appender in graph requests based on whether health display was needed. Now, the health appender is always included:
+
+```typescript
+// Before (conditional)
+if (fetchParams.includeHealth) {
+  appenders += ',health';
+}
+
+// After (always included)
+let appenders: AppenderString = 'deadNode,serviceEntry,meshCheck,workloadEntry,health';
+```
+
+#### Edge Health in Graph Response
+
+Edges now include `healthStatus` in the response:
+
+```json
+{
+  "id": "e0",
+  "source": "n1",
+  "target": "n2",
+  "traffic": { ... },
+  "healthStatus": "Healthy"  // or "Degraded", "Failure", "NA"
+}
+```
+
+### Health API Consolidation
+
+The frontend health types were simplified:
+
+| Before | After | Notes |
+| ------ | ----- | ----- |
+| `getGlobalStatus()` | `getStatus()` | Renamed; always returns backend status |
+| `getBackendStatus()` | (removed) | Consolidated into `getStatus()` |
+| Client-side fallback | (removed) | No longer needed since backend always provides status |
+
+The `getStatus()` method now directly returns the backend-provided status:
+
+```typescript
+getStatus(): Status {
+  if (this.backendStatus?.status) {
+    return statusFromString(this.backendStatus.status);
+  }
+  return NA;
+}
+```
+
+### Benefits
+
+1. **Consolidated Logic**: All health calculation is now in the backend
+2. **Reduced Frontend Complexity**: Removed ~500 lines of frontend health calculation code
+3. **Smaller Payload**: Removed `hasHealthConfig` from graph response
+4. **Consistency**: Graph health uses the same calculation logic as list pages and Prometheus metrics
+5. **Performance**: Health is calculated once on the backend rather than on every frontend render
+
+### Graph Hide Consideration
+
+The frontend "graph hide" feature visually filters elements but does not affect the underlying data. Health is calculated on the full graph on the backend, which is the correct behavior - hidden elements should still contribute to the overall health picture.
 
 ---
 

@@ -347,3 +347,23 @@ func (c *HealthCalculator) CalculateNamespaceWorkloadHealth(
 	}
 	return result
 }
+
+// GetTolerancesForDirection returns tolerances for an entity filtered by direction.
+// This is used for edge health calculation where we need outbound tolerances for
+// the source node and inbound tolerances for the destination node.
+func (c *HealthCalculator) GetTolerancesForDirection(
+	namespace, name, kind, direction string,
+	annotations map[string]string,
+) []config.Tolerance {
+	// Get base tolerances (with annotation override if present)
+	tolerances := c.matcher.GetTolerancesWithAnnotationOverride(namespace, name, kind, annotations)
+
+	// Filter by direction
+	var filtered []config.Tolerance
+	for _, tol := range tolerances {
+		if matchesPattern(tol.Direction, direction) {
+			filtered = append(filtered, tol)
+		}
+	}
+	return filtered
+}

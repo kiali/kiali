@@ -72,8 +72,8 @@ export const sortFields: SortField<AppListItem>[] = [
     compare: (a: AppListItem, b: AppListItem): number => {
       if (hasHealth(a) && hasHealth(b)) {
         // Use backend-provided status only, no client-side calculation
-        const statusForA = a.health.getBackendStatus();
-        const statusForB = b.health.getBackendStatus();
+        const statusForA = a.health.getStatus();
+        const statusForB = b.health.getStatus();
 
         if (statusForA.priority === statusForB.priority) {
           // If both apps have same health status, use backend error ratio for tie-breaking

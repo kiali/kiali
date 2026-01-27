@@ -85,7 +85,7 @@ describe('Health', () => {
       { inbound: { http: { '500': 1 } }, outbound: { http: { '500': 1 } }, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
-    expect(health.getGlobalStatus()).toEqual(H.FAILURE);
+    expect(health.getStatus()).toEqual(H.FAILURE);
   });
   it('should aggregate healthy', () => {
     const health = new H.AppHealth(
@@ -98,7 +98,7 @@ describe('Health', () => {
       { inbound: {}, outbound: {}, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
-    expect(health.getGlobalStatus()).toEqual(H.HEALTHY);
+    expect(health.getStatus()).toEqual(H.HEALTHY);
   });
   it('should aggregate idle workload', () => {
     const health = new H.AppHealth(
@@ -111,7 +111,7 @@ describe('Health', () => {
       { inbound: {}, outbound: {}, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
-    expect(health.getGlobalStatus()).toEqual(H.DEGRADED);
+    expect(health.getStatus()).toEqual(H.DEGRADED);
   });
   it('should aggregate failing requests', () => {
     const health = new H.AppHealth(
@@ -124,7 +124,7 @@ describe('Health', () => {
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } }, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
-    expect(health.getGlobalStatus()).toEqual(H.FAILURE);
+    expect(health.getStatus()).toEqual(H.FAILURE);
   });
   it('should aggregate multiple issues', () => {
     const health = new H.AppHealth(
@@ -137,7 +137,7 @@ describe('Health', () => {
       { inbound: { http: { '200': 1.6, '500': 0.3 } }, outbound: { http: { '500': 0.1 } }, healthAnnotations: {} },
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
-    expect(health.getGlobalStatus()).toEqual(H.FAILURE);
+    expect(health.getStatus()).toEqual(H.FAILURE);
   });
   it('should not ignore error rates when has sidecar', () => {
     const health = new H.AppHealth(

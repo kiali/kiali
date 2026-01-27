@@ -358,18 +358,9 @@ export abstract class Health {
     this.backendStatus = backendStatus;
   }
 
-  getGlobalStatus(): Status {
-    // If backend provided a pre-calculated status, use it
-    if (this.backendStatus?.status) {
-      return statusFromString(this.backendStatus.status);
-    }
-    // Fall back to client-side calculation
-    return this.health.items.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
-  }
-
-  // getBackendStatus returns the backend-provided health status without any client-side fallback.
-  // If no backend status is available, returns NA ("No health information").
-  getBackendStatus(): Status {
+  // Returns the health status calculated by the backend.
+  // If no backend status is available, returns NA.
+  getStatus(): Status {
     if (this.backendStatus?.status) {
       return statusFromString(this.backendStatus.status);
     }

@@ -3,8 +3,8 @@
 ## Current Status
 
 - **Phase**: 3 - Detailed Design
-- **Status**: In Progress
-- **Last Updated**: 2026-01-19
+- **Status**: Implementation Complete - Ready for Integration Testing
+- **Last Updated**: 2026-01-26
 
 ## Project Overview
 
@@ -139,28 +139,40 @@ _(None yet - will document any failed approaches to avoid repetition)_
 
 ## Notes for Next Session
 
-**Phase 3 In Progress**
+**Implementation Complete** (2026-01-26)
 
-Created PHASE3_DETAILED_DESIGN.md with file-by-file implementation plan.
+All health calculation has been moved to the backend:
 
-**Phase 2 Completed** (2026-01-19):
+1. **List Pages Health**: Backend calculates health status, frontend uses `getStatus()` method
+2. **Traffic Graph Health**: `HealthAppender` calculates node and edge health on the backend
+3. **Frontend Simplified**: Removed client-side health calculation code, consolidated API to `getStatus()`
 
-- ✅ Changed default refresh interval to 2 minutes
-- ✅ Removed cache expiration (background job continuously overwrites)
-- ✅ Clarified job interval is time between completions, not max duration
-- ✅ Clarified "accessible namespaces" means Kiali's service account access
-- ✅ Cache miss returns "Unknown" health status (not an error)
-- ✅ FR4 metrics honor `Observability.Metrics.Enabled` config
-- ✅ Removed hot reload requirement (changes require restart)
-- ✅ Rate interval is fixed configurable (default 0 = auto from elapsed time)
-- ✅ Removed enable/disable feature flag (always active)
-- ✅ Individual cache entries can be updated independently (for detail pages)
+**Next Step**: Integration testing with full backend/frontend stack
 
-**Open Questions Decided:**
+---
 
-- Q1: Cache miss → return "Unknown" status ✅
-- Q4: Rate interval → configurable, default 0 = auto from elapsed time ✅
-- Q5: Feature flag → always enabled (no disable) ✅
+### Session History
+
+**Phase 3 - Traffic Graph Health Session** (2026-01-26):
+
+- ✅ Made health appender always run (no longer conditional)
+- ✅ Added edge health calculation to `HealthAppender`
+- ✅ Added `EdgeHealthStatus` metadata key to graph
+- ✅ Added `HealthStatus` field to `EdgeData` in graph response
+- ✅ Removed `HasHealthConfig` from `NodeData` (payload optimization)
+- ✅ Added `GetTolerancesForDirection()` to `HealthCalculator`
+- ✅ Deleted frontend edge health files (`GraphEdgeStatus.ts`, `TrafficHealth.ts`)
+- ✅ Updated `TrafficListComponent` to use backend edge health
+- ✅ Consolidated `getGlobalStatus()` and `getBackendStatus()` into `getStatus()`
+- ✅ Removed all client-side health calculation fallback logic
+- ✅ Updated PHASE3_DETAILED_DESIGN.md with Traffic Graph Health section
+
+**Phase 3 - Frontend Simplification Session** (previous):
+
+- ✅ Implemented frontend changes for list pages
+- ✅ Removed duration dropdown from list pages
+- ✅ Added `fromBackendStatus()` factory methods
+- ✅ Updated sorting/filtering to use backend status
 
 **Phase 3 Design Document Created** (2026-01-19):
 
@@ -169,11 +181,11 @@ Created PHASE3_DETAILED_DESIGN.md with file-by-file implementation plan.
 - Data structures defined
 - Interface definitions
 - Implementation steps outlined
-- Data flow diagrams
-- Error handling strategy
-- Testing strategy
 
-When resuming, review the design document or begin implementation
+**Phase 2 Completed** (2026-01-19):
+
+- Created comprehensive requirements document
+- All open questions decided
 
 ### What's Been Defined:
 
@@ -185,15 +197,17 @@ When resuming, review the design document or begin implementation
 - ✅ 5-phase implementation plan
 - ✅ Comprehensive test strategy
 
-### Phase 3 Will Define:
+### Phase 3 Completed:
 
-1. File-by-file implementation plan
-2. Detailed code structure for each component
-3. Complete interface definitions
-4. Data flow diagrams
-5. Step-by-step implementation guide
-6. Migration/rollout plan
-7. Monitoring and alerting setup
+1. ✅ File-by-file implementation plan
+2. ✅ Detailed code structure for each component
+3. ✅ Complete interface definitions
+4. ✅ Data flow diagrams
+5. ✅ Step-by-step implementation guide
+6. ✅ Backend health status calculation design
+7. ✅ Frontend changes for list pages
+8. ✅ Traffic graph health (node and edge) moved to backend
+9. ✅ Frontend API consolidation (`getStatus()`)
 
 ### Quick Reference:
 
