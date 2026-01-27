@@ -37,7 +37,7 @@ const rightToolbarStyle = kialiStyle({
 
 const actionsToolbarStyle = kialiStyle({
   marginLeft: 'auto',
-  paddingTop: '1.25rem'
+  paddingTop: '0.75rem'
 });
 
 const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {

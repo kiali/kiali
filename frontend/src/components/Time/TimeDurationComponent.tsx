@@ -33,9 +33,9 @@ const closeReplayStyle = kialiStyle({
   marginLeft: '1rem'
 });
 
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
+const timeDurationStyle = kialiStyle({
+  display: 'flex',
+  gap: '0.5rem'
 });
 
 const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps) => {
@@ -49,7 +49,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
   const [prefix, suffix] = props.replayActive ? [undefined, t('Traffic')] : [t('Last'), undefined];
 
   return (
-    <span>
+    <div className={timeDurationStyle}>
       {props.supportsReplay && !props.replayActive && (
         <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content={t('Replay...')}>
           <Button
@@ -74,7 +74,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
       />
 
       {!(props.supportsReplay && props.replayActive) && (
-        <Refresh className={refreshStyle} id="time_range_refresh" disabled={props.disabled} manageURL={true} />
+        <Refresh id="time_range_refresh" disabled={props.disabled} manageURL={true} />
       )}
 
       {props.supportsReplay && props.replayActive && (
@@ -91,7 +91,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
           </span>
         </Button>
       )}
-    </span>
+    </div>
   );
 };
 

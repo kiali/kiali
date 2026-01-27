@@ -9,9 +9,9 @@ type TimeControlProps = {
   customDuration: boolean;
 };
 
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
+const timeRangeStyle = kialiStyle({
+  display: 'flex',
+  gap: '0.5rem'
 });
 
 export const TimeControl: React.FC<TimeControlProps> = (props: TimeControlProps) => {
@@ -22,9 +22,9 @@ export const TimeControl: React.FC<TimeControlProps> = (props: TimeControlProps)
   );
 
   const timeRangeComponent = (
-    <div style={{ display: 'flex' }}>
+    <div className={timeRangeStyle}>
       <TimeRangeComponent manageURL={true} tooltip={t('Time range')} />
-      <Refresh className={refreshStyle} id="metrics-refresh" manageURL={true} />
+      <Refresh id="metrics-refresh" manageURL={true} />
     </div>
   );
 
