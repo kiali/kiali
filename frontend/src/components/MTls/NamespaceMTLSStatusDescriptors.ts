@@ -1,4 +1,5 @@
 import { MTLSStatuses } from 'types/TLSStatus';
+import { PFColors } from 'components/Pf/PfColors';
 import { StatusDescriptor } from './MTLSStatus';
 import { MTLSIconTypes } from './MTLSIconTypes';
 
@@ -11,7 +12,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.VALIDATION_ERROR,
     {
       message: 'mTLS PeerAuthentication has validation errors in this namespace',
-      color: 'red',
+      color: PFColors.Danger,
       name: 'Validation error',
       icon: MTLSIconTypes.LOCK_OPEN,
       showStatus: true
@@ -21,7 +22,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.ENABLED,
     {
       message: 'mTLS is enabled for this namespace',
-      color: 'black',
+      color: 'var(--pf-t--global--text--color--primary--default)',
       name: 'Strict',
       icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
@@ -31,7 +32,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.ENABLED_EXTENDED,
     {
       message: 'mTLS is enabled for this namespace, extended from Mesh-wide config',
-      color: 'black',
+      color: 'var(--pf-t--global--text--color--primary--default)',
       name: 'Strict',
       icon: MTLSIconTypes.LOCK_FULL,
       showStatus: true
@@ -41,7 +42,6 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.PARTIALLY,
     {
       message: 'mTLS is partially enabled for this namespace. Connection can be either plaintext or mTLS tunnel',
-      color: 'grey',
       name: 'Permissive',
       icon: MTLSIconTypes.LOCK_OPEN,
       showStatus: true
@@ -51,7 +51,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.DISABLED,
     {
       message: 'mTLS is disabled for this namespace',
-      color: 'red',
+      color: PFColors.Danger,
       name: 'Disabled',
       icon: MTLSIconTypes.LOCK_OPEN,
       showStatus: true
@@ -61,7 +61,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.UNSET,
     {
       message: 'Inherit from parent, if has one. Otherwise treated as PERMISSIVE',
-      color: 'black',
+      color: 'var(--pf-t--global--text--color--primary--default)',
       name: 'Unset',
       icon: MTLSIconTypes.LOCK_OPEN,
       showStatus: true
@@ -73,7 +73,7 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
     MTLSStatuses.NOT_ENABLED,
     {
       message: 'mTLS is not modified by this namespace. Defaults to Mesh mTLS',
-      color: 'black',
+      color: 'var(--pf-t--global--text--color--primary--default)',
       name: 'Unset',
       icon: MTLSIconTypes.LOCK_OPEN,
       showStatus: true
