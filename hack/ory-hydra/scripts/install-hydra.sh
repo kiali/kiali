@@ -251,12 +251,13 @@ fi
 echo "Creating TLS secret..."
 ${KUBECTL_CMD} create secret generic hydra-tls \
     --from-file=cert.pem=${CERTS_DIR}/cert.pem \
+    --from-file=ca.pem=${CERTS_DIR}/ca.pem \
     --from-file=key.pem=${CERTS_DIR}/key.pem \
     -n ${NAMESPACE} \
     --dry-run=client -o yaml | ${KUBECTL_CMD} apply -f -
 
 # Copy Hydra CA certificate for API server OIDC validation (skip for KinD and OpenShift)
-# On OpenShift, we don't need to copy certs to nodes - Kiali uses insecure_skip_verify_tls
+# On OpenShift, the CA is provided via the kiali-cabundle ConfigMap, so node copy isn't needed.
 if [[ "${CLUSTER_TYPE:-}" != "kind" ]] && [[ "${CLUSTER_TYPE:-}" != "openshift" ]]; then
     echo "Copying Hydra CA certificate to minikube for OIDC validation..."
     if command -v minikube >/dev/null 2>&1; then
