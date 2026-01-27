@@ -162,9 +162,8 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    // When wrapped in Provider, html() returns empty string instead of null
-    // Check that no meaningful content is rendered
-    expect(wrapper.text()).toBe('');
+    // When no status data is provided, the component returns null
+    expect(wrapper.find('NamespaceHealthStatusComponent').html()).toBeNull();
   });
 
   it('prioritizes FAILURE over other statuses', () => {
