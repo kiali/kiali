@@ -75,9 +75,6 @@ type VSInfo struct {
 	Hostnames []string `json:"hostnames,omitempty"`
 }
 
-// HealthConfig maps annotations information for health
-type HealthConfig map[string]string
-
 type NodeData struct {
 	ID                    string              `json:"id"`               // unique internal node ID (n0, n1...)
 	Parent                string              `json:"parent,omitempty"` // Compound Node parent ID
@@ -96,7 +93,6 @@ type NodeData struct {
 	HealthDataApp         interface{}         `json:"-"`                           // for local use to generate appBox health
 	HasCB                 bool                `json:"hasCB,omitempty"`             // true (has circuit breaker) | false
 	HasFaultInjection     bool                `json:"hasFaultInjection,omitempty"` // true (vs has fault injection) | false
-	HasHealthConfig       HealthConfig        `json:"hasHealthConfig,omitempty"`   // set to the health config override
 	HasIngressWaypoint    bool                `json:"hasIngressWaypoint,omitempty"`
 	HasMirroring          bool                `json:"hasMirroring,omitempty"`          // true (has mirroring) | false
 	HasRequestRouting     bool                `json:"hasRequestRouting,omitempty"`     // true (vs has request routing) | false
@@ -130,6 +126,7 @@ type EdgeData struct {
 	Source          string          `json:"source"`                    // parent node ID
 	Target          string          `json:"target"`                    // child node ID
 	DestPrincipal   string          `json:"destPrincipal,omitempty"`   // principal used for the edge destination
+	HealthStatus    string          `json:"healthStatus,omitempty"`    // calculated health status (Healthy, Degraded, Failure)
 	IsMTLS          string          `json:"isMTLS,omitempty"`          // set to the percentage of traffic using a mutual TLS connection
 	ResponseTime    string          `json:"responseTime,omitempty"`    // in millis
 	SourcePrincipal string          `json:"sourcePrincipal,omitempty"` // principal used for the edge source
@@ -265,11 +262,6 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// set k8s labels, if any
 		if val, ok := n.Metadata[graph.Labels]; ok {
 			nd.Labels = val.(graph.LabelsMetadata)
-		}
-
-		// set annotations, if available
-		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
-			nd.HasHealthConfig = val.(map[string]string)
 		}
 
 		// node captured by ambient
@@ -487,6 +479,9 @@ func convertEdge(e graph.Edge, nodeID string) EdgeData {
 			waypointEdge.FromEdge = &fromEdgeData
 		}
 		ed.Waypoint = &waypointEdge
+	}
+	if e.Metadata[graph.HealthStatus] != nil {
+		ed.HealthStatus = e.Metadata[graph.HealthStatus].(string)
 	}
 
 	addEdgeTelemetry(&e, &ed)

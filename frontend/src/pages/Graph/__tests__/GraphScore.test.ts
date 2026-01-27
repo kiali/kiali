@@ -30,15 +30,7 @@ describe('scoreNodes', () => {
         health: {
           items: []
         },
-        getGlobalStatus: () => ({
-          name: 'any',
-          color: 'any',
-          priority: 1,
-          icon: WarningTriangleIcon,
-          className: 'any',
-          status: 'warning'
-        }),
-        getBackendStatus: () => ({
+        getStatus: () => ({
           name: 'any',
           color: 'any',
           priority: 1,

@@ -83,7 +83,7 @@ export const getPresenceFilterValue = (filter: FilterType, activeFilters: Active
 };
 
 // filterByHealth filters items by their backend-provided health status.
-// Uses getBackendStatus() which returns NA if no backend status is available.
+// Returns NA if no backend status is available.
 export const filterByHealth = (items: any[], filterValues: string[]): any[] => {
-  return items.filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getBackendStatus().name));
+  return items.filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getStatus().name));
 };

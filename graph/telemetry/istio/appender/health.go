@@ -2,10 +2,13 @@ package appender
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -13,9 +16,8 @@ import (
 
 const HealthAppenderName = "health"
 
-// HealthAppender is responsible for adding the information needed to perform client-side health calculations. This
-// includes both health configuration, and health data, to the graph.  TODO: replace this with server-side
-// health calculation, and report only the health results.
+// HealthAppender is responsible for calculating and attaching health status to graph nodes.
+// Health status is calculated server-side using the traffic data collected during graph generation.
 // Name: health
 type HealthAppender struct {
 	Namespaces        graph.NamespaceInfoMap
@@ -41,6 +43,10 @@ func (a HealthAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffi
 
 	a.attachHealthConfig(trafficMap, globalInfo)
 	a.attachHealth(ctx, trafficMap, globalInfo)
+
+	// Calculate and attach health status for each node
+	calculator := business.NewHealthCalculator(globalInfo.Conf)
+	a.calculateHealthStatus(trafficMap, calculator)
 }
 
 func addValueToRequests(requests map[string]map[string]float64, protocol, code string, val float64) {
@@ -354,4 +360,256 @@ func (a *HealthAppender) attachHealth(ctx context.Context, trafficMap graph.Traf
 			n.Metadata[graph.HealthData] = health
 		}
 	}
+}
+
+// calculateHealthStatus calculates and sets the health status for each node and edge in the traffic map.
+// This consolidates health status calculation on the server side, using the traffic data
+// collected during graph generation rather than relying on cached health data (because the cached data
+// uses a fixed duration and likely a different time time period).
+func (a *HealthAppender) calculateHealthStatus(trafficMap graph.TrafficMap, calculator *business.HealthCalculator) {
+	// Calculate edge health first (needs node health configs)
+	a.calculateEdgeHealthStatus(trafficMap, calculator)
+
+	// Then calculate node health
+	for _, n := range trafficMap {
+		// Skip inaccessible nodes - they don't have health data
+		if b, ok := n.Metadata[graph.IsInaccessible]; ok && b.(bool) {
+			continue
+		}
+
+		// Get health annotations for custom thresholds
+		var annotations map[string]string
+		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
+			annotations = val.(map[string]string)
+		}
+
+		switch n.NodeType {
+		case graph.NodeTypeApp:
+			// For versioned app nodes, we have both HealthData (workload health) and HealthDataApp (app health)
+			// For non-versioned app nodes, we only have HealthData (app health)
+			if graph.IsOK(n.Workload) {
+				// Versioned app node: calculate status for the versioned app (uses workload health as base)
+				if h, found := n.Metadata[graph.HealthData]; found {
+					if health, ok := h.(*models.AppHealth); ok {
+						calculated := calculator.CalculateAppHealth(n.Namespace, n.App, health, annotations)
+						health.Status = &calculated
+					}
+				}
+				// Also calculate status for the app box health
+				if h, found := n.Metadata[graph.HealthDataApp]; found {
+					if health, ok := h.(*models.AppHealth); ok {
+						calculated := calculator.CalculateAppHealth(n.Namespace, n.App, health, annotations)
+						health.Status = &calculated
+					}
+				}
+			} else {
+				// Non-versioned app node
+				if h, found := n.Metadata[graph.HealthData]; found {
+					if health, ok := h.(*models.AppHealth); ok {
+						calculated := calculator.CalculateAppHealth(n.Namespace, n.App, health, annotations)
+						health.Status = &calculated
+					}
+				}
+			}
+		case graph.NodeTypeService:
+			if h, found := n.Metadata[graph.HealthData]; found {
+				if health, ok := h.(*models.ServiceHealth); ok {
+					calculated := calculator.CalculateServiceHealth(n.Namespace, n.Service, health, annotations)
+					health.Status = &calculated
+				}
+			}
+		case graph.NodeTypeWorkload:
+			if h, found := n.Metadata[graph.HealthData]; found {
+				if health, ok := h.(*models.WorkloadHealth); ok {
+					calculated := calculator.CalculateWorkloadHealth(n.Namespace, n.Workload, health, annotations)
+					health.Status = &calculated
+				}
+			}
+		}
+	}
+}
+
+// calculateEdgeHealthStatus calculates health status for each edge in the traffic map.
+// Edge health is based on error rates in the traffic, using tolerances from both
+// source (outbound) and destination (inbound) nodes.
+func (a *HealthAppender) calculateEdgeHealthStatus(trafficMap graph.TrafficMap, calculator *business.HealthCalculator) {
+	for _, n := range trafficMap {
+		for _, e := range n.Edges {
+			status := a.calculateSingleEdgeHealth(e, calculator)
+			if status != models.HealthStatusNA {
+				e.Metadata[graph.HealthStatus] = string(status)
+			}
+		}
+	}
+}
+
+// calculateSingleEdgeHealth calculates health status for a single edge.
+func (a *HealthAppender) calculateSingleEdgeHealth(edge *graph.Edge, calculator *business.HealthCalculator) models.HealthStatus {
+	source := edge.Source
+	dest := edge.Dest
+
+	// Get protocol from edge
+	protocol, ok := edge.Metadata[graph.ProtocolKey].(string)
+	if !ok || protocol == "" {
+		return models.HealthStatusNA
+	}
+
+	// Get responses for this protocol
+	responsesKey := graph.MetadataKey(protocol + "Responses")
+	responses, ok := edge.Metadata[responsesKey].(graph.Responses)
+	if !ok || len(responses) == 0 {
+		return models.HealthStatusNA
+	}
+
+	// Calculate total requests and error counts
+	totalRequests := float64(0)
+	for _, detail := range responses {
+		for _, val := range detail.Flags {
+			totalRequests += val
+		}
+	}
+
+	if totalRequests == 0 {
+		return models.HealthStatusNA
+	}
+
+	// Get health annotations from source and dest nodes
+	sourceAnnotations := getNodeHealthAnnotations(source)
+	destAnnotations := getNodeHealthAnnotations(dest)
+
+	// Get tolerances for source (outbound) and dest (inbound)
+	sourceName := getNodeName(source)
+	destName := getNodeName(dest)
+
+	sourceTolerances := calculator.GetTolerancesForDirection(source.Namespace, sourceName, source.NodeType, "outbound", sourceAnnotations)
+	destTolerances := calculator.GetTolerancesForDirection(dest.Namespace, destName, dest.NodeType, "inbound", destAnnotations)
+
+	// Calculate status for outbound (from source perspective)
+	outboundStatus := a.calculateEdgeStatusWithTolerances(responses, protocol, totalRequests, sourceTolerances)
+
+	// Calculate status for inbound (from dest perspective)
+	inboundStatus := a.calculateEdgeStatusWithTolerances(responses, protocol, totalRequests, destTolerances)
+
+	// Return the worse status
+	return models.MergeHealthStatus(outboundStatus, inboundStatus)
+}
+
+// calculateEdgeStatusWithTolerances calculates edge health status using the given tolerances.
+func (a *HealthAppender) calculateEdgeStatusWithTolerances(
+	responses graph.Responses,
+	protocol string,
+	totalRequests float64,
+	tolerances []config.Tolerance,
+) models.HealthStatus {
+	if len(tolerances) == 0 {
+		// No matching tolerances, check if there's traffic
+		if totalRequests > 0 {
+			return models.HealthStatusHealthy
+		}
+		return models.HealthStatusNA
+	}
+
+	worstStatus := models.HealthStatusNA
+
+	for _, tol := range tolerances {
+		// Check if this tolerance matches the protocol
+		if !matchesPattern(tol.Protocol, protocol) {
+			continue
+		}
+
+		// Sum up error count for matching response codes
+		errorCount := float64(0)
+		for code, detail := range responses {
+			if matchesCodePattern(tol.Code, code) {
+				for _, val := range detail.Flags {
+					errorCount += val
+				}
+			}
+		}
+
+		if totalRequests > 0 {
+			errorRatio := (errorCount / totalRequests) * 100
+
+			var status models.HealthStatus
+			if tol.Failure > 0 && errorRatio >= float64(tol.Failure) {
+				status = models.HealthStatusFailure
+			} else if tol.Degraded > 0 && errorRatio >= float64(tol.Degraded) {
+				status = models.HealthStatusDegraded
+			} else {
+				status = models.HealthStatusHealthy
+			}
+
+			if models.HealthStatusPriority(status) > models.HealthStatusPriority(worstStatus) {
+				worstStatus = status
+			}
+		}
+	}
+
+	// If we have traffic but no tolerance matched, consider it healthy
+	if worstStatus == models.HealthStatusNA && totalRequests > 0 {
+		return models.HealthStatusHealthy
+	}
+
+	return worstStatus
+}
+
+// getNodeHealthAnnotations returns the health annotations for a node, if any.
+func getNodeHealthAnnotations(n *graph.Node) map[string]string {
+	if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
+		if annotations, ok := val.(map[string]string); ok {
+			return annotations
+		}
+	}
+	return nil
+}
+
+// getNodeName returns the appropriate name for a node based on its type.
+func getNodeName(n *graph.Node) string {
+	switch n.NodeType {
+	case graph.NodeTypeService:
+		return n.Service
+	case graph.NodeTypeWorkload:
+		return n.Workload
+	case graph.NodeTypeApp:
+		return n.App
+	default:
+		return ""
+	}
+}
+
+// matchesCodePattern checks if a response code matches a code pattern (e.g., "5XX" matches "500", "501", etc.)
+func matchesCodePattern(pattern, code string) bool {
+	if pattern == "" || pattern == ".*" {
+		return true
+	}
+
+	// Replace X/x with \d for digit matching (matches frontend behavior)
+	regexPattern := strings.ReplaceAll(pattern, "X", `\d`)
+	regexPattern = strings.ReplaceAll(regexPattern, "x", `\d`)
+
+	return matchesPattern(regexPattern, code)
+}
+
+// matchesPattern checks if a value matches a regex pattern
+func matchesPattern(pattern, value string) bool {
+	if pattern == "" || pattern == ".*" {
+		return true
+	}
+
+	// Ensure full string match
+	fullPattern := pattern
+	if !strings.HasPrefix(fullPattern, "^") {
+		fullPattern = "^" + fullPattern
+	}
+	if !strings.HasSuffix(fullPattern, "$") {
+		fullPattern = fullPattern + "$"
+	}
+
+	re, err := regexp.Compile(fullPattern)
+	if err != nil {
+		// Invalid regex, fall back to exact match
+		return pattern == value
+	}
+
+	return re.MatchString(value)
 }
