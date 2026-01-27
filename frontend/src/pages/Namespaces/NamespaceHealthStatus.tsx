@@ -69,11 +69,19 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
 
   const unhealthyCount = getUnhealthyCount();
   const isHealthy = worstStatus === HEALTHY || worstStatus === null;
+  const isNA = worstStatus === NA;
   const hasAnyStatus = props.statusApp || props.statusService || props.statusWorkload;
 
   if (!hasAnyStatus) {
     return null;
   }
+
+  const getStatusText = (): string => {
+    if (isNA) {
+      return 'n/a';
+    }
+    return isHealthy ? t('Healthy') : t('Unhealthy');
+  };
 
   return (
     <div style={{ textAlign: 'left' }}>
@@ -83,9 +91,9 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
         ) : (
           <div style={{ display: 'inline-block', marginRight: '0.5rem', width: '1.5rem' }}></div>
         )}
-        <div style={{ display: 'inline-block' }}>{isHealthy ? t('Healthy') : t('Unhealthy')}</div>
+        <div style={{ display: 'inline-block' }}>{getStatusText()}</div>
       </div>
-      {!isHealthy && unhealthyCount > 0 && (
+      {!isHealthy && !isNA && unhealthyCount > 0 && (
         <div style={{ marginLeft: '1.375rem', marginTop: '0.125rem' }}>{pluralize(unhealthyCount, 'issue')}</div>
       )}
     </div>
