@@ -260,7 +260,8 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
                 {this.props.serviceDetails &&
                   this.props.serviceDetails.workloads &&
-                  this.props.serviceDetails.workloads.length > 0 && (
+                  this.props.serviceDetails.workloads.length > 0 &&
+                  this.props.serviceDetails.workloads.some(w => w.spireInfo?.isSpireManaged) && (
                     <StackItem>
                       <Spire object={this.props.serviceDetails} objectType="service" />
                     </StackItem>

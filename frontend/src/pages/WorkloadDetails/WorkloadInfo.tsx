@@ -280,7 +280,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                   />
                 </StackItem>
 
-                {workload && (
+                {workload && workload?.spireInfo?.isSpireManaged && (
                   <StackItem>
                     <Spire object={workload} objectType="workload" />
                   </StackItem>

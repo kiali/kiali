@@ -71,11 +71,14 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
                 <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
               </StackItem>
 
-              {this.props.app && this.props.app.workloads && this.props.app.workloads.length > 0 && (
-                <StackItem>
-                  <Spire object={this.props.app} objectType="app" />
-                </StackItem>
-              )}
+              {this.props.app &&
+                this.props.app.workloads &&
+                this.props.app.workloads.length > 0 &&
+                this.props.app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
+                  <StackItem>
+                    <Spire object={this.props.app} objectType="app" />
+                  </StackItem>
+                )}
             </Stack>
           </GridItem>
 
