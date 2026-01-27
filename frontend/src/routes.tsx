@@ -49,6 +49,12 @@ const navMenuItems: MenuItem[] = [
     pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
   },
   {
+    id: 'applications',
+    title: t('Applications'),
+    to: `/${Paths.APPLICATIONS}`,
+    pathsActive: [new RegExp(`^/namespaces/(.*)/${Paths.APPLICATIONS}/(.*)`)]
+  },
+  {
     id: 'services',
     title: t('Services'),
     to: `/${Paths.SERVICES}`,
