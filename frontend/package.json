@@ -75,7 +75,7 @@
     "eventemitter3": "4.0.7",
     "js-yaml": "^3.13.1",
     "json-beautify": "1.0.1",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "^4.17.23",
     "micro-memoize": "4.0.9",
     "moment": "^2.29.4",
     "react": "^17.0.1",
