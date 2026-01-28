@@ -28,7 +28,9 @@ import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
-import { EmptyNamespaces } from './EmptyNamespaces';
+import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
+import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
+import { t } from 'utils/I18nUtils';
 import { isMultiCluster } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
@@ -230,10 +232,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
 
-            setAIContext(
-              this.props.dispatch,
-              `Namespaces list: ${this.state.namespaces.map(ns => ns.name).join(',')}`
-            );
+            setAIContext(this.props.dispatch, `Namespaces list: ${this.state.namespaces.map(ns => ns.name).join(',')}`);
           }
         );
       })
@@ -635,6 +634,36 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     }
   };
 
+  getEmptyState = (): React.ReactNode => {
+    const hasFilters = FilterSelected.getSelected().filters.length > 0;
+
+    if (hasFilters) {
+      return (
+        <EmptyState
+          headingLevel="h5"
+          icon={SearchIcon}
+          titleText={t('No namespaces found')}
+          variant={EmptyStateVariant.lg}
+        >
+          <EmptyStateBody>{t('No results match the filter criteria. Clear all filters and try again.')}</EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    return (
+      <EmptyState
+        headingLevel="h5"
+        icon={CubesIcon}
+        titleText={t('No namespaces found')}
+        variant={EmptyStateVariant.lg}
+      >
+        <EmptyStateBody>
+          {t('No namespaces are accessible. Check your permissions or contact an administrator.')}
+        </EmptyStateBody>
+      </EmptyState>
+    );
+  };
+
   render(): React.ReactNode {
     const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
 
@@ -655,28 +684,25 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             </div>
           }
         />
-        <EmptyNamespaces
-          filteredNamespaces={filteredNamespaces}
-          loaded={this.state.loaded}
-          refreshInterval={this.props.refreshInterval}
-        >
-          <RenderContent>
-            <VirtualList
-              rows={filteredNamespaces}
-              sort={this.sort}
-              statefulProps={this.sFNamespacesToolbar}
-              actions={namespaceActions}
-              hiddenColumns={hiddenColumns}
-              type="namespaces"
-            >
-              <StatefulFilters
-                initialFilters={availableFilters}
-                onFilterChange={this.onChange}
-                ref={this.sFNamespacesToolbar}
-              />
-            </VirtualList>
-          </RenderContent>
-        </EmptyNamespaces>
+        <RenderContent>
+          <VirtualList
+            emptyState={this.getEmptyState()}
+            loaded={this.state.loaded}
+            refreshInterval={this.props.refreshInterval}
+            rows={filteredNamespaces}
+            sort={this.sort}
+            statefulProps={this.sFNamespacesToolbar}
+            actions={namespaceActions}
+            hiddenColumns={hiddenColumns}
+            type="namespaces"
+          >
+            <StatefulFilters
+              initialFilters={availableFilters}
+              onFilterChange={this.onChange}
+              ref={this.sFNamespacesToolbar}
+            />
+          </VirtualList>
+        </RenderContent>
       </>
     );
   }
