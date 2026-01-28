@@ -200,7 +200,6 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
             )
         )
         .then(_ => {
-          //Error here
           if (op !== 'delete') {
             this.createTrafficPolicies(ns, duration, apsP, sdsP, op, cluster);
           } else {
