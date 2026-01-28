@@ -600,9 +600,26 @@ helm upgrade --install ${HELM_RELEASE_NAME} "${HYDRA_CHART_PATH}" \
     --values /tmp/hydra-values.yaml \
     --timeout=300s
 
-# Wait for deployment to be created before patching
-echo "Waiting for deployment to be created..."
-${KUBECTL_CMD} wait --for=condition=available deployment/hydra -n ${NAMESPACE} --timeout=60s || true
+# Wait for deployment to exist (retry loop handles race condition between Helm and k8s API)
+echo "Waiting for Hydra deployment to be created..."
+for i in {1..30}; do
+    if ${KUBECTL_CMD} get deployment hydra -n ${NAMESPACE} &>/dev/null; then
+        echo "Hydra deployment found"
+        break
+    fi
+    echo "Waiting for deployment to exist... (attempt $i/30)"
+    sleep 5
+done
+
+# Verify deployment exists before proceeding
+if ! ${KUBECTL_CMD} get deployment hydra -n ${NAMESPACE} &>/dev/null; then
+    echo "ERROR: Hydra deployment was not created after waiting. Check Helm install and migration job status."
+    exit 1
+fi
+
+# Wait for deployment to be available
+echo "Waiting for Hydra deployment to be available..."
+${KUBECTL_CMD} wait --for=condition=available deployment/hydra -n ${NAMESPACE} --timeout=120s
 
 # Add critical environment variables for login/consent URLs
 echo "Adding login/consent URL environment variables..."
