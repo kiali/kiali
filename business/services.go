@@ -226,7 +226,6 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 			// Try cache first, fall back to on-demand calculation
 			if cachedHealth != nil {
 				if health, found := cachedHealth.ServiceHealth[sv.Name]; found {
-					log.Debugf("Service health cache hit for cluster=%s namespace=%s service=%s", cluster, criteria.Namespace, sv.Name)
 					services.Services[i].Health = *health
 					continue
 				}

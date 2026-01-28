@@ -162,9 +162,10 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 
 	// Start health monitor for pre-computing health data (if enabled)
 	if hcm != nil {
+		log.Infof("health cache is enabled (refresh interval: %v); starting health pre-computation.", conf.HealthConfig.Compute.RefreshInterval)
 		hcm.Start(ctx)
 	} else {
-		log.Info("Health cache is disabled; skipping health pre-computation.")
+		log.Info("health cache is disabled; skipping health pre-computation.")
 	}
 
 	// Start listening to requests

@@ -459,12 +459,12 @@ func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType interna
 // SetHealth stores health data in cache
 func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.CachedHealthData) {
 	key := models.HealthCacheKey(cluster, namespace)
-	c.zl.Debug().
+	c.zl.Trace().
 		Str("cluster", cluster).
 		Str("namespace", namespace).
 		Time("computedAt", data.ComputedAt).
 		Str("duration", data.Duration).
-		Msg("Health cache updated")
+		Msg("health cache updated")
 	c.healthStore.Set(key, data)
 }
 

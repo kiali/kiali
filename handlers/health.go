@@ -88,7 +88,7 @@ func ClusterHealth(
 				if !found {
 					// Cache miss - return "unknown" status for this namespace
 					allFromCache = false
-					log.Debugf("Health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
+					log.Debugf("health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
 					switch healthType {
 					case "app":
 						result.AppHealth[ns] = &models.NamespaceAppHealth{}
@@ -99,9 +99,6 @@ func ClusterHealth(
 					}
 					continue
 				}
-
-				// Cache hit
-				log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
 
 				// Use cached data
 				switch healthType {
