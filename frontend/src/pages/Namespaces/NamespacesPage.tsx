@@ -693,7 +693,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     });
 
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
-    if (getUniqueRevisionsCount() < 1) {
+    if (getUniqueRevisionsCount() < 2) {
       hiddenColumns.push('revision');
     }
 

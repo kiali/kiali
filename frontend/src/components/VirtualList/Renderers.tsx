@@ -581,7 +581,7 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         key={`VirtuaItem_Revision_${ns.name}`}
         style={{ verticalAlign: 'middle' }}
       >
-        <PFLabel color="grey" isCompact>
+        <PFLabel variant="outline" color="grey" isCompact>
           {t('Not applicable')}
         </PFLabel>
       </Td>
@@ -596,7 +596,7 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         key={`VirtuaItem_Revision_${ns.name}`}
         style={{ verticalAlign: 'middle' }}
       >
-        <PFLabel color="grey" isCompact>
+        <PFLabel variant="outline" color="grey" isCompact>
           {t('Not applicable')}
         </PFLabel>
       </Td>
@@ -606,7 +606,7 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   return (
     <Td role="gridcell" dataLabel="Revision" key={`VirtuaItem_Revision_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       <Tooltip content={<span>{t('Istio revision {{version}}', { version: revision })}</span>}>
-        <PFLabel color="orange" isCompact data-test="data-plane-revision-badge">
+        <PFLabel variant="outline" color="orange" isCompact data-test="data-plane-revision-badge">
           {revision}
         </PFLabel>
       </Tooltip>
