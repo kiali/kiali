@@ -91,6 +91,7 @@ export type GraphURLPathProps = {
 };
 
 type ReduxDispatchProps = {
+  dispatch: KialiDispatch;
   endTour: () => void;
   onReady: (controller: any) => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
@@ -105,7 +106,6 @@ type ReduxDispatchProps = {
   toggleIdleNodes: () => void;
   toggleLegend: () => void;
   updateSummary: (summaryData: SummaryData | null) => void;
-  dispatch: KialiDispatch;
 };
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
@@ -594,8 +594,13 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     console.debug(`onFocus(${focusNode})`);
   };
 
-  private handleReady = (refs: GraphRefs): void => {
-    this.setState({ graphRefs: refs, isReady: true });
+  private handleReady = (refs: GraphRefs | undefined, isReady: boolean): void => {
+    this.setState({ graphRefs: refs, isReady: isReady });
+
+    if (!isReady) {
+      this.initTime = Date.now();
+      return;
+    }
 
     const loadingTime = (Date.now() - this.initTime) / 1000;
     if (this.props.showTrafficAnimation && loadingTime > 10) {
