@@ -24,7 +24,7 @@ const columns: ThProps[] = [
 ];
 
 const noJWTRulesStyle = kialiStyle({
-  color: PFColors.Red100,
+  color: PFColors.Red500,
   textAlign: 'center'
 });
 

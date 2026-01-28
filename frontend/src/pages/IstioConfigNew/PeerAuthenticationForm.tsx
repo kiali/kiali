@@ -24,7 +24,7 @@ import { SimpleTable } from 'components/Table/SimpleTable';
 
 const noPortMtlsStyle = kialiStyle({
   marginTop: '1rem',
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const columns: ThProps[] = [
@@ -323,7 +323,6 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
-            
             isChecked={this.state.addWorkloadSelector}
             onChange={this.onChangeWorkloadSelector}
           />
@@ -391,13 +390,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         </FormGroup>
 
         <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
-          <Switch
-            id="addPortMtls"
-            label={' '}
-            
-            isChecked={this.state.addPortMtls}
-            onChange={this.onChangeAddPortMtls}
-          />
+          <Switch id="addPortMtls" label={' '} isChecked={this.state.addPortMtls} onChange={this.onChangeAddPortMtls} />
         </FormGroup>
 
         {this.state.addPortMtls && (
