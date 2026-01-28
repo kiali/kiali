@@ -9,20 +9,18 @@ import { StatefulFilters, StatefulFiltersRef } from '../../components/Filters/St
 import * as FilterHelper from '../../components/FilterList/FilterHelper';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import { KialiAppState } from '../../store/Store';
-import { durationSelector, languageSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { IntervalInMilliseconds, DurationInSeconds } from '../../types/Common';
+import { languageSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { IntervalInMilliseconds } from '../../types/Common';
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import * as Sorts from './Sorts';
 import * as Filters from './Filters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { Refresh } from '../../components/Refresh/Refresh';
 import { KialiDispatch } from '../../types/Redux';
 import { t, tMap } from 'utils/I18nUtils';
 
-// TODO: Are any of these redux state or dispatch props used?
 type ReduxStateProps = {
-  duration: DurationInSeconds;
   language: string;
   refreshInterval: IntervalInMilliseconds;
 };
@@ -74,6 +72,11 @@ const rightToolbarStyle = kialiStyle({
 
 const timeToolbarStyle = kialiStyle({
   textAlign: 'right'
+});
+
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
 });
 
 const actionsToolbarStyle = kialiStyle({
@@ -217,7 +220,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
     const timeToolbar = (
       <div className={timeToolbarStyle}>
-        <TimeDurationComponent key="overview-time-range" id="overview-time-range" disabled={false} />
+        <Refresh className={refreshStyle} id="overview-time-range" disabled={false} manageURL={true} />
       </div>
     );
 
@@ -294,9 +297,8 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  duration: durationSelector(state),
-  refreshInterval: refreshIntervalSelector(state),
-  language: languageSelector(state)
+  language: languageSelector(state),
+  refreshInterval: refreshIntervalSelector(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
