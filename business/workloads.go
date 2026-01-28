@@ -370,7 +370,6 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			// Try cache first, fall back to on-demand calculation
 			if cachedHealth != nil {
 				if health, found := cachedHealth.WorkloadHealth[wItem.Name]; found {
-					log.Debugf("Workload health cache hit for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
 					wItem.Health = *health
 				} else {
 					// Cache miss for this specific workload - compute on-demand (also updates cache)

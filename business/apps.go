@@ -198,7 +198,6 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			// Try cache first, fall back to on-demand calculation
 			if cachedHealth != nil {
 				if health, found := cachedHealth.AppHealth[appItem.Name]; found {
-					log.Debugf("App health cache hit for cluster=%s namespace=%s app=%s", cluster, namespace, appItem.Name)
 					appItem.Health = *health
 				} else {
 					// Cache miss for this specific app - compute on-demand (also updates cache)
@@ -383,7 +382,6 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				cachedHealth := cachedHealthByCluster[valueApp.cluster]
 				if cachedHealth != nil {
 					if health, found := cachedHealth.AppHealth[appItem.Name]; found {
-						log.Debugf("App health cache hit for cluster=%s namespace=%s app=%s", valueApp.cluster, criteria.Namespace, appItem.Name)
 						appItem.Health = *health
 					} else {
 						// Cache miss for this specific app - compute on-demand (also updates cache)
