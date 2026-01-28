@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -219,7 +220,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 
 	if criteria.IncludeHealth {
 		// Try to get cached health for this namespace
-		cachedHealth, _ := in.kialiCache.GetHealth(cluster, criteria.Namespace)
+		cachedHealth, _ := in.kialiCache.GetHealth(cluster, criteria.Namespace, internalmetrics.HealthTypeService)
 
 		for i, sv := range services.Services {
 			// Try cache first, fall back to on-demand calculation

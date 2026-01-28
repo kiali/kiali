@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -136,7 +137,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 	// Try to get cached health for this namespace
 	var cachedHealth *models.CachedHealthData
 	if criteria.IncludeHealth {
-		cachedHealth, _ = in.kialiCache.GetHealth(cluster, namespace)
+		cachedHealth, _ = in.kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeApp)
 	}
 
 	for keyApp, valueApp := range allApps {
@@ -314,7 +315,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		for _, clusterApps := range allApps {
 			for _, valueApp := range clusterApps {
 				if _, exists := cachedHealthByCluster[valueApp.cluster]; !exists {
-					cachedHealth, _ := in.kialiCache.GetHealth(valueApp.cluster, criteria.Namespace)
+					cachedHealth, _ := in.kialiCache.GetHealth(valueApp.cluster, criteria.Namespace, internalmetrics.HealthTypeApp)
 					cachedHealthByCluster[valueApp.cluster] = cachedHealth
 				}
 			}

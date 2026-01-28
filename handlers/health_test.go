@@ -23,6 +23,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
@@ -408,7 +409,7 @@ func TestCacheUpdateWorkloadHealth(t *testing.T) {
 	kialiCache.UpdateWorkloadHealth(cluster, namespace, "workload1", updatedHealth)
 
 	// Verify workload1 was updated
-	retrieved, found := kialiCache.GetHealth(cluster, namespace)
+	retrieved, found := kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeWorkload)
 	require.True(t, found)
 	require.NotNil(t, retrieved.WorkloadHealth["workload1"])
 	assert.Equal(t, int32(3), retrieved.WorkloadHealth["workload1"].WorkloadStatus.DesiredReplicas)
@@ -458,7 +459,7 @@ func TestCacheUpdateAppHealth(t *testing.T) {
 	kialiCache.UpdateAppHealth(cluster, namespace, "app1", updatedHealth)
 
 	// Verify app1 was updated
-	retrieved, found := kialiCache.GetHealth(cluster, namespace)
+	retrieved, found := kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeApp)
 	require.True(t, found)
 	require.NotNil(t, retrieved.AppHealth["app1"])
 	assert.Equal(t, int32(5), retrieved.AppHealth["app1"].WorkloadStatuses[0].DesiredReplicas)
@@ -505,7 +506,7 @@ func TestCacheUpdateServiceHealth(t *testing.T) {
 	kialiCache.UpdateServiceHealth(cluster, namespace, "service1", updatedHealth)
 
 	// Verify service1 was updated
-	retrieved, found := kialiCache.GetHealth(cluster, namespace)
+	retrieved, found := kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeService)
 	require.True(t, found)
 	require.NotNil(t, retrieved.ServiceHealth["service1"])
 	assert.Equal(t, "true", retrieved.ServiceHealth["service1"].Requests.HealthAnnotations["updated"])
@@ -534,7 +535,7 @@ func TestCacheUpdateWhenNamespaceNotCached(t *testing.T) {
 	kialiCache.UpdateWorkloadHealth(cluster, namespace, "workload1", health)
 
 	// Verify namespace is still not in cache
-	_, found := kialiCache.GetHealth(cluster, namespace)
+	_, found := kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeWorkload)
 	assert.False(t, found)
 }
 
@@ -573,7 +574,7 @@ func TestCacheUpdateAddsNewEntry(t *testing.T) {
 	kialiCache.UpdateWorkloadHealth(cluster, namespace, "workload2", newHealth)
 
 	// Verify both workloads are now in cache
-	retrieved, found := kialiCache.GetHealth(cluster, namespace)
+	retrieved, found := kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeWorkload)
 	require.True(t, found)
 	assert.Len(t, retrieved.WorkloadHealth, 2)
 	require.NotNil(t, retrieved.WorkloadHealth["workload1"])
