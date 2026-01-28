@@ -839,7 +839,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           'data-test': `add-${nsInfo.name}-namespace-ambient`,
           isGroup: false,
           isSeparator: false,
-          title: 'Add to Ambient',
+          title: t('Add to Ambient'),
           action: (ns: string) =>
             this.setState({
               showTrafficPoliciesModal: true,
