@@ -2,7 +2,9 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"strings"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -102,6 +104,9 @@ type WorkloadListItem struct {
 	// required: true
 	// example: true
 	IsGateway bool `json:"isGateway"`
+
+	// SPIRE information for SPIRE-managed workloads
+	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
 
 	// Define if this Workload is an ambient waypoint
 	// required: true
@@ -252,6 +257,30 @@ type Workload struct {
 
 	// Health
 	Health WorkloadHealth `json:"health"`
+
+	// SPIRE information for SPIRE-managed workloads
+	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
+}
+
+// SpireManagedIdentityMatch represents a single match that indicates SPIRE-managed identity
+type SpireManagedIdentityMatch struct {
+	// Match type: "Annotations", "Labels", "PodLabels"
+	MatchType string `json:"matchType"`
+	// Key-value pair string (e.g., "inject.istio.io/templates: spire")
+	MatchValue string `json:"matchValue"`
+}
+
+// SpireInfo contains SPIRE-related information for a workload
+type SpireInfo struct {
+	// Indicates if the workload is SPIRE-managed
+	IsSpireManaged bool `json:"isSpireManaged"`
+
+	// Indicates if the workload is a SPIRE Server/Agent (Server, Agent, Driver, Provider)
+	IsSpireServer bool `json:"isSpireServer"`
+
+	// Ordered list of match types and their key-value pairs that indicate SPIRE-managed identity
+	// Preserves the order of detection (priority: Annotations, TemplateLabels/Labels, PodLabels)
+	ManagedIdentityMatches []SpireManagedIdentityMatch `json:"managedIdentityMatches,omitempty"`
 }
 
 // WorkloadEntry describes networking_v1.WorkloadEntry for Kiali, used in WorkloadGroups
@@ -313,6 +342,11 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload, conf *config.Config
 	}
 	if verLabelName, found := conf.GetVersionLabelName(w.Labels); found {
 		_, workload.VersionLabel = w.Labels[verLabelName]
+	}
+
+	// Copy SpireInfo from Workload to WorkloadListItem
+	if w.SpireInfo != nil {
+		workload.SpireInfo = w.SpireInfo
 	}
 }
 
@@ -678,6 +712,23 @@ func (workload *Workload) WaypointFor() string {
 	}
 }
 
+// IsSpireServer return true if the workload is a SPIRE Server/Agent (Based in labels)
+func (workload *Workload) IsSpireServer() bool {
+	// Check template labels first (more reliable for identifying the workload type)
+	if workload.TemplateLabels != nil {
+		if workload.TemplateLabels[config.SpireComponentLabel] == config.SpireComponentValue {
+			return true
+		}
+	}
+	// Fallback to pod labels
+	for _, pod := range workload.Pods {
+		if pod.Labels[config.SpireComponentLabel] == config.SpireComponentValue {
+			return true
+		}
+	}
+	return false
+}
+
 // IsZtunnel return true if the workload is a ztunnel (Based in labels)
 func (workload *Workload) IsZtunnel() bool {
 	for _, pod := range workload.Pods {
@@ -686,6 +737,56 @@ func (workload *Workload) IsZtunnel() bool {
 		}
 	}
 	return false
+}
+
+// SpireManagedIdentity returns an ordered slice of match types and their key-value pairs if the workload has SPIRE-managed identity
+// Returns empty slice if no SPIRE-managed identity is found
+// The order is preserved: Annotations, TemplateLabels (for controllers) or Labels (for Pods), PodLabels
+func (workload *Workload) SpireManagedIdentity() []SpireManagedIdentityMatch {
+	var result []SpireManagedIdentityMatch
+
+	// Top priority: Check template annotations for SPIRE injection annotation
+	if workload.TemplateAnnotations != nil {
+		if annotationValue, exists := workload.TemplateAnnotations[config.SpireInjectionAnnotation]; exists {
+			if strings.Contains(annotationValue, config.SpireInjectionAnnotationValue) {
+				result = append(result, SpireManagedIdentityMatch{
+					MatchType:  "Annotations",
+					MatchValue: fmt.Sprintf("%s: %s", config.SpireInjectionAnnotation, annotationValue),
+				})
+			}
+		}
+	}
+
+	// Check template labels (for deployments, statefulsets, etc.)
+	if workload.TemplateLabels != nil {
+		if labelValue, exists := workload.TemplateLabels[config.SpireManagedIdentityLabel]; exists && labelValue == config.SpireManagedIdentityValue {
+			result = append(result, SpireManagedIdentityMatch{
+				MatchType:  "Labels",
+				MatchValue: fmt.Sprintf("%s: %s", config.SpireManagedIdentityLabel, labelValue),
+			})
+		}
+	} else if workload.Labels != nil { // or check Labels
+		// For standalone Pods, TemplateLabels is nil, so check Labels directly
+		if labelValue, exists := workload.Labels[config.SpireManagedIdentityLabel]; exists && labelValue == config.SpireManagedIdentityValue {
+			result = append(result, SpireManagedIdentityMatch{
+				MatchType:  "Labels",
+				MatchValue: fmt.Sprintf("%s: %s", config.SpireManagedIdentityLabel, labelValue),
+			})
+		}
+	}
+	// Check pod labels as fallback
+	for _, pod := range workload.Pods {
+		if pod.Labels != nil {
+			if labelValue, exists := pod.Labels[config.SpireManagedIdentityLabel]; exists && labelValue == config.SpireManagedIdentityValue {
+				result = append(result, SpireManagedIdentityMatch{
+					MatchType:  "PodLabels",
+					MatchValue: fmt.Sprintf("%s: %s", config.SpireManagedIdentityLabel, labelValue),
+				})
+				break
+			}
+		}
+	}
+	return result
 }
 
 // HasIstioAmbient returns true if the workload has any pod with Ambient mesh annotations

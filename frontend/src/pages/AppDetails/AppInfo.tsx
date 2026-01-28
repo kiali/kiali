@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Grid, GridItem } from '@patternfly/react-core';
+import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { AppDescription } from './AppDescription';
 import { App } from '../../types/App';
+import { Spire } from '../../components/Spire/Spire';
 import { RenderComponentScroll } from '../../components/Nav/Page';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -65,7 +66,20 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
       <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
         <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
           <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
-            <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
+            <Stack hasGutter={true}>
+              <StackItem>
+                <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
+              </StackItem>
+
+              {this.props.app &&
+                this.props.app.workloads &&
+                this.props.app.workloads.length > 0 &&
+                this.props.app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
+                  <StackItem>
+                    <Spire object={this.props.app} objectType="app" />
+                  </StackItem>
+                )}
+            </Stack>
           </GridItem>
 
           <GridItem span={miniGraphSpan}>

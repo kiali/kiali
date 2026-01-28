@@ -1,5 +1,5 @@
 import { Namespace } from './Namespace';
-import { Runtime, WaypointInfo } from './Workload';
+import { Runtime, SpireInfo, WaypointInfo } from './Workload';
 import { InstanceType } from 'types/Common';
 import { AppHealthResponse } from '../types/Health';
 import { GroupVersionKind } from './IstioObjects';
@@ -20,6 +20,7 @@ export interface AppWorkload {
   labels: { [key: string]: string };
   namespace: string;
   serviceAccountNames: string[];
+  spireInfo?: SpireInfo;
   waypointWorkloads?: WaypointInfo[];
   workloadName: string;
 }

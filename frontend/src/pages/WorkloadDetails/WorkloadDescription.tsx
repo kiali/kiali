@@ -209,14 +209,16 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
             />
           )}
 
-          {(!workload.appLabel || !workload.versionLabel) && !workload.isWaypoint && (
-            <MissingLabel
-              missingApp={!workload.appLabel}
-              missingVersion={!workload.versionLabel}
-              className={classes(infoStyle, workloadInfoStyle)}
-              tooltip={true}
-            />
-          )}
+          {(!workload.appLabel || !workload.versionLabel) &&
+            !workload.isWaypoint &&
+            !workload.spireInfo?.isSpireServer && (
+              <MissingLabel
+                missingApp={!workload.appLabel}
+                missingVersion={!workload.versionLabel}
+                className={classes(infoStyle, workloadInfoStyle)}
+                tooltip={true}
+              />
+            )}
 
           {workload.isWaypoint && renderWaypointSimpleLabel()}
         </Title>

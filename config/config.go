@@ -112,27 +112,33 @@ const (
 )
 
 const (
-	AmbientAnnotation         = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled  = "enabled"
-	GatewayLabel              = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
-	IstioAppLabel             = "app"                                    // we can assume istio components are labeled with "app"
-	IstioInjectionAnnotation  = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
-	IstioRevisionLabel        = "istio.io/rev"                           // the standard label key used to identify the istio revision.
-	IstioSidecarAnnotation    = "sidecar.istio.io/status"                // the standard annotation for sidecar status
-	IstioVersionLabel         = "version"                                // we can assume istio components are labeled with "version", if versioned
-	KubernetesAppLabel        = "app.kubernetes.io/name"
-	Waypoint                  = "waypoint"
-	WaypointFor               = "istio.io/waypoint-for"
-	WaypointForAll            = "all"
-	WaypointForNone           = "none"
-	WaypointForService        = "service"
-	WaypointForWorkload       = "workload"
-	WaypointLabel             = "gateway.istio.io/managed" // only identifies istio waypoint
-	WaypointLabelValue        = "istio.io-mesh-controller" // only identifies istio waypoint
-	WaypointUseLabel          = "istio.io/use-waypoint"
-	WaypointNone              = "none"
-	WaypointUseNamespaceLabel = "istio.io/use-waypoint-namespace"
-	Ztunnel                   = "ztunnel"
+	AmbientAnnotation             = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled      = "enabled"
+	GatewayLabel                  = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
+	IstioAppLabel                 = "app"                                    // we can assume istio components are labeled with "app"
+	IstioInjectionAnnotation      = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
+	IstioRevisionLabel            = "istio.io/rev"                           // the standard label key used to identify the istio revision.
+	IstioSidecarAnnotation        = "sidecar.istio.io/status"                // the standard annotation for sidecar status
+	IstioVersionLabel             = "version"                                // we can assume istio components are labeled with "version", if versioned
+	KubernetesAppLabel            = "app.kubernetes.io/name"
+	SpireComponentLabel           = "app.kubernetes.io/instance"
+	SpireManagedIdentityLabel     = "spiffe.io/spire-managed-identity" // SPIRE label indicating workload is managed by SPIRE
+	SpireManagedIdentityValue     = "true"                             // Value for SPIRE managed identity label
+	SpireComponentValue           = "spire"
+	SpireInjectionAnnotation      = "inject.istio.io/templates" // SPIRE annotation indicating workload is managed by SPIRE
+	SpireInjectionAnnotationValue = "spire"                     // SPIRE annotation value workload is managed by SPIRE
+	Waypoint                      = "waypoint"
+	WaypointFor                   = "istio.io/waypoint-for"
+	WaypointForAll                = "all"
+	WaypointForNone               = "none"
+	WaypointForService            = "service"
+	WaypointForWorkload           = "workload"
+	WaypointLabel                 = "gateway.istio.io/managed" // only identifies istio waypoint
+	WaypointLabelValue            = "istio.io-mesh-controller" // only identifies istio waypoint
+	WaypointUseLabel              = "istio.io/use-waypoint"
+	WaypointNone                  = "none"
+	WaypointUseNamespaceLabel     = "istio.io/use-waypoint-namespace"
+	Ztunnel                       = "ztunnel"
 )
 
 // CA bundle file paths used by CredentialManager.
@@ -400,7 +406,6 @@ type TempoConfig struct {
 	URLFormat     string `yaml:"url_format" json:"urlFormat,omitempty"`
 }
 
-// TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth" json:"auth"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
