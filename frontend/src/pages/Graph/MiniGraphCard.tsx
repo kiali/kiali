@@ -264,8 +264,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     );
   }
 
-  private handleReady = (refs: GraphRefs): void => {
-    this.setState({ graphRefs: refs, isReady: true });
+  private handleReady = (refs: GraphRefs | undefined, isReady: boolean): void => {
+    this.setState({ graphRefs: refs, isReady: isReady });
   };
 
   private handleLaunchWizard = (key: WizardAction, mode: WizardMode): void => {
