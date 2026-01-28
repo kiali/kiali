@@ -8,6 +8,7 @@ set -e
 HOSTNAME="hydra.example.com"
 CLUSTER_IP=""
 CERT_DIR="ssl"
+EXTRA_HOSTS=""
 
 helpmsg() {
   cat <<HELP
@@ -15,17 +16,22 @@ This script generates TLS certificates for Ory Hydra.
 
 Options:
 
--hn|--hostname <hostname>
-    Hostname for the certificate.
-    Default: hydra.example.com
+-cd|--cert-dir <directory>
+    Directory where certificates will be generated.
+    Default: ssl
 
 -ci|--cluster-ip <ip>
     Cluster IP address to include in certificate SAN.
     Default: <none>
 
--cd|--cert-dir <directory>
-    Directory where certificates will be generated.
-    Default: ssl
+-eh|--extra-hosts <hosts>
+    Comma-separated list of additional hostnames to include in certificate SAN.
+    Example: --extra-hosts "hydra-admin-ory.apps.example.com,hydra-ui-ory.apps.example.com"
+    Default: <none>
+
+-hn|--hostname <hostname>
+    Hostname for the certificate.
+    Default: hydra.example.com
 
 -h|--help
     Show this help message.
@@ -36,10 +42,11 @@ HELP
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
-    -hn|--hostname)   HOSTNAME="$2";   shift;shift; ;;
-    -ci|--cluster-ip) CLUSTER_IP="$2"; shift;shift; ;;
-    -cd|--cert-dir)   CERT_DIR="$2";   shift;shift; ;;
-    -h|--help)        helpmsg;          exit 0       ;;
+    -cd|--cert-dir)   CERT_DIR="$2";    shift;shift; ;;
+    -ci|--cluster-ip) CLUSTER_IP="$2";  shift;shift; ;;
+    -eh|--extra-hosts) EXTRA_HOSTS="$2"; shift;shift; ;;
+    -hn|--hostname)   HOSTNAME="$2";    shift;shift; ;;
+    -h|--help)        helpmsg;           exit 0       ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
@@ -47,6 +54,7 @@ done
 echo "=== Ory Hydra Certificate Generation ==="
 echo "Hostname: ${HOSTNAME}"
 echo "Cluster IP: ${CLUSTER_IP}"
+echo "Extra Hosts: ${EXTRA_HOSTS}"
 echo "Certificate Directory: ${CERT_DIR}"
 echo ""
 
@@ -56,12 +64,27 @@ mkdir -p "${CERT_DIR}"
 # Build Subject Alternative Names
 SAN_ENTRIES="DNS.1 = ${HOSTNAME}"
 SAN_COUNT=1
+IP_COUNT=0
+
+# Add extra hosts if provided (comma-separated)
+if [[ -n "${EXTRA_HOSTS}" ]]; then
+    IFS=',' read -ra EXTRA_HOST_ARRAY <<< "${EXTRA_HOSTS}"
+    for extra_host in "${EXTRA_HOST_ARRAY[@]}"; do
+        extra_host=$(echo "${extra_host}" | xargs) # trim whitespace
+        if [[ -n "${extra_host}" ]]; then
+            SAN_COUNT=$((SAN_COUNT + 1))
+            SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = ${extra_host}"
+            echo "Adding extra host ${extra_host} to certificate"
+        fi
+    done
+fi
 
 # Add cluster IP if provided
 if [[ -n "${CLUSTER_IP}" ]]; then
-    SAN_COUNT=$((SAN_COUNT + 1))
+    IP_COUNT=$((IP_COUNT + 1))
     SAN_ENTRIES="${SAN_ENTRIES}
-IP.1 = ${CLUSTER_IP}"
+IP.${IP_COUNT} = ${CLUSTER_IP}"
     echo "Adding cluster IP ${CLUSTER_IP} to certificate"
 
     # Add nip.io hostname for external access
@@ -89,9 +112,35 @@ SAN_COUNT=$((SAN_COUNT + 1))
 SAN_ENTRIES="${SAN_ENTRIES}
 DNS.${SAN_COUNT} = hydra.ory.svc.cluster.local"
 
-# Add localhost IP
+# Add internal Hydra service names for OpenShift passthrough TLS
+SAN_COUNT=$((SAN_COUNT + 1))
 SAN_ENTRIES="${SAN_ENTRIES}
-IP.2 = 127.0.0.1"
+DNS.${SAN_COUNT} = hydra-public"
+
+SAN_COUNT=$((SAN_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = hydra-public.ory"
+
+SAN_COUNT=$((SAN_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = hydra-public.ory.svc.cluster.local"
+
+SAN_COUNT=$((SAN_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = hydra-admin"
+
+SAN_COUNT=$((SAN_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = hydra-admin.ory"
+
+SAN_COUNT=$((SAN_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+DNS.${SAN_COUNT} = hydra-admin.ory.svc.cluster.local"
+
+# Add localhost IP
+IP_COUNT=$((IP_COUNT + 1))
+SAN_ENTRIES="${SAN_ENTRIES}
+IP.${IP_COUNT} = 127.0.0.1"
 
 echo "Certificate will include these Subject Alternative Names:"
 echo "${SAN_ENTRIES}" | grep -E "^(DNS|IP)\." | sed 's/^/  /'

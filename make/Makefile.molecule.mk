@@ -193,7 +193,28 @@ ifndef MOLECULE_ADD_HOST_ARGS
 .prepare-add-host-args: .prepare-cluster
 ifeq ($(CLUSTER_TYPE),openshift)
 	@echo "Will auto-detect hosts to add based on the CLUSTER_REPO: ${CLUSTER_REPO}"
-	@$(eval MOLECULE_ADD_HOST_ARGS ?= $(shell basehost="$(shell echo ${CLUSTER_REPO} | sed 's/^.*\.apps[\.-]\(.*\)/\1/')"; appsbasehost="$(shell echo ${CLUSTER_REPO} | sed 's/^.*\.\(apps[\.-].*\)/\1/')"; kialihost="kiali-istio-system.$${appsbasehost}"; kialiip="$$(getent hosts $${kialihost} | head -n 1 | awk '{ print $$1 }')"; prometheushost="prometheus-istio-system.$${appsbasehost}"; prometheusip="$$(getent hosts $${prometheushost} | head -n 1 | awk '{ print $$1 }')" apihost="api.$${basehost}"; apiip="$$(getent hosts $${apihost} | head -n 1 | awk '{ print $$1 }')"; oauthoshost="oauth-openshift.$${appsbasehost}"; oauthosip="$$(getent hosts $${oauthoshost} | head -n 1 | awk '{ print $$1 }')"; echo "--add-host=$$kialihost:$$kialiip --add-host=$$prometheushost:$$prometheusip --add-host=$$apihost:$$apiip --add-host=$$oauthoshost:$$oauthosip"))
+	@$(eval MOLECULE_ADD_HOST_ARGS ?= $(shell \
+	  basehost="$(shell echo ${CLUSTER_REPO} | sed 's/^.*\.apps[\.-]\(.*\)/\1/')"; \
+	  appsbasehost="$(shell echo ${CLUSTER_REPO} | sed 's/^.*\.\(apps[\.-].*\)/\1/')"; \
+	  kialihost="kiali-istio-system.$${appsbasehost}"; \
+	  kialiip="$$(getent hosts $${kialihost} | head -n 1 | awk '{ print $$1 }')"; \
+	  prometheushost="prometheus-istio-system.$${appsbasehost}"; \
+	  prometheusip="$$(getent hosts $${prometheushost} | head -n 1 | awk '{ print $$1 }')"; \
+	  apihost="api.$${basehost}"; \
+	  apiip="$$(getent hosts $${apihost} | head -n 1 | awk '{ print $$1 }')"; \
+	  oauthoshost="oauth-openshift.$${appsbasehost}"; \
+	  oauthosip="$$(getent hosts $${oauthoshost} | head -n 1 | awk '{ print $$1 }')"; \
+	  hydrapublichost="hydra-public-ory.$${appsbasehost}"; \
+	  hydrapublicip="$$(getent hosts $${hydrapublichost} 2>/dev/null | head -n 1 | awk '{ print $$1 }')"; \
+	  hydraadminhost="hydra-admin-ory.$${appsbasehost}"; \
+	  hydraadminip="$$(getent hosts $${hydraadminhost} 2>/dev/null | head -n 1 | awk '{ print $$1 }')"; \
+	  hydrauihost="hydra-ui-ory.$${appsbasehost}"; \
+	  hydrauiip="$$(getent hosts $${hydrauihost} 2>/dev/null | head -n 1 | awk '{ print $$1 }')"; \
+	  hydraargs=""; \
+	  if [ -n "$$hydrapublicip" ]; then hydraargs="--add-host=$$hydrapublichost:$$hydrapublicip"; fi; \
+	  if [ -n "$$hydraadminip" ]; then hydraargs="$$hydraargs --add-host=$$hydraadminhost:$$hydraadminip"; fi; \
+	  if [ -n "$$hydrauiip" ]; then hydraargs="$$hydraargs --add-host=$$hydrauihost:$$hydrauiip"; fi; \
+	  echo "--add-host=$$kialihost:$$kialiip --add-host=$$prometheushost:$$prometheusip --add-host=$$apihost:$$apiip --add-host=$$oauthoshost:$$oauthosip $$hydraargs"))
 	@echo "Auto-detected add host args: ${MOLECULE_ADD_HOST_ARGS}"
 else
 	@echo "Will not auto-detect any hosts for non-OpenShift clusters."
