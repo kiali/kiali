@@ -1,28 +1,35 @@
 import * as React from 'react';
-import { shallow, mount } from 'enzyme';
+import { shallow, mount, ReactWrapper } from 'enzyme';
 import { NamespaceTrafficPolicies } from '../NamespaceTrafficPolicies';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
 import { ControlPlane } from '../../../types/Mesh';
 import { DurationInSeconds } from 'types/Common';
-import * as API from '../../../services/Api';
+import * as API from 'services/Api';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
 
-jest.mock('../../../services/Api', () => ({
-  getIstioPermissions: jest.fn(),
-  updateNamespace: jest.fn(),
-  deleteIstioConfigDetail: jest.fn(),
-  createIstioConfigDetail: jest.fn()
+jest.mock('services/Api', () => ({
+  getIstioPermissions: jest.fn(() => Promise.resolve({ data: {} })),
+  updateNamespace: jest.fn(() => Promise.resolve({})),
+  deleteIstioConfigDetail: jest.fn(() => Promise.resolve({})),
+  createIstioConfigDetail: jest.fn(() => Promise.resolve({}))
 }));
 
-jest.mock('../../../services/GraphDataSource', () => ({
+// Avoid pulling in the full preview/editor stack (react-ace + redux-connected components) in these unit tests.
+jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
+  IstioConfigPreview: (props: any) => <div data-test="IstioConfigPreview" {...props} />,
+  // Exported to satisfy named import; not needed for these tests.
+  ConfigPreviewItem: {}
+}));
+
+jest.mock('services/GraphDataSource', () => ({
   GraphDataSource: jest.fn().mockImplementation(() => ({
     on: jest.fn(),
     fetchForNamespace: jest.fn()
   }))
 }));
 
-jest.mock('../../../utils/AlertUtils', () => ({
+jest.mock('utils/AlertUtils', () => ({
   addDanger: jest.fn(),
   addError: jest.fn(),
   addSuccess: jest.fn()
@@ -54,6 +61,8 @@ const defaultProps = {
   nsTarget: 'test-namespace',
   opTarget: 'create'
 };
+
+const mountWrapper = (props = defaultProps): ReactWrapper => mount(<NamespaceTrafficPolicies {...props} />);
 
 describe('NamespaceTrafficPolicies', () => {
   beforeEach(() => {
@@ -90,7 +99,7 @@ describe('NamespaceTrafficPolicies', () => {
 
   describe('Modal rendering', () => {
     it('renders confirmation modal for injection kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="injection" opTarget="enable" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
       wrapper.setState({ confirmationModal: true, disableOp: false });
       wrapper.update();
 
@@ -99,7 +108,7 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('renders confirmation modal for ambient kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="ambient" opTarget="enable" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'ambient', opTarget: 'enable' });
       wrapper.setState({ confirmationModal: true, disableOp: false });
       wrapper.update();
 
@@ -108,7 +117,7 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('renders confirmation modal for canary kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="canary" opTarget="revision-1" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'canary', opTarget: 'revision-1' });
       wrapper.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
       wrapper.update();
 
@@ -117,7 +126,7 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('renders confirmation modal for policy kind with create operation', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="create" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
       wrapper.setState({ confirmationModal: true, disableOp: false });
       wrapper.update();
 
@@ -126,7 +135,7 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('renders confirmation modal for policy kind with delete operation', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="delete" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'delete' });
       wrapper.setState({ confirmationModal: true, disableOp: false });
       wrapper.update();
 
@@ -135,7 +144,7 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('does not render modal when confirmationModal is false', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} />);
+      const wrapper = mountWrapper(defaultProps);
       wrapper.setState({ confirmationModal: false });
       wrapper.update();
 
@@ -145,7 +154,7 @@ describe('NamespaceTrafficPolicies', () => {
 
   describe('IstioConfigPreview rendering', () => {
     it('renders preview when loaded and has authorization policies', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="create" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
       wrapper.setState({
         loaded: true,
         authorizationPolicies: [
@@ -161,15 +170,15 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('does not render preview when not loaded', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="create" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
       wrapper.setState({ loaded: false });
       wrapper.update();
 
-      expect(wrapper.find('IstioConfigPreview').prop('isOpen')).toBe(false);
+      expect(wrapper.find('IstioConfigPreview').exists()).toBe(false);
     });
 
     it('does not render preview for delete operation', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="delete" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'delete' });
       wrapper.setState({
         loaded: true,
         authorizationPolicies: [
@@ -187,23 +196,21 @@ describe('NamespaceTrafficPolicies', () => {
 
   describe('Component lifecycle', () => {
     it('calls fetchPermission on mount for injection kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="injection" opTarget="enable" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const fetchPermissionSpy = jest.spyOn(instance, 'fetchPermission');
+      const fetchPermissionSpy = jest.spyOn(instance, 'fetchPermission').mockImplementation(() => {});
 
       wrapper.setProps({ nsTarget: 'new-namespace' });
-      wrapper.update();
 
       expect(fetchPermissionSpy).toHaveBeenCalled();
     });
 
     it('generates traffic policies when opTarget changes to create', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="update" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'update' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const generateTrafficPoliciesSpy = jest.spyOn(instance, 'generateTrafficPolicies');
+      const generateTrafficPoliciesSpy = jest.spyOn(instance, 'generateTrafficPolicies').mockImplementation(() => {});
 
       wrapper.setProps({ opTarget: 'create' });
-      wrapper.update();
 
       expect(generateTrafficPoliciesSpy).toHaveBeenCalled();
     });
@@ -231,9 +238,8 @@ describe('NamespaceTrafficPolicies', () => {
         }
       };
 
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} nsInfo={nsInfoWithConfig} opTarget="create" />);
+      const wrapper = mountWrapper({ ...defaultProps, nsInfo: nsInfoWithConfig, opTarget: 'create' });
       wrapper.setProps({ opTarget: 'update' });
-      wrapper.update();
 
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
       expect(instance.state.authorizationPolicies.length).toBeGreaterThan(0);
@@ -255,10 +261,12 @@ describe('NamespaceTrafficPolicies', () => {
         }
       });
 
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} />);
+      const wrapper = mountWrapper(defaultProps);
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
 
-      await instance.fetchPermission();
+      instance.fetchPermission();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      wrapper.update();
 
       expect(instance.state.disableOp).toBe(false);
     });
@@ -276,10 +284,12 @@ describe('NamespaceTrafficPolicies', () => {
         }
       });
 
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} />);
+      const wrapper = mountWrapper(defaultProps);
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
 
-      await instance.fetchPermission();
+      instance.fetchPermission();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      wrapper.update();
 
       expect(instance.state.disableOp).toBe(true);
     });
@@ -287,12 +297,11 @@ describe('NamespaceTrafficPolicies', () => {
 
   describe('onConfirm', () => {
     it('calls onAddRemoveAutoInjection for injection kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="injection" opTarget="enable" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
       const onAddRemoveAutoInjectionSpy = jest.spyOn(instance, 'onAddRemoveAutoInjection').mockImplementation(() => {});
 
       wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
 
       const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
       confirmButton.simulate('click');
@@ -301,12 +310,11 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('calls onAddRemoveAutoInjection for ambient kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="ambient" opTarget="enable" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'ambient', opTarget: 'enable' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
       const onAddRemoveAutoInjectionSpy = jest.spyOn(instance, 'onAddRemoveAutoInjection').mockImplementation(() => {});
 
       wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
 
       const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
       confirmButton.simulate('click');
@@ -315,12 +323,11 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('calls onUpgradeDowngradeIstio for canary kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="canary" opTarget="revision-1" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'canary', opTarget: 'revision-1' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
       const onUpgradeDowngradeIstioSpy = jest.spyOn(instance, 'onUpgradeDowngradeIstio').mockImplementation(() => {});
 
       wrapper.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
-      wrapper.update();
 
       const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
       confirmButton.simulate('click');
@@ -329,14 +336,13 @@ describe('NamespaceTrafficPolicies', () => {
     });
 
     it('calls onAddRemoveTrafficPolicies for policy kind', () => {
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} kind="policy" opTarget="create" />);
+      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
       const onAddRemoveTrafficPoliciesSpy = jest
         .spyOn(instance, 'onAddRemoveTrafficPolicies')
         .mockImplementation(() => {});
 
       wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
 
       const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
       confirmButton.simulate('click');
@@ -348,7 +354,7 @@ describe('NamespaceTrafficPolicies', () => {
   describe('onHideConfirmModal', () => {
     it('resets state and calls hideConfirmModal prop', () => {
       const hideConfirmModalSpy = jest.fn();
-      const wrapper = mount(<NamespaceTrafficPolicies {...defaultProps} hideConfirmModal={hideConfirmModalSpy} />);
+      const wrapper = mountWrapper({ ...defaultProps, hideConfirmModal: hideConfirmModalSpy });
       const instance = wrapper.instance() as NamespaceTrafficPolicies;
 
       wrapper.setState({

@@ -20,41 +20,34 @@ describe('TypeHeader', () => {
       expect(wrapper.text()).toContain('Type');
     });
 
-    it('renders clickable info icon', () => {
+    it('renders Popover help', () => {
       const wrapper = mount(<TypeHeader />);
-      // The icon is rendered inside the Tooltip component
-      expect(wrapper.find('Tooltip').exists()).toBeTruthy();
-      // Check that there's a span with inline styles for the icon
-      const spans = wrapper.find('span');
-      expect(spans.length).toBeGreaterThan(0);
-    });
-
-    it('renders tooltip', () => {
-      const wrapper = mount(<TypeHeader />);
-      expect(wrapper.find('Tooltip').exists()).toBeTruthy();
+      const popover = wrapper.find('Popover');
+      expect(popover.exists()).toBeTruthy();
+      expect(popover.prop('aria-label')).toBe('Namespace type information');
     });
   });
 
-  describe('Tooltip content', () => {
+  describe('Popover content', () => {
     it('contains namespace type heading', () => {
       const wrapper = mount(<TypeHeader />);
-      const tooltip = wrapper.find('Tooltip');
-      const content = tooltip.prop('content');
+      const popover = wrapper.find('Popover');
+      const headerContent = popover.prop('headerContent');
 
-      expect(content).toBeDefined();
-      if (React.isValidElement(content)) {
-        const contentWrapper = shallow(content);
-        expect(contentWrapper.text()).toContain('Namespace type');
+      expect(headerContent).toBeDefined();
+      if (React.isValidElement(headerContent)) {
+        const headerWrapper = shallow(headerContent);
+        expect(headerWrapper.text()).toContain('Namespace type');
       }
     });
 
     it('contains CP (Control plane) description', () => {
       const wrapper = mount(<TypeHeader />);
-      const tooltip = wrapper.find('Tooltip');
-      const content = tooltip.prop('content');
+      const popover = wrapper.find('Popover');
+      const bodyContent = popover.prop('bodyContent');
 
-      if (React.isValidElement(content)) {
-        const contentWrapper = shallow(content);
+      if (React.isValidElement(bodyContent)) {
+        const contentWrapper = shallow(bodyContent);
         expect(contentWrapper.text()).toContain('CP');
         expect(contentWrapper.text()).toContain('Control plane');
         expect(contentWrapper.text()).toContain('Istio control plane');
@@ -63,11 +56,11 @@ describe('TypeHeader', () => {
 
     it('contains DP (Data plane) description', () => {
       const wrapper = mount(<TypeHeader />);
-      const tooltip = wrapper.find('Tooltip');
-      const content = tooltip.prop('content');
+      const popover = wrapper.find('Popover');
+      const bodyContent = popover.prop('bodyContent');
 
-      if (React.isValidElement(content)) {
-        const contentWrapper = shallow(content);
+      if (React.isValidElement(bodyContent)) {
+        const contentWrapper = shallow(bodyContent);
         expect(contentWrapper.text()).toContain('DP');
         expect(contentWrapper.text()).toContain('Data plane');
         expect(contentWrapper.text()).toContain('Namespace is part of the mesh');
@@ -76,31 +69,14 @@ describe('TypeHeader', () => {
 
     it('contains Empty description', () => {
       const wrapper = mount(<TypeHeader />);
-      const tooltip = wrapper.find('Tooltip');
-      const content = tooltip.prop('content');
+      const popover = wrapper.find('Popover');
+      const bodyContent = popover.prop('bodyContent');
 
-      if (React.isValidElement(content)) {
-        const contentWrapper = shallow(content);
+      if (React.isValidElement(bodyContent)) {
+        const contentWrapper = shallow(bodyContent);
         expect(contentWrapper.text()).toContain('Empty');
         expect(contentWrapper.text()).toContain('Namespace is not part of the mesh');
       }
-    });
-  });
-
-  describe('Tooltip positioning', () => {
-    it('uses top position for tooltip', () => {
-      const wrapper = mount(<TypeHeader />);
-      const tooltip = wrapper.find('Tooltip');
-      expect(tooltip.prop('position')).toBe('top');
-    });
-  });
-
-  describe('Icon styling', () => {
-    it('applies correct styles to info icon', () => {
-      const wrapper = mount(<TypeHeader />);
-      const iconSpan = wrapper.find('span').at(1);
-      const styles = iconSpan.prop('className');
-      expect(styles).toBeDefined();
     });
   });
 });

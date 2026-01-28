@@ -8,6 +8,7 @@ import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
+import { t } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { GraphDataSource } from 'services/GraphDataSource';
 import {
@@ -110,7 +111,7 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
           disableOp,
           loaded
         });
-})
+      })
       .catch(error => {
         if (!error.isCanceled) {
           addError('Could not fetch Istio permissions.', error);
