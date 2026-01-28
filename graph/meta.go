@@ -19,6 +19,7 @@ const (
 	DestServices          MetadataKey = "destServices"
 	HealthData            MetadataKey = "healthData"
 	HealthDataApp         MetadataKey = "healthDataApp" // for storing app health on versioned app nodes
+	HealthStatus          MetadataKey = "healthStatus"  // calculated health status for edges
 	HasCB                 MetadataKey = "hasCB"
 	HasFaultInjection     MetadataKey = "hasFaultInjection"
 	HasHealthConfig       MetadataKey = "hasHealthConfig"

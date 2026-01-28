@@ -414,7 +414,7 @@ export class OverviewPageComponent extends React.Component<OverviewProps, State>
           if (((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) && nsHealth) {
             Object.keys(nsHealth).forEach(k => {
               const health: Health = nsHealth[k];
-              const status = health.getGlobalStatus();
+              const status = health.getStatus();
 
               if (status === FAILURE) {
                 nsStatus.inError.push(k);

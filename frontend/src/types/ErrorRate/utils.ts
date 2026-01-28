@@ -4,7 +4,6 @@ import { ResponseDetail, Responses } from '../Graph';
 import { RequestHealth, RequestType } from '../Health';
 import { Rate, RequestTolerance } from './types';
 import { generateRateForTolerance } from './ErrorRate';
-import { generateRateForGraphTolerance } from './GraphEdgeStatus';
 import { HealthAnnotationType, HealthAnnotationConfig } from '../HealthAnnotation';
 
 export const emptyRate = (): Rate => {
@@ -57,7 +56,7 @@ export const checkExpr = (value: RegexConfig | undefined, testV: string): boolea
 export let configCache: { [key: string]: RateHealthConfig } = {};
 
 export const getRateHealthConfig = (ns: string, name: string, kind: string): RateHealthConfig => {
-  const key = ns + '_' + kind + '_' + name;
+  const key = `${ns}_${kind}_${name}`;
   // If we have the configuration cached then return it
   if (configCache[key]) {
     return configCache[key];
@@ -106,16 +105,12 @@ export const transformEdgeResponses = (requests: Responses, protocol: string): R
  where this requests are the sum of rates where match the tolerance configuration.
 
 */
-export const aggregate = (
-  request: RequestType,
-  tolerances?: ToleranceConfig[],
-  graph: boolean = false
-): RequestTolerance[] => {
+export const aggregate = (request: RequestType, tolerances?: ToleranceConfig[]): RequestTolerance[] => {
   let result: RequestTolerance[] = [];
   if (request && tolerances) {
     for (let tol of Object.values(tolerances)) {
       let newReqTol: RequestTolerance = { tolerance: tol, requests: {} };
-      graph ? generateRateForGraphTolerance(newReqTol, request) : generateRateForTolerance(newReqTol, request);
+      generateRateForTolerance(newReqTol, request);
       result.push(newReqTol);
     }
   }

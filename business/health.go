@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -15,10 +16,12 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
+func NewHealthService(businessLayer *Layer, conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
 	return HealthService{
 		businessLayer: businessLayer,
+		calculator:    NewHealthCalculator(conf),
 		conf:          conf,
+		kialiCache:    kialiCache,
 		prom:          prom,
 		userClients:   userClients,
 	}
@@ -27,7 +30,9 @@ func NewHealthService(businessLayer *Layer, conf *config.Config, prom prometheus
 // HealthService deals with fetching health from various sources and convert to kiali model
 type HealthService struct {
 	businessLayer *Layer
+	calculator    *HealthCalculator
 	conf          *config.Config
+	kialiCache    cache.KialiCache
 	prom          prometheus.ClientInterface
 	userClients   map[string]kubernetes.UserClientInterface
 }
@@ -56,7 +61,21 @@ func (in *HealthService) GetServiceHealth(ctx context.Context, namespace, cluste
 	defer end()
 
 	rqHealth, err := in.getServiceRequestsHealth(ctx, namespace, cluster, service, rateInterval, queryTime, svc)
-	return models.ServiceHealth{Requests: rqHealth}, err
+	health := models.ServiceHealth{Requests: rqHealth}
+
+	// Calculate and set the health status
+	if err == nil {
+		annotations := rqHealth.HealthAnnotations
+		calculated := in.calculator.CalculateServiceHealth(namespace, service, &health, annotations)
+		health.Status = &calculated
+	}
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateServiceHealth(cluster, namespace, service, &health)
+	}
+
+	return health, err
 }
 
 // GetAppHealth returns an app health from just Namespace and app name (thus, it fetches data from K8S and Prometheus)
@@ -72,24 +91,38 @@ func (in *HealthService) GetAppHealth(ctx context.Context, namespace, cluster, a
 	)
 	defer end()
 
-	return in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+	health, err := in.getAppHealth(ctx, namespace, cluster, app, rateInterval, queryTime, appD.Workloads)
+
+	// Calculate and set the health status
+	if err == nil {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateAppHealth(namespace, app, &health, annotations)
+		health.Status = &calculated
+	}
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateAppHealth(cluster, namespace, app, &health)
+	}
+
+	return health, err
 }
 
 func (in *HealthService) getAppHealth(ctx context.Context, namespace, cluster, app, rateInterval string, queryTime time.Time, ws models.Workloads) (models.AppHealth, error) {
 	health := models.EmptyAppHealth()
 
-	// Perf: do not bother fetching request rate if there are no workloads or no workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if there are no workloads or no workload has HTTP/request traffic
+	hasHTTPTraffic := false
 	for _, w := range ws {
-		if w.IstioSidecar || w.IsGateway() {
-			hasSidecar = true
+		if w.HasHTTPTraffic() {
+			hasHTTPTraffic = true
 			break
 		}
 	}
 
 	// Fetch services requests rates
 	var errRate error
-	if hasSidecar {
+	if hasHTTPTraffic {
 		rate, err := in.getAppRequestsHealth(ctx, namespace, cluster, app, rateInterval, queryTime)
 		health.Requests = rate
 		errRate = err
@@ -113,20 +146,42 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	)
 	defer end()
 
-	// Perf: do not bother fetching request rate if workload has no sidecar
-	if !w.IstioSidecar && !w.IsGateway() {
-		return models.WorkloadHealth{
+	var health models.WorkloadHealth
+
+	// Perf: do not bother fetching request rate if workload has no HTTP/request traffic capability
+	if !w.HasHTTPTraffic() {
+		health = models.WorkloadHealth{
 			WorkloadStatus: w.CastWorkloadStatus(),
 			Requests:       models.NewEmptyRequestHealth(),
-		}, nil
+		}
+		// Calculate and set the health status
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, workload, &health, w.HealthAnnotations)
+		health.Status = &calculated
+		// Update cache with the computed health
+		in.kialiCache.UpdateWorkloadHealth(cluster, namespace, workload, &health)
+		return health, nil
 	}
 
 	// Add Telemetry info
 	rate, err := in.getWorkloadRequestsHealth(ctx, namespace, cluster, workload, rateInterval, queryTime, w)
-	return models.WorkloadHealth{
+	health = models.WorkloadHealth{
 		WorkloadStatus: w.CastWorkloadStatus(),
 		Requests:       rate,
-	}, err
+	}
+
+	// Calculate and set the health status
+	if err == nil {
+		annotations := rate.HealthAnnotations
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, workload, &health, annotations)
+		health.Status = &calculated
+	}
+
+	// Update cache with the computed health
+	if err == nil {
+		in.kialiCache.UpdateWorkloadHealth(cluster, namespace, workload, &health)
+	}
+
+	return health, err
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)
@@ -162,9 +217,9 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	cluster := criteria.Cluster
 	allHealth := make(models.NamespaceAppHealth)
 
-	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	sidecarPresent := false
-	appSidecars := make(map[string]bool)
+	// Perf: do not bother fetching request rate if no workloads or no workload has HTTP/request traffic
+	hasHTTPTraffic := false
+	appHTTPTraffic := make(map[string]bool)
 
 	// Prepare all data
 	for app, entities := range appEntities {
@@ -174,9 +229,9 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 			if entities != nil {
 				h.WorkloadStatuses = entities.Workloads.CastWorkloadStatuses()
 				for _, w := range entities.Workloads {
-					if w.IstioSidecar || w.IsGateway() {
-						sidecarPresent = true
-						appSidecars[app] = true
+					if w.HasHTTPTraffic() {
+						hasHTTPTraffic = true
+						appHTTPTraffic[app] = true
 						break
 					}
 				}
@@ -184,14 +239,21 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 		}
 	}
 
-	if sidecarPresent && criteria.IncludeMetrics {
+	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(context.Background(), namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillAppRequestRates(allHealth, rates, appSidecars)
+		fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+	}
+
+	// Calculate and set status for each app
+	for appName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateAppHealth(namespace, appName, health, annotations)
+		health.Status = &calculated
 	}
 
 	return allHealth, nil
@@ -269,6 +331,14 @@ func (in *HealthService) getNamespaceServiceHealth(ctx context.Context, services
 			health.Requests.CombineReporters()
 		}
 	}
+
+	// Calculate and set status for each service
+	for svcName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateServiceHealth(namespace, svcName, health, annotations)
+		health.Status = &calculated
+	}
+
 	return allHealth
 }
 
@@ -305,47 +375,54 @@ func (in *HealthService) GetNamespaceWorkloadHealth(ctx context.Context, criteri
 }
 
 func (in *HealthService) getNamespaceWorkloadHealth(ctx context.Context, ws models.Workloads, criteria NamespaceHealthCriteria) (models.NamespaceWorkloadHealth, error) {
-	// Perf: do not bother fetching request rate if no workloads or no workload has sidecar
-	hasSidecar := false
+	// Perf: do not bother fetching request rate if no workloads or no workload has HTTP traffic
+	hasHTTPTraffic := false
 	namespace := criteria.Namespace
 	rateInterval := criteria.RateInterval
 	queryTime := criteria.QueryTime
 	cluster := criteria.Cluster
-	wlSidecars := make(map[string]bool)
+	wlHTTPTraffic := make(map[string]bool)
 
 	allHealth := make(models.NamespaceWorkloadHealth)
 	for _, w := range ws {
 		allHealth[w.Name] = models.EmptyWorkloadHealth()
 		allHealth[w.Name].Requests.HealthAnnotations = models.GetHealthAnnotation(w.HealthAnnotations, HealthAnnotation)
 		allHealth[w.Name].WorkloadStatus = w.CastWorkloadStatus()
-		if w.IstioSidecar || w.IsGateway() {
-			hasSidecar = true
-			wlSidecars[w.Name] = true
+		if w.HasHTTPTraffic() {
+			hasHTTPTraffic = true
+			wlHTTPTraffic[w.Name] = true
 		}
 	}
 
-	if hasSidecar && criteria.IncludeMetrics {
+	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
 		rates, err := in.prom.GetAllRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
 		// Fill with collected request rates
-		fillWorkloadRequestRates(allHealth, rates, wlSidecars)
+		fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+	}
+
+	// Calculate and set status for each workload
+	for wkName, health := range allHealth {
+		annotations := health.Requests.HealthAnnotations
+		calculated := in.calculator.CalculateWorkloadHealth(namespace, wkName, health, annotations)
+		health.Status = &calculated
 	}
 
 	return allHealth, nil
 }
 
 // fillAppRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector, appSidecars map[string]bool) {
+func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector, appHTTPTraffic map[string]bool) {
 	lblDest := model.LabelName("destination_canonical_service")
 	lblSrc := model.LabelName("source_canonical_service")
 
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		// include requests only to apps which have a sidecar
-		if _, ok := appSidecars[name]; ok {
+		// include requests only to apps which have HTTP traffic capability
+		if _, ok := appHTTPTraffic[name]; ok {
 			if health, ok := allHealth[name]; ok {
 				health.Requests.AggregateInbound(sample)
 			}
@@ -361,13 +438,13 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 }
 
 // fillWorkloadRequestRates aggregates requests rates from metrics fetched from Prometheus, and stores the result in the health map.
-func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector, wlSidecars map[string]bool) {
+func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates model.Vector, wlHTTPTraffic map[string]bool) {
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
 	for _, sample := range rates {
 		name := string(sample.Metric[lblDest])
-		// include requests only to workloads which have a sidecar
-		if _, ok := wlSidecars[name]; ok {
+		// include requests only to workloads which have HTTP traffic capability
+		if _, ok := wlHTTPTraffic[name]; ok {
 			if health, ok := allHealth[name]; ok {
 				health.Requests.AggregateInbound(sample)
 			}

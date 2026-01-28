@@ -12,7 +12,7 @@ interface HealthIndicatorProps {
 }
 
 export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthIndicatorProps) => {
-  const globalStatus = props.health ? props.health.getGlobalStatus() : H.NA;
+  const globalStatus = props.health ? props.health.getStatus() : H.NA;
 
   if (props.health) {
     const icon = createIcon(globalStatus);

@@ -35,5 +35,4 @@ export interface ServiceListQuery {
   health: boolean;
   istioResources: boolean;
   onlyDefinitions: boolean;
-  rateInterval: string;
 }

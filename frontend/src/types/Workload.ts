@@ -117,7 +117,6 @@ export interface WorkloadUpdateQuery {
 export interface WorkloadListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
-  rateInterval: string;
 }
 
 export interface ClusterWorkloadsResponse {

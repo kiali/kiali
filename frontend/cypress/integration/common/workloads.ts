@@ -3,7 +3,7 @@ import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists } from
 
 const activateFilter = (state: string): void => {
   //decided to pause the refresh, because I'm intercepting the very same request that is used for the timed refresh
-  cy.get('button#time_range_refresh-toggle').click();
+  cy.get('button#workload-list-refresh-toggle').click();
   cy.get('button[id="0"]').click();
   cy.get('#loading_kiali_spinner').should('not.exist');
 
