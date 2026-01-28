@@ -171,7 +171,7 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
 
     API.updateNamespace(this.props.nsTarget, jsonPatch, this.props.nsInfo.cluster)
       .then(_ => {
-        addSuccess(`Namespace ${this.props.nsTarget} updated`);
+        addSuccess(t('Namespace {{namespace}} updated', { namespace: this.props.nsTarget }));
         this.props.load();
       })
       .catch(error => {
