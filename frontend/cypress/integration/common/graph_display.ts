@@ -23,8 +23,17 @@ When('user graphs {string} namespaces', (namespaces: string) => {
   ensureKialiFinishedLoading();
 });
 
-When('user {string} display menu', (_action: string) => {
+When('user {string} display menu', (action: string) => {
   cy.get('button#display-settings').click();
+  // After closing the display menu, wait for the graph to render
+  if (action === 'closes') {
+    cy.waitForReact();
+    cy.get('#loading_kiali_spinner').should('not.exist');
+    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } }).should(
+      'have.length',
+      '1'
+    );
+  }
 });
 
 When('user enables {string} {string} edge labels', (radio: string, edgeLabel: string) => {
