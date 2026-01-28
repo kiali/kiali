@@ -387,7 +387,6 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
               policies objects. Do you want to {this.props.opTarget} them ?
             </>
           )}
-          {}
         </Modal>
       </>
     );
