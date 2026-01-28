@@ -78,20 +78,17 @@ func ClusterHealth(
 
 		// Check if health cache is enabled
 		healthCacheEnabled := conf.KialiInternal.HealthCache.Enabled
-		metricsEnabled := conf.Server.Observability.Metrics.Enabled
 
 		if healthCacheEnabled {
 			// Serve from cache
 			allFromCache := true
 			for _, ns := range nss {
-				cachedData, found := kialiCache.GetHealth(cluster, ns)
+				// GetHealth now tracks cache hit/miss metrics internally
+				cachedData, found := kialiCache.GetHealth(cluster, ns, healthTypeToMetricType(healthType))
 				if !found {
 					// Cache miss - return "unknown" status for this namespace
 					allFromCache = false
 					log.Debugf("Health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
-					if metricsEnabled {
-						internalmetrics.IncrementHealthCacheMisses(healthTypeToMetricType(healthType))
-					}
 					switch healthType {
 					case "app":
 						result.AppHealth[ns] = &models.NamespaceAppHealth{}
@@ -105,9 +102,6 @@ func ClusterHealth(
 
 				// Cache hit
 				log.Debugf("Health cache hit for cluster=%s namespace=%s (computed at %v)", cluster, ns, cachedData.ComputedAt)
-				if metricsEnabled {
-					internalmetrics.IncrementHealthCacheHits(healthTypeToMetricType(healthType))
-				}
 
 				// Use cached data
 				switch healthType {

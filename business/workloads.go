@@ -37,6 +37,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -356,7 +357,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	// Try to get cached health for this namespace (used if IncludeHealth is true)
 	var cachedHealth *models.CachedHealthData
 	if criteria.IncludeHealth {
-		cachedHealth, _ = in.cache.GetHealth(cluster, namespace)
+		cachedHealth, _ = in.cache.GetHealth(cluster, namespace, internalmetrics.HealthTypeWorkload)
 	}
 
 	for _, w := range ws {

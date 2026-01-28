@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/util"
 )
@@ -54,7 +55,8 @@ type KialiCache interface {
 
 	// GetHealth returns cached health data for a namespace.
 	// Returns nil and false if not found.
-	GetHealth(cluster, namespace string) (*models.CachedHealthData, bool)
+	// The healthType parameter is used for metrics tracking (app, service, or workload).
+	GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool)
 
 	// SetHealth stores health data in cache.
 	// Can be called by background job OR by individual handlers
@@ -438,9 +440,20 @@ func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 }
 
 // GetHealth returns cached health data for a namespace
-func (c *kialiCacheImpl) GetHealth(cluster, namespace string) (*models.CachedHealthData, bool) {
+func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool) {
 	key := models.HealthCacheKey(cluster, namespace)
-	return c.healthStore.Get(key)
+	data, found := c.healthStore.Get(key)
+
+	// Track cache hit/miss metrics if metrics are enabled
+	if c.conf.Server.Observability.Metrics.Enabled {
+		if found {
+			internalmetrics.IncrementHealthCacheHits(healthType)
+		} else {
+			internalmetrics.IncrementHealthCacheMisses(healthType)
+		}
+	}
+
+	return data, found
 }
 
 // SetHealth stores health data in cache
