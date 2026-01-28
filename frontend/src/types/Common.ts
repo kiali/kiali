@@ -103,8 +103,10 @@ export const boundsToDuration = (bounds: BoundsInMilliseconds): DurationInSecond
 };
 
 export const durationToBounds = (duration: DurationInSeconds): BoundsInMilliseconds => {
+  const now = new Date().getTime();
   return {
-    from: new Date().getTime() - duration * 1000
+    from: now - duration * 1000,
+    to: now
   };
 };
 

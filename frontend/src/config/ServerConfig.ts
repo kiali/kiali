@@ -17,7 +17,7 @@ export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffi
   _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
-  const obj: Duration = {};
+  const obj: Durations = {};
   tupleArray.forEach(tuple => {
     obj[tuple[0]] = tuple[1];
   });

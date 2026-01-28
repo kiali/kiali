@@ -42,13 +42,18 @@ const labelStyle = kialiStyle({
 export class TimeRangeComp extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
-    const range = retrieveTimeRange();
+    const urlTimeRange = retrieveTimeRange();
 
-    if ((range.rangeDuration !== undefined || range.from !== undefined) && !isEqualTimeRange(props.timeRange, range)) {
-      this.props.setTimeRange(range);
+    if (
+      (urlTimeRange.rangeDuration !== undefined || urlTimeRange.from !== undefined) &&
+      !isEqualTimeRange(props.timeRange, urlTimeRange)
+    ) {
+      // Use the time range from URL and update redux
+      this.props.setTimeRange(urlTimeRange);
+    } else {
+      // No URL time range, store the current props to URL
+      this.storeTimeRange(this.props.timeRange);
     }
-
-    this.storeTimeRange(this.props.timeRange);
   }
 
   componentDidUpdate(prevProps: Props): void {
