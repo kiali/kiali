@@ -10,15 +10,26 @@ import { RefreshIntervalManual } from '../../../config/Config';
 import { HistoryManager } from '../../../app/History';
 import { Show } from '../../../types/Common';
 
+// NamespacesPage always renders NamespaceTrafficPolicies; mock it to keep these unit tests focused.
+jest.mock('../NamespaceTrafficPolicies', () => ({
+  NamespaceTrafficPolicies: (props: any) => <div data-test="NamespaceTrafficPolicies" {...props} />
+}));
+
+// Some badges use react-router hooks; these tests don't run under a Router.
+jest.mock('components/Badge/ControlPlaneBadge', () => ({
+  ControlPlaneBadge: () => <span data-test="ControlPlaneBadge" />
+}));
+
 jest.mock('../../../services/Api', () => ({
   getNamespaces: jest.fn(),
   getClustersHealth: jest.fn(),
   getClustersTls: jest.fn(),
   getConfigValidations: jest.fn(),
   getAllIstioConfigs: jest.fn(),
-  getGrafanaInfo: jest.fn(),
-  getPersesInfo: jest.fn(),
-  getControlPlanes: jest.fn()
+  getGrafanaInfo: jest.fn(() => Promise.resolve({ data: {} })),
+  getErrorString: jest.fn(() => ''),
+  getPersesInfo: jest.fn(() => Promise.resolve({ data: {} })),
+  getControlPlanes: jest.fn(() => Promise.resolve({ data: [] }))
 }));
 
 jest.mock('../../../utils/AlertUtils', () => ({
@@ -28,13 +39,35 @@ jest.mock('../../../utils/AlertUtils', () => ({
 
 jest.mock('../../../app/History', () => ({
   HistoryManager: {
+    deleteParam: jest.fn(),
+    getDuration: jest.fn(),
+    getNumericParam: jest.fn(),
     getParam: jest.fn(),
     setParam: jest.fn(),
     getRefresh: jest.fn(() => 0)
   },
+  URLParam: {
+    DIRECTION: 'direction',
+    DURATION: 'duration',
+    REFRESH_INTERVAL: 'refresh',
+    SORT: 'sort'
+  },
+  location: {
+    getPathname: jest.fn(() => ''),
+    getSearch: jest.fn(() => '')
+  },
   router: {
     navigate: jest.fn()
-  }
+  },
+  webRoot: '/'
+}));
+
+jest.mock('utils/I18nUtils', () => ({
+  t: (key: string) => key,
+  tMap: (m: Record<string, string>) => m,
+  useKialiTranslation: () => ({
+    t: (key: string) => key
+  })
 }));
 
 const mockNamespaces: NamespaceInfo[] = [
@@ -67,7 +100,8 @@ const defaultReduxProps = {
   meshStatus: 'MTLS_ENABLED',
   minTLS: 'TLS_AUTO',
   navCollapse: false,
-  refreshInterval: 15000 as IntervalInMilliseconds
+  refreshInterval: 15000 as IntervalInMilliseconds,
+  dispatch: jest.fn()
 };
 
 const defaultProps = {
@@ -78,8 +112,11 @@ const defaultProps = {
 describe('NamespacesPageComponent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (HistoryManager.getParam as jest.Mock).mockReturnValue(null);
+    (HistoryManager.getParam as jest.Mock).mockReturnValue(undefined);
     (HistoryManager.getRefresh as jest.Mock).mockReturnValue(RefreshIntervalManual);
+    (API.getControlPlanes as jest.Mock).mockResolvedValue({ data: [] });
+    (API.getGrafanaInfo as jest.Mock).mockResolvedValue({ data: {} });
+    (API.getPersesInfo as jest.Mock).mockResolvedValue({ data: {} });
   });
 
   describe('Component initialization', () => {
@@ -145,7 +182,9 @@ describe('NamespacesPageComponent', () => {
       const instance = wrapper.find(NamespacesPageComponent).instance() as NamespacesPageComponent;
       const loadSpy = jest.spyOn(instance, 'load');
 
-      wrapper.setProps({ lastRefreshAt: Date.now() + 1000 });
+      wrapper.setProps({
+        children: <NamespacesPageComponent {...defaultProps} lastRefreshAt={Date.now() + 1000} />
+      });
       wrapper.update();
 
       expect(loadSpy).toHaveBeenCalled();
@@ -196,7 +235,9 @@ describe('NamespacesPageComponent', () => {
       );
       const instance = wrapper.find(NamespacesPageComponent).instance() as NamespacesPageComponent;
 
-      await instance.load();
+      instance.load();
+      await new Promise(resolve => setTimeout(resolve, 0));
+      wrapper.update();
 
       expect(API.getNamespaces).toHaveBeenCalled();
       expect(instance.state.loaded).toBe(true);
@@ -481,8 +522,10 @@ describe('NamespacesPageComponent', () => {
       const instance = wrapper.find(NamespacesPageComponent).instance() as NamespacesPageComponent;
 
       instance.setState({ loaded: true, namespaces: [] });
+      wrapper.update();
 
-      expect(wrapper.find('EmptyNamespaces').exists()).toBeTruthy();
+      // Empty state is provided via VirtualList.emptyState (PatternFly EmptyState)
+      expect(wrapper.text()).toContain('No namespaces found');
     });
 
     it('renders VirtualList when namespaces exist', () => {
@@ -494,8 +537,10 @@ describe('NamespacesPageComponent', () => {
       const instance = wrapper.find(NamespacesPageComponent).instance() as NamespacesPageComponent;
 
       instance.setState({ loaded: true, namespaces: mockNamespaces });
+      wrapper.update();
 
-      expect(wrapper.find('VirtualList').exists()).toBeTruthy();
+      // VirtualList is a redux-connected component (Connect(...)), so assert on a stable descendant.
+      expect(wrapper.find('Table').exists()).toBeTruthy();
     });
 
     it('renders NamespaceTrafficPolicies when modal is open', () => {

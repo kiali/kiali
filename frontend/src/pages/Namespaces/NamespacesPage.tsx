@@ -30,8 +30,7 @@ import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
-import { t } from 'utils/I18nUtils';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
@@ -47,6 +46,7 @@ import { isParentKiosk, kioskOverviewAction as kioskAction } from '../../compone
 import { store } from '../../store/ConfigStore';
 import { setAIContext } from 'helpers/ChatAI';
 import { KialiDispatch } from 'types/Redux';
+import { t } from 'utils/I18nUtils';
 import { NamespaceTrafficPolicies } from './NamespaceTrafficPolicies';
 import { ControlPlane } from '../../types/Mesh';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
