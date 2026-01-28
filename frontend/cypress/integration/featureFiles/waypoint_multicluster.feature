@@ -24,6 +24,7 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
     When user "opens" display menu
     And user "enables" "waypoint proxies" option
     And user "closes" display menu
+    And the button "toolbar_layout_dagre" is clicked
     Then the waypoint node "waypoint" is visible in the graph for the "east" cluster
     And the waypoint node "waypoint" is visible in the graph for the "west" cluster
     And user sees graph workloads from both clusters
