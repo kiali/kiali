@@ -73,7 +73,10 @@ func TestClustersHealth(t *testing.T) {
 	conf := config.NewConfig()
 
 	// Test 17s on rate interval to check that rate interval is adjusted correctly.
+	// GetAllRequestRates is called for app health and workload health
 	prom.On("GetAllRequestRates", mock.Anything, "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
+	// GetNamespaceServicesRequestRates is called for service health
+	prom.On("GetNamespaceServicesRequestRates", mock.Anything, "ns", conf.KubernetesConfig.ClusterName, "17s", util.Clock.Now()).Return(model.Vector{}, nil)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -83,7 +86,9 @@ func TestClustersHealth(t *testing.T) {
 
 	assert.NotEmpty(t, actual)
 	assert.Equal(t, 200, resp.StatusCode, string(actual))
-	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
+	// GetAllRequestRates is called twice: once for app health and once for workload health
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 2)
+	prom.AssertNumberOfCalls(t, "GetNamespaceServicesRequestRates", 1)
 }
 
 func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, *prometheustest.PromClientMock) {
