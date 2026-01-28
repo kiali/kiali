@@ -14,9 +14,9 @@ import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
-export type OverviewNamespaceAction = {
+export type NamespaceAction = {
   action?: (namespace: string) => void;
-  children?: OverviewNamespaceAction[];
+  children?: NamespaceAction[];
   isDisabled?: boolean;
   isExternal?: boolean;
   isGroup: boolean;
@@ -25,11 +25,11 @@ export type OverviewNamespaceAction = {
 };
 
 type Props = {
-  actions: OverviewNamespaceAction[];
+  actions: NamespaceAction[];
   namespace: string;
 };
 
-export const OverviewNamespaceActions: React.FC<Props> = (props: Props) => {
+export const NamespaceActions: React.FC<Props> = (props: Props) => {
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
 
   const onKebabToggle = (isOpen: boolean): void => {

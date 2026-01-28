@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
   ComponentFactory,
   GraphComponent,
@@ -8,7 +9,6 @@ import {
   withPanZoom,
   withSelection
 } from '@patternfly/react-topology';
-import * as React from 'react';
 import { MeshEdge } from '../styles/MeshEdge';
 import { MeshNode } from '../styles/MeshNode';
 import { MeshGroup } from '../styles/MeshGroup';

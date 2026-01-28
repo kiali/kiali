@@ -4,6 +4,22 @@ import { t } from 'utils/I18nUtils';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
+    id: 'category',
+    title: t('Type'),
+    isNumeric: false,
+    param: 'type',
+    compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
+      // Control plane comes before Data plane
+      if (a.isControlPlane && !b.isControlPlane) {
+        return -1;
+      } else if (!a.isControlPlane && b.isControlPlane) {
+        return 1;
+      }
+      // If same category, sort by name
+      return a.name.localeCompare(b.name);
+    }
+  },
+  {
     id: 'namespace',
     title: t('Name'),
     isNumeric: false,
@@ -16,22 +32,70 @@ export const sortFields: SortField<NamespaceInfo>[] = [
     isNumeric: false,
     param: 'h',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
-      if (a.status && b.status) {
-        let diff = b.status.inError.length - a.status.inError.length;
-        if (diff !== 0) {
-          return diff;
+      // Helper function to get worst status priority (lower number = worse status)
+      const getWorstStatusPriority = (ns: NamespaceInfo): number => {
+        // Namespaces page: check all three status types and get worst across all
+        if (ns.statusApp || ns.statusService || ns.statusWorkload) {
+          let worstPriority = 6;
+          [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
+            if (status) {
+              if (status.inError.length > 0 && worstPriority > 1) worstPriority = 1;
+              else if (status.inWarning.length > 0 && worstPriority > 2) worstPriority = 2;
+              else if (status.inNotReady.length > 0 && worstPriority > 3) worstPriority = 3;
+              else if (status.inSuccess.length > 0 && worstPriority > 4) worstPriority = 4;
+              else if (status.notAvailable.length > 0 && worstPriority > 5) worstPriority = 5;
+            }
+          });
+          return worstPriority;
         }
+        return 6; // No status
+      };
 
-        diff = b.status.inWarning.length - a.status.inWarning.length;
-        if (diff !== 0) {
-          return diff;
-        }
-      } else if (a.status) {
-        return -1;
-      } else if (b.status) {
-        return 1;
+      // Helper function to get total error count
+      const getErrorCount = (ns: NamespaceInfo): number => {
+        let count = 0;
+        [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
+          if (status) {
+            count += status.inError.length;
+          }
+        });
+        return count;
+      };
+
+      // Helper function to get total warning count
+      const getWarningCount = (ns: NamespaceInfo): number => {
+        let count = 0;
+        [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
+          if (status) {
+            count += status.inWarning.length;
+          }
+        });
+        return count;
+      };
+
+      const aPriority = getWorstStatusPriority(a);
+      const bPriority = getWorstStatusPriority(b);
+
+      // Sort by worst status priority first
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
       }
-      // default comparison fallback
+
+      // If same priority, sort by error count
+      const aErrors = getErrorCount(a);
+      const bErrors = getErrorCount(b);
+      if (aErrors !== bErrors) {
+        return bErrors - aErrors;
+      }
+
+      // If same error count, sort by warning count
+      const aWarnings = getWarningCount(a);
+      const bWarnings = getWarningCount(b);
+      if (aWarnings !== bWarnings) {
+        return bWarnings - aWarnings;
+      }
+
+      // Default comparison fallback
       return a.name.localeCompare(b.name);
     }
   },

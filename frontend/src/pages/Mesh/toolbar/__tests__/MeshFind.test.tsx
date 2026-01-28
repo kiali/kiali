@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { MeshFindComponent } from '../MeshFind';
-import { MeshLayout } from 'pages/Mesh/layouts/layoutFactory';
+import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 
-const testHandler = () => undefined;
-const testSetter = _val => undefined;
+const testHandler = (): undefined => undefined;
+const testSetter = (_val: string): undefined => undefined;
 const layout = MeshLayout.Dagre;
 
 // TODO Find out why typescript is unhappy and get rid of all of these ts-ignores

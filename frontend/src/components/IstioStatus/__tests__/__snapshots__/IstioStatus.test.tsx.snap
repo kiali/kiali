@@ -2,7 +2,6 @@
 
 exports[`When addon component has a problem the Icon shows is displayed in orange 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -14,25 +13,6 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-egressgateway",
-          "status": "Healthy",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -339,7 +319,6 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 
 exports[`When both core and addon component have problems any component is in not ready the Icon shows is displayed in red 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -351,25 +330,6 @@ exports[`When both core and addon component have problems any component is in no
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-egressgateway",
-          "status": "Unhealthy",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -726,7 +686,6 @@ exports[`When both core and addon component have problems any component is in no
 
 exports[`When core component has a problem the Icon shows is displayed in Red 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -738,25 +697,6 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Healthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-egressgateway",
-          "status": "Unhealthy",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -1063,7 +1003,6 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 
 exports[`When there are multiple clusters cluster with failing components shows expand/collapse arrow 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -1075,27 +1014,6 @@ exports[`When there are multiple clusters cluster with failing components shows 
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istiod",
-          "status": "Unhealthy",
-        },
-      ],
-      "cluster-2": Array [
-        Object {
-          "cluster": "cluster-2",
-          "isCore": true,
-          "name": "istiod",
-          "status": "Healthy",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -1402,7 +1320,6 @@ exports[`When there are multiple clusters cluster with failing components shows 
 
 exports[`When there are multiple clusters clusters without failing components do not show expand/collapse arrow 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -1414,33 +1331,6 @@ exports[`When there are multiple clusters clusters without failing components do
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istiod",
-          "status": "Healthy",
-        },
-      ],
-      "cluster-2": Array [
-        Object {
-          "cluster": "cluster-2",
-          "isCore": true,
-          "name": "istiod",
-          "status": "Healthy",
-        },
-        Object {
-          "cluster": "cluster-2",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Healthy",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -1759,7 +1649,6 @@ exports[`When there are multiple clusters clusters without failing components do
 
 exports[`When there are not-ready components mixed with other not healthy components in addons the Icon is displayed in orange 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -1771,25 +1660,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "jaeger",
-          "status": "NotReady",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -2108,7 +1978,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
 
 exports[`When there are not-ready components mixed with other not healthy components in both the Icon shows is displayed in red 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -2120,37 +1989,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "grafana",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "jaeger",
-          "status": "NotReady",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-egressgateway",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-ingressgateway",
-          "status": "NotReady",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -2531,7 +2369,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
 
 exports[`When there are not-ready components mixed with other not healthy components in core the Icon is displayed in red 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -2543,25 +2380,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-egressgateway",
-          "status": "Unhealthy",
-        },
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istio-ingressgateway",
-          "status": "NotReady",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -2880,7 +2698,6 @@ exports[`When there are not-ready components mixed with other not healthy compon
 
 exports[`When there are not-ready components not mixed with other unhealthy components in addons renders the Icon in blue 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -2892,19 +2709,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": true,
-          "name": "istiod",
-          "status": "NotReady",
-        },
-      ],
-    }
   }
 >
   <Tooltip
@@ -3211,7 +3015,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 
 exports[`When there are not-ready components not mixed with other unhealthy components in core renders the Icon in blue 1`] = `
 <IstioStatusComponent
-  lastRefreshAt={848152}
   namespaces={
     Array [
       Object {
@@ -3223,19 +3026,6 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
         "name": "istio-system",
       },
     ]
-  }
-  setIstioStatus={[MockFunction]}
-  statusMap={
-    Object {
-      "Kubernetes": Array [
-        Object {
-          "cluster": "Kubernetes",
-          "isCore": false,
-          "name": "jaeger",
-          "status": "NotReady",
-        },
-      ],
-    }
   }
 >
   <Tooltip

@@ -21,7 +21,7 @@ export const nameFilter: RunnableFilter<NamespaceInfo> = {
     filters.filters.some(f => namespace.name.includes(f.value))
 };
 
-export const mtlsValues: FilterValue[] = [
+const mtlsValues: FilterValue[] = [
   { id: 'enabled', title: t('Enabled') },
   { id: 'partiallyEnabled', title: t('Partially Enabled') },
   { id: 'disabled', title: t('Disabled') }
@@ -78,6 +78,19 @@ const healthValues: FilterValue[] = [
   { id: HEALTHY.name, title: HEALTHY.name }
 ];
 
+export enum NamespaceCategory {
+  DATA_PLANE = 'Data plane',
+  CONTROL_PLANE = 'Control plane'
+}
+
+export const getCategoryText = (isControlPlane?: boolean): string => {
+  return isControlPlane ? t(NamespaceCategory.CONTROL_PLANE) : t(NamespaceCategory.DATA_PLANE);
+};
+
+export const getCategoryValue = (isControlPlane?: boolean): string => {
+  return isControlPlane ? NamespaceCategory.CONTROL_PLANE : NamespaceCategory.DATA_PLANE;
+};
+
 const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters => {
   if (healthFilters.filters.length === 0) {
     return {
@@ -123,25 +136,70 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters
 
 export const healthFilter: RunnableFilter<NamespaceInfo> = {
   category: t('Health'),
-  placeholder: t('Filter by Application Health'),
+  placeholder: t('Filter by Health'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
     const { showInNotReady, showInError, showInWarning, showInSuccess, noFilter } = summarizeHealthFilters(filters);
 
-    return noFilter
-      ? true
-      : ns.status
-      ? (showInNotReady && ns.status.inNotReady.length > 0) ||
-        (showInError && ns.status.inError.length > 0) ||
-        (showInWarning && ns.status.inWarning.length > 0) ||
-        (showInSuccess &&
-          ns.status.inSuccess.length > 0 &&
-          ns.status.inError.length === 0 &&
-          ns.status.inWarning.length === 0)
-      : false;
+    if (noFilter) {
+      return true;
+    }
+
+    // Namespaces page: check all three status types (statusApp, statusService, statusWorkload)
+    if (ns.statusApp || ns.statusService || ns.statusWorkload) {
+      // Collect all statuses from the three types
+      const allStatuses = [ns.statusApp, ns.statusService, ns.statusWorkload].filter(s => s !== undefined);
+
+      if (allStatuses.length === 0) {
+        return false;
+      }
+
+      // Check if any status matches the filter criteria
+      const hasNotReady = allStatuses.some(s => s && s.inNotReady.length > 0);
+      const hasError = allStatuses.some(s => s && s.inError.length > 0);
+      const hasWarning = allStatuses.some(s => s && s.inWarning.length > 0);
+      const hasSuccess = allStatuses.some(s => s && s.inSuccess.length > 0);
+      const hasOnlySuccess = hasSuccess && !hasError && !hasWarning;
+
+      return (
+        (showInNotReady && hasNotReady) ||
+        (showInError && hasError) ||
+        (showInWarning && hasWarning) ||
+        (showInSuccess && hasOnlySuccess)
+      );
+    }
+
+    return false;
   }
 };
 
-export const availableFilters: RunnableFilter<NamespaceInfo>[] = [nameFilter, healthFilter, mtlsFilter, labelFilter];
+const categoryValues: FilterValue[] = [
+  { id: NamespaceCategory.DATA_PLANE, title: t(NamespaceCategory.DATA_PLANE) },
+  { id: NamespaceCategory.CONTROL_PLANE, title: t(NamespaceCategory.CONTROL_PLANE) }
+];
+
+export const categoryFilter: RunnableFilter<NamespaceInfo> = {
+  category: t('Type'),
+  placeholder: t('Filter by Type'),
+  filterType: AllFilterTypes.select,
+  action: FILTER_ACTION_APPEND,
+  filterValues: categoryValues,
+  run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
+    if (filters.filters.length === 0) {
+      return true;
+    }
+
+    const categoryValue = getCategoryValue(ns.isControlPlane);
+    return filters.filters.some(f => f.value === categoryValue);
+  }
+};
+
+export const availableFilters: RunnableFilter<NamespaceInfo>[] = [
+  nameFilter,
+  healthFilter,
+  categoryFilter,
+  mtlsFilter,
+  labelFilter
+];

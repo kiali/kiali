@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
-import { Status } from '../../types/Health';
-import { Paths } from '../../config';
-import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../types/Filters';
-import { healthFilter } from '../../components/Filters/CommonFilters';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
-import { KialiAppState } from '../../store/Store';
+import { Status } from 'types/Health';
+import { Paths } from 'config';
+import { ActiveFilter, DEFAULT_LABEL_OPERATION } from 'types/Filters';
+import { healthFilter } from 'components/Filters/CommonFilters';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
+import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { isParentKiosk, kioskGraphAction } from '../../components/Kiosk/KioskActions';
-import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
+import { isParentKiosk, kioskGraphAction } from 'components/Kiosk/KioskActions';
+import { durationSelector, refreshIntervalSelector } from 'store/Selectors';
+import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
 import { createIcon } from 'config/KialiIcon';
 
@@ -28,7 +28,7 @@ type Props = ReduxProps & {
   targetPage: Paths;
 };
 
-const OverviewStatusComponent: React.FC<Props> = (props: Props) => {
+const MeshHealthIndicatorComponent: React.FC<Props> = (props: Props) => {
   const setFilters = (): void => {
     const filters: ActiveFilter[] = [
       {
@@ -74,7 +74,7 @@ const OverviewStatusComponent: React.FC<Props> = (props: Props) => {
 
   return (
     <Tooltip
-      aria-label={'Overview status'}
+      aria-label={'Health indicator'}
       position={TooltipPosition.auto}
       content={tooltipContent}
       className={healthIndicatorStyle}
@@ -95,4 +95,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   refreshInterval: refreshIntervalSelector(state)
 });
 
-export const OverviewStatus = connect(mapStateToProps)(OverviewStatusComponent);
+export const MeshHealthIndicator = connect(mapStateToProps)(MeshHealthIndicatorComponent);

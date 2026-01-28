@@ -31,6 +31,8 @@ const (
 	MTLSPartiallyEnabled = "MTLS_PARTIALLY_ENABLED"
 	MTLSNotEnabled       = "MTLS_NOT_ENABLED"
 	MTLSDisabled         = "MTLS_DISABLED"
+	MTLSUnset            = "UNSET"
+	MTLSValidationError  = "MTLS_VALIDATION_ERROR"
 )
 
 func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, revision string) (models.MTLSStatus, error) {
@@ -129,11 +131,12 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		return models.MTLSStatus{}, err
 	}
 
-	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
+	pasAll := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
 	rootNamespace := in.discovery.GetRootNamespace(ctx, cluster, namespace)
 	if rootNamespace == namespace {
-		pas = []*security_v1.PeerAuthentication{}
+		pasAll = []*security_v1.PeerAuthentication{}
 	}
+	pas := in.filterNamespaceWidePeerAuthentications(pasAll)
 	drs := models.FilterByNamespaces(istioConfigList.DestinationRules, allNamespaces)
 
 	ns, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster)
@@ -149,7 +152,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	return models.MTLSStatus{
-		Status:          mtlsStatus.NamespaceMtlsStatus(namespace, in.conf).OverallStatus,
+		Status:          in.namespaceMTLSOverallStatus(cluster, namespace, pas, mtlsStatus),
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		Cluster:         cluster,
 		Namespace:       namespace,
@@ -177,11 +180,12 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	}
 
 	for _, namespace := range namespaces {
-		pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace.Name)
+		pasAll := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace.Name)
 		rootNamespace := in.discovery.GetRootNamespace(ctx, namespace.Cluster, namespace.Name)
 		if rootNamespace == namespace.Name {
-			pas = []*security_v1.PeerAuthentication{}
+			pasAll = []*security_v1.PeerAuthentication{}
 		}
+		pas := in.filterNamespaceWidePeerAuthentications(pasAll)
 
 		mtlsStatus := mtls.MtlsStatus{
 			PeerAuthentications: pas,
@@ -191,7 +195,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		}
 
 		result = append(result, models.MTLSStatus{
-			Status:          mtlsStatus.NamespaceMtlsStatus(namespace.Name, in.conf).OverallStatus,
+			Status:          in.namespaceMTLSOverallStatus(cluster, namespace.Name, pas, mtlsStatus),
 			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 			Cluster:         cluster,
 			Namespace:       namespace.Name,
@@ -199,6 +203,92 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	}
 
 	return result, nil
+}
+
+func (in *TLSService) namespaceMTLSOverallStatus(cluster, namespace string, peerAuthentications []*security_v1.PeerAuthentication, mtlsStatus mtls.MtlsStatus) string {
+	// If there are validation errors on any PeerAuthentication in the namespace, surface that as a distinct status.
+	// This has priority over UNSET.
+	if in.peerAuthenticationHasValidationErrors(cluster, peerAuthentications) {
+		return MTLSValidationError
+	}
+
+	// Treat the namespace as UNSET when there is no namespace-wide PeerAuthentication that actually defines mTLS.
+	// This covers both cases:
+	// - no PeerAuthentications at all
+	// - PeerAuthentications present but with mtls unset / not specified
+	if !in.hasNamespaceWideMTLSPolicy(peerAuthentications) {
+		return MTLSUnset
+	}
+
+	return mtlsStatus.NamespaceMtlsStatus(namespace, in.conf).OverallStatus
+}
+
+func (in *TLSService) hasNamespaceWideMTLSPolicy(peerAuthentications []*security_v1.PeerAuthentication) bool {
+	for _, pa := range peerAuthentications {
+		if pa == nil || pa.Spec.Mtls == nil {
+			continue
+		}
+
+		// If mtls is specified but mode is UNSET, it doesn't actually modify mTLS behavior.
+		if pa.Spec.Mtls.Mode.String() != "UNSET" {
+			return true
+		}
+	}
+	return false
+}
+
+// filterNamespaceWidePeerAuthentications returns only those PeerAuthentications that apply namespace-wide.
+// Selector-less PeerAuthentications apply to the entire namespace. Some users/tools may send an explicit
+// selector with an empty MatchLabels (which also applies to the whole namespace); treat that as namespace-wide too.
+func (in *TLSService) filterNamespaceWidePeerAuthentications(peerAuthentications []*security_v1.PeerAuthentication) []*security_v1.PeerAuthentication {
+	filtered := make([]*security_v1.PeerAuthentication, 0, len(peerAuthentications))
+	for _, pa := range peerAuthentications {
+		if pa == nil {
+			continue
+		}
+		if pa.Spec.Selector == nil {
+			filtered = append(filtered, pa)
+			continue
+		}
+		if len(pa.Spec.Selector.MatchLabels) == 0 {
+			filtered = append(filtered, pa)
+		}
+	}
+	return filtered
+}
+
+func (in *TLSService) peerAuthenticationHasValidationErrors(cluster string, peerAuthentications []*security_v1.PeerAuthentication) bool {
+	validations := in.kialiCache.Validations().Items()
+
+	for _, pa := range peerAuthentications {
+		if pa == nil {
+			continue
+		}
+
+		key := models.IstioValidationKey{
+			ObjectGVK: kubernetes.PeerAuthentications,
+			Name:      pa.Name,
+			Namespace: pa.Namespace,
+			Cluster:   cluster,
+		}
+
+		validation, found := validations[key]
+		if !found || validation == nil {
+			continue
+		}
+
+		if !validation.Valid {
+			return true
+		}
+
+		for _, check := range validation.Checks {
+			if check != nil && check.Severity == models.ErrorSeverity {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Namespace) bool {

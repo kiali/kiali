@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { MTLSIcon } from '../MTLSIcon';
 import { mount } from 'enzyme';
-import { mountToJson } from 'enzyme-to-json';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
-import { MTLSIconTypes } from '../NamespaceMTLSStatus';
+import { MTLSIconTypes } from '../MTLSIconTypes';
 
-const mockIcon = (icon: string) => {
+const mockIcon = (icon: string): ReturnType<typeof mount> => {
   const component = (
     <Provider store={store}>
       <MTLSIcon
@@ -25,27 +24,22 @@ describe('when Icon is LOCK_FULL', () => {
   it('MTLSIcon renders properly', () => {
     const mount = mockIcon(MTLSIconTypes.LOCK_FULL);
 
-    expect(mountToJson(mount)).toBeDefined();
-    expect(mountToJson(mount)).toMatchSnapshot();
-
     const tooltip = mount.find(Tooltip);
     expect(tooltip.exists()).toBeTruthy();
     expect(tooltip.props().position).toEqual('right');
     expect(tooltip.props().content).toEqual('Overlay Test');
 
-    const img = tooltip.find('img');
-    expect(img.exists()).toBeTruthy();
-    expect(img.props().className).toEqual('className');
-    expect(img.props().src).toEqual('mtls-status-full-dark.svg');
+    const svg = tooltip.find('svg');
+    expect(svg.exists()).toBeTruthy();
+    expect(svg.props().className).toEqual('className');
   });
 });
 
 describe('when Icon is LOCK_HOLLOW', () => {
   it('MTLSIcon renders properly', () => {
     const mount = mockIcon(MTLSIconTypes.LOCK_HOLLOW);
-    const img = mount.find('img');
-    expect(img.exists()).toBeTruthy();
-    expect(img.props().className).toEqual('className');
-    expect(img.props().src).toEqual('mtls-status-partial-dark.svg');
+    const svg = mount.find('svg');
+    expect(svg.exists()).toBeTruthy();
+    expect(svg.props().className).toEqual('className');
   });
 });

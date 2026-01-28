@@ -1,21 +1,20 @@
 import * as React from 'react';
-import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from '../../types/Health';
-import { OverviewStatus } from './OverviewStatus';
-import { OverviewType } from './OverviewToolbar';
-import { NamespaceStatus } from '../../types/NamespaceInfo';
-import { switchType } from './OverviewHelper';
-import { Paths } from '../../config';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
+import { MeshHealthIndicator } from './MeshHealthIndicator';
+import { MeshResourceType, switchMeshResourceType } from 'types/Mesh';
+import { NamespaceStatus } from 'types/NamespaceInfo';
+import { Paths } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   name: string;
   status: NamespaceStatus;
-  type: OverviewType;
+  type: MeshResourceType;
 };
 
-export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
+export const ResourceHealthStatus: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
-  const targetPage = switchType(props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
+  const targetPage = switchMeshResourceType(props.type, Paths.APPLICATIONS, Paths.SERVICES, Paths.WORKLOADS);
   const name = props.name;
   const status = props.status;
 
@@ -62,7 +61,7 @@ export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
 
           <div style={{ display: 'inline-block' }}>
             {status.inNotReady.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${name}-not-ready`}
                 namespace={name}
                 status={NOT_READY}
@@ -72,7 +71,7 @@ export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
             )}
 
             {status.inError.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${name}-failure`}
                 namespace={name}
                 status={FAILURE}
@@ -82,7 +81,7 @@ export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
             )}
 
             {status.inWarning.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${name}-degraded`}
                 namespace={name}
                 status={DEGRADED}
@@ -92,7 +91,7 @@ export const NamespaceStatuses: React.FC<Props> = (props: Props) => {
             )}
 
             {status.inSuccess.length > 0 && (
-              <OverviewStatus
+              <MeshHealthIndicator
                 id={`${name}-healthy`}
                 namespace={name}
                 status={HEALTHY}

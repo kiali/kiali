@@ -8,7 +8,9 @@ Then(`user should see no Istio Components Status`, () => {
     }
   }).as('istioStatus');
 
-  cy.get('#refresh_button').click();
+  // Wait for page to fully load before clicking refresh
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('[data-test="refresh-button"]').click();
   cy.wait('@istioStatus');
   cy.waitForReact();
 
