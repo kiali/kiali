@@ -517,6 +517,45 @@ Then('{int} edges appear in the graph', (graphEdges: number) => {
     });
 });
 
+const checkEdgesInGraphWithRetry = (graphEdges: number, maxRetries = 15, retryCount = 0): Cypress.Chainable<void> => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Expected at least ${graphEdges} edges but condition not met after ${maxRetries} retries`);
+  }
+
+  return cy.waitForReact().then(() => {
+    return cy
+      .getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+      .should('have.length', '1')
+      .then($graph => {
+        const { state } = $graph[0];
+
+        const controller = state.graphRefs.getController() as Visualization;
+        assert.isTrue(controller.hasGraph());
+        const { edges } = elems(controller);
+
+        const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+
+        if (numEdges < graphEdges) {
+          if (retryCount === 0 || retryCount % 3 === 0) {
+            Cypress.log({
+              name: 'waitForEdges',
+              message: `retry=${retryCount}/${maxRetries} expectedEdges=${graphEdges} actualEdges=${numEdges}`
+            });
+          }
+          return cy.wait(2000).then(() => {
+            return checkEdgesInGraphWithRetry(graphEdges, maxRetries, retryCount + 1);
+          });
+        } else {
+          assert.isAtLeast(numEdges, graphEdges);
+        }
+      });
+  });
+};
+
+Then('{int} edges appear in the graph with retry', (graphEdges: number) => {
+  checkEdgesInGraphWithRetry(graphEdges);
+});
+
 // For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
 // This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
 // Does not happen with cluster monitoring
