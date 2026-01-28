@@ -24,7 +24,6 @@ import { TimeDurationComponent } from '../../components/Time/TimeDurationCompone
 import { isMultiCluster, serverConfig } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
@@ -190,23 +189,23 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
             <TimeDurationComponent key={'DurationDropdown'} id="app-list-duration-dropdown" disabled={false} />
           }
         />
-        <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
-          <RenderContent>
-            <VirtualList
-              rows={this.state.listItems}
-              hiddenColumns={hiddenColumns}
-              sort={this.onSort}
-              type="applications"
-            >
-              <StatefulFilters
-                initialFilters={AppListFilters.availableFilters}
-                initialToggles={this.initialToggles}
-                onFilterChange={this.onFilterChange}
-                onToggleChange={this.onFilterChange}
-              />
-            </VirtualList>
-          </RenderContent>
-        </EmptyVirtualList>
+        <RenderContent>
+          <VirtualList
+            loaded={this.state.loaded}
+            refreshInterval={this.props.refreshInterval}
+            rows={this.state.listItems}
+            hiddenColumns={hiddenColumns}
+            sort={this.onSort}
+            type="applications"
+          >
+            <StatefulFilters
+              initialFilters={AppListFilters.availableFilters}
+              initialToggles={this.initialToggles}
+              onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
+            />
+          </VirtualList>
+        </RenderContent>
       </>
     );
   }
