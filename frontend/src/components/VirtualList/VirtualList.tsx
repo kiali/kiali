@@ -19,6 +19,7 @@ import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource, ResourceType } from './Config';
 import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
+import { CubesIcon, PlusCircleIcon, SearchIcon, SyncAltIcon } from '@patternfly/react-icons';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -27,12 +28,15 @@ import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { currentSortField } from '../FilterList/FilterHelper';
 import { sortFields } from '../../pages/Namespaces/Sorts';
-import { StatefulFiltersRef } from '../Filters/StatefulFilters';
+import { FilterSelected, StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
+import { t } from 'utils/I18nUtils';
+import { RefreshIntervalManual } from 'config/Config';
+import { IntervalInMilliseconds } from 'types/Common';
 
 const emptyStyle = kialiStyle({
   borderBottom: 0
@@ -76,8 +80,11 @@ type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
   children?: React.ReactNode;
   className?: any;
+  emptyState?: React.ReactNode;
   hiddenColumns?: string[];
+  loaded?: boolean;
   onResize?: (height: number) => void;
+  refreshInterval?: IntervalInMilliseconds;
   rows: R[];
   sort?: (sortField: SortField<NamespaceInfo>, isAscending: boolean) => void;
   statefulProps?: StatefulFiltersRef;
@@ -217,6 +224,70 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       : undefined;
   };
 
+  private renderEmptyState = (typeDisplay: string): React.ReactNode => {
+    // Manual refresh required
+    if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded) {
+      return (
+        <EmptyState
+          headingLevel="h5"
+          icon={SyncAltIcon}
+          titleText={t('Manual refresh required')}
+          data-test="manual-refresh"
+          variant={EmptyStateVariant.full}
+        >
+          <EmptyStateBody>{t('Click the Refresh button to load the list.')}</EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    // Custom empty state provided by parent
+    if (this.props.emptyState) {
+      return this.props.emptyState;
+    }
+
+    // No namespace selected
+    if (this.props.activeNamespaces.length === 0) {
+      return (
+        <EmptyState
+          headingLevel="h5"
+          icon={PlusCircleIcon}
+          titleText={t('No namespace is selected')}
+          variant={EmptyStateVariant.full}
+        >
+          <EmptyStateBody>{t('Select a namespace to view {{type}}.', { type: typeDisplay })}</EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    // Filters applied but no results
+    if (FilterSelected.getSelected().filters.length > 0) {
+      return (
+        <EmptyState
+          headingLevel="h5"
+          icon={SearchIcon}
+          titleText={t('No {{type}} found', { type: typeDisplay })}
+          variant={EmptyStateVariant.full}
+        >
+          <EmptyStateBody>{t('No results match the filter criteria. Clear all filters and try again.')}</EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
+    // No data in selected namespaces
+    return (
+      <EmptyState
+        headingLevel="h5"
+        icon={CubesIcon}
+        titleText={t('No {{type}} found', { type: typeDisplay })}
+        variant={EmptyStateVariant.full}
+      >
+        <EmptyStateBody>
+          {t('No {{type}} were found in the selected namespaces.', { type: typeDisplay })}
+        </EmptyStateBody>
+      </EmptyState>
+    );
+  };
+
   render(): React.ReactNode {
     // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     const { rows } = this.props;
@@ -246,6 +317,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         />
       );
     });
+
     const table = (
       <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
         {conf.caption && <Caption>{conf.caption}</Caption>}
@@ -270,33 +342,13 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
             rowItems
           ) : (
             <Tr className={emptyStyle}>
-              <Td colSpan={columns.length}>
-                {this.props.activeNamespaces.length > 0 ? (
-                  <EmptyState
-                    headingLevel="h5"
-                    titleText={<>No {typeDisplay} found</>}
-                    variant={EmptyStateVariant.full}
-                  >
-                    <EmptyStateBody>
-                      No {typeDisplay} in namespace
-                      {this.props.activeNamespaces.length === 1
-                        ? ` ${this.props.activeNamespaces[0].name}`
-                        : `s: ${this.props.activeNamespaces.map(ns => ns.name).join(', ')}`}
-                    </EmptyStateBody>
-                  </EmptyState>
-                ) : (
-                  <EmptyState headingLevel="h5" titleText="No namespace is selected" variant={EmptyStateVariant.full}>
-                    <EmptyStateBody>
-                      There is currently no namespace selected, please select one using the Namespace selector.
-                    </EmptyStateBody>
-                  </EmptyState>
-                )}
-              </Td>
+              <Td colSpan={columns.length}>{this.renderEmptyState(typeDisplay)}</Td>
             </Tr>
           )}
         </Tbody>
       </Table>
     );
+
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
