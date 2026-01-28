@@ -110,6 +110,12 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
           disableOp,
           loaded
         });
+})
+      .catch(error => {
+        if (!error.isCanceled) {
+          addError('Could not fetch Istio permissions.', error);
+        }
+        this.setState({ confirmationModal, disableOp: true, loaded });
       });
   };
 
