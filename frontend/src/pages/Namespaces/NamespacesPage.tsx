@@ -787,7 +787,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
-          title: 'Disable Auto Injection',
+          title: t('Disable Auto Injection'),
           action: (ns: string) =>
             this.setState({
               showTrafficPoliciesModal: true,
