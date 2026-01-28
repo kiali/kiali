@@ -802,7 +802,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
           isGroup: false,
           isSeparator: false,
-          title: 'Remove Auto Injection',
+          title: t('Remove Auto Injection'),
           action: (ns: string) =>
             this.setState({
               showTrafficPoliciesModal: true,
