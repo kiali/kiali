@@ -10,15 +10,13 @@ export const TypeHeader: React.FC = () => {
   const popoverBody = (
     <div style={{ textAlign: 'left' }}>
       <div>
-        <div>
-          <strong>{t('CP')}</strong> - {t('Control plane')}: {t('Istio control plane.')}
-        </div>
-        <div>
-          <strong>{t('DP')}</strong> - {t('Data plane')}: {t('Namespace is part of the mesh.')}
-        </div>
-        <div>
-          <strong>Empty</strong> - {t('Namespace is not part of the mesh.')}
-        </div>
+        <strong>{t('CP')}</strong> - {t('Control plane')}: {t('Istio control plane.')}
+      </div>
+      <div>
+        <strong>{t('DP')}</strong> - {t('Data plane')}: {t('Namespace is part of the mesh.')}
+      </div>
+      <div>
+        <strong>Empty</strong> - {t('Namespace is not part of the mesh.')}
       </div>
     </div>
   );
