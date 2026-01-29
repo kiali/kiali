@@ -529,6 +529,17 @@ export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
   return revision;
 };
 
+export const getNamespaceRevisions = (ns: NamespaceInfo): string[] => {
+  const raw = getNamespaceRevision(ns);
+  if (!raw || raw === '') {
+    return [];
+  }
+  return raw
+    .split(',')
+    .map(r => r.trim())
+    .filter(r => r !== '');
+};
+
 export const isDataPlaneNamespace = (ns: NamespaceInfo): boolean => {
   const hasInjectionEnabled = !!(ns.labels && ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled');
   const hasRevisionLabel = !!(
@@ -541,25 +552,9 @@ export const isDataPlaneNamespace = (ns: NamespaceInfo): boolean => {
 };
 
 export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  const revision = getNamespaceRevision(ns);
-  const isDataPlane = isDataPlaneNamespace(ns);
+  const revisions = getNamespaceRevisions(ns);
 
-  if (!isDataPlane) {
-    return (
-      <Td
-        role="gridcell"
-        dataLabel="Revision"
-        key={`VirtuaItem_Revision_${ns.name}`}
-        style={{ verticalAlign: 'middle' }}
-      >
-        <PFLabel variant="outline" color="grey" isCompact>
-          {t('Not applicable')}
-        </PFLabel>
-      </Td>
-    );
-  }
-
-  if (!revision || revision === '') {
+  if (revisions.length === 0) {
     return (
       <Td
         role="gridcell"
@@ -576,11 +571,24 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
   return (
     <Td role="gridcell" dataLabel="Revision" key={`VirtuaItem_Revision_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      <Tooltip content={<span>{t('Istio revision {{version}}', { version: revision })}</span>}>
-        <PFLabel variant="outline" color="orange" isCompact data-test="data-plane-revision-badge">
-          {revision}
-        </PFLabel>
-      </Tooltip>
+      <>
+        {revisions.map((rev, idx) => (
+          <Tooltip
+            key={`${ns.name}-rev-${idx}`}
+            content={<span>{t('Istio revision {{version}}', { version: rev })}</span>}
+          >
+            <PFLabel
+              variant="outline"
+              color="orange"
+              isCompact
+              data-test={idx === 0 ? 'data-plane-revision-badge' : undefined}
+              style={idx > 0 ? { marginLeft: '0.25rem' } : undefined}
+            >
+              {rev}
+            </PFLabel>
+          </Tooltip>
+        ))}
+      </>
     </Td>
   );
 };

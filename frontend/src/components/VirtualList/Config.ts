@@ -214,7 +214,7 @@ const revisionNamespaces: ResourceType<NamespaceInfo> = {
   name: 'Revision',
   param: 'rev',
   renderer: Renderers.nsRevision,
-  sortable: false,
+  sortable: true,
   title: 'Revision',
   width: 10
 };
