@@ -99,7 +99,8 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 
 	// The default is TLSV1_2 unless it's explicitly set to TLSV1_3 so we can ignore AUTO.
 	minTLS := istiov1alpha1.MeshConfig_TLSConfig_TLSV1_2
-	if controlPlane.MeshConfig.MeshMTLS.MinProtocolVersion == istiov1alpha1.MeshConfig_TLSConfig_TLSV1_3 {
+	if controlPlane.MeshConfig != nil && controlPlane.MeshConfig.MeshMTLS != nil &&
+		controlPlane.MeshConfig.MeshMTLS.MinProtocolVersion == istiov1alpha1.MeshConfig_TLSConfig_TLSV1_3 {
 		minTLS = istiov1alpha1.MeshConfig_TLSConfig_TLSV1_3
 	}
 
