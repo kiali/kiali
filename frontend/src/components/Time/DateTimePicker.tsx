@@ -99,11 +99,18 @@ const compareTime = (hours: number, minutes: number, refDate: Date): number => {
   return 0;
 };
 
+// Counter for generating unique IDs per DateTimePicker instance
+// TODO: Replace with React.useId() when upgrading to React 18+
+let dateTimePickerIdCounter = 0;
+
 export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePickerProps) => {
   const { maxDate, minDate, onChange, selected } = props;
 
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   const [isTimeOpen, setIsTimeOpen] = React.useState(false);
+
+  // Generate a unique ID for this instance to scope DOM queries
+  const [instanceId] = React.useState(() => `dtp-${++dateTimePickerIdCounter}`);
 
   const selectedDate = toDate(selected);
   const minDateValue = toDate(minDate);
@@ -122,14 +129,14 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
 
       // Small delay to ensure dropdown is rendered (portal renders async)
       setTimeout(() => {
-        // Find the dropdown item in the document (rendered via portal)
-        const timeItem = document.querySelector(`[data-time="${timeString}"]`);
+        // Find the dropdown item scoped to this instance
+        const timeItem = document.querySelector(`[data-instance="${instanceId}"][data-time="${timeString}"]`);
         if (timeItem) {
           timeItem.scrollIntoView({ block: 'center' });
         }
       }, 50);
     }
-  }, [isTimeOpen, selectedDate]);
+  }, [isTimeOpen, selectedDate, instanceId]);
 
   const onToggleCalendar = (): void => {
     setIsCalendarOpen(!isCalendarOpen);
@@ -235,7 +242,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
     const disabled = isTimeDisabled(time);
 
     return (
-      <DropdownItem key={time} onClick={onSelectTime} isDisabled={disabled} data-time={time}>
+      <DropdownItem key={time} onClick={onSelectTime} isDisabled={disabled} data-instance={instanceId} data-time={time}>
         {time}
       </DropdownItem>
     );
