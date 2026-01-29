@@ -30,8 +30,7 @@ import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
-import { t } from 'utils/I18nUtils';
-import { isMultiCluster, serverConfig } from '../../config';
+import { isMultiCluster } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
@@ -47,6 +46,17 @@ import { isParentKiosk, kioskOverviewAction as kioskAction } from '../../compone
 import { store } from '../../store/ConfigStore';
 import { setAIContext } from 'helpers/ChatAI';
 import { KialiDispatch } from 'types/Redux';
+import { t } from 'utils/I18nUtils';
+import { NamespaceTrafficPolicies } from './NamespaceTrafficPolicies';
+import { ControlPlane } from '../../types/Mesh';
+import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
+import { ExternalLink } from '../../types/Dashboards';
+import { PersesInfo } from '../../types/PersesInfo';
+import { addError } from '../../utils/AlertUtils';
+import { MessageType } from '../../types/NotificationCenter';
+import { gvkType, IstioConfigList } from 'types/IstioConfigList';
+import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { serverConfig } from '../../config';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -71,8 +81,16 @@ const chunkArray = <T,>(array: T[], size: number): T[][] => {
 };
 
 type State = {
+  clusterTarget?: string;
+  controlPlanes?: ControlPlane[];
+  grafanaLinks: ExternalLink[];
+  kind: string;
   loaded: boolean;
   namespaces: NamespaceInfo[];
+  nsTarget: string;
+  opTarget: string;
+  persesLinks: ExternalLink[];
+  showTrafficPoliciesModal: boolean;
 };
 
 type ReduxStateProps = {
@@ -99,6 +117,10 @@ type NamespacesProps = ReduxStateProps &
 export class NamespacesPageComponent extends React.Component<NamespacesProps, State> {
   private sFNamespacesToolbar: StatefulFiltersRef = React.createRef();
   private promises = new PromisesRegistry();
+
+  // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
+  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
+  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
 
   private kioskNamespacesAction = (
     showType: Show,
@@ -142,12 +164,22 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     super(props);
 
     this.state = {
+      clusterTarget: '',
+      controlPlanes: undefined,
+      grafanaLinks: [],
+      kind: '',
       loaded: false,
-      namespaces: []
+      namespaces: [],
+      nsTarget: '',
+      opTarget: '',
+      persesLinks: [],
+      showTrafficPoliciesModal: false
     };
   }
 
   componentDidMount(): void {
+    this.fetchGrafanaInfo();
+    this.fetchPersesInfo();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -197,8 +229,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               isAmbient: ns.isAmbient,
               isControlPlane: ns.isControlPlane,
               status: previous ? previous.status : undefined,
+              statusApp: previous ? previous.statusApp : undefined,
+              statusService: previous ? previous.statusService : undefined,
+              statusWorkload: previous ? previous.statusWorkload : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               validations: previous ? previous.validations : undefined,
+              istioConfig: previous ? previous.istioConfig : undefined,
               labels: ns.labels,
               annotations: ns.annotations,
               revision: ns.revision
@@ -233,6 +269,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             this.fetchValidations(isAscending, sortField);
 
             setAIContext(this.props.dispatch, `Namespaces list: ${this.state.namespaces.map(ns => ns.name).join(',')}`);
+            this.fetchControlPlanes();
           }
         );
       })
@@ -471,6 +508,8 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         )
         .then(() => {
           this.setState(prevState => {
+            // The mutations to istioConfig and validations are already applied to prevState.namespaces
+            // Create a new array reference to ensure React detects the state change
             let newNamespaces = prevState.namespaces.slice();
 
             if (sortField.id === 'validations') {
@@ -495,12 +534,14 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       API.getConfigValidations(chunk.map(ns => ns.name).join(','), cluster)
     );
 
-    return Promise.all(validationPromises)
-      .then(chunkedResults => {
+    return Promise.all([Promise.all(validationPromises), API.getAllIstioConfigs([], false, '', '', cluster)])
+      .then(([validationResults, istioConfigResult]) => {
+        const istioConfig = istioConfigResult.data;
+
         const validationsByClusterAndNamespace = new Map<string, Map<string, ValidationStatus>>();
 
         // Merge validations from all chunks
-        chunkedResults.forEach(validationResult => {
+        validationResults.forEach(validationResult => {
           validationResult.data.forEach(validation => {
             if (validation.cluster && !validationsByClusterAndNamespace.has(validation.cluster)) {
               validationsByClusterAndNamespace.set(validation.cluster, new Map<string, ValidationStatus>());
@@ -511,13 +552,120 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           });
         });
 
+        const istioConfigPerNamespace = new Map<string, IstioConfigList>();
+        Object.entries(istioConfig.resources).forEach(([key, configListField]) => {
+          if (configListField && Array.isArray(configListField)) {
+            configListField.forEach(istioObject => {
+              if (!istioConfigPerNamespace.has(istioObject.metadata.namespace)) {
+                const newIstioConfigList: IstioConfigList = {
+                  permissions: {},
+                  resources: {},
+                  validations: {}
+                };
+                istioConfigPerNamespace.set(istioObject.metadata.namespace, newIstioConfigList);
+              }
+              if (!istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key]) {
+                istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key] = [];
+              }
+              istioConfigPerNamespace.get(istioObject.metadata.namespace)!['resources'][key].push(istioObject);
+            });
+          }
+        });
+
+        // Update namespaces with validations and istioConfig
+        // We need to mutate the array passed in (which is this.state.namespaces)
+        // so that the changes are reflected when setState is called
         namespaces.forEach(nsInfo => {
-          if (nsInfo.cluster && nsInfo.cluster === cluster && validationsByClusterAndNamespace.get(cluster)) {
-            nsInfo.validations = validationsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
+          if (nsInfo.cluster && nsInfo.cluster === cluster) {
+            if (validationsByClusterAndNamespace.get(cluster)) {
+              nsInfo.validations = validationsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
+            }
+            // Set istioConfig - use the one from the map, or create an empty one if not found
+            const nsIstioConfig = istioConfigPerNamespace.get(nsInfo.name);
+            if (nsIstioConfig) {
+              nsInfo.istioConfig = nsIstioConfig;
+            } else if (!nsInfo.istioConfig) {
+              // Only set empty config if it doesn't already exist (to preserve existing data)
+              nsInfo.istioConfig = {
+                permissions: {},
+                resources: {},
+                validations: {}
+              };
+            }
           }
         });
       })
-      .catch(err => this.handleApiError('Could not fetch validations', err));
+      .catch(err => this.handleApiError('Could not fetch validations status', err));
+  };
+
+  fetchGrafanaInfo = (): void => {
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
+      if (!NamespacesPageComponent.grafanaInfoPromise) {
+        NamespacesPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
+
+          return response.data;
+        });
+      }
+
+      NamespacesPageComponent.grafanaInfoPromise
+        .then(grafanaInfo => {
+          if (grafanaInfo) {
+            // For Namespaces Page only Performance and Wasm Extension dashboard are interesting
+            this.setState({
+              grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+            });
+          } else {
+            this.setState({ grafanaLinks: [] });
+          }
+        })
+        .catch(err => {
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
+        });
+    }
+  };
+
+  fetchPersesInfo = (): void => {
+    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
+      if (!NamespacesPageComponent.persesInfoPromise) {
+        NamespacesPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
+          if (response.status === 204) {
+            return undefined;
+          }
+
+          return response.data;
+        });
+      }
+
+      NamespacesPageComponent.persesInfoPromise
+        .then(persesInfo => {
+          if (persesInfo) {
+            // For Namespaces Page only Performance and Wasm Extension dashboard are interesting
+            this.setState({
+              persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
+            });
+          } else {
+            this.setState({ persesLinks: [] });
+          }
+        })
+        .catch(err => {
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
+        });
+    }
+  };
+
+  private fetchControlPlanes = async (): Promise<void> => {
+    return API.getControlPlanes()
+      .then(response => {
+        this.setState({
+          controlPlanes: response.data
+        });
+      })
+      .catch(err => {
+        addError('Error fetching control planes.', err);
+      });
   };
 
   handleApiError = (message: string, error: ApiError): void => {
@@ -532,7 +680,9 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     });
   };
 
-  getNamespaceActions = (_nsInfo: NamespaceInfo): NamespaceAction[] => {
+  getNamespaceActions = (nsInfo: NamespaceInfo): NamespaceAction[] => {
+    // Today actions are fixed, but soon actions may depend of the state of a namespace
+    // So we keep this wrapped in a showActions function.
     const namespaceActions: NamespaceAction[] = isParentKiosk(this.props.kiosk)
       ? [
           {
@@ -598,8 +748,295 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             ]
           }
         ];
+    // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
+    // then it can use the Istio Injection Actions.
+    // RBAC allow more fine granularity but Kiali won't check that in detail.
+
+    if (!nsInfo.isControlPlane) {
+      if (
+        !(
+          serverConfig.ambientEnabled &&
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.ambientNamespaceLabel] ===
+            serverConfig.istioLabels.ambientNamespaceLabelValue
+        ) &&
+        serverConfig.kialiFeatureFlags.istioInjectionAction &&
+        !serverConfig.kialiFeatureFlags.istioUpgradeAction
+      ) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        const enableAction = {
+          'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
+          isGroup: false,
+          isSeparator: false,
+          title: t('Enable Auto Injection'),
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'enable',
+              kind: 'injection',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const disableAction = {
+          'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
+          isGroup: false,
+          isSeparator: false,
+          title: t('Disable Auto Injection'),
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'disable',
+              kind: 'injection',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const removeAction = {
+          'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
+          isGroup: false,
+          isSeparator: false,
+          title: t('Remove Auto Injection'),
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'remove',
+              kind: 'injection',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        if (
+          nsInfo.labels &&
+          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
+            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
+        ) {
+          namespaceActions.push(disableAction);
+          namespaceActions.push(removeAction);
+        } else if (
+          nsInfo.labels &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
+        ) {
+          namespaceActions.push(enableAction);
+          namespaceActions.push(removeAction);
+        } else {
+          namespaceActions.push(enableAction);
+        }
+      }
+
+      // Ambient actions
+      if (serverConfig.ambientEnabled) {
+        const addAmbientAction = {
+          'data-test': `add-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: t('Add to Ambient'),
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'enable',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const disableAmbientAction = {
+          'data-test': `disable-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: 'Disable Ambient',
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'disable',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        const removeAmbientAction = {
+          'data-test': `remove-${nsInfo.name}-namespace-ambient`,
+          isGroup: false,
+          isSeparator: false,
+          title: 'Remove Ambient',
+          action: (ns: string) =>
+            this.setState({
+              showTrafficPoliciesModal: true,
+              nsTarget: ns,
+              opTarget: 'remove',
+              kind: 'ambient',
+              clusterTarget: nsInfo.cluster
+            })
+        };
+
+        if (
+          nsInfo.labels &&
+          !nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
+          !nsInfo.labels[serverConfig.istioLabels.injectionLabelRev]
+        ) {
+          if (nsInfo.isAmbient) {
+            namespaceActions.push({
+              isGroup: false,
+              isSeparator: true
+            });
+            namespaceActions.push(disableAmbientAction);
+            namespaceActions.push(removeAmbientAction);
+          } else {
+            namespaceActions.push(addAmbientAction);
+          }
+        }
+      }
+
+      if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
+        const revisionActions = this.state.controlPlanes
+          ?.filter(
+            controlplane =>
+              nsInfo.revision &&
+              controlplane.managedClusters?.some(managedCluster => managedCluster.name === nsInfo.cluster) &&
+              controlplane.revision !== nsInfo.revision
+          )
+          .map(controlPlane => ({
+            isGroup: false,
+            isSeparator: false,
+            title: `Switch to ${controlPlane.revision} revision`,
+            action: (ns: string) =>
+              this.setState({
+                opTarget: controlPlane.revision,
+                kind: 'canary',
+                nsTarget: ns,
+                showTrafficPoliciesModal: true,
+                clusterTarget: nsInfo.cluster
+              })
+          }));
+
+        if (revisionActions && revisionActions.length > 0) {
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true
+          });
+        }
+
+        revisionActions?.forEach(action => {
+          namespaceActions.push(action);
+        });
+      }
+
+      const aps = nsInfo.istioConfig?.resources[getGVKTypeString(gvkType.AuthorizationPolicy)] ?? [];
+
+      const addAuthorizationAction = {
+        isGroup: false,
+        isSeparator: false,
+        title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
+        action: (ns: string) => {
+          this.setState({
+            opTarget: aps.length === 0 ? 'create' : 'update',
+            nsTarget: ns,
+            clusterTarget: nsInfo.cluster,
+            showTrafficPoliciesModal: true,
+            kind: 'policy'
+          });
+        }
+      };
+
+      const removeAuthorizationAction = {
+        isGroup: false,
+        isSeparator: false,
+        title: 'Delete Traffic Policies',
+        action: (ns: string) =>
+          this.setState({
+            opTarget: 'delete',
+            nsTarget: ns,
+            showTrafficPoliciesModal: true,
+            kind: 'policy',
+            clusterTarget: nsInfo.cluster
+          })
+      };
+
+      if (this.props.istioAPIEnabled) {
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        namespaceActions.push(addAuthorizationAction);
+
+        if (aps.length > 0) {
+          namespaceActions.push(removeAuthorizationAction);
+        }
+      }
+    } else {
+      if (this.state.grafanaLinks.length > 0) {
+        // Istio namespace will render external Grafana dashboards
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        this.state.grafanaLinks.forEach(link => {
+          const grafanaDashboard = {
+            isGroup: false,
+            isSeparator: false,
+            isExternal: true,
+            title: link.name,
+            action: (_ns: string) => {
+              window.open(link.url, '_blank');
+              this.onChange();
+            }
+          };
+
+          namespaceActions.push(grafanaDashboard);
+        });
+      }
+      if (this.state.persesLinks.length > 0) {
+        // Istio namespace will render external Perses dashboards
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
+
+        this.state.persesLinks.forEach(link => {
+          const persesDashboard = {
+            isGroup: false,
+            isSeparator: false,
+            isExternal: true,
+            title: link.name,
+            action: (_ns: string) => {
+              window.open(link.url, '_blank');
+              this.onChange();
+            }
+          };
+
+          namespaceActions.push(persesDashboard);
+        });
+      }
+    }
 
     return namespaceActions;
+  };
+
+  hideTrafficManagement = (): void => {
+    this.setState({
+      showTrafficPoliciesModal: false,
+      nsTarget: '',
+      clusterTarget: '',
+      opTarget: '',
+      kind: ''
+    });
+  };
+
+  hasCanaryUpgradeConfigured = (): boolean => {
+    return this.state.controlPlanes !== undefined;
   };
 
   show = (showType: Show, namespace: string): void => {
@@ -706,6 +1143,24 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             />
           </VirtualList>
         </RenderContent>
+
+        <NamespaceTrafficPolicies
+          opTarget={this.state.opTarget}
+          isOpen={this.state.showTrafficPoliciesModal}
+          controlPlanes={this.state.controlPlanes?.filter(cp =>
+            cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
+          )}
+          kind={this.state.kind}
+          hideConfirmModal={this.hideTrafficManagement}
+          nsTarget={this.state.nsTarget}
+          nsInfo={
+            this.state.namespaces.filter(
+              ns => ns.name === this.state.nsTarget && ns.cluster === this.state.clusterTarget
+            )[0]
+          }
+          duration={this.props.duration}
+          load={this.onChange}
+        />
       </>
     );
   }
@@ -713,7 +1168,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state),
-  externalServices: [],
+  externalServices: state.statusState.externalServices,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   language: languageSelector(state),
