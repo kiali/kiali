@@ -66,12 +66,15 @@ type healthMonitor struct {
 // Start starts the background health refresh loop.
 func (m *healthMonitor) Start(ctx context.Context) {
 	interval := m.conf.HealthConfig.Compute.RefreshInterval
-	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s", interval)
+	timeout := m.conf.HealthConfig.Compute.Timeout
+	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", interval, timeout)
 
-	// Prime the cache with an initial refresh
-	if err := m.RefreshHealth(ctx); err != nil {
+	// Prime the cache with an initial refresh (with timeout)
+	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+	if err := m.RefreshHealth(refreshCtx); err != nil {
 		m.logger.Error().Err(err).Msg("Initial health refresh failed")
 	}
+	cancel()
 
 	go func() {
 		for {
@@ -80,9 +83,11 @@ func (m *healthMonitor) Start(ctx context.Context) {
 				m.logger.Info().Msg("Stopping health monitor")
 				return
 			case <-time.After(interval):
-				if err := m.RefreshHealth(ctx); err != nil {
+				refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+				if err := m.RefreshHealth(refreshCtx); err != nil {
 					m.logger.Error().Err(err).Msg("Health refresh failed")
 				}
+				cancel()
 			}
 		}
 	}()

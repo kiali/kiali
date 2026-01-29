@@ -898,6 +898,11 @@ type HealthCompute struct {
 	// RefreshInterval is the interval between health cache refreshes.
 	// Default: 2m
 	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
+
+	// Timeout is the maximum time allowed for a single health refresh cycle.
+	// If exceeded, the refresh is cancelled and the next cycle starts on schedule.
+	// Default: 5m
+	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
 // HealthConfig holds both custom rate configurations for computing health, as well as the configuration about
@@ -1093,6 +1098,7 @@ func NewConfig() (c *Config) {
 			Compute: HealthCompute{
 				Duration:        0, // 0 means auto-calculate from elapsed time
 				RefreshInterval: 2 * time.Minute,
+				Timeout:         5 * time.Minute,
 			},
 		},
 		IstioLabels: IstioLabels{
