@@ -27,7 +27,11 @@ const defaultHealthRateInterval = "10m"
 const HealthCachedHeader = "X-Kiali-Health-Cached"
 
 // ClusterHealth is the API handler to get app-based health of every services from namespaces in the given cluster.
-// This handler serves pre-computed health data from cache.
+// When health cache is enabled, this handler serves pre-computed health data from cache. On a cache miss
+// (e.g., during startup before the first refresh completes), the handler returns an empty health map for
+// the affected namespace rather than computing health on-demand. This avoids expensive Prometheus queries
+// during the request lifecycle. The X-Kiali-Health-Cached header indicates whether all data came from cache.
+// When health cache is disabled, health is computed on-demand for each request.
 func ClusterHealth(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
