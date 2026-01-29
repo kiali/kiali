@@ -172,6 +172,21 @@ export const sortFields: SortField<NamespaceInfo>[] = [
         return 0;
       }
     }
+  },
+  {
+    id: 'revision',
+    title: t('Revision'),
+    isNumeric: false,
+    param: 'rev',
+    compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
+      const aRev = a.revision ?? '';
+      const bRev = b.revision ?? '';
+      const cmp = aRev.localeCompare(bRev);
+      if (cmp !== 0) {
+        return cmp;
+      }
+      return a.name.localeCompare(b.name);
+    }
   }
 ];
 
