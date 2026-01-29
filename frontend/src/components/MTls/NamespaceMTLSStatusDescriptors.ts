@@ -67,6 +67,28 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
       showStatus: true
     }
   ],
+  // No namespace policy; mesh/control plane is DISABLED — show "Unset" label with disabled-style icon.
+  [
+    MTLSStatuses.UNSET_INHERITED_DISABLED,
+    {
+      message: 'No mTLS policy in this namespace; inherited Disabled from mesh',
+      color: PFColors.Danger,
+      name: 'Unset',
+      icon: MTLSIconTypes.LOCK_OPEN,
+      showStatus: true
+    }
+  ],
+  // No namespace policy; mesh/control plane is STRICT — show "Unset" label with closed lock icon only.
+  [
+    MTLSStatuses.UNSET_INHERITED_STRICT,
+    {
+      message: 'No mTLS policy in this namespace; inherited Strict from mesh',
+      color: 'var(--pf-t--global--text--color--primary--default)',
+      name: 'Unset',
+      icon: MTLSIconTypes.LOCK_FULL,
+      showStatus: true
+    }
+  ],
   // Backwards-compatibility: older backends may return MTLS_NOT_ENABLED for the "no policy" case.
   // Treat it as UNSET so the UI doesn't render an empty cell.
   [

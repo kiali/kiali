@@ -27,12 +27,15 @@ type TLSService struct {
 }
 
 const (
-	MTLSEnabled          = "MTLS_ENABLED"
-	MTLSPartiallyEnabled = "MTLS_PARTIALLY_ENABLED"
-	MTLSNotEnabled       = "MTLS_NOT_ENABLED"
-	MTLSDisabled         = "MTLS_DISABLED"
-	MTLSUnset            = "UNSET"
-	MTLSValidationError  = "MTLS_VALIDATION_ERROR"
+	MTLSDisabled               = "MTLS_DISABLED"
+	MTLSEnabled                = "MTLS_ENABLED"
+	MTLSEnabledExtended        = "MTLS_ENABLED_EXTENDED"
+	MTLSNotEnabled             = "MTLS_NOT_ENABLED"
+	MTLSPartiallyEnabled       = "MTLS_PARTIALLY_ENABLED"
+	MTLSUnset                  = "UNSET"
+	MTLSUnsetInheritedDisabled = "UNSET_INHERITED_DISABLED"
+	MTLSUnsetInheritedStrict   = "UNSET_INHERITED_STRICT"
+	MTLSValidationError        = "MTLS_VALIDATION_ERROR"
 )
 
 func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, revision string) (models.MTLSStatus, error) {
@@ -151,8 +154,13 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		AllowPermissive:     false,
 	}
 
+	status := in.namespaceMTLSOverallStatus(cluster, namespace, pas, mtlsStatus)
+	if status == MTLSUnset {
+		status = in.resolveUnsetNamespaceStatus(ctx, cluster, namespace, rootNamespace, ns)
+	}
+
 	return models.MTLSStatus{
-		Status:          in.namespaceMTLSOverallStatus(cluster, namespace, pas, mtlsStatus),
+		Status:          status,
 		AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 		Cluster:         cluster,
 		Namespace:       namespace,
@@ -179,6 +187,8 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		return result, err
 	}
 
+	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces)
+
 	for _, namespace := range namespaces {
 		pasAll := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace.Name)
 		rootNamespace := in.discovery.GetRootNamespace(ctx, namespace.Cluster, namespace.Name)
@@ -194,8 +204,20 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 			AllowPermissive:     false,
 		}
 
+		status := in.namespaceMTLSOverallStatus(cluster, namespace.Name, pas, mtlsStatus)
+		if status == MTLSUnset {
+			revision := namespace.Revision
+			if revision == "" && namespace.Labels != nil {
+				revision = namespace.Labels[config.IstioRevisionLabel]
+			}
+			if revision == "" {
+				revision = models.DefaultRevisionLabel
+			}
+			status = in.resolveUnsetStatusWithMeshStatus(meshStatusByRevision[revision], cluster, namespace.Name, rootNamespace)
+		}
+
 		result = append(result, models.MTLSStatus{
-			Status:          in.namespaceMTLSOverallStatus(cluster, namespace.Name, pas, mtlsStatus),
+			Status:          status,
 			AutoMTLSEnabled: mtlsStatus.AutoMtlsEnabled,
 			Cluster:         cluster,
 			Namespace:       namespace.Name,
@@ -203,6 +225,70 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	}
 
 	return result, nil
+}
+
+// resolveUnsetNamespaceStatus returns the effective mTLS status when namespace status is UNSET:
+// - Control plane (root) namespace: mesh-wide status for its revision.
+// - Data plane namespace with mesh in STRICT: MTLS_ENABLED_EXTENDED so the UI shows a closed lock.
+func (in *TLSService) resolveUnsetNamespaceStatus(ctx context.Context, cluster, namespace, rootNamespace string, ns *models.Namespace) string {
+	revision := models.DefaultRevisionLabel
+	if ns != nil {
+		revision = ns.Revision
+		if revision == "" && ns.Labels != nil {
+			revision = ns.Labels[config.IstioRevisionLabel]
+		}
+		if revision == "" {
+			revision = models.DefaultRevisionLabel
+		}
+	}
+	meshStatus, err := in.MeshWidemTLSStatus(ctx, cluster, revision)
+	if err != nil {
+		return MTLSUnset
+	}
+	return in.resolveUnsetStatusWithMeshStatus(meshStatus.Status, cluster, namespace, rootNamespace)
+}
+
+// meshStatusByRevisionForNamespaces returns mesh-wide mTLS status per revision for the given namespaces.
+func (in *TLSService) meshStatusByRevisionForNamespaces(ctx context.Context, cluster string, namespaces []models.Namespace) map[string]string {
+	revisions := make(map[string]struct{})
+	for _, ns := range namespaces {
+		rev := ns.Revision
+		if rev == "" && ns.Labels != nil {
+			rev = ns.Labels[config.IstioRevisionLabel]
+		}
+		if rev == "" {
+			rev = models.DefaultRevisionLabel
+		}
+		revisions[rev] = struct{}{}
+	}
+	out := make(map[string]string, len(revisions))
+	for rev := range revisions {
+		meshStatus, err := in.MeshWidemTLSStatus(ctx, cluster, rev)
+		if err != nil {
+			continue
+		}
+		out[rev] = meshStatus.Status
+	}
+	return out
+}
+
+// resolveUnsetStatusWithMeshStatus returns the effective status when namespace is UNSET given mesh status.
+func (in *TLSService) resolveUnsetStatusWithMeshStatus(meshStatus, cluster, namespaceName, rootNamespace string) string {
+	if rootNamespace == namespaceName {
+		if meshStatus != "" {
+			return meshStatus
+		}
+		return MTLSUnset
+	}
+	// Namespace has no policy (UNSET) but mesh is STRICT: show "Unset" label with closed lock icon only.
+	if meshStatus == MTLSEnabled {
+		return MTLSUnsetInheritedStrict
+	}
+	// Namespace has no policy (UNSET) but mesh is DISABLED: show "Unset" label with disabled-style icon/tooltip.
+	if meshStatus == MTLSDisabled {
+		return MTLSUnsetInheritedDisabled
+	}
+	return MTLSUnset
 }
 
 func (in *TLSService) namespaceMTLSOverallStatus(cluster, namespace string, peerAuthentications []*security_v1.PeerAuthentication, mtlsStatus mtls.MtlsStatus) string {
