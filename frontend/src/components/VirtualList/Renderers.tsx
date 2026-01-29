@@ -50,22 +50,6 @@ import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
 
-// Store unique revisions count for namespaces to determine if revision column should show values
-// Initialize to -1 to indicate "not calculated yet" vs 0 which means "no revisions"
-let uniqueRevisionsCount = -1;
-
-export const setUniqueRevisionsCount = (count: number): void => {
-  uniqueRevisionsCount = count;
-};
-
-export const getUniqueRevisionsCount = (): number => {
-  return uniqueRevisionsCount;
-};
-
-export const resetUniqueRevisionsCount = (): void => {
-  uniqueRevisionsCount = -1;
-};
-
 const rendererInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',
   marginRight: '0',
@@ -557,19 +541,6 @@ export const isDataPlaneNamespace = (ns: NamespaceInfo): boolean => {
 };
 
 export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  if (uniqueRevisionsCount === -1) {
-    return (
-      <Td
-        role="gridcell"
-        dataLabel="Revision"
-        key={`VirtuaItem_Revision_${ns.name}`}
-        style={{ verticalAlign: 'middle' }}
-      >
-        {' '}
-      </Td>
-    );
-  }
-
   const revision = getNamespaceRevision(ns);
   const isDataPlane = isDataPlaneNamespace(ns);
 

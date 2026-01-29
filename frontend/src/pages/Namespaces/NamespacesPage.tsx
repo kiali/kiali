@@ -19,13 +19,6 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import {
-  setUniqueRevisionsCount,
-  resetUniqueRevisionsCount,
-  getUniqueRevisionsCount,
-  getNamespaceRevision,
-  isDataPlaneNamespace
-} from '../../components/VirtualList/Renderers';
-import {
   isCurrentSortAscending,
   currentSortField,
   runFilters,
@@ -38,7 +31,7 @@ import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
-import { isMultiCluster } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
@@ -674,26 +667,13 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   render(): React.ReactNode {
     const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
 
-    resetUniqueRevisionsCount();
-
-    const uniqueRevisions = new Set<string>();
-    filteredNamespaces.forEach(ns => {
-      if (isDataPlaneNamespace(ns)) {
-        const revision = getNamespaceRevision(ns);
-        const revisionValue = revision && revision !== '' ? revision : 'default';
-        uniqueRevisions.add(revisionValue);
-      }
-    });
-
-    setUniqueRevisionsCount(uniqueRevisions.size);
-
     const namespaceActions = filteredNamespaces.map((ns, i) => {
       const actions = this.getNamespaceActions(ns);
       return <NamespaceActions key={`namespaceAction_${i}`} namespace={ns.name} actions={actions} />;
     });
 
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
-    if (getUniqueRevisionsCount() < 2) {
+    if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
       hiddenColumns.push('revision');
     }
 
