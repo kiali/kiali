@@ -31,7 +31,7 @@ import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
-import { isMultiCluster } from '../../config';
+import { isMultiCluster, serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
@@ -673,6 +673,9 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     });
 
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
+    if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
+      hiddenColumns.push('revision');
+    }
 
     return (
       <>
