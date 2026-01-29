@@ -2670,7 +2670,7 @@ exports[`DateTimePicker renders correctly with selected date 1`] = `
         bodyContent={
           <CalendarMonth
             aria-label="Date picker calendar"
-            date={2025-06-15T12:30:00.000Z}
+            date={2025-06-15T18:30:00.000Z}
             onChange={[Function]}
             validators={
               Array [
@@ -5321,7 +5321,7 @@ exports[`DateTimePicker renders with min and max date constraints 1`] = `
         bodyContent={
           <CalendarMonth
             aria-label="Date picker calendar"
-            date={2025-06-15T12:30:00.000Z}
+            date={2025-06-15T18:30:00.000Z}
             onChange={[Function]}
             validators={
               Array [
