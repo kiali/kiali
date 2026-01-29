@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 
 	apps_v1 "k8s.io/api/apps/v1"
@@ -205,13 +207,46 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		cpnSet[n] = struct{}{}
 	}
 
+	// Revisions for control plane namespaces from the mesh.
+	cpRevisionsByNamespace := make(map[string][]string)
+	if mesh, err := in.discovery.Mesh(ctx); err == nil {
+		for _, cp := range mesh.ControlPlanes {
+			if cp.Cluster != nil && cp.Cluster.Name == cluster {
+				rev := cp.Revision
+				if rev == "" {
+					rev = models.DefaultRevisionLabel
+				}
+				cpRevisionsByNamespace[cp.IstiodNamespace] = append(cpRevisionsByNamespace[cp.IstiodNamespace], rev)
+			}
+		}
+		// Deduplicate and sort for consistent display
+		for ns := range cpRevisionsByNamespace {
+			revs := cpRevisionsByNamespace[ns]
+			seen := make(map[string]struct{}, len(revs))
+			unique := revs[:0]
+			for _, r := range revs {
+				if _, ok := seen[r]; !ok {
+					seen[r] = struct{}{}
+					unique = append(unique, r)
+				}
+			}
+			sort.Strings(unique)
+			cpRevisionsByNamespace[ns] = unique
+		}
+	}
+
 	for i := range namespaces {
 		_, ok := cpnSet[namespaces[i].Name]
 		namespaces[i].IsControlPlane = ok
 
-		if ok && in.kialiCache.IsAmbientEnabled(cluster) {
-			ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
-			in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+		if ok {
+			if revs, hasRevs := cpRevisionsByNamespace[namespaces[i].Name]; hasRevs && len(revs) > 0 {
+				namespaces[i].Revision = strings.Join(revs, ",")
+			}
+			if in.kialiCache.IsAmbientEnabled(cluster) {
+				ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
+				in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+			}
 		}
 	}
 
