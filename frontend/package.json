@@ -92,7 +92,7 @@
     "msw:init": "[ -f public/mockServiceWorker.js ] || npx msw init public/ --save=false",
     "start:mock": "npm run generate:chatbot-conversations && npm run msw:init && sh -ac '. ./.env.upstream; REACT_APP_MOCK_API=true npm run start:kiali'",
     "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "tsc -p . && TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'",
+    "test": "TZ=UTC tsc -p . && TZ=UTC TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/'",
     "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' -e 's/justify-content: end;/justify-content: flex-end;/g' -e 's/align-items: end;/align-items: flex-end;/g' {} +"
   },
   "dependencies": {
