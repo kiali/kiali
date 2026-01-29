@@ -35,8 +35,10 @@ type Props = ReduxStateProps &
     tooltip: string;
   };
 
-const labelStyle = kialiStyle({
-  margin: '0.25rem 0.25rem 0 0.25rem'
+const timeRangeStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem'
 });
 
 export class TimeRangeComp extends React.Component<Props> {
@@ -131,14 +133,33 @@ export class TimeRangeComp extends React.Component<Props> {
   };
 
   renderWithCustom = (bounds: BoundsInMilliseconds): React.ReactNode => {
+    const now = Date.now();
+
+    // Limit minDate based on Prometheus retention period
+    const retentionMs = (serverConfig.prometheus.storageTsdbRetention ?? 21600) * 1000;
+    const minDate = new Date(now - retentionMs);
+
+    // maxDate is now (no future dates)
+    const maxDate = new Date(now);
+
     return (
-      <>
+      <div className={timeRangeStyle}>
         {this.renderDuration()}
-        <div className={labelStyle}>From</div>
-        <DateTimePicker selected={bounds.from} onChange={date => this.onStartPickerChanged(date)} maxDate={bounds.to} />
-        <div className={labelStyle}>To</div>
-        <DateTimePicker selected={bounds.to} onChange={date => this.onEndPickerChanged(date)} minDate={bounds.from} />
-      </>
+        {t('From')}
+        <DateTimePicker
+          selected={bounds.from}
+          onChange={date => this.onStartPickerChanged(date)}
+          minDate={minDate}
+          maxDate={bounds.to ? Math.min(bounds.to, now) : maxDate}
+        />
+        {t('To')}
+        <DateTimePicker
+          selected={bounds.to}
+          onChange={date => this.onEndPickerChanged(date)}
+          minDate={bounds.from ?? minDate}
+          maxDate={maxDate}
+        />
+      </div>
     );
   };
 

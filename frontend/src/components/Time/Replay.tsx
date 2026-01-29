@@ -55,10 +55,6 @@ type ReplaySpeed = {
   text: string;
 };
 
-export const replayBorder = kialiStyle({
-  borderLeft: `solid 0.25rem ${PFColors.Replay}`
-});
-
 /**
  * Overrides for Replay use of the Slider component.
  * - to avoid the tt occluding other components (like close replay), limit to when mouse is over the slider only,
@@ -133,13 +129,12 @@ const isCustomActiveStyle = kialiStyle({
 
 const replayStyle = kialiStyle({
   display: 'flex',
-  width: '100%',
-  padding: '0 0.25rem 0 0.5rem'
+  gap: '0.5rem'
 });
 
 const sliderStyle = kialiStyle({
   width: '100%',
-  margin: '0 -0.5rem 0 1.25rem'
+  marginLeft: '0.75rem'
 });
 
 const speedStyle = kialiStyle({
@@ -258,11 +253,10 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const dropdownOptions = this.state.isCustomStartTime ? replayIntervals : replayLastIntervals;
 
     return (
-      <div className={`${replayStyle} ${replayBorder}`}>
+      <div className={replayStyle}>
         {this.state.isCustomStartTime && (
           <Tooltip content="Replay start time">
             <DateTimePicker
-              injectTimes={[maxTime]}
               maxDate={maxTime}
               minDate={minTime}
               onChange={(date: Date) => this.onPickerChange(date)}

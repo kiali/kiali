@@ -13,9 +13,18 @@ import {
   TextInput
 } from '@patternfly/react-core';
 import { OutlinedCalendarAltIcon, OutlinedClockIcon } from '@patternfly/react-icons';
+import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
+
+const containerStyle = kialiStyle({
+  display: 'inline-flex'
+});
+
+const inputStyle = kialiStyle({
+  width: '11em'
+});
 
 interface DateTimePickerProps {
-  injectTimes?: Date[];
   maxDate?: Date | number;
   minDate?: Date | number;
   onChange: (date: Date) => void;
@@ -55,6 +64,41 @@ const toDate = (value?: Date | number): Date | undefined => {
   return typeof value === 'number' ? new Date(value) : value;
 };
 
+// Check if two dates are on the same day
+const isSameDay = (date1: Date, date2: Date): boolean => {
+  return compareDate(date1, date2) === 0;
+};
+
+// Compare dates (year, month, day only, ignoring time)
+// Returns: -1 if date is before refDate, 0 if same day, 1 if after
+const compareDate = (date: Date, refDate: Date): number => {
+  const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const d2 = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+
+  if (d1 < d2) {
+    return -1;
+  }
+  if (d1 > d2) {
+    return 1;
+  }
+  return 0;
+};
+
+// Compare time (hours and minutes only, ignoring seconds)
+// Returns: -1 if time is before refDate, 0 if equal, 1 if after
+const compareTime = (hours: number, minutes: number, refDate: Date): number => {
+  const refHours = refDate.getHours();
+  const refMinutes = refDate.getMinutes();
+
+  if (hours < refHours || (hours === refHours && minutes < refMinutes)) {
+    return -1;
+  }
+  if (hours > refHours || (hours === refHours && minutes > refMinutes)) {
+    return 1;
+  }
+  return 0;
+};
+
 export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePickerProps) => {
   const { maxDate, minDate, onChange, selected } = props;
 
@@ -67,6 +111,25 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
 
   const displayDate = selectedDate ? dateFormat(selectedDate) : 'YYYY-MM-DD';
   const displayTime = selectedDate ? timeFormat(selectedDate) : 'HH:MM';
+
+  // Scroll to current time when dropdown opens
+  React.useEffect(() => {
+    if (isTimeOpen && selectedDate) {
+      // Find the closest 5-minute interval for the current time
+      const hours = selectedDate.getHours();
+      const minutes = Math.floor(selectedDate.getMinutes() / 5) * 5;
+      const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+      // Small delay to ensure dropdown is rendered (portal renders async)
+      setTimeout(() => {
+        // Find the dropdown item in the document (rendered via portal)
+        const timeItem = document.querySelector(`[data-time="${timeString}"]`);
+        if (timeItem) {
+          timeItem.scrollIntoView({ block: 'center' });
+        }
+      }, 50);
+    }
+  }, [isTimeOpen, selectedDate]);
 
   const onToggleCalendar = (): void => {
     setIsCalendarOpen(!isCalendarOpen);
@@ -81,17 +144,22 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
   const onSelectCalendar = (_event: React.MouseEvent<HTMLButtonElement, MouseEvent>, newDate: Date): void => {
     // Preserve time when date changes
     const currentDate = selectedDate ?? new Date();
-    newDate.setHours(currentDate.getHours());
-    newDate.setMinutes(currentDate.getMinutes());
+    const hours = currentDate.getHours();
+    const minutes = currentDate.getMinutes();
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
     newDate.setSeconds(0);
     newDate.setMilliseconds(0);
 
-    // Apply min/max constraints
-    if (minDateValue && newDate < minDateValue) {
-      newDate = new Date(minDateValue);
+    // Apply min/max constraints (compare hours and minutes only when on same day)
+    if (minDateValue && isSameDay(newDate, minDateValue) && compareTime(hours, minutes, minDateValue) < 0) {
+      newDate.setHours(minDateValue.getHours());
+      newDate.setMinutes(minDateValue.getMinutes());
     }
-    if (maxDateValue && newDate > maxDateValue) {
-      newDate = new Date(maxDateValue);
+
+    if (maxDateValue && isSameDay(newDate, maxDateValue) && compareTime(hours, minutes, maxDateValue) > 0) {
+      newDate.setHours(maxDateValue.getHours());
+      newDate.setMinutes(maxDateValue.getMinutes());
     }
 
     setIsCalendarOpen(false);
@@ -108,36 +176,50 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
       currentDate.setSeconds(0);
       currentDate.setMilliseconds(0);
 
-      // Apply min/max constraints
-      let resultDate = currentDate;
-      if (minDateValue && resultDate < minDateValue) {
-        resultDate = new Date(minDateValue);
+      // Apply min/max constraints only when on the same day
+      if (minDateValue && isSameDay(currentDate, minDateValue) && compareTime(hours, minutes, minDateValue) < 0) {
+        currentDate.setHours(minDateValue.getHours());
+        currentDate.setMinutes(minDateValue.getMinutes());
       }
-      if (maxDateValue && resultDate > maxDateValue) {
-        resultDate = new Date(maxDateValue);
+
+      if (maxDateValue && isSameDay(currentDate, maxDateValue) && compareTime(hours, minutes, maxDateValue) > 0) {
+        currentDate.setHours(maxDateValue.getHours());
+        currentDate.setMinutes(maxDateValue.getMinutes());
       }
 
       setIsTimeOpen(false);
-      onChange(resultDate);
+      onChange(currentDate);
     }
   };
 
   // Validator for CalendarMonth to disable dates outside min/max range
   const dateValidator = (date: Date): boolean => {
-    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    if (minDateValue) {
-      const minDateOnly = new Date(minDateValue.getFullYear(), minDateValue.getMonth(), minDateValue.getDate());
-      if (dateOnly < minDateOnly) {
-        return false;
-      }
+    if (minDateValue && compareDate(date, minDateValue) < 0) {
+      return false;
     }
-    if (maxDateValue) {
-      const maxDateOnly = new Date(maxDateValue.getFullYear(), maxDateValue.getMonth(), maxDateValue.getDate());
-      if (dateOnly > maxDateOnly) {
-        return false;
-      }
+    if (maxDateValue && compareDate(date, maxDateValue) > 0) {
+      return false;
     }
     return true;
+  };
+
+  // Check if a time option is valid for the currently selected date
+  const isTimeDisabled = (timeString: string): boolean => {
+    if (!selectedDate) {
+      return false;
+    }
+
+    const [hours, minutes] = timeString.split(':').map(Number);
+
+    // Disable if on same day as minDate and time is before minDate's time
+    if (minDateValue && isSameDay(selectedDate, minDateValue) && compareTime(hours, minutes, minDateValue) < 0) {
+      return true;
+    }
+    // Disable if on same day as maxDate and time is after maxDate's time
+    if (maxDateValue && isSameDay(selectedDate, maxDateValue) && compareTime(hours, minutes, maxDateValue) > 0) {
+      return true;
+    }
+    return false;
   };
 
   const calendar = (
@@ -145,15 +227,19 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
       date={selectedDate}
       onChange={onSelectCalendar}
       validators={[dateValidator]}
-      aria-label="Date picker calendar"
+      aria-label={t('Date picker calendar')}
     />
   );
 
-  const timeDropdownItems = timeOptions.map(time => (
-    <DropdownItem key={time} onClick={onSelectTime}>
-      {time}
-    </DropdownItem>
-  ));
+  const timeDropdownItems = timeOptions.map(time => {
+    const disabled = isTimeDisabled(time);
+
+    return (
+      <DropdownItem key={time} onClick={onSelectTime} isDisabled={disabled} data-time={time}>
+        {time}
+      </DropdownItem>
+    );
+  });
 
   const timeDropdown = (
     <Dropdown
@@ -164,7 +250,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
           ref={toggleRef}
           onClick={onToggleTime}
           isExpanded={isTimeOpen}
-          aria-label="Time picker"
+          aria-label={t('Time picker')}
           icon={<OutlinedClockIcon />}
         />
       )}
@@ -186,7 +272,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
     >
       <Button
         variant="control"
-        aria-label="Toggle the calendar"
+        aria-label={t('Toggle the calendar')}
         onClick={onToggleCalendar}
         icon={<OutlinedCalendarAltIcon />}
       />
@@ -194,16 +280,16 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = (props: DateTimePic
   );
 
   return (
-    <div style={{ display: 'inline-flex', marginRight: '0.5rem' }}>
+    <div className={containerStyle}>
       <InputGroup>
         <InputGroupItem>
           <TextInput
             type="text"
-            id="date-time-picker"
-            aria-label="Date and time picker"
+            aria-label={t('Date and time picker')}
             value={`${displayDate} ${displayTime}`}
             readOnlyVariant="default"
-            style={{ width: '11em' }}
+            className={inputStyle}
+            data-test="date-time-picker"
           />
         </InputGroupItem>
         <InputGroupItem>{calendarButton}</InputGroupItem>

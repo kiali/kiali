@@ -51,7 +51,6 @@ import { isKioskMode, getFocusSelector, getTraceId, getClusterName, unsetFocusSe
 import { Label, Badge } from '@patternfly/react-core';
 
 import { toRangeString } from 'components/Time/Utils';
-import { replayBorder } from 'components/Time/Replay';
 import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphThunkActions } from '../../actions/GraphThunkActions';
@@ -486,7 +485,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               onToggleHelp={this.toggleHelp}
             />
           </div>
-          <FlexView grow={true} className={`${graphWrapperDivStyle} ${this.props.replayActive && replayBorder}`}>
+          <FlexView grow={true} className={graphWrapperDivStyle}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
