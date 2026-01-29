@@ -2,13 +2,10 @@ package appender
 
 import (
 	"context"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -481,8 +478,8 @@ func (a *HealthAppender) calculateSingleEdgeHealth(edge *graph.Edge, calculator 
 	sourceName := getNodeName(source)
 	destName := getNodeName(dest)
 
-	sourceTolerances := calculator.GetTolerancesForDirection(source.Namespace, sourceName, source.NodeType, "outbound", sourceAnnotations)
-	destTolerances := calculator.GetTolerancesForDirection(dest.Namespace, destName, dest.NodeType, "inbound", destAnnotations)
+	sourceTolerances := calculator.GetCompiledTolerancesForDirection(source.Namespace, sourceName, source.NodeType, "outbound", sourceAnnotations)
+	destTolerances := calculator.GetCompiledTolerancesForDirection(dest.Namespace, destName, dest.NodeType, "inbound", destAnnotations)
 
 	// Calculate status for outbound (from source perspective)
 	outboundStatus := a.calculateEdgeStatusWithTolerances(responses, protocol, totalRequests, sourceTolerances)
@@ -494,12 +491,12 @@ func (a *HealthAppender) calculateSingleEdgeHealth(edge *graph.Edge, calculator 
 	return models.MergeHealthStatus(outboundStatus, inboundStatus)
 }
 
-// calculateEdgeStatusWithTolerances calculates edge health status using the given tolerances.
+// calculateEdgeStatusWithTolerances calculates edge health status using pre-compiled tolerances.
 func (a *HealthAppender) calculateEdgeStatusWithTolerances(
 	responses graph.Responses,
 	protocol string,
 	totalRequests float64,
-	tolerances []config.Tolerance,
+	tolerances []business.CompiledTolerance,
 ) models.HealthStatus {
 	if len(tolerances) == 0 {
 		// No matching tolerances, check if there's traffic
@@ -512,15 +509,15 @@ func (a *HealthAppender) calculateEdgeStatusWithTolerances(
 	worstStatus := models.HealthStatusNA
 
 	for _, tol := range tolerances {
-		// Check if this tolerance matches the protocol
-		if !matchesPattern(tol.Protocol, protocol) {
+		// Check if this tolerance matches the protocol using pre-compiled regex
+		if !tol.Protocol.MatchString(protocol) {
 			continue
 		}
 
-		// Sum up error count for matching response codes
+		// Sum up error count for matching response codes using pre-compiled regex
 		errorCount := float64(0)
 		for code, detail := range responses {
-			if matchesCodePattern(tol.Code, code) {
+			if tol.Code.MatchString(code) {
 				for _, val := range detail.Flags {
 					errorCount += val
 				}
@@ -585,41 +582,4 @@ func getNodeName(n *graph.Node) string {
 	default:
 		return ""
 	}
-}
-
-// matchesCodePattern checks if a response code matches a code pattern (e.g., "5XX" matches "500", "501", etc.)
-func matchesCodePattern(pattern, code string) bool {
-	if pattern == "" || pattern == ".*" {
-		return true
-	}
-
-	// Replace X/x with \d for digit matching (matches frontend behavior)
-	regexPattern := strings.ReplaceAll(pattern, "X", `\d`)
-	regexPattern = strings.ReplaceAll(regexPattern, "x", `\d`)
-
-	return matchesPattern(regexPattern, code)
-}
-
-// matchesPattern checks if a value matches a regex pattern
-func matchesPattern(pattern, value string) bool {
-	if pattern == "" || pattern == ".*" {
-		return true
-	}
-
-	// Ensure full string match
-	fullPattern := pattern
-	if !strings.HasPrefix(fullPattern, "^") {
-		fullPattern = "^" + fullPattern
-	}
-	if !strings.HasSuffix(fullPattern, "$") {
-		fullPattern = fullPattern + "$"
-	}
-
-	re, err := regexp.Compile(fullPattern)
-	if err != nil {
-		// Invalid regex, fall back to exact match
-		return pattern == value
-	}
-
-	return re.MatchString(value)
 }

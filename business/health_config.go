@@ -23,16 +23,17 @@ type compiledRate struct {
 	kind      *regexp.Regexp
 	name      *regexp.Regexp
 	namespace *regexp.Regexp
-	tolerance []compiledTolerance
+	tolerance []CompiledTolerance
 }
 
-// compiledTolerance holds pre-compiled regex patterns for a Tolerance config
-type compiledTolerance struct {
-	code      *regexp.Regexp
-	degraded  float32
-	direction *regexp.Regexp
-	failure   float32
-	protocol  *regexp.Regexp
+// CompiledTolerance holds pre-compiled regex patterns for a Tolerance config.
+// This is the public version used by HealthCalculator.
+type CompiledTolerance struct {
+	Code      *regexp.Regexp
+	Degraded  float32
+	Direction *regexp.Regexp
+	Failure   float32
+	Protocol  *regexp.Regexp
 }
 
 // NewHealthRateMatcher creates a new HealthRateMatcher with the given config.
@@ -63,20 +64,26 @@ func (m *HealthRateMatcher) compileRate(rate *config.Rate) *compiledRate {
 		namespace: compilePattern(rate.Namespace, ".*"),
 		kind:      compilePattern(rate.Kind, ".*"),
 		name:      compilePattern(rate.Name, ".*"),
-		tolerance: make([]compiledTolerance, len(rate.Tolerance)),
+		tolerance: make([]CompiledTolerance, len(rate.Tolerance)),
 	}
 
 	for i, tol := range rate.Tolerance {
-		compiled.tolerance[i] = compiledTolerance{
-			code:      compileCodePattern(tol.Code, ".*"),
-			protocol:  compilePattern(tol.Protocol, ".*"),
-			direction: compilePattern(tol.Direction, ".*"),
-			degraded:  tol.Degraded,
-			failure:   tol.Failure,
-		}
+		compiled.tolerance[i] = CompileTolerance(tol)
 	}
 
 	return compiled
+}
+
+// CompileTolerance compiles a config.Tolerance into a CompiledTolerance.
+// This is used for both config-based and annotation-based tolerances.
+func CompileTolerance(tol config.Tolerance) CompiledTolerance {
+	return CompiledTolerance{
+		Code:      compileCodePattern(tol.Code, ".*"),
+		Protocol:  compilePattern(tol.Protocol, ".*"),
+		Direction: compilePattern(tol.Direction, ".*"),
+		Degraded:  tol.Degraded,
+		Failure:   tol.Failure,
+	}
 }
 
 // compilePattern compiles a regex pattern, using defaultPattern if empty
@@ -164,7 +171,7 @@ func (m *HealthRateMatcher) GetMatchingTolerances(rate *config.Rate, protocol, d
 
 	var matching []config.Tolerance
 	for i, tol := range compiled.tolerance {
-		if tol.protocol.MatchString(protocol) && tol.direction.MatchString(direction) {
+		if tol.Protocol.MatchString(protocol) && tol.Direction.MatchString(direction) {
 			matching = append(matching, rate.Tolerance[i])
 		}
 	}
@@ -278,4 +285,62 @@ func (m *HealthRateMatcher) GetTolerancesWithAnnotationOverride(namespace, name,
 
 	// Use config-based tolerances
 	return m.GetAllTolerancesForEntity(namespace, name, kind)
+}
+
+// GetCompiledTolerances returns pre-compiled tolerances for an entity, with annotation overrides.
+// This is the preferred method for health calculation as it avoids regex recompilation.
+func (m *HealthRateMatcher) GetCompiledTolerances(namespace, name, kind string, annotations map[string]string) []CompiledTolerance {
+	// Check for annotation override
+	if annotations != nil {
+		if annotationValue, ok := annotations[HealthAnnotationKey]; ok && annotationValue != "" {
+			annotationTolerances := ParseHealthAnnotation(annotationValue)
+			if len(annotationTolerances) > 0 {
+				// Compile annotation-based tolerances
+				return CompileTolerances(annotationTolerances)
+			}
+			// If annotation parsing failed, fall through to config-based tolerances
+		}
+	}
+
+	// Use pre-compiled config-based tolerances
+	return m.getCompiledTolerancesForEntity(namespace, name, kind)
+}
+
+// getCompiledTolerancesForEntity returns the pre-compiled tolerances for an entity from the cache.
+func (m *HealthRateMatcher) getCompiledTolerancesForEntity(namespace, name, kind string) []CompiledTolerance {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Find matching rate
+	for i := 0; i < len(m.conf.HealthConfig.Rate); i++ {
+		compiled := m.cache[i]
+		if compiled != nil &&
+			compiled.namespace.MatchString(namespace) &&
+			compiled.name.MatchString(name) &&
+			compiled.kind.MatchString(kind) {
+			return compiled.tolerance
+		}
+	}
+
+	// Fall back to the last rate's tolerances
+	if len(m.conf.HealthConfig.Rate) > 0 {
+		lastIdx := len(m.conf.HealthConfig.Rate) - 1
+		if compiled := m.cache[lastIdx]; compiled != nil {
+			return compiled.tolerance
+		}
+	}
+
+	return nil
+}
+
+// CompileTolerances compiles a slice of config.Tolerance into CompiledTolerance.
+func CompileTolerances(tolerances []config.Tolerance) []CompiledTolerance {
+	if len(tolerances) == 0 {
+		return nil
+	}
+	compiled := make([]CompiledTolerance, len(tolerances))
+	for i, tol := range tolerances {
+		compiled[i] = CompileTolerance(tol)
+	}
+	return compiled
 }

@@ -50,7 +50,6 @@ Prior to this work, health calculation was fragmented across the codebase:
 1. **List pages** (Apps, Services, Workloads) computed health on-demand during each API request, causing slow page loads at scale (30+ seconds for large namespaces).
 
 2. **Traffic Graph** had a mix of backend and frontend health calculation:
-
    - Node health was partially calculated on the backend
    - Edge health was calculated entirely on the frontend
    - Health configuration was sent to the frontend to enable client-side calculation
@@ -247,6 +246,8 @@ Each refresh cycle:
 2. For each cluster, iterates through all accessible namespaces
 3. Computes health for all apps, services, and workloads in each namespace
 4. Stores the results in the Kiali Cache
+
+**Performance Optimization**: Health tolerance patterns (code, protocol, direction regexes) are pre-compiled when the `HealthRateMatcher` is created. The `HealthCalculator` uses these pre-compiled `CompiledTolerance` objects, avoiding repeated regex compilation during health calculations. This is especially important for the background health refresh job processing many namespaces.
 
 ## Cache Structure
 

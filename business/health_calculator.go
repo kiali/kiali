@@ -2,7 +2,6 @@ package business
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -36,8 +35,8 @@ func (c *HealthCalculator) CalculateAppHealth(
 		return CalculatedHealth{Status: models.HealthStatusNA}
 	}
 
-	// Get tolerances for this entity (with annotation override)
-	tolerances := c.matcher.GetTolerancesWithAnnotationOverride(namespace, name, "app", annotations)
+	// Get pre-compiled tolerances for this entity (with annotation override)
+	tolerances := c.matcher.GetCompiledTolerances(namespace, name, "app", annotations)
 
 	// Calculate request health status
 	reqStatus, errorRatio := c.calculateRequestStatus(health.Requests, tolerances)
@@ -65,8 +64,8 @@ func (c *HealthCalculator) CalculateServiceHealth(
 		return CalculatedHealth{Status: models.HealthStatusNA}
 	}
 
-	// Get tolerances for this entity (with annotation override)
-	tolerances := c.matcher.GetTolerancesWithAnnotationOverride(namespace, name, "service", annotations)
+	// Get pre-compiled tolerances for this entity (with annotation override)
+	tolerances := c.matcher.GetCompiledTolerances(namespace, name, "service", annotations)
 
 	// Calculate request health status
 	status, errorRatio := c.calculateRequestStatus(health.Requests, tolerances)
@@ -87,8 +86,8 @@ func (c *HealthCalculator) CalculateWorkloadHealth(
 		return CalculatedHealth{Status: models.HealthStatusNA}
 	}
 
-	// Get tolerances for this entity (with annotation override)
-	tolerances := c.matcher.GetTolerancesWithAnnotationOverride(namespace, name, "workload", annotations)
+	// Get pre-compiled tolerances for this entity (with annotation override)
+	tolerances := c.matcher.GetCompiledTolerances(namespace, name, "workload", annotations)
 
 	// Calculate request health status
 	reqStatus, errorRatio := c.calculateRequestStatus(health.Requests, tolerances)
@@ -103,11 +102,11 @@ func (c *HealthCalculator) CalculateWorkloadHealth(
 	}
 }
 
-// calculateRequestStatus calculates health status from request data using tolerances.
+// calculateRequestStatus calculates health status from request data using pre-compiled tolerances.
 // Returns the worst status across all matching tolerances and the error ratio that caused it.
 func (c *HealthCalculator) calculateRequestStatus(
 	requests models.RequestHealth,
-	tolerances []config.Tolerance,
+	tolerances []CompiledTolerance,
 ) (models.HealthStatus, float64) {
 	if len(tolerances) == 0 {
 		// No tolerances configured, use simple error detection
@@ -150,18 +149,12 @@ func (c *HealthCalculator) calculateRequestStatus(
 // processDirectionalTraffic processes traffic for a specific direction (inbound/outbound)
 func (c *HealthCalculator) processDirectionalTraffic(
 	traffic map[string]map[string]float64,
-	tolerances []config.Tolerance,
+	tolerances []CompiledTolerance,
 	direction string,
 ) (models.HealthStatus, float64, bool) {
 	worstStatus := models.HealthStatusNA
 	worstErrorRatio := float64(-1)
 	hasTraffic := false
-
-	// Filter tolerances by direction
-	directionTolerances := c.filterTolerancesByDirection(tolerances, direction)
-	if len(directionTolerances) == 0 {
-		return worstStatus, worstErrorRatio, hasTraffic
-	}
 
 	// For each protocol in traffic
 	for protocol, codes := range traffic {
@@ -169,14 +162,17 @@ func (c *HealthCalculator) processDirectionalTraffic(
 			continue
 		}
 
-		// Find tolerances that match this protocol
-		protocolTolerances := c.filterTolerancesByProtocol(directionTolerances, protocol)
-		if len(protocolTolerances) == 0 {
-			continue
-		}
+		// For each tolerance, check if it matches this direction and protocol
+		for _, tol := range tolerances {
+			// Use pre-compiled regex for direction and protocol matching
+			if !tol.Direction.MatchString(direction) {
+				continue
+			}
+			if !tol.Protocol.MatchString(protocol) {
+				continue
+			}
 
-		// For each matching tolerance, calculate error ratio
-		for _, tol := range protocolTolerances {
+			// Use pre-compiled regex for code matching
 			errorCount, totalCount := c.aggregateMatchingCodes(codes, tol.Code)
 			if totalCount == 0 {
 				continue
@@ -197,58 +193,15 @@ func (c *HealthCalculator) processDirectionalTraffic(
 	return worstStatus, worstErrorRatio, hasTraffic
 }
 
-// filterTolerancesByDirection returns tolerances that match the given direction
-func (c *HealthCalculator) filterTolerancesByDirection(tolerances []config.Tolerance, direction string) []config.Tolerance {
-	var filtered []config.Tolerance
-	for _, tol := range tolerances {
-		if matchesPattern(tol.Direction, direction) {
-			filtered = append(filtered, tol)
-		}
-	}
-	return filtered
-}
-
-// filterTolerancesByProtocol returns tolerances that match the given protocol
-func (c *HealthCalculator) filterTolerancesByProtocol(tolerances []config.Tolerance, protocol string) []config.Tolerance {
-	var filtered []config.Tolerance
-	for _, tol := range tolerances {
-		if matchesPattern(tol.Protocol, protocol) {
-			filtered = append(filtered, tol)
-		}
-	}
-	return filtered
-}
-
-// aggregateMatchingCodes sums up request counts, identifying which match the code pattern as errors
-func (c *HealthCalculator) aggregateMatchingCodes(codes map[string]float64, codePattern string) (errorCount, totalCount float64) {
-	// Compile the code pattern (with X/x replacement)
-	pattern := strings.ReplaceAll(codePattern, "X", `\d`)
-	pattern = strings.ReplaceAll(pattern, "x", `\d`)
-
-	// Ensure full string match
-	if !strings.HasPrefix(pattern, "^") {
-		pattern = "^" + pattern
-	}
-	if !strings.HasSuffix(pattern, "$") {
-		pattern = pattern + "$"
-	}
-
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		// Invalid pattern, treat all traffic as healthy
-		for _, count := range codes {
-			totalCount += count
-		}
-		return 0, totalCount
-	}
-
+// aggregateMatchingCodes sums up request counts, identifying which match the code pattern as errors.
+// Uses pre-compiled regex for efficient matching.
+func (c *HealthCalculator) aggregateMatchingCodes(codes map[string]float64, codeRegex *regexp.Regexp) (errorCount, totalCount float64) {
 	for code, count := range codes {
 		totalCount += count
-		if re.MatchString(code) {
+		if codeRegex.MatchString(code) {
 			errorCount += count
 		}
 	}
-
 	return errorCount, totalCount
 }
 
@@ -294,30 +247,6 @@ func (c *HealthCalculator) calculateSimpleRequestStatus(requests models.RequestH
 	return models.HealthStatusHealthy, errorPct
 }
 
-// matchesPattern checks if a value matches a pattern (regex or exact match)
-func matchesPattern(pattern, value string) bool {
-	if pattern == "" || pattern == ".*" {
-		return true
-	}
-
-	// Ensure full string match
-	fullPattern := pattern
-	if !strings.HasPrefix(fullPattern, "^") {
-		fullPattern = "^" + fullPattern
-	}
-	if !strings.HasSuffix(fullPattern, "$") {
-		fullPattern = fullPattern + "$"
-	}
-
-	re, err := regexp.Compile(fullPattern)
-	if err != nil {
-		// Invalid regex, fall back to exact match
-		return pattern == value
-	}
-
-	return re.MatchString(value)
-}
-
 // CalculateNamespaceAppHealth calculates health status for all apps in a namespace
 func (c *HealthCalculator) CalculateNamespaceAppHealth(
 	namespace string,
@@ -360,20 +289,20 @@ func (c *HealthCalculator) CalculateNamespaceWorkloadHealth(
 	return result
 }
 
-// GetTolerancesForDirection returns tolerances for an entity filtered by direction.
+// GetCompiledTolerancesForDirection returns pre-compiled tolerances for an entity filtered by direction.
 // This is used for edge health calculation where we need outbound tolerances for
 // the source node and inbound tolerances for the destination node.
-func (c *HealthCalculator) GetTolerancesForDirection(
+func (c *HealthCalculator) GetCompiledTolerancesForDirection(
 	namespace, name, kind, direction string,
 	annotations map[string]string,
-) []config.Tolerance {
-	// Get base tolerances (with annotation override if present)
-	tolerances := c.matcher.GetTolerancesWithAnnotationOverride(namespace, name, kind, annotations)
+) []CompiledTolerance {
+	// Get pre-compiled tolerances (with annotation override if present)
+	tolerances := c.matcher.GetCompiledTolerances(namespace, name, kind, annotations)
 
-	// Filter by direction
-	var filtered []config.Tolerance
+	// Filter by direction using pre-compiled regex
+	var filtered []CompiledTolerance
 	for _, tol := range tolerances {
-		if matchesPattern(tol.Direction, direction) {
+		if tol.Direction.MatchString(direction) {
 			filtered = append(filtered, tol)
 		}
 	}

@@ -302,24 +302,6 @@ func TestCalculate4xxErrors(t *testing.T) {
 	assert.Equal(t, models.HealthStatusFailure, result.Status)
 }
 
-func TestMatchesPattern(t *testing.T) {
-	// Empty pattern matches everything
-	assert.True(t, matchesPattern("", "anything"))
-	assert.True(t, matchesPattern(".*", "anything"))
-
-	// Exact match
-	assert.True(t, matchesPattern("http", "http"))
-	assert.False(t, matchesPattern("http", "grpc"))
-
-	// Regex match
-	assert.True(t, matchesPattern("http|grpc", "http"))
-	assert.True(t, matchesPattern("http|grpc", "grpc"))
-	assert.False(t, matchesPattern("http|grpc", "tcp"))
-
-	// Partial patterns are anchored
-	assert.False(t, matchesPattern("http", "http2"))
-}
-
 func TestCalculateNamespaceAppHealth(t *testing.T) {
 	conf := setupTestConfig()
 	calc := NewHealthCalculator(conf)

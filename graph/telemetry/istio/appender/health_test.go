@@ -629,62 +629,6 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 
 // Tests for edge health calculation
 
-func TestMatchesCodePattern(t *testing.T) {
-	testCases := []struct {
-		name     string
-		pattern  string
-		code     string
-		expected bool
-	}{
-		{"5XX matches 500", "5XX", "500", true},
-		{"5XX matches 503", "5XX", "503", true},
-		{"5XX does not match 400", "5XX", "400", false},
-		{"5xx matches 500 (lowercase)", "5xx", "500", true},
-		{"4XX matches 404", "4XX", "404", true},
-		{"4XX matches 400", "4XX", "400", true},
-		{"4XX does not match 500", "4XX", "500", false},
-		{"empty pattern matches all", "", "500", true},
-		{"wildcard matches all", ".*", "500", true},
-		{"exact match 200", "200", "200", true},
-		{"exact match 200 does not match 201", "200", "201", false},
-		{"regex pattern [45]XX", "[45]XX", "500", true},
-		{"regex pattern [45]XX matches 400", "[45]XX", "400", true},
-		{"regex pattern [45]XX does not match 200", "[45]XX", "200", false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := matchesCodePattern(tc.pattern, tc.code)
-			assert.Equal(t, tc.expected, result, "matchesCodePattern(%q, %q)", tc.pattern, tc.code)
-		})
-	}
-}
-
-func TestMatchesPattern(t *testing.T) {
-	testCases := []struct {
-		name     string
-		pattern  string
-		value    string
-		expected bool
-	}{
-		{"empty pattern matches all", "", "anything", true},
-		{"wildcard matches all", ".*", "anything", true},
-		{"exact match", "http", "http", true},
-		{"exact match fails", "http", "grpc", false},
-		{"regex inbound", "inbound", "inbound", true},
-		{"regex outbound", "outbound", "outbound", true},
-		{"regex .* direction matches inbound", ".*", "inbound", true},
-		{"partial match fails (full string required)", "in", "inbound", false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := matchesPattern(tc.pattern, tc.value)
-			assert.Equal(t, tc.expected, result, "matchesPattern(%q, %q)", tc.pattern, tc.value)
-		})
-	}
-}
-
 func TestCalculateEdgeStatusWithTolerances(t *testing.T) {
 	a := HealthAppender{}
 
@@ -862,7 +806,9 @@ func TestCalculateEdgeStatusWithTolerances(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			status := a.calculateEdgeStatusWithTolerances(tc.responses, tc.protocol, tc.totalRequests, tc.tolerances)
+			// Compile tolerances for the test
+			compiledTolerances := business.CompileTolerances(tc.tolerances)
+			status := a.calculateEdgeStatusWithTolerances(tc.responses, tc.protocol, tc.totalRequests, compiledTolerances)
 			assert.Equal(t, tc.expectedStatus, status)
 		})
 	}
