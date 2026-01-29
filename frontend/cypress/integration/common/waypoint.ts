@@ -119,66 +119,6 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   });
 };
 
-const waitForWaypointProxiesInGraph = (targetNamespace: string, maxRetries = 30, retryCount = 0): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForWaypointProxiesInGraph, baseUrl=${Cypress.config(
-        'baseUrl'
-      )})`
-    );
-  }
-
-  cy.request({
-    method: 'GET',
-    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
-    qs: {
-      duration: '60s',
-      graphType: 'versionedApp',
-      includeIdleEdges: false,
-      injectServiceNodes: true,
-      boxBy: 'cluster,namespace,app',
-      refreshInterval: 60000,
-      waypoints: true,
-      ambientTraffic: 'total',
-      appenders: 'deadNode,serviceEntry,meshCheck,workloadEntry,health,istio,ambient',
-      rateGrpc: 'requests',
-      rateHttp: 'requests',
-      rateTcp: 'sent',
-      namespaces: targetNamespace
-    }
-  }).then(response => {
-    expect(response.status).to.equal(200);
-    const elements = response.body.elements;
-    const nodes = elements?.nodes ?? [];
-
-    // Check if there are any waypoint nodes in the response
-    const waypointNodes = nodes.filter((node: any) => {
-      const data = node?.data;
-      return data?.isWaypoint === true;
-    });
-
-    if (waypointNodes.length > 0) {
-      return;
-    } else {
-      if (retryCount === 0 || retryCount % 5 === 0) {
-        Cypress.log({
-          name: 'waitForWaypointProxies',
-          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
-            'baseUrl'
-          )}/api/namespaces/graph waypoints=true waypointNodes=${
-            waypointNodes.length
-          } expected>0 baseUrl=${Cypress.config('baseUrl')} targetNamespace=${targetNamespace} totalNodes=${
-            nodes.length
-          }`
-        });
-      }
-      return cy.wait(10000).then(() => {
-        return waitForWaypointProxiesInGraph(targetNamespace, maxRetries, retryCount + 1);
-      });
-    }
-  });
-};
-
 const isSyncedOrIgnored = (status: string | undefined): boolean => {
   return status?.toLowerCase() === 'synced' || status?.toLowerCase() === 'ignored';
 };
@@ -420,7 +360,6 @@ Then('the graph page has enough data for L7', () => {
 
 Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
-  waitForWaypointProxiesInGraph(namespace);
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {

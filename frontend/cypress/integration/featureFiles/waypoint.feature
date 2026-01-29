@@ -10,6 +10,7 @@ Feature: Kiali Waypoint related features
   Background:
     Given user is at administrator perspective
     And all waypoints are healthy
+    And the waypoint tracing data is ready
 
   Scenario: [Setup] namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
@@ -112,7 +113,7 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
-    Then 11 edges appear in the graph with retry
+    Then 11 edges appear in the graph
 
   @skip-ossmc
   Scenario: [Istio Config] Waypoint should not have validation errors
