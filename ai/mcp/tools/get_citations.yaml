@@ -1,0 +1,13 @@
+- name: "get_citations"
+  description: "Returns the links to a documentation page related with a list of keywords related with the user query. The keywords are comma-separated."
+  input_schema:
+    type: "object"
+    required: ["keywords"]
+    properties:
+      keywords:
+        type: "string"
+        description: "Comma-separated list of keywords to search for in the documents"
+      domain:
+        type: "string"
+        description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains."
+        enum: ["kiali", "istio", "all", ""]
