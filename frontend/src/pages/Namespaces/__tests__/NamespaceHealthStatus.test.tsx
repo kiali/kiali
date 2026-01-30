@@ -6,6 +6,8 @@ import { NamespaceStatus } from '../../../types/NamespaceInfo';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
 import { store } from '../../../store/ConfigStore';
+import { naTextStyle } from 'styles/HealthStyle';
+import { namespaceNaIconStyle } from '../NamespaceStyle';
 
 describe('NamespaceHealthStatus', () => {
   beforeAll(() => {
@@ -167,19 +169,16 @@ describe('NamespaceHealthStatus', () => {
     // n/a text color
     const naText = wrapper
       .find('div')
-      .filterWhere(d => d.text() === 'n/a' && (d.prop('style') as any)?.color !== undefined)
+      .filterWhere(d => d.text() === 'n/a' && d.hasClass(naTextStyle))
       .first();
     expect(naText.exists()).toBeTruthy();
-    expect(naText.prop('style')).toMatchObject({ color: 'var(--pf-t--global--text--color--subtle)' });
+    expect(naText.hasClass(naTextStyle)).toBeTruthy();
 
     // NA icon color (createIcon(NA) yields a span with icon-na class)
     const naIcon = wrapper.find('span.icon-na').first();
     expect(naIcon.exists()).toBeTruthy();
-    const naIconWrapper = naIcon
-      .closest('div')
-      .filterWhere(d => (d.prop('style') as any)?.color !== undefined)
-      .first();
-    expect(naIconWrapper.prop('style')).toMatchObject({ color: 'var(--pf-t--global--icon--color--disabled)' });
+    const naIconWrapper = naIcon.closest('div').first();
+    expect(naIconWrapper.hasClass(namespaceNaIconStyle)).toBeTruthy();
   });
 
   it('prioritizes FAILURE over other statuses', () => {

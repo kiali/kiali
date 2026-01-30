@@ -112,13 +112,13 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
     );
   }
 
-  const naSummaryStyle: React.CSSProperties = props.style ? { ...naTextStyle, ...props.style } : naTextStyle;
-
   const tooltipBase =
     props.objectCount === undefined || props.objectCount > 0 ? (
       <Validation severity={severity()} />
     ) : (
-      <div style={naSummaryStyle}>n/a</div>
+      <div className={naTextStyle} style={props.style}>
+        n/a
+      </div>
     );
 
   return (

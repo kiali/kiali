@@ -19,7 +19,7 @@ type Props = ReduxProps & {
 };
 
 export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) => {
-  let link: React.ReactElement = <div style={{ ...naTextStyle }}>n/a</div>;
+  let link: React.ReactElement = <div className={naTextStyle}>n/a</div>;
 
   if (props.objectCount && props.objectCount > 0) {
     // Kiosk actions are used when the kiosk specifies a parent,

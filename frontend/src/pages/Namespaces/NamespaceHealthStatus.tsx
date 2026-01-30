@@ -8,8 +8,9 @@ import { connect } from 'react-redux';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { pluralize } from '@patternfly/react-core';
+import { namespaceNaIconStyle, statusIconStyle, statusTextStyle } from './NamespaceStyle';
 import { naTextStyle } from 'styles/HealthStyle';
-import { namespaceNaIconStyle } from './NamespaceStyle';
+import { classes } from 'typestyle';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -73,12 +74,6 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
   const isHealthy = worstStatus === HEALTHY;
   const isNA = worstStatus === NA;
 
-  const statusIconStyle: React.CSSProperties = isNA
-    ? { display: 'inline-block', marginRight: '0.5rem', ...namespaceNaIconStyle }
-    : { display: 'inline-block', marginRight: '0.5rem' };
-
-  const statusTextStyle: React.CSSProperties = isNA ? naTextStyle : { display: 'inline-block' };
-
   const getStatusText = (): string => {
     if (isNA) {
       return 'n/a';
@@ -90,11 +85,11 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     <div style={{ textAlign: 'left' }}>
       <div style={{ marginBottom: '0.125rem' }}>
         {worstStatus ? (
-          <div style={statusIconStyle}>{createIcon(worstStatus)}</div>
+          <div className={classes(statusIconStyle, isNA ? namespaceNaIconStyle : '')}>{createIcon(worstStatus)}</div>
         ) : (
           <div style={{ display: 'inline-block', marginRight: '0.5rem', width: '1.5rem' }}></div>
         )}
-        <div style={statusTextStyle}>{getStatusText()}</div>
+        <div className={isNA ? naTextStyle : statusTextStyle}>{getStatusText()}</div>
       </div>
       {!isHealthy && !isNA && unhealthyCount > 0 && (
         <div style={{ marginLeft: '1.375rem', marginTop: '0.125rem' }}>{pluralize(unhealthyCount, 'issue')}</div>

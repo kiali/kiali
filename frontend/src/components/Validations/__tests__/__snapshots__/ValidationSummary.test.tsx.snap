@@ -154,12 +154,7 @@ exports[`ValidationSummary renders n/a when all istio components are valid 1`] =
   position="auto"
 >
   <div
-    style={
-      Object {
-        "color": "var(--pf-t--global--text--color--subtle)",
-        "display": "inline-block",
-      }
-    }
+    className="kiali_f1vp3tcb"
   >
     n/a
   </div>

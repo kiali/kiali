@@ -1,5 +1,4 @@
 import { kialiStyle } from 'styles/StyleUtils';
-import { CSSProperties } from 'react';
 
 export const healthIndicatorStyle = kialiStyle({
   $nest: {
@@ -15,7 +14,7 @@ export const healthIndicatorStyle = kialiStyle({
   }
 });
 
-export const naTextStyle: CSSProperties = {
-  display: 'inline-block',
-  color: 'var(--pf-t--global--text--color--subtle)'
-};
+export const naTextStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  display: 'inline-block'
+});
