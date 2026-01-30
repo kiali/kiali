@@ -65,45 +65,6 @@ func TestHealthRateMatcherGetMatchingRate(t *testing.T) {
 	assert.Equal(t, "", rate.Namespace)
 }
 
-func TestHealthRateMatcherGetMatchingTolerances(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Rate = []config.Rate{
-		{
-			Namespace: "test",
-			Kind:      ".*",
-			Name:      ".*",
-			Tolerance: []config.Tolerance{
-				{Code: "5XX", Protocol: "http", Direction: "inbound", Degraded: 5, Failure: 10},
-				{Code: "4XX", Protocol: "http", Direction: "outbound", Degraded: 10, Failure: 20},
-				{Code: "^[1-9]$", Protocol: "grpc", Direction: ".*", Degraded: 2, Failure: 8},
-			},
-		},
-	}
-
-	matcher := NewHealthRateMatcher(conf)
-	rate := matcher.GetMatchingRate("test", "my-app", "app")
-	assert.NotNil(t, rate)
-
-	// Test HTTP inbound
-	tolerances := matcher.GetMatchingTolerances(rate, "http", "inbound")
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, "5XX", tolerances[0].Code)
-
-	// Test HTTP outbound
-	tolerances = matcher.GetMatchingTolerances(rate, "http", "outbound")
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, "4XX", tolerances[0].Code)
-
-	// Test gRPC any direction
-	tolerances = matcher.GetMatchingTolerances(rate, "grpc", "inbound")
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, "^[1-9]$", tolerances[0].Code)
-
-	// Test no match
-	tolerances = matcher.GetMatchingTolerances(rate, "tcp", "inbound")
-	assert.Len(t, tolerances, 0)
-}
-
 func TestHealthRateMatcherCodePatternXReplacement(t *testing.T) {
 	conf := config.NewConfig()
 	conf.HealthConfig.Rate = []config.Rate{
@@ -161,96 +122,9 @@ func TestParseHealthAnnotation(t *testing.T) {
 	assert.Len(t, tolerances, 2)
 }
 
-func TestGetTolerancesWithAnnotationOverride(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Rate = []config.Rate{
-		{
-			Tolerance: []config.Tolerance{
-				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 10, Failure: 20},
-			},
-		},
-	}
-
-	matcher := NewHealthRateMatcher(conf)
-
-	// Without annotation, use config
-	tolerances := matcher.GetTolerancesWithAnnotationOverride("ns", "name", "app", nil)
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, float32(10), tolerances[0].Degraded)
-
-	// With valid annotation, override config
-	annotations := map[string]string{
-		HealthAnnotationKey: "5xx,1,5,http,inbound",
-	}
-	tolerances = matcher.GetTolerancesWithAnnotationOverride("ns", "name", "app", annotations)
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, float32(1), tolerances[0].Degraded)
-
-	// With invalid annotation, fall back to config
-	annotations = map[string]string{
-		HealthAnnotationKey: "invalid",
-	}
-	tolerances = matcher.GetTolerancesWithAnnotationOverride("ns", "name", "app", annotations)
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, float32(10), tolerances[0].Degraded) // Falls back to config
-}
-
-func TestGetAllTolerancesForEntity(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Rate = []config.Rate{
-		{
-			Namespace: "production",
-			Kind:      "workload",
-			Name:      ".*",
-			Tolerance: []config.Tolerance{
-				{Code: "5XX", Protocol: "http", Direction: "inbound", Degraded: 1, Failure: 5},
-				{Code: "4XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
-			},
-		},
-		{
-			// Default
-			Tolerance: []config.Tolerance{
-				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 10, Failure: 20},
-			},
-		},
-	}
-
-	matcher := NewHealthRateMatcher(conf)
-
-	// Match production workload
-	tolerances := matcher.GetAllTolerancesForEntity("production", "my-workload", "workload")
-	assert.Len(t, tolerances, 2)
-
-	// Fall back to default
-	tolerances = matcher.GetAllTolerancesForEntity("staging", "my-app", "app")
-	assert.Len(t, tolerances, 1)
-}
-
 func TestCompilePatternWithInvalidRegex(t *testing.T) {
 	// Invalid regex should fall back to .*
 	pattern := compilePattern("[invalid", ".*")
 	assert.NotNil(t, pattern)
 	assert.True(t, pattern.MatchString("anything"))
-}
-
-func TestGetTolerancesForEntity(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Rate = []config.Rate{
-		{
-			Namespace: "test",
-			Kind:      ".*",
-			Name:      ".*",
-			Tolerance: []config.Tolerance{
-				{Code: "5XX", Protocol: "http", Direction: "inbound", Degraded: 5, Failure: 10},
-				{Code: "4XX", Protocol: "http", Direction: "outbound", Degraded: 10, Failure: 20},
-			},
-		},
-	}
-
-	matcher := NewHealthRateMatcher(conf)
-
-	// Get specific protocol/direction
-	tolerances := matcher.GetTolerancesForEntity("test", "app", "app", "http", "inbound")
-	assert.Len(t, tolerances, 1)
-	assert.Equal(t, "5XX", tolerances[0].Code)
 }

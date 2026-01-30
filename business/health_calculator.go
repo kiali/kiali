@@ -247,48 +247,6 @@ func (c *HealthCalculator) calculateSimpleRequestStatus(requests models.RequestH
 	return models.HealthStatusHealthy, errorPct
 }
 
-// CalculateNamespaceAppHealth calculates health status for all apps in a namespace
-func (c *HealthCalculator) CalculateNamespaceAppHealth(
-	namespace string,
-	health models.NamespaceAppHealth,
-	annotationsMap map[string]map[string]string, // key: app name
-) map[string]CalculatedHealth {
-	result := make(map[string]CalculatedHealth, len(health))
-	for name, appHealth := range health {
-		annotations := annotationsMap[name]
-		result[name] = c.CalculateAppHealth(namespace, name, appHealth, annotations)
-	}
-	return result
-}
-
-// CalculateNamespaceServiceHealth calculates health status for all services in a namespace
-func (c *HealthCalculator) CalculateNamespaceServiceHealth(
-	namespace string,
-	health models.NamespaceServiceHealth,
-	annotationsMap map[string]map[string]string, // key: service name
-) map[string]CalculatedHealth {
-	result := make(map[string]CalculatedHealth, len(health))
-	for name, svcHealth := range health {
-		annotations := annotationsMap[name]
-		result[name] = c.CalculateServiceHealth(namespace, name, svcHealth, annotations)
-	}
-	return result
-}
-
-// CalculateNamespaceWorkloadHealth calculates health status for all workloads in a namespace
-func (c *HealthCalculator) CalculateNamespaceWorkloadHealth(
-	namespace string,
-	health models.NamespaceWorkloadHealth,
-	annotationsMap map[string]map[string]string, // key: workload name
-) map[string]CalculatedHealth {
-	result := make(map[string]CalculatedHealth, len(health))
-	for name, wkHealth := range health {
-		annotations := annotationsMap[name]
-		result[name] = c.CalculateWorkloadHealth(namespace, name, wkHealth, annotations)
-	}
-	return result
-}
-
 // GetCompiledTolerancesForDirection returns pre-compiled tolerances for an entity filtered by direction.
 // This is used for edge health calculation where we need outbound tolerances for
 // the source node and inbound tolerances for the destination node.

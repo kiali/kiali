@@ -146,57 +146,6 @@ func (m *HealthRateMatcher) GetMatchingRate(namespace, name, kind string) *confi
 	return nil
 }
 
-// GetMatchingTolerances returns tolerances from the rate that match the given protocol and direction.
-// If rate is nil, returns nil.
-func (m *HealthRateMatcher) GetMatchingTolerances(rate *config.Rate, protocol, direction string) []config.Tolerance {
-	if rate == nil {
-		return nil
-	}
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	// Find the compiled rate
-	var compiled *compiledRate
-	for i := range m.conf.HealthConfig.Rate {
-		if &m.conf.HealthConfig.Rate[i] == rate {
-			compiled = m.cache[i]
-			break
-		}
-	}
-
-	if compiled == nil {
-		return nil
-	}
-
-	var matching []config.Tolerance
-	for i, tol := range compiled.tolerance {
-		if tol.Protocol.MatchString(protocol) && tol.Direction.MatchString(direction) {
-			matching = append(matching, rate.Tolerance[i])
-		}
-	}
-
-	return matching
-}
-
-// GetTolerancesForEntity is a convenience method that combines GetMatchingRate and GetMatchingTolerances.
-// It returns all tolerances applicable to the given entity for the specified protocol and direction.
-func (m *HealthRateMatcher) GetTolerancesForEntity(namespace, name, kind, protocol, direction string) []config.Tolerance {
-	rate := m.GetMatchingRate(namespace, name, kind)
-	return m.GetMatchingTolerances(rate, protocol, direction)
-}
-
-// GetAllTolerancesForEntity returns all tolerances applicable to the given entity,
-// regardless of protocol and direction. This is useful when you need to check all
-// tolerance configurations for an entity.
-func (m *HealthRateMatcher) GetAllTolerancesForEntity(namespace, name, kind string) []config.Tolerance {
-	rate := m.GetMatchingRate(namespace, name, kind)
-	if rate == nil {
-		return nil
-	}
-	return rate.Tolerance
-}
-
 // ParseHealthAnnotation parses a health rate annotation value and returns the tolerances.
 // Annotation format: "code,degraded,failure,protocol,direction" (semicolon-separated for multiple)
 // Example: "4xx,10,20,http,inbound;5xx,5,10,http,inbound"
@@ -266,26 +215,6 @@ func parseFloat32(s string, result *float32) (bool, error) {
 
 // HealthAnnotationKey is the annotation key for health rate configuration
 const HealthAnnotationKey = "health.kiali.io/rate"
-
-// GetTolerancesWithAnnotationOverride returns tolerances for an entity, with annotation overrides.
-// If the entity has a health annotation, those tolerances are used instead of the config-based ones.
-// This matches the previous frontend behavior, where annotations take precedence.
-func (m *HealthRateMatcher) GetTolerancesWithAnnotationOverride(namespace, name, kind string, annotations map[string]string) []config.Tolerance {
-	// Check for annotation override
-	if annotations != nil {
-		if annotationValue, ok := annotations[HealthAnnotationKey]; ok && annotationValue != "" {
-			annotationTolerances := ParseHealthAnnotation(annotationValue)
-			if len(annotationTolerances) > 0 {
-				return annotationTolerances
-			}
-			// If annotation parsing failed, fall through to config-based tolerances
-			// (warning already logged by ParseHealthAnnotation)
-		}
-	}
-
-	// Use config-based tolerances
-	return m.GetAllTolerancesForEntity(namespace, name, kind)
-}
 
 // GetCompiledTolerances returns pre-compiled tolerances for an entity, with annotation overrides.
 // This is the preferred method for health calculation as it avoids regex recompilation.
