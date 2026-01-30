@@ -168,10 +168,10 @@ describe('Overview page', () => {
       mockNamespaces(['a', 'b', 'c']),
       mockNamespaceHealth(['a', 'b', 'c'], {
         app1: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth,
         app2: {
-          getGlobalStatus: () => FAILURE
+          getStatus: () => FAILURE
         } as AppHealth
       })
     ]).then(() => {
@@ -189,13 +189,13 @@ describe('Overview page', () => {
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
-          getGlobalStatus: () => DEGRADED
+          getStatus: () => DEGRADED
         } as AppHealth,
         app2: {
-          getGlobalStatus: () => FAILURE
+          getStatus: () => FAILURE
         } as AppHealth,
         app3: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -212,13 +212,13 @@ describe('Overview page', () => {
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
-          getGlobalStatus: () => DEGRADED
+          getStatus: () => DEGRADED
         } as AppHealth,
         app2: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth,
         app3: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -235,10 +235,10 @@ describe('Overview page', () => {
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
-          getGlobalStatus: () => DEGRADED
+          getStatus: () => DEGRADED
         } as AppHealth,
         app2: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -255,10 +255,10 @@ describe('Overview page', () => {
       mockNamespaces(['a']),
       mockNamespaceHealth(['a'], {
         app1: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth,
         app2: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -275,7 +275,7 @@ describe('Overview page', () => {
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -306,7 +306,7 @@ describe('Overview page', () => {
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
-          getGlobalStatus: () => HEALTHY
+          getStatus: () => HEALTHY
         } as AppHealth
       })
     ]).then(() => {
@@ -325,7 +325,7 @@ describe('Overview page', () => {
       mockNamespaces(['abc', 'bce', 'ced']),
       mockNamespaceHealth(['abc', 'bce', 'ced'], {
         app1: {
-          getGlobalStatus: () => DEGRADED
+          getStatus: () => DEGRADED
         } as AppHealth
       })
     ]).then(() => {

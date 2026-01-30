@@ -31,7 +31,8 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { status: 'Healthy' }
     );
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
@@ -49,7 +50,8 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { status: 'Degraded' }
     );
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
@@ -66,7 +68,8 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { status: 'Not Ready' }
     );
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
@@ -83,7 +86,8 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, syncedProxies: 0 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { status: 'Not Ready' }
     );
 
     let wrapper = mount(<HealthIndicator id="svc" health={health} />);
@@ -101,7 +105,8 @@ describe('HealthIndicator', () => {
         outbound: { http: { '500': 0.4, '200': 2 } },
         healthAnnotations: {}
       },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { status: 'Failure' }
     );
 
     let wrapper = shallow(<HealthIndicator id="svc" health={health} />);
@@ -124,7 +129,8 @@ describe('HealthIndicator', () => {
           }
         ],
         { inbound: {}, outbound: {}, healthAnnotations: {} },
-        { rateInterval: 600, hasSidecar: true, hasAmbient: false }
+        { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+        { status: 'Degraded' }
       );
 
       let wrapper = shallow(<HealthIndicator id="svc" health={health} />);

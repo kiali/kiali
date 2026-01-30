@@ -32,7 +32,6 @@ import { DEGRADED, FAILURE } from 'types/Health';
 import { Namespace } from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
-import { getEdgeHealth } from 'types/ErrorRate/GraphEdgeStatus';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
@@ -629,38 +628,17 @@ export const setEdgeOptions = (edge: EdgeModel, nodeMap: NodeMap, settings: Grap
   data.tagStatus = getEdgeStatus(data);
 };
 
+// Edge health is now calculated on the backend and comes in via edge.data.healthStatus
+// This function is kept for backwards compatibility but no longer performs calculation
 export const assignEdgeHealth = (
   edges: DecoratedGraphEdgeWrapper[],
-  nodeMap: NodeMap,
-  settings: GraphSettings
+  _nodeMap: NodeMap,
+  _settings: GraphSettings
 ): void => {
-  edges?.forEach(edge => {
-    const edgeData = edge.data as EdgeData;
-
-    if (!edgeData.hasTraffic) {
-      return;
-    }
-    if (edgeData.protocol === 'tcp') {
-      return;
-    }
-    if (edgeData.protocol === 'grpc' && !settings.trafficRates.includes(TrafficRate.GRPC_REQUEST)) {
-      return;
-    }
-
-    const sourceNodeData = nodeMap.get(edgeData.source!)?.data as NodeData;
-    const destNodeData = nodeMap.get(edgeData.target!)?.data as NodeData;
-    const statusEdge = getEdgeHealth(edgeData, sourceNodeData, destNodeData);
-
-    switch (statusEdge.status) {
-      case FAILURE:
-        edgeData.healthStatus = FAILURE.name;
-        return;
-      case DEGRADED:
-        edgeData.healthStatus = DEGRADED.name;
-        return;
-      default:
-        // unset implies healthy or n/a
-        return;
-    }
+  // healthStatus is already set by the backend on edge.data
+  // No client-side calculation needed
+  edges?.forEach(_edge => {
+    // Edge health comes from the backend via edge.data.healthStatus
+    // Nothing to do here
   });
 };

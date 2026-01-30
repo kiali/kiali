@@ -20,10 +20,7 @@ const randomRequest = (greater = 40): RequestType => {
   return result;
 };
 
-export const generateTrafficItem = (
-  requests: { [key: string]: number[] },
-  annotation?: HealthAnnotationType
-): TrafficItem => {
+export const generateTrafficItem = (requests: { [key: string]: number[] }): TrafficItem => {
   let responses: Responses = {};
 
   Object.keys(requests).forEach(key => {
@@ -42,8 +39,7 @@ export const generateTrafficItem = (
       type: NodeType.SERVICE,
       namespace: 'alpha',
       name: 'x-server',
-      isInaccessible: false,
-      healthAnnotation: annotation
+      isInaccessible: false
     },
     traffic: {
       protocol: 'http',

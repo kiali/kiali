@@ -27,5 +27,4 @@ export interface AppListItem {
 export interface AppListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
-  rateInterval: string;
 }

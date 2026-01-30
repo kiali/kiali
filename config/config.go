@@ -548,6 +548,7 @@ type CacheExpirationConfig struct {
 type KialiInternalConfig struct {
 	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 	GraphCache             GraphCacheConfig      `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig     `yaml:"health_cache,omitempty"`
 	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
@@ -852,6 +853,11 @@ type GraphCacheConfig struct {
 	RefreshInterval   string `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`     // Default: "60s"
 }
 
+// HealthCacheConfig configures background health pre-computation and caching
+type HealthCacheConfig struct {
+	Enabled bool `yaml:"enabled" json:"enabled"` // Default: true
+}
+
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
 	Clustering            FeatureFlagClustering     `yaml:"clustering,omitempty" json:"clustering,omitempty"`
@@ -873,7 +879,7 @@ type Tolerance struct {
 	Direction string  `yaml:"direction,omitempty" json:"direction"`
 }
 
-// Rate config
+// Rate holds configuration for customizing health computation. It specifies allowable rates for certain traffic types
 type Rate struct {
 	Namespace string      `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Kind      string      `yaml:"kind,omitempty" json:"kind,omitempty"`
@@ -881,9 +887,29 @@ type Rate struct {
 	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
-// HealthConfig rates
+// HealthCompute provides configuration for health pre-computation and caching
+type HealthCompute struct {
+	// Duration is the time period over which health is calculated.
+	// Used as the rate interval for Prometheus queries.
+	// 0 means auto-calculate from elapsed time since last run.
+	// Default: 0
+	Duration time.Duration `yaml:"duration,omitempty"`
+
+	// RefreshInterval is the interval between health cache refreshes.
+	// Default: 2m
+	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
+
+	// Timeout is the maximum time allowed for a single health refresh cycle.
+	// If exceeded, the refresh is cancelled and the next cycle starts on schedule.
+	// Default: 5m
+	Timeout time.Duration `yaml:"timeout,omitempty"`
+}
+
+// HealthConfig holds both custom rate configurations for computing health, as well as the configuration about
+// the health computation job itself.
 type HealthConfig struct {
-	Rate []Rate `yaml:"rate,omitempty" json:"rate,omitempty"`
+	Compute HealthCompute `yaml:"compute,omitempty" json:"compute,omitempty"`
+	Rate    []Rate        `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
 // Profiler provides settings about the profiler that can be used to debug the Kiali server internals.
@@ -1068,6 +1094,13 @@ func NewConfig() (c *Config) {
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},
+		HealthConfig: HealthConfig{
+			Compute: HealthCompute{
+				Duration:        0, // 0 means auto-calculate from elapsed time
+				RefreshInterval: 2 * time.Minute,
+				Timeout:         5 * time.Minute,
+			},
+		},
 		IstioLabels: IstioLabels{
 			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
 			AmbientNamespaceLabelValue:  "ambient",
@@ -1183,6 +1216,9 @@ func NewConfig() (c *Config) {
 				InactivityTimeout: "10m",
 				MaxCacheMemoryMB:  1000,
 				RefreshInterval:   "60s",
+			},
+			HealthCache: HealthCacheConfig{
+				Enabled: true,
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},

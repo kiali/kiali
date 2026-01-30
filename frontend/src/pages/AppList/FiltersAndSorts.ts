@@ -1,5 +1,4 @@
 import { ActiveFiltersInfo, FILTER_ACTION_APPEND, FilterType, ToggleType } from '../../types/Filters';
-import { calculateErrorRate } from '../../types/ErrorRate';
 import { AppListItem } from '../../types/AppList';
 import { SortField } from '../../types/SortFilters';
 import { hasHealth } from '../../types/Health';
@@ -72,15 +71,14 @@ export const sortFields: SortField<AppListItem>[] = [
     param: 'he',
     compare: (a: AppListItem, b: AppListItem): number => {
       if (hasHealth(a) && hasHealth(b)) {
-        const statusForA = a.health.getGlobalStatus();
-        const statusForB = b.health.getGlobalStatus();
+        // Use backend-provided status only, no client-side calculation
+        const statusForA = a.health.getStatus();
+        const statusForB = b.health.getStatus();
 
         if (statusForA.priority === statusForB.priority) {
-          // If both apps have same health status, use error rate to determine order.
-          const ratioA = calculateErrorRate(a.namespace, a.name, 'app', a.health.requests).errorRatio.global.status
-            .value;
-          const ratioB = calculateErrorRate(b.namespace, b.name, 'app', b.health.requests).errorRatio.global.status
-            .value;
+          // If both apps have same health status, use backend error ratio for tie-breaking
+          const ratioA = a.health.backendStatus?.errorRatio ?? 0;
+          const ratioB = b.health.backendStatus?.errorRatio ?? 0;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 

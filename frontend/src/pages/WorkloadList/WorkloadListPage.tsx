@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as WorkloadListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { WorkloadListItem, ClusterWorkloadsResponse } from '../../types/Workload';
-import { InstanceType, DurationInSeconds, TimeInMilliseconds, IntervalInMilliseconds } from '../../types/Common';
+import { InstanceType, TimeInMilliseconds, IntervalInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -15,10 +15,10 @@ import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { WorkloadHealth } from '../../types/Health';
 import { isMultiCluster, serverConfig } from 'config';
@@ -29,6 +29,12 @@ import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
+});
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
   loaded: boolean;
@@ -36,7 +42,6 @@ type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
-  duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
 };
 
@@ -80,7 +85,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-          this.props.duration !== prevProps.duration ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
             this.props.refreshInterval !== RefreshIntervalPause) ||
           this.state.currentSortField !== prevCurrentSortField ||
@@ -125,7 +129,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     });
 
     if (this.props.activeNamespaces.length !== 0) {
-      this.fetchWorkloads(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
+      this.fetchWorkloads(Array.from(uniqueClusters), activeFilters, activeToggles);
     } else {
       this.setState({ listItems: [], loaded: true });
     }
@@ -147,11 +151,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         isWaypoint: deployment.isWaypoint,
         isZtunnel: deployment.isZtunnel,
         additionalDetailSample: deployment.additionalDetailSample,
-        health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health, {
-          rateInterval: this.props.duration,
-          hasSidecar: deployment.istioSidecar,
-          hasAmbient: deployment.isAmbient
-        }),
+        health: WorkloadHealth.fromBackendStatus(deployment.health),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
         validations: data.validations['workload']
@@ -164,12 +164,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return [];
   }
 
-  fetchWorkloads(
-    clusters: string[],
-    filters: ActiveFiltersInfo,
-    toggles: ActiveTogglesInfo,
-    rateInterval: number
-  ): void {
+  fetchWorkloads(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo): void {
     const perfKey = 'ClustersWorkloads';
     const workloadsConfigPromises = clusters.map(cluster => {
       const health = toggles.get('health') ? 'true' : 'false';
@@ -179,8 +174,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
           health: health,
-          istioResources: istioResources,
-          rateInterval: `${String(rateInterval)}s`
+          istioResources: istioResources
         },
         cluster
       );
@@ -237,7 +231,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       <>
         <DefaultSecondaryMasthead
           rightToolbar={
-            <TimeDurationComponent key="DurationDropdown" id="workload-list-duration-dropdown" disabled={false} />
+            <Refresh className={refreshStyle} id="workload-list-refresh" disabled={false} manageURL={true} />
           }
         />
         <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
@@ -259,7 +253,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });
 
