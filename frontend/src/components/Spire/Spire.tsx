@@ -38,8 +38,8 @@ const codeStyle = kialiStyle({
   fontFamily: 'monospace'
 });
 
-const renderListItem = (label: string, value: React.ReactNode): React.ReactNode => (
-  <li>
+const renderListItem = (label: string, value: React.ReactNode, key?: string): React.ReactNode => (
+  <li key={key}>
     <span>{t(label)}</span>
     <div style={{ display: 'inline-block' }}>{value}</div>
   </li>
@@ -54,7 +54,7 @@ const renderBasicSpireInfo = (
   if (managedIdentityMatches && managedIdentityMatches.length > 0) {
     // Loop over all matches and display each one (order is preserved from backend)
     managedIdentityMatches.forEach((match, index) => {
-      matchItems.push(renderListItem(match.matchType, <code className={codeStyle}>{match.matchValue}</code>));
+      matchItems.push(renderListItem(match.matchType, <code className={codeStyle}>{match.matchValue}</code>, 'match'));
       // Add spacing between matches, but not after the last one
       if (index < managedIdentityMatches.length - 1) {
         matchItems.push(<li key={`spacer-${index}`} style={{ marginTop: '0.25rem' }} />);
@@ -64,8 +64,8 @@ const renderBasicSpireInfo = (
 
   return (
     <>
-      {renderListItem('Status', t(statusMessage))}
-      <li style={{ marginTop: '0.5rem' }} />
+      {renderListItem('Status', t(statusMessage), 'status_message')}
+      <li key="divider" style={{ marginTop: '0.5rem' }} />
       {matchItems}
     </>
   );

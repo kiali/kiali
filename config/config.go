@@ -406,6 +406,7 @@ type TempoConfig struct {
 	URLFormat     string `yaml:"url_format" json:"urlFormat,omitempty"`
 }
 
+// TracingConfig describes configuration used for tracing links
 type TracingConfig struct {
 	Auth                 Auth              `yaml:"auth" json:"auth"`
 	CustomHeaders        map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
