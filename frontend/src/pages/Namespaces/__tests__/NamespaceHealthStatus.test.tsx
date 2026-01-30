@@ -6,6 +6,8 @@ import { NamespaceStatus } from '../../../types/NamespaceInfo';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
 import { store } from '../../../store/ConfigStore';
+import { naTextStyle } from 'styles/HealthStyle';
+import { namespaceNaIconStyle } from '../NamespaceStyle';
 
 describe('NamespaceHealthStatus', () => {
   beforeAll(() => {
@@ -155,15 +157,28 @@ describe('NamespaceHealthStatus', () => {
     expect(wrapper.text()).toContain('1 issue');
   });
 
-  it('returns null when no status data is provided', () => {
+  it('renders n/a when no status data is provided (and uses subtle/disabled colors)', () => {
     const wrapper = mount(
       <Provider store={store}>
         <NamespaceHealthStatus {...defaultProps} />
       </Provider>
     );
 
-    // When no status data is provided, the component returns null
-    expect(wrapper.find('NamespaceHealthStatusComponent').html()).toBeNull();
+    expect(wrapper.text()).toContain('n/a');
+
+    // n/a text color
+    const naText = wrapper
+      .find('div')
+      .filterWhere(d => d.text() === 'n/a' && d.hasClass(naTextStyle))
+      .first();
+    expect(naText.exists()).toBeTruthy();
+    expect(naText.hasClass(naTextStyle)).toBeTruthy();
+
+    // NA icon color (createIcon(NA) yields a span with icon-na class)
+    const naIcon = wrapper.find('span.icon-na').first();
+    expect(naIcon.exists()).toBeTruthy();
+    const naIconWrapper = naIcon.closest('div').first();
+    expect(naIconWrapper.hasClass(namespaceNaIconStyle)).toBeTruthy();
   });
 
   it('prioritizes FAILURE over other statuses', () => {

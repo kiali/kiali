@@ -13,3 +13,8 @@ export const healthIndicatorStyle = kialiStyle({
     }
   }
 });
+
+export const naTextStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  display: 'inline-block'
+});
