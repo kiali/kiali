@@ -17,6 +17,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_citations"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_graph"
 	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
+	"github.com/kiali/kiali/ai/mcp/get_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -113,6 +114,8 @@ func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *bu
 		return get_mesh_graph.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 	case "get_resource_detail":
 		return get_resource_detail.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+	case "get_traces":
+		return get_traces.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 	case "manage_istio_config":
 		return manage_istio_config.Execute(r, args, business, conf)
 	case "get_action_ui":
