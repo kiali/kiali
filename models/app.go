@@ -102,6 +102,9 @@ type WorkloadItem struct {
 
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
+
+	// SPIRE information for SPIRE-managed workloads
+	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
 }
 
 type App struct {

@@ -156,7 +156,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
         validations: data.validations['workload']
           ? data.validations['workload'][validationKey(deployment.name, deployment.namespace)]
-          : undefined
+          : undefined,
+        spireInfo: deployment.spireInfo
       }));
     }
 

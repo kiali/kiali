@@ -29,14 +29,17 @@ export const hasHealth = (r: RenderResource): r is SortResource => {
 };
 
 export const hasMissingSidecar = (workload: Workload | WorkloadListItem | AppWorkload | AppListItem): boolean => {
+  const isSpireServer = workload.spireInfo?.isSpireServer ?? false;
   return (
     (!serverConfig.ambientEnabled &&
       !workload.istioSidecar &&
       !workload.isGateway &&
+      !isSpireServer &&
       !isIstioNamespace(workload.namespace)) ||
     (serverConfig.ambientEnabled &&
       !workload.isAmbient &&
       !workload.istioSidecar &&
+      !isSpireServer &&
       !workload.isWaypoint &&
       !workload.isGateway &&
       !isIstioNamespace(workload.namespace))
