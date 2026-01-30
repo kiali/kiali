@@ -18,7 +18,9 @@ exports[`Spire component App type renders card when app has SPIRE-managed worklo
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -33,6 +35,7 @@ exports[`Spire component App type renders card when app has SPIRE-managed worklo
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -63,7 +66,9 @@ exports[`Spire component App type renders card when app has mixed workloads (som
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -78,6 +83,7 @@ exports[`Spire component App type renders card when app has mixed workloads (som
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -108,7 +114,9 @@ exports[`Spire component App type renders card when app has multiple SPIRE-manag
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -123,6 +131,7 @@ exports[`Spire component App type renders card when app has multiple SPIRE-manag
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -153,7 +162,9 @@ exports[`Spire component Service type renders card when service has SPIRE-manage
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -168,6 +179,7 @@ exports[`Spire component Service type renders card when service has SPIRE-manage
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -198,7 +210,9 @@ exports[`Spire component Service type renders card when service has mixed worklo
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -213,6 +227,7 @@ exports[`Spire component Service type renders card when service has mixed worklo
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -243,7 +258,9 @@ exports[`Spire component Service type renders card when service has multiple SPI
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -258,6 +275,7 @@ exports[`Spire component Service type renders card when service has multiple SPI
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
@@ -288,7 +306,9 @@ exports[`Spire component Workload type renders card with multiple identity match
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -303,13 +323,16 @@ exports[`Spire component Workload type renders card with multiple identity match
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
             }
           }
         />
-        <li>
+        <li
+          key="match"
+        >
           <span>
             Annotations
           </span>
@@ -335,7 +358,9 @@ exports[`Spire component Workload type renders card with multiple identity match
             }
           }
         />
-        <li>
+        <li
+          key="match"
+        >
           <span>
             Labels
           </span>
@@ -361,7 +386,9 @@ exports[`Spire component Workload type renders card with multiple identity match
             }
           }
         />
-        <li>
+        <li
+          key="match"
+        >
           <span>
             PodLabels
           </span>
@@ -403,7 +430,9 @@ exports[`Spire component Workload type renders card with single identity match 1
       className="kiali_fz3g8mp"
     >
       <ul>
-        <li>
+        <li
+          key="status_message"
+        >
           <span>
             Status
           </span>
@@ -418,13 +447,16 @@ exports[`Spire component Workload type renders card with single identity match 1
           </div>
         </li>
         <li
+          key="divider"
           style={
             Object {
               "marginTop": "0.5rem",
             }
           }
         />
-        <li>
+        <li
+          key="match"
+        >
           <span>
             Labels
           </span>
