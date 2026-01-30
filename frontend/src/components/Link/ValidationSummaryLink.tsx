@@ -4,6 +4,7 @@ import { IstioConfigListLink } from './IstioConfigListLink';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskIstioConfigAction } from '../Kiosk/KioskActions';
+import { naTextStyle } from 'styles/HealthStyle';
 
 type ReduxProps = {
   kiosk: string;
@@ -18,7 +19,7 @@ type Props = ReduxProps & {
 };
 
 export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) => {
-  let link: React.ReactElement = <div style={{ display: 'inline-block' }}>n/a</div>;
+  let link: React.ReactElement = <div style={{ ...naTextStyle }}>n/a</div>;
 
   if (props.objectCount && props.objectCount > 0) {
     // Kiosk actions are used when the kiosk specifies a parent,
@@ -32,7 +33,7 @@ export const ValidationSummaryLinkComponent: React.FC<Props> = (props: Props) =>
         namespaces={[props.namespace]}
         warnings={props.warnings > 0}
         errors={props.errors > 0}
-        issues={props.warnings || props.errors ? (props.warnings + props.errors) : undefined}
+        issues={props.warnings || props.errors ? props.warnings + props.errors : undefined}
       >
         {props.children}
       </IstioConfigListLink>

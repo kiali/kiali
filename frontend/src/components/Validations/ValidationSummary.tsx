@@ -3,6 +3,7 @@ import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
+import { naTextStyle } from 'styles/HealthStyle';
 
 interface ValidationSummaryProps {
   errors: number;
@@ -111,11 +112,13 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
     );
   }
 
+  const naSummaryStyle: React.CSSProperties = props.style ? { ...naTextStyle, ...props.style } : naTextStyle;
+
   const tooltipBase =
     props.objectCount === undefined || props.objectCount > 0 ? (
       <Validation severity={severity()} />
     ) : (
-      <div style={{ display: 'inline-block' }}>N/A</div>
+      <div style={naSummaryStyle}>n/a</div>
     );
 
   return (

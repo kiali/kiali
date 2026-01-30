@@ -8,6 +8,8 @@ import { connect } from 'react-redux';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
 import { pluralize } from '@patternfly/react-core';
+import { naTextStyle } from 'styles/HealthStyle';
+import { namespaceNaIconStyle } from './NamespaceStyle';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -26,9 +28,9 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
   // Get combined worst status across all three types
-  const getCombinedWorstStatus = (): Status | null => {
-    let worstStatus: Status | null = null;
-    let worstPriority = 6; // Higher number = better status
+  const getCombinedWorstStatus = (): Status => {
+    let worstStatus = NA;
+    let worstPriority = 5; // Higher number = better status
     const statuses = [props.statusApp, props.statusService, props.statusWorkload];
     statuses.forEach(status => {
       if (status) {
@@ -68,13 +70,14 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
   const worstStatus = getCombinedWorstStatus();
 
   const unhealthyCount = getUnhealthyCount();
-  const isHealthy = worstStatus === HEALTHY || worstStatus === null;
+  const isHealthy = worstStatus === HEALTHY;
   const isNA = worstStatus === NA;
-  const hasAnyStatus = props.statusApp || props.statusService || props.statusWorkload;
 
-  if (!hasAnyStatus) {
-    return null;
-  }
+  const statusIconStyle: React.CSSProperties = isNA
+    ? { display: 'inline-block', marginRight: '0.5rem', ...namespaceNaIconStyle }
+    : { display: 'inline-block', marginRight: '0.5rem' };
+
+  const statusTextStyle: React.CSSProperties = isNA ? naTextStyle : { display: 'inline-block' };
 
   const getStatusText = (): string => {
     if (isNA) {
@@ -87,11 +90,11 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     <div style={{ textAlign: 'left' }}>
       <div style={{ marginBottom: '0.125rem' }}>
         {worstStatus ? (
-          <div style={{ display: 'inline-block', marginRight: '0.5rem' }}>{createIcon(worstStatus)}</div>
+          <div style={statusIconStyle}>{createIcon(worstStatus)}</div>
         ) : (
           <div style={{ display: 'inline-block', marginRight: '0.5rem', width: '1.5rem' }}></div>
         )}
-        <div style={{ display: 'inline-block' }}>{getStatusText()}</div>
+        <div style={statusTextStyle}>{getStatusText()}</div>
       </div>
       {!isHealthy && !isNA && unhealthyCount > 0 && (
         <div style={{ marginLeft: '1.375rem', marginTop: '0.125rem' }}>{pluralize(unhealthyCount, 'issue')}</div>

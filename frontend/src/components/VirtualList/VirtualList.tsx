@@ -298,7 +298,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const childrenWithProps = React.Children.map(this.props.children, child => {
       // Checking isValidElement is the safe way and avoids a TS error too.
       if (React.isValidElement(child)) {
-        return React.cloneElement(child, { ref: this.statefulFilters } as React.Attributes);
+        // If parent provides a ref to StatefulFilters, use it so row renderers (e.g. label click) can add/remove filters.
+        const refToUse = this.props.statefulProps ?? this.statefulFilters;
+        return React.cloneElement(child, { ref: refToUse } as React.Attributes);
       }
 
       return child;
