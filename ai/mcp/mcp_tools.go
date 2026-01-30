@@ -1,7 +1,9 @@
 package mcp
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"maps"
 	"net/http"
 	"os"
@@ -27,6 +29,9 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
+//go:embed tools
+var toolsFS embed.FS
+
 var DefaultToolHandlers = map[string]ToolDef{}
 
 var ExcludedToolNames = map[string]bool{
@@ -35,8 +40,7 @@ var ExcludedToolNames = map[string]bool{
 }
 
 func LoadTools() error {
-	toolsDir := filepath.Join("ai", "mcp", "tools")
-	entries, err := os.ReadDir(toolsDir)
+	entries, err := fs.ReadDir(toolsFS, "tools")
 	if err != nil {
 		return fmt.Errorf("read tools directory: %w", err)
 	}
@@ -48,8 +52,11 @@ func LoadTools() error {
 		if !strings.HasSuffix(name, ".yaml") && !strings.HasSuffix(name, ".yml") {
 			continue
 		}
-
-		definition, err := LoadToolDefinition(filepath.Join(toolsDir, name))
+		contents, err := fs.ReadFile(toolsFS, "tools/"+name)
+		if err != nil {
+			return fmt.Errorf("read tool definition %s: %w", name, err)
+		}
+		definition, err := loadToolDefinitionFromContent(contents, name)
 		if err != nil {
 			return fmt.Errorf("load tool definition %s: %w", name, err)
 		}
@@ -62,29 +69,30 @@ func LoadTools() error {
 	return nil
 }
 
-// LoadTools reads the YAML file
+func loadToolDefinitionFromContent(contents []byte, name string) (ToolDef, error) {
+	var list []ToolDef
+	if err := yaml.Unmarshal(contents, &list); err == nil && len(list) > 0 {
+		if len(list) > 1 {
+			return ToolDef{}, fmt.Errorf("tool definition file %s contains multiple tools", name)
+		}
+		return list[0], nil
+	}
+	var tool ToolDef
+	if err := yaml.Unmarshal(contents, &tool); err != nil {
+		return ToolDef{}, fmt.Errorf("unmarshal tool definition %s: %w", name, err)
+	}
+	if tool.Name == "" {
+		return ToolDef{}, fmt.Errorf("tool definition file %s is empty", name)
+	}
+	return tool, nil
+}
+
 func LoadToolDefinition(filename string) (ToolDef, error) {
 	contents, err := os.ReadFile(filename)
 	if err != nil {
 		return ToolDef{}, fmt.Errorf("read tool definition file %s: %w", filename, err)
 	}
-
-	var list []ToolDef
-	if err := yaml.Unmarshal(contents, &list); err == nil && len(list) > 0 {
-		if len(list) > 1 {
-			return ToolDef{}, fmt.Errorf("tool definition file %s contains multiple tools", filename)
-		}
-		return list[0], nil
-	}
-
-	var tool ToolDef
-	if err := yaml.Unmarshal(contents, &tool); err != nil {
-		return ToolDef{}, fmt.Errorf("unmarshal tool definition %s: %w", filename, err)
-	}
-	if tool.Name == "" {
-		return ToolDef{}, fmt.Errorf("tool definition file %s is empty", filename)
-	}
-	return tool, nil
+	return loadToolDefinitionFromContent(contents, filepath.Base(filename))
 }
 
 func (t ToolDef) GetName() string {
