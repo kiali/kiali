@@ -189,7 +189,7 @@ if [ "${AMBIENT}" == "true" ]; then
 
     # Install ambient on cluster 1 (east)
     echo "==== INSTALL ISTIO AMBIENT ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${SAIL}"
 
     # Install regular Istio on cluster 2 (west)
     MC_WEST_YAML=$(mktemp)
