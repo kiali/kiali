@@ -15,9 +15,10 @@
 5. [Health Cache Implementation](#health-cache-implementation)
    1. [Background Refresh Job](#background-refresh-job)
    2. [Cache Structure](#cache-structure)
-   3. [Cache Consumers](#cache-consumers)
-   4. [On-Demand Fallback](#on-demand-fallback)
-   5. [Prometheus Health Metrics](#prometheus-health-metrics)
+   3. [Cache Cleanup](#cache-cleanup)
+   4. [Cache Consumers](#cache-consumers)
+   5. [On-Demand Fallback](#on-demand-fallback)
+   6. [Prometheus Health Metrics](#prometheus-health-metrics)
 6. [Graph Health Implementation](#graph-health-implementation)
    1. [Node Health Calculation](#node-health-calculation)
    2. [Edge Health Calculation](#edge-health-calculation)
@@ -266,6 +267,22 @@ type CachedHealthData struct {
 ```
 
 Each health object includes a pre-computed `Status` field containing the final health status string.
+
+## Cache Cleanup
+
+The health cache does not currently implement cleanup for removed namespaces. When a namespace is deleted from a cluster, its cached health entry will remain in the cache indefinitely.
+
+**Why no cleanup is implemented:**
+
+1. **Namespaces are typically long-lived**: In most Kubernetes environments, namespaces are created once and persist for extended periods. Namespace deletion is an infrequent operation.
+
+2. **Minimal memory impact**: Stale cache entries consume very little memory—just the health data structures for apps, services, and workloads that existed in that namespace.
+
+3. **No correctness issues**: Stale entries are never returned to consumers because the refresh cycle only queries health for namespaces that currently exist. The stale data simply lingers unused.
+
+4. **Simplicity**: Avoiding cleanup logic reduces complexity and potential race conditions between the refresh cycle and namespace deletion events.
+
+**Future Enhancement**: If cleanup becomes necessary (e.g., for highly dynamic environments with frequent namespace creation/deletion), a cleanup step could be added to `RefreshHealth()` that removes cache entries for namespaces no longer present in the current namespace list. This would be a straightforward addition to the existing refresh cycle.
 
 ## Cache Consumers
 
