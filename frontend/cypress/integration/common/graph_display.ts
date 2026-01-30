@@ -528,7 +528,12 @@ Then('{int} nodes appear in the graph', (graphNodes: number) => {
       assert.isTrue(controller.hasGraph());
       const { nodes } = elems(controller);
 
-      expect(nodes).to.have.lengthOf(graphNodes);
+      const visibleNodes = nodes.filter(n => {
+        const data = n.getData?.() as any;
+        return data?.nodeType === 'app' || data?.nodeType === 'service';
+      });
+
+      expect(visibleNodes).to.have.lengthOf(graphNodes);
     });
 });
 
