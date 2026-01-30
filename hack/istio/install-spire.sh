@@ -3,11 +3,17 @@
 ##############################################################################
 # install-spire.sh
 #
-# Installs and configures SPIRE with Istio for local development.
-# This script completes the SPIRE setup including:
-# - SPIRE Controller Manager for auto-registration
-# - ClusterSPIFFEID resources for Istio gateways and sidecars
-# - Verification of the setup
+# Installs SPIRE components for use with Istio.
+# This script is designed to be called BEFORE Istio installation.
+#
+# It installs:
+# - SPIRE Server with Controller Manager
+# - SPIRE Agent
+# - SPIRE CSI Driver
+# - ClusterSPIFFEID resources for Istio
+#
+# After running this script, install Istio with SPIRE configuration using:
+#   install-istio-via-istioctl.sh --spire-enabled true
 #
 # Based on: https://istio.io/latest/docs/ops/integrations/spire/
 #
@@ -15,10 +21,14 @@
 
 set -e
 
+# Script directory for sourcing other scripts
+SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 TRUST_DOMAIN="${TRUST_DOMAIN:-example.org}"
-SPIRE_NAMESPACE="${SPIRE_NAMESPACE:-spire-server}"
+SPIRE_NAMESPACE="${SPIRE_NAMESPACE:-spire}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
+SPIRE_HELM_RELEASE="${SPIRE_HELM_RELEASE:-spire}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -52,152 +62,126 @@ check_prerequisites() {
         exit 1
     fi
     
-    if ! ${CLIENT_EXE} get namespace ${ISTIO_NAMESPACE} &> /dev/null; then
-        log_error "Istio namespace '${ISTIO_NAMESPACE}' not found. Please install Istio first."
-        exit 1
-    fi
-    
     log_info "Prerequisites check passed."
 }
 
-# Clean up OIDC discovery provider if it exists (optional component that can cause issues)
-cleanup_oidc_discovery_provider() {
-    if ${CLIENT_EXE} get deployment spire-spiffe-oidc-discovery-provider -n ${SPIRE_NAMESPACE} &> /dev/null; then
-        log_info "Removing OIDC discovery provider deployment (optional component)..."
-        ${CLIENT_EXE} delete deployment spire-spiffe-oidc-discovery-provider -n ${SPIRE_NAMESPACE} --ignore-not-found=true
-        sleep 2
-    fi
-}
-
-# Install SPIRE Controller Manager
-install_spire_controller_manager() {
-    log_info "Installing SPIRE Controller Manager..."
-    
-    # Check if controller manager is enabled in SPIRE server
-    local cm_enabled=$(helm get values spire -n ${SPIRE_NAMESPACE} 2>/dev/null | grep -A 2 "controllerManager:" | grep "enabled:" | awk '{print $2}' || echo "false")
-    
-    if [ "$cm_enabled" = "true" ]; then
-        log_info "SPIRE Controller Manager is already enabled. Verifying it's running..."
-        # Controller manager runs as a sidecar in spire-server statefulset
-        local server_pod=$(${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app=spire-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-        if [ -n "$server_pod" ]; then
-            if ${CLIENT_EXE} get pod "$server_pod" -n ${SPIRE_NAMESPACE} -o jsonpath='{.spec.containers[?(@.name=="spire-controller-manager")].name}' &> /dev/null; then
-                log_info "SPIRE Controller Manager is running as a sidecar in $server_pod"
-                return
-            fi
-        fi
-    fi
-    
-    # Add SPIRE Helm repository if not already added
+# Add SPIRE Helm repository
+add_spire_helm_repo() {
     if ! helm repo list | grep -q "spiffe"; then
         log_info "Adding SPIRE Helm repository..."
         helm repo add spiffe https://spiffe.github.io/helm-charts-hardened/
-        helm repo update
+    fi
+    helm repo update spiffe
+}
+
+# Install SPIRE CRDs
+install_spire_crds() {
+    log_info "Installing SPIRE CRDs..."
+    
+    local crds_needed=false
+    
+    if ! ${CLIENT_EXE} get crd clusterspiffeids.spire.spiffe.io &> /dev/null; then
+        crds_needed=true
+        log_info "Installing ClusterSPIFFEID CRD..."
+        curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterspiffeids.yaml | ${CLIENT_EXE} apply -f -
     fi
     
-    # Install or upgrade SPIRE with Controller Manager enabled
-    if helm list -n ${SPIRE_NAMESPACE} | grep -q "^spire[[:space:]]"; then
-        log_info "SPIRE is already installed. Upgrading to enable Controller Manager..."
-        # Clean up OIDC discovery provider before upgrade
-        cleanup_oidc_discovery_provider
-        helm upgrade spire spiffe/spire -n ${SPIRE_NAMESPACE} \
-            --reuse-values \
-            --set spire-server.controllerManager.enabled=true \
-            --set externalControllerManagers.enabled=true \
-            --set spire-server.oidcDiscoveryProvider.enabled=false \
-            --wait \
-            --timeout 5m || {
-            log_warn "Helm upgrade may have timed out, but continuing. Checking critical components..."
-            # Check if critical components are running
-            if ${CLIENT_EXE} get statefulset spire-server -n ${SPIRE_NAMESPACE} &> /dev/null && \
-               ${CLIENT_EXE} get daemonset spire-agent -n ${SPIRE_NAMESPACE} &> /dev/null; then
-                log_info "Critical SPIRE components are present. Continuing..."
-            else
-                log_error "Critical SPIRE components are missing. Upgrade may have failed."
-                exit 1
-            fi
+    if ! ${CLIENT_EXE} get crd clusterstaticentries.spire.spiffe.io &> /dev/null; then
+        crds_needed=true
+        log_info "Installing ClusterStaticEntry CRD..."
+        curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterstaticentries.yaml | ${CLIENT_EXE} apply -f -
+    fi
+    
+    if ! ${CLIENT_EXE} get crd clusterfederatedtrustdomains.spire.spiffe.io &> /dev/null; then
+        crds_needed=true
+        log_info "Installing ClusterFederatedTrustDomain CRD..."
+        curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterfederatedtrustdomains.yaml | ${CLIENT_EXE} apply -f -
+    fi
+    
+    if [ "$crds_needed" = true ]; then
+        log_info "Waiting for CRDs to be established..."
+        ${CLIENT_EXE} wait --for=condition=Established --timeout=60s \
+            crd/clusterspiffeids.spire.spiffe.io \
+            crd/clusterstaticentries.spire.spiffe.io \
+            crd/clusterfederatedtrustdomains.spire.spiffe.io || {
+            log_warn "CRDs may still be initializing..."
         }
     else
-        log_info "Installing SPIRE with Controller Manager enabled..."
-        # Clean up OIDC discovery provider if it exists from a previous installation
-        cleanup_oidc_discovery_provider
-        # Install required CRDs first if not present
-        if ! kubectl get crd clusterspiffeids.spire.spiffe.io &> /dev/null; then
-            log_info "Installing ClusterSPIFFEID CRD..."
-            curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterspiffeids.yaml | kubectl apply -f -
-        fi
-        if ! kubectl get crd clusterstaticentries.spire.spiffe.io &> /dev/null; then
-            log_info "Installing ClusterStaticEntry CRD..."
-            curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterstaticentries.yaml | kubectl apply -f -
-        fi
-        if ! kubectl get crd clusterfederatedtrustdomains.spire.spiffe.io &> /dev/null; then
-            log_info "Installing ClusterFederatedTrustDomain CRD..."
-            curl -s https://raw.githubusercontent.com/spiffe/spire-controller-manager/main/config/crd/bases/spire.spiffe.io_clusterfederatedtrustdomains.yaml | kubectl apply -f -
-        fi
-        if kubectl get crd clusterspiffeids.spire.spiffe.io clusterstaticentries.spire.spiffe.io clusterfederatedtrustdomains.spire.spiffe.io &> /dev/null; then
-            log_info "Waiting for CRDs to be ready..."
-            sleep 3
-        fi
-        helm install spire spiffe/spire -n ${SPIRE_NAMESPACE} --create-namespace \
+        log_info "SPIRE CRDs already installed."
+    fi
+}
+
+# Install SPIRE using Helm
+install_spire() {
+    log_info "Installing SPIRE..."
+    log_info "  Trust Domain: ${TRUST_DOMAIN}"
+    log_info "  Namespace: ${SPIRE_NAMESPACE}"
+    
+    add_spire_helm_repo
+    install_spire_crds
+    
+    # Create namespace if it doesn't exist
+    if ! ${CLIENT_EXE} get namespace ${SPIRE_NAMESPACE} &> /dev/null; then
+        ${CLIENT_EXE} create namespace ${SPIRE_NAMESPACE}
+    fi
+    
+    # Check if SPIRE is already installed
+    if helm status ${SPIRE_HELM_RELEASE} -n ${SPIRE_NAMESPACE} &> /dev/null; then
+        log_info "SPIRE is already installed. Upgrading..."
+        helm upgrade ${SPIRE_HELM_RELEASE} spiffe/spire -n ${SPIRE_NAMESPACE} \
+            --reuse-values \
             --set global.spire.trustDomain=${TRUST_DOMAIN} \
             --set spire-server.controllerManager.enabled=true \
             --set externalControllerManagers.enabled=true \
             --set spire-server.oidcDiscoveryProvider.enabled=false \
+            --set spire-agent.sds.enabled=true \
+            --set spire-agent.sds.defaultSVIDName=default \
+            --set spire-agent.sds.defaultBundleName=ROOTCA \
+            --set spire-agent.sds.defaultAllBundlesName=ROOTCA \
             --wait \
             --timeout 10m || {
-            log_warn "Helm install may have timed out, but continuing. Checking critical components..."
-            # Check if critical components are running
-            if ${CLIENT_EXE} get statefulset spire-server -n ${SPIRE_NAMESPACE} &> /dev/null && \
-               ${CLIENT_EXE} get daemonset spire-agent -n ${SPIRE_NAMESPACE} &> /dev/null; then
-                log_info "Critical SPIRE components are present. Continuing..."
-            else
-                log_error "Critical SPIRE components are missing. Installation may have failed."
-                exit 1
-            fi
+            log_warn "Helm upgrade may have timed out. Checking components..."
+        }
+    else
+        log_info "Installing SPIRE via Helm..."
+        helm install ${SPIRE_HELM_RELEASE} spiffe/spire -n ${SPIRE_NAMESPACE} \
+            --set global.spire.trustDomain=${TRUST_DOMAIN} \
+            --set spire-server.controllerManager.enabled=true \
+            --set externalControllerManagers.enabled=true \
+            --set spire-server.oidcDiscoveryProvider.enabled=false \
+            --set spire-agent.sds.enabled=true \
+            --set spire-agent.sds.defaultSVIDName=default \
+            --set spire-agent.sds.defaultBundleName=ROOTCA \
+            --set spire-agent.sds.defaultAllBundlesName=ROOTCA \
+            --wait \
+            --timeout 10m || {
+            log_warn "Helm install may have timed out. Checking components..."
         }
     fi
     
-    log_info "Waiting for SPIRE Server with Controller Manager to be ready..."
+    # Wait for critical components
+    log_info "Waiting for SPIRE components to be ready..."
+    
+    # SPIRE Helm chart uses app.kubernetes.io/name=server (not spire-server)
     ${CLIENT_EXE} wait --for=condition=ready --timeout=300s \
-        statefulset/spire-server -n ${SPIRE_NAMESPACE} || {
-        log_warn "SPIRE Server may still be initializing. Continuing..."
+        pod -l app.kubernetes.io/name=server,app.kubernetes.io/instance=spire -n ${SPIRE_NAMESPACE} 2>/dev/null || {
+        log_warn "SPIRE Server may still be initializing..."
     }
     
-    log_info "SPIRE Controller Manager enabled successfully."
+    # SPIRE Helm chart uses app.kubernetes.io/name=agent (not spire-agent)
+    ${CLIENT_EXE} wait --for=condition=ready --timeout=300s \
+        pod -l app.kubernetes.io/name=agent,app.kubernetes.io/instance=spire -n ${SPIRE_NAMESPACE} 2>/dev/null || {
+        log_warn "SPIRE Agent may still be initializing..."
+    }
+    
+    log_info "SPIRE installation completed."
 }
 
-# Verify ClusterSPIFFEID resources
-verify_clusterspiffeids() {
-    log_info "Verifying ClusterSPIFFEID resources..."
-    
-    local ingress_gateway_exists=false
-    local sidecar_exists=false
-    
-    if ${CLIENT_EXE} get clusterspiffeid istio-ingressgateway-reg &> /dev/null; then
-        ingress_gateway_exists=true
-        log_info "ClusterSPIFFEID for Istio Ingress Gateway exists"
-    else
-        log_warn "ClusterSPIFFEID for Istio Ingress Gateway not found"
-    fi
-    
-    if ${CLIENT_EXE} get clusterspiffeid istio-sidecar-reg &> /dev/null; then
-        sidecar_exists=true
-        log_info "ClusterSPIFFEID for Istio Sidecar exists"
-    else
-        log_warn "ClusterSPIFFEID for Istio Sidecar not found"
-    fi
-    
-    if [ "$ingress_gateway_exists" = false ] || [ "$sidecar_exists" = false ]; then
-        log_info "Creating missing ClusterSPIFFEID resources..."
-        create_clusterspiffeids
-    fi
-}
-
-# Create ClusterSPIFFEID resources
+# Create ClusterSPIFFEID resources for Istio
 create_clusterspiffeids() {
-    log_info "Creating ClusterSPIFFEID resources..."
+    log_info "Creating ClusterSPIFFEID resources for Istio..."
     
-    # Create ClusterSPIFFEID for Istio Ingress Gateway
+    # ClusterSPIFFEID for Istio Ingress Gateway
     if ! ${CLIENT_EXE} get clusterspiffeid istio-ingressgateway-reg &> /dev/null; then
         log_info "Creating ClusterSPIFFEID for Istio Ingress Gateway..."
         ${CLIENT_EXE} apply -f - <<EOF
@@ -211,9 +195,11 @@ spec:
     - "k8s:ns:${ISTIO_NAMESPACE}"
     - "k8s:sa:istio-ingressgateway-service-account"
 EOF
+    else
+        log_info "ClusterSPIFFEID for Istio Ingress Gateway already exists."
     fi
     
-    # Create ClusterSPIFFEID for Istio Sidecars
+    # ClusterSPIFFEID for Istio Sidecars (using label selector)
     if ! ${CLIENT_EXE} get clusterspiffeid istio-sidecar-reg &> /dev/null; then
         log_info "Creating ClusterSPIFFEID for Istio Sidecars..."
         ${CLIENT_EXE} apply -f - <<EOF
@@ -227,6 +213,8 @@ spec:
     matchLabels:
       spiffe.io/spire-managed-identity: "true"
 EOF
+    else
+        log_info "ClusterSPIFFEID for Istio Sidecars already exists."
     fi
     
     log_info "ClusterSPIFFEID resources created."
@@ -238,50 +226,14 @@ verify_spire_components() {
     
     local all_ready=true
     
-    # Check SPIRE Server
-    if ${CLIENT_EXE} get statefulset spire-server -n ${SPIRE_NAMESPACE} &> /dev/null; then
-        local server_ready=$(${CLIENT_EXE} get statefulset spire-server -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.readyReplicas}')
-        local server_desired=$(${CLIENT_EXE} get statefulset spire-server -n ${SPIRE_NAMESPACE} -o jsonpath='{.spec.replicas}')
-        if [ "$server_ready" = "$server_desired" ]; then
-            log_info "SPIRE Server is ready ($server_ready/$server_desired)"
+    # Check SPIRE Server (Helm chart uses app.kubernetes.io/name=server)
+    local server_pod=$(${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=server,app.kubernetes.io/instance=spire -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+    if [ -n "$server_pod" ]; then
+        local server_ready=$(${CLIENT_EXE} get pod "$server_pod" -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False")
+        if [ "$server_ready" = "True" ]; then
+            log_info "SPIRE Server is ready: $server_pod"
         else
-            log_warn "SPIRE Server is not ready ($server_ready/$server_desired)"
-            all_ready=false
-        fi
-    else
-        log_warn "SPIRE Server not found"
-        all_ready=false
-    fi
-    
-    # Check SPIRE Agent
-    if ${CLIENT_EXE} get daemonset spire-agent -n ${SPIRE_NAMESPACE} &> /dev/null; then
-        local agent_ready=$(${CLIENT_EXE} get daemonset spire-agent -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.numberReady}')
-        local agent_desired=$(${CLIENT_EXE} get daemonset spire-agent -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.desiredNumberScheduled}')
-        if [ "$agent_ready" = "$agent_desired" ]; then
-            log_info "SPIRE Agent is ready ($agent_ready/$agent_desired)"
-        else
-            log_warn "SPIRE Agent is not ready ($agent_ready/$agent_desired)"
-            all_ready=false
-        fi
-    else
-        log_warn "SPIRE Agent not found"
-        all_ready=false
-    fi
-    
-    # Check SPIRE Controller Manager (runs as sidecar in spire-server)
-    local server_pod=$(${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=spire-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || \
-                       ${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app=spire-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
-    if [ -n "$server_pod" ] && [ "$server_pod" != "" ]; then
-        if ${CLIENT_EXE} get pod "$server_pod" -n ${SPIRE_NAMESPACE} -o jsonpath='{.spec.containers[?(@.name=="spire-controller-manager")].name}' &> /dev/null; then
-            local cm_ready=$(${CLIENT_EXE} get pod "$server_pod" -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.containerStatuses[?(@.name=="spire-controller-manager")].ready}' 2>/dev/null || echo "false")
-            if [ "$cm_ready" = "true" ]; then
-                log_info "SPIRE Controller Manager is ready (running in $server_pod)"
-            else
-                log_warn "SPIRE Controller Manager is not ready"
-                all_ready=false
-            fi
-        else
-            log_warn "SPIRE Controller Manager container not found in SPIRE Server pod"
+            log_warn "SPIRE Server is not ready"
             all_ready=false
         fi
     else
@@ -289,190 +241,211 @@ verify_spire_components() {
         all_ready=false
     fi
     
-    # Check CSI Driver
-    if ${CLIENT_EXE} get daemonset spire-spiffe-csi-driver -n ${SPIRE_NAMESPACE} &> /dev/null; then
-        local csi_ready=$(${CLIENT_EXE} get daemonset spire-spiffe-csi-driver -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.numberReady}')
-        local csi_desired=$(${CLIENT_EXE} get daemonset spire-spiffe-csi-driver -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.desiredNumberScheduled}')
-        if [ "$csi_ready" = "$csi_desired" ]; then
-            log_info "SPIRE CSI Driver is ready ($csi_ready/$csi_desired)"
+    # Check SPIRE Agent (Helm chart uses app.kubernetes.io/name=agent)
+    local agent_ready=$(${CLIENT_EXE} get daemonset -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=agent,app.kubernetes.io/instance=spire -o jsonpath='{.items[0].status.numberReady}' 2>/dev/null || echo "0")
+    local agent_desired=$(${CLIENT_EXE} get daemonset -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=agent,app.kubernetes.io/instance=spire -o jsonpath='{.items[0].status.desiredNumberScheduled}' 2>/dev/null || echo "0")
+    if [ "$agent_ready" = "$agent_desired" ] && [ "$agent_ready" != "0" ]; then
+        log_info "SPIRE Agent is ready ($agent_ready/$agent_desired)"
+    else
+        log_warn "SPIRE Agent is not ready ($agent_ready/$agent_desired)"
+        all_ready=false
+    fi
+    
+    # Check SPIRE CSI Driver
+    local csi_ready=$(${CLIENT_EXE} get daemonset -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=spiffe-csi-driver -o jsonpath='{.items[0].status.numberReady}' 2>/dev/null || \
+                      ${CLIENT_EXE} get daemonset spire-spiffe-csi-driver -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.numberReady}' 2>/dev/null || echo "0")
+    local csi_desired=$(${CLIENT_EXE} get daemonset -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=spiffe-csi-driver -o jsonpath='{.items[0].status.desiredNumberScheduled}' 2>/dev/null || \
+                        ${CLIENT_EXE} get daemonset spire-spiffe-csi-driver -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null || echo "0")
+    if [ "$csi_ready" = "$csi_desired" ] && [ "$csi_ready" != "0" ]; then
+        log_info "SPIRE CSI Driver is ready ($csi_ready/$csi_desired)"
+    else
+        log_warn "SPIRE CSI Driver is not ready ($csi_ready/$csi_desired)"
+        all_ready=false
+    fi
+    
+    # Check Controller Manager (runs as sidecar in spire-server)
+    if [ -n "$server_pod" ]; then
+        local cm_ready=$(${CLIENT_EXE} get pod "$server_pod" -n ${SPIRE_NAMESPACE} -o jsonpath='{.status.containerStatuses[?(@.name=="spire-controller-manager")].ready}' 2>/dev/null || echo "false")
+        if [ "$cm_ready" = "true" ]; then
+            log_info "SPIRE Controller Manager is ready"
         else
-            log_warn "SPIRE CSI Driver is not ready ($csi_ready/$csi_desired)"
+            log_warn "SPIRE Controller Manager is not ready or not found"
             all_ready=false
         fi
-    else
-        log_warn "SPIRE CSI Driver not found"
-        all_ready=false
     fi
     
     if [ "$all_ready" = true ]; then
         log_info "All SPIRE components are ready!"
+        return 0
     else
-        log_warn "Some SPIRE components are not ready. Please check the status."
+        log_warn "Some SPIRE components are not ready."
+        return 1
     fi
-}
-
-# Verify Istio configuration
-verify_istio_config() {
-    log_info "Verifying Istio configuration with SPIRE..."
-    
-    # Check if Istio is configured with the correct trust domain
-    local trust_domain=$(${CLIENT_EXE} get istiooperator -n ${ISTIO_NAMESPACE} -o jsonpath='{.items[0].spec.meshConfig.trustDomain}' 2>/dev/null || echo "")
-    if [ -n "$trust_domain" ]; then
-        if [ "$trust_domain" = "$TRUST_DOMAIN" ]; then
-            log_info "Istio trust domain is correctly set to: $trust_domain"
-        else
-            log_warn "Istio trust domain is '$trust_domain' but expected '$TRUST_DOMAIN'"
-        fi
-    else
-        log_warn "Could not determine Istio trust domain"
-    fi
-    
-    # Check if ingress gateway has SPIRE volume
-    if ${CLIENT_EXE} get deployment istio-ingressgateway -n ${ISTIO_NAMESPACE} -o jsonpath='{.spec.template.spec.volumes[?(@.name=="workload-socket")]}' &> /dev/null; then
-        log_info "Istio Ingress Gateway has SPIRE workload-socket volume configured"
-    else
-        log_warn "Istio Ingress Gateway does not have SPIRE workload-socket volume"
-    fi
-}
-
-# Deploy test workload
-deploy_test_workload() {
-    log_info "Deploying test workload to verify SPIRE integration..."
-    
-    ${CLIENT_EXE} apply -f - <<EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: spire-test
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: curl
-  namespace: spire-test
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: curl
-  namespace: spire-test
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: curl
-  template:
-    metadata:
-      labels:
-        app: curl
-      annotations:
-        inject.istio.io/templates: "sidecar,spire"
-    spec:
-      terminationGracePeriodSeconds: 0
-      serviceAccountName: curl
-      containers:
-      - name: curl
-        image: curlimages/curl:latest
-        command: ["/bin/sleep", "3650d"]
-        imagePullPolicy: IfNotPresent
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        securityContext:
-          runAsUser: 1000
-      volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: workload-socket
-        csi:
-          driver: "csi.spiffe.io"
-          readOnly: true
-EOF
-    
-    log_info "Waiting for test workload to be ready..."
-    ${CLIENT_EXE} wait --for=condition=available --timeout=120s \
-        deployment/curl -n spire-test || {
-        log_warn "Test workload failed to become ready"
-    }
-    
-    log_info "Test workload deployed. You can verify SPIRE identity with:"
-    log_info "  kubectl exec -t \$(kubectl get pod -l app=curl -n spire-test -o jsonpath='{.items[0].metadata.name}') -n spire-test -c istio-proxy -- cat /var/run/secrets/workload-spiffe-uds/svid.key"
 }
 
 # Verify SPIRE identities
 verify_spire_identities() {
     log_info "Verifying SPIRE identities..."
     
-    local spire_server_pod=$(${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=spire-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || \
-                             ${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app=spire-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || \
-                             ${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -o name 2>/dev/null | grep "spire-server" | head -1 | sed 's|pod/||' || echo "")
+    # SPIRE Helm chart uses app.kubernetes.io/name=server
+    local spire_server_pod=$(${CLIENT_EXE} get pod -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=server,app.kubernetes.io/instance=spire -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
     
     if [ -z "$spire_server_pod" ]; then
         log_warn "SPIRE Server pod not found. Cannot verify identities."
-        log_info "Available pods in ${SPIRE_NAMESPACE}:"
-        ${CLIENT_EXE} get pods -n ${SPIRE_NAMESPACE} | head -10
-        return
+        return 1
     fi
     
-    log_info "Checking SPIRE Server entries using pod: $spire_server_pod"
+    log_info "SPIRE Server entries:"
     ${CLIENT_EXE} exec -n ${SPIRE_NAMESPACE} "$spire_server_pod" -c spire-server -- \
         ./bin/spire-server entry show 2>/dev/null || {
-        log_warn "Could not retrieve SPIRE entries. SPIRE Server may still be initializing."
+        log_warn "Could not retrieve SPIRE entries."
     }
 }
 
-# Main execution
+# Uninstall SPIRE
+uninstall_spire() {
+    log_info "Uninstalling SPIRE..."
+    log_info "  SPIRE Namespace: ${SPIRE_NAMESPACE}"
+    
+    # Remove ClusterSPIFFEID resources
+    log_info "Removing ClusterSPIFFEID resources..."
+    ${CLIENT_EXE} delete clusterspiffeid istio-ingressgateway-reg --ignore-not-found=true 2>/dev/null || true
+    ${CLIENT_EXE} delete clusterspiffeid istio-sidecar-reg --ignore-not-found=true 2>/dev/null || true
+    
+    # Uninstall SPIRE Helm release
+    if helm status ${SPIRE_HELM_RELEASE} -n ${SPIRE_NAMESPACE} &> /dev/null; then
+        log_info "Uninstalling SPIRE Helm release..."
+        helm uninstall ${SPIRE_HELM_RELEASE} -n ${SPIRE_NAMESPACE} --wait --timeout 5m || {
+            log_warn "Helm uninstall may have timed out."
+        }
+    else
+        log_info "SPIRE Helm release not found."
+    fi
+    
+    # Delete SPIRE namespace
+    if ${CLIENT_EXE} get namespace ${SPIRE_NAMESPACE} &> /dev/null; then
+        log_info "Deleting SPIRE namespace..."
+        ${CLIENT_EXE} delete namespace ${SPIRE_NAMESPACE} --timeout=120s || {
+            log_warn "Namespace deletion timed out. It may still be terminating."
+        }
+    fi
+    
+    # Remove SPIRE CRDs
+    log_info "Removing SPIRE CRDs..."
+    ${CLIENT_EXE} delete crd clusterspiffeids.spire.spiffe.io --ignore-not-found=true 2>/dev/null || true
+    ${CLIENT_EXE} delete crd clusterstaticentries.spire.spiffe.io --ignore-not-found=true 2>/dev/null || true
+    ${CLIENT_EXE} delete crd clusterfederatedtrustdomains.spire.spiffe.io --ignore-not-found=true 2>/dev/null || true
+    
+    log_info "SPIRE uninstallation completed."
+}
+
+# Show status
+show_status() {
+    log_info "SPIRE Status:"
+    log_info "  Namespace: ${SPIRE_NAMESPACE}"
+    log_info "  Trust Domain: ${TRUST_DOMAIN}"
+    echo ""
+    
+    verify_spire_components
+    
+    echo ""
+    log_info "ClusterSPIFFEID resources:"
+    ${CLIENT_EXE} get clusterspiffeid 2>/dev/null || log_warn "No ClusterSPIFFEID resources found"
+}
+
+# Print help
+print_help() {
+    cat <<HELPMSG
+Usage: $0 [OPTIONS]
+
+Installs SPIRE components for use with Istio. This script should be run
+BEFORE installing Istio with SPIRE support.
+
+Options:
+  (no options)            Install SPIRE and create ClusterSPIFFEID resources
+  --uninstall             Uninstall SPIRE completely
+  --status                Show SPIRE component status
+  --verify-identities     Show SPIRE registered identities
+  --verify-components     Verify SPIRE components are ready
+  --help, -h              Show this help message
+
+Environment variables:
+  CLIENT_EXE              Kubernetes client executable (default: kubectl)
+  TRUST_DOMAIN            SPIRE trust domain (default: example.org)
+  SPIRE_NAMESPACE         SPIRE namespace (default: spire)
+  ISTIO_NAMESPACE         Istio namespace for ClusterSPIFFEID (default: istio-system)
+
+Example:
+  # Install SPIRE with custom trust domain
+  TRUST_DOMAIN=my-mesh.example.com $0
+
+  # Then install Istio with SPIRE support
+  ./install-istio-via-istioctl.sh --spire-enabled true --trust-domain my-mesh.example.com
+HELPMSG
+}
+
+# Main installation
 main() {
-    log_info "Starting SPIRE installation and configuration..."
-    log_info "Trust Domain: ${TRUST_DOMAIN}"
-    log_info "SPIRE Namespace: ${SPIRE_NAMESPACE}"
-    log_info "Istio Namespace: ${ISTIO_NAMESPACE}"
+    log_info "Starting SPIRE installation..."
+    log_info "  Trust Domain: ${TRUST_DOMAIN}"
+    log_info "  SPIRE Namespace: ${SPIRE_NAMESPACE}"
+    log_info "  Istio Namespace: ${ISTIO_NAMESPACE}"
     
     check_prerequisites
-    install_spire_controller_manager
-    verify_clusterspiffeids
-    verify_spire_components
-    verify_istio_config
+    install_spire
+    create_clusterspiffeids
+    
+    # Verify SPIRE components are ready
+    if ! verify_spire_components; then
+        log_error ""
+        log_error "SPIRE installation failed - components are not ready."
+        log_error "Check pod logs with: kubectl logs -n ${SPIRE_NAMESPACE} -l app.kubernetes.io/name=spire-server"
+        log_error ""
+        log_error "Common issues:"
+        log_error "  - Trust domain conflict with existing registration entries"
+        log_error "  - Resource constraints (CPU/memory)"
+        log_error "  - Network policies blocking communication"
+        log_error ""
+        log_error "To clean up and retry:"
+        log_error "  $0 --uninstall"
+        exit 1
+    fi
     
     log_info ""
-    log_info "SPIRE installation and configuration completed!"
+    log_info "SPIRE installation completed successfully!"
     log_info ""
     log_info "Next steps:"
-    log_info "1. Verify SPIRE identities: ./hack/istio/install-spire.sh --verify-identities"
-    log_info "2. Deploy a test workload: ./hack/istio/install-spire.sh --deploy-test"
-    local cmd="kubectl exec -n ${SPIRE_NAMESPACE} \$(kubectl get pod -n ${SPIRE_NAMESPACE} -l app=spire-server -o jsonpath='{.items[0].metadata.name}') -c spire-server -- ./bin/spire-server entry show"
-    log_info "3. Check SPIRE Server entries: ${cmd}"
+    log_info "  Install Istio with SPIRE support:"
+    log_info "    ./install-istio-via-istioctl.sh --spire-enabled true --trust-domain ${TRUST_DOMAIN}"
+    log_info ""
+    log_info "  Or check SPIRE status:"
+    log_info "    $0 --status"
 }
 
 # Handle command line arguments
 case "${1:-}" in
+    --uninstall)
+        uninstall_spire
+        ;;
+    --status)
+        show_status
+        ;;
     --verify-identities)
         verify_spire_identities
-        ;;
-    --deploy-test)
-        deploy_test_workload
         ;;
     --verify-components)
         verify_spire_components
         ;;
     --help|-h)
-        echo "Usage: $0 [OPTIONS]"
-        echo ""
-        echo "Options:"
-        echo "  --verify-identities    Verify SPIRE identities"
-        echo "  --deploy-test         Deploy a test workload"
-        echo "  --verify-components   Verify SPIRE components"
-        echo "  --help, -h            Show this help message"
-        echo ""
-        echo "Environment variables:"
-        echo "  CLIENT_EXE            Kubernetes client (default: kubectl)"
-        echo "  TRUST_DOMAIN         SPIRE trust domain (default: example.org)"
-        echo "  SPIRE_NAMESPACE      SPIRE namespace (default: spire-server)"
-        echo "  ISTIO_NAMESPACE      Istio namespace (default: istio-system)"
+        print_help
         exit 0
         ;;
-    *)
+    "")
         main
         ;;
+    *)
+        log_error "Unknown option: $1"
+        print_help
+        exit 1
+        ;;
 esac
-
