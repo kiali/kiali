@@ -10,6 +10,7 @@ Feature: Kiali Waypoint related features
   Background:
     Given user is at administrator perspective
     And all waypoints are healthy
+    And the waypoint tracing data is ready
 
   Scenario: [Setup] namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
