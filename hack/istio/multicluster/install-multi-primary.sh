@@ -179,7 +179,7 @@ if [ "${AMBIENT}" == "true" ]; then
       kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
       kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
-    install_ambient_multicluster
+    install_ambient_multicluster "${SAIL}"
   else
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
@@ -193,7 +193,7 @@ if [ "${AMBIENT}" == "true" ]; then
 
     # Install ambient on cluster 1 (east)
     echo "==== INSTALL ISTIO AMBIENT ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${SAIL}"
 
     # Install regular Istio on cluster 2 (west)
     MC_WEST_YAML=$(mktemp)

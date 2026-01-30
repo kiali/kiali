@@ -60,9 +60,13 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
--s|--sail
+-s|--sail <true|false>
     Install Istio with the Sail Operator.
+    Must be 'true' or 'false'.
     Default: <false>
+-w|--waypoint <true|false>
+    If true, configure waypoint for bookinfo namespace in ambient multi-primary setup.
+    Default: false
 -te|--tempo
     If Tempo will be installed as the tracing platform
     instead of Jaeger
@@ -98,7 +102,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -s|--sail)                     SAIL="true";              shift;shift; ;;
+    -s|--sail)
+      SAIL="$2"
+      if [ "${SAIL}" != "true" -a "${SAIL}" != "false" ]; then
+        echo "--sail option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -te|--tempo)                   TEMPO="$2";               shift;shift; ;;
     -w|--waypoint)                 WAYPOINT="$2";            shift;shift; ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
@@ -590,6 +601,13 @@ setup_kind_multicluster() {
     WAYPOINT_ARG=()
   fi
 
+  # Build sail argument properly for array expansion (passed through to multicluster scripts)
+  if [ -n "${SAIL}" ]; then
+    SAIL_ARG=(--sail "${SAIL}")
+  else
+    SAIL_ARG=()
+  fi
+
   local cluster1_context
   local cluster2_context
   local cluster1_name
@@ -643,6 +661,9 @@ setup_kind_multicluster() {
     fi
     if [ ${#WAYPOINT_ARG[@]} -gt 0 ]; then
       install_args+=("${WAYPOINT_ARG[@]}")
+    fi
+    if [ ${#SAIL_ARG[@]} -gt 0 ]; then
+      install_args+=("${SAIL_ARG[@]}")
     fi
     if [ ${#kind_node_image[@]} -gt 0 ]; then
       install_args+=("${kind_node_image[@]}")

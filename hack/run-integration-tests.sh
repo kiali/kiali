@@ -12,6 +12,7 @@ BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 BOOKINFO_ONLY="false"
 CLUSTER_TYPE="kind"
 CLUSTER2_AMBIENT="true"
+SAIL=""
 FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_CORE_1="frontend-core-1"
@@ -92,6 +93,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -s|--sail)
+      SAIL="${2}"
+      if [ "${SAIL}" != "true" -a "${SAIL}" != "false" ]; then
+        echo "--sail option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -st|--stern)
       STERN="${2}"
       if [ "${STERN}" != "true" -a "${STERN}" != "false" ]; then
@@ -166,6 +175,10 @@ Valid command line arguments:
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
     Default: false
+  -s|--sail <true|false>
+    If true, install Istio using Sail (default for multicluster scripts).
+    If false, install Istio using istioctl where supported.
+    Default: unset (suite-dependent; for frontend-multi-primary ambient, Sail remains the default unless you pass false)
   -st|--stern <true|false>
     If true, will setup stern logging binary.
     Default: false
@@ -221,6 +234,7 @@ ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
 KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_LIMIT_MEMORY
 SETUP_ONLY=$SETUP_ONLY
+SAIL=$SAIL
 STERN=$STERN
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
@@ -242,6 +256,12 @@ if [ -n "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR_ARG="--helm-charts-dir ${HELM_CHARTS_DIR}"
 else
   HELM_CHARTS_DIR_ARG=""
+fi
+
+if [ -n "${SAIL}" ]; then
+  SAIL_ARG="--sail ${SAIL}"
+else
+  SAIL_ARG=""
 fi
 
 # Install go-junit-report if not already installed
@@ -668,7 +688,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG $WAYPOINT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG $WAYPOINT_ARG
   fi
 
   ensureKialiServerReady
