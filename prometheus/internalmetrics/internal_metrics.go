@@ -664,17 +664,3 @@ func SetHealthStatusForItem(cluster, namespace string, healthType HealthType, na
 		}).Set(value)
 	}
 }
-
-// DeleteHealthStatusForItem removes all health status metrics for an item.
-// This can be used when an item is deleted or no longer exists.
-func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType, name string) {
-	for _, status := range HealthStatuses {
-		Metrics.HealthStatus.Delete(prometheus.Labels{
-			labelCluster:      cluster,
-			labelNamespace:    namespace,
-			labelHealthType:   string(healthType),
-			labelName:         name,
-			labelHealthStatus: status,
-		})
-	}
-}
