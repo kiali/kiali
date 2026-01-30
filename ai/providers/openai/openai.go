@@ -7,13 +7,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 
 	openai "github.com/openai/openai-go/v3"
 
 	"github.com/kiali/kiali/ai/mcp"
-	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -34,7 +32,7 @@ type OpenAIProvider struct {
 }
 
 func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*OpenAIProvider, error) {
-	opts, err := getProviderOptions(conf, provider, model)
+	opts, err := providers.GetProviderOptions(conf, provider, model)
 	if err != nil {
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
@@ -43,6 +41,43 @@ func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, mod
 		client: openai.NewClient(opts...),
 		model:  model.Model,
 	}, nil
+}
+
+func convertToolToOpenAI(tool mcp.ToolDef) openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        tool.GetName(),
+				Description: openai.String(tool.GetDescription()),
+				Parameters:  openai.FunctionParameters(tool.GetDefinition()),
+			},
+		},
+	}
+}
+func (p *OpenAIProvider) GetToolDefinitions() interface{} {
+	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
+	for _, handler := range mcp.DefaultToolHandlers {
+		tools = append(tools, convertToolToOpenAI(handler))
+	}
+	return tools
+}
+
+func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) []mcp.ToolsProcessor {
+	toolsSlice, ok := toolCall.([]openai.ChatCompletionMessageToolCallUnion)
+	if !ok {
+		return []mcp.ToolsProcessor{}
+	}
+	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	for i, tool := range toolsSlice {
+		args := map[string]any{}
+		_ = json.Unmarshal([]byte(tool.Function.Arguments), &args)
+		tools[i] = mcp.ToolsProcessor{
+			Args:       args,
+			Name:       tool.Function.Name,
+			ToolCallID: tool.ID,
+		}
+	}
+	return tools
 }
 
 func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
@@ -77,7 +112,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 
 	if len(conversation) == 0 {
 		conversation = []types.ConversationMessage{
-			newConversationMessage(
+			providers.NewConversationMessage(
 				openai.SystemMessage(types.SystemInstruction),
 				"system",
 				"",
@@ -89,37 +124,26 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	contextBytes, _ := json.Marshal(req.Context)
 	// Adding context to the conversation. This is the system message that is sent to the AI.
 	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	conversation = append(conversation, newConversationMessage(
+	conversation = append(conversation, providers.NewConversationMessage(
 		openai.SystemMessage(contextContent),
 		"system",
 		"",
 		contextContent,
 	))
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	conversation = append(conversation, newConversationMessage(
+	conversation = append(conversation, providers.NewConversationMessage(
 		openai.UserMessage(req.Query),
 		"user",
 		"",
 		req.Query,
 	))
 
-	// Prepare tool definitions and lookup
-	toolDefs := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
-	handlerByName := make(map[string]mcp.ToolHandler, len(mcp.DefaultToolHandlers))
-	for _, h := range mcp.DefaultToolHandlers {
-		def := h.Definition()
-		toolDefs = append(toolDefs, def)
-		if def.OfFunction != nil {
-			handlerByName[def.OfFunction.Function.Name] = h
-		}
-	}
-
 	resp, err := p.client.Chat.Completions.New(
 		r.Context(),
 		openai.ChatCompletionNewParams{
 			Model:    openai.ChatModel(p.model),
 			Messages: buildChatParams(conversation),
-			Tools:    toolDefs,
+			Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
 		},
 	)
 
@@ -134,7 +158,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
 	msg := resp.Choices[0].Message
-	conversation = append(conversation, newConversationMessage(
+	conversation = append(conversation, providers.NewConversationMessage(
 		msg.ToParam(),
 		string(msg.Role),
 		"",
@@ -144,23 +168,23 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	role := string(msg.Role)
 	if len(msg.ToolCalls) > 0 {
 		// Execute tool calls in parallel since they don't depend on each other
-		toolResults := p.executeToolCallsInParallel(ctx, r, msg.ToolCalls, handlerByName, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, p.TransformToolCallToToolsProcessor(msg.ToolCalls), business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return newContextCanceledResponse(err)
 		}
 
 		// Add tool results to conversation in the original order
 		for _, result := range toolResults {
-			if result.err != nil {
-				return &types.AIResponse{Error: result.err.Error()}, result.code
+			if result.Error != nil {
+				return &types.AIResponse{Error: result.Error.Error()}, result.Code
 			}
-			if len(result.actions) > 0 {
-				response.Actions = append(response.Actions, result.actions...)
+			if len(result.Actions) > 0 {
+				response.Actions = append(response.Actions, result.Actions...)
 			}
-			if len(result.citations) > 0 {
-				response.Citations = append(response.Citations, result.citations...)
+			if len(result.Citations) > 0 {
+				response.Citations = append(response.Citations, result.Citations...)
 			}
-			conversation = append(conversation, result.message)
+			conversation = append(conversation, result.Message)
 		}
 		if err := ctx.Err(); err != nil {
 			return newContextCanceledResponse(err)
@@ -181,7 +205,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	} else {
 		response.Answer = parseResponse(msg.Content)
 	}
-	conversation = append(conversation, newConversationMessage(
+	conversation = append(conversation, providers.NewConversationMessage(
 		openai.AssistantMessage(response.Answer),
 		role,
 		"",
@@ -222,157 +246,16 @@ func newContextCanceledResponse(err error) (*types.AIResponse, int) {
 	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
 }
 
-// toolCallResult holds the result of a tool call execution
-type toolCallResult struct {
-	message   types.ConversationMessage
-	err       error
-	code      int
-	actions   []get_action_ui.Action
-	citations []get_citations.Citation
-}
-
-// executeToolCallsInParallel executes all tool calls in parallel and returns results in order
-func (p *OpenAIProvider) executeToolCallsInParallel(
-	ctx context.Context,
-	r *http.Request,
-	toolCalls []openai.ChatCompletionMessageToolCallUnion,
-	handlerByName map[string]mcp.ToolHandler,
-	business *business.Layer,
-	prom prometheus.ClientInterface,
-	clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache,
-	conf *config.Config,
-	grafana *grafana.Service,
-	perses *perses.Service,
-	discovery *istio.Discovery,
-) []toolCallResult {
-	results := make([]toolCallResult, len(toolCalls))
-	var wg sync.WaitGroup
-	log.Debugf("Executing %d tool calls in parallel", len(toolCalls))
-	// Execute all tool calls in parallel
-	for i, toolCall := range toolCalls {
-		wg.Add(1)
-		go func(index int, call openai.ChatCompletionMessageToolCallUnion) {
-			defer wg.Done()
-			actions := []get_action_ui.Action{}
-			citations := []get_citations.Citation{}
-			if err := ctx.Err(); err != nil {
-				results[index] = toolCallResult{
-					err:  err,
-					code: http.StatusRequestTimeout,
-				}
-				return
-			}
-
-			if call.Type != "function" {
-				results[index] = toolCallResult{
-					err:  fmt.Errorf("unsupported tool call type: %s", call.Type),
-					code: http.StatusBadRequest,
-				}
-				return
-			}
-
-			var args map[string]interface{}
-			_ = json.Unmarshal([]byte(call.Function.Arguments), &args)
-			log.Debugf("Calling tool: %+v with arguments: %+v", call.Function.Name, args)
-
-			handler, ok := handlerByName[call.Function.Name]
-			if !ok {
-				results[index] = toolCallResult{
-					err:  fmt.Errorf("tool handler not found: %s", call.Function.Name),
-					code: http.StatusInternalServerError,
-				}
-				return
-			}
-
-			mcpResult, code := handler.Call(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
-			if code != http.StatusOK {
-				results[index] = toolCallResult{
-					err:  fmt.Errorf("tool %s returned error: %s", call.Function.Name, mcpResult),
-					code: code,
-				}
-				return
-			}
-			if err := ctx.Err(); err != nil {
-				results[index] = toolCallResult{
-					err:  err,
-					code: http.StatusRequestTimeout,
-				}
-				return
-			}
-
-			confirmed, _ := args["confirmed"].(bool)
-			if call.Function.Name == mcp.ManageIstioConfigToolName && !confirmed {
-				if mcpRes, ok := mcpResult.(struct {
-					Actions []get_action_ui.Action `json:"actions"`
-					Result  string                 `json:"result"`
-				}); ok {
-					actions = append(actions, mcpRes.Actions...)
-				}
-			}
-
-			if call.Function.Name == mcp.GetActionUIToolName {
-				if mcpRes, ok := mcpResult.(get_action_ui.GetActionUIResponse); ok {
-					actions = append(actions, mcpRes.Actions...)
-				}
-			}
-
-			if call.Function.Name == mcp.GetCitationsToolName {
-				if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
-					citations = append(citations, mcpRes.Citations...)
-				}
-			}
-
-			toolContent, err := formatToolContent(mcpResult)
-			if err != nil {
-				results[index] = toolCallResult{
-					err:  fmt.Errorf("failed to format tool content: %w", err),
-					code: http.StatusInternalServerError,
-				}
-				return
-			}
-			if err := ctx.Err(); err != nil {
-				results[index] = toolCallResult{
-					err:  err,
-					code: http.StatusRequestTimeout,
-				}
-				return
-			}
-
-			results[index] = toolCallResult{
-				message: newConversationMessage(
-					openai.ToolMessage(toolContent, call.ID),
-					"tool",
-					call.Function.Name,
-					toolContent,
-				),
-				code:      http.StatusOK,
-				actions:   actions,
-				citations: citations,
-			}
-		}(i, toolCall)
-	}
-
-	// Wait for all tool calls to complete
-	wg.Wait()
-
-	return results
-}
-
 // cleanConversation removes tool messages with names that are not useful for storage
 // This helps reduce storage size by removing tool call responses that don't add value to the conversation context
 func (p *OpenAIProvider) cleanConversation(conversation []types.ConversationMessage) []types.ConversationMessage {
 	// List of tool names that are not useful to store in conversation history
-	excludedToolNames := map[string]bool{
-		mcp.GetCitationsToolName: true,
-		mcp.GetActionUIToolName:  true,
-	}
 
 	cleaned := make([]types.ConversationMessage, 0, len(conversation))
 	for _, msg := range conversation {
 		// Remove tool messages where the tool name is in the exclusion list
 		if msg.Role == "tool" {
-			if excludedToolNames[msg.Name] {
+			if mcp.ExcludedToolNames[msg.Name] {
 				log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
 				continue
 			}
@@ -429,7 +312,7 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 	var reduced []types.ConversationMessage
 	reduced = append(reduced, instructions...)
 	summaryContent := fmt.Sprintf("Summary of previous interactions: %s", summary)
-	reduced = append(reduced, newConversationMessage(
+	reduced = append(reduced, providers.NewConversationMessage(
 		openai.AssistantMessage(summaryContent),
 		"assistant",
 		"",
@@ -444,34 +327,24 @@ func parseResponse(content string) string {
 	return strings.ReplaceAll(content, "```", "~~~")
 }
 
-func formatToolContent(result interface{}) (string, error) {
-	switch v := result.(type) {
-	case string:
-		return v, nil
-	case []byte:
-		return string(v), nil
-	default:
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			return "", err
-		}
-		return string(bytes), nil
-	}
-}
-
 func buildChatParams(conversation []types.ConversationMessage) []openai.ChatCompletionMessageParamUnion {
 	params := make([]openai.ChatCompletionMessageParamUnion, 0, len(conversation))
 	for _, msg := range conversation {
-		params = append(params, msg.Param)
+		if param, ok := msg.Param.(openai.ChatCompletionMessageParamUnion); ok {
+			params = append(params, param)
+			continue
+		}
+		switch msg.Role {
+		case "system":
+			params = append(params, openai.SystemMessage(msg.Content))
+		case "user":
+			params = append(params, openai.UserMessage(msg.Content))
+		case "tool":
+			log.Debugf("Tool message missing tool_call_id, using assistant message for role=%s name=%s", msg.Role, msg.Name)
+			params = append(params, openai.AssistantMessage(msg.Content))
+		default:
+			params = append(params, openai.AssistantMessage(msg.Content))
+		}
 	}
 	return params
-}
-
-func newConversationMessage(param openai.ChatCompletionMessageParamUnion, role, name, content string) types.ConversationMessage {
-	return types.ConversationMessage{
-		Content: content,
-		Name:    name,
-		Param:   param,
-		Role:    role,
-	}
 }

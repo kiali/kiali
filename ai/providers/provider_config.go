@@ -37,7 +37,7 @@ func resolveProviderKey(conf *config.Config, provider *config.ProviderConfig, mo
 	return resolvedKey, nil
 }
 
-func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) ([]option.RequestOption, error) {
+func GetProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) ([]option.RequestOption, error) {
 	resolvedKey, err := resolveProviderKey(conf, provider, model)
 	if err != nil {
 		return nil, err

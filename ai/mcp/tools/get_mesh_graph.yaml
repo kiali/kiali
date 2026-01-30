@@ -1,0 +1,21 @@
+- name: "get_mesh_graph"
+  description: "Returns the mesh graph data for the given namespaces and graph type."
+  input_schema:
+    type: "object"
+    properties:
+      namespace:
+        type: "string"
+        description: "Optional single namespace to include in the graph (alternative to namespaces)"
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to include in the graph"
+      graphType:
+        type: "string"
+        description: "Type of graph to return. Possible values: versionedApp, app, service, workload"
+        enum: ["versionedApp", "app", "service", "workload"]
+      rateInterval:
+        type: "string"
+        description: "Optional rate interval for fetching (e.g., '10m', '5m', '1h'). Default is '10m'."
+      clusterName:
+        type: "string"
+        description: "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig)."
