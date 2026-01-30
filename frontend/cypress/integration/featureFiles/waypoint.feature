@@ -113,7 +113,8 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
-    Then 11 edges appear in the graph
+    Then 10 edges appear in the graph
+    And 11 nodes appear in the graph
 
   @skip-ossmc
   Scenario: [Istio Config] Waypoint should not have validation errors
