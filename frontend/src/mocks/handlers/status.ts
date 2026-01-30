@@ -14,13 +14,18 @@ const mockStatus: StatusState = {
       version: '1.28.0'
     },
     {
-      name: 'Prometheus',
-      version: '2.45.0',
-      url: 'http://prometheus:9090'
+      name: 'jaeger',
+      url: 'http://jaeger-query:16686',
+      version: '1.62.0'
     },
     {
       name: 'Kubernetes',
       version: '1.33.0'
+    },
+    {
+      name: 'Prometheus',
+      url: 'http://prometheus:9090',
+      version: '2.45.0'
     }
   ],
   warningMessages: [],

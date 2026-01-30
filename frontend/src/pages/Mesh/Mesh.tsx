@@ -28,12 +28,12 @@ import {
   GraphAreaSelectedEventListener,
   GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
-import { elementFactory } from './elements/elementFactory';
-import { getValidMeshLayout, layoutFactory, MeshLayoutType, MeshLayout } from './layouts/layoutFactory';
+import { elementFactory } from './elements/ElementFactory';
+import { getValidMeshLayout, layoutFactory, MeshLayoutType, MeshLayout } from './layouts/LayoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
-import { meshComponentFactory } from './components/meshComponentFactory';
+import { meshComponentFactory } from './components/MeshComponentFactory';
 import { MeshData, MeshRefs } from './MeshPage';
 import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';

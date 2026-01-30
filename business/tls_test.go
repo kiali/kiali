@@ -283,17 +283,27 @@ func TestNamespaceHasNoDestinationRulesNoPolicy(t *testing.T) {
 	var drs []*networking_v1.DestinationRule
 	var ps []*security_v1.PeerAuthentication
 
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
+	testNamespaceScenario(MTLSUnset, drs, ps, true, t)
+	testNamespaceScenario(MTLSUnset, drs, ps, false, t)
 
 	ps = fakePeerAuthnWithSelector("default", "bookinfo", "productpage")
 	drs = []*networking_v1.DestinationRule{
 		data.CreateEmptyDestinationRule("bookinfo", "dr-1", "*.bookinfo.svc.cluster.local"),
 	}
 
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, false, t)
-	testNamespaceScenario(MTLSNotEnabled, drs, ps, true, t)
-	testNamespaceScenario(MTLSNotEnabled, []*networking_v1.DestinationRule{}, ps, true, t)
+	// A PeerAuthentication with a selector is not namespace-wide policy. Treat as "no policy" (UNSET).
+	testNamespaceScenario(MTLSUnset, drs, ps, false, t)
+	testNamespaceScenario(MTLSUnset, drs, ps, true, t)
+	testNamespaceScenario(MTLSUnset, []*networking_v1.DestinationRule{}, ps, true, t)
+}
+
+func TestNamespaceWidePeerAuthnWithUnsetMtlsIsUnset(t *testing.T) {
+	// A namespace-wide PeerAuthentication with mtls unset should not force the status to PARTIALLY.
+	ps := fakePeerAuthn("default", "bookinfo", nil)
+	var drs []*networking_v1.DestinationRule
+
+	testNamespaceScenario(MTLSUnset, drs, ps, true, t)
+	testNamespaceScenario(MTLSUnset, drs, ps, false, t)
 }
 
 func TestNamespaceHasPermissivePeerAuthDisableDestRule(t *testing.T) {

@@ -25,7 +25,6 @@ import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
-import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
@@ -239,18 +238,23 @@ class WorkloadListPageComponent extends FilterComponent.Component<
             <TimeDurationComponent key="DurationDropdown" id="workload-list-duration-dropdown" disabled={false} />
           }
         />
-        <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
-          <RenderContent>
-            <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="workloads">
-              <StatefulFilters
-                initialFilters={WorkloadListFilters.availableFilters}
-                initialToggles={this.initialToggles}
-                onFilterChange={this.onFilterChange}
-                onToggleChange={this.onFilterChange}
-              />
-            </VirtualList>
-          </RenderContent>
-        </EmptyVirtualList>
+        <RenderContent>
+          <VirtualList
+            loaded={this.state.loaded}
+            refreshInterval={this.props.refreshInterval}
+            rows={this.state.listItems}
+            hiddenColumns={hiddenColumns}
+            sort={this.onSort}
+            type="workloads"
+          >
+            <StatefulFilters
+              initialFilters={WorkloadListFilters.availableFilters}
+              initialToggles={this.initialToggles}
+              onFilterChange={this.onFilterChange}
+              onToggleChange={this.onFilterChange}
+            />
+          </VirtualList>
+        </RenderContent>
       </>
     );
   }
