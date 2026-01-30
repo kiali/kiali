@@ -375,10 +375,7 @@ func (a *HealthAppender) calculateHealthStatus(trafficMap graph.TrafficMap, calc
 		}
 
 		// Get health annotations for custom thresholds
-		var annotations map[string]string
-		if val, ok := n.Metadata[graph.HasHealthConfig]; ok {
-			annotations = val.(map[string]string)
-		}
+		annotations := getNodeHealthAnnotations(n)
 
 		switch n.NodeType {
 		case graph.NodeTypeApp:
