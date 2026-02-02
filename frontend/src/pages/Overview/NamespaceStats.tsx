@@ -87,6 +87,20 @@ interface NamespaceWithHealth extends Namespace {
   healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
 }
 
+// Get translated display label for health status
+const getHealthStatusLabel = (status?: string): string => {
+  switch (status) {
+    case 'degraded':
+      return t('Degraded');
+    case 'unhealthy':
+      return t('Unhealthy');
+    case 'healthy':
+      return t('Healthy');
+    default:
+      return status ?? t('Unknown');
+  }
+};
+
 export const NamespaceStats: React.FC = () => {
   const { isLoading, namespaces } = useNamespaces();
 
@@ -123,7 +137,7 @@ export const NamespaceStats: React.FC = () => {
   });
 
   // Build URL for "View all" link with filters for unhealthy namespaces
-  const getViewIssuesUrl = (): string => {
+  const getViewAllUrl = (): string => {
     const params: string[] = [];
 
     // Check which health statuses are present in the unhealthy namespaces
@@ -155,14 +169,14 @@ export const NamespaceStats: React.FC = () => {
           <Link to={`/${Paths.NAMESPACES}?namespaces=${ns.name}${ns.cluster ? `&clusterName=${ns.cluster}` : ''}`}>
             {ns.name}
           </Link>
-          <span className={popoverItemStatusStyle}>{ns.healthStatus}</span>
+          <span className={popoverItemStatusStyle}>{getHealthStatusLabel(ns.healthStatus)}</span>
         </div>
       ))}
       {namespacesWithIssues.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
-          <Link to={getViewIssuesUrl()} onClick={handleViewAllClick}>
+          <Link to={getViewAllUrl()} onClick={handleViewAllClick}>
             <Button variant="link" isInline>
-              {t('View all unhealthy ({{count}})', { count: unhealthy })}
+              {t('View all unhealthy namespaces')}
             </Button>
           </Link>
         </div>

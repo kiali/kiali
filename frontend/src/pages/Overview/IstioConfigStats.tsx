@@ -79,7 +79,7 @@ export const IstioConfigStats: React.FC = () => {
   const unhealthy = istioConfigStats.errors + istioConfigStats.warnings;
 
   // Build URL for "View all" link with filters for unhealthy configs
-  const getViewIssuesUrl = (): string => {
+  const getViewAllUrl = (): string => {
     const params: string[] = [];
 
     if (istioConfigStats.warnings > 0) {
@@ -106,7 +106,7 @@ export const IstioConfigStats: React.FC = () => {
         return (
           <div key={`${item.cluster}-${item.namespace}-${item.kind}-${item.name}`} className={popoverItemStyle}>
             <span>
-              <PFBadge badge={PFBadges[item.kind]} size="sm" />
+              <PFBadge badge={PFBadges[item.kind] ?? PFBadges.IstioConfig} size="sm" />
               <Link
                 to={`/${Paths.ISTIO}/${item.namespace}/${item.kind.toLowerCase()}/${item.name}${
                   item.cluster ? `?clusterName=${item.cluster}` : ''
@@ -133,7 +133,7 @@ export const IstioConfigStats: React.FC = () => {
       })}
       {istioConfigStats.issues.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
-          <Link to={getViewIssuesUrl()} onClick={handleViewAllClick}>
+          <Link to={getViewAllUrl()} onClick={handleViewAllClick}>
             <Button variant="link" isInline>
               {t('View all warning Istio configs')}
             </Button>
