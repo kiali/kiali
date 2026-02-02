@@ -27,13 +27,13 @@ export const IstioConfigListLink: React.FC<Props> = (props: Props) => {
     let params = '';
 
     if (props.warnings) {
-      params += 'configvalidation=Warning';
+      params += 'config=Warning';
     }
 
     let errorParams = '';
 
     if (props.errors) {
-      errorParams += 'configvalidation=Not+Valid';
+      errorParams += 'config=Not+Valid';
     }
 
     if (params !== '' && errorParams !== '') {

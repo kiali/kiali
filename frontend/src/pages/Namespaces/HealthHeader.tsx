@@ -19,7 +19,7 @@ export const HealthHeader: React.FC = () => {
         <strong>{t('Unhealthy')}</strong>: {t('One or more components are unhealthy.')}
       </div>
       <div>
-        <strong>{'n/a'}</strong>: {t('No health information available.')}
+        <strong>{'n/a'}</strong>: {t('No components available to monitor.')}
       </div>
     </div>
   );

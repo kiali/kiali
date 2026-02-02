@@ -341,11 +341,13 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               value={value}
               style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
               onClick={(): void => {
-                if (statefulFilter) {
+                if (statefulFilter?.current) {
                   if (labelAct) {
-                    isExactlyLabelFilter && statefulFilter.current!.removeFilter(labelFilt.category, label);
+                    if (isExactlyLabelFilter) {
+                      statefulFilter.current.removeFilter(labelFilt.category, label);
+                    }
                   } else {
-                    statefulFilter.current!.filterAdded(labelFilt, label);
+                    statefulFilter.current.filterAdded(labelFilt, label);
                   }
                 }
               }}
