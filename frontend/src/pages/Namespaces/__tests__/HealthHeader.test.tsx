@@ -86,7 +86,7 @@ describe('HealthHeader', () => {
       if (React.isValidElement(bodyContent)) {
         const contentWrapper = shallow(bodyContent);
         expect(contentWrapper.text()).toContain('n/a');
-        expect(contentWrapper.text()).toContain('No health information');
+        expect(contentWrapper.text()).toContain('No components available to monitor');
       }
     });
   });
