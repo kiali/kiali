@@ -111,9 +111,8 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	// @TODO, workload validations are not up to date in a cache, because now they depend on namespace and worklaod labels as well, and those are not in a change detection
-	validations, _, err := in.ValidateIstioObject(ctx, cluster, namespace, schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload)
-	return validations, err
+	validations := in.kialiCache.Validations().Items()
+	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
 }
 
 type validationNamespaceInfo struct {
@@ -229,11 +228,24 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], in.conf)
 	}
 
-	// if changeDetection is enabled then loop through the workloads, looking for a change
+	// if changeDetection is enabled then loop through the namespaces and workloads, looking for a change
 	if changeMap != nil {
 		vInfo.reportChange = true
-
 		changeDetected := false
+
+		// loop through namespaces, looking for label/annotation changes that affect validations
+		numNamespaces := 0
+		for cluster, namespaces := range vInfo.nsMap {
+			numNamespaces += len(namespaces)
+			for _, ns := range namespaces {
+				nsKey := strings.Join([]string{"NS", cluster, ns.Name}, ":")
+				nsVersion := fmt.Sprintf("%v:%v", ns.Labels, ns.Annotations)
+				changeDetected = changeMap.update(nsKey, nsVersion, vInfo.reportChange) || changeDetected
+			}
+		}
+		changeDetected = changeMap.update("validation-num-namespaces", strconv.Itoa(numNamespaces), vInfo.reportChange) || changeDetected
+
+		// loop through workloads, looking for label/serviceAccount changes that affect validations
 		numWorkloads := 0
 		for _, workloadsMap := range vInfo.wlMap {
 			for _, workloads := range workloadsMap {
@@ -244,6 +256,7 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 			}
 		}
 		changeDetected = changeMap.update("validation-num-workloads", strconv.Itoa(numWorkloads), vInfo.reportChange) || changeDetected
+
 		vInfo.hasBaseChange = changeDetected
 	}
 
