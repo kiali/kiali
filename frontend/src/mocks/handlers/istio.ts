@@ -1,6 +1,23 @@
 import { http, HttpResponse } from 'msw';
-import { getScenarioConfig } from '../scenarios';
+import {
+  getAllControlPlanes,
+  getClusterHealthStatus,
+  getClusterValidationCounts,
+  getScenarioConfig
+} from '../scenarios';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
+
+// Map cluster health status to Istio component status
+const healthToStatus = (health: 'Healthy' | 'Degraded' | 'Unhealthy'): Status => {
+  switch (health) {
+    case 'Unhealthy':
+      return Status.Unhealthy;
+    case 'Degraded':
+      return Status.Unhealthy; // Degraded maps to unhealthy for components
+    default:
+      return Status.Healthy;
+  }
+};
 
 // Generate Istio status for all clusters in the scenario
 const generateIstioStatus = (): ComponentStatus[] => {
@@ -8,23 +25,34 @@ const generateIstioStatus = (): ComponentStatus[] => {
   const statuses: ComponentStatus[] = [];
 
   scenarioConfig.clusters.forEach(cluster => {
-    // istiod - core component
-    statuses.push({
-      name: 'istiod',
-      cluster: cluster.name,
-      status: Status.Healthy,
-      isCore: true
+    const clusterHealth = getClusterHealthStatus(cluster.name);
+    const componentStatus = healthToStatus(clusterHealth);
+
+    // Get control planes for this cluster
+    const controlPlanes = cluster.controlPlanes || [
+      { istiodName: 'istiod', istiodNamespace: 'istio-system', revision: 'default', status: clusterHealth }
+    ];
+
+    // Add each control plane as a component
+    controlPlanes.forEach(cp => {
+      const cpStatus = healthToStatus(cp.status);
+      statuses.push({
+        name: cp.istiodName,
+        cluster: cluster.name,
+        status: cpStatus,
+        isCore: true
+      });
     });
 
-    // ingress gateway - core component
+    // ingress gateway - core component (follows cluster health)
     statuses.push({
       name: 'istio-ingressgateway',
       cluster: cluster.name,
-      status: Status.Healthy,
+      status: componentStatus,
       isCore: true
     });
 
-    // egress gateway - addon (non-core)
+    // egress gateway - addon (non-core, usually healthy)
     statuses.push({
       name: 'istio-egressgateway',
       cluster: cluster.name,
@@ -32,11 +60,11 @@ const generateIstioStatus = (): ComponentStatus[] => {
       isCore: false
     });
 
-    // Prometheus - addon
+    // Prometheus - addon (degraded clusters might have prometheus issues)
     statuses.push({
       name: 'prometheus',
       cluster: cluster.name,
-      status: Status.Healthy,
+      status: clusterHealth === 'Unhealthy' ? Status.Unhealthy : Status.Healthy,
       isCore: false
     });
 
@@ -211,12 +239,16 @@ const authPolicyGVK = { Group: 'security.istio.io', Kind: 'AuthorizationPolicy',
 
 // Validations map: { [gvkTypeString]: { [name.namespace]: ObjectValidation } }
 // Key format is: name.namespace (e.g., "bookinfo-vs.bookinfo")
-// Returns validations based on scenario - unhealthy scenario shows validation errors
+// Returns validations based on scenario with a mix of healthy and unhealthy configs
 const generateMockValidations = (): Record<string, Record<string, Record<string, unknown>>> => {
   const scenarioConfig = getScenarioConfig();
-  const isUnhealthyScenario = scenarioConfig.unhealthyItems.length > 0 || scenarioConfig.unhealthyNamespaces.length > 0;
-  const isValid = !isUnhealthyScenario;
+  const hasIssues =
+    scenarioConfig.unhealthyItems.length > 0 ||
+    scenarioConfig.unhealthyNamespaces.length > 0 ||
+    scenarioConfig.degradedItems.length > 0 ||
+    scenarioConfig.degradedNamespaces.length > 0;
 
+  // Different types of validation checks
   const errorChecks = [
     {
       code: 'KIA0101',
@@ -226,29 +258,82 @@ const generateMockValidations = (): Record<string, Record<string, Record<string,
     }
   ];
 
+  const warningChecks = [
+    {
+      code: 'KIA0201',
+      message: 'This subset is not referenced by any VirtualService',
+      path: 'spec/subsets[1]',
+      severity: 'warning'
+    }
+  ];
+
+  const multipleErrorChecks = [
+    {
+      code: 'KIA0101',
+      message: 'DestinationRule not found for this host',
+      path: 'spec/http[0]/route[0]/destination/host',
+      severity: 'error'
+    },
+    {
+      code: 'KIA0102',
+      message: 'VirtualService is pointing to a non-existent gateway',
+      path: 'spec/gateways[0]',
+      severity: 'error'
+    }
+  ];
+
+  // In multicluster or scenarios with issues, create a realistic mix
+  // Some configs healthy, some with warnings, some with errors
+  if (hasIssues) {
+    return {
+      'networking.istio.io/v1, Kind=VirtualService': {
+        // bookinfo-vs is healthy (valid)
+        'bookinfo-vs.bookinfo': createValidation('bookinfo-vs', virtualServiceGVK, true, []),
+        // reviews-vs has errors (invalid) - associated with degraded 'reviews' item
+        'reviews-vs.bookinfo': createValidation('reviews-vs', virtualServiceGVK, false, errorChecks)
+      },
+      'networking.istio.io/v1, Kind=DestinationRule': {
+        // productpage-dr is healthy (valid)
+        'productpage-dr.bookinfo': createValidation('productpage-dr', destinationRuleGVK, true, []),
+        // reviews-dr has warnings only (valid but with warnings)
+        'reviews-dr.bookinfo': createValidation('reviews-dr', destinationRuleGVK, true, warningChecks),
+        // ratings-dr has errors (invalid)
+        'ratings-dr.bookinfo': createValidation('ratings-dr', destinationRuleGVK, false, multipleErrorChecks)
+      },
+      'networking.istio.io/v1, Kind=Gateway': {
+        // bookinfo-gateway is healthy (valid)
+        'bookinfo-gateway.bookinfo': createValidation('bookinfo-gateway', gatewayGVK, true, [])
+      },
+      'security.istio.io/v1, Kind=PeerAuthentication': {
+        // PeerAuth in istio-system is healthy (valid)
+        'default.istio-system': createValidation('default', peerAuthGVK, true, [])
+      },
+      'security.istio.io/v1, Kind=AuthorizationPolicy': {
+        // AuthPolicy has warnings (valid but with warnings)
+        'allow-bookinfo.bookinfo': createValidation('allow-bookinfo', authPolicyGVK, true, warningChecks)
+      }
+    };
+  }
+
+  // For healthy scenarios, all configs are valid with no issues
   return {
     'networking.istio.io/v1, Kind=VirtualService': {
-      'bookinfo-vs.bookinfo': createValidation('bookinfo-vs', virtualServiceGVK, isValid, isValid ? [] : errorChecks),
-      'reviews-vs.bookinfo': createValidation('reviews-vs', virtualServiceGVK, isValid, isValid ? [] : errorChecks)
+      'bookinfo-vs.bookinfo': createValidation('bookinfo-vs', virtualServiceGVK, true, []),
+      'reviews-vs.bookinfo': createValidation('reviews-vs', virtualServiceGVK, true, [])
     },
     'networking.istio.io/v1, Kind=DestinationRule': {
-      'productpage-dr.bookinfo': createValidation(
-        'productpage-dr',
-        destinationRuleGVK,
-        isValid,
-        isValid ? [] : errorChecks
-      ),
-      'reviews-dr.bookinfo': createValidation('reviews-dr', destinationRuleGVK, isValid, isValid ? [] : errorChecks),
-      'ratings-dr.bookinfo': createValidation('ratings-dr', destinationRuleGVK, isValid, isValid ? [] : errorChecks)
+      'productpage-dr.bookinfo': createValidation('productpage-dr', destinationRuleGVK, true, []),
+      'reviews-dr.bookinfo': createValidation('reviews-dr', destinationRuleGVK, true, []),
+      'ratings-dr.bookinfo': createValidation('ratings-dr', destinationRuleGVK, true, [])
     },
     'networking.istio.io/v1, Kind=Gateway': {
-      'bookinfo-gateway.bookinfo': createValidation('bookinfo-gateway', gatewayGVK, isValid, isValid ? [] : errorChecks)
+      'bookinfo-gateway.bookinfo': createValidation('bookinfo-gateway', gatewayGVK, true, [])
     },
     'security.istio.io/v1, Kind=PeerAuthentication': {
-      'default.istio-system': createValidation('default', peerAuthGVK, isValid, isValid ? [] : errorChecks)
+      'default.istio-system': createValidation('default', peerAuthGVK, true, [])
     },
     'security.istio.io/v1, Kind=AuthorizationPolicy': {
-      'allow-bookinfo.bookinfo': createValidation('allow-bookinfo', authPolicyGVK, isValid, isValid ? [] : errorChecks)
+      'allow-bookinfo.bookinfo': createValidation('allow-bookinfo', authPolicyGVK, true, [])
     }
   };
 };
@@ -341,29 +426,37 @@ const mockMeshTls = {
   minTLS: 'TLSv1_2'
 };
 
-const mockControlPlanes = [
-  {
+// Generate control planes dynamically from scenario
+const generateControlPlanes = (): object[] => {
+  const controlPlanes = getAllControlPlanes();
+
+  return controlPlanes.map(cp => ({
     cluster: {
-      accessible: true,
-      apiEndpoint: 'https://kubernetes.default.svc',
-      isKialiHome: true,
-      kialiInstances: [],
-      name: 'cluster-default',
-      secretName: ''
+      accessible: cp.cluster.accessible,
+      apiEndpoint: `https://${cp.cluster.name}.kubernetes.default.svc`,
+      isKialiHome: cp.cluster.isHome,
+      kialiInstances: cp.cluster.isHome
+        ? [
+            {
+              namespace: 'istio-system',
+              operatorResource: '',
+              serviceName: 'kiali',
+              url: 'http://localhost:20001/kiali',
+              version: 'dev'
+            }
+          ]
+        : [],
+      name: cp.cluster.name,
+      secretName: cp.cluster.isHome ? '' : `${cp.cluster.name}-secret`
     },
-    istiodName: 'istiod',
-    istiodNamespace: 'istio-system',
-    revision: 'default',
-    status: 'Healthy',
-    config: {
-      ambientEnabled: true
-    },
-    thresholds: {
-      cpu: 80,
-      memory: 80
-    }
-  }
-];
+    config: cp.config,
+    istiodName: cp.istiodName,
+    istiodNamespace: cp.istiodNamespace,
+    revision: cp.revision,
+    status: cp.status,
+    thresholds: cp.thresholds
+  }));
+};
 
 const mockOutboundTrafficPolicy = {
   mode: 'ALLOW_ANY'
@@ -433,12 +526,16 @@ export const istioHandlers = [
       'kube-system': 0,
       'travel-agency': 2,
       'travel-portal': 2,
-      'travel-control': 1
+      'travel-control': 1,
+      alpha: 1,
+      beta: 2,
+      gamma: 3
     };
 
-    const createValidationStatus = (namespace: string): Record<string, unknown> => {
-      // Use scenario config to determine errors/warnings for unhealthy namespaces
+    const createValidationStatus = (namespace: string, clusterName: string): Record<string, unknown> => {
+      // Use scenario config and per-cluster validation counts
       const scenarioConfig = getScenarioConfig();
+      const clusterValidation = getClusterValidationCounts(clusterName);
       const isUnhealthy = scenarioConfig.unhealthyNamespaces.includes(namespace);
       const isDegraded = scenarioConfig.degradedNamespaces.includes(namespace);
 
@@ -446,36 +543,50 @@ export const istioHandlers = [
       let warnings = 0;
 
       if (isUnhealthy) {
-        errors = Math.max(1, Math.floor(scenarioConfig.validationErrors / 2));
-        warnings = Math.max(1, Math.floor(scenarioConfig.validationWarnings / 2));
+        errors = Math.max(1, clusterValidation.errors);
+        warnings = Math.max(1, Math.floor(clusterValidation.warnings / 2));
       } else if (isDegraded) {
-        warnings = Math.max(1, scenarioConfig.validationWarnings);
+        warnings = Math.max(1, clusterValidation.warnings);
+      } else if (clusterValidation.errors > 0 || clusterValidation.warnings > 0) {
+        // Apply cluster-level validation counts to some namespaces
+        errors = Math.floor(clusterValidation.errors / 2);
+        warnings = Math.floor(clusterValidation.warnings / 2);
       }
 
       return {
-        cluster: 'cluster-default',
-        namespace,
+        cluster: clusterName,
         errors,
-        warnings,
-        objectCount: objectCounts[namespace] || 0
+        namespace,
+        objectCount: objectCounts[namespace] || 0,
+        warnings
       };
     };
 
+    // Get all namespaces from scenario with their clusters
+    const scenarioConfig = getScenarioConfig();
+    const allNamespaces: Array<{ cluster: string; namespace: string }> = [];
+    scenarioConfig.clusters.forEach(cluster => {
+      cluster.namespaces.forEach(ns => {
+        allNamespaces.push({ cluster: cluster.name, namespace: ns });
+      });
+    });
+
     if (namespaces) {
       const nsList = namespaces.split(',').map(ns => ns.trim());
-      return HttpResponse.json(nsList.map(ns => createValidationStatus(ns)));
+      const results = nsList.flatMap(ns => {
+        // Find all clusters that have this namespace
+        const clustersWithNs = allNamespaces.filter(item => item.namespace === ns);
+        if (clustersWithNs.length === 0) {
+          // Default to first cluster if namespace not found
+          return [createValidationStatus(ns, scenarioConfig.clusters[0].name)];
+        }
+        return clustersWithNs.map(item => createValidationStatus(item.namespace, item.cluster));
+      });
+      return HttpResponse.json(results);
     }
 
-    // Return validations for all namespaces
-    return HttpResponse.json([
-      createValidationStatus('bookinfo'),
-      createValidationStatus('default'),
-      createValidationStatus('istio-system'),
-      createValidationStatus('kube-system'),
-      createValidationStatus('travel-agency'),
-      createValidationStatus('travel-portal'),
-      createValidationStatus('travel-control')
-    ]);
+    // Return validations for all namespaces across all clusters
+    return HttpResponse.json(allNamespaces.map(item => createValidationStatus(item.namespace, item.cluster)));
   }),
 
   // Mesh TLS
@@ -490,7 +601,7 @@ export const istioHandlers = [
 
   // Control planes
   http.get('*/api/mesh/controlplanes', () => {
-    return HttpResponse.json(mockControlPlanes);
+    return HttpResponse.json(generateControlPlanes());
   }),
 
   // Outbound traffic policy

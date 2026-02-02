@@ -1,5 +1,16 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle, Label, Spinner, Tooltip } from '@patternfly/react-core';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Label,
+  Popover,
+  PopoverPosition,
+  Spinner
+} from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -8,8 +19,23 @@ import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { Namespace } from 'types/Namespace';
-import { infoStyle } from 'styles/IconStyle';
-import { cardStyle, cardBodyStyle, linkStyle, iconStyle, statsContainerStyle, statItemStyle } from './OverviewStyles';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
+import { helpIconStyle } from 'styles/IconStyle';
+import {
+  cardStyle,
+  cardBodyStyle,
+  clickableStyle,
+  iconStyle,
+  linkStyle,
+  popoverFooterStyle,
+  popoverHeaderStyle,
+  popoverItemStatusStyle,
+  popoverItemStyle,
+  statItemStyle,
+  statsContainerStyle
+} from './OverviewStyles';
+import { classes } from 'typestyle';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -54,42 +80,109 @@ const hasIstioInjection = (ns: Namespace): boolean => {
   return !!ns.labels && (ns.labels['istio-injection'] === 'enabled' || !!ns.labels['istio.io/rev']);
 };
 
+// Maximum number of items to show in the popover
+const MAX_POPOVER_ITEMS = 3;
+
+interface NamespaceWithHealth extends Namespace {
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+}
+
 export const NamespaceStats: React.FC = () => {
   const { isLoading, namespaces } = useNamespaces();
 
   // Calculate stats from namespaces
   const total = namespaces.length;
   let ambient = 0;
+  let controlPlane = 0;
   let sidecar = 0;
   let outOfMesh = 0;
   let healthy = 0;
   let unhealthy = 0;
+  const namespacesWithIssues: NamespaceWithHealth[] = [];
 
   namespaces.forEach(ns => {
-    // Don't count control plane namespaces in the injection stats
-    if (!ns.isControlPlane) {
-      if (ns.isAmbient) {
-        ambient++;
-      } else if (hasIstioInjection(ns)) {
-        sidecar++;
-      } else {
-        outOfMesh++;
-      }
+    if (ns.isControlPlane) {
+      controlPlane++;
+    } else if (ns.isAmbient) {
+      ambient++;
+    } else if (hasIstioInjection(ns)) {
+      sidecar++;
+    } else {
+      outOfMesh++;
     }
 
-    // Note: Basic namespace API doesn't include health status.
-    // For now, we'll just count all as healthy
-    healthy++;
+    // Use healthStatus from namespace data if available (from mock)
+    // TODO: Adapt once we have a proper health status from the API
+    const nsWithHealth = ns as NamespaceWithHealth;
+    if (nsWithHealth.healthStatus === 'unhealthy' || nsWithHealth.healthStatus === 'degraded') {
+      unhealthy++;
+      namespacesWithIssues.push(nsWithHealth);
+    } else {
+      healthy++;
+    }
   });
+
+  // Build URL for "View all" link with filters for unhealthy namespaces
+  const getViewIssuesUrl = (): string => {
+    const params: string[] = [];
+
+    // Check which health statuses are present in the unhealthy namespaces
+    const hasDegraded = namespacesWithIssues.some(ns => ns.healthStatus === 'degraded');
+    const hasUnhealthy = namespacesWithIssues.some(ns => ns.healthStatus === 'unhealthy');
+
+    if (hasDegraded) {
+      params.push('health=Degraded');
+    }
+
+    if (hasUnhealthy) {
+      params.push('health=Failure');
+    }
+
+    params.push('opLabel=or');
+
+    return `/${Paths.NAMESPACES}${params.length > 1 ? `?${params.join('&')}` : ''}`;
+  };
+
+  const handleViewAllClick = (): void => {
+    FilterSelected.resetFilters();
+  };
+
+  const popoverContent = (
+    <>
+      {namespacesWithIssues.slice(0, MAX_POPOVER_ITEMS).map(ns => (
+        <div key={`${ns.cluster}-${ns.name}`} className={popoverItemStyle}>
+          <PFBadge badge={PFBadges.Namespace} size="sm" />
+          <Link to={`/${Paths.NAMESPACES}?namespaces=${ns.name}${ns.cluster ? `&clusterName=${ns.cluster}` : ''}`}>
+            {ns.name}
+          </Link>
+          <span className={popoverItemStatusStyle}>{ns.healthStatus}</span>
+        </div>
+      ))}
+      {namespacesWithIssues.length > MAX_POPOVER_ITEMS && (
+        <div className={popoverFooterStyle}>
+          <Link to={getViewIssuesUrl()} onClick={handleViewAllClick}>
+            <Button variant="link" isInline>
+              {t('View all unhealthy ({{count}})', { count: unhealthy })}
+            </Button>
+          </Link>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>
-          {t('Namespaces')} ({total}){' '}
-          <Tooltip content={t('Display Istio config types for all namespaces')}>
-            <KialiIcon.Info className={infoStyle} />
-          </Tooltip>
+          <span>{`${t('Namespaces')} (${total})`}</span>
+          <Popover
+            aria-label={t('Namespace information')}
+            headerContent={<span>{t('Namespace statistics')}</span>}
+            bodyContent={t('Display Istio config types for all namespaces')}
+            triggerAction="hover"
+          >
+            <KialiIcon.Help className={helpIconStyle} />
+          </Popover>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
@@ -105,15 +198,34 @@ export const NamespaceStats: React.FC = () => {
                 </div>
               )}
               {unhealthy > 0 && (
-                <div className={statItemStyle}>
-                  <span>{unhealthy}</span>
-                  <KialiIcon.Warning />
-                </div>
+                <Popover
+                  aria-label={t('Namespaces with issues')}
+                  position={PopoverPosition.right}
+                  headerContent={
+                    <span className={popoverHeaderStyle}>
+                      <KialiIcon.ExclamationTriangle /> {t('Namespaces')}
+                    </span>
+                  }
+                  bodyContent={popoverContent}
+                >
+                  <div className={classes(statItemStyle, clickableStyle)}>
+                    <span className={linkStyle}>{unhealthy}</span>
+                    <KialiIcon.ExclamationTriangle />
+                  </div>
+                </Popover>
               )}
             </div>
             <div className={verticalDividerStyle} />
             <div className={labelsContainerStyle}>
               <div className={labelGroupStyle}>
+                {controlPlane > 0 && (
+                  <div className={labelItemStyle}>
+                    <span className={labelNumberStyle}>{controlPlane}</span>{' '}
+                    <Label variant="outline" className={labelStyle}>
+                      {t('Control Plane')}
+                    </Label>
+                  </div>
+                )}
                 {ambient > 0 && (
                   <div className={labelItemStyle}>
                     <span className={labelNumberStyle}>{ambient}</span>{' '}

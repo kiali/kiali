@@ -37,7 +37,6 @@ import {
   GithubIcon,
   GlobeAmericasIcon,
   GlobeRouteIcon,
-  HelpIcon,
   HistoryIcon,
   HomeIcon,
   InfoAltIcon,
@@ -79,7 +78,8 @@ import {
   ProcessAutomationIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  OutlinedQuestionCircleIcon
 } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Icon } from '@patternfly/react-core';
@@ -130,7 +130,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Filter: (props: IconProps) => createIcon(props, FilterIcon),
   Gateway: (props: IconProps) => createIcon(props, GlobeRouteIcon),
   Github: (props: IconProps) => createIcon(props, GithubIcon),
-  Help: (props: IconProps) => createIcon(props, HelpIcon),
+  Help: (props: IconProps) => createIcon(props, OutlinedQuestionCircleIcon),
   History: (props: IconProps) => createIcon(props, HistoryIcon),
   Info: (props: IconProps) => createIcon(props, InfoAltIcon, PFColors.Info),
   IstioConfig: (props: IconProps) => createIcon(props, PficonTemplateIcon),

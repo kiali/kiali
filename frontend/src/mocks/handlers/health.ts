@@ -1,9 +1,9 @@
 import { http, HttpResponse } from 'msw';
-import { getScenarioConfig, getItemHealthStatus } from '../scenarios';
+import { getScenarioConfig, getItemHealthStatus, getAllNamespaces } from '../scenarios';
 
 // Create health status based on scenario
-const createHealthyStatus = (workloadName?: string, namespace?: string): Record<string, unknown> => {
-  const healthStatus = workloadName ? getItemHealthStatus(workloadName, namespace) : 'healthy';
+const createHealthyStatus = (workloadName?: string, namespace?: string, cluster?: string): Record<string, unknown> => {
+  const healthStatus = workloadName ? getItemHealthStatus(workloadName, namespace, cluster) : 'healthy';
   const errorRate = getScenarioConfig().errorRate;
 
   // Calculate HTTP response distribution based on health
@@ -45,8 +45,12 @@ const createHealthyStatus = (workloadName?: string, namespace?: string): Record<
   };
 };
 
-const createWorkloadHealthStatus = (workloadName: string, namespace?: string): Record<string, unknown> => {
-  const healthStatus = getItemHealthStatus(workloadName, namespace);
+const createWorkloadHealthStatus = (
+  workloadName: string,
+  namespace?: string,
+  cluster?: string
+): Record<string, unknown> => {
+  const healthStatus = getItemHealthStatus(workloadName, namespace, cluster);
   const errorRate = getScenarioConfig().errorRate;
 
   let http200 = 100;
@@ -83,79 +87,106 @@ const createWorkloadHealthStatus = (workloadName: string, namespace?: string): R
   };
 };
 
-// Generate health data dynamically based on scenario
-const generateClustersHealth = (): Record<string, unknown> => ({
-  namespaceAppHealth: {
-    bookinfo: {
-      productpage: createHealthyStatus('productpage-v1', 'bookinfo'),
-      details: createHealthyStatus('details-v1', 'bookinfo'),
-      reviews: createHealthyStatus('reviews-v1', 'bookinfo'),
-      ratings: createHealthyStatus('ratings-v1', 'bookinfo')
-    },
-    'istio-system': {
-      istiod: createHealthyStatus('istiod', 'istio-system'),
-      'istio-ingressgateway': createHealthyStatus('istio-ingressgateway', 'istio-system')
-    },
-    'travel-agency': {
-      travels: createHealthyStatus('travels-v1', 'travel-agency'),
-      hotels: createHealthyStatus('hotels-v1', 'travel-agency'),
-      cars: createHealthyStatus('cars-v1', 'travel-agency'),
-      flights: createHealthyStatus('flights-v1', 'travel-agency')
-    },
-    'travel-portal': {
-      voyages: createHealthyStatus('voyages-v1', 'travel-portal'),
-      viaggi: createHealthyStatus('viaggi-v1', 'travel-portal')
-    }
-  },
-  namespaceServiceHealth: {
-    bookinfo: {
-      productpage: createHealthyStatus(undefined, 'bookinfo'),
-      details: createHealthyStatus(undefined, 'bookinfo'),
-      reviews: createHealthyStatus(undefined, 'bookinfo'),
-      ratings: createHealthyStatus(undefined, 'bookinfo')
-    },
-    'istio-system': {
-      istiod: createHealthyStatus(undefined, 'istio-system'),
-      'istio-ingressgateway': createHealthyStatus(undefined, 'istio-system')
-    },
-    'travel-agency': {
-      travels: createHealthyStatus(undefined, 'travel-agency'),
-      hotels: createHealthyStatus(undefined, 'travel-agency'),
-      cars: createHealthyStatus(undefined, 'travel-agency'),
-      flights: createHealthyStatus(undefined, 'travel-agency')
-    },
-    'travel-portal': {
-      voyages: createHealthyStatus(undefined, 'travel-portal'),
-      viaggi: createHealthyStatus(undefined, 'travel-portal')
-    }
-  },
-  namespaceWorkloadHealth: {
-    bookinfo: {
-      'productpage-v1': createWorkloadHealthStatus('productpage-v1', 'bookinfo'),
-      'details-v1': createWorkloadHealthStatus('details-v1', 'bookinfo'),
-      'reviews-v1': createWorkloadHealthStatus('reviews-v1', 'bookinfo'),
-      'reviews-v2': createWorkloadHealthStatus('reviews-v2', 'bookinfo'),
-      'reviews-v3': createWorkloadHealthStatus('reviews-v3', 'bookinfo'),
-      'ratings-v1': createWorkloadHealthStatus('ratings-v1', 'bookinfo')
-    },
-    'istio-system': {
-      istiod: createWorkloadHealthStatus('istiod', 'istio-system'),
-      'istio-ingressgateway': createWorkloadHealthStatus('istio-ingressgateway', 'istio-system')
-    },
-    'travel-agency': {
-      'travels-v1': createWorkloadHealthStatus('travels-v1', 'travel-agency'),
-      'hotels-v1': createWorkloadHealthStatus('hotels-v1', 'travel-agency'),
-      'cars-v1': createWorkloadHealthStatus('cars-v1', 'travel-agency'),
-      'flights-v1': createWorkloadHealthStatus('flights-v1', 'travel-agency')
-    },
-    'travel-portal': {
-      'voyages-v1': createWorkloadHealthStatus('voyages-v1', 'travel-portal'),
-      'viaggi-v1': createWorkloadHealthStatus('viaggi-v1', 'travel-portal')
-    }
-  }
-});
+// App/Service/Workload definitions per namespace
+const appDefinitions: Record<string, string[]> = {
+  alpha: ['alpha-api', 'alpha-worker'],
+  beta: ['beta-api', 'beta-db'],
+  bookinfo: ['productpage', 'details', 'reviews', 'ratings'],
+  default: ['httpbin', 'sleep'],
+  gamma: ['gamma-frontend', 'gamma-backend'],
+  'istio-system': ['istiod', 'istio-ingressgateway'],
+  'travel-agency': ['travels', 'hotels', 'cars', 'flights'],
+  'travel-control': ['control', 'mysqldb'],
+  'travel-portal': ['voyages', 'viaggi']
+};
 
-// Get health for specific namespaces
+const workloadDefinitions: Record<string, Array<{ app: string; name: string }>> = {
+  alpha: [
+    { name: 'alpha-api-v1', app: 'alpha-api' },
+    { name: 'alpha-worker-v1', app: 'alpha-worker' }
+  ],
+  beta: [
+    { name: 'beta-api-v1', app: 'beta-api' },
+    { name: 'beta-db-v1', app: 'beta-db' }
+  ],
+  bookinfo: [
+    { name: 'productpage-v1', app: 'productpage' },
+    { name: 'details-v1', app: 'details' },
+    { name: 'reviews-v1', app: 'reviews' },
+    { name: 'reviews-v2', app: 'reviews' },
+    { name: 'reviews-v3', app: 'reviews' },
+    { name: 'ratings-v1', app: 'ratings' }
+  ],
+  default: [
+    { name: 'httpbin-v1', app: 'httpbin' },
+    { name: 'sleep-v1', app: 'sleep' }
+  ],
+  gamma: [
+    { name: 'gamma-frontend-v1', app: 'gamma-frontend' },
+    { name: 'gamma-backend-v1', app: 'gamma-backend' }
+  ],
+  'istio-system': [
+    { name: 'istiod', app: 'istiod' },
+    { name: 'istio-ingressgateway', app: 'istio-ingressgateway' }
+  ],
+  'travel-agency': [
+    { name: 'travels-v1', app: 'travels' },
+    { name: 'hotels-v1', app: 'hotels' },
+    { name: 'cars-v1', app: 'cars' },
+    { name: 'flights-v1', app: 'flights' }
+  ],
+  'travel-control': [
+    { name: 'control-v1', app: 'control' },
+    { name: 'mysqldb-v1', app: 'mysqldb' }
+  ],
+  'travel-portal': [
+    { name: 'voyages-v1', app: 'voyages' },
+    { name: 'viaggi-v1', app: 'viaggi' }
+  ]
+};
+
+// Generate health data dynamically based on scenario - cluster-aware
+const generateClustersHealth = (): Record<string, unknown> => {
+  const allNamespaces = getAllNamespaces();
+  const namespaceAppHealth: Record<string, Record<string, unknown>> = {};
+  const namespaceServiceHealth: Record<string, Record<string, unknown>> = {};
+  const namespaceWorkloadHealth: Record<string, Record<string, unknown>> = {};
+
+  allNamespaces.forEach(ns => {
+    // Use cluster_namespace as key for multicluster support
+    const key = `${ns.cluster}_${ns.name}`;
+
+    // Generate app health
+    const apps = appDefinitions[ns.name] || [];
+    namespaceAppHealth[key] = {};
+    apps.forEach(appName => {
+      namespaceAppHealth[key][appName] = createHealthyStatus(`${appName}-v1`, ns.name, ns.cluster);
+    });
+
+    // Generate service health
+    namespaceServiceHealth[key] = {};
+    apps.forEach(appName => {
+      namespaceServiceHealth[key][appName] = createHealthyStatus(undefined, ns.name, ns.cluster);
+    });
+
+    // Generate workload health
+    const workloads = workloadDefinitions[ns.name] || [];
+    namespaceWorkloadHealth[key] = {};
+    workloads.forEach(wl => {
+      namespaceWorkloadHealth[key][wl.name] = createWorkloadHealthStatus(wl.name, ns.name, ns.cluster);
+    });
+  });
+
+  return {
+    namespaceAppHealth,
+    namespaceServiceHealth,
+    namespaceWorkloadHealth
+  };
+};
+
+// Get health for specific namespaces (cluster-aware)
+// Keys in healthMap are in format "cluster_namespace"
+// Request namespaces can be just "namespace" or "cluster_namespace"
 const getHealthForNamespaces = (namespaces: string, type: 'app' | 'service' | 'workload'): Record<string, unknown> => {
   const nsList = namespaces.split(',').map(ns => ns.trim());
   const clustersHealth = generateClustersHealth() as {
@@ -170,9 +201,21 @@ const getHealthForNamespaces = (namespaces: string, type: 'app' | 'service' | 'w
   }[type];
 
   const result: Record<string, Record<string, unknown>> = {};
+
+  // For each requested namespace, find all matching entries in the health map
   nsList.forEach(ns => {
+    // Check for exact match first (for cluster_namespace format)
     if (healthMap[ns]) {
       result[ns] = healthMap[ns];
+    } else {
+      // Find all entries where the namespace part matches
+      Object.keys(healthMap).forEach(key => {
+        const parts = key.split('_');
+        const namespacePart = parts.slice(1).join('_'); // Handle namespaces with underscores
+        if (namespacePart === ns) {
+          result[key] = healthMap[key];
+        }
+      });
     }
   });
 

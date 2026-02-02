@@ -386,9 +386,10 @@ const createMockWorkloadListItem = (
   name: string,
   namespace: string,
   app: string,
-  version: string
+  version: string,
+  cluster = 'cluster-default'
 ): MockWorkloadListItem => {
-  const healthStatus = getItemHealthStatus(name, namespace);
+  const healthStatus = getItemHealthStatus(name, namespace, cluster);
   const errorRate = getScenarioConfig().errorRate;
 
   // Calculate HTTP responses based on health
@@ -445,7 +446,7 @@ const createMockWorkloadListItem = (
   return {
     name,
     namespace,
-    cluster: 'cluster-default',
+    cluster,
     gvk: deploymentGVK,
     instanceType: InstanceType.Workload,
     istioSidecar: true,
@@ -485,8 +486,12 @@ const serviceGVK = {
   Version: 'v1'
 };
 
-const createMockServiceListItem = (name: string, namespace: string): MockServiceListItem => {
-  const healthStatus = getItemHealthStatus(name, namespace);
+const createMockServiceListItem = (
+  name: string,
+  namespace: string,
+  cluster = 'cluster-default'
+): MockServiceListItem => {
+  const healthStatus = getItemHealthStatus(name, namespace, cluster);
   const errorRate = getScenarioConfig().errorRate;
 
   // Calculate HTTP responses based on health
@@ -500,7 +505,7 @@ const createMockServiceListItem = (name: string, namespace: string): MockService
   return {
     name,
     namespace,
-    cluster: 'cluster-default',
+    cluster,
     instanceType: InstanceType.Service,
     istioSidecar: true,
     isAmbient: false,
@@ -532,8 +537,8 @@ const createMockServiceListItem = (name: string, namespace: string): MockService
   };
 };
 
-const createMockAppListItem = (name: string, namespace: string): MockAppListItem => {
-  const healthStatus = getItemHealthStatus(name, namespace);
+const createMockAppListItem = (name: string, namespace: string, cluster = 'cluster-default'): MockAppListItem => {
+  const healthStatus = getItemHealthStatus(name, namespace, cluster);
   const errorRate = getScenarioConfig().errorRate;
 
   // Calculate HTTP responses based on health
@@ -547,7 +552,7 @@ const createMockAppListItem = (name: string, namespace: string): MockAppListItem
   return {
     name,
     namespace,
-    cluster: 'cluster-default',
+    cluster,
     instanceType: InstanceType.App,
     istioSidecar: true,
     isAmbient: false,
@@ -577,76 +582,170 @@ const createMockAppListItem = (name: string, namespace: string): MockAppListItem
   };
 };
 
-// Generate workloads dynamically based on scenario - called per request
-const getWorkloadsByNamespace = (): Record<string, MockWorkloadListItem[]> => ({
+// Workload definitions per namespace (base templates)
+const workloadDefinitions: Record<string, Array<{ app: string; name: string; version: string }>> = {
+  alpha: [
+    { name: 'alpha-api-v1', app: 'alpha-api', version: 'v1' },
+    { name: 'alpha-worker-v1', app: 'alpha-worker', version: 'v1' }
+  ],
+  beta: [
+    { name: 'beta-api-v1', app: 'beta-api', version: 'v1' },
+    { name: 'beta-db-v1', app: 'beta-db', version: 'v1' }
+  ],
   bookinfo: [
-    createMockWorkloadListItem('productpage-v1', 'bookinfo', 'productpage', 'v1'),
-    createMockWorkloadListItem('details-v1', 'bookinfo', 'details', 'v1'),
-    createMockWorkloadListItem('reviews-v1', 'bookinfo', 'reviews', 'v1'),
-    createMockWorkloadListItem('reviews-v2', 'bookinfo', 'reviews', 'v2'),
-    createMockWorkloadListItem('reviews-v3', 'bookinfo', 'reviews', 'v3'),
-    createMockWorkloadListItem('ratings-v1', 'bookinfo', 'ratings', 'v1')
+    { name: 'productpage-v1', app: 'productpage', version: 'v1' },
+    { name: 'details-v1', app: 'details', version: 'v1' },
+    { name: 'reviews-v1', app: 'reviews', version: 'v1' },
+    { name: 'reviews-v2', app: 'reviews', version: 'v2' },
+    { name: 'reviews-v3', app: 'reviews', version: 'v3' },
+    { name: 'ratings-v1', app: 'ratings', version: 'v1' }
+  ],
+  default: [
+    { name: 'httpbin-v1', app: 'httpbin', version: 'v1' },
+    { name: 'sleep-v1', app: 'sleep', version: 'v1' }
+  ],
+  gamma: [
+    { name: 'gamma-frontend-v1', app: 'gamma-frontend', version: 'v1' },
+    { name: 'gamma-backend-v1', app: 'gamma-backend', version: 'v1' }
   ],
   'istio-system': [
-    createMockWorkloadListItem('istiod', 'istio-system', 'istiod', 'default'),
-    createMockWorkloadListItem('istio-ingressgateway', 'istio-system', 'istio-ingressgateway', 'default')
+    { name: 'istiod', app: 'istiod', version: 'default' },
+    { name: 'istio-ingressgateway', app: 'istio-ingressgateway', version: 'default' }
   ],
   'travel-agency': [
-    createMockWorkloadListItem('travels-v1', 'travel-agency', 'travels', 'v1'),
-    createMockWorkloadListItem('hotels-v1', 'travel-agency', 'hotels', 'v1'),
-    createMockWorkloadListItem('cars-v1', 'travel-agency', 'cars', 'v1'),
-    createMockWorkloadListItem('flights-v1', 'travel-agency', 'flights', 'v1')
+    { name: 'travels-v1', app: 'travels', version: 'v1' },
+    { name: 'hotels-v1', app: 'hotels', version: 'v1' },
+    { name: 'cars-v1', app: 'cars', version: 'v1' },
+    { name: 'flights-v1', app: 'flights', version: 'v1' }
+  ],
+  'travel-control': [
+    { name: 'control-v1', app: 'control', version: 'v1' },
+    { name: 'mysqldb-v1', app: 'mysqldb', version: 'v1' }
   ],
   'travel-portal': [
-    createMockWorkloadListItem('voyages-v1', 'travel-portal', 'voyages', 'v1'),
-    createMockWorkloadListItem('viaggi-v1', 'travel-portal', 'viaggi', 'v1')
+    { name: 'voyages-v1', app: 'voyages', version: 'v1' },
+    { name: 'viaggi-v1', app: 'viaggi', version: 'v1' }
   ]
-});
+};
 
-// Generate services dynamically based on scenario - called per request
-const getServicesByNamespace = (): Record<string, MockServiceListItem[]> => ({
-  bookinfo: [
-    createMockServiceListItem('productpage', 'bookinfo'),
-    createMockServiceListItem('details', 'bookinfo'),
-    createMockServiceListItem('reviews', 'bookinfo'),
-    createMockServiceListItem('ratings', 'bookinfo')
-  ],
-  'istio-system': [
-    createMockServiceListItem('istiod', 'istio-system'),
-    createMockServiceListItem('istio-ingressgateway', 'istio-system')
-  ],
-  'travel-agency': [
-    createMockServiceListItem('travels', 'travel-agency'),
-    createMockServiceListItem('hotels', 'travel-agency'),
-    createMockServiceListItem('cars', 'travel-agency'),
-    createMockServiceListItem('flights', 'travel-agency')
-  ],
-  'travel-portal': [
-    createMockServiceListItem('voyages', 'travel-portal'),
-    createMockServiceListItem('viaggi', 'travel-portal')
-  ]
-});
+// Generate workloads for all clusters based on scenario configuration
+const getAllWorkloads = (): MockWorkloadListItem[] => {
+  const scenarioConfig = getScenarioConfig();
+  const workloads: MockWorkloadListItem[] = [];
 
-// Generate apps dynamically based on scenario - called per request
-const getAppsByNamespace = (): Record<string, MockAppListItem[]> => ({
-  bookinfo: [
-    createMockAppListItem('productpage', 'bookinfo'),
-    createMockAppListItem('details', 'bookinfo'),
-    createMockAppListItem('reviews', 'bookinfo'),
-    createMockAppListItem('ratings', 'bookinfo')
-  ],
-  'istio-system': [
-    createMockAppListItem('istiod', 'istio-system'),
-    createMockAppListItem('istio-ingressgateway', 'istio-system')
-  ],
-  'travel-agency': [
-    createMockAppListItem('travels', 'travel-agency'),
-    createMockAppListItem('hotels', 'travel-agency'),
-    createMockAppListItem('cars', 'travel-agency'),
-    createMockAppListItem('flights', 'travel-agency')
-  ],
-  'travel-portal': [createMockAppListItem('voyages', 'travel-portal'), createMockAppListItem('viaggi', 'travel-portal')]
-});
+  scenarioConfig.clusters.forEach(cluster => {
+    // Skip inaccessible clusters
+    if (!cluster.accessible) return;
+
+    cluster.namespaces.forEach(namespace => {
+      const definitions = workloadDefinitions[namespace] || [];
+      definitions.forEach(def => {
+        workloads.push(createMockWorkloadListItem(def.name, namespace, def.app, def.version, cluster.name));
+      });
+    });
+  });
+
+  return workloads;
+};
+
+// Generate workloads dynamically based on scenario - called per request (legacy support)
+const getWorkloadsByNamespace = (): Record<string, MockWorkloadListItem[]> => {
+  const allWorkloads = getAllWorkloads();
+  const byNamespace: Record<string, MockWorkloadListItem[]> = {};
+
+  allWorkloads.forEach(wl => {
+    if (!byNamespace[wl.namespace]) {
+      byNamespace[wl.namespace] = [];
+    }
+    byNamespace[wl.namespace].push(wl);
+  });
+
+  return byNamespace;
+};
+
+// Service definitions per namespace (base templates)
+const serviceDefinitions: Record<string, string[]> = {
+  alpha: ['alpha-api', 'alpha-worker'],
+  beta: ['beta-api', 'beta-db'],
+  bookinfo: ['productpage', 'details', 'reviews', 'ratings'],
+  default: ['httpbin', 'sleep'],
+  gamma: ['gamma-frontend', 'gamma-backend'],
+  'istio-system': ['istiod', 'istio-ingressgateway'],
+  'travel-agency': ['travels', 'hotels', 'cars', 'flights'],
+  'travel-control': ['control', 'mysqldb'],
+  'travel-portal': ['voyages', 'viaggi']
+};
+
+// Generate services for all clusters based on scenario configuration
+const getAllServices = (): MockServiceListItem[] => {
+  const scenarioConfig = getScenarioConfig();
+  const services: MockServiceListItem[] = [];
+
+  scenarioConfig.clusters.forEach(cluster => {
+    if (!cluster.accessible) return;
+
+    cluster.namespaces.forEach(namespace => {
+      const definitions = serviceDefinitions[namespace] || [];
+      definitions.forEach(name => {
+        services.push(createMockServiceListItem(name, namespace, cluster.name));
+      });
+    });
+  });
+
+  return services;
+};
+
+// Generate services dynamically based on scenario - called per request (legacy support)
+const getServicesByNamespace = (): Record<string, MockServiceListItem[]> => {
+  const allServices = getAllServices();
+  const byNamespace: Record<string, MockServiceListItem[]> = {};
+
+  allServices.forEach(svc => {
+    if (!byNamespace[svc.namespace]) {
+      byNamespace[svc.namespace] = [];
+    }
+    byNamespace[svc.namespace].push(svc);
+  });
+
+  return byNamespace;
+};
+
+// App definitions per namespace (same as services)
+const appDefinitions = serviceDefinitions;
+
+// Generate apps for all clusters based on scenario configuration
+const getAllApps = (): MockAppListItem[] => {
+  const scenarioConfig = getScenarioConfig();
+  const apps: MockAppListItem[] = [];
+
+  scenarioConfig.clusters.forEach(cluster => {
+    if (!cluster.accessible) return;
+
+    cluster.namespaces.forEach(namespace => {
+      const definitions = appDefinitions[namespace] || [];
+      definitions.forEach(name => {
+        apps.push(createMockAppListItem(name, namespace, cluster.name));
+      });
+    });
+  });
+
+  return apps;
+};
+
+// Generate apps dynamically based on scenario - called per request (legacy support)
+const getAppsByNamespace = (): Record<string, MockAppListItem[]> => {
+  const allApps = getAllApps();
+  const byNamespace: Record<string, MockAppListItem[]> = {};
+
+  allApps.forEach(app => {
+    if (!byNamespace[app.namespace]) {
+      byNamespace[app.namespace] = [];
+    }
+    byNamespace[app.namespace].push(app);
+  });
+
+  return byNamespace;
+};
 
 // Helper to get workloads for requested namespaces - generates fresh data per request
 const getWorkloadsForNamespaces = (namespaces: string): MockWorkloadListItem[] => {

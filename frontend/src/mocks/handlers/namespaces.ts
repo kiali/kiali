@@ -1,9 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { Namespace } from '../../types/Namespace';
-import { getAllNamespaces } from '../scenarios';
+import { getAllNamespaces, getNamespaceHealthStatus } from '../scenarios';
+
+// Extended namespace type for mock with health status
+interface MockNamespace extends Namespace {
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+}
 
 // Generate namespaces based on scenario
-const generateNamespaces = (): Namespace[] => {
+const generateNamespaces = (): MockNamespace[] => {
   const namespaces = getAllNamespaces();
 
   return namespaces.map(ns => {
@@ -22,12 +27,14 @@ const generateNamespaces = (): Namespace[] => {
       cluster: ns.cluster,
       isAmbient: ns.isAmbient,
       isControlPlane: ns.name === 'istio-system',
-      labels
+      labels,
+      // Add health status from scenario config
+      healthStatus: getNamespaceHealthStatus(ns.name)
     };
   });
 };
 
-const getMockNamespaces = (): Namespace[] => generateNamespaces();
+const getMockNamespaces = (): MockNamespace[] => generateNamespaces();
 
 export const namespaceHandlers = [
   // Get all namespaces
