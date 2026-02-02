@@ -156,10 +156,7 @@ func ServiceDetails(
 			rateInterval = defaultHealthRateInterval
 		}
 
-		includeValidations := false
-		if _, found := queryParams["validate"]; found {
-			includeValidations = true
-		}
+		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
 
 		params := mux.Vars(r)
 		cluster := clusterNameFromQuery(conf, queryParams)
@@ -229,10 +226,7 @@ func ServiceUpdate(
 		if patchType == "" {
 			patchType = defaultPatchType
 		}
-		includeValidations := false
-		if _, found := queryParams["validate"]; found {
-			includeValidations = true
-		}
+		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
 
 		params := mux.Vars(r)
 		cluster := clusterNameFromQuery(conf, queryParams)

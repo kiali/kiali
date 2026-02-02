@@ -38,6 +38,7 @@ type workloadParams struct {
 	// Optional
 	IncludeHealth         bool `json:"health"`
 	IncludeIstioResources bool `json:"istioResources"`
+	IncludeValidations    bool `json:"validate"`
 }
 
 func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
@@ -56,6 +57,8 @@ func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	if err != nil {
 		p.IncludeIstioResources = true
 	}
+	// Check for "validate" query param - defaults to false like other detail handlers
+	p.IncludeValidations, _ = strconv.ParseBool(query.Get("validate"))
 
 	p.WorkloadGVK, err = util.StringToGVK(query.Get("gvk"))
 	if err != nil {
@@ -162,7 +165,7 @@ func WorkloadDetails(
 
 		criteria := business.WorkloadCriteria{
 			Namespace: p.Namespace, WorkloadName: p.WorkloadName,
-			WorkloadGVK: p.WorkloadGVK, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
+			WorkloadGVK: p.WorkloadGVK, IncludeIstioResources: p.IncludeIstioResources, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
 			QueryTime: p.QueryTime, Cluster: p.ClusterName,
 		}
 
@@ -172,7 +175,7 @@ func WorkloadDetails(
 			return
 		}
 
-		includeValidations := p.IncludeIstioResources
+		includeValidations := p.IncludeValidations
 
 		istioConfigValidations := models.IstioValidations{}
 		var errValidations error
@@ -246,10 +249,7 @@ func WorkloadUpdate(
 		cluster := clusterNameFromQuery(conf, query)
 		log.Debugf("Cluster: %s", cluster)
 
-		includeValidations := false
-		if _, found := query["validate"]; found {
-			includeValidations = true
-		}
+		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
