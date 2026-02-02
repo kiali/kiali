@@ -1,84 +1,25 @@
-package providers
+package openai_provider
 
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	openai "github.com/openai/openai-go/v3"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 )
-
-// OpenAIProvider implements AIProvider using openai-go.
-type OpenAIProvider struct {
-	client openai.Client
-	model  string
-}
-
-func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*OpenAIProvider, error) {
-	opts, err := providers.GetProviderOptions(conf, provider, model)
-	if err != nil {
-		return nil, fmt.Errorf("get provider config: %w", err)
-	}
-
-	return &OpenAIProvider{
-		client: openai.NewClient(opts...),
-		model:  model.Model,
-	}, nil
-}
-
-func convertToolToOpenAI(tool mcp.ToolDef) openai.ChatCompletionToolUnionParam {
-	return openai.ChatCompletionToolUnionParam{
-		OfFunction: &openai.ChatCompletionFunctionToolParam{
-			Function: openai.FunctionDefinitionParam{
-				Name:        tool.GetName(),
-				Description: openai.String(tool.GetDescription()),
-				Parameters:  openai.FunctionParameters(tool.GetDefinition()),
-			},
-		},
-	}
-}
-func (p *OpenAIProvider) GetToolDefinitions() interface{} {
-	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
-	for _, handler := range mcp.DefaultToolHandlers {
-		tools = append(tools, convertToolToOpenAI(handler))
-	}
-	return tools
-}
-
-func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) []mcp.ToolsProcessor {
-	toolsSlice, ok := toolCall.([]openai.ChatCompletionMessageToolCallUnion)
-	if !ok {
-		return []mcp.ToolsProcessor{}
-	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
-	for i, tool := range toolsSlice {
-		args := map[string]any{}
-		_ = json.Unmarshal([]byte(tool.Function.Arguments), &args)
-		tools[i] = mcp.ToolsProcessor{
-			Args:       args,
-			Name:       tool.Function.Name,
-			ToolCallID: tool.ID,
-		}
-	}
-	return tools
-}
 
 func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
 	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
@@ -90,87 +31,40 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
 	ctx := r.Context()
-	var conversation []types.ConversationMessage
-	var ptr *types.Conversation
-	var sessionID string
-	if aiStore.Enabled() {
-		log.Debugf("AiStore is enabled: %+v", aiStore.Enabled())
-		sessionID = authentication.GetSessionIDContext(r.Context()) // Use = not := to avoid shadowing
-		log.Debugf("Getting conversation for session ID: %s", sessionID)
-		var found bool
-		ptr, found = aiStore.GetConversation(sessionID, req.ConversationID) // Use = not := to avoid shadowing
-		log.Debugf("Conversation found: %+v", found)
-		if found && ptr != nil {
-			log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
-			conversation = ptr.Conversation
-		} else {
-			log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
-			// Create a new Conversation struct for storage later
-			ptr = &types.Conversation{}
-		}
-	}
-
-	if len(conversation) == 0 {
-		conversation = []types.ConversationMessage{
-			providers.NewConversationMessage(
-				openai.SystemMessage(types.SystemInstruction),
-				"system",
-				"",
-				types.SystemInstruction,
-			),
-		}
-	}
-
-	contextBytes, _ := json.Marshal(req.Context)
-	// Adding context to the conversation. This is the system message that is sent to the AI.
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	conversation = append(conversation, providers.NewConversationMessage(
-		openai.SystemMessage(contextContent),
-		"system",
-		"",
-		contextContent,
-	))
-	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	conversation = append(conversation, providers.NewConversationMessage(
-		openai.UserMessage(req.Query),
-		"user",
-		"",
-		req.Query,
-	))
-
+	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
+	p.InitializeConversation(&conversation, req)
 	resp, err := p.client.Chat.Completions.New(
 		r.Context(),
 		openai.ChatCompletionNewParams{
 			Model:    openai.ChatModel(p.model),
-			Messages: buildChatParams(conversation),
+			Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
 			Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
 		},
 	)
 
 	if err != nil {
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
 	if err := ctx.Err(); err != nil {
-		return newContextCanceledResponse(err)
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools context error: %v", err)
+		return providers.NewContextCanceledResponse(err)
 	}
 
 	if len(resp.Choices) == 0 {
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
 		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
+	conversation = append(conversation, p.ProviderToConversation(resp))
 	msg := resp.Choices[0].Message
-	conversation = append(conversation, providers.NewConversationMessage(
-		msg.ToParam(),
-		string(msg.Role),
-		"",
-		msg.Content,
-	))
 	response := &types.AIResponse{}
-	role := string(msg.Role)
 	if len(msg.ToolCalls) > 0 {
+		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
+		log.Debugf("[Chat AI] OpenAI provider tool calls: %v", toolNames)
 		// Execute tool calls in parallel since they don't depend on each other
-		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, p.TransformToolCallToToolsProcessor(msg.ToolCalls), business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
-			return newContextCanceledResponse(err)
+			return providers.NewContextCanceledResponse(err)
 		}
 
 		// Add tool results to conversation in the original order
@@ -178,95 +72,75 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			if result.Error != nil {
 				return &types.AIResponse{Error: result.Error.Error()}, result.Code
 			}
-			if len(result.Actions) > 0 {
+			if len(result.Actions) > 0 || len(result.Citations) > 0 {
 				response.Actions = append(response.Actions, result.Actions...)
-			}
-			if len(result.Citations) > 0 {
 				response.Citations = append(response.Citations, result.Citations...)
+			} else {
+				conversation = append(conversation, result.Message)
 			}
-			conversation = append(conversation, result.Message)
 		}
 		if err := ctx.Err(); err != nil {
-			return newContextCanceledResponse(err)
+			return providers.NewContextCanceledResponse(err)
 		}
-
-		finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-			Model:    openai.ChatModel(p.model),
-			Messages: buildChatParams(conversation),
-		})
-		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
+		if shouldGenerate {
+			log.Debugf("[Chat AI] OpenAI provider conversation after tool calls: %+v", conversation)
+			finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+				Model:    openai.ChatModel(p.model),
+				Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
+			})
+			if err != nil {
+				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+			}
+			if err := ctx.Err(); err != nil {
+				return providers.NewContextCanceledResponse(err)
+			}
+			response.Answer = providers.ParseMarkdownResponse(finalResp.Choices[0].Message.Content)
+		} else {
+			response.Answer = responseAnswer
 		}
-		if err := ctx.Err(); err != nil {
-			return newContextCanceledResponse(err)
-		}
-		response.Answer = parseResponse(finalResp.Choices[0].Message.Content)
-		role = string(finalResp.Choices[0].Message.Role)
 	} else {
-		response.Answer = parseResponse(msg.Content)
+		response.Answer = providers.ParseMarkdownResponse(msg.Content)
 	}
-	conversation = append(conversation, providers.NewConversationMessage(
-		openai.AssistantMessage(response.Answer),
-		role,
-		"",
-		response.Answer,
-	))
-	if aiStore.Enabled() {
-		if err := ctx.Err(); err != nil {
-			return newContextCanceledResponse(err)
-		}
-		// Clean conversation by removing tool messages that are not useful for storage
-		conversation = p.cleanConversation(conversation)
-		if aiStore.ReduceWithAI() {
-			if err := ctx.Err(); err != nil {
-				return newContextCanceledResponse(err)
-			}
-			// Reduce the conversation with AI
-			conversation = p.reduceConversation(ctx, conversation, aiStore.ReduceThreshold())
-			if err := ctx.Err(); err != nil {
-				return newContextCanceledResponse(err)
-			}
-		}
-		ptr.Mu.Lock()
-		ptr.Conversation = conversation
-		ptr.Mu.Unlock()
-		err := aiStore.SetConversation(sessionID, req.ConversationID, ptr)
-		if err != nil {
-			log.Warningf("Failed to set conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
-		}
-	}
-	log.Debugf("AI Chat Response for conversation ID: %s: %+v", req.ConversationID, response)
+
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 	return response, http.StatusOK
 }
 
-func newContextCanceledResponse(err error) (*types.AIResponse, int) {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return &types.AIResponse{Error: err.Error()}, http.StatusRequestTimeout
+func (p *OpenAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
+	if conversation == nil {
+		return
 	}
-	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
-}
-
-// cleanConversation removes tool messages with names that are not useful for storage
-// This helps reduce storage size by removing tool call responses that don't add value to the conversation context
-func (p *OpenAIProvider) cleanConversation(conversation []types.ConversationMessage) []types.ConversationMessage {
-	// List of tool names that are not useful to store in conversation history
-
-	cleaned := make([]types.ConversationMessage, 0, len(conversation))
-	for _, msg := range conversation {
-		// Remove tool messages where the tool name is in the exclusion list
-		if msg.Role == "tool" {
-			if mcp.ExcludedToolNames[msg.Name] {
-				log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
-				continue
-			}
+	if len(*conversation) == 0 {
+		// Initialize base system instruction when empty.
+		*conversation = []types.ConversationMessage{{
+			Content: types.SystemInstruction,
+			Name:    "",
+			Param:   openai.SystemMessage(types.SystemInstruction).GetContent().AsAny(),
+			Role:    "system",
+		},
 		}
-		cleaned = append(cleaned, msg)
 	}
-
-	return cleaned
+	contextBytes, _ := json.Marshal(req.Context)
+	// Adding context to the conversation. This is the system message that is sent to the AI.
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	*conversation = append(*conversation, types.ConversationMessage{
+		Content: contextContent,
+		Name:    "",
+		Param:   nil,
+		Role:    "system",
+	})
+	// Adding user query to the conversation. This is the user message that is sent to the AI.
+	*conversation = append(*conversation, types.ConversationMessage{
+		Content: req.Query,
+		Name:    "",
+		Param:   nil,
+		Role:    "user",
+	})
 }
 
-func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
+func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
 	// Threshold: Only reduce if conversation gets long (e.g., > 10 messages)
 	// You could also use a token counter here for more precision.
 	if len(conversation) < reduceThreshold {
@@ -303,7 +177,7 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 		},
 	})
 	if err != nil {
-		log.Warningf("Failed to reduce conversation: %v", err)
+		log.Warningf("[Chat AI] Failed to reduce conversation: %v", err)
 		return conversation // Return original if summary fails
 	}
 
@@ -312,35 +186,39 @@ func (p *OpenAIProvider) reduceConversation(ctx context.Context, conversation []
 	var reduced []types.ConversationMessage
 	reduced = append(reduced, instructions...)
 	summaryContent := fmt.Sprintf("Summary of previous interactions: %s", summary)
-	reduced = append(reduced, providers.NewConversationMessage(
-		openai.AssistantMessage(summaryContent),
-		"assistant",
-		"",
-		summaryContent,
-	))
+	reduced = append(reduced, types.ConversationMessage{
+		Content: summaryContent,
+		Name:    "",
+		Param:   nil,
+		Role:    "system",
+	})
 	reduced = append(reduced, recentMessages...)
 	return reduced
 }
 
-func parseResponse(content string) string {
-	// Fix code blocks: replace ``` with ~~~ (AI sometimes uses wrong delimiter)
-	return strings.ReplaceAll(content, "```", "~~~")
+func (p *OpenAIProvider) ProviderToConversation(providerMessage interface{}) types.ConversationMessage {
+	chatCompletionMessage, ok := providerMessage.(openai.ChatCompletion)
+	if !ok {
+		return types.ConversationMessage{}
+	}
+	msg := chatCompletionMessage.Choices[0].Message
+	var param interface{} = msg.ToParam()
+	return types.ConversationMessage{
+		Content: msg.Content,
+		Role:    string(msg.Role),
+		Name:    chatCompletionMessage.ID,
+		Param:   param,
+	}
 }
-
-func buildChatParams(conversation []types.ConversationMessage) []openai.ChatCompletionMessageParamUnion {
+func (p *OpenAIProvider) ConversationToProvider(conversation []types.ConversationMessage) interface{} {
 	params := make([]openai.ChatCompletionMessageParamUnion, 0, len(conversation))
 	for _, msg := range conversation {
-		if param, ok := msg.Param.(openai.ChatCompletionMessageParamUnion); ok {
-			params = append(params, param)
-			continue
-		}
 		switch msg.Role {
 		case "system":
 			params = append(params, openai.SystemMessage(msg.Content))
 		case "user":
 			params = append(params, openai.UserMessage(msg.Content))
 		case "tool":
-			log.Debugf("Tool message missing tool_call_id, using assistant message for role=%s name=%s", msg.Role, msg.Name)
 			params = append(params, openai.AssistantMessage(msg.Content))
 		default:
 			params = append(params, openai.AssistantMessage(msg.Content))

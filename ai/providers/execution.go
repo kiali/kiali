@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"sync"
 
-	openai "github.com/openai/openai-go/v3"
-
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -48,7 +47,7 @@ func ExecuteToolCallsInParallel(
 			citations := []get_citations.Citation{}
 			if err := ctx.Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
-					Error: err,
+					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
 				}
 				return
@@ -73,7 +72,7 @@ func ExecuteToolCallsInParallel(
 			}
 			if err := ctx.Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
-					Error: err,
+					Error: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
 				}
 				return
@@ -92,26 +91,23 @@ func ExecuteToolCallsInParallel(
 			}
 
 			if mcp.ExcludedToolNames[call.Name] {
-				message := ""
 				if call.Name == "get_action_ui" {
 					if mcpRes, ok := mcpResult.(get_action_ui.GetActionUIResponse); ok {
 						actions = append(actions, mcpRes.Actions...)
 					}
-					message = "I have found the following actions: "
 				}
 				if call.Name == "get_citations" {
 					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
 						citations = append(citations, mcpRes.Citations...)
 					}
-					message = "I have found the following citations: "
 				}
 				results[index] = mcp.ToolCallResult{
-					Message: NewConversationMessage(
-						openai.ToolMessage(message, call.ToolCallID),
-						"tool",
-						call.Name,
-						message,
-					),
+					Message: types.ConversationMessage{
+						Content: "",
+						Name:    call.Name,
+						Param:   nil,
+						Role:    "tool",
+					},
 					Code:      http.StatusOK,
 					Actions:   actions,
 					Citations: citations,
@@ -122,26 +118,26 @@ func ExecuteToolCallsInParallel(
 			toolContent, err := FormatToolContent(mcpResult)
 			if err != nil {
 				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("failed to format tool content: %w", err),
+					Error: fmt.Errorf("failed to format tool %s content: %w", call.Name, err),
 					Code:  http.StatusInternalServerError,
 				}
 				return
 			}
 			if err := ctx.Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
-					Error: err,
+					Error: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
 				}
 				return
 			}
 
 			results[index] = mcp.ToolCallResult{
-				Message: NewConversationMessage(
-					openai.ToolMessage(toolContent, call.ToolCallID),
-					"tool",
-					call.Name,
-					toolContent,
-				),
+				Message: types.ConversationMessage{
+					Content: toolContent,
+					Name:    call.Name,
+					Param:   nil,
+					Role:    "tool",
+				},
 				Code:      http.StatusOK,
 				Actions:   actions,
 				Citations: citations,

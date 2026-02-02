@@ -2,33 +2,17 @@ package ai
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/providers"
+	googleProvider "github.com/kiali/kiali/ai/providers/google"
 	openaiProvider "github.com/kiali/kiali/ai/providers/openai"
-	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
-// AIProvider exposes a minimal interface to send chat requests.
-type AIProvider interface {
-	GetToolDefinitions() interface{}
-	TransformToolCallToToolsProcessor(toolCall any) []mcp.ToolsProcessor
-	SendChat(r *http.Request,
-		req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface,
-		clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int)
-}
-
 // NewAIProvider builds the AI provider configured for the given model name.
-func NewAIProvider(conf *config.Config, providerName string, modelName string) (AIProvider, error) {
+func NewAIProvider(conf *config.Config, providerName string, modelName string) (providers.AIProvider, error) {
 	if len(mcp.DefaultToolHandlers) == 0 {
 		log.Infof("[AI]Loading tools...")
 		if err := mcp.LoadTools(); err != nil {
@@ -46,6 +30,8 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	switch provider.Type {
 	case config.OpenAIProvider:
 		return openaiProvider.NewOpenAIProvider(conf, provider, model)
+	case config.GoogleProvider:
+		return googleProvider.NewGoogleAIProvider(conf, provider, model)
 	default:
 		return nil, fmt.Errorf("unsupported provider type %q", provider.Type)
 	}

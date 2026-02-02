@@ -6,6 +6,9 @@ models with credentials. Only enabled providers/models are used.
 
 ## Available providers
 
+- [OpenAI (`type: openai`)](#openai-type-openai)
+- [Google GenAI (`type: google`)](#google-genai-type-google)
+
 ### OpenAI (`type: openai`)
 
 The OpenAI provider uses the OpenAI-compatible chat completion API via the
@@ -74,6 +77,44 @@ chat_ai:
       model: gemini-2.5-pro
       enabled: true
       # endpoint: "https://generativelanguage.googleapis.com/v1beta/openai"
+```
+
+### Google GenAI (`type: google`)
+
+The Google provider uses the `google.golang.org/genai` client with the Gemini API.
+It supports the `default` and `gemini` config modes (both map to Gemini).
+
+#### Shared fields
+
+These fields apply to the Google provider:
+
+- `providers[].name`: Unique provider name (also used in secrets mount names).
+- `providers[].enabled`: Enable/disable the provider.
+- `providers[].default_model`: Name of the default model for this provider.
+- `providers[].key`: API key for all models, unless a model overrides it.
+- `providers[].models[]`:
+  - `name`: Model alias used in requests.
+  - `model`: Provider-specific model identifier (sent to the API).
+  - `enabled`: Enable/disable the model.
+  - `key`: Optional per-model key override.
+
+#### Config mode: `gemini` (or `default`)
+
+```yaml
+chat_ai:
+  enabled: true
+  default_provider: google-gemini
+  providers:
+  - name: google-gemini
+    type: google
+    config: gemini
+    enabled: true
+    default_model: gemini-pro
+    key: "secret:my-ai-keys:google-gemini"
+    models:
+    - name: gemini-pro
+      model: gemini-2.5-pro
+      enabled: true
 ```
 
 #### Config mode: `azure`
