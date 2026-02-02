@@ -101,7 +101,7 @@ export const IstioConfigStats: React.FC = () => {
 
   const popoverContent = (
     <>
-      {istioConfigStats.itemsWithIssues.slice(0, MAX_POPOVER_ITEMS).map(item => {
+      {istioConfigStats.issues.slice(0, MAX_POPOVER_ITEMS).map(item => {
         const borderColor = getStatusBorderColor(item.status);
         return (
           <div key={`${item.cluster}-${item.namespace}-${item.kind}-${item.name}`} className={popoverItemStyle}>
@@ -131,7 +131,7 @@ export const IstioConfigStats: React.FC = () => {
           </div>
         );
       })}
-      {istioConfigStats.itemsWithIssues.length > MAX_POPOVER_ITEMS && (
+      {istioConfigStats.issues.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
           <Link to={getViewIssuesUrl()} onClick={handleViewAllClick}>
             <Button variant="link" isInline>
