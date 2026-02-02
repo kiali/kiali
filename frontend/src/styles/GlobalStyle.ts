@@ -4,7 +4,7 @@ export const globalStyle = kialiStyle({
   height: '100%',
   margin: 0,
   fontFamily: 'var(--pf-t--global--font--family--body)',
-  fontSize: '14px',
+  fontSize: 'var(--pf-t--global--font--size--body--default)',
   overflow: 'hidden',
   $nest: {
     /**
@@ -85,18 +85,6 @@ export const globalStyle = kialiStyle({
      */
     '& .pf-v6-c-chart svg': {
       overflow: 'visible'
-    },
-
-    /**
-     * Light color for links in tooltips
-     */
-    '& .pf-v6-c-tooltip a': {
-      color: 'var(pf-t--global--text--color--link--default)',
-      $nest: {
-        '&:hover': {
-          color: 'var(pf-t--global--text--color--link--hover)'
-        }
-      }
     },
 
     /**

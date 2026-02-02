@@ -7,9 +7,21 @@ import { addError } from '../utils/AlertUtils';
 import { useKialiTranslation } from '../utils/I18nUtils';
 import { isMultiCluster, serverConfig } from '../config';
 
+export type IstioConfigStatusLabel = 'Warning' | 'Not Valid' | 'Not Validated';
+
+export type IstioConfigIssue = {
+  cluster?: string;
+  kind: string;
+  name: string;
+  namespace: string;
+  severity: 'error' | 'warning';
+  status: IstioConfigStatusLabel;
+};
+
 export type IstioConfigStats = {
   errors: number;
   isLoading: boolean;
+  issues: IstioConfigIssue[];
   total: number;
   valid: number;
   warnings: number;
@@ -22,6 +34,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
   const [stats, setStats] = React.useState<IstioConfigStats>({
     errors: 0,
     isLoading: false,
+    issues: [],
     total: 0,
     valid: 0,
     warnings: 0
@@ -54,22 +67,39 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
         let valid = 0;
         let warnings = 0;
         let errors = 0;
+        const issues: IstioConfigIssue[] = [];
 
         allItems.forEach(item => {
           if (item.validation) {
-            if (item.validation.valid) {
-              valid++;
-            }
-
             if (item.validation.checks && item.validation.checks.length > 0) {
               const hasErrors = item.validation.checks.some(check => check.severity === ValidationTypes.Error);
               const hasWarnings = item.validation.checks.some(check => check.severity === ValidationTypes.Warning);
 
               if (hasErrors) {
                 errors++;
+                issues.push({
+                  cluster: item.cluster,
+                  kind: item.kind,
+                  name: item.name,
+                  namespace: item.namespace,
+                  severity: 'error',
+                  status: 'Not Valid'
+                });
               } else if (hasWarnings) {
                 warnings++;
+                issues.push({
+                  cluster: item.cluster,
+                  kind: item.kind,
+                  name: item.name,
+                  namespace: item.namespace,
+                  severity: 'warning',
+                  status: 'Warning'
+                });
+              } else {
+                valid++;
               }
+            } else {
+              valid++;
             }
           } else {
             // No validation means it's valid
@@ -80,6 +110,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
         setStats({
           errors,
           isLoading: false,
+          issues,
           total,
           valid,
           warnings
@@ -90,6 +121,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
         setStats({
           errors: 0,
           isLoading: false,
+          issues: [],
           total: 0,
           valid: 0,
           warnings: 0

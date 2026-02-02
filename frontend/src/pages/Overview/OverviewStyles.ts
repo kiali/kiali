@@ -25,18 +25,46 @@ export const iconStyle = kialiStyle({
 export const statsContainerStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
-  gap: '1rem',
+  gap: '2rem',
   fontSize: '1.5rem'
 });
 
 export const statItemStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
+  gap: '0.25rem',
   $nest: {
     '& svg': {
       margin: '0.125rem 0 0 1rem',
-      width: '1rem',
-      height: '1rem'
+      width: '1.25rem',
+      height: '1.25rem'
     }
   }
+});
+
+export const clickableStyle = kialiStyle({
+  cursor: 'pointer'
+});
+
+// Common popover styles
+export const popoverHeaderStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem'
+});
+
+export const popoverItemStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  padding: '0.5rem 0',
+  borderBottom: `1px solid ${PFColors.BorderColor100}`
+});
+
+export const popoverItemStatusStyle = kialiStyle({
+  marginLeft: 'auto'
+});
+
+export const popoverFooterStyle = kialiStyle({
+  marginTop: '1rem'
 });

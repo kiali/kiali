@@ -1,13 +1,35 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle, Spinner } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Popover,
+  PopoverPosition,
+  Spinner
+} from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
-import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useClusterStatus } from 'hooks/clusters';
 import { Status } from 'types/IstioStatus';
-import { cardStyle, cardBodyStyle, linkStyle, iconStyle, statsContainerStyle, statItemStyle } from './OverviewStyles';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { PFColors } from 'components/Pf/PfColors';
+import {
+  cardStyle,
+  cardBodyStyle,
+  clickableStyle,
+  iconStyle,
+  linkStyle,
+  popoverHeaderStyle,
+  popoverItemStatusStyle,
+  popoverItemStyle,
+  statItemStyle,
+  statsContainerStyle
+} from './OverviewStyles';
+import { classes } from 'typestyle';
 
 export const ClusterStats: React.FC = () => {
   const { isLoading, statusMap } = useClusterStatus();
@@ -18,6 +40,26 @@ export const ClusterStats: React.FC = () => {
     components.every(comp => comp.status === Status.Healthy)
   ).length;
   const unhealthy = total - healthy;
+
+  // Get clusters with issues
+  const clustersWithIssues = Object.entries(statusMap)
+    .filter(([_, components]) => components.some(comp => comp.status !== Status.Healthy))
+    .map(([clusterName, components]) => ({
+      name: clusterName,
+      issues: components.filter(comp => comp.status !== Status.Healthy).length
+    }));
+
+  const popoverContent = (
+    <>
+      {clustersWithIssues.map(cluster => (
+        <div key={cluster.name} className={popoverItemStyle}>
+          <PFBadge badge={PFBadges.Cluster} size="sm" />
+          <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link>
+          <span className={popoverItemStatusStyle}>{t('{{count}} issue', { count: cluster.issues })}</span>
+        </div>
+      ))}
+    </>
+  );
 
   return (
     <Card className={cardStyle}>
@@ -38,10 +80,21 @@ export const ClusterStats: React.FC = () => {
               </div>
             )}
             {unhealthy > 0 && (
-              <div className={statItemStyle}>
-                <span>{unhealthy}</span>
-                <KialiIcon.Error />
-              </div>
+              <Popover
+                aria-label={t('Clusters with issues')}
+                position={PopoverPosition.right}
+                headerContent={
+                  <span className={popoverHeaderStyle}>
+                    <KialiIcon.ExclamationTriangle /> {t('Clusters')}
+                  </span>
+                }
+                bodyContent={popoverContent}
+              >
+                <div className={classes(statItemStyle, clickableStyle)}>
+                  <span className={linkStyle}>{unhealthy}</span>
+                  <KialiIcon.ExclamationTriangle />
+                </div>
+              </Popover>
             )}
           </div>
         )}

@@ -14,11 +14,17 @@ import { setAIContext } from 'helpers/ChatAI';
 
 const titleContainerStyle = kialiStyle({
   borderBottom: `1px solid ${PFColors.BorderColor100}`,
-  marginBottom: '1.25rem'
+  marginBottom: '0.25rem'
 });
 
 const titleStyle = kialiStyle({
   marginBottom: '1rem'
+});
+
+const overviewPageStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '1rem'
 });
 
 export const OverviewPage: React.FC = () => {
@@ -29,7 +35,7 @@ export const OverviewPage: React.FC = () => {
   }, [dispatch]);
 
   return (
-    <div>
+    <div className={overviewPageStyle}>
       <div className={titleContainerStyle}>
         <Title headingLevel="h1" size={TitleSizes['2xl']} className={titleStyle}>
           {t('Overview')}
@@ -60,7 +66,7 @@ export const OverviewPage: React.FC = () => {
       </Grid>
 
       {/* Bottom row - Applications and Workload insights */}
-      <Grid hasGutter style={{ marginTop: '1rem' }}>
+      <Grid hasGutter>
         <GridItem span={5}>
           <ApplicationStats />
         </GridItem>
