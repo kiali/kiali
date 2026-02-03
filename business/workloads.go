@@ -37,6 +37,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -353,6 +354,12 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		return *workloadList, err
 	}
 
+	// Try to get cached health for this namespace (used if IncludeHealth is true)
+	var cachedHealth *models.CachedHealthData
+	if criteria.IncludeHealth {
+		cachedHealth, _ = in.cache.GetHealth(cluster, namespace, internalmetrics.HealthTypeWorkload)
+	}
+
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w, in.conf)
@@ -360,9 +367,25 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
-			wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
-			if err != nil {
-				log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+			// Try cache first, fall back to on-demand calculation
+			if cachedHealth != nil {
+				if health, found := cachedHealth.WorkloadHealth[wItem.Name]; found {
+					wItem.Health = *health
+				} else {
+					// Cache miss for this specific workload - compute on-demand (also updates cache)
+					log.Debugf("Workload health cache miss for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
+					wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+					if err != nil {
+						log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+					}
+				}
+			} else {
+				// No cached data for namespace - compute on-demand (also updates cache)
+				log.Debugf("Workload health cache miss (no namespace data) for cluster=%s namespace=%s workload=%s", cluster, namespace, wItem.Name)
+				wItem.Health, err = in.businessLayer.Health.GetWorkloadHealth(ctx, namespace, cluster, wItem.Name, criteria.RateInterval, criteria.QueryTime, w)
+				if err != nil {
+					log.Errorf("Error fetching Health in namespace %s for workload %s: %s", namespace, wItem.Name, err)
+				}
 			}
 		}
 		wItem.Cluster = cluster
@@ -873,6 +896,37 @@ func isAccessLogEmpty(al *parser.AccessLog) bool {
 		al.UserAgent == "")
 }
 
+// setPodsForDeployment sets pods for a workload based on deployment configuration.
+// For SPIRE-managed workloads, it uses the deployment's selector to match pods.
+// For non-SPIRE workloads, it uses template labels.
+func (in *WorkloadService) setPodsForDeployment(dep *apps_v1.Deployment, pods []core_v1.Pod, w *models.Workload) {
+	// Check if deployment has SPIRE label in template labels
+	hasSpireLabel := false
+	if dep.Spec.Template.Labels != nil {
+		if dep.Spec.Template.Labels[config.SpireManagedIdentityLabel] == config.SpireManagedIdentityValue {
+			hasSpireLabel = true
+		}
+	}
+
+	if hasSpireLabel {
+		// For SPIRE workloads, use deployment's selector (not template labels) to match pods
+		labelMap, err := meta_v1.LabelSelectorAsMap(dep.Spec.Selector)
+		if err != nil {
+			log.Errorf("Error converting deployment selector to map: %v", err)
+			// Fallback to template labels if selector conversion fails
+			selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
+			w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
+		} else {
+			selector := labels.Set(labelMap).AsSelector()
+			w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
+		}
+	} else {
+		// For non-SPIRE workloads, use template labels
+		selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
+		w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
+	}
+}
+
 // fetchWorkloadsFromCluster returns all cluster workloads for the specified namespaces. The caller must have access to all of
 // the specified namespaces or it is an error. If <namespaces> is empty it returns the workloads for all accessible namespaces.
 func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, fetchNamespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
@@ -1342,8 +1396,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if found {
-				selector := labels.Set(dep[iFound].Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
+				in.setPodsForDeployment(&dep[iFound], pods, w)
 				w.ParseDeployment(&dep[iFound], in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", controllerName)
@@ -1567,6 +1620,23 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			w.ServiceAccountNames = w.Pods.ServiceAccounts()
 			slices.Sort(w.ServiceAccountNames)
 			w.ValidationVersion = fmt.Sprintf("%v:%v", w.Labels, w.ServiceAccountNames)
+
+			// Set SpireInfo if workload is SPIRE-managed or is a SPIRE server
+			spireMatches := w.SpireManagedIdentity()
+			if len(spireMatches) > 0 || w.IsSpireServer() {
+				if w.SpireInfo == nil {
+					w.SpireInfo = &models.SpireInfo{}
+				}
+				if len(spireMatches) > 0 {
+					w.SpireInfo.IsSpireManaged = true
+					w.SpireInfo.ManagedIdentityMatches = spireMatches
+				}
+				if w.IsSpireServer() {
+					w.SpireInfo.IsSpireServer = true
+				}
+				// Also set on WorkloadListItem so it's available in lists
+				w.WorkloadListItem.SpireInfo = w.SpireInfo
+			}
 
 			ws = append(ws, w)
 		}
@@ -2053,8 +2123,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		switch controllerGVK {
 		case kubernetes.Deployments:
 			if dep != nil && dep.Name == criteria.WorkloadName {
-				selector := labels.Set(dep.Spec.Template.Labels).AsSelector()
-				w.SetPods(kubernetes.FilterPodsBySelector(selector, pods), in.businessLayer.Mesh.IsControlPlane)
+				in.setPodsForDeployment(dep, pods, &w)
 				w.ParseDeployment(dep, in.conf)
 			} else {
 				log.Errorf("Workload %s is not found as Deployment", criteria.WorkloadName)
@@ -2227,6 +2296,23 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
 		w.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
 
+		// Set SpireInfo if workload is SPIRE-managed or is a SPIRE server
+		spireMatches := w.SpireManagedIdentity()
+		if len(spireMatches) > 0 || w.IsSpireServer() {
+			if w.SpireInfo == nil {
+				w.SpireInfo = &models.SpireInfo{}
+			}
+			if len(spireMatches) > 0 {
+				w.SpireInfo.IsSpireManaged = true
+				w.SpireInfo.ManagedIdentityMatches = spireMatches
+			}
+			if w.IsSpireServer() {
+				w.SpireInfo.IsSpireServer = true
+			}
+			// Also set on WorkloadListItem so it's available in lists
+			w.WorkloadListItem.SpireInfo = w.SpireInfo
+		}
+
 		// Add the Proxy Status to the workload
 		istioAPIEnabled := in.conf.ExternalServices.Istio.IstioAPIEnabled
 		for _, pod := range w.Pods {
@@ -2265,6 +2351,10 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 		}
+
+		// Populate ServiceAccountNames from pods (needed for other operations)
+		w.ServiceAccountNames = w.Pods.ServiceAccounts()
+		slices.Sort(w.ServiceAccountNames)
 
 		if cnFound {
 			return &w, nil

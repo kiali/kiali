@@ -1,0 +1,19 @@
+- name: "get_resource_detail"
+  description: "Returns the resource detail data for the given resource type, namespaces and resource name."
+  input_schema:
+    type: "object"
+    required: ["resourceType"]
+    properties:
+      resourceType:
+        type: "string"
+        description: "Type of resource to get list/details"
+        enum: ["service", "workload", "app", "istio"]
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces"
+      resourceName:
+        type: "string"
+        description: "Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all)."
+      clusterName:
+        type: "string"
+        description: "Name of the cluster to get resources from. If not provided, will use the cluster name in the Kiali configuration (KubeConfig)."

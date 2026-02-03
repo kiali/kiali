@@ -19,6 +19,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/store"
 	"github.com/kiali/kiali/util"
 )
@@ -51,6 +52,28 @@ type KialiCache interface {
 
 	GetGateways() (models.Workloads, bool)
 	SetGateways(models.Workloads)
+
+	// GetHealth returns cached health data for a namespace.
+	// Returns nil and false if not found.
+	// The healthType parameter is used for metrics tracking (app, service, or workload).
+	GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool)
+
+	// SetHealth stores health data in cache.
+	// Can be called by background job OR by individual handlers
+	// to update specific entries independently.
+	SetHealth(cluster, namespace string, data *models.CachedHealthData)
+
+	// UpdateAppHealth updates a single app's health in the cached namespace data.
+	// Returns true if the cache was updated, false if namespace not in cache.
+	UpdateAppHealth(cluster, namespace, appName string, health *models.AppHealth)
+
+	// UpdateServiceHealth updates a single service's health in the cached namespace data.
+	// Returns true if the cache was updated, false if namespace not in cache.
+	UpdateServiceHealth(cluster, namespace, serviceName string, health *models.ServiceHealth)
+
+	// UpdateWorkloadHealth updates a single workload's health in the cached namespace data.
+	// Returns true if the cache was updated, false if namespace not in cache.
+	UpdateWorkloadHealth(cluster, namespace, workloadName string, health *models.WorkloadHealth)
 
 	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
 
@@ -126,6 +149,9 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
 	gatewayStore store.Store[string, models.Workloads]
 
+	// Cache pre-computed health data per cluster:namespace
+	healthStore store.Store[string, *models.CachedHealthData]
+
 	// There's only ever one IstioStatus but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheIstioStatusKey.
 	istioStatusStore store.Store[string, kubernetes.IstioComponentStatus]
@@ -177,6 +203,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		conf:                    conf,
 		zl:                      zl,
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
+		healthStore:             store.New[string, *models.CachedHealthData](),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
 		kubeCache:               kubeCache,
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
@@ -410,6 +437,119 @@ func (c *kialiCacheImpl) GetGateways() (models.Workloads, bool) {
 // SetGateways Sets a list of all gateway workloads by cluster and namespace
 func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 	c.gatewayStore.Set(kialiCacheGatewaysKey, gateways)
+}
+
+// GetHealth returns cached health data for a namespace
+func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool) {
+	key := models.HealthCacheKey(cluster, namespace)
+	data, found := c.healthStore.Get(key)
+
+	// Track cache hit/miss metrics if metrics are enabled
+	if c.conf.Server.Observability.Metrics.Enabled {
+		if found {
+			internalmetrics.IncrementHealthCacheHits(healthType)
+		} else {
+			internalmetrics.IncrementHealthCacheMisses(healthType)
+		}
+	}
+
+	return data, found
+}
+
+// SetHealth stores health data in cache
+func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.CachedHealthData) {
+	key := models.HealthCacheKey(cluster, namespace)
+	c.zl.Trace().
+		Str("cluster", cluster).
+		Str("namespace", namespace).
+		Time("computedAt", data.ComputedAt).
+		Str("duration", data.Duration).
+		Msg("health cache updated")
+	c.healthStore.Set(key, data)
+}
+
+// UpdateAppHealth updates a single app's health in the cached namespace data.
+func (c *kialiCacheImpl) UpdateAppHealth(cluster, namespace, appName string, health *models.AppHealth) {
+	key := models.HealthCacheKey(cluster, namespace)
+	cached, found := c.healthStore.Get(key)
+	if !found {
+		c.zl.Debug().
+			Str("cluster", cluster).
+			Str("namespace", namespace).
+			Str("app", appName).
+			Msg("Cannot update app health - namespace not in cache")
+		return
+	}
+
+	// Update the specific app health entry
+	if cached.AppHealth == nil {
+		cached.AppHealth = models.NamespaceAppHealth{}
+	}
+	cached.AppHealth[appName] = health
+	cached.ComputedAt = time.Now()
+	c.healthStore.Set(key, cached)
+
+	c.zl.Debug().
+		Str("cluster", cluster).
+		Str("namespace", namespace).
+		Str("app", appName).
+		Msg("App health updated in cache")
+}
+
+// UpdateServiceHealth updates a single service's health in the cached namespace data.
+func (c *kialiCacheImpl) UpdateServiceHealth(cluster, namespace, serviceName string, health *models.ServiceHealth) {
+	key := models.HealthCacheKey(cluster, namespace)
+	cached, found := c.healthStore.Get(key)
+	if !found {
+		c.zl.Debug().
+			Str("cluster", cluster).
+			Str("namespace", namespace).
+			Str("service", serviceName).
+			Msg("Cannot update service health - namespace not in cache")
+		return
+	}
+
+	// Update the specific service health entry
+	if cached.ServiceHealth == nil {
+		cached.ServiceHealth = models.NamespaceServiceHealth{}
+	}
+	cached.ServiceHealth[serviceName] = health
+	cached.ComputedAt = time.Now()
+	c.healthStore.Set(key, cached)
+
+	c.zl.Debug().
+		Str("cluster", cluster).
+		Str("namespace", namespace).
+		Str("service", serviceName).
+		Msg("Service health updated in cache")
+}
+
+// UpdateWorkloadHealth updates a single workload's health in the cached namespace data.
+func (c *kialiCacheImpl) UpdateWorkloadHealth(cluster, namespace, workloadName string, health *models.WorkloadHealth) {
+	key := models.HealthCacheKey(cluster, namespace)
+	cached, found := c.healthStore.Get(key)
+	if !found {
+		c.zl.Debug().
+			Str("cluster", cluster).
+			Str("namespace", namespace).
+			Str("workload", workloadName).
+			Msg("Cannot update workload health - namespace not in cache")
+		return
+	}
+
+	// Update the specific workload health entry
+	if cached.WorkloadHealth == nil {
+		cached.WorkloadHealth = models.NamespaceWorkloadHealth{}
+	}
+	cached.WorkloadHealth[workloadName] = health
+	cached.ComputedAt = time.Now()
+	c.healthStore.Set(key, cached)
+
+	c.zl.Debug().
+		Str("cluster", cluster).
+		Str("namespace", namespace).
+		Str("workload", workloadName).
+		Msg("Workload health updated in cache")
 }
 
 // GatewayAPIClasses returns list of K8s GatewayAPIClass objects

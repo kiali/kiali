@@ -4,7 +4,7 @@ import { RenderContent } from '../../components/Nav/Page';
 import * as ServiceListFilters from './FiltersAndSorts';
 import * as FilterComponent from '../../components/FilterList/FilterComponent';
 import { ServiceList, ServiceListItem } from '../../types/ServiceList';
-import { DurationInSeconds, InstanceType, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
+import { InstanceType, IntervalInMilliseconds, TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { namespaceEquals } from '../../utils/Common';
@@ -16,10 +16,10 @@ import { addError } from '../../utils/AlertUtils';
 import { ObjectValidation, Validations } from '../../types/IstioObjects';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, durationSelector, refreshIntervalSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { connect, DispatchProp } from 'react-redux';
-import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
 import { ServiceHealth } from '../../types/Health';
@@ -29,6 +29,12 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
+});
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;
@@ -36,7 +42,6 @@ type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
-  duration: DurationInSeconds;
   refreshInterval: IntervalInMilliseconds;
 };
 
@@ -80,7 +85,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
-          this.props.duration !== prevProps.duration ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
             this.props.refreshInterval !== RefreshIntervalPause) ||
           this.state.currentSortField !== prevCurrentSortField ||
@@ -125,13 +129,13 @@ class ServiceListPageComponent extends FilterComponent.Component<
     });
 
     if (this.props.activeNamespaces.length !== 0) {
-      this.fetchServices(Array.from(uniqueClusters), activeFilters, activeToggles, this.props.duration);
+      this.fetchServices(Array.from(uniqueClusters), activeFilters, activeToggles);
     } else {
       this.setState({ listItems: [], loaded: true });
     }
   }
 
-  getServiceItem(data: ServiceList, rateInterval: number): ServiceListItem[] {
+  getServiceItem(data: ServiceList): ServiceListItem[] {
     if (data.services) {
       return data.services.map(service => ({
         name: service.name,
@@ -142,11 +146,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         isZtunnel: service.isZtunnel,
         namespace: service.namespace,
         cluster: service.cluster,
-        health: ServiceHealth.fromJson(service.namespace, service.name, service.health, {
-          rateInterval: rateInterval,
-          hasSidecar: service.istioSidecar,
-          hasAmbient: service.isAmbient
-        }),
+        health: ServiceHealth.fromBackendStatus(service.health),
         validation: this.getServiceValidation(service.name, service.namespace, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels ?? {},
@@ -160,12 +160,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return [];
   }
 
-  fetchServices(
-    clusters: string[],
-    filters: ActiveFiltersInfo,
-    toggles: ActiveTogglesInfo,
-    rateInterval: number
-  ): void {
+  fetchServices(clusters: string[], filters: ActiveFiltersInfo, toggles: ActiveTogglesInfo): void {
     const perfKey = 'ClustersServices';
     const servicesPromises = clusters.map(cluster => {
       startPerfTimer(perfKey);
@@ -174,7 +169,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
         {
           health: toggles.get('health') ?? true,
           istioResources: toggles.get('istioResources') ?? true,
-          rateInterval: `${String(rateInterval)}s`,
           onlyDefinitions: toggles.get('configuration') !== undefined ? !toggles.get('configuration') : false // !configuration => onlyDefinitions
         },
         cluster
@@ -188,7 +182,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
         responses.forEach(response => {
           endPerfTimer(perfKey);
-          serviceListItems = serviceListItems.concat(this.getServiceItem(response.data, rateInterval));
+          serviceListItems = serviceListItems.concat(this.getServiceItem(response.data));
         });
 
         return ServiceListFilters.filterBy(serviceListItems, filters);
@@ -242,7 +236,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
       <>
         <DefaultSecondaryMasthead
           rightToolbar={
-            <TimeDurationComponent key="DurationDropdown" id="service-list-duration-dropdown" disabled={false} />
+            <Refresh className={refreshStyle} id="service-list-refresh" disabled={false} manageURL={true} />
           }
         />
         <RenderContent>
@@ -269,7 +263,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
-  duration: durationSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });
 

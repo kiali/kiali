@@ -1,6 +1,7 @@
 import { AppHealth, AppHealthResponse } from './Health';
 import { ObjectReference } from './IstioObjects';
 import { InstanceType } from 'types/Common';
+import { SpireInfo } from './Workload';
 
 // Raw API response - health is JSON that needs conversion
 export interface AppList {
@@ -36,10 +37,10 @@ export interface AppListItem {
   labels: { [key: string]: string };
   name: string;
   namespace: string;
+  spireInfo?: SpireInfo;
 }
 
 export interface AppListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
-  rateInterval: string;
 }

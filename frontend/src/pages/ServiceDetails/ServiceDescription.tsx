@@ -82,7 +82,8 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             isWaypoint: wk.isWaypoint,
             isZtunnel: wk.isZtunnel,
             serviceAccountNames: wk.serviceAccountNames,
-            labels: wk.labels ?? {}
+            labels: wk.labels ?? {},
+            spireInfo: wk.spireInfo
           });
         });
     }

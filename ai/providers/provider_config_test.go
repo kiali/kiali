@@ -81,7 +81,7 @@ func TestGetProviderOptions_NilConfig(t *testing.T) {
 		Name: "test-model",
 	}
 
-	_, err := getProviderOptions(nil, provider, model)
+	_, err := GetProviderOptions(nil, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "config is required")
 }
@@ -100,7 +100,7 @@ func TestGetProviderOptions_AzureRequiresEndpoint(t *testing.T) {
 		Endpoint: "", // Empty - should error for Azure
 	}
 
-	_, err := getProviderOptions(conf, provider, model)
+	_, err := GetProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "endpoint is required for azure")
 }
@@ -118,7 +118,7 @@ func TestGetProviderOptions_UnsupportedProviderConfig(t *testing.T) {
 		Model: "gpt-4",
 	}
 
-	_, err := getProviderOptions(conf, provider, model)
+	_, err := GetProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported provider config type")
 }

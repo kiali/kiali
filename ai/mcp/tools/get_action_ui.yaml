@@ -1,0 +1,28 @@
+- name: "get_action_ui"
+  description: "Returns the action to navigate in the Kiali UI when user request see graph or mesh graph,list/get/show resources or a detailed resource information"
+  input_schema:
+    type: "object"
+    required: ["resourceType"]
+    properties:
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces in case of list/show resources or graph, just one namespace in case of get or show resource. If empty, will use all namespaces accessible to the user."
+      resourceType:
+        type: "string"
+        description: "Type of resource to get a view of : list resources,details of a resource, traffic/mesh graph or overview of namespaces"
+        enum: ["service", "workload", "app", "istio", "graph", "overview"]
+      resourceName:
+        type: "string"
+        description: "Optional. Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all)."
+      graph:
+        type: "string"
+        description: "Optional. If resourceType is graph, you can specify the type of graph to return: Mesh if user request mesh or traffic graph (Values: mesh|traffic). Mesh graph no required namespaces parameter, traffic graph have an optional namespaces parameter. Default graph is traffic"
+        enum: ["mesh", "traffic"]
+      graphType:
+        type: "string"
+        description: "Optional type of graph to return. Default is 'versionedApp'."
+        enum: ["versionedApp", "app", "service", "workload"]
+      tab:
+        type: "string"
+        description: "Optional. Tab to open in case of show resource details. Default is info."
+        enum: ["info", "logs", "metrics", "in_metrics", "out_metrics", "traffic", "traces", "envoy"]

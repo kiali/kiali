@@ -1,4 +1,5 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
+import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -261,52 +262,9 @@ After(() => {
 });
 
 After({ tags: '@graph-cache-metrics' }, () => {
-  const primaryResource = (Cypress.env('KIALI_PRIMARY_RESOURCE') as string | undefined) ?? '';
-  const prev = (Cypress.env('GRAPH_CACHE_PREV') as string | undefined) ?? '';
-  const prevBool = prev === 'true';
+  restoreKialiFeature(GRAPH_CACHE_CONFIG);
+});
 
-  const kialiDeploymentName = (Cypress.env('KIALI_DEPLOYMENT_NAME') as string | undefined) ?? 'kiali';
-  const kialiDeploymentNamespace = (Cypress.env('KIALI_DEPLOYMENT_NAMESPACE') as string | undefined) ?? 'istio-system';
-  const kialiConfigMapName = (Cypress.env('KIALI_CONFIGMAP_NAME') as string | undefined) ?? 'kiali';
-
-  const restartKiali = (): void => {
-    cy.exec(
-      `kubectl rollout restart deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} && kubectl rollout status deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} --timeout=180s`,
-      { timeout: 300000, failOnNonZeroExit: false }
-    );
-  };
-
-  if (primaryResource) {
-    const parts = primaryResource.split('/');
-    const crNamespace = parts[0];
-    const crName = parts[1];
-
-    cy.exec(
-      `kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '{"spec":{"kiali_internal":{"graph_cache":{"enabled":${prevBool}}}}}'`,
-      { failOnNonZeroExit: false }
-    ).then(() => restartKiali());
-    return;
-  }
-
-  // Helm installation - restore via ConfigMap.
-  // If the previous value was empty (not set), delete the enabled key; otherwise set it back.
-  cy.exec(
-    `kubectl get configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`,
-    {
-      failOnNonZeroExit: false
-    }
-  ).then(() => {
-    if (prev === '') {
-      cy.exec("yq -i 'del(.kiali_internal.graph_cache.enabled)' /tmp/kiali-config.yaml", { failOnNonZeroExit: false });
-    } else {
-      cy.exec(`yq -i '.kiali_internal.graph_cache.enabled = ${prevBool}' /tmp/kiali-config.yaml`, {
-        failOnNonZeroExit: false
-      });
-    }
-
-    cy.exec(
-      `kubectl create configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`,
-      { failOnNonZeroExit: false }
-    ).then(() => restartKiali());
-  });
+After({ tags: '@health-cache-metrics' }, () => {
+  restoreKialiFeature(HEALTH_CACHE_CONFIG);
 });
