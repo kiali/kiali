@@ -40,9 +40,11 @@
 # References:
 #   - Red Hat blog on connecting Grafana to ACM Observability (mTLS setup):
 #     https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
+#   - Red Hat documentation on configuring User Workload Monitoring:
+#     https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
 #
 # The script supports:
-#   init-openshift  - Initialize CRC OpenShift cluster with recommended settings
+#   init-openshift  - Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
 #   install-acm     - Install ACM operator, MultiClusterHub, MinIO, and observability
 #   uninstall-acm   - Remove all ACM components cleanly
 #   status-acm      - Check the status of ACM installation
@@ -58,8 +60,8 @@
 #   - OpenShift cluster accessible via 'oc' CLI
 #   - Cluster-admin privileges
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
-#   - User Workload Monitoring (UWM) MUST be enabled (for PodMonitor/ServiceMonitor)
-#   - Istio must be installed
+#   - User Workload Monitoring (UWM) - automatically enabled by init-openshift command
+#   - Istio - automatically installed by init-openshift command
 #   - For install-kiali: helm, make, and access to Kiali git repositories
 #   - For install-kiali: ACM Observability must be installed first (run install-acm)
 #
@@ -75,19 +77,23 @@
 #       start
 #
 #   The --enable-cluster-monitoring option is REQUIRED for ACM observability to work.
-#   It enables User Workload Monitoring which is required for Istio metrics collection.
+#   It enables cluster monitoring (prometheus-k8s). User Workload Monitoring is enabled
+#   separately by the init-openshift command after the cluster starts.
 #   The --crc-cpus 12 is recommended because ACM + Istio + monitoring is resource-intensive.
 #   The --crc-virtual-disk-size 100 sets the VM disk to 100GB (minimum recommended for
 #   ACM observability which requires ~30GB for Thanos metrics storage). The default of
 #   48GB is insufficient and will cause disk pressure issues during installation.
 #
-# Installing Istio:
-#   After the OpenShift cluster is running, install Istio before running this script:
+# Installing Istio and Enabling User Workload Monitoring:
+#   The init-openshift command automatically:
+#     1. Enables User Workload Monitoring (required for Istio metrics collection)
+#     2. Installs Istio via ./hack/istio/install-istio-via-istioctl.sh
 #
+#   If you need to install Istio manually on an existing cluster:
 #     ./hack/istio/install-istio-via-istioctl.sh -c oc
 #
 # Usage:
-#   ./install-acm.sh --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Initialize CRC cluster
+#   ./install-acm.sh --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Create CRC cluster, enable UWM, install Istio
 #   ./install-acm.sh install-acm          # Install ACM with observability
 #   ./install-acm.sh status-acm           # Check ACM status
 #   ./install-acm.sh install-kiali        # Build and install Kiali for ACM
@@ -1519,6 +1525,67 @@ status_kiali() {
 # OpenShift Initialization Functions
 ##############################################################################
 
+enable_user_workload_monitoring() {
+  # Enable User Workload Monitoring (UWM) for the cluster.
+  # UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor resources.
+  # Per Red Hat docs: https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
+  infomsg "Enabling User Workload Monitoring..."
+
+  # Check if already enabled
+  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    infomsg "User Workload Monitoring is already enabled"
+    return 0
+  fi
+
+  # Check if cluster-monitoring-config ConfigMap exists
+  if ! ${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring &>/dev/null 2>&1; then
+    infomsg "Creating cluster-monitoring-config ConfigMap..."
+    cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+EOF
+  else
+    infomsg "Updating cluster-monitoring-config ConfigMap..."
+    # Get existing config, add enableUserWorkload if not present
+    local existing_config=$(${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null)
+
+    if echo "${existing_config}" | grep -q "enableUserWorkload"; then
+      # Already has the setting, just update it to true
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    else
+      # Doesn't have the setting, add it
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    fi
+  fi
+
+  # Wait for User Workload Monitoring pods to be created
+  infomsg "Waiting for User Workload Monitoring pods to be created (this may take 1-2 minutes)..."
+  local max_wait=180
+  local waited=0
+  while ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; do
+    if [ ${waited} -ge ${max_wait} ]; then
+      errormsg "Timeout waiting for User Workload Monitoring to be enabled"
+      return 1
+    fi
+    debug "Waiting for prometheus-user-workload statefulset... (${waited}s)"
+    sleep 5
+    waited=$((waited + 5))
+  done
+
+  # Wait for pods to be ready
+  infomsg "Waiting for User Workload Monitoring pods to be ready..."
+  ${CLIENT_EXE} wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n openshift-user-workload-monitoring --timeout=300s || true
+
+  infomsg "User Workload Monitoring enabled successfully"
+  return 0
+}
+
 init_openshift() {
   infomsg "Initializing OpenShift cluster using CRC..."
 
@@ -1571,6 +1638,13 @@ init_openshift() {
   fi
 
   infomsg "Logged into OpenShift cluster as kubeadmin"
+
+  # Enable User Workload Monitoring (required for ACM observability)
+  enable_user_workload_monitoring
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to enable User Workload Monitoring"
+    return 1
+  fi
 
   # Log into the image registry
   infomsg "Logging into the image registry..."
@@ -1996,7 +2070,7 @@ Valid options:
       Display this help message.
 
 The command must be one of:
-  init-openshift:   Initialize CRC OpenShift cluster with recommended settings
+  init-openshift:   Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
   install-acm:      Install ACM operator, MultiClusterHub, MinIO, and observability
   uninstall-acm:    Remove all ACM components
   status-acm:       Check the status of ACM installation
