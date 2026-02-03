@@ -1,10 +1,47 @@
-import { Then } from '@badeball/cypress-cucumber-preprocessor';
-import { getClusterForSingleCluster } from './table';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { getClusterForSingleCluster, getColWithRowText } from './table';
 
 // Namespace page (table) helpers.
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td', ns);
+});
+
+Then(`user does not see the {string} namespace in the namespaces page`, (ns: string) => {
+  cy.get('tbody').contains('td', ns).should('not.exist');
+});
+
+Then(`user sees the {string} namespace in cluster {string} in the namespaces page`, (ns: string, cluster: string) => {
+  cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).should('exist');
+});
+
+Then(
+  `user does not see the {string} namespace in cluster {string} in the namespaces page`,
+  (ns: string, cluster: string) => {
+    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).should('not.exist');
+  }
+);
+
+const normalizeColumn = (column: string): string => {
+  // Header title is "Istio config" but cell data-label is "Config".
+  if (column === 'Istio config') {
+    return 'Config';
+  }
+
+  return column;
+};
+
+Then('the {string} column on the {string} row is not empty', (column: string, rowText: string) => {
+  getColWithRowText(rowText, normalizeColumn(column))
+    .invoke('text')
+    .then(text => {
+      expect(text.trim()).to.not.equal('');
+    });
+});
+
+When('user filters for type {string}', (type: string) => {
+  cy.get('button#filter_select_value-toggle').click();
+  cy.contains('div#filter_select_value button', type).click();
 });
 
 Then(

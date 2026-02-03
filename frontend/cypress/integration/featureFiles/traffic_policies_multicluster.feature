@@ -9,61 +9,57 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
 	Background:
 		Given user is at administrator perspective
 
-  # COMMENTED OUT: Legacy overview page tests - replaced by new namespaces page implementation
-  # TODO: Update these tests to work with the new NamespacesPage
-  # Scenario: Create a Traffic Policy in a local cluster
-  #   When user deletes a Traffic Policy and the resource is no longer available in any cluster
-  #   And user is at the "overview" page
-  #   And user decides to "create" a Traffic Policy in the "east" "bookinfo"
-  #   And user confirms to "create" the Traffic Policy
-  #   Then an info message "Traffic policies created for bookinfo namespace." is displayed
-  #   When user is at the "istio" list page
-  #   And user selects the "bookinfo" namespace
-  #   Then user sees the generated Traffic policy objects located in the "east" cluster
-  #   And user should not see the generated Traffic policy objects located in the "west" cluster
+  Scenario: Create a Traffic Policy in a local cluster
+    When user deletes a Traffic Policy and the resource is no longer available in any cluster
+    And user is at the "namespaces" list page
+    And user decides to "create" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "create" the Traffic Policy
+    Then an info message "Traffic policies created for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated Traffic policy objects located in the "east" cluster
+    And user should not see the generated Traffic policy objects located in the "west" cluster
 
-  # Scenario: Update a Traffic Policy scenario in a local cluster
-  #   When user is at the "overview" page
-  #   And user decides to "update" a Traffic Policy in the "east" "bookinfo"
-  #   And user confirms to "update" the Traffic Policy
-  #   Then an info message "Traffic policies updated for bookinfo namespace." is displayed
+  Scenario: Update a Traffic Policy scenario in a local cluster
+    When user is at the "namespaces" list page
+    And user decides to "update" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "update" the Traffic Policy
+    Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
-  # Scenario: Delete the Traffic Policy scenario in a local cluster
-  #   When user is at the "overview" page
-  #   And user decides to "delete" a Traffic Policy in the "east" "bookinfo"
-  #   And user confirms to "delete" the Traffic Policy
-  #   Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
-  #   When user is at the "istio" list page
-  #   And user selects the "bookinfo" namespace
-  #   Then user should not see the generated Traffic policy objects located in the "east" cluster
+  Scenario: Delete the Traffic Policy scenario in a local cluster
+    When user is at the "namespaces" list page
+    And user decides to "delete" a Traffic Policy in the "east" "bookinfo"
+    And user confirms to "delete" the Traffic Policy
+    Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user should not see the generated Traffic policy objects located in the "east" cluster
 
-  # COMMENTED OUT: Legacy overview page tests - replaced by new namespaces page implementation
-  # TODO: Update these tests to work with the new NamespacesPage
-  # @multi-primary
-  # Scenario: Create a Traffic Policy in a remote cluster
-  #   When user deletes a Traffic Policy and the resource is no longer available in any cluster
-  #   And user is at the "overview" page
-  #   And user decides to "create" a Traffic Policy in the "west" "bookinfo"
-  #   And user confirms to "create" the Traffic Policy
-  #   Then an info message "Traffic policies created for bookinfo namespace." is displayed
-  #   When user is at the "istio" list page
-  #   And user selects the "bookinfo" namespace
-  #   Then user sees the generated Traffic policy objects located in the "west" cluster
-  #   And user should not see the generated Traffic policy objects located in the "east" cluster
+  @multi-primary
+  Scenario: Create a Traffic Policy in a remote cluster
+    When user deletes a Traffic Policy and the resource is no longer available in any cluster
+    And user is at the "namespaces" list page
+    And user decides to "create" a Traffic Policy in the "west" "bookinfo"
+    And user confirms to "create" the Traffic Policy
+    Then an info message "Traffic policies created for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user sees the generated Traffic policy objects located in the "west" cluster
+    And user should not see the generated Traffic policy objects located in the "east" cluster
 
-  # @multi-primary
-  # Scenario: Update a Traffic Policy scenario in a remote cluster
-  #   When user is at the "overview" page
-  #   And user decides to "update" a Traffic Policy in the "west" "bookinfo"
-  #   And user confirms to "update" the Traffic Policy
-  #   Then an info message "Traffic policies updated for bookinfo namespace." is displayed
+  @multi-primary
+  Scenario: Update a Traffic Policy scenario in a remote cluster
+    When user is at the "namespaces" list page
+    And user decides to "update" a Traffic Policy in the "west" "bookinfo"
+    And user confirms to "update" the Traffic Policy
+    Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
-  # @multi-primary
-  # Scenario: Delete the Traffic Policy scenario in a remote cluster
-  #   When user is at the "overview" page
-  #   And user decides to "delete" a Traffic Policy in the "west" "bookinfo"
-  #   And user confirms to "delete" the Traffic Policy
-  #   Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
-  #   When user is at the "istio" list page
-  #   And user selects the "bookinfo" namespace
-  #   Then user should not see the generated Traffic policy objects located in the "west" cluster
+  @multi-primary
+  Scenario: Delete the Traffic Policy scenario in a remote cluster
+    When user is at the "namespaces" list page
+    And user decides to "delete" a Traffic Policy in the "west" "bookinfo"
+    And user confirms to "delete" the Traffic Policy
+    Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
+    When user is at the "istio" list page
+    And user selects the "bookinfo" namespace
+    Then user should not see the generated Traffic policy objects located in the "west" cluster

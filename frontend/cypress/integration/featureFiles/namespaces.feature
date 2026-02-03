@@ -15,6 +15,14 @@ Feature: Kiali Namespaces page
   Scenario: Cluster column is hidden on single-cluster namespaces list
     Then user sees the "beta" namespace in the namespaces page
     And the "Cluster" column "disappears"
+    And user sees a table with headings
+      | Namespace | Type | Health | mTLS | Istio config | Labels |
+    And the "Namespace" column on the "beta" row has the text "beta"
+    And the "Type" column on the "beta" row is not empty
+    And the health column on the "beta" row has a health icon
+    And the "mTLS" column on the "beta" row is not empty
+    And the "Istio config" column on the "beta" row is not empty
+    And the "Labels" column on the "beta" row is not empty
 
   @multi-cluster
   Scenario: Cluster column is visible on multi-cluster namespaces list
@@ -32,4 +40,28 @@ Feature: Kiali Namespaces page
   Scenario: Ambient badge is visible on namespaces list
     Then user sees the "istio-system" namespace in the namespaces page
     And badge for "Ambient" is visible in the namespaces page in the namespace "istio-system"
+
+  @core-2
+  @offline
+  Scenario: Filter namespaces by name
+    When user selects filter "Namespace"
+    And user filters for name "alpha"
+    Then user sees the "alpha" namespace in the namespaces page
+    And user does not see the "beta" namespace in the namespaces page
+
+  @core-2
+  @offline
+  Scenario: Filter namespaces by type
+    When user selects filter "Type"
+    And user filters for type "Control plane"
+    Then user sees the "istio-system" namespace in the namespaces page
+    And user does not see the "alpha" namespace in the namespaces page
+
+  @core-2
+  @offline
+  Scenario: Sort namespaces by name
+    When user sorts the list by column "Namespace" in "ascending" order
+    Then the list is sorted by column "Namespace" in "ascending" order
+    When user sorts the list by column "Namespace" in "descending" order
+    Then the list is sorted by column "Namespace" in "descending" order
 
