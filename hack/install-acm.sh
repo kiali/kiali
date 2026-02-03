@@ -36,6 +36,7 @@
 #     https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
 #
 # The script supports:
+#   init-openshift  - Initialize CRC OpenShift cluster with recommended settings
 #   install-acm     - Install ACM operator, MultiClusterHub, MinIO, and observability
 #   uninstall-acm   - Remove all ACM components cleanly
 #   status-acm      - Check the status of ACM installation
@@ -79,6 +80,7 @@
 #     ./hack/istio/install-istio-via-istioctl.sh -c oc
 #
 # Usage:
+#   ./install-acm.sh --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Initialize CRC cluster
 #   ./install-acm.sh install-acm          # Install ACM with observability
 #   ./install-acm.sh status-acm           # Check ACM status
 #   ./install-acm.sh install-kiali        # Build and install Kiali for ACM
@@ -113,6 +115,11 @@ DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && 
 
 # Test app defaults
 DEFAULT_APP_NAMESPACE="test-app"
+
+# CRC initialization defaults
+DEFAULT_CRC_CPUS="12"
+DEFAULT_CRC_DISK_SIZE="100"
+DEFAULT_CRC_PULL_SECRET_FILE=""
 
 # Runtime variables
 _VERBOSE="false"
@@ -1382,6 +1389,101 @@ status_kiali() {
 }
 
 ##############################################################################
+# OpenShift Initialization Functions
+##############################################################################
+
+init_openshift() {
+  infomsg "Initializing OpenShift cluster using CRC..."
+
+  # Check if crc-openshift.sh exists
+  if [ ! -f "${SCRIPT_DIR}/crc-openshift.sh" ]; then
+    errormsg "Cannot find crc-openshift.sh script at ${SCRIPT_DIR}/crc-openshift.sh"
+    return 1
+  fi
+
+  # Check if pull secret file is provided
+  if [ -z "${CRC_PULL_SECRET_FILE}" ]; then
+    errormsg "Pull secret file is required. Use --crc-pull-secret-file option."
+    errormsg "You can download the pull secret from https://console.redhat.com/openshift/create/local"
+    return 1
+  fi
+
+  if [ ! -f "${CRC_PULL_SECRET_FILE}" ]; then
+    errormsg "Pull secret file not found: ${CRC_PULL_SECRET_FILE}"
+    return 1
+  fi
+
+  infomsg "Starting CRC with configuration:"
+  infomsg "  CPUs: ${CRC_CPUS}"
+  infomsg "  Disk Size: ${CRC_DISK_SIZE} GB"
+  infomsg "  Pull Secret: ${CRC_PULL_SECRET_FILE}"
+  infomsg "  Cluster Monitoring: enabled"
+
+  # Start CRC cluster
+  "${SCRIPT_DIR}/crc-openshift.sh" \
+    --enable-cluster-monitoring true \
+    --crc-cpus "${CRC_CPUS}" \
+    --crc-virtual-disk-size "${CRC_DISK_SIZE}" \
+    -p "${CRC_PULL_SECRET_FILE}" \
+    start
+
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to start CRC cluster"
+    return 1
+  fi
+
+  infomsg "CRC cluster started successfully"
+
+  # Log into the cluster
+  infomsg "Logging into OpenShift cluster..."
+  ${CLIENT_EXE} login -u kubeadmin -p kiali --server https://api.crc.testing:6443
+
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to log into OpenShift cluster"
+    return 1
+  fi
+
+  infomsg "Logged into OpenShift cluster as kubeadmin"
+
+  # Log into the image registry
+  infomsg "Logging into the image registry..."
+  podman login --tls-verify=false -u kiali -p $(${CLIENT_EXE} whoami -t) default-route-openshift-image-registry.apps-crc.testing
+
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to log into image registry (this may not be critical)"
+  else
+    infomsg "Logged into image registry"
+  fi
+
+  # Install Istio
+  infomsg "Installing Istio..."
+  if [ -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
+    "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" -c ${CLIENT_EXE}
+    if [ $? -ne 0 ]; then
+      warnmsg "Istio installation failed or had issues"
+    else
+      infomsg "Istio installed successfully"
+    fi
+  else
+    warnmsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
+    warnmsg "You will need to install Istio manually before installing ACM"
+  fi
+
+  infomsg "======================================"
+  infomsg "OpenShift initialization complete!"
+  infomsg "======================================"
+  infomsg "Cluster: https://api.crc.testing:6443"
+  infomsg "Console: https://console-openshift-console.apps-crc.testing"
+  infomsg "Username: kubeadmin"
+  infomsg "Password: kiali"
+  infomsg ""
+  infomsg "Next steps:"
+  infomsg "  1. Run: $0 install-acm"
+  infomsg "  2. Run: $0 install-kiali"
+  infomsg "  3. Run: $0 install-app"
+}
+
+##############################################################################
 # Test App Functions
 ##############################################################################
 
@@ -1595,6 +1697,7 @@ _CMD=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    init-openshift) _CMD="init-openshift"; shift ;;
     install-acm) _CMD="install-acm"; shift ;;
     uninstall-acm) _CMD="uninstall-acm"; shift ;;
     status-acm) _CMD="status-acm"; shift ;;
@@ -1615,6 +1718,9 @@ while [[ $# -gt 0 ]]; do
     --kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
     --helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
     --app-namespace) APP_NAMESPACE="$2"; shift; shift ;;
+    --crc-cpus) CRC_CPUS="$2"; shift; shift ;;
+    --crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
+    --crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -1659,12 +1765,22 @@ Valid options:
   --app-namespace <namespace>
       The namespace for the test application.
       Default: ${DEFAULT_APP_NAMESPACE}
+  --crc-cpus <num>
+      Number of CPUs to assign to the CRC VM (for init-openshift command).
+      Default: ${DEFAULT_CRC_CPUS}
+  --crc-disk-size <size>
+      Disk size in GB for the CRC VM (for init-openshift command).
+      Default: ${DEFAULT_CRC_DISK_SIZE}
+  --crc-pull-secret-file <path>
+      Path to the Red Hat pull secret file (required for init-openshift command).
+      Download from: https://console.redhat.com/openshift/create/local
   -v|--verbose
       Enable verbose/debug output.
   -h|--help
       Display this help message.
 
 The command must be one of:
+  init-openshift:   Initialize CRC OpenShift cluster with recommended settings
   install-acm:      Install ACM operator, MultiClusterHub, MinIO, and observability
   uninstall-acm:    Remove all ACM components
   status-acm:       Check the status of ACM installation
@@ -1676,6 +1792,7 @@ The command must be one of:
   status-app:       Check the status of the test application
 
 Examples:
+  $0 --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Initialize CRC cluster
   $0 install-acm                      # Install ACM with defaults
   $0 -n my-acm install-acm            # Install ACM in custom namespace
   $0 -c release-2.14 install-acm      # Install specific ACM version
@@ -1710,6 +1827,9 @@ done
 : ${KIALI_REPO_DIR:=${DEFAULT_KIALI_REPO_DIR}}
 : ${HELM_CHARTS_DIR:=${DEFAULT_HELM_CHARTS_DIR}}
 : ${APP_NAMESPACE:=${DEFAULT_APP_NAMESPACE}}
+: ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
+: ${CRC_DISK_SIZE:=${DEFAULT_CRC_DISK_SIZE}}
+: ${CRC_PULL_SECRET_FILE:=${DEFAULT_CRC_PULL_SECRET_FILE}}
 
 # Debug output
 debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
@@ -1731,11 +1851,16 @@ if [ -z "${_CMD}" ]; then
   exit 1
 fi
 
-# Check prerequisites
-check_prerequisites || exit 2
+# Check prerequisites (skip for init-openshift since cluster may not exist yet)
+if [ "${_CMD}" != "init-openshift" ]; then
+  check_prerequisites || exit 2
+fi
 
 # Execute command
 case ${_CMD} in
+  init-openshift)
+    init_openshift
+    ;;
   install-acm)
     do_install
     ;;
