@@ -20,8 +20,10 @@ export type IstioConfigIssue = {
 
 export type IstioConfigStats = {
   errors: number;
+  isError: boolean;
   isLoading: boolean;
   issues: IstioConfigIssue[];
+  refresh: () => void;
   total: number;
   valid: number;
   warnings: number;
@@ -31,9 +33,9 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [stats, setStats] = React.useState<IstioConfigStats>({
+  const [isError, setIsError] = React.useState(false);
+  const [stats, setStats] = React.useState<Omit<IstioConfigStats, 'isError' | 'isLoading' | 'refresh'>>({
     errors: 0,
-    isLoading: false,
     issues: [],
     total: 0,
     valid: 0,
@@ -42,6 +44,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
 
   const fetchIstioConfigs = React.useCallback((): void => {
     setIsLoading(true);
+    setIsError(false);
 
     const fetchPromises: Promise<IstioConfigItem[]>[] = [];
 
@@ -63,53 +66,63 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
         // Flatten all items from all clusters
         const allItems = results.flat();
 
-        let total = allItems.length;
+        const total = allItems.length;
         let valid = 0;
-        let warnings = 0;
-        let errors = 0;
+        let warnings = 0; // Warning + Not Validated
+        let errors = 0; // Not Valid
         const issues: IstioConfigIssue[] = [];
 
         allItems.forEach(item => {
-          if (item.validation) {
-            if (item.validation.checks && item.validation.checks.length > 0) {
-              const hasErrors = item.validation.checks.some(check => check.severity === ValidationTypes.Error);
-              const hasWarnings = item.validation.checks.some(check => check.severity === ValidationTypes.Warning);
-
-              if (hasErrors) {
-                errors++;
-                issues.push({
-                  cluster: item.cluster,
-                  kind: item.kind,
-                  name: item.name,
-                  namespace: item.namespace,
-                  severity: 'error',
-                  status: 'Not Valid'
-                });
-              } else if (hasWarnings) {
-                warnings++;
-                issues.push({
-                  cluster: item.cluster,
-                  kind: item.kind,
-                  name: item.name,
-                  namespace: item.namespace,
-                  severity: 'warning',
-                  status: 'Warning'
-                });
-              } else {
-                valid++;
-              }
-            } else {
-              valid++;
-            }
-          } else {
-            // No validation means it's valid
-            valid++;
+          // Align with Istio list filters:
+          // - Not Valid: validation exists AND valid == false
+          // - Warning: validation exists AND checks include at least one warning
+          // - Not Validated: no validation present
+          if (!item.validation) {
+            warnings++;
+            issues.push({
+              cluster: item.cluster,
+              kind: item.kind,
+              name: item.name,
+              namespace: item.namespace,
+              severity: 'warning',
+              status: 'Not Validated'
+            });
+            return;
           }
+
+          if (!item.validation.valid) {
+            errors++;
+            issues.push({
+              cluster: item.cluster,
+              kind: item.kind,
+              name: item.name,
+              namespace: item.namespace,
+              severity: 'error',
+              status: 'Not Valid'
+            });
+            return;
+          }
+
+          const hasWarnings =
+            item.validation.checks?.some(check => check.severity === ValidationTypes.Warning) ?? false;
+          if (hasWarnings) {
+            warnings++;
+            issues.push({
+              cluster: item.cluster,
+              kind: item.kind,
+              name: item.name,
+              namespace: item.namespace,
+              severity: 'warning',
+              status: 'Warning'
+            });
+            return;
+          }
+
+          valid++;
         });
 
         setStats({
           errors,
-          isLoading: false,
           issues,
           total,
           valid,
@@ -118,9 +131,9 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
       })
       .catch(error => {
         addError(t('Error fetching Istio configs.'), error);
+        setIsError(true);
         setStats({
           errors: 0,
-          isLoading: false,
           issues: [],
           total: 0,
           valid: 0,
@@ -139,6 +152,8 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
 
   return {
     ...stats,
-    isLoading
+    isError,
+    isLoading,
+    refresh: fetchIstioConfigs
   };
 };
