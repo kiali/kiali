@@ -623,7 +623,7 @@ export const getApp = (
   return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), queryParams, {});
 };
 
-export const getClustersApps = (
+export const getClusterApps = (
   namespaces: string,
   params: AppListQuery,
   cluster?: string
@@ -1528,7 +1528,11 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
 };
 
-export const postChatAI = (provider: string, model: string, chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
+export const postChatAI = (
+  provider: string,
+  model: string,
+  chatRequest: ChatRequest
+): Promise<ApiResponse<ChatResponse>> => {
   return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(provider, model), undefined, chatRequest);
 };
 

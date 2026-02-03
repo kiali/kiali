@@ -131,7 +131,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
       const health = toggles.get('health') ? 'true' : 'false';
       const istioResources = toggles.get('istioResources') ? 'true' : 'false';
       startPerfTimer(perfKey);
-      return API.getClustersApps(
+      return API.getClusterApps(
         this.props.activeNamespaces.map(ns => ns.name).join(','),
         {
           health: health,

@@ -72,10 +72,10 @@ interface HealthFilters {
 }
 
 const healthValues: FilterValue[] = [
-  { id: NOT_READY.name, title: NOT_READY.name },
-  { id: FAILURE.name, title: FAILURE.name },
-  { id: DEGRADED.name, title: DEGRADED.name },
-  { id: HEALTHY.name, title: HEALTHY.name }
+  { id: NOT_READY.id, title: NOT_READY.name },
+  { id: FAILURE.id, title: FAILURE.name },
+  { id: DEGRADED.id, title: DEGRADED.name },
+  { id: HEALTHY.id, title: HEALTHY.name }
 ];
 
 export enum NamespaceCategory {
@@ -109,16 +109,16 @@ const summarizeHealthFilters = (healthFilters: ActiveFiltersInfo): HealthFilters
 
   healthFilters.filters.forEach(f => {
     switch (f.value) {
-      case NOT_READY.name:
+      case NOT_READY.id:
         showInNotReady = true;
         break;
-      case FAILURE.name:
+      case FAILURE.id:
         showInError = true;
         break;
-      case DEGRADED.name:
+      case DEGRADED.id:
         showInWarning = true;
         break;
-      case HEALTHY.name:
+      case HEALTHY.id:
         showInSuccess = true;
         break;
       default:

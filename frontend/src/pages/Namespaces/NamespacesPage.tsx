@@ -14,7 +14,7 @@ import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { RenderContent } from '../../components/Nav/Page';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { TimeDurationComponent } from '../../components/Time/TimeDurationComponent';
+import { Refresh } from '../../components/Refresh/Refresh';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
@@ -61,9 +61,9 @@ import { serverConfig } from '../../config';
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
 
-const rightToolbarStyle = kialiStyle({
-  position: 'absolute',
-  right: '3rem'
+const refreshStyle = kialiStyle({
+  marginLeft: '0.4rem',
+  marginRight: '0.4rem'
 });
 
 /**
@@ -189,8 +189,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     if (
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
-        (prevProps.duration !== this.props.duration ||
-          prevProps.navCollapse !== this.props.navCollapse ||
+        (prevProps.navCollapse !== this.props.navCollapse ||
           (prevProps.refreshInterval !== this.props.refreshInterval &&
             this.props.refreshInterval !== RefreshIntervalPause)))
     ) {
@@ -347,7 +346,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
                   };
                   Object.keys(nsHealth.appHealth).forEach(k => {
                     const health: Health = nsHealth.appHealth[k];
-                    const status = health.getGlobalStatus();
+                    const status = health.getStatus();
                     if (status === FAILURE) {
                       nsStatus.inError.push(k);
                     } else if (status === DEGRADED) {
@@ -374,7 +373,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
                   };
                   Object.keys(nsHealth.serviceHealth).forEach(k => {
                     const health: Health = nsHealth.serviceHealth[k];
-                    const status = health.getGlobalStatus();
+                    const status = health.getStatus();
                     if (status === FAILURE) {
                       nsStatus.inError.push(k);
                     } else if (status === DEGRADED) {
@@ -401,7 +400,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
                   };
                   Object.keys(nsHealth.workloadHealth).forEach(k => {
                     const health: Health = nsHealth.workloadHealth[k];
-                    const status = health.getGlobalStatus();
+                    const status = health.getStatus();
                     if (status === FAILURE) {
                       nsStatus.inError.push(k);
                     } else if (status === DEGRADED) {
@@ -1119,9 +1118,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
           rightToolbar={
-            <div className={rightToolbarStyle}>
-              <TimeDurationComponent key="DurationDropdown" id="namespaces-list-duration-dropdown" disabled={false} />
-            </div>
+            <Refresh className={refreshStyle} id="namespaces-list-refresh" disabled={false} manageURL={true} />
           }
         />
         <RenderContent>

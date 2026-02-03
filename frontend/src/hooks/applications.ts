@@ -28,20 +28,16 @@ export const useApplications = (): ApplicationsResult => {
     if (isMultiCluster) {
       for (let cluster in serverConfig.clusters) {
         fetchPromises.push(
-          API.getClustersApps(
-            '',
-            { health: 'true', istioResources: 'false', rateInterval: `${duration}s` },
-            cluster
-          ).then(response => response.data.applications)
+          API.getClusterApps('', { health: 'true', istioResources: 'false' }, cluster).then(
+            response => response.data.applications
+          )
         );
       }
     } else {
       fetchPromises.push(
-        API.getClustersApps(
-          '',
-          { health: 'true', istioResources: 'false', rateInterval: `${duration}s` },
-          undefined
-        ).then(response => response.data.applications)
+        API.getClusterApps('', { health: 'true', istioResources: 'false' }, undefined).then(
+          response => response.data.applications
+        )
       );
     }
 
