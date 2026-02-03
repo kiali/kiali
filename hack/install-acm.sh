@@ -16,9 +16,13 @@
 #     - Proper CA trust (no insecure_skip_verify)
 #     - Certificate-based authentication at the TLS layer
 #
-#   ACM Observability automatically creates trusted certificates in these secrets:
-#     - observability-grafana-certs: Contains tls.crt and tls.key for client auth
-#     - observability-server-ca-certs: Contains ca.crt for server trust
+#   ACM Observability automatically creates trusted certificates that the script uses:
+#     - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
+#     - CA bundle is extracted with fallback chain:
+#       1. observability-client-ca-certs in open-cluster-management-issuer namespace
+#       2. observability-server-ca-certs (ca.crt key) in observability namespace
+#       3. observability-server-ca-certs (tls.crt key) in observability namespace
+#       4. OpenShift service CA as last resort
 #
 #   The install-kiali command copies these certificates to Kiali's namespace:
 #     - Secret 'acm-observability-certs' with tls.crt and tls.key (client auth)
@@ -46,6 +50,7 @@
 #   - OpenShift cluster accessible via 'oc' CLI
 #   - Cluster-admin privileges
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
+#   - User Workload Monitoring (UWM) MUST be enabled (for PodMonitor/ServiceMonitor)
 #   - Istio must be installed
 #   - For install-kiali: helm, make, and access to Kiali git repositories
 #   - For install-kiali: ACM Observability must be installed first (run install-acm)
@@ -56,12 +61,17 @@
 #
 #     ./hack/crc-openshift.sh \
 #       --enable-cluster-monitoring true \
-#       --cpus 12 \
+#       --crc-cpus 12 \
+#       --crc-virtual-disk-size 100 \
 #       -p <path-to-your-pull-secret-file> \
 #       start
 #
 #   The --enable-cluster-monitoring option is REQUIRED for ACM observability to work.
-#   The --cpus 12 is recommended because ACM + Istio + monitoring is resource-intensive.
+#   It enables User Workload Monitoring which is required for Istio metrics collection.
+#   The --crc-cpus 12 is recommended because ACM + Istio + monitoring is resource-intensive.
+#   The --crc-virtual-disk-size 100 sets the VM disk to 100GB (minimum recommended for
+#   ACM observability which requires ~30GB for Thanos metrics storage). The default of
+#   48GB is insufficient and will cause disk pressure issues during installation.
 #
 # Installing Istio:
 #   After the OpenShift cluster is running, install Istio before running this script:
@@ -123,6 +133,10 @@ debug() {
   if [ "${_VERBOSE}" == "true" ]; then
     echo "[DEBUG] ${1}"
   fi
+}
+
+warnmsg() {
+  echo "[WARN] ${1}" >&2
 }
 
 # Wait for a resource condition with timeout
@@ -202,6 +216,16 @@ check_prerequisites() {
     return 1
   fi
   debug "OpenShift cluster monitoring (prometheus-k8s) is available"
+
+  # Check for User Workload Monitoring (required for PodMonitor/ServiceMonitor in user namespaces)
+  if ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    errormsg "User Workload Monitoring (UWM) is not enabled."
+    errormsg "UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor."
+    errormsg "Please enable UWM by setting 'enableUserWorkload: true' in the cluster-monitoring-config ConfigMap."
+    errormsg "See: https://docs.openshift.com/container-platform/latest/monitoring/enabling-monitoring-for-user-defined-projects.html"
+    return 1
+  fi
+  debug "User Workload Monitoring (prometheus-user-workload) is available"
 
   return 0
 }
@@ -433,6 +457,99 @@ stringData:
 EOF
 }
 
+configure_istio_metrics_for_acm() {
+  # Configure Istio metric collection so ACM can scrape and federate Istio metrics.
+  # Based on Red Hat OpenShift Service Mesh 3.0 documentation:
+  # https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/observability/index
+  #
+  # IMPORTANT: OpenShift monitoring ignores namespaceSelector in PodMonitor/ServiceMonitor.
+  # Therefore, PodMonitor must be created in EACH namespace that has Istio sidecars.
+  # This function only creates monitors in istio-system. For application namespaces,
+  # the install-app command creates the PodMonitor in that namespace.
+
+  if ! ${CLIENT_EXE} get namespace istio-system &>/dev/null 2>&1; then
+    warnmsg "istio-system namespace not found. Skipping Istio metrics configuration."
+    warnmsg "Install Istio first, then re-run install-acm to configure metrics."
+    return 0
+  fi
+
+  infomsg "Configuring Istio metrics collection for ACM..."
+
+  # Create ServiceMonitor for istiod control plane (per Red Hat docs)
+  infomsg "Creating ServiceMonitor for istiod..."
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod-monitor
+  namespace: istio-system
+spec:
+  targetLabels:
+  - app
+  selector:
+    matchLabels:
+      istio: pilot
+  endpoints:
+  - port: http-monitoring
+    interval: 30s
+EOF
+
+  # Create PodMonitor for Istio proxies in istio-system namespace
+  # This monitors any sidecars in istio-system (e.g., ingress/egress gateways)
+  create_istio_podmonitor "istio-system"
+
+  infomsg "Istio metrics collection configured for ACM"
+}
+
+# Creates a PodMonitor for Istio proxies in the specified namespace.
+# Must be called for EACH namespace that has Istio sidecars because
+# OpenShift monitoring ignores namespaceSelector in PodMonitor objects.
+# Based on Red Hat OpenShift Service Mesh 3.0 documentation.
+create_istio_podmonitor() {
+  local namespace="$1"
+
+  if ! ${CLIENT_EXE} get namespace "${namespace}" &>/dev/null 2>&1; then
+    debug "Namespace ${namespace} not found, skipping PodMonitor creation"
+    return 0
+  fi
+
+  infomsg "Creating PodMonitor for Istio proxies in namespace: ${namespace}"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-proxies-monitor
+  namespace: ${namespace}
+spec:
+  selector:
+    matchExpressions:
+    - key: istio-prometheus-ignore
+      operator: DoesNotExist
+  podMetricsEndpoints:
+  - path: /stats/prometheus
+    interval: 30s
+    relabelings:
+    - action: keep
+      sourceLabels: [__meta_kubernetes_pod_container_name]
+      regex: "istio-proxy"
+    - action: keep
+      sourceLabels: [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
+    - action: replace
+      regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+      replacement: '[\$2]:\$1'
+      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port,__meta_kubernetes_pod_ip]
+      targetLabel: __address__
+    - action: replace
+      regex: (\d+);((([0-9]+?)(\.|$)){4})
+      replacement: '\$2:\$1'
+      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port,__meta_kubernetes_pod_ip]
+      targetLabel: __address__
+    - sourceLabels: [__meta_kubernetes_namespace]
+      action: replace
+      targetLabel: namespace
+EOF
+}
+
 create_multiclusterobservability() {
   infomsg "Creating MultiClusterObservability resource"
   cat <<EOF | ${CLIENT_EXE} apply -f -
@@ -575,6 +692,7 @@ do_install() {
   create_thanos_secret
   create_multiclusterobservability
   wait_for_observability
+  configure_istio_metrics_for_acm
 
   infomsg "======================================"
   infomsg "ACM installation complete!"
@@ -585,9 +703,10 @@ do_install() {
   infomsg "To check status: $0 status"
   infomsg "To uninstall: $0 uninstall-acm"
   infomsg ""
-  infomsg "ACM Observability endpoints available:"
-  infomsg "  Thanos Querier: https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
-  infomsg "  RBAC Proxy:     https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+  infomsg "ACM Observability endpoints (Kiali will use the first available):"
+  infomsg "  Thanos Query Frontend: https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  Thanos Query:          https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  RBAC Query Proxy:      https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
   infomsg ""
   infomsg "To install Kiali with mTLS authentication to ACM Observability:"
   infomsg "  $0 install-kiali"
@@ -596,6 +715,17 @@ do_install() {
 ##############################################################################
 # Uninstallation Functions
 ##############################################################################
+
+delete_istio_metrics_monitors() {
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n istio-system &>/dev/null 2>&1; then
+    infomsg "Deleting Istio proxies PodMonitor from istio-system..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n istio-system || true
+  fi
+  if ${CLIENT_EXE} get servicemonitor istiod-monitor -n istio-system &>/dev/null 2>&1; then
+    infomsg "Deleting istiod ServiceMonitor..."
+    ${CLIENT_EXE} delete servicemonitor istiod-monitor -n istio-system || true
+  fi
+}
 
 delete_multiclusterobservability() {
   if ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
@@ -667,23 +797,39 @@ delete_acm_namespace() {
   fi
 }
 
+delete_acm_crds() {
+  infomsg "Deleting ACM CRDs..."
+  local crds=$(${CLIENT_EXE} get crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE} -o name 2>/dev/null || true)
+  if [ -n "${crds}" ]; then
+    ${CLIENT_EXE} delete crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE} --timeout=${TIMEOUT}s || true
+  else
+    debug "No ACM CRDs found, skipping"
+  fi
+
+  # Also delete observability CRDs which may have a different label
+  local obs_crds=$(${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "observ.*open-cluster-management" || true)
+  if [ -n "${obs_crds}" ]; then
+    infomsg "Deleting ACM Observability CRDs..."
+    echo "${obs_crds}" | xargs ${CLIENT_EXE} delete --timeout=${TIMEOUT}s || true
+  fi
+}
+
 do_uninstall() {
   infomsg "Starting ACM uninstallation..."
 
   # Delete in reverse order of installation
+  delete_istio_metrics_monitors
   delete_multiclusterobservability
   delete_minio
   delete_observability_namespace
   delete_multiclusterhub
   delete_acm_operator
   delete_acm_namespace
+  delete_acm_crds
 
   infomsg "======================================"
   infomsg "ACM uninstallation complete!"
   infomsg "======================================"
-  infomsg ""
-  infomsg "Note: CRDs were not deleted. To fully clean up, you may need to run:"
-  infomsg "  ${CLIENT_EXE} delete crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE}"
 }
 
 ##############################################################################
@@ -733,22 +879,59 @@ check_status() {
     local mco_ready=$(${CLIENT_EXE} get mco observability -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Not Found")
     echo "MultiClusterObservability: Ready=${mco_ready}"
 
-    # Check observability endpoints
-    if ${CLIENT_EXE} get service observability-thanos-querier -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-      echo "Thanos Querier service: [EXISTS]"
-      echo "  URL: https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    # Check observability endpoints (same order as install_kiali uses)
+    echo "Observability Endpoints:"
+    if ${CLIENT_EXE} get service observability-thanos-query-frontend -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "  Thanos Query Frontend: [EXISTS] https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
     else
-      echo "Thanos Querier service: [NOT FOUND]"
+      echo "  Thanos Query Frontend: [NOT FOUND]"
+    fi
+
+    if ${CLIENT_EXE} get service observability-thanos-query -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "  Thanos Query:          [EXISTS] https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    else
+      echo "  Thanos Query:          [NOT FOUND]"
     fi
 
     if ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-      echo "RBAC Query Proxy service: [EXISTS]"
-      echo "  URL: https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+      echo "  RBAC Query Proxy:      [EXISTS] https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
     else
-      echo "RBAC Query Proxy service: [NOT FOUND]"
+      echo "  RBAC Query Proxy:      [NOT FOUND]"
     fi
   else
     echo "Observability Namespace: ${OBSERVABILITY_NAMESPACE} [NOT FOUND]"
+  fi
+
+  # Check User Workload Monitoring
+  echo ""
+  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    local uwm_ready=$(${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+    local uwm_desired=$(${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+    echo "User Workload Monitoring: ${uwm_ready}/${uwm_desired} ready"
+  else
+    echo "User Workload Monitoring: [NOT ENABLED]"
+  fi
+
+  # Check Istio metrics monitors
+  echo ""
+  echo "Istio Metrics Monitors:"
+
+  # Check istiod ServiceMonitor (only in istio-system)
+  if ${CLIENT_EXE} get servicemonitor istiod-monitor -n istio-system &>/dev/null 2>&1; then
+    echo "  ServiceMonitor istiod-monitor: istio-system"
+  else
+    echo "  ServiceMonitor istiod-monitor: [NOT FOUND]"
+  fi
+
+  # Check istio-proxies-monitor PodMonitors across all namespaces
+  local podmonitors=$(${CLIENT_EXE} get podmonitor istio-proxies-monitor --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}{"\n"}{end}' 2>/dev/null || true)
+  if [ -n "${podmonitors}" ]; then
+    echo "  PodMonitor istio-proxies-monitor:"
+    echo "${podmonitors}" | while read ns; do
+      echo "    - ${ns}"
+    done
+  else
+    echo "  PodMonitor istio-proxies-monitor: [NOT FOUND in any namespace]"
   fi
 
   echo ""
@@ -759,9 +942,12 @@ check_status() {
 ##############################################################################
 
 # Copy mTLS client certificates from ACM Observability secrets.
-# ACM creates these secrets automatically when MultiClusterObservability is deployed:
-#   - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
+# ACM creates the observability-grafana-certs secret automatically when
+# MultiClusterObservability is deployed. This secret contains:
+#   - tls.crt: Client certificate for mTLS authentication
+#   - tls.key: Client private key for mTLS authentication
 # These certificates are already trusted by ACM's Observatorium/Thanos components.
+# The CA bundle for server trust is extracted separately by setup_kiali_ca_bundle().
 copy_acm_mtls_certs() {
   local cert_dir="$1"
 
@@ -802,6 +988,8 @@ copy_acm_mtls_certs() {
 # Set up the CA bundle ConfigMap for Kiali to trust the ACM Observability server certificate.
 # ACM creates a CA certificate that signs the Observatorium/Thanos server certificates.
 # The key name MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
+# Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
+# the CA should come from observability-client-ca-certs in open-cluster-management-issuer namespace.
 setup_kiali_ca_bundle() {
   local configmap_name="kiali-cabundle"
 
@@ -809,23 +997,23 @@ setup_kiali_ca_bundle() {
 
   local ca_bundle=""
 
-  # Try to get CA from ACM's observability-server-ca-certs secret
-  if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Extracting CA from observability-server-ca-certs..."
-    ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+  # Primary: observability-client-ca-certs in open-cluster-management-issuer namespace (per Red Hat blog)
+  if ${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer &>/dev/null 2>&1; then
+    infomsg "Extracting CA from observability-client-ca-certs (issuer namespace)..."
+    ca_bundle=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
       -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
   fi
 
-  # Fallback: try observability-client-ca-certs in open-cluster-management-issuer namespace
+  # Fallback: try observability-server-ca-certs in observability namespace (ca.crt key)
   if [ -z "${ca_bundle}" ]; then
-    if ${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer &>/dev/null 2>&1; then
-      infomsg "Extracting CA from observability-client-ca-certs (issuer namespace)..."
-      ca_bundle=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
+    if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      infomsg "Extracting CA from observability-server-ca-certs (ca.crt key)..."
+      ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
         -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
     fi
   fi
 
-  # Fallback: try tls.crt from observability-server-ca-certs (some versions use this key)
+  # Fallback: try tls.crt from observability-server-ca-certs (some ACM versions use this key)
   if [ -z "${ca_bundle}" ]; then
     if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
       infomsg "Extracting CA from observability-server-ca-certs (tls.crt key)..."
@@ -853,15 +1041,28 @@ setup_kiali_ca_bundle() {
   # Create or update the kiali-cabundle ConfigMap
   # The key MUST be 'additional-ca-bundle.pem' - this is the expected key name
   # that Kiali uses to load additional CA certificates for TLS verification.
+  # We add Helm ownership labels so Helm can manage this ConfigMap alongside Kiali.
   if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Updating existing ${configmap_name} ConfigMap..."
     ${CLIENT_EXE} delete configmap "${configmap_name}" -n ${KIALI_NAMESPACE}
   fi
 
   infomsg "Creating ${configmap_name} ConfigMap..."
-  ${CLIENT_EXE} create configmap "${configmap_name}" \
-    -n ${KIALI_NAMESPACE} \
-    --from-literal="additional-ca-bundle.pem=${ca_bundle}"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${configmap_name}
+  namespace: ${KIALI_NAMESPACE}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: kiali
+    meta.helm.sh/release-namespace: ${KIALI_NAMESPACE}
+data:
+  additional-ca-bundle.pem: |
+$(echo "${ca_bundle}" | sed 's/^/    /')
+EOF
 
   debug "CA bundle ConfigMap created/updated: ${configmap_name}"
 }
@@ -899,27 +1100,28 @@ create_kiali_mtls_secret() {
 install_kiali() {
   infomsg "Installing Kiali with ACM observability integration (mTLS)..."
 
-  # Verify ACM observability is installed - check for Thanos Querier service
-  local thanos_service=""
+  # Verify ACM observability is installed and determine the best endpoint
+  # We use HTTPS with mTLS (long-lived client certificates) for authentication.
+  # The certificates are copied from ACM's observability-grafana-certs secret.
   local prometheus_url=""
 
-  # Prefer observability-thanos-querier (direct Thanos endpoint)
-  if ${CLIENT_EXE} get service observability-thanos-querier -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    thanos_service="observability-thanos-querier"
-    prometheus_url="https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
-    debug "Found observability-thanos-querier service"
-  # Fallback to rbac-query-proxy
+  # Prefer observability-thanos-query-frontend (Thanos Query Frontend with caching)
+  if ${CLIENT_EXE} get service observability-thanos-query-frontend -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    prometheus_url="https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    infomsg "Using ACM observability endpoint: observability-thanos-query-frontend:9090 (HTTPS/mTLS)"
+  # Fallback to observability-thanos-query (direct Thanos)
+  elif ${CLIENT_EXE} get service observability-thanos-query -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    prometheus_url="https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    infomsg "Using ACM observability endpoint: observability-thanos-query:9090 (HTTPS/mTLS)"
+  # Fallback to rbac-query-proxy (HTTPS port)
   elif ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    thanos_service="rbac-query-proxy"
     prometheus_url="https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
-    debug "Found rbac-query-proxy service (fallback)"
+    infomsg "Using ACM observability endpoint: rbac-query-proxy:8443 (HTTPS/mTLS)"
   else
-    errormsg "ACM observability is not installed (no Thanos Querier or rbac-query-proxy found)."
+    errormsg "ACM observability is not installed (no Thanos services found)."
     errormsg "Please run '$0 install-acm' first to install ACM with observability."
     return 1
   fi
-
-  infomsg "Using ACM observability endpoint: ${thanos_service}"
 
   # Check if helm is available
   if ! command -v helm &>/dev/null; then
@@ -961,7 +1163,8 @@ install_kiali() {
   fi
 
   # Copy mTLS certificates from ACM Observability
-  # ACM creates trusted certificates that we can use for Kiali
+  # ACM creates trusted client certificates that we use for Kiali's authentication.
+  # These are long-lived certificates (typically 1 year) from observability-grafana-certs.
   local cert_dir="/tmp/kiali-mtls-certs-$$"
   if ! copy_acm_mtls_certs "${cert_dir}"; then
     errormsg "Failed to copy mTLS certificates from ACM"
@@ -971,7 +1174,7 @@ install_kiali() {
     return 1
   fi
 
-  # Create the mTLS secret
+  # Create the mTLS secret in Kiali's namespace
   if ! create_kiali_mtls_secret "${cert_dir}"; then
     errormsg "Failed to create mTLS secret"
     rm -rf "${cert_dir}"
@@ -1013,9 +1216,7 @@ install_kiali() {
   debug "Kiali route URL: ${kiali_route_url}"
   debug "Prometheus URL: ${prometheus_url}"
 
-  # Helm install/upgrade with mTLS configuration
-  # Using 'type: none' means no Authorization header - authentication is via mTLS only
-  # The cert_file and key_file reference the secret we created above
+  # Helm install/upgrade Kiali with mTLS authentication to ACM Observability
   local helm_cmd="install"
   if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Kiali is already installed. Upgrading..."
@@ -1024,6 +1225,9 @@ install_kiali() {
     infomsg "Installing Kiali via Helm..."
   fi
 
+  # Helm install/upgrade with mTLS configuration
+  # Using 'type: none' means no Authorization header - authentication is via mTLS client certificates.
+  # The cert_file and key_file reference the secret we created from ACM's observability-grafana-certs.
   helm ${helm_cmd} kiali "${helm_chart_tgz}" \
     --namespace ${KIALI_NAMESPACE} \
     --set deployment.image_name="${kiali_image}" \
@@ -1060,11 +1264,11 @@ install_kiali() {
   infomsg "Kiali Namespace: ${KIALI_NAMESPACE}"
   infomsg "Kiali URL: ${kiali_route_url}"
   infomsg "Prometheus Backend: ${prometheus_url}"
-  infomsg "Authentication: mTLS (certificate-based)"
+  infomsg "Authentication: mTLS (long-lived client certificates from ACM)"
   infomsg ""
-  infomsg "mTLS configuration (using ACM's pre-trusted certificates):"
+  infomsg "mTLS configuration:"
   infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
-  infomsg "  Server CA trust:     configmap/kiali-cabundle (ACM's CA)"
+  infomsg "  Server CA trust:     configmap/kiali-cabundle (ACM's server CA)"
   infomsg ""
   infomsg "To access Kiali, open: ${kiali_route_url}"
 }
@@ -1276,6 +1480,10 @@ EOF
   infomsg "Waiting for deployment to be ready..."
   ${CLIENT_EXE} rollout status deployment/hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
 
+  # Create PodMonitor for Istio proxies in this namespace
+  # Required because OpenShift monitoring ignores namespaceSelector in PodMonitor
+  create_istio_podmonitor "${APP_NAMESPACE}"
+
   infomsg "======================================"
   infomsg "Test application installation complete!"
   infomsg "======================================"
@@ -1310,6 +1518,12 @@ uninstall_app() {
   if ${CLIENT_EXE} get configmap hello-world-html -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting configmap..."
     ${CLIENT_EXE} delete configmap hello-world-html -n ${APP_NAMESPACE}
+  fi
+
+  # Delete PodMonitor for Istio proxies
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting PodMonitor..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${APP_NAMESPACE}
   fi
 
   # Delete namespace
