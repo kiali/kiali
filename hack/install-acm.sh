@@ -567,6 +567,95 @@ spec:
 EOF
 }
 
+configure_istio_metrics_allowlist() {
+  infomsg "Configuring ACM observability to collect Istio metrics for Kiali..."
+
+  # Wait for the default allowlist ConfigMap to be created by ACM
+  local max_wait=60
+  local waited=0
+  while ! ${CLIENT_EXE} get configmap observability-metrics-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; do
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for observability-metrics-allowlist ConfigMap"
+      warnmsg "Istio metrics may not be collected by ACM"
+      return 0
+    fi
+    debug "Waiting for observability-metrics-allowlist ConfigMap... (${waited}s)"
+    sleep 5
+    waited=$((waited + 5))
+  done
+
+  # Check if custom allowlist already exists
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    local existing_list=$(${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.data.metrics_list\.yaml}' 2>/dev/null)
+    if echo "${existing_list}" | grep -q "istio_"; then
+      infomsg "Istio metrics already in ACM custom allowlist"
+      return 0
+    fi
+  fi
+
+  # Create custom allowlist ConfigMap with ALL metrics Kiali requires
+  # Per ACM docs, custom metrics go in observability-metrics-custom-allowlist (separate from default allowlist)
+  # See: https://github.com/stolostron/multicluster-observability-operator/blob/main/tools/example/observability-metrics-custom-allowlist.yaml
+  # Complete list from Kiali FAQ: https://kiali.io/docs/faq/general/#requiredmetrics
+  infomsg "Creating custom metrics allowlist with all Kiali-required metrics..."
+
+  cat <<'EOF' | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-metrics-custom-allowlist
+  namespace: open-cluster-management-observability
+data:
+  metrics_list.yaml: |
+    names:
+    # Istio HTTP/gRPC metrics (required for traffic, health, topology)
+    - istio_requests_total
+    - istio_request_bytes_bucket
+    - istio_request_bytes_count
+    - istio_request_bytes_sum
+    - istio_request_duration_milliseconds_bucket
+    - istio_request_duration_milliseconds_count
+    - istio_request_duration_milliseconds_sum
+    - istio_request_messages_total
+    - istio_response_bytes_bucket
+    - istio_response_bytes_count
+    - istio_response_bytes_sum
+    - istio_response_messages_total
+    # Istio TCP metrics (required for TCP services)
+    - istio_tcp_connections_closed_total
+    - istio_tcp_connections_opened_total
+    - istio_tcp_received_bytes_total
+    - istio_tcp_sent_bytes_total
+    # Pilot/control plane metrics (required for control plane monitoring)
+    - pilot_proxy_convergence_time_sum
+    - pilot_proxy_convergence_time_count
+    - pilot_services
+    - pilot_xds
+    - pilot_xds_pushes
+    # Envoy proxy metrics (required for workload details)
+    - envoy_cluster_upstream_cx_active
+    - envoy_cluster_upstream_rq_total
+    - envoy_listener_downstream_cx_active
+    - envoy_listener_http_downstream_rq
+    - envoy_server_memory_allocated
+    - envoy_server_memory_heap_size
+    - envoy_server_uptime
+    # Container/process metrics (required for control plane overview)
+    - container_cpu_usage_seconds_total
+    - container_memory_working_set_bytes
+    - process_cpu_seconds_total
+    - process_resident_memory_bytes
+EOF
+
+  infomsg "Custom metrics allowlist created with Istio metrics"
+  infomsg "Metrics collector will include Istio metrics in next scrape cycle (~5 minutes)"
+
+  # Restart metrics collectors to pick up the new allowlist immediately
+  infomsg "Restarting metrics collectors to apply new allowlist..."
+  ${CLIENT_EXE} rollout restart deployment/uwl-metrics-collector-deployment -n ${OBSERVABILITY_NAMESPACE} || true
+  ${CLIENT_EXE} rollout restart deployment/metrics-collector-deployment -n ${OBSERVABILITY_NAMESPACE} || true
+}
+
 create_multiclusterobservability() {
   infomsg "Creating MultiClusterObservability resource"
   cat <<EOF | ${CLIENT_EXE} apply -f -
@@ -710,6 +799,7 @@ do_install() {
   create_multiclusterobservability
   wait_for_observability
   configure_istio_metrics_for_acm
+  configure_istio_metrics_allowlist
 
   infomsg "======================================"
   infomsg "ACM installation complete!"
