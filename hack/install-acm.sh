@@ -52,6 +52,7 @@
 #   install-app     - Install a simple test mesh application
 #   uninstall-app   - Remove the test application
 #   status-app      - Check the status of the test application
+#   traffic         - Generate HTTP traffic to the test application
 #
 # Prerequisites:
 #   - OpenShift cluster accessible via 'oc' CLI
@@ -93,6 +94,7 @@
 #   ./install-acm.sh status-kiali         # Check Kiali status
 #   ./install-acm.sh install-app          # Install test mesh application
 #   ./install-acm.sh status-app           # Check test application status
+#   ./install-acm.sh traffic              # Generate traffic to test app
 #   ./install-acm.sh uninstall-app        # Remove test application
 #   ./install-acm.sh uninstall-kiali      # Remove Kiali
 #   ./install-acm.sh uninstall-acm        # Remove ACM completely
@@ -121,6 +123,8 @@ DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && 
 
 # Test app defaults
 DEFAULT_APP_NAMESPACE="test-app"
+DEFAULT_TRAFFIC_COUNT="10"
+DEFAULT_TRAFFIC_INTERVAL="1"
 
 # CRC initialization defaults
 DEFAULT_CRC_CPUS="12"
@@ -1003,7 +1007,7 @@ copy_acm_mtls_certs() {
 }
 
 # Set up the CA bundle ConfigMap for Kiali to trust the ACM Observability server certificate.
-# The Kiali Helm chart now creates kiali-cabundle-openshift (for OpenShift service CA) and
+# The Kiali Helm chart creates kiali-cabundle-openshift (for OpenShift service CA) and
 # uses a projected volume to automatically combine it with kiali-cabundle (custom CAs).
 # This function creates kiali-cabundle with only the ACM CA - the projected volume will
 # merge it with OpenShift's service CA automatically.
@@ -1703,6 +1707,68 @@ status_app() {
   echo ""
 }
 
+generate_traffic() {
+  infomsg "Generating traffic to test application..."
+
+  # Check if test app is running
+  if ! ${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "Test application is not installed in namespace ${APP_NAMESPACE}"
+    errormsg "Run '$0 install-app' first to install the test application"
+    return 1
+  fi
+
+  # Check if deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  if [ "${ready}" != "1" ]; then
+    errormsg "Test application is not ready (ready replicas: ${ready:-0})"
+    return 1
+  fi
+
+  if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
+    # Continuous traffic mode
+    infomsg "Sending requests every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
+    local count=0
+    trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
+    while true; do
+      if ${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 2>/dev/null; then
+        count=$((count + 1))
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP $(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080 2>/dev/null))"
+      else
+        warnmsg "Request ${count} failed"
+      fi
+      sleep ${TRAFFIC_INTERVAL}
+    done
+  else
+    # Send N requests mode
+    infomsg "Sending ${TRAFFIC_COUNT} requests to test application (${TRAFFIC_INTERVAL}s interval)..."
+    local success_count=0
+    local fail_count=0
+    for i in $(seq 1 ${TRAFFIC_COUNT}); do
+      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        success_count=$((success_count + 1))
+        debug "Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code}"
+      else
+        fail_count=$((fail_count + 1))
+        warnmsg "Request ${i}/${TRAFFIC_COUNT}: Failed (HTTP ${http_code})"
+      fi
+      # Sleep between requests (but not after the last one)
+      if [ ${i} -lt ${TRAFFIC_COUNT} ]; then
+        sleep ${TRAFFIC_INTERVAL}
+      fi
+    done
+    infomsg "======================================"
+    infomsg "Traffic generation complete!"
+    infomsg "======================================"
+    infomsg "Total requests: ${TRAFFIC_COUNT}"
+    infomsg "Successful: ${success_count}"
+    infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Metrics should now be visible in Kiali at:"
+    infomsg "  https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+  fi
+}
+
 ##############################################################################
 # Argument Parsing
 ##############################################################################
@@ -1721,6 +1787,7 @@ while [[ $# -gt 0 ]]; do
     install-app) _CMD="install-app"; shift ;;
     uninstall-app) _CMD="uninstall-app"; shift ;;
     status-app) _CMD="status-app"; shift ;;
+    traffic) _CMD="traffic"; shift ;;
     -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
     -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
     --observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
@@ -1735,6 +1802,9 @@ while [[ $# -gt 0 ]]; do
     --crc-cpus) CRC_CPUS="$2"; shift; shift ;;
     --crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
     --crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
+    --traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
+    --traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
+    --traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -1788,6 +1858,15 @@ Valid options:
   --crc-pull-secret-file <path>
       Path to the Red Hat pull secret file (required for init-openshift command).
       Download from: https://console.redhat.com/openshift/create/local
+  --traffic-count <num>
+      Number of requests to send to test app (for traffic-app command).
+      Default: ${DEFAULT_TRAFFIC_COUNT}
+  --traffic-interval <seconds>
+      Interval in seconds between requests (for traffic-app --traffic-continuous).
+      Default: ${DEFAULT_TRAFFIC_INTERVAL}
+  --traffic-continuous
+      Send requests continuously until Ctrl-C (for traffic-app command).
+      Without this flag, sends --traffic-count requests and stops.
   -v|--verbose
       Enable verbose/debug output.
   -h|--help
@@ -1804,6 +1883,7 @@ The command must be one of:
   install-app:      Install a simple test mesh application
   uninstall-app:    Remove the test application
   status-app:       Check the status of the test application
+  traffic:          Generate HTTP traffic to the test application
 
 Examples:
   $0 --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Initialize CRC cluster
@@ -1818,6 +1898,9 @@ Examples:
   $0 install-app                      # Install test mesh application
   $0 status-app                       # Check test application status
   $0 uninstall-app                    # Remove test application
+  $0 traffic                          # Send 10 requests to test app
+  $0 --traffic-count 50 traffic       # Send 50 requests to test app
+  $0 --traffic-continuous traffic     # Send requests continuously (Ctrl-C to stop)
 
 HELPMSG
       exit 0
@@ -1844,6 +1927,9 @@ done
 : ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
 : ${CRC_DISK_SIZE:=${DEFAULT_CRC_DISK_SIZE}}
 : ${CRC_PULL_SECRET_FILE:=${DEFAULT_CRC_PULL_SECRET_FILE}}
+: ${TRAFFIC_COUNT:=${DEFAULT_TRAFFIC_COUNT}}
+: ${TRAFFIC_INTERVAL:=${DEFAULT_TRAFFIC_INTERVAL}}
+: ${TRAFFIC_CONTINUOUS:=false}
 
 # Debug output
 debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
@@ -1901,6 +1987,9 @@ case ${_CMD} in
     ;;
   status-app)
     status_app
+    ;;
+  traffic)
+    generate_traffic
     ;;
   *)
     errormsg "Unknown command: ${_CMD}"
