@@ -1,7 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { getClusterForSingleCluster, getColWithRowText } from './table';
 
-// Namespace page (table) helpers.
+const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);
@@ -31,15 +31,23 @@ Then('the {string} column on the {string} row is not empty', (column: string, ro
   const normalized = normalizeColumn(column);
 
   getColWithRowText(rowText, normalized).then($cell => {
-    const cellText = $cell.text().trim();
-
     // Some columns can be icon-only (ex: Istio config validation status).
     if (normalized === 'Config') {
-      cy.wrap($cell).find('[data-test$="-validation"]').should('exist');
+      if (!IN_OFFLINE_MODE) {
+        cy.wrap($cell).find('[data-test$="-validation"]').should('exist');
+      } else {
+        cy.wrap($cell)
+          .invoke('text')
+          .then(t => t.trim())
+          .should('contain.text', 'n/a');
+      }
       return;
     }
 
-    expect(cellText).to.not.equal('');
+    cy.wrap($cell)
+      .invoke('text')
+      .then(t => t.trim())
+      .should('not.eq', '');
   });
 });
 
