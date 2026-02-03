@@ -4,11 +4,7 @@ import { getClusterForSingleCluster, getColWithRowText } from './table';
 // Namespace page (table) helpers.
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
-  cy.get('tbody').contains('td', ns);
-});
-
-Then(`user does not see the {string} namespace in the namespaces page`, (ns: string) => {
-  cy.get('tbody').contains('td', ns).should('not.exist');
+  cy.get('tbody').contains('td[data-label="Namespace"]', ns);
 });
 
 Then(`user sees the {string} namespace in cluster {string} in the namespaces page`, (ns: string, cluster: string) => {
@@ -32,11 +28,19 @@ const normalizeColumn = (column: string): string => {
 };
 
 Then('the {string} column on the {string} row is not empty', (column: string, rowText: string) => {
-  getColWithRowText(rowText, normalizeColumn(column))
-    .invoke('text')
-    .then(text => {
-      expect(text.trim()).to.not.equal('');
-    });
+  const normalized = normalizeColumn(column);
+
+  getColWithRowText(rowText, normalized).then($cell => {
+    const cellText = $cell.text().trim();
+
+    // Some columns can be icon-only (ex: Istio config validation status).
+    if (normalized === 'Config') {
+      cy.wrap($cell).find('[data-test$="-validation"]').should('exist');
+      return;
+    }
+
+    expect(cellText).to.not.equal('');
+  });
 });
 
 When('user filters for type {string}', (type: string) => {
