@@ -10,11 +10,17 @@
 #
 # Kiali Authentication to ACM Observability:
 #   This script configures Kiali to use mTLS (mutual TLS) with long-lived
-#   client certificates for authentication to ACM's Observatorium/Thanos.
+#   client certificates for authentication to ACM's Observatorium API.
 #   This approach provides:
+#     - HTTPS with TLS for secure communication
 #     - Long-lived credentials without frequent rotation
 #     - Proper CA trust (no insecure_skip_verify)
 #     - Certificate-based authentication at the TLS layer
+#
+#   Kiali connects to ACM via the Observatorium API route:
+#     - URL: https://observatorium-api-<namespace>.apps.<domain>/api/metrics/v1/default
+#     - The Observatorium API proxies requests to internal Thanos services
+#     - TLS termination happens at the Observatorium API layer
 #
 #   ACM Observability automatically creates trusted certificates that the script uses:
 #     - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
@@ -710,9 +716,13 @@ do_install() {
   infomsg "To check status: $0 status"
   infomsg "To uninstall: $0 uninstall-acm"
   infomsg ""
-  infomsg "ACM Observability endpoints (Kiali will use the first available):"
-  infomsg "  Thanos Query Frontend: https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
-  infomsg "  Thanos Query:          https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "ACM Observability endpoint for Kiali (HTTPS with mTLS):"
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg "  Observatorium API: https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
+  infomsg ""
+  infomsg "Internal endpoints (HTTP only, for reference):"
+  infomsg "  Thanos Query Frontend: http://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  Thanos Query:          http://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
   infomsg "  RBAC Query Proxy:      https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
   infomsg ""
   infomsg "To install Kiali with mTLS authentication to ACM Observability:"
@@ -993,68 +1003,61 @@ copy_acm_mtls_certs() {
 }
 
 # Set up the CA bundle ConfigMap for Kiali to trust the ACM Observability server certificate.
-# ACM creates a CA certificate that signs the Observatorium/Thanos server certificates.
-# The key name MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
+# The Kiali Helm chart now creates kiali-cabundle-openshift (for OpenShift service CA) and
+# uses a projected volume to automatically combine it with kiali-cabundle (custom CAs).
+# This function creates kiali-cabundle with only the ACM CA - the projected volume will
+# merge it with OpenShift's service CA automatically.
+# Per Kiali docs: https://kiali.io/docs/configuration/p8s-jaeger-grafana/tls-configuration/
 # Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
-# the CA should come from observability-client-ca-certs in open-cluster-management-issuer namespace.
 setup_kiali_ca_bundle() {
   local configmap_name="kiali-cabundle"
 
   infomsg "Setting up CA bundle for ACM Observability server trust..."
 
-  local ca_bundle=""
+  local acm_ca=""
 
+  # Get ACM observability CA
   # Primary: observability-client-ca-certs in open-cluster-management-issuer namespace (per Red Hat blog)
   if ${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer &>/dev/null 2>&1; then
     infomsg "Extracting CA from observability-client-ca-certs (issuer namespace)..."
-    ca_bundle=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
+    acm_ca=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
       -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
   fi
 
   # Fallback: try observability-server-ca-certs in observability namespace (ca.crt key)
-  if [ -z "${ca_bundle}" ]; then
+  if [ -z "${acm_ca}" ]; then
     if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
       infomsg "Extracting CA from observability-server-ca-certs (ca.crt key)..."
-      ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
         -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
     fi
   fi
 
   # Fallback: try tls.crt from observability-server-ca-certs (some ACM versions use this key)
-  if [ -z "${ca_bundle}" ]; then
+  if [ -z "${acm_ca}" ]; then
     if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
       infomsg "Extracting CA from observability-server-ca-certs (tls.crt key)..."
-      ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
         -o jsonpath='{.data.tls\.crt}' 2>/dev/null | base64 -d)
     fi
   fi
 
-  # Last fallback: use OpenShift service CA
-  if [ -z "${ca_bundle}" ]; then
-    warnmsg "Could not find ACM observability CA certificates."
-    warnmsg "Falling back to OpenShift service CA..."
-    if ${CLIENT_EXE} get configmap openshift-service-ca.crt -n openshift-config-managed &>/dev/null 2>&1; then
-      ca_bundle=$(${CLIENT_EXE} get configmap openshift-service-ca.crt -n openshift-config-managed \
-        -o jsonpath='{.data.service-ca\.crt}' 2>/dev/null)
-    fi
+  if [ -z "${acm_ca}" ]; then
+    errormsg "Could not retrieve ACM observability CA certificate."
+    errormsg "Kiali will not be able to verify the Observatorium API server certificate."
+    return 1
   fi
 
-  if [ -z "${ca_bundle}" ]; then
-    warnmsg "Could not retrieve any CA bundle for server trust."
-    warnmsg "Kiali may not be able to verify the Thanos server certificate."
-    return 0
-  fi
-
-  # Create or update the kiali-cabundle ConfigMap
-  # The key MUST be 'additional-ca-bundle.pem' - this is the expected key name
-  # that Kiali uses to load additional CA certificates for TLS verification.
-  # We add Helm ownership labels so Helm can manage this ConfigMap alongside Kiali.
+  # Create or update the kiali-cabundle ConfigMap with the ACM CA only.
+  # The Helm chart will create kiali-cabundle-openshift for the OpenShift service CA,
+  # and use a projected volume to automatically combine both ConfigMaps.
+  # Key MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
   if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Updating existing ${configmap_name} ConfigMap..."
     ${CLIENT_EXE} delete configmap "${configmap_name}" -n ${KIALI_NAMESPACE}
   fi
 
-  infomsg "Creating ${configmap_name} ConfigMap..."
+  infomsg "Creating ${configmap_name} ConfigMap with ACM observability CA..."
   cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: v1
 kind: ConfigMap
@@ -1068,10 +1071,10 @@ metadata:
     meta.helm.sh/release-namespace: ${KIALI_NAMESPACE}
 data:
   additional-ca-bundle.pem: |
-$(echo "${ca_bundle}" | sed 's/^/    /')
+$(echo "${acm_ca}" | sed 's/^/    /')
 EOF
 
-  debug "CA bundle ConfigMap created/updated: ${configmap_name}"
+  debug "CA bundle ConfigMap created. Helm chart will merge with OpenShift service CA via projected volume."
 }
 
 # Create the Kubernetes secret containing mTLS client certificates for Kiali.
@@ -1107,28 +1110,27 @@ create_kiali_mtls_secret() {
 install_kiali() {
   infomsg "Installing Kiali with ACM observability integration (mTLS)..."
 
-  # Verify ACM observability is installed and determine the best endpoint
-  # We use HTTPS with mTLS (long-lived client certificates) for authentication.
-  # The certificates are copied from ACM's observability-grafana-certs secret.
-  local prometheus_url=""
-
-  # Prefer observability-thanos-query-frontend (Thanos Query Frontend with caching)
-  if ${CLIENT_EXE} get service observability-thanos-query-frontend -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    prometheus_url="https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
-    infomsg "Using ACM observability endpoint: observability-thanos-query-frontend:9090 (HTTPS/mTLS)"
-  # Fallback to observability-thanos-query (direct Thanos)
-  elif ${CLIENT_EXE} get service observability-thanos-query -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    prometheus_url="https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
-    infomsg "Using ACM observability endpoint: observability-thanos-query:9090 (HTTPS/mTLS)"
-  # Fallback to rbac-query-proxy (HTTPS port)
-  elif ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    prometheus_url="https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
-    infomsg "Using ACM observability endpoint: rbac-query-proxy:8443 (HTTPS/mTLS)"
-  else
-    errormsg "ACM observability is not installed (no Thanos services found)."
+  # Verify ACM observability is installed
+  if ! ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
+    errormsg "ACM observability is not installed (MultiClusterObservability not found)."
     errormsg "Please run '$0 install-acm' first to install ACM with observability."
     return 1
   fi
+
+  # Get cluster apps domain for constructing the Observatorium API route URL
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  if [ -z "${apps_domain}" ]; then
+    errormsg "Could not determine cluster apps domain"
+    return 1
+  fi
+
+  # Use the Observatorium API route with HTTPS and mTLS authentication.
+  # This is the proper way to access ACM observability externally with client certificates.
+  # Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
+  # The Observatorium API proxies requests to internal Thanos services and handles TLS termination.
+  local prometheus_url="https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
+  infomsg "Using ACM observability endpoint: observatorium-api (HTTPS/mTLS)"
+  debug "Prometheus URL: ${prometheus_url}"
 
   # Check if helm is available
   if ! command -v helm &>/dev/null; then
@@ -1202,15 +1204,9 @@ install_kiali() {
 
   # Get dynamic values from cluster
   local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
-  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
 
   if [ -z "${internal_registry}" ]; then
     errormsg "Could not determine internal registry hostname"
-    return 1
-  fi
-
-  if [ -z "${apps_domain}" ]; then
-    errormsg "Could not determine cluster apps domain"
     return 1
   fi
 
@@ -1234,7 +1230,11 @@ install_kiali() {
 
   # Helm install/upgrade with mTLS configuration
   # Using 'type: none' means no Authorization header - authentication is via mTLS client certificates.
-  # The cert_file and key_file reference the secret we created from ACM's observability-grafana-certs.
+  # The cert_file and key_file reference the acm-observability-certs secret for client authentication.
+  # CA trust is configured via the kiali-cabundle ConfigMap (not via deprecated ca_file parameter).
+  # On OpenShift, the projected volume automatically combines:
+  #   - kiali-cabundle-openshift: OpenShift service CA (auto-created)
+  #   - kiali-cabundle: ACM observability CA (we create this above)
   helm ${helm_cmd} kiali "${helm_chart_tgz}" \
     --namespace ${KIALI_NAMESPACE} \
     --set deployment.image_name="${kiali_image}" \
@@ -1275,7 +1275,10 @@ install_kiali() {
   infomsg ""
   infomsg "mTLS configuration:"
   infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
-  infomsg "  Server CA trust:     configmap/kiali-cabundle (ACM's server CA)"
+  infomsg "  Server CA trust:     Projected volume combining:"
+  infomsg "    - configmap/kiali-cabundle-openshift (OpenShift service CA, auto-injected)"
+  infomsg "    - configmap/kiali-cabundle (ACM observability CA)"
+  infomsg "  Note: Helm chart automatically combines both CAs via projected volume"
   infomsg ""
   infomsg "To access Kiali, open: ${kiali_route_url}"
 }
@@ -1371,11 +1374,22 @@ status_kiali() {
     echo "mTLS Certificate Secret: [NOT FOUND]"
   fi
 
-  # Check CA bundle ConfigMap
-  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
-    echo "CA Bundle ConfigMap: [EXISTS]"
+  # Check CA bundle ConfigMaps (projected volume combines both)
+  if ${CLIENT_EXE} get configmap kiali-cabundle-openshift -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "CA Bundle ConfigMap (OpenShift service CA): [EXISTS]"
   else
-    echo "CA Bundle ConfigMap: [NOT FOUND]"
+    echo "CA Bundle ConfigMap (OpenShift service CA): [NOT FOUND]"
+  fi
+
+  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "CA Bundle ConfigMap (ACM observability CA): [EXISTS]"
+    # Check if it has the ACM CA
+    local has_acm_ca=$(${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} -o jsonpath='{.data.additional-ca-bundle\.pem}' 2>/dev/null)
+    if [ -n "${has_acm_ca}" ]; then
+      echo "  ACM CA in additional-ca-bundle.pem: [EXISTS]"
+    fi
+  else
+    echo "CA Bundle ConfigMap (ACM observability CA): [NOT FOUND]"
   fi
 
   # Check ACM RBAC
