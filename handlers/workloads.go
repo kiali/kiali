@@ -17,7 +17,6 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -176,6 +175,9 @@ func WorkloadDetails(
 		}
 
 		includeValidations := p.IncludeValidations
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
+		}
 
 		istioConfigValidations := models.IstioValidations{}
 		var errValidations error
@@ -247,9 +249,11 @@ func WorkloadUpdate(
 		}
 
 		cluster := clusterNameFromQuery(conf, query)
-		log.Debugf("Cluster: %s", cluster)
 
 		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
+		}
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {

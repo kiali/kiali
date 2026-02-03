@@ -149,17 +149,21 @@ func ServiceDetails(
 			return
 		}
 
-		// Rate interval is needed to fetch request rates based health
 		queryParams := r.URL.Query()
+		cluster := clusterNameFromQuery(conf, queryParams)
+
+		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = defaultHealthRateInterval
 		}
 
 		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
+		}
 
 		params := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
 
 		namespace := params["namespace"]
 		service := params["service"]
@@ -215,8 +219,10 @@ func ServiceUpdate(
 			return
 		}
 
-		// Rate interval is needed to fetch request rates based health
 		queryParams := r.URL.Query()
+		cluster := clusterNameFromQuery(conf, queryParams)
+
+		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = defaultHealthRateInterval
@@ -226,10 +232,13 @@ func ServiceUpdate(
 		if patchType == "" {
 			patchType = defaultPatchType
 		}
+
 		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
+		}
 
 		params := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
 
 		namespace := params["namespace"]
 		service := params["service"]
