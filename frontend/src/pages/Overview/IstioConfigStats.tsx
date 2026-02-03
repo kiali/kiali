@@ -60,12 +60,10 @@ const statusLabelStyle = kialiStyle({
 });
 
 const errorCardBodyStyle = kialiStyle({
-  // Reduce the gap between the error message (body) and the footer action.
   paddingBottom: 0
 });
 
 const tryAgainStyle = kialiStyle({
-  // PatternFly "link button" defaults to underlined text; design asks for no underline.
   textDecoration: 'none',
   $nest: {
     '&, &:hover, &:focus, &:active': {

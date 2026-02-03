@@ -99,13 +99,11 @@ export const ClusterStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      {!isLoading && (
-        <CardFooter>
-          <Link to={`/${Paths.MESH}`} className={linkStyle}>
-            {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Link>
-        </CardFooter>
-      )}
+      <CardFooter>
+        <Link to={`/${Paths.MESH}`} className={linkStyle}>
+          {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+        </Link>
+      </CardFooter>
     </Card>
   );
 };
