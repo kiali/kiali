@@ -4,7 +4,7 @@
   pages since these are all similar.
 */
 
-import { Then, When, Step } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, Then, When, Step } from '@badeball/cypress-cucumber-preprocessor';
 import {
   checkHealthIndicatorInTable,
   checkHealthStatusInTable,
@@ -14,6 +14,13 @@ import {
   hasAtLeastOneClass
 } from './table';
 import { openTab } from './transition';
+import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
+
+// Type definition for health cache metrics API response
+interface HealthCacheMetrics {
+  healthCacheHits: number;
+  healthCacheMisses: number;
+}
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
@@ -220,4 +227,45 @@ Then('user should see no duplicate namespaces', () => {
     .contains('bookinfo')
     .should('be.visible')
     .and('have.length', 1);
+});
+
+// Health cache metrics test steps
+Given('health cache is enabled', () => {
+  enableKialiFeature(HEALTH_CACHE_CONFIG);
+});
+
+Given('health cache metrics are recorded', () => {
+  cy.request('api/test/metrics/health/cache').then(resp => {
+    expect(resp.status).to.eq(200);
+    const before = resp.body as HealthCacheMetrics;
+    cy.wrap(before, { log: false }).as('healthCacheMetricsBefore');
+    cy.log(`health cache metrics (before): ${JSON.stringify(before)}`);
+  });
+});
+
+When('user visits the apps list page for {string} namespace', (namespace: string) => {
+  // The apps endpoint includes health data when health=true query param is set
+  // The backend uses the health cache to populate this data
+  cy.intercept(`**/api/clusters/apps*`).as('appsRequest');
+
+  cy.visit({ url: `/console/applications?namespaces=${namespace}&refresh=0` });
+
+  // Wait for the apps request (which includes health data from the cache)
+  cy.wait('@appsRequest');
+});
+
+Then('health cache metrics should show at least {int} hit', (minHits: number) => {
+  cy.get('@healthCacheMetricsBefore').then(beforeObj => {
+    const before = (beforeObj as unknown) as HealthCacheMetrics;
+
+    cy.request('api/test/metrics/health/cache').then(resp => {
+      expect(resp.status).to.eq(200);
+      const after = resp.body as HealthCacheMetrics;
+
+      cy.log(`health cache metrics (before): ${JSON.stringify(before)}`);
+      cy.log(`health cache metrics (after): ${JSON.stringify(after)}`);
+
+      expect(after.healthCacheHits).to.be.at.least(before.healthCacheHits + minHits);
+    });
+  });
 });

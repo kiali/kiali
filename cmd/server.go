@@ -123,6 +123,12 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Fatalf("Error creating business layer: %s", err)
 	}
 
+	// Create health monitor for pre-computing health data, started below after cache initialization
+	var hcm business.HealthMonitor
+	if conf.KialiInternal.HealthCache.Enabled {
+		hcm = business.NewHealthMonitor(cache, clientFactory, conf, discovery, prom)
+	}
+
 	if conf.IsValidationsEnabled() {
 		if err := controller.NewValidationsController(ctx, slices.Collect(maps.Keys(kubeCaches)), conf, cache, &layer.Validations, mgr); err != nil {
 			log.Fatal(err)
@@ -152,6 +158,14 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 
 	if conf.ExternalServices.Istio.IstioAPIEnabled {
 		cpm.PollIstiodForProxyStatus(ctx)
+	}
+
+	// Start health monitor for pre-computing health data (if enabled)
+	if hcm != nil {
+		log.Infof("health cache is enabled (refresh interval: %v); starting health pre-computation.", conf.HealthConfig.Compute.RefreshInterval)
+		hcm.Start(ctx)
+	} else {
+		log.Info("health cache is disabled; skipping health pre-computation.")
 	}
 
 	// Start listening to requests

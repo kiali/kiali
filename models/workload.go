@@ -183,6 +183,12 @@ type WorkloadListItem struct {
 
 type WorkloadOverviews []*WorkloadListItem
 
+// HasHTTPTraffic returns true if the workload can report HTTP traffic metrics.
+// This is true if the workload has a sidecar, is a gateway, or is associated with an ambient waypoint.
+func (w *WorkloadListItem) HasHTTPTraffic() bool {
+	return w.IstioSidecar || w.IsGateway || len(w.WaypointWorkloads) > 0
+}
+
 // WorkloadReferenceInfo holds the service information needed to create links to another workload.
 // Used, for example, to link services to Ambient waypoint proxies
 type WorkloadReferenceInfo struct {

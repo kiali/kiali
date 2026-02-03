@@ -20,7 +20,6 @@ import * as TrafficListFilters from './FiltersAndSorts';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector } from '../../store/Selectors';
-import { HealthAnnotationType } from '../../types/HealthAnnotation';
 import { TrafficListComponent } from 'components/TrafficList/TrafficListComponent';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
@@ -42,7 +41,6 @@ export interface AppNode {
 
 export interface WorkloadNode {
   cluster?: string;
-  healthAnnotation?: HealthAnnotationType;
   id: string;
   isInaccessible: boolean;
   name: string;
@@ -53,7 +51,6 @@ export interface WorkloadNode {
 export interface ServiceNode {
   cluster?: string;
   destServices?: DestService[];
-  healthAnnotation?: HealthAnnotationType;
   id: string;
   isInaccessible: boolean;
   isServiceEntry?: SEInfo;
@@ -68,6 +65,7 @@ export type TrafficDirection = 'inbound' | 'outbound';
 
 export interface TrafficItem {
   direction: TrafficDirection;
+  healthStatus?: string; // backend-calculated health status
   mTLS?: number;
   node: TrafficNode;
   proxy?: TrafficItem;
@@ -171,7 +169,6 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           this.props.itemName,
           this.props.cluster
         );
-        params.includeHealth = false;
         params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
         break;
@@ -183,7 +180,6 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           this.props.itemName,
           this.props.cluster
         );
-        params.includeHealth = false;
         params.injectServiceNodes = false;
         params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
@@ -196,7 +192,6 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           this.props.itemName,
           this.props.cluster
         );
-        params.includeHealth = false;
         params.injectServiceNodes = false;
         params.showSecurity = true;
         this.graphDataSource.fetchGraphData(params);
@@ -241,8 +236,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           name: node.service || 'unknown',
           isServiceEntry: node.isServiceEntry,
           isInaccessible: node.isInaccessible || false,
-          destServices: node.destServices,
-          healthAnnotation: node.hasHealthConfig
+          destServices: node.destServices
         };
       default:
         return {
@@ -251,8 +245,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
           namespace: node.namespace,
           cluster: node.cluster,
           name: node.workload || 'unknown',
-          isInaccessible: node.isInaccessible || false,
-          healthAnnotation: node.hasHealthConfig
+          isInaccessible: node.isInaccessible || false
         };
     }
   };
@@ -270,6 +263,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
       if (myNode.id === edge.data.source) {
         const trafficItem: TrafficItem = {
           direction: 'outbound',
+          healthStatus: edge.data.healthStatus,
           node: this.buildTrafficNode('out', targetNode),
           traffic: edge.data.traffic!,
           mTLS: edge.data.isMTLS
@@ -278,6 +272,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
       } else if (myNode.id === edge.data.target) {
         const trafficItem: TrafficItem = {
           direction: 'inbound',
+          healthStatus: edge.data.healthStatus,
           node: this.buildTrafficNode('in', sourceNode),
           traffic: edge.data.traffic!,
           mTLS: edge.data.isMTLS
