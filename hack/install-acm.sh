@@ -1726,27 +1726,34 @@ generate_traffic() {
     return 1
   fi
 
+  # Service URL - MUST use the Kubernetes service (not localhost) so Istio sidecar intercepts the traffic.
+  # Traffic to localhost bypasses the sidecar and doesn't generate Istio metrics.
+  # Traffic through the service generates istio_requests_total and other metrics that Kiali needs.
+  local service_url="http://hello-world.${APP_NAMESPACE}.svc.cluster.local:80"
+  debug "Using service URL to generate Istio metrics: ${service_url}"
+
   if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
     # Continuous traffic mode
-    infomsg "Sending requests every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
+    infomsg "Sending requests to ${service_url} every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
     local count=0
     trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
     while true; do
-      if ${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 2>/dev/null; then
+      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         count=$((count + 1))
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP $(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080 2>/dev/null))"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
       else
-        warnmsg "Request ${count} failed"
+        warnmsg "Request ${count} failed (HTTP ${http_code})"
       fi
       sleep ${TRAFFIC_INTERVAL}
     done
   else
     # Send N requests mode
-    infomsg "Sending ${TRAFFIC_COUNT} requests to test application (${TRAFFIC_INTERVAL}s interval)..."
+    infomsg "Sending ${TRAFFIC_COUNT} requests to ${service_url} (${TRAFFIC_INTERVAL}s interval)..."
     local success_count=0
     local fail_count=0
     for i in $(seq 1 ${TRAFFIC_COUNT}); do
-      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         success_count=$((success_count + 1))
         echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
@@ -1766,8 +1773,12 @@ generate_traffic() {
     infomsg "Successful: ${success_count}"
     infomsg "Failed: ${fail_count}"
     infomsg ""
-    infomsg "Metrics should now be visible in Kiali at:"
-    infomsg "  https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+    infomsg "Metrics will appear in Kiali after propagation (typically 1-2 minutes):"
+    infomsg "  1. Prometheus scrapes Envoy metrics (every 30s)"
+    infomsg "  2. Metrics federate to ACM Thanos (may take 1-2 minutes)"
+    infomsg "  3. Kiali queries Thanos and displays graphs"
+    infomsg ""
+    infomsg "View in Kiali: https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
   fi
 }
 
