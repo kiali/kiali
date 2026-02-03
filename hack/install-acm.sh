@@ -6,7 +6,30 @@
 # This script installs Red Hat Advanced Cluster Management (ACM) with
 # observability on an OpenShift cluster for development and testing purposes.
 # It can also build and install Kiali configured to use ACM's observability
-# backend (Thanos via rbac-query-proxy).
+# backend (Thanos Querier) with mTLS certificate-based authentication.
+#
+# Kiali Authentication to ACM Observability:
+#   This script configures Kiali to use mTLS (mutual TLS) with long-lived
+#   client certificates for authentication to ACM's Observatorium/Thanos.
+#   This approach provides:
+#     - Long-lived credentials without frequent rotation
+#     - Proper CA trust (no insecure_skip_verify)
+#     - Certificate-based authentication at the TLS layer
+#
+#   ACM Observability automatically creates trusted certificates in these secrets:
+#     - observability-grafana-certs: Contains tls.crt and tls.key for client auth
+#     - observability-server-ca-certs: Contains ca.crt for server trust
+#
+#   The install-kiali command copies these certificates to Kiali's namespace:
+#     - Secret 'acm-observability-certs' with tls.crt and tls.key (client auth)
+#     - ConfigMap 'kiali-cabundle' with the server CA (server trust)
+#
+#   This approach uses ACM's pre-trusted certificates, so no additional
+#   ACM configuration is required for mTLS to work.
+#
+# References:
+#   - Red Hat blog on connecting Grafana to ACM Observability (mTLS setup):
+#     https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
 #
 # The script supports:
 #   install-acm     - Install ACM operator, MultiClusterHub, MinIO, and observability
@@ -25,6 +48,7 @@
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
 #   - Istio must be installed
 #   - For install-kiali: helm, make, and access to Kiali git repositories
+#   - For install-kiali: ACM Observability must be installed first (run install-acm)
 #
 # Setting up a CRC cluster for this script:
 #   If you want to use CRC (CodeReady Containers) for local development, you can
@@ -559,10 +583,14 @@ do_install() {
   infomsg "Observability Namespace: ${OBSERVABILITY_NAMESPACE}"
   infomsg ""
   infomsg "To check status: $0 status"
-  infomsg "To uninstall: $0 uninstall"
+  infomsg "To uninstall: $0 uninstall-acm"
   infomsg ""
-  infomsg "Kiali can now be configured to use the rbac-query-proxy endpoint:"
-  infomsg "  https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+  infomsg "ACM Observability endpoints available:"
+  infomsg "  Thanos Querier: https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  RBAC Proxy:     https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+  infomsg ""
+  infomsg "To install Kiali with mTLS authentication to ACM Observability:"
+  infomsg "  $0 install-kiali"
 }
 
 ##############################################################################
@@ -705,11 +733,19 @@ check_status() {
     local mco_ready=$(${CLIENT_EXE} get mco observability -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Not Found")
     echo "MultiClusterObservability: Ready=${mco_ready}"
 
-    # Check rbac-query-proxy
-    if ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-      echo "rbac-query-proxy service: [EXISTS]"
+    # Check observability endpoints
+    if ${CLIENT_EXE} get service observability-thanos-querier -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "Thanos Querier service: [EXISTS]"
+      echo "  URL: https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
     else
-      echo "rbac-query-proxy service: [NOT FOUND]"
+      echo "Thanos Querier service: [NOT FOUND]"
+    fi
+
+    if ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "RBAC Query Proxy service: [EXISTS]"
+      echo "  URL: https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+    else
+      echo "RBAC Query Proxy service: [NOT FOUND]"
     fi
   else
     echo "Observability Namespace: ${OBSERVABILITY_NAMESPACE} [NOT FOUND]"
@@ -722,21 +758,175 @@ check_status() {
 # Kiali Installation Functions
 ##############################################################################
 
-install_kiali() {
-  infomsg "Installing Kiali with ACM observability integration..."
+# Copy mTLS client certificates from ACM Observability secrets.
+# ACM creates these secrets automatically when MultiClusterObservability is deployed:
+#   - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
+# These certificates are already trusted by ACM's Observatorium/Thanos components.
+copy_acm_mtls_certs() {
+  local cert_dir="$1"
 
-  # Verify ACM observability is installed
-  if ! ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    errormsg "ACM observability (rbac-query-proxy) is not installed."
-    errormsg "Please run '$0 install' first to install ACM with observability."
+  infomsg "Copying mTLS client certificates from ACM Observability..."
+
+  # Create temporary directory
+  mkdir -p "${cert_dir}"
+
+  # Check if the ACM grafana certs secret exists
+  if ! ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "ACM observability-grafana-certs secret not found in ${OBSERVABILITY_NAMESPACE}"
+    errormsg "Make sure MultiClusterObservability is fully deployed and ready."
     return 1
   fi
+
+  # Extract tls.crt from ACM's grafana certs secret
+  infomsg "Extracting client certificate from observability-grafana-certs..."
+  ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} \
+    -o jsonpath='{.data.tls\.crt}' | base64 -d > "${cert_dir}/tls.crt"
+
+  # Extract tls.key from ACM's grafana certs secret
+  infomsg "Extracting client key from observability-grafana-certs..."
+  ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} \
+    -o jsonpath='{.data.tls\.key}' | base64 -d > "${cert_dir}/tls.key"
+
+  # Verify the certificates were extracted
+  if [ ! -s "${cert_dir}/tls.crt" ] || [ ! -s "${cert_dir}/tls.key" ]; then
+    errormsg "Failed to extract certificates from ACM secrets"
+    return 1
+  fi
+
+  debug "Certificate files extracted successfully to ${cert_dir}"
+  debug "Client certificate: ${cert_dir}/tls.crt"
+  debug "Client key: ${cert_dir}/tls.key"
+  return 0
+}
+
+# Set up the CA bundle ConfigMap for Kiali to trust the ACM Observability server certificate.
+# ACM creates a CA certificate that signs the Observatorium/Thanos server certificates.
+# The key name MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
+setup_kiali_ca_bundle() {
+  local configmap_name="kiali-cabundle"
+
+  infomsg "Setting up CA bundle for ACM Observability server trust..."
+
+  local ca_bundle=""
+
+  # Try to get CA from ACM's observability-server-ca-certs secret
+  if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Extracting CA from observability-server-ca-certs..."
+    ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+  fi
+
+  # Fallback: try observability-client-ca-certs in open-cluster-management-issuer namespace
+  if [ -z "${ca_bundle}" ]; then
+    if ${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer &>/dev/null 2>&1; then
+      infomsg "Extracting CA from observability-client-ca-certs (issuer namespace)..."
+      ca_bundle=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
+        -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+    fi
+  fi
+
+  # Fallback: try tls.crt from observability-server-ca-certs (some versions use this key)
+  if [ -z "${ca_bundle}" ]; then
+    if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      infomsg "Extracting CA from observability-server-ca-certs (tls.crt key)..."
+      ca_bundle=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+        -o jsonpath='{.data.tls\.crt}' 2>/dev/null | base64 -d)
+    fi
+  fi
+
+  # Last fallback: use OpenShift service CA
+  if [ -z "${ca_bundle}" ]; then
+    warnmsg "Could not find ACM observability CA certificates."
+    warnmsg "Falling back to OpenShift service CA..."
+    if ${CLIENT_EXE} get configmap openshift-service-ca.crt -n openshift-config-managed &>/dev/null 2>&1; then
+      ca_bundle=$(${CLIENT_EXE} get configmap openshift-service-ca.crt -n openshift-config-managed \
+        -o jsonpath='{.data.service-ca\.crt}' 2>/dev/null)
+    fi
+  fi
+
+  if [ -z "${ca_bundle}" ]; then
+    warnmsg "Could not retrieve any CA bundle for server trust."
+    warnmsg "Kiali may not be able to verify the Thanos server certificate."
+    return 0
+  fi
+
+  # Create or update the kiali-cabundle ConfigMap
+  # The key MUST be 'additional-ca-bundle.pem' - this is the expected key name
+  # that Kiali uses to load additional CA certificates for TLS verification.
+  if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Updating existing ${configmap_name} ConfigMap..."
+    ${CLIENT_EXE} delete configmap "${configmap_name}" -n ${KIALI_NAMESPACE}
+  fi
+
+  infomsg "Creating ${configmap_name} ConfigMap..."
+  ${CLIENT_EXE} create configmap "${configmap_name}" \
+    -n ${KIALI_NAMESPACE} \
+    --from-literal="additional-ca-bundle.pem=${ca_bundle}"
+
+  debug "CA bundle ConfigMap created/updated: ${configmap_name}"
+}
+
+# Create the Kubernetes secret containing mTLS client certificates for Kiali.
+# Per the ACM Observability documentation, only tls.crt and tls.key are needed.
+# The CA bundle for server trust is provided separately via kiali-cabundle ConfigMap.
+create_kiali_mtls_secret() {
+  local cert_dir="$1"
+  local secret_name="acm-observability-certs"
+
+  infomsg "Creating mTLS certificate secret for Kiali..."
+
+  # Verify certificate files exist
+  if [ ! -f "${cert_dir}/tls.crt" ] || [ ! -f "${cert_dir}/tls.key" ]; then
+    errormsg "Certificate files not found in ${cert_dir}"
+    return 1
+  fi
+
+  # Create or update the secret
+  # Only include tls.crt and tls.key - the CA bundle is in a separate ConfigMap
+  if ${CLIENT_EXE} get secret "${secret_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Updating existing ${secret_name} secret..."
+    ${CLIENT_EXE} delete secret "${secret_name}" -n ${KIALI_NAMESPACE}
+  fi
+
+  ${CLIENT_EXE} create secret generic "${secret_name}" \
+    -n ${KIALI_NAMESPACE} \
+    --from-file=tls.crt="${cert_dir}/tls.crt" \
+    --from-file=tls.key="${cert_dir}/tls.key"
+
+  debug "mTLS secret created: ${secret_name}"
+}
+
+install_kiali() {
+  infomsg "Installing Kiali with ACM observability integration (mTLS)..."
+
+  # Verify ACM observability is installed - check for Thanos Querier service
+  local thanos_service=""
+  local prometheus_url=""
+
+  # Prefer observability-thanos-querier (direct Thanos endpoint)
+  if ${CLIENT_EXE} get service observability-thanos-querier -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    thanos_service="observability-thanos-querier"
+    prometheus_url="https://observability-thanos-querier.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    debug "Found observability-thanos-querier service"
+  # Fallback to rbac-query-proxy
+  elif ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    thanos_service="rbac-query-proxy"
+    prometheus_url="https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+    debug "Found rbac-query-proxy service (fallback)"
+  else
+    errormsg "ACM observability is not installed (no Thanos Querier or rbac-query-proxy found)."
+    errormsg "Please run '$0 install-acm' first to install ACM with observability."
+    return 1
+  fi
+
+  infomsg "Using ACM observability endpoint: ${thanos_service}"
 
   # Check if helm is available
   if ! command -v helm &>/dev/null; then
     errormsg "helm is not installed or not in PATH"
     return 1
   fi
+
 
   # Verify directories exist
   if [ ! -d "${KIALI_REPO_DIR}" ]; then
@@ -770,6 +960,30 @@ install_kiali() {
     ${CLIENT_EXE} create namespace ${KIALI_NAMESPACE}
   fi
 
+  # Copy mTLS certificates from ACM Observability
+  # ACM creates trusted certificates that we can use for Kiali
+  local cert_dir="/tmp/kiali-mtls-certs-$$"
+  if ! copy_acm_mtls_certs "${cert_dir}"; then
+    errormsg "Failed to copy mTLS certificates from ACM"
+    errormsg "Ensure MultiClusterObservability is fully deployed and the"
+    errormsg "observability-grafana-certs secret exists in ${OBSERVABILITY_NAMESPACE}"
+    rm -rf "${cert_dir}"
+    return 1
+  fi
+
+  # Create the mTLS secret
+  if ! create_kiali_mtls_secret "${cert_dir}"; then
+    errormsg "Failed to create mTLS secret"
+    rm -rf "${cert_dir}"
+    return 1
+  fi
+
+  # Set up CA bundle for trusting the Thanos server certificate
+  setup_kiali_ca_bundle
+
+  # Clean up temporary certificate files
+  rm -rf "${cert_dir}"
+
   # Build and push Kiali image
   infomsg "Building and pushing Kiali image to cluster..."
   pushd "${KIALI_REPO_DIR}" > /dev/null
@@ -792,7 +1006,6 @@ install_kiali() {
 
   local kiali_image="${internal_registry}/kiali/kiali"
   local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
-  local prometheus_url="https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
 
   debug "Internal registry: ${internal_registry}"
   debug "Apps domain: ${apps_domain}"
@@ -800,47 +1013,40 @@ install_kiali() {
   debug "Kiali route URL: ${kiali_route_url}"
   debug "Prometheus URL: ${prometheus_url}"
 
-  # Check if Kiali is already installed
+  # Helm install/upgrade with mTLS configuration
+  # Using 'type: none' means no Authorization header - authentication is via mTLS only
+  # The cert_file and key_file reference the secret we created above
+  local helm_cmd="install"
   if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Kiali is already installed. Upgrading..."
-    helm upgrade kiali "${helm_chart_tgz}" \
-      --namespace ${KIALI_NAMESPACE} \
-      --set deployment.image_name="${kiali_image}" \
-      --set deployment.image_version="dev" \
-      --set deployment.image_pull_policy="Always" \
-      --set auth.strategy="openshift" \
-      --set kiali_route_url="${kiali_route_url}" \
-      --set external_services.prometheus.url="${prometheus_url}" \
-      --set external_services.prometheus.auth.type="bearer" \
-      --set external_services.prometheus.auth.use_kiali_token="true" \
-      --set external_services.prometheus.auth.insecure_skip_verify="true" \
-      --set external_services.prometheus.thanos_proxy.enabled="true" \
-      --set deployment.logger.log_level="debug"
+    helm_cmd="upgrade"
   else
     infomsg "Installing Kiali via Helm..."
-    helm install kiali "${helm_chart_tgz}" \
-      --namespace ${KIALI_NAMESPACE} \
-      --set deployment.image_name="${kiali_image}" \
-      --set deployment.image_version="dev" \
-      --set deployment.image_pull_policy="Always" \
-      --set auth.strategy="openshift" \
-      --set kiali_route_url="${kiali_route_url}" \
-      --set external_services.prometheus.url="${prometheus_url}" \
-      --set external_services.prometheus.auth.type="bearer" \
-      --set external_services.prometheus.auth.use_kiali_token="true" \
-      --set external_services.prometheus.auth.insecure_skip_verify="true" \
-      --set external_services.prometheus.thanos_proxy.enabled="true" \
-      --set deployment.logger.log_level="debug"
   fi
+
+  helm ${helm_cmd} kiali "${helm_chart_tgz}" \
+    --namespace ${KIALI_NAMESPACE} \
+    --set deployment.image_name="${kiali_image}" \
+    --set deployment.image_version="dev" \
+    --set deployment.image_pull_policy="Always" \
+    --set auth.strategy="openshift" \
+    --set kiali_route_url="${kiali_route_url}" \
+    --set external_services.prometheus.url="${prometheus_url}" \
+    --set external_services.prometheus.auth.type="none" \
+    --set external_services.prometheus.auth.cert_file="secret:acm-observability-certs:tls.crt" \
+    --set external_services.prometheus.auth.key_file="secret:acm-observability-certs:tls.key" \
+    --set external_services.prometheus.thanos_proxy.enabled="true" \
+    --set external_services.prometheus.thanos_proxy.retention_period="7d" \
+    --set external_services.prometheus.thanos_proxy.scrape_interval="30s" \
+    --set deployment.logger.log_level="debug"
 
   # Wait for Kiali to be ready
   infomsg "Waiting for Kiali deployment to be ready..."
   ${CLIENT_EXE} rollout status deployment/kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
 
   # Create RBAC for ACM observability access
-  # The rbac-query-proxy validates that the caller has permission to view resources
-  # in the namespaces being queried. The 'view' ClusterRole provides read access
-  # to most resources, which is sufficient for Kiali to query metrics.
+  # Even with mTLS, Kiali needs cluster-wide read permissions to query metrics
+  # for workloads across namespaces.
   infomsg "Configuring RBAC for ACM observability access..."
   if ! ${CLIENT_EXE} get clusterrolebinding kiali-acm-observability &>/dev/null 2>&1; then
     ${CLIENT_EXE} create clusterrolebinding kiali-acm-observability \
@@ -854,6 +1060,11 @@ install_kiali() {
   infomsg "Kiali Namespace: ${KIALI_NAMESPACE}"
   infomsg "Kiali URL: ${kiali_route_url}"
   infomsg "Prometheus Backend: ${prometheus_url}"
+  infomsg "Authentication: mTLS (certificate-based)"
+  infomsg ""
+  infomsg "mTLS configuration (using ACM's pre-trusted certificates):"
+  infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
+  infomsg "  Server CA trust:     configmap/kiali-cabundle (ACM's CA)"
   infomsg ""
   infomsg "To access Kiali, open: ${kiali_route_url}"
 }
@@ -867,6 +1078,18 @@ uninstall_kiali() {
     helm uninstall kiali -n ${KIALI_NAMESPACE}
   else
     debug "Kiali Helm release not found, skipping"
+  fi
+
+  # Delete mTLS certificate secret
+  if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Removing mTLS certificate secret..."
+    ${CLIENT_EXE} delete secret acm-observability-certs -n ${KIALI_NAMESPACE} || true
+  fi
+
+  # Delete CA bundle ConfigMap
+  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Removing CA bundle ConfigMap..."
+    ${CLIENT_EXE} delete configmap kiali-cabundle -n ${KIALI_NAMESPACE} || true
   fi
 
   # Delete RBAC
@@ -920,6 +1143,28 @@ status_kiali() {
   local prometheus_url=$(${CLIENT_EXE} get configmap kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.data.config\.yaml}' 2>/dev/null | grep -A1 "prometheus:" | grep "url:" | awk '{print $2}' || echo "")
   if [ -n "${prometheus_url}" ]; then
     echo "Prometheus URL: ${prometheus_url}"
+  fi
+
+  # Check mTLS certificate secret
+  if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "mTLS Certificate Secret: [EXISTS]"
+    # Show certificate expiration if possible
+    local cert_data=$(${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} -o jsonpath='{.data.tls\.crt}' 2>/dev/null)
+    if [ -n "${cert_data}" ]; then
+      local cert_expiry=$(echo "${cert_data}" | base64 -d 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+      if [ -n "${cert_expiry}" ]; then
+        echo "  Certificate Expiry: ${cert_expiry}"
+      fi
+    fi
+  else
+    echo "mTLS Certificate Secret: [NOT FOUND]"
+  fi
+
+  # Check CA bundle ConfigMap
+  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "CA Bundle ConfigMap: [EXISTS]"
+  else
+    echo "CA Bundle ConfigMap: [NOT FOUND]"
   fi
 
   # Check ACM RBAC
