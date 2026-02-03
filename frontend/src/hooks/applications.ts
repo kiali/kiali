@@ -52,7 +52,7 @@ export const useApplications = (): ApplicationsResult => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [t, duration]);
+  }, [t]);
 
   React.useEffect(() => {
     fetchApplications();
