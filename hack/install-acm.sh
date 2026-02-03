@@ -945,11 +945,13 @@ check_status() {
   fi
 
   # Check istio-proxies-monitor PodMonitors across all namespaces
-  local podmonitors=$(${CLIENT_EXE} get podmonitor istio-proxies-monitor --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}{"\n"}{end}' 2>/dev/null || true)
+  local podmonitors=$(${CLIENT_EXE} get podmonitor --all-namespaces -o json 2>/dev/null | jq -r '.items[] | select(.metadata.name == "istio-proxies-monitor") | .metadata.namespace' 2>/dev/null || true)
   if [ -n "${podmonitors}" ]; then
     echo "  PodMonitor istio-proxies-monitor:"
     echo "${podmonitors}" | while read ns; do
-      echo "    - ${ns}"
+      if [ -n "${ns}" ]; then
+        echo "    - ${ns}"
+      fi
     done
   else
     echo "  PodMonitor istio-proxies-monitor: [NOT FOUND in any namespace]"
