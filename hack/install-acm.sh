@@ -567,46 +567,35 @@ spec:
 EOF
 }
 
-configure_istio_metrics_allowlist() {
-  infomsg "Configuring ACM observability to collect Istio metrics for Kiali..."
+# Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
+# Per ACM docs, user workload metrics need ConfigMaps in the SOURCE namespace with key "uwl_metrics_list.yaml"
+create_namespace_metrics_allowlist() {
+  local namespace="$1"
 
-  # Wait for the default allowlist ConfigMap to be created by ACM
-  local max_wait=60
-  local waited=0
-  while ! ${CLIENT_EXE} get configmap observability-metrics-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; do
-    if [ ${waited} -ge ${max_wait} ]; then
-      warnmsg "Timeout waiting for observability-metrics-allowlist ConfigMap"
-      warnmsg "Istio metrics may not be collected by ACM"
-      return 0
-    fi
-    debug "Waiting for observability-metrics-allowlist ConfigMap... (${waited}s)"
-    sleep 5
-    waited=$((waited + 5))
-  done
+  if [ -z "${namespace}" ]; then
+    errormsg "Namespace parameter required for create_namespace_metrics_allowlist"
+    return 1
+  fi
 
-  # Check if custom allowlist already exists
-  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    local existing_list=$(${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.data.metrics_list\.yaml}' 2>/dev/null)
+  # Check if already exists
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${namespace} &>/dev/null 2>&1; then
+    local existing_list=$(${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${namespace} -o jsonpath='{.data.uwl_metrics_list\.yaml}' 2>/dev/null)
     if echo "${existing_list}" | grep -q "istio_"; then
-      infomsg "Istio metrics already in ACM custom allowlist"
+      debug "Istio metrics allowlist already exists in namespace ${namespace}"
       return 0
     fi
   fi
 
-  # Create custom allowlist ConfigMap with ALL metrics Kiali requires
-  # Per ACM docs, custom metrics go in observability-metrics-custom-allowlist (separate from default allowlist)
-  # See: https://github.com/stolostron/multicluster-observability-operator/blob/main/tools/example/observability-metrics-custom-allowlist.yaml
-  # Complete list from Kiali FAQ: https://kiali.io/docs/faq/general/#requiredmetrics
-  infomsg "Creating custom metrics allowlist with all Kiali-required metrics..."
+  infomsg "Creating ACM metrics allowlist for namespace ${namespace}..."
 
-  cat <<'EOF' | ${CLIENT_EXE} apply -f -
+  cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: observability-metrics-custom-allowlist
-  namespace: open-cluster-management-observability
+  namespace: ${namespace}
 data:
-  metrics_list.yaml: |
+  uwl_metrics_list.yaml: |
     names:
     # Istio HTTP/gRPC metrics (required for traffic, health, topology)
     - istio_requests_total
@@ -647,7 +636,35 @@ data:
     - process_resident_memory_bytes
 EOF
 
-  infomsg "Custom metrics allowlist created with Istio metrics"
+  debug "Metrics allowlist created in namespace ${namespace}"
+}
+
+configure_istio_metrics_allowlist() {
+  infomsg "Configuring ACM observability to collect Istio metrics for Kiali..."
+
+  # Wait for the default allowlist ConfigMap to be created by ACM
+  local max_wait=60
+  local waited=0
+  while ! ${CLIENT_EXE} get configmap observability-metrics-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; do
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for observability-metrics-allowlist ConfigMap"
+      warnmsg "Istio metrics may not be collected by ACM"
+      return 0
+    fi
+    debug "Waiting for observability-metrics-allowlist ConfigMap... (${waited}s)"
+    sleep 5
+    waited=$((waited + 5))
+  done
+
+  # For USER WORKLOAD metrics (Istio), ACM requires ConfigMaps in the SOURCE namespaces
+  # with key "uwl_metrics_list.yaml" (not "metrics_list.yaml")
+  # Per ACM docs: https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.9/html/observability/customizing-observability#adding-user-workload-metrics
+  # Complete list from Kiali FAQ: https://kiali.io/docs/faq/general/#requiredmetrics
+
+  # Create allowlist in istio-system namespace (for istiod and gateway metrics)
+  create_namespace_metrics_allowlist "istio-system"
+
+  infomsg "Istio metrics allowlist configured in istio-system"
   infomsg "Metrics collector will include Istio metrics in next scrape cycle (~5 minutes)"
 
   # Restart metrics collectors to pick up the new allowlist immediately
@@ -1695,6 +1712,9 @@ EOF
   # Create PodMonitor for Istio proxies in this namespace
   # Required because OpenShift monitoring ignores namespaceSelector in PodMonitor
   create_istio_podmonitor "${APP_NAMESPACE}"
+
+  # Create metrics allowlist for ACM observability to collect Istio metrics from this namespace
+  create_namespace_metrics_allowlist "${APP_NAMESPACE}"
 
   infomsg "======================================"
   infomsg "Test application installation complete!"
