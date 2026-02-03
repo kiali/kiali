@@ -1747,7 +1747,7 @@ generate_traffic() {
       local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         success_count=$((success_count + 1))
-        debug "Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code}"
+        echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
       else
         fail_count=$((fail_count + 1))
         warnmsg "Request ${i}/${TRAFFIC_COUNT}: Failed (HTTP ${http_code})"
@@ -1790,21 +1790,21 @@ while [[ $# -gt 0 ]]; do
     traffic) _CMD="traffic"; shift ;;
     -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
     -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
-    --observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
-    --minio-access-key) MINIO_ACCESS_KEY="$2"; shift; shift ;;
-    --minio-secret-key) MINIO_SECRET_KEY="$2"; shift; shift ;;
+    -on|--observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
+    -mak|--minio-access-key) MINIO_ACCESS_KEY="$2"; shift; shift ;;
+    -msk|--minio-secret-key) MINIO_SECRET_KEY="$2"; shift; shift ;;
     -ce|--client-exe) CLIENT_EXE="$2"; shift; shift ;;
-    --timeout) TIMEOUT="$2"; shift; shift ;;
-    --kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
-    --kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
-    --helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
-    --app-namespace) APP_NAMESPACE="$2"; shift; shift ;;
-    --crc-cpus) CRC_CPUS="$2"; shift; shift ;;
-    --crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
-    --crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
-    --traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
-    --traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
-    --traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
+    -t|--timeout) TIMEOUT="$2"; shift; shift ;;
+    -kn|--kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
+    -krd|--kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
+    -hcd|--helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
+    -an|--app-namespace) APP_NAMESPACE="$2"; shift; shift ;;
+    -cc|--crc-cpus) CRC_CPUS="$2"; shift; shift ;;
+    -cds|--crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
+    -cps|--crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
+    -tc|--traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
+    -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
+    -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -1822,50 +1822,50 @@ Valid options:
   -c|--channel <channel>
       The ACM operator channel (e.g., release-2.14, release-2.15).
       Default: ${DEFAULT_ACM_CHANNEL}
-  --observability-namespace <namespace>
+  -on|--observability-namespace <namespace>
       The namespace for observability components (MinIO, Thanos).
       Default: ${DEFAULT_OBSERVABILITY_NAMESPACE}
-  --minio-access-key <key>
+  -mak|--minio-access-key <key>
       The MinIO access key (username).
       Default: ${DEFAULT_MINIO_ACCESS_KEY}
-  --minio-secret-key <key>
+  -msk|--minio-secret-key <key>
       The MinIO secret key (password).
       Default: ${DEFAULT_MINIO_SECRET_KEY}
   -ce|--client-exe <path>
       The path to the oc or kubectl executable.
       Default: ${DEFAULT_CLIENT_EXE}
-  --timeout <seconds>
+  -t|--timeout <seconds>
       Timeout in seconds for waiting on resources.
       Default: ${DEFAULT_TIMEOUT}
-  --kiali-namespace <namespace>
+  -kn|--kiali-namespace <namespace>
       The namespace where Kiali will be installed.
       Default: ${DEFAULT_KIALI_NAMESPACE}
-  --kiali-repo-dir <path>
+  -krd|--kiali-repo-dir <path>
       Path to the Kiali server git repository (for building images).
       Default: ${DEFAULT_KIALI_REPO_DIR}
-  --helm-charts-dir <path>
+  -hcd|--helm-charts-dir <path>
       Path to the Kiali helm-charts git repository.
       Default: ${DEFAULT_HELM_CHARTS_DIR}
-  --app-namespace <namespace>
+  -an|--app-namespace <namespace>
       The namespace for the test application.
       Default: ${DEFAULT_APP_NAMESPACE}
-  --crc-cpus <num>
+  -cc|--crc-cpus <num>
       Number of CPUs to assign to the CRC VM (for init-openshift command).
       Default: ${DEFAULT_CRC_CPUS}
-  --crc-disk-size <size>
+  -cds|--crc-disk-size <size>
       Disk size in GB for the CRC VM (for init-openshift command).
       Default: ${DEFAULT_CRC_DISK_SIZE}
-  --crc-pull-secret-file <path>
+  -cps|--crc-pull-secret-file <path>
       Path to the Red Hat pull secret file (required for init-openshift command).
       Download from: https://console.redhat.com/openshift/create/local
-  --traffic-count <num>
-      Number of requests to send to test app (for traffic-app command).
+  -tc|--traffic-count <num>
+      Number of requests to send to test app (for traffic command).
       Default: ${DEFAULT_TRAFFIC_COUNT}
-  --traffic-interval <seconds>
-      Interval in seconds between requests (for traffic-app --traffic-continuous).
+  -ti|--traffic-interval <seconds>
+      Interval in seconds between requests (for traffic command).
       Default: ${DEFAULT_TRAFFIC_INTERVAL}
-  --traffic-continuous
-      Send requests continuously until Ctrl-C (for traffic-app command).
+  -cont|--traffic-continuous
+      Send requests continuously until Ctrl-C (for traffic command).
       Without this flag, sends --traffic-count requests and stops.
   -v|--verbose
       Enable verbose/debug output.
@@ -1886,21 +1886,26 @@ The command must be one of:
   traffic:          Generate HTTP traffic to the test application
 
 Examples:
-  $0 --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Initialize CRC cluster
-  $0 install-acm                      # Install ACM with defaults
-  $0 -n my-acm install-acm            # Install ACM in custom namespace
-  $0 -c release-2.14 install-acm      # Install specific ACM version
-  $0 status-acm                       # Check ACM installation status
-  $0 uninstall-acm                    # Remove ACM completely
-  $0 install-kiali                    # Build and install Kiali for ACM
-  $0 status-kiali                     # Check Kiali installation status
-  $0 uninstall-kiali                  # Remove Kiali
-  $0 install-app                      # Install test mesh application
-  $0 status-app                       # Check test application status
-  $0 uninstall-app                    # Remove test application
-  $0 traffic                          # Send 10 requests to test app
-  $0 --traffic-count 50 traffic       # Send 50 requests to test app
-  $0 --traffic-continuous traffic     # Send requests continuously (Ctrl-C to stop)
+  $0 -cps ~/pull-secret.txt init-openshift  # Initialize CRC cluster (short option)
+  $0 install-acm                            # Install ACM with defaults
+  $0 -n my-acm install-acm                  # Install ACM in custom namespace
+  $0 -c release-2.14 install-acm            # Install specific ACM version
+  $0 -on my-obs -n my-acm install-acm       # Custom namespaces (short options)
+  $0 status-acm                             # Check ACM installation status
+  $0 uninstall-acm                          # Remove ACM completely
+  $0 install-kiali                          # Build and install Kiali for ACM
+  $0 -kn my-kiali install-kiali             # Install Kiali in custom namespace
+  $0 status-kiali                           # Check Kiali installation status
+  $0 uninstall-kiali                        # Remove Kiali
+  $0 install-app                            # Install test mesh application
+  $0 -an my-app install-app                 # Install test app in custom namespace
+  $0 status-app                             # Check test application status
+  $0 uninstall-app                          # Remove test application
+  $0 traffic                                # Send 10 requests to test app
+  $0 -tc 50 traffic                         # Send 50 requests (short option)
+  $0 -tc 100 -ti 2 traffic                  # Send 100 requests, 2s interval
+  $0 -cont traffic                          # Continuous traffic (short option)
+  $0 -cont -ti 3 traffic                    # Continuous every 3 seconds
 
 HELPMSG
       exit 0
