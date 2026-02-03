@@ -23,6 +23,16 @@ Feature: Kiali Istio Config page
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
 
+  # There is no Configuration column for offline mode because the istio API is disabled
+  # so you don't get validations.
+  @offline
+  Scenario: See all Istio Config objects in the bookinfo namespace.
+    Then user sees all the Istio Config objects in the bookinfo namespace
+    And the "Cluster" column "disappears"
+    And user sees Name information for Istio objects
+    And user sees Namespace information for Istio objects
+    And user sees Type information for Istio objects
+
   @bookinfo-app
   @core-1
   @lpinterop

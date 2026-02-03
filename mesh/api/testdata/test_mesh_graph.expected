@@ -273,6 +273,8 @@
         "nodeType" : "infra",
         "healthData" : "Healthy",
         "infraData" : {
+          "kind": "Gateway",
+          "apiVersion": "networking.istio.io/v1",
           "metadata" : {
             "name" : "gateway",
             "namespace" : "istio-system",

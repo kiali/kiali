@@ -6,9 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -98,4 +101,190 @@ func TestWaitForObjCreate(t *testing.T) {
 		return nil
 	}
 	require.NoError(kubernetes.WaitForObjectCreateInCache(context.Background(), r, pod.DeepCopy()))
+}
+
+type unknownObject struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+}
+
+func (u *unknownObject) DeepCopyObject() runtime.Object {
+	return &unknownObject{
+		TypeMeta:   u.TypeMeta,
+		ObjectMeta: *u.ObjectMeta.DeepCopy(),
+	}
+}
+
+func TestEnsureTypeMeta(t *testing.T) {
+	testCases := map[string]struct {
+		obj         runtime.Object
+		expected    metav1.TypeMeta
+		expectError bool
+	}{
+		"single object without TypeMeta": {
+			obj: &networkingv1.VirtualService{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-vs",
+					Namespace: "default",
+				},
+			},
+			expected: metav1.TypeMeta{
+				Kind:       "VirtualService",
+				APIVersion: "networking.istio.io/v1",
+			},
+		},
+		"single object with TypeMeta already set": {
+			obj: &networkingv1.VirtualService{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "VirtualService",
+					APIVersion: "networking.istio.io/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-vs",
+					Namespace: "default",
+				},
+			},
+			expected: metav1.TypeMeta{
+				Kind:       "VirtualService",
+				APIVersion: "networking.istio.io/v1",
+			},
+		},
+		"unknown object type returns error": {
+			obj: &unknownObject{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-unknown",
+					Namespace: "default",
+				},
+			},
+			expectError: true,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			err := kubernetes.EnsureTypeMeta(tc.obj)
+			if tc.expectError {
+				require.Error(err)
+				return
+			}
+			require.NoError(err)
+
+			accessor, err := meta.TypeAccessor(tc.obj)
+			require.NoError(err)
+
+			require.Equal(tc.expected.APIVersion, accessor.GetAPIVersion())
+			require.Equal(tc.expected.Kind, accessor.GetKind())
+		})
+	}
+}
+
+func TestEnsureTypeMetaList(t *testing.T) {
+	testCases := map[string]struct {
+		obj      runtime.Object
+		expected metav1.TypeMeta
+	}{
+		"list without TypeMeta on items": {
+			obj: &networkingv1.VirtualServiceList{
+				Items: []*networkingv1.VirtualService{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-1",
+							Namespace: "default",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-2",
+							Namespace: "default",
+						},
+					},
+				},
+			},
+			expected: metav1.TypeMeta{
+				Kind:       "VirtualService",
+				APIVersion: "networking.istio.io/v1",
+			},
+		},
+		"list with TypeMeta on items on list but not items": {
+			obj: &networkingv1.VirtualServiceList{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "VirtualServiceList",
+					APIVersion: "networking.istio.io/v1",
+				},
+				Items: []*networkingv1.VirtualService{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-1",
+							Namespace: "default",
+						},
+					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-2",
+							Namespace: "default",
+						},
+					},
+				},
+			},
+			expected: metav1.TypeMeta{
+				Kind:       "VirtualService",
+				APIVersion: "networking.istio.io/v1",
+			},
+		},
+		"list with TypeMeta on items but not list": {
+			obj: &networkingv1.VirtualServiceList{
+				Items: []*networkingv1.VirtualService{
+					{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "VirtualService",
+							APIVersion: "networking.istio.io/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-1",
+							Namespace: "default",
+						},
+					},
+					{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "VirtualService",
+							APIVersion: "networking.istio.io/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "vs-2",
+							Namespace: "default",
+						},
+					},
+				},
+			},
+			expected: metav1.TypeMeta{
+				Kind:       "VirtualService",
+				APIVersion: "networking.istio.io/v1",
+			},
+		},
+		"empty list": {
+			obj: &networkingv1.VirtualServiceList{
+				Items: []*networkingv1.VirtualService{},
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			initialLen := len(tc.obj.(*networkingv1.VirtualServiceList).Items)
+
+			err := kubernetes.EnsureTypeMeta(tc.obj)
+			require.NoError(err)
+
+			list := tc.obj.(*networkingv1.VirtualServiceList)
+			require.Len(list.Items, initialLen)
+			for _, item := range list.Items {
+				require.Equal(tc.expected.Kind, item.Kind)
+				require.Equal(tc.expected.APIVersion, item.APIVersion)
+			}
+		})
+	}
 }

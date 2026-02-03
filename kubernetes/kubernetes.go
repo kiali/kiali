@@ -26,6 +26,7 @@ import (
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -36,6 +37,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -685,4 +687,39 @@ func KubeConfigDir() string {
 		return path.Join(homedir, ".kube/config")
 	}
 	return ""
+}
+
+// EnsureTypeMeta ensures that the TypeMeta (APIVersion and Kind) is set on the object.
+// If the object is a list, it sets TypeMeta for each item in the list that doesn't already have it.
+// This is useful when objects are retrieved from the cache which may not have TypeMeta populated.
+func EnsureTypeMeta(obj runtime.Object) error {
+	if meta.IsListType(obj) {
+		return meta.EachListItem(obj, func(item runtime.Object) error {
+			return setTypeMetaIfMissing(item)
+		})
+	}
+
+	return setTypeMetaIfMissing(obj)
+}
+
+// setTypeMetaIfMissing sets the TypeMeta on an object if it's not already set.
+func setTypeMetaIfMissing(obj runtime.Object) error {
+	accessor, err := meta.TypeAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("failed to get type accessor: %w", err)
+	}
+
+	if accessor.GetAPIVersion() != "" && accessor.GetKind() != "" {
+		return nil
+	}
+
+	gvk, err := apiutil.GVKForObject(obj, Scheme)
+	if err != nil {
+		return fmt.Errorf("failed to get GVK for object: %w", err)
+	}
+
+	accessor.SetAPIVersion(gvk.GroupVersion().String())
+	accessor.SetKind(gvk.Kind)
+
+	return nil
 }
