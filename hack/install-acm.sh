@@ -37,6 +37,12 @@
 #   This approach uses ACM's pre-trusted certificates, so no additional
 #   ACM configuration is required for mTLS to work.
 #
+# Metrics Pipeline Latency:
+#   ACM collects metrics from Prometheus and pushes to Thanos every 5 minutes.
+#   Expect a 5-6 minute delay before new metrics appear in Kiali. To see data in
+#   Kiali's graph or metrics views, query time ranges that include data older than
+#   5-6 minutes (e.g., "Last 10 minutes" or "Last 30 minutes").
+#
 # References:
 #   - Red Hat blog on connecting Grafana to ACM Observability (mTLS setup):
 #     https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
