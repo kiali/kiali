@@ -30,6 +30,7 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
+import { isUnhealthy } from 'utils/Overview';
 
 export const ClusterStats: React.FC = () => {
   const { isLoading, statusMap } = useClusterStatus();
@@ -42,12 +43,20 @@ export const ClusterStats: React.FC = () => {
   const unhealthy = total - healthy;
 
   // Get clusters with issues
-  const clustersWithIssues = Object.entries(statusMap)
-    .filter(([_, components]) => components.some(comp => comp.status !== Status.Healthy))
-    .map(([clusterName, components]) => ({
-      name: clusterName,
-      issues: components.filter(comp => comp.status !== Status.Healthy).length
-    }));
+  const clustersWithIssues = Object.entries(statusMap).reduce((acc, [clusterName, components]) => {
+    // Calculate issues once
+    const issueCount = components.filter(isUnhealthy).length;
+
+    // Only add to accumulator if there are actual issues
+    if (issueCount > 0) {
+      acc.push({
+        name: clusterName,
+        issues: issueCount
+      });
+    }
+
+    return acc;
+  }, [] as { issues: number; name: string }[]);
 
   const popoverContent = (
     <>

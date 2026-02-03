@@ -30,6 +30,7 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
+import { isUnhealthy } from 'utils/Overview';
 
 export const ControlPlaneStats: React.FC = () => {
   const { controlPlanes, isLoading } = useControlPlanes();
@@ -40,7 +41,7 @@ export const ControlPlaneStats: React.FC = () => {
   const unhealthy = total - healthy;
 
   // Get control planes with issues
-  const controlPlanesWithIssues = controlPlanes.filter(cp => cp.status !== Status.Healthy);
+  const controlPlanesWithIssues = controlPlanes.filter(isUnhealthy);
 
   const popoverContent = (
     <>
