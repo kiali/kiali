@@ -203,6 +203,7 @@ func WorkloadDetails(
 			workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.Cluster, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
 			if err != nil {
 				handleErrorResponse(w, err)
+				return
 			}
 		}
 
