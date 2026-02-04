@@ -2226,11 +2226,11 @@ The command must be one of:
 
 Examples:
   $0 -cps ~/pull-secret.txt create-all      # Create complete environment (CRC/OpenShift + ACM + Kiali + test app + traffic)
-  $0 -cps ~/pull-secret.txt init-openshift  # Initialize CRC cluster (short option)
+  $0 -cps ~/pull-secret.txt init-openshift  # Initialize CRC cluster
   $0 install-acm                            # Install ACM with defaults
   $0 -n my-acm install-acm                  # Install ACM in custom namespace
   $0 -c release-2.14 install-acm            # Install specific ACM version
-  $0 -on my-obs -n my-acm install-acm       # Custom namespaces (short options)
+  $0 -on my-obs -n my-acm install-acm       # Custom namespaces
   $0 status-acm                             # Check ACM installation status
   $0 uninstall-acm                          # Remove ACM completely
   $0 install-kiali                          # Build and install Kiali for ACM
@@ -2242,9 +2242,9 @@ Examples:
   $0 status-app                             # Check test application status
   $0 uninstall-app                          # Remove test application
   $0 traffic                                # Send 10 requests to test app
-  $0 -tc 50 traffic                         # Send 50 requests (short option)
+  $0 -tc 50 traffic                         # Send 50 requests
   $0 -tc 100 -ti 2 traffic                  # Send 100 requests, 2s interval
-  $0 -cont traffic                          # Continuous traffic (short option)
+  $0 -cont traffic                          # Continuous traffic
   $0 -cont -ti 3 traffic                    # Continuous every 3 seconds
 
 HELPMSG
