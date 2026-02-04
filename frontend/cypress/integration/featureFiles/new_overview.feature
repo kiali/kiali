@@ -1,5 +1,6 @@
 @overview
-Feature: New Overview - Summary cards
+@selected
+Feature: New Overview - Overview cards
 
   Background:
     Given user is at administrator perspective
@@ -35,9 +36,9 @@ Feature: New Overview - Summary cards
 
   @core-2
   Scenario: Control plane links in popover navigate to Mesh page with cluster filter
-    Given Control planes API returns 1 unhealthy control plane in cluster "east"
+    Given Control planes API returns 1 unhealthy control plane in cluster "Kubernetes"
     And user is at the "overview" page
     When user opens the Control planes issues popover
-    And user clicks the "istiod-east" control plane link in the popover
-    Then user is redirected to Mesh page with cluster filter "east"
+    And user clicks the "istiod-kubernetes" control plane link in the popover
+    Then user is redirected to Mesh page with cluster filter "Kubernetes"
 
