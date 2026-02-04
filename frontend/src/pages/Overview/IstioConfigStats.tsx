@@ -82,13 +82,13 @@ const getStatusBorderColor = (status: IstioConfigStatusLabel): string => {
 
 // Get icon for status label
 const getStatusIcon = (status: IstioConfigStatusLabel): React.ReactNode => {
-  switch (status) {          
+  switch (status) {
     case IstioConfigStatusLabel.Warning:
       return <KialiIcon.ExclamationTriangle />;
     case IstioConfigStatusLabel.NotValid:
       return <KialiIcon.ExclamationCircle />;
     case IstioConfigStatusLabel.NotValidated:
-      return <KialiIcon.InProgressIcon color={PFColors.Color200} />;  
+      return <KialiIcon.InProgressIcon color={PFColors.Color200} />;
     default:
       return <KialiIcon.InProgressIcon color={PFColors.Color200} />;
   }
@@ -165,6 +165,7 @@ export const IstioConfigStats: React.FC = () => {
           <div className={popoverFooterStyle}>
             <Button
               variant="link"
+              className={classes(linkStyle, noUnderlineStyle)}
               isInline
               onClick={() =>
                 navigateToUrl(buildIstioListUrl({ configFilters: viewAllStatuses, namespaces: allNamespaceNames }))
