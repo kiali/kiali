@@ -191,6 +191,9 @@ func ServiceDetails(
 			wg.Wait()
 			serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
 			err = errValidations
+		} else if serviceDetails != nil && serviceDetails.Validations == nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			serviceDetails.Validations = models.IstioValidations{}
 		}
 
 		if err != nil {
@@ -272,6 +275,9 @@ func ServiceUpdate(
 			wg.Wait()
 			serviceDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if serviceDetails != nil && serviceDetails.Validations == nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			serviceDetails.Validations = models.IstioValidations{}
 		}
 
 		if err != nil {

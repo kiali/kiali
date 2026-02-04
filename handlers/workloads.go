@@ -197,6 +197,9 @@ func WorkloadDetails(
 			wg.Wait()
 			workloadDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if workloadDetails != nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			workloadDetails.Validations = models.IstioValidations{}
 		}
 
 		if criteria.IncludeHealth && err == nil {
@@ -279,6 +282,9 @@ func WorkloadUpdate(
 			wg.Wait()
 			workloadDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if workloadDetails != nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			workloadDetails.Validations = models.IstioValidations{}
 		}
 		if err != nil {
 			handleErrorResponse(w, err)
