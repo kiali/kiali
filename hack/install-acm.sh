@@ -539,7 +539,8 @@ EOF
   create_istio_podmonitor "istio-system"
 
   # Create PodMonitor for ztunnel if Ambient mode is detected
-  # The sidecar PodMonitor filters by container_name=istio-proxy which does NOT match ztunnel
+  # Ztunnel container is named 'istio-proxy' and has prometheus.io/scrape annotation,
+  # so the standard istio-proxies-monitor works for ztunnel too
   create_ztunnel_podmonitor
 
   infomsg "Istio metrics collection configured for ACM"
@@ -634,11 +635,11 @@ spec:
 EOF
 }
 
-# Creates a PodMonitor for ztunnel pods.
+# Creates a PodMonitor for ztunnel pods if Ambient mode is detected.
 # Ztunnel is the L4 proxy component in Istio Ambient mode.
-# Unlike sidecar proxies which run as containers named 'istio-proxy',
-# ztunnel pods have label 'app=ztunnel' and expose metrics at :15020/stats/prometheus.
-# This monitor is REQUIRED for Ambient mode - the sidecar PodMonitor does NOT capture ztunnel.
+# The ztunnel container is named 'istio-proxy' and has prometheus.io/scrape annotation,
+# so we can use the standard create_istio_podmonitor function which has proper relabelings
+# including mesh_id, app/version extraction, and IPv4/IPv6 address handling.
 # Note: ztunnel can be in istio-system (istioctl) or ztunnel namespace (Sail Operator).
 create_ztunnel_podmonitor() {
   # Determine which namespace ztunnel is running in
@@ -668,34 +669,9 @@ create_ztunnel_podmonitor() {
     return 0
   fi
 
-  infomsg "Creating PodMonitor for ztunnel (Ambient L4 proxy) in ${ztunnel_namespace}..."
-  cat <<EOF | ${CLIENT_EXE} apply -f -
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: ztunnel-monitor
-  namespace: ${ztunnel_namespace}
-spec:
-  selector:
-    matchLabels:
-      app: ztunnel
-  podMetricsEndpoints:
-  - path: /stats/prometheus
-    port: "15020"
-    interval: 30s
-    relabelings:
-    - sourceLabels: ["__meta_kubernetes_namespace"]
-      action: replace
-      targetLabel: namespace
-    - sourceLabels: ["__meta_kubernetes_pod_name"]
-      action: replace
-      targetLabel: pod
-    - sourceLabels: ["__meta_kubernetes_pod_node_name"]
-      action: replace
-      targetLabel: node
-EOF
-
-  infomsg "Ztunnel PodMonitor created in ${ztunnel_namespace}"
+  # Use the standard istio-proxies-monitor since ztunnel container is named 'istio-proxy'
+  # and has the prometheus.io/scrape annotation. This ensures consistent relabelings.
+  create_istio_podmonitor "${ztunnel_namespace}"
 }
 
 # Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
@@ -1207,7 +1183,7 @@ check_status() {
 
   # Check istiod ServiceMonitor (only in istio-system)
   if ${CLIENT_EXE} get servicemonitor istiod-monitor -n istio-system &>/dev/null 2>&1; then
-    echo "  ServiceMonitor istiod-monitor: istio-system"
+    echo "  ServiceMonitor istiod-monitor (namespace: istio-system)"
   else
     echo "  ServiceMonitor istiod-monitor: [NOT FOUND]"
   fi
@@ -1215,7 +1191,7 @@ check_status() {
   # Check istio-proxies-monitor PodMonitors across all namespaces
   local podmonitors=$(${CLIENT_EXE} get podmonitor --all-namespaces -o json 2>/dev/null | jq -r '.items[] | select(.metadata.name == "istio-proxies-monitor") | .metadata.namespace' 2>/dev/null || true)
   if [ -n "${podmonitors}" ]; then
-    echo "  PodMonitor istio-proxies-monitor:"
+    echo "  PodMonitor istio-proxies-monitor (namespaces):"
     echo "${podmonitors}" | while read ns; do
       if [ -n "${ns}" ]; then
         echo "    - ${ns}"
@@ -1225,15 +1201,18 @@ check_status() {
     echo "  PodMonitor istio-proxies-monitor: [NOT FOUND in any namespace]"
   fi
 
-  # Check ztunnel-monitor PodMonitor (for Ambient mode L4 metrics)
-  local ztunnel_monitor_ns=$(${CLIENT_EXE} get podmonitor --all-namespaces -o json 2>/dev/null | jq -r '.items[] | select(.metadata.name == "ztunnel-monitor") | .metadata.namespace' 2>/dev/null || true)
-  if [ -n "${ztunnel_monitor_ns}" ]; then
-    echo "  PodMonitor ztunnel-monitor: ${ztunnel_monitor_ns}"
-  else
-    # Check if ztunnel exists but monitor is missing
-    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1 || \
-       ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-      echo "  PodMonitor ztunnel-monitor: [MISSING - Ambient mode detected but monitor not created]"
+  # Check if Ambient mode is detected but ztunnel monitor is missing
+  # Only show a warning if there's a problem - when it exists, it's already shown in the namespace list above
+  local ztunnel_ns=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_ns="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_ns="istio-system"
+  fi
+
+  if [ -n "${ztunnel_ns}" ]; then
+    if ! ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${ztunnel_ns} &>/dev/null 2>&1; then
+      echo "  [WARNING] Ambient mode detected (ztunnel in ${ztunnel_ns}) but istio-proxies-monitor not found in that namespace"
     fi
   fi
 
@@ -1639,8 +1618,10 @@ status_kiali() {
   fi
 
   # Check deployment
-  local deployment_ready=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
-  local deployment_desired=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+  local deployment_ready=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  local deployment_desired=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+  deployment_ready=${deployment_ready:-0}
+  deployment_desired=${deployment_desired:-0}
   echo "Deployment: ${deployment_ready}/${deployment_desired} ready"
 
   # Check route
@@ -2410,13 +2391,13 @@ install_ambient_app() {
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hello-world-html
+  name: hello-ambient-html
 data:
   index.html: |
     <!DOCTYPE html>
     <html>
-    <head><title>Hello World (Ambient)</title></head>
-    <body><h1>Hello World - Ambient Mode</h1><p>This is a test application using Istio Ambient mode.</p></body>
+    <head><title>Hello Ambient</title></head>
+    <body><h1>Hello Ambient</h1><p>This is a test application using Istio Ambient mode (ztunnel + waypoint).</p></body>
     </html>
 EOF
 
@@ -2427,27 +2408,27 @@ EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world
+  name: hello-ambient
   labels:
-    app: hello-world
+    app: hello-ambient
     version: v1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-world
+      app: hello-ambient
       version: v1
   template:
     metadata:
       labels:
-        app: hello-world
+        app: hello-ambient
         version: v1
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
       containers:
-      - name: hello-world
+      - name: hello-ambient
         image: registry.access.redhat.com/ubi9/httpd-24:latest
         ports:
         - containerPort: 8080
@@ -2465,7 +2446,7 @@ spec:
       volumes:
       - name: html
         configMap:
-          name: hello-world-html
+          name: hello-ambient-html
 EOF
 
   # Create Service
@@ -2474,32 +2455,32 @@ EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-world
+  name: hello-ambient
   labels:
-    app: hello-world
+    app: hello-ambient
 spec:
   ports:
   - port: 80
     targetPort: 8080
     name: http
   selector:
-    app: hello-world
+    app: hello-ambient
 EOF
 
   # Wait for deployment to be ready
   infomsg "Waiting for deployment to be ready..."
-  ${CLIENT_EXE} rollout status deployment/hello-world -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+  ${CLIENT_EXE} rollout status deployment/hello-ambient -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
   # Wait for pod to be fully ready
   infomsg "Waiting for pod to be fully ready..."
-  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-world -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-ambient -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
   # Wait for Service endpoints to be populated
   infomsg "Waiting for service endpoints to be ready..."
   local max_wait=60
   local waited=0
   while true; do
-    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
     if [ -n "${endpoint_ip}" ]; then
       debug "Service endpoint ready: ${endpoint_ip}"
       break
@@ -2530,7 +2511,7 @@ EOF
   fi
 
   # Create PodMonitor for waypoint proxies in this namespace (uses istio-proxy container)
-  # Note: Ztunnel is monitored globally via ztunnel-monitor in istio-system
+  # Note: Ztunnel is monitored globally via istio-proxies-monitor in ztunnel/istio-system namespace
   create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
 
   # Create metrics allowlist for ACM observability
@@ -2540,7 +2521,7 @@ EOF
   infomsg "Ambient test application installation complete!"
   infomsg "======================================"
   infomsg "Namespace: ${AMBIENT_APP_NAMESPACE}"
-  infomsg "Service: hello-world.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  infomsg "Service: hello-ambient.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
   infomsg "Mode: Istio Ambient (L4 via ztunnel, L7 via waypoint)"
   infomsg ""
   infomsg "Metrics flow:"
@@ -2565,21 +2546,21 @@ uninstall_ambient_app() {
   fi
 
   # Delete deployment
-  if ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting deployment..."
-    ${CLIENT_EXE} delete deployment hello-world -n ${AMBIENT_APP_NAMESPACE}
+    ${CLIENT_EXE} delete deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete service
-  if ${CLIENT_EXE} get service hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get service hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting service..."
-    ${CLIENT_EXE} delete service hello-world -n ${AMBIENT_APP_NAMESPACE}
+    ${CLIENT_EXE} delete service hello-ambient -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete configmap
-  if ${CLIENT_EXE} get configmap hello-world-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get configmap hello-ambient-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting configmap..."
-    ${CLIENT_EXE} delete configmap hello-world-html -n ${AMBIENT_APP_NAMESPACE}
+    ${CLIENT_EXE} delete configmap hello-ambient-html -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete PodMonitor
@@ -2618,9 +2599,9 @@ status_ambient_app() {
   fi
 
   # Check deployment
-  if ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
-    local ready=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
-    local desired=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+  if ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
     ready=${ready:-0}
     desired=${desired:-0}
     echo "Deployment: ${ready}/${desired} ready"
@@ -2629,7 +2610,7 @@ status_ambient_app() {
   fi
 
   # Check service
-  if ${CLIENT_EXE} get service hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get service hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     echo "Service: [EXISTS]"
   else
     echo "Service: [NOT FOUND]"
@@ -2669,21 +2650,21 @@ generate_ambient_traffic() {
   infomsg "Generating traffic to Ambient test application..."
 
   # Check if ambient test app is running
-  if ! ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ! ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     errormsg "Ambient test application is not installed in namespace ${AMBIENT_APP_NAMESPACE}"
     errormsg "Run '$0 install-ambient-app' first to install the Ambient test application"
     return 1
   fi
 
   # Check if deployment is ready
-  local ready=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  local ready=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
   if [ "${ready}" != "1" ]; then
     errormsg "Ambient test application is not ready (ready replicas: ${ready:-0})"
     return 1
   fi
 
   # Service URL - traffic goes through ztunnel (L4) and optionally waypoint (L7)
-  local service_url="http://hello-world.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  local service_url="http://hello-ambient.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
   debug "Using service URL to generate Ambient metrics: ${service_url}"
 
   # Check if waypoint is deployed for L7 metrics
@@ -2700,7 +2681,7 @@ generate_ambient_traffic() {
     local count=0
     trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
     while true; do
-      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-ambient -c hello-ambient -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         count=$((count + 1))
         echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
@@ -2715,7 +2696,7 @@ generate_ambient_traffic() {
     local success_count=0
     local fail_count=0
     for i in $(seq 1 ${TRAFFIC_COUNT}); do
-      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-ambient -c hello-ambient -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         success_count=$((success_count + 1))
         echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
