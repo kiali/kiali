@@ -18,6 +18,13 @@ Feature: Kiali Namespaces page
     And user sees a table with headings
       | Namespace | Type | Health | mTLS | Istio config | Labels |
     And the "Namespace" column on the "bookinfo" row has the text "bookinfo"
+
+  @core-2
+  Scenario: See namespaces table with correct info
+    Then user sees the "bookinfo" namespace in the namespaces page
+    And user sees a table with headings
+      | Namespace | Type | Health | mTLS | Istio config | Labels |
+    And the "Namespace" column on the "bookinfo" row has the text "bookinfo"
     And the "Type" column on the "bookinfo" row is not empty
     And the health column on the "bookinfo" row has a health icon
     And the "mTLS" column on the "bookinfo" row has the text "Unset"
