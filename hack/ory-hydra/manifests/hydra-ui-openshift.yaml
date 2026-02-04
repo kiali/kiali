@@ -1,0 +1,277 @@
+# Hydra Login/Consent UI for OpenShift
+# Uses HTTPS with passthrough TLS termination at Route level
+# Connects to Hydra Admin via HTTPS (internal cluster communication)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hydra-ui-simple
+  namespace: ory
+data:
+  server.js: |
+    const express = require('express');
+    const https = require('https');
+    const fs = require('fs');
+    const { URL } = require('url');
+
+    const app = express();
+    app.use(express.urlencoded({ extended: true }));
+
+    // Use HTTPS to connect to Hydra Admin (Hydra now uses TLS)
+    const HYDRA_ADMIN_URL = process.env.HYDRA_ADMIN_URL || 'https://hydra-admin:4445';
+
+    // Test user for molecule tests
+    const testUser = {
+      email: 'admin@example.com',
+      password: 'password',
+      name: 'Admin User',
+      groups: ['admin', 'users']
+    };
+
+    // Helper function to make HTTPS requests (skip TLS verification for internal cluster communication)
+    const makeHttpsRequest = (url, method, data) => {
+      return new Promise((resolve, reject) => {
+        const parsedUrl = new URL(url);
+        const options = {
+          hostname: parsedUrl.hostname,
+          port: parsedUrl.port || 443,
+          path: parsedUrl.pathname + parsedUrl.search,
+          method: method,
+          rejectUnauthorized: false, // Skip TLS verification for internal cluster communication
+          headers: data ? {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(data)
+          } : {}
+        };
+
+        const req = https.request(options, (res) => {
+          let responseData = '';
+          res.on('data', (chunk) => responseData += chunk);
+          res.on('end', () => {
+            try {
+              const parsed = JSON.parse(responseData);
+              resolve({ data: parsed, status: res.statusCode });
+            } catch (e) {
+              resolve({ data: { error: 'Parse failed', raw: responseData }, status: res.statusCode });
+            }
+          });
+        });
+        req.on('error', reject);
+        if (data) req.write(data);
+        req.end();
+      });
+    };
+
+    // Login flow
+    app.get('/login', async (req, res) => {
+      const challenge = req.query.login_challenge;
+      if (!challenge) return res.status(400).send('Missing login challenge');
+
+      // Simple login form with proper challenge handling
+      res.send(`
+        <html><body style="font-family:Arial;max-width:400px;margin:100px auto;padding:20px">
+          <h2>Kiali Test Login</h2>
+          <form method="post" action="/login?login_challenge=${challenge}">
+            <input type="hidden" name="challenge" value="${challenge}">
+            <div style="margin-bottom:15px">
+              <label>Email:</label><br>
+              <input type="email" name="email" value="admin@example.com" style="width:100%;padding:8px" required>
+            </div>
+            <div style="margin-bottom:15px">
+              <label>Password:</label><br>
+              <input type="password" name="password" value="password" style="width:100%;padding:8px" required>
+            </div>
+            <button type="submit" style="background:#007bff;color:white;padding:10px 20px;border:none;width:100%">Login</button>
+          </form>
+        </body></html>
+      `);
+    });
+
+    app.post('/login', async (req, res) => {
+      const challenge = req.body.challenge || req.query.login_challenge;
+      const { email, password } = req.body;
+
+      if (!challenge) return res.status(400).send('Missing login challenge');
+
+      // Validate credentials (simple test validation)
+      if (email !== testUser.email || password !== testUser.password) {
+        return res.status(401).send('Invalid credentials');
+      }
+
+      try {
+        console.log('Attempting login acceptance with challenge:', challenge);
+        console.log('Using admin URL:', HYDRA_ADMIN_URL);
+
+        const acceptUrl = `${HYDRA_ADMIN_URL}/admin/oauth2/auth/requests/login/accept?login_challenge=${encodeURIComponent(challenge)}`;
+        const postData = JSON.stringify({
+          subject: email,
+          remember: true,
+          remember_for: 3600,
+          context: { name: testUser.name, email: testUser.email, groups: testUser.groups }
+        });
+
+        const response = await makeHttpsRequest(acceptUrl, 'PUT', postData);
+        console.log('Login response:', response.data);
+
+        if (response.data.redirect_to) {
+          console.log('Login acceptance successful, redirecting to:', response.data.redirect_to);
+          res.redirect(response.data.redirect_to);
+        } else {
+          console.error('No redirect_to in response:', response.data);
+          res.status(500).send('Login failed - no redirect');
+        }
+      } catch (error) {
+        console.error('Login error:', error.message);
+        res.status(500).send('Login failed');
+      }
+    });
+
+    // Consent flow (auto-accept for testing)
+    app.get('/consent', async (req, res) => {
+      const challenge = req.query.consent_challenge;
+      console.log('Consent endpoint called with challenge:', challenge);
+      if (!challenge) return res.status(400).send('Missing consent challenge');
+
+      try {
+        // Get consent request
+        const consentUrl = `${HYDRA_ADMIN_URL}/admin/oauth2/auth/requests/consent?consent_challenge=${encodeURIComponent(challenge)}`;
+        const consentReq = await makeHttpsRequest(consentUrl, 'GET', null);
+
+        // Auto-accept consent for testing
+        const acceptUrl = `${HYDRA_ADMIN_URL}/admin/oauth2/auth/requests/consent/accept?consent_challenge=${encodeURIComponent(challenge)}`;
+        const acceptData = JSON.stringify({
+          grant_scope: consentReq.data.requested_scope,
+          grant_access_token_audience: consentReq.data.requested_access_token_audience,
+          session: {
+            id_token: {
+              email: consentReq.data.subject,
+              groups: testUser.groups
+            }
+          }
+        });
+
+        const acceptResponse = await makeHttpsRequest(acceptUrl, 'PUT', acceptData);
+        console.log('Consent acceptance successful, redirecting to:', acceptResponse.data.redirect_to);
+        res.redirect(acceptResponse.data.redirect_to);
+      } catch (error) {
+        console.error('Consent error:', error.message);
+        res.status(500).send('Consent failed');
+      }
+    });
+
+    app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+    const port = process.env.PORT || 8443;
+
+    // Load TLS certificates and start HTTPS server
+    const tlsOptions = {
+      key: fs.readFileSync('/etc/hydra/certs/key.pem'),
+      cert: fs.readFileSync('/etc/hydra/certs/cert.pem')
+    };
+
+    https.createServer(tlsOptions, app).listen(port, () => {
+      console.log(`Hydra UI HTTPS listening on port ${port}`);
+    });
+
+  package.json: |
+    {
+      "name": "hydra-ui-simple",
+      "version": "1.0.0",
+      "main": "server.js",
+      "scripts": { "start": "node server.js" },
+      "dependencies": {
+        "express": "^4.18.2"
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hydra-ui
+  namespace: ory
+  labels:
+    app: hydra-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hydra-ui
+  template:
+    metadata:
+      labels:
+        app: hydra-ui
+    spec:
+      containers:
+      - name: hydra-ui
+        image: node:18-alpine
+        workingDir: /app
+        command: ["sh", "-c", "cp /app-config/* /app/ && npm install && npm start"]
+        ports:
+        - containerPort: 8443
+          name: https
+        env:
+        - name: HYDRA_ADMIN_URL
+          value: "https://hydra-admin:4445"
+        - name: PORT
+          value: "8443"
+        volumeMounts:
+        - name: ui-config
+          mountPath: /app-config
+        - name: app-dir
+          mountPath: /app
+        - name: npm-cache
+          mountPath: /.npm
+        - name: hydra-certs
+          mountPath: /etc/hydra/certs
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 20
+          periodSeconds: 10
+      volumes:
+      - name: ui-config
+        configMap:
+          name: hydra-ui-simple
+      - name: app-dir
+        emptyDir: {}
+      - name: npm-cache
+        emptyDir: {}
+      - name: hydra-certs
+        secret:
+          secretName: hydra-tls
+          defaultMode: 0644
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hydra-ui
+  namespace: ory
+  labels:
+    app: hydra-ui
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8443
+    targetPort: 8443
+    protocol: TCP
+    name: https
+  selector:
+    app: hydra-ui

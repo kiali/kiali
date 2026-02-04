@@ -626,3 +626,332 @@ func setupHealthConfig(t *testing.T, services []core_v1.Service, deployments []a
 	prom.MockAllRequestRates(context.Background(), "testNamespace", conf.KubernetesConfig.ClusterName, "0s", time.Unix(0, 0), model.Vector{})
 	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 }
+
+// Tests for edge health calculation
+
+func TestCalculateEdgeStatusWithTolerances(t *testing.T) {
+	a := HealthAppender{}
+
+	testCases := []struct {
+		name           string
+		responses      graph.Responses
+		protocol       string
+		totalRequests  float64
+		tolerances     []config.Tolerance
+		expectedStatus models.HealthStatus
+	}{
+		{
+			name:           "No tolerances with traffic returns healthy",
+			responses:      graph.Responses{"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 100}}},
+			protocol:       "http",
+			totalRequests:  100,
+			tolerances:     []config.Tolerance{},
+			expectedStatus: models.HealthStatusHealthy,
+		},
+		{
+			name:           "No traffic returns NA",
+			responses:      graph.Responses{},
+			protocol:       "http",
+			totalRequests:  0,
+			tolerances:     []config.Tolerance{},
+			expectedStatus: models.HealthStatusNA,
+		},
+		{
+			name: "All success returns healthy",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 100}},
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 1, Failure: 5},
+			},
+			expectedStatus: models.HealthStatusHealthy,
+		},
+		{
+			name: "Error rate below degraded threshold is healthy",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 99}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 1}}, // 1% error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusHealthy,
+		},
+		{
+			name: "Error rate at degraded threshold is degraded",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 95}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 5}}, // 5% error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusDegraded,
+		},
+		{
+			name: "Error rate above degraded but below failure is degraded",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 92}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 8}}, // 8% error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusDegraded,
+		},
+		{
+			name: "Error rate at failure threshold is failure",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 90}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 10}}, // 10% error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusFailure,
+		},
+		{
+			name: "Error rate above failure threshold is failure",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 80}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 20}}, // 20% error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusFailure,
+		},
+		{
+			name: "4XX errors with 4XX tolerance",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 85}},
+				"404": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 15}}, // 15% 4xx error
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "4XX", Protocol: "http", Direction: ".*", Degraded: 10, Failure: 20},
+			},
+			expectedStatus: models.HealthStatusDegraded,
+		},
+		{
+			name: "Protocol mismatch - tolerance not applied",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 50}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 50}}, // 50% error but grpc tolerance
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "grpc", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusHealthy, // No matching tolerance, so healthy
+		},
+		{
+			name: "Multiple tolerances - worst status wins",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 80}},
+				"400": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 8}},  // 8% 4xx (degraded)
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 12}}, // 12% 5xx (failure)
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "4XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 20},
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusFailure, // 5xx at 12% > 10% failure threshold
+		},
+		{
+			// This tests the default 5XX tolerance which has Failure=10, Degraded=0 (not set)
+			// When degraded=0, any error > 0% should be degraded (matching frontend behavior)
+			name: "Degraded threshold 0 - any error triggers degraded",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 96}},
+				"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 4}}, // 4% error, below failure=10
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 0, Failure: 10}, // Degraded=0 means any error
+			},
+			expectedStatus: models.HealthStatusDegraded, // 4% error with degraded=0 should be degraded
+		},
+		{
+			// Verify that 0% error is still healthy even with degraded=0
+			name: "Degraded threshold 0 - no errors is healthy",
+			responses: graph.Responses{
+				"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 100}},
+			},
+			protocol:      "http",
+			totalRequests: 100,
+			tolerances: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 0, Failure: 10},
+			},
+			expectedStatus: models.HealthStatusHealthy, // 0% error is healthy
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Compile tolerances for the test
+			compiledTolerances := business.CompileTolerances(tc.tolerances)
+			status := a.calculateEdgeStatusWithTolerances(tc.responses, tc.protocol, tc.totalRequests, compiledTolerances)
+			assert.Equal(t, tc.expectedStatus, status)
+		})
+	}
+}
+
+func TestCalculateSingleEdgeHealth(t *testing.T) {
+	conf := config.NewConfig()
+	conf.HealthConfig.Rate = []config.Rate{
+		{
+			Tolerance: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+		},
+	}
+	config.Set(conf)
+
+	calculator := business.NewHealthCalculator(conf)
+	a := HealthAppender{}
+
+	// Create source and dest nodes
+	sourceNode := &graph.Node{
+		ID:        "source-id",
+		NodeType:  graph.NodeTypeWorkload,
+		Namespace: "testNamespace",
+		Workload:  "source-workload",
+		Metadata:  graph.NewMetadata(),
+	}
+	destNode := &graph.Node{
+		ID:        "dest-id",
+		NodeType:  graph.NodeTypeService,
+		Namespace: "testNamespace",
+		Service:   "dest-service",
+		Metadata:  graph.NewMetadata(),
+	}
+
+	t.Run("Healthy edge - all 200s", func(t *testing.T) {
+		edge := &graph.Edge{
+			Source:   sourceNode,
+			Dest:     destNode,
+			Metadata: graph.NewMetadata(),
+		}
+		edge.Metadata[graph.ProtocolKey] = "http"
+		edge.Metadata["httpResponses"] = graph.Responses{
+			"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 100}},
+		}
+
+		status := a.calculateSingleEdgeHealth(edge, calculator)
+		assert.Equal(t, models.HealthStatusHealthy, status)
+	})
+
+	t.Run("Degraded edge - 7% 5xx errors", func(t *testing.T) {
+		edge := &graph.Edge{
+			Source:   sourceNode,
+			Dest:     destNode,
+			Metadata: graph.NewMetadata(),
+		}
+		edge.Metadata[graph.ProtocolKey] = "http"
+		edge.Metadata["httpResponses"] = graph.Responses{
+			"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 93}},
+			"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 7}},
+		}
+
+		status := a.calculateSingleEdgeHealth(edge, calculator)
+		assert.Equal(t, models.HealthStatusDegraded, status)
+	})
+
+	t.Run("Failure edge - 15% 5xx errors", func(t *testing.T) {
+		edge := &graph.Edge{
+			Source:   sourceNode,
+			Dest:     destNode,
+			Metadata: graph.NewMetadata(),
+		}
+		edge.Metadata[graph.ProtocolKey] = "http"
+		edge.Metadata["httpResponses"] = graph.Responses{
+			"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 85}},
+			"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 15}},
+		}
+
+		status := a.calculateSingleEdgeHealth(edge, calculator)
+		assert.Equal(t, models.HealthStatusFailure, status)
+	})
+
+	t.Run("No protocol returns NA", func(t *testing.T) {
+		edge := &graph.Edge{
+			Source:   sourceNode,
+			Dest:     destNode,
+			Metadata: graph.NewMetadata(),
+		}
+		// No protocol set
+
+		status := a.calculateSingleEdgeHealth(edge, calculator)
+		assert.Equal(t, models.HealthStatusNA, status)
+	})
+
+	t.Run("No responses returns NA", func(t *testing.T) {
+		edge := &graph.Edge{
+			Source:   sourceNode,
+			Dest:     destNode,
+			Metadata: graph.NewMetadata(),
+		}
+		edge.Metadata[graph.ProtocolKey] = "http"
+		// No responses set
+
+		status := a.calculateSingleEdgeHealth(edge, calculator)
+		assert.Equal(t, models.HealthStatusNA, status)
+	})
+}
+
+func TestCalculateEdgeHealthStatus(t *testing.T) {
+	conf := config.NewConfig()
+	conf.HealthConfig.Rate = []config.Rate{
+		{
+			Tolerance: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 5, Failure: 10},
+			},
+		},
+	}
+	config.Set(conf)
+
+	calculator := business.NewHealthCalculator(conf)
+	a := HealthAppender{}
+
+	// Build a simple traffic map with edges
+	sourceNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "source-app", "", "", "", "", graph.GraphTypeVersionedApp)
+	destNode, _ := graph.NewNode(config.DefaultClusterID, "testNamespace", "dest-app", "", "", "", "", graph.GraphTypeVersionedApp)
+
+	edge := sourceNode.AddEdge(destNode)
+	edge.Metadata[graph.ProtocolKey] = "http"
+	edge.Metadata["httpResponses"] = graph.Responses{
+		"200": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 85}},
+		"500": &graph.ResponseDetail{Flags: graph.ResponseFlags{"-": 15}}, // 15% errors = Failure
+	}
+
+	trafficMap := graph.TrafficMap{
+		sourceNode.ID: sourceNode,
+		destNode.ID:   destNode,
+	}
+
+	// Calculate edge health
+	a.calculateEdgeHealthStatus(trafficMap, calculator)
+
+	// Verify edge has health status set
+	healthStatus, ok := edge.Metadata[graph.HealthStatus].(string)
+	assert.True(t, ok, "edge should have HealthStatus metadata")
+	assert.Equal(t, string(models.HealthStatusFailure), healthStatus)
+}

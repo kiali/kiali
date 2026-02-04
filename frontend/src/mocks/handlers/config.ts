@@ -199,7 +199,7 @@ const generateServerConfig = (): ServerConfig => {
     logLevel: 'info',
     prometheus: {
       globalScrapeInterval: 15,
-      storageTsdbRetention: 86400
+      storageTsdbRetention: 604800
     },
     runMode: RunMode.APP
   };

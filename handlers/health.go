@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -18,13 +16,24 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
 
 const defaultHealthRateInterval = "10m"
 
-// ClusterHealth is the API handler to get app-based health of every services from namespaces in the given cluster
+// ResponseHeader for indicating cached health data
+const HealthCachedHeader = "X-Kiali-Health-Cached"
+
+// ClusterHealth is the API handler to get health of services from namespaces in the given cluster.
+// The 'type' query parameter can be set to 'app', 'service', or 'workload' to get health for a specific type.
+// If 'type' is not specified, health for all types (app, service, workload) is returned.
+// When health cache is enabled, this handler serves pre-computed health data from cache. On a cache miss
+// (e.g., during startup before the first refresh completes), the handler returns an empty health map for
+// the affected namespace rather than computing health on-demand. This avoids expensive Prometheus queries
+// during the request lifecycle. The X-Kiali-Health-Cached header indicates whether all data came from cache.
+// When health cache is disabled, health is computed on-demand for each request.
 func ClusterHealth(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -44,77 +53,140 @@ func ClusterHealth(
 		}
 		cluster := clusterNameFromQuery(conf, params)
 
-		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
+		// Extract health type from query params
+		// If type is not specified, we'll fetch all types (app, service, workload)
+		healthType := params.Get("type")
+		if healthType != "" && healthType != "app" && healthType != "service" && healthType != "workload" {
+			RespondWithError(w, http.StatusBadRequest, "Bad request, query parameter 'type' must be one of ['app','service','workload']")
 			return
 		}
 
+		// Determine which health types to fetch
+		var healthTypes []string
+		if healthType == "" {
+			healthTypes = []string{"app", "service", "workload"}
+		} else {
+			healthTypes = []string{healthType}
+		}
+
+		// If no namespaces specified, get all namespaces for the cluster
 		if len(nss) == 0 {
+			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
+				return
+			}
 			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
 			for _, ns := range loadedNamespaces {
 				nss = append(nss, ns.Name)
 			}
 		}
+
 		result := models.ClustersNamespaceHealth{
 			AppHealth:      map[string]*models.NamespaceAppHealth{},
-			WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
 			ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
+			WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
 		}
-		for _, ns := range nss {
-			p := namespaceHealthParams{}
-			if ok, err := p.extract(conf, r, ns); !ok {
-				// Bad request
-				RespondWithError(w, http.StatusBadRequest, err)
-				return
+
+		// Check if health cache is enabled
+		healthCacheEnabled := conf.KialiInternal.HealthCache.Enabled
+
+		if healthCacheEnabled {
+			// Serve from cache
+			allFromCache := true
+			for _, ns := range nss {
+				for _, ht := range healthTypes {
+					// GetHealth now tracks cache hit/miss metrics internally
+					cachedData, found := kialiCache.GetHealth(cluster, ns, healthTypeToMetricType(ht))
+					if !found {
+						// Cache miss - return "unknown" status for this namespace
+						allFromCache = false
+						log.Debugf("health cache miss for cluster=%s namespace=%s type=%s, returning unknown status", cluster, ns, ht)
+						switch ht {
+						case "app":
+							result.AppHealth[ns] = &models.NamespaceAppHealth{}
+						case "service":
+							result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+						case "workload":
+							result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+						}
+						continue
+					}
+
+					// Use cached data
+					switch ht {
+					case "app":
+						result.AppHealth[ns] = &cachedData.AppHealth
+					case "service":
+						result.ServiceHealth[ns] = &cachedData.ServiceHealth
+					case "workload":
+						result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
+					}
+				}
 			}
 
-			// Adjust rate interval
-			rateInterval, err := adjustRateInterval(r.Context(), businessLayer, p.Namespace, p.RateInterval, p.QueryTime, p.ClusterName)
-			if err != nil {
-				handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
-				return
-			}
-
-			healthCriteria := business.NamespaceHealthCriteria{Namespace: p.Namespace, Cluster: p.ClusterName, RateInterval: rateInterval, QueryTime: p.QueryTime, IncludeMetrics: true}
-
-			// Determine which types to fetch
-			var typesToFetch []string
-			if p.Type == "" {
-				// Empty type means fetch all types
-				typesToFetch = []string{"app", "service", "workload"}
+			// Set header to indicate data came from cache
+			if allFromCache && len(nss) > 0 {
+				w.Header().Set(HealthCachedHeader, "true")
 			} else {
-				// Specific type requested
-				typesToFetch = []string{p.Type}
+				w.Header().Set(HealthCachedHeader, "false")
+			}
+		} else {
+			// Health cache disabled - compute on-demand
+			w.Header().Set(HealthCachedHeader, "false")
+
+			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
+				return
 			}
 
-			// Fetch health for each requested type
-			for _, healthType := range typesToFetch {
-				switch healthType {
-				case "app":
-					health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), healthCriteria)
-					if err != nil {
-						handleErrorResponse(w, err, "Error while fetching app health: "+err.Error())
-						return
+			queryTime := util.Clock.Now()
+			rateInterval := params.Get("rateInterval")
+			if rateInterval == "" {
+				rateInterval = defaultHealthRateInterval
+			}
+
+			for _, ns := range nss {
+				criteria := business.NamespaceHealthCriteria{
+					Cluster:        cluster,
+					IncludeMetrics: true,
+					Namespace:      ns,
+					QueryTime:      queryTime,
+					RateInterval:   rateInterval,
+				}
+
+				for _, ht := range healthTypes {
+					switch ht {
+					case "app":
+						health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing app health for namespace %s: %v", ns, err)
+							result.AppHealth[ns] = &models.NamespaceAppHealth{}
+						} else {
+							result.AppHealth[ns] = &health
+						}
+					case "service":
+						health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing service health for namespace %s: %v", ns, err)
+							result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+						} else {
+							result.ServiceHealth[ns] = &health
+						}
+					case "workload":
+						health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing workload health for namespace %s: %v", ns, err)
+							result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+						} else {
+							result.WorkloadHealth[ns] = &health
+						}
 					}
-					result.AppHealth[ns] = &health
-				case "service":
-					health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), healthCriteria)
-					if err != nil {
-						handleErrorResponse(w, err, "Error while fetching service health: "+err.Error())
-						return
-					}
-					result.ServiceHealth[ns] = &health
-				case "workload":
-					health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), healthCriteria)
-					if err != nil {
-						handleErrorResponse(w, err, "Error while fetching workload health: "+err.Error())
-						return
-					}
-					result.WorkloadHealth[ns] = &health
 				}
 			}
 		}
+
 		RespondWithJSON(w, http.StatusOK, result)
 	}
 }
@@ -151,37 +223,6 @@ func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request, var
 	}
 }
 
-// namespaceHealthParams holds the path and query parameters for NamespaceHealth
-//
-// swagger:parameters namespaceHealth
-type namespaceHealthParams struct {
-	baseHealthParams
-	// The type of health, "app", "service" or "workload". Empty string returns all types.
-	//
-	// in: query
-	// pattern: ^(app|service|workload|)$
-	// default: app
-	Type string `json:"type"`
-}
-
-func (p *namespaceHealthParams) extract(conf *config.Config, r *http.Request, namespace string) (bool, string) {
-	vars := mux.Vars(r)
-	p.baseExtract(conf, r, vars)
-	p.Namespace = namespace
-	queryParams := r.URL.Query()
-	healthType := queryParams.Get("type")
-	if healthType != "" {
-		if healthType != "app" && healthType != "service" && healthType != "workload" {
-			return false, "Bad request, query parameter 'type' must be one of ['app','service','workload'] or empty to get all types"
-		}
-		p.Type = healthType
-	} else {
-		// Empty string means fetch all types
-		p.Type = ""
-	}
-	return true, ""
-}
-
 func adjustRateInterval(ctx context.Context, business *business.Layer, namespace, rateInterval string, queryTime time.Time, cluster string) (string, error) {
 	namespaceInfo, err := business.Namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
@@ -198,4 +239,18 @@ func adjustRateInterval(ctx context.Context, business *business.Layer, namespace
 	}
 
 	return interval, nil
+}
+
+// healthTypeToMetricType converts a health type string to the internalmetrics.HealthType
+func healthTypeToMetricType(healthType string) internalmetrics.HealthType {
+	switch healthType {
+	case "app":
+		return internalmetrics.HealthTypeApp
+	case "service":
+		return internalmetrics.HealthTypeService
+	case "workload":
+		return internalmetrics.HealthTypeWorkload
+	default:
+		return internalmetrics.HealthTypeApp
+	}
 }

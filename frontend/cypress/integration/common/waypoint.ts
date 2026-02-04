@@ -285,6 +285,53 @@ Then('all waypoints are healthy', () => {
   });
 });
 
+const waitForWaypointTracesInApi = (
+  namespace: string,
+  workload: string,
+  clusterName?: string,
+  maxRetries = 10,
+  retryCount = 0
+): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Waypoint traces not found after ${maxRetries} retries (namespace=${namespace}, cluster=${clusterName ?? ''})`
+    );
+  }
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    // last 10 minutes (micros)
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+  if (clusterName) {
+    qs.clusterName = clusterName;
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `api/namespaces/${namespace}/workloads/${workload}/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const traces = response.body?.data;
+    if (Array.isArray(traces) && traces.length > 0) {
+      return;
+    }
+
+    return cy
+      .wait(10000)
+      .then(() => waitForWaypointTracesInApi(namespace, workload, clusterName, maxRetries, retryCount + 1));
+  });
+};
+
+Then('the waypoint tracing data is ready', () => {
+  waitForWaypointTracesInApi('bookinfo', 'bookinfo-gateway-istio');
+});
+
 Then('{string} namespace is labeled with the waypoint label', (namespace: string) => {
   cy.exec(`kubectl label namespace ${namespace} istio.io/use-waypoint=waypoint`, { failOnNonZeroExit: false });
   waitForWorkloadEnrolled(namespace);

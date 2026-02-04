@@ -337,18 +337,46 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 
 ---
 
-## Tool Registration
+## Tool definitions (YAML)
 
-Tools are registered in the AI provider and made available to the AI model. Each tool implements the `ToolHandler` interface:
+Tool definitions are now described in YAML files under `ai/mcp/tools/`. Each
+file defines a single tool, or a list with exactly one tool. The loader reads
+all `*.yaml`/`*.yml` files and registers them by name.
 
-```go
-type ToolHandler interface {
-    Definition() openai.ChatCompletionToolUnionParam
-    Call(r *http.Request, args map[string]interface{}, ...) (interface{}, int)
-}
+**Schema**
+
+- `name`: Tool name, must match the implementation switch in `mcp_tools.go`.
+- `description`: Short description sent to the model.
+- `input_schema`: JSON Schema object describing the tool parameters.
+
+Example:
+
+```yaml
+- name: "get_mesh_graph"
+  description: "Returns the mesh graph data for the given namespaces and graph type."
+  input_schema:
+    type: "object"
+    properties:
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to include in the graph"
+      graphType:
+        type: "string"
+        description: "Type of graph to return"
+        enum: ["versionedApp", "app", "service", "workload"]
 ```
 
-The `Definition()` method returns the OpenAI tool definition with parameter schemas, and `Call()` executes the tool with the provided arguments.
+## Tool execution flow
+
+Tools are loaded via `mcp.LoadTools()` and exposed to the provider as OpenAI
+tools. The execution is routed by name in `ToolDef.Call`.
+
+### ExcludedToolNames
+
+`ExcludedToolNames` defines tools that **return UI actions or citations only**.
+For these tools, the AI does not need to interpret or summarize the result; the
+UI consumes the `actions` or `citations` directly. The AI response only includes
+an acknowledgment tool message so the conversation can continue.
 
 ## Response Format
 
@@ -371,10 +399,14 @@ The AI combines results from multiple tools to provide comprehensive answers wit
 
 To add a new MCP tool:
 
-1. Create a new directory under `ai/mcp/` (e.g., `ai/mcp/my_tool/`)
-2. Implement the tool logic in `my_tool.go`
-3. Create a wrapper in `ai/mcp/my_tool.go` that implements `ToolHandler`
-4. Register the tool in the AI provider initialization
+1. Add a YAML definition in `ai/mcp/tools/<tool_name>.yaml` using the schema
+   above. The `name` must match the implementation name.
+2. Implement the tool logic in `ai/mcp/<tool_name>/` and expose an `Execute`
+   function (follow existing tools).
+3. Add a switch case in `ToolDef.Call` in `mcp_tools.go` to route the tool name
+   to your `Execute` function.
+4. If your tool only emits UI actions or citations and the AI should not consume
+   the tool output, add the tool name to `ExcludedToolNames`.
 
-See existing tools for implementation examples.
+See existing tools in `ai/mcp/` and `ai/mcp/tools/` for end-to-end examples.
 

@@ -86,3 +86,42 @@ func GraphCacheMetricsHandler() http.HandlerFunc {
 		RespondWithJSON(w, http.StatusOK, metrics)
 	}
 }
+
+// HealthCacheMetrics holds health cache metrics that can be exposed via the API.
+// This is useful for testing and monitoring without having to scrape the Prometheus metrics endpoint.
+type HealthCacheMetrics struct {
+	HealthCacheHits   float64 `json:"healthCacheHits"`
+	HealthCacheMisses float64 `json:"healthCacheMisses"`
+}
+
+// getCounterVecTotal sums up all values from a CounterVec across all label combinations.
+func getCounterVecTotal(counterVec *prometheus.CounterVec) float64 {
+	ch := make(chan prometheus.Metric, 100)
+	go func() {
+		counterVec.Collect(ch)
+		close(ch)
+	}()
+
+	var total float64
+	for metric := range ch {
+		m := &dto.Metric{}
+		if err := metric.Write(m); err == nil && m.Counter != nil {
+			total += m.Counter.GetValue()
+		}
+	}
+	return total
+}
+
+// HealthCacheMetricsHandler returns Kiali's health cache metrics in JSON format.
+// This endpoint provides a simple way to access internal metrics without having to
+// parse the Prometheus text format from the /metrics endpoint.
+func HealthCacheMetricsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		metrics := HealthCacheMetrics{
+			HealthCacheHits:   getCounterVecTotal(internalmetrics.GetHealthCacheHitsTotalMetric()),
+			HealthCacheMisses: getCounterVecTotal(internalmetrics.GetHealthCacheMissesTotalMetric()),
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}

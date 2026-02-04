@@ -14,7 +14,7 @@ export const kioskGraphAction = (
   targetPage: string
 ): void => {
   let showInParent = `/graph/namespaces?namespaces=${namespace}`;
-  if (healthStatus === HEALTHY.name) {
+  if (healthStatus === HEALTHY.id) {
     showInParent += '&graphFind=healthy';
   } else {
     showInParent += '&graphFind=!healthy';

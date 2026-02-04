@@ -21,7 +21,6 @@ import {
 } from '../../components/Filters/CommonFilters';
 import { TextInputTypes } from '@patternfly/react-core';
 import { filterByLabel } from '../../helpers/LabelFilterHelper';
-import { calculateErrorRate } from '../../types/ErrorRate';
 import { istioConfigTypeFilter } from '../IstioConfigList/FiltersAndSorts';
 import { compareObjectReferences } from '../AppList/FiltersAndSorts';
 import { serverConfig } from 'config';
@@ -169,15 +168,14 @@ export const sortFields: SortField<WorkloadListItem>[] = [
     param: 'he',
     compare: (a: WorkloadListItem, b: WorkloadListItem): number => {
       if (hasHealth(a) && hasHealth(b)) {
-        const statusForA = a.health.getGlobalStatus();
-        const statusForB = b.health.getGlobalStatus();
+        // Use backend-provided status only, no client-side calculation
+        const statusForA = a.health.getStatus();
+        const statusForB = b.health.getStatus();
 
         if (statusForA.priority === statusForB.priority) {
-          // If both workloads have same health status, use error rate to determine order.
-          const ratioA = calculateErrorRate(a.namespace, a.name, 'workload', a.health.requests).errorRatio.global.status
-            .value;
-          const ratioB = calculateErrorRate(b.namespace, b.name, 'workload', b.health.requests).errorRatio.global.status
-            .value;
+          // If both workloads have same health status, use backend error ratio for tie-breaking
+          const ratioA = a.health.backendStatus?.errorRatio ?? 0;
+          const ratioB = b.health.backendStatus?.errorRatio ?? 0;
           return ratioA === ratioB ? a.name.localeCompare(b.name) : ratioB - ratioA;
         }
 

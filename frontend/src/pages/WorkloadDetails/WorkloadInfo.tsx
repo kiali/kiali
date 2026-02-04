@@ -18,6 +18,7 @@ import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCar
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
 import { WorkloadEntries } from './WorkloadEntries';
+import { Spire } from '../../components/Spire/Spire';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -278,6 +279,12 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                     namespace={this.props.namespace}
                   />
                 </StackItem>
+
+                {workload && workload?.spireInfo?.isSpireManaged && (
+                  <StackItem>
+                    <Spire object={workload} objectType="workload" />
+                  </StackItem>
+                )}
 
                 <StackItem>
                   {this.props.workload?.gvk.Kind === gvkType.WorkloadGroup ? (

@@ -1,7 +1,6 @@
 import { Namespace } from './Namespace';
 import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
 import { Health } from './Health';
-import { HealthAnnotationType } from './HealthAnnotation';
 import { Controller, GraphElement } from '@patternfly/react-topology';
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
@@ -391,7 +390,6 @@ export interface GraphNodeData {
   destServices?: DestService[];
   hasCB?: boolean;
   hasFaultInjection?: boolean;
-  hasHealthConfig?: HealthAnnotationType;
   hasIngressWaypoint?: boolean;
   hasMirroring?: boolean;
   hasRequestRouting?: boolean;
@@ -441,6 +439,7 @@ export interface GraphNodeData {
 // Edge data expected from server
 export interface GraphEdgeData {
   destPrincipal?: string;
+  healthStatus?: string; // backend-calculated health status
   id: string;
   isMTLS?: number;
   responseTime?: number;

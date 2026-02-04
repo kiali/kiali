@@ -154,11 +154,14 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
           decoratedNode.data.aggregate = aggr[0];
           decoratedNode.data.aggregateValue = aggr[1];
         }
-        // Calculate health
+        // Process health data and status
+        // The backend now calculates health status server-side, included in healthData.status.
+        // We still create Health objects for detailed tooltips, but use the backend status for display.
         if (decoratedNode.data.healthData) {
           if (Array.isArray(decoratedNode.data.healthData)) {
-            decoratedNode.data.healthStatus = NA.name;
-          } else if (decoratedNode.data.healthData.workloadStatus) {
+            decoratedNode.data.healthStatus = NA.id;
+          } else if (decoratedNode.data.healthData.workloadStatus !== undefined) {
+            // Workload health
             decoratedNode.data.health = WorkloadHealth.fromJson(
               decoratedNode.data.namespace,
               decoratedNode.data.workload,
@@ -169,8 +172,10 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
                 hasAmbient: false
               }
             );
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
-          } else if (decoratedNode.data.healthData.workloadStatuses) {
+            // Use backend-calculated status (getStatus checks backendStatus first)
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
+          } else if (decoratedNode.data.healthData.workloadStatuses !== undefined) {
+            // App health
             decoratedNode.data.health = AppHealth.fromJson(
               decoratedNode.data.namespace,
               decoratedNode.data.app,
@@ -181,8 +186,10 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
                 hasAmbient: false
               }
             );
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
+            // Use backend-calculated status (getStatus checks backendStatus first)
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
           } else {
+            // Service health
             decoratedNode.data.health = ServiceHealth.fromJson(
               decoratedNode.data.namespace,
               decoratedNode.data.service,
@@ -193,7 +200,8 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
                 hasAmbient: false
               }
             );
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getGlobalStatus().name;
+            // Use backend-calculated status (getStatus checks backendStatus first)
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
           }
         }
         const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;

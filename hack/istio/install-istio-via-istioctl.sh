@@ -41,6 +41,14 @@ REVISION=""
 IMAGE_HUB="gcr.io/istio-release"
 IMAGE_TAG="default"
 
+# SPIRE configuration
+SPIRE_ENABLED="false"
+SPIRE_TRUST_DOMAIN="example.org"
+SPIRE_NAMESPACE="spire"
+
+# Script directory
+SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -203,6 +211,23 @@ while [[ $# -gt 0 ]]; do
       CUSTOM_INSTALL_SETTINGS="${CUSTOM_INSTALL_SETTINGS} --set $2"
       shift;shift
       ;;
+    -se|--spire-enabled)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        SPIRE_ENABLED="$2"
+      else
+        echo "ERROR: The --spire-enabled flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -std|--spire-trust-domain)
+      SPIRE_TRUST_DOMAIN="$2"
+      shift;shift
+      ;;
+    -sns|--spire-namespace)
+      SPIRE_NAMESPACE="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -295,6 +320,17 @@ Valid command line arguments:
   -s|--set <name=value>:
        Sets a name/value pair for a custom install setting. Some examples you may want to use:
        --set installPackagePath=/git/clone/istio.io/installer
+  -se|--spire-enabled (true|false):
+       When set to true, SPIRE will be installed before Istio, and Istio will be configured
+       to use SPIRE for workload identity. This includes configuring the trust domain,
+       ingress gateway with SPIRE CSI driver volumes, and sidecar injection templates.
+       Default: false
+  -std|--spire-trust-domain <domain>:
+       The SPIRE trust domain to use. Only used when --spire-enabled is true.
+       Default: example.org
+  -sns|--spire-namespace <namespace>:
+       The namespace where SPIRE will be installed. Only used when --spire-enabled is true.
+       Default: spire
   -h|--help:
        this message
 HELPMSG
@@ -509,6 +545,23 @@ if [ "${REVISION}" != "" ]; then
   REVISION_CM="-${REVISION}"
 fi
 
+# SPIRE configuration options
+# When SPIRE is enabled, we need to configure Istio to use SPIRE for workload identity
+if [ "${SPIRE_ENABLED}" == "true" ]; then
+  echo "SPIRE integration enabled"
+  echo "  Trust Domain: ${SPIRE_TRUST_DOMAIN}"
+  echo "  SPIRE Namespace: ${SPIRE_NAMESPACE}"
+  
+  # Configure trust domain to match SPIRE and set SPIFFE_ENDPOINT_SOCKET for SDS integration
+  # The SPIFFE_ENDPOINT_SOCKET tells Istio proxies to use the SPIRE socket for certificate fetching
+  SPIRE_OPTIONS=" \
+    --set meshConfig.trustDomain=${SPIRE_TRUST_DOMAIN} \
+    --set meshConfig.defaultConfig.proxyMetadata.SPIFFE_ENDPOINT_SOCKET=/run/secrets/workload-spiffe-uds/socket"
+  
+  # Note: Ingress gateway SPIRE volumes will be patched after Istio installation
+  # because IstioOperator doesn't support direct volume configuration via --set flags
+fi
+
 DEFAULT_ZIPKIN_SERVICE_OPTION="--set values.meshConfig.defaultConfig.tracing.zipkin.address=zipkin.${NAMESPACE}:9411"
 if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.defaultConfig.tracing.zipkin.address"* ]]; then
   echo "Custom zipkin address set. Not setting default zipkin address."
@@ -535,6 +588,7 @@ for s in \
    "${REVISION_OPTION}" \
    "${DUALSTACK_OPTIONS}" \
    "${IPV6_DISABLE_OPTIONS}" \
+   "${SPIRE_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
   MANIFEST_CONFIG_SETTINGS_TO_APPLY="${MANIFEST_CONFIG_SETTINGS_TO_APPLY} ${s}"
@@ -571,7 +625,33 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
 
   echo "Deleting the istio namespace [${NAMESPACE}]"
   ${CLIENT_EXE} delete namespace ${NAMESPACE}
+
+  # Delete SPIRE if it was enabled
+  if [ "${SPIRE_ENABLED}" == "true" ]; then
+    echo "Deleting SPIRE..."
+    TRUST_DOMAIN="${SPIRE_TRUST_DOMAIN}" \
+    SPIRE_NAMESPACE="${SPIRE_NAMESPACE}" \
+    ISTIO_NAMESPACE="${NAMESPACE}" \
+    CLIENT_EXE="${CLIENT_EXE}" \
+    ${SCRIPT_DIR}/install-spire.sh --uninstall
+  fi
 else
+  # Install SPIRE first if enabled
+  if [ "${SPIRE_ENABLED}" == "true" ]; then
+    echo "Installing SPIRE before Istio..."
+    TRUST_DOMAIN="${SPIRE_TRUST_DOMAIN}" \
+    SPIRE_NAMESPACE="${SPIRE_NAMESPACE}" \
+    ISTIO_NAMESPACE="${NAMESPACE}" \
+    CLIENT_EXE="${CLIENT_EXE}" \
+    ${SCRIPT_DIR}/install-spire.sh
+
+    if [ $? -ne 0 ]; then
+      echo "ERROR: Failed to install SPIRE. Aborting Istio installation."
+      exit 1
+    fi
+    echo "SPIRE installed successfully. Proceeding with Istio installation..."
+  fi
+
   echo Installing Istio...
   # There is a bug in istioctl manifest install - it wants to always create the CR in istio-system.
   # If we are not installing in istio-system, we cannot use 'install' but must generate the yaml and apply it ourselves.
@@ -588,6 +668,105 @@ else
       echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
       sleep 10
     done
+  fi
+
+  # If SPIRE is enabled, patch the ingress gateway to add SPIRE CSI driver volumes
+  if [ "${SPIRE_ENABLED}" == "true" ] && [ "${ISTIO_INGRESSGATEWAY_ENABLED}" == "true" ]; then
+    echo "Patching Istio Ingress Gateway for SPIRE integration..."
+    
+    # Wait for ingress gateway deployment to be available
+    ${CLIENT_EXE} wait --for=condition=available --timeout=120s deployment/istio-ingressgateway -n ${NAMESPACE} || {
+      echo "WARNING: Ingress gateway deployment not available, skipping SPIRE patch"
+    }
+    
+    # Check if workload-socket volume is already a CSI driver (not emptyDir)
+    volume_type=$(${CLIENT_EXE} get deployment istio-ingressgateway -n ${NAMESPACE} -o jsonpath='{.spec.template.spec.volumes[?(@.name=="workload-socket")].csi.driver}' 2>/dev/null || echo "")
+    
+    if [ "$volume_type" = "csi.spiffe.io" ]; then
+      echo "SPIRE CSI volume already configured in ingress gateway"
+    else
+      echo "Configuring ingress gateway with SPIRE CSI volume and label..."
+      
+      # Step 1: Add SPIRE label using strategic merge patch (works fine for labels)
+      echo "  Adding SPIRE label..."
+      ${CLIENT_EXE} patch deployment istio-ingressgateway -n ${NAMESPACE} --type='strategic' -p='{
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "spiffe.io/spire-managed-identity": "true"
+              }
+            }
+          }
+        }
+      }' || echo "  Note: SPIRE label may already exist"
+      
+      # Step 2: Find the index of workload-socket volume and replace it with CSI driver
+      # Note: Strategic merge patch does NOT work for volumes - it merges fields instead of replacing
+      # We must use JSON patch to fully replace the volume
+      echo "  Replacing workload-socket volume with SPIRE CSI driver..."
+      
+      # Find volume index using go-template (doesn't require jq)
+      volume_index=""
+      volumes_json=$(${CLIENT_EXE} get deployment istio-ingressgateway -n ${NAMESPACE} -o jsonpath='{range .spec.template.spec.volumes[*]}{.name}{"\n"}{end}' 2>/dev/null)
+      idx=0
+      while IFS= read -r vol_name; do
+        if [ "$vol_name" = "workload-socket" ]; then
+          volume_index=$idx
+          break
+        fi
+        ((idx++))
+      done <<< "$volumes_json"
+      
+      if [ -n "$volume_index" ]; then
+        ${CLIENT_EXE} patch deployment istio-ingressgateway -n ${NAMESPACE} --type='json' -p="[
+          {
+            \"op\": \"replace\",
+            \"path\": \"/spec/template/spec/volumes/${volume_index}\",
+            \"value\": {
+              \"name\": \"workload-socket\",
+              \"csi\": {
+                \"driver\": \"csi.spiffe.io\",
+                \"readOnly\": true
+              }
+            }
+          }
+        ]" || {
+          echo "ERROR: Failed to replace workload-socket volume"
+        }
+      else
+        echo "WARNING: workload-socket volume not found, adding it..."
+        ${CLIENT_EXE} patch deployment istio-ingressgateway -n ${NAMESPACE} --type='json' -p='[
+          {
+            "op": "add",
+            "path": "/spec/template/spec/volumes/-",
+            "value": {
+              "name": "workload-socket",
+              "csi": {
+                "driver": "csi.spiffe.io",
+                "readOnly": true
+              }
+            }
+          }
+        ]' || echo "ERROR: Failed to add workload-socket volume"
+      fi
+      
+      # Verify the patch worked
+      patched_type=$(${CLIENT_EXE} get deployment istio-ingressgateway -n ${NAMESPACE} -o jsonpath='{.spec.template.spec.volumes[?(@.name=="workload-socket")].csi.driver}' 2>/dev/null || echo "")
+      if [ "$patched_type" = "csi.spiffe.io" ]; then
+        echo "  Successfully configured SPIRE CSI volume"
+      else
+        echo "ERROR: SPIRE CSI volume patch verification failed"
+        echo "  Expected: csi.spiffe.io, Got: $patched_type"
+        echo "  Please manually patch the ingress gateway deployment"
+      fi
+    fi
+    
+    # Wait for the patched deployment to roll out
+    echo "Waiting for ingress gateway to restart with SPIRE configuration..."
+    ${CLIENT_EXE} rollout status deployment/istio-ingressgateway -n ${NAMESPACE} --timeout=120s || {
+      echo "WARNING: Ingress gateway rollout may still be in progress"
+    }
   fi
 
   echo "Installing Addons: [${ADDONS}]"

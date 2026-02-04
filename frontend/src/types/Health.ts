@@ -33,6 +33,30 @@ export interface HealthItem {
   type: HealthItemType;
 }
 
+// CalculatedHealthStatus represents the pre-calculated health status from the backend
+// When present, this should be used instead of client-side calculation
+export interface CalculatedHealthStatus {
+  errorRatio?: number; // Error ratio as percentage (0-100)
+  status: string; // "Healthy", "Degraded", "Failure", "Not Ready", "NA"
+}
+
+// Map backend status string to frontend Status object
+export const statusFromString = (statusStr: string): Status => {
+  switch (statusStr) {
+    case 'Healthy':
+      return HEALTHY;
+    case 'Degraded':
+      return DEGRADED;
+    case 'Failure':
+      return FAILURE;
+    case 'Not Ready':
+      return NOT_READY;
+    case 'NA':
+    default:
+      return NA;
+  }
+};
+
 export interface HealthItemConfig {
   status: Status;
   text?: string;
@@ -85,11 +109,14 @@ export interface RequestHealth {
   outbound: RequestType;
 }
 
+// Valid health status IDs that match backend HealthStatus values
+export type HealthStatusId = 'Healthy' | 'Degraded' | 'Failure' | 'Not Ready' | 'NA';
+
 export interface Status {
   className: string;
   color: string;
   icon: React.ComponentClass<SVGIconProps>;
-  id: string;
+  id: HealthStatusId | 'Info'; // 'Info' is used for validation/proxy status display, not health
   name: string;
   priority: number;
   status: string;
@@ -156,7 +183,7 @@ export const NA: Status = {
   className: 'icon-na',
   color: PFColors.Color200,
   icon: UnknownIcon,
-  id: 'No health information',
+  id: 'NA',
   name: t('No health information'),
   priority: 0,
   status: 'custom'
@@ -334,10 +361,20 @@ export const isRequestHealthNotEmpty = (requests: RequestHealth): boolean => {
 };
 
 export abstract class Health {
-  constructor(public health: HealthConfig) {}
+  // Optional pre-calculated status from the backend
+  public backendStatus?: CalculatedHealthStatus;
 
-  getGlobalStatus(): Status {
-    return this.health.items.map(i => i.status).reduce((prev, cur) => mergeStatus(prev, cur), NA);
+  constructor(public health: HealthConfig, backendStatus?: CalculatedHealthStatus) {
+    this.backendStatus = backendStatus;
+  }
+
+  // Returns the health status calculated by the backend.
+  // If no backend status is available, returns NA.
+  getStatus(): Status {
+    if (this.backendStatus?.status) {
+      return statusFromString(this.backendStatus.status);
+    }
+    return NA;
   }
 
   getStatusConfig(): ToleranceConfig | undefined {
@@ -389,7 +426,14 @@ interface HealthContext {
 
 export class ServiceHealth extends Health {
   public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext): ServiceHealth =>
-    new ServiceHealth(ns, srv, json.requests, ctx);
+    new ServiceHealth(ns, srv, json.requests, ctx, json.status);
+
+  // Factory method for list pages that only need backend-calculated status
+  public static fromBackendStatus = (json: any): ServiceHealth => {
+    const health = new ServiceHealth('', '', { inbound: {}, outbound: {}, healthAnnotations: {} }, { rateInterval: 0 });
+    health.backendStatus = json.status;
+    return health;
+  };
 
   private static computeItems(ns: string, srv: string, requests: RequestHealth, ctx: HealthContext): HealthConfig {
     const items: HealthItem[] = [];
@@ -436,14 +480,27 @@ export class ServiceHealth extends Health {
     return { items, statusConfig };
   }
 
-  constructor(ns: string, srv: string, public requests: RequestHealth, ctx: HealthContext) {
-    super(ServiceHealth.computeItems(ns, srv, requests, ctx));
+  constructor(
+    ns: string,
+    srv: string,
+    public requests: RequestHealth,
+    ctx: HealthContext,
+    backendStatus?: CalculatedHealthStatus
+  ) {
+    super(ServiceHealth.computeItems(ns, srv, requests, ctx), backendStatus);
   }
 }
 
 export class AppHealth extends Health {
-  public static fromJson = (ns: string, app: string, json: AppHealthResponse, ctx: HealthContext): AppHealth =>
-    new AppHealth(ns, app, json.workloadStatuses, json.requests, ctx);
+  public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext): AppHealth =>
+    new AppHealth(ns, app, json.workloadStatuses, json.requests, ctx, json.status);
+
+  // Factory method for list pages that only need backend-calculated status
+  public static fromBackendStatus = (json: any): AppHealth => {
+    const health = new AppHealth('', '', [], { inbound: {}, outbound: {}, healthAnnotations: {} }, { rateInterval: 0 });
+    health.backendStatus = json.status;
+    return health;
+  };
 
   private static computeItems(
     ns: string,
@@ -515,15 +572,36 @@ export class AppHealth extends Health {
     app: string,
     workloadStatuses: WorkloadStatus[],
     public requests: RequestHealth,
-    ctx: HealthContext
+    ctx: HealthContext,
+    backendStatus?: CalculatedHealthStatus
   ) {
-    super(AppHealth.computeItems(ns, app, workloadStatuses, requests, ctx));
+    super(AppHealth.computeItems(ns, app, workloadStatuses, requests, ctx), backendStatus);
   }
 }
 
 export class WorkloadHealth extends Health {
   public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext): WorkloadHealth =>
-    new WorkloadHealth(ns, workload, json.workloadStatus, json.requests, ctx);
+    new WorkloadHealth(ns, workload, json.workloadStatus, json.requests, ctx, json.status);
+
+  // Factory method for list pages that only need backend-calculated status
+  public static fromBackendStatus = (json: any): WorkloadHealth => {
+    const emptyWorkloadStatus = {
+      name: '',
+      desiredReplicas: 0,
+      currentReplicas: 0,
+      availableReplicas: 0,
+      syncedProxies: -1
+    };
+    const health = new WorkloadHealth(
+      '',
+      '',
+      emptyWorkloadStatus,
+      { inbound: {}, outbound: {}, healthAnnotations: {} },
+      { rateInterval: 0 }
+    );
+    health.backendStatus = json.status;
+    return health;
+  };
 
   private static computeItems(
     ns: string,
@@ -624,9 +702,10 @@ export class WorkloadHealth extends Health {
     workload: string,
     workloadStatus: WorkloadStatus,
     public requests: RequestHealth,
-    ctx: HealthContext
+    ctx: HealthContext,
+    backendStatus?: CalculatedHealthStatus
   ) {
-    super(WorkloadHealth.computeItems(ns, workload, workloadStatus, requests, ctx));
+    super(WorkloadHealth.computeItems(ns, workload, workloadStatus, requests, ctx), backendStatus);
   }
 }
 

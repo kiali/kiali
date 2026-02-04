@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	openai "github.com/openai/openai-go/v3"
-
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_citations"
 )
@@ -39,7 +37,7 @@ type AIResponse struct {
 type ConversationMessage struct {
 	Content string
 	Name    string
-	Param   openai.ChatCompletionMessageParamUnion
+	Param   interface{}
 	Role    string
 }
 

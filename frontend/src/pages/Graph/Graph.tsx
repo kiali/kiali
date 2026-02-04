@@ -129,7 +129,7 @@ const TopologyContent: React.FC<{
     peerAuths: PeerAuthentication[]
   ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (refs: GraphRefs) => void;
+  onReady: (refs: GraphRefs | undefined, isReady: boolean) => void;
   rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (val: GraphLayout) => void;
@@ -315,7 +315,7 @@ const TopologyContent: React.FC<{
       }
 
       isReady = true;
-      onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
+      onReady({ getController: () => controller, setSelectedIds: setSelectedIds }, true);
     }
 
     layoutInProgress = undefined;
@@ -342,6 +342,9 @@ const TopologyContent: React.FC<{
     //
     const resetGraph = (): void => {
       if (controller) {
+        // notify the parent that the graph is being updated and is not ready
+        onReady(undefined, false);
+
         const defaultModel: Model = {
           graph: {
             id: 'trafficgraph',
@@ -886,7 +889,7 @@ export const Graph: React.FC<{
     peerAuths: PeerAuthentication[]
   ) => void;
   onNodeTap?: (node: Node<NodeModel>) => void;
-  onReady: (refs: GraphRefs) => void;
+  onReady: (refs: GraphRefs | undefined, isReady: boolean) => void;
   rankBy: RankMode[];
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: GraphLayout) => void;

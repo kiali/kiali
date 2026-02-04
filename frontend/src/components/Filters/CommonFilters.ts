@@ -36,23 +36,23 @@ export const healthFilter: FilterType = {
   action: FILTER_ACTION_APPEND,
   filterValues: [
     {
-      id: HEALTHY.name,
+      id: HEALTHY.id,
       title: HEALTHY.name
     },
     {
-      id: DEGRADED.name,
+      id: DEGRADED.id,
       title: DEGRADED.name
     },
     {
-      id: FAILURE.name,
+      id: FAILURE.id,
       title: FAILURE.name
     },
     {
-      id: NOT_READY.name,
+      id: NOT_READY.id,
       title: NOT_READY.name
     },
     {
-      id: NA.name,
+      id: NA.id,
       title: NA.name
     }
   ]
@@ -82,6 +82,8 @@ export const getPresenceFilterValue = (filter: FilterType, activeFilters: Active
   return undefined;
 };
 
+// filterByHealth filters items by their backend-provided health status.
+// Uses Status.id for matching to ensure consistency with backend values.
 export const filterByHealth = (items: any[], filterValues: string[]): any[] => {
-  return items.filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getGlobalStatus().name));
+  return items.filter(itemWithHealth => filterValues.includes(itemWithHealth.health.getStatus().id));
 };

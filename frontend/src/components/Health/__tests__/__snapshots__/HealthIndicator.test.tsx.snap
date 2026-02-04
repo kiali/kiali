@@ -12,6 +12,9 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
       <HealthDetails
         health={
           AppHealth {
+            "backendStatus": Object {
+              "status": "Degraded",
+            },
             "health": Object {
               "items": Array [
                 Object {
@@ -48,7 +51,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
-                        "id": "No health information",
+                        "id": "NA",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -61,7 +64,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
-                        "id": "No health information",
+                        "id": "NA",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -74,7 +77,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                     "className": "icon-na",
                     "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
-                    "id": "No health information",
+                    "id": "NA",
                     "name": "No health information",
                     "priority": 0,
                     "status": "custom",
@@ -88,7 +91,7 @@ exports[`HealthIndicator proxy status section renders the degraded workloads 1`]
                   "className": "icon-na",
                   "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
-                  "id": "No health information",
+                  "id": "NA",
                   "name": "No health information",
                   "priority": 0,
                   "status": "custom",
@@ -133,6 +136,9 @@ exports[`HealthIndicator renders healthy 1`] = `
       <HealthDetails
         health={
           AppHealth {
+            "backendStatus": Object {
+              "status": "Healthy",
+            },
             "health": Object {
               "items": Array [
                 Object {
@@ -181,7 +187,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
-                        "id": "No health information",
+                        "id": "NA",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -194,7 +200,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                         "className": "icon-na",
                         "color": "var(--pf-t--color--gray--50)",
                         "icon": [Function],
-                        "id": "No health information",
+                        "id": "NA",
                         "name": "No health information",
                         "priority": 0,
                         "status": "custom",
@@ -207,7 +213,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                     "className": "icon-na",
                     "color": "var(--pf-t--color--gray--50)",
                     "icon": [Function],
-                    "id": "No health information",
+                    "id": "NA",
                     "name": "No health information",
                     "priority": 0,
                     "status": "custom",
@@ -221,7 +227,7 @@ exports[`HealthIndicator renders healthy 1`] = `
                   "className": "icon-na",
                   "color": "var(--pf-t--color--gray--50)",
                   "icon": [Function],
-                  "id": "No health information",
+                  "id": "NA",
                   "name": "No health information",
                   "priority": 0,
                   "status": "custom",

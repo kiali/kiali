@@ -881,11 +881,11 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
           target: 'node',
           selector: isNegation
             ? [
-                { prop: MeshAttr.healthStatus, op: '!=', val: HEALTHY.name },
-                { prop: MeshAttr.healthStatus, op: '!=', val: NA.name },
-                { prop: MeshAttr.healthStatus, op: '!=', val: NOT_READY.name }
+                { prop: MeshAttr.healthStatus, op: '!=', val: HEALTHY.id },
+                { prop: MeshAttr.healthStatus, op: '!=', val: NA.id },
+                { prop: MeshAttr.healthStatus, op: '!=', val: NOT_READY.id }
               ]
-            : { prop: MeshAttr.healthStatus, val: HEALTHY.name }
+            : { prop: MeshAttr.healthStatus, val: HEALTHY.id }
         };
       //
       // edges...

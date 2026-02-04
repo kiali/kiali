@@ -5,9 +5,8 @@ import { IRow, SortByDirection } from '@patternfly/react-table';
 import { Link } from 'react-router-dom-v5-compat';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
-import { ThresholdStatus, NA } from 'types/Health';
+import { ThresholdStatus, NA, statusFromString, HEALTHY } from 'types/Health';
 import { NodeType, hasProtocolTraffic, ProtocolTraffic } from 'types/Graph';
-import { getTrafficHealth } from 'types/ErrorRate';
 import { location, URLParam } from 'app/History';
 import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
@@ -241,10 +240,17 @@ class TrafficList extends FilterComponent.Component<
   }
 
   private getHealthStatus = (item: TrafficItem): ThresholdStatus => {
-    const traffic = item.traffic;
+    // Use backend-calculated health status if available
+    if (item.healthStatus) {
+      const status = statusFromString(item.healthStatus);
+      return { value: 0, status };
+    }
 
+    // For TCP traffic or if no health data, check if there's traffic
+    const traffic = item.traffic;
     if (traffic.protocol !== 'tcp' && hasProtocolTraffic(traffic)) {
-      return getTrafficHealth(item, item.direction);
+      // Traffic exists but no health status from backend - consider healthy
+      return { value: 0, status: HEALTHY };
     }
 
     return { value: 0, status: NA };
