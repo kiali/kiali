@@ -642,13 +642,29 @@ EOF
 # Note: ztunnel can be in istio-system (istioctl) or ztunnel namespace (Sail Operator).
 create_ztunnel_podmonitor() {
   # Determine which namespace ztunnel is running in
+  # Retry a few times to handle timing issues where ztunnel may still be deploying
   local ztunnel_namespace=""
-  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
-    ztunnel_namespace="ztunnel"
-  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-    ztunnel_namespace="istio-system"
-  else
-    debug "ztunnel daemonset not found, skipping ztunnel PodMonitor"
+  local max_attempts=5
+  local attempt=1
+
+  while [ ${attempt} -le ${max_attempts} ]; do
+    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+      ztunnel_namespace="ztunnel"
+      break
+    elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+      ztunnel_namespace="istio-system"
+      break
+    else
+      if [ ${attempt} -lt ${max_attempts} ]; then
+        debug "ztunnel daemonset not found (attempt ${attempt}/${max_attempts}), waiting 5s..."
+        sleep 5
+      fi
+      attempt=$((attempt + 1))
+    fi
+  done
+
+  if [ -z "${ztunnel_namespace}" ]; then
+    debug "ztunnel daemonset not found after ${max_attempts} attempts, skipping ztunnel PodMonitor (Ambient mode may not be enabled)"
     return 0
   fi
 
