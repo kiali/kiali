@@ -47,6 +47,14 @@ jobs:
           echo "istio_version=unknown" >> $GITHUB_OUTPUT
         fi
 
+    - name: Check DATA_ROUTER_USERNAME
+      env:
+        DATA_ROUTER_USERNAME: ${{ secrets.DATA_ROUTER_USERNAME }}
+      run: |
+        if [ -z "$DATA_ROUTER_USERNAME" ]; then
+          echo "ERROR: DATA_ROUTER_USERNAME is empty"
+        fi
+
     - name: Report to ReportPortal
       continue-on-error: true
       uses: ./.github/actions/report-to-reportportal
