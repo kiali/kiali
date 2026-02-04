@@ -5,8 +5,11 @@ export type MockScenario =
   | 'healthy' // All services healthy (default)
   | 'ai' // Chat AI enabled
   | 'unhealthy' // Some services with errors
-  | 'multicluster' // Multiple clusters
+  | 'multicluster' // Multiple clusters with timeout simulation
   | 'ambient'; // Ambient mesh enabled
+
+// API endpoints that can be configured to timeout or return empty data
+export type TimeoutApi = 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'applications';
 
 export interface ScenarioConfig {
   // Feature flags
@@ -22,6 +25,9 @@ export interface ScenarioConfig {
   degradedItems: string[]; // Items that are degraded (e.g., 'reviews', 'hotels')
   degradedNamespaces: string[];
 
+  // APIs that should return empty data (for testing empty states)
+  emptyApis?: TimeoutApi[];
+
   // Traffic configuration
   errorRate: number; // 0-100 percentage
 
@@ -30,6 +36,13 @@ export interface ScenarioConfig {
 
   // Istio config
   mtlsEnabled: boolean;
+
+  // Response delay in milliseconds (for testing loading states)
+  responseDelay?: number;
+
+  // APIs that should simulate timeout errors (for testing error states)
+  timeoutApis?: TimeoutApi[];
+
   tracingEnabled: boolean;
   unhealthyItems: string[]; // Items that are unhealthy (e.g., 'ratings', 'flights')
   unhealthyNamespaces: string[];
@@ -123,6 +136,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: false,
+    responseDelay: 0,
+    timeoutApis: [],
+    emptyApis: [],
     tracingEnabled: true,
     mtlsEnabled: true,
     validationErrors: 0,
@@ -174,6 +190,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: false,
+    responseDelay: 0,
+    timeoutApis: [],
+    emptyApis: [],
     tracingEnabled: true,
     mtlsEnabled: true,
     validationErrors: 0,
@@ -200,6 +219,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     errorRate: 30,
     latencyMultiplier: 2,
     ambientEnabled: false,
+    responseDelay: 0,
+    timeoutApis: [],
+    emptyApis: [],
     tracingEnabled: true,
     mtlsEnabled: true,
     validationErrors: 3,
@@ -248,8 +270,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
           }
         ],
         healthStatus: 'Degraded',
-        // Only reviews is degraded, everything else healthy
-        degradedItems: ['reviews'],
+        // reviews is degraded, ratings is unhealthy (failure)
+        degradedItems: ['reviews', 'hotels'],
+        unhealthyItems: ['ratings'],
         validationErrors: 1,
         validationWarnings: 2
       },
@@ -268,9 +291,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
           }
         ],
         healthStatus: 'Unhealthy',
-        // flights unhealthy, cars degraded - other apps healthy
-        unhealthyItems: ['flights'],
-        degradedItems: ['cars'],
+        // Multiple failures: flights and viaggi unhealthy, cars degraded
+        unhealthyItems: ['flights', 'viaggi', 'beta-api'],
+        degradedItems: ['cars', 'discounts'],
         validationErrors: 4,
         validationWarnings: 3
       },
@@ -294,12 +317,16 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     // Global namespace health (applied across all clusters unless overridden)
     healthyNamespaces: ['bookinfo', 'istio-system', 'default', 'alpha', 'travel-agency', 'beta'],
     degradedNamespaces: ['travel-portal'],
-    degradedItems: [],
+    // Global items: details degraded, grafana unhealthy (visible in mesh graph)
+    degradedItems: ['details', 'prometheus'],
     unhealthyNamespaces: ['gamma'],
-    unhealthyItems: [],
-    errorRate: 10,
+    unhealthyItems: ['grafana'],
+    errorRate: 15,
     latencyMultiplier: 1.2,
     ambientEnabled: false,
+    responseDelay: 0,
+    timeoutApis: [],
+    emptyApis: [],
     tracingEnabled: true,
     mtlsEnabled: true,
     validationErrors: 0,
@@ -323,6 +350,9 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: true,
+    responseDelay: 0,
+    timeoutApis: [],
+    emptyApis: [],
     tracingEnabled: true,
     mtlsEnabled: true,
     validationErrors: 0,
@@ -345,6 +375,23 @@ export const getCurrentScenario = (): MockScenario => {
 // Get scenario configuration
 export const getScenarioConfig = (): ScenarioConfig => {
   return scenarios[getCurrentScenario()];
+};
+
+// Get response delay for testing loading states (in milliseconds)
+export const getResponseDelay = (): number => {
+  return getScenarioConfig().responseDelay ?? 0;
+};
+
+// Check if an API should simulate a timeout error
+export const shouldApiTimeout = (api: TimeoutApi): boolean => {
+  const config = getScenarioConfig();
+  return config.timeoutApis?.includes(api) ?? false;
+};
+
+// Check if an API should return empty data
+export const shouldApiReturnEmpty = (api: TimeoutApi): boolean => {
+  const config = getScenarioConfig();
+  return config.emptyApis?.includes(api) ?? false;
 };
 
 // Helper to check namespace health status
