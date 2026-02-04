@@ -11,13 +11,11 @@ Feature: Manual Refresh option
   Background:
     Given user is at administrator perspective
 
-  # COMMENTED OUT: Legacy overview page tests - replaced by new namespaces page implementation
-  # TODO: Update this test to work with the new NamespacesPage
-  # @ossmc
-  # @core-2
-  # Scenario: Overview page shows manual
-  #   When user is at the "overview" page with manual refresh
-  #   Then user "sees" manual refresh messaging
+  @ossmc
+  @core-2
+  Scenario: Namespaces page shows manual
+    When user is at the "namespaces" page with manual refresh
+    Then user "sees" manual refresh messaging
 
   @ossmc
   @core-2

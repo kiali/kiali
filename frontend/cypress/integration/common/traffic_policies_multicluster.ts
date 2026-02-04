@@ -10,14 +10,7 @@ const authorizationPolicies: string[] = [
   'reviews-v2',
   'reviews-v3'
 ];
-const sidecars: string[] = [
-  'details-v1',
-  'productpage-v1',
-  'ratings-v1',
-  'reviews-v1',
-  'reviews-v2',
-  'reviews-v3'
-];
+const sidecars: string[] = ['details-v1', 'productpage-v1', 'ratings-v1', 'reviews-v1', 'reviews-v2', 'reviews-v3'];
 
 When('user deletes a Traffic Policy and the resource is no longer available in any cluster', () => {
   authorizationPolicies.forEach(policy => {
@@ -50,7 +43,10 @@ When(
   'user decides to {string} a Traffic Policy in the {string} {string}',
   (action: string, cluster: string, ns: string) => {
     ensureKialiFinishedLoading();
-    cy.get(`[data-test="CardItem_${ns}_${cluster}"]`).find('[aria-label="Actions"]').should('be.visible').click();
+    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`)
+      .find('button[aria-label="Actions"]')
+      .should('be.visible')
+      .click();
     cy.get('button')
       .contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`)
       .should('be.visible');
