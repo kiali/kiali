@@ -28,12 +28,6 @@ import { EmptyVirtualList } from 'components/VirtualList/EmptyVirtualList';
 import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
-import { kialiStyle } from 'styles/StyleUtils';
-
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
-});
 
 type AppListPageState = FilterComponent.State<AppListItem> & {
   loaded: boolean;
@@ -188,9 +182,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
     return (
       <>
-        <DefaultSecondaryMasthead
-          rightToolbar={<Refresh className={refreshStyle} id="app-list-refresh" disabled={false} manageURL={true} />}
-        />
+        <DefaultSecondaryMasthead rightToolbar={<Refresh id="app-list-refresh" disabled={false} manageURL={true} />} />
         <EmptyVirtualList loaded={this.state.loaded} refreshInterval={this.props.refreshInterval}>
           <RenderContent>
             <VirtualList

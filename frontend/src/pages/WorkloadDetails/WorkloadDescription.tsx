@@ -209,7 +209,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               <MissingLabel
                 missingApp={!workload.appLabel}
                 missingVersion={!workload.versionLabel}
-                className={classes(infoStyle, workloadInfoStyle)}
+                className={infoStyle}
                 tooltip={true}
               />
             )}

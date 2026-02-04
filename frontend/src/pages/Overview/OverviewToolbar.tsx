@@ -75,11 +75,6 @@ const timeToolbarStyle = kialiStyle({
   justifyContent: 'end'
 });
 
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
-});
-
 const actionsToolbarStyle = kialiStyle({
   paddingTop: '1rem',
   display: 'flex',
@@ -221,7 +216,7 @@ class OverviewToolbarComponent extends React.Component<Props, State> {
 
     const timeToolbar = (
       <div className={timeToolbarStyle}>
-        <Refresh className={refreshStyle} id="overview-time-range" disabled={false} manageURL={true} />
+        <Refresh id="overview-time-range" disabled={false} manageURL={true} />
       </div>
     );
 
