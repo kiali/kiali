@@ -731,6 +731,13 @@ spec:
     ruleStorageSize: 1Gi
     storeStorageSize: 10Gi
   advanced:
+    # Explicitly set retention to 5d to match the CRD schema default. Without this,
+    # the ACM operator applies a hardcoded internal default of 365d. This value
+    # should match Kiali's thanos_proxy.retention_period setting.
+    retentionConfig:
+      retentionResolution1h: 5d
+      retentionResolution5m: 5d
+      retentionResolutionRaw: 5d
     compact:
       resources:
         requests:
@@ -1411,7 +1418,7 @@ install_kiali() {
     --set external_services.prometheus.auth.cert_file="secret:acm-observability-certs:tls.crt" \
     --set external_services.prometheus.auth.key_file="secret:acm-observability-certs:tls.key" \
     --set external_services.prometheus.thanos_proxy.enabled="true" \
-    --set external_services.prometheus.thanos_proxy.retention_period="7d" \
+    --set external_services.prometheus.thanos_proxy.retention_period="5d" \
     --set external_services.prometheus.thanos_proxy.scrape_interval="30s" \
     --set deployment.logger.log_level="debug"
 
