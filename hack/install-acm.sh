@@ -559,23 +559,38 @@ spec:
     interval: 30s
     relabelings:
     - action: keep
-      sourceLabels: [__meta_kubernetes_pod_container_name]
+      sourceLabels: ["__meta_kubernetes_pod_container_name"]
       regex: "istio-proxy"
     - action: keep
-      sourceLabels: [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
+      sourceLabels: ["__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape"]
     - action: replace
       regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
       replacement: '[\$2]:\$1'
-      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port,__meta_kubernetes_pod_ip]
-      targetLabel: __address__
+      sourceLabels: ["__meta_kubernetes_pod_annotation_prometheus_io_port","__meta_kubernetes_pod_ip"]
+      targetLabel: "__address__"
     - action: replace
       regex: (\d+);((([0-9]+?)(\.|$)){4})
       replacement: '\$2:\$1'
-      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port,__meta_kubernetes_pod_ip]
-      targetLabel: __address__
-    - sourceLabels: [__meta_kubernetes_namespace]
+      sourceLabels: ["__meta_kubernetes_pod_annotation_prometheus_io_port","__meta_kubernetes_pod_ip"]
+      targetLabel: "__address__"
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_name","__meta_kubernetes_pod_label_app"]
+      separator: ";"
+      targetLabel: "app"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_version","__meta_kubernetes_pod_label_version"]
+      separator: ";"
+      targetLabel: "version"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+    - sourceLabels: ["__meta_kubernetes_namespace"]
       action: replace
       targetLabel: namespace
+    - action: replace
+      replacement: "the-mesh-identification-string"
+      targetLabel: mesh_id
 EOF
 }
 
