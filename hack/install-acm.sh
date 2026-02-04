@@ -1828,6 +1828,11 @@ EOF
   infomsg "Waiting for deployment to be ready..."
   ${CLIENT_EXE} rollout status deployment/hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
 
+  # Wait for pod to be fully ready (including Istio sidecar)
+  # The rollout status only checks deployment readiness, not sidecar initialization
+  infomsg "Waiting for pod to be fully ready (including Istio sidecar)..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
+
   # Create PodMonitor for Istio proxies in this namespace
   # Required because OpenShift monitoring ignores namespaceSelector in PodMonitor
   create_istio_podmonitor "${APP_NAMESPACE}"
