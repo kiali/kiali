@@ -44,14 +44,12 @@ const ERROR_FILTERS: IstioConfigStatusLabel[] = ['Not Valid'];
 const statusLabelStyle = kialiStyle({
   height: '1.25rem',
   backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
+  borderColor: 'var(--pf-v6-c-label--m-outline--BorderColor, transparent)',
+  borderStyle: 'solid',
+  borderWidth: '1px',
   $nest: {
     '& .pf-v6-c-label__icon': {
-      marginRight: '0.25rem',
-      $nest: {
-        '& svg': {
-          color: 'inherit'
-        }
-      }
+      marginRight: '0.25rem'
     },
     '& .pf-v6-c-label__content': {
       color: 'var(--pf-t--global--text--color--primary--default)'
@@ -59,22 +57,13 @@ const statusLabelStyle = kialiStyle({
   }
 });
 
-const errorCardBodyStyle = kialiStyle({
-  paddingBottom: 0
-});
-
-const tryAgainStyle = kialiStyle({
+const noUnderlineStyle = kialiStyle({
   textDecoration: 'none',
   $nest: {
     '&, &:hover, &:focus, &:active': {
       textDecoration: 'none'
     }
   }
-});
-
-const centeredFooterStyle = kialiStyle({
-  display: 'flex',
-  justifyContent: 'center'
 });
 
 // Get border color for status label
@@ -165,14 +154,7 @@ export const IstioConfigStats: React.FC = () => {
                 className={classes(statusLabelStyle, popoverItemStatusStyle)}
                 variant="outline"
                 icon={getStatusIcon(item.status)}
-                style={
-                  {
-                    '--pf-v6-c-label--m-outline--BorderColor': borderColor,
-                    borderColor: borderColor,
-                    borderWidth: '1px',
-                    borderStyle: 'solid'
-                  } as React.CSSProperties
-                }
+                style={{ '--pf-v6-c-label--m-outline--BorderColor': borderColor } as React.CSSProperties}
               >
                 {t(item.status)}
               </Label>
@@ -204,11 +186,14 @@ export const IstioConfigStats: React.FC = () => {
           {!istioConfigStats.isLoading && !istioConfigStats.isError && ` (${istioConfigStats.total})`}
         </CardTitle>
       </CardHeader>
-      <CardBody className={istioConfigStats.isError ? classes(cardBodyStyle, errorCardBodyStyle) : cardBodyStyle}>
+      <CardBody className={cardBodyStyle}>
         {istioConfigStats.isLoading ? (
           <OverviewCardLoadingState message={t('Fetching Istio config data')} />
         ) : istioConfigStats.isError ? (
-          <OverviewCardErrorState align="bottom" message={t('Istio configs could not be loaded')} />
+          <OverviewCardErrorState
+            message={t('Istio configs could not be loaded')}
+            onTryAgain={istioConfigStats.refresh}
+          />
         ) : (
           <div className={statsContainerStyle}>
             {istioConfigStats.valid > 0 && (
@@ -254,24 +239,12 @@ export const IstioConfigStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      {!istioConfigStats.isLoading && istioConfigStats.isError && (
-        <CardFooter className={centeredFooterStyle}>
-          <Button
-            className={classes(linkStyle, tryAgainStyle)}
-            variant="link"
-            isInline
-            onClick={() => istioConfigStats.refresh()}
-          >
-            {t('Try Again')}
-          </Button>
-        </CardFooter>
-      )}
       {!istioConfigStats.isLoading && !istioConfigStats.isError && (
         <CardFooter>
           <Button
             variant="link"
             isInline
-            className={linkStyle}
+            className={classes(linkStyle, noUnderlineStyle)}
             onClick={() => navigateToUrl(buildIstioListUrl({ namespaces: allNamespaceNames }))}
           >
             {t('View Istio config')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
