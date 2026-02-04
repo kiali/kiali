@@ -24,11 +24,11 @@
 #
 #   ACM Observability automatically creates trusted certificates that the script uses:
 #     - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
-#     - CA bundle is extracted with fallback chain (all in observability namespace):
-#       1. observability-server-ca-certs (ca.crt key)
-#       2. observability-client-ca-certs (ca.crt key)
-#       3. observability-server-ca-certs (tls.crt key)
-#     The exact CA secret and key vary by ACM version
+#     - CA bundle is extracted by inspecting the Observatorium API server certificate issuer,
+#       then extracting from the matching secret in the observability namespace:
+#       - observability-server-ca-certs (if server cert issued by observability-server-ca-certificate)
+#       - observability-client-ca-certs (if server cert issued by observability-client-ca-certificate)
+#     The exact CA used varies by ACM version and deployment configuration
 #
 #   The install-kiali command copies these certificates to Kiali's namespace:
 #     - Secret 'acm-observability-certs' with tls.crt and tls.key (client auth)
@@ -1141,33 +1141,42 @@ setup_kiali_ca_bundle() {
 
   local acm_ca=""
 
-  # Get ACM observability CA from one of several possible locations.
-  # The exact secret name and key vary by ACM version - try multiple locations until one succeeds.
-  # All secrets are in the observability namespace.
+  # Deterministically identify which CA to extract by inspecting the Observatorium API server certificate.
+  # This approach works across ACM versions by checking the actual certificate issuer.
+  infomsg "Identifying CA certificate by inspecting Observatorium API server certificate..."
 
-  # Try: observability-client-ca-certs in open-cluster-management-issuer namespace
-  if ${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer &>/dev/null 2>&1; then
-    infomsg "Extracting CA from observability-client-ca-certs (issuer namespace)..."
-    acm_ca=$(${CLIENT_EXE} get secret observability-client-ca-certs -n open-cluster-management-issuer \
+  # Get the Observatorium API route hostname
+  local obs_route_host=$(${CLIENT_EXE} get route observatorium-api -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null)
+  if [ -z "${obs_route_host}" ]; then
+    errormsg "Could not get Observatorium API route hostname"
+    return 1
+  fi
+  debug "Observatorium API hostname: ${obs_route_host}"
+
+  # Inspect the server certificate to determine which CA issued it
+  local issuer_cn=$(echo | openssl s_client -connect "${obs_route_host}:443" -servername "${obs_route_host}" -showcerts 2>/dev/null | openssl x509 -noout -issuer 2>/dev/null | grep -o 'CN=[^,]*' | cut -d= -f2)
+
+  if [ -z "${issuer_cn}" ]; then
+    warnmsg "Could not determine server certificate issuer via openssl inspection"
+    warnmsg "Falling back to trying observability-server-ca-certs..."
+    issuer_cn="observability-server-ca-certificate"
+  else
+    infomsg "Server certificate issued by: ${issuer_cn}"
+  fi
+
+  # Extract the matching CA certificate based on the issuer CN
+  if [[ "${issuer_cn}" == *"observability-server-ca-certificate"* ]]; then
+    infomsg "Extracting CA from observability-server-ca-certs (ca.crt key)..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
       -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
-  fi
-
-  # Fallback: try observability-server-ca-certs in observability namespace (ca.crt key)
-  if [ -z "${acm_ca}" ]; then
-    if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-      infomsg "Extracting CA from observability-server-ca-certs (ca.crt key)..."
-      acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
-        -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
-    fi
-  fi
-
-  # Fallback: try tls.crt from observability-server-ca-certs (some ACM versions use this key)
-  if [ -z "${acm_ca}" ]; then
-    if ${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-      infomsg "Extracting CA from observability-server-ca-certs (tls.crt key)..."
-      acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
-        -o jsonpath='{.data.tls\.crt}' 2>/dev/null | base64 -d)
-    fi
+  elif [[ "${issuer_cn}" == *"observability-client-ca-certificate"* ]]; then
+    infomsg "Extracting CA from observability-client-ca-certs (ca.crt key)..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-client-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+  else
+    warnmsg "Unknown issuer CN: ${issuer_cn}. Trying observability-server-ca-certs as default..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
   fi
 
   if [ -z "${acm_ca}" ]; then
