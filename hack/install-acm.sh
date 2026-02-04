@@ -731,13 +731,33 @@ spec:
     ruleStorageSize: 1Gi
     storeStorageSize: 10Gi
   advanced:
-    # Explicitly set retention to 5d to match the CRD schema default. Without this,
-    # the ACM operator applies a hardcoded internal default of 365d. This value
-    # should match Kiali's thanos_proxy.retention_period setting.
+    # Explicitly configure retention periods for Thanos compactor. All three resolutions
+    # (raw, 5m, 1h) are set to 14d for the following reasons:
+    #
+    # 1. MINIMUM REQUIREMENT: Thanos requires retentionResolution5m >= 10d because that's
+    #    when downsampling from 5m to 1h resolution begins. Setting it lower causes the
+    #    thanos-compact pod to crash with error:
+    #    "5m resolution retention must be higher than the minimum block size after which
+    #    1h resolution downsampling will occur (10 days)"
+    #    We use 14d to provide a buffer above this minimum threshold.
+    #
+    # 2. THANOS BEST PRACTICE: Per Thanos documentation, "ideally, you will have an equal
+    #    retention set (or no retention at all) to all resolutions which allow both 'zoom
+    #    in' capabilities as well as performant long ranges queries." If raw data expires
+    #    before downsampled data, you lose the ability to view detailed metrics for older
+    #    time periods.
+    #
+    # 3. OPERATOR DEFAULT: Without explicit retentionConfig, the ACM operator applies a
+    #    hardcoded internal default of 365d (despite CRD schema defaults of 5d/14d/30d),
+    #    which wastes storage for most use cases.
+    #
+    # 4. KIALI ALIGNMENT: This value must match Kiali's thanos_proxy.retention_period
+    #    setting so Kiali doesn't attempt to query data outside the available retention
+    #    window.
     retentionConfig:
-      retentionResolution1h: 5d
-      retentionResolution5m: 5d
-      retentionResolutionRaw: 5d
+      retentionResolution1h: 14d
+      retentionResolution5m: 14d
+      retentionResolutionRaw: 14d
     compact:
       resources:
         requests:
@@ -1418,7 +1438,7 @@ install_kiali() {
     --set external_services.prometheus.auth.cert_file="secret:acm-observability-certs:tls.crt" \
     --set external_services.prometheus.auth.key_file="secret:acm-observability-certs:tls.key" \
     --set external_services.prometheus.thanos_proxy.enabled="true" \
-    --set external_services.prometheus.thanos_proxy.retention_period="5d" \
+    --set external_services.prometheus.thanos_proxy.retention_period="14d" \
     --set external_services.prometheus.thanos_proxy.scrape_interval="30s" \
     --set deployment.logger.log_level="debug"
 
