@@ -119,7 +119,7 @@ When('Control planes API succeeds with 1 healthy control plane', () => {
     },
     {
       statusCode: 200,
-      body: [makeControlPlane({ clusterName: 'east', istiodName: 'istiod-east', status: 'Healthy' })]
+      body: [makeControlPlane({ clusterName: 'Kubernetes', istiodName: 'istiod-kubernetes', status: 'Healthy' })]
     }
   ).as('controlPlanesRetry');
 });
