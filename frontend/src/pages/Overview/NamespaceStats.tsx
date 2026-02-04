@@ -11,17 +11,26 @@ import {
   PopoverPosition,
   Spinner
 } from '@patternfly/react-core';
-import { Link } from 'react-router-dom-v5-compat';
+import { router } from 'app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
+import { createIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { Namespace } from 'types/Namespace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { helpIconStyle } from 'styles/IconStyle';
+import { useSelector } from 'react-redux';
+import { durationSelector } from 'store/Selectors';
+import { DurationInSeconds } from 'types/Common';
+import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
+import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
+import { combinedWorstStatus, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceHealthUtils';
+import { addDanger } from 'utils/AlertUtils';
+import * as API from 'services/Api';
+import { ApiError } from 'types/Api';
 import {
   cardStyle,
   cardBodyStyle,
@@ -36,7 +45,8 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { HealthStatus, isDegraded, isUnhealthy } from 'utils/HealthUtils';
+import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
+import { camelCase } from 'lodash';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -77,6 +87,31 @@ const labelStyle = kialiStyle({
   marginBottom: '0.5rem'
 });
 
+const noUnderlineStyle = kialiStyle({
+  textDecoration: 'none',
+  $nest: {
+    '&, &:hover, &:focus, &:active': {
+      textDecoration: 'none'
+    }
+  }
+});
+
+const statusLabelStyle = kialiStyle({
+  height: '1.25rem',
+  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
+  borderColor: 'var(--pf-v6-c-label--m-outline--BorderColor, transparent)',
+  borderStyle: 'solid',
+  borderWidth: '1px',
+  $nest: {
+    '& .pf-v6-c-label__icon': {
+      marginRight: '0.25rem'
+    },
+    '& .pf-v6-c-label__content': {
+      color: 'var(--pf-t--global--text--color--primary--default)'
+    }
+  }
+});
+
 const hasIstioInjection = (ns: Namespace): boolean => {
   return !!ns.labels && (ns.labels['istio-injection'] === 'enabled' || !!ns.labels['istio.io/rev']);
 };
@@ -84,19 +119,19 @@ const hasIstioInjection = (ns: Namespace): boolean => {
 // Maximum number of items to show in the popover
 const MAX_POPOVER_ITEMS = 3;
 
-interface NamespaceWithHealth extends Namespace {
-  healthStatus?: HealthStatus;
-}
-
 // Get translated display label for health status
-const getHealthStatusLabel = (status?: string): string => {
+const getHealthStatusLabel = (status?: HealthStatusId): string => {
   switch (status) {
-    case HealthStatus.Degraded:
-      return t('Degraded');
-    case HealthStatus.Unhealthy:
-      return t('Unhealthy');
-    case HealthStatus.Healthy:
-      return t('Healthy');
+    case DEGRADED.id:
+      return DEGRADED.name;
+    case FAILURE.id:
+      return FAILURE.name;
+    case NOT_READY.id:
+      return NOT_READY.name;
+    case HEALTHY.id:
+      return HEALTHY.name;
+    case NA.id:
+      return 'n/a';
     default:
       return status ?? t('Unknown');
   }
@@ -104,128 +139,319 @@ const getHealthStatusLabel = (status?: string): string => {
 
 export const NamespaceStats: React.FC = () => {
   const { isLoading, namespaces } = useNamespaces();
+  const duration = useSelector(durationSelector) as DurationInSeconds;
+  const [isHealthLoading, setIsHealthLoading] = React.useState<boolean>(false);
+  const [healthByNamespace, setHealthByNamespace] = React.useState<Record<string, HealthStatusId>>({});
+
+  const typeFilterParam = camelCase(categoryFilter.category);
+  const healthFilterParam = camelCase(healthFilter.category);
+  const dataPlaneParamValue = NamespaceCategory.DATA_PLANE;
+
+  const handleApiError = React.useCallback((message: string, error: ApiError): void => {
+    addDanger(message, API.getErrorString(error));
+  }, []);
+
+  const nsKey = React.useCallback((cluster: string | undefined, name: string): string => {
+    return `${cluster ?? ''}::${name}`;
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+
+    const fetchHealth = async (): Promise<void> => {
+      if (namespaces.length === 0) {
+        setHealthByNamespace({});
+        return;
+      }
+
+      // Overview card is scoped to data-plane namespaces only (ambient or sidecar-injected).
+      const dataPlaneNamespaces = namespaces.filter(
+        ns => !ns.isControlPlane && (ns.isAmbient || hasIstioInjection(ns))
+      );
+      if (dataPlaneNamespaces.length === 0) {
+        setHealthByNamespace({});
+        return;
+      }
+
+      setIsHealthLoading(true);
+
+      // Initialize data-plane namespaces as NA; we will overwrite when health is present.
+      const nextHealth: Record<string, HealthStatusId> = {};
+      dataPlaneNamespaces.forEach(ns => {
+        nextHealth[nsKey(ns.cluster, ns.name)] = NA.id as HealthStatusId;
+      });
+
+      // Group namespaces by cluster (undefined cluster => single-cluster mode)
+      const namespacesByCluster = new Map<string | undefined, string[]>();
+      dataPlaneNamespaces.forEach(ns => {
+        const current = namespacesByCluster.get(ns.cluster) || [];
+        current.push(ns.name);
+        namespacesByCluster.set(ns.cluster, current);
+      });
+
+      const clusterResults = await Promise.all(
+        Array.from(namespacesByCluster.entries()).map(async ([cluster, nsNames]) => {
+          const healthMap = await fetchClusterNamespacesHealth(nsNames, duration, cluster);
+          return { cluster, healthMap, nsNames };
+        })
+      );
+
+      clusterResults.forEach(({ cluster, healthMap, nsNames }) => {
+        nsNames.forEach(name => {
+          const nsHealth = healthMap.get(name);
+          if (!nsHealth) {
+            return;
+          }
+
+          const statuses = namespaceStatusesFromNamespaceHealth(nsHealth);
+          const worst = combinedWorstStatus(statuses.statusApp, statuses.statusService, statuses.statusWorkload);
+          nextHealth[nsKey(cluster, name)] = worst.id as HealthStatusId;
+        });
+      });
+
+      if (active) {
+        setHealthByNamespace(nextHealth);
+      }
+    };
+
+    fetchHealth()
+      .catch(err => {
+        handleApiError('Could not fetch health', err as ApiError);
+      })
+      .finally(() => {
+        if (active) {
+          setIsHealthLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [duration, handleApiError, namespaces, nsKey]);
 
   // Calculate stats from namespaces
-  const total = namespaces.length;
   let ambient = 0;
-  let controlPlane = 0;
   let sidecar = 0;
-  let outOfMesh = 0;
   let healthy = 0;
-  let unhealthy = 0;
-  const namespacesWithIssues: NamespaceWithHealth[] = [];
+  type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
+  const namespacesFailure: NamespaceWithHealthStatus[] = [];
+  const namespacesDegraded: NamespaceWithHealthStatus[] = [];
+  const namespacesNotReady: NamespaceWithHealthStatus[] = [];
+  const namespacesNA: NamespaceWithHealthStatus[] = [];
 
   namespaces.forEach(ns => {
-    if (ns.isControlPlane) {
-      controlPlane++;
-    } else if (ns.isAmbient) {
+    // Overview card focuses on data-plane namespaces
+    if (ns.isControlPlane || !(ns.isAmbient || hasIstioInjection(ns))) {
+      return;
+    }
+
+    if (ns.isAmbient) {
       ambient++;
     } else if (hasIstioInjection(ns)) {
       sidecar++;
-    } else {
-      outOfMesh++;
     }
 
-    // Use healthStatus from namespace data if available (from mock)
-    // TODO: Adapt once we have a proper health status from the API
-    const nsWithHealth = ns as NamespaceWithHealth;
-    if (nsWithHealth.healthStatus === HealthStatus.Unhealthy || nsWithHealth.healthStatus === HealthStatus.Degraded) {
-      unhealthy++;
-      namespacesWithIssues.push(nsWithHealth);
-    } else {
+    const healthStatus = healthByNamespace[nsKey(ns.cluster, ns.name)];
+    if (healthStatus === FAILURE.id) {
+      namespacesFailure.push({ ...ns, healthStatus });
+    } else if (healthStatus === DEGRADED.id) {
+      namespacesDegraded.push({ ...ns, healthStatus });
+    } else if (healthStatus === NOT_READY.id) {
+      namespacesNotReady.push({ ...ns, healthStatus });
+    } else if (healthStatus === HEALTHY.id) {
       healthy++;
+    } else {
+      // Treat undefined/missing as NA, but keep NA separate from healthy/unhealthy totals
+      namespacesNA.push({ ...ns, healthStatus: NA.id as HealthStatusId });
     }
   });
 
-  // Build URL for "View all" link with filters for unhealthy namespaces
-  const getViewAllUrl = (): string => {
-    const params: string[] = [];
+  const total = ambient + sidecar;
 
-    // Check which health statuses are present in the unhealthy namespaces
-    const hasDegraded = namespacesWithIssues.some(isDegraded);
-    const hasUnhealthy = namespacesWithIssues.some(isUnhealthy);
+  const getViewAllUrl = (status?: HealthStatusId): string => {
+    const params = new URLSearchParams();
+    params.set(typeFilterParam, dataPlaneParamValue);
 
-    if (hasDegraded) {
-      params.push('health=Degraded');
+    // Namespaces page health filter does not include NA; for NA, navigate with only the data plane filter.
+    if (status && status !== (NA.id as HealthStatusId)) {
+      params.set(healthFilterParam, status);
     }
 
-    if (hasUnhealthy) {
-      params.push('health=Failure');
-    }
-
-    params.push('opLabel=or');
-
-    return `/${Paths.NAMESPACES}${params.length > 1 ? `?${params.join('&')}` : ''}`;
+    return `/${Paths.NAMESPACES}?${params.toString()}`;
   };
 
   const handleViewAllClick = (): void => {
     FilterSelected.resetFilters();
   };
 
-  const popoverContent = (
+  const navigateToUrl = (url: string): void => {
+    handleViewAllClick();
+    router.navigate(url);
+  };
+
+  const popoverContentFor = (
+    list: NamespaceWithHealthStatus[],
+    viewAllStatus: HealthStatusId,
+    viewAllText: string
+  ): React.ReactNode => (
     <>
-      {namespacesWithIssues.slice(0, MAX_POPOVER_ITEMS).map(ns => (
+      {list.slice(0, MAX_POPOVER_ITEMS).map(ns => (
         <div key={`${ns.cluster}-${ns.name}`} className={popoverItemStyle}>
           <PFBadge badge={PFBadges.Namespace} size="sm" />
-          <Link to={`/${Paths.NAMESPACES}?namespaces=${ns.name}${ns.cluster ? `&clusterName=${ns.cluster}` : ''}`}>
-            {ns.name}
-          </Link>
-          <span className={popoverItemStatusStyle}>{getHealthStatusLabel(ns.healthStatus)}</span>
+          {ns.name}
+          <Label
+            className={classes(statusLabelStyle, popoverItemStatusStyle)}
+            variant="outline"
+            icon={createIcon(
+              ns.healthStatus === FAILURE.id
+                ? FAILURE
+                : ns.healthStatus === DEGRADED.id
+                ? DEGRADED
+                : ns.healthStatus === NOT_READY.id
+                ? NOT_READY
+                : NA
+            )}
+            style={
+              {
+                '--pf-v6-c-label--m-outline--BorderColor':
+                  ns.healthStatus === FAILURE.id
+                    ? FAILURE.color
+                    : ns.healthStatus === DEGRADED.id
+                    ? DEGRADED.color
+                    : ns.healthStatus === NOT_READY.id
+                    ? NOT_READY.color
+                    : NA.color
+              } as React.CSSProperties
+            }
+          >
+            {getHealthStatusLabel(ns.healthStatus)}
+          </Label>
         </div>
       ))}
-      {namespacesWithIssues.length > MAX_POPOVER_ITEMS && (
+      {list.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
-          <Link to={getViewAllUrl()} onClick={handleViewAllClick}>
-            <Button variant="link" isInline>
-              {t('View all unhealthy namespaces')}
-            </Button>
-          </Link>
+          <Button
+            variant="link"
+            isInline
+            className={classes(linkStyle, noUnderlineStyle)}
+            onClick={() => navigateToUrl(getViewAllUrl(viewAllStatus))}
+          >
+            {viewAllText}
+          </Button>
         </div>
       )}
     </>
   );
 
+  const failureCount = namespacesFailure.length;
+  const degradedCount = namespacesDegraded.length;
+  const notReadyCount = namespacesNotReady.length;
+  const naCount = namespacesNA.length;
+
   return (
     <Card className={cardStyle}>
       <CardHeader>
         <CardTitle>
-          <span>{`${t('Namespaces')} (${total})`}</span>
-          <Popover
-            aria-label={t('Namespace information')}
-            headerContent={<span>{t('Namespace statistics')}</span>}
-            bodyContent={t('Display Istio config types for all namespaces')}
-            triggerAction="hover"
-          >
-            <KialiIcon.Help className={helpIconStyle} />
-          </Popover>
+          <span>{`${t('Data planes')} (${total})`}</span>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
-        {isLoading ? (
+        {isLoading || isHealthLoading ? (
           <Spinner size="lg" />
         ) : (
           <div className={namespaceContainerStyle}>
             <div className={statsContainerStyle}>
               {healthy > 0 && (
-                <div className={statItemStyle}>
+                <div className={statItemStyle} data-test="data-planes-healthy">
                   <span>{healthy}</span>
                   <KialiIcon.Success />
                 </div>
               )}
-              {unhealthy > 0 && (
+              {failureCount > 0 && (
                 <Popover
-                  aria-label={t('Namespaces with issues')}
+                  aria-label={t('Namespaces in Failure')}
                   position={PopoverPosition.right}
+                  triggerAction="click"
+                  showClose={true}
                   headerContent={
                     <span className={popoverHeaderStyle}>
-                      <KialiIcon.ExclamationTriangle /> {t('Namespaces')}
+                      {createIcon(FAILURE)} {t('Data planes')}
                     </span>
                   }
-                  bodyContent={popoverContent}
+                  bodyContent={popoverContentFor(
+                    namespacesFailure,
+                    FAILURE.id as HealthStatusId,
+                    t('View all failure namespaces')
+                  )}
                 >
-                  <div className={classes(statItemStyle, clickableStyle)}>
-                    <span className={linkStyle}>{unhealthy}</span>
-                    <KialiIcon.ExclamationTriangle />
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-failure">
+                    <span className={linkStyle}>{failureCount}</span>
+                    {createIcon(FAILURE)}
+                  </div>
+                </Popover>
+              )}
+              {degradedCount > 0 && (
+                <Popover
+                  aria-label={t('Namespaces in Degraded')}
+                  position={PopoverPosition.right}
+                  triggerAction="click"
+                  showClose={true}
+                  headerContent={
+                    <span className={popoverHeaderStyle}>
+                      {createIcon(DEGRADED)} {t('Data planes')}
+                    </span>
+                  }
+                  bodyContent={popoverContentFor(
+                    namespacesDegraded,
+                    DEGRADED.id as HealthStatusId,
+                    t('View all degraded namespaces')
+                  )}
+                >
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-degraded">
+                    <span className={linkStyle}>{degradedCount}</span>
+                    {createIcon(DEGRADED)}
+                  </div>
+                </Popover>
+              )}
+              {notReadyCount > 0 && (
+                <Popover
+                  aria-label={t('Namespaces in Not Ready')}
+                  position={PopoverPosition.right}
+                  triggerAction="click"
+                  showClose={true}
+                  headerContent={
+                    <span className={popoverHeaderStyle}>
+                      {createIcon(NOT_READY)} {t('Data planes')}
+                    </span>
+                  }
+                  bodyContent={popoverContentFor(
+                    namespacesNotReady,
+                    NOT_READY.id as HealthStatusId,
+                    t('View all not ready namespaces')
+                  )}
+                >
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-not-ready">
+                    <span className={linkStyle}>{notReadyCount}</span>
+                    {createIcon(NOT_READY)}
+                  </div>
+                </Popover>
+              )}
+              {naCount > 0 && (
+                <Popover
+                  aria-label={t('Namespaces with no health information')}
+                  position={PopoverPosition.right}
+                  triggerAction="click"
+                  showClose={true}
+                  headerContent={
+                    <span className={popoverHeaderStyle}>
+                      {createIcon(NA)} {t('Data planes')}
+                    </span>
+                  }
+                  bodyContent={popoverContentFor(namespacesNA, NA.id as HealthStatusId, t('View Namespaces'))}
+                >
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
+                    <span className={linkStyle}>{naCount}</span>
+                    {createIcon(NA)}
                   </div>
                 </Popover>
               )}
@@ -233,14 +459,6 @@ export const NamespaceStats: React.FC = () => {
             <div className={verticalDividerStyle} />
             <div className={labelsContainerStyle}>
               <div className={labelGroupStyle}>
-                {controlPlane > 0 && (
-                  <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{controlPlane}</span>{' '}
-                    <Label variant="outline" className={labelStyle}>
-                      {t('Control Plane')}
-                    </Label>
-                  </div>
-                )}
                 {ambient > 0 && (
                   <div className={labelItemStyle}>
                     <span className={labelNumberStyle}>{ambient}</span>{' '}
@@ -257,23 +475,21 @@ export const NamespaceStats: React.FC = () => {
                     </Label>
                   </div>
                 )}
-                {outOfMesh > 0 && (
-                  <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{outOfMesh}</span>{' '}
-                    <Label variant="outline" className={labelStyle}>
-                      {t('Out of mesh')}
-                    </Label>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
       </CardBody>
       <CardFooter>
-        <Link to={`/${Paths.NAMESPACES}`} className={linkStyle}>
+        <Button
+          variant="link"
+          isInline
+          className={classes(linkStyle, noUnderlineStyle)}
+          onClick={() => navigateToUrl(getViewAllUrl())}
+          data-test="data-planes-view-namespaces"
+        >
           {t('View Namespaces')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-        </Link>
+        </Button>
       </CardFooter>
     </Card>
   );
