@@ -60,7 +60,7 @@ const CodeBlockMessage: React.FC<
     'aria-label'?: string;
     inline?: boolean;
   }
-> = ({ children, className, 'aria-label': ariaLabel, inline: _inline, ...props }) => {
+> = ({ children, className, 'aria-label': ariaLabel, inline: _inline, ref: _ref, ...props }) => {
   const [copied, setCopied] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const tooltipIdRef = React.useRef(`chatbot-copy-${Math.random().toString(16).slice(2)}`);
