@@ -1736,85 +1736,34 @@ EOF
   return 0
 }
 
-# Apply OpenShift-specific fixes required for Istio Ambient mode.
-# OpenShift's security model requires additional privileges for Ambient components:
-# - CNI pod needs privileged mode to create /var/run/istio-cni/log.sock
-# - Ztunnel pod needs privileged mode to connect to /var/run/ztunnel/ztunnel.sock (SELinux blocks non-privileged access)
-# Both require: (1) privileged SCC granted to service account, (2) DaemonSet patched to set privileged=true
-apply_openshift_ambient_fixes() {
-  infomsg "Applying OpenShift-specific fixes for Ambient mode..."
-
-  # Grant privileged SCC to istio-cni service account in kube-system
-  # Required because CNI needs to create /var/run/istio-cni/log.sock
-  infomsg "Granting privileged SCC to istio-cni service account..."
-  ${CLIENT_EXE} adm policy add-scc-to-user privileged -z istio-cni -n kube-system 2>/dev/null || true
-
-  # Patch CNI DaemonSet to run as privileged
-  # Without this, CNI fails with "permission denied" when creating Unix sockets
-  infomsg "Patching istio-cni-node DaemonSet for privileged mode..."
-  ${CLIENT_EXE} patch ds -n kube-system istio-cni-node --type='json' \
-    -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/securityContext/privileged", "value": true}]' 2>/dev/null || true
-
-  # Wait for CNI pod to be ready with new privileges
-  infomsg "Waiting for istio-cni-node pod to be ready..."
-  sleep 5
-  ${CLIENT_EXE} rollout status ds/istio-cni-node -n kube-system --timeout=120s 2>/dev/null || true
-
-  # Grant privileged SCC to ztunnel service account in istio-system
-  # Required because ztunnel needs hostPath volumes and elevated capabilities
-  infomsg "Granting privileged SCC to ztunnel service account..."
-  ${CLIENT_EXE} adm policy add-scc-to-user privileged -z ztunnel -n istio-system 2>/dev/null || true
-
-  # Patch ztunnel DaemonSet to run as privileged
-  # Without this, ztunnel fails to connect to /var/run/ztunnel/ztunnel.sock due to SELinux restrictions
-  infomsg "Patching ztunnel DaemonSet for privileged mode..."
-  ${CLIENT_EXE} patch ds ztunnel -n istio-system --type='json' \
-    -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/securityContext/privileged", "value": true}]' 2>/dev/null || true
-
-  # Restart ztunnel to pick up new privileges
-  infomsg "Restarting ztunnel DaemonSet..."
-  ${CLIENT_EXE} rollout restart ds/ztunnel -n istio-system 2>/dev/null || true
-
-  # Wait for ztunnel to be ready
-  infomsg "Waiting for ztunnel pod to be ready..."
-  ${CLIENT_EXE} rollout status ds/ztunnel -n istio-system --timeout=120s 2>/dev/null || true
-
-  infomsg "OpenShift Ambient fixes applied successfully"
-}
-
 ##############################################################################
 # Istio Functions
 ##############################################################################
 
 install_istio() {
   if [ "${AMBIENT_MODE}" == "true" ]; then
-    infomsg "Installing Istio with Ambient mode enabled (sidecar + ztunnel/waypoint)..."
+    infomsg "Installing Istio via Sail Operator with Ambient mode enabled..."
   else
-    infomsg "Installing Istio..."
+    infomsg "Installing Istio via Sail Operator..."
   fi
 
-  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
-    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
+  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" ]; then
+    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-sail.sh"
     return 1
   fi
 
-  local istio_args="-c ${CLIENT_EXE}"
+  local istio_args=""
   if [ "${AMBIENT_MODE}" == "true" ]; then
     istio_args="${istio_args} --config-profile ambient"
   fi
 
-  "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ${istio_args}
+  "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" ${istio_args}
   if [ $? -ne 0 ]; then
     errormsg "Istio installation failed"
     return 1
   fi
 
   infomsg "Istio installed successfully"
-
-  # Apply OpenShift-specific fixes for Ambient mode
-  if [ "${AMBIENT_MODE}" == "true" ]; then
-    apply_openshift_ambient_fixes
-  fi
 
   infomsg "======================================"
   infomsg "Istio installation complete!"
@@ -1828,26 +1777,103 @@ install_istio() {
 }
 
 uninstall_istio() {
-  infomsg "Uninstalling Istio..."
+  infomsg "Uninstalling Istio (Sail Operator)..."
 
-  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
-    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
-    return 1
+  # Delete Telemetry CR first (before namespace deletion)
+  infomsg "Deleting Telemetry CR..."
+  ${CLIENT_EXE} delete telemetry otel-tracing -n istio-system --ignore-not-found 2>/dev/null || true
+
+  # Delete Sail Operator CRs (these control the Istio components)
+  infomsg "Deleting Istio CR..."
+  ${CLIENT_EXE} delete istio default --ignore-not-found 2>/dev/null || true
+
+  infomsg "Deleting IstioCNI CR..."
+  ${CLIENT_EXE} delete istiocni default --ignore-not-found 2>/dev/null || true
+
+  infomsg "Deleting ZTunnel CR..."
+  ${CLIENT_EXE} delete ztunnel default --ignore-not-found 2>/dev/null || true
+
+  # Wait for Sail Operator to clean up resources
+  infomsg "Waiting for Sail Operator to clean up resources..."
+  sleep 15
+
+  # Uninstall Sail Operator via Helm
+  infomsg "Uninstalling Sail Operator..."
+  helm uninstall sail-operator -n sail-operator 2>/dev/null || true
+
+  # Delete namespaces created by the Sail script
+  infomsg "Deleting Istio namespaces..."
+  ${CLIENT_EXE} delete namespace istio-system --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace istio-cni --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace ztunnel --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace sail-operator --ignore-not-found --wait=false 2>/dev/null || true
+
+  # Clean up OpenTelemetry Operator if it was installed (for tempo addon)
+  if ${CLIENT_EXE} get namespace opentelemetry-operator-system &>/dev/null 2>&1; then
+    infomsg "Cleaning up OpenTelemetry Operator..."
+    ${CLIENT_EXE} delete -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml --ignore-not-found 2>/dev/null || true
+    ${CLIENT_EXE} delete namespace opentelemetry-operator-system --ignore-not-found --wait=false 2>/dev/null || true
   fi
 
-  "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" -c ${CLIENT_EXE} --delete-istio true
-  if [ $? -ne 0 ]; then
-    warnmsg "Istio uninstallation may have had issues"
-  else
-    infomsg "Istio uninstalled successfully"
-  fi
+  # Clean up Sail Operator CRDs explicitly
+  infomsg "Cleaning up Sail Operator CRDs..."
+  ${CLIENT_EXE} delete crd istios.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiocnis.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd ztunnels.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiorevisions.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiorevisiontags.sailoperator.io --ignore-not-found 2>/dev/null || true
+
+  # Clean up any remaining Istio CRDs
+  infomsg "Cleaning up Istio CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.istio\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up GatewayClasses created by Istio
+  infomsg "Cleaning up GatewayClasses..."
+  ${CLIENT_EXE} delete gatewayclass istio istio-remote istio-waypoint --ignore-not-found 2>/dev/null || true
+
+  # Clean up istio-ca ConfigMaps that get distributed to all namespaces
+  infomsg "Cleaning up istio-ca ConfigMaps..."
+  for ns in $(${CLIENT_EXE} get cm -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name' --no-headers 2>/dev/null | grep -E "istio-ca-root-cert|istio-ca-crl" | awk '{print $1}' | sort -u); do
+    ${CLIENT_EXE} delete cm istio-ca-root-cert istio-ca-crl -n "$ns" --ignore-not-found 2>/dev/null || true
+  done
+
+  # Clean up Gateway API CRDs
+  infomsg "Cleaning up Gateway API CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.gateway\.networking\.k8s\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up Gateway API Inference Extension CRDs (both k8s.io and x-k8s.io suffixes)
+  infomsg "Cleaning up Gateway API Inference Extension CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.inference\.networking\.(k8s|x-k8s)\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up ClusterRole/ClusterRoleBinding created by Istio addons (prometheus, grafana, etc.)
+  infomsg "Cleaning up addon ClusterRoles and ClusterRoleBindings..."
+  ${CLIENT_EXE} delete clusterrole prometheus --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete clusterrolebinding prometheus --ignore-not-found 2>/dev/null || true
+
+  infomsg "Istio uninstalled successfully"
 }
 
 status_istio() {
-  infomsg "Checking Istio status..."
+  infomsg "Checking Istio status (Sail Operator)..."
   echo ""
 
+  # Check Sail Operator
+  echo "=== Sail Operator ==="
+  if ${CLIENT_EXE} get namespace sail-operator &>/dev/null; then
+    echo "Namespace: sail-operator [EXISTS]"
+    ${CLIENT_EXE} get pods -n sail-operator 2>/dev/null || echo "  No pods"
+  else
+    echo "Namespace: sail-operator [NOT FOUND]"
+  fi
+
+  # Check Istio CR
+  echo ""
+  echo "=== Istio CR ==="
+  ${CLIENT_EXE} get istio default 2>/dev/null || echo "  Istio CR not found"
+
   # Check namespace
+  echo ""
+  echo "=== istio-system Namespace ==="
   if ${CLIENT_EXE} get namespace istio-system &>/dev/null; then
     echo "Namespace: istio-system [EXISTS]"
   else
@@ -1857,38 +1883,48 @@ status_istio() {
 
   # Check istiod
   echo ""
-  echo "Istiod:"
+  echo "=== Istiod ==="
   ${CLIENT_EXE} get deployment istiod -n istio-system 2>/dev/null || echo "  Not found"
 
-  # Check gateways
+  # Check CNI (Sail uses istio-cni namespace)
   echo ""
-  echo "Gateways:"
-  ${CLIENT_EXE} get deployment -n istio-system -l app=istio-ingressgateway 2>/dev/null || echo "  Ingress gateway not found"
-  ${CLIENT_EXE} get deployment -n istio-system -l app=istio-egressgateway 2>/dev/null || echo "  Egress gateway not found"
-
-  # Check CNI (OpenShift)
-  echo ""
-  echo "CNI (kube-system):"
-  ${CLIENT_EXE} get ds istio-cni-node -n kube-system 2>/dev/null || echo "  Not found"
-
-  # Check ztunnel (Ambient mode)
-  echo ""
-  echo "Ztunnel (Ambient mode):"
-  if ${CLIENT_EXE} get ds ztunnel -n istio-system &>/dev/null 2>&1; then
-    ${CLIENT_EXE} get ds ztunnel -n istio-system
-    echo "  Ambient mode: ENABLED"
+  echo "=== CNI (istio-cni namespace) ==="
+  if ${CLIENT_EXE} get namespace istio-cni &>/dev/null; then
+    ${CLIENT_EXE} get istiocni default 2>/dev/null || echo "  IstioCNI CR not found"
+    ${CLIENT_EXE} get ds -n istio-cni 2>/dev/null || echo "  No DaemonSets"
+    ${CLIENT_EXE} get pods -n istio-cni 2>/dev/null || echo "  No pods"
   else
-    echo "  Not found (Ambient mode not enabled)"
+    echo "  istio-cni namespace not found (CNI not installed or using different namespace)"
+    # Also check kube-system for istioctl-based installs
+    ${CLIENT_EXE} get ds istio-cni-node -n kube-system 2>/dev/null || echo "  Not in kube-system either"
   fi
 
-  # Check all pods
+  # Check ztunnel (Sail uses ztunnel namespace for Ambient mode)
   echo ""
-  echo "Istio System Pods:"
+  echo "=== Ztunnel (Ambient mode) ==="
+  if ${CLIENT_EXE} get namespace ztunnel &>/dev/null; then
+    ${CLIENT_EXE} get ztunnel default 2>/dev/null || echo "  ZTunnel CR not found"
+    ${CLIENT_EXE} get ds -n ztunnel 2>/dev/null || echo "  No DaemonSets"
+    ${CLIENT_EXE} get pods -n ztunnel 2>/dev/null || echo "  No pods"
+    echo "  Ambient mode: ENABLED"
+  else
+    # Also check istio-system for istioctl-based installs
+    if ${CLIENT_EXE} get ds ztunnel -n istio-system &>/dev/null 2>&1; then
+      ${CLIENT_EXE} get ds ztunnel -n istio-system
+      echo "  Ambient mode: ENABLED (istioctl install)"
+    else
+      echo "  ztunnel namespace not found (Ambient mode not enabled)"
+    fi
+  fi
+
+  # Check all pods in istio-system
+  echo ""
+  echo "=== Istio System Pods ==="
   ${CLIENT_EXE} get pods -n istio-system
 
   # Check addons
   echo ""
-  echo "Addons:"
+  echo "=== Addons ==="
   for addon in prometheus grafana jaeger; do
     if ${CLIENT_EXE} get deployment ${addon} -n istio-system &>/dev/null 2>&1; then
       echo "  ${addon}: installed"
