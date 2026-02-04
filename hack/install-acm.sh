@@ -1833,6 +1833,45 @@ EOF
   infomsg "Waiting for pod to be fully ready (including Istio sidecar)..."
   ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
 
+  # Wait for Service endpoints to be populated
+  infomsg "Waiting for service endpoints to be ready..."
+  local max_wait=60
+  local waited=0
+  while true; do
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-world -n ${APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    if [ -n "${endpoint_ip}" ]; then
+      debug "Service endpoint ready: ${endpoint_ip}"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for service endpoints (continuing anyway)"
+      break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+
+  # Wait for Istio sidecar to be fully synced by making test requests
+  # The sidecar may be "ready" but not yet synced with istiod, causing 503s
+  infomsg "Waiting for Istio sidecar to be fully synced (testing connectivity)..."
+  local service_url="http://hello-world.${APP_NAMESPACE}.svc.cluster.local:80"
+  max_wait=60
+  waited=0
+  while true; do
+    local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+    if [ "${http_code}" == "200" ]; then
+      debug "Service responding with HTTP 200"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for service to respond (continuing anyway)"
+      break
+    fi
+    debug "Service returned HTTP ${http_code}, waiting..."
+    sleep 2
+    waited=$((waited + 2))
+  done
+
   # Create PodMonitor for Istio proxies in this namespace
   # Required because OpenShift monitoring ignores namespaceSelector in PodMonitor
   create_istio_podmonitor "${APP_NAMESPACE}"
