@@ -4,7 +4,7 @@ export enum HealthStatus {
   Unhealthy = 'unhealthy'
 }
 
-export const isDegraded = (entity: { healthStatus?: HealthStatus | string }): boolean =>
+export const isDegraded = (entity: { healthStatus?: HealthStatus }): boolean =>
   entity.healthStatus === HealthStatus.Degraded;
 export const isHealthy = (entity: { healthStatus?: HealthStatus | string }): boolean =>
   entity.healthStatus === HealthStatus.Healthy;
