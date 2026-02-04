@@ -131,7 +131,7 @@ describe('Parse find value test', () => {
       nodeSelector: [
         [
           { op: '!=', prop: 'healthStatus', val: 'Healthy' },
-          { op: '!=', prop: 'healthStatus', val: 'No health information' },
+          { op: '!=', prop: 'healthStatus', val: 'NA' },
           { op: '!=', prop: 'healthStatus', val: 'Not Ready' }
         ]
       ]
@@ -142,7 +142,7 @@ describe('Parse find value test', () => {
       nodeSelector: [
         [
           { op: '!=', prop: 'healthStatus', val: 'Healthy' },
-          { op: '!=', prop: 'healthStatus', val: 'No health information' },
+          { op: '!=', prop: 'healthStatus', val: 'NA' },
           { op: '!=', prop: 'healthStatus', val: 'Not Ready' }
         ]
       ]
@@ -153,7 +153,7 @@ describe('Parse find value test', () => {
       nodeSelector: [
         [
           { op: '!=', prop: 'healthStatus', val: 'Healthy' },
-          { op: '!=', prop: 'healthStatus', val: 'No health information' },
+          { op: '!=', prop: 'healthStatus', val: 'NA' },
           { op: '!=', prop: 'healthStatus', val: 'Not Ready' }
         ]
       ]
@@ -164,7 +164,7 @@ describe('Parse find value test', () => {
       nodeSelector: [
         [
           { op: '!=', prop: 'healthStatus', val: 'Healthy' },
-          { op: '!=', prop: 'healthStatus', val: 'No health information' },
+          { op: '!=', prop: 'healthStatus', val: 'NA' },
           { op: '!=', prop: 'healthStatus', val: 'Not Ready' }
         ]
       ]

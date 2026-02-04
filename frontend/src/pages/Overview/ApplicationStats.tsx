@@ -59,7 +59,7 @@ export const ApplicationStats: React.FC = () => {
       hasAmbient: app.isAmbient
     });
 
-    const globalStatus: Status = appHealth.getGlobalStatus();
+    const globalStatus: Status = appHealth.getStatus();
 
     switch (globalStatus) {
       case HEALTHY:

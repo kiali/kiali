@@ -109,11 +109,14 @@ export interface RequestHealth {
   outbound: RequestType;
 }
 
+// Valid health status IDs that match backend HealthStatus values
+export type HealthStatusId = 'Healthy' | 'Degraded' | 'Failure' | 'Not Ready' | 'NA';
+
 export interface Status {
   className: string;
   color: string;
   icon: React.ComponentClass<SVGIconProps>;
-  id: string;
+  id: HealthStatusId | 'Info'; // 'Info' is used for validation/proxy status display, not health
   name: string;
   priority: number;
   status: string;
@@ -180,7 +183,7 @@ export const NA: Status = {
   className: 'icon-na',
   color: PFColors.Color200,
   icon: UnknownIcon,
-  id: 'No health information',
+  id: 'NA',
   name: t('No health information'),
   priority: 0,
   status: 'custom'
