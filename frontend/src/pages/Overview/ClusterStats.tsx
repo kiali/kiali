@@ -14,7 +14,6 @@ import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useClusterStatus } from 'hooks/clusters';
-import { Status } from 'types/IstioStatus';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
 import {
@@ -30,24 +29,31 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
+import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
 
 export const ClusterStats: React.FC = () => {
   const { isLoading, statusMap } = useClusterStatus();
 
   // Calculate stats from statusMap
   const total = Object.keys(statusMap).length;
-  const healthy = Object.values(statusMap).filter(components =>
-    components.every(comp => comp.status === Status.Healthy)
-  ).length;
+  const healthy = Object.values(statusMap).filter(components => components.every(isHealthy)).length;
   const unhealthy = total - healthy;
 
   // Get clusters with issues
-  const clustersWithIssues = Object.entries(statusMap)
-    .filter(([_, components]) => components.some(comp => comp.status !== Status.Healthy))
-    .map(([clusterName, components]) => ({
-      name: clusterName,
-      issues: components.filter(comp => comp.status !== Status.Healthy).length
-    }));
+  const clustersWithIssues = Object.entries(statusMap).reduce((acc, [clusterName, components]) => {
+    // Calculate issues once
+    const issueCount = components.filter(isUnhealthy).length;
+
+    // Only add to accumulator if there are actual issues
+    if (issueCount > 0) {
+      acc.push({
+        name: clusterName,
+        issues: issueCount
+      });
+    }
+
+    return acc;
+  }, [] as ClusterIssue[]);
 
   const popoverContent = (
     <>

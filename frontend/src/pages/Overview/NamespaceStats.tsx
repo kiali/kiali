@@ -36,6 +36,7 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
+import { HealthStatus, isDegraded, isUnhealthy } from 'utils/HealthUtils';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -84,17 +85,17 @@ const hasIstioInjection = (ns: Namespace): boolean => {
 const MAX_POPOVER_ITEMS = 3;
 
 interface NamespaceWithHealth extends Namespace {
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  healthStatus?: HealthStatus;
 }
 
 // Get translated display label for health status
 const getHealthStatusLabel = (status?: string): string => {
   switch (status) {
-    case 'degraded':
+    case HealthStatus.Degraded:
       return t('Degraded');
-    case 'unhealthy':
+    case HealthStatus.Unhealthy:
       return t('Unhealthy');
-    case 'healthy':
+    case HealthStatus.Healthy:
       return t('Healthy');
     default:
       return status ?? t('Unknown');
@@ -128,7 +129,7 @@ export const NamespaceStats: React.FC = () => {
     // Use healthStatus from namespace data if available (from mock)
     // TODO: Adapt once we have a proper health status from the API
     const nsWithHealth = ns as NamespaceWithHealth;
-    if (nsWithHealth.healthStatus === 'unhealthy' || nsWithHealth.healthStatus === 'degraded') {
+    if (nsWithHealth.healthStatus === HealthStatus.Unhealthy || nsWithHealth.healthStatus === HealthStatus.Degraded) {
       unhealthy++;
       namespacesWithIssues.push(nsWithHealth);
     } else {
@@ -141,8 +142,8 @@ export const NamespaceStats: React.FC = () => {
     const params: string[] = [];
 
     // Check which health statuses are present in the unhealthy namespaces
-    const hasDegraded = namespacesWithIssues.some(ns => ns.healthStatus === 'degraded');
-    const hasUnhealthy = namespacesWithIssues.some(ns => ns.healthStatus === 'unhealthy');
+    const hasDegraded = namespacesWithIssues.some(isDegraded);
+    const hasUnhealthy = namespacesWithIssues.some(isUnhealthy);
 
     if (hasDegraded) {
       params.push('health=Degraded');

@@ -7,7 +7,11 @@ import { addError } from '../utils/AlertUtils';
 import { useKialiTranslation } from '../utils/I18nUtils';
 import { isMultiCluster, serverConfig } from '../config';
 
-export type IstioConfigStatusLabel = 'Warning' | 'Not Valid' | 'Not Validated';
+export enum IstioConfigStatusLabel {
+  Warning = 'Warning',
+  NotValid = 'Not Valid',
+  NotValidated = 'Not Validated'
+}
 
 export type IstioConfigIssue = {
   cluster?: string;
@@ -85,7 +89,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
               name: item.name,
               namespace: item.namespace,
               severity: 'warning',
-              status: 'Not Validated'
+              status: IstioConfigStatusLabel.NotValidated
             });
             return;
           }
@@ -98,7 +102,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
               name: item.name,
               namespace: item.namespace,
               severity: 'error',
-              status: 'Not Valid'
+              status: IstioConfigStatusLabel.NotValid
             });
             return;
           }
@@ -113,7 +117,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
               name: item.name,
               namespace: item.namespace,
               severity: 'warning',
-              status: 'Warning'
+              status: IstioConfigStatusLabel.Warning
             });
             return;
           }
