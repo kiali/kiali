@@ -50,6 +50,7 @@
 #     https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
 #
 # The script supports:
+#   create-all      - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+app+sends initial traffic)
 #   init-openshift  - Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
 #   install-acm     - Install ACM operator, MultiClusterHub, MinIO, and observability
 #   uninstall-acm   - Remove all ACM components cleanly
@@ -97,20 +98,6 @@
 #
 #   If you need to install Istio manually on an existing cluster:
 #     ./hack/istio/install-istio-via-istioctl.sh -c oc
-#
-# Usage:
-#   ./install-acm.sh --crc-pull-secret-file ~/pull-secret.txt init-openshift  # Create CRC cluster, enable UWM, install Istio
-#   ./install-acm.sh install-acm          # Install ACM with observability
-#   ./install-acm.sh status-acm           # Check ACM status
-#   ./install-acm.sh install-kiali        # Build and install Kiali for ACM
-#   ./install-acm.sh status-kiali         # Check Kiali status
-#   ./install-acm.sh install-app          # Install test mesh application
-#   ./install-acm.sh status-app           # Check test application status
-#   ./install-acm.sh traffic              # Generate traffic to test app
-#   ./install-acm.sh uninstall-app        # Remove test application
-#   ./install-acm.sh uninstall-kiali      # Remove Kiali
-#   ./install-acm.sh uninstall-acm        # Remove ACM completely
-#   ./install-acm.sh -h                   # Show help
 #
 ##############################################################################
 
@@ -841,7 +828,7 @@ wait_for_observability() {
   done
 }
 
-do_install() {
+install_acm() {
   infomsg "Starting ACM installation..."
 
   # Check if already installed
@@ -994,7 +981,7 @@ delete_acm_crds() {
   fi
 }
 
-do_uninstall() {
+uninstall_acm() {
   infomsg "Starting ACM uninstallation..."
 
   # Delete in reverse order of installation
@@ -2025,6 +2012,101 @@ generate_traffic() {
 }
 
 ##############################################################################
+# Create All Function
+##############################################################################
+
+create_all() {
+  infomsg "======================================"
+  infomsg "Creating complete ACM + Kiali environment"
+  infomsg "======================================"
+  infomsg ""
+  infomsg "This will run the following commands in sequence:"
+  infomsg "  1. init-openshift  (Create CRC cluster, enable UWM, install Istio)"
+  infomsg "  2. install-acm     (Install ACM with observability)"
+  infomsg "  3. install-kiali   (Build and install Kiali)"
+  infomsg "  4. install-app     (Install test mesh application)"
+  infomsg "  5. traffic         (Generate initial traffic)"
+  infomsg ""
+
+  # Step 1: Initialize OpenShift
+  infomsg "======================================"
+  infomsg "Step 1/5: Initializing OpenShift cluster"
+  infomsg "======================================"
+  init_openshift
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to initialize OpenShift cluster"
+    return 1
+  fi
+
+  # After init-openshift, we need to check prerequisites for subsequent commands
+  check_prerequisites
+  if [ $? -ne 0 ]; then
+    errormsg "Prerequisites check failed after OpenShift initialization"
+    return 1
+  fi
+
+  # Step 2: Install ACM
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 2/5: Installing ACM with observability"
+  infomsg "======================================"
+  install_acm
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install ACM"
+    return 1
+  fi
+
+  # Step 3: Install Kiali
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 3/5: Installing Kiali"
+  infomsg "======================================"
+  install_kiali
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install Kiali"
+    return 1
+  fi
+
+  # Step 4: Install test app
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 4/5: Installing test application"
+  infomsg "======================================"
+  install_app
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install test application"
+    return 1
+  fi
+
+  # Step 5: Generate initial traffic
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 5/5: Generating initial traffic"
+  infomsg "======================================"
+  generate_traffic
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to generate traffic"
+    return 1
+  fi
+
+  # Final summary
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg ""
+  infomsg "=========================================================="
+  infomsg "Complete ACM + Kiali environment created successfully!"
+  infomsg "=========================================================="
+  infomsg ""
+  infomsg "OpenShift Console: https://console-openshift-console.${apps_domain}"
+  infomsg "Kiali URL:         https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  infomsg ""
+  infomsg "Initial traffic has been sent. To generate more traffic:"
+  infomsg "  $0 traffic"
+  infomsg ""
+  infomsg "Note: Metrics take 5-6 minutes to appear in Kiali due to ACM federation interval."
+  infomsg "Use 'Last 10 minutes' or longer time ranges in Kiali to see data."
+}
+
+##############################################################################
 # Argument Parsing
 ##############################################################################
 
@@ -2032,6 +2114,7 @@ _CMD=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    create-all) _CMD="create-all"; shift ;;
     init-openshift) _CMD="init-openshift"; shift ;;
     install-acm) _CMD="install-acm"; shift ;;
     uninstall-acm) _CMD="uninstall-acm"; shift ;;
@@ -2128,6 +2211,7 @@ Valid options:
       Display this help message.
 
 The command must be one of:
+  create-all:       "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+app), and send some initial traffic
   init-openshift:   Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
   install-acm:      Install ACM operator, MultiClusterHub, MinIO, and observability
   uninstall-acm:    Remove all ACM components
@@ -2141,6 +2225,7 @@ The command must be one of:
   traffic:          Generate HTTP traffic to the test application
 
 Examples:
+  $0 -cps ~/pull-secret.txt create-all      # Create complete environment (CRC/OpenShift + ACM + Kiali + test app + traffic)
   $0 -cps ~/pull-secret.txt init-openshift  # Initialize CRC cluster (short option)
   $0 install-acm                            # Install ACM with defaults
   $0 -n my-acm install-acm                  # Install ACM in custom namespace
@@ -2211,21 +2296,24 @@ if [ -z "${_CMD}" ]; then
   exit 1
 fi
 
-# Check prerequisites (skip for init-openshift since cluster may not exist yet)
-if [ "${_CMD}" != "init-openshift" ]; then
+# Check prerequisites (skip for init-openshift and create-all since cluster may not exist yet)
+if [ "${_CMD}" != "init-openshift" ] && [ "${_CMD}" != "create-all" ]; then
   check_prerequisites || exit 2
 fi
 
 # Execute command
 case ${_CMD} in
+  create-all)
+    create_all
+    ;;
   init-openshift)
     init_openshift
     ;;
   install-acm)
-    do_install
+    install_acm
     ;;
   uninstall-acm)
-    do_uninstall
+    uninstall_acm
     ;;
   status-acm)
     check_status
