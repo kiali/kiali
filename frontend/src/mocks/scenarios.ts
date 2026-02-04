@@ -9,7 +9,7 @@ export type MockScenario =
   | 'ambient'; // Ambient mesh enabled
 
 // API endpoints that can be configured to timeout or return empty data
-export type ApiEndpoint = 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'applications';
+export type ApiEndpoint = 'applications' | 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'workloads';
 
 export interface ScenarioConfig {
   // Feature flags
@@ -383,13 +383,13 @@ export const getResponseDelay = (): number => {
 };
 
 // Check if an API should simulate a timeout error
-export const shouldApiTimeout = (api: TimeoutApi): boolean => {
+export const shouldApiTimeout = (api: ApiEndpoint): boolean => {
   const config = getScenarioConfig();
   return config.timeoutApis?.includes(api) ?? false;
 };
 
 // Check if an API should return empty data
-export const shouldApiReturnEmpty = (api: TimeoutApi): boolean => {
+export const shouldApiReturnEmpty = (api: ApiEndpoint): boolean => {
   const config = getScenarioConfig();
   return config.emptyApis?.includes(api) ?? false;
 };

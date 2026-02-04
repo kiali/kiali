@@ -792,7 +792,22 @@ const getAppsForNamespaces = (namespaces: string): MockAppListItem[] => {
 
 export const workloadHandlers = [
   // Clusters workloads - main endpoint for workload list
-  http.get('*/api/clusters/workloads', ({ request }) => {
+  http.get('*/api/clusters/workloads', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('workloads')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch workloads' }, { status: 504 });
+    }
+
+    // Return empty workloads if configured
+    if (shouldApiReturnEmpty('workloads')) {
+      return HttpResponse.json({
+        cluster: 'cluster-default',
+        workloads: [],
+        validations: { workload: {} }
+      });
+    }
+
     const url = new URL(request.url);
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const workloads = getWorkloadsForNamespaces(namespaces);
