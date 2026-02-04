@@ -634,30 +634,31 @@ spec:
 EOF
 }
 
-# Creates a PodMonitor for ztunnel pods in istio-system namespace.
+# Creates a PodMonitor for ztunnel pods.
 # Ztunnel is the L4 proxy component in Istio Ambient mode.
 # Unlike sidecar proxies which run as containers named 'istio-proxy',
 # ztunnel pods have label 'app=ztunnel' and expose metrics at :15020/stats/prometheus.
 # This monitor is REQUIRED for Ambient mode - the sidecar PodMonitor does NOT capture ztunnel.
+# Note: ztunnel can be in istio-system (istioctl) or ztunnel namespace (Sail Operator).
 create_ztunnel_podmonitor() {
-  if ! ${CLIENT_EXE} get namespace istio-system &>/dev/null 2>&1; then
-    debug "istio-system namespace not found, skipping ztunnel PodMonitor creation"
+  # Determine which namespace ztunnel is running in
+  local ztunnel_namespace=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_namespace="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_namespace="istio-system"
+  else
+    debug "ztunnel daemonset not found, skipping ztunnel PodMonitor"
     return 0
   fi
 
-  # Check if ztunnel daemonset exists (indicates Ambient mode)
-  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-    debug "ztunnel daemonset not found in istio-system, skipping ztunnel PodMonitor"
-    return 0
-  fi
-
-  infomsg "Creating PodMonitor for ztunnel (Ambient L4 proxy)..."
+  infomsg "Creating PodMonitor for ztunnel (Ambient L4 proxy) in ${ztunnel_namespace}..."
   cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: ztunnel-monitor
-  namespace: istio-system
+  namespace: ${ztunnel_namespace}
 spec:
   selector:
     matchLabels:
@@ -678,7 +679,7 @@ spec:
       targetLabel: node
 EOF
 
-  infomsg "Ztunnel PodMonitor created in istio-system"
+  infomsg "Ztunnel PodMonitor created in ${ztunnel_namespace}"
 }
 
 # Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
@@ -1122,8 +1123,8 @@ check_status() {
     return 0
   fi
 
-  # Check Subscription
-  local sub_state=$(${CLIENT_EXE} get subscription advanced-cluster-management -n ${ACM_NAMESPACE} -o jsonpath='{.status.state}' 2>/dev/null || echo "Not Found")
+  # Check Subscription (must use full API group to avoid conflict with ACM's subscription.apps CRD)
+  local sub_state=$(${CLIENT_EXE} get subscription.operators.coreos.com advanced-cluster-management -n ${ACM_NAMESPACE} -o jsonpath='{.status.state}' 2>/dev/null || echo "Not Found")
   echo "ACM Subscription: ${sub_state}"
 
   # Check CSV
@@ -1206,6 +1207,18 @@ check_status() {
     done
   else
     echo "  PodMonitor istio-proxies-monitor: [NOT FOUND in any namespace]"
+  fi
+
+  # Check ztunnel-monitor PodMonitor (for Ambient mode L4 metrics)
+  local ztunnel_monitor_ns=$(${CLIENT_EXE} get podmonitor --all-namespaces -o json 2>/dev/null | jq -r '.items[] | select(.metadata.name == "ztunnel-monitor") | .metadata.namespace' 2>/dev/null || true)
+  if [ -n "${ztunnel_monitor_ns}" ]; then
+    echo "  PodMonitor ztunnel-monitor: ${ztunnel_monitor_ns}"
+  else
+    # Check if ztunnel exists but monitor is missing
+    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1 || \
+       ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+      echo "  PodMonitor ztunnel-monitor: [MISSING - Ambient mode detected but monitor not created]"
+    fi
   fi
 
   echo ""
@@ -2258,12 +2271,17 @@ status_app() {
     echo "Service: [NOT FOUND]"
   fi
 
-  # Check pod sidecar
+  # Check pod sidecar (can be regular container or native sidecar via init container with restartPolicy: Always)
   local pod_name=$(${CLIENT_EXE} get pods -n ${APP_NAMESPACE} -l app=hello-world -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
   if [ -n "${pod_name}" ]; then
-    local container_count=$(${CLIENT_EXE} get pod ${pod_name} -n ${APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | wc -w)
-    if [ "${container_count}" -ge 2 ]; then
-      echo "Istio Sidecar: [INJECTED]"
+    # Check for regular sidecar container
+    local has_proxy_container=$(${CLIENT_EXE} get pod ${pod_name} -n ${APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
+    # Check for native sidecar (init container with restartPolicy: Always)
+    local has_native_sidecar=$(${CLIENT_EXE} get pod ${pod_name} -n ${APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
+    if [ "${has_proxy_container}" -ge 1 ]; then
+      echo "Istio Sidecar: [INJECTED] (regular container)"
+    elif [ "${has_native_sidecar}" == "Always" ]; then
+      echo "Istio Sidecar: [INJECTED] (native sidecar)"
     else
       echo "Istio Sidecar: [NOT INJECTED]"
     fi
@@ -2352,8 +2370,9 @@ generate_traffic() {
 install_ambient_app() {
   infomsg "Installing Ambient test application..."
 
-  # Check if Ambient mode is available
-  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+  # Check if Ambient mode is available (ztunnel can be in istio-system or ztunnel namespace)
+  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1 && \
+     ! ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
     errormsg "Istio Ambient mode is not installed (ztunnel daemonset not found)"
     errormsg "Run 'install-istio --ambient' first to install Istio in Ambient mode"
     return 1
@@ -2611,11 +2630,18 @@ status_ambient_app() {
     echo "  L7 Metrics: Not available (only L4/TCP metrics via ztunnel)"
   fi
 
-  # Check ztunnel (global)
-  if ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-    local ztunnel_ready=$(${CLIENT_EXE} get daemonset ztunnel -n istio-system -o jsonpath='{.status.numberReady}' 2>/dev/null)
-    local ztunnel_desired=$(${CLIENT_EXE} get daemonset ztunnel -n istio-system -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null)
-    echo "Ztunnel (L4 proxy): ${ztunnel_ready}/${ztunnel_desired} ready"
+  # Check ztunnel (global) - can be in ztunnel namespace (Sail) or istio-system (istioctl)
+  local ztunnel_ns=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_ns="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_ns="istio-system"
+  fi
+
+  if [ -n "${ztunnel_ns}" ]; then
+    local ztunnel_ready=$(${CLIENT_EXE} get daemonset ztunnel -n ${ztunnel_ns} -o jsonpath='{.status.numberReady}' 2>/dev/null)
+    local ztunnel_desired=$(${CLIENT_EXE} get daemonset ztunnel -n ${ztunnel_ns} -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null)
+    echo "Ztunnel (L4 proxy): ${ztunnel_ready}/${ztunnel_desired} ready (in ${ztunnel_ns})"
   else
     echo "Ztunnel: [NOT FOUND - Ambient mode not installed]"
   fi
