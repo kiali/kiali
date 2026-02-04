@@ -1,0 +1,68 @@
+name: Report to ReportPortal
+
+on:
+  workflow_run:
+    workflows: ["Kiali CI"]
+    types:
+      - completed
+
+jobs:
+  report-backend-tests:
+    name: Report backend tests to ReportPortal
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    container:
+      image: quay.io/dno/droute:latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.workflow_run.head_branch }}
+
+    - name: Download test results
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-rest-report
+        path: tests/integration/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Download test metadata
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: backend-test-metadata
+        path: test-metadata/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Extract metadata
+      id: metadata
+      run: |
+        if [ -f test-metadata/istio_version.txt ]; then
+          ISTIO_VERSION=$(cat test-metadata/istio_version.txt)
+          echo "istio_version=${ISTIO_VERSION:-unknown}" >> $GITHUB_OUTPUT
+        else
+          echo "istio_version=unknown" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Check DATA_ROUTER_USERNAME
+      env:
+        DATA_ROUTER_USERNAME: ${{ secrets.DATA_ROUTER_USERNAME }}
+      run: |
+        if [ -z "$DATA_ROUTER_USERNAME" ]; then
+          echo "ERROR: DATA_ROUTER_USERNAME is empty"
+        fi
+
+    - name: Report to ReportPortal
+      continue-on-error: true
+      uses: ./.github/actions/report-to-reportportal
+      with:
+        test_suite: 'backend'
+        test_results_dir: 'tests/integration'
+        test_file_name: 'junit-rest-report.xml'
+        istio_version: ${{ steps.metadata.outputs.istio_version }}
+        data_plane_mode: 'sidecar'
+        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
+        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
