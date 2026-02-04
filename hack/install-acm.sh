@@ -536,10 +536,35 @@ EOF
 # Based on Red Hat OpenShift Service Mesh 3.0 documentation.
 create_istio_podmonitor() {
   local namespace="$1"
+  local mesh_id=""
 
   if ! ${CLIENT_EXE} get namespace "${namespace}" &>/dev/null 2>&1; then
     debug "Namespace ${namespace} not found, skipping PodMonitor creation"
     return 0
+  fi
+
+  # Use the actual Istio mesh ID for the mesh_id metric label. This aligns with how Kiali
+  # identifies meshes: MeshId when set, otherwise TrustDomain.
+  #
+  # Kiali reference: kiali/handlers/mesh.go (MeshId falls back to TrustDomain).
+  # Istio reference: Istio multi-cluster docs use values.global.meshID (mesh identifier).
+  #
+  # Detection order:
+  # 1) defaultConfig.meshId (if present in mesh config)
+  # 2) defaultConfig.proxyMetadata.ISTIO_META_MESH_ID (if present)
+  # 3) trustDomain (Istio default when meshId is not set)
+  local mesh_cfg="$(${CLIENT_EXE} -n istio-system get configmap istio -o jsonpath='{.data.mesh}' 2>/dev/null || true)"
+  if [ -n "${mesh_cfg}" ]; then
+    mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^[[:space:]]*meshId:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    if [ -z "${mesh_id}" ]; then
+      mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^[[:space:]]*ISTIO_META_MESH_ID:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    fi
+    if [ -z "${mesh_id}" ]; then
+      mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^trustDomain:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    fi
+  fi
+  if [ -z "${mesh_id}" ]; then
+    mesh_id="cluster.local"
   fi
 
   infomsg "Creating PodMonitor for Istio proxies in namespace: ${namespace}"
@@ -589,7 +614,7 @@ spec:
       action: replace
       targetLabel: namespace
     - action: replace
-      replacement: "the-mesh-identification-string"
+      replacement: "${mesh_id}"
       targetLabel: mesh_id
 EOF
 }
