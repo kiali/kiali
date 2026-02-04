@@ -38,8 +38,8 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 
-const WARNING_FILTERS: IstioConfigStatusLabel[] = ['Warning', 'Not Validated'];
-const ERROR_FILTERS: IstioConfigStatusLabel[] = ['Not Valid'];
+const WARNING_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.Warning, IstioConfigStatusLabel.NotValidated];
+const ERROR_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.NotValid];
 
 const statusLabelStyle = kialiStyle({
   height: '1.25rem',
@@ -69,11 +69,11 @@ const noUnderlineStyle = kialiStyle({
 // Get border color for status label
 const getStatusBorderColor = (status: IstioConfigStatusLabel): string => {
   switch (status) {
-    case 'Warning':
+    case IstioConfigStatusLabel.Warning:
       return PFColors.Warning;
-    case 'Not Valid':
+    case IstioConfigStatusLabel.NotValid:
       return PFColors.Danger;
-    case 'Not Validated':
+    case IstioConfigStatusLabel.NotValidated:
       return PFColors.Color200;
     default:
       return PFColors.Color200;
@@ -82,13 +82,13 @@ const getStatusBorderColor = (status: IstioConfigStatusLabel): string => {
 
 // Get icon for status label
 const getStatusIcon = (status: IstioConfigStatusLabel): React.ReactNode => {
-  switch (status) {
-    case 'Warning':
+  switch (status) {          
+    case IstioConfigStatusLabel.Warning:
       return <KialiIcon.ExclamationTriangle />;
-    case 'Not Valid':
+    case IstioConfigStatusLabel.NotValid:
       return <KialiIcon.ExclamationCircle />;
-    case 'Not Validated':
-      return <KialiIcon.InProgressIcon color={PFColors.Color200} />;
+    case IstioConfigStatusLabel.NotValidated:
+      return <KialiIcon.InProgressIcon color={PFColors.Color200} />;  
     default:
       return <KialiIcon.InProgressIcon color={PFColors.Color200} />;
   }
