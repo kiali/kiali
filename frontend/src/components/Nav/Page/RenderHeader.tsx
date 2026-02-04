@@ -7,21 +7,22 @@ import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
 
 const containerStyle = kialiStyle({
-  paddingBottom: '1.5rem',
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  paddingBottom: '1.5rem'
 });
 
-const breadcrumbStyle = kialiStyle({
-  display: 'flex',
-  flexWrap: 'wrap'
+const headerRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex'
 });
 
 const rightToolbarStyle = kialiStyle({
-  marginLeft: 'auto',
   display: 'flex',
-  gap: '0.5rem'
+  gap: '0.5rem',
+  marginLeft: 'auto'
 });
 
+// Positioned absolutely to align with the tabs row below
 const actionsToolbarStyle = kialiStyle({
   position: 'absolute',
   right: '3rem',
@@ -44,7 +45,7 @@ const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderP
   return isKiosk(props.kiosk) ? null : (
     <>
       <div className={containerStyle}>
-        <div className={breadcrumbStyle}>
+        <div className={headerRowStyle}>
           <BreadcrumbView />
 
           {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
