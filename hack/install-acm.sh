@@ -336,7 +336,7 @@ EOF
 }
 
 wait_for_multiclusterhub() {
-  infomsg "Waiting for MultiClusterHub to reach Running status (this may take up to 10 minutes)..."
+  infomsg "Waiting for MultiClusterHub to reach Running status (this could take 15 minutes or more)..."
 
   local start_time=$(date +%s)
   while true; do
