@@ -177,6 +177,7 @@
           "namespaceSelector" : true,
           "queryTimeout" : 5,
           "useGRPC" : true,
+          "useWaypointName" : false,
           "whiteListIstioSystem" : [ "jaeger-query", "istio-ingressgateway" ]
         },
         "isExternal" : true,
