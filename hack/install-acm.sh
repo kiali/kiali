@@ -49,26 +49,43 @@
 #   - Red Hat documentation on configuring User Workload Monitoring:
 #     https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
 #
+# Istio Ambient Mode:
+#   Sidecar injection is always supported. Optionally, you can also enable Ambient mode
+#   using the --ambient flag with install-istio or create-all commands.
+#
+#   When Ambient mode is enabled, you get additional capabilities:
+#     - L4 traffic: Handled by ztunnel daemonset (TCP metrics: istio_tcp_*)
+#     - L7 traffic: Handled by waypoint proxies (HTTP metrics: istio_requests_total with reporter=waypoint)
+#     - Ambient namespaces use label: istio.io/dataplane-mode=ambient (instead of sidecar injection)
+#     - Separate PodMonitor is created for ztunnel (sidecar PodMonitor does not capture ztunnel)
+#
 # The script supports:
-#   create-all      - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+app+sends initial traffic)
-#   init-openshift  - Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
-#   install-acm     - Install ACM operator, MultiClusterHub, MinIO, and observability
-#   uninstall-acm   - Remove all ACM components cleanly
-#   status-acm      - Check the status of ACM installation
-#   install-kiali   - Build and install Kiali configured for ACM observability
-#   uninstall-kiali - Remove Kiali installation
-#   status-kiali    - Check the status of Kiali installation
-#   install-app     - Install a simple test mesh application
-#   uninstall-app   - Remove the test application
-#   status-app      - Check the status of the test application
-#   traffic         - Generate HTTP traffic to the test application
+#   create-all           - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps+sends initial traffic)
+#   init-openshift       - Create/start CRC OpenShift cluster and enable User Workload Monitoring
+#   install-istio        - Install Istio (use --ambient for Ambient mode)
+#   uninstall-istio      - Remove Istio installation
+#   status-istio         - Check the status of Istio installation
+#   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
+#   uninstall-acm        - Remove all ACM components cleanly
+#   status-acm           - Check the status of ACM installation
+#   install-kiali        - Build and install Kiali configured for ACM observability
+#   uninstall-kiali      - Remove Kiali installation
+#   status-kiali         - Check the status of Kiali installation
+#   install-app          - Install a simple sidecar test mesh application
+#   uninstall-app        - Remove the sidecar test application
+#   status-app           - Check the status of the sidecar test application
+#   traffic              - Generate HTTP traffic to the sidecar test application
+#   install-ambient-app  - Install an Ambient mode test application (requires Ambient Istio)
+#   uninstall-ambient-app - Remove the Ambient test application
+#   status-ambient-app   - Check the status of the Ambient test application
+#   traffic-ambient      - Generate HTTP traffic to the Ambient test application
 #
 # Prerequisites:
 #   - OpenShift cluster accessible via 'oc' CLI
 #   - Cluster-admin privileges
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
 #   - User Workload Monitoring (UWM) - automatically enabled by init-openshift command
-#   - Istio - automatically installed by init-openshift command
+#   - Istio - install via install-istio command (use --ambient for Ambient mode)
 #   - For install-kiali: helm, make, and access to Kiali git repositories
 #   - For install-kiali: ACM Observability must be installed first (run install-acm)
 #
@@ -92,11 +109,14 @@
 #   48GB is insufficient and will cause disk pressure issues during installation.
 #
 # Installing Istio and Enabling User Workload Monitoring:
-#   The init-openshift command automatically:
-#     1. Enables User Workload Monitoring (required for Istio metrics collection)
-#     2. Installs Istio via ./hack/istio/install-istio-via-istioctl.sh
+#   The init-openshift command automatically enables User Workload Monitoring
+#   (required for Istio metrics collection).
 #
-#   If you need to install Istio manually on an existing cluster:
+#   After init-openshift, install Istio using:
+#     ./install-acm.sh install-istio              # Sidecar mode
+#     ./install-acm.sh --ambient install-istio    # Ambient mode
+#
+#   Or install Istio manually on an existing cluster:
 #     ./hack/istio/install-istio-via-istioctl.sh -c oc
 #
 ##############################################################################
@@ -122,8 +142,12 @@ DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && 
 
 # Test app defaults
 DEFAULT_APP_NAMESPACE="test-app"
+DEFAULT_AMBIENT_APP_NAMESPACE="test-app-ambient"
 DEFAULT_TRAFFIC_COUNT="10"
 DEFAULT_TRAFFIC_INTERVAL="1"
+
+# Istio mode defaults
+DEFAULT_AMBIENT_MODE="false"
 
 # CRC initialization defaults
 DEFAULT_CRC_CPUS="12"
@@ -514,6 +538,10 @@ EOF
   # This monitors any sidecars in istio-system (e.g., ingress/egress gateways)
   create_istio_podmonitor "istio-system"
 
+  # Create PodMonitor for ztunnel if Ambient mode is detected
+  # The sidecar PodMonitor filters by container_name=istio-proxy which does NOT match ztunnel
+  create_ztunnel_podmonitor
+
   infomsg "Istio metrics collection configured for ACM"
 }
 
@@ -606,6 +634,53 @@ spec:
 EOF
 }
 
+# Creates a PodMonitor for ztunnel pods in istio-system namespace.
+# Ztunnel is the L4 proxy component in Istio Ambient mode.
+# Unlike sidecar proxies which run as containers named 'istio-proxy',
+# ztunnel pods have label 'app=ztunnel' and expose metrics at :15020/stats/prometheus.
+# This monitor is REQUIRED for Ambient mode - the sidecar PodMonitor does NOT capture ztunnel.
+create_ztunnel_podmonitor() {
+  if ! ${CLIENT_EXE} get namespace istio-system &>/dev/null 2>&1; then
+    debug "istio-system namespace not found, skipping ztunnel PodMonitor creation"
+    return 0
+  fi
+
+  # Check if ztunnel daemonset exists (indicates Ambient mode)
+  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    debug "ztunnel daemonset not found in istio-system, skipping ztunnel PodMonitor"
+    return 0
+  fi
+
+  infomsg "Creating PodMonitor for ztunnel (Ambient L4 proxy)..."
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: ztunnel-monitor
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: ztunnel
+  podMetricsEndpoints:
+  - path: /stats/prometheus
+    port: "15020"
+    interval: 30s
+    relabelings:
+    - sourceLabels: ["__meta_kubernetes_namespace"]
+      action: replace
+      targetLabel: namespace
+    - sourceLabels: ["__meta_kubernetes_pod_name"]
+      action: replace
+      targetLabel: pod
+    - sourceLabels: ["__meta_kubernetes_pod_node_name"]
+      action: replace
+      targetLabel: node
+EOF
+
+  infomsg "Ztunnel PodMonitor created in istio-system"
+}
+
 # Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
 # Per ACM docs, user workload metrics need ConfigMaps in the SOURCE namespace with key "uwl_metrics_list.yaml"
 create_namespace_metrics_allowlist() {
@@ -649,11 +724,14 @@ data:
     - istio_response_bytes_count
     - istio_response_bytes_sum
     - istio_response_messages_total
-    # Istio TCP metrics (required for TCP services)
+    # Istio TCP metrics (required for TCP services and Ambient ztunnel)
     - istio_tcp_connections_closed_total
     - istio_tcp_connections_opened_total
     - istio_tcp_received_bytes_total
     - istio_tcp_sent_bytes_total
+    # Ztunnel-specific metrics (Ambient L4 proxy)
+    - workload_manager_active_proxy_count
+    - istio_build
     # Pilot/control plane metrics (required for control plane monitoring)
     - pilot_proxy_convergence_time_sum
     - pilot_proxy_convergence_time_count
@@ -1658,6 +1736,168 @@ EOF
   return 0
 }
 
+# Apply OpenShift-specific fixes required for Istio Ambient mode.
+# OpenShift's security model requires additional privileges for Ambient components:
+# - CNI pod needs privileged mode to create /var/run/istio-cni/log.sock
+# - Ztunnel pod needs privileged mode to connect to /var/run/ztunnel/ztunnel.sock (SELinux blocks non-privileged access)
+# Both require: (1) privileged SCC granted to service account, (2) DaemonSet patched to set privileged=true
+apply_openshift_ambient_fixes() {
+  infomsg "Applying OpenShift-specific fixes for Ambient mode..."
+
+  # Grant privileged SCC to istio-cni service account in kube-system
+  # Required because CNI needs to create /var/run/istio-cni/log.sock
+  infomsg "Granting privileged SCC to istio-cni service account..."
+  ${CLIENT_EXE} adm policy add-scc-to-user privileged -z istio-cni -n kube-system 2>/dev/null || true
+
+  # Patch CNI DaemonSet to run as privileged
+  # Without this, CNI fails with "permission denied" when creating Unix sockets
+  infomsg "Patching istio-cni-node DaemonSet for privileged mode..."
+  ${CLIENT_EXE} patch ds -n kube-system istio-cni-node --type='json' \
+    -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/securityContext/privileged", "value": true}]' 2>/dev/null || true
+
+  # Wait for CNI pod to be ready with new privileges
+  infomsg "Waiting for istio-cni-node pod to be ready..."
+  sleep 5
+  ${CLIENT_EXE} rollout status ds/istio-cni-node -n kube-system --timeout=120s 2>/dev/null || true
+
+  # Grant privileged SCC to ztunnel service account in istio-system
+  # Required because ztunnel needs hostPath volumes and elevated capabilities
+  infomsg "Granting privileged SCC to ztunnel service account..."
+  ${CLIENT_EXE} adm policy add-scc-to-user privileged -z ztunnel -n istio-system 2>/dev/null || true
+
+  # Patch ztunnel DaemonSet to run as privileged
+  # Without this, ztunnel fails to connect to /var/run/ztunnel/ztunnel.sock due to SELinux restrictions
+  infomsg "Patching ztunnel DaemonSet for privileged mode..."
+  ${CLIENT_EXE} patch ds ztunnel -n istio-system --type='json' \
+    -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/securityContext/privileged", "value": true}]' 2>/dev/null || true
+
+  # Restart ztunnel to pick up new privileges
+  infomsg "Restarting ztunnel DaemonSet..."
+  ${CLIENT_EXE} rollout restart ds/ztunnel -n istio-system 2>/dev/null || true
+
+  # Wait for ztunnel to be ready
+  infomsg "Waiting for ztunnel pod to be ready..."
+  ${CLIENT_EXE} rollout status ds/ztunnel -n istio-system --timeout=120s 2>/dev/null || true
+
+  infomsg "OpenShift Ambient fixes applied successfully"
+}
+
+##############################################################################
+# Istio Functions
+##############################################################################
+
+install_istio() {
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "Installing Istio with Ambient mode enabled (sidecar + ztunnel/waypoint)..."
+  else
+    infomsg "Installing Istio..."
+  fi
+
+  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
+    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
+    return 1
+  fi
+
+  local istio_args="-c ${CLIENT_EXE}"
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    istio_args="${istio_args} --config-profile ambient"
+  fi
+
+  "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ${istio_args}
+  if [ $? -ne 0 ]; then
+    errormsg "Istio installation failed"
+    return 1
+  fi
+
+  infomsg "Istio installed successfully"
+
+  # Apply OpenShift-specific fixes for Ambient mode
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    apply_openshift_ambient_fixes
+  fi
+
+  infomsg "======================================"
+  infomsg "Istio installation complete!"
+  infomsg "======================================"
+  infomsg "Mode: $([ "${AMBIENT_MODE}" == "true" ] && echo "Ambient (sidecar + ztunnel/waypoint)" || echo "Sidecar")"
+  infomsg ""
+  infomsg "Next steps:"
+  infomsg "  1. Run: $0 install-acm"
+  infomsg "  2. Run: $0 install-kiali"
+  infomsg "  3. Run: $0 install-app"
+}
+
+uninstall_istio() {
+  infomsg "Uninstalling Istio..."
+
+  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
+    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
+    return 1
+  fi
+
+  "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" -c ${CLIENT_EXE} --delete-istio true
+  if [ $? -ne 0 ]; then
+    warnmsg "Istio uninstallation may have had issues"
+  else
+    infomsg "Istio uninstalled successfully"
+  fi
+}
+
+status_istio() {
+  infomsg "Checking Istio status..."
+  echo ""
+
+  # Check namespace
+  if ${CLIENT_EXE} get namespace istio-system &>/dev/null; then
+    echo "Namespace: istio-system [EXISTS]"
+  else
+    echo "Namespace: istio-system [NOT FOUND]"
+    return 1
+  fi
+
+  # Check istiod
+  echo ""
+  echo "Istiod:"
+  ${CLIENT_EXE} get deployment istiod -n istio-system 2>/dev/null || echo "  Not found"
+
+  # Check gateways
+  echo ""
+  echo "Gateways:"
+  ${CLIENT_EXE} get deployment -n istio-system -l app=istio-ingressgateway 2>/dev/null || echo "  Ingress gateway not found"
+  ${CLIENT_EXE} get deployment -n istio-system -l app=istio-egressgateway 2>/dev/null || echo "  Egress gateway not found"
+
+  # Check CNI (OpenShift)
+  echo ""
+  echo "CNI (kube-system):"
+  ${CLIENT_EXE} get ds istio-cni-node -n kube-system 2>/dev/null || echo "  Not found"
+
+  # Check ztunnel (Ambient mode)
+  echo ""
+  echo "Ztunnel (Ambient mode):"
+  if ${CLIENT_EXE} get ds ztunnel -n istio-system &>/dev/null 2>&1; then
+    ${CLIENT_EXE} get ds ztunnel -n istio-system
+    echo "  Ambient mode: ENABLED"
+  else
+    echo "  Not found (Ambient mode not enabled)"
+  fi
+
+  # Check all pods
+  echo ""
+  echo "Istio System Pods:"
+  ${CLIENT_EXE} get pods -n istio-system
+
+  # Check addons
+  echo ""
+  echo "Addons:"
+  for addon in prometheus grafana jaeger; do
+    if ${CLIENT_EXE} get deployment ${addon} -n istio-system &>/dev/null 2>&1; then
+      echo "  ${addon}: installed"
+    else
+      echo "  ${addon}: not found"
+    fi
+  done
+}
+
 init_openshift() {
   infomsg "Initializing OpenShift cluster using CRC..."
 
@@ -1728,20 +1968,6 @@ init_openshift() {
     infomsg "Logged into image registry"
   fi
 
-  # Install Istio
-  infomsg "Installing Istio..."
-  if [ -f "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" ]; then
-    "${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh" -c ${CLIENT_EXE}
-    if [ $? -ne 0 ]; then
-      warnmsg "Istio installation failed or had issues"
-    else
-      infomsg "Istio installed successfully"
-    fi
-  else
-    warnmsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-istioctl.sh"
-    warnmsg "You will need to install Istio manually before installing ACM"
-  fi
-
   infomsg "======================================"
   infomsg "OpenShift initialization complete!"
   infomsg "======================================"
@@ -1751,9 +1977,10 @@ init_openshift() {
   infomsg "Password: kiali"
   infomsg ""
   infomsg "Next steps:"
-  infomsg "  1. Run: $0 install-acm"
-  infomsg "  2. Run: $0 install-kiali"
-  infomsg "  3. Run: $0 install-app"
+  infomsg "  1. Run: $0 install-istio    (use --ambient for Ambient mode)"
+  infomsg "  2. Run: $0 install-acm"
+  infomsg "  3. Run: $0 install-kiali"
+  infomsg "  4. Run: $0 install-app"
 }
 
 ##############################################################################
@@ -2083,6 +2310,370 @@ generate_traffic() {
 }
 
 ##############################################################################
+# Ambient Test App Functions
+##############################################################################
+
+install_ambient_app() {
+  infomsg "Installing Ambient test application..."
+
+  # Check if Ambient mode is available
+  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    errormsg "Istio Ambient mode is not installed (ztunnel daemonset not found)"
+    errormsg "Run 'install-istio --ambient' first to install Istio in Ambient mode"
+    return 1
+  fi
+
+  # Create namespace for Ambient mode app - uses ztunnel/waypoint instead of sidecar injection
+  if ! ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${AMBIENT_APP_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Enable Ambient mode for the namespace (L4 via ztunnel)
+  infomsg "Enabling Istio Ambient mode for namespace..."
+  ${CLIENT_EXE} label namespace ${AMBIENT_APP_NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
+
+  # Create ConfigMap with HTML content
+  infomsg "Creating HTML content ConfigMap..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-world-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>Hello World (Ambient)</title></head>
+    <body><h1>Hello World - Ambient Mode</h1><p>This is a test application using Istio Ambient mode.</p></body>
+    </html>
+EOF
+
+  # Create Deployment using Red Hat UBI httpd image (OpenShift-compatible)
+  # This app uses Ambient mode (ztunnel/waypoint) rather than sidecar injection
+  infomsg "Creating deployment (using Ambient ztunnel/waypoint)..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world
+  labels:
+    app: hello-world
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: hello-world
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: hello-world
+        image: registry.access.redhat.com/ubi9/httpd-24:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
+        volumeMounts:
+        - name: html
+          mountPath: /var/www/html
+          readOnly: true
+      volumes:
+      - name: html
+        configMap:
+          name: hello-world-html
+EOF
+
+  # Create Service
+  infomsg "Creating service..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world
+  labels:
+    app: hello-world
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: hello-world
+EOF
+
+  # Wait for deployment to be ready
+  infomsg "Waiting for deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/hello-world -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for pod to be fully ready
+  infomsg "Waiting for pod to be fully ready..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-world -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for Service endpoints to be populated
+  infomsg "Waiting for service endpoints to be ready..."
+  local max_wait=60
+  local waited=0
+  while true; do
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    if [ -n "${endpoint_ip}" ]; then
+      debug "Service endpoint ready: ${endpoint_ip}"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for service endpoints (continuing anyway)"
+      break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+
+  # Deploy waypoint proxy for L7 metrics (optional but recommended for full Kiali functionality)
+  infomsg "Deploying waypoint proxy for L7 metrics..."
+  if command -v istioctl &>/dev/null; then
+    istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --enroll-namespace
+    if [ $? -eq 0 ]; then
+      infomsg "Waypoint proxy deployed - L7 metrics (HTTP/gRPC) will be available"
+      # Wait for waypoint to be ready
+      infomsg "Waiting for waypoint proxy to be ready..."
+      ${CLIENT_EXE} wait --for=condition=Ready pod -l gateway.istio.io/managed=istio.io-mesh-controller -n ${AMBIENT_APP_NAMESPACE} --timeout=120s || true
+    else
+      warnmsg "Failed to deploy waypoint proxy - only L4 metrics will be available"
+    fi
+  else
+    warnmsg "istioctl not found - skipping waypoint deployment. Only L4 (TCP) metrics will be available."
+    warnmsg "Install istioctl and run: istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --enroll-namespace"
+  fi
+
+  # Create PodMonitor for waypoint proxies in this namespace (uses istio-proxy container)
+  # Note: Ztunnel is monitored globally via ztunnel-monitor in istio-system
+  create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
+
+  # Create metrics allowlist for ACM observability
+  create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
+
+  infomsg "======================================"
+  infomsg "Ambient test application installation complete!"
+  infomsg "======================================"
+  infomsg "Namespace: ${AMBIENT_APP_NAMESPACE}"
+  infomsg "Service: hello-world.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  infomsg "Mode: Istio Ambient (L4 via ztunnel, L7 via waypoint)"
+  infomsg ""
+  infomsg "Metrics flow:"
+  infomsg "  - L4 (TCP): ztunnel metrics in istio-system (istio_tcp_* with app=ztunnel)"
+  infomsg "  - L7 (HTTP): waypoint metrics (istio_requests_total with reporter=waypoint)"
+  infomsg ""
+  infomsg "To generate traffic, run:"
+  infomsg "  $0 traffic-ambient"
+}
+
+uninstall_ambient_app() {
+  infomsg "Uninstalling Ambient test application..."
+
+  if ! ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Namespace ${AMBIENT_APP_NAMESPACE} does not exist. Nothing to uninstall."
+    return 0
+  fi
+
+  # Delete waypoint if exists
+  if command -v istioctl &>/dev/null; then
+    istioctl waypoint delete -n ${AMBIENT_APP_NAMESPACE} --all 2>/dev/null || true
+  fi
+
+  # Delete deployment
+  if ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting deployment..."
+    ${CLIENT_EXE} delete deployment hello-world -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete service
+  if ${CLIENT_EXE} get service hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting service..."
+    ${CLIENT_EXE} delete service hello-world -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete configmap
+  if ${CLIENT_EXE} get configmap hello-world-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting configmap..."
+    ${CLIENT_EXE} delete configmap hello-world-html -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete PodMonitor
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting PodMonitor..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete namespace
+  infomsg "Deleting namespace ${AMBIENT_APP_NAMESPACE}..."
+  ${CLIENT_EXE} delete namespace ${AMBIENT_APP_NAMESPACE} --ignore-not-found
+
+  infomsg "Ambient test application uninstallation complete!"
+}
+
+status_ambient_app() {
+  infomsg "Checking Ambient test application status..."
+  echo ""
+
+  # Check namespace
+  if ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    echo "Namespace: ${AMBIENT_APP_NAMESPACE} [EXISTS]"
+
+    # Check Ambient mode
+    local dataplane_mode=$(${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.metadata.labels.istio\.io/dataplane-mode}' 2>/dev/null)
+    if [ "${dataplane_mode}" == "ambient" ]; then
+      echo "Istio Mode: Ambient [ENABLED]"
+    else
+      echo "Istio Mode: [NOT AMBIENT - missing istio.io/dataplane-mode=ambient label]"
+    fi
+  else
+    echo "Namespace: ${AMBIENT_APP_NAMESPACE} [NOT FOUND]"
+    echo ""
+    echo "Ambient test application does not appear to be installed."
+    return 0
+  fi
+
+  # Check deployment
+  if ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Deployment: ${ready}/${desired} ready"
+  else
+    echo "Deployment: [NOT FOUND]"
+  fi
+
+  # Check service
+  if ${CLIENT_EXE} get service hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Service: [EXISTS]"
+  else
+    echo "Service: [NOT FOUND]"
+  fi
+
+  # Check waypoint proxy
+  local waypoint_pods=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o name 2>/dev/null | wc -l)
+  if [ "${waypoint_pods}" -gt 0 ]; then
+    local waypoint_ready=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
+    echo "Waypoint Proxy: [DEPLOYED] (${waypoint_ready})"
+    echo "  L7 Metrics: Available (istio_requests_total with reporter=waypoint)"
+  else
+    echo "Waypoint Proxy: [NOT DEPLOYED]"
+    echo "  L7 Metrics: Not available (only L4/TCP metrics via ztunnel)"
+  fi
+
+  # Check ztunnel (global)
+  if ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    local ztunnel_ready=$(${CLIENT_EXE} get daemonset ztunnel -n istio-system -o jsonpath='{.status.numberReady}' 2>/dev/null)
+    local ztunnel_desired=$(${CLIENT_EXE} get daemonset ztunnel -n istio-system -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null)
+    echo "Ztunnel (L4 proxy): ${ztunnel_ready}/${ztunnel_desired} ready"
+  else
+    echo "Ztunnel: [NOT FOUND - Ambient mode not installed]"
+  fi
+
+  echo ""
+}
+
+generate_ambient_traffic() {
+  infomsg "Generating traffic to Ambient test application..."
+
+  # Check if ambient test app is running
+  if ! ${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "Ambient test application is not installed in namespace ${AMBIENT_APP_NAMESPACE}"
+    errormsg "Run '$0 install-ambient-app' first to install the Ambient test application"
+    return 1
+  fi
+
+  # Check if deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment hello-world -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  if [ "${ready}" != "1" ]; then
+    errormsg "Ambient test application is not ready (ready replicas: ${ready:-0})"
+    return 1
+  fi
+
+  # Service URL - traffic goes through ztunnel (L4) and optionally waypoint (L7)
+  local service_url="http://hello-world.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  debug "Using service URL to generate Ambient metrics: ${service_url}"
+
+  # Check if waypoint is deployed for L7 metrics
+  local waypoint_pods=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o name 2>/dev/null | wc -l)
+  if [ "${waypoint_pods}" -gt 0 ]; then
+    infomsg "Waypoint proxy detected - traffic will generate both L4 (ztunnel) and L7 (waypoint) metrics"
+  else
+    infomsg "No waypoint proxy - traffic will only generate L4 (TCP) metrics via ztunnel"
+  fi
+
+  if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
+    # Continuous traffic mode
+    infomsg "Sending requests to ${service_url} every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
+    local count=0
+    trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
+    while true; do
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        count=$((count + 1))
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
+      else
+        warnmsg "Request ${count} failed (HTTP ${http_code})"
+      fi
+      sleep ${TRAFFIC_INTERVAL}
+    done
+  else
+    # Send N requests mode
+    infomsg "Sending ${TRAFFIC_COUNT} requests to ${service_url} (${TRAFFIC_INTERVAL}s interval)..."
+    local success_count=0
+    local fail_count=0
+    for i in $(seq 1 ${TRAFFIC_COUNT}); do
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        success_count=$((success_count + 1))
+        echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
+      else
+        fail_count=$((fail_count + 1))
+        warnmsg "Request ${i}/${TRAFFIC_COUNT}: Failed (HTTP ${http_code})"
+      fi
+      # Sleep between requests (but not after the last one)
+      if [ ${i} -lt ${TRAFFIC_COUNT} ]; then
+        sleep ${TRAFFIC_INTERVAL}
+      fi
+    done
+    infomsg "======================================"
+    infomsg "Ambient traffic generation complete!"
+    infomsg "======================================"
+    infomsg "Total requests: ${TRAFFIC_COUNT}"
+    infomsg "Successful: ${success_count}"
+    infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Metrics will appear in Kiali after propagation (typically 5-6 minutes):"
+    infomsg "  1. Ztunnel/Waypoint generates metrics"
+    infomsg "  2. Prometheus scrapes metrics (every 30s)"
+    infomsg "  3. Metrics federate to ACM Thanos (every 5 minutes)"
+    infomsg "  4. Kiali queries Thanos and displays graphs"
+    infomsg ""
+    infomsg "Expected metrics:"
+    infomsg "  - L4 (ztunnel): istio_tcp_received_bytes_total, istio_tcp_sent_bytes_total"
+    if [ "${waypoint_pods}" -gt 0 ]; then
+      infomsg "  - L7 (waypoint): istio_requests_total with reporter=waypoint"
+    fi
+    infomsg ""
+    infomsg "View in Kiali: https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+  fi
+}
+
+##############################################################################
 # Create All Function
 ##############################################################################
 
@@ -2091,17 +2682,31 @@ create_all() {
   infomsg "Creating complete ACM + Kiali environment"
   infomsg "======================================"
   infomsg ""
-  infomsg "This will run the following commands in sequence:"
-  infomsg "  1. init-openshift  (Create CRC cluster, enable UWM, install Istio)"
-  infomsg "  2. install-acm     (Install ACM with observability)"
-  infomsg "  3. install-kiali   (Build and install Kiali)"
-  infomsg "  4. install-app     (Install test mesh application)"
-  infomsg "  5. traffic         (Generate initial traffic)"
+  infomsg "Istio Ambient: $([ "${AMBIENT_MODE}" == "true" ] && echo "enabled (adds ztunnel/waypoint)" || echo "disabled")"
   infomsg ""
+  infomsg "This will run the following commands in sequence:"
+  infomsg "  1. init-openshift  (Create CRC cluster, enable UWM)"
+  infomsg "  2. install-istio   (Install Istio$([ "${AMBIENT_MODE}" == "true" ] && echo " with Ambient mode"))"
+  infomsg "  3. install-acm     (Install ACM with observability)"
+  infomsg "  4. install-kiali   (Build and install Kiali)"
+  infomsg "  5. install-app     (Install sidecar test mesh application)"
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "  6. install-ambient-app (Install Ambient test mesh application)"
+    infomsg "  7. traffic         (Generate traffic to both apps)"
+  else
+    infomsg "  6. traffic         (Generate initial traffic)"
+  fi
+  infomsg ""
+
+  # Calculate total steps upfront so all step messages are consistent
+  local total_steps=6
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    total_steps=7
+  fi
 
   # Step 1: Initialize OpenShift
   infomsg "======================================"
-  infomsg "Step 1/5: Initializing OpenShift cluster"
+  infomsg "Step 1/${total_steps}: Initializing OpenShift cluster"
   infomsg "======================================"
   init_openshift
   if [ $? -ne 0 ]; then
@@ -2116,10 +2721,21 @@ create_all() {
     return 1
   fi
 
-  # Step 2: Install ACM
+  # Step 2: Install Istio
   infomsg ""
   infomsg "======================================"
-  infomsg "Step 2/5: Installing ACM with observability"
+  infomsg "Step 2/${total_steps}: Installing Istio"
+  infomsg "======================================"
+  install_istio
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install Istio"
+    return 1
+  fi
+
+  # Step 3: Install ACM
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 3/${total_steps}: Installing ACM with observability"
   infomsg "======================================"
   install_acm
   if [ $? -ne 0 ]; then
@@ -2127,10 +2743,10 @@ create_all() {
     return 1
   fi
 
-  # Step 3: Install Kiali
+  # Step 4: Install Kiali
   infomsg ""
   infomsg "======================================"
-  infomsg "Step 3/5: Installing Kiali"
+  infomsg "Step 4/${total_steps}: Installing Kiali"
   infomsg "======================================"
   install_kiali
   if [ $? -ne 0 ]; then
@@ -2138,26 +2754,50 @@ create_all() {
     return 1
   fi
 
-  # Step 4: Install test app
+  # Step 5: Install sidecar test app
   infomsg ""
   infomsg "======================================"
-  infomsg "Step 4/5: Installing test application"
+  infomsg "Step 5/${total_steps}: Installing sidecar test application"
   infomsg "======================================"
   install_app
   if [ $? -ne 0 ]; then
-    errormsg "Failed to install test application"
+    errormsg "Failed to install sidecar test application"
     return 1
   fi
 
-  # Step 5: Generate initial traffic
+  # Step 6 (Ambient only): Install Ambient test app
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step 6/${total_steps}: Installing Ambient test application"
+    infomsg "======================================"
+    install_ambient_app
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Ambient test application"
+      return 1
+    fi
+  fi
+
+  # Final step: Generate initial traffic (always the last step)
   infomsg ""
   infomsg "======================================"
-  infomsg "Step 5/5: Generating initial traffic"
+  infomsg "Step ${total_steps}/${total_steps}: Generating initial traffic"
   infomsg "======================================"
   generate_traffic
   if [ $? -ne 0 ]; then
-    errormsg "Failed to generate traffic"
+    errormsg "Failed to generate sidecar traffic"
     return 1
+  fi
+
+  # Generate Ambient traffic if Ambient mode
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "Generating traffic to Ambient test application..."
+    generate_ambient_traffic
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to generate Ambient traffic"
+      return 1
+    fi
   fi
 
   # Final summary
@@ -2187,6 +2827,9 @@ while [[ $# -gt 0 ]]; do
   case $key in
     create-all) _CMD="create-all"; shift ;;
     init-openshift) _CMD="init-openshift"; shift ;;
+    install-istio) _CMD="install-istio"; shift ;;
+    uninstall-istio) _CMD="uninstall-istio"; shift ;;
+    status-istio) _CMD="status-istio"; shift ;;
     install-acm) _CMD="install-acm"; shift ;;
     uninstall-acm) _CMD="uninstall-acm"; shift ;;
     status-acm) _CMD="status-acm"; shift ;;
@@ -2197,6 +2840,10 @@ while [[ $# -gt 0 ]]; do
     uninstall-app) _CMD="uninstall-app"; shift ;;
     status-app) _CMD="status-app"; shift ;;
     traffic) _CMD="traffic"; shift ;;
+    install-ambient-app) _CMD="install-ambient-app"; shift ;;
+    uninstall-ambient-app) _CMD="uninstall-ambient-app"; shift ;;
+    status-ambient-app) _CMD="status-ambient-app"; shift ;;
+    traffic-ambient) _CMD="traffic-ambient"; shift ;;
     -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
     -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
     -on|--observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
@@ -2214,6 +2861,8 @@ while [[ $# -gt 0 ]]; do
     -tc|--traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
     -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
     -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
+    --ambient) AMBIENT_MODE="true"; shift ;;
+    -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -2276,39 +2925,68 @@ Valid options:
   -cont|--traffic-continuous
       Send requests continuously until Ctrl-C (for traffic command).
       Without this flag, sends --traffic-count requests and stops.
+  --ambient
+      Enable Istio Ambient mode in addition to sidecar support.
+      Adds ztunnel (L4) and waypoint (L7) capabilities alongside sidecars.
+      Affects install-istio (installs Ambient profile) and create-all.
+  -aan|--ambient-app-namespace <namespace>
+      The namespace for the Ambient test application.
+      Default: ${DEFAULT_AMBIENT_APP_NAMESPACE}
   -v|--verbose
       Enable verbose/debug output.
   -h|--help
       Display this help message.
 
 The command must be one of:
-  create-all:       "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+app), and send some initial traffic
-  init-openshift:   Create/start CRC OpenShift cluster, enable User Workload Monitoring, and install Istio
-  install-acm:      Install ACM operator, MultiClusterHub, MinIO, and observability
-  uninstall-acm:    Remove all ACM components
-  status-acm:       Check the status of ACM installation
-  install-kiali:    Build and install Kiali configured for ACM observability
-  uninstall-kiali:  Remove Kiali installation
-  status-kiali:     Check the status of Kiali installation
-  install-app:      Install a simple test mesh application
-  uninstall-app:    Remove the test application
-  status-app:       Check the status of the test application
-  traffic:          Generate HTTP traffic to the test application
+  create-all:           "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps), and send initial traffic
+  init-openshift:       Create/start CRC OpenShift cluster and enable User Workload Monitoring
+  install-istio:        Install Istio (use --ambient for Ambient mode)
+  uninstall-istio:      Remove Istio installation
+  status-istio:         Check the status of Istio installation
+  install-acm:          Install ACM operator, MultiClusterHub, MinIO, and observability
+  uninstall-acm:        Remove all ACM components
+  status-acm:           Check the status of ACM installation
+  install-kiali:        Build and install Kiali configured for ACM observability
+  uninstall-kiali:      Remove Kiali installation
+  status-kiali:         Check the status of Kiali installation
+  install-app:          Install a simple sidecar test mesh application
+  uninstall-app:        Remove the sidecar test application
+  status-app:           Check the status of the sidecar test application
+  traffic:              Generate HTTP traffic to the sidecar test application
+  install-ambient-app:  Install an Ambient mode test mesh application (requires --ambient)
+  uninstall-ambient-app: Remove the Ambient test application
+  status-ambient-app:   Check the status of the Ambient test application
+  traffic-ambient:      Generate HTTP traffic to the Ambient test application
 
 Examples:
-  $0 -cps ~/pull-secret.txt create-all      # Create complete environment (CRC/OpenShift + ACM + Kiali + test app + traffic)
-  $0 -cps ~/pull-secret.txt init-openshift  # Initialize CRC cluster
+  # Standard installation (sidecar support)
+  $0 -cps ~/pull-secret.txt create-all         # Create complete environment
+  $0 -cps ~/pull-secret.txt init-openshift     # Initialize CRC cluster
+  $0 install-istio                             # Install Istio (sidecar mode)
+
+  # With Ambient mode enabled (adds ztunnel L4 + waypoint L7 alongside sidecars)
+  $0 -cps ~/pull-secret.txt --ambient create-all      # Create complete environment with Ambient mode
+  $0 -cps ~/pull-secret.txt init-openshift            # Initialize CRC cluster
+  $0 --ambient install-istio                          # Install Istio with Ambient mode
+  $0 status-istio                                     # Check Istio status (shows Ambient if enabled)
+  $0 install-ambient-app                              # Install Ambient test app (requires Ambient Istio)
+  $0 status-ambient-app                               # Check Ambient test app status
+  $0 traffic-ambient                                  # Generate traffic to Ambient app
+  $0 uninstall-ambient-app                            # Remove Ambient test app
+  $0 uninstall-istio                                  # Remove Istio
+
+  # ACM and Kiali
   $0 install-acm                            # Install ACM with defaults
   $0 -n my-acm install-acm                  # Install ACM in custom namespace
   $0 -c release-2.14 install-acm            # Install specific ACM version
-  $0 -on my-obs -n my-acm install-acm       # Custom namespaces
   $0 status-acm                             # Check ACM installation status
   $0 uninstall-acm                          # Remove ACM completely
   $0 install-kiali                          # Build and install Kiali for ACM
-  $0 -kn my-kiali install-kiali             # Install Kiali in custom namespace
   $0 status-kiali                           # Check Kiali installation status
   $0 uninstall-kiali                        # Remove Kiali
-  $0 install-app                            # Install test mesh application
+
+  # Sidecar test app
+  $0 install-app                            # Install sidecar test mesh application
   $0 -an my-app install-app                 # Install test app in custom namespace
   $0 status-app                             # Check test application status
   $0 uninstall-app                          # Remove test application
@@ -2346,6 +3024,8 @@ done
 : ${TRAFFIC_COUNT:=${DEFAULT_TRAFFIC_COUNT}}
 : ${TRAFFIC_INTERVAL:=${DEFAULT_TRAFFIC_INTERVAL}}
 : ${TRAFFIC_CONTINUOUS:=false}
+: ${AMBIENT_MODE:=${DEFAULT_AMBIENT_MODE}}
+: ${AMBIENT_APP_NAMESPACE:=${DEFAULT_AMBIENT_APP_NAMESPACE}}
 
 # Debug output
 debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
@@ -2357,6 +3037,8 @@ debug "KIALI_NAMESPACE=${KIALI_NAMESPACE}"
 debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
 debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
 debug "APP_NAMESPACE=${APP_NAMESPACE}"
+debug "AMBIENT_MODE=${AMBIENT_MODE}"
+debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 
 ##############################################################################
 # Main
@@ -2379,6 +3061,15 @@ case ${_CMD} in
     ;;
   init-openshift)
     init_openshift
+    ;;
+  install-istio)
+    install_istio
+    ;;
+  uninstall-istio)
+    uninstall_istio
+    ;;
+  status-istio)
+    status_istio
     ;;
   install-acm)
     install_acm
@@ -2409,6 +3100,18 @@ case ${_CMD} in
     ;;
   traffic)
     generate_traffic
+    ;;
+  install-ambient-app)
+    install_ambient_app
+    ;;
+  uninstall-ambient-app)
+    uninstall_ambient_app
+    ;;
+  status-ambient-app)
+    status_ambient_app
+    ;;
+  traffic-ambient)
+    generate_ambient_traffic
     ;;
   *)
     errormsg "Unknown command: ${_CMD}"
