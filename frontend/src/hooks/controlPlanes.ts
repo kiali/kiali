@@ -7,17 +7,21 @@ import { ControlPlane } from '../types/Mesh';
 
 export type ControlPlanesResult = {
   controlPlanes: ControlPlane[];
+  isError: boolean;
   isLoading: boolean;
+  refresh: () => void;
 };
 
 export const useControlPlanes = (): ControlPlanesResult => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
+  const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [controlPlanes, setControlPlanes] = React.useState<ControlPlane[]>([]);
 
   const fetchControlPlanes = React.useCallback((): void => {
     setIsLoading(true);
+    setIsError(false);
 
     API.getControlPlanes()
       .then(response => {
@@ -26,6 +30,7 @@ export const useControlPlanes = (): ControlPlanesResult => {
       .catch(error => {
         addError(t('Error fetching control planes.'), error);
         setControlPlanes([]);
+        setIsError(true);
       })
       .finally(() => {
         setIsLoading(false);
@@ -39,6 +44,8 @@ export const useControlPlanes = (): ControlPlanesResult => {
 
   return {
     controlPlanes,
+    isError,
+    refresh: fetchControlPlanes,
     isLoading
   };
 };
