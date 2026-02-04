@@ -9,7 +9,7 @@ export type MockScenario =
   | 'ambient'; // Ambient mesh enabled
 
 // API endpoints that can be configured to timeout or return empty data
-export type TimeoutApi = 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'applications';
+export type ApiEndpoint = 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'applications';
 
 export interface ScenarioConfig {
   // Feature flags
@@ -26,7 +26,7 @@ export interface ScenarioConfig {
   degradedNamespaces: string[];
 
   // APIs that should return empty data (for testing empty states)
-  emptyApis?: TimeoutApi[];
+  emptyApis?: ApiEndpoint[];
 
   // Traffic configuration
   errorRate: number; // 0-100 percentage
@@ -41,7 +41,7 @@ export interface ScenarioConfig {
   responseDelay?: number;
 
   // APIs that should simulate timeout errors (for testing error states)
-  timeoutApis?: TimeoutApi[];
+  timeoutApis?: ApiEndpoint[];
 
   tracingEnabled: boolean;
   unhealthyItems: string[]; // Items that are unhealthy (e.g., 'ratings', 'flights')
