@@ -2804,7 +2804,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	tracingName.App = app
 	tracingName.Lookup = app
 
-	if len(wkd.WaypointWorkloads) > 0 {
+	if in.conf.ExternalServices.Tracing.UseWaypointName && len(wkd.WaypointWorkloads) > 0 {
 		tracingName.WaypointName = wkd.WaypointWorkloads[0].Name
 		tracingName.Lookup = wkd.WaypointWorkloads[0].Name
 		tracingName.WaypointNamespace = wkd.WaypointWorkloads[0].Namespace

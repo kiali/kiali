@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -287,6 +288,71 @@ func TestMultiClusterGetServiceAppName(t *testing.T) {
 
 	assert.Equal("ratings", s.Lookup)
 	assert.Equal("ratings", s.App)
+}
+
+func TestGetServiceTracingNameUseWaypointNameConfig(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	k8sObjects := []runtime.Object{
+		kubetest.FakeNamespaceWithLabels("bookinfo", map[string]string{}),
+		&core_v1.Service{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "ratings",
+				Namespace: "bookinfo",
+				Labels: map[string]string{
+					config.WaypointUseLabel: "waypoint",
+				},
+			},
+			Spec: core_v1.ServiceSpec{
+				Selector: map[string]string{
+					"app": "ratings",
+				},
+			},
+		},
+		&apps_v1.Deployment{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "waypoint",
+				Namespace: "bookinfo",
+				Annotations: map[string]string{
+					"gateway.istio.io/managed": "istio.io-mesh-controller",
+				},
+			},
+		},
+	}
+
+	{
+		conf := config.NewConfig()
+		conf.ExternalServices.Istio.IstioAPIEnabled = false
+		conf.ExternalServices.Tracing.UseWaypointName = false
+		config.Set(conf)
+
+		k8s := kubetest.NewFakeK8sClient(k8sObjects...)
+		svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+		s, err := svc.GetServiceTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
+		require.NoError(err)
+		assert.Equal("ratings", s.App)
+		assert.Equal("ratings", s.Lookup)
+		assert.Empty(s.WaypointName)
+	}
+
+	{
+		conf := config.NewConfig()
+		conf.ExternalServices.Istio.IstioAPIEnabled = false
+		conf.ExternalServices.Tracing.UseWaypointName = true
+		config.Set(conf)
+
+		k8s := kubetest.NewFakeK8sClient(k8sObjects...)
+		svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+		s, err := svc.GetServiceTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
+		require.NoError(err)
+		assert.Equal("ratings", s.App)
+		assert.Equal("waypoint", s.Lookup)
+		assert.Equal("waypoint", s.WaypointName)
+		assert.Equal("bookinfo", s.WaypointNamespace)
+	}
 }
 
 func TestGetServiceRouteURL(t *testing.T) {

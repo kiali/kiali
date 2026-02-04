@@ -423,6 +423,7 @@ type TracingConfig struct {
 	QueryScope           map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
 	QueryTimeout         int               `yaml:"query_timeout,omitempty" json:"queryTimeout,omitempty"`
 	UseGRPC              bool              `yaml:"use_grpc" json:"useGRPC"`
+	UseWaypointName      bool              `yaml:"use_waypoint_name" json:"useWaypointName"`
 	WhiteListIstioSystem []string          `yaml:"whitelist_istio_system" json:"whiteListIstioSystem"`
 	XInClusterURL        string            `yaml:"in_cluster_url,omitempty" json:"InClusterURL,omitempty"` // DEPRECATED!
 	XURL                 string            `yaml:"url,omitempty" json:"URL,omitempty"`                     // DEPRECATED!
@@ -1091,6 +1092,7 @@ func NewConfig() (c *Config) {
 					Tenant:        "",
 				},
 				UseGRPC:              true,
+				UseWaypointName:      false,
 				WhiteListIstioSystem: []string{"jaeger-query", "istio-ingressgateway"},
 			},
 		},

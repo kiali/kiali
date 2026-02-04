@@ -955,12 +955,14 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 		tracingName.Lookup = svc.Name
 		return tracingName, nil
 	}
-	waypoints := in.GetWaypointsForService(ctx, &svc)
-	if len(waypoints) > 0 {
-		tracingName.WaypointName = waypoints[0].Name
-		tracingName.WaypointNamespace = waypoints[0].Namespace
-		tracingName.Lookup = waypoints[0].Name
-		return tracingName, nil
+	if in.conf.ExternalServices.Tracing.UseWaypointName {
+		waypoints := in.GetWaypointsForService(ctx, &svc)
+		if len(waypoints) > 0 {
+			tracingName.WaypointName = waypoints[0].Name
+			tracingName.WaypointNamespace = waypoints[0].Namespace
+			tracingName.Lookup = waypoints[0].Name
+			return tracingName, nil
+		}
 	}
 
 	appLabelName, found := in.conf.GetAppLabelName(svc.Selectors)

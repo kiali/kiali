@@ -589,7 +589,7 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 		return tracingName
 	}
 	for _, wk := range appDetails.Workloads {
-		if len(wk.WaypointWorkloads) > 0 {
+		if in.conf.ExternalServices.Tracing.UseWaypointName && len(wk.WaypointWorkloads) > 0 {
 			// Assuming that all the workloads from the app have the same waypoint
 			// But, could be wrong
 			tracingName.WaypointName = wk.WaypointWorkloads[0].Name
