@@ -39,8 +39,6 @@ Feature: Kiali Waypoint related features
     And user sees trace information
     When user selects a trace
     Then user sees trace details
-    When the user looks for the bootstrap tab
-    Then the user sees bootstrap expected information
     When the user goes to the "Overview" tab
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
@@ -51,6 +49,8 @@ Feature: Kiali Waypoint related features
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
     And the proxy status is "info" with "RDS: IGNORED" details
     And the user can see the "K8sGateway-bookinfo-waypoint" istio config and badge "pfbadge-G"
+    When the user looks for the bootstrap tab
+    Then the user sees bootstrap expected information
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data
