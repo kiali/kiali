@@ -14,6 +14,8 @@ import { triggerRefresh } from '../../hooks/refresh';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kioskRefreshAction } from '../Kiosk/KioskActions';
 import { t, tMap } from 'utils/I18nUtils';
+import { classes } from 'typestyle';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type ReduxStateProps = {
   language: string;
@@ -35,6 +37,11 @@ type ComponentProps = {
 type Props = ComponentProps & ReduxStateProps & ReduxDispatchProps;
 
 const REFRESH_INTERVALS = config.toolbar.refreshInterval;
+
+const refreshStyle = kialiStyle({
+  display: 'flex',
+  gap: '0.5rem'
+});
 
 export class RefreshComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
@@ -66,9 +73,8 @@ export class RefreshComponent extends React.PureComponent<Props> {
   render(): React.ReactNode {
     if (this.props.refreshInterval !== undefined) {
       return (
-        <>
+        <div className={classes(refreshStyle, this.props.className)}>
           <ToolbarDropdown
-            className={this.props.className}
             id={this.props.id}
             handleSelect={value => this.updateRefreshInterval(Number(value))}
             value={String(this.props.refreshInterval)}
@@ -83,7 +89,7 @@ export class RefreshComponent extends React.PureComponent<Props> {
           {this.props.hideRefreshButton || (
             <RefreshButton handleRefresh={triggerRefresh} disabled={this.props.disabled} />
           )}
-        </>
+        </div>
       );
     } else {
       return this.props.hideRefreshButton ? null : <RefreshButton handleRefresh={triggerRefresh} />;

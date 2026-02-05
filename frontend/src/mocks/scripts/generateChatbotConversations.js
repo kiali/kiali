@@ -23,9 +23,10 @@ const imports = files
   .join('\n');
 
 const entries = files
-  .map(fileName => {
+  .map((fileName, index, arr) => {
     const id = fileName.replace(/\.json$/, '');
-    return `  ['${id}', ${toIdentifier(fileName)}],`;
+    const comma = index < arr.length - 1 ? ',' : '';
+    return `  ['${id}', ${toIdentifier(fileName)}]${comma}`;
   })
   .join('\n');
 

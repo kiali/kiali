@@ -14,7 +14,6 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { infoStyle } from 'styles/IconStyle';
-import { classes } from 'typestyle';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 
@@ -38,13 +37,8 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-const serviceInfoStyle = kialiStyle({
-  verticalAlign: '-0.125rem'
-});
-
 const healthIconStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  verticalAlign: '-0.075rem'
+  marginLeft: '0.5rem'
 });
 
 const additionalItemStyle = kialiStyle({
@@ -171,7 +165,7 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             position={TooltipPosition.right}
             content={<div style={{ textAlign: 'left' }}>{serviceProperties}</div>}
           >
-            <KialiIcon.Info className={classes(infoStyle, serviceInfoStyle)} />
+            <KialiIcon.Info className={infoStyle} />
           </Tooltip>
 
           <span className={healthIconStyle}>
