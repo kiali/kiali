@@ -2980,8 +2980,23 @@ EOF
   # Note: Ztunnel is monitored globally via istio-proxies-monitor in ztunnel/istio-system namespace
   create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
 
-  # Create metrics allowlist for ACM observability
+  # Create metrics allowlist for ACM observability in app namespace
   create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
+
+  # Create metrics allowlist in ztunnel namespace (required for ztunnel L4 metrics to be collected by ACM)
+  local ztunnel_namespace=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_namespace="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_namespace="istio-system"
+  fi
+
+  if [ -n "${ztunnel_namespace}" ]; then
+    infomsg "Creating ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
+    create_namespace_metrics_allowlist "${ztunnel_namespace}"
+  else
+    warnmsg "Could not find ztunnel daemonset - skipping ztunnel allowlist creation"
+  fi
 
   infomsg "======================================"
   infomsg "Ambient test application installation complete!"
@@ -2991,7 +3006,7 @@ EOF
   infomsg "Mode: Istio Ambient (L4 via ztunnel, L7 via waypoint)"
   infomsg ""
   infomsg "Metrics flow:"
-  infomsg "  - L4 (TCP): ztunnel metrics in istio-system (istio_tcp_* with app=ztunnel)"
+  infomsg "  - L4 (TCP): ztunnel metrics in ${ztunnel_namespace:-ztunnel/istio-system} (istio_tcp_* with app=ztunnel)"
   infomsg "  - L7 (HTTP): waypoint metrics (istio_requests_total with reporter=waypoint)"
   infomsg ""
   infomsg "To generate traffic, run:"
