@@ -2804,10 +2804,21 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	tracingName.App = app
 	tracingName.Lookup = app
 
-	if in.conf.ExternalServices.Tracing.UseWaypointName && len(wkd.WaypointWorkloads) > 0 {
-		tracingName.WaypointName = wkd.WaypointWorkloads[0].Name
-		tracingName.Lookup = wkd.WaypointWorkloads[0].Name
-		tracingName.WaypointNamespace = wkd.WaypointWorkloads[0].Namespace
+	if len(wkd.WaypointWorkloads) > 0 {
+		if in.conf.ExternalServices.Tracing.UseWaypointName {
+			tracingName.WaypointName = wkd.WaypointWorkloads[0].Name
+			tracingName.Lookup = wkd.WaypointWorkloads[0].Name
+			tracingName.WaypointNamespace = wkd.WaypointWorkloads[0].Namespace
+		} else if app != "" {
+			lookupName := ""
+			if in.conf.ExternalServices.Tracing.NamespaceSelector {
+				lookupName = fmt.Sprintf("%s.%s.%s", app, namespace, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+			} else {
+				lookupName = fmt.Sprintf("%s.%s", app, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+			}
+			tracingName.Lookup = lookupName
+			tracingName.WaypointName = lookupName
+		}
 	}
 
 	return tracingName, nil

@@ -37,6 +37,7 @@ func GetTracingInfo(conf *config.Config) http.HandlerFunc {
 				TempoConfig:          tracingConfig.TempoConfig,
 				URL:                  tracingConfig.ExternalURL,
 				NamespaceSelector:    tracingConfig.NamespaceSelector,
+				UseWaypointName:      tracingConfig.UseWaypointName,
 				WhiteListIstioSystem: tracingConfig.WhiteListIstioSystem,
 			}
 		} else {

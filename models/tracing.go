@@ -18,6 +18,7 @@ type TracingInfo struct {
 	TempoConfig          config.TempoConfig `json:"tempoConfig"`
 	URL                  string             `json:"url"`
 	NamespaceSelector    bool               `json:"namespaceSelector"`
+	UseWaypointName      bool               `json:"useWaypointName"`
 	WhiteListIstioSystem []string           `json:"whiteListIstioSystem"`
 }
 

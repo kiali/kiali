@@ -589,12 +589,24 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 		return tracingName
 	}
 	for _, wk := range appDetails.Workloads {
-		if in.conf.ExternalServices.Tracing.UseWaypointName && len(wk.WaypointWorkloads) > 0 {
-			// Assuming that all the workloads from the app have the same waypoint
-			// But, could be wrong
-			tracingName.WaypointName = wk.WaypointWorkloads[0].Name
-			tracingName.WaypointNamespace = wk.WaypointWorkloads[0].Namespace
-			tracingName.Lookup = tracingName.WaypointName
+		if len(wk.WaypointWorkloads) > 0 {
+			if in.conf.ExternalServices.Tracing.UseWaypointName {
+				// Assuming that all the workloads from the app have the same waypoint
+				// But, could be wrong
+				tracingName.WaypointName = wk.WaypointWorkloads[0].Name
+				tracingName.WaypointNamespace = wk.WaypointWorkloads[0].Namespace
+				tracingName.Lookup = tracingName.WaypointName
+			} else if len(appDetails.ServiceNames) > 0 {
+				lookupName := ""
+				if in.conf.ExternalServices.Tracing.NamespaceSelector {
+					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0], namespace, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				} else {
+					lookupName = fmt.Sprintf("%s.%s", appDetails.ServiceNames[0], in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				}
+				tracingName.Lookup = lookupName
+				tracingName.WaypointName = lookupName
+			}
+			break
 		}
 	}
 	return tracingName

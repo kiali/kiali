@@ -333,7 +333,7 @@ func TestGetServiceTracingNameUseWaypointNameConfig(t *testing.T) {
 		s, err := svc.GetServiceTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings")
 		require.NoError(err)
 		assert.Equal("ratings", s.App)
-		assert.Equal("ratings", s.Lookup)
+		assert.Equal("ratings.bookinfo.svc.cluster.local", s.Lookup)
 		assert.Empty(s.WaypointName)
 	}
 
