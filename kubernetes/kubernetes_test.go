@@ -111,7 +111,7 @@ type unknownObject struct {
 func (u *unknownObject) DeepCopyObject() runtime.Object {
 	return &unknownObject{
 		TypeMeta:   u.TypeMeta,
-		ObjectMeta: *u.ObjectMeta.DeepCopy(),
+		ObjectMeta: *u.DeepCopy(),
 	}
 }
 
