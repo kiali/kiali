@@ -67,7 +67,7 @@ Feature: Kiali Graph page - Side panel menu actions
   @waypoint-tracing
   Scenario: Traces tab contains traces
     Given user graphs "bookinfo" namespaces
-    And user clicks the "productpage" "service" node
+    And user clicks the "reviews" "service" node
     And service badge for the graph side panel should be visible
     And user clicks the "Traces" graph summary tab
     Then user should see the traces tab not empty
