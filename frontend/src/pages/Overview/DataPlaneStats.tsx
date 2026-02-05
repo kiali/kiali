@@ -26,11 +26,7 @@ import { durationSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
-import {
-  combinedWorstStatus,
-  isDataPlaneNamespace,
-  namespaceStatusesFromNamespaceHealth
-} from 'utils/NamespaceHealthUtils';
+import { combinedWorstStatus, isDataPlaneNamespace, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
 import { addDanger } from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { ApiError } from 'types/Api';
@@ -40,12 +36,14 @@ import {
   clickableStyle,
   iconStyle,
   linkStyle,
+  noUnderlineStyle,
   popoverFooterStyle,
   popoverHeaderStyle,
   popoverItemStatusStyle,
   popoverItemStyle,
   statItemStyle,
-  statsContainerStyle
+  statsContainerStyle,
+  statusLabelStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
@@ -88,31 +86,6 @@ const labelNumberStyle = kialiStyle({
 const labelStyle = kialiStyle({
   marginTop: '0.5rem',
   marginBottom: '0.5rem'
-});
-
-const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});
-
-const statusLabelStyle = kialiStyle({
-  height: '1.25rem',
-  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
-  borderColor: 'var(--pf-v6-c-label--m-outline--BorderColor, transparent)',
-  borderStyle: 'solid',
-  borderWidth: '1px',
-  $nest: {
-    '& .pf-v6-c-label__icon': {
-      marginRight: '0.25rem'
-    },
-    '& .pf-v6-c-label__content': {
-      color: 'var(--pf-t--global--text--color--primary--default)'
-    }
-  }
 });
 
 // Maximum number of items to show in the popover

@@ -10,7 +10,7 @@ import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from '../../types/Health';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
-import { isDataPlaneNamespace } from 'utils/NamespaceHealthUtils';
+import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
   category: t('Namespace'),

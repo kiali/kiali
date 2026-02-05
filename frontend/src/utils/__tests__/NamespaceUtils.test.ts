@@ -10,9 +10,9 @@ jest.mock('config', () => ({
   }
 }));
 
-const { combinedWorstStatus, isDataPlaneNamespace } = require('../NamespaceHealthUtils');
+const { combinedWorstStatus, isDataPlaneNamespace } = require('../NamespaceUtils');
 
-describe('NamespaceHealthUtils', () => {
+describe('NamespaceUtils', () => {
   const status = (partial: Partial<NamespaceStatus>): NamespaceStatus => ({
     inError: [],
     inNotReady: [],

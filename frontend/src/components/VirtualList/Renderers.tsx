@@ -49,7 +49,7 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
-import { isDataPlaneNamespace } from 'utils/NamespaceHealthUtils';
+import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 
 const rendererInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',

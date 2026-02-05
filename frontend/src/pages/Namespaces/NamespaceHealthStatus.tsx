@@ -11,7 +11,7 @@ import { pluralize } from '@patternfly/react-core';
 import { namespaceNaIconStyle, statusIconStyle, statusTextStyle } from './NamespaceStyle';
 import { naTextStyle } from 'styles/HealthStyle';
 import { classes } from 'typestyle';
-import { combinedWorstStatus } from 'utils/NamespaceHealthUtils';
+import { combinedWorstStatus } from 'utils/NamespaceUtils';
 
 type ReduxProps = {
   duration: DurationInSeconds;

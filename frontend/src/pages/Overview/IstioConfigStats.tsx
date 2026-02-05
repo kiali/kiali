@@ -18,7 +18,6 @@ import { IstioConfigStatusLabel, useIstioConfigStatus } from 'hooks/istioConfigs
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { PFColors } from 'components/Pf/PfColors';
-import { kialiStyle } from 'styles/StyleUtils';
 import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
@@ -34,37 +33,14 @@ import {
   popoverItemStyle,
   popoverItemStatusStyle,
   statItemStyle,
-  statsContainerStyle
+  statsContainerStyle,
+  statusLabelStyle,
+  noUnderlineStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 
 const WARNING_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.Warning, IstioConfigStatusLabel.NotValidated];
 const ERROR_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.NotValid];
-
-const statusLabelStyle = kialiStyle({
-  height: '1.25rem',
-  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
-  borderColor: 'var(--pf-v6-c-label--m-outline--BorderColor, transparent)',
-  borderStyle: 'solid',
-  borderWidth: '1px',
-  $nest: {
-    '& .pf-v6-c-label__icon': {
-      marginRight: '0.25rem'
-    },
-    '& .pf-v6-c-label__content': {
-      color: 'var(--pf-t--global--text--color--primary--default)'
-    }
-  }
-});
-
-const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});
 
 // Get border color for status label
 const getStatusBorderColor = (status: IstioConfigStatusLabel): string => {

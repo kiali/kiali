@@ -56,7 +56,7 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
-import { namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceHealthUtils';
+import { namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
