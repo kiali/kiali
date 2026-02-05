@@ -68,7 +68,7 @@
 #   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
 #   uninstall-acm        - Remove all ACM components cleanly
 #   status-acm           - Check the status of ACM installation
-#   install-kiali        - Build and install Kiali configured for ACM observability
+#   install-kiali        - Install Kiali configured for ACM observability (supports 3 methods: helm-server, olm-operator, helm-operator)
 #   uninstall-kiali      - Remove Kiali installation
 #   status-kiali         - Check the status of Kiali installation
 #   install-app          - Install a simple sidecar test mesh application
@@ -138,7 +138,11 @@ DEFAULT_TIMEOUT="1200"
 # Kiali defaults
 DEFAULT_KIALI_NAMESPACE="istio-system"
 DEFAULT_KIALI_REPO_DIR="$(cd "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
+DEFAULT_KIALI_OPERATOR_REPO_DIR="$(cd "${SCRIPT_DIR}/../../kiali-operator" &> /dev/null && pwd)"
 DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && pwd)"
+DEFAULT_KIALI_INSTALL_TYPE="helm-server"
+KIALI_OLM_OPERATOR_NAMESPACE="openshift-operators"
+KIALI_HELM_OPERATOR_NAMESPACE="kiali-operator"
 
 # Test app defaults
 DEFAULT_APP_NAMESPACE="test-app"
@@ -148,6 +152,9 @@ DEFAULT_TRAFFIC_INTERVAL="1"
 
 # Istio mode defaults
 DEFAULT_AMBIENT_MODE="false"
+
+# Build defaults
+DEFAULT_SKIP_BUILD="false"
 
 # CRC initialization defaults
 DEFAULT_CRC_CPUS="12"
@@ -1326,7 +1333,7 @@ setup_kiali_ca_bundle() {
   fi
 
   # Create or update the kiali-cabundle ConfigMap with the ACM CA only.
-  # The Helm chart will create kiali-cabundle-openshift for the OpenShift service CA,
+  # Kiali (via Helm chart or operator) will create kiali-cabundle-openshift for the OpenShift service CA,
   # and use a projected volume to automatically combine both ConfigMaps.
   # Key MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
   if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
@@ -1384,37 +1391,115 @@ create_kiali_mtls_secret() {
   debug "mTLS secret created: ${secret_name}"
 }
 
-install_kiali() {
-  infomsg "Installing Kiali with ACM observability integration (mTLS)..."
+##############################################################################
+# Kiali Installation - Common Functions
+##############################################################################
 
-  # Verify ACM observability is installed
+verify_acm_observability() {
   if ! ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
     errormsg "ACM observability is not installed (MultiClusterObservability not found)."
     errormsg "Please run '$0 install-acm' first to install ACM with observability."
     return 1
   fi
+  return 0
+}
 
-  # Get cluster apps domain for constructing the Observatorium API route URL
-  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
-  if [ -z "${apps_domain}" ]; then
-    errormsg "Could not determine cluster apps domain"
+ensure_kiali_namespace() {
+  if ! ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${KIALI_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${KIALI_NAMESPACE}
+  fi
+}
+
+setup_kiali_acm_auth() {
+  # Copy mTLS certificates from ACM Observability
+  # ACM creates trusted client certificates that we use for Kiali's authentication.
+  # These are long-lived certificates (typically 1 year) from observability-grafana-certs.
+  local cert_dir="/tmp/kiali-mtls-certs-$$"
+  if ! copy_acm_mtls_certs "${cert_dir}"; then
+    errormsg "Failed to copy mTLS certificates from ACM"
+    errormsg "Ensure MultiClusterObservability is fully deployed and the"
+    errormsg "observability-grafana-certs secret exists in ${OBSERVABILITY_NAMESPACE}"
+    rm -rf "${cert_dir}"
     return 1
   fi
 
-  # Use the Observatorium API route with HTTPS and mTLS authentication.
-  # This is the proper way to access ACM observability externally with client certificates.
-  # Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
-  # The Observatorium API proxies requests to internal Thanos services and handles TLS termination.
-  local prometheus_url="https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
-  infomsg "Using ACM observability endpoint: observatorium-api (HTTPS/mTLS)"
-  debug "Prometheus URL: ${prometheus_url}"
+  # Create the mTLS secret in Kiali's namespace
+  if ! create_kiali_mtls_secret "${cert_dir}"; then
+    errormsg "Failed to create mTLS secret"
+    rm -rf "${cert_dir}"
+    return 1
+  fi
+
+  # Set up CA bundle for trusting the Observatorium API server certificate
+  setup_kiali_ca_bundle
+
+  # Clean up temporary certificate files
+  rm -rf "${cert_dir}"
+  return 0
+}
+
+wait_for_kiali_ready() {
+  infomsg "Waiting for Kiali deployment to be created..."
+  local max_wait=120
+  local elapsed=0
+  while ! ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+    sleep 5
+    elapsed=$((elapsed + 5))
+  done
+
+  if [ ${elapsed} -ge ${max_wait} ]; then
+    errormsg "Timeout waiting for Kiali deployment to be created"
+    return 1
+  fi
+
+  infomsg "Waiting for Kiali deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
+}
+
+print_kiali_summary() {
+  local install_method="$1"
+  local kiali_route_url="$2"
+  local prometheus_url="$3"
+  local additional_info="$4"
+
+  infomsg "======================================"
+  infomsg "Kiali installation complete!"
+  infomsg "======================================"
+  infomsg "Installation Method: ${install_method}"
+  infomsg "Kiali Namespace: ${KIALI_NAMESPACE}"
+  infomsg "Kiali URL: ${kiali_route_url}"
+  infomsg "Prometheus Backend: ${prometheus_url}"
+  infomsg "Authentication: mTLS (long-lived client certificates from ACM)"
+  infomsg ""
+  infomsg "mTLS configuration:"
+  infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
+  infomsg "  Server CA trust:     Projected volume combining:"
+  infomsg "    - configmap/kiali-cabundle-openshift (OpenShift service CA, auto-injected)"
+  infomsg "    - configmap/kiali-cabundle (ACM observability CA)"
+  if [ -n "${additional_info}" ]; then
+    infomsg ""
+    infomsg "${additional_info}"
+  fi
+  infomsg ""
+  infomsg "To access Kiali, open: ${kiali_route_url}"
+}
+
+##############################################################################
+# Kiali Installation - Method 1: helm-server
+##############################################################################
+
+install_kiali_via_helm_server() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via helm-server method (build from source)..."
 
   # Check if helm is available
   if ! command -v helm &>/dev/null; then
     errormsg "helm is not installed or not in PATH"
     return 1
   fi
-
 
   # Verify directories exist
   if [ ! -d "${KIALI_REPO_DIR}" ]; then
@@ -1442,46 +1527,19 @@ install_kiali() {
   fi
   infomsg "Using helm chart: ${helm_chart_tgz}"
 
-  # Create Kiali namespace if it doesn't exist
-  if ! ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
-    infomsg "Creating namespace: ${KIALI_NAMESPACE}"
-    ${CLIENT_EXE} create namespace ${KIALI_NAMESPACE}
-  fi
-
-  # Copy mTLS certificates from ACM Observability
-  # ACM creates trusted client certificates that we use for Kiali's authentication.
-  # These are long-lived certificates (typically 1 year) from observability-grafana-certs.
-  local cert_dir="/tmp/kiali-mtls-certs-$$"
-  if ! copy_acm_mtls_certs "${cert_dir}"; then
-    errormsg "Failed to copy mTLS certificates from ACM"
-    errormsg "Ensure MultiClusterObservability is fully deployed and the"
-    errormsg "observability-grafana-certs secret exists in ${OBSERVABILITY_NAMESPACE}"
-    rm -rf "${cert_dir}"
-    return 1
-  fi
-
-  # Create the mTLS secret in Kiali's namespace
-  if ! create_kiali_mtls_secret "${cert_dir}"; then
-    errormsg "Failed to create mTLS secret"
-    rm -rf "${cert_dir}"
-    return 1
-  fi
-
-  # Set up CA bundle for trusting the Thanos server certificate
-  setup_kiali_ca_bundle
-
-  # Clean up temporary certificate files
-  rm -rf "${cert_dir}"
-
-  # Build and push Kiali image
-  infomsg "Building and pushing Kiali image to cluster..."
+  # Build and push Kiali server image
   pushd "${KIALI_REPO_DIR}" > /dev/null
-  make cluster-push-kiali
+  if [ "${SKIP_BUILD}" == "true" ]; then
+    infomsg "Skipping build (--skip-build specified), pushing existing image to cluster..."
+    make cluster-push-kiali
+  else
+    infomsg "Building and pushing Kiali server image to cluster..."
+    make build-ui build cluster-push-kiali
+  fi
   popd > /dev/null
 
   # Get dynamic values from cluster
   local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
-
   if [ -z "${internal_registry}" ]; then
     errormsg "Could not determine internal registry hostname"
     return 1
@@ -1506,12 +1564,6 @@ install_kiali() {
   fi
 
   # Helm install/upgrade with mTLS configuration
-  # Using 'type: none' means no Authorization header - authentication is via mTLS client certificates.
-  # The cert_file and key_file reference the acm-observability-certs secret for client authentication.
-  # CA trust is configured via the kiali-cabundle ConfigMap (not via deprecated ca_file parameter).
-  # On OpenShift, the projected volume automatically combines:
-  #   - kiali-cabundle-openshift: OpenShift service CA (auto-created)
-  #   - kiali-cabundle: ACM observability CA (we create this above)
   helm ${helm_cmd} kiali "${helm_chart_tgz}" \
     --namespace ${KIALI_NAMESPACE} \
     --set deployment.image_name="${kiali_image}" \
@@ -1528,48 +1580,395 @@ install_kiali() {
     --set external_services.prometheus.thanos_proxy.scrape_interval="30s" \
     --set deployment.logger.log_level="debug"
 
-  # Wait for Kiali to be ready
-  infomsg "Waiting for Kiali deployment to be ready..."
-  ${CLIENT_EXE} rollout status deployment/kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
+  wait_for_kiali_ready
+  print_kiali_summary "helm-server" "${kiali_route_url}" "${prometheus_url}" "Server Image: ${kiali_image}:dev (built from source)"
+}
 
-  # Create RBAC for ACM observability access
-  # Even with mTLS, Kiali needs cluster-wide read permissions to query metrics
-  # for workloads across namespaces.
-  infomsg "Configuring RBAC for ACM observability access..."
-  if ! ${CLIENT_EXE} get clusterrolebinding kiali-acm-observability &>/dev/null 2>&1; then
-    ${CLIENT_EXE} create clusterrolebinding kiali-acm-observability \
-      --clusterrole=view \
-      --serviceaccount=${KIALI_NAMESPACE}:kiali || true
+##############################################################################
+# Kiali Installation - Method 2: olm-operator
+##############################################################################
+
+install_kiali_via_olm_operator() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via olm-operator method (OLM Subscription + Kiali CR)..."
+
+  # Install operator via OLM if not already present
+  if ! ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Installing Kiali operator via OLM Subscription..."
+
+    cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+
+    infomsg "Waiting for Kiali operator to be ready..."
+    local max_wait=300
+    local elapsed=0
+    while [ ${elapsed} -lt ${max_wait} ]; do
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        ${CLIENT_EXE} rollout status deployment/kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} --timeout=${TIMEOUT}s
+        break
+      fi
+      sleep 5
+      elapsed=$((elapsed + 5))
+    done
+
+    if [ ${elapsed} -ge ${max_wait} ]; then
+      errormsg "Timeout waiting for Kiali operator deployment to appear"
+      return 1
+    fi
+  else
+    infomsg "Kiali operator is already installed via OLM"
   fi
 
-  infomsg "======================================"
-  infomsg "Kiali installation complete!"
-  infomsg "======================================"
-  infomsg "Kiali Namespace: ${KIALI_NAMESPACE}"
-  infomsg "Kiali URL: ${kiali_route_url}"
-  infomsg "Prometheus Backend: ${prometheus_url}"
-  infomsg "Authentication: mTLS (long-lived client certificates from ACM)"
-  infomsg ""
-  infomsg "mTLS configuration:"
-  infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
-  infomsg "  Server CA trust:     Projected volume combining:"
-  infomsg "    - configmap/kiali-cabundle-openshift (OpenShift service CA, auto-injected)"
-  infomsg "    - configmap/kiali-cabundle (ACM observability CA)"
-  infomsg "  Note: Helm chart automatically combines both CAs via projected volume"
-  infomsg ""
-  infomsg "To access Kiali, open: ${kiali_route_url}"
+  # Create Kiali CR with ACM configuration (uses stock server image)
+  local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  create_kiali_cr "${prometheus_url}" "" ""
+
+  wait_for_kiali_ready
+  print_kiali_summary "olm-operator" "${kiali_route_url}" "${prometheus_url}" "Operator Namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}"$'\n'"Server Image: Stock (managed by operator)"
+}
+
+##############################################################################
+# Kiali Installation - Method 3: helm-operator
+##############################################################################
+
+install_kiali_via_helm_operator() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via helm-operator method (operator + server from source)..."
+
+  # Check if helm is available
+  if ! command -v helm &>/dev/null; then
+    errormsg "helm is not installed or not in PATH"
+    return 1
+  fi
+
+  # Verify directories exist
+  if [ ! -d "${KIALI_REPO_DIR}" ]; then
+    errormsg "Kiali repository directory not found: ${KIALI_REPO_DIR}"
+    return 1
+  fi
+
+  if [ ! -d "${KIALI_OPERATOR_REPO_DIR}" ]; then
+    errormsg "Kiali operator repository directory not found: ${KIALI_OPERATOR_REPO_DIR}"
+    return 1
+  fi
+
+  if [ ! -d "${HELM_CHARTS_DIR}" ]; then
+    errormsg "Helm charts directory not found: ${HELM_CHARTS_DIR}"
+    return 1
+  fi
+
+  # Build and push Kiali server and operator images
+  pushd "${KIALI_REPO_DIR}" > /dev/null
+  if [ "${SKIP_BUILD}" == "true" ]; then
+    infomsg "Skipping build (--skip-build specified), pushing existing images to cluster..."
+    make cluster-push
+  else
+    infomsg "Building and pushing Kiali server and operator images to cluster..."
+    make build-ui build cluster-push
+  fi
+  popd > /dev/null
+
+  # Build operator helm chart
+  local helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-operator-*.tgz 2>/dev/null | head -1)
+  if [ -z "${helm_chart_tgz}" ]; then
+    infomsg "Building operator helm charts..."
+    pushd "${HELM_CHARTS_DIR}" > /dev/null
+    make build-helm-charts
+    popd > /dev/null
+    helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-operator-*.tgz 2>/dev/null | head -1)
+    if [ -z "${helm_chart_tgz}" ]; then
+      errormsg "Failed to build kiali-operator helm chart"
+      return 1
+    fi
+  fi
+  infomsg "Using operator helm chart: ${helm_chart_tgz}"
+
+  # Get internal registry
+  local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
+  if [ -z "${internal_registry}" ]; then
+    errormsg "Could not determine internal registry hostname"
+    return 1
+  fi
+
+  local operator_image="${internal_registry}/kiali/kiali-operator"
+  local kiali_image="${internal_registry}/kiali/kiali"
+
+  # Create operator namespace if needed
+  if ! ${CLIENT_EXE} get namespace ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null; then
+    infomsg "Creating operator namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${KIALI_HELM_OPERATOR_NAMESPACE}
+  fi
+
+  # Helm install/upgrade operator
+  local helm_cmd="install"
+  if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Kiali operator is already installed. Upgrading..."
+    helm_cmd="upgrade"
+  else
+    infomsg "Installing Kiali operator via Helm..."
+  fi
+
+  helm ${helm_cmd} kiali-operator "${helm_chart_tgz}" \
+    --namespace ${KIALI_HELM_OPERATOR_NAMESPACE} \
+    --set image.repo="${operator_image}" \
+    --set image.tag="dev" \
+    --set image.pullPolicy="Always" \
+    --set allowAdHocKialiImage=true
+
+  # Wait for operator to be ready
+  infomsg "Waiting for Kiali operator deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Create Kiali CR with ACM configuration + dev server image
+  local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  create_kiali_cr "${prometheus_url}" "${kiali_image}" "dev"
+
+  wait_for_kiali_ready
+  print_kiali_summary "helm-operator" "${kiali_route_url}" "${prometheus_url}" "Operator Namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"$'\n'"Operator Image: ${operator_image}:dev (built from source)"$'\n'"Server Image: ${kiali_image}:dev (built from source)"
+}
+
+##############################################################################
+# Kiali CR Creation Helper
+##############################################################################
+
+create_kiali_cr() {
+  local prometheus_url="$1"
+  local image_name="$2"
+  local image_version="$3"
+
+  infomsg "Creating Kiali CR in namespace ${KIALI_NAMESPACE}..."
+
+  # Build deployment spec based on whether custom images are specified
+  local deployment_spec
+  if [ -n "${image_name}" ] && [ -n "${image_version}" ]; then
+    deployment_spec="  deployment:
+    image_name: \"${image_name}\"
+    image_version: \"${image_version}\"
+    image_pull_policy: \"Always\"
+    logger:
+      log_level: debug"
+  else
+    deployment_spec="  deployment:
+    logger:
+      log_level: debug"
+  fi
+
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+  namespace: ${KIALI_NAMESPACE}
+spec:
+${deployment_spec}
+  external_services:
+    prometheus:
+      url: "${prometheus_url}"
+      auth:
+        type: none
+        cert_file: "secret:acm-observability-certs:tls.crt"
+        key_file: "secret:acm-observability-certs:tls.key"
+      thanos_proxy:
+        enabled: true
+        retention_period: "14d"
+        scrape_interval: "30s"
+EOF
+
+  # Wait for operator to finish reconciliation
+  infomsg "Waiting for operator to reconcile Kiali CR..."
+  ${CLIENT_EXE} wait --for=condition=Successful kiali kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
+}
+
+##############################################################################
+# Main Kiali Installation Function
+##############################################################################
+
+install_kiali() {
+  infomsg "Installing Kiali with ACM observability integration (mTLS)..."
+  infomsg "Installation type: ${KIALI_INSTALL_TYPE}"
+
+  # Verify ACM observability is installed
+  verify_acm_observability || return 1
+
+  # Get cluster apps domain for constructing the Observatorium API route URL
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  if [ -z "${apps_domain}" ]; then
+    errormsg "Could not determine cluster apps domain"
+    return 1
+  fi
+
+  # Use the Observatorium API route with HTTPS and mTLS authentication
+  local prometheus_url="https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
+  infomsg "Using ACM observability endpoint: observatorium-api (HTTPS/mTLS)"
+  debug "Prometheus URL: ${prometheus_url}"
+
+  # Create Kiali namespace if needed
+  ensure_kiali_namespace
+
+  # Setup mTLS authentication (common to all methods)
+  setup_kiali_acm_auth || return 1
+
+  # Route to appropriate installation method
+  case "${KIALI_INSTALL_TYPE}" in
+    helm-server)
+      install_kiali_via_helm_server "${apps_domain}" "${prometheus_url}"
+      ;;
+    olm-operator)
+      install_kiali_via_olm_operator "${apps_domain}" "${prometheus_url}"
+      ;;
+    helm-operator)
+      install_kiali_via_helm_operator "${apps_domain}" "${prometheus_url}"
+      ;;
+    *)
+      errormsg "Unknown Kiali install type: ${KIALI_INSTALL_TYPE}"
+      errormsg "Valid types: helm-server, olm-operator, helm-operator"
+      return 1
+      ;;
+  esac
+}
+
+detect_kiali_install_method() {
+  # Check if Kiali CR exists
+  if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    # Operator-based install - determine which one
+    if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+      echo "olm-operator"
+    elif ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+      echo "helm-operator"
+    else
+      echo "unknown-operator"
+    fi
+  elif helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "helm-server"
+  else
+    echo "not-installed"
+  fi
 }
 
 uninstall_kiali() {
   infomsg "Uninstalling Kiali..."
 
-  # Delete Helm release
-  if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Removing Kiali Helm release..."
-    helm uninstall kiali -n ${KIALI_NAMESPACE}
-  else
-    debug "Kiali Helm release not found, skipping"
-  fi
+  # Always auto-detect the installation method for uninstall
+  # This ensures we clean up correctly regardless of what --kiali-install-type defaults to
+  local install_method=$(detect_kiali_install_method)
+  infomsg "Detected installation method: ${install_method}"
+
+  case "${install_method}" in
+    helm-server)
+      infomsg "Uninstalling helm-server installation..."
+      if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Removing Kiali Helm release..."
+        helm uninstall kiali -n ${KIALI_NAMESPACE}
+      else
+        debug "Kiali Helm release not found, skipping"
+      fi
+      ;;
+
+    olm-operator)
+      infomsg "Uninstalling olm-operator installation..."
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CR..."
+        ${CLIENT_EXE} delete kiali kiali -n ${KIALI_NAMESPACE} || true
+        # Wait for Kiali deployment to be deleted
+        infomsg "Waiting for Kiali deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      # Delete OLM Subscription
+      if ${CLIENT_EXE} get subscription.operators.coreos.com kiali-ossm -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali OLM Subscription..."
+        ${CLIENT_EXE} delete subscription.operators.coreos.com kiali-ossm -n ${KIALI_OLM_OPERATOR_NAMESPACE} || true
+      fi
+
+      # Delete ClusterServiceVersion (CSV)
+      local csv_name=$(${CLIENT_EXE} get csv -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.items[?(@.spec.displayName=="Kiali Operator")].metadata.name}' 2>/dev/null || echo "")
+      if [ -n "${csv_name}" ]; then
+        infomsg "Deleting Kiali ClusterServiceVersion: ${csv_name}..."
+        ${CLIENT_EXE} delete csv "${csv_name}" -n ${KIALI_OLM_OPERATOR_NAMESPACE} || true
+      fi
+
+      # Wait for operator deployment to be deleted
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Waiting for Kiali operator deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      # Delete Kiali CRDs (OLM doesn't delete CRDs by default)
+      if ${CLIENT_EXE} get crd kialis.kiali.io &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CRDs..."
+        ${CLIENT_EXE} delete crd kialis.kiali.io ossmconsoles.kiali.io || true
+      fi
+      ;;
+
+    helm-operator)
+      infomsg "Uninstalling helm-operator installation..."
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CR..."
+        ${CLIENT_EXE} delete kiali kiali -n ${KIALI_NAMESPACE} || true
+        # Wait for Kiali deployment to be deleted
+        infomsg "Waiting for Kiali deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Removing Kiali operator Helm release..."
+        helm uninstall kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE}
+      fi
+
+      # Delete Kiali CRD (Helm doesn't delete CRDs by default)
+      if ${CLIENT_EXE} get crd kialis.kiali.io &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CRD..."
+        ${CLIENT_EXE} delete crd kialis.kiali.io || true
+      fi
+
+      if ${CLIENT_EXE} get namespace ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting operator namespace..."
+        ${CLIENT_EXE} delete namespace ${KIALI_HELM_OPERATOR_NAMESPACE} || true
+      fi
+      ;;
+
+    not-installed|unknown-operator)
+      infomsg "Kiali does not appear to be installed or method unknown, cleaning up any remaining resources..."
+      ;;
+
+    *)
+      errormsg "Unknown install method: ${install_method}"
+      return 1
+      ;;
+  esac
+
+  # Common cleanup for all methods
+  infomsg "Cleaning up common resources..."
 
   # Delete mTLS certificate secret
   if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
@@ -1583,12 +1982,6 @@ uninstall_kiali() {
     ${CLIENT_EXE} delete configmap kiali-cabundle -n ${KIALI_NAMESPACE} || true
   fi
 
-  # Delete RBAC
-  if ${CLIENT_EXE} get clusterrolebinding kiali-acm-observability &>/dev/null 2>&1; then
-    infomsg "Removing Kiali ACM RBAC..."
-    ${CLIENT_EXE} delete clusterrolebinding kiali-acm-observability || true
-  fi
-
   infomsg "Kiali uninstallation complete!"
 }
 
@@ -1597,32 +1990,114 @@ status_kiali() {
   echo ""
 
   # Check Kiali namespace
-  if ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
-    echo "Kiali Namespace: ${KIALI_NAMESPACE} [EXISTS]"
-  else
+  if ! ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
     echo "Kiali Namespace: ${KIALI_NAMESPACE} [NOT FOUND]"
     echo ""
     echo "Kiali does not appear to be installed."
     return
   fi
+  echo "Kiali Namespace: ${KIALI_NAMESPACE} [EXISTS]"
 
-  # Check Helm release
-  if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
-    local helm_status=$(helm status kiali -n ${KIALI_NAMESPACE} -o json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-    echo "Helm Release: ${helm_status:-deployed}"
-  else
-    echo "Helm Release: [NOT FOUND]"
-    echo ""
-    echo "Kiali does not appear to be installed via Helm."
-    return
-  fi
+  # Detect installation method
+  local install_method=$(detect_kiali_install_method)
+
+  echo ""
+  echo "=== Installation Method ==="
+  case "${install_method}" in
+    helm-server)
+      echo "Method: helm-server (detected)"
+      if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        local helm_status=$(helm status kiali -n ${KIALI_NAMESPACE} -o json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+        echo "  Helm Release: ${helm_status:-deployed}"
+      fi
+      ;;
+
+    olm-operator)
+      echo "Method: olm-operator (detected)"
+      echo "  Kiali CR: exists"
+      echo "  Operator Namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}"
+      echo ""
+      echo "=== Operator Status ==="
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        local op_ready=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+        local op_desired=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        op_ready=${op_ready:-0}
+        op_desired=${op_desired:-0}
+        echo "Operator Deployment: ${op_ready}/${op_desired} ready"
+
+        local op_version=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d: -f2)
+        echo "Operator Version: ${op_version:-unknown}"
+      else
+        echo "Operator Deployment: [NOT FOUND]"
+      fi
+
+      echo ""
+      echo "=== Kiali CR Status ==="
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        echo "CR Name: kiali"
+        echo "CR Namespace: ${KIALI_NAMESPACE}"
+        local cr_status=$(${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "Unknown")
+        echo "Status: ${cr_status}"
+      fi
+      ;;
+
+    helm-operator)
+      echo "Method: helm-operator (detected)"
+      echo "  Kiali CR: exists"
+      if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        echo "  Operator Helm Release: kiali-operator"
+      fi
+      echo ""
+      echo "=== Operator Status ==="
+      echo "Operator Namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        local op_ready=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+        local op_desired=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        op_ready=${op_ready:-0}
+        op_desired=${op_desired:-0}
+        echo "Operator Deployment: ${op_ready}/${op_desired} ready"
+
+        local op_version=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d: -f2)
+        echo "Operator Version: ${op_version:-unknown}"
+      else
+        echo "Operator Deployment: [NOT FOUND]"
+      fi
+
+      echo ""
+      echo "=== Kiali CR Status ==="
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        echo "CR Name: kiali"
+        echo "CR Namespace: ${KIALI_NAMESPACE}"
+        local cr_status=$(${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "Unknown")
+        echo "Status: ${cr_status}"
+      fi
+      ;;
+
+    not-installed)
+      echo "Method: not-installed"
+      echo ""
+      echo "Kiali does not appear to be installed."
+      return
+      ;;
+
+    unknown-operator)
+      echo "Method: unknown-operator (Kiali CR exists but operator not found)"
+      ;;
+  esac
+
+  echo ""
+  echo "=== Kiali Server Status ==="
 
   # Check deployment
-  local deployment_ready=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
-  local deployment_desired=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
-  deployment_ready=${deployment_ready:-0}
-  deployment_desired=${deployment_desired:-0}
-  echo "Deployment: ${deployment_ready}/${deployment_desired} ready"
+  if ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    local deployment_ready=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local deployment_desired=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    deployment_ready=${deployment_ready:-0}
+    deployment_desired=${deployment_desired:-0}
+    echo "Deployment: ${deployment_ready}/${deployment_desired} ready"
+  else
+    echo "Deployment: [NOT FOUND]"
+  fi
 
   # Check route
   local route_host=$(${CLIENT_EXE} get route kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
@@ -1637,6 +2112,9 @@ status_kiali() {
   if [ -n "${prometheus_url}" ]; then
     echo "Prometheus URL: ${prometheus_url}"
   fi
+
+  echo ""
+  echo "=== ACM Authentication ==="
 
   # Check mTLS certificate secret
   if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
@@ -1653,7 +2131,7 @@ status_kiali() {
     echo "mTLS Certificate Secret: [NOT FOUND]"
   fi
 
-  # Check CA bundle ConfigMaps (projected volume combines both)
+  # Check CA bundle ConfigMaps
   if ${CLIENT_EXE} get configmap kiali-cabundle-openshift -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     echo "CA Bundle ConfigMap (OpenShift service CA): [EXISTS]"
   else
@@ -1662,20 +2140,8 @@ status_kiali() {
 
   if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
     echo "CA Bundle ConfigMap (ACM observability CA): [EXISTS]"
-    # Check if it has the ACM CA
-    local has_acm_ca=$(${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} -o jsonpath='{.data.additional-ca-bundle\.pem}' 2>/dev/null)
-    if [ -n "${has_acm_ca}" ]; then
-      echo "  ACM CA in additional-ca-bundle.pem: [EXISTS]"
-    fi
   else
     echo "CA Bundle ConfigMap (ACM observability CA): [NOT FOUND]"
-  fi
-
-  # Check ACM RBAC
-  if ${CLIENT_EXE} get clusterrolebinding kiali-acm-observability &>/dev/null 2>&1; then
-    echo "ACM Observability RBAC: [EXISTS]"
-  else
-    echo "ACM Observability RBAC: [NOT FOUND]"
   fi
 
   echo ""
@@ -2911,7 +3377,9 @@ while [[ $# -gt 0 ]]; do
     -ce|--client-exe) CLIENT_EXE="$2"; shift; shift ;;
     -t|--timeout) TIMEOUT="$2"; shift; shift ;;
     -kn|--kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
+    -kit|--kiali-install-type) KIALI_INSTALL_TYPE="$2"; shift; shift ;;
     -krd|--kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
+    -kord|--kiali-operator-repo-dir) KIALI_OPERATOR_REPO_DIR="$2"; shift; shift ;;
     -hcd|--helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
     -an|--app-namespace) APP_NAMESPACE="$2"; shift; shift ;;
     -cc|--crc-cpus) CRC_CPUS="$2"; shift; shift ;;
@@ -2922,6 +3390,7 @@ while [[ $# -gt 0 ]]; do
     -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
     --ambient) AMBIENT_MODE="true"; shift ;;
     -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
+    -sb|--skip-build) SKIP_BUILD="true"; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -2957,9 +3426,18 @@ Valid options:
   -kn|--kiali-namespace <namespace>
       The namespace where Kiali will be installed.
       Default: ${DEFAULT_KIALI_NAMESPACE}
+  -kit|--kiali-install-type <type>
+      The Kiali installation method. Valid values:
+        helm-server     - Build from source, install via kiali-server helm chart
+        olm-operator    - Use OLM-installed operator with stock images
+        helm-operator   - Build from source, install via kiali-operator helm chart
+      Default: ${DEFAULT_KIALI_INSTALL_TYPE}
   -krd|--kiali-repo-dir <path>
       Path to the Kiali server git repository (for building images).
       Default: ${DEFAULT_KIALI_REPO_DIR}
+  -kord|--kiali-operator-repo-dir <path>
+      Path to the Kiali operator git repository (for helm-operator method).
+      Default: ${DEFAULT_KIALI_OPERATOR_REPO_DIR}
   -hcd|--helm-charts-dir <path>
       Path to the Kiali helm-charts git repository.
       Default: ${DEFAULT_HELM_CHARTS_DIR}
@@ -2991,6 +3469,11 @@ Valid options:
   -aan|--ambient-app-namespace <namespace>
       The namespace for the Ambient test application.
       Default: ${DEFAULT_AMBIENT_APP_NAMESPACE}
+  -sb|--skip-build
+      Skip building Kiali server (useful for faster iterations).
+      Images will still be pushed to the cluster if they already exist.
+      Use this after you've built once and only need to test configuration changes.
+      Default: ${DEFAULT_SKIP_BUILD}
   -v|--verbose
       Enable verbose/debug output.
   -h|--help
@@ -3005,7 +3488,7 @@ The command must be one of:
   install-acm:          Install ACM operator, MultiClusterHub, MinIO, and observability
   uninstall-acm:        Remove all ACM components
   status-acm:           Check the status of ACM installation
-  install-kiali:        Build and install Kiali configured for ACM observability
+  install-kiali:        Install Kiali configured for ACM observability (supports 3 methods)
   uninstall-kiali:      Remove Kiali installation
   status-kiali:         Check the status of Kiali installation
   install-app:          Install a simple sidecar test mesh application
@@ -3040,9 +3523,12 @@ Examples:
   $0 -c release-2.14 install-acm            # Install specific ACM version
   $0 status-acm                             # Check ACM installation status
   $0 uninstall-acm                          # Remove ACM completely
-  $0 install-kiali                          # Build and install Kiali for ACM
-  $0 status-kiali                           # Check Kiali installation status
-  $0 uninstall-kiali                        # Remove Kiali
+  $0 install-kiali                          # Build and install Kiali (helm-server, default)
+  $0 --kiali-install-type helm-server install-kiali  # Explicit helm-server method
+  $0 --kiali-install-type olm-operator install-kiali # Use OLM operator with stock images
+  $0 --kiali-install-type helm-operator install-kiali # Build operator and server from source
+  $0 status-kiali                           # Check Kiali installation status (auto-detects method)
+  $0 uninstall-kiali                        # Remove Kiali (auto-detects method)
 
   # Sidecar test app
   $0 install-app                            # Install sidecar test mesh application
@@ -3074,7 +3560,9 @@ done
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
 : ${TIMEOUT:=${DEFAULT_TIMEOUT}}
 : ${KIALI_NAMESPACE:=${DEFAULT_KIALI_NAMESPACE}}
+: ${KIALI_INSTALL_TYPE:=${DEFAULT_KIALI_INSTALL_TYPE}}
 : ${KIALI_REPO_DIR:=${DEFAULT_KIALI_REPO_DIR}}
+: ${KIALI_OPERATOR_REPO_DIR:=${DEFAULT_KIALI_OPERATOR_REPO_DIR}}
 : ${HELM_CHARTS_DIR:=${DEFAULT_HELM_CHARTS_DIR}}
 : ${APP_NAMESPACE:=${DEFAULT_APP_NAMESPACE}}
 : ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
@@ -3085,6 +3573,7 @@ done
 : ${TRAFFIC_CONTINUOUS:=false}
 : ${AMBIENT_MODE:=${DEFAULT_AMBIENT_MODE}}
 : ${AMBIENT_APP_NAMESPACE:=${DEFAULT_AMBIENT_APP_NAMESPACE}}
+: ${SKIP_BUILD:=${DEFAULT_SKIP_BUILD}}
 
 # Debug output
 debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
@@ -3093,11 +3582,14 @@ debug "OBSERVABILITY_NAMESPACE=${OBSERVABILITY_NAMESPACE}"
 debug "CLIENT_EXE=${CLIENT_EXE}"
 debug "TIMEOUT=${TIMEOUT}"
 debug "KIALI_NAMESPACE=${KIALI_NAMESPACE}"
+debug "KIALI_INSTALL_TYPE=${KIALI_INSTALL_TYPE}"
 debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
+debug "KIALI_OPERATOR_REPO_DIR=${KIALI_OPERATOR_REPO_DIR}"
 debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
 debug "APP_NAMESPACE=${APP_NAMESPACE}"
 debug "AMBIENT_MODE=${AMBIENT_MODE}"
 debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
+debug "SKIP_BUILD=${SKIP_BUILD}"
 
 ##############################################################################
 # Main
@@ -3106,6 +3598,20 @@ debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 if [ -z "${_CMD}" ]; then
   errormsg "Missing command. Use -h for help."
   exit 1
+fi
+
+# Validate Kiali install type
+if [ "${_CMD}" == "install-kiali" ]; then
+  case "${KIALI_INSTALL_TYPE}" in
+    helm-server|olm-operator|helm-operator)
+      # Valid
+      ;;
+    *)
+      errormsg "Invalid Kiali install type: ${KIALI_INSTALL_TYPE}"
+      errormsg "Valid types: helm-server, olm-operator, helm-operator"
+      exit 1
+      ;;
+  esac
 fi
 
 # Check prerequisites (skip for init-openshift and create-all since cluster may not exist yet)
