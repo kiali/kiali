@@ -1,7 +1,13 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { InstanceType } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
-import { getScenarioConfig, getItemHealthStatus } from '../scenarios';
+import {
+  getItemHealthStatus,
+  getResponseDelay,
+  getScenarioConfig,
+  shouldApiReturnEmpty,
+  shouldApiTimeout
+} from '../scenarios';
 
 // Helper to generate time series datapoints
 const generateDatapoints = (baseValue: number, variance: number, points = 61): Array<[number, number]> => {
@@ -549,6 +555,20 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
     httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
 
+  // Map internal health status to backend status string
+  let backendStatus: string;
+  let errorRatio: number | undefined;
+  if (healthStatus === 'unhealthy') {
+    backendStatus = 'Failure';
+    errorRatio = errorRate;
+  } else if (healthStatus === 'degraded') {
+    backendStatus = 'Degraded';
+    errorRatio = Math.floor(errorRate / 2);
+  } else {
+    backendStatus = 'Healthy';
+    errorRatio = 0;
+  }
+
   return {
     name,
     namespace,
@@ -577,7 +597,11 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
           availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
           syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
         }
-      ]
+      ],
+      status: {
+        status: backendStatus,
+        errorRatio
+      }
     }
   };
 };
@@ -768,7 +792,22 @@ const getAppsForNamespaces = (namespaces: string): MockAppListItem[] => {
 
 export const workloadHandlers = [
   // Clusters workloads - main endpoint for workload list
-  http.get('*/api/clusters/workloads', ({ request }) => {
+  http.get('*/api/clusters/workloads', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('workloads')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch workloads' }, { status: 504 });
+    }
+
+    // Return empty workloads if configured
+    if (shouldApiReturnEmpty('workloads')) {
+      return HttpResponse.json({
+        cluster: 'cluster-default',
+        workloads: [],
+        validations: { workload: {} }
+      });
+    }
+
     const url = new URL(request.url);
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const workloads = getWorkloadsForNamespaces(namespaces);
@@ -819,7 +858,21 @@ export const workloadHandlers = [
   }),
 
   // Clusters apps
-  http.get('*/api/clusters/apps', ({ request }) => {
+  http.get('*/api/clusters/apps', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('applications')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch applications' }, { status: 504 });
+    }
+
+    // Return empty applications if configured
+    if (shouldApiReturnEmpty('applications')) {
+      return HttpResponse.json({
+        cluster: 'cluster-default',
+        applications: []
+      });
+    }
+
     const url = new URL(request.url);
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const applications = getAppsForNamespaces(namespaces);

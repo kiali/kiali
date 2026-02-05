@@ -1,9 +1,12 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import {
   getAllControlPlanes,
   getClusterHealthStatus,
   getClusterValidationCounts,
-  getScenarioConfig
+  getResponseDelay,
+  getScenarioConfig,
+  shouldApiReturnEmpty,
+  shouldApiTimeout
 } from '../scenarios';
 import { ComponentStatus, Status } from '../../types/IstioStatus';
 
@@ -481,8 +484,19 @@ const mockCertsInfo = [
 ];
 
 export const istioHandlers = [
-  // Istio status
-  http.get('*/api/istio/status', () => {
+  // Istio status (used by clusters card)
+  http.get('*/api/istio/status', async () => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('clusters')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch cluster status' }, { status: 504 });
+    }
+
+    // Return empty status if configured
+    if (shouldApiReturnEmpty('clusters')) {
+      return HttpResponse.json([]);
+    }
+
     return HttpResponse.json(generateIstioStatus());
   }),
 
@@ -492,7 +506,22 @@ export const istioHandlers = [
   }),
 
   // All istio configs - returns IstioConfigList format
-  http.get('*/api/istio/config', () => {
+  http.get('*/api/istio/config', async () => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('istioConfig')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch Istio config' }, { status: 504 });
+    }
+
+    // Return empty config list if configured
+    if (shouldApiReturnEmpty('istioConfig')) {
+      return HttpResponse.json({
+        permissions: {},
+        resources: {},
+        validations: {}
+      });
+    }
+
     return HttpResponse.json(generateMockIstioConfigList());
   }),
 
@@ -600,7 +629,18 @@ export const istioHandlers = [
   }),
 
   // Control planes
-  http.get('*/api/mesh/controlplanes', () => {
+  http.get('*/api/mesh/controlplanes', async () => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('controlPlanes')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch control planes' }, { status: 504 });
+    }
+
+    // Return empty control planes if configured
+    if (shouldApiReturnEmpty('controlPlanes')) {
+      return HttpResponse.json([]);
+    }
+
     return HttpResponse.json(generateControlPlanes());
   }),
 
