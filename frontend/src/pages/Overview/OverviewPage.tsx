@@ -6,7 +6,7 @@ import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
 import { DataPlaneStats } from './DataPlaneStats';
 import { ApplicationStats } from './ApplicationStats';
-import { WorkloadInsights } from './WorkloadInsights';
+import { ServiceInsights } from './ServiceInsights';
 import { useKialiDispatch } from 'hooks/redux';
 import { setAIContext } from 'helpers/ChatAI';
 import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
@@ -61,7 +61,7 @@ export const OverviewPage: React.FC = () => {
         </GridItem>
 
         <GridItem span={7}>
-          <WorkloadInsights />
+          <ServiceInsights />
         </GridItem>
       </Grid>
     </div>
