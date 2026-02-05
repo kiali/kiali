@@ -87,7 +87,13 @@ Given('Control planes API returns 1 unhealthy control plane in cluster {string}'
     },
     {
       statusCode: 200,
-      body: [makeControlPlane({ clusterName, istiodName: `istiod-${clusterName}`, status: 'Unhealthy' })]
+      body: [
+        makeControlPlane({
+          clusterName,
+          istiodName: `istiod-${clusterName.toLowerCase()}`,
+          status: 'Unhealthy'
+        })
+      ]
     }
   ).as('controlPlanes');
 });
