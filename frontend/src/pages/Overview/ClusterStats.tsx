@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle, Spinner } from '@patternfly/react-core';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
@@ -22,6 +22,7 @@ import {
 import { classes } from 'typestyle';
 import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
 import { StatCountPopover } from './StatCountPopover';
+import { OverviewCardLoadingState } from './OverviewCardState';
 
 export const ClusterStats: React.FC = () => {
   const { isLoading, statusMap } = useClusterStatus();
@@ -68,7 +69,7 @@ export const ClusterStats: React.FC = () => {
       </CardHeader>
       <CardBody className={cardBodyStyle}>
         {isLoading ? (
-          <Spinner size="lg" />
+          <OverviewCardLoadingState message={t('Fetching cluster stats data...')} />
         ) : (
           <div className={statsContainerStyle}>
             {healthy > 0 && (

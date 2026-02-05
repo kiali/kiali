@@ -12,6 +12,11 @@ export type ApplicationsResult = {
   applications: AppListItemResponse[];
   duration: number;
   isLoading: boolean;
+  metrics: {
+    latency: string;
+    no_traffic: string;
+    rps: string;
+  };
 };
 
 export const useApplications = (): ApplicationsResult => {
@@ -20,47 +25,85 @@ export const useApplications = (): ApplicationsResult => {
   const duration = useKialiSelector(durationSelector);
   const [isLoading, setIsLoading] = React.useState(false);
   const [applications, setApplications] = React.useState<AppListItemResponse[]>([]);
+  const [metrics, setMetrics] = React.useState<{ latency: string; no_traffic: string; rps: string }>({
+    latency: '',
+    no_traffic: '',
+    rps: ''
+  });
 
-  const fetchApplications = React.useCallback((): void => {
-    setIsLoading(true);
-    const fetchPromises: Promise<AppListItemResponse[]>[] = [];
+  const fetchApplications = React.useCallback(
+    (duration: number): void => {
+      setIsLoading(true);
+      const fetchPromises: Promise<AppListItemResponse[]>[] = [];
 
-    if (isMultiCluster) {
-      for (let cluster in serverConfig.clusters) {
+      if (isMultiCluster) {
+        for (let cluster in serverConfig.clusters) {
+          fetchPromises.push(
+            API.getClusterApps(
+              '',
+              { health: 'true', istioResources: 'false', rateInterval: `${String(duration)}s`, metrics: 'true' },
+              cluster
+            ).then(response => response.data.applications)
+          );
+        }
+      } else {
         fetchPromises.push(
-          API.getClusterApps('', { health: 'true', istioResources: 'false' }, cluster).then(
-            response => response.data.applications
-          )
+          API.getClusterApps(
+            '',
+            { health: 'true', istioResources: 'false', rateInterval: `${String(duration)}s`, metrics: 'true' },
+            undefined
+          ).then(response => response.data.applications)
         );
       }
-    } else {
-      fetchPromises.push(
-        API.getClusterApps('', { health: 'true', istioResources: 'false' }, undefined).then(
-          response => response.data.applications
-        )
-      );
-    }
 
-    Promise.all(fetchPromises)
-      .then(results => {
-        setApplications(results.flat());
-      })
-      .catch(error => {
-        addError(t('Error fetching Applications.'), error);
-        setApplications([]);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [t]);
+      Promise.all(fetchPromises)
+        .then(results => {
+          const apps = results.flat();
+          setApplications(apps);
+
+          const rpsValues = apps
+            .map(app => Number.parseFloat(app.metrics?.request_rate_total ?? ''))
+            .filter(value => Number.isFinite(value));
+          const rpsSum = rpsValues.reduce((acc, value) => acc + value, 0);
+          const rpsFormatted =
+            rpsValues.length === 0 ? '' : rpsSum >= 1000 ? `${(rpsSum / 1000).toFixed(1)}K` : rpsSum.toFixed(1);
+
+          const latencyValues = apps
+            .map(app => Number.parseFloat(app.metrics?.request_latency_p50_ms ?? ''))
+            .filter(value => Number.isFinite(value));
+          const latencyAvg =
+            latencyValues.length > 0 ? latencyValues.reduce((acc, value) => acc + value, 0) / latencyValues.length : 0;
+          const noTrafficCount = apps.filter(app => {
+            const value = Number.parseFloat(app.metrics?.request_rate_total ?? '');
+            return !Number.isFinite(value) || value <= 0;
+          }).length;
+
+          setMetrics({
+            latency: latencyValues.length > 0 ? latencyAvg.toFixed(2) : '',
+            no_traffic: String(noTrafficCount),
+            rps: rpsFormatted
+          });
+        })
+        .catch(error => {
+          addError(t('Error fetching Applications.'), error);
+          setApplications([]);
+          setMetrics({ latency: '', rps: '', no_traffic: '' });
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    },
+    [t]
+  );
 
   React.useEffect(() => {
-    fetchApplications();
-  }, [lastRefreshAt, fetchApplications]);
+    fetchApplications(duration);
+  }, [lastRefreshAt, fetchApplications, duration]);
 
   return {
     applications,
     duration,
-    isLoading
+    isLoading,
+    metrics
   };
 };
