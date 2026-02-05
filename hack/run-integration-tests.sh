@@ -230,7 +230,7 @@ TEMPO=$TEMPO
 === SETTINGS ===
 EOM
 
-set -e
+set -eo pipefail
 
 if [ -n "${ISTIO_VERSION}" ]; then
   ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
@@ -327,14 +327,14 @@ ensureKialiTracesReady() {
     echo "Multicluster request"
     trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
   fi
-
   infomsg "Traces url: ${trace_url}"
+  set +o pipefail
   while true; do
     result=$(curl -k -s --fail "$trace_url" \
         -H 'Accept: application/json, text/plain, */*' \
         -H 'Content-Type: application/json' | jq -r '.data')
 
-    if [ "$result" == "[]" ]; then
+    if [ -z "$result" ] || [ "$result" == "[]" ]; then
       local now=$(date +%s)
       if [ "${now}" -gt "${end_time}" ]; then
         echo "Timed out waiting for Kiali to get any trace. Examine open telemetry collector logs below:"
@@ -348,6 +348,7 @@ ensureKialiTracesReady() {
     fi
 
   done
+  set -o pipefail
 }
 
 ensureBookinfoGraphReady() {
