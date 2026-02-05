@@ -66,6 +66,47 @@ func TestGetNamespaceValidations(t *testing.T) {
 	assert.NotNil(validations)
 }
 
+func TestNamespaceLabelChangeTriggersValidation(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
+		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+
+	// Initial validation run
+	changeMap := map[string]string{}
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	validationPerformed, validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.True(validationPerformed)
+	vs.kialiCache.Validations().Replace(validations)
+
+	// Verify namespace keys are tracked in changeMap
+	assert.Contains(changeMap, "NS::test")
+	assert.Contains(changeMap, "NS::test2")
+	assert.Contains(changeMap, "validation-num-namespaces")
+
+	// Second run without changes should skip validation
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	validationPerformed, validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.False(validationPerformed)
+	assert.Nil(validations)
+
+	// Simulate a namespace label change by modifying the changeMap entry
+	// This simulates what would happen if a namespace's labels changed
+	changeMap["NS::test"] = "modified-labels"
+
+	// Third run should detect the change and perform validation
+	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
+	require.NoError(err)
+	assert.True(vInfo.hasBaseChange, "Namespace label change should set hasBaseChange to true")
+}
+
 func TestGetIstioObjectValidations(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()

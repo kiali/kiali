@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -45,10 +46,7 @@ func IstioConfigList(
 			}
 		}
 
-		includeValidations := false
-		if _, found := query["validate"]; found {
-			includeValidations = true
-		}
+		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
 
 		labelSelector := ""
 		if _, found := query["labelSelector"]; found {
@@ -124,11 +122,8 @@ func IstioConfigDetails(
 		objectKind := params["kind"]
 		object := params["object"]
 
-		includeValidations := false
 		query := r.URL.Query()
-		if _, found := query["validate"]; found {
-			includeValidations = true
-		}
+		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
 
 		includeHelp := false
 		if _, found := query["help"]; found {

@@ -17,7 +17,6 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
@@ -38,6 +37,7 @@ type workloadParams struct {
 	// Optional
 	IncludeHealth         bool `json:"health"`
 	IncludeIstioResources bool `json:"istioResources"`
+	IncludeValidations    bool `json:"validate"`
 }
 
 func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
@@ -56,6 +56,8 @@ func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	if err != nil {
 		p.IncludeIstioResources = true
 	}
+	// Check for "validate" query param - defaults to false like other detail handlers
+	p.IncludeValidations, _ = strconv.ParseBool(query.Get("validate"))
 
 	p.WorkloadGVK, err = util.StringToGVK(query.Get("gvk"))
 	if err != nil {
@@ -162,7 +164,7 @@ func WorkloadDetails(
 
 		criteria := business.WorkloadCriteria{
 			Namespace: p.Namespace, WorkloadName: p.WorkloadName,
-			WorkloadGVK: p.WorkloadGVK, IncludeIstioResources: true, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
+			WorkloadGVK: p.WorkloadGVK, IncludeIstioResources: p.IncludeIstioResources, IncludeServices: true, IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval,
 			QueryTime: p.QueryTime, Cluster: p.ClusterName,
 		}
 
@@ -172,7 +174,10 @@ func WorkloadDetails(
 			return
 		}
 
-		includeValidations := p.IncludeIstioResources
+		includeValidations := p.IncludeValidations
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
+		}
 
 		istioConfigValidations := models.IstioValidations{}
 		var errValidations error
@@ -192,12 +197,16 @@ func WorkloadDetails(
 			wg.Wait()
 			workloadDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if workloadDetails != nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			workloadDetails.Validations = models.IstioValidations{}
 		}
 
 		if criteria.IncludeHealth && err == nil {
 			workloadDetails.Health, err = business.Health.GetWorkloadHealth(r.Context(), criteria.Namespace, criteria.Cluster, criteria.WorkloadName, criteria.RateInterval, criteria.QueryTime, workloadDetails)
 			if err != nil {
 				handleErrorResponse(w, err)
+				return
 			}
 		}
 
@@ -244,11 +253,10 @@ func WorkloadUpdate(
 		}
 
 		cluster := clusterNameFromQuery(conf, query)
-		log.Debugf("Cluster: %s", cluster)
 
-		includeValidations := false
-		if _, found := query["validate"]; found {
-			includeValidations = true
+		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
 		}
 
 		body, err := io.ReadAll(r.Body)
@@ -274,6 +282,9 @@ func WorkloadUpdate(
 			wg.Wait()
 			workloadDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if workloadDetails != nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			workloadDetails.Validations = models.IstioValidations{}
 		}
 		if err != nil {
 			handleErrorResponse(w, err)

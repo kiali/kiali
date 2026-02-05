@@ -149,20 +149,21 @@ func ServiceDetails(
 			return
 		}
 
-		// Rate interval is needed to fetch request rates based health
 		queryParams := r.URL.Query()
+		cluster := clusterNameFromQuery(conf, queryParams)
+
+		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = defaultHealthRateInterval
 		}
 
-		includeValidations := false
-		if _, found := queryParams["validate"]; found {
-			includeValidations = true
+		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
 		}
 
 		params := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
 
 		namespace := params["namespace"]
 		service := params["service"]
@@ -190,6 +191,9 @@ func ServiceDetails(
 			wg.Wait()
 			serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
 			err = errValidations
+		} else if serviceDetails != nil && serviceDetails.Validations == nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			serviceDetails.Validations = models.IstioValidations{}
 		}
 
 		if err != nil {
@@ -218,8 +222,10 @@ func ServiceUpdate(
 			return
 		}
 
-		// Rate interval is needed to fetch request rates based health
 		queryParams := r.URL.Query()
+		cluster := clusterNameFromQuery(conf, queryParams)
+
+		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = defaultHealthRateInterval
@@ -229,13 +235,13 @@ func ServiceUpdate(
 		if patchType == "" {
 			patchType = defaultPatchType
 		}
-		includeValidations := false
-		if _, found := queryParams["validate"]; found {
-			includeValidations = true
+
+		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+			includeValidations = false
 		}
 
 		params := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
 
 		namespace := params["namespace"]
 		service := params["service"]
@@ -269,6 +275,9 @@ func ServiceUpdate(
 			wg.Wait()
 			serviceDetails.Validations = istioConfigValidations
 			err = errValidations
+		} else if serviceDetails != nil && serviceDetails.Validations == nil {
+			// Ensure validations is never nil to prevent frontend crashes
+			serviceDetails.Validations = models.IstioValidations{}
 		}
 
 		if err != nil {
