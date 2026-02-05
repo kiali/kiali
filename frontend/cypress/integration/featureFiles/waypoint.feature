@@ -29,10 +29,10 @@ Feature: Kiali Waypoint related features
     And the "Details" column on the "waypoint" row has the text "Waypoint Proxy"
     And the "Details" column on the "waypoint" row has a link ending in "bookinfo/istio/gateway.networking.k8s.io/v1/Gateway/waypoint"
 
-  Scenario: [Workload details - productpage] The workload productpage is enrolled in waypoint
-    Given user is at the details page for the "workload" "bookinfo/productpage-v1" located in the "" cluster
+  Scenario: [Workload details - ratings] The workload ratings is enrolled in waypoint
+    Given user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "" cluster
     Then user sees "ambient" badge
-    Then the user cannot see the "missing-sidecar" badge for "product-v1" workload in "bookinfo" namespace
+    Then the user cannot see the "missing-sidecar" badge for "ratings-v1" workload in "bookinfo" namespace
     And the user hovers in the "ambient" label and sees "L4" in the tooltip
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
     And the user sees the "Protocol" option in the pod tooltip, and is "HBONE"
