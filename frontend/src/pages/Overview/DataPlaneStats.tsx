@@ -1,16 +1,5 @@
 import * as React from 'react';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Label,
-  Popover,
-  PopoverPosition,
-  Spinner
-} from '@patternfly/react-core';
+import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label, Spinner } from '@patternfly/react-core';
 import { router } from 'app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -48,6 +37,7 @@ import {
 import { classes } from 'typestyle';
 import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
 import { camelCase } from 'lodash';
+import { StatCountPopover } from './StatCountPopover';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -338,9 +328,8 @@ export const DataPlaneStats: React.FC = () => {
                 </div>
               )}
               {failureCount > 0 && (
-                <Popover
-                  aria-label={t('Namespaces in Failure')}
-                  position={PopoverPosition.right}
+                <StatCountPopover
+                  ariaLabel={t('Namespaces in Failure')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -353,17 +342,17 @@ export const DataPlaneStats: React.FC = () => {
                     FAILURE.id as HealthStatusId,
                     t('View all failure namespaces')
                   )}
-                >
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-failure">
-                    <span className={linkStyle}>{failureCount}</span>
-                    {createIcon(FAILURE)}
-                  </div>
-                </Popover>
+                  trigger={
+                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-failure">
+                      <span className={linkStyle}>{failureCount}</span>
+                      {createIcon(FAILURE)}
+                    </div>
+                  }
+                />
               )}
               {degradedCount > 0 && (
-                <Popover
-                  aria-label={t('Namespaces in Degraded')}
-                  position={PopoverPosition.right}
+                <StatCountPopover
+                  ariaLabel={t('Namespaces in Degraded')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -376,17 +365,17 @@ export const DataPlaneStats: React.FC = () => {
                     DEGRADED.id as HealthStatusId,
                     t('View all degraded namespaces')
                   )}
-                >
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-degraded">
-                    <span className={linkStyle}>{degradedCount}</span>
-                    {createIcon(DEGRADED)}
-                  </div>
-                </Popover>
+                  trigger={
+                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-degraded">
+                      <span className={linkStyle}>{degradedCount}</span>
+                      {createIcon(DEGRADED)}
+                    </div>
+                  }
+                />
               )}
               {notReadyCount > 0 && (
-                <Popover
-                  aria-label={t('Namespaces in Not Ready')}
-                  position={PopoverPosition.right}
+                <StatCountPopover
+                  ariaLabel={t('Namespaces in Not Ready')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -399,17 +388,17 @@ export const DataPlaneStats: React.FC = () => {
                     NOT_READY.id as HealthStatusId,
                     t('View all not ready namespaces')
                   )}
-                >
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-not-ready">
-                    <span className={linkStyle}>{notReadyCount}</span>
-                    {createIcon(NOT_READY)}
-                  </div>
-                </Popover>
+                  trigger={
+                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-not-ready">
+                      <span className={linkStyle}>{notReadyCount}</span>
+                      {createIcon(NOT_READY)}
+                    </div>
+                  }
+                />
               )}
               {naCount > 0 && (
-                <Popover
-                  aria-label={t('Namespaces with no health information')}
-                  position={PopoverPosition.right}
+                <StatCountPopover
+                  ariaLabel={t('Namespaces with no health information')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -418,12 +407,13 @@ export const DataPlaneStats: React.FC = () => {
                     </span>
                   }
                   bodyContent={popoverContentFor(namespacesNA, NA.id as HealthStatusId, t('View Namespaces'))}
-                >
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
-                    <span className={linkStyle}>{naCount}</span>
-                    {createIcon(NA)}
-                  </div>
-                </Popover>
+                  trigger={
+                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
+                      <span className={linkStyle}>{naCount}</span>
+                      {createIcon(NA)}
+                    </div>
+                  }
+                />
               )}
             </div>
             <div className={verticalDividerStyle} />

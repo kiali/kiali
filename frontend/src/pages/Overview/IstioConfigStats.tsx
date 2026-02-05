@@ -1,15 +1,5 @@
 import * as React from 'react';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Label,
-  Popover,
-  PopoverPosition
-} from '@patternfly/react-core';
+import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
@@ -38,6 +28,7 @@ import {
   noUnderlineStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
+import { StatCountPopover } from './StatCountPopover';
 
 const WARNING_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.Warning, IstioConfigStatusLabel.NotValidated];
 const ERROR_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.NotValid];
@@ -180,38 +171,38 @@ export const IstioConfigStats: React.FC = () => {
               </div>
             )}
             {istioConfigStats.warnings > 0 && (
-              <Popover
-                aria-label={t('Istio configs with warnings')}
-                position={PopoverPosition.right}
+              <StatCountPopover
+                ariaLabel={t('Istio configs with warnings')}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationTriangle /> {t('Istio configs')}
                   </span>
                 }
                 bodyContent={renderPopoverContent(warningIssues, 'View warning Istio configs', WARNING_FILTERS)}
-              >
-                <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-warnings">
-                  <span className={linkStyle}>{istioConfigStats.warnings}</span>
-                  <KialiIcon.ExclamationTriangle />
-                </div>
-              </Popover>
+                trigger={
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-warnings">
+                    <span className={linkStyle}>{istioConfigStats.warnings}</span>
+                    <KialiIcon.ExclamationTriangle />
+                  </div>
+                }
+              />
             )}
             {istioConfigStats.errors > 0 && (
-              <Popover
-                aria-label={t('Istio configs with errors')}
-                position={PopoverPosition.right}
+              <StatCountPopover
+                ariaLabel={t('Istio configs with errors')}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationCircle /> {t('Istio configs')}
                   </span>
                 }
                 bodyContent={renderPopoverContent(errorIssues, 'View invalid Istio configs', ERROR_FILTERS)}
-              >
-                <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-errors">
-                  <span className={linkStyle}>{istioConfigStats.errors}</span>
-                  <KialiIcon.ExclamationCircle />
-                </div>
-              </Popover>
+                trigger={
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-errors">
+                    <span className={linkStyle}>{istioConfigStats.errors}</span>
+                    <KialiIcon.ExclamationCircle />
+                  </div>
+                }
+              />
             )}
           </div>
         )}

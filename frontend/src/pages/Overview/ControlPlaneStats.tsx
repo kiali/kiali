@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle, Popover, PopoverPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
@@ -23,6 +23,7 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { isUnhealthy, isHealthy } from 'utils/StatusUtils';
+import { StatCountPopover } from './StatCountPopover';
 
 export const ControlPlaneStats: React.FC = () => {
   const { controlPlanes, isError, isLoading, refresh } = useControlPlanes();
@@ -79,21 +80,21 @@ export const ControlPlaneStats: React.FC = () => {
               </div>
             )}
             {unhealthy > 0 && (
-              <Popover
-                aria-label={t('Control planes with issues')}
-                position={PopoverPosition.right}
+              <StatCountPopover
+                ariaLabel={t('Control planes with issues')}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationTriangle /> {t('Control planes')}
                   </span>
                 }
                 bodyContent={popoverContent}
-              >
-                <div className={classes(statItemStyle, clickableStyle)} data-test="control-planes-issues">
-                  <span className={linkStyle}>{unhealthy}</span>
-                  <KialiIcon.ExclamationTriangle />
-                </div>
-              </Popover>
+                trigger={
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="control-planes-issues">
+                    <span className={linkStyle}>{unhealthy}</span>
+                    <KialiIcon.ExclamationTriangle />
+                  </div>
+                }
+              />
             )}
           </div>
         )}
