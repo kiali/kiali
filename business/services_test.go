@@ -334,7 +334,7 @@ func TestGetServiceTracingNameUseWaypointNameConfig(t *testing.T) {
 		require.NoError(err)
 		assert.Equal("ratings", s.App)
 		assert.Equal("ratings.bookinfo.svc.cluster.local", s.Lookup)
-		assert.Empty(s.WaypointName)
+		assert.Equal("ratings.bookinfo.svc.cluster.local", s.WaypointName)
 	}
 
 	{
