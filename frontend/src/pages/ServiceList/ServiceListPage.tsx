@@ -29,12 +29,6 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { setAIContext } from 'helpers/ChatAI';
-import { kialiStyle } from 'styles/StyleUtils';
-
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
-});
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;

@@ -8,7 +8,7 @@ import { PFColors } from 'components/Pf/PfColors';
 
 const containerStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
-  paddingBottom: '1.5rem'
+  paddingBottom: '1rem'
 });
 
 const headerRowStyle = kialiStyle({
