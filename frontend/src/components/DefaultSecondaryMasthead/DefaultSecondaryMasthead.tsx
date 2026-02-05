@@ -8,7 +8,7 @@ import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
-const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'services', 'workloads'];
+const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
@@ -31,7 +31,9 @@ const flexStyle = kialiStyle({
 });
 
 const rightToolbarStyle = kialiStyle({
-  marginLeft: 'auto'
+  position: 'absolute',
+  right: '3rem',
+  zIndex: 1
 });
 
 const actionsToolbarStyle = kialiStyle({

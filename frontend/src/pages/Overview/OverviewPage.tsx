@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { Grid, GridItem, Title, TitleSizes } from '@patternfly/react-core';
+import { Grid, GridItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
-import { t } from 'utils/I18nUtils';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
@@ -11,15 +9,8 @@ import { ApplicationStats } from './ApplicationStats';
 import { WorkloadInsights } from './WorkloadInsights';
 import { useKialiDispatch } from 'hooks/redux';
 import { setAIContext } from 'helpers/ChatAI';
-
-const titleContainerStyle = kialiStyle({
-  borderBottom: `1px solid ${PFColors.BorderColor100}`,
-  marginBottom: '0.25rem'
-});
-
-const titleStyle = kialiStyle({
-  marginBottom: '1rem'
-});
+import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { Refresh } from 'components/Refresh/Refresh';
 
 const overviewPageStyle = kialiStyle({
   display: 'flex',
@@ -36,13 +27,11 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className={overviewPageStyle}>
-      <div className={titleContainerStyle}>
-        <Title headingLevel="h1" size={TitleSizes['2xl']} className={titleStyle}>
-          {t('Overview')}
-        </Title>
-      </div>
+      <DefaultSecondaryMasthead
+        hideNamespaceSelector={true}
+        rightToolbar={<Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />}
+      />
 
-      {/* Top row - Summary cards */}
       <Grid hasGutter>
         <GridItem span={7}>
           <Grid hasGutter>

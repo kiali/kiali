@@ -31,7 +31,6 @@ import { availableFilters, nameFilter } from './Filters';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
-import { kialiStyle } from 'styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import { TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
@@ -60,11 +59,6 @@ import { serverConfig } from '../../config';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
-
-const refreshStyle = kialiStyle({
-  marginLeft: '0.4rem',
-  marginRight: '0.4rem'
-});
 
 /**
  * Chunks an array into smaller arrays of a specified size
@@ -1117,9 +1111,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       <>
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
-          rightToolbar={
-            <Refresh className={refreshStyle} id="namespaces-list-refresh" disabled={false} manageURL={true} />
-          }
+          rightToolbar={<Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />}
         />
         <RenderContent>
           <VirtualList
