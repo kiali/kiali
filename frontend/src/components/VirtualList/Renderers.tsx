@@ -49,6 +49,7 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
+import { isDataPlaneNamespace } from 'utils/NamespaceHealthUtils';
 
 const rendererInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',
@@ -484,17 +485,7 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 };
 
 export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
-  // Determine if namespace is a data plane namespace
-  // A namespace is a data plane namespace if:
-  // - It's not a control plane namespace
-  // - AND (it has the injection label enabled OR has the revision label set OR is ambient)
-  const isDataPlane =
-    !ns.isControlPlane &&
-    (ns.isAmbient ||
-      (ns.labels &&
-        (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
-          (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
-            ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''))));
+  const isDataPlane = isDataPlaneNamespace(ns);
 
   return (
     <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
@@ -533,17 +524,6 @@ export const getNamespaceRevisions = (ns: NamespaceInfo): string[] => {
     .split(',')
     .map(r => r.trim())
     .filter(r => r !== '');
-};
-
-export const isDataPlaneNamespace = (ns: NamespaceInfo): boolean => {
-  const hasInjectionEnabled = !!(ns.labels && ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled');
-  const hasRevisionLabel = !!(
-    ns.labels &&
-    ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
-    ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''
-  );
-  const isDataPlane = !ns.isControlPlane && (ns.isAmbient || hasInjectionEnabled || hasRevisionLabel);
-  return isDataPlane && !ns.isAmbient;
 };
 
 export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {

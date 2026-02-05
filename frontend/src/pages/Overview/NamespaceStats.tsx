@@ -27,7 +27,11 @@ import { durationSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
-import { combinedWorstStatus, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceHealthUtils';
+import {
+  combinedWorstStatus,
+  isDataPlaneNamespace,
+  namespaceStatusesFromNamespaceHealth
+} from 'utils/NamespaceHealthUtils';
 import { addDanger } from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { ApiError } from 'types/Api';
@@ -112,10 +116,6 @@ const statusLabelStyle = kialiStyle({
   }
 });
 
-const hasIstioInjection = (ns: Namespace): boolean => {
-  return !!ns.labels && (ns.labels['istio-injection'] === 'enabled' || !!ns.labels['istio.io/rev']);
-};
-
 // Maximum number of items to show in the popover
 const MAX_POPOVER_ITEMS = 3;
 
@@ -165,9 +165,7 @@ export const NamespaceStats: React.FC = () => {
       }
 
       // Overview card is scoped to data-plane namespaces only (ambient or sidecar-injected).
-      const dataPlaneNamespaces = namespaces.filter(
-        ns => !ns.isControlPlane && (ns.isAmbient || hasIstioInjection(ns))
-      );
+      const dataPlaneNamespaces = namespaces.filter(isDataPlaneNamespace);
       if (dataPlaneNamespaces.length === 0) {
         setHealthByNamespace({});
         return;
@@ -241,13 +239,14 @@ export const NamespaceStats: React.FC = () => {
 
   namespaces.forEach(ns => {
     // Overview card focuses on data-plane namespaces
-    if (ns.isControlPlane || !(ns.isAmbient || hasIstioInjection(ns))) {
+    if (!isDataPlaneNamespace(ns)) {
       return;
     }
 
     if (ns.isAmbient) {
       ambient++;
-    } else if (hasIstioInjection(ns)) {
+    } else {
+      // Sidecar-injected data-plane namespace
       sidecar++;
     }
 
@@ -272,8 +271,7 @@ export const NamespaceStats: React.FC = () => {
     const params = new URLSearchParams();
     params.set(typeFilterParam, dataPlaneParamValue);
 
-    // Namespaces page health filter does not include NA; for NA, navigate with only the data plane filter.
-    if (status && status !== (NA.id as HealthStatusId)) {
+    if (status) {
       params.set(healthFilterParam, status);
     }
 
