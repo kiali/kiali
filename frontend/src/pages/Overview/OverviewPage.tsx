@@ -27,6 +27,16 @@ const durationLabelStyle = kialiStyle({
   whiteSpace: 'nowrap'
 });
 
+const secondRowItemStyle = kialiStyle({
+  display: 'flex',
+  minHeight: '40vh',
+  $nest: {
+    '& > *': {
+      flex: 1
+    }
+  }
+});
+
 export const OverviewPage: React.FC = () => {
   const dispatch = useKialiDispatch();
 
@@ -49,7 +59,7 @@ export const OverviewPage: React.FC = () => {
       />
 
       <Grid hasGutter>
-        <GridItem span={7}>
+        <GridItem span={6}>
           <Grid hasGutter>
             <GridItem span={4}>
               <ClusterStats />
@@ -65,14 +75,11 @@ export const OverviewPage: React.FC = () => {
           </Grid>
         </GridItem>
 
-        <GridItem span={5}>
+        <GridItem span={6}>
           <DataPlaneStats />
         </GridItem>
-      </Grid>
-
-      {/* Bottom row - Applications and Workload insights */}
-      <Grid hasGutter>
-        <GridItem span={5}>
+        {/* Bottom row - Applications and Workload insights */}
+        <GridItem span={4} className={secondRowItemStyle}>
           <ApplicationStats />
         </GridItem>
 
