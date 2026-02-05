@@ -14,8 +14,7 @@ import {
 import { router } from 'app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { KialiIcon } from 'config/KialiIcon';
-import { createIcon } from 'config/KialiIcon';
+import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
@@ -36,8 +35,8 @@ import { addDanger } from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { ApiError } from 'types/Api';
 import {
-  cardStyle,
   cardBodyStyle,
+  cardStyle,
   clickableStyle,
   iconStyle,
   linkStyle,
@@ -137,7 +136,7 @@ const getHealthStatusLabel = (status?: HealthStatusId): string => {
   }
 };
 
-export const NamespaceStats: React.FC = () => {
+export const DataPlaneStats: React.FC = () => {
   const { isLoading, namespaces } = useNamespaces();
   const duration = useSelector(durationSelector) as DurationInSeconds;
   const [isHealthLoading, setIsHealthLoading] = React.useState<boolean>(false);

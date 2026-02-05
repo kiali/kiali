@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { ReactWrapper } from 'enzyme';
 
-import { NamespaceStats } from '../NamespaceStats';
+import { DataPlaneStats } from '../DataPlaneStats';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
 import { Paths } from 'config';
 import * as NamespaceHealthService from 'services/NamespaceHealth';
@@ -71,7 +71,7 @@ const flushAllPromises = async (): Promise<void> => {
 const mountAndFlush = async (): Promise<ReactWrapper> => {
   let wrapper!: ReactWrapper;
   await act(async () => {
-    wrapper = mount(<NamespaceStats />);
+    wrapper = mount(<DataPlaneStats />);
   });
   await act(async () => {
     await flushAllPromises();
@@ -80,7 +80,7 @@ const mountAndFlush = async (): Promise<ReactWrapper> => {
   return wrapper;
 };
 
-describe('Overview NamespaceStats', () => {
+describe('Overview DataPlaneStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useSelectorMock.mockReturnValue(60);

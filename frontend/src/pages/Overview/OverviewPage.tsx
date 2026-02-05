@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
-import { NamespaceStats } from './NamespaceStats';
+import { DataPlaneStats } from './DataPlaneStats';
 import { ApplicationStats } from './ApplicationStats';
 import { WorkloadInsights } from './WorkloadInsights';
 import { useKialiDispatch } from 'hooks/redux';
@@ -50,7 +50,7 @@ export const OverviewPage: React.FC = () => {
         </GridItem>
 
         <GridItem span={5}>
-          <NamespaceStats />
+          <DataPlaneStats />
         </GridItem>
       </Grid>
 
