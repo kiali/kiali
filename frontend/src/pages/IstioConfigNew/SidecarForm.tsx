@@ -104,7 +104,8 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
           egressHosts: prevState.egressHosts,
           addEgressHost: {
             host: ''
-          }
+          },
+          validEgressHost: false
         };
       },
       () => this.props.onChange(this.state)
