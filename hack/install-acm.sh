@@ -71,10 +71,10 @@
 #   install-kiali        - Install Kiali configured for ACM observability (supports 3 methods: helm-server, olm-operator, helm-operator)
 #   uninstall-kiali      - Remove Kiali installation
 #   status-kiali         - Check the status of Kiali installation
-#   install-app          - Install a simple sidecar test mesh application
-#   uninstall-app        - Remove the sidecar test application
-#   status-app           - Check the status of the sidecar test application
-#   traffic              - Generate HTTP traffic to the sidecar test application
+#   install-sidecar-app  - Install a sidecar test mesh application (frontend -> backend)
+#   uninstall-sidecar-app - Remove the sidecar test application
+#   status-sidecar-app   - Check the status of the sidecar test application
+#   traffic-sidecar      - Generate HTTP traffic to the sidecar test application
 #   install-ambient-app  - Install an Ambient mode test application (requires Ambient Istio)
 #   uninstall-ambient-app - Remove the Ambient test application
 #   status-ambient-app   - Check the status of the Ambient test application
@@ -145,8 +145,8 @@ KIALI_OLM_OPERATOR_NAMESPACE="openshift-operators"
 KIALI_HELM_OPERATOR_NAMESPACE="kiali-operator"
 
 # Test app defaults
-DEFAULT_APP_NAMESPACE="test-app"
-DEFAULT_AMBIENT_APP_NAMESPACE="test-app-ambient"
+DEFAULT_SIDECAR_APP_NAMESPACE="test-sidecar-app"
+DEFAULT_AMBIENT_APP_NAMESPACE="test-ambient-app"
 DEFAULT_TRAFFIC_COUNT="10"
 DEFAULT_TRAFFIC_INTERVAL="1"
 
@@ -504,55 +504,6 @@ stringData:
 EOF
 }
 
-configure_istio_metrics_for_acm() {
-  # Configure Istio metric collection so ACM can scrape and federate Istio metrics.
-  # Based on Red Hat OpenShift Service Mesh 3.0 documentation:
-  # https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/observability/index
-  #
-  # IMPORTANT: OpenShift monitoring ignores namespaceSelector in PodMonitor/ServiceMonitor.
-  # Therefore, PodMonitor must be created in EACH namespace that has Istio sidecars.
-  # This function only creates monitors in istio-system. For application namespaces,
-  # the install-app command creates the PodMonitor in that namespace.
-
-  if ! ${CLIENT_EXE} get namespace istio-system &>/dev/null 2>&1; then
-    warnmsg "istio-system namespace not found. Skipping Istio metrics configuration."
-    warnmsg "Install Istio first, then re-run install-acm to configure metrics."
-    return 0
-  fi
-
-  infomsg "Configuring Istio metrics collection for ACM..."
-
-  # Create ServiceMonitor for istiod control plane (per Red Hat docs)
-  infomsg "Creating ServiceMonitor for istiod..."
-  cat <<EOF | ${CLIENT_EXE} apply -f -
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: istiod-monitor
-  namespace: istio-system
-spec:
-  targetLabels:
-  - app
-  selector:
-    matchLabels:
-      istio: pilot
-  endpoints:
-  - port: http-monitoring
-    interval: 30s
-EOF
-
-  # Create PodMonitor for Istio proxies in istio-system namespace
-  # This monitors any sidecars in istio-system (e.g., ingress/egress gateways)
-  create_istio_podmonitor "istio-system"
-
-  # Create PodMonitor for ztunnel if Ambient mode is detected
-  # Ztunnel container is named 'istio-proxy' and has prometheus.io/scrape annotation,
-  # so the standard istio-proxies-monitor works for ztunnel too
-  create_ztunnel_podmonitor
-
-  infomsg "Istio metrics collection configured for ACM"
-}
-
 # Creates a PodMonitor for Istio proxies in the specified namespace.
 # Must be called for EACH namespace that has Istio sidecars because
 # OpenShift monitoring ignores namespaceSelector in PodMonitor objects.
@@ -642,45 +593,6 @@ spec:
 EOF
 }
 
-# Creates a PodMonitor for ztunnel pods if Ambient mode is detected.
-# Ztunnel is the L4 proxy component in Istio Ambient mode.
-# The ztunnel container is named 'istio-proxy' and has prometheus.io/scrape annotation,
-# so we can use the standard create_istio_podmonitor function which has proper relabelings
-# including mesh_id, app/version extraction, and IPv4/IPv6 address handling.
-# Note: ztunnel can be in istio-system (istioctl) or ztunnel namespace (Sail Operator).
-create_ztunnel_podmonitor() {
-  # Determine which namespace ztunnel is running in
-  # Retry a few times to handle timing issues where ztunnel may still be deploying
-  local ztunnel_namespace=""
-  local max_attempts=5
-  local attempt=1
-
-  while [ ${attempt} -le ${max_attempts} ]; do
-    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
-      ztunnel_namespace="ztunnel"
-      break
-    elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-      ztunnel_namespace="istio-system"
-      break
-    else
-      if [ ${attempt} -lt ${max_attempts} ]; then
-        debug "ztunnel daemonset not found (attempt ${attempt}/${max_attempts}), waiting 5s..."
-        sleep 5
-      fi
-      attempt=$((attempt + 1))
-    fi
-  done
-
-  if [ -z "${ztunnel_namespace}" ]; then
-    debug "ztunnel daemonset not found after ${max_attempts} attempts, skipping ztunnel PodMonitor (Ambient mode may not be enabled)"
-    return 0
-  fi
-
-  # Use the standard istio-proxies-monitor since ztunnel container is named 'istio-proxy'
-  # and has the prometheus.io/scrape annotation. This ensures consistent relabelings.
-  create_istio_podmonitor "${ztunnel_namespace}"
-}
-
 # Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
 # Per ACM docs, user workload metrics need ConfigMaps in the SOURCE namespace with key "uwl_metrics_list.yaml"
 create_namespace_metrics_allowlist() {
@@ -754,40 +666,6 @@ data:
 EOF
 
   debug "Metrics allowlist created in namespace ${namespace}"
-}
-
-configure_istio_metrics_allowlist() {
-  infomsg "Configuring ACM observability to collect Istio metrics for Kiali..."
-
-  # Wait for the default allowlist ConfigMap to be created by ACM
-  local max_wait=60
-  local waited=0
-  while ! ${CLIENT_EXE} get configmap observability-metrics-allowlist -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; do
-    if [ ${waited} -ge ${max_wait} ]; then
-      warnmsg "Timeout waiting for observability-metrics-allowlist ConfigMap"
-      warnmsg "Istio metrics may not be collected by ACM"
-      return 0
-    fi
-    debug "Waiting for observability-metrics-allowlist ConfigMap... (${waited}s)"
-    sleep 5
-    waited=$((waited + 5))
-  done
-
-  # For USER WORKLOAD metrics (Istio), ACM requires ConfigMaps in the SOURCE namespaces
-  # with key "uwl_metrics_list.yaml" (not "metrics_list.yaml")
-  # Per ACM docs: https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.9/html/observability/customizing-observability#adding-user-workload-metrics
-  # Complete list from Kiali FAQ: https://kiali.io/docs/faq/general/#requiredmetrics
-
-  # Create allowlist in istio-system namespace (for istiod and gateway metrics)
-  create_namespace_metrics_allowlist "istio-system"
-
-  infomsg "Istio metrics allowlist configured in istio-system"
-  infomsg "Metrics collector will include Istio metrics in next scrape cycle (~5 minutes)"
-
-  # Restart metrics collectors to pick up the new allowlist immediately
-  infomsg "Restarting metrics collectors to apply new allowlist..."
-  ${CLIENT_EXE} rollout restart deployment/uwl-metrics-collector-deployment -n ${OBSERVABILITY_NAMESPACE} || true
-  ${CLIENT_EXE} rollout restart deployment/metrics-collector-deployment -n ${OBSERVABILITY_NAMESPACE} || true
 }
 
 create_multiclusterobservability() {
@@ -959,8 +837,6 @@ install_acm() {
   create_thanos_secret
   create_multiclusterobservability
   wait_for_observability
-  configure_istio_metrics_for_acm
-  configure_istio_metrics_allowlist
 
   infomsg "======================================"
   infomsg "ACM installation complete!"
@@ -980,24 +856,15 @@ install_acm() {
   infomsg "  Thanos Query:          http://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
   infomsg "  RBAC Query Proxy:      https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
   infomsg ""
-  infomsg "To install Kiali with mTLS authentication to ACM Observability:"
-  infomsg "  $0 install-kiali"
+  infomsg "Next steps:"
+  infomsg "  1. Install Istio: $0 install-istio"
+  infomsg "  2. Install Kiali: $0 install-kiali"
+  infomsg "  3. Install test app: $0 install-sidecar-app"
 }
 
 ##############################################################################
 # Uninstallation Functions
 ##############################################################################
-
-delete_istio_metrics_monitors() {
-  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n istio-system &>/dev/null 2>&1; then
-    infomsg "Deleting Istio proxies PodMonitor from istio-system..."
-    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n istio-system || true
-  fi
-  if ${CLIENT_EXE} get servicemonitor istiod-monitor -n istio-system &>/dev/null 2>&1; then
-    infomsg "Deleting istiod ServiceMonitor..."
-    ${CLIENT_EXE} delete servicemonitor istiod-monitor -n istio-system || true
-  fi
-}
 
 delete_multiclusterobservability() {
   if ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
@@ -1090,7 +957,6 @@ uninstall_acm() {
   infomsg "Starting ACM uninstallation..."
 
   # Delete in reverse order of installation
-  delete_istio_metrics_monitors
   delete_multiclusterobservability
   delete_minio
   delete_observability_namespace
@@ -2241,19 +2107,81 @@ install_istio() {
 
   infomsg "Istio installed successfully"
 
+  # Configure Istio metrics collection for ACM.
+  # Create ServiceMonitor and PodMonitor in istio-system for istiod and gateway metrics.
+  # Based on Red Hat OpenShift Service Mesh 3.0 documentation:
+  # https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/observability/index
+
+  infomsg "Creating ServiceMonitor for istiod..."
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod-monitor
+  namespace: istio-system
+spec:
+  targetLabels:
+  - app
+  selector:
+    matchLabels:
+      istio: pilot
+  endpoints:
+  - port: http-monitoring
+    interval: 30s
+EOF
+
+  infomsg "Creating PodMonitor for istio-system..."
+  create_istio_podmonitor "istio-system"
+
+  infomsg "Creating ACM metrics allowlist for istio-system..."
+  create_namespace_metrics_allowlist "istio-system"
+
+  # If Ambient mode is enabled, also create PodMonitor and allowlist for ztunnel namespace
+  # This ensures ztunnel L4 metrics are scraped immediately when Ambient mode is installed
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    local ztunnel_namespace=""
+    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+      ztunnel_namespace="ztunnel"
+    elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+      ztunnel_namespace="istio-system"
+    fi
+
+    if [ -n "${ztunnel_namespace}" ]; then
+      infomsg "Creating PodMonitor for ztunnel in namespace: ${ztunnel_namespace}..."
+      create_istio_podmonitor "${ztunnel_namespace}"
+      infomsg "Creating ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
+      create_namespace_metrics_allowlist "${ztunnel_namespace}"
+    else
+      warnmsg "Could not find ztunnel daemonset - skipping ztunnel PodMonitor and allowlist creation"
+    fi
+  fi
+
   infomsg "======================================"
   infomsg "Istio installation complete!"
   infomsg "======================================"
   infomsg "Mode: $([ "${AMBIENT_MODE}" == "true" ] && echo "Ambient (sidecar + ztunnel/waypoint)" || echo "Sidecar")"
   infomsg ""
   infomsg "Next steps:"
-  infomsg "  1. Run: $0 install-acm"
-  infomsg "  2. Run: $0 install-kiali"
-  infomsg "  3. Run: $0 install-app"
+  infomsg "  1. Install Kiali: $0 install-kiali"
+  infomsg "  2. Install test app: $0 install-sidecar-app"
 }
 
 uninstall_istio() {
   infomsg "Uninstalling Istio (Sail Operator)..."
+
+  # Delete Istio metrics monitoring resources first
+  infomsg "Deleting Istio metrics monitors..."
+  ${CLIENT_EXE} delete servicemonitor istiod-monitor -n istio-system --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n istio-system --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n istio-system --ignore-not-found 2>/dev/null || true
+
+  # Delete ztunnel metrics monitoring resources (if Ambient mode was installed)
+  # Check both ztunnel namespace (Sail Operator) and istio-system (istioctl)
+  if ${CLIENT_EXE} get namespace ztunnel &>/dev/null 2>&1; then
+    infomsg "Deleting ztunnel metrics monitors in ztunnel namespace..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ztunnel --ignore-not-found 2>/dev/null || true
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ztunnel --ignore-not-found 2>/dev/null || true
+  fi
 
   # Delete Telemetry CR first (before namespace deletion)
   infomsg "Deleting Telemetry CR..."
@@ -2489,69 +2417,69 @@ init_openshift() {
   infomsg "Password: kiali"
   infomsg ""
   infomsg "Next steps:"
-  infomsg "  1. Run: $0 install-istio    (use --ambient for Ambient mode)"
-  infomsg "  2. Run: $0 install-acm"
+  infomsg "  1. Run: $0 install-acm"
+  infomsg "  2. Run: $0 install-istio    (use --ambient for Ambient mode)"
   infomsg "  3. Run: $0 install-kiali"
-  infomsg "  4. Run: $0 install-app"
+  infomsg "  4. Run: $0 install-sidecar-app"
 }
 
 ##############################################################################
 # Test App Functions
 ##############################################################################
 
-install_app() {
-  infomsg "Installing test application..."
+install_sidecar_app() {
+  infomsg "Installing sidecar test application (frontend -> backend topology)..."
 
   # Create namespace with Istio injection
-  if ! ${CLIENT_EXE} get namespace ${APP_NAMESPACE} &>/dev/null; then
-    infomsg "Creating namespace: ${APP_NAMESPACE}"
-    ${CLIENT_EXE} create namespace ${APP_NAMESPACE}
+  if ! ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${SIDECAR_APP_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${SIDECAR_APP_NAMESPACE}
   fi
 
   # Enable Istio sidecar injection
   infomsg "Enabling Istio sidecar injection..."
-  ${CLIENT_EXE} label namespace ${APP_NAMESPACE} istio-injection=enabled --overwrite
+  ${CLIENT_EXE} label namespace ${SIDECAR_APP_NAMESPACE} istio-injection=enabled --overwrite
 
-  # Create ConfigMap with HTML content
-  infomsg "Creating HTML content ConfigMap..."
-  ${CLIENT_EXE} apply -n ${APP_NAMESPACE} -f - <<EOF
+  # Create ConfigMap with HTML content for backend
+  infomsg "Creating HTML content ConfigMap for backend..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hello-world-html
+  name: test-sidecar-backend-html
 data:
   index.html: |
     <!DOCTYPE html>
     <html>
-    <head><title>Hello World</title></head>
-    <body><h1>Hello World</h1><p>This is a test application for Kiali.</p></body>
+    <head><title>Sidecar Backend</title></head>
+    <body><h1>Sidecar Backend</h1><p>Response from test-sidecar-backend workload.</p></body>
     </html>
 EOF
 
-  # Create Deployment using Red Hat UBI httpd image (OpenShift-compatible)
-  infomsg "Creating deployment..."
-  ${CLIENT_EXE} apply -n ${APP_NAMESPACE} -f - <<EOF
+  # Create Backend Deployment using Red Hat UBI httpd image (OpenShift-compatible)
+  infomsg "Creating backend deployment..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world
+  name: test-sidecar-backend
   labels:
-    app: hello-world
+    app: test-sidecar-backend
     version: v1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-world
+      app: test-sidecar-backend
       version: v1
   template:
     metadata:
       labels:
-        app: hello-world
+        app: test-sidecar-backend
         version: v1
     spec:
       containers:
-      - name: hello-world
+      - name: test-sidecar-backend
         image: registry.access.redhat.com/ubi9/httpd-24:latest
         ports:
         - containerPort: 8080
@@ -2569,211 +2497,340 @@ spec:
       volumes:
       - name: html
         configMap:
-          name: hello-world-html
+          name: test-sidecar-backend-html
 EOF
 
-  # Create Service
-  infomsg "Creating service..."
-  ${CLIENT_EXE} apply -n ${APP_NAMESPACE} -f - <<EOF
+  # Create Backend Service
+  infomsg "Creating backend service..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-world
+  name: test-sidecar-backend
   labels:
-    app: hello-world
+    app: test-sidecar-backend
 spec:
   ports:
   - port: 80
     targetPort: 8080
     name: http
   selector:
-    app: hello-world
+    app: test-sidecar-backend
 EOF
 
-  # Wait for deployment to be ready
-  infomsg "Waiting for deployment to be ready..."
-  ${CLIENT_EXE} rollout status deployment/hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
+  # Wait for backend deployment to be ready
+  infomsg "Waiting for backend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
-  # Wait for pod to be fully ready (including Istio sidecar)
-  # The rollout status only checks deployment readiness, not sidecar initialization
-  infomsg "Waiting for pod to be fully ready (including Istio sidecar)..."
-  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-world -n ${APP_NAMESPACE} --timeout=${TIMEOUT}s
+  # Wait for backend pod to be fully ready (including Istio sidecar)
+  infomsg "Waiting for backend pod to be fully ready (including Istio sidecar)..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
-  # Wait for Service endpoints to be populated
-  infomsg "Waiting for service endpoints to be ready..."
+  # Wait for backend Service endpoints to be populated
+  infomsg "Waiting for backend service endpoints to be ready..."
   local max_wait=60
   local waited=0
   while true; do
-    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-world -n ${APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
     if [ -n "${endpoint_ip}" ]; then
-      debug "Service endpoint ready: ${endpoint_ip}"
+      debug "Backend service endpoint ready: ${endpoint_ip}"
       break
     fi
     if [ ${waited} -ge ${max_wait} ]; then
-      warnmsg "Timeout waiting for service endpoints (continuing anyway)"
+      warnmsg "Timeout waiting for backend service endpoints (continuing anyway)"
       break
     fi
     sleep 2
     waited=$((waited + 2))
   done
 
-  # Wait for Istio sidecar to be fully synced by making test requests
-  # The sidecar may be "ready" but not yet synced with istiod, causing 503s
-  infomsg "Waiting for Istio sidecar to be fully synced (testing connectivity)..."
-  local service_url="http://hello-world.${APP_NAMESPACE}.svc.cluster.local:80"
+  # Create Frontend Deployment that continuously calls backend
+  # Uses curl image with a loop to generate continuous mesh traffic
+  infomsg "Creating frontend deployment (generates continuous traffic to backend)..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-sidecar-frontend
+  labels:
+    app: test-sidecar-frontend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-sidecar-frontend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-sidecar-frontend
+        version: v1
+    spec:
+      containers:
+      - name: test-sidecar-frontend
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting continuous traffic to backend..."
+            while true; do
+              curl -s -o /dev/null -w "%{http_code}" http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80
+              sleep 2
+            done
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 32Mi
+EOF
+
+  # Create Frontend Service (for completeness and potential external access)
+  infomsg "Creating frontend service..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-sidecar-frontend
+  labels:
+    app: test-sidecar-frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-sidecar-frontend
+EOF
+
+  # Wait for frontend deployment to be ready
+  infomsg "Waiting for frontend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for frontend pod to be fully ready (including Istio sidecar)
+  infomsg "Waiting for frontend pod to be fully ready (including Istio sidecar)..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for Istio sidecars to be fully synced by checking backend responds via frontend
+  infomsg "Waiting for Istio sidecars to be fully synced (testing connectivity)..."
+  local service_url="http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80"
   max_wait=60
   waited=0
   while true; do
-    local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+    local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
     if [ "${http_code}" == "200" ]; then
-      debug "Service responding with HTTP 200"
+      debug "Backend responding with HTTP 200 via frontend"
       break
     fi
     if [ ${waited} -ge ${max_wait} ]; then
-      warnmsg "Timeout waiting for service to respond (continuing anyway)"
+      warnmsg "Timeout waiting for backend to respond (continuing anyway)"
       break
     fi
-    debug "Service returned HTTP ${http_code}, waiting..."
+    debug "Backend returned HTTP ${http_code}, waiting..."
     sleep 2
     waited=$((waited + 2))
   done
 
-  # Create PodMonitor for Istio proxies in this namespace
-  # Required because OpenShift monitoring ignores namespaceSelector in PodMonitor
-  create_istio_podmonitor "${APP_NAMESPACE}"
+  # Create PodMonitor for Istio proxies in this app namespace
+  infomsg "Creating PodMonitor for ${SIDECAR_APP_NAMESPACE}..."
+  create_istio_podmonitor "${SIDECAR_APP_NAMESPACE}"
 
-  # Create metrics allowlist for ACM observability to collect Istio metrics from this namespace
-  create_namespace_metrics_allowlist "${APP_NAMESPACE}"
+  # Create metrics allowlist for this app namespace
+  infomsg "Creating ACM metrics allowlist for ${SIDECAR_APP_NAMESPACE}..."
+  create_namespace_metrics_allowlist "${SIDECAR_APP_NAMESPACE}"
 
   infomsg "======================================"
-  infomsg "Test application installation complete!"
+  infomsg "Sidecar test application installation complete!"
   infomsg "======================================"
-  infomsg "Namespace: ${APP_NAMESPACE}"
-  infomsg "Service: hello-world.${APP_NAMESPACE}.svc.cluster.local:80"
+  infomsg "Namespace: ${SIDECAR_APP_NAMESPACE}"
+  infomsg "Topology: test-sidecar-frontend -> test-sidecar-backend"
   infomsg ""
-  infomsg "To generate traffic, run:"
-  infomsg "  ${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s http://127.0.0.1:8080"
+  infomsg "Traffic generation:"
+  infomsg "  - Automatic: Frontend continuously sends requests to backend every 2 seconds"
+  infomsg "  - Manual: Run '$0 traffic-sidecar' for additional burst traffic"
+  infomsg ""
+  infomsg "Kiali graph will show:"
+  infomsg "  [test-sidecar-frontend] --HTTP--> [test-sidecar-backend]"
 }
 
-uninstall_app() {
-  infomsg "Uninstalling test application..."
+uninstall_sidecar_app() {
+  infomsg "Uninstalling sidecar test application..."
 
-  if ! ${CLIENT_EXE} get namespace ${APP_NAMESPACE} &>/dev/null; then
-    infomsg "Namespace ${APP_NAMESPACE} does not exist. Nothing to uninstall."
+  if ! ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Namespace ${SIDECAR_APP_NAMESPACE} does not exist. Nothing to uninstall."
     return 0
   fi
 
-  # Delete deployment
-  if ${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Deleting deployment..."
-    ${CLIENT_EXE} delete deployment hello-world -n ${APP_NAMESPACE}
+  # Delete frontend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend deployment..."
+    ${CLIENT_EXE} delete deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE}
   fi
 
-  # Delete service
-  if ${CLIENT_EXE} get service hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Deleting service..."
-    ${CLIENT_EXE} delete service hello-world -n ${APP_NAMESPACE}
+  # Delete backend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend deployment..."
+    ${CLIENT_EXE} delete deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete frontend service
+  if ${CLIENT_EXE} get service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend service..."
+    ${CLIENT_EXE} delete service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete backend service
+  if ${CLIENT_EXE} get service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend service..."
+    ${CLIENT_EXE} delete service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE}
   fi
 
   # Delete configmap
-  if ${CLIENT_EXE} get configmap hello-world-html -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get configmap test-sidecar-backend-html -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting configmap..."
-    ${CLIENT_EXE} delete configmap hello-world-html -n ${APP_NAMESPACE}
+    ${CLIENT_EXE} delete configmap test-sidecar-backend-html -n ${SIDECAR_APP_NAMESPACE}
   fi
 
   # Delete PodMonitor for Istio proxies
-  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting PodMonitor..."
-    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${APP_NAMESPACE}
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete metrics allowlist ConfigMap
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting metrics allowlist ConfigMap..."
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ${SIDECAR_APP_NAMESPACE}
   fi
 
   # Delete namespace
-  infomsg "Deleting namespace ${APP_NAMESPACE}..."
-  ${CLIENT_EXE} delete namespace ${APP_NAMESPACE} --ignore-not-found
+  infomsg "Deleting namespace ${SIDECAR_APP_NAMESPACE}..."
+  ${CLIENT_EXE} delete namespace ${SIDECAR_APP_NAMESPACE} --ignore-not-found
 
-  infomsg "Test application uninstallation complete!"
+  infomsg "Sidecar test application uninstallation complete!"
 }
 
-status_app() {
-  infomsg "Checking test application status..."
+status_sidecar_app() {
+  infomsg "Checking sidecar test application status..."
   echo ""
 
   # Check namespace
-  if ${CLIENT_EXE} get namespace ${APP_NAMESPACE} &>/dev/null; then
-    echo "Namespace: ${APP_NAMESPACE} [EXISTS]"
+  if ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    echo "Namespace: ${SIDECAR_APP_NAMESPACE} [EXISTS]"
 
     # Check Istio injection
-    local injection=$(${CLIENT_EXE} get namespace ${APP_NAMESPACE} -o jsonpath='{.metadata.labels.istio-injection}' 2>/dev/null)
+    local injection=$(${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.metadata.labels.istio-injection}' 2>/dev/null)
     if [ "${injection}" == "enabled" ]; then
       echo "Istio Injection: [ENABLED]"
     else
       echo "Istio Injection: [DISABLED]"
     fi
   else
-    echo "Namespace: ${APP_NAMESPACE} [NOT FOUND]"
+    echo "Namespace: ${SIDECAR_APP_NAMESPACE} [NOT FOUND]"
     echo ""
-    echo "Test application does not appear to be installed."
+    echo "Sidecar test application does not appear to be installed."
     return 0
   fi
 
-  # Check deployment
-  if ${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
-    local ready=$(${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
-    local desired=$(${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+  echo ""
+  echo "=== Frontend Workload ==="
+
+  # Check frontend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
     ready=${ready:-0}
     desired=${desired:-0}
-    echo "Deployment: ${ready}/${desired} ready"
+    echo "Frontend Deployment: ${ready}/${desired} ready"
   else
-    echo "Deployment: [NOT FOUND]"
+    echo "Frontend Deployment: [NOT FOUND]"
   fi
 
-  # Check service
-  if ${CLIENT_EXE} get service hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
-    echo "Service: [EXISTS]"
+  # Check frontend service
+  if ${CLIENT_EXE} get service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Frontend Service: [EXISTS]"
   else
-    echo "Service: [NOT FOUND]"
+    echo "Frontend Service: [NOT FOUND]"
   fi
 
-  # Check pod sidecar (can be regular container or native sidecar via init container with restartPolicy: Always)
-  local pod_name=$(${CLIENT_EXE} get pods -n ${APP_NAMESPACE} -l app=hello-world -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
-  if [ -n "${pod_name}" ]; then
-    # Check for regular sidecar container
-    local has_proxy_container=$(${CLIENT_EXE} get pod ${pod_name} -n ${APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
-    # Check for native sidecar (init container with restartPolicy: Always)
-    local has_native_sidecar=$(${CLIENT_EXE} get pod ${pod_name} -n ${APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
-    if [ "${has_proxy_container}" -ge 1 ]; then
-      echo "Istio Sidecar: [INJECTED] (regular container)"
-    elif [ "${has_native_sidecar}" == "Always" ]; then
-      echo "Istio Sidecar: [INJECTED] (native sidecar)"
+  # Check frontend pod sidecar
+  local frontend_pod=$(${CLIENT_EXE} get pods -n ${SIDECAR_APP_NAMESPACE} -l app=test-sidecar-frontend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  if [ -n "${frontend_pod}" ]; then
+    local has_proxy=$(${CLIENT_EXE} get pod ${frontend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
+    local has_native=$(${CLIENT_EXE} get pod ${frontend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
+    if [ "${has_proxy}" -ge 1 ]; then
+      echo "Frontend Istio Sidecar: [INJECTED] (regular container)"
+    elif [ "${has_native}" == "Always" ]; then
+      echo "Frontend Istio Sidecar: [INJECTED] (native sidecar)"
     else
-      echo "Istio Sidecar: [NOT INJECTED]"
+      echo "Frontend Istio Sidecar: [NOT INJECTED]"
     fi
   fi
 
   echo ""
+  echo "=== Backend Workload ==="
+
+  # Check backend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Backend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Backend Deployment: [NOT FOUND]"
+  fi
+
+  # Check backend service
+  if ${CLIENT_EXE} get service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Backend Service: [EXISTS]"
+  else
+    echo "Backend Service: [NOT FOUND]"
+  fi
+
+  # Check backend pod sidecar
+  local backend_pod=$(${CLIENT_EXE} get pods -n ${SIDECAR_APP_NAMESPACE} -l app=test-sidecar-backend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  if [ -n "${backend_pod}" ]; then
+    local has_proxy=$(${CLIENT_EXE} get pod ${backend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
+    local has_native=$(${CLIENT_EXE} get pod ${backend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
+    if [ "${has_proxy}" -ge 1 ]; then
+      echo "Backend Istio Sidecar: [INJECTED] (regular container)"
+    elif [ "${has_native}" == "Always" ]; then
+      echo "Backend Istio Sidecar: [INJECTED] (native sidecar)"
+    else
+      echo "Backend Istio Sidecar: [NOT INJECTED]"
+    fi
+  fi
+
+  echo ""
+  echo "=== Topology ==="
+  echo "  [test-sidecar-frontend] --HTTP--> [test-sidecar-backend]"
+  echo "  Traffic is generated automatically every 2 seconds"
+  echo ""
 }
 
-generate_traffic() {
-  infomsg "Generating traffic to test application..."
+generate_sidecar_traffic() {
+  infomsg "Generating additional traffic to sidecar test application..."
+  infomsg "(Note: Frontend already generates continuous baseline traffic every 2 seconds)"
 
   # Check if test app is running
-  if ! ${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} &>/dev/null 2>&1; then
-    errormsg "Test application is not installed in namespace ${APP_NAMESPACE}"
-    errormsg "Run '$0 install-app' first to install the test application"
+  if ! ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "Sidecar test application is not installed in namespace ${SIDECAR_APP_NAMESPACE}"
+    errormsg "Run '$0 install-sidecar-app' first to install the test application"
     return 1
   fi
 
-  # Check if deployment is ready
-  local ready=$(${CLIENT_EXE} get deployment hello-world -n ${APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  # Check if frontend deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
   if [ "${ready}" != "1" ]; then
-    errormsg "Test application is not ready (ready replicas: ${ready:-0})"
+    errormsg "Sidecar test application frontend is not ready (ready replicas: ${ready:-0})"
     return 1
   fi
 
-  # Service URL - MUST use the Kubernetes service (not localhost) so Istio sidecar intercepts the traffic.
-  # Traffic to localhost bypasses the sidecar and doesn't generate Istio metrics.
-  # Traffic through the service generates istio_requests_total and other metrics that Kiali needs.
-  local service_url="http://hello-world.${APP_NAMESPACE}.svc.cluster.local:80"
+  # Service URL - traffic goes frontend -> backend through Istio sidecars
+  local service_url="http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80"
   debug "Using service URL to generate Istio metrics: ${service_url}"
 
   if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
@@ -2782,7 +2839,7 @@ generate_traffic() {
     local count=0
     trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
     while true; do
-      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         count=$((count + 1))
         echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
@@ -2797,7 +2854,7 @@ generate_traffic() {
     local success_count=0
     local fail_count=0
     for i in $(seq 1 ${TRAFFIC_COUNT}); do
-      local http_code=$(${CLIENT_EXE} exec -n ${APP_NAMESPACE} deploy/hello-world -c hello-world -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         success_count=$((success_count + 1))
         echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
@@ -2811,11 +2868,13 @@ generate_traffic() {
       fi
     done
     infomsg "======================================"
-    infomsg "Traffic generation complete!"
+    infomsg "Additional traffic generation complete!"
     infomsg "======================================"
     infomsg "Total requests: ${TRAFFIC_COUNT}"
     infomsg "Successful: ${success_count}"
     infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
     infomsg ""
     infomsg "Metrics will appear in Kiali after propagation (typically 5-6 minutes):"
     infomsg "  1. Prometheus scrapes Envoy metrics (every 30s)"
@@ -2831,7 +2890,7 @@ generate_traffic() {
 ##############################################################################
 
 install_ambient_app() {
-  infomsg "Installing Ambient test application..."
+  infomsg "Installing Ambient test application (frontend -> backend topology)..."
 
   # Check if Ambient mode is available (ztunnel can be in istio-system or ztunnel namespace)
   if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1 && \
@@ -2851,50 +2910,50 @@ install_ambient_app() {
   infomsg "Enabling Istio Ambient mode for namespace..."
   ${CLIENT_EXE} label namespace ${AMBIENT_APP_NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
 
-  # Create ConfigMap with HTML content
-  infomsg "Creating HTML content ConfigMap..."
+  # Create ConfigMap with HTML content for backend
+  infomsg "Creating HTML content ConfigMap for backend..."
   ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hello-ambient-html
+  name: test-ambient-backend-html
 data:
   index.html: |
     <!DOCTYPE html>
     <html>
-    <head><title>Hello Ambient</title></head>
-    <body><h1>Hello Ambient</h1><p>This is a test application using Istio Ambient mode (ztunnel + waypoint).</p></body>
+    <head><title>Ambient Backend</title></head>
+    <body><h1>Ambient Backend</h1><p>Response from test-ambient-backend workload using Istio Ambient mode.</p></body>
     </html>
 EOF
 
-  # Create Deployment using Red Hat UBI httpd image (OpenShift-compatible)
+  # Create Backend Deployment using Red Hat UBI httpd image (OpenShift-compatible)
   # This app uses Ambient mode (ztunnel/waypoint) rather than sidecar injection
-  infomsg "Creating deployment (using Ambient ztunnel/waypoint)..."
+  infomsg "Creating backend deployment (using Ambient ztunnel/waypoint)..."
   ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-ambient
+  name: test-ambient-backend
   labels:
-    app: hello-ambient
+    app: test-ambient-backend
     version: v1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: hello-ambient
+      app: test-ambient-backend
       version: v1
   template:
     metadata:
       labels:
-        app: hello-ambient
+        app: test-ambient-backend
         version: v1
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
       containers:
-      - name: hello-ambient
+      - name: test-ambient-backend
         image: registry.access.redhat.com/ubi9/httpd-24:latest
         ports:
         - containerPort: 8080
@@ -2912,52 +2971,121 @@ spec:
       volumes:
       - name: html
         configMap:
-          name: hello-ambient-html
+          name: test-ambient-backend-html
 EOF
 
-  # Create Service
-  infomsg "Creating service..."
+  # Create Backend Service
+  infomsg "Creating backend service..."
   ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-ambient
+  name: test-ambient-backend
   labels:
-    app: hello-ambient
+    app: test-ambient-backend
 spec:
   ports:
   - port: 80
     targetPort: 8080
     name: http
   selector:
-    app: hello-ambient
+    app: test-ambient-backend
 EOF
 
-  # Wait for deployment to be ready
-  infomsg "Waiting for deployment to be ready..."
-  ${CLIENT_EXE} rollout status deployment/hello-ambient -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+  # Wait for backend deployment to be ready
+  infomsg "Waiting for backend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
-  # Wait for pod to be fully ready
-  infomsg "Waiting for pod to be fully ready..."
-  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=hello-ambient -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+  # Wait for backend pod to be fully ready
+  infomsg "Waiting for backend pod to be fully ready..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
-  # Wait for Service endpoints to be populated
-  infomsg "Waiting for service endpoints to be ready..."
+  # Wait for backend Service endpoints to be populated
+  infomsg "Waiting for backend service endpoints to be ready..."
   local max_wait=60
   local waited=0
   while true; do
-    local endpoint_ip=$(${CLIENT_EXE} get endpoints hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
     if [ -n "${endpoint_ip}" ]; then
-      debug "Service endpoint ready: ${endpoint_ip}"
+      debug "Backend service endpoint ready: ${endpoint_ip}"
       break
     fi
     if [ ${waited} -ge ${max_wait} ]; then
-      warnmsg "Timeout waiting for service endpoints (continuing anyway)"
+      warnmsg "Timeout waiting for backend service endpoints (continuing anyway)"
       break
     fi
     sleep 2
     waited=$((waited + 2))
   done
+
+  # Create Frontend Deployment that continuously calls backend
+  # Uses curl image with a loop to generate continuous mesh traffic (no sidecar - uses ztunnel/waypoint)
+  infomsg "Creating frontend deployment (generates continuous traffic to backend)..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-ambient-frontend
+  labels:
+    app: test-ambient-frontend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-ambient-frontend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-ambient-frontend
+        version: v1
+    spec:
+      containers:
+      - name: test-ambient-frontend
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting continuous traffic to backend..."
+            while true; do
+              curl -s -o /dev/null -w "%{http_code}" http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80
+              sleep 2
+            done
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 32Mi
+EOF
+
+  # Create Frontend Service (for completeness)
+  infomsg "Creating frontend service..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-ambient-frontend
+  labels:
+    app: test-ambient-frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-ambient-frontend
+EOF
+
+  # Wait for frontend deployment to be ready
+  infomsg "Waiting for frontend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for frontend pod to be fully ready
+  infomsg "Waiting for frontend pod to be fully ready..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
 
   # Deploy waypoint proxy for L7 metrics (optional but recommended for full Kiali functionality)
   infomsg "Deploying waypoint proxy for L7 metrics..."
@@ -2977,40 +3105,30 @@ EOF
   fi
 
   # Create PodMonitor for waypoint proxies in this namespace (uses istio-proxy container)
-  # Note: Ztunnel is monitored globally via istio-proxies-monitor in ztunnel/istio-system namespace
   create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
 
   # Create metrics allowlist for ACM observability in app namespace
   create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
 
-  # Create metrics allowlist in ztunnel namespace (required for ztunnel L4 metrics to be collected by ACM)
-  local ztunnel_namespace=""
-  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
-    ztunnel_namespace="ztunnel"
-  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
-    ztunnel_namespace="istio-system"
-  fi
-
-  if [ -n "${ztunnel_namespace}" ]; then
-    infomsg "Creating ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
-    create_namespace_metrics_allowlist "${ztunnel_namespace}"
-  else
-    warnmsg "Could not find ztunnel daemonset - skipping ztunnel allowlist creation"
-  fi
-
   infomsg "======================================"
   infomsg "Ambient test application installation complete!"
   infomsg "======================================"
   infomsg "Namespace: ${AMBIENT_APP_NAMESPACE}"
-  infomsg "Service: hello-ambient.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  infomsg "Topology: test-ambient-frontend -> test-ambient-backend"
   infomsg "Mode: Istio Ambient (L4 via ztunnel, L7 via waypoint)"
   infomsg ""
+  infomsg "Traffic generation:"
+  infomsg "  - Automatic: Frontend continuously sends requests to backend every 2 seconds"
+  infomsg "  - Manual: Run '$0 traffic-ambient' for additional burst traffic"
+  infomsg ""
   infomsg "Metrics flow:"
-  infomsg "  - L4 (TCP): ztunnel metrics in ${ztunnel_namespace:-ztunnel/istio-system} (istio_tcp_* with app=ztunnel)"
+  infomsg "  - L4 (TCP): ztunnel metrics in ztunnel or istio-system namespace (istio_tcp_* with app=ztunnel)"
   infomsg "  - L7 (HTTP): waypoint metrics (istio_requests_total with reporter=waypoint)"
   infomsg ""
-  infomsg "To generate traffic, run:"
-  infomsg "  $0 traffic-ambient"
+  infomsg "Kiali graph will show:"
+  infomsg "  [test-ambient-frontend] --HTTP--> [test-ambient-backend]"
+  infomsg "              |                              |"
+  infomsg "              +-------- waypoint ------------+"
 }
 
 uninstall_ambient_app() {
@@ -3026,28 +3144,46 @@ uninstall_ambient_app() {
     istioctl waypoint delete -n ${AMBIENT_APP_NAMESPACE} --all 2>/dev/null || true
   fi
 
-  # Delete deployment
-  if ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Deleting deployment..."
-    ${CLIENT_EXE} delete deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE}
+  # Delete frontend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend deployment..."
+    ${CLIENT_EXE} delete deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE}
   fi
 
-  # Delete service
-  if ${CLIENT_EXE} get service hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Deleting service..."
-    ${CLIENT_EXE} delete service hello-ambient -n ${AMBIENT_APP_NAMESPACE}
+  # Delete backend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend deployment..."
+    ${CLIENT_EXE} delete deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete frontend service
+  if ${CLIENT_EXE} get service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend service..."
+    ${CLIENT_EXE} delete service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete backend service
+  if ${CLIENT_EXE} get service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend service..."
+    ${CLIENT_EXE} delete service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete configmap
-  if ${CLIENT_EXE} get configmap hello-ambient-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get configmap test-ambient-backend-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting configmap..."
-    ${CLIENT_EXE} delete configmap hello-ambient-html -n ${AMBIENT_APP_NAMESPACE}
+    ${CLIENT_EXE} delete configmap test-ambient-backend-html -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete PodMonitor
   if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting PodMonitor..."
     ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete metrics allowlist ConfigMap
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting metrics allowlist ConfigMap..."
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ${AMBIENT_APP_NAMESPACE}
   fi
 
   # Delete namespace
@@ -3079,23 +3215,50 @@ status_ambient_app() {
     return 0
   fi
 
-  # Check deployment
-  if ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
-    local ready=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
-    local desired=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+  echo ""
+  echo "=== Frontend Workload ==="
+
+  # Check frontend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
     ready=${ready:-0}
     desired=${desired:-0}
-    echo "Deployment: ${ready}/${desired} ready"
+    echo "Frontend Deployment: ${ready}/${desired} ready"
   else
-    echo "Deployment: [NOT FOUND]"
+    echo "Frontend Deployment: [NOT FOUND]"
   fi
 
-  # Check service
-  if ${CLIENT_EXE} get service hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
-    echo "Service: [EXISTS]"
+  # Check frontend service
+  if ${CLIENT_EXE} get service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Frontend Service: [EXISTS]"
   else
-    echo "Service: [NOT FOUND]"
+    echo "Frontend Service: [NOT FOUND]"
   fi
+
+  echo ""
+  echo "=== Backend Workload ==="
+
+  # Check backend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Backend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Backend Deployment: [NOT FOUND]"
+  fi
+
+  # Check backend service
+  if ${CLIENT_EXE} get service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Backend Service: [EXISTS]"
+  else
+    echo "Backend Service: [NOT FOUND]"
+  fi
+
+  echo ""
+  echo "=== Ambient Infrastructure ==="
 
   # Check waypoint proxy
   local waypoint_pods=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o name 2>/dev/null | wc -l)
@@ -3125,27 +3288,34 @@ status_ambient_app() {
   fi
 
   echo ""
+  echo "=== Topology ==="
+  echo "  [test-ambient-frontend] --HTTP--> [test-ambient-backend]"
+  echo "              |                              |"
+  echo "              +-------- waypoint ------------+"
+  echo "  Traffic is generated automatically every 2 seconds"
+  echo ""
 }
 
 generate_ambient_traffic() {
-  infomsg "Generating traffic to Ambient test application..."
+  infomsg "Generating additional traffic to Ambient test application..."
+  infomsg "(Note: Frontend already generates continuous baseline traffic every 2 seconds)"
 
   # Check if ambient test app is running
-  if ! ${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+  if ! ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
     errormsg "Ambient test application is not installed in namespace ${AMBIENT_APP_NAMESPACE}"
     errormsg "Run '$0 install-ambient-app' first to install the Ambient test application"
     return 1
   fi
 
-  # Check if deployment is ready
-  local ready=$(${CLIENT_EXE} get deployment hello-ambient -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  # Check if frontend deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
   if [ "${ready}" != "1" ]; then
-    errormsg "Ambient test application is not ready (ready replicas: ${ready:-0})"
+    errormsg "Ambient test application frontend is not ready (ready replicas: ${ready:-0})"
     return 1
   fi
 
-  # Service URL - traffic goes through ztunnel (L4) and optionally waypoint (L7)
-  local service_url="http://hello-ambient.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  # Service URL - traffic goes frontend -> backend through ztunnel (L4) and optionally waypoint (L7)
+  local service_url="http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
   debug "Using service URL to generate Ambient metrics: ${service_url}"
 
   # Check if waypoint is deployed for L7 metrics
@@ -3162,7 +3332,7 @@ generate_ambient_traffic() {
     local count=0
     trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
     while true; do
-      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-ambient -c hello-ambient -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/test-ambient-frontend -c test-ambient-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         count=$((count + 1))
         echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
@@ -3177,7 +3347,7 @@ generate_ambient_traffic() {
     local success_count=0
     local fail_count=0
     for i in $(seq 1 ${TRAFFIC_COUNT}); do
-      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/hello-ambient -c hello-ambient -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/test-ambient-frontend -c test-ambient-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
       if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
         success_count=$((success_count + 1))
         echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
@@ -3191,11 +3361,13 @@ generate_ambient_traffic() {
       fi
     done
     infomsg "======================================"
-    infomsg "Ambient traffic generation complete!"
+    infomsg "Additional Ambient traffic generation complete!"
     infomsg "======================================"
     infomsg "Total requests: ${TRAFFIC_COUNT}"
     infomsg "Successful: ${success_count}"
     infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
     infomsg ""
     infomsg "Metrics will appear in Kiali after propagation (typically 5-6 minutes):"
     infomsg "  1. Ztunnel/Waypoint generates metrics"
@@ -3226,15 +3398,15 @@ create_all() {
   infomsg ""
   infomsg "This will run the following commands in sequence:"
   infomsg "  1. init-openshift  (Create CRC cluster, enable UWM)"
-  infomsg "  2. install-istio   (Install Istio$([ "${AMBIENT_MODE}" == "true" ] && echo " with Ambient mode"))"
-  infomsg "  3. install-acm     (Install ACM with observability)"
+  infomsg "  2. install-acm     (Install ACM with observability)"
+  infomsg "  3. install-istio   (Install Istio$([ "${AMBIENT_MODE}" == "true" ] && echo " with Ambient mode"))"
   infomsg "  4. install-kiali   (Build and install Kiali)"
-  infomsg "  5. install-app     (Install sidecar test mesh application)"
+  infomsg "  5. install-sidecar-app (Install sidecar test mesh application)"
   if [ "${AMBIENT_MODE}" == "true" ]; then
     infomsg "  6. install-ambient-app (Install Ambient test mesh application)"
-    infomsg "  7. traffic         (Generate traffic to both apps)"
+    infomsg "  7. traffic-sidecar/traffic-ambient (Generate traffic to both apps)"
   else
-    infomsg "  6. traffic         (Generate initial traffic)"
+    infomsg "  6. traffic-sidecar (Generate initial traffic)"
   fi
   infomsg ""
 
@@ -3261,25 +3433,25 @@ create_all() {
     return 1
   fi
 
-  # Step 2: Install Istio
+  # Step 2: Install ACM
   infomsg ""
   infomsg "======================================"
-  infomsg "Step 2/${total_steps}: Installing Istio"
-  infomsg "======================================"
-  install_istio
-  if [ $? -ne 0 ]; then
-    errormsg "Failed to install Istio"
-    return 1
-  fi
-
-  # Step 3: Install ACM
-  infomsg ""
-  infomsg "======================================"
-  infomsg "Step 3/${total_steps}: Installing ACM with observability"
+  infomsg "Step 2/${total_steps}: Installing ACM with observability"
   infomsg "======================================"
   install_acm
   if [ $? -ne 0 ]; then
     errormsg "Failed to install ACM"
+    return 1
+  fi
+
+  # Step 3: Install Istio
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 3/${total_steps}: Installing Istio"
+  infomsg "======================================"
+  install_istio
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install Istio"
     return 1
   fi
 
@@ -3299,7 +3471,7 @@ create_all() {
   infomsg "======================================"
   infomsg "Step 5/${total_steps}: Installing sidecar test application"
   infomsg "======================================"
-  install_app
+  install_sidecar_app
   if [ $? -ne 0 ]; then
     errormsg "Failed to install sidecar test application"
     return 1
@@ -3323,7 +3495,7 @@ create_all() {
   infomsg "======================================"
   infomsg "Step ${total_steps}/${total_steps}: Generating initial traffic"
   infomsg "======================================"
-  generate_traffic
+  generate_sidecar_traffic
   if [ $? -ne 0 ]; then
     errormsg "Failed to generate sidecar traffic"
     return 1
@@ -3351,7 +3523,7 @@ create_all() {
   infomsg "Kiali URL:         https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
   infomsg ""
   infomsg "Initial traffic has been sent. To generate more traffic:"
-  infomsg "  $0 traffic"
+  infomsg "  $0 traffic-sidecar"
   infomsg ""
   infomsg "Note: Metrics take 5-6 minutes to appear in Kiali due to ACM federation interval."
   infomsg "Use 'Last 10 minutes' or longer time ranges in Kiali to see data."
@@ -3376,10 +3548,10 @@ while [[ $# -gt 0 ]]; do
     install-kiali) _CMD="install-kiali"; shift ;;
     uninstall-kiali) _CMD="uninstall-kiali"; shift ;;
     status-kiali) _CMD="status-kiali"; shift ;;
-    install-app) _CMD="install-app"; shift ;;
-    uninstall-app) _CMD="uninstall-app"; shift ;;
-    status-app) _CMD="status-app"; shift ;;
-    traffic) _CMD="traffic"; shift ;;
+    install-sidecar-app) _CMD="install-sidecar-app"; shift ;;
+    uninstall-sidecar-app) _CMD="uninstall-sidecar-app"; shift ;;
+    status-sidecar-app) _CMD="status-sidecar-app"; shift ;;
+    traffic-sidecar) _CMD="traffic-sidecar"; shift ;;
     install-ambient-app) _CMD="install-ambient-app"; shift ;;
     uninstall-ambient-app) _CMD="uninstall-ambient-app"; shift ;;
     status-ambient-app) _CMD="status-ambient-app"; shift ;;
@@ -3396,7 +3568,7 @@ while [[ $# -gt 0 ]]; do
     -krd|--kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
     -kord|--kiali-operator-repo-dir) KIALI_OPERATOR_REPO_DIR="$2"; shift; shift ;;
     -hcd|--helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
-    -an|--app-namespace) APP_NAMESPACE="$2"; shift; shift ;;
+    -san|--sidecar-app-namespace) SIDECAR_APP_NAMESPACE="$2"; shift; shift ;;
     -cc|--crc-cpus) CRC_CPUS="$2"; shift; shift ;;
     -cds|--crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
     -cps|--crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
@@ -3456,9 +3628,9 @@ Valid options:
   -hcd|--helm-charts-dir <path>
       Path to the Kiali helm-charts git repository.
       Default: ${DEFAULT_HELM_CHARTS_DIR}
-  -an|--app-namespace <namespace>
-      The namespace for the test application.
-      Default: ${DEFAULT_APP_NAMESPACE}
+  -san|--sidecar-app-namespace <namespace>
+      The namespace for the sidecar test application.
+      Default: ${DEFAULT_SIDECAR_APP_NAMESPACE}
   -cc|--crc-cpus <num>
       Number of CPUs to assign to the CRC VM (for init-openshift command).
       Default: ${DEFAULT_CRC_CPUS}
@@ -3506,10 +3678,10 @@ The command must be one of:
   install-kiali:        Install Kiali configured for ACM observability (supports 3 methods)
   uninstall-kiali:      Remove Kiali installation
   status-kiali:         Check the status of Kiali installation
-  install-app:          Install a simple sidecar test mesh application
-  uninstall-app:        Remove the sidecar test application
-  status-app:           Check the status of the sidecar test application
-  traffic:              Generate HTTP traffic to the sidecar test application
+  install-sidecar-app:  Install a sidecar test mesh application (frontend -> backend)
+  uninstall-sidecar-app: Remove the sidecar test application
+  status-sidecar-app:   Check the status of the sidecar test application
+  traffic-sidecar:      Generate HTTP traffic to the sidecar test application
   install-ambient-app:  Install an Ambient mode test mesh application (requires --ambient)
   uninstall-ambient-app: Remove the Ambient test application
   status-ambient-app:   Check the status of the Ambient test application
@@ -3545,16 +3717,16 @@ Examples:
   $0 status-kiali                           # Check Kiali installation status (auto-detects method)
   $0 uninstall-kiali                        # Remove Kiali (auto-detects method)
 
-  # Sidecar test app
-  $0 install-app                            # Install sidecar test mesh application
-  $0 -an my-app install-app                 # Install test app in custom namespace
-  $0 status-app                             # Check test application status
-  $0 uninstall-app                          # Remove test application
-  $0 traffic                                # Send 10 requests to test app
-  $0 -tc 50 traffic                         # Send 50 requests
-  $0 -tc 100 -ti 2 traffic                  # Send 100 requests, 2s interval
-  $0 -cont traffic                          # Continuous traffic
-  $0 -cont -ti 3 traffic                    # Continuous every 3 seconds
+  # Sidecar test app (frontend -> backend topology, auto-generates traffic)
+  $0 install-sidecar-app                    # Install sidecar test mesh application
+  $0 -san my-app install-sidecar-app        # Install test app in custom namespace
+  $0 status-sidecar-app                     # Check test application status
+  $0 uninstall-sidecar-app                  # Remove test application
+  $0 traffic-sidecar                        # Send 10 additional requests to test app
+  $0 -tc 50 traffic-sidecar                 # Send 50 additional requests
+  $0 -tc 100 -ti 2 traffic-sidecar          # Send 100 additional requests, 2s interval
+  $0 -cont traffic-sidecar                  # Continuous additional traffic
+  $0 -cont -ti 3 traffic-sidecar            # Continuous additional every 3 seconds
 
 HELPMSG
       exit 0
@@ -3579,7 +3751,7 @@ done
 : ${KIALI_REPO_DIR:=${DEFAULT_KIALI_REPO_DIR}}
 : ${KIALI_OPERATOR_REPO_DIR:=${DEFAULT_KIALI_OPERATOR_REPO_DIR}}
 : ${HELM_CHARTS_DIR:=${DEFAULT_HELM_CHARTS_DIR}}
-: ${APP_NAMESPACE:=${DEFAULT_APP_NAMESPACE}}
+: ${SIDECAR_APP_NAMESPACE:=${DEFAULT_SIDECAR_APP_NAMESPACE}}
 : ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
 : ${CRC_DISK_SIZE:=${DEFAULT_CRC_DISK_SIZE}}
 : ${CRC_PULL_SECRET_FILE:=${DEFAULT_CRC_PULL_SECRET_FILE}}
@@ -3601,7 +3773,7 @@ debug "KIALI_INSTALL_TYPE=${KIALI_INSTALL_TYPE}"
 debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
 debug "KIALI_OPERATOR_REPO_DIR=${KIALI_OPERATOR_REPO_DIR}"
 debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
-debug "APP_NAMESPACE=${APP_NAMESPACE}"
+debug "SIDECAR_APP_NAMESPACE=${SIDECAR_APP_NAMESPACE}"
 debug "AMBIENT_MODE=${AMBIENT_MODE}"
 debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 debug "SKIP_BUILD=${SKIP_BUILD}"
@@ -3669,17 +3841,17 @@ case ${_CMD} in
   status-kiali)
     status_kiali
     ;;
-  install-app)
-    install_app
+  install-sidecar-app)
+    install_sidecar_app
     ;;
-  uninstall-app)
-    uninstall_app
+  uninstall-sidecar-app)
+    uninstall_sidecar_app
     ;;
-  status-app)
-    status_app
+  status-sidecar-app)
+    status_sidecar_app
     ;;
-  traffic)
-    generate_traffic
+  traffic-sidecar)
+    generate_sidecar_traffic
     ;;
   install-ambient-app)
     install_ambient_app
