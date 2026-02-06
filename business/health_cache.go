@@ -145,6 +145,10 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 // This Layer is reused for all namespace health computations in a refresh cycle.
 func (m *healthMonitor) createHealthLayer() (*Layer, error) {
 	userClients := m.clientFactory.GetSAClientsAsUserClientInterfaces()
+	discovery, ok := m.discovery.(*istio.Discovery)
+	if !ok {
+		return nil, fmt.Errorf("unsupported discovery type for health monitor: %T", m.discovery)
+	}
 
 	// Use the existing NewLayerWithSAClients which creates a complete Layer
 	// Pass nil for tracing client and grafana since health computation doesn't need them
@@ -156,7 +160,7 @@ func (m *healthMonitor) createHealthLayer() (*Layer, error) {
 		nil, // traceClient - not needed for health
 		&FakeControlPlaneMonitor{},
 		nil, // grafana - not needed for health
-		m.discovery.(*istio.Discovery),
+		discovery,
 		userClients,
 	)
 }

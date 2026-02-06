@@ -1,11 +1,13 @@
 import * as React from 'react';
 import {
+  Button,
   Card,
   CardBody,
   CardFooter,
   CardHeader,
   CardTitle,
-  Spinner,
+  Popover,
+  PopoverPosition,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
@@ -20,21 +22,27 @@ import * as API from 'services/Api';
 import { ServiceLatency, ServiceRequests } from 'types/Overview';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
+import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
+import { useKialiSelector } from 'hooks/redux';
+import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
+import { router, URLParam } from 'app/History';
+import { helpIconStyle } from 'styles/IconStyle';
+import { classes } from 'typestyle';
 
 const tablesContainerStyle = kialiStyle({
   display: 'flex',
   gap: '1.5rem'
 });
 
-const tableContainerStyle = kialiStyle({
-  flex: 1
+const insightsWindowStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  fontSize: '0.75rem',
+  color: PFColors.Color200
 });
 
-const tableTitleStyle = kialiStyle({
-  fontWeight: 600,
-  fontSize: '0.875rem',
-  marginBottom: '0.5rem',
-  color: PFColors.Color200
+const tableContainerStyle = kialiStyle({
+  flex: 1
 });
 
 const tableStyle = kialiStyle({
@@ -45,10 +53,9 @@ const tableStyle = kialiStyle({
 const tableHeaderStyle = kialiStyle({
   textAlign: 'left',
   padding: '0.5rem',
-  borderBottom: `2px solid ${PFColors.BorderColor100}`,
-  fontWeight: 600,
+  borderBottom: 'none',
   fontSize: '0.875rem',
-  color: PFColors.Color200
+  color: 'var(--pf-t--global--text--color--primary--default)'
 });
 
 const tableRowStyle = kialiStyle({
@@ -68,15 +75,13 @@ const tableCellStyle = kialiStyle({
 const metricCellStyle = kialiStyle({
   padding: '0.5rem',
   fontSize: '0.875rem',
-  textAlign: 'right',
-  fontFamily: 'monospace'
+  textAlign: 'right'
 });
 
 const rateCellStyle = kialiStyle({
   padding: '0.5rem',
   fontSize: '0.875rem',
   textAlign: 'right',
-  fontFamily: 'monospace',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
@@ -89,10 +94,14 @@ const statusIconStyle = kialiStyle({
 });
 
 const serviceLinkStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  color: PFColors.Link
+  display: 'inline-block',
+  color: PFColors.Link,
+  textDecoration: 'underline !important',
+  $nest: {
+    '&, &:hover, &:focus, &:active': {
+      textDecoration: 'underline !important'
+    }
+  }
 });
 
 const emptyStateStyle = kialiStyle({
@@ -114,12 +123,14 @@ const formatErrorRate = (rate: number): string => {
   return `${(rate * 100).toFixed(1)}%`;
 };
 
-const formatRequestRate = (rate: number): string => {
-  if (rate >= 1) {
-    return `${rate.toFixed(1)} req/s`;
+const noUnderlineStyle = kialiStyle({
+  textDecoration: 'none',
+  $nest: {
+    '&, &:hover, &:focus, &:active': {
+      textDecoration: 'none'
+    }
   }
-  return `${(rate * 60).toFixed(1)} req/m`;
-};
+});
 
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
@@ -132,35 +143,64 @@ const buildTooltipContent = (cluster: string, namespace: string, serviceName: st
         <PFBadge badge={PFBadges.Namespace} size="sm" />
         {namespace}
       </div>
-      <div>
-        <PFBadge badge={PFBadges.Service} size="sm" /> {serviceName}
-      </div>
+      <div>{serviceName}</div>
     </div>
   );
 };
 
 export const ServiceInsights: React.FC = () => {
   const { lastRefreshAt } = useRefreshInterval();
+  const namespaceItems = useKialiSelector(namespaceItemsSelector);
+  const activeNamespaces = useKialiSelector(activeNamespacesSelector);
+
+  // Keep this explicit to show in the UI
+  const rateInterval = '1h';
+  const rateIntervalHoursLabel = '1';
+
+  // Use all known namespaces when available
+  const allNamespaceNames = React.useMemo(() => {
+    const namespaces = namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
+    return Array.from(new Set(namespaces.map(ns => ns.name))).sort();
+  }, [activeNamespaces, namespaceItems]);
+
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
-  const [error, setError] = React.useState<string | null>(null);
+  const [isError, setIsError] = React.useState(false);
+
+  const buildServicesListUrl = React.useCallback((): string => {
+    const params = new URLSearchParams();
+    if (allNamespaceNames.length > 0) {
+      params.set(URLParam.NAMESPACES, allNamespaceNames.join(','));
+    }
+    params.set(URLParam.DIRECTION, 'asc');
+    params.set(URLParam.SORT, 'he');
+
+    const qs = params.toString();
+    return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
+  }, [allNamespaceNames]);
+
+  const navigateToUrl = React.useCallback((url: string): void => {
+    FilterSelected.resetFilters();
+    router.navigate(url);
+  }, []);
 
   const fetchData = React.useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
-      setError(null);
+      setIsError(false);
 
       const [latenciesResponse, ratesResponse] = await Promise.all([
-        API.getOverviewServiceLatencies({ limit: 5 }),
-        API.getOverviewServiceRates({ limit: 5 })
+        API.getOverviewServiceLatencies({ limit: 5, rateInterval }),
+        API.getOverviewServiceRates({ limit: 5, rateInterval })
       ]);
 
       setLatencies(latenciesResponse.data.services || []);
       setRates(ratesResponse.data.services || []);
     } catch (err) {
-      setError(t('Failed to load service data'));
-      console.error('Error fetching service data:', err);
+      setIsError(true);
+      // eslint-disable-next-line no-console
+      console.error('Error fetching service insights data:', err);
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +209,15 @@ export const ServiceInsights: React.FC = () => {
   React.useEffect(() => {
     fetchData();
   }, [lastRefreshAt, fetchData]);
+
+  const buildServiceDetailUrl = React.useCallback(
+    (svc: { cluster: string; namespace: string; serviceName: string }) => {
+      const clusterParam =
+        svc.cluster && svc.cluster !== 'unknown' ? `?${URLParam.CLUSTERNAME}=${encodeURIComponent(svc.cluster)}` : '';
+      return `/${Paths.NAMESPACES}/${svc.namespace}/${Paths.SERVICES}/${svc.serviceName}${clusterParam}`;
+    },
+    []
+  );
 
   const renderLatenciesTable = (): React.ReactNode => {
     if (latencies.length === 0) {
@@ -179,9 +228,9 @@ export const ServiceInsights: React.FC = () => {
       <table className={tableStyle}>
         <thead>
           <tr>
-            <th className={tableHeaderStyle}>{t('Service')}</th>
+            <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle} style={{ textAlign: 'right' }}>
-              {t('P95')}
+              {t('P95 latency')}
             </th>
           </tr>
         </thead>
@@ -193,11 +242,7 @@ export const ServiceInsights: React.FC = () => {
                   content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}
                   position={TooltipPosition.topStart}
                 >
-                  <Link
-                    to={`/${Paths.NAMESPACES}/${svc.namespace}/${Paths.SERVICES}/${svc.serviceName}?clusterName=${svc.cluster}`}
-                    className={serviceLinkStyle}
-                  >
-                    <PFBadge badge={PFBadges.Service} size="sm" />
+                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
                     {svc.serviceName}
                   </Link>
                 </Tooltip>
@@ -219,9 +264,9 @@ export const ServiceInsights: React.FC = () => {
       <table className={tableStyle}>
         <thead>
           <tr>
-            <th className={tableHeaderStyle}>{t('Service')}</th>
+            <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle} style={{ textAlign: 'right' }}>
-              {t('Error %')}
+              {t('Success rate')}
             </th>
           </tr>
         </thead>
@@ -230,11 +275,7 @@ export const ServiceInsights: React.FC = () => {
             <tr key={`rate-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
               <td className={tableCellStyle}>
                 <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
-                  <Link
-                    to={`/${Paths.NAMESPACES}/${svc.namespace}/${Paths.SERVICES}/${svc.serviceName}?clusterName=${svc.cluster}`}
-                    className={serviceLinkStyle}
-                  >
-                    <PFBadge badge={PFBadges.Service} size="sm" />
+                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
                     {svc.serviceName}
                   </Link>
                 </Tooltip>
@@ -243,12 +284,12 @@ export const ServiceInsights: React.FC = () => {
                 {svc.errorRate > 0 ? (
                   <>
                     <KialiIcon.ExclamationCircle className={statusIconStyle} color={PFColors.Danger} />
-                    {formatErrorRate(svc.errorRate)}
+                    {formatErrorRate(Math.max(0, Math.min(1, 1 - svc.errorRate)))}
                   </>
                 ) : (
                   <>
                     <KialiIcon.Success className={statusIconStyle} color={PFColors.Success} />
-                    {formatRequestRate(svc.requestCount)}
+                    {formatErrorRate(1)}
                   </>
                 )}
               </td>
@@ -261,27 +302,17 @@ export const ServiceInsights: React.FC = () => {
 
   const renderContent = (): React.ReactNode => {
     if (isLoading) {
-      return (
-        <div className={emptyStateStyle}>
-          <Spinner size="lg" />
-        </div>
-      );
+      return <OverviewCardLoadingState message={t('Fetching service data')} />;
     }
 
-    if (error) {
-      return <div className={emptyStateStyle}>{error}</div>;
+    if (isError) {
+      return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
 
     return (
       <div className={tablesContainerStyle}>
-        <div className={tableContainerStyle}>
-          <div className={tableTitleStyle}>{t('Top Rate')}</div>
-          {renderRatesTable()}
-        </div>
-        <div className={tableContainerStyle}>
-          <div className={tableTitleStyle}>{t('Top Latency')}</div>
-          {renderLatenciesTable()}
-        </div>
+        <div className={tableContainerStyle}>{renderRatesTable()}</div>
+        <div className={tableContainerStyle}>{renderLatenciesTable()}</div>
       </div>
     );
   };
@@ -289,14 +320,33 @@ export const ServiceInsights: React.FC = () => {
   return (
     <Card className={cardStyle}>
       <CardHeader>
-        <CardTitle>{t('Service Insights')}</CardTitle>
+        <CardTitle>
+          <span>{t('Service Insights')}</span>
+          <Popover
+            aria-label={t('Service insights information')}
+            headerContent={<span>{t('Service Insights')}</span>}
+            bodyContent={t('Shows top services by error rate and p95 latency across all clusters and namespaces.')}
+            position={PopoverPosition.right}
+            triggerAction="hover"
+          >
+            <KialiIcon.Help className={helpIconStyle} />
+          </Popover>
+          <span className={insightsWindowStyle}>{`Last ${rateIntervalHoursLabel} hour`}</span>
+        </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
-      <CardFooter>
-        <Link to={`/${Paths.SERVICES}`} className={linkStyle}>
-          {t('View all services')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-        </Link>
-      </CardFooter>
+      {!isLoading && !isError && (
+        <CardFooter>
+          <Button
+            variant="link"
+            isInline
+            className={classes(linkStyle, noUnderlineStyle)}
+            onClick={() => navigateToUrl(buildServicesListUrl())}
+          >
+            {t('View all services')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };
