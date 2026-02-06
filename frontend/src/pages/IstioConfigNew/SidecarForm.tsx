@@ -29,7 +29,7 @@ const columns: ThProps[] = [
 
 const noEgressHostsStyle = kialiStyle({
   marginTop: '1rem',
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const hostsHelperText = 'Enter a valid namespace/FQDN Egress host.';
@@ -104,7 +104,8 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
           egressHosts: prevState.egressHosts,
           addEgressHost: {
             host: ''
-          }
+          },
+          validEgressHost: false
         };
       },
       () => this.props.onChange(this.state)
@@ -224,7 +225,6 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
-            
             isChecked={this.state.addWorkloadSelector}
             onChange={() => {
               this.setState(

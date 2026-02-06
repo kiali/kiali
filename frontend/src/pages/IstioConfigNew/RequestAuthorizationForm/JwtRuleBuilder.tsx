@@ -46,12 +46,12 @@ const columns: ThProps[] = [
 ];
 
 const noValidStyle = kialiStyle({
-  color: PFColors.Red100
+  color: PFColors.Red500
 });
 
 const warningStyle = kialiStyle({
   marginLeft: '1.5rem',
-  color: PFColors.Red100,
+  color: PFColors.Red500,
   textAlign: 'center'
 });
 
