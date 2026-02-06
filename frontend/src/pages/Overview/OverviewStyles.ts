@@ -68,3 +68,28 @@ export const popoverItemStatusStyle = kialiStyle({
 export const popoverFooterStyle = kialiStyle({
   marginTop: '1rem'
 });
+
+export const statusLabelStyle = kialiStyle({
+  height: '1.25rem',
+  backgroundColor: 'var(--pf-v6-c-label--m-outline--BackgroundColor, transparent)',
+  borderColor: 'var(--pf-v6-c-label--m-outline--BorderColor, transparent)',
+  borderStyle: 'solid',
+  borderWidth: '1px',
+  $nest: {
+    '& .pf-v6-c-label__icon': {
+      marginRight: '0.25rem'
+    },
+    '& .pf-v6-c-label__content': {
+      color: 'var(--pf-t--global--text--color--primary--default)'
+    }
+  }
+});
+
+export const noUnderlineStyle = kialiStyle({
+  textDecoration: 'none',
+  $nest: {
+    '&, &:hover, &:focus, &:active': {
+      textDecoration: 'none'
+    }
+  }
+});

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DEGRADED, FAILURE, HEALTHY, NOT_READY, NA, Status } from '../../types/Health';
+import { HEALTHY, NA } from '../../types/Health';
 import { NamespaceStatus } from '../../types/NamespaceInfo';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { createIcon } from '../../config/KialiIcon';
@@ -11,6 +11,7 @@ import { pluralize } from '@patternfly/react-core';
 import { namespaceNaIconStyle, statusIconStyle, statusTextStyle } from './NamespaceStyle';
 import { naTextStyle } from 'styles/HealthStyle';
 import { classes } from 'typestyle';
+import { combinedWorstStatus } from 'utils/NamespaceUtils';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -28,35 +29,6 @@ type Props = ReduxProps & {
 const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
-  // Get combined worst status across all three types
-  const getCombinedWorstStatus = (): Status => {
-    let worstStatus = NA;
-    let worstPriority = 5; // Higher number = better status
-    const statuses = [props.statusApp, props.statusService, props.statusWorkload];
-    statuses.forEach(status => {
-      if (status) {
-        if (status.inError.length > 0 && worstPriority > 1) {
-          worstStatus = FAILURE;
-          worstPriority = 1;
-        } else if (status.inWarning.length > 0 && worstPriority > 2) {
-          worstStatus = DEGRADED;
-          worstPriority = 2;
-        } else if (status.inNotReady.length > 0 && worstPriority > 3) {
-          worstStatus = NOT_READY;
-          worstPriority = 3;
-        } else if (status.inSuccess.length > 0 && worstPriority > 4) {
-          worstStatus = HEALTHY;
-          worstPriority = 4;
-        } else if (status.notAvailable.length > 0 && worstPriority > 5) {
-          worstStatus = NA;
-          worstPriority = 5;
-        }
-      }
-    });
-
-    return worstStatus;
-  };
-
   // Count total unhealthy components (errors + warnings + not ready)
   const getUnhealthyCount = (): number => {
     let count = 0;
@@ -68,7 +40,7 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     return count;
   };
 
-  const worstStatus = getCombinedWorstStatus();
+  const worstStatus = combinedWorstStatus(props.statusApp, props.statusService, props.statusWorkload);
 
   const unhealthyCount = getUnhealthyCount();
   const isHealthy = worstStatus === HEALTHY;

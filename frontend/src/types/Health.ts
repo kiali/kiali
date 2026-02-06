@@ -3,7 +3,7 @@ import {
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   InfoCircleIcon,
-  MinusCircleIcon,
+  NewProcessIcon,
   UnknownIcon
 } from '@patternfly/react-icons';
 import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
@@ -161,8 +161,8 @@ export const INFO: Status = {
 
 export const NOT_READY: Status = {
   className: 'icon-idle',
-  color: PFColors.Info,
-  icon: MinusCircleIcon,
+  color: PFColors.Cyan300,
+  icon: NewProcessIcon,
   id: 'Not Ready',
   name: t('Not Ready'),
   priority: 2,

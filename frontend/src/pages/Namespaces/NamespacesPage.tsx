@@ -9,7 +9,7 @@ import {
   refreshIntervalSelector
 } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
-import { NamespaceInfo, NamespaceStatus } from '../../types/NamespaceInfo';
+import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { RenderContent } from '../../components/Nav/Page';
@@ -36,7 +36,6 @@ import { TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { DEGRADED, FAILURE, HEALTHY, NOT_READY, Health } from '../../types/Health';
 import { Show } from 'types/Common';
 import { ApiError } from 'types/Api';
 import { router } from '../../app/History';
@@ -56,6 +55,8 @@ import { MessageType } from '../../types/NotificationCenter';
 import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
+import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
+import { namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -307,114 +308,32 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     cluster: string,
     duration: DurationInSeconds
   ): Promise<void> => {
-    // Filter namespaces for this cluster
-    const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
+    try {
+      // Filter namespaces for this cluster
+      const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
+      const healthByNamespace = await fetchClusterNamespacesHealth(
+        clusterNamespaces.map(ns => ns.name),
+        duration,
+        cluster
+      );
 
-    // Chunk namespaces to avoid overloading the backend and/or long URIs
-    const namespaceChunks = chunkArray(clusterNamespaces, MAX_NAMESPACES_PER_CALL);
+      clusterNamespaces.forEach(nsInfo => {
+        const nsHealth = healthByNamespace.get(nsInfo.name);
+        if (!nsHealth) {
+          nsInfo.statusApp = undefined;
+          nsInfo.statusService = undefined;
+          nsInfo.statusWorkload = undefined;
+          return;
+        }
 
-    // Make single API call for each chunk (without type parameter)
-    const healthPromises = namespaceChunks.map(chunk => {
-      const namespacesStr = chunk.map(ns => ns.name).join(',');
-      return API.getClustersHealth(namespacesStr, duration, cluster);
-    });
-
-    return Promise.all(healthPromises)
-      .then(chunkedResults => {
-        // Process results from all chunks
-        namespaceChunks.forEach((chunk, chunkIndex) => {
-          const result = chunkedResults[chunkIndex];
-
-          chunk.forEach(nsInfo => {
-            if ((nsInfo.cluster && nsInfo.cluster === cluster) || !nsInfo.cluster) {
-              const nsHealth = result.get(nsInfo.name);
-              if (nsHealth) {
-                // Process app health
-                if (nsHealth.appHealth && Object.keys(nsHealth.appHealth).length > 0) {
-                  const nsStatus: NamespaceStatus = {
-                    inNotReady: [],
-                    inError: [],
-                    inWarning: [],
-                    inSuccess: [],
-                    notAvailable: []
-                  };
-                  Object.keys(nsHealth.appHealth).forEach(k => {
-                    const health: Health = nsHealth.appHealth[k];
-                    const status = health.getStatus();
-                    if (status === FAILURE) {
-                      nsStatus.inError.push(k);
-                    } else if (status === DEGRADED) {
-                      nsStatus.inWarning.push(k);
-                    } else if (status === HEALTHY) {
-                      nsStatus.inSuccess.push(k);
-                    } else if (status === NOT_READY) {
-                      nsStatus.inNotReady.push(k);
-                    } else {
-                      nsStatus.notAvailable.push(k);
-                    }
-                  });
-                  nsInfo.statusApp = nsStatus;
-                }
-
-                // Process service health
-                if (nsHealth.serviceHealth && Object.keys(nsHealth.serviceHealth).length > 0) {
-                  const nsStatus: NamespaceStatus = {
-                    inNotReady: [],
-                    inError: [],
-                    inWarning: [],
-                    inSuccess: [],
-                    notAvailable: []
-                  };
-                  Object.keys(nsHealth.serviceHealth).forEach(k => {
-                    const health: Health = nsHealth.serviceHealth[k];
-                    const status = health.getStatus();
-                    if (status === FAILURE) {
-                      nsStatus.inError.push(k);
-                    } else if (status === DEGRADED) {
-                      nsStatus.inWarning.push(k);
-                    } else if (status === HEALTHY) {
-                      nsStatus.inSuccess.push(k);
-                    } else if (status === NOT_READY) {
-                      nsStatus.inNotReady.push(k);
-                    } else {
-                      nsStatus.notAvailable.push(k);
-                    }
-                  });
-                  nsInfo.statusService = nsStatus;
-                }
-
-                // Process workload health
-                if (nsHealth.workloadHealth && Object.keys(nsHealth.workloadHealth).length > 0) {
-                  const nsStatus: NamespaceStatus = {
-                    inNotReady: [],
-                    inError: [],
-                    inWarning: [],
-                    inSuccess: [],
-                    notAvailable: []
-                  };
-                  Object.keys(nsHealth.workloadHealth).forEach(k => {
-                    const health: Health = nsHealth.workloadHealth[k];
-                    const status = health.getStatus();
-                    if (status === FAILURE) {
-                      nsStatus.inError.push(k);
-                    } else if (status === DEGRADED) {
-                      nsStatus.inWarning.push(k);
-                    } else if (status === HEALTHY) {
-                      nsStatus.inSuccess.push(k);
-                    } else if (status === NOT_READY) {
-                      nsStatus.inNotReady.push(k);
-                    } else {
-                      nsStatus.notAvailable.push(k);
-                    }
-                  });
-                  nsInfo.statusWorkload = nsStatus;
-                }
-              }
-            }
-          });
-        });
-      })
-      .catch(err => this.handleApiError('Could not fetch health', err));
+        const statuses = namespaceStatusesFromNamespaceHealth(nsHealth);
+        nsInfo.statusApp = statuses.statusApp;
+        nsInfo.statusService = statuses.statusService;
+        nsInfo.statusWorkload = statuses.statusWorkload;
+      });
+    } catch (err) {
+      this.handleApiError('Could not fetch health', err as ApiError);
+    }
   };
 
   fetchTLS = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {

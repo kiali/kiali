@@ -1,14 +1,5 @@
 import * as React from 'react';
-import {
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Popover,
-  PopoverPosition,
-  Spinner
-} from '@patternfly/react-core';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle, Spinner } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
@@ -30,6 +21,7 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
+import { StatCountPopover } from './StatCountPopover';
 
 export const ClusterStats: React.FC = () => {
   const { isLoading, statusMap } = useClusterStatus();
@@ -86,21 +78,21 @@ export const ClusterStats: React.FC = () => {
               </div>
             )}
             {unhealthy > 0 && (
-              <Popover
-                aria-label={t('Clusters with issues')}
-                position={PopoverPosition.right}
+              <StatCountPopover
+                ariaLabel={t('Clusters with issues')}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationTriangle /> {t('Clusters')}
                   </span>
                 }
                 bodyContent={popoverContent}
-              >
-                <div className={classes(statItemStyle, clickableStyle)}>
-                  <span className={linkStyle}>{unhealthy}</span>
-                  <KialiIcon.ExclamationTriangle />
-                </div>
-              </Popover>
+                trigger={
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="clusters-issues">
+                    <span className={linkStyle}>{unhealthy}</span>
+                    <KialiIcon.ExclamationTriangle />
+                  </div>
+                }
+              />
             )}
           </div>
         )}
