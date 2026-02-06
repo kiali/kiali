@@ -63,7 +63,8 @@ Feature: Kiali Service Details page
   @bookinfo-app
   @tracing
   @waypoint-tracing
-  Scenario: See graph traces for productpage service details
+  Scenario: See graph traces for details service details
+    And user is at the details page for the "service" "bookinfo/details" located in the "" cluster
     And user sees trace information
     When user selects a trace
     Then user sees trace details
