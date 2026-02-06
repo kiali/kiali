@@ -5,17 +5,17 @@
 Feature: Kiali Service Details page
 
   User opens the Services page and sees the bookinfo namespaces,
-  clicks in the reviews service, and page loads correctly.
+  clicks in the productpage service, and page loads correctly.
 
   Background:
     Given user is at administrator perspective
-    And user is at the details page for the "service" "bookinfo/reviews" located in the "" cluster
+    And user is at the details page for the "service" "bookinfo/productpage" located in the "" cluster
 
   # TODO: offline - no tracing details yet
   @bookinfo-app
   @core-2
   @lpinterop
-  Scenario: See details for reviews
+  Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
     Then sd::user sees a list with content "Traffic"
     Then sd::user sees a list with content "Inbound Metrics"
@@ -27,7 +27,7 @@ Feature: Kiali Service Details page
   @core-2
   @lpinterop
   Scenario: See details for service
-    Then sd::user sees "reviews" details information for service "v1"
+    Then sd::user sees "productpage" details information for service "v1"
     Then sd::user sees Network card
     Then sd::user sees Istio Config
     But no cluster badge for the "service" should be visible
@@ -40,7 +40,7 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @core-2
-  Scenario: See Inbound Metrics for reviews service details
+  Scenario: See Inbound Metrics for productpage service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
     Then sd::user sees "Request size" graph
@@ -56,23 +56,25 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @core-2
-  Scenario: See Graph data for reviews service details Inbound Metrics graphs
+  Scenario: See Graph data for productpage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
   # TODO: offline - no tracing details yet
   @bookinfo-app
   @tracing
   @waypoint-tracing
-  Scenario: See graph traces for reviews service details
+  Scenario: See graph traces for productpage service details
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   # TODO: offline - no tracing details yet
+  # waypoint tracing does not emit traces for productpage
   @bookinfo-app
   @tracing
   @waypoint-tracing
   Scenario: See span info after selecting service span
+    Given user is at the details page for the "service" "bookinfo/details" located in the "" cluster
     And user sees trace information
     When user selects a trace with at least 4 spans
     Then user sees span details
