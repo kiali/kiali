@@ -469,7 +469,6 @@
   "Secret Name: {{secretName}}": "Secret Name: {{secretName}}",
   "Select a namespace to view {{type}}.": "Select a namespace to view {{type}}.",
   "Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.": "选择工作负载、服务或应用程序图形视图。应用程序视图用于版本控制，它依赖于应用程序和版本标签。工作负载和服务图分别提供物理视图和逻辑视图。",
-  "Select duration": "Select duration",
   "Select edge + side panel": "Select edge + side panel",
   "Select Gateway": "选择网关",
   "Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example \"Last 5m\" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.": "选择刷新图表的频率，以及每次刷新使用多少历史度量数据来构建图表。例如，“Last 5m”表示使用最近5分钟的请求指标数据。要重播历史时间窗口，请单击重播图标。这将用重播工具栏替换当前的时间范围控件。",

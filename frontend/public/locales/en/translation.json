@@ -477,7 +477,6 @@
   "Secret Name: {{secretName}}": "Secret Name: {{secretName}}",
   "Select a namespace to view {{type}}.": "Select a namespace to view {{type}}.",
   "Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.": "Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.",
-  "Select duration": "Select duration",
   "Select edge + side panel": "Select edge + side panel",
   "Select Gateway": "Select Gateway",
   "Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example \"Last 5m\" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.": "Select how often to refresh the graph and how much historical metric data is used to build the graph, per refresh. For example \"Last 5m\" means use the most recent 5 minutes of request metric data.  To replay a historical time window click the replay icon.  This replaces the current time range controls with the replay toolbar.",
