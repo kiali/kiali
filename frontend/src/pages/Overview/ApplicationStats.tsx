@@ -3,7 +3,7 @@ import { Card, CardBody, CardFooter, CardHeader, CardTitle, Flex, FlexItem } fro
 import { ChartDonut } from '@patternfly/react-charts/victory';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
+import { Paths, serverConfig } from 'config';
 import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
@@ -13,7 +13,6 @@ import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { namespaceItemsSelector } from 'store/Selectors';
-import { DurationDropdown } from 'components/Dropdown/DurationDropdown';
 import { getName } from 'utils/RateIntervals';
 import { OverviewCardLoadingState } from './OverviewCardState';
 import { ResourcesFullIcon, TachometerAltIcon } from '@patternfly/react-icons';
@@ -51,9 +50,9 @@ const durationStyle = kialiStyle({
 });
 
 export const ApplicationStats: React.FC = () => {
-  const { applications, duration, isLoading, metrics } = useApplications();
+  const { applications, isLoading, metrics } = useApplications();
   const allNamespaces = useKialiSelector(namespaceItemsSelector);
-
+  const duration = serverConfig.healthConfig.compute?.Duration ?? 0;
   // Calculate stats from applications
   const total = applications.length;
   let healthy = 0;
@@ -135,17 +134,9 @@ export const ApplicationStats: React.FC = () => {
 
   const colorScale = [PFColors.Danger, PFColors.Warning, PFColors.Success, PFColors.Color200, PFColors.Color100];
 
-  const durationDropwdown = (
-    <DurationDropdown
-      id="application-stats-duration-dropdown"
-      toggleAriaLabel={t('Select duration')}
-      toggleIcon={<KialiIcon.Clock />}
-    />
-  );
-
   return (
     <Card className={cardStyle}>
-      <CardHeader actions={{ actions: [durationDropwdown] }}>
+      <CardHeader>
         <CardTitle>
           {t('Applications')}
           <span className={durationStyle}>{t('Last {{duration}}', { duration: getName(duration) })}</span>

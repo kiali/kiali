@@ -45,5 +45,4 @@ export interface AppListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
   metrics?: 'true' | 'false';
-  rateInterval?: string;
 }
