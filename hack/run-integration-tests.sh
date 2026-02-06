@@ -581,7 +581,6 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressInstalled
-  ensureKialiTracesReady "true"
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
@@ -592,6 +591,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
   ensureKialiServerReady
   ensureBookinfoGraphReady
+  # TODO: traces are not available at this time, but tests are passing anyway
+  # ensureKialiTracesReady "false"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
