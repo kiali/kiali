@@ -1464,7 +1464,7 @@ install_kiali_via_helm_server() {
     --set external_services.prometheus.auth.key_file="secret:acm-observability-certs:tls.key" \
     --set external_services.prometheus.thanos_proxy.enabled="true" \
     --set external_services.prometheus.thanos_proxy.retention_period="14d" \
-    --set external_services.prometheus.thanos_proxy.scrape_interval="30s" \
+    --set external_services.prometheus.thanos_proxy.scrape_interval="5m" \
     --set deployment.logger.log_level="debug"
 
   wait_for_kiali_ready
@@ -1673,7 +1673,7 @@ ${deployment_spec}
       thanos_proxy:
         enabled: true
         retention_period: "14d"
-        scrape_interval: "30s"
+        scrape_interval: "5m"
 EOF
 
   # Wait for operator to finish reconciliation
