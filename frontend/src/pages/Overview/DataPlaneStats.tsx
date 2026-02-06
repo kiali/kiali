@@ -257,8 +257,10 @@ export const DataPlaneStats: React.FC = () => {
     <>
       {list.slice(0, MAX_POPOVER_ITEMS).map(ns => (
         <div key={`${ns.cluster}-${ns.name}`} className={popoverItemStyle}>
-          <PFBadge badge={PFBadges.Namespace} size="sm" />
-          {ns.name}
+          <span>
+            <PFBadge badge={PFBadges.Namespace} size="sm" />
+            {ns.name}
+          </span>
           <Label
             className={classes(statusLabelStyle, popoverItemStatusStyle)}
             variant="outline"
