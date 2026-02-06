@@ -2575,7 +2575,7 @@ spec:
           - |
             echo "Starting continuous traffic to backend..."
             while true; do
-              curl -s -o /dev/null -w "%{http_code}" http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80
+              curl -s -o /dev/null -w "%{http_code}\n" http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80
               sleep 2
             done
         resources:
@@ -3049,7 +3049,7 @@ spec:
           - |
             echo "Starting continuous traffic to backend..."
             while true; do
-              curl -s -o /dev/null -w "%{http_code}" http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80
+              curl -s -o /dev/null -w "%{http_code}\n" http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80
               sleep 2
             done
         resources:
