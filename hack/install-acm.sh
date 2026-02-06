@@ -53,8 +53,8 @@
 #     https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
 #
 # Istio Ambient Mode:
-#   Sidecar injection is always supported. Optionally, you can also enable Ambient mode
-#   using the --ambient flag with install-istio or create-all commands.
+#   Sidecar injection is always supported. Ambient mode is enabled by default.
+#   Use --ambient false to disable it with install-istio or create-all commands.
 #
 #   When Ambient mode is enabled, you get additional capabilities:
 #     - L4 traffic: Handled by ztunnel daemonset (TCP metrics: istio_tcp_*)
@@ -65,7 +65,7 @@
 # The script supports:
 #   create-all           - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps+sends initial traffic)
 #   init-openshift       - Create/start CRC OpenShift cluster and enable User Workload Monitoring
-#   install-istio        - Install Istio (use --ambient for Ambient mode)
+#   install-istio        - Install Istio (Ambient mode enabled by default; use --ambient false to disable)
 #   uninstall-istio      - Remove Istio installation
 #   status-istio         - Check the status of Istio installation
 #   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
@@ -88,7 +88,7 @@
 #   - Cluster-admin privileges
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
 #   - User Workload Monitoring (UWM) - see "Enabling User Workload Monitoring" section below
-#   - Istio - install via install-istio command (use --ambient for Ambient mode)
+#   - Istio - install via install-istio command (Ambient mode enabled by default)
 #   - For install-kiali: helm, make, and access to Kiali git repositories
 #   - For install-kiali: ACM Observability must be installed first (run install-acm)
 #
@@ -137,11 +137,8 @@
 #
 #   After User Workload Monitoring is enabled, install ACM and Istio using:
 #     ./install-acm.sh install-acm
-#     ./install-acm.sh install-istio              # Sidecar mode
-#     ./install-acm.sh --ambient install-istio    # Ambient mode
-#
-#   Or install Istio manually on an existing cluster:
-#     ./hack/istio/install-istio-via-istioctl.sh -c oc
+#     ./install-acm.sh install-istio                    # Ambient mode (default)
+#     ./install-acm.sh --ambient false install-istio    # Sidecar-only mode
 #
 ##############################################################################
 
@@ -175,7 +172,7 @@ DEFAULT_TRAFFIC_COUNT="10"
 DEFAULT_TRAFFIC_INTERVAL="1"
 
 # Istio mode defaults
-DEFAULT_AMBIENT_MODE="false"
+DEFAULT_AMBIENT_MODE="true"
 
 # Build defaults
 DEFAULT_SKIP_BUILD="false"
@@ -2442,7 +2439,7 @@ init_openshift() {
   infomsg ""
   infomsg "Next steps:"
   infomsg "  1. Run: $0 install-acm"
-  infomsg "  2. Run: $0 install-istio    (use --ambient for Ambient mode)"
+  infomsg "  2. Run: $0 install-istio    (Ambient mode enabled by default; use --ambient false to disable)"
   infomsg "  3. Run: $0 install-kiali"
   infomsg "  4. Run: $0 install-sidecar-app"
 }
@@ -2921,7 +2918,7 @@ install_ambient_app() {
   if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1 && \
      ! ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
     errormsg "Istio Ambient mode is not installed (ztunnel daemonset not found)"
-    errormsg "Run 'install-istio --ambient' first to install Istio in Ambient mode"
+    errormsg "Run 'install-istio' first (Ambient mode is enabled by default)"
     return 1
   fi
 
@@ -3600,7 +3597,7 @@ while [[ $# -gt 0 ]]; do
     -tc|--traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
     -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
     -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
-    --ambient) AMBIENT_MODE="true"; shift ;;
+    --ambient) AMBIENT_MODE="$2"; shift; shift ;;
     -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
     -sb|--skip-build) SKIP_BUILD="true"; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
@@ -3674,10 +3671,10 @@ Valid options:
   -cont|--traffic-continuous
       Send requests continuously until Ctrl-C (for traffic command).
       Without this flag, sends --traffic-count requests and stops.
-  --ambient
-      Enable Istio Ambient mode in addition to sidecar support.
-      Adds ztunnel (L4) and waypoint (L7) capabilities alongside sidecars.
+  --ambient <true|false>
+      Enable or disable Istio Ambient mode (ztunnel L4 + waypoint L7) alongside sidecar support.
       Affects install-istio (installs Ambient profile) and create-all.
+      Default: ${DEFAULT_AMBIENT_MODE}
   -aan|--ambient-app-namespace <namespace>
       The namespace for the Ambient test application.
       Default: ${DEFAULT_AMBIENT_APP_NAMESPACE}
@@ -3713,21 +3710,20 @@ The command must be one of:
   traffic-ambient:      Generate HTTP traffic to the Ambient test application
 
 Examples:
-  # Standard installation (sidecar support)
-  $0 -cps ~/pull-secret.txt create-all         # Create complete environment
-  $0 -cps ~/pull-secret.txt init-openshift     # Initialize CRC cluster
-  $0 install-istio                             # Install Istio (sidecar mode)
-
-  # With Ambient mode enabled (adds ztunnel L4 + waypoint L7 alongside sidecars)
-  $0 -cps ~/pull-secret.txt --ambient create-all      # Create complete environment with Ambient mode
+  # Standard installation (Ambient mode enabled by default)
+  $0 -cps ~/pull-secret.txt create-all                # Create complete environment (includes Ambient)
   $0 -cps ~/pull-secret.txt init-openshift            # Initialize CRC cluster
-  $0 --ambient install-istio                          # Install Istio with Ambient mode
+  $0 install-istio                                    # Install Istio with Ambient mode (default)
   $0 status-istio                                     # Check Istio status (shows Ambient if enabled)
-  $0 install-ambient-app                              # Install Ambient test app (requires Ambient Istio)
+  $0 install-ambient-app                              # Install Ambient test app
   $0 status-ambient-app                               # Check Ambient test app status
   $0 traffic-ambient                                  # Generate traffic to Ambient app
   $0 uninstall-ambient-app                            # Remove Ambient test app
   $0 uninstall-istio                                  # Remove Istio
+
+  # Sidecar-only installation (Ambient mode disabled)
+  $0 -cps ~/pull-secret.txt --ambient false create-all    # Create environment without Ambient
+  $0 --ambient false install-istio                        # Install Istio without Ambient mode
 
   # ACM and Kiali
   $0 install-acm                            # Install ACM with defaults
