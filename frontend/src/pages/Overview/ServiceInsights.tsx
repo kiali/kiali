@@ -225,7 +225,7 @@ export const ServiceInsights: React.FC = () => {
     }
 
     return (
-      <table className={tableStyle}>
+      <table className={tableStyle} data-test="service-insights-latencies-table">
         <thead>
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
@@ -261,7 +261,7 @@ export const ServiceInsights: React.FC = () => {
     }
 
     return (
-      <table className={tableStyle}>
+      <table className={tableStyle} data-test="service-insights-rates-table">
         <thead>
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
@@ -318,7 +318,7 @@ export const ServiceInsights: React.FC = () => {
   };
 
   return (
-    <Card className={cardStyle}>
+    <Card className={cardStyle} data-test="service-insights-card">
       <CardHeader>
         <CardTitle>
           <span>{t('Service Insights')}</span>
@@ -338,6 +338,7 @@ export const ServiceInsights: React.FC = () => {
       {!isLoading && !isError && (
         <CardFooter>
           <Button
+            data-test="service-insights-view-all-services"
             variant="link"
             isInline
             className={classes(linkStyle, noUnderlineStyle)}
