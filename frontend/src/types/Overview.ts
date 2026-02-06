@@ -13,8 +13,22 @@ export interface ServiceLatencyResponse {
   services: ServiceLatency[];
 }
 
-// Query parameters for the service latencies endpoint
-export interface ServiceLatencyQuery {
+// ServiceRequests represents a single service's request statistics
+export interface ServiceRequests {
+  cluster: string;
+  errorRate: number; // error rate as a decimal (0.0 to 1.0)
+  namespace: string;
+  requestCount: number; // requests per second
+  serviceName: string;
+}
+
+// ServiceRequestsResponse contains the sorted list of service request statistics
+export interface ServiceRequestsResponse {
+  services: ServiceRequests[];
+}
+
+// Query parameters for the overview metrics endpoints
+export interface OverviewMetricsQuery {
   limit?: number;
   rateInterval?: string;
 }

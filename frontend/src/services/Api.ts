@@ -1552,3 +1552,19 @@ export const getOverviewServiceLatencies = (
 > => {
   return newRequest(HTTP_VERBS.GET, urls.overviewServiceLatencies, params, {});
 };
+
+export const getOverviewServiceRates = (
+  params: { limit?: number; rateInterval?: string } = {}
+): Promise<
+  ApiResponse<{
+    services: Array<{
+      cluster: string;
+      errorRate: number;
+      namespace: string;
+      requestCount: number;
+      serviceName: string;
+    }>;
+  }>
+> => {
+  return newRequest(HTTP_VERBS.GET, urls.overviewServiceRates, params, {});
+};

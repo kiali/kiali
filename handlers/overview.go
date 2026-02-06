@@ -91,7 +91,7 @@ func OverviewServiceLatencies(conf *config.Config, prom prometheus.ClientInterfa
 // Uses topk to return only the top results sorted by highest latency.
 func buildLatencyQuery(labels, groupBy, rateInterval string, limit int) string {
 	return fmt.Sprintf(
-		`topk(%d, histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{%s}[%s])) by (le,%s)) > 0)`,
+		`round(topk(%d, histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{%s}[%s])) by (le,%s)) > 0), 0.001)`,
 		limit,
 		labels,
 		rateInterval,
@@ -141,4 +141,232 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm", seconds/60)
 	}
 	return fmt.Sprintf("%ds", seconds)
+}
+
+// OverviewServiceRates returns the top service error rates across all clusters and namespaces.
+// Query parameters:
+//   - rateInterval: time period for rate calculation (default: from healthConfig.compute.duration)
+//   - limit: maximum number of results to return (default: 20, must be > 0)
+func OverviewServiceRates(conf *config.Config, prom prometheus.ClientInterface) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		zl := log.FromContext(ctx)
+
+		// Parse query parameters
+		queryParams := r.URL.Query()
+
+		rateInterval := queryParams.Get("rateInterval")
+		if rateInterval == "" {
+			rateInterval = getDefaultRateInterval(conf)
+		} else {
+			// Validate the provided rateInterval
+			if _, err := model.ParseDuration(rateInterval); err != nil {
+				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid 'rateInterval' parameter: %v", err))
+				return
+			}
+		}
+
+		limit := 20 // default limit
+		if limitStr := queryParams.Get("limit"); limitStr != "" {
+			var err error
+			limit, err = strconv.Atoi(limitStr)
+			if err != nil || limit <= 0 {
+				RespondWithError(w, http.StatusBadRequest, "Invalid 'limit' parameter: must be a positive integer")
+				return
+			}
+		}
+
+		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
+		groupBy := "source_cluster,destination_cluster,destination_service_namespace,destination_service_name"
+		labels := ``
+
+		queryTime := time.Now()
+		services := make([]models.ServiceRequests, 0, limit)
+		foundServices := make(map[string]bool)
+
+		// Step 1: Query for top error rates using topk
+		errorRateQuery := buildErrorRateQuery(labels, groupBy, rateInterval, limit)
+		zl.Debug().Msgf("OverviewServiceRequests error rate query: %s", errorRateQuery)
+
+		errorRateResult, warnings, err := prom.API().Query(ctx, errorRateQuery, queryTime)
+		if len(warnings) > 0 {
+			zl.Warn().Msgf("OverviewServiceRequests error rate. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		}
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus for error rates: "+err.Error())
+			return
+		}
+
+		errorRateVector, ok := errorRateResult.(model.Vector)
+		if !ok {
+			RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type for error rates")
+			return
+		}
+
+		// Step 2: Query for total request rates to get request counts
+		totalQuery := buildRequestsQuery(labels, groupBy, rateInterval, limit)
+		zl.Debug().Msgf("OverviewServiceRequests total query: %s", totalQuery)
+
+		totalResult, warnings, err := prom.API().Query(ctx, totalQuery, queryTime)
+		if len(warnings) > 0 {
+			zl.Warn().Msgf("OverviewServiceRequests total. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+		}
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus for total requests: "+err.Error())
+			return
+		}
+
+		totalVector, ok := totalResult.(model.Vector)
+		if !ok {
+			RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type for total requests")
+			return
+		}
+
+		// Build a map of total request counts
+		totalMap := buildTotalMap(totalVector)
+
+		// Process error rate results first (these are our primary results)
+		for _, sample := range errorRateVector {
+			if math.IsNaN(float64(sample.Value)) {
+				continue
+			}
+
+			cluster := string(sample.Metric["destination_cluster"])
+			namespace := string(sample.Metric["destination_service_namespace"])
+			serviceName := string(sample.Metric["destination_service_name"])
+
+			if serviceName == "" {
+				continue
+			}
+
+			// try to protect against a known prom reporting problem
+			if cluster == "unknown" {
+				cluster = string(sample.Metric["source_cluster"])
+			}
+
+			key := serviceKey(cluster, namespace, serviceName)
+			foundServices[key] = true
+
+			// Look up request count from total map
+			requestCount := totalMap[key]
+
+			services = append(services, models.ServiceRequests{
+				Cluster:      cluster,
+				ErrorRate:    float64(sample.Value),
+				Namespace:    namespace,
+				RequestCount: requestCount,
+				ServiceName:  serviceName,
+			})
+		}
+
+		// Step 3: If we have remaining capacity, fill with top-traffic services
+		remaining := limit - len(services)
+		if remaining > 0 {
+			// Add services from total query that weren't in error rate results
+			// These are sorted by request count (topk), so we add in order
+			for _, sample := range totalVector {
+				if remaining <= 0 {
+					break
+				}
+
+				if math.IsNaN(float64(sample.Value)) {
+					continue
+				}
+
+				cluster := string(sample.Metric["destination_cluster"])
+				namespace := string(sample.Metric["destination_service_namespace"])
+				serviceName := string(sample.Metric["destination_service_name"])
+
+				if serviceName == "" {
+					continue
+				}
+
+				// try to protect against a known prom reporting problem
+				if cluster == "unknown" {
+					cluster = string(sample.Metric["source_cluster"])
+				}
+
+				key := serviceKey(cluster, namespace, serviceName)
+				if foundServices[key] {
+					continue // Already included from error rate query
+				}
+
+				requestCount := float64(sample.Value)
+				if requestCount <= 0 {
+					continue
+				}
+
+				foundServices[key] = true
+				services = append(services, models.ServiceRequests{
+					Cluster:      cluster,
+					ErrorRate:    0, // No errors (wasn't in error rate results)
+					Namespace:    namespace,
+					RequestCount: requestCount,
+					ServiceName:  serviceName,
+				})
+				remaining--
+			}
+		}
+
+		response := models.ServiceRatesResponse{
+			Services: services,
+		}
+
+		RespondWithJSON(w, http.StatusOK, response)
+	}
+}
+
+// buildErrorRateQuery constructs a PromQL query for error rate using topk.
+func buildErrorRateQuery(labels, groupBy, rateInterval string, limit int) string {
+	var errorLabels string
+	if labels == "" {
+		errorLabels = `response_code!="200"`
+	} else {
+		errorLabels = labels + `,response_code!="200"`
+	}
+	return fmt.Sprintf(
+		`round(topk(%d, sum(rate(istio_requests_total{%s}[%s])) by (%s) / sum(rate(istio_requests_total{%s}[%s])) by (%s) > 0), 0.001)`,
+		limit,
+		errorLabels,
+		rateInterval,
+		groupBy,
+		labels,
+		rateInterval,
+		groupBy,
+	)
+}
+
+// buildRequestsQuery constructs a PromQL query for request rate using topk.
+func buildRequestsQuery(labels, groupBy, rateInterval string, limit int) string {
+	return fmt.Sprintf(
+		`round(topk(%d, sum(rate(istio_requests_total{%s}[%s])) by (%s) > 0), 0.001)`,
+		limit,
+		labels,
+		rateInterval,
+		groupBy,
+	)
+}
+
+// serviceKey generates a unique key for a service based on cluster, namespace, and name.
+func serviceKey(cluster, namespace, serviceName string) string {
+	return cluster + "/" + namespace + "/" + serviceName
+}
+
+// buildTotalMap creates a map of service keys to their total request counts.
+func buildTotalMap(vector model.Vector) map[string]float64 {
+	totalMap := make(map[string]float64)
+	for _, sample := range vector {
+		if math.IsNaN(float64(sample.Value)) {
+			continue
+		}
+		cluster := string(sample.Metric["destination_cluster"])
+		namespace := string(sample.Metric["destination_service_namespace"])
+		serviceName := string(sample.Metric["destination_service_name"])
+		if serviceName == "" {
+			continue
+		}
+		key := serviceKey(cluster, namespace, serviceName)
+		totalMap[key] = float64(sample.Value)
+	}
+	return totalMap
 }
