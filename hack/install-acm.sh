@@ -38,10 +38,13 @@
 #   ACM configuration is required for mTLS to work.
 #
 # Metrics Pipeline Latency:
-#   ACM collects metrics from Prometheus and pushes to Thanos every 5 minutes.
-#   Expect a 5-6 minute delay before new metrics appear in Kiali. To see data in
-#   Kiali's graph or metrics views, query time ranges that include data older than
-#   5-6 minutes (e.g., "Last 10 minutes" or "Last 30 minutes").
+#   ACM collects metrics from Prometheus and pushes to Thanos every 5 minutes
+#   (default, configurable via spec.observabilityAddonSpec.interval in the MCO CR).
+#   After deploying a new application, expect a warm-up period of approximately
+#   twice the collection interval (~10 minutes by default) before data appears in
+#   Kiali's graph and metrics tab. This is because rate calculations require at
+#   least two data points. After the warm-up, all time ranges work normally, but
+#   the most recent data will always be at least one collection interval old.
 #
 # References:
 #   - Red Hat blog on connecting Grafana to ACM Observability (mTLS setup):
@@ -2897,10 +2900,11 @@ generate_sidecar_traffic() {
     infomsg ""
     infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
     infomsg ""
-    infomsg "Metrics will appear in Kiali after propagation (typically 5-6 minutes):"
+    infomsg "Metrics will appear in Kiali after approximately twice the ACM collection interval (~10 minutes by default):"
     infomsg "  1. Prometheus scrapes Envoy metrics (every 30s)"
-    infomsg "  2. Metrics federate to ACM Thanos (every 5 minutes)"
-    infomsg "  3. Kiali queries Thanos and displays graphs"
+    infomsg "  2. Metrics federate to ACM Thanos (every 5 minutes by default)"
+    infomsg "  3. Rate calculations require at least two data points in Thanos"
+    infomsg "  4. Kiali queries Thanos and displays graphs"
     infomsg ""
     infomsg "View in Kiali: https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
   fi
@@ -3390,11 +3394,12 @@ generate_ambient_traffic() {
     infomsg ""
     infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
     infomsg ""
-    infomsg "Metrics will appear in Kiali after propagation (typically 5-6 minutes):"
+    infomsg "Metrics will appear in Kiali after approximately twice the ACM collection interval (~10 minutes by default):"
     infomsg "  1. Ztunnel/Waypoint generates metrics"
     infomsg "  2. Prometheus scrapes metrics (every 30s)"
-    infomsg "  3. Metrics federate to ACM Thanos (every 5 minutes)"
-    infomsg "  4. Kiali queries Thanos and displays graphs"
+    infomsg "  3. Metrics federate to ACM Thanos (every 5 minutes by default)"
+    infomsg "  4. Rate calculations require at least two data points in Thanos"
+    infomsg "  5. Kiali queries Thanos and displays graphs"
     infomsg ""
     infomsg "Expected metrics:"
     infomsg "  - L4 (ztunnel): istio_tcp_received_bytes_total, istio_tcp_sent_bytes_total"
@@ -3546,8 +3551,7 @@ create_all() {
   infomsg "Initial traffic has been sent. To generate more traffic:"
   infomsg "  $0 traffic-sidecar"
   infomsg ""
-  infomsg "Note: Metrics take 5-6 minutes to appear in Kiali due to ACM federation interval."
-  infomsg "Use 'Last 10 minutes' or longer time ranges in Kiali to see data."
+  infomsg "Note: Metrics take approximately twice the ACM collection interval (~10 minutes by default) to appear in Kiali."
 }
 
 ##############################################################################
