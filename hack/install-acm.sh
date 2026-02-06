@@ -84,7 +84,7 @@
 #   - OpenShift cluster accessible via 'oc' CLI
 #   - Cluster-admin privileges
 #   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
-#   - User Workload Monitoring (UWM) - automatically enabled by init-openshift command
+#   - User Workload Monitoring (UWM) - see "Enabling User Workload Monitoring" section below
 #   - Istio - install via install-istio command (use --ambient for Ambient mode)
 #   - For install-kiali: helm, make, and access to Kiali git repositories
 #   - For install-kiali: ACM Observability must be installed first (run install-acm)
@@ -108,11 +108,32 @@
 #   ACM observability which requires ~30GB for Thanos metrics storage). The default of
 #   48GB is insufficient and will cause disk pressure issues during installation.
 #
-# Installing Istio and Enabling User Workload Monitoring:
+# Enabling User Workload Monitoring:
 #   The init-openshift command automatically enables User Workload Monitoring
 #   (required for Istio metrics collection).
 #
-#   After init-openshift, install Istio using:
+#   If you are using an existing OpenShift cluster (not using init-openshift),
+#   you MUST manually enable User Workload Monitoring before installing ACM and Istio:
+#
+#     1. Create or update the ConfigMap 'cluster-monitoring-config' in namespace 'openshift-monitoring':
+#
+#        oc apply -f - <<EOF
+#        apiVersion: v1
+#        kind: ConfigMap
+#        metadata:
+#          name: cluster-monitoring-config
+#          namespace: openshift-monitoring
+#        data:
+#          config.yaml: |
+#            enableUserWorkload: true
+#        EOF
+#
+#     2. Wait for prometheus-user-workload statefulset to be created (1-2 minutes):
+#
+#        oc get statefulset prometheus-user-workload -n openshift-user-workload-monitoring
+#
+#   After User Workload Monitoring is enabled, install ACM and Istio using:
+#     ./install-acm.sh install-acm
 #     ./install-acm.sh install-istio              # Sidecar mode
 #     ./install-acm.sh --ambient install-istio    # Ambient mode
 #
