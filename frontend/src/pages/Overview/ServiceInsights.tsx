@@ -266,7 +266,7 @@ export const ServiceInsights: React.FC = () => {
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle} style={{ textAlign: 'right' }}>
-              {t('Success rate')}
+              {t('Error rate')}
             </th>
           </tr>
         </thead>
@@ -284,12 +284,12 @@ export const ServiceInsights: React.FC = () => {
                 {svc.errorRate > 0 ? (
                   <>
                     <KialiIcon.ExclamationCircle className={statusIconStyle} color={PFColors.Danger} />
-                    {formatErrorRate(Math.max(0, Math.min(1, 1 - svc.errorRate)))}
+                    {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
                   </>
                 ) : (
                   <>
                     <KialiIcon.Success className={statusIconStyle} color={PFColors.Success} />
-                    {formatErrorRate(1)}
+                    {formatErrorRate(0)}
                   </>
                 )}
               </td>
