@@ -12,7 +12,9 @@ import { useKialiTranslation } from '../utils/I18nUtils';
 export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
 
 export type ClusterStatusResult = {
+  isError: boolean;
   isLoading: boolean;
+  refresh: () => void;
   statusMap: ClusterStatusMap;
 };
 
@@ -26,6 +28,7 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
   const dispatch = useKialiDispatch();
   const statusMapFromRedux = useKialiSelector(istioStatusSelector);
   const { lastRefreshAt } = useRefreshInterval();
+  const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
   const hasNamespaces = options?.hasNamespaces ?? true;
@@ -39,6 +42,7 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
   // Fetch and update Redux on mount and refresh
   const fetchStatus = React.useCallback((): void => {
     setIsLoading(true);
+    setIsError(false);
 
     API.getIstioStatus()
       .then(response => {
@@ -59,6 +63,7 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
         }
       })
       .catch(error => {
+        setIsError(true);
         // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = !hasNamespaces;
 
@@ -79,7 +84,9 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
   }, [lastRefreshAt, fetchStatus]);
 
   return {
+    isError,
     isLoading,
+    refresh: fetchStatus,
     statusMap: statusMapFromRedux
   };
 };

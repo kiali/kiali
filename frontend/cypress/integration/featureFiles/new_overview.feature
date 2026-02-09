@@ -13,18 +13,22 @@ Feature: New Overview - Overview cards
     And user clicks the "View warning Istio configs" popover action
     Then user is redirected to Istio config list with all namespaces and warning filters
 
+  # Combined loading/error state tests for all overview cards
   @core-2
-  Scenario: Control planes card shows loading state without count or footer link
-    Given Control planes API responds slowly
+  Scenario: All overview cards show loading state without count or footer link
+    Given all overview APIs respond slowly
     And user is at the "overview" page
     Then Control planes card shows loading state without count or footer link
+    And Clusters card shows loading state without count or footer link
 
   @core-2
-  Scenario: Control planes card shows error state with Try Again without count or footer link
-    Given Control planes API fails
+  Scenario: All overview cards show error state with Try Again without count or footer link
+    Given all overview APIs fail
     And user is at the "overview" page
     Then Control planes card shows error state without count or footer link
+    And Clusters card shows error state without count or footer link
 
+  # Control planes card specific tests
   @core-2
   Scenario: Control planes card can retry after error
     Given Control planes API fails
@@ -47,3 +51,43 @@ Feature: New Overview - Overview cards
     Given user is at the "overview" page
     When user clicks View Data planes in Data planes card
     Then user is redirected to Namespaces page with data-plane type filter
+    
+  # Clusters card specific tests
+  @core-2
+  Scenario: Clusters card can retry after error
+    Given Clusters API fails once
+    And user is at the "overview" page
+    Then Clusters card shows error state without count or footer link
+    When user clicks Try Again in Clusters card
+    Then Clusters card shows cluster count and footer link
+
+  @core-2
+  Scenario: Clusters card shows no data state with dash
+    Given Clusters API returns empty data
+    And user is at the "overview" page
+    Then Clusters card shows no data state with dash
+
+  # Tests using real backend data
+  @core-2
+  Scenario: Clusters card displays cluster count from backend
+    Given user is at the "overview" page
+    Then Clusters card shows cluster count and footer link
+
+  @core-2
+  Scenario: Clusters card View Mesh link navigates to mesh page
+    Given user is at the "overview" page
+    When user clicks View Mesh link in Clusters card
+    Then user is redirected to Mesh page
+
+  @multi-cluster
+  @clusters-health-restore
+  Scenario: Clusters card shows unhealthy clusters with popover
+    When user scales to "0" the "istiod" in namespace "istio-system"
+    And user is at the "overview" page
+    Then Clusters card shows unhealthy clusters count
+    When user opens the Clusters issues popover
+    Then Clusters popover shows cluster with issues
+    When user scales to "1" the "istiod" in namespace "istio-system"
+    And the user refreshes the page
+    Then Clusters card shows all healthy clusters
+
