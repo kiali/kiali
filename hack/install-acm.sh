@@ -64,6 +64,9 @@
 #
 # The script supports:
 #   create-all           - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps+sends initial traffic)
+#   install-components   - Install all components on existing OpenShift cluster (ACM+Istio+Kiali+apps, skips already installed).
+#                          Similar to create-all but for existing clusters. Assumes user is logged in via 'oc'.
+#                          Checks and installs only missing components. Requires User Workload Monitoring already enabled.
 #   init-openshift       - Create/start CRC OpenShift cluster and enable User Workload Monitoring
 #   install-istio        - Install Istio (Ambient mode enabled by default; use --ambient false to disable)
 #   uninstall-istio      - Remove Istio installation
@@ -251,6 +254,67 @@ wait_for_deletion() {
 # Prerequisite Checking
 ##############################################################################
 
+enable_user_workload_monitoring() {
+  # Enable User Workload Monitoring (UWM) for the cluster.
+  # UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor resources.
+  # Per Red Hat docs: https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
+  infomsg "Enabling User Workload Monitoring..."
+
+  # Check if already enabled
+  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    infomsg "User Workload Monitoring is already enabled"
+    return 0
+  fi
+
+  # Check if cluster-monitoring-config ConfigMap exists
+  if ! ${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring &>/dev/null 2>&1; then
+    infomsg "Creating cluster-monitoring-config ConfigMap..."
+    cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+EOF
+  else
+    infomsg "Updating cluster-monitoring-config ConfigMap..."
+    # Get existing config, add enableUserWorkload if not present
+    local existing_config=$(${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null)
+
+    if echo "${existing_config}" | grep -q "enableUserWorkload"; then
+      # Already has the setting, just update it to true
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    else
+      # Doesn't have the setting, add it
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    fi
+  fi
+
+  # Wait for User Workload Monitoring pods to be created
+  infomsg "Waiting for User Workload Monitoring pods to be created (this may take 1-2 minutes)..."
+  local max_wait=180
+  local waited=0
+  while ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; do
+    if [ ${waited} -ge ${max_wait} ]; then
+      errormsg "Timeout waiting for User Workload Monitoring to be enabled"
+      return 1
+    fi
+    debug "Waiting for prometheus-user-workload statefulset... (${waited}s)"
+    sleep 5
+    waited=$((waited + 5))
+  done
+
+  # Wait for pods to be ready
+  infomsg "Waiting for User Workload Monitoring pods to be ready..."
+  ${CLIENT_EXE} wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n openshift-user-workload-monitoring --timeout=300s || true
+
+  infomsg "User Workload Monitoring enabled successfully"
+  return 0
+}
+
 check_prerequisites() {
   debug "Checking prerequisites..."
 
@@ -287,14 +351,49 @@ check_prerequisites() {
 
   # Check for User Workload Monitoring (required for PodMonitor/ServiceMonitor in user namespaces)
   if ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
-    errormsg "User Workload Monitoring (UWM) is not enabled."
-    errormsg "UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor."
-    errormsg "Please enable UWM by setting 'enableUserWorkload: true' in the cluster-monitoring-config ConfigMap."
-    errormsg "See: https://docs.openshift.com/container-platform/latest/monitoring/enabling-monitoring-for-user-defined-projects.html"
-    return 1
+    infomsg "User Workload Monitoring (UWM) is not enabled - enabling it now..."
+    enable_user_workload_monitoring
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to enable User Workload Monitoring"
+      return 1
+    fi
   fi
   debug "User Workload Monitoring (prometheus-user-workload) is available"
 
+  return 0
+}
+
+setup_image_registry() {
+  # Set up and login to the OpenShift image registry
+  # This is required before pushing images to the cluster
+  infomsg "Setting up image registry access..."
+
+  # Run make cluster-status to set up the registry
+  pushd "${KIALI_REPO_DIR}" > /dev/null
+  infomsg "Running make cluster-status to set up registry..."
+  make cluster-status &>/dev/null
+  popd > /dev/null
+
+  # Get the external registry route hostname
+  local registry_route=$(${CLIENT_EXE} get route -n openshift-image-registry default-route -o jsonpath='{.spec.host}' 2>/dev/null)
+  if [ -z "${registry_route}" ]; then
+    errormsg "Could not determine image registry route hostname"
+    return 1
+  fi
+
+  debug "Image registry route: ${registry_route}"
+
+  # Log into the image registry
+  infomsg "Logging into image registry: ${registry_route}"
+  local registry_token=$(${CLIENT_EXE} whoami -t)
+  podman login --tls-verify=false -u kubeadmin -p "${registry_token}" "${registry_route}"
+
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to log into image registry"
+    return 1
+  fi
+
+  infomsg "Successfully logged into image registry"
   return 0
 }
 
@@ -305,6 +404,35 @@ check_acm_installed() {
     fi
   fi
   return 1  # ACM is not installed
+}
+
+check_istio_installed() {
+  # Check if Istio CR exists or istiod deployment exists
+  if ${CLIENT_EXE} get istio default &>/dev/null 2>&1; then
+    return 0  # Istio is installed (Sail Operator)
+  fi
+  if ${CLIENT_EXE} get deployment istiod -n istio-system &>/dev/null 2>&1; then
+    return 0  # Istio is installed (istioctl)
+  fi
+  return 1  # Istio is not installed
+}
+
+check_sidecar_app_installed() {
+  if ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+      return 0  # Sidecar test app is installed
+    fi
+  fi
+  return 1  # Sidecar test app is not installed
+}
+
+check_ambient_app_installed() {
+  if ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+      return 0  # Ambient test app is installed
+    fi
+  fi
+  return 1  # Ambient test app is not installed
 }
 
 ##############################################################################
@@ -1414,6 +1542,13 @@ install_kiali_via_helm_server() {
   fi
   infomsg "Using helm chart: ${helm_chart_tgz}"
 
+  # Setup image registry access
+  setup_image_registry
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to setup image registry"
+    return 1
+  fi
+
   # Build and push Kiali server image
   pushd "${KIALI_REPO_DIR}" > /dev/null
   if [ "${SKIP_BUILD}" == "true" ]; then
@@ -1584,6 +1719,13 @@ install_kiali_via_helm_operator() {
     fi
   fi
   infomsg "Using operator helm chart: ${helm_chart_tgz}"
+
+  # Setup image registry access
+  setup_image_registry
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to setup image registry"
+    return 1
+  fi
 
   # Get internal registry
   local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
@@ -2035,71 +2177,6 @@ status_kiali() {
 }
 
 ##############################################################################
-# OpenShift Initialization Functions
-##############################################################################
-
-enable_user_workload_monitoring() {
-  # Enable User Workload Monitoring (UWM) for the cluster.
-  # UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor resources.
-  # Per Red Hat docs: https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
-  infomsg "Enabling User Workload Monitoring..."
-
-  # Check if already enabled
-  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
-    infomsg "User Workload Monitoring is already enabled"
-    return 0
-  fi
-
-  # Check if cluster-monitoring-config ConfigMap exists
-  if ! ${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring &>/dev/null 2>&1; then
-    infomsg "Creating cluster-monitoring-config ConfigMap..."
-    cat <<EOF | ${CLIENT_EXE} apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cluster-monitoring-config
-  namespace: openshift-monitoring
-data:
-  config.yaml: |
-    enableUserWorkload: true
-EOF
-  else
-    infomsg "Updating cluster-monitoring-config ConfigMap..."
-    # Get existing config, add enableUserWorkload if not present
-    local existing_config=$(${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null)
-
-    if echo "${existing_config}" | grep -q "enableUserWorkload"; then
-      # Already has the setting, just update it to true
-      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
-    else
-      # Doesn't have the setting, add it
-      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
-    fi
-  fi
-
-  # Wait for User Workload Monitoring pods to be created
-  infomsg "Waiting for User Workload Monitoring pods to be created (this may take 1-2 minutes)..."
-  local max_wait=180
-  local waited=0
-  while ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; do
-    if [ ${waited} -ge ${max_wait} ]; then
-      errormsg "Timeout waiting for User Workload Monitoring to be enabled"
-      return 1
-    fi
-    debug "Waiting for prometheus-user-workload statefulset... (${waited}s)"
-    sleep 5
-    waited=$((waited + 5))
-  done
-
-  # Wait for pods to be ready
-  infomsg "Waiting for User Workload Monitoring pods to be ready..."
-  ${CLIENT_EXE} wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n openshift-user-workload-monitoring --timeout=300s || true
-
-  infomsg "User Workload Monitoring enabled successfully"
-  return 0
-}
-
-##############################################################################
 # Istio Functions
 ##############################################################################
 
@@ -2419,14 +2496,10 @@ init_openshift() {
     return 1
   fi
 
-  # Log into the image registry
-  infomsg "Logging into the image registry..."
-  podman login --tls-verify=false -u kiali -p $(${CLIENT_EXE} whoami -t) default-route-openshift-image-registry.apps-crc.testing
-
+  # Setup and log into the image registry
+  setup_image_registry
   if [ $? -ne 0 ]; then
-    warnmsg "Failed to log into image registry (this may not be critical)"
-  else
-    infomsg "Logged into image registry"
+    warnmsg "Failed to setup image registry (this may not be critical)"
   fi
 
   infomsg "======================================"
@@ -3551,6 +3624,145 @@ create_all() {
   infomsg "Note: Metrics take approximately twice the ACM collection interval (~10 minutes by default) to appear in Kiali."
 }
 
+install_components() {
+  infomsg "======================================"
+  infomsg "Installing all components on existing cluster"
+  infomsg "======================================"
+  infomsg ""
+  infomsg "Istio Ambient: $([ "${AMBIENT_MODE}" == "true" ] && echo "enabled" || echo "disabled")"
+  infomsg ""
+
+  # Calculate total steps
+  local current_step=1
+  local total_steps=5
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    total_steps=6
+  fi
+
+  # Step 1: Conditionally install ACM
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing ACM"
+  infomsg "======================================"
+  if check_acm_installed; then
+    infomsg "ACM is already installed - skipping"
+  else
+    infomsg "ACM not found - installing..."
+    install_acm
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install ACM"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 2: Conditionally install Istio
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing Istio"
+  infomsg "======================================"
+  if check_istio_installed; then
+    infomsg "Istio is already installed - skipping"
+  else
+    infomsg "Istio not found - installing..."
+    install_istio
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Istio"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 3: Conditionally install Kiali
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing Kiali"
+  infomsg "======================================"
+  local kiali_method=$(detect_kiali_install_method)
+  if [ "${kiali_method}" == "not-installed" ]; then
+    infomsg "Kiali not found - installing..."
+    install_kiali
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Kiali"
+      return 1
+    fi
+  else
+    infomsg "Kiali is already installed (method: ${kiali_method}) - skipping"
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 4: Conditionally install sidecar test app
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing sidecar test app"
+  infomsg "======================================"
+  if check_sidecar_app_installed; then
+    infomsg "Sidecar test app is already installed - skipping"
+  else
+    infomsg "Sidecar test app not found - installing..."
+    install_sidecar_app
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install sidecar test app"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 5: Conditionally install ambient test app (only if ambient mode enabled)
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step ${current_step}/${total_steps}: Checking/Installing ambient test app"
+    infomsg "======================================"
+    if check_ambient_app_installed; then
+      infomsg "Ambient test app is already installed - skipping"
+    else
+      infomsg "Ambient test app not found - installing..."
+      install_ambient_app
+      if [ $? -ne 0 ]; then
+        errormsg "Failed to install ambient test app"
+        return 1
+      fi
+    fi
+    current_step=$((current_step + 1))
+  fi
+
+  # Final step: Generate initial traffic
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Generating initial traffic"
+  infomsg "======================================"
+  generate_sidecar_traffic
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to generate sidecar traffic (continuing anyway)"
+  fi
+
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "Generating traffic to Ambient test application..."
+    generate_ambient_traffic
+    if [ $? -ne 0 ]; then
+      warnmsg "Failed to generate Ambient traffic (continuing anyway)"
+    fi
+  fi
+
+  # Final summary (similar to create_all)
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg ""
+  infomsg "=========================================================="
+  infomsg "All components installed successfully!"
+  infomsg "=========================================================="
+  infomsg ""
+  infomsg "Kiali URL: https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  infomsg ""
+  infomsg "Initial traffic has been sent. To generate more traffic:"
+  infomsg "  $0 traffic-sidecar"
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "  $0 traffic-ambient"
+  fi
+  infomsg ""
+  infomsg "Note: Metrics take approximately twice the ACM collection interval (~10 minutes) to appear in Kiali."
+}
+
 ##############################################################################
 # Argument Parsing
 ##############################################################################
@@ -3560,6 +3772,7 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     create-all) _CMD="create-all"; shift ;;
+    install-components) _CMD="install-components"; shift ;;
     init-openshift) _CMD="init-openshift"; shift ;;
     install-istio) _CMD="install-istio"; shift ;;
     uninstall-istio) _CMD="uninstall-istio"; shift ;;
@@ -3690,6 +3903,7 @@ Valid options:
 
 The command must be one of:
   create-all:           "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps), and send initial traffic
+  install-components:   Install all components on existing cluster (assumes OpenShift already running)
   init-openshift:       Create/start CRC OpenShift cluster and enable User Workload Monitoring
   install-istio:        Install Istio (use --ambient for Ambient mode)
   uninstall-istio:      Remove Istio installation
@@ -3724,6 +3938,10 @@ Examples:
   # Sidecar-only installation (Ambient mode disabled)
   $0 -cps ~/pull-secret.txt --ambient false create-all    # Create environment without Ambient
   $0 --ambient false install-istio                        # Install Istio without Ambient mode
+
+  # Install all components on existing cluster (user already logged in with oc)
+  $0 install-components                           # Install all missing components
+  $0 --ambient false install-components           # Install without Ambient mode
 
   # ACM and Kiali
   $0 install-acm                            # Install ACM with defaults
@@ -3831,6 +4049,9 @@ fi
 case ${_CMD} in
   create-all)
     create_all
+    ;;
+  install-components)
+    install_components
     ;;
   init-openshift)
     init_openshift
