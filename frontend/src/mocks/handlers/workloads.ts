@@ -1,7 +1,13 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { InstanceType } from '../../types/Common';
 import { Metric } from '../../types/Metrics';
-import { getScenarioConfig, getItemHealthStatus } from '../scenarios';
+import {
+  getItemHealthStatus,
+  getResponseDelay,
+  getScenarioConfig,
+  shouldApiReturnEmpty,
+  shouldApiTimeout
+} from '../scenarios';
 
 // Helper to generate time series datapoints
 const generateDatapoints = (baseValue: number, variance: number, points = 61): Array<[number, number]> => {
@@ -382,6 +388,20 @@ const deploymentGVK = {
   Version: 'v1'
 };
 
+// Map mock health status to backend status string
+const toBackendStatus = (healthStatus: 'healthy' | 'degraded' | 'unhealthy' | 'notready'): string => {
+  switch (healthStatus) {
+    case 'unhealthy':
+      return 'Failure';
+    case 'degraded':
+      return 'Degraded';
+    case 'notready':
+      return 'Not Ready';
+    default:
+      return 'Healthy';
+  }
+};
+
 const createMockWorkloadListItem = (
   name: string,
   namespace: string,
@@ -443,6 +463,10 @@ const createMockWorkloadListItem = (
     };
   }
 
+  // Not ready status means workload is scaled down (desiredReplicas = 0)
+  const isNotReady = healthStatus === 'notready';
+  const isUnhealthy = healthStatus === 'unhealthy';
+
   return {
     name,
     namespace,
@@ -465,15 +489,20 @@ const createMockWorkloadListItem = (
     health: {
       workloadStatus: {
         name,
-        desiredReplicas: 1,
-        currentReplicas: 1,
-        availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
-        syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+        desiredReplicas: isNotReady ? 0 : 1,
+        currentReplicas: isNotReady ? 0 : 1,
+        availableReplicas: isNotReady || isUnhealthy ? 0 : 1,
+        syncedProxies: isNotReady || isUnhealthy ? 0 : 1
       },
       requests: {
         inbound: { http: httpResponses },
         outbound: { http: httpResponses },
         healthAnnotations: {}
+      },
+      // Backend-calculated status - this is what Health.getStatus() uses
+      status: {
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
       }
     }
   };
@@ -525,6 +554,11 @@ const createMockServiceListItem = (
         inbound: { http: httpResponses },
         outbound: { http: httpResponses },
         healthAnnotations: {}
+      },
+      // Backend-calculated status - this is what Health.getStatus() uses
+      status: {
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
       }
     },
     validation: {
@@ -549,6 +583,10 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
     httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
 
+  // Not ready status means workload is scaled down (desiredReplicas = 0)
+  const isNotReady = healthStatus === 'notready';
+  const isUnhealthy = healthStatus === 'unhealthy';
+
   return {
     name,
     namespace,
@@ -572,12 +610,17 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
       workloadStatuses: [
         {
           name: `${name}-v1`,
-          desiredReplicas: 1,
-          currentReplicas: 1,
-          availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
-          syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+          desiredReplicas: isNotReady ? 0 : 1,
+          currentReplicas: isNotReady ? 0 : 1,
+          availableReplicas: isNotReady || isUnhealthy ? 0 : 1,
+          syncedProxies: isNotReady || isUnhealthy ? 0 : 1
         }
-      ]
+      ],
+      // Backend-calculated status - this is what Health.getStatus() uses
+      status: {
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
+      }
     }
   };
 };
@@ -768,7 +811,22 @@ const getAppsForNamespaces = (namespaces: string): MockAppListItem[] => {
 
 export const workloadHandlers = [
   // Clusters workloads - main endpoint for workload list
-  http.get('*/api/clusters/workloads', ({ request }) => {
+  http.get('*/api/clusters/workloads', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('workloads')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch workloads' }, { status: 504 });
+    }
+
+    // Return empty workloads if configured
+    if (shouldApiReturnEmpty('workloads')) {
+      return HttpResponse.json({
+        cluster: 'cluster-default',
+        workloads: [],
+        validations: { workload: {} }
+      });
+    }
+
     const url = new URL(request.url);
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const workloads = getWorkloadsForNamespaces(namespaces);
@@ -819,7 +877,21 @@ export const workloadHandlers = [
   }),
 
   // Clusters apps
-  http.get('*/api/clusters/apps', ({ request }) => {
+  http.get('*/api/clusters/apps', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('applications')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch applications' }, { status: 504 });
+    }
+
+    // Return empty applications if configured
+    if (shouldApiReturnEmpty('applications')) {
+      return HttpResponse.json({
+        cluster: 'cluster-default',
+        applications: []
+      });
+    }
+
     const url = new URL(request.url);
     const namespaces = url.searchParams.get('namespaces') || 'bookinfo';
     const applications = getAppsForNamespaces(namespaces);

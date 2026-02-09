@@ -1,10 +1,16 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { Namespace } from '../../types/Namespace';
-import { getAllNamespaces, getNamespaceHealthStatus } from '../scenarios';
+import {
+  getAllNamespaces,
+  getNamespaceHealthStatus,
+  getResponseDelay,
+  shouldApiReturnEmpty,
+  shouldApiTimeout
+} from '../scenarios';
 
 // Extended namespace type for mock with health status
 interface MockNamespace extends Namespace {
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'notready';
 }
 
 // Generate namespaces based on scenario
@@ -38,7 +44,18 @@ const getMockNamespaces = (): MockNamespace[] => generateNamespaces();
 
 export const namespaceHandlers = [
   // Get all namespaces
-  http.get('*/api/namespaces', ({ request }) => {
+  http.get('*/api/namespaces', async ({ request }) => {
+    await delay(getResponseDelay());
+
+    if (shouldApiTimeout('namespaces')) {
+      return HttpResponse.json({ error: 'Request timeout: failed to fetch namespaces' }, { status: 504 });
+    }
+
+    // Return empty namespaces if configured
+    if (shouldApiReturnEmpty('namespaces')) {
+      return HttpResponse.json([]);
+    }
+
     const url = new URL(request.url);
     const cluster = url.searchParams.get('clusterName');
     const mockNamespaces = getMockNamespaces();
