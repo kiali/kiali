@@ -179,39 +179,74 @@ export const ServiceInsights: React.FC = () => {
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
   const [isError, setIsError] = React.useState(false);
 
-  const hasNamespaceCollisionByServiceName = React.useMemo(() => {
-    const byName = new Map<string, Set<string>>();
+  const serviceNameCollisions = React.useMemo(() => {
+    const namespacesByName = new Map<string, Set<string>>();
+    const clustersByName = new Map<string, Set<string>>();
     const all = [...latencies, ...rates];
 
     all.forEach(svc => {
       const key = svc.serviceName;
-      const namespaces = byName.get(key) ?? new Set<string>();
-      namespaces.add(svc.namespace);
-      byName.set(key, namespaces);
-    });
 
-    const collisions = new Set<string>();
-    byName.forEach((namespaces, serviceName) => {
-      if (namespaces.size > 1) {
-        collisions.add(serviceName);
+      const namespaces = namespacesByName.get(key) ?? new Set<string>();
+      namespaces.add(svc.namespace);
+      namespacesByName.set(key, namespaces);
+
+      // Ignore "unknown" cluster value when determining collisions.
+      if (svc.cluster && svc.cluster !== 'unknown') {
+        const clusters = clustersByName.get(key) ?? new Set<string>();
+        clusters.add(svc.cluster);
+        clustersByName.set(key, clusters);
       }
     });
 
-    return (serviceName: string) => collisions.has(serviceName);
+    const namespaceCollisions = new Set<string>();
+    const clusterCollisions = new Set<string>();
+
+    namespacesByName.forEach((namespaces, serviceName) => {
+      if (namespaces.size > 1) {
+        namespaceCollisions.add(serviceName);
+      }
+    });
+
+    clustersByName.forEach((clusters, serviceName) => {
+      if (clusters.size > 1) {
+        clusterCollisions.add(serviceName);
+      }
+    });
+
+    return {
+      hasClusterCollision: (serviceName: string) => clusterCollisions.has(serviceName),
+      hasNamespaceCollision: (serviceName: string) => namespaceCollisions.has(serviceName)
+    };
   }, [latencies, rates]);
 
   const formatServiceDisplayName = React.useCallback(
-    (svc: { namespace: string; serviceName: string }): string => {
-      if (!hasNamespaceCollisionByServiceName(svc.serviceName)) {
+    (svc: { cluster: string; namespace: string; serviceName: string }): string => {
+      const showNs = serviceNameCollisions.hasNamespaceCollision(svc.serviceName);
+      const showCluster =
+        isMultiCluster &&
+        svc.cluster &&
+        svc.cluster !== 'unknown' &&
+        serviceNameCollisions.hasClusterCollision(svc.serviceName);
+
+      if (!showNs && !showCluster) {
         return svc.serviceName;
       }
 
+      const suffixParts: string[] = [];
+      if (showNs) {
+        suffixParts.push(`NS: ${svc.namespace}`);
+      }
+      if (showCluster) {
+        suffixParts.push(`C: ${svc.cluster}`);
+      }
+
       // Disambiguate only when needed, but avoid making very long labels even longer.
-      const suffix = `(NS: ${svc.namespace})`;
-      const withNs = `${svc.serviceName}${suffix}`;
-      return withNs.length <= 32 ? withNs : svc.serviceName;
+      const suffix = `(${suffixParts.join(', ')})`;
+      const withSuffix = `${svc.serviceName}${suffix}`;
+      return withSuffix.length <= 32 ? withSuffix : svc.serviceName;
     },
-    [hasNamespaceCollisionByServiceName]
+    [serviceNameCollisions]
   );
 
   const buildServicesListUrl = React.useCallback((): string => {
