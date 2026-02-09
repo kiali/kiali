@@ -34,6 +34,10 @@ const getControlPlanesCard = (): Cypress.Chainable => {
   return cy.contains('Control planes').closest('div[data-ouia-component-type="PF6/Card"]');
 };
 
+const getDataPlanesCard = (): Cypress.Chainable => {
+  return cy.contains('Data planes').closest('div[data-ouia-component-type="PF6/Card"]');
+};
+
 const makeControlPlane = (opts: { clusterName: string; istiodName: string; status: 'Healthy' | 'Unhealthy' }): any => {
   return {
     cluster: {
@@ -103,7 +107,7 @@ Then('Control planes card shows loading state without count or footer link', () 
   getControlPlanesCard().within(() => {
     cy.contains('Fetching control plane data').should('be.visible');
     cy.contains('Control planes (').should('not.exist');
-    cy.contains('View control planes').should('not.exist');
+    cy.contains('View Control planes').should('not.exist');
   });
 });
 
@@ -113,7 +117,7 @@ Then('Control planes card shows error state without count or footer link', () =>
     cy.contains('Control planes could not be loaded').should('be.visible');
     cy.contains('Try Again').should('be.visible');
     cy.contains('Control planes (').should('not.exist');
-    cy.contains('View control planes').should('not.exist');
+    cy.contains('View Control planes').should('not.exist');
   });
 });
 
@@ -140,7 +144,7 @@ When('user clicks Try Again in Control planes card', () => {
 Then('Control planes card shows count {int} and footer link', (count: number) => {
   getControlPlanesCard().within(() => {
     cy.contains(`Control planes (${count})`).should('be.visible');
-    cy.contains('View control planes').should('be.visible');
+    cy.contains('View Control planes').should('be.visible');
   });
 });
 
@@ -195,5 +199,19 @@ Then('user is redirected to Istio config list with all namespaces and warning fi
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
+  });
+});
+
+When('user clicks View Data planes in Data planes card', () => {
+  getDataPlanesCard().within(() => {
+    cy.getBySel('data-planes-view-namespaces').should('be.visible').click();
+  });
+});
+
+Then('user is redirected to Namespaces page with data-plane type filter', () => {
+  cy.location('pathname').should('match', /\/console\/namespaces$/);
+  cy.location('search').then(search => {
+    const params = new URLSearchParams(search);
+    expect(params.get('type')).to.eq('Data plane');
   });
 });

@@ -42,3 +42,8 @@ Feature: New Overview - Overview cards
     And user clicks the "istiod-kubernetes" control plane link in the popover
     Then user is redirected to Mesh page with cluster filter "Kubernetes"
 
+  @core-2
+  Scenario: Data planes footer link navigates to Namespaces list with type filter
+    Given user is at the "overview" page
+    When user clicks View Data planes in Data planes card
+    Then user is redirected to Namespaces page with data-plane type filter
