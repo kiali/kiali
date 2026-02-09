@@ -7,8 +7,8 @@ on:
       - completed
 
 jobs:
-  report-backend-tests:
-    name: Report backend tests to ReportPortal
+  report-tests:
+    name: Report tests to ReportPortal
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
     container:
@@ -37,6 +37,57 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
 
+    # Download PR metadata from artifact because workflow_run events triggered by PRs from forks
+    # don't have access to PR information in github.event.workflow_run.pull_requests
+    # See: https://github.com/orgs/community/discussions/25220
+    - name: Download PR metadata
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: pr-metadata
+        path: pr-metadata/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Download frontend core 1 test results
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-frontend-core-1-report
+        path: frontend-core-temp/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Download frontend core 2 test results
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-frontend-core-2-report
+        path: frontend-core-temp/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Download frontend core optional test results
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        name: junit-frontend-core-optional-report
+        path: frontend-core-temp/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Setup Node.js for merging reports
+      uses: actions/setup-node@v6
+      with:
+        node-version: "20"
+
+    - name: Merge frontend core reports
+      continue-on-error: true
+      run: |
+        npm install -g junit-report-merger
+        mkdir -p frontend-core/cypress/results
+        jrm frontend-core/cypress/results/combined-report.xml "frontend-core-temp/*.xml"
+
     - name: Extract metadata
       id: metadata
       run: |
@@ -47,15 +98,21 @@ jobs:
           echo "istio_version=unknown" >> $GITHUB_OUTPUT
         fi
 
-    - name: Check DATA_ROUTER_USERNAME
-      env:
-        DATA_ROUTER_USERNAME: ${{ secrets.DATA_ROUTER_USERNAME }}
-      run: |
-        if [ -z "$DATA_ROUTER_USERNAME" ]; then
-          echo "ERROR: DATA_ROUTER_USERNAME is empty"
+        if [ -f pr-metadata/pr_number.txt ]; then
+          PR_NUMBER=$(cat pr-metadata/pr_number.txt)
+          echo "pr_number=${PR_NUMBER:-unknown}" >> $GITHUB_OUTPUT
+        else
+          echo "pr_number=unknown" >> $GITHUB_OUTPUT
         fi
 
-    - name: Report to ReportPortal
+        if [ -f pr-metadata/target_branch.txt ]; then
+          TARGET_BRANCH=$(cat pr-metadata/target_branch.txt)
+          echo "target_branch=${TARGET_BRANCH:-unknown}" >> $GITHUB_OUTPUT
+        else
+          echo "target_branch=unknown" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Report backend tests to ReportPortal
       continue-on-error: true
       uses: ./.github/actions/report-to-reportportal
       with:
@@ -64,5 +121,21 @@ jobs:
         test_file_name: 'junit-rest-report.xml'
         istio_version: ${{ steps.metadata.outputs.istio_version }}
         data_plane_mode: 'sidecar'
+        pr_number: ${{ steps.metadata.outputs.pr_number }}
+        target_branch: ${{ steps.metadata.outputs.target_branch }}
+        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
+        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
+
+    - name: Report frontend core tests to ReportPortal
+      continue-on-error: true
+      uses: ./.github/actions/report-to-reportportal
+      with:
+        test_suite: 'cypress'
+        test_results_dir: 'frontend-core/cypress/results'
+        test_file_name: 'combined-report.xml'
+        istio_version: ${{ steps.metadata.outputs.istio_version }}
+        data_plane_mode: 'sidecar'
+        pr_number: ${{ steps.metadata.outputs.pr_number }}
+        target_branch: ${{ steps.metadata.outputs.target_branch }}
         data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
         data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}

@@ -69,6 +69,14 @@ jobs:
     - name: Run frontend core 2 integration tests
       run: hack/run-integration-tests.sh --test-suite frontend-core-2 --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: junit-frontend-core-2-report
+        path: frontend/cypress/results/combined-report.xml
+        if-no-files-found: warn
+
     - name: Get debug info when integration tests fail
       if: failure()
       run: |
