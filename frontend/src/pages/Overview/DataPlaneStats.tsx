@@ -1,15 +1,12 @@
 import * as React from 'react';
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label, Spinner } from '@patternfly/react-core';
-import { router } from 'app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { Namespace } from 'types/Namespace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { useSelector } from 'react-redux';
 import { durationSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
@@ -35,9 +32,8 @@ import {
   statusLabelStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
-import { camelCase } from 'lodash';
 import { StatCountPopover } from './StatCountPopover';
+import { buildDataPlanesUrl, navigateToUrl } from './Links';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -104,10 +100,6 @@ export const DataPlaneStats: React.FC = () => {
   const duration = useSelector(durationSelector) as DurationInSeconds;
   const [isHealthLoading, setIsHealthLoading] = React.useState<boolean>(false);
   const [healthByNamespace, setHealthByNamespace] = React.useState<Record<string, HealthStatusId>>({});
-
-  const typeFilterParam = camelCase(categoryFilter.category);
-  const healthFilterParam = camelCase(healthFilter.category);
-  const dataPlaneParamValue = NamespaceCategory.DATA_PLANE;
 
   const handleApiError = React.useCallback((message: string, error: ApiError): void => {
     addDanger(message, API.getErrorString(error));
@@ -229,26 +221,6 @@ export const DataPlaneStats: React.FC = () => {
 
   const total = ambient + sidecar;
 
-  const getViewAllUrl = (status?: HealthStatusId): string => {
-    const params = new URLSearchParams();
-    params.set(typeFilterParam, dataPlaneParamValue);
-
-    if (status) {
-      params.set(healthFilterParam, status);
-    }
-
-    return `/${Paths.NAMESPACES}?${params.toString()}`;
-  };
-
-  const handleViewAllClick = (): void => {
-    FilterSelected.resetFilters();
-  };
-
-  const navigateToUrl = (url: string): void => {
-    handleViewAllClick();
-    router.navigate(url);
-  };
-
   const popoverContentFor = (
     list: NamespaceWithHealthStatus[],
     viewAllStatus: HealthStatusId,
@@ -296,7 +268,7 @@ export const DataPlaneStats: React.FC = () => {
             variant="link"
             isInline
             className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(getViewAllUrl(viewAllStatus))}
+            onClick={() => navigateToUrl(buildDataPlanesUrl(viewAllStatus))}
           >
             {viewAllText}
           </Button>
@@ -447,7 +419,7 @@ export const DataPlaneStats: React.FC = () => {
           variant="link"
           isInline
           className={classes(linkStyle, noUnderlineStyle)}
-          onClick={() => navigateToUrl(getViewAllUrl())}
+          onClick={() => navigateToUrl(buildDataPlanesUrl())}
           data-test="data-planes-view-namespaces"
         >
           {t('View Namespaces')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
