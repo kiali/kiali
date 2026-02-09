@@ -23,6 +23,9 @@ func GetTimeArg(args map[string]interface{}, keys ...string) time.Time {
 			if value == "" {
 				continue
 			}
+			if parsed, err := time.Parse(time.RFC3339Nano, value); err == nil {
+				return parsed
+			}
 			if parsed, err := time.Parse(time.RFC3339, value); err == nil {
 				return parsed
 			}

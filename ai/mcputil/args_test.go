@@ -26,15 +26,19 @@ func TestGetStringArg(t *testing.T) {
 }
 
 func TestGetTimeArg(t *testing.T) {
-	now := time.Now()
+	now := time.Date(2026, time.February, 9, 10, 11, 12, 0, time.UTC)
+	nowNano := time.Date(2026, time.February, 9, 10, 11, 12, 123456789, time.UTC)
 	args := map[string]interface{}{
 		"t1": now,
 		"t2": now.Format(time.RFC3339),
+		"t3": nowNano.Format(time.RFC3339Nano),
 	}
 
 	assert.Equal(t, now, GetTimeArg(args, "t1"))
 	parsed := GetTimeArg(args, "t2")
 	assert.True(t, parsed.Equal(now))
+	parsedNano := GetTimeArg(args, "t3")
+	assert.True(t, parsedNano.Equal(nowNano))
 	assert.True(t, GetTimeArg(map[string]interface{}{}, "missing").IsZero())
 }
 
