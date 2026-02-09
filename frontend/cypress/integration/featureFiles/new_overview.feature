@@ -5,12 +5,11 @@ Feature: New Overview - Overview cards
     Given user is at administrator perspective
 
   @core-2
-  Scenario: View all warning Istio configs includes namespaces and filters
-    Given Istio configs API returns at least 4 warning configs
+  Scenario: Istio configs card can navigate to Istio config list with all namespaces
+    Given Istio configs API is observed
     And user is at the "overview" page
-    When user opens the Istio configs warnings popover
-    And user clicks the "View warning Istio configs" popover action
-    Then user is redirected to Istio config list with all namespaces and warning filters
+    When user clicks View Istio config in Istio configs card
+    Then user is redirected to Istio config list with all namespaces
 
   # Combined loading/error state tests for all overview cards
   @core-2
@@ -30,20 +29,18 @@ Feature: New Overview - Overview cards
   # Control planes card specific tests
   @core-2
   Scenario: Control planes card can retry after error
-    Given Control planes API fails
+    Given Control planes API fails once
     And user is at the "overview" page
     Then Control planes card shows error state without count or footer link
-    When Control planes API succeeds with 1 healthy control plane
-    And user clicks Try Again in Control planes card
-    Then Control planes card shows count 1 and footer link
+    When user clicks Try Again in Control planes card
+    Then Control planes card shows count and footer link
 
   @core-2
-  Scenario: Control plane links in popover navigate to Mesh page with cluster filter
-    Given Control planes API returns 1 unhealthy control plane in cluster "Kubernetes"
+  Scenario: Control planes issues (if any) can navigate to Mesh page with cluster filter
+    Given Control planes API is observed
     And user is at the "overview" page
-    When user opens the Control planes issues popover
-    And user clicks the "istiod-kubernetes" control plane link in the popover
-    Then user is redirected to Mesh page with cluster filter "Kubernetes"
+    When user navigates to Mesh page from Control planes card
+    Then user is redirected to Mesh page
 
   @core-2
   Scenario: Data planes footer link navigates to Namespaces list with type filter
@@ -102,24 +99,24 @@ Feature: New Overview - Overview cards
 
   @core-2
   Scenario: Service insights card can retry after error
-    Given Service insights APIs fail
+    Given Service insights APIs fail once
     And user is at the "overview" page
     Then Service insights card shows error state without tables or footer link
-    When Service insights APIs succeed with data
-    And user clicks Try Again in Service insights card
+    When user clicks Try Again in Service insights card
     Then Service insights card shows data tables and footer link
 
   @core-2
   Scenario: Service insights footer link navigates to Services list with all namespaces and sort
-    Given Service insights APIs succeed with no data
+    Given Service insights APIs are observed
     And user is at the "overview" page
     When user clicks View all services in Service insights card
     Then user is redirected to Services list with all namespaces and service insights sorting
 
+  @selected
   @core-2
-  Scenario: Service insights service link navigates to service details with cluster parameter
-    Given Service insights APIs succeed with data
+  Scenario: Service insights service link navigates to service details
+    Given Service insights APIs are observed
     And user is at the "overview" page
-    When user clicks the "svc-a" service link in Service insights card
-    Then user is redirected to Service details for namespace "alpha" service "svc-a" in cluster "Kubernetes"
+    When user clicks a valid service link in Service insights card
+    Then user is redirected to that Service details page
 

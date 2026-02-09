@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
+import { isMultiCluster, Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
 import * as API from 'services/Api';
@@ -213,7 +213,9 @@ export const ServiceInsights: React.FC = () => {
   const buildServiceDetailUrl = React.useCallback(
     (svc: { cluster: string; namespace: string; serviceName: string }) => {
       const clusterParam =
-        svc.cluster && svc.cluster !== 'unknown' ? `?${URLParam.CLUSTERNAME}=${encodeURIComponent(svc.cluster)}` : '';
+        isMultiCluster && svc.cluster && svc.cluster !== 'unknown'
+          ? `?${URLParam.CLUSTERNAME}=${encodeURIComponent(svc.cluster)}`
+          : '';
       return `/${Paths.NAMESPACES}/${svc.namespace}/${Paths.SERVICES}/${svc.serviceName}${clusterParam}`;
     },
     []
@@ -311,8 +313,12 @@ export const ServiceInsights: React.FC = () => {
 
     return (
       <div className={tablesContainerStyle}>
-        <div className={tableContainerStyle}>{renderRatesTable()}</div>
-        <div className={tableContainerStyle}>{renderLatenciesTable()}</div>
+        <div className={tableContainerStyle} data-test="service-insights-rates">
+          {renderRatesTable()}
+        </div>
+        <div className={tableContainerStyle} data-test="service-insights-latencies">
+          {renderLatenciesTable()}
+        </div>
       </div>
     );
   };
