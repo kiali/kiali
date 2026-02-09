@@ -1,0 +1,29 @@
+- name: "get_traces"
+  description: "Fetches a distributed trace (Jaeger/Tempo) by trace_id or searches by service_name (optionally only error traces) and summarizes bottlenecks and error spans."
+  input_schema:
+    type: "object"
+    properties:
+      trace_id:
+        type: "string"
+        description: "Trace ID to fetch and summarize. If provided, namespace/service_name are ignored."
+      namespace:
+        type: "string"
+        description: "Kubernetes namespace of the service (required when trace_id is not provided)."
+      service_name:
+        type: "string"
+        description: "Service name to search traces for (required when trace_id is not provided)."
+      error_only:
+        type: "boolean"
+        description: "If true, only consider traces that contain errors (e.g. error=true / non-200 status). Default false."
+      cluster_name:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
+      lookback_seconds:
+        type: "integer"
+        description: "How far back to search when using service_name. Default 600 (10m)."
+      limit:
+        type: "integer"
+        description: "Max number of traces to consider when searching by service_name. Default 10."
+      max_spans:
+        type: "integer"
+        description: "Max number of spans to return in each summary section (bottlenecks, errors, roots). Default 7."

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -44,8 +45,8 @@ type documentMatch struct {
 }
 
 func Execute(r *http.Request, args map[string]interface{}, business *business.Layer, conf *config.Config) (interface{}, int) {
-	keywordsStr, ok := args["keywords"].(string)
-	if !ok {
+	keywordsStr := mcputil.GetStringArg(args, "keywords")
+	if keywordsStr == "" {
 		return GetCitationsResponse{
 			Citations: []Citation{},
 			Errors:    "keywords parameter is required and must be a string",
@@ -71,7 +72,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 
 	// Get domain parameter (optional)
 	domain := ""
-	if domainStr, ok := args["domain"].(string); ok && domainStr != "" {
+	if domainStr := mcputil.GetStringArg(args, "domain"); domainStr != "" {
 		domain = strings.ToLower(strings.TrimSpace(domainStr))
 	}
 

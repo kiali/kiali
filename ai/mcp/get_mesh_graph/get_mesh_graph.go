@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -45,18 +46,12 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	ctx := r.Context()
 	// Parse arguments: allow either `namespace` or `namespaces` (comma-separated string)
 	namespaces := make([]string, 0)
-	if v, ok := args["namespace"].(string); ok {
-		v = strings.TrimSpace(v)
-		if v != "" {
-			namespaces = append(namespaces, v)
-		}
+	if v := mcputil.GetStringArg(args, "namespace"); v != "" {
+		namespaces = append(namespaces, v)
 	}
-	if v, ok := args["namespaces"].(string); ok {
+	if v := mcputil.GetStringArg(args, "namespaces"); v != "" {
 		for _, ns := range strings.Split(v, ",") {
-			ns = strings.TrimSpace(ns)
-			if ns != "" {
-				namespaces = append(namespaces, ns)
-			}
+			namespaces = append(namespaces, strings.TrimSpace(ns))
 		}
 	}
 	// Deduplicate namespaces if both provided
@@ -78,10 +73,10 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	}
 	toolArgs.Namespaces = namespaces
 
-	if v, ok := args["rateInterval"].(string); ok {
+	if v := mcputil.GetStringArg(args, "rateInterval"); v != "" {
 		toolArgs.RateInterval = strings.TrimSpace(v)
 	}
-	if v, ok := args["graphType"].(string); ok {
+	if v := mcputil.GetStringArg(args, "graphType"); v != "" {
 		toolArgs.GraphType = strings.TrimSpace(v)
 	}
 
@@ -97,7 +92,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		toolArgs.GraphType = graph.GraphTypeVersionedApp
 	}
 
-	if v, ok := args["clusterName"].(string); ok {
+	if v := mcputil.GetStringArg(args, "clusterName"); v != "" {
 		toolArgs.ClusterName = strings.TrimSpace(v)
 	} else {
 		toolArgs.ClusterName = conf.KubernetesConfig.ClusterName

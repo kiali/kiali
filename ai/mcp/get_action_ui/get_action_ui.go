@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -27,16 +28,13 @@ type GetActionUIResponse struct {
 }
 
 func Execute(r *http.Request, args map[string]interface{}, business *business.Layer, conf *config.Config) (interface{}, int) {
-	namespaces, _ := args["namespaces"].(string)
-	resourceType, _ := args["resourceType"].(string)
-	resourceName, _ := args["resourceName"].(string)
-	graph, _ := args["graph"].(string)
-	graphType, _ := args["graphType"].(string)
-	tab, _ := args["tab"].(string)
-	clusterName := conf.KubernetesConfig.ClusterName
-	if v, ok := args["clusterName"].(string); ok {
-		clusterName = strings.TrimSpace(v)
-	}
+	namespaces := mcputil.GetStringArg(args, "namespaces")
+	resourceType := mcputil.GetStringArg(args, "resourceType")
+	resourceName := mcputil.GetStringArg(args, "resourceName")
+	graph := mcputil.GetStringArg(args, "graph")
+	graphType := mcputil.GetStringArg(args, "graphType")
+	tab := mcputil.GetStringArg(args, "tab")
+	clusterName := mcputil.GetStringArg(args, "clusterName", "clusterName")
 
 	namespacesValue := namespaces
 	if namespaces == "all" || namespaces == "" {

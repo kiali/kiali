@@ -244,7 +244,46 @@ Retrieves detailed information or lists of Kubernetes resources (services, workl
 
 ---
 
-### 5. `manage_istio_config`
+### 5. `get_traces`
+
+Fetches a distributed trace from the configured tracing backend (Jaeger/Tempo) and returns a compact summary highlighting **latency bottlenecks** and/or **error chains**.
+
+**Action**: Query tracing backend and summarize spans.
+
+**Parameters**:
+- `trace_id` (string, optional): If provided, fetch that trace and summarize it.
+- `namespace` (string, required if `trace_id` omitted): Namespace of the service.
+- `service_name` (string, required if `trace_id` omitted): Service name to search traces for.
+- `error_only` (boolean, optional): If true, only consider error traces.
+- `lookback_seconds` (integer, optional): Search window when using `service_name`. Default 600.
+- `limit` (integer, optional): Max traces to consider when searching. Default 10.
+- `max_spans` (integer, optional): Max spans to return per summary section. Default 7.
+
+**Returns**: `GetTracesResponse` with:
+- `summary.bottlenecks`: Largest-duration spans (where latency concentrates)
+- `summary.error_spans`: Spans tagged as errors
+- `summary.error_chain`: Root → error span chain for the most expensive error span
+
+**Example 1**: Summarize a specific trace
+```json
+{
+  "trace_id": "0af7651916cd43dd8448eb211c80319c"
+}
+```
+
+**Example 2**: Find an error trace for a service and summarize it
+```json
+{
+  "namespace": "bookinfo",
+  "service_name": "reviews",
+  "error_only": true,
+  "lookback_seconds": 900
+}
+```
+
+---
+
+### 6. `manage_istio_config`
 
 Manages Istio configuration objects: list, get, create, patch, and delete operations.
 
