@@ -100,7 +100,7 @@ export const ControlPlaneStats: React.FC = () => {
             onClick={() => navigateToUrl(buildControlPlanesUrl())}
             data-test="control-planes-view-namespaces"
           >
-            {t('View control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+            {t('View Control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
           </Button>
         </CardFooter>
       )}

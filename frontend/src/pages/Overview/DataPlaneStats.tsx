@@ -380,7 +380,7 @@ export const DataPlaneStats: React.FC = () => {
                       {createIcon(NA)} {t('Data planes')}
                     </span>
                   }
-                  bodyContent={popoverContentFor(namespacesNA, NA.id as HealthStatusId, t('View Namespaces'))}
+                  bodyContent={popoverContentFor(namespacesNA, NA.id as HealthStatusId, t('View Data planes'))}
                   trigger={
                     <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
                       <span className={linkStyle}>{naCount}</span>
@@ -422,7 +422,7 @@ export const DataPlaneStats: React.FC = () => {
           onClick={() => navigateToUrl(buildDataPlanesUrl())}
           data-test="data-planes-view-namespaces"
         >
-          {t('View Namespaces')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+          {t('View Data planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
         </Button>
       </CardFooter>
     </Card>
