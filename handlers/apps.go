@@ -50,7 +50,7 @@ func (p *appParams) extract(r *http.Request, conf *config.Config) {
 	}
 	p.IncludeMetrics, err = strconv.ParseBool(query.Get("metrics"))
 	if err != nil {
-		p.IncludeMetrics = true
+		p.IncludeMetrics = false
 	}
 }
 
