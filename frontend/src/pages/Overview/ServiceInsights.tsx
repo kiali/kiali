@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
+import { LongArrowAltDownIcon } from '@patternfly/react-icons';
 import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -52,7 +53,7 @@ const tableStyle = kialiStyle({
 
 const tableHeaderStyle = kialiStyle({
   textAlign: 'left',
-  padding: '0.5rem',
+  padding: '0.75rem',
   borderBottom: 'none',
   fontSize: '0.875rem',
   color: 'var(--pf-t--global--text--color--primary--default)'
@@ -68,23 +69,21 @@ const tableRowStyle = kialiStyle({
 });
 
 const tableCellStyle = kialiStyle({
-  padding: '0.5rem',
+  padding: '0.75rem',
   fontSize: '0.875rem'
 });
 
 const metricCellStyle = kialiStyle({
-  padding: '0.5rem',
-  fontSize: '0.875rem',
-  textAlign: 'right'
+  padding: '0.75rem',
+  fontSize: '0.875rem'
 });
 
 const rateCellStyle = kialiStyle({
-  padding: '0.5rem',
+  padding: '0.75rem',
   fontSize: '0.875rem',
-  textAlign: 'right',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-end',
+  justifyContent: 'flex-start',
   gap: '0.25rem'
 });
 
@@ -112,6 +111,14 @@ const emptyStateStyle = kialiStyle({
   color: PFColors.Color200
 });
 
+const sortIconDisabledStyle = kialiStyle({
+  // "Disabled" sort indicator: visible but not interactive.
+  color: PFColors.Black1000,
+  fontSize: '0.75rem',
+  marginLeft: '0.5rem',
+  opacity: 1
+});
+
 const formatLatency = (latencyMs: number): string => {
   if (latencyMs >= 1000) {
     return `${(latencyMs / 1000).toFixed(2)}s`;
@@ -120,7 +127,11 @@ const formatLatency = (latencyMs: number): string => {
 };
 
 const formatErrorRate = (rate: number): string => {
-  return `${(rate * 100).toFixed(1)}%`;
+  const pct = rate * 100;
+  const pctRounded1 = Math.round(pct * 10) / 10;
+  const isWholeNumber = Math.abs(pctRounded1 - Math.round(pctRounded1)) < 1e-9;
+
+  return `${isWholeNumber ? Math.round(pctRounded1).toFixed(0) : pctRounded1.toFixed(1)}%`;
 };
 
 const noUnderlineStyle = kialiStyle({
@@ -167,6 +178,41 @@ export const ServiceInsights: React.FC = () => {
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
   const [isError, setIsError] = React.useState(false);
+
+  const hasNamespaceCollisionByServiceName = React.useMemo(() => {
+    const byName = new Map<string, Set<string>>();
+    const all = [...latencies, ...rates];
+
+    all.forEach(svc => {
+      const key = svc.serviceName;
+      const namespaces = byName.get(key) ?? new Set<string>();
+      namespaces.add(svc.namespace);
+      byName.set(key, namespaces);
+    });
+
+    const collisions = new Set<string>();
+    byName.forEach((namespaces, serviceName) => {
+      if (namespaces.size > 1) {
+        collisions.add(serviceName);
+      }
+    });
+
+    return (serviceName: string) => collisions.has(serviceName);
+  }, [latencies, rates]);
+
+  const formatServiceDisplayName = React.useCallback(
+    (svc: { namespace: string; serviceName: string }): string => {
+      if (!hasNamespaceCollisionByServiceName(svc.serviceName)) {
+        return svc.serviceName;
+      }
+
+      // Disambiguate only when needed, but avoid making very long labels even longer.
+      const suffix = `(NS: ${svc.namespace})`;
+      const withNs = `${svc.serviceName}${suffix}`;
+      return withNs.length <= 32 ? withNs : svc.serviceName;
+    },
+    [hasNamespaceCollisionByServiceName]
+  );
 
   const buildServicesListUrl = React.useCallback((): string => {
     const params = new URLSearchParams();
@@ -228,11 +274,16 @@ export const ServiceInsights: React.FC = () => {
 
     return (
       <table className={tableStyle} data-test="service-insights-latencies-table">
+        <colgroup>
+          <col style={{ width: '75%' }} />
+          <col style={{ width: '25%' }} />
+        </colgroup>
         <thead>
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
-            <th className={tableHeaderStyle} style={{ textAlign: 'right' }}>
-              {t('P95 latency')}
+            <th className={tableHeaderStyle}>
+              <span>{t('Latency')}</span>
+              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
         </thead>
@@ -245,7 +296,7 @@ export const ServiceInsights: React.FC = () => {
                   position={TooltipPosition.topStart}
                 >
                   <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
-                    {svc.serviceName}
+                    {formatServiceDisplayName(svc)}
                   </Link>
                 </Tooltip>
               </td>
@@ -264,11 +315,16 @@ export const ServiceInsights: React.FC = () => {
 
     return (
       <table className={tableStyle} data-test="service-insights-rates-table">
+        <colgroup>
+          <col style={{ width: '75%' }} />
+          <col style={{ width: '25%' }} />
+        </colgroup>
         <thead>
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
-            <th className={tableHeaderStyle} style={{ textAlign: 'right' }}>
-              {t('Error rate')}
+            <th className={tableHeaderStyle}>
+              <span>{t('Errors')}</span>
+              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
         </thead>
@@ -278,7 +334,7 @@ export const ServiceInsights: React.FC = () => {
               <td className={tableCellStyle}>
                 <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
                   <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
-                    {svc.serviceName}
+                    {formatServiceDisplayName(svc)}
                   </Link>
                 </Tooltip>
               </td>
@@ -331,8 +387,13 @@ export const ServiceInsights: React.FC = () => {
           <Popover
             aria-label={t('Service insights information')}
             headerContent={<span>{t('Service Insights')}</span>}
-            bodyContent={t('Shows top services by error rate and p95 latency across all clusters and namespaces.')}
-            position={PopoverPosition.right}
+            bodyContent={
+              <>
+                Lists services with the highest <strong>Errors</strong> and <strong>Latency</strong>. Always displays
+                the top 5 for each metric, even when all services are healthy.
+              </>
+            }
+            position={PopoverPosition.top}
             triggerAction="hover"
           >
             <KialiIcon.Help className={helpIconStyle} />
