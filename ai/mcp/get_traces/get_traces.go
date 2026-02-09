@@ -1,13 +1,13 @@
 package get_traces
 
 import (
-	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -107,19 +107,19 @@ func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
 		MaxSpans:        defaultMaxSpans,
 	}
 
-	out.TraceID = strings.TrimSpace(asString(args["trace_id"]))
-	out.Namespace = strings.TrimSpace(asString(args["namespace"]))
-	out.ServiceName = strings.TrimSpace(asString(args["service_name"]))
-	out.ClusterName = strings.TrimSpace(asString(args["cluster_name"]))
-	out.ErrorOnly = asBool(args["error_only"])
+	out.TraceID = mcputil.GetStringArg(args, "trace_id")
+	out.Namespace = mcputil.GetStringArg(args, "namespace")
+	out.ServiceName = mcputil.GetStringArg(args, "service_name")
+	out.ClusterName = mcputil.GetStringArg(args, "cluster_name")
+	out.ErrorOnly = mcputil.AsBool(args["error_only"])
 
-	if v := asInt(args["limit"]); v > 0 {
+	if v := mcputil.AsInt(args["limit"]); v > 0 {
 		out.Limit = v
 	}
-	if v := asInt(args["lookback_seconds"]); v > 0 {
+	if v := mcputil.AsInt(args["lookback_seconds"]); v > 0 {
 		out.LookbackSeconds = v
 	}
-	if v := asInt(args["max_spans"]); v > 0 {
+	if v := mcputil.AsInt(args["max_spans"]); v > 0 {
 		out.MaxSpans = v
 	}
 
@@ -427,7 +427,7 @@ func isErrorSpan(span *jaegerModels.Span) bool {
 			return strings.EqualFold(v, "true")
 		default:
 			// fallthrough: unknown type, best-effort string conversion
-			return strings.EqualFold(asString(kv.Value), "true")
+			return strings.EqualFold(mcputil.AsString(kv.Value), "true")
 		}
 	}
 	return false
@@ -454,7 +454,7 @@ func isHTTPErrorSpan(span *jaegerModels.Span) bool {
 			i, err := strconv.Atoi(strings.TrimSpace(v))
 			return err == nil && i >= 400
 		default:
-			i, err := strconv.Atoi(strings.TrimSpace(asString(v)))
+			i, err := strconv.Atoi(strings.TrimSpace(mcputil.AsString(v)))
 			return err == nil && i >= 400
 		}
 	}
@@ -492,7 +492,7 @@ func isGRPCErrorSpan(span *jaegerModels.Span) bool {
 			}
 			return true
 		default:
-			s := strings.TrimSpace(asString(v))
+			s := strings.TrimSpace(mcputil.AsString(v))
 			if strings.EqualFold(s, "ok") || s == "0" {
 				return false
 			}
@@ -510,7 +510,7 @@ func hasNonEmptyTag(span *jaegerModels.Span, key string) bool {
 		return false
 	}
 	for _, kv := range span.Tags {
-		if kv.Key == key && strings.TrimSpace(asString(kv.Value)) != "" {
+		if kv.Key == key && strings.TrimSpace(mcputil.AsString(kv.Value)) != "" {
 			return true
 		}
 	}
@@ -522,7 +522,7 @@ func hasTagValueEqualFold(span *jaegerModels.Span, key, want string) bool {
 		return false
 	}
 	for _, kv := range span.Tags {
-		if kv.Key == key && strings.EqualFold(strings.TrimSpace(asString(kv.Value)), want) {
+		if kv.Key == key && strings.EqualFold(strings.TrimSpace(mcputil.AsString(kv.Value)), want) {
 			return true
 		}
 	}
@@ -552,7 +552,7 @@ func interestingTags(span *jaegerModels.Span) map[string]string {
 		if !allow[kv.Key] {
 			continue
 		}
-		out[kv.Key] = asString(kv.Value)
+		out[kv.Key] = mcputil.AsString(kv.Value)
 	}
 	if len(out) == 0 {
 		return nil
@@ -568,64 +568,4 @@ func takeFirst[T any](in []T, n int) []T {
 		return in
 	}
 	return in[:n]
-}
-
-func asString(v interface{}) string {
-	switch t := v.(type) {
-	case nil:
-		return ""
-	case string:
-		return t
-	case []byte:
-		return string(t)
-	case fmt.Stringer:
-		return t.String()
-	case float64:
-		// Common for JSON numbers.
-		return strconv.FormatFloat(t, 'f', -1, 64)
-	case int:
-		return strconv.Itoa(t)
-	case int64:
-		return strconv.FormatInt(t, 10)
-	case uint64:
-		return strconv.FormatUint(t, 10)
-	case bool:
-		if t {
-			return "true"
-		}
-		return "false"
-	default:
-		return strings.TrimSpace(fmt.Sprintf("%v", t))
-	}
-}
-
-func asBool(v interface{}) bool {
-	switch t := v.(type) {
-	case bool:
-		return t
-	case string:
-		b, err := strconv.ParseBool(strings.TrimSpace(t))
-		return err == nil && b
-	default:
-		return false
-	}
-}
-
-func asInt(v interface{}) int {
-	switch t := v.(type) {
-	case int:
-		return t
-	case int64:
-		return int(t)
-	case float64:
-		return int(t)
-	case string:
-		i, err := strconv.Atoi(strings.TrimSpace(t))
-		if err == nil {
-			return i
-		}
-		return 0
-	default:
-		return 0
-	}
 }

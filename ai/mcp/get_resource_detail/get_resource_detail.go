@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -38,12 +39,12 @@ type ResourceDetailArgs struct {
 
 func Execute(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
 	// Extract parameters
-	resourceType, _ := args["resource_type"].(string)
-	namespaces, _ := args["namespaces"].(string)
-	resourceName, _ := args["resource_name"].(string)
-	clusterName, _ := args["cluster_name"].(string)
-	rateInterval, _ := args["rate_interval"].(string)
-	queryTime, _ := args["query_time"].(time.Time)
+	resourceType := mcputil.GetStringArg(args, "resource_type", "resourceType")
+	namespaces := mcputil.GetStringArg(args, "namespaces")
+	resourceName := mcputil.GetStringArg(args, "resource_name", "resourceName")
+	clusterName := mcputil.GetStringArg(args, "cluster_name", "clusterName")
+	rateInterval := mcputil.GetStringArg(args, "rate_interval", "rateInterval")
+	queryTime := mcputil.GetTimeArg(args, "query_time", "queryTime")
 	// Validate parameters
 	if resourceType == "" {
 		return "Resource type is required", http.StatusBadRequest
@@ -86,6 +87,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 
 	return resp, http.StatusOK
 }
+
 func calculateRateInterval(
 	ctx context.Context, businessLayer *business.Layer, resourceArgs ResourceDetailArgs, namespace string) (string, int, error) {
 	namespaceInfo, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, resourceArgs.ClusterName)
