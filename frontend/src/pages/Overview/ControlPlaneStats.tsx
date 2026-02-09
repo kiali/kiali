@@ -1,13 +1,11 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
+import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { useControlPlanes } from 'hooks/controlPlanes';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
-import { URLParam } from 'app/History';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 import {
   cardStyle,
@@ -19,22 +17,16 @@ import {
   popoverItemStatusStyle,
   popoverItemStyle,
   statItemStyle,
-  statsContainerStyle
+  statsContainerStyle,
+  noUnderlineStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { isUnhealthy, isHealthy } from 'utils/StatusUtils';
 import { StatCountPopover } from './StatCountPopover';
+import { buildControlPlanesUrl, buildMeshUrlWithClusterFilter, navigateToUrl } from './Links';
 
 export const ControlPlaneStats: React.FC = () => {
   const { controlPlanes, isError, isLoading, refresh } = useControlPlanes();
-
-  const buildMeshUrlWithClusterFilter = React.useCallback((clusterName: string): string => {
-    const params = new URLSearchParams();
-    // Use Mesh "Hide" expression to effectively filter the view to a single cluster.
-    // See Mesh Find/Hide semantics in `pages/Mesh/toolbar/MeshFind.tsx`.
-    params.set(URLParam.MESH_HIDE, `cluster!=${clusterName}`);
-    return `/${Paths.MESH}?${params.toString()}`;
-  }, []);
 
   // Calculate stats from controlPlanes
   const total = controlPlanes.length;
@@ -101,9 +93,15 @@ export const ControlPlaneStats: React.FC = () => {
       </CardBody>
       {!isLoading && !isError && (
         <CardFooter>
-          <Link to={`/${Paths.MESH}`} className={linkStyle}>
-            {t('View control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Link>
+          <Button
+            variant="link"
+            isInline
+            className={classes(linkStyle, noUnderlineStyle)}
+            onClick={() => navigateToUrl(buildControlPlanesUrl())}
+            data-test="control-planes-view-namespaces"
+          >
+            {t('View Control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+          </Button>
         </CardFooter>
       )}
     </Card>
