@@ -21,8 +21,8 @@ export interface ScenarioConfig {
   // Cluster configuration
   clusters: ClusterConfig[];
 
-  // Health configuration - can be namespaces or specific items (app/workload names)
-  degradedItems: string[]; // Items that are degraded (e.g., 'reviews', 'hotels')
+  // Items (apps/workloads) that show DEGRADED status (yellow warning icon).
+  degradedItems: string[];
   degradedNamespaces: string[];
 
   // APIs that should return empty data (for testing empty states)
@@ -37,6 +37,10 @@ export interface ScenarioConfig {
   // Istio config
   mtlsEnabled: boolean;
 
+  // Items (apps/workloads) that show NOT READY status (blue minus icon).
+  notReadyItems: string[];
+  notReadyNamespaces: string[];
+
   // Response delay in milliseconds (for testing loading states)
   responseDelay?: number;
 
@@ -44,8 +48,12 @@ export interface ScenarioConfig {
   timeoutApis?: ApiEndpoint[];
 
   tracingEnabled: boolean;
-  unhealthyItems: string[]; // Items that are unhealthy (e.g., 'ratings', 'flights')
+
+  // Items (apps/workloads) that show FAILURE status (red error icon).
+  unhealthyItems: string[];
   unhealthyNamespaces: string[];
+
+  // Number of Istio configuration validation errors to simulate.
   validationErrors: number;
   validationWarnings: number;
 }
@@ -133,6 +141,8 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     degradedItems: [],
     unhealthyNamespaces: [],
     unhealthyItems: [],
+    notReadyNamespaces: [],
+    notReadyItems: [],
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: false,
@@ -187,6 +197,8 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     degradedItems: [],
     unhealthyNamespaces: [],
     unhealthyItems: [],
+    notReadyNamespaces: [],
+    notReadyItems: [],
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: false,
@@ -216,6 +228,8 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     unhealthyItems: ['reviews', 'ratings', 'flights', 'viaggi', 'grafana'],
     // Specific items that are degraded (yellow) - will have some errors but available
     degradedItems: ['hotels', 'voyages', 'prometheus'],
+    notReadyNamespaces: [],
+    notReadyItems: [],
     errorRate: 30,
     latencyMultiplier: 2,
     ambientEnabled: false,
@@ -231,11 +245,24 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
   multicluster: {
     clusters: [
       {
-        // HEALTHY CLUSTER - Everything works well here
+        // HEALTHY CLUSTER - Has empty namespaces (NA) and not-ready namespaces to exceed popover limits
         name: 'cluster-east',
         isHome: true,
         accessible: true,
-        namespaces: ['bookinfo', 'istio-system', 'default', 'alpha'],
+        namespaces: [
+          'bookinfo',
+          'istio-system',
+          'default',
+          'alpha',
+          'empty-ns-1',
+          'empty-ns-2',
+          'empty-ns-3',
+          'empty-ns-4',
+          'idle-ns-1',
+          'idle-ns-2',
+          'idle-ns-3',
+          'idle-ns-4'
+        ],
         controlPlanes: [
           {
             istiodName: 'istiod',
@@ -245,16 +272,17 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
           }
         ],
         healthStatus: 'Healthy',
-        // No unhealthy/degraded items - all apps healthy
+        // Not-ready items (scaled down workloads) to exceed popover limit
+        notReadyItems: ['idle-api-1', 'idle-api-2', 'idle-api-3', 'idle-api-4'],
         validationErrors: 0,
         validationWarnings: 0
       },
       {
-        // MIXED CLUSTER - Some issues but mostly working
+        // MIXED CLUSTER - Multiple degraded namespaces to exceed popover limit
         name: 'cluster-west',
         isHome: false,
         accessible: true,
-        namespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal'],
+        namespaces: ['bookinfo', 'istio-system', 'travel-agency', 'travel-portal', 'kappa', 'lambda', 'mu', 'nu'],
         controlPlanes: [
           {
             istiodName: 'istiod',
@@ -277,11 +305,11 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
         validationWarnings: 2
       },
       {
-        // PROBLEMATIC CLUSTER - Multiple issues
+        // PROBLEMATIC CLUSTER - Multiple issues with many unhealthy namespaces
         name: 'cluster-central',
         isHome: false,
         accessible: true,
-        namespaces: ['istio-system', 'travel-control', 'beta', 'gamma'],
+        namespaces: ['istio-system', 'travel-control', 'beta', 'gamma', 'delta', 'epsilon', 'zeta'],
         controlPlanes: [
           {
             istiodName: 'istiod',
@@ -315,12 +343,17 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
       }
     ],
     // Global namespace health (applied across all clusters unless overridden)
-    healthyNamespaces: ['bookinfo', 'istio-system', 'default', 'alpha', 'travel-agency', 'beta'],
-    degradedNamespaces: ['travel-portal'],
+    healthyNamespaces: ['bookinfo', 'istio-system', 'default', 'alpha', 'travel-agency', 'beta', 'nu'],
+    // Multiple degraded namespaces to exceed the 3-item popover limit
+    degradedNamespaces: ['travel-portal', 'kappa', 'lambda', 'mu'],
     // Global items: details degraded, grafana unhealthy (visible in mesh graph)
-    degradedItems: ['details', 'prometheus'],
-    unhealthyNamespaces: ['gamma'],
-    unhealthyItems: ['grafana'],
+    degradedItems: ['details', 'prometheus', 'kappa-api', 'lambda-api', 'mu-api'],
+    // Multiple unhealthy namespaces to exceed the 3-item popover limit
+    unhealthyNamespaces: ['gamma', 'delta', 'epsilon', 'zeta'],
+    unhealthyItems: ['grafana', 'delta-api', 'epsilon-api', 'zeta-api'],
+    // Multiple not-ready namespaces to exceed the 3-item popover limit
+    notReadyNamespaces: ['idle-ns-1', 'idle-ns-2', 'idle-ns-3', 'idle-ns-4'],
+    notReadyItems: ['idle-api-1', 'idle-api-2', 'idle-api-3', 'idle-api-4'],
     errorRate: 15,
     latencyMultiplier: 1.2,
     ambientEnabled: false,
@@ -347,6 +380,8 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
     degradedItems: [],
     unhealthyNamespaces: [],
     unhealthyItems: [],
+    notReadyNamespaces: [],
+    notReadyItems: [],
     errorRate: 0,
     latencyMultiplier: 1,
     ambientEnabled: true,
@@ -395,10 +430,11 @@ export const shouldApiReturnEmpty = (api: ApiEndpoint): boolean => {
 };
 
 // Helper to check namespace health status
-export const getNamespaceHealthStatus = (namespace: string): 'healthy' | 'degraded' | 'unhealthy' => {
+export const getNamespaceHealthStatus = (namespace: string): 'healthy' | 'degraded' | 'unhealthy' | 'notready' => {
   const config = getScenarioConfig();
   if (config.unhealthyNamespaces.includes(namespace)) return 'unhealthy';
   if (config.degradedNamespaces.includes(namespace)) return 'degraded';
+  if (config.notReadyNamespaces.includes(namespace)) return 'notready';
   return 'healthy';
 };
 
@@ -409,7 +445,7 @@ export const getItemHealthStatus = (
   itemName: string,
   namespace?: string,
   clusterName?: string
-): 'healthy' | 'degraded' | 'unhealthy' => {
+): 'healthy' | 'degraded' | 'unhealthy' | 'notready' => {
   const config = getScenarioConfig();
 
   // Extract base name (remove version suffix like -v1, -v2, etc.)
@@ -425,6 +461,9 @@ export const getItemHealthStatus = (
       if (cluster.degradedItems?.includes(baseName) || cluster.degradedItems?.includes(itemName)) {
         return 'degraded';
       }
+      if (cluster.notReadyItems?.includes(baseName) || cluster.notReadyItems?.includes(itemName)) {
+        return 'notready';
+      }
     }
   }
 
@@ -434,6 +473,9 @@ export const getItemHealthStatus = (
   }
   if (config.degradedItems.includes(baseName) || config.degradedItems.includes(itemName)) {
     return 'degraded';
+  }
+  if (config.notReadyItems.includes(baseName) || config.notReadyItems.includes(itemName)) {
+    return 'notready';
   }
 
   // Fall back to namespace-level health if no item-level config

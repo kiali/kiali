@@ -10,7 +10,7 @@ import {
 
 // Extended namespace type for mock with health status
 interface MockNamespace extends Namespace {
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'notready';
 }
 
 // Generate namespaces based on scenario

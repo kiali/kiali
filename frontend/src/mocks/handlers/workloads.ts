@@ -388,6 +388,20 @@ const deploymentGVK = {
   Version: 'v1'
 };
 
+// Map mock health status to backend status string
+const toBackendStatus = (healthStatus: 'healthy' | 'degraded' | 'unhealthy' | 'notready'): string => {
+  switch (healthStatus) {
+    case 'unhealthy':
+      return 'Failure';
+    case 'degraded':
+      return 'Degraded';
+    case 'notready':
+      return 'Not Ready';
+    default:
+      return 'Healthy';
+  }
+};
+
 const createMockWorkloadListItem = (
   name: string,
   namespace: string,
@@ -449,6 +463,10 @@ const createMockWorkloadListItem = (
     };
   }
 
+  // Not ready status means workload is scaled down (desiredReplicas = 0)
+  const isNotReady = healthStatus === 'notready';
+  const isUnhealthy = healthStatus === 'unhealthy';
+
   return {
     name,
     namespace,
@@ -471,15 +489,20 @@ const createMockWorkloadListItem = (
     health: {
       workloadStatus: {
         name,
-        desiredReplicas: 1,
-        currentReplicas: 1,
-        availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
-        syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+        desiredReplicas: isNotReady ? 0 : 1,
+        currentReplicas: isNotReady ? 0 : 1,
+        availableReplicas: isNotReady || isUnhealthy ? 0 : 1,
+        syncedProxies: isNotReady || isUnhealthy ? 0 : 1
       },
       requests: {
         inbound: { http: httpResponses },
         outbound: { http: httpResponses },
         healthAnnotations: {}
+      },
+      // Backend-calculated status - this is what Health.getStatus() uses
+      status: {
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
       }
     }
   };
@@ -531,6 +554,11 @@ const createMockServiceListItem = (
         inbound: { http: httpResponses },
         outbound: { http: httpResponses },
         healthAnnotations: {}
+      },
+      // Backend-calculated status - this is what Health.getStatus() uses
+      status: {
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
       }
     },
     validation: {
@@ -555,19 +583,9 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
     httpResponses = { '200': 100 - Math.floor(errorRate / 2) - 5, '500': Math.floor(errorRate / 2), '503': 5 };
   }
 
-  // Map internal health status to backend status string
-  let backendStatus: string;
-  let errorRatio: number | undefined;
-  if (healthStatus === 'unhealthy') {
-    backendStatus = 'Failure';
-    errorRatio = errorRate;
-  } else if (healthStatus === 'degraded') {
-    backendStatus = 'Degraded';
-    errorRatio = Math.floor(errorRate / 2);
-  } else {
-    backendStatus = 'Healthy';
-    errorRatio = 0;
-  }
+  // Not ready status means workload is scaled down (desiredReplicas = 0)
+  const isNotReady = healthStatus === 'notready';
+  const isUnhealthy = healthStatus === 'unhealthy';
 
   return {
     name,
@@ -592,15 +610,16 @@ const createMockAppListItem = (name: string, namespace: string, cluster = 'clust
       workloadStatuses: [
         {
           name: `${name}-v1`,
-          desiredReplicas: 1,
-          currentReplicas: 1,
-          availableReplicas: healthStatus === 'unhealthy' ? 0 : 1,
-          syncedProxies: healthStatus === 'unhealthy' ? 0 : 1
+          desiredReplicas: isNotReady ? 0 : 1,
+          currentReplicas: isNotReady ? 0 : 1,
+          availableReplicas: isNotReady || isUnhealthy ? 0 : 1,
+          syncedProxies: isNotReady || isUnhealthy ? 0 : 1
         }
       ],
+      // Backend-calculated status - this is what Health.getStatus() uses
       status: {
-        status: backendStatus,
-        errorRatio
+        status: toBackendStatus(healthStatus),
+        errorRatio: healthStatus === 'unhealthy' ? errorRate : healthStatus === 'degraded' ? errorRate / 2 : 0
       }
     }
   };

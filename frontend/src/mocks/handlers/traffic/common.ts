@@ -137,13 +137,15 @@ interface EdgeTraffic {
 }
 
 // Map health status to graph health status ID
-// Must match FAILURE.id and DEGRADED.id from types/Health.ts (capitalized)
-const healthStatusToId = (status: 'healthy' | 'degraded' | 'unhealthy'): string | undefined => {
+// Must match FAILURE.id, DEGRADED.id, NOT_READY.id from types/Health.ts (capitalized)
+const healthStatusToId = (status: 'healthy' | 'degraded' | 'unhealthy' | 'notready'): string | undefined => {
   switch (status) {
     case 'unhealthy':
       return 'Failure'; // FAILURE.id from types/Health
     case 'degraded':
       return 'Degraded'; // DEGRADED.id from types/Health
+    case 'notready':
+      return 'Not Ready'; // NOT_READY.id from types/Health
     default:
       return undefined; // Healthy edges don't need healthStatus set
   }
