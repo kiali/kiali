@@ -69,17 +69,20 @@ export interface ClusterConfig {
   accessible: boolean;
   // Control plane configuration (defaults to single healthy istiod if not specified)
   controlPlanes?: ControlPlaneConfig[];
-  // Items that are degraded in this specific cluster
+  // Items (apps/workloads) that show DEGRADED status in this specific cluster. */
   degradedItems?: string[];
   // Health status for this cluster's control plane (deprecated, use controlPlanes)
   healthStatus?: 'Healthy' | 'Degraded' | 'Unhealthy';
   isHome: boolean;
   name: string;
   namespaces: string[];
-  // Items that are unhealthy in this specific cluster
+  // Items (apps/workloads) that show NOT READY status in this specific cluster (scaled down workloads). */
+  notReadyItems?: string[];
+  // Items (apps/workloads) that show FAILURE status in this specific cluster. */
   unhealthyItems?: string[];
-  // Validation errors/warnings for this cluster
+  // Number of Istio configuration validation errors to simulate for this cluster. */
   validationErrors?: number;
+  // Number of Istio configuration validation warnings to simulate for this cluster. */
   validationWarnings?: number;
 }
 
