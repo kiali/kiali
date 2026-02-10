@@ -420,14 +420,16 @@ func fillAppRequestRates(allHealth models.NamespaceAppHealth, rates model.Vector
 	lblSrc := model.LabelName("source_canonical_service")
 
 	for _, sample := range rates {
-		name := string(sample.Metric[lblDest])
 		// include requests only to apps which have HTTP traffic capability
-		if _, ok := appHTTPTraffic[name]; ok {
-			if health, ok := allHealth[name]; ok {
+		destName := string(sample.Metric[lblDest])
+		if _, ok := appHTTPTraffic[destName]; ok {
+			if health, ok := allHealth[destName]; ok {
 				health.Requests.AggregateInbound(sample)
 			}
-			name = string(sample.Metric[lblSrc])
-			if health, ok := allHealth[name]; ok {
+		}
+		srcName := string(sample.Metric[lblSrc])
+		if _, ok := appHTTPTraffic[srcName]; ok {
+			if health, ok := allHealth[srcName]; ok {
 				health.Requests.AggregateOutbound(sample)
 			}
 		}
@@ -442,14 +444,16 @@ func fillWorkloadRequestRates(allHealth models.NamespaceWorkloadHealth, rates mo
 	lblDest := model.LabelName("destination_workload")
 	lblSrc := model.LabelName("source_workload")
 	for _, sample := range rates {
-		name := string(sample.Metric[lblDest])
-		// include requests only to workloads which have HTTP traffic capability
-		if _, ok := wlHTTPTraffic[name]; ok {
-			if health, ok := allHealth[name]; ok {
+		// include only workloads which have HTTP traffic capability
+		destName := string(sample.Metric[lblDest])
+		if _, ok := wlHTTPTraffic[destName]; ok {
+			if health, ok := allHealth[destName]; ok {
 				health.Requests.AggregateInbound(sample)
 			}
-			name = string(sample.Metric[lblSrc])
-			if health, ok := allHealth[name]; ok {
+		}
+		srcName := string(sample.Metric[lblSrc])
+		if _, ok := wlHTTPTraffic[srcName]; ok {
+			if health, ok := allHealth[srcName]; ok {
 				health.Requests.AggregateOutbound(sample)
 			}
 		}
