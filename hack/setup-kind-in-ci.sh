@@ -299,7 +299,7 @@ setup_kind_singlecluster() {
       KEYCLOAK_ADDRESS="${beginning_subnet_octets}.${lb_range_start}"
 
       echo "==== START KIND FOR CLUSTER"
-      "${SCRIPT_DIR}"/start-kind.sh \
+      go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go \
             --name "ci" \
             --load-balancer-range "${lb_range_start}-${lb_range_end}" \
             --image "${KIND_NODE_IMAGE}" \
@@ -326,7 +326,7 @@ setup_kind_singlecluster() {
             auth_flags+=(--certs-dir "${certs_dir}")
 
   else
-    "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+    go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ci --image "${KIND_NODE_IMAGE}"
   fi
 
   infomsg "Installing istio"
@@ -447,7 +447,7 @@ setup_kind_singlecluster() {
 }
 
 setup_kind_tempo() {
-  "${SCRIPT_DIR}"/start-kind.sh --name ci --image "${KIND_NODE_IMAGE}"
+  go run "${SCRIPT_DIR}"/../tools/cmd/installer/main.go --name ci --image "${KIND_NODE_IMAGE}"
 
   if [ "${SAIL}" == "true" ]; then
     infomsg "Installing Istio with Sail"
