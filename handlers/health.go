@@ -61,9 +61,21 @@ func ClusterHealth(
 			return
 		}
 
+		queryTime := util.Clock.Now()
+		rateInterval := params.Get("rateInterval")
+		if rateInterval == "" {
+			rateInterval = defaultHealthRateInterval
+		}
+		if _, err := util.GetStartTimeForRateInterval(queryTime, rateInterval); err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		// If no namespaces specified, get all namespaces for the cluster
+		var businessLayer *business.Layer
+		var err error
 		if len(nss) == 0 {
-			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			businessLayer, err = getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
 				return
@@ -71,6 +83,20 @@ func ClusterHealth(
 			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
 			for _, ns := range loadedNamespaces {
 				nss = append(nss, ns.Name)
+			}
+		} else {
+			// Validate requested namespaces even when health cache is enabled.
+			// This preserves pre-cache behavior: invalid/inaccessible namespaces should return an error.
+			businessLayer, err = getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
+				return
+			}
+			for _, ns := range nss {
+				if _, err := businessLayer.Namespace.GetClusterNamespace(r.Context(), ns, cluster); err != nil {
+					handleErrorResponse(w, err)
+					return
+				}
 			}
 		}
 
@@ -125,25 +151,19 @@ func ClusterHealth(
 			// Health cache disabled - compute on-demand
 			w.Header().Set(HealthCachedHeader, "false")
 
-			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
-				return
-			}
-
-			queryTime := util.Clock.Now()
-			rateInterval := params.Get("rateInterval")
-			if rateInterval == "" {
-				rateInterval = defaultHealthRateInterval
-			}
-
 			for _, ns := range nss {
+				adjustedRateInterval, err := adjustRateInterval(r.Context(), businessLayer, ns, rateInterval, queryTime, cluster)
+				if err != nil {
+					handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
+					return
+				}
+
 				criteria := business.NamespaceHealthCriteria{
 					Cluster:        cluster,
 					IncludeMetrics: true,
 					Namespace:      ns,
 					QueryTime:      queryTime,
-					RateInterval:   rateInterval,
+					RateInterval:   adjustedRateInterval,
 				}
 
 				switch healthType {
