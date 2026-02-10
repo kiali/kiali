@@ -15,11 +15,12 @@ type ServiceLatencyResponse struct {
 
 // ServiceRequests represents a single service's request statistics
 type ServiceRequests struct {
-	Cluster      string  `json:"cluster"`
-	ErrorRate    float64 `json:"errorRate"` // error rate as a decimal (0.0 to 1.0)
-	Namespace    string  `json:"namespace"`
-	RequestCount float64 `json:"requestCount"` // requests per second
-	ServiceName  string  `json:"serviceName"`
+	Cluster      string       `json:"cluster"`
+	ErrorRate    float64      `json:"errorRate"` // error rate as a decimal (0.0 to 1.0)
+	HealthStatus HealthStatus `json:"healthStatus,omitempty"`
+	Namespace    string       `json:"namespace"`
+	RequestCount float64      `json:"requestCount"` // requests per second
+	ServiceName  string       `json:"serviceName"`
 }
 
 // ServiceRatesResponse contains the sorted list of service request statistics

@@ -1,4 +1,4 @@
-// Types for Overview metrics APIs
+import { HealthStatusId } from './Health';
 
 // ServiceLatency represents a single service's latency measurement
 export interface ServiceLatency {
@@ -17,6 +17,7 @@ export interface ServiceLatencyResponse {
 export interface ServiceRequests {
   cluster: string;
   errorRate: number; // error rate as a decimal (0.0 to 1.0)
+  healthStatus?: HealthStatusId;
   namespace: string;
   requestCount: number; // requests per second
   serviceName: string;

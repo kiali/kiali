@@ -1791,7 +1791,7 @@ func NewRoutes(
 			LogGroupName:  log.MetricsLogName,
 			Method:        "GET",
 			Pattern:       "/api/overview/metrics/services/rates",
-			HandlerFunc:   handlers.OverviewServiceRates(conf, prom),
+			HandlerFunc:   handlers.OverviewServiceRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			Authenticated: true,
 		},
 		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI

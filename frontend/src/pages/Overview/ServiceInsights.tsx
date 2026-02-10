@@ -15,11 +15,12 @@ import { LongArrowAltDownIcon } from '@patternfly/react-icons';
 import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
-import { KialiIcon } from 'config/KialiIcon';
+import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { isMultiCluster, Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
 import * as API from 'services/Api';
+import { statusFromString } from 'types/Health';
 import { ServiceLatency, ServiceRequests } from 'types/Overview';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
@@ -374,17 +375,8 @@ export const ServiceInsights: React.FC = () => {
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
-                {svc.errorRate > 0 ? (
-                  <>
-                    <KialiIcon.ExclamationCircle className={statusIconStyle} color={PFColors.Danger} />
-                    {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
-                  </>
-                ) : (
-                  <>
-                    <KialiIcon.Success className={statusIconStyle} color={PFColors.Success} />
-                    {formatErrorRate(0)}
-                  </>
-                )}
+                {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+                {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
               </td>
             </tr>
           ))}

@@ -114,3 +114,20 @@ func (r RequestHealth) GetErrorRatio() float64 {
 
 	return totalErrors / totalRequests
 }
+
+// GetTotalRequestRate returns the total request rate (req/s) from inbound and outbound traffic.
+// Returns 0 if no data is available.
+func (r RequestHealth) GetTotalRequestRate() float64 {
+	var total float64
+	for _, codeMap := range r.Inbound {
+		for _, count := range codeMap {
+			total += count
+		}
+	}
+	for _, codeMap := range r.Outbound {
+		for _, count := range codeMap {
+			total += count
+		}
+	}
+	return total
+}

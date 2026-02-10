@@ -1,19 +1,29 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
+	"github.com/rs/zerolog"
 
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/tracing"
 )
 
 // OverviewServiceLatencies returns the top service latencies (p95) across all clusters and namespaces.
@@ -144,10 +154,21 @@ func formatDuration(d time.Duration) string {
 }
 
 // OverviewServiceRates returns the top service error rates across all clusters and namespaces.
+// When health cache is enabled, data is aggregated from the cache (using health config tolerances
+// for error rate). Otherwise, Prometheus is queried directly (simple non-200 = error).
 // Query parameters:
 //   - rateInterval: time period for rate calculation (default: from healthConfig.compute.duration)
 //   - limit: maximum number of results to return (default: 20, must be > 0)
-func OverviewServiceRates(conf *config.Config, prom prometheus.ClientInterface) http.HandlerFunc {
+func OverviewServiceRates(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		zl := log.FromContext(ctx)
@@ -176,7 +197,14 @@ func OverviewServiceRates(conf *config.Config, prom prometheus.ClientInterface) 
 			}
 		}
 
-		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
+		// When health cache is enabled, serve from cache (uses health config for error rate)
+		if conf.KialiInternal.HealthCache.Enabled {
+			services := overviewServiceRatesFromHealthCache(r, ctx, zl, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery, limit)
+			RespondWithJSON(w, http.StatusOK, models.ServiceRatesResponse{Services: services})
+			return
+		}
+
+		// Prometheus path (simple non-200 = error)
 		groupBy := "source_cluster,destination_cluster,destination_service_namespace,destination_service_name"
 		labels := ``
 
@@ -253,6 +281,7 @@ func OverviewServiceRates(conf *config.Config, prom prometheus.ClientInterface) 
 			services = append(services, models.ServiceRequests{
 				Cluster:      cluster,
 				ErrorRate:    float64(sample.Value),
+				HealthStatus: models.HealthStatusNA, // Prometheus path does not compute health status
 				Namespace:    namespace,
 				RequestCount: requestCount,
 				ServiceName:  serviceName,
@@ -299,7 +328,8 @@ func OverviewServiceRates(conf *config.Config, prom prometheus.ClientInterface) 
 				foundServices[key] = true
 				services = append(services, models.ServiceRequests{
 					Cluster:      cluster,
-					ErrorRate:    0, // No errors (wasn't in error rate results)
+					ErrorRate:    0,                     // No errors (wasn't in error rate results)
+					HealthStatus: models.HealthStatusNA, // Prometheus path does not compute health status
 					Namespace:    namespace,
 					RequestCount: requestCount,
 					ServiceName:  serviceName,
@@ -369,4 +399,104 @@ func buildTotalMap(vector model.Vector) map[string]float64 {
 		totalMap[key] = float64(sample.Value)
 	}
 	return totalMap
+}
+
+// overviewServiceRatesFromHealthCache aggregates service error and request rates from the health cache.
+// Error rates use the health config (tolerances); request rate is total req/s from cached RequestHealth.
+func overviewServiceRatesFromHealthCache(
+	r *http.Request,
+	ctx context.Context,
+	zl *zerolog.Logger,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+	limit int,
+) []models.ServiceRequests {
+	layer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+	if err != nil {
+		zl.Warn().Err(err).Msg("OverviewServiceRates: could not get business layer, returning empty list")
+		return nil
+	}
+
+	type serviceRate struct {
+		cluster      string
+		namespace    string
+		serviceName  string
+		errorRate    float64 // 0-1 decimal
+		requestCount float64
+		healthStatus models.HealthStatus
+	}
+
+	var all []serviceRate
+	clusters := kialiCache.GetClusters()
+
+	for _, cluster := range clusters {
+		namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster.Name)
+		if err != nil {
+			zl.Debug().Err(err).Str("cluster", cluster.Name).Msg("OverviewServiceRates: could not get namespaces for cluster")
+			continue
+		}
+
+		for _, ns := range namespaces {
+			cachedData, found := kialiCache.GetHealth(cluster.Name, ns.Name, internalmetrics.HealthTypeService)
+			if !found || cachedData == nil {
+				continue
+			}
+
+			for svcName, sh := range cachedData.ServiceHealth {
+				if sh == nil {
+					continue
+				}
+				// Status is always set when health is stored in the cache (getNamespaceServiceHealth sets it for every service).
+				if sh.Status == nil {
+					continue
+				}
+
+				// ErrorRatio is 0-100 (percentage); API expects 0-1 decimal
+				errorRate := sh.Status.ErrorRatio / 100.0
+				requestCount := sh.Status.TotalRequestRate
+
+				all = append(all, serviceRate{
+					cluster:      cluster.Name,
+					namespace:    ns.Name,
+					serviceName:  svcName,
+					errorRate:    errorRate,
+					requestCount: requestCount,
+					healthStatus: sh.Status.Status,
+				})
+			}
+		}
+	}
+
+	// Sort: highest error rate first, then highest request rate
+	sort.Slice(all, func(i, j int) bool {
+		if all[i].errorRate != all[j].errorRate {
+			return all[i].errorRate > all[j].errorRate
+		}
+		return all[i].requestCount > all[j].requestCount
+	})
+
+	// Take top `limit`
+	if limit < len(all) {
+		all = all[:limit]
+	}
+
+	services := make([]models.ServiceRequests, 0, len(all))
+	for _, s := range all {
+		services = append(services, models.ServiceRequests{
+			Cluster:      s.cluster,
+			ErrorRate:    s.errorRate,
+			HealthStatus: s.healthStatus,
+			Namespace:    s.namespace,
+			RequestCount: s.requestCount,
+			ServiceName:  s.serviceName,
+		})
+	}
+
+	return services
 }
