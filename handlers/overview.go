@@ -151,15 +151,6 @@ func convertToServiceLatencies(vector model.Vector) []models.ServiceLatency {
 	return services
 }
 
-// formatDuration formats a duration for Prometheus queries (e.g., "2m", "5m").
-func formatDuration(d time.Duration) string {
-	seconds := int(d.Seconds())
-	if seconds >= 60 && seconds%60 == 0 {
-		return fmt.Sprintf("%dm", seconds/60)
-	}
-	return fmt.Sprintf("%ds", seconds)
-}
-
 // OverviewServiceRates returns the top service error rates across all clusters and namespaces.
 // When health cache is enabled, data is aggregated from the cache (using health config tolerances
 // for error rate). Otherwise, Prometheus is queried directly (simple non-200 = error).
