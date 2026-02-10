@@ -32,7 +32,7 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
-import { TLSStatus } from '../../types/TLSStatus';
+import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -393,7 +393,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             const tlsStatus = tlsByClusterAndNamespace.get(cluster)!.get(nsInfo.name);
             if (tlsStatus) {
               nsInfo.tlsStatus = {
-                status: tlsStatus.status,
+                status: this.resolveNamespaceTlsStatusForDisplay(tlsStatus.status),
                 autoMTLSEnabled: tlsStatus.autoMTLSEnabled,
                 minTLS: tlsStatus.minTLS
               };
@@ -402,6 +402,33 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         });
       })
       .catch(err => this.handleApiError('Could not fetch TLS status', err));
+  };
+
+  private resolveNamespaceTlsStatusForDisplay = (status: string): string => {
+    if (status !== MTLSStatuses.UNSET && status !== MTLSStatuses.NOT_ENABLED) {
+      return status;
+    }
+
+    const meshStatus = this.props.meshStatus;
+
+    if (
+      meshStatus === MTLSStatuses.ENABLED ||
+      meshStatus === MTLSStatuses.ENABLED_DEFAULT ||
+      meshStatus === MTLSStatuses.AUTO_DEFAULT
+    ) {
+      return MTLSStatuses.UNSET_INHERITED_STRICT;
+    }
+
+    if (meshStatus === MTLSStatuses.PARTIALLY || meshStatus === MTLSStatuses.PARTIALLY_DEFAULT) {
+      return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
+    }
+
+    if (meshStatus === MTLSStatuses.DISABLED) {
+      return MTLSStatuses.UNSET_INHERITED_DISABLED;
+    }
+
+    // Mesh-wide mTLS "not specified" effectively defaults to PERMISSIVE in Istio.
+    return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
   };
 
   fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {

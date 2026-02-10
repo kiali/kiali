@@ -60,10 +60,11 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.UNSET,
     {
-      message: 'Inherit from parent, if has one. Otherwise treated as PERMISSIVE',
-      color: 'var(--pf-t--global--text--color--primary--default)',
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide UNSET mTLS mode',
+      backgroundColor: PFColors.Color200,
+      color: PFColors.BackgroundColor100,
       name: 'Unset',
-      icon: MTLSIconTypes.LOCK_OPEN,
+      icon: MTLSIconTypes.ARROW_DOWN,
       showStatus: true
     }
   ],
@@ -71,10 +72,22 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.UNSET_INHERITED_DISABLED,
     {
-      message: 'No mTLS policy in this namespace; inherited Disabled from mesh',
-      color: PFColors.Danger,
-      name: 'Unset',
-      icon: MTLSIconTypes.LOCK_OPEN,
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide DISABLED mTLS mode',
+      backgroundColor: PFColors.Danger,
+      color: PFColors.BackgroundColor100,
+      name: 'Disabled',
+      icon: MTLSIconTypes.ARROW_DOWN,
+      showStatus: true
+    }
+  ],
+  [
+    MTLSStatuses.UNSET_INHERITED_PERMISSIVE,
+    {
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide PERMISSIVE mTLS mode',
+      backgroundColor: PFColors.Color200,
+      color: PFColors.BackgroundColor100,
+      name: 'Permissive',
+      icon: MTLSIconTypes.ARROW_DOWN,
       showStatus: true
     }
   ],
@@ -82,10 +95,22 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.UNSET_INHERITED_STRICT,
     {
-      message: 'No mTLS policy in this namespace; inherited Strict from mesh',
-      color: 'var(--pf-t--global--text--color--primary--default)',
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide STRICT mTLS mode',
+      backgroundColor: 'var(--pf-t--global--icon--color--regular)',
+      color: PFColors.BackgroundColor100,
+      name: 'Strict',
+      icon: MTLSIconTypes.ARROW_DOWN,
+      showStatus: true
+    }
+  ],
+  [
+    MTLSStatuses.UNSET_INHERITED_UNSET,
+    {
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide UNSET mTLS mode',
+      backgroundColor: PFColors.Color200,
+      color: PFColors.BackgroundColor100,
       name: 'Unset',
-      icon: MTLSIconTypes.LOCK_FULL,
+      icon: MTLSIconTypes.ARROW_DOWN,
       showStatus: true
     }
   ],
@@ -94,10 +119,11 @@ export const namespaceMTLSStatusDescriptors = new Map<string, StatusDescriptor>(
   [
     MTLSStatuses.NOT_ENABLED,
     {
-      message: 'mTLS is not modified by this namespace. Defaults to Mesh mTLS',
-      color: 'var(--pf-t--global--text--color--primary--default)',
+      message: 'mTLS is UNSET for the namespace. Inheriting mesh-wide UNSET mTLS mode',
+      backgroundColor: PFColors.Color200,
+      color: PFColors.BackgroundColor100,
       name: 'Unset',
-      icon: MTLSIconTypes.LOCK_OPEN,
+      icon: MTLSIconTypes.ARROW_DOWN,
       showStatus: true
     }
   ]

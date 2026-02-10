@@ -11,6 +11,7 @@ type MTLSStatusProps = {
 };
 
 export type StatusDescriptor = {
+  backgroundColor?: string;
   color?: string;
   icon: string;
   message: string;
@@ -32,6 +33,7 @@ export const MTLSStatus: React.FC<MTLSStatusProps> = (props: MTLSStatusProps) =>
       <MTLSIcon
         icon={statusDescriptor.icon}
         iconClassName={props.className ?? ''}
+        backgroundColor={statusDescriptor.backgroundColor}
         color={statusDescriptor.color}
         tooltipText={statusDescriptor.message}
         tooltipPosition={props.overlayPosition ?? TooltipPosition.left}

@@ -23,16 +23,27 @@ export const nameFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 const mtlsValues: FilterValue[] = [
-  { id: 'enabled', title: t('Enabled') },
-  { id: 'partiallyEnabled', title: t('Partially Enabled') },
-  { id: 'disabled', title: t('Disabled') }
+  { id: 'strict', title: t('Strict') },
+  { id: 'permissive', title: t('Permissive') },
+  { id: 'disable', title: t('Disabled') },
+  { id: 'notApplicable', title: t('Not applicable') }
 ];
 
 const statusMap = new Map<string, string>([
-  [MTLSStatuses.ENABLED, t('Enabled')],
-  [MTLSStatuses.PARTIALLY, t('Partially Enabled')],
-  [MTLSStatuses.NOT_ENABLED, t('Disabled')],
-  [MTLSStatuses.DISABLED, t('Disabled')]
+  [MTLSStatuses.ENABLED, t('Strict')],
+  [MTLSStatuses.ENABLED_EXTENDED, t('Strict')],
+  [MTLSStatuses.ENABLED_DEFAULT, t('Strict')],
+  [MTLSStatuses.UNSET_INHERITED_STRICT, t('Strict')],
+
+  [MTLSStatuses.PARTIALLY, t('Permissive')],
+  [MTLSStatuses.PARTIALLY_DEFAULT, t('Permissive')],
+  [MTLSStatuses.UNSET, t('Permissive')],
+  [MTLSStatuses.UNSET_INHERITED_PERMISSIVE, t('Permissive')],
+  [MTLSStatuses.UNSET_INHERITED_UNSET, t('Permissive')],
+  [MTLSStatuses.NOT_ENABLED, t('Permissive')],
+
+  [MTLSStatuses.DISABLED, t('Disabled')],
+  [MTLSStatuses.UNSET_INHERITED_DISABLED, t('Disabled')]
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
@@ -42,7 +53,21 @@ export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
   action: FILTER_ACTION_APPEND,
   filterValues: mtlsValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
-    return ns.tlsStatus ? filters.filters.some(f => statusMap.get(ns.tlsStatus!.status) === f.value) : false;
+    if (filters.filters.length === 0) {
+      return true;
+    }
+
+    const isInMesh = !!ns.isControlPlane || isDataPlaneNamespace(ns) || !!ns.isAmbient;
+    if (!isInMesh) {
+      return filters.filters.some(f => f.value === t('Not applicable'));
+    }
+
+    const normalized = ns.tlsStatus ? statusMap.get(ns.tlsStatus.status) : undefined;
+    if (!normalized) {
+      return false;
+    }
+
+    return filters.filters.some(f => normalized === f.value);
   }
 };
 

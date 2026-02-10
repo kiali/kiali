@@ -624,6 +624,7 @@ export const nsTls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         <MTLSIcon
           icon={statusDescriptor.icon}
           iconClassName={tlsIconStyle}
+          backgroundColor={statusDescriptor.backgroundColor}
           color={statusDescriptor.color}
           tooltipText={statusDescriptor.message}
           tooltipPosition={TooltipPosition.auto}
