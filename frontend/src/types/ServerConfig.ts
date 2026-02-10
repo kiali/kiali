@@ -82,8 +82,8 @@ interface UIDefaults {
 
 interface CustomWorkloadType {
   group: string;
-  version: string;
   kind: string;
+  version: string;
 }
 
 interface KialiFeatureFlags {
@@ -120,6 +120,12 @@ export interface KialiDisabledFeatures {
 export type RegexConfig = string | RegExp;
 
 export interface HealthConfig {
+  // all fields are duration strings from backend (e.g. "5m", "1h")
+  compute?: {
+    duration?: string;
+    refreshInterval?: string;
+    timeout?: string;
+  };
   rate: RateHealthConfig[];
 }
 

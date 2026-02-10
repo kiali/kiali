@@ -3,6 +3,7 @@ import { HealthStatusId } from './Health';
 // ServiceLatency represents a single service's latency measurement
 export interface ServiceLatency {
   cluster: string;
+  healthStatus?: HealthStatusId;
   latency: number; // in milliseconds
   namespace: string;
   serviceName: string;

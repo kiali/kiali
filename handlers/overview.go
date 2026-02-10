@@ -6,7 +6,6 @@ import (
 	"math"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -26,38 +25,17 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
+// overviewServiceMetricsLimit is the default limit for top-N service latencies and service error rates.
+const overviewServiceMetricsLimit = 7
+
 // OverviewServiceLatencies returns the top service latencies (p95) across all clusters and namespaces.
-// Query parameters:
-//   - rateInterval: time period for rate calculation (default: from healthConfig.compute.duration)
-//   - limit: maximum number of results to return (default: 20, must be > 0)
-func OverviewServiceLatencies(conf *config.Config, prom prometheus.ClientInterface) http.HandlerFunc {
+// Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
+func OverviewServiceLatencies(conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		zl := log.FromContext(ctx)
 
-		// Parse query parameters
-		queryParams := r.URL.Query()
-
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = getDefaultRateInterval(conf)
-		} else {
-			// Validate the provided rateInterval
-			if _, err := model.ParseDuration(rateInterval); err != nil {
-				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid 'rateInterval' parameter: %v", err))
-				return
-			}
-		}
-
-		limit := 20 // default limit
-		if limitStr := queryParams.Get("limit"); limitStr != "" {
-			var err error
-			limit, err = strconv.Atoi(limitStr)
-			if err != nil || limit <= 0 {
-				RespondWithError(w, http.StatusBadRequest, "Invalid 'limit' parameter: must be a positive integer")
-				return
-			}
-		}
+		rateInterval := string(conf.HealthConfig.Compute.Duration)
 
 		// Build the PromQL query for p95 latency
 		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
@@ -66,7 +44,7 @@ func OverviewServiceLatencies(conf *config.Config, prom prometheus.ClientInterfa
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
 		labels := `destination_workload!="unknown"`
 
-		query := buildLatencyQuery(labels, groupBy, rateInterval, limit)
+		query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
 		zl.Debug().Msgf("OverviewServiceLatencies query: %s", query)
 
 		// Execute query
@@ -88,12 +66,46 @@ func OverviewServiceLatencies(conf *config.Config, prom prometheus.ClientInterfa
 		}
 
 		services := convertToServiceLatencies(vector)
+		enrichServiceLatenciesWithHealth(services, kialiCache, conf)
 
 		response := models.ServiceLatencyResponse{
 			Services: services,
 		}
 
 		RespondWithJSON(w, http.StatusOK, response)
+	}
+}
+
+// enrichServiceLatenciesWithHealth sets HealthStatus on each ServiceLatency from the health cache.
+// One cache lookup per distinct (cluster, namespace) keeps it efficient.
+func enrichServiceLatenciesWithHealth(services []models.ServiceLatency, kialiCache cache.KialiCache, conf *config.Config) {
+	if !conf.KialiInternal.HealthCache.Enabled || kialiCache == nil {
+		for i := range services {
+			services[i].HealthStatus = models.HealthStatusNA
+		}
+		return
+	}
+	// Collect unique (cluster, namespace) and fetch health once per pair
+	type nsKey struct{ cluster, namespace string }
+	cacheByNs := make(map[nsKey]models.NamespaceServiceHealth)
+	for _, s := range services {
+		key := nsKey{s.Cluster, s.Namespace}
+		if _, ok := cacheByNs[key]; ok {
+			continue
+		}
+		cached, _ := kialiCache.GetHealth(s.Cluster, s.Namespace, internalmetrics.HealthTypeService)
+		if cached != nil {
+			cacheByNs[key] = cached.ServiceHealth
+		}
+	}
+	for i := range services {
+		key := nsKey{services[i].Cluster, services[i].Namespace}
+		svcHealth := cacheByNs[key]
+		if sh := svcHealth[services[i].ServiceName]; sh != nil && sh.Status != nil {
+			services[i].HealthStatus = sh.Status.Status
+		} else {
+			services[i].HealthStatus = models.HealthStatusNA
+		}
 	}
 }
 
@@ -139,11 +151,6 @@ func convertToServiceLatencies(vector model.Vector) []models.ServiceLatency {
 	return services
 }
 
-// getDefaultRateInterval returns the default rate interval from health config.
-func getDefaultRateInterval(conf *config.Config) string {
-	return formatDuration(conf.HealthConfig.Compute.Duration)
-}
-
 // formatDuration formats a duration for Prometheus queries (e.g., "2m", "5m").
 func formatDuration(d time.Duration) string {
 	seconds := int(d.Seconds())
@@ -156,9 +163,7 @@ func formatDuration(d time.Duration) string {
 // OverviewServiceRates returns the top service error rates across all clusters and namespaces.
 // When health cache is enabled, data is aggregated from the cache (using health config tolerances
 // for error rate). Otherwise, Prometheus is queried directly (simple non-200 = error).
-// Query parameters:
-//   - rateInterval: time period for rate calculation (default: from healthConfig.compute.duration)
-//   - limit: maximum number of results to return (default: 20, must be > 0)
+// Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
 func OverviewServiceRates(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -173,33 +178,11 @@ func OverviewServiceRates(
 		ctx := r.Context()
 		zl := log.FromContext(ctx)
 
-		// Parse query parameters
-		queryParams := r.URL.Query()
-
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = getDefaultRateInterval(conf)
-		} else {
-			// Validate the provided rateInterval
-			if _, err := model.ParseDuration(rateInterval); err != nil {
-				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid 'rateInterval' parameter: %v", err))
-				return
-			}
-		}
-
-		limit := 20 // default limit
-		if limitStr := queryParams.Get("limit"); limitStr != "" {
-			var err error
-			limit, err = strconv.Atoi(limitStr)
-			if err != nil || limit <= 0 {
-				RespondWithError(w, http.StatusBadRequest, "Invalid 'limit' parameter: must be a positive integer")
-				return
-			}
-		}
+		rateInterval := string(conf.HealthConfig.Compute.Duration)
 
 		// When health cache is enabled, serve from cache (uses health config for error rate)
 		if conf.KialiInternal.HealthCache.Enabled {
-			services := overviewServiceRatesFromHealthCache(r, ctx, zl, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery, limit)
+			services := overviewServiceRatesFromHealthCache(r, ctx, zl, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery, overviewServiceMetricsLimit)
 			RespondWithJSON(w, http.StatusOK, models.ServiceRatesResponse{Services: services})
 			return
 		}
@@ -209,11 +192,11 @@ func OverviewServiceRates(
 		labels := ``
 
 		queryTime := time.Now()
-		services := make([]models.ServiceRequests, 0, limit)
+		services := make([]models.ServiceRequests, 0, overviewServiceMetricsLimit)
 		foundServices := make(map[string]bool)
 
 		// Step 1: Query for top error rates using topk
-		errorRateQuery := buildErrorRateQuery(labels, groupBy, rateInterval, limit)
+		errorRateQuery := buildErrorRateQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
 		zl.Debug().Msgf("OverviewServiceRequests error rate query: %s", errorRateQuery)
 
 		errorRateResult, warnings, err := prom.API().Query(ctx, errorRateQuery, queryTime)
@@ -232,7 +215,7 @@ func OverviewServiceRates(
 		}
 
 		// Step 2: Query for total request rates to get request counts
-		totalQuery := buildRequestsQuery(labels, groupBy, rateInterval, limit)
+		totalQuery := buildRequestsQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
 		zl.Debug().Msgf("OverviewServiceRequests total query: %s", totalQuery)
 
 		totalResult, warnings, err := prom.API().Query(ctx, totalQuery, queryTime)
@@ -275,8 +258,11 @@ func OverviewServiceRates(
 			key := serviceKey(cluster, namespace, serviceName)
 			foundServices[key] = true
 
-			// Look up request count from total map
+			// Look up request count from total map; do not include services with zero rate
 			requestCount := totalMap[key]
+			if requestCount <= 0 {
+				continue
+			}
 
 			services = append(services, models.ServiceRequests{
 				Cluster:      cluster,
@@ -289,7 +275,7 @@ func OverviewServiceRates(
 		}
 
 		// Step 3: If we have remaining capacity, fill with top-traffic services
-		remaining := limit - len(services)
+		remaining := overviewServiceMetricsLimit - len(services)
 		if remaining > 0 {
 			// Add services from total query that weren't in error rate results
 			// These are sorted by request count (topk), so we add in order
@@ -463,6 +449,9 @@ func overviewServiceRatesFromHealthCache(
 				if requestCount == 0 {
 					// Fallback: Status.TotalRequestRate can be 0 if computed before CombineReporters or in edge cases; use raw Requests.
 					requestCount = sh.Requests.GetTotalRequestRate()
+				}
+				if requestCount <= 0 {
+					continue // do not include zero-rate services
 				}
 
 				all = append(all, serviceRate{

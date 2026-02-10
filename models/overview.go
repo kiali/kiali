@@ -2,10 +2,11 @@ package models
 
 // ServiceLatency represents a single service's latency measurement
 type ServiceLatency struct {
-	Cluster     string  `json:"cluster"`
-	Latency     float64 `json:"latency"` // in milliseconds
-	Namespace   string  `json:"namespace"`
-	ServiceName string  `json:"serviceName"`
+	Cluster      string       `json:"cluster"`
+	HealthStatus HealthStatus `json:"healthStatus,omitempty"`
+	Latency      float64      `json:"latency"` // in milliseconds
+	Namespace    string       `json:"namespace"`
+	ServiceName  string       `json:"serviceName"`
 }
 
 // ServiceLatencyResponse contains the sorted list of service latencies

@@ -37,12 +37,6 @@ const tablesContainerStyle = kialiStyle({
   gap: '1.5rem'
 });
 
-const insightsWindowStyle = kialiStyle({
-  marginLeft: '0.5rem',
-  fontSize: '0.75rem',
-  color: PFColors.Color200
-});
-
 const tableContainerStyle = kialiStyle({
   flex: 1
 });
@@ -70,11 +64,6 @@ const tableRowStyle = kialiStyle({
 });
 
 const tableCellStyle = kialiStyle({
-  padding: '0.75rem',
-  fontSize: '0.875rem'
-});
-
-const metricCellStyle = kialiStyle({
   padding: '0.75rem',
   fontSize: '0.875rem'
 });
@@ -168,10 +157,6 @@ export const ServiceInsights: React.FC = () => {
   const { lastRefreshAt } = useRefreshInterval();
   const namespaceItems = useKialiSelector(namespaceItemsSelector);
   const activeNamespaces = useKialiSelector(activeNamespacesSelector);
-
-  // Keep this explicit to show in the UI
-  const rateInterval = '1h';
-  const rateIntervalHoursLabel = '1';
 
   // Use all known namespaces when available
   const allNamespaceNames = React.useMemo(() => {
@@ -277,8 +262,8 @@ export const ServiceInsights: React.FC = () => {
       setIsError(false);
 
       const [latenciesResponse, ratesResponse] = await Promise.all([
-        API.getOverviewServiceLatencies({ limit: 5, rateInterval }),
-        API.getOverviewServiceRates({ limit: 5, rateInterval })
+        API.getOverviewServiceLatencies(),
+        API.getOverviewServiceRates()
       ]);
 
       setLatencies(latenciesResponse.data.services || []);
@@ -315,8 +300,8 @@ export const ServiceInsights: React.FC = () => {
     return (
       <table className={tableStyle} data-test="service-insights-latencies-table">
         <colgroup>
-          <col style={{ width: '75%' }} />
-          <col style={{ width: '25%' }} />
+          <col style={{ width: '60%' }} />
+          <col style={{ width: '40%' }} />
         </colgroup>
         <thead>
           <tr>
@@ -340,7 +325,13 @@ export const ServiceInsights: React.FC = () => {
                   </Link>
                 </Tooltip>
               </td>
-              <td className={metricCellStyle}>{formatLatency(svc.latency)}</td>
+              <td className={rateCellStyle}>
+                {createIcon({
+                  ...statusFromString(svc.healthStatus ?? 'NA'),
+                  className: statusIconStyle
+                })}
+                {formatLatency(svc.latency)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -423,7 +414,7 @@ export const ServiceInsights: React.FC = () => {
             bodyContent={
               <>
                 Lists services with the highest <strong>Errors</strong> and <strong>Latency</strong>. Always displays
-                the top 5 for each metric, even when all services are healthy.
+                the top results for each metric, even when all services are healthy.
               </>
             }
             position={PopoverPosition.top}
@@ -431,7 +422,6 @@ export const ServiceInsights: React.FC = () => {
           >
             <KialiIcon.Help className={helpIconStyle} />
           </Popover>
-          <span className={insightsWindowStyle}>{`Last ${rateIntervalHoursLabel} hour`}</span>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
