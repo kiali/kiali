@@ -1,6 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
+import { ensureKialiFinishedLoading } from './transition';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -231,14 +232,19 @@ export const checkHealthIndicatorInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
-  // VirtualItem_Clustercluster-default_Nsbookinfo_details
-  // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
-  getClusterForSingleCluster().then(cluster => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
-      .find('span')
-      .filter(`.icon-${healthStatus}`)
-      .should('exist');
+  // Workload health is cached now, it needs some time to be replicated in UI
+  it('health status icon should be visible', { retries: 5 }, () => {
+    cy.get('[data-test="refresh-button"]').click();
+    ensureKialiFinishedLoading();
+    // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
+    // VirtualItem_Clustercluster-default_Nsbookinfo_details
+    // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
+    getClusterForSingleCluster().then(cluster => {
+      cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
+        .find('span')
+        .filter(`.icon-${healthStatus}`)
+        .should('exist');
+    });
   });
 };
 
@@ -260,11 +266,16 @@ export const checkHealthStatusInTable = (
     cy.wrap(clusterNames).should('have.length', 1);
     const cluster = clusterNames[0];
 
-    cy.get(
-      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child .pf-v6-c-icon__content`
-    ).trigger('mouseenter');
+    // Workload health is cached now, it needs some time to be replicated in UI
+    it('health status should be visible', { retries: 5 }, () => {
+      cy.get('[data-test="refresh-button"]').click();
+      ensureKialiFinishedLoading();
+      cy.get(`[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child .pf-v6-c-icon__content`).trigger(
+        'mouseenter'
+      );
 
-    cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
+      cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
+    });
   });
 };
 
