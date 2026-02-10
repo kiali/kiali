@@ -96,6 +96,7 @@ const serviceLinkStyle = kialiStyle({
 
 const emptyStateStyle = kialiStyle({
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
   height: '100%',
@@ -294,7 +295,12 @@ export const ServiceInsights: React.FC = () => {
 
   const renderLatenciesTable = (): React.ReactNode => {
     if (latencies.length === 0) {
-      return <div className={emptyStateStyle}>{t('No data')}</div>;
+      return (
+        <div className={emptyStateStyle}>
+          <div>{t('Latencies not available')}</div>
+          <div>{t('No HTTP traffic or response time metrics are unavailable')}</div>
+        </div>
+      );
     }
 
     return (
@@ -341,7 +347,12 @@ export const ServiceInsights: React.FC = () => {
 
   const renderRatesTable = (): React.ReactNode => {
     if (rates.length === 0) {
-      return <div className={emptyStateStyle}>{t('No data')}</div>;
+      return (
+        <div className={emptyStateStyle}>
+          <div>{t('Error Rates not available')}</div>
+          <div>{t('No HTTP traffic or health cache is disabled')}</div>
+        </div>
+      );
     }
 
     return (
