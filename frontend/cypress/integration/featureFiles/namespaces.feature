@@ -27,7 +27,8 @@ Feature: Kiali Namespaces page
     And the "Namespace" column on the "bookinfo" row has the text "bookinfo"
     And the "Type" column on the "bookinfo" row is not empty
     And the health column on the "bookinfo" row has a health icon
-    And the "mTLS" column on the "bookinfo" row has the text "Unset"
+    And the "mTLS" column on the "bookinfo" row has the text "Permissive"
+    And the "mTLS" column on the "bookinfo" row has a tooltip containing "Inheriting"
     And the "Istio config" column on the "bookinfo" row is not empty
     And the "Labels" column on the "bookinfo" row is not empty
 

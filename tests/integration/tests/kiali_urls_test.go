@@ -96,7 +96,15 @@ func TestClusterNamespaceTls(t *testing.T) {
 func MTLSCorrect(status string) bool {
 	switch status {
 	case
-		business.MTLSEnabled, business.MTLSNotEnabled, business.MTLSPartiallyEnabled, business.MTLSDisabled:
+		business.MTLSDisabled,
+		business.MTLSEnabled,
+		business.MTLSEnabledExtended,
+		business.MTLSNotEnabled,
+		business.MTLSPartiallyEnabled,
+		business.MTLSUnset,
+		business.MTLSUnsetInheritedDisabled,
+		business.MTLSUnsetInheritedStrict,
+		business.MTLSValidationError:
 		return true
 	default:
 		return false
