@@ -195,6 +195,20 @@ func NewRouter(
 		} else {
 			zl.Info().Msg("[ChatAI Store] DISABLED")
 		}
+		for _, provider := range conf.ChatAI.Providers {
+			if !provider.Enabled {
+				zl.Info().Msgf("[ChatAI Provider] %q is disabled", provider.Name)
+				continue
+			}
+			zl.Info().Msgf("[ChatAI Provider] %q: enabled=%t", provider.Name, provider.Enabled)
+			for _, model := range provider.Models {
+				if !model.Enabled {
+					zl.Info().Msgf("[ChatAI Model] Provider %q > model %q is disabled", provider.Name, model.Name)
+					continue
+				}
+				zl.Info().Msgf("[ChatAI Model] Provider %q > model %q is enabled", provider.Name, model.Name)
+			}
+		}
 	}
 
 	// Build our API server routes and install them.

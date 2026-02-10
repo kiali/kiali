@@ -194,11 +194,11 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
           const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
           const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
 
-          if (!newBotMessage.content?.trim() && navigationActions.length > 0) {
+          if (navigationActions.length > 0) {
             newBotMessage.content =
               alwaysNavigate && navigationActions.length === 1
-                ? 'Ok, navigating to the link.'
-                : 'Here is the link provided for the UI view.';
+                ? `Ok, navigating to the ${navigationActions[0].title}...`
+                : 'Here is the link provided for the ChatBot:';
           }
 
           if (alwaysNavigate && navigationActions.length === 1) {

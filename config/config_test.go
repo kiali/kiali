@@ -623,7 +623,7 @@ func TestValidateAI(t *testing.T) {
 			{
 				Name:         "provider-1",
 				Type:         OpenAIProvider,
-				Config:       OpenAIProviderConfigDefault,
+				Config:       DefaultProviderConfigType,
 				Enabled:      true,
 				DefaultModel: "model-1",
 				Key:          "provider-key",
@@ -669,11 +669,23 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "type",
 		},
-		"empty provider type": {
+		"empty provider type defaults to openai": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers[0].Type = ""
 			},
-			expectErr: "type",
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, OpenAIProvider, conf.ChatAI.Providers[0].Type)
+			},
+		},
+		"default provider type defaults to openai": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = DefaultProviderType
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, OpenAIProvider, conf.ChatAI.Providers[0].Type)
+			},
 		},
 		"invalid provider config": {
 			mutate: func(conf *Config) {
@@ -689,6 +701,61 @@ func TestValidateAI(t *testing.T) {
 			postValidate: func(t *testing.T, conf *Config) {
 				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
 			},
+		},
+		"openai config azure is valid": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.ChatAI.Providers[0].Config = OpenAIProviderConfigAzure
+			},
+			expectErr: "",
+		},
+		"openai config gemini is valid": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.ChatAI.Providers[0].Config = ProviderConfigGemini
+			},
+			expectErr: "",
+		},
+		"openai config invalid for type": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+			},
+			expectErr: "config",
+		},
+		"google config must be gemini": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = GoogleProvider
+				conf.ChatAI.Providers[0].Config = ""
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, ProviderConfigGemini, conf.ChatAI.Providers[0].Config)
+			},
+		},
+		"google config gemini is valid": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = GoogleProvider
+				conf.ChatAI.Providers[0].Config = ProviderConfigGemini
+			},
+			expectErr: "",
+		},
+		"google config empty defaults to gemini": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = GoogleProvider
+				conf.ChatAI.Providers[0].Config = ""
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, ProviderConfigGemini, conf.ChatAI.Providers[0].Config)
+			},
+		},
+		"google config invalid for type": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = GoogleProvider
+				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+			},
+			expectErr: "config",
 		},
 		"disabled provider skips validation": {
 			mutate: func(conf *Config) {
@@ -720,7 +787,7 @@ func TestValidateAI(t *testing.T) {
 				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-1",
 					Type:         OpenAIProvider,
-					Config:       OpenAIProviderConfigDefault,
+					Config:       DefaultProviderConfigType,
 					Enabled:      true,
 					DefaultModel: "model-1",
 					Key:          "provider-key-2",
@@ -756,7 +823,7 @@ func TestValidateAI(t *testing.T) {
 				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-2",
 					Type:         OpenAIProvider,
-					Config:       OpenAIProviderConfigDefault,
+					Config:       DefaultProviderConfigType,
 					Enabled:      true,
 					DefaultModel: "model-1",
 					Key:          "provider-key-2",

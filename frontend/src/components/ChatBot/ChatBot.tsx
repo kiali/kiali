@@ -134,6 +134,16 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
     setConversations(conversationList);
   }, [backendConversationIds]);
 
+  const onProviderChange = (provider: ProviderAI): void => {
+    if (provider === selectedProvider) {
+      return;
+    }
+    setSelectedProvider(provider);
+    setIsDrawerOpen(false);
+    setCurrentConversation(undefined, []);
+    updateConversationList();
+  };
+
   // Load conversations from backend and storage
   const loadConversationsFromBackend = useCallback(async (): Promise<void> => {
     try {
@@ -344,7 +354,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 providers={props.providers}
                 selectedModel={selectedModel}
                 selectedProvider={selectedProvider}
-                onSelectProvider={setSelectedProvider}
+                onSelectProvider={onProviderChange}
                 onSelectModel={setSelectedModel}
                 selectedMockConversation={selectedMockConversation}
                 setSelectedMockConversation={handleSelectMockConversation}

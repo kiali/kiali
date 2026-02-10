@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -784,16 +785,16 @@ type ProviderType string
 
 const (
 	OpenAIProvider      ProviderType = "openai"
-	DefaultProviderType ProviderType = ""
+	GoogleProvider      ProviderType = "google"
+	DefaultProviderType ProviderType = "default"
 )
 
 type ProviderConfigType string
 
 const (
-	OpenAIProviderConfigDefault ProviderConfigType = "default"
-	OpenAIProviderConfigGemini  ProviderConfigType = "gemini"
-	OpenAIProviderConfigAzure   ProviderConfigType = "azure"
-	DefaultProviderConfigType   ProviderConfigType = "default"
+	OpenAIProviderConfigAzure ProviderConfigType = "azure"
+	ProviderConfigGemini      ProviderConfigType = "gemini"
+	DefaultProviderConfigType ProviderConfigType = "default"
 )
 
 type ProviderConfig struct {
@@ -1318,19 +1319,18 @@ func (conf *Config) ValidateAI() error {
 	}
 
 	defaultProviderFound := false
+	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
+		OpenAIProvider: {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
+		GoogleProvider: {ProviderConfigGemini},
+	}
 
-	validProviderTypes := map[ProviderType]struct{}{
-		OpenAIProvider: {},
-	}
-	validProviderConfigTypes := map[ProviderConfigType]struct{}{
-		OpenAIProviderConfigDefault: {},
-		OpenAIProviderConfigAzure:   {},
-		OpenAIProviderConfigGemini:  {},
-	}
 	seenNames := make(map[string]struct{})
 
 	for i := range conf.ChatAI.Providers {
 		p := &conf.ChatAI.Providers[i]
+		if !p.Enabled {
+			continue
+		}
 		if _, exists := seenNames[p.Name]; exists {
 			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
 		}
@@ -1347,20 +1347,25 @@ func (conf *Config) ValidateAI() error {
 			continue
 		}
 
-		if p.Type == "" {
-			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, DefaultProviderType)
-			p.Type = DefaultProviderType
+		if p.Type == "" || p.Type == DefaultProviderType {
+			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, OpenAIProvider)
+			p.Type = OpenAIProvider
 		}
-		if _, valid := validProviderTypes[p.Type]; !valid {
-			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid", p.Name, p.Type)
+		if _, valid := validCompatibleProviderTypes[p.Type]; !valid {
+			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid or not supported. Available types are: %v", p.Name, p.Type, validCompatibleProviderTypes[p.Type])
 		}
 
 		if p.Config == "" {
-			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q", p.Name, DefaultProviderConfigType)
-			p.Config = DefaultProviderConfigType
+			defaultValue := DefaultProviderConfigType
+			if p.Type == GoogleProvider {
+				defaultValue = ProviderConfigGemini
+			}
+			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q for provider type %s", p.Name, defaultValue, p.Type)
+			p.Config = defaultValue
 		}
-		if _, valid := validProviderConfigTypes[p.Config]; !valid {
-			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid", p.Name, p.Config)
+
+		if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
+			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
 		}
 
 		if p.DefaultModel == "" {
@@ -1456,7 +1461,7 @@ func Set(conf *Config) {
 
 	// Validate the chat_ai configuration
 	if err := conf.ValidateAI(); err != nil {
-		log.Fatalf("invalid chat_ai configuration: %v", err)
+		log.Fatalf("[Chat AI] Invalid chat_ai configuration: %v", err)
 	}
 
 	// init these one time, they don't change
@@ -1714,15 +1719,19 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 
 	for i := range conf.ChatAI.Providers {
 		provider := &conf.ChatAI.Providers[i]
-		overrides = append(overrides, overridesType{
-			configValue: &provider.Key,
-			fileName:    chatAIProviderSecretFileName(provider.Name),
-		})
-		for j := range provider.Models {
+		if provider.Enabled {
 			overrides = append(overrides, overridesType{
-				configValue: &provider.Models[j].Key,
-				fileName:    chatAIModelSecretFileName(provider.Name, provider.Models[j].Name),
+				configValue: &provider.Key,
+				fileName:    chatAIProviderSecretFileName(provider.Name),
 			})
+			for j := range provider.Models {
+				if provider.Models[j].Enabled {
+					overrides = append(overrides, overridesType{
+						configValue: &provider.Models[j].Key,
+						fileName:    chatAIModelSecretFileName(provider.Name, provider.Models[j].Name),
+					})
+				}
+			}
 		}
 	}
 
