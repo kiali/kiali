@@ -950,18 +950,6 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 	if err != nil {
 		return tracingName, fmt.Errorf("Service [cluster: %s] [namespace: %s] [name: %s] doesn't exist", cluster, namespace, service)
 	}
-	// Waypoint proxies don't have the label app, but they do have traces
-	if IsWaypoint(svc) {
-		tracingName.Lookup = svc.Name
-		return tracingName, nil
-	}
-	waypoints := in.GetWaypointsForService(ctx, &svc)
-	if len(waypoints) > 0 {
-		tracingName.WaypointName = waypoints[0].Name
-		tracingName.WaypointNamespace = waypoints[0].Namespace
-		tracingName.Lookup = waypoints[0].Name
-		return tracingName, nil
-	}
 
 	appLabelName, found := in.conf.GetAppLabelName(svc.Selectors)
 	// the prior code assumed the svc.Selectors had the configured appLabelName entry. I'm going to assume the same
@@ -970,6 +958,32 @@ func (in *SvcService) GetServiceTracingName(ctx context.Context, cluster, namesp
 		log.Debugf("Expected appLabelName not found in svc.Selectors for [%s:%s:%s]", svc.Cluster, svc.Namespace, svc.Name)
 	}
 	app := svc.Selectors[appLabelName]
+
+	// Waypoint proxies don't have the label app, but they do have traces
+	if IsWaypoint(svc) {
+		tracingName.Lookup = svc.Name
+		return tracingName, nil
+	}
+	waypoints := in.GetWaypointsForService(ctx, &svc)
+	if len(waypoints) > 0 {
+		if in.conf.ExternalServices.Tracing.UseWaypointName {
+			tracingName.WaypointName = waypoints[0].Name
+			tracingName.WaypointNamespace = waypoints[0].Namespace
+			tracingName.Lookup = waypoints[0].Name
+			return tracingName, nil
+		}
+
+		lookupName := ""
+		if in.conf.ExternalServices.Tracing.NamespaceSelector {
+			lookupName = fmt.Sprintf("%s.%s.%s", app, namespace, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+		} else {
+			lookupName = fmt.Sprintf("%s.%s", app, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+		}
+		tracingName.Lookup = lookupName
+		tracingName.WaypointName = lookupName
+		return tracingName, nil
+	}
+
 	tracingName.App = app
 	tracingName.Lookup = app
 	return tracingName, nil

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -318,7 +319,7 @@ func (in *Client) GetServices(ctx context.Context) ([]string, error) {
 // BuildTracingServiceName
 func BuildTracingServiceName(namespace, app string) string {
 	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector {
+	if conf.ExternalServices.Tracing.NamespaceSelector && !strings.Contains(app, conf.ExternalServices.Istio.IstioIdentityDomain) {
 		return util.BuildNameNSKey(app, namespace)
 	}
 	return app

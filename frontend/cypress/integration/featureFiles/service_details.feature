@@ -40,7 +40,7 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @core-2
-  Scenario: See Inbound Metrics for productspage service details
+  Scenario: See Inbound Metrics for productpage service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
     Then sd::user sees "Request size" graph
@@ -56,23 +56,26 @@ Feature: Kiali Service Details page
 
   @bookinfo-app
   @core-2
-  Scenario: See Graph data for productspage service details Inbound Metrics graphs
+  Scenario: See Graph data for productpage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 
   # TODO: offline - no tracing details yet
   @bookinfo-app
   @tracing
   @waypoint-tracing
-  Scenario: See graph traces for productspage service details
+  Scenario: See graph traces for details service details
+    And user is at the details page for the "service" "bookinfo/details" located in the "" cluster
     And user sees trace information
     When user selects a trace
     Then user sees trace details
 
   # TODO: offline - no tracing details yet
+  # waypoint tracing does not emit traces for productpage
   @bookinfo-app
   @tracing
   @waypoint-tracing
   Scenario: See span info after selecting service span
+    Given user is at the details page for the "service" "bookinfo/details" located in the "" cluster
     And user sees trace information
     When user selects a trace with at least 4 spans
     Then user sees span details

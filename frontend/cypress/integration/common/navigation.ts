@@ -85,7 +85,7 @@ Given(
 
       if (pageDetail === 'services') {
         cy.intercept({
-          pathname: '**/api/namespaces/bookinfo/services/productpage',
+          pathname: `**/api/namespaces/${namespace}/services/${name}`,
           query: {
             objects: ''
           }

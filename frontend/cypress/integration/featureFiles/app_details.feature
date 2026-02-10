@@ -63,4 +63,4 @@ Feature: Kiali App Details page
     And user sees trace information
     When user selects a trace with at least 4 spans
     Then user sees span details
-    And user can filter spans by app "waypoint"
+    And user can filter spans by app "details" by "waypoint"
