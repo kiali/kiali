@@ -85,7 +85,8 @@ const rateCellStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-start',
-  gap: '0.25rem'
+  gap: '0.25rem',
+  whiteSpace: 'nowrap'
 });
 
 const statusIconStyle = kialiStyle({
@@ -128,11 +129,14 @@ const formatLatency = (latencyMs: number): string => {
 };
 
 const formatErrorRate = (rate: number): string => {
-  const pct = rate * 100;
-  const pctRounded1 = Math.round(pct * 10) / 10;
-  const isWholeNumber = Math.abs(pctRounded1 - Math.round(pctRounded1)) < 1e-9;
+  return `${(rate * 100).toFixed(2)}%`;
+};
 
-  return `${isWholeNumber ? Math.round(pctRounded1).toFixed(0) : pctRounded1.toFixed(1)}%`;
+const formatRequestRate = (reqPerSec: number): string => {
+  if (reqPerSec >= 1000) {
+    return `${(reqPerSec / 1000).toFixed(2)}k req/s`;
+  }
+  return `${reqPerSec.toFixed(2)} req/s`;
 };
 
 const noUnderlineStyle = kialiStyle({
@@ -352,8 +356,8 @@ export const ServiceInsights: React.FC = () => {
     return (
       <table className={tableStyle} data-test="service-insights-rates-table">
         <colgroup>
-          <col style={{ width: '75%' }} />
-          <col style={{ width: '25%' }} />
+          <col style={{ width: '60%' }} />
+          <col style={{ width: '40%' }} />
         </colgroup>
         <thead>
           <tr>
@@ -376,7 +380,9 @@ export const ServiceInsights: React.FC = () => {
               </td>
               <td className={rateCellStyle}>
                 {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
-                {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
+                {svc.errorRate > 0
+                  ? formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))
+                  : formatRequestRate(svc.requestCount ?? 0)}
               </td>
             </tr>
           ))}

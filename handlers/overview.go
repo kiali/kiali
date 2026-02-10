@@ -460,6 +460,10 @@ func overviewServiceRatesFromHealthCache(
 				// ErrorRatio is 0-100 (percentage); API expects 0-1 decimal
 				errorRate := sh.Status.ErrorRatio / 100.0
 				requestCount := sh.Status.TotalRequestRate
+				if requestCount == 0 {
+					// Fallback: Status.TotalRequestRate can be 0 if computed before CombineReporters or in edge cases; use raw Requests.
+					requestCount = sh.Requests.GetTotalRequestRate()
+				}
 
 				all = append(all, serviceRate{
 					cluster:      cluster.Name,
