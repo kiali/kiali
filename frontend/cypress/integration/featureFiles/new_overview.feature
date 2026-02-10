@@ -36,11 +36,11 @@ Feature: New Overview - Overview cards
     Then Control planes card shows count and footer link
 
   @core-2
-  Scenario: Control planes issues (if any) can navigate to Mesh page with cluster filter
+  Scenario: Control planes card can navigate to Namespaces page with control-plane type filter
     Given Control planes API is observed
     And user is at the "overview" page
-    When user navigates to Mesh page from Control planes card
-    Then user is redirected to Mesh page
+    When user navigates to Namespaces page from Control planes card
+    Then user is redirected to Namespaces page with control-plane type filter
 
   @core-2
   Scenario: Data planes footer link navigates to Namespaces list with type filter
@@ -112,7 +112,6 @@ Feature: New Overview - Overview cards
     When user clicks View all services in Service insights card
     Then user is redirected to Services list with all namespaces and service insights sorting
 
-  @selected
   @core-2
   Scenario: Service insights service link navigates to service details
     Given Service insights APIs are observed
