@@ -311,10 +311,12 @@ export const ServiceInsights: React.FC = () => {
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
-                {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
-                {svc.errorRate > 0
-                  ? formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))
-                  : formatRequestRate(svc.requestCount ?? 0)}
+                <Tooltip content={formatRequestRate(svc.requestCount ?? 0)} position={TooltipPosition.top}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+                    {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
+                  </span>
+                </Tooltip>
               </td>
             </tr>
           ))}
@@ -354,8 +356,10 @@ export const ServiceInsights: React.FC = () => {
             headerContent={<span>{t('Service Insights')}</span>}
             bodyContent={
               <>
-                Lists services with the highest <strong>Errors</strong> and <strong>Latency</strong>. Always displays
-                the top results for each metric, even when all services are healthy.
+                Lists services by top <strong>Error rate</strong> and <strong>Latency</strong>. Hover over the error
+                rate to see the associated request rate. Entries with the same error rate are then ordered by request
+                rate. Hover over a service name to see its cluster and namespace. Click the service name to go to its
+                service detail page.
               </>
             }
             position={PopoverPosition.top}
