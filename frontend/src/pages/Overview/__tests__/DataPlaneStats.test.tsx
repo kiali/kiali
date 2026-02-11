@@ -148,6 +148,7 @@ describe('Overview DataPlaneStats', () => {
     expect(wrapper.find('[data-test="data-planes-not-ready"]').text()).toContain('1');
     expect(wrapper.find('[data-test="data-planes-na"]').text()).toContain('1');
 
+    expect(wrapper.find('button[data-test="data-planes-view-namespaces"]').exists()).toBeTruthy();
     wrapper.find('button[data-test="data-planes-view-namespaces"]').simulate('click');
     expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
     const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
