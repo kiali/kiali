@@ -356,10 +356,10 @@ export const ServiceInsights: React.FC = () => {
             headerContent={<span>{t('Service Insights')}</span>}
             bodyContent={
               <>
-                Lists services by top <strong>Error rate</strong> and <strong>Latency</strong>. Hover over the error
-                rate to see the associated request rate. Entries with the same error rate are then ordered by request
-                rate. Hover over a service name to see its cluster and namespace. Click the service name to go to its
-                service detail page.
+                Lists services by top <strong>Error rate</strong> and <strong>P95 Latency</strong>. Status icons reflect
+                the service health for the time period. Hover over the error rate to see the associated request rate.
+                Entries with the same error rate are then ordered by request rate. Hover over a service name to see its
+                cluster and namespace. Click the service name to go to its service detail page.
               </>
             }
             position={PopoverPosition.top}
