@@ -715,7 +715,7 @@ Given('Service insights APIs are observed', () => {
 Given('Service insights mock APIs are observed', () => {
   didServiceInsightsRetry = false;
   // no need at this time to mock the latencies
-  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatenciesMock');
   cy.intercept(
     { method: 'GET', pathname: SERVICE_RATES_API_PATHNAME },
     {
@@ -741,7 +741,7 @@ Given('Service insights mock APIs are observed', () => {
         ]
       }
     }
-  ).as('serviceRates');
+  ).as('serviceRatesMock');
 });
 
 Given('Service insights APIs respond slowly', () => {
@@ -848,12 +848,14 @@ Then('Service insights card shows data tables and footer link', () => {
       cy.contains('th', 'Latency').should('be.visible');
 
       cy.get('tbody tr').then($rows => {
-        expect($rows).to.have.length(2);
+        if ($rows.length === 0) {
+          return;
+        }
         cy.wrap($rows[0]).within(() => {
           cy.get('a')
             .should('have.attr', 'href')
             .and('match', /\/namespaces\/.+\/services\/.+/);
-          cy.contains('%').should('be.visible');
+          cy.contains(/ms|s/).should('be.visible');
         });
       });
     });
@@ -861,11 +863,8 @@ Then('Service insights card shows data tables and footer link', () => {
 });
 
 Then('Service insights card shows mock data tables', () => {
-  // If we didn't already wait for a retry, wait for the initial real API responses so assertions are stable.
-  if (!didServiceInsightsRetry) {
-    cy.wait('@serviceLatencies');
-    cy.wait('@serviceRates');
-  }
+  cy.wait('@serviceLatenciesMock');
+  cy.wait('@serviceRatesMock');
 
   getServiceInsightsCard().within(() => {
     cy.contains('Fetching service data').should('not.exist');
@@ -880,14 +879,12 @@ Then('Service insights card shows mock data tables', () => {
       cy.contains('th', 'Errors').should('be.visible');
 
       cy.get('tbody tr').then($rows => {
-        if ($rows.length === 0) {
-          return;
-        }
+        expect($rows).to.have.length(2);
         cy.wrap($rows[0]).within(() => {
           cy.get('a')
             .should('have.attr', 'href')
             .and('match', /\/namespaces\/.+\/services\/.+/);
-          cy.contains(/ms|s/).should('be.visible');
+          cy.contains('%').should('be.visible');
         });
       });
     });
