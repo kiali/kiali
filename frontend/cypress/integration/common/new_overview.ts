@@ -1,7 +1,7 @@
 import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
-const CLUSTERS_API_PATHNAME = '**/api/istio/status';
+const CLUSTERS_API_URL = '**/api/istio/status*';
 const CARD_LOADING_TIMEOUT = 30000;
 
 const istioConfigsWithNoValidations = {
@@ -64,7 +64,8 @@ Given('all overview APIs respond slowly', () => {
     'controlPlanes'
   );
 
-  cy.intercept({ method: 'GET', pathname: CLUSTERS_API_PATHNAME }, { delay: 2000, statusCode: 200, body: [] }).as(
+  // Use url pattern to catch all requests including those from IstioStatus component
+  cy.intercept({ method: 'GET', url: CLUSTERS_API_URL }, { delay: 2000, statusCode: 200, body: [] }).as(
     'clustersStatus'
   );
 });
@@ -74,7 +75,8 @@ Given('all overview APIs fail', () => {
     'controlPlanes'
   );
 
-  cy.intercept({ method: 'GET', pathname: CLUSTERS_API_PATHNAME }, { statusCode: 500, body: {} }).as('clustersStatus');
+  // Use url pattern to catch all requests including those from IstioStatus component
+  cy.intercept({ method: 'GET', url: CLUSTERS_API_URL }, { statusCode: 500, body: {} }).as('clustersStatus');
 });
 
 // Individual API intercepts for card-specific tests
@@ -121,6 +123,7 @@ Then('Control planes card shows loading state without count or footer link', () 
 
 Then('Control planes card shows error state without count or footer link', () => {
   cy.wait('@controlPlanes');
+  cy.waitForReact();
   getControlPlanesCard().within(() => {
     cy.contains('Control planes could not be loaded').should('be.visible');
     cy.contains('Try Again').should('be.visible');
@@ -231,12 +234,13 @@ const getClustersCard = (): Cypress.Chainable => {
 };
 
 Given('Clusters API fails once', () => {
-  // Intercept only once - subsequent requests will hit real backend
+  // Intercept twice to cover both ClusterStats and IstioStatus components
+  // Subsequent requests (like retry) will hit real backend
   cy.intercept(
     {
       method: 'GET',
-      pathname: CLUSTERS_API_PATHNAME,
-      times: 1
+      url: CLUSTERS_API_URL,
+      times: 2
     },
     {
       statusCode: 500,
@@ -249,7 +253,7 @@ Given('Clusters API returns empty data', () => {
   cy.intercept(
     {
       method: 'GET',
-      pathname: CLUSTERS_API_PATHNAME
+      url: CLUSTERS_API_URL
     },
     {
       statusCode: 200,
@@ -274,12 +278,15 @@ Then('Clusters card shows loading state without count or footer link', () => {
 
 Then('Clusters card shows error state without count or footer link', () => {
   cy.wait('@clustersStatus');
-  getClustersCard().within(() => {
-    cy.contains('Clusters could not be loaded').should('be.visible');
-    cy.contains('Try Again').should('be.visible');
-    cy.contains('Clusters (').should('not.exist');
-    cy.contains('View Mesh').should('not.exist');
-  });
+  cy.waitForReact();
+  getClustersCard()
+    .should('be.visible')
+    .within(() => {
+      cy.contains('Clusters could not be loaded').should('be.visible');
+      cy.contains('Try Again').should('be.visible');
+      cy.contains('Clusters (').should('not.exist');
+      cy.contains('View Mesh').should('not.exist');
+    });
 });
 
 Then('Clusters card shows count {int} and footer link', (count: number) => {
