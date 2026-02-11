@@ -50,6 +50,7 @@
     "cypress:multi-cluster": "cypress open -e TAGS=\"@multi-cluster and not @multi-primary\"",
     "cypress:multi-primary": "cypress open -e TAGS=\"@multi-primary\"",
     "cypress:multi-mesh": "cypress open -e TAGS=\"@multi-mesh\"",
+    "cypress:offline": "cypress open -e TAGS=\"@offline\"",
     "cypress:perf": "cypress open --config-file cypress-perf.config.ts",
     "cypress:selected": "cypress open -e TAGS=\"@selected\"",
     "cypress:tracing": "cypress open -e TAGS=\"@tracing\"",

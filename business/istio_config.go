@@ -279,12 +279,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.DestinationRules = list.Items
 	}
 
 	if userClient.IsIstioAPI() && criteria.Include(kubernetes.EnvoyFilters) {
 		list := &networking_v1alpha3.EnvoyFilterList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.EnvoyFilters = list.Items
@@ -296,6 +302,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	if userClient.IsIstioAPI() && userClient.IsIstioGateway() && criteria.Include(kubernetes.Gateways) {
 		list := &networking_v1.GatewayList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.Gateways = list.Items
@@ -310,13 +319,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
-
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.K8sGateways = ToPtrs(list.Items)
 	}
 
 	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGRPCRoutes) {
 		list := &k8s_networking_v1.GRPCRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.K8sGRPCRoutes = ToPtrs(list.Items)
@@ -327,12 +341,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.K8sHTTPRoutes = ToPtrs(list.Items)
 	}
 
 	if userClient.IsInferenceAPI() && criteria.Include(kubernetes.K8sInferencePools) {
 		list := &k8s_inference_v1.InferencePoolList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.K8sInferencePools = ToPtrs(list.Items)
@@ -346,12 +366,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.K8sReferenceGrants = ToPtrs(list.Items)
 	}
 
 	if userClient.IsExpGatewayAPI() && criteria.Include(kubernetes.K8sTCPRoutes) {
 		list := &k8s_networking_v1alpha2.TCPRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.K8sTCPRoutes = ToPtrs(list.Items)
@@ -362,6 +388,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.K8sTLSRoutes = ToPtrs(list.Items)
 	}
 
@@ -370,12 +399,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.ServiceEntries = list.Items
 	}
 
 	if userClient.IsIstioAPI() && criteria.Include(kubernetes.Sidecars) {
 		list := &networking_v1.SidecarList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.Sidecars = list.Items
@@ -390,6 +425,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.VirtualServices = list.Items
 	}
 
@@ -398,12 +436,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.WorkloadEntries = list.Items
 	}
 
 	if userClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadGroups) {
 		list := &networking_v1.WorkloadGroupList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.WorkloadGroups = list.Items
@@ -418,6 +462,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.WasmPlugins = list.Items
 	}
 
@@ -426,12 +473,18 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.Telemetries = list.Items
 	}
 
 	if criteria.Include(kubernetes.AuthorizationPolicies) {
 		list := &security_v1.AuthorizationPolicyList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.AuthorizationPolicies = list.Items
@@ -446,6 +499,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
 		istioConfigList.PeerAuthentications = list.Items
 
 		if isWorkloadSelector {
@@ -456,6 +512,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	if criteria.Include(kubernetes.RequestAuthentications) {
 		list := &security_v1.RequestAuthenticationList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
 			return nil, err
 		}
 		istioConfigList.RequestAuthentications = list.Items

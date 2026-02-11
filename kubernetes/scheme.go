@@ -20,6 +20,17 @@ import (
 	gatewayapischeme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
 )
 
+// Scheme is the default scheme with all the Kinds that Kiali consumes.
+var Scheme *runtime.Scheme
+
+func init() {
+	s, err := NewScheme()
+	if err != nil {
+		panic(err)
+	}
+	Scheme = s
+}
+
 // NewScheme creates a scheme will all the Kinds that Kiali consumes.
 func NewScheme() (*runtime.Scheme, error) {
 	scheme := runtime.NewScheme()
