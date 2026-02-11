@@ -14,6 +14,11 @@ jobs:
     container:
       image: quay.io/dno/droute:latest
     steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.workflow_run.head_sha }}
+
     # Download test artifacts and PR metadata because workflow_run events triggered by PRs from forks
     # don't have access to PR information in github.event.workflow_run.pull_requests
     # See: https://github.com/orgs/community/discussions/25220
