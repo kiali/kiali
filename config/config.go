@@ -786,6 +786,7 @@ type ProviderType string
 const (
 	OpenAIProvider      ProviderType = "openai"
 	GoogleProvider      ProviderType = "google"
+	LightSpeedProvider  ProviderType = "lightspeed"
 	DefaultProviderType ProviderType = "default"
 )
 
@@ -1320,8 +1321,9 @@ func (conf *Config) ValidateAI() error {
 
 	defaultProviderFound := false
 	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
-		OpenAIProvider: {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
-		GoogleProvider: {ProviderConfigGemini},
+		OpenAIProvider:     {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
+		GoogleProvider:     {ProviderConfigGemini},
+		LightSpeedProvider: {DefaultProviderConfigType},
 	}
 
 	seenNames := make(map[string]struct{})
@@ -1338,23 +1340,20 @@ func (conf *Config) ValidateAI() error {
 
 		if p.Name == conf.ChatAI.DefaultProvider {
 			defaultProviderFound = true
-			if !p.Enabled {
-				return fmt.Errorf("chat_ai.default_provider %q must be enabled", conf.ChatAI.DefaultProvider)
-			}
 		}
 
-		if !p.Enabled {
-			continue
-		}
-
+		// Default to OpenAI if no type is provided
 		if p.Type == "" || p.Type == DefaultProviderType {
 			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, OpenAIProvider)
 			p.Type = OpenAIProvider
 		}
+
+		// Validate the provider type provided
 		if _, valid := validCompatibleProviderTypes[p.Type]; !valid {
 			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid or not supported. Available types are: %v", p.Name, p.Type, validCompatibleProviderTypes[p.Type])
 		}
 
+		// Default to default config if no config is provided
 		if p.Config == "" {
 			defaultValue := DefaultProviderConfigType
 			if p.Type == GoogleProvider {
@@ -1364,12 +1363,33 @@ func (conf *Config) ValidateAI() error {
 			p.Config = defaultValue
 		}
 
+		// Validate the config provided
 		if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
 			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
 		}
 
+		// Default to the first model if no default model is provided
 		if p.DefaultModel == "" {
-			return fmt.Errorf("chat_ai.providers[%q].default_model is required", p.Name)
+			nModels := len(p.Models)
+			switch nModels {
+			case 0:
+				return fmt.Errorf("chat_ai.providers[%q].default_model is required and no models are provided", p.Name)
+			case 1:
+				p.DefaultModel = p.Models[0].Name
+			default:
+				return fmt.Errorf("chat_ai.providers[%q].default_model is required and multiple models are provided", p.Name)
+			}
+		}
+
+		if p.Type == LightSpeedProvider {
+			if len(p.Models) > 1 {
+				return fmt.Errorf("LightSpeed provider %q cannot have multiple models", p.Name)
+			}
+			model := p.Models[0]
+			if model.Endpoint == "" {
+				return fmt.Errorf("LightSpeed provider %q %q requires an endpoint", p.Name, model.Name)
+			}
+			continue
 		}
 
 		defaultModelFound := false
