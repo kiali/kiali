@@ -20,6 +20,13 @@ const overviewPageStyle = kialiStyle({
   gap: '1rem'
 });
 
+const durationLabelStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 400,
+  color: 'var(--pf-global--Color--200)',
+  whiteSpace: 'nowrap'
+});
+
 export const OverviewPage: React.FC = () => {
   const dispatch = useKialiDispatch();
 
@@ -33,8 +40,12 @@ export const OverviewPage: React.FC = () => {
     <div className={overviewPageStyle}>
       <DefaultSecondaryMasthead
         hideNamespaceSelector={true}
-        rightToolbar={<Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />}
-        titleSuffix={t('Last {{duration}}', { duration: durationLabel })}
+        rightToolbar={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className={durationLabelStyle}>{t('Last {{duration}}', { duration: durationLabel })}</span>
+            <Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />
+          </div>
+        }
       />
 
       <Grid hasGutter>
