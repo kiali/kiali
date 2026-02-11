@@ -19,60 +19,15 @@ jobs:
       with:
         ref: ${{ github.event.workflow_run.head_branch }}
 
-    - name: Download test results
-      continue-on-error: true
-      uses: actions/download-artifact@v7
-      with:
-        name: junit-rest-report
-        path: tests/integration/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-
-    - name: Download test metadata
-      continue-on-error: true
-      uses: actions/download-artifact@v7
-      with:
-        name: backend-test-metadata
-        path: test-metadata/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-
     # Download PR metadata from artifact because workflow_run events triggered by PRs from forks
     # don't have access to PR information in github.event.workflow_run.pull_requests
     # See: https://github.com/orgs/community/discussions/25220
-    - name: Download PR metadata
+    - name: Download all test artifacts
       continue-on-error: true
       uses: actions/download-artifact@v7
       with:
-        name: pr-metadata
-        path: pr-metadata/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-
-    - name: Download frontend core 1 test results
-      continue-on-error: true
-      uses: actions/download-artifact@v7
-      with:
-        name: junit-frontend-core-1-report
-        path: frontend-core-temp/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-
-    - name: Download frontend core 2 test results
-      continue-on-error: true
-      uses: actions/download-artifact@v7
-      with:
-        name: junit-frontend-core-2-report
-        path: frontend-core-temp/
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        run-id: ${{ github.event.workflow_run.id }}
-
-    - name: Download frontend core optional test results
-      continue-on-error: true
-      uses: actions/download-artifact@v7
-      with:
-        name: junit-frontend-core-optional-report
-        path: frontend-core-temp/
+        pattern: '*'
+        path: artifacts/
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
 
@@ -86,27 +41,27 @@ jobs:
       run: |
         npm install -g junit-report-merger
         mkdir -p frontend-core/cypress/results
-        jrm frontend-core/cypress/results/combined-report.xml "frontend-core-temp/*.xml"
+        jrm frontend-core/cypress/results/combined-report.xml "artifacts/junit-frontend-core-*-report/*.xml"
 
     - name: Extract metadata
       id: metadata
       run: |
-        if [ -f test-metadata/istio_version.txt ]; then
-          ISTIO_VERSION=$(cat test-metadata/istio_version.txt)
+        if [ -f artifacts/backend-test-metadata/istio_version.txt ]; then
+          ISTIO_VERSION=$(cat artifacts/backend-test-metadata/istio_version.txt)
           echo "istio_version=${ISTIO_VERSION:-unknown}" >> $GITHUB_OUTPUT
         else
           echo "istio_version=unknown" >> $GITHUB_OUTPUT
         fi
 
-        if [ -f pr-metadata/pr_number.txt ]; then
-          PR_NUMBER=$(cat pr-metadata/pr_number.txt)
+        if [ -f artifacts/pr-metadata/pr_number.txt ]; then
+          PR_NUMBER=$(cat artifacts/pr-metadata/pr_number.txt)
           echo "pr_number=${PR_NUMBER:-unknown}" >> $GITHUB_OUTPUT
         else
           echo "pr_number=unknown" >> $GITHUB_OUTPUT
         fi
 
-        if [ -f pr-metadata/target_branch.txt ]; then
-          TARGET_BRANCH=$(cat pr-metadata/target_branch.txt)
+        if [ -f artifacts/pr-metadata/target_branch.txt ]; then
+          TARGET_BRANCH=$(cat artifacts/pr-metadata/target_branch.txt)
           echo "target_branch=${TARGET_BRANCH:-unknown}" >> $GITHUB_OUTPUT
         else
           echo "target_branch=unknown" >> $GITHUB_OUTPUT
@@ -117,7 +72,7 @@ jobs:
       uses: ./.github/actions/report-to-reportportal
       with:
         test_suite: 'backend'
-        test_results_dir: 'tests/integration'
+        test_results_dir: 'artifacts/junit-rest-report'
         test_file_name: 'junit-rest-report.xml'
         istio_version: ${{ steps.metadata.outputs.istio_version }}
         data_plane_mode: 'sidecar'
