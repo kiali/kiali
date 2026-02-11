@@ -34,6 +34,7 @@ describe('NamespaceHealthStatus', () => {
     );
 
     expect(wrapper.text()).toContain('Healthy');
+    expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeFalsy();
   });
 
   it('renders Unhealthy when there are errors', () => {
@@ -53,6 +54,7 @@ describe('NamespaceHealthStatus', () => {
 
     expect(wrapper.text()).toContain('Unhealthy');
     expect(wrapper.text()).toContain('1 issue');
+    expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeTruthy();
   });
 
   it('renders Unhealthy when there are warnings', () => {
@@ -177,7 +179,7 @@ describe('NamespaceHealthStatus', () => {
     // NA icon color (createIcon(NA) yields a span with icon-na class)
     const naIcon = wrapper.find('span.icon-na').first();
     expect(naIcon.exists()).toBeTruthy();
-    const naIconWrapper = naIcon.closest('div').first();
+    const naIconWrapper = naIcon.parent().first();
     expect(naIconWrapper.hasClass(namespaceNaIconStyle)).toBeTruthy();
   });
 
