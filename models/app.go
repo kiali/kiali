@@ -65,6 +65,8 @@ type AppListItem struct {
 
 	// Health
 	Health AppHealth `json:"health,omitempty"`
+	// Metrics for App
+	Metrics map[string]string `json:"metrics,omitempty"`
 }
 
 type WorkloadItem struct {

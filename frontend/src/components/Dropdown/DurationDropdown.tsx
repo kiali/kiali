@@ -28,6 +28,8 @@ type DurationDropdownProps = ReduxStateProps &
     nameDropdown?: string;
     prefix?: string;
     suffix?: string;
+    toggleAriaLabel?: string;
+    toggleIcon?: React.ReactNode;
     tooltip?: string;
     tooltipPosition?: TooltipPosition;
   };
@@ -51,6 +53,8 @@ export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props
       value={String(props.duration)}
       label={durations[props.duration]}
       options={durations}
+      toggleAriaLabel={props.toggleAriaLabel}
+      toggleIcon={props.toggleIcon}
       tooltip={props.tooltip}
       tooltipPosition={props.tooltipPosition}
       nameDropdown={props.nameDropdown}

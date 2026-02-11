@@ -19,6 +19,7 @@ export interface AppListItemResponse {
   istioReferences: ObjectReference[];
   istioSidecar: boolean;
   labels: { [key: string]: string };
+  metrics: { [key: string]: string };
   name: string;
   namespace: string;
 }
@@ -43,4 +44,5 @@ export interface AppListItem {
 export interface AppListQuery {
   health: 'true' | 'false';
   istioResources: 'true' | 'false';
+  metrics?: 'true' | 'false';
 }

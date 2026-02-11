@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle, Flex, FlexItem } from '@patternfly/react-core';
 import { ChartDonut } from '@patternfly/react-charts/victory';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
+import { Paths, serverConfig } from 'config';
 import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
@@ -13,6 +13,9 @@ import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { namespaceItemsSelector } from 'store/Selectors';
+import { getName } from 'utils/RateIntervals';
+import { OverviewCardLoadingState } from './OverviewCardState';
+import { ResourcesFullIcon, TachometerAltIcon } from '@patternfly/react-icons';
 
 const chartContainerStyle = kialiStyle({
   display: 'flex',
@@ -40,10 +43,16 @@ const legendIconStyle = kialiStyle({
   height: '1rem'
 });
 
-export const ApplicationStats: React.FC = () => {
-  const { applications, duration } = useApplications();
-  const allNamespaces = useKialiSelector(namespaceItemsSelector);
+const durationStyle = kialiStyle({
+  marginLeft: '0.5rem',
+  fontSize: '0.875rem',
+  color: PFColors.Color200
+});
 
+export const ApplicationStats: React.FC = () => {
+  const { applications, isLoading, metrics } = useApplications();
+  const allNamespaces = useKialiSelector(namespaceItemsSelector);
+  const duration = serverConfig.healthConfig.compute?.Duration ?? 0;
   // Calculate stats from applications
   const total = applications.length;
   let healthy = 0;
@@ -128,64 +137,87 @@ export const ApplicationStats: React.FC = () => {
   return (
     <Card className={cardStyle}>
       <CardHeader>
-        <CardTitle>{t('Applications')}</CardTitle>
+        <CardTitle>
+          {t('Applications')}
+          <span className={durationStyle}>{t('Last {{duration}}', { duration: getName(duration) })}</span>
+        </CardTitle>
       </CardHeader>
-      <CardBody className={cardBodyStyle}>
-        <div className={chartContainerStyle}>
-          <div style={{ width: '280px', height: '280px' }}>
-            <ChartDonut
-              ariaDesc={t('Application health status')}
-              constrainToVisibleArea
-              data={chartData}
-              labels={({ datum }) => `${datum.x}: ${datum.y}`}
-              legendPosition="right"
-              padding={{
-                bottom: 20,
-                left: 20,
-                right: 20,
-                top: 20
-              }}
-              title={`${total}`}
-              subTitle={t('Total applications')}
-              width={225}
-              height={225}
-              colorScale={colorScale}
-            />
-          </div>
-          <div className={legendContainerStyle}>
-            <div className={legendItemStyle} onClick={() => navigateToHealthFilter(FAILURE.id)}>
-              <KialiIcon.ExclamationCircle className={legendIconStyle} />
-              <span>
-                {failure} {t('Failure')}
-              </span>
+      {isLoading ? (
+        <OverviewCardLoadingState message={t('Fetching applications data...')} diameter="5rem" />
+      ) : (
+        <>
+          <CardBody style={{ display: 'flex', marginTop: '1rem' }}>
+            <Flex style={{ marginLeft: '1.2rem', fontSize: '1rem' }}>
+              <FlexItem>
+                <ResourcesFullIcon /> {`Total ${metrics.rps} RPS`}
+                <br />
+                <span
+                  style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}
+                >{`${metrics.no_traffic} apps with no traffic`}</span>
+              </FlexItem>
+              <FlexItem style={{ marginLeft: '1.2rem' }}>
+                <TachometerAltIcon /> {`Latency ${metrics.latency} ms`}
+              </FlexItem>
+            </Flex>
+          </CardBody>
+          <CardBody className={cardBodyStyle}>
+            <div className={chartContainerStyle}>
+              <div style={{ width: '280px', height: '280px' }}>
+                <ChartDonut
+                  ariaDesc={t('Application health status')}
+                  constrainToVisibleArea
+                  data={chartData}
+                  labels={({ datum }) => `${datum.x}: ${datum.y}`}
+                  legendPosition="right"
+                  padding={{
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    top: 20
+                  }}
+                  title={`${total}`}
+                  subTitle={t('Total applications')}
+                  width={225}
+                  height={225}
+                  colorScale={colorScale}
+                />
+              </div>
+              <div className={legendContainerStyle}>
+                <div className={legendItemStyle} onClick={() => navigateToHealthFilter(FAILURE.id)}>
+                  <KialiIcon.ExclamationCircle className={legendIconStyle} />
+                  <span>
+                    {failure} {t('Failure')}
+                  </span>
+                </div>
+                <div className={legendItemStyle} onClick={() => navigateToHealthFilter(DEGRADED.id)}>
+                  <KialiIcon.ExclamationTriangle className={legendIconStyle} />
+                  <span>
+                    {degraded} {t('Degraded')}
+                  </span>
+                </div>
+                <div className={legendItemStyle} onClick={() => navigateToHealthFilter(HEALTHY.id)}>
+                  <KialiIcon.Success className={legendIconStyle} />
+                  <span>
+                    {healthy} {t('Healthy')}
+                  </span>
+                </div>
+                <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NOT_READY.id)}>
+                  <KialiIcon.Delete className={legendIconStyle} />
+                  <span>
+                    {notReady} {t('Not ready')}
+                  </span>
+                </div>
+                <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NA.id)}>
+                  <KialiIcon.Unknown className={legendIconStyle} />
+                  <span>
+                    {noHealthInfo} {t('No health information')}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className={legendItemStyle} onClick={() => navigateToHealthFilter(DEGRADED.id)}>
-              <KialiIcon.ExclamationTriangle className={legendIconStyle} />
-              <span>
-                {degraded} {t('Degraded')}
-              </span>
-            </div>
-            <div className={legendItemStyle} onClick={() => navigateToHealthFilter(HEALTHY.id)}>
-              <KialiIcon.Success className={legendIconStyle} />
-              <span>
-                {healthy} {t('Healthy')}
-              </span>
-            </div>
-            <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NOT_READY.id)}>
-              <KialiIcon.Delete className={legendIconStyle} />
-              <span>
-                {notReady} {t('Not ready')}
-              </span>
-            </div>
-            <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NA.id)}>
-              <KialiIcon.Unknown className={legendIconStyle} />
-              <span>
-                {noHealthInfo} {t('No health information')}
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardBody>
+          </CardBody>
+        </>
+      )}
       <CardFooter>
         <span onClick={resetFiltersAndNavigate} className={linkStyle} style={{ cursor: 'pointer' }}>
           {t('View all applications')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />

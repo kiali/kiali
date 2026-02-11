@@ -6,6 +6,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
+import { OverviewCardLoadingState } from './OverviewCardState';
 
 export const WorkloadInsights: React.FC = () => {
   return (
@@ -13,7 +14,9 @@ export const WorkloadInsights: React.FC = () => {
       <CardHeader>
         <CardTitle>{t('Workload insights')}</CardTitle>
       </CardHeader>
-      <CardBody className={cardBodyStyle}>{/* Workload insights table will be added later */}</CardBody>
+      <CardBody className={cardBodyStyle}>
+        <OverviewCardLoadingState message={t('Fetching workload insights data...')} diameter="5rem" />
+      </CardBody>
       <CardFooter>
         <Link to={`/${Paths.WORKLOADS}`} className={linkStyle}>
           {t('View all workloads')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
