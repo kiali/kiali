@@ -12,6 +12,10 @@ inputs:
     description: 'Test results file name'
     required: false
     default: 'junit.xml'
+  kiali_version:
+    description: 'Kiali version'
+    required: false
+    default: 'unknown'
   istio_version:
     description: 'Istio version'
     required: false
@@ -38,13 +42,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Extract Kiali version
-      shell: bash
-      run: |
-        # Extract VERSION from Makefile and get major.minor (e.g., v2.21.0-SNAPSHOT -> 2.21)
-        VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
-        echo "KIALI_VERSION=$VERSION" >> $GITHUB_ENV
-
     - name: Download ReportPortal script
       shell: bash
       run: |
@@ -55,7 +52,7 @@ runs:
     - name: Set EXTRA_ATTRIBUTES
       shell: bash
       run: |
-        echo "EXTRA_ATTRIBUTES=[{\"key\": \"build_type\", \"value\": \"pr_build\"}, {\"key\": \"kiali_version\", \"value\": \"${{ env.KIALI_VERSION }}\"}, {\"key\": \"istio_version\", \"value\": \"${{ inputs.istio_version }}\"}, {\"key\": \"data_plane_mode\", \"value\": \"${{ inputs.data_plane_mode }}\"}, {\"key\": \"pr_number\", \"value\": \"${{ inputs.pr_number }}\"}, {\"key\": \"target_branch\", \"value\": \"${{ inputs.target_branch }}\"}]" >> $GITHUB_ENV
+        echo "EXTRA_ATTRIBUTES=[{\"key\": \"build_type\", \"value\": \"pr_build\"}, {\"key\": \"kiali_version\", \"value\": \"${{ inputs.kiali_version }}\"}, {\"key\": \"istio_version\", \"value\": \"${{ inputs.istio_version }}\"}, {\"key\": \"data_plane_mode\", \"value\": \"${{ inputs.data_plane_mode }}\"}, {\"key\": \"pr_number\", \"value\": \"${{ inputs.pr_number }}\"}, {\"key\": \"target_branch\", \"value\": \"${{ inputs.target_branch }}\"}]" >> $GITHUB_ENV
 
     - name: Send results to ReportPortal
       shell: bash
