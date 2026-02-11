@@ -188,3 +188,26 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ""
+
+  store_pr_metadata:
+    name: Store PR metadata
+    runs-on: ubuntu-latest
+    needs: [initialize]
+    steps:
+    - name: Store PR number and target branch
+      run: |
+        mkdir -p pr-metadata
+        echo "${{ github.event.number }}" > pr-metadata/pr_number.txt
+        echo "${{ github.base_ref || github.ref_name }}" > pr-metadata/target_branch.txt
+        cat pr-metadata/pr_number.txt
+        cat pr-metadata/target_branch.txt
+
+    # Upload PR number as artifact because workflow_run events triggered by PRs from forks
+    # don't have access to PR information in github.event.workflow_run.pull_requests
+    # See: https://github.com/orgs/community/discussions/25220
+    - name: Upload PR metadata
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-metadata
+        path: pr-metadata/
+        retention-days: 1

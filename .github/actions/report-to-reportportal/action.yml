@@ -20,6 +20,14 @@ inputs:
     description: 'Data plane mode'
     required: false
     default: 'unknown'
+  pr_number:
+    description: 'Pull request number'
+    required: false
+    default: 'unknown'
+  target_branch:
+    description: 'Target branch name'
+    required: false
+    default: 'unknown'
   data_router_username:
     description: 'Data Router username (secret)'
     required: true
@@ -47,7 +55,7 @@ runs:
     - name: Set EXTRA_ATTRIBUTES
       shell: bash
       run: |
-        echo "EXTRA_ATTRIBUTES=[{\"key\": \"build_type\", \"value\": \"pr_build\"}, {\"key\": \"kiali_version\", \"value\": \"${{ env.KIALI_VERSION }}\"}, {\"key\": \"istio_version\", \"value\": \"${{ inputs.istio_version }}\"}, {\"key\": \"data_plane_mode\", \"value\": \"${{ inputs.data_plane_mode }}\"}]" >> $GITHUB_ENV
+        echo "EXTRA_ATTRIBUTES=[{\"key\": \"build_type\", \"value\": \"pr_build\"}, {\"key\": \"kiali_version\", \"value\": \"${{ env.KIALI_VERSION }}\"}, {\"key\": \"istio_version\", \"value\": \"${{ inputs.istio_version }}\"}, {\"key\": \"data_plane_mode\", \"value\": \"${{ inputs.data_plane_mode }}\"}, {\"key\": \"pr_number\", \"value\": \"${{ inputs.pr_number }}\"}, {\"key\": \"target_branch\", \"value\": \"${{ inputs.target_branch }}\"}]" >> $GITHUB_ENV
 
     - name: Send results to ReportPortal
       shell: bash
@@ -60,7 +68,7 @@ runs:
         TEST_FILE_NAME: ${{ inputs.test_file_name }}
         TEST_SUITE: ${{ inputs.test_suite }}
         TESTRUN_NAME: Kiali ${{ inputs.test_suite }} test run
-        TESTRUN_DESCRIPTION: Kiali ${{ inputs.test_suite }} test run
+        TESTRUN_DESCRIPTION: Kiali ${{ inputs.test_suite }} test run - PR https://github.com/${{ github.repository }}/pull/${{ inputs.pr_number }}
         INSTALLATION_METHOD: helm
         PRODUCT_STAGE: upstream
         TEST_REPO: ${{ github.repository }}

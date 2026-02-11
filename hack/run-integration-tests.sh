@@ -529,8 +529,13 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_1}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:core-1
+  set +e
+  TEST_GROUP="@core-1" yarn run cypress:run:test-group:junit
+  CYPRESS_EXIT=$?
+  set -e
+  yarn run cypress:combine:reports
   detectRaceConditions
+  exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
   ensureCypressInstalled
 
@@ -553,8 +558,13 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:core-2
+  set +e
+  TEST_GROUP="@core-2" yarn run cypress:run:test-group:junit
+  CYPRESS_EXIT=$?
+  set -e
+  yarn run cypress:combine:reports
   detectRaceConditions
+  exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   ensureCypressInstalled
 
@@ -577,8 +587,13 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   fi
 
   cd "${SCRIPT_DIR}"/../frontend
-  yarn run cypress:run:core-optional
+  set +e
+  TEST_GROUP="@crd-validation or @perses" yarn run cypress:run:test-group:junit
+  CYPRESS_EXIT=$?
+  set -e
+  yarn run cypress:combine:reports
   detectRaceConditions
+  exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressInstalled
 
