@@ -669,6 +669,189 @@ Then('Control planes card shows error state without count or footer link', () =>
     }
       ).as('controlPlanes');
 });
+
+When('user clicks Try Again in Control planes card', () => {
+  getControlPlanesCard().within(() => {
+    cy.contains('button', 'Try Again').should('be.visible').click();
+  });
+  if (shouldWaitControlPlanesRetry) {
+    cy.wait('@controlPlanesRetry');
+    shouldWaitControlPlanesRetry = false;
+  }
+});
+
+Then('Control planes card shows count and footer link', () => {
+  getControlPlanesCard().within(() => {
+    cy.contains('Control planes (').should('be.visible');
+    cy.getBySel('control-planes-view-namespaces').should('be.visible');
+  });
+});
+
+When('user navigates to Namespaces page from Control planes card', () => {
+  cy.wait('@controlPlanes');
+
+  // Navigation should always be via the footer link (Namespaces with type filter).
+  getControlPlanesCard().within(() => {
+    cy.getBySel('control-planes-view-namespaces').should('be.visible').click();
+  });
+});
+
+Then('user is redirected to Namespaces page with control-plane type filter', () => {
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/namespaces$/);
+  cy.location('search').then(search => {
+    const params = new URLSearchParams(search);
+    expect(params.get('type')).to.eq('Control plane');
+  });
+});
+
+Given('Service insights APIs are observed', () => {
+  didServiceInsightsRetry = false;
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
+  cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+});
+
+Given('Service insights APIs respond slowly', () => {
+  didServiceInsightsRetry = false;
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }, req => {
+    req.continue(res => {
+      res.delay = 2000;
+    });
+  }).as('serviceLatencies');
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }, req => {
+    req.continue(res => {
+      res.delay = 2000;
+    });
+  }).as('serviceRates');
+});
+
+Given('Service insights APIs fail', () => {
+  didServiceInsightsRetry = false;
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }, { statusCode: 500, body: {} }).as(
+    'serviceLatencies'
+  );
+  cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }, { statusCode: 500, body: {} }).as(
+    'serviceRates'
+  );
+});
+
+Given('Service insights APIs fail once', () => {
+  didServiceInsightsRetry = false;
+  shouldWaitServiceInsightsRetry = true;
+
+  // Observe subsequent (retry) calls without modifying them.
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
+  cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
+    'serviceLatenciesFailOnce'
+  );
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
+    'serviceRatesFailOnce'
+  );
+});
+
+Then('Service insights card shows loading state without tables or footer link', () => {
+  getServiceInsightsCard().within(() => {
+    cy.contains('Fetching service data').should('be.visible');
+    cy.getBySel('service-insights-view-all-services').should('not.exist');
+  });
+});
+
+Then('Service insights card shows error state without tables or footer link', () => {
+  if (shouldWaitServiceInsightsRetry) {
+    cy.wait('@serviceLatenciesFailOnce');
+    cy.wait('@serviceRatesFailOnce');
+  } else {
+    cy.wait('@serviceLatencies');
+    cy.wait('@serviceRates');
+  }
+
+  getServiceInsightsCard().within(() => {
+    cy.contains('Failed to load service data').should('be.visible');
+    cy.contains('button', 'Try Again').should('be.visible');
+    cy.getBySel('service-insights-view-all-services').should('not.exist');
+  });
+});
+
+When('user clicks Try Again in Service insights card', () => {
+  getServiceInsightsCard().within(() => {
+    cy.contains('button', 'Try Again').should('be.visible').click();
+  });
+
+  if (shouldWaitServiceInsightsRetry) {
+    cy.wait('@serviceLatencies');
+    cy.wait('@serviceRates');
+    didServiceInsightsRetry = true;
+    shouldWaitServiceInsightsRetry = false;
+  }
+});
+
+Then('Service insights card shows data tables and footer link', () => {
+  // If we didn't already wait for a retry, wait for the initial real API responses so assertions are stable.
+  if (!didServiceInsightsRetry) {
+    cy.wait('@serviceLatencies');
+    cy.wait('@serviceRates');
+  }
+
+  getServiceInsightsCard().within(() => {
+    cy.contains('Fetching service data').should('not.exist');
+    cy.contains('Failed to load service data').should('not.exist');
+    cy.getBySel('service-insights-view-all-services').should('be.visible');
+  });
+
+  // Rates section: either a table with headers/rows or an explicit "not available" message.
+  cy.getBySel('service-insights-rates').within(() => {
+    cy.get('table').then($table => {
+      if ($table.length === 0) {
+        cy.contains('not available').should('be.visible');
+        return;
+      }
+
+      cy.contains('th', 'Name').should('be.visible');
+      cy.contains('th', 'Errors').should('be.visible');
+
+      cy.get('tbody tr').then($rows => {
+        if ($rows.length === 0) {
+          return;
+        }
+        cy.wrap($rows[0]).within(() => {
+          cy.get('a')
+            .should('have.attr', 'href')
+            .and('match', /\/namespaces\/.+\/services\/.+/);
+          cy.contains('%').should('be.visible');
+        });
+      });
+    });
+  });
+
+  // Latencies section: either a table with headers/rows or an explicit "not available" message.
+  cy.getBySel('service-insights-latencies').within(() => {
+    cy.get('table').then($table => {
+      if ($table.length === 0) {
+        cy.contains('not available').should('be.visible');
+        return;
+      }
+
+      cy.contains('th', 'Name').should('be.visible');
+      cy.contains('th', 'Latency').should('be.visible');
+
+      cy.get('tbody tr').then($rows => {
+        if ($rows.length === 0) {
+          return;
+        }
+        cy.wrap($rows[0]).within(() => {
+          cy.get('a')
+            .should('have.attr', 'href')
+            .and('match', /\/namespaces\/.+\/services\/.+/);
+          cy.contains(/ms|s/).should('be.visible');
+        });
+      });
+    });
+  });
+});
+
 When('user clicks View all services in Service insights card', () => {
   cy.wait('@serviceLatencies');
   cy.wait('@serviceRates');
@@ -719,7 +902,7 @@ When('user clicks a valid service link in Service insights card', () => {
         $card.find('[data-test="service-insights-rates"] a').length > 0 ||
         $card.find('[data-test="service-insights-latencies"] a').length > 0;
 
-      const hasEmptyState = $card.text().includes('No data');
+      const hasEmptyState = $card.text().includes('not available');
 
       expect(
         hasServiceLink || hasEmptyState,
@@ -734,7 +917,7 @@ When('user clicks a valid service link in Service insights card', () => {
       if (!hasServiceLink) {
         // Nothing to click in real data; assert the empty state and exit.
         getServiceInsightsCard().within(() => {
-          cy.contains('No data').should('be.visible');
+          cy.contains('not available').should('be.visible');
         });
         return;
       }
@@ -799,7 +982,7 @@ When('user clicks a valid service link in Service insights card', () => {
 
 Then('user is redirected to that Service details page', () => {
   if (!lastClickedServiceInsightsHref) {
-    // No data case: the previous step already asserted "No data".
+    // not available case: the previous step already asserted "not available".
     return;
   }
 
