@@ -25,8 +25,10 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
-// overviewServiceMetricsLimit is the default limit for top-N service latencies and service error rates.
-const overviewServiceMetricsLimit = 7
+// overviewServiceMetricsLimit is the default limit for top-N service latencies and service error rates. It
+// is currently set to 6 because it is a value that allows most screens to show it without introducing
+// scroll. We want the overview cards to present data w/o scroll.
+const overviewServiceMetricsLimit = 6
 
 // OverviewServiceLatencies returns the top service latencies (p95) across all clusters and namespaces.
 // Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
