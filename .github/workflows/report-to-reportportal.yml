@@ -7,26 +7,16 @@ on:
       - completed
 
 jobs:
-  report-tests:
-    name: Report tests to ReportPortal
+  merge-reports:
+    name: Merge frontend test reports
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
-    container:
-      image: quay.io/dno/droute:latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ github.event.workflow_run.head_sha }}
-
-    # Download test artifacts and PR metadata because workflow_run events triggered by PRs from forks
-    # don't have access to PR information in github.event.workflow_run.pull_requests
-    # See: https://github.com/orgs/community/discussions/25220
-    - name: Download all test artifacts
+    - name: Download frontend core test reports
       continue-on-error: true
       uses: actions/download-artifact@v7
       with:
-        pattern: '*'
+        pattern: 'junit-frontend-core-*-report'
         path: artifacts/
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}
@@ -40,8 +30,46 @@ jobs:
       continue-on-error: true
       run: |
         npm install -g junit-report-merger
-        mkdir -p frontend-core/cypress/results
-        jrm frontend-core/cypress/results/combined-report.xml "artifacts/junit-frontend-core-*-report/*.xml"
+        mkdir -p merged-reports
+        jrm merged-reports/combined-report.xml "artifacts/junit-frontend-core-*-report/*.xml"
+
+    - name: Upload merged report
+      uses: actions/upload-artifact@v4
+      with:
+        name: merged-frontend-report
+        path: merged-reports/
+        retention-days: 1
+
+  report-tests:
+    name: Report tests to ReportPortal
+    runs-on: ubuntu-latest
+    needs: [merge-reports]
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    container:
+      image: quay.io/dno/droute:latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.workflow_run.head_sha }}
+
+    # Download backend test results and metadata because workflow_run events triggered by PRs from forks
+    # don't have access to PR information in github.event.workflow_run.pull_requests
+    # See: https://github.com/orgs/community/discussions/25220
+    - name: Download backend test results and metadata
+      continue-on-error: true
+      uses: actions/download-artifact@v7
+      with:
+        pattern: '{junit-rest-report,backend-test-metadata,pr-metadata}'
+        path: artifacts/
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
+
+    - name: Download merged frontend report
+      uses: actions/download-artifact@v4
+      with:
+        name: merged-frontend-report
+        path: frontend-core/cypress/results/
 
     - name: Extract metadata
       id: metadata
