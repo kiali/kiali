@@ -1,18 +1,31 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
 import { Provider } from 'react-redux';
+import { createStore } from 'redux';
 import { NamespaceHealthStatus } from '../NamespaceHealthStatus';
 import { NamespaceStatus } from '../../../types/NamespaceInfo';
 import { setServerConfig } from '../../../config/ServerConfig';
 import { healthConfig } from '../../../types/__testData__/HealthConfig';
-import { store } from '../../../store/ConfigStore';
 import { naTextStyle } from 'styles/HealthStyle';
 import { namespaceNaIconStyle } from '../NamespaceStyle';
+
+jest.mock('utils/NavigationUtils', () => ({
+  kialiNavigate: jest.fn()
+}));
 
 describe('NamespaceHealthStatus', () => {
   beforeAll(() => {
     setServerConfig(healthConfig);
   });
+
+  const store = createStore(
+    // Minimal reducer/store for this connected component. Avoid importing the real ConfigStore (which pulls Mesh + ESM deps).
+    (state = {}) => state,
+    {
+      globalState: { kiosk: '' },
+      userSettings: { duration: 600, refreshInterval: 10000 }
+    } as any
+  );
 
   const defaultProps = {
     name: 'test-namespace'
@@ -179,8 +192,8 @@ describe('NamespaceHealthStatus', () => {
     // NA icon color (createIcon(NA) yields a span with icon-na class)
     const naIcon = wrapper.find('span.icon-na').first();
     expect(naIcon.exists()).toBeTruthy();
-    const naIconWrapper = naIcon.parent().first();
-    expect(naIconWrapper.hasClass(namespaceNaIconStyle)).toBeTruthy();
+    // Don't assume a fixed DOM nesting for PatternFly Icon - just ensure the NA icon is within the disabled-color wrapper.
+    expect(wrapper.find(`.${namespaceNaIconStyle} span.icon-na`).exists()).toBeTruthy();
   });
 
   it('prioritizes FAILURE over other statuses', () => {
