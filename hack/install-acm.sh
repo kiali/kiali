@@ -1,0 +1,4114 @@
+#!/bin/bash
+
+##############################################################################
+# install-acm.sh
+#
+# This script installs Red Hat Advanced Cluster Management (ACM) with
+# observability on an OpenShift cluster for development and testing purposes.
+# It can also build and install Kiali configured to use ACM's observability
+# backend (Thanos Querier) with mTLS certificate-based authentication.
+#
+# Kiali Authentication to ACM Observability:
+#   This script configures Kiali to use mTLS (mutual TLS) with long-lived
+#   client certificates for authentication to ACM's Observatorium API.
+#   This approach provides:
+#     - HTTPS with TLS for secure communication
+#     - Long-lived credentials without frequent rotation
+#     - Proper CA trust (no insecure_skip_verify)
+#     - Certificate-based authentication at the TLS layer
+#
+#   Kiali connects to ACM via the Observatorium API route:
+#     - URL: https://observatorium-api-<namespace>.apps.<domain>/api/metrics/v1/default
+#     - The Observatorium API proxies requests to internal Thanos services
+#     - TLS termination happens at the Observatorium API layer
+#
+#   ACM Observability automatically creates trusted certificates that the script uses:
+#     - observability-grafana-certs: Contains tls.crt and tls.key for client authentication
+#     - CA bundle is extracted by inspecting the Observatorium API server certificate issuer,
+#       then extracting from the matching secret in the observability namespace:
+#       - observability-server-ca-certs (if server cert issued by observability-server-ca-certificate)
+#       - observability-client-ca-certs (if server cert issued by observability-client-ca-certificate)
+#     The exact CA used varies by ACM version and deployment configuration
+#
+#   The install-kiali command copies these certificates to Kiali's namespace:
+#     - Secret 'acm-observability-certs' with tls.crt and tls.key (client auth)
+#     - ConfigMap 'kiali-cabundle' with the server CA (server trust)
+#
+#   This approach uses ACM's pre-trusted certificates, so no additional
+#   ACM configuration is required for mTLS to work.
+#
+# Metrics Pipeline Latency:
+#   ACM collects metrics from Prometheus and pushes to Thanos every 5 minutes
+#   (default, configurable via spec.observabilityAddonSpec.interval in the MCO CR).
+#   After deploying a new application, expect a warm-up period of approximately
+#   twice the collection interval (~10 minutes by default) before data appears in
+#   Kiali's graph and metrics tab. This is because rate calculations require at
+#   least two data points. After the warm-up, all time ranges work normally, but
+#   the most recent data will always be at least one collection interval old.
+#
+# References:
+#   - Red Hat blog on connecting Grafana to ACM Observability (mTLS setup):
+#     https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
+#   - Red Hat documentation on configuring User Workload Monitoring:
+#     https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
+#
+# Istio Ambient Mode:
+#   Sidecar injection is always supported. Ambient mode is enabled by default.
+#   Use --ambient false to disable it with install-istio or create-all commands.
+#
+#   When Ambient mode is enabled, you get additional capabilities:
+#     - L4 traffic: Handled by ztunnel daemonset (TCP metrics: istio_tcp_*)
+#     - L7 traffic: Handled by waypoint proxies (HTTP metrics: istio_requests_total with reporter=waypoint)
+#     - Ambient namespaces use label: istio.io/dataplane-mode=ambient (instead of sidecar injection)
+#     - Separate PodMonitor is created for ztunnel (sidecar PodMonitor does not capture ztunnel)
+#
+# The script supports:
+#   create-all           - "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps+sends initial traffic)
+#   install-components   - Install all components on existing OpenShift cluster (ACM+Istio+Kiali+apps, skips already installed).
+#                          Similar to create-all but for existing clusters. Assumes user is logged in via 'oc'.
+#                          Checks and installs only missing components. Requires User Workload Monitoring already enabled.
+#   init-openshift       - Create/start CRC OpenShift cluster and enable User Workload Monitoring
+#   install-istio        - Install Istio (Ambient mode enabled by default; use --ambient false to disable)
+#   uninstall-istio      - Remove Istio installation
+#   status-istio         - Check the status of Istio installation
+#   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
+#   uninstall-acm        - Remove all ACM components cleanly
+#   status-acm           - Check the status of ACM installation
+#   install-kiali        - Install Kiali configured for ACM observability (supports 3 methods: helm-server, olm-operator, helm-operator)
+#   uninstall-kiali      - Remove Kiali installation
+#   status-kiali         - Check the status of Kiali installation
+#   install-sidecar-app  - Install a sidecar test mesh application (frontend -> backend)
+#   uninstall-sidecar-app - Remove the sidecar test application
+#   status-sidecar-app   - Check the status of the sidecar test application
+#   traffic-sidecar      - Generate HTTP traffic to the sidecar test application
+#   install-ambient-app  - Install an Ambient mode test application (requires Ambient Istio)
+#   uninstall-ambient-app - Remove the Ambient test application
+#   status-ambient-app   - Check the status of the Ambient test application
+#   traffic-ambient      - Generate HTTP traffic to the Ambient test application
+#
+# Prerequisites:
+#   - OpenShift cluster accessible via 'oc' CLI
+#   - Cluster-admin privileges
+#   - OpenShift cluster monitoring MUST be enabled (prometheus-k8s service)
+#   - User Workload Monitoring (UWM) - see "Enabling User Workload Monitoring" section below
+#   - Istio - install via install-istio command (Ambient mode enabled by default)
+#   - For install-kiali: helm, make, and access to Kiali git repositories
+#   - For install-kiali: ACM Observability must be installed first (run install-acm)
+#
+# Setting up a CRC cluster for this script:
+#   If you want to use CRC (CodeReady Containers) for local development, you can
+#   create a suitable cluster with the following command (from the kiali repo):
+#
+#     ./hack/crc-openshift.sh \
+#       --enable-cluster-monitoring true \
+#       --crc-cpus 12 \
+#       --crc-virtual-disk-size 100 \
+#       -p <path-to-your-pull-secret-file> \
+#       start
+#
+#   The --enable-cluster-monitoring option is REQUIRED for ACM observability to work.
+#   It enables cluster monitoring (prometheus-k8s). User Workload Monitoring is enabled
+#   separately by the init-openshift command after the cluster starts.
+#   The --crc-cpus 12 is recommended because ACM + Istio + monitoring is resource-intensive.
+#   The --crc-virtual-disk-size 100 sets the VM disk to 100GB (minimum recommended for
+#   ACM observability which requires ~30GB for Thanos metrics storage). The default of
+#   48GB is insufficient and will cause disk pressure issues during installation.
+#
+# Enabling User Workload Monitoring:
+#   The init-openshift command automatically enables User Workload Monitoring
+#   (required for Istio metrics collection).
+#
+#   If you are using an existing OpenShift cluster (not using init-openshift),
+#   you MUST manually enable User Workload Monitoring before installing ACM and Istio:
+#
+#     1. Create or update the ConfigMap 'cluster-monitoring-config' in namespace 'openshift-monitoring':
+#
+#        oc apply -f - <<EOF
+#        apiVersion: v1
+#        kind: ConfigMap
+#        metadata:
+#          name: cluster-monitoring-config
+#          namespace: openshift-monitoring
+#        data:
+#          config.yaml: |
+#            enableUserWorkload: true
+#        EOF
+#
+#     2. Wait for prometheus-user-workload statefulset to be created (1-2 minutes):
+#
+#        oc get statefulset prometheus-user-workload -n openshift-user-workload-monitoring
+#
+#   After User Workload Monitoring is enabled, install ACM and Istio using:
+#     ./install-acm.sh install-acm
+#     ./install-acm.sh install-istio                    # Ambient mode (default)
+#     ./install-acm.sh --ambient false install-istio    # Sidecar-only mode
+#
+##############################################################################
+
+set -e
+
+# Script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+# Default values
+DEFAULT_ACM_NAMESPACE="open-cluster-management"
+DEFAULT_ACM_CHANNEL="release-2.15"
+DEFAULT_OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
+DEFAULT_MINIO_ACCESS_KEY="minio"
+DEFAULT_MINIO_SECRET_KEY="minio123"
+DEFAULT_CLIENT_EXE="oc"
+DEFAULT_TIMEOUT="1200"
+
+# Kiali defaults
+DEFAULT_KIALI_NAMESPACE="istio-system"
+DEFAULT_KIALI_REPO_DIR="$(cd "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
+DEFAULT_KIALI_OPERATOR_REPO_DIR="$(cd "${SCRIPT_DIR}/../../kiali-operator" &> /dev/null && pwd)"
+DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && pwd)"
+DEFAULT_KIALI_INSTALL_TYPE="helm-server"
+KIALI_OLM_OPERATOR_NAMESPACE="openshift-operators"
+KIALI_HELM_OPERATOR_NAMESPACE="kiali-operator"
+
+# Test app defaults
+DEFAULT_SIDECAR_APP_NAMESPACE="test-sidecar-app"
+DEFAULT_AMBIENT_APP_NAMESPACE="test-ambient-app"
+DEFAULT_TRAFFIC_COUNT="10"
+DEFAULT_TRAFFIC_INTERVAL="1"
+
+# Istio mode defaults
+DEFAULT_AMBIENT_MODE="true"
+
+# Build defaults
+DEFAULT_SKIP_BUILD="false"
+
+# CRC initialization defaults
+DEFAULT_CRC_CPUS="12"
+DEFAULT_CRC_DISK_SIZE="100"
+DEFAULT_CRC_PULL_SECRET_FILE=""
+
+# Runtime variables
+_VERBOSE="false"
+
+##############################################################################
+# Helper Functions
+##############################################################################
+
+infomsg() {
+  echo "[INFO] ${1}"
+}
+
+errormsg() {
+  echo "[ERROR] ${1}" >&2
+}
+
+debug() {
+  if [ "${_VERBOSE}" == "true" ]; then
+    echo "[DEBUG] ${1}"
+  fi
+}
+
+warnmsg() {
+  echo "[WARN] ${1}" >&2
+}
+
+# Wait for a resource condition with timeout
+wait_for_condition() {
+  local resource_type=$1
+  local resource_name=$2
+  local namespace=$3
+  local condition=$4
+  local timeout=$5
+  local message=$6
+
+  infomsg "${message}"
+  if ! ${CLIENT_EXE} wait --for=${condition} ${resource_type}/${resource_name} -n ${namespace} --timeout=${timeout}s 2>/dev/null; then
+    errormsg "Timeout waiting for ${resource_type}/${resource_name} to meet condition: ${condition}"
+    return 1
+  fi
+  return 0
+}
+
+# Wait for a resource to be deleted
+wait_for_deletion() {
+  local resource_type=$1
+  local resource_name=$2
+  local namespace=$3
+  local timeout=$4
+  local message=$5
+
+  infomsg "${message}"
+  local start_time=$(date +%s)
+  while ${CLIENT_EXE} get ${resource_type} ${resource_name} -n ${namespace} &>/dev/null; do
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+    if [ ${elapsed} -ge ${timeout} ]; then
+      errormsg "Timeout waiting for ${resource_type}/${resource_name} to be deleted"
+      return 1
+    fi
+    debug "Waiting for ${resource_type}/${resource_name} to be deleted... (${elapsed}s)"
+    sleep 5
+  done
+  return 0
+}
+
+##############################################################################
+# Prerequisite Checking
+##############################################################################
+
+enable_user_workload_monitoring() {
+  # Enable User Workload Monitoring (UWM) for the cluster.
+  # UWM is required for Istio metrics collection via PodMonitor/ServiceMonitor resources.
+  # Per Red Hat docs: https://docs.redhat.com/en/documentation/monitoring_stack_for_red_hat_openshift/4.20/html-single/configuring_user_workload_monitoring/index
+  infomsg "Enabling User Workload Monitoring..."
+
+  # Check if already enabled
+  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    infomsg "User Workload Monitoring is already enabled"
+    return 0
+  fi
+
+  # Check if cluster-monitoring-config ConfigMap exists
+  if ! ${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring &>/dev/null 2>&1; then
+    infomsg "Creating cluster-monitoring-config ConfigMap..."
+    cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+EOF
+  else
+    infomsg "Updating cluster-monitoring-config ConfigMap..."
+    # Get existing config, add enableUserWorkload if not present
+    local existing_config=$(${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null)
+
+    if echo "${existing_config}" | grep -q "enableUserWorkload"; then
+      # Already has the setting, just update it to true
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    else
+      # Doesn't have the setting, add it
+      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
+    fi
+  fi
+
+  # Wait for User Workload Monitoring pods to be created
+  infomsg "Waiting for User Workload Monitoring pods to be created (this may take 1-2 minutes)..."
+  local max_wait=180
+  local waited=0
+  while ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; do
+    if [ ${waited} -ge ${max_wait} ]; then
+      errormsg "Timeout waiting for User Workload Monitoring to be enabled"
+      return 1
+    fi
+    debug "Waiting for prometheus-user-workload statefulset... (${waited}s)"
+    sleep 5
+    waited=$((waited + 5))
+  done
+
+  # Wait for pods to be ready
+  infomsg "Waiting for User Workload Monitoring pods to be ready..."
+  ${CLIENT_EXE} wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n openshift-user-workload-monitoring --timeout=300s || true
+
+  infomsg "User Workload Monitoring enabled successfully"
+  return 0
+}
+
+check_prerequisites() {
+  debug "Checking prerequisites..."
+
+  # Check if client executable exists
+  if ! which ${CLIENT_EXE} &>/dev/null; then
+    errormsg "${CLIENT_EXE} command not found. Please install it or specify with --client-exe."
+    return 1
+  fi
+  debug "Found ${CLIENT_EXE} at $(which ${CLIENT_EXE})"
+
+  # Check cluster connectivity
+  if ! ${CLIENT_EXE} whoami &>/dev/null; then
+    errormsg "Cannot connect to cluster. Please log in with '${CLIENT_EXE} login'."
+    return 1
+  fi
+  debug "Connected to cluster as $(${CLIENT_EXE} whoami)"
+
+  # Check for cluster-admin privileges (try to list nodes as a proxy check)
+  if ! ${CLIENT_EXE} auth can-i create namespaces --all-namespaces &>/dev/null; then
+    errormsg "Insufficient privileges. Cluster-admin access is required."
+    return 1
+  fi
+  debug "Cluster-admin privileges confirmed"
+
+  # Check for OpenShift cluster monitoring Prometheus (required for ACM observability)
+  if ! ${CLIENT_EXE} get service prometheus-k8s -n openshift-monitoring &>/dev/null 2>&1; then
+    errormsg "OpenShift cluster monitoring is not enabled (prometheus-k8s service not found in openshift-monitoring namespace)."
+    errormsg "ACM observability requires OpenShift cluster monitoring to collect metrics."
+    errormsg "Please enable cluster monitoring before running this script."
+    errormsg "See: https://docs.openshift.com/container-platform/latest/monitoring/enabling-monitoring-for-user-defined-projects.html"
+    return 1
+  fi
+  debug "OpenShift cluster monitoring (prometheus-k8s) is available"
+
+  # Check for User Workload Monitoring (required for PodMonitor/ServiceMonitor in user namespaces)
+  if ! ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    infomsg "User Workload Monitoring (UWM) is not enabled - enabling it now..."
+    enable_user_workload_monitoring
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to enable User Workload Monitoring"
+      return 1
+    fi
+  fi
+  debug "User Workload Monitoring (prometheus-user-workload) is available"
+
+  return 0
+}
+
+setup_image_registry() {
+  # Set up and login to the OpenShift image registry
+  # This is required before pushing images to the cluster
+  infomsg "Setting up image registry access..."
+
+  # Run make cluster-status to set up the registry
+  pushd "${KIALI_REPO_DIR}" > /dev/null
+  infomsg "Running make cluster-status to set up registry..."
+  make cluster-status &>/dev/null
+  popd > /dev/null
+
+  # Get the external registry route hostname
+  local registry_route=$(${CLIENT_EXE} get route -n openshift-image-registry default-route -o jsonpath='{.spec.host}' 2>/dev/null)
+  if [ -z "${registry_route}" ]; then
+    errormsg "Could not determine image registry route hostname"
+    return 1
+  fi
+
+  debug "Image registry route: ${registry_route}"
+
+  # Log into the image registry
+  infomsg "Logging into image registry: ${registry_route}"
+  local registry_token=$(${CLIENT_EXE} whoami -t)
+  podman login --tls-verify=false -u kubeadmin -p "${registry_token}" "${registry_route}"
+
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to log into image registry"
+    return 1
+  fi
+
+  infomsg "Successfully logged into image registry"
+  return 0
+}
+
+check_acm_installed() {
+  if ${CLIENT_EXE} get namespace ${ACM_NAMESPACE} &>/dev/null; then
+    if ${CLIENT_EXE} get mch -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
+      return 0  # ACM is installed
+    fi
+  fi
+  return 1  # ACM is not installed
+}
+
+check_istio_installed() {
+  # Check if Istio CR exists or istiod deployment exists
+  if ${CLIENT_EXE} get istio default &>/dev/null 2>&1; then
+    return 0  # Istio is installed (Sail Operator)
+  fi
+  if ${CLIENT_EXE} get deployment istiod -n istio-system &>/dev/null 2>&1; then
+    return 0  # Istio is installed (istioctl)
+  fi
+  return 1  # Istio is not installed
+}
+
+check_sidecar_app_installed() {
+  if ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+      return 0  # Sidecar test app is installed
+    fi
+  fi
+  return 1  # Sidecar test app is not installed
+}
+
+check_ambient_app_installed() {
+  if ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+      return 0  # Ambient test app is installed
+    fi
+  fi
+  return 1  # Ambient test app is not installed
+}
+
+##############################################################################
+# Installation Functions
+##############################################################################
+
+create_acm_namespace() {
+  infomsg "Creating ACM namespace: ${ACM_NAMESPACE}"
+  if ${CLIENT_EXE} get namespace ${ACM_NAMESPACE} &>/dev/null; then
+    debug "Namespace ${ACM_NAMESPACE} already exists"
+  else
+    ${CLIENT_EXE} create namespace ${ACM_NAMESPACE}
+  fi
+}
+
+create_operator_group() {
+  infomsg "Creating OperatorGroup in ${ACM_NAMESPACE}"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: acm-operator-group
+  namespace: ${ACM_NAMESPACE}
+spec:
+  targetNamespaces:
+  - ${ACM_NAMESPACE}
+EOF
+}
+
+create_subscription() {
+  infomsg "Creating ACM Subscription with channel: ${ACM_CHANNEL}"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: advanced-cluster-management
+  namespace: ${ACM_NAMESPACE}
+spec:
+  channel: ${ACM_CHANNEL}
+  installPlanApproval: Automatic
+  name: advanced-cluster-management
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+}
+
+wait_for_operator() {
+  infomsg "Waiting for ACM operator to be installed (this may take several minutes)..."
+
+  # Wait for the CSV to appear and succeed
+  local start_time=$(date +%s)
+  local csv_name=""
+  while [ -z "${csv_name}" ] || [ "${csv_name}" == "" ]; do
+    csv_name=$(${CLIENT_EXE} get csv -n ${ACM_NAMESPACE} -o jsonpath='{.items[?(@.spec.displayName=="Advanced Cluster Management for Kubernetes")].metadata.name}' 2>/dev/null || true)
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+    if [ ${elapsed} -ge ${TIMEOUT} ]; then
+      errormsg "Timeout waiting for ACM CSV to appear"
+      return 1
+    fi
+    if [ -z "${csv_name}" ]; then
+      debug "Waiting for ACM CSV to appear... (${elapsed}s)"
+      sleep 10
+    fi
+  done
+
+  infomsg "Found CSV: ${csv_name}"
+  wait_for_condition "csv" "${csv_name}" "${ACM_NAMESPACE}" "jsonpath={.status.phase}=Succeeded" "${TIMEOUT}" "Waiting for CSV to reach Succeeded phase..."
+}
+
+create_multiclusterhub() {
+  infomsg "Creating MultiClusterHub resource"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  name: multiclusterhub
+  namespace: ${ACM_NAMESPACE}
+spec: {}
+EOF
+}
+
+wait_for_multiclusterhub() {
+  infomsg "Waiting for MultiClusterHub to reach Running status (this could take 15 minutes or more)..."
+
+  local start_time=$(date +%s)
+  while true; do
+    local phase=$(${CLIENT_EXE} get mch multiclusterhub -n ${ACM_NAMESPACE} -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+
+    if [ "${phase}" == "Running" ]; then
+      infomsg "MultiClusterHub is Running"
+      return 0
+    fi
+
+    if [ ${elapsed} -ge ${TIMEOUT} ]; then
+      errormsg "Timeout waiting for MultiClusterHub. Current phase: ${phase}"
+      return 1
+    fi
+
+    debug "MultiClusterHub phase: ${phase} (${elapsed}s elapsed)"
+    sleep 15
+  done
+}
+
+create_observability_namespace() {
+  infomsg "Creating observability namespace: ${OBSERVABILITY_NAMESPACE}"
+  if ${CLIENT_EXE} get namespace ${OBSERVABILITY_NAMESPACE} &>/dev/null; then
+    debug "Namespace ${OBSERVABILITY_NAMESPACE} already exists"
+  else
+    ${CLIENT_EXE} create namespace ${OBSERVABILITY_NAMESPACE}
+  fi
+}
+
+install_minio() {
+  infomsg "Installing MinIO for object storage"
+
+  # Create MinIO Deployment
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: ${OBSERVABILITY_NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: quay.io/minio/minio:latest
+        args:
+        - server
+        - /data
+        - --console-address
+        - ":9001"
+        env:
+        - name: MINIO_ROOT_USER
+          value: "${MINIO_ACCESS_KEY}"
+        - name: MINIO_ROOT_PASSWORD
+          value: "${MINIO_SECRET_KEY}"
+        ports:
+        - containerPort: 9000
+          name: api
+        - containerPort: 9001
+          name: console
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: ${OBSERVABILITY_NAMESPACE}
+spec:
+  ports:
+  - port: 9000
+    name: api
+    targetPort: 9000
+  - port: 9001
+    name: console
+    targetPort: 9001
+  selector:
+    app: minio
+EOF
+
+  # Wait for MinIO to be ready
+  infomsg "Waiting for MinIO to be ready..."
+  ${CLIENT_EXE} rollout status deployment/minio -n ${OBSERVABILITY_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Create the thanos bucket
+  infomsg "Creating thanos bucket in MinIO..."
+  local minio_pod=$(${CLIENT_EXE} get pods -n ${OBSERVABILITY_NAMESPACE} -l app=minio -o jsonpath='{.items[0].metadata.name}')
+  ${CLIENT_EXE} exec -n ${OBSERVABILITY_NAMESPACE} ${minio_pod} -- mkdir -p /data/thanos
+}
+
+create_thanos_secret() {
+  infomsg "Creating Thanos object storage secret"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-object-storage
+  namespace: ${OBSERVABILITY_NAMESPACE}
+type: Opaque
+stringData:
+  thanos.yaml: |
+    type: s3
+    config:
+      bucket: thanos
+      endpoint: minio.${OBSERVABILITY_NAMESPACE}.svc:9000
+      insecure: true
+      access_key: ${MINIO_ACCESS_KEY}
+      secret_key: ${MINIO_SECRET_KEY}
+EOF
+}
+
+# Creates a PodMonitor for Istio proxies in the specified namespace.
+# Must be called for EACH namespace that has Istio sidecars because
+# OpenShift monitoring ignores namespaceSelector in PodMonitor objects.
+# Based on Red Hat OpenShift Service Mesh 3.0 documentation.
+create_istio_podmonitor() {
+  local namespace="$1"
+  local mesh_id=""
+
+  if ! ${CLIENT_EXE} get namespace "${namespace}" &>/dev/null 2>&1; then
+    debug "Namespace ${namespace} not found, skipping PodMonitor creation"
+    return 0
+  fi
+
+  # Use the actual Istio mesh ID for the mesh_id metric label. This aligns with how Kiali
+  # identifies meshes: MeshId when set, otherwise TrustDomain.
+  #
+  # Kiali reference: kiali/handlers/mesh.go (MeshId falls back to TrustDomain).
+  # Istio reference: Istio multi-cluster docs use values.global.meshID (mesh identifier).
+  #
+  # Detection order:
+  # 1) defaultConfig.meshId (if present in mesh config)
+  # 2) defaultConfig.proxyMetadata.ISTIO_META_MESH_ID (if present)
+  # 3) trustDomain (Istio default when meshId is not set)
+  local mesh_cfg="$(${CLIENT_EXE} -n istio-system get configmap istio -o jsonpath='{.data.mesh}' 2>/dev/null || true)"
+  if [ -n "${mesh_cfg}" ]; then
+    mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^[[:space:]]*meshId:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    if [ -z "${mesh_id}" ]; then
+      mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^[[:space:]]*ISTIO_META_MESH_ID:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    fi
+    if [ -z "${mesh_id}" ]; then
+      mesh_id="$(printf '%s\n' "${mesh_cfg}" | sed -n -E 's/^trustDomain:[[:space:]]*"?([^"]+)"?$/\1/p' | head -n 1)"
+    fi
+  fi
+  if [ -z "${mesh_id}" ]; then
+    mesh_id="cluster.local"
+  fi
+
+  infomsg "Creating PodMonitor for Istio proxies in namespace: ${namespace}"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-proxies-monitor
+  namespace: ${namespace}
+spec:
+  selector:
+    matchExpressions:
+    - key: istio-prometheus-ignore
+      operator: DoesNotExist
+  podMetricsEndpoints:
+  - path: /stats/prometheus
+    interval: 30s
+    relabelings:
+    - action: keep
+      sourceLabels: ["__meta_kubernetes_pod_container_name"]
+      regex: "istio-proxy"
+    - action: keep
+      sourceLabels: ["__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape"]
+    - action: replace
+      regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+      replacement: '[\$2]:\$1'
+      sourceLabels: ["__meta_kubernetes_pod_annotation_prometheus_io_port","__meta_kubernetes_pod_ip"]
+      targetLabel: "__address__"
+    - action: replace
+      regex: (\d+);((([0-9]+?)(\.|$)){4})
+      replacement: '\$2:\$1'
+      sourceLabels: ["__meta_kubernetes_pod_annotation_prometheus_io_port","__meta_kubernetes_pod_ip"]
+      targetLabel: "__address__"
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_name","__meta_kubernetes_pod_label_app"]
+      separator: ";"
+      targetLabel: "app"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_version","__meta_kubernetes_pod_label_version"]
+      separator: ";"
+      targetLabel: "version"
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+    - sourceLabels: ["__meta_kubernetes_namespace"]
+      action: replace
+      targetLabel: namespace
+    - action: replace
+      replacement: "${mesh_id}"
+      targetLabel: mesh_id
+EOF
+}
+
+# Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
+# Per ACM docs, user workload metrics need ConfigMaps in the SOURCE namespace with key "uwl_metrics_list.yaml"
+create_namespace_metrics_allowlist() {
+  local namespace="$1"
+
+  if [ -z "${namespace}" ]; then
+    errormsg "Namespace parameter required for create_namespace_metrics_allowlist"
+    return 1
+  fi
+
+  # Check if already exists
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${namespace} &>/dev/null 2>&1; then
+    local existing_list=$(${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${namespace} -o jsonpath='{.data.uwl_metrics_list\.yaml}' 2>/dev/null)
+    if echo "${existing_list}" | grep -q "istio_"; then
+      debug "Istio metrics allowlist already exists in namespace ${namespace}"
+      return 0
+    fi
+  fi
+
+  infomsg "Creating ACM metrics allowlist for namespace ${namespace}..."
+
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-metrics-custom-allowlist
+  namespace: ${namespace}
+data:
+  uwl_metrics_list.yaml: |
+    names:
+    # Istio HTTP/gRPC metrics (required for traffic, health, topology)
+    - istio_requests_total
+    - istio_request_bytes_bucket
+    - istio_request_bytes_count
+    - istio_request_bytes_sum
+    - istio_request_duration_milliseconds_bucket
+    - istio_request_duration_milliseconds_count
+    - istio_request_duration_milliseconds_sum
+    - istio_request_messages_total
+    - istio_response_bytes_bucket
+    - istio_response_bytes_count
+    - istio_response_bytes_sum
+    - istio_response_messages_total
+    # Istio TCP metrics (required for TCP services and Ambient ztunnel)
+    - istio_tcp_connections_closed_total
+    - istio_tcp_connections_opened_total
+    - istio_tcp_received_bytes_total
+    - istio_tcp_sent_bytes_total
+    # Ztunnel-specific metrics (Ambient L4 proxy)
+    - workload_manager_active_proxy_count
+    - istio_build
+    # Pilot/control plane metrics (required for control plane monitoring)
+    - pilot_proxy_convergence_time_sum
+    - pilot_proxy_convergence_time_count
+    - pilot_services
+    - pilot_xds
+    - pilot_xds_pushes
+    # Envoy proxy metrics (required for workload details)
+    - envoy_cluster_upstream_cx_active
+    - envoy_cluster_upstream_rq_total
+    - envoy_listener_downstream_cx_active
+    - envoy_listener_http_downstream_rq
+    - envoy_server_memory_allocated
+    - envoy_server_memory_heap_size
+    - envoy_server_uptime
+    # Container/process metrics (required for control plane overview)
+    - container_cpu_usage_seconds_total
+    - container_memory_working_set_bytes
+    - process_cpu_seconds_total
+    - process_resident_memory_bytes
+EOF
+
+  debug "Metrics allowlist created in namespace ${namespace}"
+}
+
+create_multiclusterobservability() {
+  infomsg "Creating MultiClusterObservability resource"
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: observability.open-cluster-management.io/v1beta2
+kind: MultiClusterObservability
+metadata:
+  name: observability
+spec:
+  observabilityAddonSpec: {}
+  storageConfig:
+    metricObjectStorage:
+      name: thanos-object-storage
+      key: thanos.yaml
+    alertmanagerStorageSize: 1Gi
+    compactStorageSize: 10Gi
+    receiveStorageSize: 10Gi
+    ruleStorageSize: 1Gi
+    storeStorageSize: 10Gi
+  advanced:
+    # Explicitly configure retention periods for Thanos compactor. All three resolutions
+    # (raw, 5m, 1h) are set to 14d for the following reasons:
+    #
+    # 1. MINIMUM REQUIREMENT: Thanos requires retentionResolution5m >= 10d because that's
+    #    when downsampling from 5m to 1h resolution begins. Setting it lower causes the
+    #    thanos-compact pod to crash with error:
+    #    "5m resolution retention must be higher than the minimum block size after which
+    #    1h resolution downsampling will occur (10 days)"
+    #    We use 14d to provide a buffer above this minimum threshold.
+    #
+    # 2. THANOS BEST PRACTICE: Per Thanos documentation, "ideally, you will have an equal
+    #    retention set (or no retention at all) to all resolutions which allow both 'zoom
+    #    in' capabilities as well as performant long ranges queries." If raw data expires
+    #    before downsampled data, you lose the ability to view detailed metrics for older
+    #    time periods.
+    #
+    # 3. OPERATOR DEFAULT: Without explicit retentionConfig, the ACM operator applies a
+    #    hardcoded internal default of 365d (despite CRD schema defaults of 5d/14d/30d),
+    #    which wastes storage for most use cases.
+    #
+    # 4. KIALI ALIGNMENT: This value must match Kiali's thanos_proxy.retention_period
+    #    setting so Kiali doesn't attempt to query data outside the available retention
+    #    window.
+    retentionConfig:
+      retentionResolution1h: 14d
+      retentionResolution5m: 14d
+      retentionResolutionRaw: 14d
+    compact:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    query:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    queryFrontend:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+    receive:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    rule:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    store:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    alertmanager:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+    grafana:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+    observatoriumAPI:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+    rbacQueryProxy:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+    storeMemcached:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+    queryFrontendMemcached:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 20m
+          memory: 64Mi
+EOF
+}
+
+wait_for_observability() {
+  infomsg "Waiting for MultiClusterObservability to be ready (this may take several minutes)..."
+
+  local start_time=$(date +%s)
+  while true; do
+    local ready=$(${CLIENT_EXE} get mco observability -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Unknown")
+    local current_time=$(date +%s)
+    local elapsed=$((current_time - start_time))
+
+    if [ "${ready}" == "True" ]; then
+      infomsg "MultiClusterObservability is Ready"
+      return 0
+    fi
+
+    if [ ${elapsed} -ge ${TIMEOUT} ]; then
+      errormsg "Timeout waiting for MultiClusterObservability. Ready status: ${ready}"
+      return 1
+    fi
+
+    debug "MultiClusterObservability ready: ${ready} (${elapsed}s elapsed)"
+    sleep 15
+  done
+}
+
+install_acm() {
+  infomsg "Starting ACM installation..."
+
+  # Check if already installed
+  if check_acm_installed; then
+    infomsg "ACM is already installed in namespace ${ACM_NAMESPACE}"
+    infomsg "Run 'uninstall' first if you want to reinstall."
+    return 0
+  fi
+
+  # Install ACM operator
+  create_acm_namespace
+  create_operator_group
+  create_subscription
+  wait_for_operator
+
+  # Create MultiClusterHub
+  create_multiclusterhub
+  wait_for_multiclusterhub
+
+  # Install observability
+  create_observability_namespace
+  install_minio
+  create_thanos_secret
+  create_multiclusterobservability
+  wait_for_observability
+
+  infomsg "======================================"
+  infomsg "ACM installation complete!"
+  infomsg "======================================"
+  infomsg "ACM Namespace: ${ACM_NAMESPACE}"
+  infomsg "Observability Namespace: ${OBSERVABILITY_NAMESPACE}"
+  infomsg ""
+  infomsg "To check status: $0 status"
+  infomsg "To uninstall: $0 uninstall-acm"
+  infomsg ""
+  infomsg "ACM Observability endpoint for Kiali (HTTPS with mTLS):"
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg "  Observatorium API: https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
+  infomsg ""
+  infomsg "Internal endpoints (HTTP only, for reference):"
+  infomsg "  Thanos Query Frontend: http://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  Thanos Query:          http://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+  infomsg "  RBAC Query Proxy:      https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+  infomsg ""
+  infomsg "Next steps:"
+  infomsg "  1. Install Istio: $0 install-istio"
+  infomsg "  2. Install Kiali: $0 install-kiali"
+  infomsg "  3. Install test app: $0 install-sidecar-app"
+}
+
+##############################################################################
+# Uninstallation Functions
+##############################################################################
+
+delete_multiclusterobservability() {
+  if ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
+    infomsg "Deleting MultiClusterObservability..."
+    ${CLIENT_EXE} delete mco observability --timeout=${TIMEOUT}s || true
+    wait_for_deletion "mco" "observability" "" "${TIMEOUT}" "Waiting for MultiClusterObservability deletion..."
+  else
+    debug "MultiClusterObservability not found, skipping"
+  fi
+}
+
+delete_minio() {
+  if ${CLIENT_EXE} get deployment minio -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting MinIO..."
+    ${CLIENT_EXE} delete deployment minio -n ${OBSERVABILITY_NAMESPACE} || true
+    ${CLIENT_EXE} delete service minio -n ${OBSERVABILITY_NAMESPACE} || true
+    ${CLIENT_EXE} delete secret thanos-object-storage -n ${OBSERVABILITY_NAMESPACE} || true
+  else
+    debug "MinIO not found, skipping"
+  fi
+}
+
+delete_observability_namespace() {
+  if ${CLIENT_EXE} get namespace ${OBSERVABILITY_NAMESPACE} &>/dev/null; then
+    infomsg "Deleting observability namespace: ${OBSERVABILITY_NAMESPACE}"
+    ${CLIENT_EXE} delete namespace ${OBSERVABILITY_NAMESPACE} --timeout=${TIMEOUT}s || true
+  else
+    debug "Observability namespace not found, skipping"
+  fi
+}
+
+delete_multiclusterhub() {
+  if ${CLIENT_EXE} get mch multiclusterhub -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting MultiClusterHub (this may take several minutes)..."
+    ${CLIENT_EXE} delete mch multiclusterhub -n ${ACM_NAMESPACE} --timeout=${TIMEOUT}s || true
+    wait_for_deletion "mch" "multiclusterhub" "${ACM_NAMESPACE}" "${TIMEOUT}" "Waiting for MultiClusterHub deletion..."
+  else
+    debug "MultiClusterHub not found, skipping"
+  fi
+}
+
+delete_acm_operator() {
+  # Delete Subscription
+  if ${CLIENT_EXE} get subscription advanced-cluster-management -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting ACM Subscription..."
+    ${CLIENT_EXE} delete subscription advanced-cluster-management -n ${ACM_NAMESPACE} || true
+  fi
+
+  # Delete CSV
+  local csv_name=$(${CLIENT_EXE} get csv -n ${ACM_NAMESPACE} -o jsonpath='{.items[?(@.spec.displayName=="Advanced Cluster Management for Kubernetes")].metadata.name}' 2>/dev/null || true)
+  if [ -n "${csv_name}" ]; then
+    infomsg "Deleting ACM ClusterServiceVersion: ${csv_name}"
+    ${CLIENT_EXE} delete csv ${csv_name} -n ${ACM_NAMESPACE} || true
+  fi
+
+  # Delete OperatorGroup
+  if ${CLIENT_EXE} get operatorgroup acm-operator-group -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting OperatorGroup..."
+    ${CLIENT_EXE} delete operatorgroup acm-operator-group -n ${ACM_NAMESPACE} || true
+  fi
+}
+
+delete_acm_namespace() {
+  if ${CLIENT_EXE} get namespace ${ACM_NAMESPACE} &>/dev/null; then
+    infomsg "Deleting ACM namespace: ${ACM_NAMESPACE}"
+    ${CLIENT_EXE} delete namespace ${ACM_NAMESPACE} --timeout=${TIMEOUT}s || true
+  else
+    debug "ACM namespace not found, skipping"
+  fi
+}
+
+delete_acm_crds() {
+  infomsg "Deleting ACM CRDs..."
+  local crds=$(${CLIENT_EXE} get crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE} -o name 2>/dev/null || true)
+  if [ -n "${crds}" ]; then
+    ${CLIENT_EXE} delete crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE} --timeout=${TIMEOUT}s || true
+  else
+    debug "No ACM CRDs found, skipping"
+  fi
+
+  # Also delete observability CRDs which may have a different label
+  local obs_crds=$(${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "observ.*open-cluster-management" || true)
+  if [ -n "${obs_crds}" ]; then
+    infomsg "Deleting ACM Observability CRDs..."
+    echo "${obs_crds}" | xargs ${CLIENT_EXE} delete --timeout=${TIMEOUT}s || true
+  fi
+}
+
+uninstall_acm() {
+  infomsg "Starting ACM uninstallation..."
+
+  # Delete in reverse order of installation
+  delete_multiclusterobservability
+  delete_minio
+  delete_observability_namespace
+  delete_multiclusterhub
+  delete_acm_operator
+  delete_acm_namespace
+  delete_acm_crds
+
+  infomsg "======================================"
+  infomsg "ACM uninstallation complete!"
+  infomsg "======================================"
+}
+
+##############################################################################
+# Status Function
+##############################################################################
+
+check_status() {
+  infomsg "Checking ACM status..."
+  echo ""
+
+  # Check ACM namespace
+  if ${CLIENT_EXE} get namespace ${ACM_NAMESPACE} &>/dev/null; then
+    echo "ACM Namespace: ${ACM_NAMESPACE} [EXISTS]"
+  else
+    echo "ACM Namespace: ${ACM_NAMESPACE} [NOT FOUND]"
+    echo ""
+    echo "ACM does not appear to be installed."
+    return 0
+  fi
+
+  # Check Subscription (must use full API group to avoid conflict with ACM's subscription.apps CRD)
+  local sub_state=$(${CLIENT_EXE} get subscription.operators.coreos.com advanced-cluster-management -n ${ACM_NAMESPACE} -o jsonpath='{.status.state}' 2>/dev/null || echo "Not Found")
+  echo "ACM Subscription: ${sub_state}"
+
+  # Check CSV
+  local csv_phase=$(${CLIENT_EXE} get csv -n ${ACM_NAMESPACE} -o jsonpath='{.items[?(@.spec.displayName=="Advanced Cluster Management for Kubernetes")].status.phase}' 2>/dev/null || echo "Not Found")
+  echo "ACM Operator (CSV): ${csv_phase}"
+
+  # Check MultiClusterHub
+  local mch_phase=$(${CLIENT_EXE} get mch multiclusterhub -n ${ACM_NAMESPACE} -o jsonpath='{.status.phase}' 2>/dev/null || echo "Not Found")
+  echo "MultiClusterHub: ${mch_phase}"
+
+  # Check local-cluster
+  local local_cluster=$(${CLIENT_EXE} get managedcluster local-cluster -o jsonpath='{.status.conditions[?(@.type=="ManagedClusterConditionAvailable")].status}' 2>/dev/null || echo "Not Found")
+  echo "local-cluster (self-managed): ${local_cluster}"
+
+  # Check Observability namespace
+  echo ""
+  if ${CLIENT_EXE} get namespace ${OBSERVABILITY_NAMESPACE} &>/dev/null; then
+    echo "Observability Namespace: ${OBSERVABILITY_NAMESPACE} [EXISTS]"
+
+    # Check MinIO
+    local minio_ready=$(${CLIENT_EXE} get deployment minio -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+    echo "MinIO: ${minio_ready}/1 ready"
+
+    # Check MultiClusterObservability
+    local mco_ready=$(${CLIENT_EXE} get mco observability -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Not Found")
+    echo "MultiClusterObservability: Ready=${mco_ready}"
+
+    # Check observability endpoints (same order as install_kiali uses)
+    echo "Observability Endpoints:"
+    if ${CLIENT_EXE} get service observability-thanos-query-frontend -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "  Thanos Query Frontend: [EXISTS] https://observability-thanos-query-frontend.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    else
+      echo "  Thanos Query Frontend: [NOT FOUND]"
+    fi
+
+    if ${CLIENT_EXE} get service observability-thanos-query -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "  Thanos Query:          [EXISTS] https://observability-thanos-query.${OBSERVABILITY_NAMESPACE}.svc:9090"
+    else
+      echo "  Thanos Query:          [NOT FOUND]"
+    fi
+
+    if ${CLIENT_EXE} get service rbac-query-proxy -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+      echo "  RBAC Query Proxy:      [EXISTS] https://rbac-query-proxy.${OBSERVABILITY_NAMESPACE}.svc:8443"
+    else
+      echo "  RBAC Query Proxy:      [NOT FOUND]"
+    fi
+  else
+    echo "Observability Namespace: ${OBSERVABILITY_NAMESPACE} [NOT FOUND]"
+  fi
+
+  # Check User Workload Monitoring
+  echo ""
+  if ${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring &>/dev/null 2>&1; then
+    local uwm_ready=$(${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+    local uwm_desired=$(${CLIENT_EXE} get statefulset prometheus-user-workload -n openshift-user-workload-monitoring -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+    echo "User Workload Monitoring: ${uwm_ready}/${uwm_desired} ready"
+  else
+    echo "User Workload Monitoring: [NOT ENABLED]"
+  fi
+
+  # Check Istio metrics monitors
+  echo ""
+  echo "Istio Metrics Monitors:"
+
+  # Check istiod ServiceMonitor (only in istio-system)
+  if ${CLIENT_EXE} get servicemonitor istiod-monitor -n istio-system &>/dev/null 2>&1; then
+    echo "  ServiceMonitor istiod-monitor (namespace: istio-system)"
+  else
+    echo "  ServiceMonitor istiod-monitor: [NOT FOUND]"
+  fi
+
+  # Check istio-proxies-monitor PodMonitors across all namespaces
+  local podmonitors=$(${CLIENT_EXE} get podmonitor --all-namespaces -o json 2>/dev/null | jq -r '.items[] | select(.metadata.name == "istio-proxies-monitor") | .metadata.namespace' 2>/dev/null || true)
+  if [ -n "${podmonitors}" ]; then
+    echo "  PodMonitor istio-proxies-monitor (namespaces):"
+    echo "${podmonitors}" | while read ns; do
+      if [ -n "${ns}" ]; then
+        echo "    - ${ns}"
+      fi
+    done
+  else
+    echo "  PodMonitor istio-proxies-monitor: [NOT FOUND in any namespace]"
+  fi
+
+  # Check if Ambient mode is detected but ztunnel monitor is missing
+  # Only show a warning if there's a problem - when it exists, it's already shown in the namespace list above
+  local ztunnel_ns=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_ns="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_ns="istio-system"
+  fi
+
+  if [ -n "${ztunnel_ns}" ]; then
+    if ! ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${ztunnel_ns} &>/dev/null 2>&1; then
+      echo "  [WARNING] Ambient mode detected (ztunnel in ${ztunnel_ns}) but istio-proxies-monitor not found in that namespace"
+    fi
+  fi
+
+  echo ""
+}
+
+##############################################################################
+# Kiali Installation Functions
+##############################################################################
+
+# Copy mTLS client certificates from ACM Observability secrets.
+# ACM creates the observability-grafana-certs secret automatically when
+# MultiClusterObservability is deployed. This secret contains:
+#   - tls.crt: Client certificate for mTLS authentication
+#   - tls.key: Client private key for mTLS authentication
+# These certificates are already trusted by ACM's Observatorium/Thanos components.
+# The CA bundle for server trust is extracted separately by setup_kiali_ca_bundle().
+copy_acm_mtls_certs() {
+  local cert_dir="$1"
+
+  infomsg "Copying mTLS client certificates from ACM Observability..."
+
+  # Create temporary directory
+  mkdir -p "${cert_dir}"
+
+  # Check if the ACM grafana certs secret exists
+  if ! ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "ACM observability-grafana-certs secret not found in ${OBSERVABILITY_NAMESPACE}"
+    errormsg "Make sure MultiClusterObservability is fully deployed and ready."
+    return 1
+  fi
+
+  # Extract tls.crt from ACM's grafana certs secret
+  infomsg "Extracting client certificate from observability-grafana-certs..."
+  ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} \
+    -o jsonpath='{.data.tls\.crt}' | base64 -d > "${cert_dir}/tls.crt"
+
+  # Extract tls.key from ACM's grafana certs secret
+  infomsg "Extracting client key from observability-grafana-certs..."
+  ${CLIENT_EXE} get secret observability-grafana-certs -n ${OBSERVABILITY_NAMESPACE} \
+    -o jsonpath='{.data.tls\.key}' | base64 -d > "${cert_dir}/tls.key"
+
+  # Verify the certificates were extracted
+  if [ ! -s "${cert_dir}/tls.crt" ] || [ ! -s "${cert_dir}/tls.key" ]; then
+    errormsg "Failed to extract certificates from ACM secrets"
+    return 1
+  fi
+
+  debug "Certificate files extracted successfully to ${cert_dir}"
+  debug "Client certificate: ${cert_dir}/tls.crt"
+  debug "Client key: ${cert_dir}/tls.key"
+  return 0
+}
+
+# Set up the CA bundle ConfigMap for Kiali to trust the ACM Observability server certificate.
+# The Kiali Helm chart creates kiali-cabundle-openshift (for OpenShift service CA) and
+# uses a projected volume to automatically combine it with kiali-cabundle (custom CAs).
+# This function creates kiali-cabundle with only the ACM CA - the projected volume will
+# merge it with OpenShift's service CA automatically.
+# Per Kiali docs: https://kiali.io/docs/configuration/p8s-jaeger-grafana/tls-configuration/
+# Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
+setup_kiali_ca_bundle() {
+  local configmap_name="kiali-cabundle"
+
+  infomsg "Setting up CA bundle for ACM Observability server trust..."
+
+  local acm_ca=""
+
+  # Deterministically identify which CA to extract by inspecting the Observatorium API server certificate.
+  # This approach works across ACM versions by checking the actual certificate issuer.
+  infomsg "Identifying CA certificate by inspecting Observatorium API server certificate..."
+
+  # Get the Observatorium API route hostname
+  local obs_route_host=$(${CLIENT_EXE} get route observatorium-api -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null)
+  if [ -z "${obs_route_host}" ]; then
+    errormsg "Could not get Observatorium API route hostname"
+    return 1
+  fi
+  debug "Observatorium API hostname: ${obs_route_host}"
+
+  # Inspect the server certificate to determine which CA issued it
+  local issuer_cn=$(echo | openssl s_client -connect "${obs_route_host}:443" -servername "${obs_route_host}" -showcerts 2>/dev/null | openssl x509 -noout -issuer 2>/dev/null | grep -o 'CN=[^,]*' | cut -d= -f2)
+
+  if [ -z "${issuer_cn}" ]; then
+    warnmsg "Could not determine server certificate issuer via openssl inspection"
+    warnmsg "Falling back to trying observability-server-ca-certs..."
+    issuer_cn="observability-server-ca-certificate"
+  else
+    infomsg "Server certificate issued by: ${issuer_cn}"
+  fi
+
+  # Extract the matching CA certificate based on the issuer CN
+  if [[ "${issuer_cn}" == *"observability-server-ca-certificate"* ]]; then
+    infomsg "Extracting CA from observability-server-ca-certs (ca.crt key)..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+  elif [[ "${issuer_cn}" == *"observability-client-ca-certificate"* ]]; then
+    infomsg "Extracting CA from observability-client-ca-certs (ca.crt key)..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-client-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+  else
+    warnmsg "Unknown issuer CN: ${issuer_cn}. Trying observability-server-ca-certs as default..."
+    acm_ca=$(${CLIENT_EXE} get secret observability-server-ca-certs -n ${OBSERVABILITY_NAMESPACE} \
+      -o jsonpath='{.data.ca\.crt}' 2>/dev/null | base64 -d)
+  fi
+
+  if [ -z "${acm_ca}" ]; then
+    errormsg "Could not retrieve ACM observability CA certificate."
+    errormsg "Kiali will not be able to verify the Observatorium API server certificate."
+    return 1
+  fi
+
+  # Create or update the kiali-cabundle ConfigMap with the ACM CA only.
+  # Kiali (via Helm chart or operator) will create kiali-cabundle-openshift for the OpenShift service CA,
+  # and use a projected volume to automatically combine both ConfigMaps.
+  # Key MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
+  if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Updating existing ${configmap_name} ConfigMap..."
+    ${CLIENT_EXE} delete configmap "${configmap_name}" -n ${KIALI_NAMESPACE}
+  fi
+
+  infomsg "Creating ${configmap_name} ConfigMap with ACM observability CA..."
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${configmap_name}
+  namespace: ${KIALI_NAMESPACE}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: kiali
+    meta.helm.sh/release-namespace: ${KIALI_NAMESPACE}
+data:
+  additional-ca-bundle.pem: |
+$(echo "${acm_ca}" | sed 's/^/    /')
+EOF
+
+  debug "CA bundle ConfigMap created. Helm chart will merge with OpenShift service CA via projected volume."
+}
+
+# Create the Kubernetes secret containing mTLS client certificates for Kiali.
+# Per the ACM Observability documentation, only tls.crt and tls.key are needed.
+# The CA bundle for server trust is provided separately via kiali-cabundle ConfigMap.
+create_kiali_mtls_secret() {
+  local cert_dir="$1"
+  local secret_name="acm-observability-certs"
+
+  infomsg "Creating mTLS certificate secret for Kiali..."
+
+  # Verify certificate files exist
+  if [ ! -f "${cert_dir}/tls.crt" ] || [ ! -f "${cert_dir}/tls.key" ]; then
+    errormsg "Certificate files not found in ${cert_dir}"
+    return 1
+  fi
+
+  # Create or update the secret
+  # Only include tls.crt and tls.key - the CA bundle is in a separate ConfigMap
+  if ${CLIENT_EXE} get secret "${secret_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Updating existing ${secret_name} secret..."
+    ${CLIENT_EXE} delete secret "${secret_name}" -n ${KIALI_NAMESPACE}
+  fi
+
+  ${CLIENT_EXE} create secret generic "${secret_name}" \
+    -n ${KIALI_NAMESPACE} \
+    --from-file=tls.crt="${cert_dir}/tls.crt" \
+    --from-file=tls.key="${cert_dir}/tls.key"
+
+  debug "mTLS secret created: ${secret_name}"
+}
+
+##############################################################################
+# Kiali Installation - Common Functions
+##############################################################################
+
+verify_acm_observability() {
+  if ! ${CLIENT_EXE} get mco observability &>/dev/null 2>&1; then
+    errormsg "ACM observability is not installed (MultiClusterObservability not found)."
+    errormsg "Please run '$0 install-acm' first to install ACM with observability."
+    return 1
+  fi
+  return 0
+}
+
+ensure_kiali_namespace() {
+  if ! ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${KIALI_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${KIALI_NAMESPACE}
+  fi
+}
+
+setup_kiali_acm_auth() {
+  # Copy mTLS certificates from ACM Observability
+  # ACM creates trusted client certificates that we use for Kiali's authentication.
+  # These are long-lived certificates (typically 1 year) from observability-grafana-certs.
+  local cert_dir="/tmp/kiali-mtls-certs-$$"
+  if ! copy_acm_mtls_certs "${cert_dir}"; then
+    errormsg "Failed to copy mTLS certificates from ACM"
+    errormsg "Ensure MultiClusterObservability is fully deployed and the"
+    errormsg "observability-grafana-certs secret exists in ${OBSERVABILITY_NAMESPACE}"
+    rm -rf "${cert_dir}"
+    return 1
+  fi
+
+  # Create the mTLS secret in Kiali's namespace
+  if ! create_kiali_mtls_secret "${cert_dir}"; then
+    errormsg "Failed to create mTLS secret"
+    rm -rf "${cert_dir}"
+    return 1
+  fi
+
+  # Set up CA bundle for trusting the Observatorium API server certificate
+  setup_kiali_ca_bundle
+
+  # Clean up temporary certificate files
+  rm -rf "${cert_dir}"
+  return 0
+}
+
+wait_for_kiali_ready() {
+  infomsg "Waiting for Kiali deployment to be created..."
+  local max_wait=120
+  local elapsed=0
+  while ! ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+    sleep 5
+    elapsed=$((elapsed + 5))
+  done
+
+  if [ ${elapsed} -ge ${max_wait} ]; then
+    errormsg "Timeout waiting for Kiali deployment to be created"
+    return 1
+  fi
+
+  infomsg "Waiting for Kiali deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
+}
+
+print_kiali_summary() {
+  local install_method="$1"
+  local kiali_route_url="$2"
+  local prometheus_url="$3"
+  local additional_info="$4"
+
+  infomsg "======================================"
+  infomsg "Kiali installation complete!"
+  infomsg "======================================"
+  infomsg "Installation Method: ${install_method}"
+  infomsg "Kiali Namespace: ${KIALI_NAMESPACE}"
+  infomsg "Kiali URL: ${kiali_route_url}"
+  infomsg "Prometheus Backend: ${prometheus_url}"
+  infomsg "Authentication: mTLS (long-lived client certificates from ACM)"
+  infomsg ""
+  infomsg "mTLS configuration:"
+  infomsg "  Client certificates: secret/acm-observability-certs (copied from ACM)"
+  infomsg "  Server CA trust:     Projected volume combining:"
+  infomsg "    - configmap/kiali-cabundle-openshift (OpenShift service CA, auto-injected)"
+  infomsg "    - configmap/kiali-cabundle (ACM observability CA)"
+  if [ -n "${additional_info}" ]; then
+    infomsg ""
+    infomsg "${additional_info}"
+  fi
+  infomsg ""
+  infomsg "To access Kiali, open: ${kiali_route_url}"
+}
+
+##############################################################################
+# Kiali Installation - Method 1: helm-server
+##############################################################################
+
+install_kiali_via_helm_server() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via helm-server method (build from source)..."
+
+  # Check if helm is available
+  if ! command -v helm &>/dev/null; then
+    errormsg "helm is not installed or not in PATH"
+    return 1
+  fi
+
+  # Verify directories exist
+  if [ ! -d "${KIALI_REPO_DIR}" ]; then
+    errormsg "Kiali repository directory not found: ${KIALI_REPO_DIR}"
+    return 1
+  fi
+
+  if [ ! -d "${HELM_CHARTS_DIR}" ]; then
+    errormsg "Helm charts directory not found: ${HELM_CHARTS_DIR}"
+    return 1
+  fi
+
+  # Build helm charts if the tgz doesn't exist
+  local helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz 2>/dev/null | head -1)
+  if [ -z "${helm_chart_tgz}" ]; then
+    infomsg "Building helm charts..."
+    pushd "${HELM_CHARTS_DIR}" > /dev/null
+    make build-helm-charts
+    popd > /dev/null
+    helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz 2>/dev/null | head -1)
+    if [ -z "${helm_chart_tgz}" ]; then
+      errormsg "Failed to build kiali-server helm chart"
+      return 1
+    fi
+  fi
+  infomsg "Using helm chart: ${helm_chart_tgz}"
+
+  # Setup image registry access
+  setup_image_registry
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to setup image registry"
+    return 1
+  fi
+
+  # Build and push Kiali server image
+  pushd "${KIALI_REPO_DIR}" > /dev/null
+  if [ "${SKIP_BUILD}" == "true" ]; then
+    infomsg "Skipping build (--skip-build specified), pushing existing image to cluster..."
+    make cluster-push-kiali
+  else
+    infomsg "Building and pushing Kiali server image to cluster..."
+    make build-ui build cluster-push-kiali
+  fi
+  popd > /dev/null
+
+  # Get dynamic values from cluster
+  local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
+  if [ -z "${internal_registry}" ]; then
+    errormsg "Could not determine internal registry hostname"
+    return 1
+  fi
+
+  local kiali_image="${internal_registry}/kiali/kiali"
+  local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+
+  debug "Internal registry: ${internal_registry}"
+  debug "Apps domain: ${apps_domain}"
+  debug "Kiali image: ${kiali_image}"
+  debug "Kiali route URL: ${kiali_route_url}"
+  debug "Prometheus URL: ${prometheus_url}"
+
+  # Helm install/upgrade Kiali with mTLS authentication to ACM Observability
+  local helm_cmd="install"
+  if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Kiali is already installed. Upgrading..."
+    helm_cmd="upgrade"
+  else
+    infomsg "Installing Kiali via Helm..."
+  fi
+
+  # Helm install/upgrade with mTLS configuration
+  helm ${helm_cmd} kiali "${helm_chart_tgz}" \
+    --namespace ${KIALI_NAMESPACE} \
+    --set deployment.image_name="${kiali_image}" \
+    --set deployment.image_version="dev" \
+    --set deployment.image_pull_policy="Always" \
+    --set auth.strategy="openshift" \
+    --set kiali_route_url="${kiali_route_url}" \
+    --set external_services.prometheus.url="${prometheus_url}" \
+    --set external_services.prometheus.auth.type="none" \
+    --set external_services.prometheus.auth.cert_file="secret:acm-observability-certs:tls.crt" \
+    --set external_services.prometheus.auth.key_file="secret:acm-observability-certs:tls.key" \
+    --set external_services.prometheus.thanos_proxy.enabled="true" \
+    --set external_services.prometheus.thanos_proxy.retention_period="14d" \
+    --set external_services.prometheus.thanos_proxy.scrape_interval="5m" \
+    --set deployment.logger.log_level="debug"
+
+  wait_for_kiali_ready
+  print_kiali_summary "helm-server" "${kiali_route_url}" "${prometheus_url}" "Server Image: ${kiali_image}:dev (built from source)"
+}
+
+##############################################################################
+# Kiali Installation - Method 2: olm-operator
+##############################################################################
+
+install_kiali_via_olm_operator() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via olm-operator method (OLM Subscription + Kiali CR)..."
+
+  # Install operator via OLM if not already present
+  if ! ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Installing Kiali operator via OLM Subscription..."
+
+    cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+
+    infomsg "Waiting for Kiali operator to be ready..."
+    local max_wait=300
+    local elapsed=0
+    while [ ${elapsed} -lt ${max_wait} ]; do
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        ${CLIENT_EXE} rollout status deployment/kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} --timeout=${TIMEOUT}s
+        break
+      fi
+      sleep 5
+      elapsed=$((elapsed + 5))
+    done
+
+    if [ ${elapsed} -ge ${max_wait} ]; then
+      errormsg "Timeout waiting for Kiali operator deployment to appear"
+      return 1
+    fi
+  else
+    infomsg "Kiali operator is already installed via OLM"
+  fi
+
+  # Create Kiali CR with ACM configuration (uses stock server image)
+  local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  create_kiali_cr "${prometheus_url}" "" ""
+
+  wait_for_kiali_ready
+  print_kiali_summary "olm-operator" "${kiali_route_url}" "${prometheus_url}" "Operator Namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}"$'\n'"Server Image: Stock (managed by operator)"
+}
+
+##############################################################################
+# Kiali Installation - Method 3: helm-operator
+##############################################################################
+
+install_kiali_via_helm_operator() {
+  local apps_domain="$1"
+  local prometheus_url="$2"
+
+  infomsg "Installing Kiali via helm-operator method (operator + server from source)..."
+
+  # Check if helm is available
+  if ! command -v helm &>/dev/null; then
+    errormsg "helm is not installed or not in PATH"
+    return 1
+  fi
+
+  # Verify directories exist
+  if [ ! -d "${KIALI_REPO_DIR}" ]; then
+    errormsg "Kiali repository directory not found: ${KIALI_REPO_DIR}"
+    return 1
+  fi
+
+  if [ ! -d "${KIALI_OPERATOR_REPO_DIR}" ]; then
+    errormsg "Kiali operator repository directory not found: ${KIALI_OPERATOR_REPO_DIR}"
+    return 1
+  fi
+
+  if [ ! -d "${HELM_CHARTS_DIR}" ]; then
+    errormsg "Helm charts directory not found: ${HELM_CHARTS_DIR}"
+    return 1
+  fi
+
+  # Build and push Kiali server and operator images
+  pushd "${KIALI_REPO_DIR}" > /dev/null
+  if [ "${SKIP_BUILD}" == "true" ]; then
+    infomsg "Skipping build (--skip-build specified), pushing existing images to cluster..."
+    make cluster-push
+  else
+    infomsg "Building and pushing Kiali server and operator images to cluster..."
+    make build-ui build cluster-push
+  fi
+  popd > /dev/null
+
+  # Build operator helm chart
+  local helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-operator-*.tgz 2>/dev/null | head -1)
+  if [ -z "${helm_chart_tgz}" ]; then
+    infomsg "Building operator helm charts..."
+    pushd "${HELM_CHARTS_DIR}" > /dev/null
+    make build-helm-charts
+    popd > /dev/null
+    helm_chart_tgz=$(ls ${HELM_CHARTS_DIR}/_output/charts/kiali-operator-*.tgz 2>/dev/null | head -1)
+    if [ -z "${helm_chart_tgz}" ]; then
+      errormsg "Failed to build kiali-operator helm chart"
+      return 1
+    fi
+  fi
+  infomsg "Using operator helm chart: ${helm_chart_tgz}"
+
+  # Setup image registry access
+  setup_image_registry
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to setup image registry"
+    return 1
+  fi
+
+  # Get internal registry
+  local internal_registry=$(${CLIENT_EXE} get image.config.openshift.io/cluster -o jsonpath='{.status.internalRegistryHostname}')
+  if [ -z "${internal_registry}" ]; then
+    errormsg "Could not determine internal registry hostname"
+    return 1
+  fi
+
+  local operator_image="${internal_registry}/kiali/kiali-operator"
+  local kiali_image="${internal_registry}/kiali/kiali"
+
+  # Create operator namespace if needed
+  if ! ${CLIENT_EXE} get namespace ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null; then
+    infomsg "Creating operator namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${KIALI_HELM_OPERATOR_NAMESPACE}
+  fi
+
+  # Helm install/upgrade operator
+  local helm_cmd="install"
+  if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Kiali operator is already installed. Upgrading..."
+    helm_cmd="upgrade"
+  else
+    infomsg "Installing Kiali operator via Helm..."
+  fi
+
+  helm ${helm_cmd} kiali-operator "${helm_chart_tgz}" \
+    --namespace ${KIALI_HELM_OPERATOR_NAMESPACE} \
+    --set image.repo="${operator_image}" \
+    --set image.tag="dev" \
+    --set image.pullPolicy="Always" \
+    --set allowAdHocKialiImage=true
+
+  # Wait for operator to be ready
+  infomsg "Waiting for Kiali operator deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Create Kiali CR with ACM configuration + dev server image
+  local kiali_route_url="https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  create_kiali_cr "${prometheus_url}" "${kiali_image}" "dev"
+
+  wait_for_kiali_ready
+  print_kiali_summary "helm-operator" "${kiali_route_url}" "${prometheus_url}" "Operator Namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"$'\n'"Operator Image: ${operator_image}:dev (built from source)"$'\n'"Server Image: ${kiali_image}:dev (built from source)"
+}
+
+##############################################################################
+# Kiali CR Creation Helper
+##############################################################################
+
+create_kiali_cr() {
+  local prometheus_url="$1"
+  local image_name="$2"
+  local image_version="$3"
+
+  infomsg "Creating Kiali CR in namespace ${KIALI_NAMESPACE}..."
+
+  # Build deployment spec based on whether custom images are specified
+  local deployment_spec
+  if [ -n "${image_name}" ] && [ -n "${image_version}" ]; then
+    deployment_spec="  deployment:
+    image_name: \"${image_name}\"
+    image_version: \"${image_version}\"
+    image_pull_policy: \"Always\"
+    logger:
+      log_level: debug"
+  else
+    deployment_spec="  deployment:
+    logger:
+      log_level: debug"
+  fi
+
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+  namespace: ${KIALI_NAMESPACE}
+spec:
+${deployment_spec}
+  external_services:
+    prometheus:
+      url: "${prometheus_url}"
+      auth:
+        type: none
+        cert_file: "secret:acm-observability-certs:tls.crt"
+        key_file: "secret:acm-observability-certs:tls.key"
+      thanos_proxy:
+        enabled: true
+        retention_period: "14d"
+        scrape_interval: "5m"
+EOF
+
+  # Wait for operator to finish reconciliation
+  infomsg "Waiting for operator to reconcile Kiali CR..."
+  ${CLIENT_EXE} wait --for=condition=Successful kiali kiali -n ${KIALI_NAMESPACE} --timeout=${TIMEOUT}s
+}
+
+##############################################################################
+# Main Kiali Installation Function
+##############################################################################
+
+install_kiali() {
+  infomsg "Installing Kiali with ACM observability integration (mTLS)..."
+  infomsg "Installation type: ${KIALI_INSTALL_TYPE}"
+
+  # Verify ACM observability is installed
+  verify_acm_observability || return 1
+
+  # Get cluster apps domain for constructing the Observatorium API route URL
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  if [ -z "${apps_domain}" ]; then
+    errormsg "Could not determine cluster apps domain"
+    return 1
+  fi
+
+  # Use the Observatorium API route with HTTPS and mTLS authentication
+  local prometheus_url="https://observatorium-api-${OBSERVABILITY_NAMESPACE}.${apps_domain}/api/metrics/v1/default"
+  infomsg "Using ACM observability endpoint: observatorium-api (HTTPS/mTLS)"
+  debug "Prometheus URL: ${prometheus_url}"
+
+  # Create Kiali namespace if needed
+  ensure_kiali_namespace
+
+  # Setup mTLS authentication (common to all methods)
+  setup_kiali_acm_auth || return 1
+
+  # Route to appropriate installation method
+  case "${KIALI_INSTALL_TYPE}" in
+    helm-server)
+      install_kiali_via_helm_server "${apps_domain}" "${prometheus_url}"
+      ;;
+    olm-operator)
+      install_kiali_via_olm_operator "${apps_domain}" "${prometheus_url}"
+      ;;
+    helm-operator)
+      install_kiali_via_helm_operator "${apps_domain}" "${prometheus_url}"
+      ;;
+    *)
+      errormsg "Unknown Kiali install type: ${KIALI_INSTALL_TYPE}"
+      errormsg "Valid types: helm-server, olm-operator, helm-operator"
+      return 1
+      ;;
+  esac
+}
+
+detect_kiali_install_method() {
+  # Check if Kiali CR exists
+  if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    # Operator-based install - determine which one
+    if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+      echo "olm-operator"
+    elif ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+      echo "helm-operator"
+    else
+      echo "unknown-operator"
+    fi
+  elif helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "helm-server"
+  else
+    echo "not-installed"
+  fi
+}
+
+uninstall_kiali() {
+  infomsg "Uninstalling Kiali..."
+
+  # Always auto-detect the installation method for uninstall
+  # This ensures we clean up correctly regardless of what --kiali-install-type defaults to
+  local install_method=$(detect_kiali_install_method)
+  infomsg "Detected installation method: ${install_method}"
+
+  case "${install_method}" in
+    helm-server)
+      infomsg "Uninstalling helm-server installation..."
+      if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Removing Kiali Helm release..."
+        helm uninstall kiali -n ${KIALI_NAMESPACE}
+      else
+        debug "Kiali Helm release not found, skipping"
+      fi
+      ;;
+
+    olm-operator)
+      infomsg "Uninstalling olm-operator installation..."
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CR..."
+        ${CLIENT_EXE} delete kiali kiali -n ${KIALI_NAMESPACE} || true
+        # Wait for Kiali deployment to be deleted
+        infomsg "Waiting for Kiali deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      # Delete OLM Subscription
+      if ${CLIENT_EXE} get subscription.operators.coreos.com kiali-ossm -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali OLM Subscription..."
+        ${CLIENT_EXE} delete subscription.operators.coreos.com kiali-ossm -n ${KIALI_OLM_OPERATOR_NAMESPACE} || true
+      fi
+
+      # Delete ClusterServiceVersion (CSV)
+      local csv_name=$(${CLIENT_EXE} get csv -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.items[?(@.spec.displayName=="Kiali Operator")].metadata.name}' 2>/dev/null || echo "")
+      if [ -n "${csv_name}" ]; then
+        infomsg "Deleting Kiali ClusterServiceVersion: ${csv_name}..."
+        ${CLIENT_EXE} delete csv "${csv_name}" -n ${KIALI_OLM_OPERATOR_NAMESPACE} || true
+      fi
+
+      # Wait for operator deployment to be deleted
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Waiting for Kiali operator deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      # Delete Kiali CRDs (OLM doesn't delete CRDs by default)
+      if ${CLIENT_EXE} get crd kialis.kiali.io &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CRDs..."
+        ${CLIENT_EXE} delete crd kialis.kiali.io ossmconsoles.kiali.io || true
+      fi
+      ;;
+
+    helm-operator)
+      infomsg "Uninstalling helm-operator installation..."
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CR..."
+        ${CLIENT_EXE} delete kiali kiali -n ${KIALI_NAMESPACE} || true
+        # Wait for Kiali deployment to be deleted
+        infomsg "Waiting for Kiali deployment to be deleted..."
+        local max_wait=120
+        local elapsed=0
+        while ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1 && [ ${elapsed} -lt ${max_wait} ]; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+        done
+      fi
+
+      if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Removing Kiali operator Helm release..."
+        helm uninstall kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE}
+      fi
+
+      # Delete Kiali CRD (Helm doesn't delete CRDs by default)
+      if ${CLIENT_EXE} get crd kialis.kiali.io &>/dev/null 2>&1; then
+        infomsg "Deleting Kiali CRD..."
+        ${CLIENT_EXE} delete crd kialis.kiali.io || true
+      fi
+
+      if ${CLIENT_EXE} get namespace ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        infomsg "Deleting operator namespace..."
+        ${CLIENT_EXE} delete namespace ${KIALI_HELM_OPERATOR_NAMESPACE} || true
+      fi
+      ;;
+
+    not-installed|unknown-operator)
+      infomsg "Kiali does not appear to be installed or method unknown, cleaning up any remaining resources..."
+      ;;
+
+    *)
+      errormsg "Unknown install method: ${install_method}"
+      return 1
+      ;;
+  esac
+
+  # Common cleanup for all methods
+  infomsg "Cleaning up common resources..."
+
+  # Delete mTLS certificate secret
+  if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Removing mTLS certificate secret..."
+    ${CLIENT_EXE} delete secret acm-observability-certs -n ${KIALI_NAMESPACE} || true
+  fi
+
+  # Delete CA bundle ConfigMap
+  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Removing CA bundle ConfigMap..."
+    ${CLIENT_EXE} delete configmap kiali-cabundle -n ${KIALI_NAMESPACE} || true
+  fi
+
+  infomsg "Kiali uninstallation complete!"
+}
+
+status_kiali() {
+  infomsg "Checking Kiali status..."
+  echo ""
+
+  # Check Kiali namespace
+  if ! ${CLIENT_EXE} get namespace ${KIALI_NAMESPACE} &>/dev/null; then
+    echo "Kiali Namespace: ${KIALI_NAMESPACE} [NOT FOUND]"
+    echo ""
+    echo "Kiali does not appear to be installed."
+    return
+  fi
+  echo "Kiali Namespace: ${KIALI_NAMESPACE} [EXISTS]"
+
+  # Detect installation method
+  local install_method=$(detect_kiali_install_method)
+
+  echo ""
+  echo "=== Installation Method ==="
+  case "${install_method}" in
+    helm-server)
+      echo "Method: helm-server (detected)"
+      if helm status kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        local helm_status=$(helm status kiali -n ${KIALI_NAMESPACE} -o json 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+        echo "  Helm Release: ${helm_status:-deployed}"
+      fi
+      ;;
+
+    olm-operator)
+      echo "Method: olm-operator (detected)"
+      echo "  Kiali CR: exists"
+      echo "  Operator Namespace: ${KIALI_OLM_OPERATOR_NAMESPACE}"
+      echo ""
+      echo "=== Operator Status ==="
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        local op_ready=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+        local op_desired=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        op_ready=${op_ready:-0}
+        op_desired=${op_desired:-0}
+        echo "Operator Deployment: ${op_ready}/${op_desired} ready"
+
+        local op_version=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_OLM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d: -f2)
+        echo "Operator Version: ${op_version:-unknown}"
+      else
+        echo "Operator Deployment: [NOT FOUND]"
+      fi
+
+      echo ""
+      echo "=== Kiali CR Status ==="
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        echo "CR Name: kiali"
+        echo "CR Namespace: ${KIALI_NAMESPACE}"
+        local cr_status=$(${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "Unknown")
+        echo "Status: ${cr_status}"
+      fi
+      ;;
+
+    helm-operator)
+      echo "Method: helm-operator (detected)"
+      echo "  Kiali CR: exists"
+      if helm status kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        echo "  Operator Helm Release: kiali-operator"
+      fi
+      echo ""
+      echo "=== Operator Status ==="
+      echo "Operator Namespace: ${KIALI_HELM_OPERATOR_NAMESPACE}"
+      if ${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} &>/dev/null 2>&1; then
+        local op_ready=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+        local op_desired=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+        op_ready=${op_ready:-0}
+        op_desired=${op_desired:-0}
+        echo "Operator Deployment: ${op_ready}/${op_desired} ready"
+
+        local op_version=$(${CLIENT_EXE} get deployment kiali-operator -n ${KIALI_HELM_OPERATOR_NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d: -f2)
+        echo "Operator Version: ${op_version:-unknown}"
+      else
+        echo "Operator Deployment: [NOT FOUND]"
+      fi
+
+      echo ""
+      echo "=== Kiali CR Status ==="
+      if ${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+        echo "CR Name: kiali"
+        echo "CR Namespace: ${KIALI_NAMESPACE}"
+        local cr_status=$(${CLIENT_EXE} get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "Unknown")
+        echo "Status: ${cr_status}"
+      fi
+      ;;
+
+    not-installed)
+      echo "Method: not-installed"
+      echo ""
+      echo "Kiali does not appear to be installed."
+      return
+      ;;
+
+    unknown-operator)
+      echo "Method: unknown-operator (Kiali CR exists but operator not found)"
+      ;;
+  esac
+
+  echo ""
+  echo "=== Kiali Server Status ==="
+
+  # Check deployment
+  if ${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    local deployment_ready=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local deployment_desired=$(${CLIENT_EXE} get deployment kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    deployment_ready=${deployment_ready:-0}
+    deployment_desired=${deployment_desired:-0}
+    echo "Deployment: ${deployment_ready}/${deployment_desired} ready"
+  else
+    echo "Deployment: [NOT FOUND]"
+  fi
+
+  # Check route
+  local route_host=$(${CLIENT_EXE} get route kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+  if [ -n "${route_host}" ]; then
+    echo "Route: https://${route_host}"
+  else
+    echo "Route: [NOT FOUND]"
+  fi
+
+  # Check Prometheus configuration
+  local prometheus_url=$(${CLIENT_EXE} get configmap kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.data.config\.yaml}' 2>/dev/null | grep -A1 "prometheus:" | grep "url:" | awk '{print $2}' || echo "")
+  if [ -n "${prometheus_url}" ]; then
+    echo "Prometheus URL: ${prometheus_url}"
+  fi
+
+  echo ""
+  echo "=== ACM Authentication ==="
+
+  # Check mTLS certificate secret
+  if ${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "mTLS Certificate Secret: [EXISTS]"
+    # Show certificate expiration if possible
+    local cert_data=$(${CLIENT_EXE} get secret acm-observability-certs -n ${KIALI_NAMESPACE} -o jsonpath='{.data.tls\.crt}' 2>/dev/null)
+    if [ -n "${cert_data}" ]; then
+      local cert_expiry=$(echo "${cert_data}" | base64 -d 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+      if [ -n "${cert_expiry}" ]; then
+        echo "  Certificate Expiry: ${cert_expiry}"
+      fi
+    fi
+  else
+    echo "mTLS Certificate Secret: [NOT FOUND]"
+  fi
+
+  # Check CA bundle ConfigMaps
+  if ${CLIENT_EXE} get configmap kiali-cabundle-openshift -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "CA Bundle ConfigMap (OpenShift service CA): [EXISTS]"
+  else
+    echo "CA Bundle ConfigMap (OpenShift service CA): [NOT FOUND]"
+  fi
+
+  if ${CLIENT_EXE} get configmap kiali-cabundle -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
+    echo "CA Bundle ConfigMap (ACM observability CA): [EXISTS]"
+  else
+    echo "CA Bundle ConfigMap (ACM observability CA): [NOT FOUND]"
+  fi
+
+  echo ""
+}
+
+##############################################################################
+# Istio Functions
+##############################################################################
+
+install_istio() {
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "Installing Istio via Sail Operator with Ambient mode enabled..."
+  else
+    infomsg "Installing Istio via Sail Operator..."
+  fi
+
+  if [ ! -f "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" ]; then
+    errormsg "Istio installation script not found at ${SCRIPT_DIR}/istio/install-istio-via-sail.sh"
+    return 1
+  fi
+
+  local istio_args=""
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    istio_args="${istio_args} --config-profile ambient"
+  fi
+
+  "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" ${istio_args}
+  if [ $? -ne 0 ]; then
+    errormsg "Istio installation failed"
+    return 1
+  fi
+
+  infomsg "Istio installed successfully"
+
+  # Configure Istio metrics collection for ACM.
+  # Create ServiceMonitor and PodMonitor in istio-system for istiod and gateway metrics.
+  # Based on Red Hat OpenShift Service Mesh 3.0 documentation:
+  # https://docs.redhat.com/en/documentation/red_hat_openshift_service_mesh/3.0/html-single/observability/index
+
+  infomsg "Creating ServiceMonitor for istiod..."
+  cat <<EOF | ${CLIENT_EXE} apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istiod-monitor
+  namespace: istio-system
+spec:
+  targetLabels:
+  - app
+  selector:
+    matchLabels:
+      istio: pilot
+  endpoints:
+  - port: http-monitoring
+    interval: 30s
+EOF
+
+  infomsg "Creating PodMonitor for istio-system..."
+  create_istio_podmonitor "istio-system"
+
+  infomsg "Creating ACM metrics allowlist for istio-system..."
+  create_namespace_metrics_allowlist "istio-system"
+
+  # If Ambient mode is enabled, also create PodMonitor and allowlist for ztunnel namespace
+  # This ensures ztunnel L4 metrics are scraped immediately when Ambient mode is installed
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    local ztunnel_namespace=""
+    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+      ztunnel_namespace="ztunnel"
+    elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+      ztunnel_namespace="istio-system"
+    fi
+
+    if [ -n "${ztunnel_namespace}" ]; then
+      infomsg "Creating PodMonitor for ztunnel in namespace: ${ztunnel_namespace}..."
+      create_istio_podmonitor "${ztunnel_namespace}"
+      infomsg "Creating ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
+      create_namespace_metrics_allowlist "${ztunnel_namespace}"
+    else
+      warnmsg "Could not find ztunnel daemonset - skipping ztunnel PodMonitor and allowlist creation"
+    fi
+  fi
+
+  infomsg "======================================"
+  infomsg "Istio installation complete!"
+  infomsg "======================================"
+  infomsg "Mode: $([ "${AMBIENT_MODE}" == "true" ] && echo "Ambient (sidecar + ztunnel/waypoint)" || echo "Sidecar")"
+  infomsg ""
+  infomsg "Next steps:"
+  infomsg "  1. Install Kiali: $0 install-kiali"
+  infomsg "  2. Install test app: $0 install-sidecar-app"
+}
+
+uninstall_istio() {
+  infomsg "Uninstalling Istio (Sail Operator)..."
+
+  # Delete Istio metrics monitoring resources first
+  infomsg "Deleting Istio metrics monitors..."
+  ${CLIENT_EXE} delete servicemonitor istiod-monitor -n istio-system --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n istio-system --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n istio-system --ignore-not-found 2>/dev/null || true
+
+  # Delete ztunnel metrics monitoring resources (if Ambient mode was installed)
+  # Check both ztunnel namespace (Sail Operator) and istio-system (istioctl)
+  if ${CLIENT_EXE} get namespace ztunnel &>/dev/null 2>&1; then
+    infomsg "Deleting ztunnel metrics monitors in ztunnel namespace..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ztunnel --ignore-not-found 2>/dev/null || true
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ztunnel --ignore-not-found 2>/dev/null || true
+  fi
+
+  # Delete Telemetry CR first (before namespace deletion)
+  infomsg "Deleting Telemetry CR..."
+  ${CLIENT_EXE} delete telemetry otel-tracing -n istio-system --ignore-not-found 2>/dev/null || true
+
+  # Delete Sail Operator CRs (these control the Istio components)
+  infomsg "Deleting Istio CR..."
+  ${CLIENT_EXE} delete istio default --ignore-not-found 2>/dev/null || true
+
+  infomsg "Deleting IstioCNI CR..."
+  ${CLIENT_EXE} delete istiocni default --ignore-not-found 2>/dev/null || true
+
+  infomsg "Deleting ZTunnel CR..."
+  ${CLIENT_EXE} delete ztunnel default --ignore-not-found 2>/dev/null || true
+
+  # Wait for Sail Operator to clean up resources
+  infomsg "Waiting for Sail Operator to clean up resources..."
+  sleep 15
+
+  # Uninstall Sail Operator via Helm
+  infomsg "Uninstalling Sail Operator..."
+  helm uninstall sail-operator -n sail-operator 2>/dev/null || true
+
+  # Delete namespaces created by the Sail script
+  infomsg "Deleting Istio namespaces..."
+  ${CLIENT_EXE} delete namespace istio-system --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace istio-cni --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace ztunnel --ignore-not-found --wait=false 2>/dev/null || true
+  ${CLIENT_EXE} delete namespace sail-operator --ignore-not-found --wait=false 2>/dev/null || true
+
+  # Clean up OpenTelemetry Operator if it was installed (for tempo addon)
+  if ${CLIENT_EXE} get namespace opentelemetry-operator-system &>/dev/null 2>&1; then
+    infomsg "Cleaning up OpenTelemetry Operator..."
+    ${CLIENT_EXE} delete -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml --ignore-not-found 2>/dev/null || true
+    ${CLIENT_EXE} delete namespace opentelemetry-operator-system --ignore-not-found --wait=false 2>/dev/null || true
+  fi
+
+  # Clean up Sail Operator CRDs explicitly
+  infomsg "Cleaning up Sail Operator CRDs..."
+  ${CLIENT_EXE} delete crd istios.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiocnis.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd ztunnels.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiorevisions.sailoperator.io --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete crd istiorevisiontags.sailoperator.io --ignore-not-found 2>/dev/null || true
+
+  # Clean up any remaining Istio CRDs
+  infomsg "Cleaning up Istio CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.istio\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up GatewayClasses created by Istio
+  infomsg "Cleaning up GatewayClasses..."
+  ${CLIENT_EXE} delete gatewayclass istio istio-remote istio-waypoint --ignore-not-found 2>/dev/null || true
+
+  # Clean up istio-ca ConfigMaps that get distributed to all namespaces
+  infomsg "Cleaning up istio-ca ConfigMaps..."
+  for ns in $(${CLIENT_EXE} get cm -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name' --no-headers 2>/dev/null | grep -E "istio-ca-root-cert|istio-ca-crl" | awk '{print $1}' | sort -u); do
+    ${CLIENT_EXE} delete cm istio-ca-root-cert istio-ca-crl -n "$ns" --ignore-not-found 2>/dev/null || true
+  done
+
+  # Clean up Gateway API CRDs
+  infomsg "Cleaning up Gateway API CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.gateway\.networking\.k8s\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up Gateway API Inference Extension CRDs (both k8s.io and x-k8s.io suffixes)
+  infomsg "Cleaning up Gateway API Inference Extension CRDs..."
+  ${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E "\.inference\.networking\.(k8s|x-k8s)\.io" | xargs -r ${CLIENT_EXE} delete --ignore-not-found 2>/dev/null || true
+
+  # Clean up ClusterRole/ClusterRoleBinding created by Istio addons (prometheus, grafana, etc.)
+  infomsg "Cleaning up addon ClusterRoles and ClusterRoleBindings..."
+  ${CLIENT_EXE} delete clusterrole prometheus --ignore-not-found 2>/dev/null || true
+  ${CLIENT_EXE} delete clusterrolebinding prometheus --ignore-not-found 2>/dev/null || true
+
+  infomsg "Istio uninstalled successfully"
+}
+
+status_istio() {
+  infomsg "Checking Istio status (Sail Operator)..."
+  echo ""
+
+  # Check Sail Operator
+  echo "=== Sail Operator ==="
+  if ${CLIENT_EXE} get namespace sail-operator &>/dev/null; then
+    echo "Namespace: sail-operator [EXISTS]"
+    ${CLIENT_EXE} get pods -n sail-operator 2>/dev/null || echo "  No pods"
+  else
+    echo "Namespace: sail-operator [NOT FOUND]"
+  fi
+
+  # Check Istio CR
+  echo ""
+  echo "=== Istio CR ==="
+  ${CLIENT_EXE} get istio default 2>/dev/null || echo "  Istio CR not found"
+
+  # Check namespace
+  echo ""
+  echo "=== istio-system Namespace ==="
+  if ${CLIENT_EXE} get namespace istio-system &>/dev/null; then
+    echo "Namespace: istio-system [EXISTS]"
+  else
+    echo "Namespace: istio-system [NOT FOUND]"
+    return 1
+  fi
+
+  # Check istiod
+  echo ""
+  echo "=== Istiod ==="
+  ${CLIENT_EXE} get deployment istiod -n istio-system 2>/dev/null || echo "  Not found"
+
+  # Check CNI (Sail uses istio-cni namespace)
+  echo ""
+  echo "=== CNI (istio-cni namespace) ==="
+  if ${CLIENT_EXE} get namespace istio-cni &>/dev/null; then
+    ${CLIENT_EXE} get istiocni default 2>/dev/null || echo "  IstioCNI CR not found"
+    ${CLIENT_EXE} get ds -n istio-cni 2>/dev/null || echo "  No DaemonSets"
+    ${CLIENT_EXE} get pods -n istio-cni 2>/dev/null || echo "  No pods"
+  else
+    echo "  istio-cni namespace not found (CNI not installed or using different namespace)"
+    # Also check kube-system for istioctl-based installs
+    ${CLIENT_EXE} get ds istio-cni-node -n kube-system 2>/dev/null || echo "  Not in kube-system either"
+  fi
+
+  # Check ztunnel (Sail uses ztunnel namespace for Ambient mode)
+  echo ""
+  echo "=== Ztunnel (Ambient mode) ==="
+  if ${CLIENT_EXE} get namespace ztunnel &>/dev/null; then
+    ${CLIENT_EXE} get ztunnel default 2>/dev/null || echo "  ZTunnel CR not found"
+    ${CLIENT_EXE} get ds -n ztunnel 2>/dev/null || echo "  No DaemonSets"
+    ${CLIENT_EXE} get pods -n ztunnel 2>/dev/null || echo "  No pods"
+    echo "  Ambient mode: ENABLED"
+  else
+    # Also check istio-system for istioctl-based installs
+    if ${CLIENT_EXE} get ds ztunnel -n istio-system &>/dev/null 2>&1; then
+      ${CLIENT_EXE} get ds ztunnel -n istio-system
+      echo "  Ambient mode: ENABLED (istioctl install)"
+    else
+      echo "  ztunnel namespace not found (Ambient mode not enabled)"
+    fi
+  fi
+
+  # Check all pods in istio-system
+  echo ""
+  echo "=== Istio System Pods ==="
+  ${CLIENT_EXE} get pods -n istio-system
+
+  # Check addons
+  echo ""
+  echo "=== Addons ==="
+  for addon in prometheus grafana jaeger; do
+    if ${CLIENT_EXE} get deployment ${addon} -n istio-system &>/dev/null 2>&1; then
+      echo "  ${addon}: installed"
+    else
+      echo "  ${addon}: not found"
+    fi
+  done
+}
+
+init_openshift() {
+  infomsg "Initializing OpenShift cluster using CRC..."
+
+  # Check if crc-openshift.sh exists
+  if [ ! -f "${SCRIPT_DIR}/crc-openshift.sh" ]; then
+    errormsg "Cannot find crc-openshift.sh script at ${SCRIPT_DIR}/crc-openshift.sh"
+    return 1
+  fi
+
+  # Check if pull secret file is provided
+  if [ -z "${CRC_PULL_SECRET_FILE}" ]; then
+    errormsg "Pull secret file is required. Use --crc-pull-secret-file option."
+    errormsg "You can download the pull secret from https://console.redhat.com/openshift/create/local"
+    return 1
+  fi
+
+  if [ ! -f "${CRC_PULL_SECRET_FILE}" ]; then
+    errormsg "Pull secret file not found: ${CRC_PULL_SECRET_FILE}"
+    return 1
+  fi
+
+  infomsg "Starting CRC with configuration:"
+  infomsg "  CPUs: ${CRC_CPUS}"
+  infomsg "  Disk Size: ${CRC_DISK_SIZE} GB"
+  infomsg "  Pull Secret: ${CRC_PULL_SECRET_FILE}"
+  infomsg "  Cluster Monitoring: enabled"
+
+  # Start CRC cluster
+  "${SCRIPT_DIR}/crc-openshift.sh" \
+    --enable-cluster-monitoring true \
+    --crc-cpus "${CRC_CPUS}" \
+    --crc-virtual-disk-size "${CRC_DISK_SIZE}" \
+    -p "${CRC_PULL_SECRET_FILE}" \
+    start
+
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to start CRC cluster"
+    return 1
+  fi
+
+  infomsg "CRC cluster started successfully"
+
+  # Log into the cluster
+  infomsg "Logging into OpenShift cluster..."
+  ${CLIENT_EXE} login -u kubeadmin -p kiali --server https://api.crc.testing:6443
+
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to log into OpenShift cluster"
+    return 1
+  fi
+
+  infomsg "Logged into OpenShift cluster as kubeadmin"
+
+  # Enable User Workload Monitoring (required for ACM observability)
+  enable_user_workload_monitoring
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to enable User Workload Monitoring"
+    return 1
+  fi
+
+  # Setup and log into the image registry
+  setup_image_registry
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to setup image registry (this may not be critical)"
+  fi
+
+  infomsg "======================================"
+  infomsg "OpenShift initialization complete!"
+  infomsg "======================================"
+  infomsg "Cluster: https://api.crc.testing:6443"
+  infomsg "Console: https://console-openshift-console.apps-crc.testing"
+  infomsg "Username: kubeadmin"
+  infomsg "Password: kiali"
+  infomsg ""
+  infomsg "Next steps:"
+  infomsg "  1. Run: $0 install-acm"
+  infomsg "  2. Run: $0 install-istio    (Ambient mode enabled by default; use --ambient false to disable)"
+  infomsg "  3. Run: $0 install-kiali"
+  infomsg "  4. Run: $0 install-sidecar-app"
+}
+
+##############################################################################
+# Test App Functions
+##############################################################################
+
+install_sidecar_app() {
+  infomsg "Installing sidecar test application (frontend -> backend topology)..."
+
+  # Create namespace with Istio injection
+  if ! ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${SIDECAR_APP_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Enable Istio sidecar injection
+  infomsg "Enabling Istio sidecar injection..."
+  ${CLIENT_EXE} label namespace ${SIDECAR_APP_NAMESPACE} istio-injection=enabled --overwrite
+
+  # Create ConfigMap with HTML content for backend
+  infomsg "Creating HTML content ConfigMap for backend..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-sidecar-backend-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>Sidecar Backend</title></head>
+    <body><h1>Sidecar Backend</h1><p>Response from test-sidecar-backend workload.</p></body>
+    </html>
+EOF
+
+  # Create Backend Deployment using Red Hat UBI httpd image (OpenShift-compatible)
+  infomsg "Creating backend deployment..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-sidecar-backend
+  labels:
+    app: test-sidecar-backend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-sidecar-backend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-sidecar-backend
+        version: v1
+    spec:
+      containers:
+      - name: test-sidecar-backend
+        image: registry.access.redhat.com/ubi9/httpd-24:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
+        volumeMounts:
+        - name: html
+          mountPath: /var/www/html
+          readOnly: true
+      volumes:
+      - name: html
+        configMap:
+          name: test-sidecar-backend-html
+EOF
+
+  # Create Backend Service
+  infomsg "Creating backend service..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-sidecar-backend
+  labels:
+    app: test-sidecar-backend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-sidecar-backend
+EOF
+
+  # Wait for backend deployment to be ready
+  infomsg "Waiting for backend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for backend pod to be fully ready (including Istio sidecar)
+  infomsg "Waiting for backend pod to be fully ready (including Istio sidecar)..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for backend Service endpoints to be populated
+  infomsg "Waiting for backend service endpoints to be ready..."
+  local max_wait=60
+  local waited=0
+  while true; do
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    if [ -n "${endpoint_ip}" ]; then
+      debug "Backend service endpoint ready: ${endpoint_ip}"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for backend service endpoints (continuing anyway)"
+      break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+
+  # Create Frontend Deployment that continuously calls backend
+  # Uses curl image with a loop to generate continuous mesh traffic
+  infomsg "Creating frontend deployment (generates continuous traffic to backend)..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-sidecar-frontend
+  labels:
+    app: test-sidecar-frontend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-sidecar-frontend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-sidecar-frontend
+        version: v1
+    spec:
+      containers:
+      - name: test-sidecar-frontend
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting continuous traffic to backend..."
+            while true; do
+              curl -s -o /dev/null -w "%{http_code}\n" http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80
+              sleep 2
+            done
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 32Mi
+EOF
+
+  # Create Frontend Service (for completeness and potential external access)
+  infomsg "Creating frontend service..."
+  ${CLIENT_EXE} apply -n ${SIDECAR_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-sidecar-frontend
+  labels:
+    app: test-sidecar-frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-sidecar-frontend
+EOF
+
+  # Wait for frontend deployment to be ready
+  infomsg "Waiting for frontend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for frontend pod to be fully ready (including Istio sidecar)
+  infomsg "Waiting for frontend pod to be fully ready (including Istio sidecar)..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for Istio sidecars to be fully synced by checking backend responds via frontend
+  infomsg "Waiting for Istio sidecars to be fully synced (testing connectivity)..."
+  local service_url="http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80"
+  max_wait=60
+  waited=0
+  while true; do
+    local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+    if [ "${http_code}" == "200" ]; then
+      debug "Backend responding with HTTP 200 via frontend"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for backend to respond (continuing anyway)"
+      break
+    fi
+    debug "Backend returned HTTP ${http_code}, waiting..."
+    sleep 2
+    waited=$((waited + 2))
+  done
+
+  # Create PodMonitor for Istio proxies in this app namespace
+  infomsg "Creating PodMonitor for ${SIDECAR_APP_NAMESPACE}..."
+  create_istio_podmonitor "${SIDECAR_APP_NAMESPACE}"
+
+  # Create metrics allowlist for this app namespace
+  infomsg "Creating ACM metrics allowlist for ${SIDECAR_APP_NAMESPACE}..."
+  create_namespace_metrics_allowlist "${SIDECAR_APP_NAMESPACE}"
+
+  infomsg "======================================"
+  infomsg "Sidecar test application installation complete!"
+  infomsg "======================================"
+  infomsg "Namespace: ${SIDECAR_APP_NAMESPACE}"
+  infomsg "Topology: test-sidecar-frontend -> test-sidecar-backend"
+  infomsg ""
+  infomsg "Traffic generation:"
+  infomsg "  - Automatic: Frontend continuously sends requests to backend every 2 seconds"
+  infomsg "  - Manual: Run '$0 traffic-sidecar' for additional burst traffic"
+  infomsg ""
+  infomsg "Kiali graph will show:"
+  infomsg "  [test-sidecar-frontend] --HTTP--> [test-sidecar-backend]"
+}
+
+uninstall_sidecar_app() {
+  infomsg "Uninstalling sidecar test application..."
+
+  if ! ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Namespace ${SIDECAR_APP_NAMESPACE} does not exist. Nothing to uninstall."
+    return 0
+  fi
+
+  # Delete frontend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend deployment..."
+    ${CLIENT_EXE} delete deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete backend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend deployment..."
+    ${CLIENT_EXE} delete deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete frontend service
+  if ${CLIENT_EXE} get service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend service..."
+    ${CLIENT_EXE} delete service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete backend service
+  if ${CLIENT_EXE} get service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend service..."
+    ${CLIENT_EXE} delete service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete configmap
+  if ${CLIENT_EXE} get configmap test-sidecar-backend-html -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting configmap..."
+    ${CLIENT_EXE} delete configmap test-sidecar-backend-html -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete PodMonitor for Istio proxies
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting PodMonitor..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete metrics allowlist ConfigMap
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting metrics allowlist ConfigMap..."
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ${SIDECAR_APP_NAMESPACE}
+  fi
+
+  # Delete namespace
+  infomsg "Deleting namespace ${SIDECAR_APP_NAMESPACE}..."
+  ${CLIENT_EXE} delete namespace ${SIDECAR_APP_NAMESPACE} --ignore-not-found
+
+  infomsg "Sidecar test application uninstallation complete!"
+}
+
+status_sidecar_app() {
+  infomsg "Checking sidecar test application status..."
+  echo ""
+
+  # Check namespace
+  if ${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} &>/dev/null; then
+    echo "Namespace: ${SIDECAR_APP_NAMESPACE} [EXISTS]"
+
+    # Check Istio injection
+    local injection=$(${CLIENT_EXE} get namespace ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.metadata.labels.istio-injection}' 2>/dev/null)
+    if [ "${injection}" == "enabled" ]; then
+      echo "Istio Injection: [ENABLED]"
+    else
+      echo "Istio Injection: [DISABLED]"
+    fi
+  else
+    echo "Namespace: ${SIDECAR_APP_NAMESPACE} [NOT FOUND]"
+    echo ""
+    echo "Sidecar test application does not appear to be installed."
+    return 0
+  fi
+
+  echo ""
+  echo "=== Frontend Workload ==="
+
+  # Check frontend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Frontend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Frontend Deployment: [NOT FOUND]"
+  fi
+
+  # Check frontend service
+  if ${CLIENT_EXE} get service test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Frontend Service: [EXISTS]"
+  else
+    echo "Frontend Service: [NOT FOUND]"
+  fi
+
+  # Check frontend pod sidecar
+  local frontend_pod=$(${CLIENT_EXE} get pods -n ${SIDECAR_APP_NAMESPACE} -l app=test-sidecar-frontend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  if [ -n "${frontend_pod}" ]; then
+    local has_proxy=$(${CLIENT_EXE} get pod ${frontend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
+    local has_native=$(${CLIENT_EXE} get pod ${frontend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
+    if [ "${has_proxy}" -ge 1 ]; then
+      echo "Frontend Istio Sidecar: [INJECTED] (regular container)"
+    elif [ "${has_native}" == "Always" ]; then
+      echo "Frontend Istio Sidecar: [INJECTED] (native sidecar)"
+    else
+      echo "Frontend Istio Sidecar: [NOT INJECTED]"
+    fi
+  fi
+
+  echo ""
+  echo "=== Backend Workload ==="
+
+  # Check backend deployment
+  if ${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Backend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Backend Deployment: [NOT FOUND]"
+  fi
+
+  # Check backend service
+  if ${CLIENT_EXE} get service test-sidecar-backend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Backend Service: [EXISTS]"
+  else
+    echo "Backend Service: [NOT FOUND]"
+  fi
+
+  # Check backend pod sidecar
+  local backend_pod=$(${CLIENT_EXE} get pods -n ${SIDECAR_APP_NAMESPACE} -l app=test-sidecar-backend -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  if [ -n "${backend_pod}" ]; then
+    local has_proxy=$(${CLIENT_EXE} get pod ${backend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.containers[*].name}' 2>/dev/null | grep -c "istio-proxy" || true)
+    local has_native=$(${CLIENT_EXE} get pod ${backend_pod} -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.spec.initContainers[?(@.name=="istio-proxy")].restartPolicy}' 2>/dev/null)
+    if [ "${has_proxy}" -ge 1 ]; then
+      echo "Backend Istio Sidecar: [INJECTED] (regular container)"
+    elif [ "${has_native}" == "Always" ]; then
+      echo "Backend Istio Sidecar: [INJECTED] (native sidecar)"
+    else
+      echo "Backend Istio Sidecar: [NOT INJECTED]"
+    fi
+  fi
+
+  echo ""
+  echo "=== Topology ==="
+  echo "  [test-sidecar-frontend] --HTTP--> [test-sidecar-backend]"
+  echo "  Traffic is generated automatically every 2 seconds"
+  echo ""
+}
+
+generate_sidecar_traffic() {
+  infomsg "Generating additional traffic to sidecar test application..."
+  infomsg "(Note: Frontend already generates continuous baseline traffic every 2 seconds)"
+
+  # Check if test app is running
+  if ! ${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "Sidecar test application is not installed in namespace ${SIDECAR_APP_NAMESPACE}"
+    errormsg "Run '$0 install-sidecar-app' first to install the test application"
+    return 1
+  fi
+
+  # Check if frontend deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment test-sidecar-frontend -n ${SIDECAR_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  if [ "${ready}" != "1" ]; then
+    errormsg "Sidecar test application frontend is not ready (ready replicas: ${ready:-0})"
+    return 1
+  fi
+
+  # Service URL - traffic goes frontend -> backend through Istio sidecars
+  local service_url="http://test-sidecar-backend.${SIDECAR_APP_NAMESPACE}.svc.cluster.local:80"
+  debug "Using service URL to generate Istio metrics: ${service_url}"
+
+  if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
+    # Continuous traffic mode
+    infomsg "Sending requests to ${service_url} every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
+    local count=0
+    trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
+    while true; do
+      local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        count=$((count + 1))
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
+      else
+        warnmsg "Request ${count} failed (HTTP ${http_code})"
+      fi
+      sleep ${TRAFFIC_INTERVAL}
+    done
+  else
+    # Send N requests mode
+    infomsg "Sending ${TRAFFIC_COUNT} requests to ${service_url} (${TRAFFIC_INTERVAL}s interval)..."
+    local success_count=0
+    local fail_count=0
+    for i in $(seq 1 ${TRAFFIC_COUNT}); do
+      local http_code=$(${CLIENT_EXE} exec -n ${SIDECAR_APP_NAMESPACE} deploy/test-sidecar-frontend -c test-sidecar-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        success_count=$((success_count + 1))
+        echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
+      else
+        fail_count=$((fail_count + 1))
+        warnmsg "Request ${i}/${TRAFFIC_COUNT}: Failed (HTTP ${http_code})"
+      fi
+      # Sleep between requests (but not after the last one)
+      if [ ${i} -lt ${TRAFFIC_COUNT} ]; then
+        sleep ${TRAFFIC_INTERVAL}
+      fi
+    done
+    infomsg "======================================"
+    infomsg "Additional traffic generation complete!"
+    infomsg "======================================"
+    infomsg "Total requests: ${TRAFFIC_COUNT}"
+    infomsg "Successful: ${success_count}"
+    infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
+    infomsg ""
+    infomsg "Metrics will appear in Kiali after approximately twice the ACM collection interval (~10 minutes by default):"
+    infomsg "  1. Prometheus scrapes Envoy metrics (every 30s)"
+    infomsg "  2. Metrics federate to ACM Thanos (every 5 minutes by default)"
+    infomsg "  3. Rate calculations require at least two data points in Thanos"
+    infomsg "  4. Kiali queries Thanos and displays graphs"
+    infomsg ""
+    infomsg "View in Kiali: https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+  fi
+}
+
+##############################################################################
+# Ambient Test App Functions
+##############################################################################
+
+install_ambient_app() {
+  infomsg "Installing Ambient test application (frontend -> backend topology)..."
+
+  # Check if Ambient mode is available (ztunnel can be in istio-system or ztunnel namespace)
+  if ! ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1 && \
+     ! ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    errormsg "Istio Ambient mode is not installed (ztunnel daemonset not found)"
+    errormsg "Run 'install-istio' first (Ambient mode is enabled by default)"
+    return 1
+  fi
+
+  # Create namespace for Ambient mode app - uses ztunnel/waypoint instead of sidecar injection
+  if ! ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Creating namespace: ${AMBIENT_APP_NAMESPACE}"
+    ${CLIENT_EXE} create namespace ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Enable Ambient mode for the namespace (L4 via ztunnel)
+  infomsg "Enabling Istio Ambient mode for namespace..."
+  ${CLIENT_EXE} label namespace ${AMBIENT_APP_NAMESPACE} istio.io/dataplane-mode=ambient --overwrite
+
+  # Create ConfigMap with HTML content for backend
+  infomsg "Creating HTML content ConfigMap for backend..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-ambient-backend-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head><title>Ambient Backend</title></head>
+    <body><h1>Ambient Backend</h1><p>Response from test-ambient-backend workload using Istio Ambient mode.</p></body>
+    </html>
+EOF
+
+  # Create Backend Deployment using Red Hat UBI httpd image (OpenShift-compatible)
+  # This app uses Ambient mode (ztunnel/waypoint) rather than sidecar injection
+  infomsg "Creating backend deployment (using Ambient ztunnel/waypoint)..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-ambient-backend
+  labels:
+    app: test-ambient-backend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-ambient-backend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-ambient-backend
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: test-ambient-backend
+        image: registry.access.redhat.com/ubi9/httpd-24:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
+        volumeMounts:
+        - name: html
+          mountPath: /var/www/html
+          readOnly: true
+      volumes:
+      - name: html
+        configMap:
+          name: test-ambient-backend-html
+EOF
+
+  # Create Backend Service
+  infomsg "Creating backend service..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-ambient-backend
+  labels:
+    app: test-ambient-backend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-ambient-backend
+EOF
+
+  # Wait for backend deployment to be ready
+  infomsg "Waiting for backend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for backend pod to be fully ready
+  infomsg "Waiting for backend pod to be fully ready..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for backend Service endpoints to be populated
+  infomsg "Waiting for backend service endpoints to be ready..."
+  local max_wait=60
+  local waited=0
+  while true; do
+    local endpoint_ip=$(${CLIENT_EXE} get endpoints test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+    if [ -n "${endpoint_ip}" ]; then
+      debug "Backend service endpoint ready: ${endpoint_ip}"
+      break
+    fi
+    if [ ${waited} -ge ${max_wait} ]; then
+      warnmsg "Timeout waiting for backend service endpoints (continuing anyway)"
+      break
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+
+  # Create Frontend Deployment that continuously calls backend
+  # Uses curl image with a loop to generate continuous mesh traffic (no sidecar - uses ztunnel/waypoint)
+  infomsg "Creating frontend deployment (generates continuous traffic to backend)..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-ambient-frontend
+  labels:
+    app: test-ambient-frontend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-ambient-frontend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: test-ambient-frontend
+        version: v1
+    spec:
+      containers:
+      - name: test-ambient-frontend
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Starting continuous traffic to backend..."
+            while true; do
+              curl -s -o /dev/null -w "%{http_code}\n" http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80
+              sleep 2
+            done
+        resources:
+          requests:
+            cpu: 5m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 32Mi
+EOF
+
+  # Create Frontend Service (for completeness)
+  infomsg "Creating frontend service..."
+  ${CLIENT_EXE} apply -n ${AMBIENT_APP_NAMESPACE} -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-ambient-frontend
+  labels:
+    app: test-ambient-frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http
+  selector:
+    app: test-ambient-frontend
+EOF
+
+  # Wait for frontend deployment to be ready
+  infomsg "Waiting for frontend deployment to be ready..."
+  ${CLIENT_EXE} rollout status deployment/test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Wait for frontend pod to be fully ready
+  infomsg "Waiting for frontend pod to be fully ready..."
+  ${CLIENT_EXE} wait --for=condition=Ready pod -l app=test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} --timeout=${TIMEOUT}s
+
+  # Deploy waypoint proxy for L7 metrics (optional but recommended for full Kiali functionality)
+  infomsg "Deploying waypoint proxy for L7 metrics..."
+  if command -v istioctl &>/dev/null; then
+    istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --enroll-namespace
+    if [ $? -eq 0 ]; then
+      infomsg "Waypoint proxy deployed - L7 metrics (HTTP/gRPC) will be available"
+      # Wait for waypoint to be ready
+      infomsg "Waiting for waypoint proxy to be ready..."
+      ${CLIENT_EXE} wait --for=condition=Ready pod -l gateway.istio.io/managed=istio.io-mesh-controller -n ${AMBIENT_APP_NAMESPACE} --timeout=120s || true
+    else
+      warnmsg "Failed to deploy waypoint proxy - only L4 metrics will be available"
+    fi
+  else
+    warnmsg "istioctl not found - skipping waypoint deployment. Only L4 (TCP) metrics will be available."
+    warnmsg "Install istioctl and run: istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --enroll-namespace"
+  fi
+
+  # Create PodMonitor for waypoint proxies in this namespace (uses istio-proxy container)
+  create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
+
+  # Create metrics allowlist for ACM observability in app namespace
+  create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
+
+  infomsg "======================================"
+  infomsg "Ambient test application installation complete!"
+  infomsg "======================================"
+  infomsg "Namespace: ${AMBIENT_APP_NAMESPACE}"
+  infomsg "Topology: test-ambient-frontend -> test-ambient-backend"
+  infomsg "Mode: Istio Ambient (L4 via ztunnel, L7 via waypoint)"
+  infomsg ""
+  infomsg "Traffic generation:"
+  infomsg "  - Automatic: Frontend continuously sends requests to backend every 2 seconds"
+  infomsg "  - Manual: Run '$0 traffic-ambient' for additional burst traffic"
+  infomsg ""
+  infomsg "Metrics flow:"
+  infomsg "  - L4 (TCP): ztunnel metrics in ztunnel or istio-system namespace (istio_tcp_* with app=ztunnel)"
+  infomsg "  - L7 (HTTP): waypoint metrics (istio_requests_total with reporter=waypoint)"
+  infomsg ""
+  infomsg "Kiali graph will show:"
+  infomsg "  [test-ambient-frontend] --HTTP--> [test-ambient-backend]"
+  infomsg "              |                              |"
+  infomsg "              +-------- waypoint ------------+"
+}
+
+uninstall_ambient_app() {
+  infomsg "Uninstalling Ambient test application..."
+
+  if ! ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    infomsg "Namespace ${AMBIENT_APP_NAMESPACE} does not exist. Nothing to uninstall."
+    return 0
+  fi
+
+  # Delete waypoint if exists
+  if command -v istioctl &>/dev/null; then
+    istioctl waypoint delete -n ${AMBIENT_APP_NAMESPACE} --all 2>/dev/null || true
+  fi
+
+  # Delete frontend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend deployment..."
+    ${CLIENT_EXE} delete deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete backend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend deployment..."
+    ${CLIENT_EXE} delete deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete frontend service
+  if ${CLIENT_EXE} get service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting frontend service..."
+    ${CLIENT_EXE} delete service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete backend service
+  if ${CLIENT_EXE} get service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting backend service..."
+    ${CLIENT_EXE} delete service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete configmap
+  if ${CLIENT_EXE} get configmap test-ambient-backend-html -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting configmap..."
+    ${CLIENT_EXE} delete configmap test-ambient-backend-html -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete PodMonitor
+  if ${CLIENT_EXE} get podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting PodMonitor..."
+    ${CLIENT_EXE} delete podmonitor istio-proxies-monitor -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete metrics allowlist ConfigMap
+  if ${CLIENT_EXE} get configmap observability-metrics-custom-allowlist -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting metrics allowlist ConfigMap..."
+    ${CLIENT_EXE} delete configmap observability-metrics-custom-allowlist -n ${AMBIENT_APP_NAMESPACE}
+  fi
+
+  # Delete namespace
+  infomsg "Deleting namespace ${AMBIENT_APP_NAMESPACE}..."
+  ${CLIENT_EXE} delete namespace ${AMBIENT_APP_NAMESPACE} --ignore-not-found
+
+  infomsg "Ambient test application uninstallation complete!"
+}
+
+status_ambient_app() {
+  infomsg "Checking Ambient test application status..."
+  echo ""
+
+  # Check namespace
+  if ${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} &>/dev/null; then
+    echo "Namespace: ${AMBIENT_APP_NAMESPACE} [EXISTS]"
+
+    # Check Ambient mode
+    local dataplane_mode=$(${CLIENT_EXE} get namespace ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.metadata.labels.istio\.io/dataplane-mode}' 2>/dev/null)
+    if [ "${dataplane_mode}" == "ambient" ]; then
+      echo "Istio Mode: Ambient [ENABLED]"
+    else
+      echo "Istio Mode: [NOT AMBIENT - missing istio.io/dataplane-mode=ambient label]"
+    fi
+  else
+    echo "Namespace: ${AMBIENT_APP_NAMESPACE} [NOT FOUND]"
+    echo ""
+    echo "Ambient test application does not appear to be installed."
+    return 0
+  fi
+
+  echo ""
+  echo "=== Frontend Workload ==="
+
+  # Check frontend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Frontend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Frontend Deployment: [NOT FOUND]"
+  fi
+
+  # Check frontend service
+  if ${CLIENT_EXE} get service test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Frontend Service: [EXISTS]"
+  else
+    echo "Frontend Service: [NOT FOUND]"
+  fi
+
+  echo ""
+  echo "=== Backend Workload ==="
+
+  # Check backend deployment
+  if ${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    local ready=$(${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+    local desired=$(${CLIENT_EXE} get deployment test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.spec.replicas}' 2>/dev/null)
+    ready=${ready:-0}
+    desired=${desired:-0}
+    echo "Backend Deployment: ${ready}/${desired} ready"
+  else
+    echo "Backend Deployment: [NOT FOUND]"
+  fi
+
+  # Check backend service
+  if ${CLIENT_EXE} get service test-ambient-backend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    echo "Backend Service: [EXISTS]"
+  else
+    echo "Backend Service: [NOT FOUND]"
+  fi
+
+  echo ""
+  echo "=== Ambient Infrastructure ==="
+
+  # Check waypoint proxy
+  local waypoint_pods=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o name 2>/dev/null | wc -l)
+  if [ "${waypoint_pods}" -gt 0 ]; then
+    local waypoint_ready=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o jsonpath='{.items[0].status.phase}' 2>/dev/null)
+    echo "Waypoint Proxy: [DEPLOYED] (${waypoint_ready})"
+    echo "  L7 Metrics: Available (istio_requests_total with reporter=waypoint)"
+  else
+    echo "Waypoint Proxy: [NOT DEPLOYED]"
+    echo "  L7 Metrics: Not available (only L4/TCP metrics via ztunnel)"
+  fi
+
+  # Check ztunnel (global) - can be in ztunnel namespace (Sail) or istio-system (istioctl)
+  local ztunnel_ns=""
+  if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel &>/dev/null 2>&1; then
+    ztunnel_ns="ztunnel"
+  elif ${CLIENT_EXE} get daemonset ztunnel -n istio-system &>/dev/null 2>&1; then
+    ztunnel_ns="istio-system"
+  fi
+
+  if [ -n "${ztunnel_ns}" ]; then
+    local ztunnel_ready=$(${CLIENT_EXE} get daemonset ztunnel -n ${ztunnel_ns} -o jsonpath='{.status.numberReady}' 2>/dev/null)
+    local ztunnel_desired=$(${CLIENT_EXE} get daemonset ztunnel -n ${ztunnel_ns} -o jsonpath='{.status.desiredNumberScheduled}' 2>/dev/null)
+    echo "Ztunnel (L4 proxy): ${ztunnel_ready}/${ztunnel_desired} ready (in ${ztunnel_ns})"
+  else
+    echo "Ztunnel: [NOT FOUND - Ambient mode not installed]"
+  fi
+
+  echo ""
+  echo "=== Topology ==="
+  echo "  [test-ambient-frontend] --HTTP--> [test-ambient-backend]"
+  echo "              |                              |"
+  echo "              +-------- waypoint ------------+"
+  echo "  Traffic is generated automatically every 2 seconds"
+  echo ""
+}
+
+generate_ambient_traffic() {
+  infomsg "Generating additional traffic to Ambient test application..."
+  infomsg "(Note: Frontend already generates continuous baseline traffic every 2 seconds)"
+
+  # Check if ambient test app is running
+  if ! ${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} &>/dev/null 2>&1; then
+    errormsg "Ambient test application is not installed in namespace ${AMBIENT_APP_NAMESPACE}"
+    errormsg "Run '$0 install-ambient-app' first to install the Ambient test application"
+    return 1
+  fi
+
+  # Check if frontend deployment is ready
+  local ready=$(${CLIENT_EXE} get deployment test-ambient-frontend -n ${AMBIENT_APP_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+  if [ "${ready}" != "1" ]; then
+    errormsg "Ambient test application frontend is not ready (ready replicas: ${ready:-0})"
+    return 1
+  fi
+
+  # Service URL - traffic goes frontend -> backend through ztunnel (L4) and optionally waypoint (L7)
+  local service_url="http://test-ambient-backend.${AMBIENT_APP_NAMESPACE}.svc.cluster.local:80"
+  debug "Using service URL to generate Ambient metrics: ${service_url}"
+
+  # Check if waypoint is deployed for L7 metrics
+  local waypoint_pods=$(${CLIENT_EXE} get pods -n ${AMBIENT_APP_NAMESPACE} -l gateway.istio.io/managed=istio.io-mesh-controller -o name 2>/dev/null | wc -l)
+  if [ "${waypoint_pods}" -gt 0 ]; then
+    infomsg "Waypoint proxy detected - traffic will generate both L4 (ztunnel) and L7 (waypoint) metrics"
+  else
+    infomsg "No waypoint proxy - traffic will only generate L4 (TCP) metrics via ztunnel"
+  fi
+
+  if [ "${TRAFFIC_CONTINUOUS}" == "true" ]; then
+    # Continuous traffic mode
+    infomsg "Sending requests to ${service_url} every ${TRAFFIC_INTERVAL} second(s). Press Ctrl-C to stop."
+    local count=0
+    trap 'infomsg "Sent ${count} total requests. Stopping..."; exit 0' INT TERM
+    while true; do
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/test-ambient-frontend -c test-ambient-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        count=$((count + 1))
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Request ${count} sent (HTTP ${http_code})"
+      else
+        warnmsg "Request ${count} failed (HTTP ${http_code})"
+      fi
+      sleep ${TRAFFIC_INTERVAL}
+    done
+  else
+    # Send N requests mode
+    infomsg "Sending ${TRAFFIC_COUNT} requests to ${service_url} (${TRAFFIC_INTERVAL}s interval)..."
+    local success_count=0
+    local fail_count=0
+    for i in $(seq 1 ${TRAFFIC_COUNT}); do
+      local http_code=$(${CLIENT_EXE} exec -n ${AMBIENT_APP_NAMESPACE} deploy/test-ambient-frontend -c test-ambient-frontend -- curl -s -o /dev/null -w "%{http_code}" ${service_url} 2>/dev/null)
+      if [ $? -eq 0 ] && [ "${http_code}" == "200" ]; then
+        success_count=$((success_count + 1))
+        echo "  Request ${i}/${TRAFFIC_COUNT}: HTTP ${http_code} ✓"
+      else
+        fail_count=$((fail_count + 1))
+        warnmsg "Request ${i}/${TRAFFIC_COUNT}: Failed (HTTP ${http_code})"
+      fi
+      # Sleep between requests (but not after the last one)
+      if [ ${i} -lt ${TRAFFIC_COUNT} ]; then
+        sleep ${TRAFFIC_INTERVAL}
+      fi
+    done
+    infomsg "======================================"
+    infomsg "Additional Ambient traffic generation complete!"
+    infomsg "======================================"
+    infomsg "Total requests: ${TRAFFIC_COUNT}"
+    infomsg "Successful: ${success_count}"
+    infomsg "Failed: ${fail_count}"
+    infomsg ""
+    infomsg "Note: Frontend continues to generate baseline traffic every 2 seconds"
+    infomsg ""
+    infomsg "Metrics will appear in Kiali after approximately twice the ACM collection interval (~10 minutes by default):"
+    infomsg "  1. Ztunnel/Waypoint generates metrics"
+    infomsg "  2. Prometheus scrapes metrics (every 30s)"
+    infomsg "  3. Metrics federate to ACM Thanos (every 5 minutes by default)"
+    infomsg "  4. Rate calculations require at least two data points in Thanos"
+    infomsg "  5. Kiali queries Thanos and displays graphs"
+    infomsg ""
+    infomsg "Expected metrics:"
+    infomsg "  - L4 (ztunnel): istio_tcp_received_bytes_total, istio_tcp_sent_bytes_total"
+    if [ "${waypoint_pods}" -gt 0 ]; then
+      infomsg "  - L7 (waypoint): istio_requests_total with reporter=waypoint"
+    fi
+    infomsg ""
+    infomsg "View in Kiali: https://kiali-${KIALI_NAMESPACE}.$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')"
+  fi
+}
+
+##############################################################################
+# Create All Function
+##############################################################################
+
+create_all() {
+  infomsg "======================================"
+  infomsg "Creating complete ACM + Kiali environment"
+  infomsg "======================================"
+  infomsg ""
+  infomsg "Istio Ambient: $([ "${AMBIENT_MODE}" == "true" ] && echo "enabled (adds ztunnel/waypoint)" || echo "disabled")"
+  infomsg ""
+  infomsg "This will run the following commands in sequence:"
+  infomsg "  1. init-openshift  (Create CRC cluster, enable UWM)"
+  infomsg "  2. install-acm     (Install ACM with observability)"
+  infomsg "  3. install-istio   (Install Istio$([ "${AMBIENT_MODE}" == "true" ] && echo " with Ambient mode"))"
+  infomsg "  4. install-kiali   (Build and install Kiali)"
+  infomsg "  5. install-sidecar-app (Install sidecar test mesh application)"
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "  6. install-ambient-app (Install Ambient test mesh application)"
+    infomsg "  7. traffic-sidecar/traffic-ambient (Generate traffic to both apps)"
+  else
+    infomsg "  6. traffic-sidecar (Generate initial traffic)"
+  fi
+  infomsg ""
+
+  # Calculate total steps upfront so all step messages are consistent
+  local total_steps=6
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    total_steps=7
+  fi
+
+  # Step 1: Initialize OpenShift
+  infomsg "======================================"
+  infomsg "Step 1/${total_steps}: Initializing OpenShift cluster"
+  infomsg "======================================"
+  init_openshift
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to initialize OpenShift cluster"
+    return 1
+  fi
+
+  # After init-openshift, we need to check prerequisites for subsequent commands
+  check_prerequisites
+  if [ $? -ne 0 ]; then
+    errormsg "Prerequisites check failed after OpenShift initialization"
+    return 1
+  fi
+
+  # Step 2: Install ACM
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 2/${total_steps}: Installing ACM with observability"
+  infomsg "======================================"
+  install_acm
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install ACM"
+    return 1
+  fi
+
+  # Step 3: Install Istio
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 3/${total_steps}: Installing Istio"
+  infomsg "======================================"
+  install_istio
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install Istio"
+    return 1
+  fi
+
+  # Step 4: Install Kiali
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 4/${total_steps}: Installing Kiali"
+  infomsg "======================================"
+  install_kiali
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install Kiali"
+    return 1
+  fi
+
+  # Step 5: Install sidecar test app
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step 5/${total_steps}: Installing sidecar test application"
+  infomsg "======================================"
+  install_sidecar_app
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install sidecar test application"
+    return 1
+  fi
+
+  # Step 6 (Ambient only): Install Ambient test app
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step 6/${total_steps}: Installing Ambient test application"
+    infomsg "======================================"
+    install_ambient_app
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Ambient test application"
+      return 1
+    fi
+  fi
+
+  # Final step: Generate initial traffic (always the last step)
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${total_steps}/${total_steps}: Generating initial traffic"
+  infomsg "======================================"
+  generate_sidecar_traffic
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to generate sidecar traffic"
+    return 1
+  fi
+
+  # Generate Ambient traffic if Ambient mode
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "Generating traffic to Ambient test application..."
+    generate_ambient_traffic
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to generate Ambient traffic"
+      return 1
+    fi
+  fi
+
+  # Final summary
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg ""
+  infomsg "=========================================================="
+  infomsg "Complete ACM + Kiali environment created successfully!"
+  infomsg "=========================================================="
+  infomsg ""
+  infomsg "OpenShift Console: https://console-openshift-console.${apps_domain}"
+  infomsg "Kiali URL:         https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  infomsg ""
+  infomsg "Initial traffic has been sent. To generate more traffic:"
+  infomsg "  $0 traffic-sidecar"
+  infomsg ""
+  infomsg "Note: Metrics take approximately twice the ACM collection interval (~10 minutes by default) to appear in Kiali."
+}
+
+install_components() {
+  infomsg "======================================"
+  infomsg "Installing all components on existing cluster"
+  infomsg "======================================"
+  infomsg ""
+  infomsg "Istio Ambient: $([ "${AMBIENT_MODE}" == "true" ] && echo "enabled" || echo "disabled")"
+  infomsg ""
+
+  # Calculate total steps
+  local current_step=1
+  local total_steps=5
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    total_steps=6
+  fi
+
+  # Step 1: Conditionally install ACM
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing ACM"
+  infomsg "======================================"
+  if check_acm_installed; then
+    infomsg "ACM is already installed - skipping"
+  else
+    infomsg "ACM not found - installing..."
+    install_acm
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install ACM"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 2: Conditionally install Istio
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing Istio"
+  infomsg "======================================"
+  if check_istio_installed; then
+    infomsg "Istio is already installed - skipping"
+  else
+    infomsg "Istio not found - installing..."
+    install_istio
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Istio"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 3: Conditionally install Kiali
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing Kiali"
+  infomsg "======================================"
+  local kiali_method=$(detect_kiali_install_method)
+  if [ "${kiali_method}" == "not-installed" ]; then
+    infomsg "Kiali not found - installing..."
+    install_kiali
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install Kiali"
+      return 1
+    fi
+  else
+    infomsg "Kiali is already installed (method: ${kiali_method}) - skipping"
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 4: Conditionally install sidecar test app
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Checking/Installing sidecar test app"
+  infomsg "======================================"
+  if check_sidecar_app_installed; then
+    infomsg "Sidecar test app is already installed - skipping"
+  else
+    infomsg "Sidecar test app not found - installing..."
+    install_sidecar_app
+    if [ $? -ne 0 ]; then
+      errormsg "Failed to install sidecar test app"
+      return 1
+    fi
+  fi
+  current_step=$((current_step + 1))
+
+  # Step 5: Conditionally install ambient test app (only if ambient mode enabled)
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step ${current_step}/${total_steps}: Checking/Installing ambient test app"
+    infomsg "======================================"
+    if check_ambient_app_installed; then
+      infomsg "Ambient test app is already installed - skipping"
+    else
+      infomsg "Ambient test app not found - installing..."
+      install_ambient_app
+      if [ $? -ne 0 ]; then
+        errormsg "Failed to install ambient test app"
+        return 1
+      fi
+    fi
+    current_step=$((current_step + 1))
+  fi
+
+  # Final step: Generate initial traffic
+  infomsg ""
+  infomsg "======================================"
+  infomsg "Step ${current_step}/${total_steps}: Generating initial traffic"
+  infomsg "======================================"
+  generate_sidecar_traffic
+  if [ $? -ne 0 ]; then
+    warnmsg "Failed to generate sidecar traffic (continuing anyway)"
+  fi
+
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg ""
+    infomsg "Generating traffic to Ambient test application..."
+    generate_ambient_traffic
+    if [ $? -ne 0 ]; then
+      warnmsg "Failed to generate Ambient traffic (continuing anyway)"
+    fi
+  fi
+
+  # Final summary (similar to create_all)
+  local apps_domain=$(${CLIENT_EXE} get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+  infomsg ""
+  infomsg "=========================================================="
+  infomsg "All components installed successfully!"
+  infomsg "=========================================================="
+  infomsg ""
+  infomsg "Kiali URL: https://kiali-${KIALI_NAMESPACE}.${apps_domain}"
+  infomsg ""
+  infomsg "Initial traffic has been sent. To generate more traffic:"
+  infomsg "  $0 traffic-sidecar"
+  if [ "${AMBIENT_MODE}" == "true" ]; then
+    infomsg "  $0 traffic-ambient"
+  fi
+  infomsg ""
+  infomsg "Note: Metrics take approximately twice the ACM collection interval (~10 minutes) to appear in Kiali."
+}
+
+##############################################################################
+# Argument Parsing
+##############################################################################
+
+_CMD=""
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    create-all) _CMD="create-all"; shift ;;
+    install-components) _CMD="install-components"; shift ;;
+    init-openshift) _CMD="init-openshift"; shift ;;
+    install-istio) _CMD="install-istio"; shift ;;
+    uninstall-istio) _CMD="uninstall-istio"; shift ;;
+    status-istio) _CMD="status-istio"; shift ;;
+    install-acm) _CMD="install-acm"; shift ;;
+    uninstall-acm) _CMD="uninstall-acm"; shift ;;
+    status-acm) _CMD="status-acm"; shift ;;
+    install-kiali) _CMD="install-kiali"; shift ;;
+    uninstall-kiali) _CMD="uninstall-kiali"; shift ;;
+    status-kiali) _CMD="status-kiali"; shift ;;
+    install-sidecar-app) _CMD="install-sidecar-app"; shift ;;
+    uninstall-sidecar-app) _CMD="uninstall-sidecar-app"; shift ;;
+    status-sidecar-app) _CMD="status-sidecar-app"; shift ;;
+    traffic-sidecar) _CMD="traffic-sidecar"; shift ;;
+    install-ambient-app) _CMD="install-ambient-app"; shift ;;
+    uninstall-ambient-app) _CMD="uninstall-ambient-app"; shift ;;
+    status-ambient-app) _CMD="status-ambient-app"; shift ;;
+    traffic-ambient) _CMD="traffic-ambient"; shift ;;
+    -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
+    -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
+    -on|--observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
+    -mak|--minio-access-key) MINIO_ACCESS_KEY="$2"; shift; shift ;;
+    -msk|--minio-secret-key) MINIO_SECRET_KEY="$2"; shift; shift ;;
+    -ce|--client-exe) CLIENT_EXE="$2"; shift; shift ;;
+    -t|--timeout) TIMEOUT="$2"; shift; shift ;;
+    -kn|--kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
+    -kit|--kiali-install-type) KIALI_INSTALL_TYPE="$2"; shift; shift ;;
+    -krd|--kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
+    -kord|--kiali-operator-repo-dir) KIALI_OPERATOR_REPO_DIR="$2"; shift; shift ;;
+    -hcd|--helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
+    -san|--sidecar-app-namespace) SIDECAR_APP_NAMESPACE="$2"; shift; shift ;;
+    -cc|--crc-cpus) CRC_CPUS="$2"; shift; shift ;;
+    -cds|--crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
+    -cps|--crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
+    -tc|--traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
+    -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
+    -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
+    --ambient) AMBIENT_MODE="$2"; shift; shift ;;
+    -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
+    -sb|--skip-build) SKIP_BUILD="true"; shift ;;
+    -v|--verbose) _VERBOSE="true"; shift ;;
+    -h|--help)
+      cat <<HELPMSG
+
+$0 [options] command
+
+This script installs Red Hat Advanced Cluster Management (ACM) with observability
+on an OpenShift cluster for development and testing purposes. It can also install
+Kiali configured to use ACM's observability backend.
+
+Valid options:
+  -n|--namespace <namespace>
+      The namespace where ACM will be installed.
+      Default: ${DEFAULT_ACM_NAMESPACE}
+  -c|--channel <channel>
+      The ACM operator channel (e.g., release-2.14, release-2.15).
+      Default: ${DEFAULT_ACM_CHANNEL}
+  -on|--observability-namespace <namespace>
+      The namespace for observability components (MinIO, Thanos).
+      Default: ${DEFAULT_OBSERVABILITY_NAMESPACE}
+  -mak|--minio-access-key <key>
+      The MinIO access key (username).
+      Default: ${DEFAULT_MINIO_ACCESS_KEY}
+  -msk|--minio-secret-key <key>
+      The MinIO secret key (password).
+      Default: ${DEFAULT_MINIO_SECRET_KEY}
+  -ce|--client-exe <path>
+      The path to the oc or kubectl executable.
+      Default: ${DEFAULT_CLIENT_EXE}
+  -t|--timeout <seconds>
+      Timeout in seconds for waiting on resources.
+      Default: ${DEFAULT_TIMEOUT}
+  -kn|--kiali-namespace <namespace>
+      The namespace where Kiali will be installed.
+      Default: ${DEFAULT_KIALI_NAMESPACE}
+  -kit|--kiali-install-type <type>
+      The Kiali installation method. Valid values:
+        helm-server     - Build from source, install via kiali-server helm chart
+        olm-operator    - Use OLM-installed operator with stock images
+        helm-operator   - Build from source, install via kiali-operator helm chart
+      Default: ${DEFAULT_KIALI_INSTALL_TYPE}
+  -krd|--kiali-repo-dir <path>
+      Path to the Kiali server git repository (for building images).
+      Default: ${DEFAULT_KIALI_REPO_DIR}
+  -kord|--kiali-operator-repo-dir <path>
+      Path to the Kiali operator git repository (for helm-operator method).
+      Default: ${DEFAULT_KIALI_OPERATOR_REPO_DIR}
+  -hcd|--helm-charts-dir <path>
+      Path to the Kiali helm-charts git repository.
+      Default: ${DEFAULT_HELM_CHARTS_DIR}
+  -san|--sidecar-app-namespace <namespace>
+      The namespace for the sidecar test application.
+      Default: ${DEFAULT_SIDECAR_APP_NAMESPACE}
+  -cc|--crc-cpus <num>
+      Number of CPUs to assign to the CRC VM (for init-openshift command).
+      Default: ${DEFAULT_CRC_CPUS}
+  -cds|--crc-disk-size <size>
+      Disk size in GB for the CRC VM (for init-openshift command).
+      Default: ${DEFAULT_CRC_DISK_SIZE}
+  -cps|--crc-pull-secret-file <path>
+      Path to the Red Hat pull secret file (required for init-openshift command).
+      Download from: https://console.redhat.com/openshift/create/local
+  -tc|--traffic-count <num>
+      Number of requests to send to test app (for traffic command).
+      Default: ${DEFAULT_TRAFFIC_COUNT}
+  -ti|--traffic-interval <seconds>
+      Interval in seconds between requests (for traffic command).
+      Default: ${DEFAULT_TRAFFIC_INTERVAL}
+  -cont|--traffic-continuous
+      Send requests continuously until Ctrl-C (for traffic command).
+      Without this flag, sends --traffic-count requests and stops.
+  --ambient <true|false>
+      Enable or disable Istio Ambient mode (ztunnel L4 + waypoint L7) alongside sidecar support.
+      Affects install-istio (installs Ambient profile) and create-all.
+      Default: ${DEFAULT_AMBIENT_MODE}
+  -aan|--ambient-app-namespace <namespace>
+      The namespace for the Ambient test application.
+      Default: ${DEFAULT_AMBIENT_APP_NAMESPACE}
+  -sb|--skip-build
+      Skip building Kiali server (useful for faster iterations).
+      Images will still be pushed to the cluster if they already exist.
+      Use this after you've built once and only need to test configuration changes.
+      Default: ${DEFAULT_SKIP_BUILD}
+  -v|--verbose
+      Enable verbose/debug output.
+  -h|--help
+      Display this help message.
+
+The command must be one of:
+  create-all:           "Uber command" to install everything (OpenShift+Istio+ACM+Kiali+apps), and send initial traffic
+  install-components:   Install all components on existing cluster (assumes OpenShift already running)
+  init-openshift:       Create/start CRC OpenShift cluster and enable User Workload Monitoring
+  install-istio:        Install Istio (use --ambient for Ambient mode)
+  uninstall-istio:      Remove Istio installation
+  status-istio:         Check the status of Istio installation
+  install-acm:          Install ACM operator, MultiClusterHub, MinIO, and observability
+  uninstall-acm:        Remove all ACM components
+  status-acm:           Check the status of ACM installation
+  install-kiali:        Install Kiali configured for ACM observability (supports 3 methods)
+  uninstall-kiali:      Remove Kiali installation
+  status-kiali:         Check the status of Kiali installation
+  install-sidecar-app:  Install a sidecar test mesh application (frontend -> backend)
+  uninstall-sidecar-app: Remove the sidecar test application
+  status-sidecar-app:   Check the status of the sidecar test application
+  traffic-sidecar:      Generate HTTP traffic to the sidecar test application
+  install-ambient-app:  Install an Ambient mode test mesh application (requires --ambient)
+  uninstall-ambient-app: Remove the Ambient test application
+  status-ambient-app:   Check the status of the Ambient test application
+  traffic-ambient:      Generate HTTP traffic to the Ambient test application
+
+Examples:
+  # Standard installation (Ambient mode enabled by default)
+  $0 -cps ~/pull-secret.txt create-all                # Create complete environment (includes Ambient)
+  $0 -cps ~/pull-secret.txt init-openshift            # Initialize CRC cluster
+  $0 install-istio                                    # Install Istio with Ambient mode (default)
+  $0 status-istio                                     # Check Istio status (shows Ambient if enabled)
+  $0 install-ambient-app                              # Install Ambient test app
+  $0 status-ambient-app                               # Check Ambient test app status
+  $0 traffic-ambient                                  # Generate traffic to Ambient app
+  $0 uninstall-ambient-app                            # Remove Ambient test app
+  $0 uninstall-istio                                  # Remove Istio
+
+  # Sidecar-only installation (Ambient mode disabled)
+  $0 -cps ~/pull-secret.txt --ambient false create-all    # Create environment without Ambient
+  $0 --ambient false install-istio                        # Install Istio without Ambient mode
+
+  # Install all components on existing cluster (user already logged in with oc)
+  $0 install-components                           # Install all missing components
+  $0 --ambient false install-components           # Install without Ambient mode
+
+  # ACM and Kiali
+  $0 install-acm                            # Install ACM with defaults
+  $0 -n my-acm install-acm                  # Install ACM in custom namespace
+  $0 -c release-2.14 install-acm            # Install specific ACM version
+  $0 status-acm                             # Check ACM installation status
+  $0 uninstall-acm                          # Remove ACM completely
+  $0 install-kiali                          # Build and install Kiali (helm-server, default)
+  $0 --kiali-install-type helm-server install-kiali  # Explicit helm-server method
+  $0 --kiali-install-type olm-operator install-kiali # Use OLM operator with stock images
+  $0 --kiali-install-type helm-operator install-kiali # Build operator and server from source
+  $0 status-kiali                           # Check Kiali installation status (auto-detects method)
+  $0 uninstall-kiali                        # Remove Kiali (auto-detects method)
+
+  # Sidecar test app (frontend -> backend topology, auto-generates traffic)
+  $0 install-sidecar-app                    # Install sidecar test mesh application
+  $0 -san my-app install-sidecar-app        # Install test app in custom namespace
+  $0 status-sidecar-app                     # Check test application status
+  $0 uninstall-sidecar-app                  # Remove test application
+  $0 traffic-sidecar                        # Send 10 additional requests to test app
+  $0 -tc 50 traffic-sidecar                 # Send 50 additional requests
+  $0 -tc 100 -ti 2 traffic-sidecar          # Send 100 additional requests, 2s interval
+  $0 -cont traffic-sidecar                  # Continuous additional traffic
+  $0 -cont -ti 3 traffic-sidecar            # Continuous additional every 3 seconds
+
+HELPMSG
+      exit 0
+      ;;
+    *)
+      errormsg "Unknown argument [$key]. Use -h for help."
+      exit 1
+      ;;
+  esac
+done
+
+# Set defaults for unset variables
+: ${ACM_NAMESPACE:=${DEFAULT_ACM_NAMESPACE}}
+: ${ACM_CHANNEL:=${DEFAULT_ACM_CHANNEL}}
+: ${OBSERVABILITY_NAMESPACE:=${DEFAULT_OBSERVABILITY_NAMESPACE}}
+: ${MINIO_ACCESS_KEY:=${DEFAULT_MINIO_ACCESS_KEY}}
+: ${MINIO_SECRET_KEY:=${DEFAULT_MINIO_SECRET_KEY}}
+: ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
+: ${TIMEOUT:=${DEFAULT_TIMEOUT}}
+: ${KIALI_NAMESPACE:=${DEFAULT_KIALI_NAMESPACE}}
+: ${KIALI_INSTALL_TYPE:=${DEFAULT_KIALI_INSTALL_TYPE}}
+: ${KIALI_REPO_DIR:=${DEFAULT_KIALI_REPO_DIR}}
+: ${KIALI_OPERATOR_REPO_DIR:=${DEFAULT_KIALI_OPERATOR_REPO_DIR}}
+: ${HELM_CHARTS_DIR:=${DEFAULT_HELM_CHARTS_DIR}}
+: ${SIDECAR_APP_NAMESPACE:=${DEFAULT_SIDECAR_APP_NAMESPACE}}
+: ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
+: ${CRC_DISK_SIZE:=${DEFAULT_CRC_DISK_SIZE}}
+: ${CRC_PULL_SECRET_FILE:=${DEFAULT_CRC_PULL_SECRET_FILE}}
+: ${TRAFFIC_COUNT:=${DEFAULT_TRAFFIC_COUNT}}
+: ${TRAFFIC_INTERVAL:=${DEFAULT_TRAFFIC_INTERVAL}}
+: ${TRAFFIC_CONTINUOUS:=false}
+: ${AMBIENT_MODE:=${DEFAULT_AMBIENT_MODE}}
+: ${AMBIENT_APP_NAMESPACE:=${DEFAULT_AMBIENT_APP_NAMESPACE}}
+: ${SKIP_BUILD:=${DEFAULT_SKIP_BUILD}}
+
+# Debug output
+debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
+debug "ACM_CHANNEL=${ACM_CHANNEL}"
+debug "OBSERVABILITY_NAMESPACE=${OBSERVABILITY_NAMESPACE}"
+debug "CLIENT_EXE=${CLIENT_EXE}"
+debug "TIMEOUT=${TIMEOUT}"
+debug "KIALI_NAMESPACE=${KIALI_NAMESPACE}"
+debug "KIALI_INSTALL_TYPE=${KIALI_INSTALL_TYPE}"
+debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
+debug "KIALI_OPERATOR_REPO_DIR=${KIALI_OPERATOR_REPO_DIR}"
+debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
+debug "SIDECAR_APP_NAMESPACE=${SIDECAR_APP_NAMESPACE}"
+debug "AMBIENT_MODE=${AMBIENT_MODE}"
+debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
+debug "SKIP_BUILD=${SKIP_BUILD}"
+
+##############################################################################
+# Main
+##############################################################################
+
+if [ -z "${_CMD}" ]; then
+  errormsg "Missing command. Use -h for help."
+  exit 1
+fi
+
+# Validate Kiali install type
+if [ "${_CMD}" == "install-kiali" ]; then
+  case "${KIALI_INSTALL_TYPE}" in
+    helm-server|olm-operator|helm-operator)
+      # Valid
+      ;;
+    *)
+      errormsg "Invalid Kiali install type: ${KIALI_INSTALL_TYPE}"
+      errormsg "Valid types: helm-server, olm-operator, helm-operator"
+      exit 1
+      ;;
+  esac
+fi
+
+# Check prerequisites (skip for init-openshift and create-all since cluster may not exist yet)
+if [ "${_CMD}" != "init-openshift" ] && [ "${_CMD}" != "create-all" ]; then
+  check_prerequisites || exit 2
+fi
+
+# Execute command
+case ${_CMD} in
+  create-all)
+    create_all
+    ;;
+  install-components)
+    install_components
+    ;;
+  init-openshift)
+    init_openshift
+    ;;
+  install-istio)
+    install_istio
+    ;;
+  uninstall-istio)
+    uninstall_istio
+    ;;
+  status-istio)
+    status_istio
+    ;;
+  install-acm)
+    install_acm
+    ;;
+  uninstall-acm)
+    uninstall_acm
+    ;;
+  status-acm)
+    check_status
+    ;;
+  install-kiali)
+    install_kiali
+    ;;
+  uninstall-kiali)
+    uninstall_kiali
+    ;;
+  status-kiali)
+    status_kiali
+    ;;
+  install-sidecar-app)
+    install_sidecar_app
+    ;;
+  uninstall-sidecar-app)
+    uninstall_sidecar_app
+    ;;
+  status-sidecar-app)
+    status_sidecar_app
+    ;;
+  traffic-sidecar)
+    generate_sidecar_traffic
+    ;;
+  install-ambient-app)
+    install_ambient_app
+    ;;
+  uninstall-ambient-app)
+    uninstall_ambient_app
+    ;;
+  status-ambient-app)
+    status_ambient_app
+    ;;
+  traffic-ambient)
+    generate_ambient_traffic
+    ;;
+  *)
+    errormsg "Unknown command: ${_CMD}"
+    exit 1
+    ;;
+esac
