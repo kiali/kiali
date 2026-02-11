@@ -801,39 +801,15 @@ Then('Service insights card shows data tables and footer link', () => {
     cy.getBySel('service-insights-view-all-services').should('be.visible');
   });
 
-  // Rates section: either a table with headers/rows or an explicit "not available" message.
+  // Rates section: should be empty because it depends on health cache, which is disabled during
+  // standard cypress testing.
   cy.getBySel('service-insights-rates').within(() => {
-    cy.get('table').then($table => {
-      if ($table.length === 0) {
-        cy.contains('not available').should('be.visible');
-        return;
-      }
-
-      cy.contains('th', 'Name').should('be.visible');
-      cy.contains('th', 'Errors').should('be.visible');
-
-      cy.get('tbody tr').then($rows => {
-        if ($rows.length === 0) {
-          return;
-        }
-        cy.wrap($rows[0]).within(() => {
-          cy.get('a')
-            .should('have.attr', 'href')
-            .and('match', /\/namespaces\/.+\/services\/.+/);
-          cy.contains('%').should('be.visible');
-        });
-      });
-    });
+    cy.contains('not available').should('be.visible');
   });
 
-  // Latencies section: either a table with headers/rows or an explicit "not available" message.
+  // Latencies section: table should have data because this queries prometheus directly
   cy.getBySel('service-insights-latencies').within(() => {
-    cy.get('table').then($table => {
-      if ($table.length === 0) {
-        cy.contains('not available').should('be.visible');
-        return;
-      }
-
+    cy.get('table').then(_ => {
       cy.contains('th', 'Name').should('be.visible');
       cy.contains('th', 'Latency').should('be.visible');
 
