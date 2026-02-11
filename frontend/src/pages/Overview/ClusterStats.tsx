@@ -63,9 +63,9 @@ export const ClusterStats: React.FC = () => {
   );
 
   return (
-    <Card className={cardStyle}>
+    <Card className={cardStyle} data-test="clusters-card">
       <CardHeader>
-        <CardTitle>
+        <CardTitle data-test="clusters-card-title">
           {t('Clusters')}
           {!isLoading && !isError && ` (${total})`}
         </CardTitle>

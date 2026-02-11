@@ -51,7 +51,7 @@ export const ControlPlaneStats: React.FC = () => {
   );
 
   return (
-    <Card className={cardStyle}>
+    <Card className={cardStyle} data-test="control-planes-card">
       <CardHeader>
         <CardTitle>
           {t('Control planes')}

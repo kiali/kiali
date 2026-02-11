@@ -33,11 +33,11 @@ Given('Istio configs API returns at least 4 warning configs', () => {
 });
 
 const getControlPlanesCard = (): Cypress.Chainable => {
-  return cy.contains('Control planes').closest('div[data-ouia-component-type="PF6/Card"]');
+  return cy.getBySel('control-planes-card');
 };
 
 const getDataPlanesCard = (): Cypress.Chainable => {
-  return cy.contains('Data planes').closest('div[data-ouia-component-type="PF6/Card"]');
+  return cy.getBySel('data-planes-card');
 };
 
 const makeControlPlane = (opts: { clusterName: string; istiodName: string; status: 'Healthy' | 'Unhealthy' }): any => {
@@ -225,8 +225,9 @@ Then('user is redirected to Namespaces page with data-plane type filter', () => 
 });
 
 // ==================== Clusters Stats Card ====================
+
 const getClustersCard = (): Cypress.Chainable => {
-  return cy.contains('Clusters').closest('div[data-ouia-component-type="PF6/Card"]');
+  return cy.getBySel('clusters-card');
 };
 
 Given('Clusters API fails once', () => {
@@ -304,8 +305,8 @@ Then('Clusters card shows cluster count and footer link', () => {
     cy.get('[class*="spinner"]', { timeout: CARD_LOADING_TIMEOUT }).should('not.exist');
     cy.contains('Could not be loaded').should('not.exist');
 
-    // The card should show clusters data (header contains "Clusters")
-    cy.get('[class*="cardTitle"]').should('contain', 'Clusters');
+    // The card should show clusters data (title contains "Clusters")
+    cy.getBySel('clusters-card-title').should('contain', 'Clusters');
 
     // Footer link should be visible when data loaded successfully
     cy.contains('a', 'View Mesh').should('be.visible');
