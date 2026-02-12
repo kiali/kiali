@@ -13,8 +13,10 @@ let mockStatusMap: ClusterStatusMap = {};
 
 jest.mock('../../../hooks/clusters', () => ({
   useClusterStatus: () => ({
-    statusMap: mockStatusMap,
-    isLoading: false
+    isError: false,
+    isLoading: false,
+    refresh: jest.fn(),
+    statusMap: mockStatusMap
   })
 }));
 

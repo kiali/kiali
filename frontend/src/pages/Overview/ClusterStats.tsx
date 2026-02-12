@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle, Spinner } from '@patternfly/react-core';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { KialiIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
@@ -7,6 +7,7 @@ import { t } from 'utils/I18nUtils';
 import { useClusterStatus } from 'hooks/clusters';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
+import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 import {
   cardStyle,
   cardBodyStyle,
@@ -24,7 +25,7 @@ import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
 import { StatCountPopover } from './StatCountPopover';
 
 export const ClusterStats: React.FC = () => {
-  const { isLoading, statusMap } = useClusterStatus();
+  const { isError, isLoading, refresh, statusMap } = useClusterStatus();
 
   // Calculate stats from statusMap
   const total = Object.keys(statusMap).length;
@@ -39,8 +40,8 @@ export const ClusterStats: React.FC = () => {
     // Only add to accumulator if there are actual issues
     if (issueCount > 0) {
       acc.push({
-        name: clusterName,
-        issues: issueCount
+        issues: issueCount,
+        name: clusterName
       });
     }
 
@@ -51,8 +52,10 @@ export const ClusterStats: React.FC = () => {
     <>
       {clustersWithIssues.map(cluster => (
         <div key={cluster.name} className={popoverItemStyle}>
-          <PFBadge badge={PFBadges.Cluster} size="sm" />
-          <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link>
+          <span>
+            <PFBadge badge={PFBadges.Cluster} size="sm" />
+            <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link>
+          </span>
           <span className={popoverItemStatusStyle}>{t('{{count}} issue', { count: cluster.issues })}</span>
         </div>
       ))}
@@ -60,19 +63,24 @@ export const ClusterStats: React.FC = () => {
   );
 
   return (
-    <Card className={cardStyle}>
+    <Card className={cardStyle} data-test="clusters-card">
       <CardHeader>
-        <CardTitle>
-          {t('Clusters')} ({total})
+        <CardTitle data-test="clusters-card-title">
+          {t('Clusters')}
+          {!isLoading && !isError && ` (${total})`}
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
         {isLoading ? (
-          <Spinner size="lg" />
+          <OverviewCardLoadingState message={t('Fetching cluster data')} />
+        ) : isError ? (
+          <OverviewCardErrorState message={t('Clusters could not be loaded')} onTryAgain={refresh} />
+        ) : total === 0 ? (
+          <div className={statsContainerStyle}>–</div>
         ) : (
           <div className={statsContainerStyle}>
             {healthy > 0 && (
-              <div className={statItemStyle}>
+              <div className={statItemStyle} data-test="clusters-healthy">
                 <span>{healthy}</span>
                 <KialiIcon.Success />
               </div>
@@ -97,11 +105,13 @@ export const ClusterStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      <CardFooter>
-        <Link to={`/${Paths.MESH}`} className={linkStyle}>
-          {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-        </Link>
-      </CardFooter>
+      {!isLoading && !isError && (
+        <CardFooter>
+          <Link to={`/${Paths.MESH}`} className={linkStyle}>
+            {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+          </Link>
+        </CardFooter>
+      )}
     </Card>
   );
 };

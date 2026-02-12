@@ -283,7 +283,7 @@ export const DataPlaneStats: React.FC = () => {
   const naCount = namespacesNA.length;
 
   return (
-    <Card className={cardStyle}>
+    <Card className={cardStyle} data-test="data-planes-card">
       <CardHeader>
         <CardTitle>
           <span>{`${t('Data planes')} (${total})`}</span>
