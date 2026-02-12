@@ -2,7 +2,7 @@ import { URLParam } from '../../app/History';
 import { camelCase } from 'lodash';
 import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
 import { Paths } from '../../config';
-import { HealthStatusId } from '../../types/Health';
+import { DEGRADED, FAILURE, HealthStatusId, NOT_READY } from '../../types/Health';
 import { kialiNavigate } from '../../utils/NavigationUtils';
 import { FilterSelected } from '../../components/Filters/StatefulFilters';
 
@@ -23,6 +23,18 @@ export const buildDataPlanesUrl = (status?: HealthStatusId): string => {
   if (status) {
     params.set(healthFilterParam, status);
   }
+
+  return `/${Paths.NAMESPACES}?${params.toString()}`;
+};
+
+export const buildUnhealthyDataPlanesUrl = (): string => {
+  const params = new URLSearchParams();
+  params.set(typeFilterParam, dataPlaneParamValue);
+  // The Namespaces "Health" filter supports multiple values via repeated query params.
+  // Use ids (not translated titles) to keep the URL stable across locales.
+  params.append(healthFilterParam, FAILURE.id);
+  params.append(healthFilterParam, DEGRADED.id);
+  params.append(healthFilterParam, NOT_READY.id);
 
   return `/${Paths.NAMESPACES}?${params.toString()}`;
 };
