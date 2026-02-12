@@ -1,4 +1,5 @@
 import { MessageProps } from '@patternfly/chatbot';
+import { Map as ImmutableMap } from 'immutable';
 
 export const CHATBOT_CONVERSATION_ALWAYS_NAVIGATE = 'chatbot_conversation_always_navigate';
 
@@ -24,9 +25,16 @@ export type Action = {
   payload: string;
 };
 
+export type Tool = {
+  args: { [key: string]: Array<string> };
+  content: string;
+  name: string;
+  status: 'error' | 'success';
+};
+
 export type ToolCall = {
   name: string;
-  args: any;
+  args: { [key: string]: Array<string> };
   id: string;
   type: string;
 };
@@ -74,6 +82,7 @@ export type ReferencedDocument = {
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
+  tools?: ImmutableMap<string, Tool>;
   referenced_documents: ReferencedDocument[];
   actions?: Action[];
   scrollToHere?: boolean;

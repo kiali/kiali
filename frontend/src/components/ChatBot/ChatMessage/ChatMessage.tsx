@@ -1,11 +1,13 @@
 import React from 'react';
 import { ChatbotDisplayMode, Message, MessageProps } from '@patternfly/chatbot';
 import { Button, ExpandableSection } from '@patternfly/react-core';
-import { Action, ExtendedMessage, ReferencedDocument } from 'types/Chatbot';
+import { Action, ExtendedMessage, ReferencedDocument, Tool } from 'types/Chatbot';
+import { Map as ImmutableMap } from 'immutable';
 import { router } from 'app/History';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { FileAttachment } from './FileAttachment';
 import { ChatMessageMarkdown } from './ChatMessageMarkdown';
+import { ResponseTools } from './ResponseTools';
 
 type ChatMessageProps = {
   actions: Action[];
@@ -14,8 +16,11 @@ type ChatMessageProps = {
   index: string;
   innerRef: React.RefObject<HTMLDivElement>;
   message: MessageProps;
+  tools?: ImmutableMap<string, Tool>;
   referenced_documents: ReferencedDocument[];
   scrollToHere?: boolean;
+  setToolModalOpen: (toolModalOpen: boolean) => void;
+  setTool: (tool: Tool) => void;
 };
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -24,9 +29,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   referenced_documents,
   collapse,
   message,
+  tools,
   index,
   scrollToHere,
-  innerRef
+  innerRef,
+  setToolModalOpen,
+  setTool
 }) => {
   const renderAction = (actions: Action[]): React.ReactNode => {
     return actions.map(action => (
@@ -47,7 +55,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     index: string,
     referenced_documents: ReferencedDocument[],
     collapse?: boolean,
-    actions?: Action[]
+    actions?: Action[],
+    tools?: ImmutableMap<string, Tool>
   ): React.ReactNode => {
     const messageProps: any = {
       key: `chatbot_message_${index}`,
@@ -81,6 +90,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         openLinkInNewTab={messageProps.openLinkInNewTab}
       />
     ) : null;
+    const afterMainContent = tools ? (
+      <ResponseTools tools={tools} setToolModalOpen={setToolModalOpen} setTool={setTool} />
+    ) : null;
     const mergedExtraContent =
       markdownContent || message.extraContent
         ? {
@@ -93,10 +105,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )
           }
         : message.extraContent;
+
     const safeMessage: typeof message = {
       ...message,
       content: markdownContent ? '' : safeContent,
-      extraContent: mergedExtraContent
+      extraContent: {...mergedExtraContent, afterMainContent: afterMainContent}
     };
 
     const messageContent = (
@@ -137,7 +150,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     <div key={`chatbot_message_div_${index}`}>
       {scrollToHere && <div key={`chatbot_message_container_scroll_div_${index}`} ref={innerRef} />}
       <div key={`chatbot_message_container_div_${index}`}>
-        {getMessage(message, index, referenced_documents, collapse, actions)}
+        {getMessage(message, index, referenced_documents, collapse, actions, tools)}
       </div>
     </div>
   );

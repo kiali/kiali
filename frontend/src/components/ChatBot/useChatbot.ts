@@ -8,8 +8,10 @@ import {
   ContextRequest,
   ExtendedMessage,
   ModelAI,
-  ProviderAI
+  ProviderAI,
+  Tool
 } from '../../types/Chatbot';
+import { Map as ImmutableMap } from 'immutable';
 import {
   API_TIMEOUT,
   INITIAL_NOTICE,
@@ -132,13 +134,31 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
     const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
     const content = isMockApi ? safeContent : escapeHtml(safeContent);
+
+    let tools = ImmutableMap<string, Tool>();
+    if (typeof response === 'object' && response.tool_calls?.length && response.tool_results?.length) {
+      const resultById = new Map(response.tool_results.map(r => [r.id, r]));
+      for (const call of response.tool_calls) {
+        const result = resultById.get(call.id);
+        if (result) {
+          tools = tools.set(call.id, {
+            args: call.args,
+            name: call.name,
+            status: result.status,
+            content: result.content
+          });
+        }
+      }
+    }
+
     const message: ExtendedMessage = {
       role: 'bot',
       content,
       name: botName,
       avatar: logo,
       timestamp: getTimestamp(),
-      referenced_documents: typeof response === 'object' ? response.referenced_documents : []
+      referenced_documents: typeof response === 'object' ? response.referenced_documents : [],
+      tools
     };
 
     return message;
