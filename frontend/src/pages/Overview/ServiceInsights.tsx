@@ -105,7 +105,7 @@ const emptyStateStyle = kialiStyle({
 
 const sortIconDisabledStyle = kialiStyle({
   // "Disabled" sort indicator: visible but not interactive.
-  color: PFColors.Black1000,
+  color: 'var(--pf-t--global--icon--color--regular)',
   fontSize: '0.75rem',
   marginLeft: '0.5rem',
   opacity: 1
@@ -356,10 +356,9 @@ export const ServiceInsights: React.FC = () => {
             headerContent={<span>{t('Service Insights')}</span>}
             bodyContent={
               <>
-                Lists services by top <strong>Error rate</strong> and <strong>P95 Latency</strong>. Status icons reflect
-                the service health for the time period. Hover over the error rate to see the associated request rate.
-                Entries with the same error rate are then ordered by request rate. Hover over a service name to see its
-                cluster and namespace. Click the service name to go to its service detail page.
+                {t(
+                  'Lists services by top Error rate and P95 Latency. Status icons reflect the service health for the time period. Hover over the error rate to see the associated request rate. Entries with the same error rate are then ordered by request rate. Hover over a service name to see its cluster and namespace. Click the service name to go to its service detail page.'
+                )}
               </>
             }
             position={PopoverPosition.top}

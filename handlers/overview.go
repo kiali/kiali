@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -32,42 +33,114 @@ const overviewServiceMetricsLimit = 6
 
 // OverviewServiceLatencies returns the top service latencies (p95) across all clusters and namespaces.
 // Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
-func OverviewServiceLatencies(conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface) http.HandlerFunc {
+func OverviewServiceLatencies(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		zl := log.FromContext(ctx)
 
 		rateInterval := string(conf.HealthConfig.Compute.Duration)
 
+		// Use the business layer to respect discovery selectors and per-user namespace visibility.
+		layer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error creating business layer: "+err.Error())
+			return
+		}
+
 		// Build the PromQL query for p95 latency
 		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
 		// Currently uses all reporters, which can get source and dest reporting for the same request,
 		// but ensures we don't miss out on anything reported from only one proxy (including waypoints)
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
-		labels := `destination_workload!="unknown"`
 
-		query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-		zl.Debug().Msgf("OverviewServiceLatencies query: %s", query)
-
-		// Execute query
+		// Execute per-cluster queries so that we can apply per-cluster namespace visibility (avoid leaking
+		// namespaces from clusters a user cannot access).
 		queryTime := time.Now()
-		result, warnings, err := prom.API().Query(ctx, query, queryTime)
-		if len(warnings) > 0 {
-			zl.Warn().Msgf("OverviewServiceLatencies. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
-		}
-		if err != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+err.Error())
+		services := make([]models.ServiceLatency, 0, overviewServiceMetricsLimit)
+		successfulClusterQueries := 0
+		failedClusterQueries := 0
+		var lastQueryErr error
+
+		if kialiCache == nil {
+			RespondWithJSON(w, http.StatusOK, models.ServiceLatencyResponse{Services: services})
 			return
 		}
 
-		// Convert results (already sorted by Prometheus topk)
-		vector, ok := result.(model.Vector)
-		if !ok {
-			RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type")
+		for _, cluster := range kialiCache.GetClusters() {
+			labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster.Name)
+
+			if !conf.Deployment.ClusterWideAccess {
+				namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster.Name)
+				if err != nil {
+					zl.Debug().Err(err).Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: could not get namespaces for cluster")
+					continue
+				}
+
+				nsRegex := buildNamespaceRegex(namespaces)
+				if nsRegex == "" {
+					continue
+				}
+
+				labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
+			}
+
+			query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+			zl.Debug().Str("cluster", cluster.Name).Msgf("OverviewServiceLatencies query: %s", query)
+
+			result, warnings, err := prom.API().Query(ctx, query, queryTime)
+			if len(warnings) > 0 {
+				zl.Warn().Str("cluster", cluster.Name).Msgf("OverviewServiceLatencies. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+			}
+			if err != nil {
+				failedClusterQueries++
+				lastQueryErr = err
+				zl.Warn().Err(err).Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: Prometheus query failed for cluster")
+				continue
+			}
+
+			vector, ok := result.(model.Vector)
+			if !ok {
+				failedClusterQueries++
+				lastQueryErr = fmt.Errorf("unexpected Prometheus result type: %T", result)
+				zl.Warn().Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: unexpected Prometheus result type for cluster")
+				continue
+			}
+
+			clusterServices := convertToServiceLatencies(vector)
+			for i := range clusterServices {
+				// Some telemetry setups may omit destination_cluster. If we scoped the query to a cluster, default it.
+				if clusterServices[i].Cluster == "" {
+					clusterServices[i].Cluster = cluster.Name
+				}
+			}
+
+			services = append(services, clusterServices...)
+			successfulClusterQueries++
+		}
+
+		// If Prometheus queries failed for all clusters, surface an error (so UI shows error state).
+		if successfulClusterQueries == 0 && failedClusterQueries > 0 && lastQueryErr != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+lastQueryErr.Error())
 			return
 		}
 
-		services := convertToServiceLatencies(vector)
+		// Sort and take global top N across all clusters.
+		sort.Slice(services, func(i, j int) bool {
+			return services[i].Latency > services[j].Latency
+		})
+		if overviewServiceMetricsLimit < len(services) {
+			services = services[:overviewServiceMetricsLimit]
+		}
+
 		enrichServiceLatenciesWithHealth(services, kialiCache, conf)
 
 		response := models.ServiceLatencyResponse{
@@ -76,6 +149,23 @@ func OverviewServiceLatencies(conf *config.Config, kialiCache cache.KialiCache, 
 
 		RespondWithJSON(w, http.StatusOK, response)
 	}
+}
+
+// buildNamespaceRegex builds an anchored regex matching exactly the given namespaces.
+// It returns an empty string if no valid namespaces are provided.
+func buildNamespaceRegex(namespaces []models.Namespace) string {
+	ns := make([]string, 0, len(namespaces))
+	for _, n := range namespaces {
+		if n.Name == "" {
+			continue
+		}
+		ns = append(ns, regexp.QuoteMeta(n.Name))
+	}
+	if len(ns) == 0 {
+		return ""
+	}
+	sort.Strings(ns)
+	return "^(?:" + strings.Join(ns, "|") + ")$"
 }
 
 // enrichServiceLatenciesWithHealth sets HealthStatus on each ServiceLatency from the health cache.
