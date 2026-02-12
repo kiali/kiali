@@ -56,93 +56,117 @@ func OverviewServiceLatencies(
 			return
 		}
 
-		// Build the PromQL query for p95 latency
+		// Execute the PromQL queries to get the top p95 latencies. Because histogram querying is
+		// heavy, We try to make the most efficient prometheus queries possible, given the user's
+		// cluster and/or namespace access. All of the queries use the prom 'topk' function to limit
+		// query processing and return only the necessary time-series.
+
 		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
 		// Currently uses all reporters, which can get source and dest reporting for the same request,
 		// but ensures we don't miss out on anything reported from only one proxy (including waypoints)
+		var services []models.ServiceLatency
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
-
-		// Execute per-cluster queries so that we can apply per-cluster namespace visibility (avoid leaking
-		// namespaces from clusters a user cannot access).
 		queryTime := time.Now()
-		services := make([]models.ServiceLatency, 0, overviewServiceMetricsLimit)
-		successfulClusterQueries := 0
-		failedClusterQueries := 0
-		var lastQueryErr error
 
-		if kialiCache == nil {
-			RespondWithJSON(w, http.StatusOK, models.ServiceLatencyResponse{Services: services})
-			return
-		}
-
-		for _, cluster := range kialiCache.GetClusters() {
-			labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster.Name)
-
-			if !conf.Deployment.ClusterWideAccess {
-				namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster.Name)
-				if err != nil {
-					zl.Debug().Err(err).Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: could not get namespaces for cluster")
-					continue
-				}
-
-				nsRegex := buildNamespaceRegex(namespaces)
-				if nsRegex == "" {
-					continue
-				}
-
-				labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
-			}
+		// For users with full access, execute a single, cross-cluster, cross-namespace query.
+		if hasAllClusterNamespaceAccess(ctx, layer, "") {
+			labels := `destination_workload!="unknown"`
 
 			query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-			zl.Debug().Str("cluster", cluster.Name).Msgf("OverviewServiceLatencies query: %s", query)
+			zl.Debug().Msgf("OverviewServiceLatencies query: %s", query)
 
 			result, warnings, err := prom.API().Query(ctx, query, queryTime)
 			if len(warnings) > 0 {
-				zl.Warn().Str("cluster", cluster.Name).Msgf("OverviewServiceLatencies. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+				zl.Warn().Msgf("OverviewServiceLatencies. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 			}
 			if err != nil {
-				failedClusterQueries++
-				lastQueryErr = err
-				zl.Warn().Err(err).Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: Prometheus query failed for cluster")
-				continue
+				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+err.Error())
+				return
 			}
 
+			// Convert results (already sorted by Prometheus topk)
 			vector, ok := result.(model.Vector)
 			if !ok {
-				failedClusterQueries++
-				lastQueryErr = fmt.Errorf("unexpected Prometheus result type: %T", result)
-				zl.Warn().Str("cluster", cluster.Name).Msg("OverviewServiceLatencies: unexpected Prometheus result type for cluster")
-				continue
+				RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type")
+				return
 			}
+			services = convertToServiceLatencies(vector)
 
-			clusterServices := convertToServiceLatencies(vector)
-			for i := range clusterServices {
-				// Some telemetry setups may omit destination_cluster. If we scoped the query to a cluster, default it.
-				if clusterServices[i].Cluster == "" {
-					clusterServices[i].Cluster = cluster.Name
+		} else {
+			// For users with limited access, execute per-cluster queries, limiting the namespaces, as needed.
+			services = make([]models.ServiceLatency, 0, overviewServiceMetricsLimit)
+			successfulClusterQueries := 0
+			failedClusterQueries := 0
+			var lastQueryErr error
+
+			userClusters := layer.Namespace.GetClusterList()
+
+			for _, cluster := range userClusters {
+				labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
+				if !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
+					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
+					if err != nil {
+						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceLatencies: could not get namespaces for cluster")
+						continue
+					}
+					nsRegex := buildNamespaceRegex(namespaces)
+					if nsRegex == "" {
+						continue
+					}
+
+					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
 				}
+
+				query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+				zl.Debug().Str("cluster", cluster).Msgf("OverviewServiceLatencies query: %s", query)
+
+				result, warnings, err := prom.API().Query(ctx, query, queryTime)
+				if len(warnings) > 0 {
+					zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceLatencies. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+				}
+				if err != nil {
+					failedClusterQueries++
+					lastQueryErr = err
+					zl.Warn().Err(err).Str("cluster", cluster).Msg("OverviewServiceLatencies: Prometheus query failed for cluster")
+					continue
+				}
+
+				vector, ok := result.(model.Vector)
+				if !ok {
+					failedClusterQueries++
+					lastQueryErr = fmt.Errorf("unexpected Prometheus result type: %T", result)
+					zl.Warn().Str("cluster", cluster).Msg("OverviewServiceLatencies: unexpected Prometheus result type for cluster")
+					continue
+				}
+
+				clusterServices := convertToServiceLatencies(vector)
+				for i := range clusterServices {
+					// Some telemetry setups may omit destination_cluster. If we scoped the query to a cluster, default it.
+					if clusterServices[i].Cluster == "" {
+						clusterServices[i].Cluster = cluster
+					}
+				}
+
+				services = append(services, clusterServices...)
+				successfulClusterQueries++
 			}
 
-			services = append(services, clusterServices...)
-			successfulClusterQueries++
-		}
+			// If Prometheus queries failed for all clusters, surface an error (so UI shows error state).
+			if successfulClusterQueries == 0 && failedClusterQueries > 0 && lastQueryErr != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus in service latencies: "+lastQueryErr.Error())
+				return
+			}
 
-		// If Prometheus queries failed for all clusters, surface an error (so UI shows error state).
-		if successfulClusterQueries == 0 && failedClusterQueries > 0 && lastQueryErr != nil {
-			RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+lastQueryErr.Error())
-			return
-		}
-
-		// Sort and take global top N across all clusters.
-		sort.Slice(services, func(i, j int) bool {
-			return services[i].Latency > services[j].Latency
-		})
-		if overviewServiceMetricsLimit < len(services) {
-			services = services[:overviewServiceMetricsLimit]
+			// Sort and take global top N across all clusters.
+			sort.Slice(services, func(i, j int) bool {
+				return services[i].Latency > services[j].Latency
+			})
+			if overviewServiceMetricsLimit < len(services) {
+				services = services[:overviewServiceMetricsLimit]
+			}
 		}
 
 		enrichServiceLatenciesWithHealth(services, kialiCache, conf)
-
 		response := models.ServiceLatencyResponse{
 			Services: services,
 		}
@@ -378,4 +402,48 @@ func overviewServiceRatesFromHealthCache(
 	}
 
 	return services
+}
+
+// hasAllClusterNamespaceAccess returns true if the user has access to the same set of namespaces
+// as Kiali, for the specified cluster. If cluster is set to "", then test against all clusters
+// that Kiali has access to.
+func hasAllClusterNamespaceAccess(ctx context.Context, layer *business.Layer, cluster string) bool {
+	zl := log.FromContext(ctx)
+
+	var clusters []string
+	if cluster == "" {
+		// Use Kiali SA cluster list so the check fails if the user is missing any cluster.
+		clusters = layer.Namespace.GetKialiSAClusterList()
+	} else {
+		clusters = []string{cluster}
+	}
+
+	for _, c := range clusters {
+		userNs, err := layer.Namespace.GetClusterNamespaces(ctx, c)
+		if err != nil {
+			zl.Debug().Err(err).Str("cluster", c).Msg("hasAllClusterNamespaceAccess: could not get user namespaces")
+			return false
+		}
+
+		kialiNs, err := layer.Namespace.GetKialiSAClusterNamespaces(ctx, c)
+		if err != nil {
+			zl.Debug().Err(err).Str("cluster", c).Msg("hasAllClusterNamespaceAccess: could not get Kiali SA namespaces")
+			return false
+		}
+
+		// Build set of user namespace names for fast lookup
+		userNsSet := make(map[string]struct{}, len(userNs))
+		for _, ns := range userNs {
+			userNsSet[ns.Name] = struct{}{}
+		}
+
+		// Check that all Kiali SA namespaces are in the user's namespace set
+		for _, ns := range kialiNs {
+			if _, ok := userNsSet[ns.Name]; !ok {
+				return false
+			}
+		}
+	}
+
+	return true
 }

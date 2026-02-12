@@ -333,6 +333,156 @@ func TestGetNamespacesDifferentTokens(t *testing.T) {
 	assert.Equal("east", namespace.Cluster)
 }
 
+func TestGetKialiSAClusterList(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	// User only has access to "east"
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+	}
+
+	// Kiali SA has access to both "east" and "west"
+	saEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saWest := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": saEast,
+		"west": saWest,
+	}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// GetClusterList should return only user clusters
+	userClusters := nsservice.GetClusterList()
+	require.Len(userClusters, 1)
+	require.Contains(userClusters, "east")
+
+	// GetKialiSAClusterList should return all SA clusters
+	saClusters := nsservice.GetKialiSAClusterList()
+	require.Len(saClusters, 2)
+	require.Contains(saClusters, "east")
+	require.Contains(saClusters, "west")
+}
+
+func TestGetKialiSAClusterNamespaces(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	// User only has access to bookinfo
+	userEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	userEast.Token = "user-token"
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": userEast,
+	}
+
+	// Kiali SA has access to bookinfo, alpha, and beta
+	saEast := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("beta"),
+	)
+	saEast.Token = "sa-token"
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": saEast,
+	}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// User namespaces should only include bookinfo
+	userNs, err := nsservice.GetClusterNamespaces(context.TODO(), "east")
+	require.NoError(err)
+	require.Len(userNs, 1)
+	require.Equal("bookinfo", userNs[0].Name)
+
+	// SA namespaces should include all three
+	saNs, err := nsservice.GetKialiSAClusterNamespaces(context.TODO(), "east")
+	require.NoError(err)
+	require.Len(saNs, 3)
+
+	saNames := make([]string, 0, len(saNs))
+	for _, ns := range saNs {
+		saNames = append(saNames, ns.Name)
+	}
+	require.Contains(saNames, "bookinfo")
+	require.Contains(saNames, "alpha")
+	require.Contains(saNames, "beta")
+}
+
+func TestGetKialiSAClusterNamespacesCached(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
+
+	userEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	userEast.Token = "user-token"
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": userEast,
+	}
+
+	saEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saEast.Token = "sa-token"
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": saEast,
+	}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+
+	// Pre-populate cache with SA namespaces (including "gamma" which isn't in the actual client)
+	kialiCache.SetNamespaces(
+		saEast.GetToken(),
+		[]models.Namespace{
+			{Name: "bookinfo", Cluster: "east"},
+			{Name: "gamma", Cluster: "east"},
+		},
+	)
+
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// Should return the cached SA namespaces, including "gamma"
+	saNs, err := nsservice.GetKialiSAClusterNamespaces(context.TODO(), "east")
+	require.NoError(err)
+	require.Len(saNs, 2)
+
+	saNames := make([]string, 0, len(saNs))
+	for _, ns := range saNs {
+		saNames = append(saNames, ns.Name)
+	}
+	require.Contains(saNames, "bookinfo")
+	require.Contains(saNames, "gamma")
+}
+
+func TestGetKialiSAClusterNamespacesUnknownCluster(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+	}
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+	}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	_, err := nsservice.GetKialiSAClusterNamespaces(context.TODO(), "unknown")
+	require.Error(err)
+}
+
 type forbiddenFake struct{ kubernetes.UserClientInterface }
 
 func (f *forbiddenFake) GetNamespace(namespace string) (*core_v1.Namespace, error) {
