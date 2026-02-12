@@ -4,7 +4,7 @@
 # Refer to the --help output for a description of this script and its available options.
 #
 
-set +u
+#set +u
 
 EXTERNAL_CONTROLPLANE="external-controlplane"
 EXTERNAL_KIALI="external-kiali"
@@ -17,7 +17,7 @@ KEYCLOAK_REQUESTS_MEMORY=""
 CLUSTER2_AMBIENT="true"
 
 INSTALL_PERSES="false"
-HELM_CHARTS_DIR="${HELM_CHARTS_DIR:-}"
+#HELM_CHARTS_DIR="${HELM_CHARTS_DIR:-}"
 ISTIO_VERSION="${ISTIO_VERSION:-}"
 
 infomsg() {
@@ -107,7 +107,6 @@ HELP
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR}/..
 
-# Version parsing/comparison helpers
 source "${SCRIPT_DIR}/istio/version-utils.sh"
 
 # TODO: Remove sail option once everything uses sail to install
@@ -179,7 +178,7 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
 # https://kiali.io/docs/installation/installation-guide/prerequisites/
 # https://istio.io/latest/docs/releases/supported-releases/
-if [ -z "${ISTIO_VERSION:-}" ]; then
+if [ -z "${ISTIO_VERSION}" ]; then
   if [ "${TARGET_BRANCH}" == "v1.73" ]; then
     ISTIO_VERSION="1.18.7"
   elif [ "${TARGET_BRANCH}" == "v2.4" ]; then
