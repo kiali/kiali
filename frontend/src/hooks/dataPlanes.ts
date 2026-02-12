@@ -9,7 +9,11 @@ import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { combinedWorstStatus, isDataPlaneNamespace, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
 
-type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
+export type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
+
+const nsKey = (cluster: string | undefined, name: string): string => {
+  return `${cluster ?? ''}::${name}`;
+};
 
 export type DataPlanesResult = {
   ambient: number;
@@ -45,10 +49,6 @@ export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSecon
 
   const refresh = React.useCallback((): void => {
     setRefreshIndex(i => i + 1);
-  }, []);
-
-  const nsKey = React.useCallback((cluster: string | undefined, name: string): string => {
-    return `${cluster ?? ''}::${name}`;
   }, []);
 
   React.useEffect(() => {
@@ -161,7 +161,7 @@ export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSecon
     return () => {
       active = false;
     };
-  }, [duration, namespaces, nsKey, refreshIndex, t]);
+  }, [duration, namespaces, refreshIndex, t]);
 
   return {
     ...result,
