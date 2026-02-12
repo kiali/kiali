@@ -893,17 +893,17 @@ type Rate struct {
 type HealthCompute struct {
 	// Duration is the time period over which health is calculated.
 	// Used as the rate interval for Prometheus queries.
-	// 0 means auto-calculate from elapsed time since last run.
-	// Default: 0
+	// Minimum: 1m
+	// Default: 5m
 	Duration time.Duration `yaml:"duration,omitempty"`
 
 	// RefreshInterval is the interval between health cache refreshes.
-	// Default: 2m
+	// Default: 3m
 	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
 
 	// Timeout is the maximum time allowed for a single health refresh cycle.
 	// If exceeded, the refresh is cancelled and the next cycle starts on schedule.
-	// Default: 5m
+	// Default: 10m
 	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
@@ -1099,9 +1099,9 @@ func NewConfig() (c *Config) {
 		},
 		HealthConfig: HealthConfig{
 			Compute: HealthCompute{
-				Duration:        0, // 0 means auto-calculate from elapsed time
-				RefreshInterval: 2 * time.Minute,
-				Timeout:         5 * time.Minute,
+				Duration:        5 * time.Minute,
+				RefreshInterval: 3 * time.Minute,
+				Timeout:         10 * time.Minute,
 			},
 		},
 		IstioLabels: IstioLabels{
@@ -2035,6 +2035,12 @@ func Validate(conf *Config) error {
 	cfgTracing := conf.ExternalServices.Tracing
 	if cfgTracing.Enabled && cfgTracing.Provider != JaegerProvider && cfgTracing.Provider != TempoProvider {
 		return fmt.Errorf("error in configuration options for the external services tracing provider. Invalid provider type [%s]", cfgTracing.Provider)
+	}
+
+	// Validate health config duration (minimum 1 minute)
+	if conf.HealthConfig.Compute.Duration < time.Minute {
+		log.Warningf("health_config.compute.duration [%v] is less than the minimum of 1m. Setting to 1m.", conf.HealthConfig.Compute.Duration)
+		conf.HealthConfig.Compute.Duration = time.Minute
 	}
 
 	return nil

@@ -294,30 +294,28 @@ func (m *healthMonitor) exportHealthStatusMetrics(
 	}
 }
 
-// calculateDuration calculates the health duration based on configuration.
-// If Duration is 0, it calculates based on elapsed time since last run.
+// calculateDuration calculates the health duration based on configuration and elapsed time.
+// On first run, it uses the configured duration. On subsequent runs, if the elapsed time
+// since the last run exceeds the configured duration, it extends the interval to cover
+// the elapsed period (with a 10% buffer).
 func (m *healthMonitor) calculateDuration() string {
-	configuredInterval := m.conf.HealthConfig.Compute.Duration
+	configuredDuration := m.conf.HealthConfig.Compute.Duration
 
-	// If configured interval is non-zero, use it
-	if configuredInterval > 0 {
-		return formatDuration(configuredInterval)
-	}
-
-	// Auto-calculate based on elapsed time since last run
+	// First run - use the configured duration
 	if m.lastRun.IsZero() {
-		// First run - use 2x the refresh interval as a reasonable default
-		return formatDuration(m.conf.HealthConfig.Compute.RefreshInterval * 2)
+		return formatDuration(configuredDuration)
 	}
 
 	elapsed := time.Since(m.lastRun)
+
+	// If elapsed time is within the configured duration, use the configured duration
+	if elapsed <= configuredDuration {
+		return formatDuration(configuredDuration)
+	}
+
+	// Elapsed time exceeds configured duration - extend the interval
 	// Add a small buffer (10%) to ensure we cover the entire period
 	interval := time.Duration(float64(elapsed) * 1.1)
-
-	// Minimum of 1 minute
-	if interval < time.Minute {
-		interval = time.Minute
-	}
 
 	return formatDuration(interval)
 }
