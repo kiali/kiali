@@ -769,17 +769,3 @@ Then('user is redirected to that Service details page', () => {
   cy.contains('button, a', 'Traffic').should('be.visible');
   cy.contains('button, a', 'Inbound Metrics').should('be.visible');
 });
-
-When('user clicks View Data planes in Data planes card', () => {
-  getDataPlanesCard().within(() => {
-    cy.getBySel('data-planes-view-namespaces').should('be.visible').click();
-  });
-});
-
-Then('user is redirected to Namespaces page with data-plane type filter', () => {
-  cy.location('pathname').should('match', /\/console\/namespaces$/);
-  cy.location('search').then(search => {
-    const params = new URLSearchParams(search);
-    expect(params.get('type')).to.eq('Data plane');
-  });
-});

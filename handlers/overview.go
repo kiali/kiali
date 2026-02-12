@@ -73,7 +73,7 @@ func OverviewServiceLatencies(
 			labels := `destination_workload!="unknown"`
 
 			query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-			zl.Debug().Msgf("OverviewServiceLatencies query: %s", query)
+			zl.Trace().Msgf("OverviewServiceLatencies query: %s", query)
 
 			result, warnings, err := prom.API().Query(ctx, query, queryTime)
 			if len(warnings) > 0 {
@@ -118,7 +118,7 @@ func OverviewServiceLatencies(
 				}
 
 				query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-				zl.Debug().Str("cluster", cluster).Msgf("OverviewServiceLatencies query: %s", query)
+				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceLatencies query: %s", query)
 
 				result, warnings, err := prom.API().Query(ctx, query, queryTime)
 				if len(warnings) > 0 {
