@@ -250,16 +250,13 @@ Given('Clusters API fails once', () => {
 });
 
 Given('Clusters API returns empty data', () => {
-  cy.intercept(
-    {
-      method: 'GET',
-      url: CLUSTERS_API_URL
-    },
-    {
+  // Use a function handler to ensure ALL requests to this endpoint return empty data
+  cy.intercept({ method: 'GET', url: CLUSTERS_API_URL }, req => {
+    req.reply({
       statusCode: 200,
       body: []
-    }
-  ).as('clustersStatus');
+    });
+  }).as('clustersStatus');
 });
 
 When('user clicks Try Again in Clusters card', () => {
@@ -298,8 +295,9 @@ Then('Clusters card shows count {int} and footer link', (count: number) => {
 
 Then('Clusters card shows no data state with dash', () => {
   cy.wait('@clustersStatus');
+  cy.waitForReact();
   getClustersCard().within(() => {
-    cy.contains('Clusters (').should('not.exist');
+    cy.contains('Clusters (0)').should('be.visible');
     cy.contains('–').should('be.visible');
     cy.contains('View Mesh').should('be.visible');
   });
