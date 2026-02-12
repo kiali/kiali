@@ -1,15 +1,17 @@
 @overview
+@selected
 Feature: New Overview - Overview cards
 
   Background:
     Given user is at administrator perspective
 
   @core-2
-  Scenario: Istio configs card can navigate to Istio config list with all namespaces
-    Given Istio configs API is observed
+  Scenario: View all warning Istio configs includes namespaces and filters
+    Given Istio configs API returns at least 4 warning configs
     And user is at the "overview" page
-    When user clicks View Istio config in Istio configs card
-    Then user is redirected to Istio config list with all namespaces
+    When user opens the Istio configs warnings popover
+    And user clicks the "View warning Istio configs" popover action
+    Then user is redirected to Istio config list with all namespaces and warning filters
 
   # Combined loading/error state tests for all overview cards
   @core-2
@@ -29,18 +31,20 @@ Feature: New Overview - Overview cards
   # Control planes card specific tests
   @core-2
   Scenario: Control planes card can retry after error
-    Given Control planes API fails once
+    Given Control planes API fails
     And user is at the "overview" page
     Then Control planes card shows error state without count or footer link
-    When user clicks Try Again in Control planes card
-    Then Control planes card shows count and footer link
+    When Control planes API succeeds with 1 healthy control plane
+    And user clicks Try Again in Control planes card
+    Then Control planes card shows count 1 and footer link
 
   @core-2
-  Scenario: Control planes card can navigate to Namespaces page with control-plane type filter
-    Given Control planes API is observed
+  Scenario: Control plane links in popover navigate to Mesh page with cluster filter
+    Given Control planes API returns 1 unhealthy control plane in cluster "Kubernetes"
     And user is at the "overview" page
-    When user navigates to Namespaces page from Control planes card
-    Then user is redirected to Namespaces page with control-plane type filter
+    When user opens the Control planes issues popover
+    And user clicks the "istiod-kubernetes" control plane link in the popover
+    Then user is redirected to Mesh page with cluster filter "Kubernetes"
 
   @core-2
   Scenario: Data planes footer link navigates to Namespaces list with type filter
@@ -86,8 +90,8 @@ Feature: New Overview - Overview cards
     When user scales to "1" the "istiod" in namespace "istio-system"
     And the user refreshes the page
     Then Clusters card shows all healthy clusters
-  
-  @core-2
+
+    @core-2
   Scenario: Service insights card shows loading state without tables or footer link
     Given Service insights APIs respond slowly
     And user is at the "overview" page
@@ -126,4 +130,3 @@ Feature: New Overview - Overview cards
     Given Service insights mock APIs are observed
     And user is at the "overview" page
     Then Service insights card shows mock data tables
-
