@@ -1770,7 +1770,7 @@ func NewRoutes(
 			LogGroupName:  log.MetricsLogName,
 			Method:        "GET",
 			Pattern:       "/api/overview/metrics/services/latency",
-			HandlerFunc:   handlers.OverviewServiceLatencies(conf, kialiCache, prom),
+			HandlerFunc:   handlers.OverviewServiceLatencies(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			Authenticated: true,
 		},
 		// swagger:route GET /overview/metrics/services/rates overview overviewServiceRates

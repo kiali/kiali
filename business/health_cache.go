@@ -67,12 +67,12 @@ type healthMonitor struct {
 func (m *healthMonitor) Start(ctx context.Context) {
 	interval, err := m.conf.HealthConfig.Compute.RefreshInterval.ToDuration()
 	if err != nil {
-		m.logger.Warn().Err(err).Str("refreshInterval", string(m.conf.HealthConfig.Compute.RefreshInterval)).Msg("Invalid refresh interval, using 2m")
+		m.logger.Warn().Err(err).Str("refreshInterval", string(m.conf.HealthConfig.Compute.RefreshInterval)).Msg("Invalid refresh interval, using 3m")
 		interval = 3 * time.Minute
 	}
 	timeout, err := m.conf.HealthConfig.Compute.Timeout.ToDuration()
 	if err != nil {
-		m.logger.Warn().Err(err).Str("timeout", string(m.conf.HealthConfig.Compute.Timeout)).Msg("Invalid timeout, using 5m")
+		m.logger.Warn().Err(err).Str("timeout", string(m.conf.HealthConfig.Compute.Timeout)).Msg("Invalid timeout, using 10m")
 		timeout = 10 * time.Minute
 	}
 	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", m.conf.HealthConfig.Compute.RefreshInterval, m.conf.HealthConfig.Compute.Timeout)
