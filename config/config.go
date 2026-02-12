@@ -1368,6 +1368,25 @@ func (conf *Config) ValidateAI() error {
 			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
 		}
 
+		if p.Type == LightSpeedProvider {
+			if len(p.Models) > 1 {
+				return fmt.Errorf("LightSpeed provider %q cannot have multiple models", p.Name)
+			}
+			model := &p.Models[0]
+			if model.Endpoint == "" {
+				return fmt.Errorf("LightSpeed provider %q %q requires an endpoint", p.Name, model.Name)
+			}
+			if model.Name == "" {
+				model.Name = p.Name
+			}
+			p.DefaultModel = p.Name
+			p.Description = "LightSpeed provider"
+			model.Model = p.Name
+			model.Description = "LightSpeed provider"
+			model.Enabled = true
+			continue
+		}
+
 		// Default to the first model if no default model is provided
 		if p.DefaultModel == "" {
 			nModels := len(p.Models)
@@ -1379,17 +1398,6 @@ func (conf *Config) ValidateAI() error {
 			default:
 				return fmt.Errorf("chat_ai.providers[%q].default_model is required and multiple models are provided", p.Name)
 			}
-		}
-
-		if p.Type == LightSpeedProvider {
-			if len(p.Models) > 1 {
-				return fmt.Errorf("LightSpeed provider %q cannot have multiple models", p.Name)
-			}
-			model := p.Models[0]
-			if model.Endpoint == "" {
-				return fmt.Errorf("LightSpeed provider %q %q requires an endpoint", p.Name, model.Name)
-			}
-			continue
 		}
 
 		defaultModelFound := false

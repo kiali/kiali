@@ -16,7 +16,8 @@ func TestNew(t *testing.T) {
 		t.Errorf("expected default http client")
 	}
 
-	c2 := New("https://ols.example.com/", WithAuthToken("token1"))
+	c2 := New("https://ols.example.com/")
+	c2.SetAuthToken("token1")
 	if c2.authToken != "token1" {
 		t.Errorf("authToken: got %q", c2.authToken)
 	}
@@ -41,12 +42,18 @@ func TestQuery_Validation(t *testing.T) {
 	ctx := context.Background()
 	cl := New(srv.URL)
 
-	_, err := cl.Query(ctx, nil, "")
+	_, code, err := cl.Query(ctx, nil, "")
+	if code != http.StatusBadRequest {
+		t.Errorf("got code %d", code)
+	}
 	if err == nil || err.Error() != "LLMRequest is required" {
 		t.Errorf("Query(nil): got err %v", err)
 	}
 
-	_, err = cl.Query(ctx, &LLMRequest{}, "")
+	_, code, err = cl.Query(ctx, &LLMRequest{}, "")
+	if code != http.StatusBadRequest {
+		t.Errorf("got code %d", code)
+	}
 	if err == nil || err.Error() != "query is required" {
 		t.Errorf("Query(empty query): got err %v", err)
 	}
@@ -108,8 +115,12 @@ func TestAuthorized_Success(t *testing.T) {
 	defer srv.Close()
 
 	ctx := context.Background()
-	cl := New(srv.URL, WithAuthToken("bearer-token"))
-	out, err := cl.Authorized(ctx, "")
+	cl := New(srv.URL)
+	cl.SetAuthToken("bearer-token")
+	out, code, err := cl.Authorized(ctx, "")
+	if code != http.StatusOK {
+		t.Errorf("got code %d", code)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

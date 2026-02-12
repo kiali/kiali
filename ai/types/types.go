@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
 )
 
 // AIContext represents the context information for an AI request
@@ -24,13 +23,23 @@ type AIRequest struct {
 	Context        AIContext `json:"context,omitempty"`
 }
 
-// AIResponse represents the provider reply (shape aligns with frontend expectations).
+type ReferencedDocument struct {
+	DocTitle string `json:"doc_title"`
+	DocURL   string `json:"doc_url"`
+}
+
 type AIResponse struct {
-	Actions   []get_action_ui.Action   `json:"actions,omitempty"`
-	Answer    string                   `json:"answer"`
-	Citations []get_citations.Citation `json:"citations,omitempty"`
-	Error     string                   `json:"error,omitempty"`
-	Mu        sync.Mutex               `json:"-"`
+	AvailableQuotas     map[string]int         `json:"available_quotas"`
+	ConversationID      string                 `json:"conversation_id"`
+	InputTokens         int                    `json:"input_tokens"`
+	OutputTokens        int                    `json:"output_tokens"`
+	ReferencedDocuments []ReferencedDocument   `json:"referenced_documents"`
+	Actions             []get_action_ui.Action `json:"actions,omitempty"`
+	Response            string                 `json:"response"`
+	ToolCalls           []any                  `json:"tool_calls"`
+	ToolResults         []any                  `json:"tool_results"`
+	Truncated           bool                   `json:"truncated"`
+	Error               string                 `json:"error,omitempty"`
 }
 
 // ConversationMessage represents a stored message in a conversation.

@@ -3,22 +3,22 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/kiali/kiali/ai/types"
 )
 
 const (
-	pathAuthorized           = "/authorized"
-	pathFeedbackStatus       = "/v1/feedback/status"
-	pathLiveness             = "/liveness"
-	pathMCPClientAuthHeaders = "/v1/mcp/client-auth-headers"
-	pathQuery                = "/v1/query"
-	pathReadiness            = "/readiness"
-	pathStreamingQuery       = "/v1/streaming_query"
+	pathAuthorized = "/authorized"
+	pathLiveness   = "/liveness"
+	pathQuery      = "/v1/query"
+	pathReadiness  = "/readiness"
 )
 
 // Client calls the OpenShift LightSpeed (OLS) API.
@@ -38,11 +38,24 @@ func WithHTTPClient(c *http.Client) Option {
 	}
 }
 
-// WithAuthToken sets the Bearer token used for authenticated endpoints.
-func WithAuthToken(token string) Option {
-	return func(client *Client) {
-		client.authToken = strings.TrimSpace(token)
+// WithInsecureSkipTLS configures the client to skip TLS certificate verification (e.g. for CRC or self-signed OLS).
+func WithInsecureSkipTLS(skip bool) Option {
+	return func(c *Client) {
+		if !skip {
+			return
+		}
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{}
+		}
+		transport.TLSClientConfig.InsecureSkipVerify = true
+		c.httpClient = &http.Client{Transport: transport}
 	}
+}
+
+// SetAuthToken sets the Bearer token on the client (e.g. per-request token from Kiali auth).
+func (c *Client) SetAuthToken(token string) {
+	c.authToken = strings.TrimSpace(token)
 }
 
 // New builds a LightSpeed client. baseURL must be the root of the OLS API (e.g. https://ols.example.com).
@@ -83,7 +96,6 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	if c.authToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.authToken)
 	}
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("request: %w", err)
@@ -122,17 +134,14 @@ func (e *APIError) Error() string {
 
 // Authorized validates the current user with POST /authorized.
 // Optional userID is sent as query parameter when no-op auth is enabled.
-func (c *Client) Authorized(ctx context.Context, userID string) (*AuthorizationResponse, error) {
+func (c *Client) Authorized(ctx context.Context, userID string) (*AuthorizationResponse, int, error) {
 	q := url.Values{}
 	if userID != "" {
 		q.Set("user_id", userID)
 	}
 	var out AuthorizationResponse
-	_, err := c.do(ctx, http.MethodPost, pathAuthorized, q, nil, &out)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
+	code, err := c.do(ctx, http.MethodPost, pathAuthorized, q, nil, &out)
+	return &out, code, err
 }
 
 // Readiness returns service readiness from GET /readiness.
@@ -157,21 +166,19 @@ func (c *Client) Liveness(ctx context.Context) (*LivenessResponse, error) {
 
 // Query sends a conversation request via POST /v1/query and returns the full response.
 // Optional userID is sent as query parameter when no-op auth is enabled.
-func (c *Client) Query(ctx context.Context, req *LLMRequest, userID string) (*LLMResponse, error) {
+func (c *Client) Query(ctx context.Context, req *LLMRequest, userID string) (*types.AIResponse, int, error) {
 	if req == nil {
-		return nil, fmt.Errorf("LLMRequest is required")
+		return nil, http.StatusBadRequest, fmt.Errorf("LLMRequest is required")
 	}
 	if req.Query == "" {
-		return nil, fmt.Errorf("query is required")
+		return nil, http.StatusBadRequest, fmt.Errorf("query is required")
 	}
+
 	q := url.Values{}
 	if userID != "" {
 		q.Set("user_id", userID)
 	}
-	var out LLMResponse
-	_, err := c.do(ctx, http.MethodPost, pathQuery, q, req, &out)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
+	var out types.AIResponse
+	code, err := c.do(ctx, http.MethodPost, pathQuery, q, req, &out)
+	return &out, code, err
 }

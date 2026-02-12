@@ -56,9 +56,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         referenced_documents && referenced_documents.length > 0
           ? {
               sources: referenced_documents.map(document => ({
-                link: document.link,
-                title: document.title,
-                body: `${document.body.substring(0, 30)}...`,
+                link: document.doc_url,
+                title: document.doc_title,
                 isExternal: true
               }))
             }

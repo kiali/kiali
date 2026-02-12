@@ -128,7 +128,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
   };
   const botMessage = (response: ChatResponse | string): ExtendedMessage => {
     const rawContent =
-      typeof response === 'object' ? (typeof response.answer === 'string' ? response.answer : '') : response;
+      typeof response === 'object' ? (typeof response.response === 'string' ? response.response : '') : response;
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
     const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
     const content = isMockApi ? safeContent : escapeHtml(safeContent);
@@ -138,7 +138,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       name: botName,
       avatar: logo,
       timestamp: getTimestamp(),
-      referenced_documents: typeof response === 'object' ? response.citations : []
+      referenced_documents: typeof response === 'object' ? response.referenced_documents : []
     };
 
     return message;
@@ -186,7 +186,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
 
       if (resp.status === 200) {
         const chatResponse: ChatResponse = resp.data;
-        const referenced_documents = chatResponse.citations;
+        const referenced_documents = chatResponse.referenced_documents;
 
         const newBotMessage: any = botMessage(chatResponse);
         newBotMessage.referenced_documents = referenced_documents;

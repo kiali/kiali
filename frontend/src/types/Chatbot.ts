@@ -24,13 +24,34 @@ export type Action = {
   payload: string;
 };
 
+export type ToolCall = {
+  name: string;
+  args: any;
+  id: string;
+  type: string;
+};
+
+export type ToolResult = {
+  id: string;
+  status: 'success' | 'error';
+  content: string;
+  type: string;
+};
+
 type LLMResponse = {
-  answer: string;
-  actions: Action[];
-  citations: ReferencedDocument[];
-  used_models: ModelResponse;
-  truncated?: boolean;
+  available_quotas: {
+    [key: string]: number;
+  };
+  conversation_id: string;
+  input_tokens: number;
+  output_tokens: number;
+  referenced_documents: ReferencedDocument[];
+  response: string;
+  tool_calls: ToolCall[];
+  tool_results: ToolResult[];
+  truncated: boolean;
   error?: string;
+  actions?: Action[];
 };
 
 export type ChatRequest = LLMRequest;
@@ -48,9 +69,8 @@ export type AlertMessage = {
 };
 
 export type ReferencedDocument = {
-  link: string;
-  title: string;
-  body: string;
+  doc_url: string;
+  doc_title: string;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {

@@ -1,0 +1,28 @@
+apiVersion: ols.openshift.io/v1alpha1
+kind: OLSConfig
+metadata:
+  name: cluster
+spec:
+  featureGates:
+  - MCPServer
+  llm:
+    providers:
+    - name: myGemini
+      type: openai
+      credentialsSecretRef:
+        name: credentials
+      url: https://generativelanguage.googleapis.com/v1beta/openai/
+      models:
+      - name: gemini-2.5-flash
+  mcpServers:
+  - name: $PLATFORM-mcp
+    streamableHTTP:
+      enableSSE: false
+      headers:
+        kubernetes-authorization: kubernetes
+      url: 'http://$PLATFORM-mcp-server.$PLATFORM-mcp:8080/mcp'
+      timeout: 30   
+  ols:
+    defaultModel: gemini-2.5-flash
+    defaultProvider: myGemini
+    logLevel: DEBUG
