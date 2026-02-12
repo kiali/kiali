@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { TimeInMilliseconds, TimeRange } from '../../types/Common';
+import { DirectionType, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { location, router } from 'app/History';
-import { DirectionType } from '../../pages/Overview/OverviewToolbar';
 import { serverConfig } from '../../config';
 import * as MetricsHelper from '../Metrics/Helper';
 import { Dashboard } from '../Charts/Dashboard';

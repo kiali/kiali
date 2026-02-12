@@ -77,9 +77,9 @@ export const getNodeStatus = (data: NodeData): NodeStatus => {
   }
 
   switch (data.healthStatus) {
-    case DEGRADED.name:
+    case DEGRADED.id:
       return NodeStatus.warning;
-    case FAILURE.name:
+    case FAILURE.id:
       return NodeStatus.danger;
     default:
       return NodeStatus.success;
@@ -212,9 +212,9 @@ const getEdgeLabel = (_edge: EdgeModel, _nodeMap: NodeMap): string => {
 
 const getEdgeStatus = (data: EdgeData): NodeStatus => {
   switch (data.healthStatus) {
-    case FAILURE.name:
+    case FAILURE.id:
       return NodeStatus.danger;
-    case DEGRADED.name:
+    case DEGRADED.id:
       return NodeStatus.warning;
     default:
       return NodeStatus.default;
@@ -223,8 +223,8 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
 
 const getPathStyle = (data: EdgeData): React.CSSProperties => {
   switch (data.healthStatus) {
-    case FAILURE.name:
-    case DEGRADED.name:
+    case FAILURE.id:
+    case DEGRADED.id:
       return {
         strokeWidth: 6,
         strokeDasharray: '10 10'

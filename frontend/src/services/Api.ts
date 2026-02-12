@@ -12,6 +12,7 @@ import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '.
 import {
   AppHealth,
   NamespaceAppHealth,
+  NamespaceHealth,
   NamespaceHealthQuery,
   NamespaceServiceHealth,
   NamespaceWorkloadHealth,
@@ -622,7 +623,7 @@ export const getApp = (
   return newRequest<App>(HTTP_VERBS.GET, urls.app(namespace, app), queryParams, {});
 };
 
-export const getClustersApps = (
+export const getClusterApps = (
   namespaces: string,
   params: AppListQuery,
   cluster?: string
@@ -855,6 +856,102 @@ export const getClustersWorkloadHealth = async (
       return ret;
     }
   );
+};
+
+export const getClustersHealth = async (
+  namespaces: string,
+  duration: DurationInSeconds,
+  cluster?: string,
+  queryTime?: TimeInSeconds
+): Promise<Map<string, NamespaceHealth>> => {
+  const params: QueryParams<NamespaceHealthQuery & Namespaces> = {
+    namespaces: namespaces,
+    // empty type means load app,workload,services health
+    type: ''
+  };
+
+  if (duration) {
+    params.rateInterval = `${String(duration)}s`;
+  }
+
+  if (queryTime) {
+    params.queryTime = String(queryTime);
+  }
+
+  if (cluster) {
+    params.clusterName = cluster;
+  }
+
+  return newRequest<any>(HTTP_VERBS.GET, urls.clustersHealth(), params, {}).then(response => {
+    const namespaceHealthMap = new Map<string, NamespaceHealth>();
+
+    // Get all unique namespace names from all three health types
+    const allNamespaces = new Set<string>();
+    const namespaceAppHealth = response.data['namespaceAppHealth'];
+    const namespaceServiceHealth = response.data['namespaceServiceHealth'];
+    const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
+
+    if (namespaceAppHealth) {
+      Object.keys(namespaceAppHealth).forEach(ns => allNamespaces.add(ns));
+    }
+    if (namespaceServiceHealth) {
+      Object.keys(namespaceServiceHealth).forEach(ns => allNamespaces.add(ns));
+    }
+    if (namespaceWorkloadHealth) {
+      Object.keys(namespaceWorkloadHealth).forEach(ns => allNamespaces.add(ns));
+    }
+
+    // Process each namespace
+    allNamespaces.forEach(ns => {
+      const appHealth: NamespaceAppHealth = {};
+      const serviceHealth: NamespaceServiceHealth = {};
+      const workloadHealth: NamespaceWorkloadHealth = {};
+
+      // Process app health for this namespace
+      if (namespaceAppHealth && namespaceAppHealth[ns]) {
+        Object.keys(namespaceAppHealth[ns]).forEach(k => {
+          if (namespaceAppHealth[ns][k]) {
+            const ah = AppHealth.fromJson(ns, k, namespaceAppHealth[ns][k], {
+              rateInterval: duration
+            });
+            appHealth[k] = ah;
+          }
+        });
+      }
+
+      // Process service health for this namespace
+      if (namespaceServiceHealth && namespaceServiceHealth[ns]) {
+        Object.keys(namespaceServiceHealth[ns]).forEach(k => {
+          if (namespaceServiceHealth[ns][k]) {
+            const sh = ServiceHealth.fromJson(ns, k, namespaceServiceHealth[ns][k], {
+              rateInterval: duration
+            });
+            serviceHealth[k] = sh;
+          }
+        });
+      }
+
+      // Process workload health for this namespace
+      if (namespaceWorkloadHealth && namespaceWorkloadHealth[ns]) {
+        Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
+          if (namespaceWorkloadHealth[ns][k]) {
+            const wh = WorkloadHealth.fromJson(ns, k, namespaceWorkloadHealth[ns][k], {
+              rateInterval: duration
+            });
+            workloadHealth[k] = wh;
+          }
+        });
+      }
+
+      namespaceHealthMap.set(ns, {
+        appHealth,
+        serviceHealth,
+        workloadHealth
+      });
+    });
+
+    return namespaceHealthMap;
+  });
 };
 
 export const getGrafanaInfo = (): Promise<ApiResponse<GrafanaInfo>> => {
@@ -1431,7 +1528,11 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
 };
 
-export const postChatAI = (provider: string, model: string, chatRequest: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
+export const postChatAI = (
+  provider: string,
+  model: string,
+  chatRequest: ChatRequest
+): Promise<ApiResponse<ChatResponse>> => {
   return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(provider, model), undefined, chatRequest);
 };
 

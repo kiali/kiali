@@ -1,5 +1,5 @@
 // Single cluster traffic graph (sidecar-based bookinfo topology)
-import { createAppHealthData, createServiceHealthData, createEdgeTraffic } from './common';
+import { createAppHealthData, createServiceHealthData, createEdgeTraffic, createNodeTraffic } from './common';
 
 interface TrafficGraphResult {
   edges: unknown[];
@@ -65,8 +65,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'productpage',
         version: 'v1',
         workload: 'productpage-v1',
-        traffic: [{ protocol: 'http', rates: { httpIn: '10.00' } }],
-        healthData: createAppHealthData('productpage-v1', 'bookinfo'),
+        traffic: createNodeTraffic('productpage', '10.00', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('productpage-v1', 'bookinfo', clusterName),
         isRoot: true,
         parent: 'box-app-productpage'
       }
@@ -80,8 +80,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'details',
         version: 'v1',
         workload: 'details-v1',
-        traffic: [{ protocol: 'http', rates: { httpIn: '5.00' } }],
-        healthData: createAppHealthData('details-v1', 'bookinfo'),
+        traffic: createNodeTraffic('details', '5.00', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('details-v1', 'bookinfo', clusterName),
         parent: 'box-app-details'
       }
     },
@@ -94,8 +94,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'reviews',
         version: 'v1',
         workload: 'reviews-v1',
-        traffic: [{ protocol: 'http', rates: { httpIn: '3.33' } }],
-        healthData: createAppHealthData('reviews-v1', 'bookinfo'),
+        traffic: createNodeTraffic('reviews', '3.33', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('reviews-v1', 'bookinfo', clusterName),
         parent: 'box-app-reviews'
       }
     },
@@ -108,8 +108,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'reviews',
         version: 'v2',
         workload: 'reviews-v2',
-        traffic: [{ protocol: 'http', rates: { httpIn: '3.33' } }],
-        healthData: createAppHealthData('reviews-v2', 'bookinfo'),
+        traffic: createNodeTraffic('reviews', '3.33', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('reviews-v2', 'bookinfo', clusterName),
         parent: 'box-app-reviews'
       }
     },
@@ -122,8 +122,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'reviews',
         version: 'v3',
         workload: 'reviews-v3',
-        traffic: [{ protocol: 'http', rates: { httpIn: '3.34' } }],
-        healthData: createAppHealthData('reviews-v3', 'bookinfo'),
+        traffic: createNodeTraffic('reviews', '3.34', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('reviews-v3', 'bookinfo', clusterName),
         parent: 'box-app-reviews'
       }
     },
@@ -136,8 +136,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         app: 'ratings',
         version: 'v1',
         workload: 'ratings-v1',
-        traffic: [{ protocol: 'http', rates: { httpIn: '6.67' } }],
-        healthData: createAppHealthData('ratings-v1', 'bookinfo'),
+        traffic: createNodeTraffic('ratings', '6.67', undefined, 'bookinfo', clusterName),
+        healthData: createAppHealthData('ratings-v1', 'bookinfo', clusterName),
         parent: 'box-app-ratings'
       }
     },
@@ -149,8 +149,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         namespace: 'bookinfo',
         service: 'productpage',
         app: 'productpage',
-        traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '10.00' } }],
-        healthData: createServiceHealthData('productpage', 'bookinfo'),
+        traffic: createNodeTraffic('productpage', '10.00', '10.00', 'bookinfo', clusterName),
+        healthData: createServiceHealthData('productpage', 'bookinfo', clusterName),
         parent: 'box-app-productpage'
       }
     },
@@ -162,8 +162,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         namespace: 'bookinfo',
         service: 'details',
         app: 'details',
-        traffic: [{ protocol: 'http', rates: { httpIn: '5.00', httpOut: '5.00' } }],
-        healthData: createServiceHealthData('details', 'bookinfo'),
+        traffic: createNodeTraffic('details', '5.00', '5.00', 'bookinfo', clusterName),
+        healthData: createServiceHealthData('details', 'bookinfo', clusterName),
         parent: 'box-app-details'
       }
     },
@@ -175,8 +175,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         namespace: 'bookinfo',
         service: 'reviews',
         app: 'reviews',
-        traffic: [{ protocol: 'http', rates: { httpIn: '10.00', httpOut: '10.00' } }],
-        healthData: createServiceHealthData('reviews', 'bookinfo'),
+        traffic: createNodeTraffic('reviews', '10.00', '10.00', 'bookinfo', clusterName),
+        healthData: createServiceHealthData('reviews', 'bookinfo', clusterName),
         parent: 'box-app-reviews'
       }
     },
@@ -188,8 +188,8 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
         namespace: 'bookinfo',
         service: 'ratings',
         app: 'ratings',
-        traffic: [{ protocol: 'http', rates: { httpIn: '6.67', httpOut: '6.67' } }],
-        healthData: createServiceHealthData('ratings', 'bookinfo'),
+        traffic: createNodeTraffic('ratings', '6.67', '6.67', 'bookinfo', clusterName),
+        healthData: createServiceHealthData('ratings', 'bookinfo', clusterName),
         parent: 'box-app-ratings'
       }
     },
@@ -220,96 +220,40 @@ export const generateSingleClusterTrafficGraph = (clusterName: string): TrafficG
     }
   );
 
+  // Helper to create edge with healthStatus
+  const makeEdge = (
+    id: string,
+    source: string,
+    target: string,
+    targetName: string,
+    host: string,
+    rate: string
+  ): { data: Record<string, unknown> } => {
+    const trafficData = createEdgeTraffic(targetName, host, rate, 'bookinfo', clusterName);
+    return {
+      data: {
+        id,
+        source,
+        target,
+        traffic: { protocol: trafficData.protocol, rates: trafficData.rates, responses: trafficData.responses },
+        healthStatus: trafficData.healthStatus
+      }
+    };
+  };
+
   // Edges - traffic responses based on target's health
   edges.push(
-    {
-      data: {
-        id: 'e0',
-        source: 'n10',
-        target: 'n6',
-        traffic: createEdgeTraffic('productpage', 'productpage:9080', '10.00', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e1',
-        source: 'n6',
-        target: 'n0',
-        traffic: createEdgeTraffic('productpage', 'productpage:9080', '10.00', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e2',
-        source: 'n0',
-        target: 'n7',
-        traffic: createEdgeTraffic('details', 'details:9080', '5.00', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e3',
-        source: 'n0',
-        target: 'n8',
-        traffic: createEdgeTraffic('reviews', 'reviews:9080', '10.00', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e4',
-        source: 'n7',
-        target: 'n1',
-        traffic: createEdgeTraffic('details', 'details:9080', '5.00', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e5',
-        source: 'n8',
-        target: 'n2',
-        traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.33', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e6',
-        source: 'n8',
-        target: 'n3',
-        traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.33', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e7',
-        source: 'n8',
-        target: 'n4',
-        traffic: createEdgeTraffic('reviews', 'reviews:9080', '3.34', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e8',
-        source: 'n3',
-        target: 'n9',
-        traffic: createEdgeTraffic('ratings', 'ratings:9080', '3.33', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e9',
-        source: 'n4',
-        target: 'n9',
-        traffic: createEdgeTraffic('ratings', 'ratings:9080', '3.34', 'bookinfo')
-      }
-    },
-    {
-      data: {
-        id: 'e10',
-        source: 'n9',
-        target: 'n5',
-        traffic: createEdgeTraffic('ratings', 'ratings:9080', '6.67', 'bookinfo')
-      }
-    }
+    makeEdge('e0', 'n10', 'n6', 'productpage', 'productpage:9080', '10.00'),
+    makeEdge('e1', 'n6', 'n0', 'productpage', 'productpage:9080', '10.00'),
+    makeEdge('e2', 'n0', 'n7', 'details', 'details:9080', '5.00'),
+    makeEdge('e3', 'n0', 'n8', 'reviews', 'reviews:9080', '10.00'),
+    makeEdge('e4', 'n7', 'n1', 'details', 'details:9080', '5.00'),
+    makeEdge('e5', 'n8', 'n2', 'reviews', 'reviews:9080', '3.33'),
+    makeEdge('e6', 'n8', 'n3', 'reviews', 'reviews:9080', '3.33'),
+    makeEdge('e7', 'n8', 'n4', 'reviews', 'reviews:9080', '3.34'),
+    makeEdge('e8', 'n3', 'n9', 'ratings', 'ratings:9080', '3.33'),
+    makeEdge('e9', 'n4', 'n9', 'ratings', 'ratings:9080', '3.34'),
+    makeEdge('e10', 'n9', 'n5', 'ratings', 'ratings:9080', '6.67')
   );
 
   return { nodes, edges };

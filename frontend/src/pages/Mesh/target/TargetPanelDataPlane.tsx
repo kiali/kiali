@@ -9,7 +9,7 @@ import { ExpandableRowContent, Table, Tbody, Td, Th, Thead, Tr } from '@patternf
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { TargetPanelDataPlaneNamespace } from './TargetPanelDataPlaneNamespace';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { ControlPlaneVersionBadge } from 'pages/Overview/ControlPlaneVersionBadge';
+import { ControlPlaneVersionBadge } from 'components/Badge/ControlPlaneVersionBadge';
 import { isIstioNamespace } from 'config/ServerConfig';
 
 type TargetPanelDataPlaneProps = TargetPanelCommonProps & {

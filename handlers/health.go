@@ -26,7 +26,9 @@ const defaultHealthRateInterval = "10m"
 // ResponseHeader for indicating cached health data
 const HealthCachedHeader = "X-Kiali-Health-Cached"
 
-// ClusterHealth is the API handler to get app-based health of every services from namespaces in the given cluster.
+// ClusterHealth is the API handler to get health of services from namespaces in the given cluster.
+// The 'type' query parameter can be set to 'app', 'service', or 'workload' to get health for a specific type.
+// If 'type' is not specified, health for all types (app, service, workload) is returned.
 // When health cache is enabled, this handler serves pre-computed health data from cache. On a cache miss
 // (e.g., during startup before the first refresh completes), the handler returns an empty health map for
 // the affected namespace rather than computing health on-demand. This avoids expensive Prometheus queries
@@ -52,13 +54,19 @@ func ClusterHealth(
 		cluster := clusterNameFromQuery(conf, params)
 
 		// Extract health type from query params
+		// If type is not specified, we'll fetch all types (app, service, workload)
 		healthType := params.Get("type")
-		if healthType == "" {
-			healthType = "app"
-		}
-		if healthType != "app" && healthType != "service" && healthType != "workload" {
+		if healthType != "" && healthType != "app" && healthType != "service" && healthType != "workload" {
 			RespondWithError(w, http.StatusBadRequest, "Bad request, query parameter 'type' must be one of ['app','service','workload']")
 			return
+		}
+
+		// Determine which health types to fetch
+		var healthTypes []string
+		if healthType == "" {
+			healthTypes = []string{"app", "service", "workload"}
+		} else {
+			healthTypes = []string{healthType}
 		}
 
 		// If no namespaces specified, get all namespaces for the cluster
@@ -87,31 +95,33 @@ func ClusterHealth(
 			// Serve from cache
 			allFromCache := true
 			for _, ns := range nss {
-				// GetHealth now tracks cache hit/miss metrics internally
-				cachedData, found := kialiCache.GetHealth(cluster, ns, healthTypeToMetricType(healthType))
-				if !found {
-					// Cache miss - return "unknown" status for this namespace
-					allFromCache = false
-					log.Debugf("health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
-					switch healthType {
-					case "app":
-						result.AppHealth[ns] = &models.NamespaceAppHealth{}
-					case "service":
-						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
-					case "workload":
-						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+				for _, ht := range healthTypes {
+					// GetHealth now tracks cache hit/miss metrics internally
+					cachedData, found := kialiCache.GetHealth(cluster, ns, healthTypeToMetricType(ht))
+					if !found {
+						// Cache miss - return "unknown" status for this namespace
+						allFromCache = false
+						log.Debugf("health cache miss for cluster=%s namespace=%s type=%s, returning unknown status", cluster, ns, ht)
+						switch ht {
+						case "app":
+							result.AppHealth[ns] = &models.NamespaceAppHealth{}
+						case "service":
+							result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+						case "workload":
+							result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+						}
+						continue
 					}
-					continue
-				}
 
-				// Use cached data
-				switch healthType {
-				case "app":
-					result.AppHealth[ns] = &cachedData.AppHealth
-				case "service":
-					result.ServiceHealth[ns] = &cachedData.ServiceHealth
-				case "workload":
-					result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
+					// Use cached data
+					switch ht {
+					case "app":
+						result.AppHealth[ns] = &cachedData.AppHealth
+					case "service":
+						result.ServiceHealth[ns] = &cachedData.ServiceHealth
+					case "workload":
+						result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
+					}
 				}
 			}
 
@@ -146,30 +156,32 @@ func ClusterHealth(
 					RateInterval:   rateInterval,
 				}
 
-				switch healthType {
-				case "app":
-					health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), criteria)
-					if err != nil {
-						log.Warningf("Error computing app health for namespace %s: %v", ns, err)
-						result.AppHealth[ns] = &models.NamespaceAppHealth{}
-					} else {
-						result.AppHealth[ns] = &health
-					}
-				case "service":
-					health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), criteria)
-					if err != nil {
-						log.Warningf("Error computing service health for namespace %s: %v", ns, err)
-						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
-					} else {
-						result.ServiceHealth[ns] = &health
-					}
-				case "workload":
-					health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), criteria)
-					if err != nil {
-						log.Warningf("Error computing workload health for namespace %s: %v", ns, err)
-						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
-					} else {
-						result.WorkloadHealth[ns] = &health
+				for _, ht := range healthTypes {
+					switch ht {
+					case "app":
+						health, err := businessLayer.Health.GetNamespaceAppHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing app health for namespace %s: %v", ns, err)
+							result.AppHealth[ns] = &models.NamespaceAppHealth{}
+						} else {
+							result.AppHealth[ns] = &health
+						}
+					case "service":
+						health, err := businessLayer.Health.GetNamespaceServiceHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing service health for namespace %s: %v", ns, err)
+							result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+						} else {
+							result.ServiceHealth[ns] = &health
+						}
+					case "workload":
+						health, err := businessLayer.Health.GetNamespaceWorkloadHealth(r.Context(), criteria)
+						if err != nil {
+							log.Warningf("Error computing workload health for namespace %s: %v", ns, err)
+							result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+						} else {
+							result.WorkloadHealth[ns] = &health
+						}
 					}
 				}
 			}

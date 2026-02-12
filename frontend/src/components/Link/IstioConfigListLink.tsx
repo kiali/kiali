@@ -2,10 +2,12 @@ import * as React from 'react';
 import { Paths } from '../../config';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { Link } from 'react-router-dom-v5-compat';
+import { pluralize } from '@patternfly/react-core';
 
 interface Props {
   children: React.ReactNode;
   errors?: boolean;
+  issues?: number;
   namespaces: string[];
   warnings?: boolean;
 }
@@ -25,13 +27,13 @@ export const IstioConfigListLink: React.FC<Props> = (props: Props) => {
     let params = '';
 
     if (props.warnings) {
-      params += 'configvalidation=Warning';
+      params += 'config=Warning';
     }
 
     let errorParams = '';
 
     if (props.errors) {
-      errorParams += 'configvalidation=Not+Valid';
+      errorParams += 'config=Not+Valid';
     }
 
     if (params !== '' && errorParams !== '') {
@@ -56,10 +58,12 @@ export const IstioConfigListLink: React.FC<Props> = (props: Props) => {
   }
 
   params += validationParams;
-
   return (
-    <Link to={`/${Paths.ISTIO}?${params}`} onClick={cleanFilters}>
+    <>
       {props.children}
-    </Link>
+      <Link to={`/${Paths.ISTIO}?${params}`} onClick={cleanFilters}>
+        {props.issues && <> {pluralize(props.issues, 'issue')}</>}
+      </Link>
+    </>
   );
 };

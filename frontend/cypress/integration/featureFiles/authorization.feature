@@ -3,19 +3,23 @@
 
 Feature: Kiali Authorization
 
-  User opens the Overview page.
+  User opens the Namespaces page.
 
   Background:
     Given user is at limited user perspective
-    And user is at the "overview" page
+    And user is at the "namespaces" list page
 
   @multi-cluster
   @multi-primary
   @authorization
-  Scenario: There should be one bookinfo namespace card
-    Then user sees the "bookinfo" namespace card in cluster "east"
-    Then user does not see the "istio-system" namespace card in any cluster
-    Then user doesn't see the "mesh" menu
+  Scenario: There should be one bookinfo namespace entry
+    When user selects filter "Namespace"
+    And user filters for name "bookinfo"
+    Then user sees the "bookinfo" namespace in cluster "east" in the namespaces page
+    And user does not see the "bookinfo" namespace in cluster "west" in the namespaces page
+    And user does not see the "istio-system" namespace in cluster "east" in the namespaces page
+    And user does not see the "istio-system" namespace in cluster "west" in the namespaces page
+    And user doesn't see the "mesh" menu
 
   @multi-cluster
   @multi-primary

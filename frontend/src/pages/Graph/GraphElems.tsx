@@ -130,9 +130,9 @@ export const getNodeStatus = (data: NodeData): NodeStatus => {
   }
 
   switch (data.healthStatus) {
-    case DEGRADED.name:
+    case DEGRADED.id:
       return NodeStatus.warning;
-    case FAILURE.name:
+    case FAILURE.id:
       return NodeStatus.danger;
     default:
       return NodeStatus.success;
@@ -584,9 +584,9 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
   }
 
   switch (data.healthStatus) {
-    case FAILURE.name:
+    case FAILURE.id:
       return NodeStatus.danger;
-    case DEGRADED.name:
+    case DEGRADED.id:
       return NodeStatus.warning;
     default:
       return NodeStatus.success;
@@ -601,9 +601,9 @@ const getPathStyleStroke = (data: EdgeData): PFColors => {
     return EdgeColorTCPWithTraffic;
   }
   switch (data.healthStatus) {
-    case FAILURE.name:
+    case FAILURE.id:
       return EdgeColorFailure;
-    case DEGRADED.name:
+    case DEGRADED.id:
       return EdgeColorDegraded;
     default:
       return EdgeColor;

@@ -1,10 +1,10 @@
-Feature: Kiali help about verify
+Feature: Kiali alerts verify
 
   User does not want to see any alerts when opening a fresh installation of Kiali
 
   Background:
     Given user is at administrator perspective
-    And user is at the "overview" page
+    And user is at the "namespaces" list page
 
   @smoke
   @core-2

@@ -43,6 +43,20 @@ Then(
   }
 );
 
+Then(
+  'the {string} column on the {string} row has a tooltip containing {string}',
+  (column: string, rowText: string, text: string) => {
+    getColWithRowText(rowText, column).within(() => {
+      cy.get('svg').first().trigger('mouseover', { force: true }).trigger('mouseenter', { force: true });
+    });
+
+    cy.get('[aria-label="mTLS status"]')
+      .should('be.visible')
+      .find('.pf-v6-c-tooltip__content')
+      .should('contain.text', text);
+  }
+);
+
 Then('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
   getColWithRowText(rowText, column).children().should('be.empty');
 });
@@ -260,9 +274,9 @@ export const checkHealthStatusInTable = (
     cy.wrap(clusterNames).should('have.length', 1);
     const cluster = clusterNames[0];
 
-    cy.get(
-      `[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child .pf-v6-c-icon__content`
-    ).trigger('mouseenter');
+    cy.get(`[data-test=VirtualItem_Cluster${cluster}_Ns${selector}] td:first-child .pf-v6-c-icon__content`).trigger(
+      'mouseenter'
+    );
 
     cy.get(`[aria-label='Health indicator'] strong`).should('contain.text', healthStatus);
   });

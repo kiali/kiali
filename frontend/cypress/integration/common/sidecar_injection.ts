@@ -298,7 +298,7 @@ When('I override the default automatic sidecar injection policy in the namespace
       cy.wrap(clusterNames).should('have.length', 1);
       const cluster = clusterNames[0];
 
-      cy.getBySel('overview-type-LIST').should('be.visible').click();
+      ensureKialiFinishedLoading();
 
       cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
         .should('be.visible')
@@ -326,7 +326,7 @@ When(
         cy.wrap(clusterNames).should('have.length', 1);
         const cluster = clusterNames[0];
 
-        cy.getBySel('overview-type-LIST').should('be.visible').click();
+        ensureKialiFinishedLoading();
 
         cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
           .should('be.visible')
@@ -355,7 +355,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
       cy.wrap(clusterNames).should('have.length', 1);
       const cluster = clusterNames[0];
 
-      cy.getBySel('overview-type-LIST').should('be.visible').click();
+      ensureKialiFinishedLoading();
 
       cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
         .should('be.visible')

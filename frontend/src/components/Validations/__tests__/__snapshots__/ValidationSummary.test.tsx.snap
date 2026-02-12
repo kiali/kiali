@@ -1,30 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ValidationSummary renders N/A when all istio components are valid 1`] = `
-<Tooltip
-  aria-label="Validations list"
-  content={
-    <div
-      className="kiali_fz2k14t"
-    >
-      No Istio config objects found
-    </div>
-  }
-  enableFlip={true}
-  position="auto"
->
-  <div
-    style={
-      Object {
-        "display": "inline-block",
-      }
-    }
-  >
-    N/A
-  </div>
-</Tooltip>
-`;
-
 exports[`ValidationSummary renders error icon when all istio components are valid 1`] = `
 <Tooltip
   aria-label="Validations list"
@@ -162,6 +137,27 @@ exports[`ValidationSummary renders error icon when all services are valid 2`] = 
   <Validation
     severity="error"
   />
+</Tooltip>
+`;
+
+exports[`ValidationSummary renders n/a when all istio components are valid 1`] = `
+<Tooltip
+  aria-label="Validations list"
+  content={
+    <div
+      className="kiali_fz2k14t"
+    >
+      No Istio config objects found
+    </div>
+  }
+  enableFlip={true}
+  position="auto"
+>
+  <div
+    className="kiali_f1vp3tcb"
+  >
+    n/a
+  </div>
 </Tooltip>
 `;
 

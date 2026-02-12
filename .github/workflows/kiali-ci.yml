@@ -15,6 +15,7 @@ on:
     branches:
     - master
     - v*.*
+    - namespaces
     paths-ignore:
     - "design/**"
     - "**/*.md"
