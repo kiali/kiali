@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label, Spinner } from '@patternfly/react-core';
+import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
@@ -11,11 +11,7 @@ import { useSelector } from 'react-redux';
 import { durationSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
-import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
-import { combinedWorstStatus, isDataPlaneNamespace, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
-import { addDanger } from 'utils/AlertUtils';
-import * as API from 'services/Api';
-import { ApiError } from 'types/Api';
+import { useDataPlanes } from 'hooks/dataPlanes';
 import {
   cardBodyStyle,
   cardStyle,
@@ -34,6 +30,7 @@ import {
 import { classes } from 'typestyle';
 import { StatCountPopover } from './StatCountPopover';
 import { buildDataPlanesUrl, navigateToUrl } from './Links';
+import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 
 const namespaceContainerStyle = kialiStyle({
   display: 'flex',
@@ -96,130 +93,27 @@ const getHealthStatusLabel = (status?: HealthStatusId): string => {
 };
 
 export const DataPlaneStats: React.FC = () => {
-  const { isLoading, namespaces } = useNamespaces();
+  const {
+    isError: isNamespacesError,
+    isLoading: isNamespacesLoading,
+    namespaces,
+    refresh: refreshNamespaces
+  } = useNamespaces();
   const duration = useSelector(durationSelector) as DurationInSeconds;
-  const [isHealthLoading, setIsHealthLoading] = React.useState<boolean>(false);
-  const [healthByNamespace, setHealthByNamespace] = React.useState<Record<string, HealthStatusId>>({});
-
-  const handleApiError = React.useCallback((message: string, error: ApiError): void => {
-    addDanger(message, API.getErrorString(error));
-  }, []);
-
-  const nsKey = React.useCallback((cluster: string | undefined, name: string): string => {
-    return `${cluster ?? ''}::${name}`;
-  }, []);
-
-  React.useEffect(() => {
-    let active = true;
-
-    const fetchHealth = async (): Promise<void> => {
-      if (namespaces.length === 0) {
-        setHealthByNamespace({});
-        return;
-      }
-
-      // Overview card is scoped to data-plane namespaces only (ambient or sidecar-injected).
-      const dataPlaneNamespaces = namespaces.filter(isDataPlaneNamespace);
-      if (dataPlaneNamespaces.length === 0) {
-        setHealthByNamespace({});
-        return;
-      }
-
-      setIsHealthLoading(true);
-
-      // Initialize data-plane namespaces as NA; we will overwrite when health is present.
-      const nextHealth: Record<string, HealthStatusId> = {};
-      dataPlaneNamespaces.forEach(ns => {
-        nextHealth[nsKey(ns.cluster, ns.name)] = NA.id as HealthStatusId;
-      });
-
-      // Group namespaces by cluster (undefined cluster => single-cluster mode)
-      const namespacesByCluster = new Map<string | undefined, string[]>();
-      dataPlaneNamespaces.forEach(ns => {
-        const current = namespacesByCluster.get(ns.cluster) || [];
-        current.push(ns.name);
-        namespacesByCluster.set(ns.cluster, current);
-      });
-
-      const clusterResults = await Promise.all(
-        Array.from(namespacesByCluster.entries()).map(async ([cluster, nsNames]) => {
-          const healthMap = await fetchClusterNamespacesHealth(nsNames, duration, cluster);
-          return { cluster, healthMap, nsNames };
-        })
-      );
-
-      clusterResults.forEach(({ cluster, healthMap, nsNames }) => {
-        nsNames.forEach(name => {
-          const nsHealth = healthMap.get(name);
-          if (!nsHealth) {
-            return;
-          }
-
-          const statuses = namespaceStatusesFromNamespaceHealth(nsHealth);
-          const worst = combinedWorstStatus(statuses.statusApp, statuses.statusService, statuses.statusWorkload);
-          nextHealth[nsKey(cluster, name)] = worst.id as HealthStatusId;
-        });
-      });
-
-      if (active) {
-        setHealthByNamespace(nextHealth);
-      }
-    };
-
-    fetchHealth()
-      .catch(err => {
-        handleApiError('Could not fetch health', err as ApiError);
-      })
-      .finally(() => {
-        if (active) {
-          setIsHealthLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [duration, handleApiError, namespaces, nsKey]);
-
-  // Calculate stats from namespaces
-  let ambient = 0;
-  let sidecar = 0;
-  let healthy = 0;
   type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
-  const namespacesFailure: NamespaceWithHealthStatus[] = [];
-  const namespacesDegraded: NamespaceWithHealthStatus[] = [];
-  const namespacesNotReady: NamespaceWithHealthStatus[] = [];
-  const namespacesNA: NamespaceWithHealthStatus[] = [];
-
-  namespaces.forEach(ns => {
-    // Overview card focuses on data-plane namespaces
-    if (!isDataPlaneNamespace(ns)) {
-      return;
-    }
-
-    if (ns.isAmbient) {
-      ambient++;
-    } else {
-      // Sidecar-injected data-plane namespace
-      sidecar++;
-    }
-
-    const healthStatus = healthByNamespace[nsKey(ns.cluster, ns.name)];
-    if (healthStatus === FAILURE.id) {
-      namespacesFailure.push({ ...ns, healthStatus });
-    } else if (healthStatus === DEGRADED.id) {
-      namespacesDegraded.push({ ...ns, healthStatus });
-    } else if (healthStatus === NOT_READY.id) {
-      namespacesNotReady.push({ ...ns, healthStatus });
-    } else if (healthStatus === HEALTHY.id) {
-      healthy++;
-    } else {
-      // Treat undefined/missing as NA, but keep NA separate from healthy/unhealthy totals
-      namespacesNA.push({ ...ns, healthStatus: NA.id as HealthStatusId });
-    }
-  });
-
-  const total = ambient + sidecar;
+  const {
+    ambient,
+    healthy,
+    isError,
+    isLoading: isHealthLoading,
+    namespacesDegraded,
+    namespacesFailure,
+    namespacesNA,
+    namespacesNotReady,
+    refresh,
+    sidecar,
+    total
+  } = useDataPlanes(namespaces, duration);
 
   const popoverContentFor = (
     list: NamespaceWithHealthStatus[],
@@ -281,17 +175,27 @@ export const DataPlaneStats: React.FC = () => {
   const degradedCount = namespacesDegraded.length;
   const notReadyCount = namespacesNotReady.length;
   const naCount = namespacesNA.length;
+  const isCardLoading = isNamespacesLoading || isHealthLoading;
+  const isCardError = isNamespacesError || isError;
+
+  const handleTryAgain = (): void => {
+    refreshNamespaces();
+    refresh();
+  };
 
   return (
     <Card className={cardStyle} data-test="data-planes-card">
       <CardHeader>
         <CardTitle>
-          <span>{`${t('Data planes')} (${total})`}</span>
+          {t('Data planes')}
+          {!isCardLoading && !isCardError && ` (${total})`}
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>
-        {isLoading || isHealthLoading ? (
-          <Spinner size="lg" />
+        {isCardLoading ? (
+          <OverviewCardLoadingState message={t('Fetching data plane data')} />
+        ) : isCardError ? (
+          <OverviewCardErrorState message={t('Data planes could not be loaded')} onTryAgain={handleTryAgain} />
         ) : (
           <div className={namespaceContainerStyle}>
             <div className={statsContainerStyle}>
@@ -414,17 +318,19 @@ export const DataPlaneStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      <CardFooter>
-        <Button
-          variant="link"
-          isInline
-          className={classes(linkStyle, noUnderlineStyle)}
-          onClick={() => navigateToUrl(buildDataPlanesUrl())}
-          data-test="data-planes-view-namespaces"
-        >
-          {t('View Data planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-        </Button>
-      </CardFooter>
+      {!isCardLoading && !isCardError && (
+        <CardFooter>
+          <Button
+            variant="link"
+            isInline
+            className={classes(linkStyle, noUnderlineStyle)}
+            onClick={() => navigateToUrl(buildDataPlanesUrl())}
+            data-test="data-planes-view-namespaces"
+          >
+            {t('View Data planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };

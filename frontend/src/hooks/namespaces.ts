@@ -6,18 +6,22 @@ import { addError } from '../utils/AlertUtils';
 import { useKialiTranslation } from '../utils/I18nUtils';
 
 export type NamespacesResult = {
+  isError: boolean;
   isLoading: boolean;
   namespaces: Namespace[];
+  refresh: () => void;
 };
 
 export const useNamespaces = (): NamespacesResult => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
+  const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [namespaces, setNamespaces] = React.useState<Namespace[]>([]);
 
   const fetchNamespaces = React.useCallback((): void => {
     setIsLoading(true);
+    setIsError(false);
 
     API.getNamespaces()
       .then(response => {
@@ -26,6 +30,7 @@ export const useNamespaces = (): NamespacesResult => {
       .catch(error => {
         addError(t('Error fetching namespaces.'), error);
         setNamespaces([]);
+        setIsError(true);
       })
       .finally(() => {
         setIsLoading(false);
@@ -38,7 +43,9 @@ export const useNamespaces = (): NamespacesResult => {
   }, [lastRefreshAt, fetchNamespaces]);
 
   return {
+    isError,
     isLoading,
-    namespaces
+    namespaces,
+    refresh: fetchNamespaces
   };
 };
