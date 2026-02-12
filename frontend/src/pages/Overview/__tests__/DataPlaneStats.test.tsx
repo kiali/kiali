@@ -146,8 +146,8 @@ describe('Overview DataPlaneStats', () => {
     expect(wrapper.find('[data-test="data-planes-unhealthy"]').text()).toContain('4');
     expect(wrapper.find('[data-test="data-planes-na"]').text()).toContain('1');
 
-    expect(wrapper.find('button[data-test="data-planes-view-namespaces"]').exists()).toBeTruthy();
-    wrapper.find('button[data-test="data-planes-view-namespaces"]').simulate('click');
+    expect(wrapper.find('button[data-test="data-planes-view"]').exists()).toBeTruthy();
+    wrapper.find('button[data-test="data-planes-view"]').simulate('click');
     expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
     const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
@@ -193,8 +193,8 @@ describe('Overview DataPlaneStats', () => {
     const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
-    expect(url).toMatch(/[?&]health=failure/);
-    expect(url).toMatch(/[?&]health=degraded/);
-    expect(url).toMatch(/[?&]health=not_ready/);
+    expect(url).toMatch(/[?&]health=Failure/);
+    expect(url).toMatch(/[?&]health=Degraded/);
+    expect(url).toMatch(/[?&]health=Not(\+|%20)Ready/);
   });
 });
