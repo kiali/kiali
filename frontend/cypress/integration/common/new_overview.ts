@@ -2,7 +2,6 @@ import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocesso
 
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
 const CLUSTERS_API_URL = '**/api/istio/status*';
-const CARD_LOADING_TIMEOUT = 30000;
 
 const istioConfigsWithNoValidations = {
   permissions: {},
@@ -305,9 +304,8 @@ Then('Clusters card shows no data state with dash', () => {
 
 // Tests using real backend data - no API mocking
 Then('Clusters card shows cluster count and footer link', () => {
+  cy.waitForReact();
   getClustersCard().within(() => {
-    // Wait for loading to complete
-    cy.get('[class*="spinner"]', { timeout: CARD_LOADING_TIMEOUT }).should('not.exist');
     cy.contains('Could not be loaded').should('not.exist');
 
     // The card should show clusters data (title contains "Clusters")
@@ -334,10 +332,7 @@ function waitForUnhealthyClusters(retries: number): void {
     throw new Error('Exceeded max retries waiting for unhealthy clusters to appear');
   }
 
-  getClustersCard().within(() => {
-    cy.get('[class*="spinner"]', { timeout: CARD_LOADING_TIMEOUT }).should('not.exist');
-  });
-
+  cy.waitForReact();
   cy.get('body').then($body => {
     const $issues = $body.find('[data-test="clusters-issues"]');
     if ($issues.length > 0 && $issues.is(':visible')) {
@@ -374,10 +369,7 @@ function waitForHealthyClusters(retries: number): void {
     throw new Error('Exceeded max retries waiting for healthy clusters');
   }
 
-  getClustersCard().within(() => {
-    cy.get('[class*="spinner"]', { timeout: CARD_LOADING_TIMEOUT }).should('not.exist');
-  });
-
+  cy.waitForReact();
   cy.get('body').then($body => {
     const $healthy = $body.find('[data-test="clusters-healthy"]');
     const $issues = $body.find('[data-test="clusters-issues"]');
