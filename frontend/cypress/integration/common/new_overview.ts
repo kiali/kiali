@@ -233,7 +233,7 @@ Then('user is redirected to Istio config list with all namespaces and warning fi
 
 When('user clicks View Data planes in Data planes card', () => {
   getDataPlanesCard().within(() => {
-    cy.getBySel('data-planes-view-namespaces').should('be.visible').click();
+    cy.getBySel('data-planes-view').should('be.visible').click();
   });
 });
 
