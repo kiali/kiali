@@ -126,6 +126,7 @@ function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): voi
 
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
+  const tags = (Cypress.env('TAGS') ?? '') as string;
   cy.session(
     username,
     () => {
@@ -188,7 +189,6 @@ Cypress.Commands.add('login', (username: string, password: string) => {
                 password: password
               }
             }).then(() => {
-              const tags = Cypress.env('TAGS');
               if (tags.includes('ambient-multi-primary')) {
                 ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
               } else {
@@ -209,8 +209,22 @@ Cypress.Commands.add('login', (username: string, password: string) => {
             body: {
               token: result.stdout
             }
+          }).then(() => {
+            if (tags.includes('ambient-multi-primary')) {
+              ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
+            } else if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
+              ensureMulticlusterApplicationsAreHealthy(Date.now());
+            }
           });
         });
+      } else if (auth_strategy === 'anonymous') {
+        // Auth disabled: we can still wait for multicluster/ambient telemetry readiness
+        // using direct API requests without needing a session cookie.
+        if (tags.includes('ambient-multi-primary')) {
+          ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
+        } else if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
+          ensureMulticlusterApplicationsAreHealthy(Date.now());
+        }
       }
     },
     {
