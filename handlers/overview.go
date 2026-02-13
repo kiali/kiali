@@ -70,8 +70,9 @@ func OverviewServiceLatencies(
 
 		// If Kiali is scoped (CWA=false and/or discovery selectors are configured), we must not run an
 		// unfiltered cross-namespace query. Instead, always run per-cluster queries with a namespace filter.
+		// This is because Kiali with DS may not have access to all of the mesh namespaces.
 		discoverySelectorsConfigured := len(conf.Deployment.DiscoverySelectors.Default) > 0 ||
-			(conf.Deployment.DiscoverySelectors.Overrides != nil && len(conf.Deployment.DiscoverySelectors.Overrides) > 0)
+			len(conf.Deployment.DiscoverySelectors.Overrides) > 0
 		scopedByConfig := !conf.Deployment.ClusterWideAccess || discoverySelectorsConfigured
 
 		// For users with full access, execute a single, cross-cluster, cross-namespace query.
