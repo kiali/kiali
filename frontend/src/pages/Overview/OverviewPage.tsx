@@ -1,21 +1,30 @@
 import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { serverConfig } from 'config/ServerConfig';
+import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { Refresh } from 'components/Refresh/Refresh';
+import { useKialiDispatch } from 'hooks/redux';
+import { setAIContext } from 'helpers/ChatAI';
+import { t } from 'utils/I18nUtils';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
 import { DataPlaneStats } from './DataPlaneStats';
 import { ApplicationStats } from './ApplicationStats';
-import { WorkloadInsights } from './WorkloadInsights';
-import { useKialiDispatch } from 'hooks/redux';
-import { setAIContext } from 'helpers/ChatAI';
-import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { Refresh } from 'components/Refresh/Refresh';
+import { ServiceInsights } from './ServiceInsights';
 
 const overviewPageStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
   gap: '1rem'
+});
+
+const durationLabelStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 400,
+  color: 'var(--pf-global--Color--200)',
+  whiteSpace: 'nowrap'
 });
 
 export const OverviewPage: React.FC = () => {
@@ -25,11 +34,18 @@ export const OverviewPage: React.FC = () => {
     setAIContext(dispatch, 'Overview page');
   }, [dispatch]);
 
+  const durationLabel = serverConfig.healthConfig?.compute?.duration ?? '5m';
+
   return (
     <div className={overviewPageStyle}>
       <DefaultSecondaryMasthead
         hideNamespaceSelector={true}
-        rightToolbar={<Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />}
+        rightToolbar={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className={durationLabelStyle}>{t('Last {{duration}}', { duration: durationLabel })}</span>
+            <Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />
+          </div>
+        }
       />
 
       <Grid hasGutter>
@@ -61,7 +77,7 @@ export const OverviewPage: React.FC = () => {
         </GridItem>
 
         <GridItem span={7}>
-          <WorkloadInsights />
+          <ServiceInsights />
         </GridItem>
       </Grid>
     </div>

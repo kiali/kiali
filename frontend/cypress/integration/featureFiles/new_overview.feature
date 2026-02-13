@@ -91,3 +91,42 @@ Feature: New Overview - Overview cards
     And the user refreshes the page
     Then Clusters card shows all healthy clusters
 
+    @core-2
+  Scenario: Service insights card shows loading state without tables or footer link
+    Given Service insights APIs respond slowly
+    And user is at the "overview" page
+    Then Service insights card shows loading state without tables or footer link
+
+  @core-2
+  Scenario: Service insights card shows error state without tables or footer link
+    Given Service insights APIs fail
+    And user is at the "overview" page
+    Then Service insights card shows error state without tables or footer link
+
+  @core-2
+  Scenario: Service insights card can retry after error
+    Given Service insights APIs fail once
+    And user is at the "overview" page
+    Then Service insights card shows error state without tables or footer link
+    When user clicks Try Again in Service insights card
+    Then Service insights card shows data tables and footer link
+
+  @core-2
+  Scenario: Service insights footer link navigates to Services list with all namespaces and sort
+    Given Service insights APIs are observed
+    And user is at the "overview" page
+    When user clicks View all services in Service insights card
+    Then user is redirected to Services list with all namespaces and service insights sorting
+
+  @core-2
+  Scenario: Service insights service link navigates to service details
+    Given Service insights APIs are observed
+    And user is at the "overview" page
+    When user clicks a valid service link in Service insights card
+    Then user is redirected to that Service details page
+
+  @core-2
+  Scenario: Service insights card shows mock rate table
+    Given Service insights mock APIs are observed
+    And user is at the "overview" page
+    Then Service insights card shows mock data tables

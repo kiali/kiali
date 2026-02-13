@@ -525,7 +525,7 @@ func (in *Client) GetAppRequestRates(ctx context.Context, namespace, cluster, ap
 			return inResult, outResult, nil
 		}
 	}
-	inResult, outResult, err := getItemRequestRates(ctx, in.api, namespace, cluster, app, "app", queryTime, ratesInterval)
+	inResult, outResult, err := getItemRequestRates(ctx, in.api, namespace, cluster, app, "canonical_service", queryTime, ratesInterval)
 	if err != nil {
 		return inResult, outResult, err
 	}

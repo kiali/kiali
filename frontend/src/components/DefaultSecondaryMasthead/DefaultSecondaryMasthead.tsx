@@ -14,10 +14,18 @@ type ReduxProps = {
   istioAPIEnabled: boolean;
 };
 
+const titleSuffixStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 400,
+  marginLeft: '0.75rem',
+  color: 'var(--pf-global--Color--200)'
+});
+
 type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
+  titleSuffix?: React.ReactNode;
 };
 
 const containerStyle = kialiStyle({
@@ -95,7 +103,10 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
       </div>
 
       <div className={flexStyle}>
-        <div>{title}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+          {title}
+          {props.titleSuffix && <span className={titleSuffixStyle}>{props.titleSuffix}</span>}
+        </div>
 
         {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
       </div>

@@ -1544,3 +1544,27 @@ export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiR
   const conversationIDsParam = conversationIDs.join(',');
   return newRequest<void>(HTTP_VERBS.DELETE, urls.chatConversations, { conversationIDs: conversationIDsParam }, {});
 };
+
+export const getOverviewServiceLatencies = (
+  params: { limit?: number; rateInterval?: string } = {}
+): Promise<
+  ApiResponse<{ services: Array<{ cluster: string; latency: number; namespace: string; serviceName: string }> }>
+> => {
+  return newRequest(HTTP_VERBS.GET, urls.overviewServiceLatencies, params, {});
+};
+
+export const getOverviewServiceRates = (
+  params: { limit?: number; rateInterval?: string } = {}
+): Promise<
+  ApiResponse<{
+    services: Array<{
+      cluster: string;
+      errorRate: number;
+      namespace: string;
+      requestCount: number;
+      serviceName: string;
+    }>;
+  }>
+> => {
+  return newRequest(HTTP_VERBS.GET, urls.overviewServiceRates, params, {});
+};

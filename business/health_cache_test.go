@@ -9,10 +9,10 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-func TestCalculateDuration_ConfiguredDuration(t *testing.T) {
+func TestCalculateDuration_FirstRun(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 5 * time.Minute
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "1m"
 
 	monitor := &healthMonitor{
 		conf:    conf,
@@ -23,27 +23,12 @@ func TestCalculateDuration_ConfiguredDuration(t *testing.T) {
 	assert.Equal(t, "5m", result)
 }
 
-func TestCalculateDuration_FirstRunAutoCalculate(t *testing.T) {
+func TestCalculateDuration_ElapsedWithinDuration(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 0 // Auto-calculate
-	conf.HealthConfig.Compute.RefreshInterval = 2 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "2m"
 
-	monitor := &healthMonitor{
-		conf:    conf,
-		lastRun: time.Time{}, // Zero value - first run
-	}
-
-	// First run should use 2x refresh interval
-	result := monitor.calculateDuration()
-	assert.Equal(t, "4m", result) // 2 * 2 minutes = 4 minutes
-}
-
-func TestCalculateDuration_SubsequentRunAutoCalculate(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 0 // Auto-calculate
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
-
-	// Simulate a run that happened 3 minutes ago
+	// Simulate a run that happened 3 minutes ago (within the 5 minute duration)
 	lastRunTime := time.Now().Add(-3 * time.Minute)
 
 	monitor := &healthMonitor{
@@ -52,28 +37,43 @@ func TestCalculateDuration_SubsequentRunAutoCalculate(t *testing.T) {
 	}
 
 	result := monitor.calculateDuration()
+	// Should use configured duration since elapsed <= duration
+	assert.Equal(t, "5m", result)
+}
 
-	// Should be approximately 3 minutes * 1.1 = 3.3 minutes = 198 seconds
+func TestCalculateDuration_ElapsedExceedsDuration(t *testing.T) {
+	conf := config.NewConfig()
+	conf.HealthConfig.Compute.Duration = "2m"
+	conf.HealthConfig.Compute.RefreshInterval = "1m"
+
+	// Simulate a run that happened 5 minutes ago (exceeds the 2 minute duration)
+	lastRunTime := time.Now().Add(-5 * time.Minute)
+
+	monitor := &healthMonitor{
+		conf:    conf,
+		lastRun: lastRunTime,
+	}
+
+	result := monitor.calculateDuration()
+
+	// Should be approximately 5 minutes * 1.1 = 5.5 minutes = 330 seconds
 	// Due to time passing during test, we'll check it's in a reasonable range
-	// The result should be formatted as seconds since it won't be an exact minute
-	assert.Contains(t, result, "s", "Expected seconds format for non-exact minute")
-
-	// Parse the number to verify it's approximately correct
 	var seconds int
 	_, err := parseSeconds(result, &seconds)
 	assert.NoError(t, err)
-	// Should be around 198 seconds (3 minutes * 1.1), allow some variance for test execution time
-	assert.GreaterOrEqual(t, seconds, 190, "Expected at least 190 seconds")
-	assert.LessOrEqual(t, seconds, 220, "Expected at most 220 seconds")
+	// Should be around 330 seconds (5 minutes * 1.1), allow some variance for test execution time
+	assert.GreaterOrEqual(t, seconds, 320, "Expected at least 320 seconds")
+	assert.LessOrEqual(t, seconds, 350, "Expected at most 350 seconds")
 }
 
-func TestCalculateDuration_MinimumOneMinute(t *testing.T) {
+func TestCalculateDuration_ElapsedAtBoundary(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 0 // Auto-calculate
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "2m"
 
-	// Simulate a run that happened just 10 seconds ago
-	lastRunTime := time.Now().Add(-10 * time.Second)
+	// Simulate a run that happened just under 5 minutes ago (within boundary)
+	// Using 4m59s to ensure we're within the duration even with test execution time
+	lastRunTime := time.Now().Add(-4*time.Minute - 59*time.Second)
 
 	monitor := &healthMonitor{
 		conf:    conf,
@@ -81,31 +81,11 @@ func TestCalculateDuration_MinimumOneMinute(t *testing.T) {
 	}
 
 	result := monitor.calculateDuration()
-
-	// Should be at least 1 minute (minimum enforced)
-	assert.Equal(t, "1m", result)
+	// elapsed <= duration, so should use configured duration
+	assert.Equal(t, "5m", result)
 }
 
-func TestCalculateDuration_ConfiguredOverridesElapsed(t *testing.T) {
-	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 10 * time.Minute // Explicit configuration
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
-
-	// Even with a recent run, configured duration should be used
-	lastRunTime := time.Now().Add(-2 * time.Minute)
-
-	monitor := &healthMonitor{
-		conf:    conf,
-		lastRun: lastRunTime,
-	}
-
-	result := monitor.calculateDuration()
-
-	// Should use configured duration, not calculated
-	assert.Equal(t, "10m", result)
-}
-
-// parseSeconds is a helper to parse duration strings like "198s" into seconds
+// parseSeconds is a helper to parse duration strings like "198s" or "5m" into seconds
 func parseSeconds(s string, result *int) (bool, error) {
 	if len(s) < 2 {
 		return false, nil

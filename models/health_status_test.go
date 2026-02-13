@@ -366,3 +366,45 @@ func TestGetErrorRatio_GrpcCodes(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTotalRequestRate(t *testing.T) {
+	testCases := []struct {
+		name     string
+		health   RequestHealth
+		expected float64
+	}{
+		{
+			name:     "empty",
+			health:   RequestHealth{},
+			expected: 0,
+		},
+		{
+			name: "inbound only",
+			health: RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 10, "500": 2},
+				},
+				Outbound: map[string]map[string]float64{},
+			},
+			expected: 12,
+		},
+		{
+			name: "inbound and outbound",
+			health: RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 5},
+				},
+				Outbound: map[string]map[string]float64{
+					"http": {"200": 3, "404": 1},
+				},
+			},
+			expected: 9,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.health.GetTotalRequestRate()
+			assert.InDelta(t, tc.expected, result, 0.0001)
+		})
+	}
+}

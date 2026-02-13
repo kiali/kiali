@@ -1752,6 +1752,48 @@ func NewRoutes(
 			HandlerFunc:   handlers.MetricsStats(conf, kialiCache, discovery, clientFactory, prom),
 			Authenticated: true,
 		},
+		// swagger:route GET /overview/metrics/services/latency overview overviewServiceLatencies
+		// ---
+		// Endpoint to fetch top service latencies (p95) across all clusters and namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: serviceLatencyResponse
+		{
+			Name:          "OverviewServiceLatencies",
+			LogGroupName:  log.MetricsLogName,
+			Method:        "GET",
+			Pattern:       "/api/overview/metrics/services/latency",
+			HandlerFunc:   handlers.OverviewServiceLatencies(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			Authenticated: true,
+		},
+		// swagger:route GET /overview/metrics/services/rates overview overviewServiceRates
+		// ---
+		// Endpoint to fetch top service error rates across all clusters and namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: serviceRequestsResponse
+		{
+			Name:          "OverviewServiceRates",
+			LogGroupName:  log.MetricsLogName,
+			Method:        "GET",
+			Pattern:       "/api/overview/metrics/services/rates",
+			HandlerFunc:   handlers.OverviewServiceRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			Authenticated: true,
+		},
 		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI
 		// ---
 		// Endpoint to chat with AI
