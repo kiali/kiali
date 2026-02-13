@@ -6,6 +6,11 @@ This package provides the Kiali AI Assistant backend. It wires the chat provider
 
 - [High-level flow](#high-level-flow)
 - [Configuration summary](#configuration-summary)
+- [Configuring providers and models](#configuring-providers-and-models)
+  - [Top-level chat_ai keys](#top-level-chat_ai-keys)
+  - [Provider keys (providers[])](#provider-keys-providers)
+  - [Model keys (providers[].models[])](#model-keys-providersmodels)
+  - [Store config keys (store_config)](#store-config-keys-store_config)
   - [API Key Configuration](#api-key-configuration)
 - [Providers Supported](#providers-supported)
 - [MCP tools (summary)](#mcp-tools-summary)
@@ -32,8 +37,7 @@ Validation rules are enforced in `Config.ValidateAI()`. Disabled providers/model
 
 Example configuration:
 
-[source,yaml]
-----
+```yaml
 chat_ai:
   enabled: true
   default_provider: "openai"
@@ -51,13 +55,59 @@ chat_ai:
           description: "Model provided by Google with OpenAI API Support"
           endpoint: "https://generativelanguage.googleapis.com/v1beta/openai"
           key: "secret:my-key-secret:openai-gemini"
-----
+```
 
 Notes:
 
 * Model keys override provider keys if both are set.
 * `endpoint` is required for the `azure` config and optional for others.
 * Provider and model names are used in secret volume names; avoid special characters.
+
+## Configuring providers and models
+
+Reference for every configuration key under `chat_ai`, with type, allowed values, and description.
+
+### Top-level chat_ai keys
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enabled` | boolean | `false` | Turns the AI assistant on or off. When `true`, `default_provider` is required. |
+| `default_provider` | string | `""` | Name of the provider to use when the UI does not specify one. Must match a provider `name` and that provider must be enabled. |
+| `providers` | array | `[]` | List of provider definitions. Each entry has the keys described in [Provider keys](#provider-keys-providers). |
+| `store_config` | object | (see below) | Optional conversation storage settings. Keys are described in [Store config keys](#store-config-keys-store_config). |
+
+### Provider keys (providers[])
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `name` | string | yes | Unique identifier for the provider. Used in API requests and in secret volume names; avoid special characters. |
+| `type` | string | yes* | Backend to use. Values: `openai`, `google`. Empty defaults to `openai`. |
+| `config` | string | yes* | Mode for this provider. For `type: openai`: `default`, `azure`, or `gemini`. For `type: google`: `default` or `gemini` (both use Gemini). Empty is defaulted per type. |
+| `enabled` | boolean | no | Enable or disable this provider. Defaults to `true`. Disabled providers are ignored. |
+| `default_model` | string | yes | Name of the default model for this provider. Must match a model `name` in `models` and that model must be enabled. |
+| `description` | string | no | Human-readable description of the provider (e.g. for UI). |
+| `key` | string | conditional | API key for all models in this provider. Inline value or `secret:<secret-name>:<key-in-secret>`. Required if no model has a `key`. |
+| `models` | array | yes | List of models. Each entry has the keys described in [Model keys](#model-keys-providersmodels). |
+
+### Model keys (providers[].models[])
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `name` | string | yes | Alias used in requests (e.g. when the UI selects a model). Used in secret volume names; avoid special characters. |
+| `model` | string | yes | Provider-specific model ID sent to the API (e.g. `gpt-4o-mini`, `gemini-2.5-pro`). |
+| `enabled` | boolean | no | Enable or disable this model. Defaults to `true`. Disabled models are ignored. |
+| `description` | string | no | Human-readable description of the model (e.g. for UI). |
+| `endpoint` | string | conditional | Base URL for the API. Required for `config: azure`. Optional for `openai`/`gemini` (e.g. override for OpenAI or Gemini endpoint). Not used for `type: google`. |
+| `key` | string | conditional | Per-model API key. Overrides the provider `key` when set. Inline value or `secret:<secret-name>:<key-in-secret>`. Required when the provider has no `key`. |
+
+### Store config keys (store_config)
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enabled` | boolean | `true` | Enable or disable the AI store. When enabled, conversation context is kept across requests. |
+| `max_cache_memory_mb` | integer | `1024` | Maximum memory (MB) for all stored conversations. Oldest conversations are pruned when the limit is reached. |
+| `reduce_with_ai` | boolean | `false` | If `true`, long conversations are summarized using the configured AI provider when reduced; if `false`, older messages are dropped. |
+| `reduce_threshold` | integer | `15` | When a conversation reaches this number of messages, it is reduced (by summarization or truncation depending on `reduce_with_ai`). |
 
 ### API Key Configuration
 
@@ -116,21 +166,5 @@ For detailed tool documentation, see `ai/mcp/README.md`.
 
 ## AI Store
 
-The AI store keeps conversation context (enabled by default). When limits are reached, older conversations are pruned. See [AI STORE README](../design/KEPS/ai-store/proposal.md) for details.
-
-```yaml
-chat_ai:
-  store_config:
-    enabled: true
-    max_cache_memory_mb: 1024
-    reduce_with_ai: false
-    reduce_threshold: 15
-```
-
-Property details:
-
-- `enabled`: Turns the AI store on/off. Enable it to keep conversation context across requests.
-- `max_cache_memory_mb`: Maximum total memory for all stored conversations. When reached, the oldest conversations are removed to stay under the limit.
-- `reduce_threshold`: When a conversation reaches this number of messages (e.g., 15), it is reduced by about 1/4.
-- `reduce_with_ai`: Controls how reduction happens. If `false`, keep the most recent messages and drop older ones; if `true`, summarize the conversation using the configured AI provider.
+The AI store keeps conversation context (enabled by default). When limits are reached, older conversations are pruned. For all `store_config` keys, values, and descriptions, see [Store config keys](#store-config-keys-store_config). For design and behavior details, see [AI STORE README](../design/KEPS/ai-store/proposal.md).
 
