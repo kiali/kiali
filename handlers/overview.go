@@ -68,8 +68,14 @@ func OverviewServiceLatencies(
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
 		queryTime := time.Now()
 
+		// If Kiali is scoped (CWA=false and/or discovery selectors are configured), we must not run an
+		// unfiltered cross-namespace query. Instead, always run per-cluster queries with a namespace filter.
+		discoverySelectorsConfigured := len(conf.Deployment.DiscoverySelectors.Default) > 0 ||
+			(conf.Deployment.DiscoverySelectors.Overrides != nil && len(conf.Deployment.DiscoverySelectors.Overrides) > 0)
+		scopedByConfig := !conf.Deployment.ClusterWideAccess || discoverySelectorsConfigured
+
 		// For users with full access, execute a single, cross-cluster, cross-namespace query.
-		if hasAllClusterNamespaceAccess(ctx, layer, "") {
+		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
 			labels := `destination_workload!="unknown"`
 
 			query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
@@ -103,7 +109,7 @@ func OverviewServiceLatencies(
 
 			for _, cluster := range userClusters {
 				labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
-				if !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
+				if scopedByConfig || !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
 					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 					if err != nil {
 						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceLatencies: could not get namespaces for cluster")
