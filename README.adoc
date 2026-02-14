@@ -26,6 +26,8 @@ The target audience of this README are developers. For those who are not develop
 
 Kiali includes a Chat AI integration in **developer preview**. The APIs and configuration are still evolving and may change without notice. See link:./ai/README.md[AI README] for details.
 
+To install the MCP (Model Context Protocol) server and OpenShift LightSpeed in a cluster for use with the AI integration, run the script `link:./hack/install-mcp-lightspeed.sh[hack/install-mcp-lightspeed.sh]`. It deploys the MCP server (Kubernetes or OpenShift variant), creates the LightSpeed operator subscription and namespace, and applies the OLS config. Usage: pass `MCP=kubernetes` or `MCP=openshift` and `API_TOKEN=your_token` (and optionally `MCP_IMAGE=...`). For full deployment steps (including CRC), see link:./ai/providers/lightspeed/DEPLOY.md[LightSpeed deploy guide].
+
 === How and where Kiali is released?
 
 Read the link:./RELEASING.adoc[RELEASING.adoc] file.

@@ -30,8 +30,8 @@ func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool,
 	if len(response.Actions) > 0 {
 		return false, "I have found the following actions: "
 	}
-	if len(response.Citations) > 0 {
-		return false, "I have found the following citations: "
+	if len(response.ReferencedDocuments) > 0 {
+		return false, "I have found the following referenced documents: "
 	}
 	return true, ""
 }

@@ -77,8 +77,8 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 			if len(result.Actions) > 0 {
 				response.Actions = append(response.Actions, result.Actions...)
 			}
-			if len(result.Citations) > 0 {
-				response.Citations = append(response.Citations, result.Citations...)
+			if len(result.ReferencedDocuments) > 0 {
+				response.ReferencedDocuments = append(response.ReferencedDocuments, result.ReferencedDocuments...)
 			}
 			if result.Message.Content != "" {
 				conversation = append(conversation, types.ConversationMessage{
@@ -100,12 +100,12 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 			if err := ctx.Err(); err != nil {
 				return providers.NewContextCanceledResponse(err)
 			}
-			response.Answer = providers.ParseMarkdownResponse(result.Text())
+			response.Response = providers.ParseMarkdownResponse(result.Text())
 		} else {
-			response.Answer = responseAnswer
+			response.Response = responseAnswer
 		}
 	} else {
-		response.Answer = providers.ParseMarkdownResponse(result.Text())
+		response.Response = providers.ParseMarkdownResponse(result.Text())
 	}
 	conversation = append(conversation, p.ProviderToConversation(result))
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)

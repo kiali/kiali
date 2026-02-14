@@ -16,7 +16,7 @@ import { connect } from 'react-redux';
 import { useChatbot } from './useChatbot';
 import { ChatBotFooter } from './ChatBotFooter';
 import { ChatBotMock } from './ChatBotMock';
-import { ContextRequest, ExtendedMessage, ProviderAI } from 'types/Chatbot';
+import { ContextRequest, ExtendedMessage, ProviderAI, Tool } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ToggleIcon } from './icons/ToogleIcon';
@@ -100,6 +100,8 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<ChatbotDisplayMode>(ChatbotDisplayMode.default);
+  const [toolModalOpen, setToolModalOpen] = useState<boolean>(false);
+  const [tool, setTool] = useState<Tool | undefined>(undefined);
   const [conversations, setConversations] = useState<Conversation[] | { [key: string]: Conversation[] }>(
     conversationList
   );
@@ -372,11 +374,13 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 handleSend={handleSend}
                 setAlertMessage={setAlertMessage}
                 messages={messages}
+                setToolModalOpen={setToolModalOpen}
+                setTool={setTool}
                 isLoading={isLoading}
                 botMessage={botMessage}
                 context={props.context}
               />
-              <ChatBotFooter setAlertMessage={() => setAlertMessage(undefined)} handleSend={onHandleSend} />
+              <ChatBotFooter setAlertMessage={() => setAlertMessage(undefined)} handleSend={onHandleSend} toolModalOpen={toolModalOpen} tool={tool ?? undefined} setToolModalOpen={setToolModalOpen} setTool={setTool} />
             </>
           }
         />

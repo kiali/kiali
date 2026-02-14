@@ -5,11 +5,11 @@ import { conversationEntries } from './conversations';
 const conversationEntryIds = Array.from(conversationEntries.keys());
 const conversationIdStore = new Set<string>(conversationEntryIds);
 
-const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model: string): ChatResponse => {
+const buildDefaultResponse = (chatRequest: ChatRequest, _: string, __: string): ChatResponse => {
   const query = chatRequest.query.trim();
 
   return {
-    answer: query
+    response: query
       ? `Mock response for "${query}". Ask me about namespaces, workloads, or traffic.`
       : 'Mock response ready. Ask me about namespaces, workloads, or traffic.',
     actions: [
@@ -19,17 +19,20 @@ const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model:
         payload: '/overview'
       }
     ],
-    citations: [
+    referenced_documents: [
       {
-        link: 'https://kiali.io',
-        title: 'Kiali Documentation',
-        body: 'Kiali provides observability and management for Istio-based service meshes.'
+        doc_url: 'https://kiali.io',
+        doc_title: 'Kiali Documentation',
       }
     ],
-    used_models: {
-      completion_model: model,
-      embedding_model: `${provider}-embeddings`
-    }
+    tool_calls: [],
+    tool_results: [],
+    truncated: false,
+    error: undefined,
+    available_quotas: {},
+    conversation_id: '312312312',
+    input_tokens: 0,
+    output_tokens: 0
   };
 };
 
@@ -41,13 +44,17 @@ const buildChatResponse = (chatRequest: ChatRequest, provider: string, model: st
 
   return {
     ...requestedConversation,
-    answer: typeof requestedConversation.answer === 'string' ? requestedConversation.answer : '',
+    response: typeof requestedConversation.response === 'string' ? requestedConversation.response : '',
     actions: requestedConversation.actions ?? [],
-    citations: requestedConversation.citations ?? [],
-    used_models: {
-      completion_model: requestedConversation.used_models?.completion_model ?? model,
-      embedding_model: requestedConversation.used_models?.embedding_model ?? `${provider}-embeddings`
-    }
+    referenced_documents: requestedConversation.referenced_documents ?? [],
+    tool_calls: requestedConversation.tool_calls ?? [],
+    tool_results: requestedConversation.tool_results ?? [],
+    truncated: requestedConversation.truncated ?? false,
+    error: requestedConversation.error ?? undefined,
+    available_quotas: requestedConversation.available_quotas ?? {},
+    conversation_id: requestedConversation.conversation_id ?? '',
+    input_tokens: requestedConversation.input_tokens ?? 0,
+    output_tokens: requestedConversation.output_tokens ?? 0
   };
 };
 

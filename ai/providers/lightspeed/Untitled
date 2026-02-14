@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "openshift-lightspeed": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/your/folder/ols-mcp", "run", "python", "-m", "ols_mcp.server"],
+      "env": {
+        "OLS_API_URL": "https://ols-route-openshift-lightspeed.apps.mycluster.example.com",
+        "OLS_API_TOKEN": "sha256~NW5MJOynIEABEj_7pSna...",
+        "OLS_TIMEOUT": "30.0",
+        "OLS_VERIFY_SSL": "true"
+      }
+    }
+  }
+}
+
+
+curl --insecure -X GET https://ols-route-openshift-lightspeed.apps.kiali.servicemesh.rhqeaws.com/liveness
+{"alive":true}
+
+curl --insecure -X GET https://ols-route-openshift-lightspeed.apps.kiali.servicemesh.rhqeaws.com/metrics -H "Authorization: Bearer sha256~8eh5JAUbX79fNlgzebR6dQ6j_rcat9ecDYHhT-0WiH0"
+
+curl --insecure -X POST https://ols-route-openshift-lightspeed.apps.kiali.servicemesh.rhqeaws.com/authorized -H "Authorization: Bearer sha256~8eh5JAUbX79fNlgzebR6dQ6j_rcat9ecDYHhT-0WiH0"
+{"user_id":"d4d87c31-5bd3-43b8-b28d-d113ca077bdf","username":"kube:admin","skip_user_id_check":false}
+

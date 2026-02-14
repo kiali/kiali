@@ -9,7 +9,7 @@ import {
 } from '@patternfly/chatbot';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
+import { AlertMessage, ChatResponse, ExtendedMessage, Tool } from 'types/Chatbot';
 import { ChatMessage } from './ChatMessage/ChatMessage';
 
 type ChatBotContentProps = {
@@ -21,6 +21,8 @@ type ChatBotContentProps = {
   isLoading: boolean;
   messages: ExtendedMessage[];
   setAlertMessage: (alertMessage?: AlertMessage) => void;
+  setToolModalOpen: (toolModalOpen: boolean) => void;
+  setTool: (tool: Tool) => void;
   username: string;
 };
 
@@ -33,6 +35,8 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
   displayMode,
   messages,
   botMessage,
+  setTool,
+  setToolModalOpen,
   context
 }) => {
   const { pathname } = useLocation();
@@ -77,9 +81,10 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
           </ChatbotAlert>
         )}
         {messages.map(
-          ({ referenced_documents, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
+          ({ referenced_documents, scrollToHere, collapse, actions, tools, ...message }: ExtendedMessage, index) => {
             return (
               <ChatMessage
+                tools={tools}
                 key={`chatbot_message_${index}`}
                 index={index.toString()}
                 message={message}
@@ -89,6 +94,8 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
                 scrollToHere={scrollToHere}
                 innerRef={messagesEndRef}
                 displayMode={displayMode}
+                setToolModalOpen={setToolModalOpen}
+                setTool={setTool}
               />
             );
           }

@@ -1,4 +1,5 @@
 import { MessageProps } from '@patternfly/chatbot';
+import { Map as ImmutableMap } from 'immutable';
 
 export const CHATBOT_CONVERSATION_ALWAYS_NAVIGATE = 'chatbot_conversation_always_navigate';
 
@@ -24,13 +25,41 @@ export type Action = {
   payload: string;
 };
 
+export type Tool = {
+  args: { [key: string]: Array<string> };
+  content: string;
+  name: string;
+  status: 'error' | 'success';
+};
+
+export type ToolCall = {
+  name: string;
+  args: { [key: string]: Array<string> };
+  id: string;
+  type: string;
+};
+
+export type ToolResult = {
+  id: string;
+  status: 'success' | 'error';
+  content: string;
+  type: string;
+};
+
 type LLMResponse = {
-  answer: string;
-  actions: Action[];
-  citations: ReferencedDocument[];
-  used_models: ModelResponse;
-  truncated?: boolean;
+  available_quotas: {
+    [key: string]: number;
+  };
+  conversation_id: string;
+  input_tokens: number;
+  output_tokens: number;
+  referenced_documents: ReferencedDocument[];
+  response: string;
+  tool_calls: ToolCall[];
+  tool_results: ToolResult[];
+  truncated: boolean;
   error?: string;
+  actions?: Action[];
 };
 
 export type ChatRequest = LLMRequest;
@@ -48,12 +77,12 @@ export type AlertMessage = {
 };
 
 export type ReferencedDocument = {
-  link: string;
-  title: string;
-  body: string;
+  doc_url: string;
+  doc_title: string;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
+  tools?: ImmutableMap<string, Tool>;
   referenced_documents: ReferencedDocument[];
   actions?: Action[];
   scrollToHere?: boolean;

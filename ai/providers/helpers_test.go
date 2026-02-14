@@ -12,7 +12,6 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -115,12 +114,12 @@ func TestShouldGenerateAnswer(t *testing.T) {
 	assert.Equal(t, "I have found the following actions: ", message)
 
 	response.Actions = nil
-	response.Citations = []get_citations.Citation{{Title: "title"}}
+	response.ReferencedDocuments = []types.ReferencedDocument{{DocTitle: "title", DocURL: "url"}}
 	shouldGenerate, message = ShouldGenerateAnswer(response, []string{"get_citations"})
 	assert.False(t, shouldGenerate)
-	assert.Equal(t, "I have found the following citations: ", message)
+	assert.Equal(t, "I have found the following referenced documents: ", message)
 
-	response.Citations = nil
+	response.ReferencedDocuments = nil
 	shouldGenerate, message = ShouldGenerateAnswer(response, []string{"get_action_ui"})
 	assert.True(t, shouldGenerate)
 	assert.Equal(t, "", message)
