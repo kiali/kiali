@@ -220,7 +220,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		}
 		if criteria.IncludeMetrics {
 			appItem.Metrics = map[string]string{}
-			duration := in.conf.HealthConfig.Compute.Duration.String()
+			duration := string(in.conf.HealthConfig.Compute.Duration)
 			// Request rates
 			inRates, outRates, err := in.prom.GetAppRequestRates(ctx, namespace, cluster, appItem.Name, duration, criteria.QueryTime)
 			if err != nil {
