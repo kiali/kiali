@@ -17,7 +17,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1b1zl8q kiali_f1h06nwv"
+          className="kiali_fc3wfdg kiali_f16xt7kc"
         >
           <UnknownIcon />
         </Icon>
@@ -245,7 +245,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f1b1zl8q kiali_f1h06nwv"
+          className="kiali_fc3wfdg kiali_f16xt7kc"
         >
           <UnknownIcon />
         </Icon>
