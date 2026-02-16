@@ -17,15 +17,15 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_fqzjpeg kiali_f1q8dfts"
+          className="kiali_f1b1zl8q kiali_f1h06nwv"
         >
-          <ExclamationCircleIcon />
+          <UnknownIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--danger--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--danger--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--color--gray--50)",
+          "borderColor": "var(--pf-t--color--gray--50)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }
@@ -245,15 +245,15 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
       data-test="component-status-icon"
       icon={
         <Icon
-          className="kiali_f3dfrvt kiali_f1cbc381"
+          className="kiali_f1b1zl8q kiali_f1h06nwv"
         >
-          <ExclamationTriangleIcon />
+          <UnknownIcon />
         </Icon>
       }
       style={
         Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--warning--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--warning--default)",
+          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--color--gray--50)",
+          "borderColor": "var(--pf-t--color--gray--50)",
           "borderStyle": "solid",
           "borderWidth": "1px",
         }

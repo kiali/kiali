@@ -5,7 +5,8 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
-  InProgressIcon
+  InProgressIcon,
+  UnknownIcon
 } from '@patternfly/react-icons';
 import { Label, Split, SplitItem } from '@patternfly/react-core';
 import { IconProps, createIcon } from 'config/KialiIcon';
@@ -31,6 +32,11 @@ const ErrorAddonComponent: IconProps = {
 const NotReadyComponent: IconProps = {
   color: PFColors.Info,
   icon: InProgressIcon
+};
+
+const NotFoundComponent: IconProps = {
+  color: PFColors.Color200,
+  icon: UnknownIcon
 };
 
 const SuccessComponent: IconProps = {
@@ -77,6 +83,10 @@ export const IstioComponentStatus: React.FC<Props> = (props: Props) => {
   const { t } = useKialiTranslation();
 
   const getIcon = (status: Status, isCore: boolean): IconProps => {
+    if (status === Status.NotFound) {
+      return NotFoundComponent;
+    }
+
     let compIcon = validToIcon[`${status === Status.Healthy}-${isCore}`];
 
     if (status === Status.NotReady) {
