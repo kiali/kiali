@@ -66,7 +66,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download merged frontend report
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: merged-frontend-report
         path: frontend-core/cypress/results/
