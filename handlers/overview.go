@@ -79,7 +79,7 @@ func OverviewServiceLatencies(
 		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
 			labels := `destination_workload!="unknown"`
 
-			query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+			query := buildLatencyQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
 			zl.Trace().Msgf("OverviewServiceLatencies query: %s", query)
 
 			result, warnings, err := prom.API().Query(ctx, query, queryTime)
@@ -124,7 +124,7 @@ func OverviewServiceLatencies(
 					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
 				}
 
-				query := buildLatencyQuery(labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+				query := buildLatencyQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
 				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceLatencies query: %s", query)
 
 				result, warnings, err := prom.API().Query(ctx, query, queryTime)
@@ -234,7 +234,14 @@ func enrichServiceLatenciesWithHealth(services []models.ServiceLatency, kialiCac
 
 // buildLatencyQuery constructs a PromQL query for p95 latency.
 // Uses topk to return only the top results sorted by highest latency.
-func buildLatencyQuery(labels, groupBy, rateInterval string, limit int) string {
+// If conf.ExternalServices.Prometheus.QueryScope is defined, the scope labels are
+// injected into the query's label selectors.
+func buildLatencyQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+	queryScope := conf.ExternalServices.Prometheus.QueryScope
+	for labelName, labelValue := range queryScope {
+		labels = fmt.Sprintf("%s,%s=\"%s\"", labels, prometheus.SanitizeLabelName(labelName), labelValue)
+	}
+
 	return fmt.Sprintf(
 		`round(topk(%d, histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket{%s}[%s])) by (le,%s)) > 0), 0.001)`,
 		limit,
