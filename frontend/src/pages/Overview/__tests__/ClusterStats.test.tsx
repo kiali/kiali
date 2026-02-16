@@ -32,7 +32,8 @@ describe('Overview ClusterStats', () => {
     });
 
     const wrapper = mountComponent();
-    expect(wrapper.find('Spinner').exists()).toBeTruthy();
+
+    expect(wrapper.find('[role="progressbar"]').exists()).toBeTruthy();
   });
 
   it('shows total/healthy/unhealthy counters and builds mesh links for clusters with issues', () => {
