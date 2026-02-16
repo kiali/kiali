@@ -129,6 +129,12 @@ export interface HealthConfig {
   rate: RateHealthConfig[];
 }
 
+export interface HealthCompute {
+  Duration: DurationInSeconds;
+  RefreshInterval: DurationInSeconds;
+  Timeout: DurationInSeconds;
+}
+
 // rateHealthConfig
 export interface RateHealthConfig {
   kind?: RegexConfig;

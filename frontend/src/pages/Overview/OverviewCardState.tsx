@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Button, Spinner } from '@patternfly/react-core';
+import { Button } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { t } from 'utils/I18nUtils';
+import { InProgressSpinner } from 'components/Loading/Loading';
 
 const baseContainerStyle = kialiStyle({
   display: 'flex',
@@ -12,7 +13,9 @@ const baseContainerStyle = kialiStyle({
   alignItems: 'center',
   flex: 1,
   gap: '0.5rem',
-  minHeight: '3.5rem'
+  minHeight: '3.5rem',
+  height: '100%',
+  width: '100%'
 });
 
 const centerStyle = kialiStyle({
@@ -42,13 +45,14 @@ type OverviewCardStateBaseProps = {
 };
 
 export type OverviewCardLoadingStateProps = OverviewCardStateBaseProps & {
+  diameter?: string;
   message: string;
 };
 
 export const OverviewCardLoadingState: React.FC<OverviewCardLoadingStateProps> = props => {
   return (
     <div className={classes(baseContainerStyle, centerStyle, props.className)}>
-      <Spinner size="lg" aria-label={props.message} />
+      <InProgressSpinner diameter={props.diameter} />
       <div className={helperTextStyle}>{props.message}</div>
     </div>
   );
