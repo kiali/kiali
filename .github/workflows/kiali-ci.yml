@@ -195,7 +195,7 @@ jobs:
     needs: [initialize]
     steps:
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Store PR number, target branch, and Kiali version
       run: |
