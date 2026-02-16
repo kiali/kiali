@@ -213,7 +213,7 @@ jobs:
     # don't have access to PR information in github.event.workflow_run.pull_requests
     # See: https://github.com/orgs/community/discussions/25220
     - name: Upload PR metadata
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: pr-metadata
         path: pr-metadata/

@@ -34,7 +34,7 @@ jobs:
         jrm merged-reports/combined-report.xml "artifacts/junit-frontend-core-*-report/*.xml"
 
     - name: Upload merged report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: merged-frontend-report
         path: merged-reports/
