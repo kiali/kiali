@@ -357,7 +357,7 @@ export const ServiceInsights: React.FC = () => {
             bodyContent={
               <>
                 {t(
-                  'Lists services by top Error rate and P95 Latency. Status icons reflect the service health for the time period. Hover over the error rate to see the associated request rate. Entries with the same error rate are then ordered by request rate. Hover over a service name to see its cluster and namespace. Click the service name to go to its service detail page.'
+                  'Top services ranked by error rate and P95 latency. Status icons indicate health for the time period. Services with identical error rates are sorted by request rate.'
                 )}
               </>
             }
