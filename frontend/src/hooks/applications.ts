@@ -18,7 +18,8 @@ export type ApplicationsResult = {
   isLoading: boolean;
   metrics: {
     no_traffic: string;
-    rps: string;
+    rpsIn: string;
+    rpsOut: string;
   };
 };
 
@@ -27,9 +28,10 @@ export const useApplications = (): ApplicationsResult => {
   const { lastRefreshAt } = useRefreshInterval();
   const [isLoading, setIsLoading] = React.useState(false);
   const [apps, setApps] = React.useState<AppRateItem[]>([]);
-  const [metrics, setMetrics] = React.useState<{ no_traffic: string; rps: string }>({
+  const [metrics, setMetrics] = React.useState<{ no_traffic: string; rpsIn: string; rpsOut: string }>({
     no_traffic: '',
-    rps: ''
+    rpsIn: '',
+    rpsOut: ''
   });
 
   const fetchAppRates = React.useCallback((): void => {
@@ -40,21 +42,24 @@ export const useApplications = (): ApplicationsResult => {
         const appRates = response.data.apps ?? [];
         setApps(appRates);
 
-        const rpsSum = appRates.reduce((acc, app) => acc + app.requestRateIn + app.requestRateOut, 0);
-        const rpsFormatted =
-          appRates.length === 0 ? '' : rpsSum >= 1000 ? `${(rpsSum / 1000).toFixed(1)}K` : rpsSum.toFixed(1);
+        const formatRps = (value: number): string =>
+          value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value.toFixed(1);
+
+        const rpsInSum = appRates.reduce((acc, app) => acc + app.requestRateIn, 0);
+        const rpsOutSum = appRates.reduce((acc, app) => acc + app.requestRateOut, 0);
 
         const noTrafficCount = appRates.filter(app => app.requestRateIn + app.requestRateOut <= 0).length;
 
         setMetrics({
           no_traffic: String(noTrafficCount),
-          rps: rpsFormatted
+          rpsIn: appRates.length === 0 ? '' : formatRps(rpsInSum),
+          rpsOut: appRates.length === 0 ? '' : formatRps(rpsOutSum)
         });
       })
       .catch(error => {
         addError(t('Error fetching Applications.'), error);
         setApps([]);
-        setMetrics({ rps: '', no_traffic: '' });
+        setMetrics({ rpsIn: '', rpsOut: '', no_traffic: '' });
       })
       .finally(() => {
         setIsLoading(false);

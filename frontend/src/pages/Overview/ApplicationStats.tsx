@@ -124,11 +124,14 @@ export const ApplicationStats: React.FC = () => {
           <CardBody style={{ display: 'flex', marginTop: '1rem' }}>
             <Flex style={{ marginLeft: '1.2rem', fontSize: '1rem' }}>
               <FlexItem>
-                <ResourcesFullIcon /> {`Total ${metrics.rps} RPS`}
+                <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
                 <br />
                 <span
                   style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}
                 >{`${metrics.no_traffic} apps with no traffic`}</span>
+              </FlexItem>
+              <FlexItem style={{ marginLeft: '1.2rem' }}>
+                <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
               </FlexItem>
             </Flex>
           </CardBody>
