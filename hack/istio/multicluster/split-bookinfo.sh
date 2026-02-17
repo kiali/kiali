@@ -111,6 +111,10 @@ install_bookinfo "${CLUSTER1_CONTEXT}" "true"
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v2 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v3 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} ratings-v1 --replicas=0
+if [ "${WAYPOINT}" != "true" ]; then
+  # For the baseline bookinfo namespace, move all reviews versions to the west cluster.
+  ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
+fi
 
 create_traffic_shifting_rules() {
   local cluster_context="${1}"
@@ -183,7 +187,10 @@ switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
 install_bookinfo "${CLUSTER2_CONTEXT}" "false"
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} productpage-v1 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} details-v1 --replicas=0
-${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
+if [ "${WAYPOINT}" == "true" ]; then
+  # For the waypoint bookinfo-waypoints namespace, keep the original split with reviews-v1 on east only.
+  ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
+fi
 
 if [ "${AMBIENT}" != "true" ]; then
   # If istio CRDs exist on both clusters then it's multi-primary and we need to create traffic shifting rules on both clusters.
