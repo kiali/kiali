@@ -198,6 +198,7 @@
   "External Links": "External Links",
   "external_services.tracing configuration:": "external_services.tracing configuration:",
   "Failed Request": "失败的请求",
+  "Failed to load applications data": "Failed to load applications data",
   "Failed to load service data": "Failed to load service data",
   "Failure": "Failure",
   "fault injection": "fault injection",

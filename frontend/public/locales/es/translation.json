@@ -212,6 +212,7 @@
   "External Links": "External Links",
   "external_services.tracing configuration:": "configuración de external_services.tracing:",
   "Failed Request": "Solicitud fallida",
+  "Failed to load applications data": "Failed to load applications data",
   "Failed to load service data": "No se pudieron cargar los datos de servicios",
   "Failure": "Fallo",
   "fault injection": "fault injection",

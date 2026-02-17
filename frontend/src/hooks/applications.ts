@@ -15,18 +15,21 @@ export type AppRateItem = {
 
 export type ApplicationsResult = {
   apps: AppRateItem[];
+  isError: boolean;
   isLoading: boolean;
   metrics: {
     no_traffic: string;
     rpsIn: string;
     rpsOut: string;
   };
+  retry: () => void;
 };
 
 export const useApplications = (): ApplicationsResult => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
   const [apps, setApps] = React.useState<AppRateItem[]>([]);
   const [metrics, setMetrics] = React.useState<{ no_traffic: string; rpsIn: string; rpsOut: string }>({
     no_traffic: '',
@@ -36,6 +39,7 @@ export const useApplications = (): ApplicationsResult => {
 
   const fetchAppRates = React.useCallback((): void => {
     setIsLoading(true);
+    setIsError(false);
 
     API.getOverviewAppRates()
       .then(response => {
@@ -58,6 +62,7 @@ export const useApplications = (): ApplicationsResult => {
       })
       .catch(error => {
         addError(t('Error fetching Applications.'), error);
+        setIsError(true);
         setApps([]);
         setMetrics({ rpsIn: '', rpsOut: '', no_traffic: '' });
       })
@@ -72,7 +77,9 @@ export const useApplications = (): ApplicationsResult => {
 
   return {
     apps,
+    isError,
     isLoading,
-    metrics
+    metrics,
+    retry: fetchAppRates
   };
 };
