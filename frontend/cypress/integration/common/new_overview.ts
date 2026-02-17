@@ -439,7 +439,7 @@ Given('Service insights mock APIs are observed', () => {
             errorRate: 0.5495495495495495,
             healthStatus: 'Failure',
             namespace: 'bookinfo',
-            requestCount: 1.5578947368421052,
+            requestRate: 1.5578947368421052,
             serviceName: 'reviews'
           },
           {
@@ -447,7 +447,7 @@ Given('Service insights mock APIs are observed', () => {
             errorRate: 0.45759717314487636,
             healthStatus: 'Failure',
             namespace: 'beta',
-            requestCount: 1.9859649122807015,
+            requestRate: 1.9859649122807015,
             serviceName: 'w-server'
           }
         ]

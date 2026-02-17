@@ -8,15 +8,13 @@ import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
 import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
-import { AppHealth, DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, Status } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from 'types/Health';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
-import { durationSelector, namespaceItemsSelector } from 'store/Selectors';
+import { namespaceItemsSelector } from 'store/Selectors';
 import { OverviewCardLoadingState } from './OverviewCardState';
 import { ResourcesFullIcon, TachometerAltIcon } from '@patternfly/react-icons';
-import { useSelector } from 'react-redux';
-import { DurationInSeconds } from '../../types/Common';
 
 const chartContainerStyle = kialiStyle({
   display: 'flex',
@@ -45,37 +43,28 @@ const legendIconStyle = kialiStyle({
 });
 
 export const ApplicationStats: React.FC = () => {
-  const { applications, isLoading, metrics } = useApplications();
+  const { apps, isLoading, metrics } = useApplications();
   const allNamespaces = useKialiSelector(namespaceItemsSelector);
-  const duration = useSelector(durationSelector) as DurationInSeconds;
-  // Calculate stats from applications
-  const total = applications.length;
+
+  const total = apps.length;
   let healthy = 0;
   let degraded = 0;
   let failure = 0;
   let notReady = 0;
   let noHealthInfo = 0;
 
-  applications.forEach(app => {
-    const appHealth = AppHealth.fromJson(app.namespace, app.name, app.health, {
-      rateInterval: duration,
-      hasSidecar: app.istioSidecar,
-      hasAmbient: app.isAmbient
-    });
-
-    const globalStatus: Status = appHealth.getStatus();
-
-    switch (globalStatus) {
-      case HEALTHY:
+  apps.forEach(app => {
+    switch (app.healthStatus) {
+      case 'Healthy':
         healthy++;
         break;
-      case DEGRADED:
+      case 'Degraded':
         degraded++;
         break;
-      case FAILURE:
+      case 'Failure':
         failure++;
         break;
-      case NOT_READY:
+      case 'Not Ready':
         notReady++;
         break;
       default:
@@ -84,7 +73,6 @@ export const ApplicationStats: React.FC = () => {
   });
 
   const navigateToApplications = (): void => {
-    // Pass all available namespaces to show everything
     const namespaces = allNamespaces ? allNamespaces.map(ns => ns.name).join(',') : '';
     let url = `/${Paths.APPLICATIONS}`;
 
@@ -96,7 +84,6 @@ export const ApplicationStats: React.FC = () => {
   };
 
   const navigateToHealthFilter = (healthStatus: string): void => {
-    // Set the health filter
     FilterSelected.setSelected({
       filters: [
         {
@@ -107,15 +94,11 @@ export const ApplicationStats: React.FC = () => {
       op: 'or'
     });
 
-    // Navigate to applications page with health filter
     navigateToApplications();
   };
 
   const resetFiltersAndNavigate = (): void => {
-    // Clear all filters before navigating
     FilterSelected.resetFilters();
-
-    // Navigate to applications page
     navigateToApplications();
   };
 

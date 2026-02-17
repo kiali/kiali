@@ -20,7 +20,7 @@ export interface ServiceRequests {
   errorRate: number; // error rate as a decimal (0.0 to 1.0)
   healthStatus?: HealthStatusId;
   namespace: string;
-  requestCount: number; // requests per second
+  requestRate: number; // requests per second
   serviceName: string;
 }
 

@@ -158,6 +158,7 @@ const conf = {
       meshTls: () => 'api/mesh/tls',
       metricsStats: 'api/stats/metrics',
       namespace: (namespace: string) => `api/namespaces/${namespace}`,
+      overviewAppRates: 'api/overview/metrics/apps/rates',
       overviewServiceLatencies: 'api/overview/metrics/services/latency',
       overviewServiceRates: 'api/overview/metrics/services/rates',
       namespaceInfo: (namespace: string) => `api/namespaces/${namespace}/info`,
