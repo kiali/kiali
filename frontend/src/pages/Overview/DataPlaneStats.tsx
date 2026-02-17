@@ -5,13 +5,12 @@ import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
-import { Namespace } from 'types/Namespace';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useSelector } from 'react-redux';
 import { durationSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
-import { useDataPlanes } from 'hooks/dataPlanes';
+import { NamespaceWithHealthStatus, useDataPlanes } from 'hooks/dataPlanes';
 import {
   cardBodyStyle,
   cardStyle,
@@ -24,12 +23,11 @@ import {
   popoverItemStatusStyle,
   popoverItemStyle,
   statItemStyle,
-  statsContainerStyle,
-  statusLabelStyle
+  statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { StatCountPopover } from './StatCountPopover';
-import { buildDataPlanesUrl, navigateToUrl } from './Links';
+import { buildDataPlanesUrl, buildUnhealthyDataPlanesUrl, navigateToUrl } from './Links';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 
 const namespaceContainerStyle = kialiStyle({
@@ -100,7 +98,6 @@ export const DataPlaneStats: React.FC = () => {
     refresh: refreshNamespaces
   } = useNamespaces();
   const duration = useSelector(durationSelector) as DurationInSeconds;
-  type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
   const {
     ambient,
     healthy,
@@ -117,8 +114,11 @@ export const DataPlaneStats: React.FC = () => {
 
   const popoverContentFor = (
     list: NamespaceWithHealthStatus[],
-    viewAllStatus: HealthStatusId,
-    viewAllText: string
+    viewAll?: {
+      onClick: () => void;
+      testId?: string;
+      text: string;
+    }
   ): React.ReactNode => (
     <>
       {list.slice(0, MAX_POPOVER_ITEMS).map(ns => (
@@ -127,44 +127,19 @@ export const DataPlaneStats: React.FC = () => {
             <PFBadge badge={PFBadges.Namespace} size="sm" />
             {ns.name}
           </span>
-          <Label
-            className={classes(statusLabelStyle, popoverItemStatusStyle)}
-            variant="outline"
-            icon={createIcon(
-              ns.healthStatus === FAILURE.id
-                ? FAILURE
-                : ns.healthStatus === DEGRADED.id
-                ? DEGRADED
-                : ns.healthStatus === NOT_READY.id
-                ? NOT_READY
-                : NA
-            )}
-            style={
-              {
-                '--pf-v6-c-label--m-outline--BorderColor':
-                  ns.healthStatus === FAILURE.id
-                    ? FAILURE.color
-                    : ns.healthStatus === DEGRADED.id
-                    ? DEGRADED.color
-                    : ns.healthStatus === NOT_READY.id
-                    ? NOT_READY.color
-                    : NA.color
-              } as React.CSSProperties
-            }
-          >
-            {getHealthStatusLabel(ns.healthStatus)}
-          </Label>
+          <span className={popoverItemStatusStyle}>{getHealthStatusLabel(ns.healthStatus)}</span>
         </div>
       ))}
-      {list.length > MAX_POPOVER_ITEMS && (
+      {viewAll && list.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
           <Button
             variant="link"
             isInline
             className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(buildDataPlanesUrl(viewAllStatus))}
+            onClick={viewAll.onClick}
+            data-test={viewAll.testId}
           >
-            {viewAllText}
+            {viewAll.text}
           </Button>
         </div>
       )}
@@ -175,8 +150,33 @@ export const DataPlaneStats: React.FC = () => {
   const degradedCount = namespacesDegraded.length;
   const notReadyCount = namespacesNotReady.length;
   const naCount = namespacesNA.length;
+  const unhealthyCount = failureCount + degradedCount + notReadyCount;
   const isCardLoading = isNamespacesLoading || isHealthLoading;
   const isCardError = isNamespacesError || isError;
+
+  const unhealthyNamespaces: NamespaceWithHealthStatus[] = React.useMemo(() => {
+    const severity = (s: HealthStatusId): number => {
+      switch (s) {
+        case FAILURE.id:
+          return 0;
+        case DEGRADED.id:
+          return 1;
+        case NOT_READY.id:
+          return 2;
+        default:
+          return 3;
+      }
+    };
+
+    // Show the "worst" namespaces first: Failure > Degraded > Not Ready, then alphabetical.
+    return [...namespacesFailure, ...namespacesDegraded, ...namespacesNotReady].sort((a, b) => {
+      const sev = severity(a.healthStatus) - severity(b.healthStatus);
+      if (sev !== 0) {
+        return sev;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [namespacesDegraded, namespacesFailure, namespacesNotReady]);
 
   const handleTryAgain = (): void => {
     refreshNamespaces();
@@ -205,32 +205,9 @@ export const DataPlaneStats: React.FC = () => {
                   <KialiIcon.Success />
                 </div>
               )}
-              {failureCount > 0 && (
+              {unhealthyCount > 0 && (
                 <StatCountPopover
-                  ariaLabel={t('Namespaces in Failure')}
-                  triggerAction="click"
-                  showClose={true}
-                  headerContent={
-                    <span className={popoverHeaderStyle}>
-                      {createIcon(FAILURE)} {t('Data planes')}
-                    </span>
-                  }
-                  bodyContent={popoverContentFor(
-                    namespacesFailure,
-                    FAILURE.id as HealthStatusId,
-                    t('View all failure namespaces')
-                  )}
-                  trigger={
-                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-failure">
-                      <span className={linkStyle}>{failureCount}</span>
-                      {createIcon(FAILURE)}
-                    </div>
-                  }
-                />
-              )}
-              {degradedCount > 0 && (
-                <StatCountPopover
-                  ariaLabel={t('Namespaces in Degraded')}
+                  ariaLabel={t('Unhealthy Data planes')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -238,45 +215,22 @@ export const DataPlaneStats: React.FC = () => {
                       {createIcon(DEGRADED)} {t('Data planes')}
                     </span>
                   }
-                  bodyContent={popoverContentFor(
-                    namespacesDegraded,
-                    DEGRADED.id as HealthStatusId,
-                    t('View all degraded namespaces')
-                  )}
+                  bodyContent={popoverContentFor(unhealthyNamespaces, {
+                    onClick: () => navigateToUrl(buildUnhealthyDataPlanesUrl()),
+                    testId: 'data-planes-view-unhealthy',
+                    text: t('View all Unhealthy Data planes')
+                  })}
                   trigger={
-                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-degraded">
-                      <span className={linkStyle}>{degradedCount}</span>
+                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-unhealthy">
+                      <span className={linkStyle}>{unhealthyCount}</span>
                       {createIcon(DEGRADED)}
-                    </div>
-                  }
-                />
-              )}
-              {notReadyCount > 0 && (
-                <StatCountPopover
-                  ariaLabel={t('Namespaces in Not Ready')}
-                  triggerAction="click"
-                  showClose={true}
-                  headerContent={
-                    <span className={popoverHeaderStyle}>
-                      {createIcon(NOT_READY)} {t('Data planes')}
-                    </span>
-                  }
-                  bodyContent={popoverContentFor(
-                    namespacesNotReady,
-                    NOT_READY.id as HealthStatusId,
-                    t('View all not ready namespaces')
-                  )}
-                  trigger={
-                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-not-ready">
-                      <span className={linkStyle}>{notReadyCount}</span>
-                      {createIcon(NOT_READY)}
                     </div>
                   }
                 />
               )}
               {naCount > 0 && (
                 <StatCountPopover
-                  ariaLabel={t('Namespaces with no health information')}
+                  ariaLabel={t('Data planes with no health information')}
                   triggerAction="click"
                   showClose={true}
                   headerContent={
@@ -284,7 +238,10 @@ export const DataPlaneStats: React.FC = () => {
                       {createIcon(NA)} {t('Data planes')}
                     </span>
                   }
-                  bodyContent={popoverContentFor(namespacesNA, NA.id as HealthStatusId, t('View Data planes'))}
+                  bodyContent={popoverContentFor(namespacesNA, {
+                    onClick: () => navigateToUrl(buildDataPlanesUrl(NA.id as HealthStatusId)),
+                    text: t('View all n/a Data planes')
+                  })}
                   trigger={
                     <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
                       <span className={linkStyle}>{naCount}</span>
@@ -325,7 +282,7 @@ export const DataPlaneStats: React.FC = () => {
             isInline
             className={classes(linkStyle, noUnderlineStyle)}
             onClick={() => navigateToUrl(buildDataPlanesUrl())}
-            data-test="data-planes-view-namespaces"
+            data-test="data-planes-view"
           >
             {t('View Data planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
           </Button>

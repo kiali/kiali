@@ -143,17 +143,58 @@ describe('Overview DataPlaneStats', () => {
 
     const wrapper = await mountAndFlush();
 
-    expect(wrapper.find('[data-test="data-planes-failure"]').text()).toContain('2');
-    expect(wrapper.find('[data-test="data-planes-degraded"]').text()).toContain('1');
-    expect(wrapper.find('[data-test="data-planes-not-ready"]').text()).toContain('1');
+    expect(wrapper.find('[data-test="data-planes-unhealthy"]').text()).toContain('4');
     expect(wrapper.find('[data-test="data-planes-na"]').text()).toContain('1');
 
-    expect(wrapper.find('button[data-test="data-planes-view-namespaces"]').exists()).toBeTruthy();
-    wrapper.find('button[data-test="data-planes-view-namespaces"]').simulate('click');
+    expect(wrapper.find('button[data-test="data-planes-view"]').exists()).toBeTruthy();
+    wrapper.find('button[data-test="data-planes-view"]').simulate('click');
     expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
     const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     // Data plane filter should be present; URLSearchParams encodes spaces as '+'
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
+  });
+
+  it('shows unhealthy popover footer link when unhealthy > 3 and navigates with 3 health filters', async () => {
+    useNamespacesMock.mockReturnValue({
+      isLoading: false,
+      namespaces: [
+        { name: 'f1', labels: { 'istio-injection': 'enabled' } },
+        { name: 'f2', labels: { 'istio-injection': 'enabled' } },
+        { name: 'd1', isAmbient: true },
+        { name: 'nr1', labels: { 'istio.io/rev': 'rev1' } }
+      ]
+    });
+
+    (NamespaceHealthService.fetchClusterNamespacesHealth as jest.Mock).mockResolvedValue(
+      new Map<string, any>([
+        ['f1', makeNamespaceHealth(FAILURE)],
+        ['f2', makeNamespaceHealth(FAILURE)],
+        ['d1', makeNamespaceHealth(DEGRADED)],
+        ['nr1', makeNamespaceHealth(NOT_READY)]
+      ])
+    );
+
+    const wrapper = await mountAndFlush();
+
+    const popover = wrapper.find('Popover[aria-label="Unhealthy Data planes"]').first();
+    expect(popover.exists()).toBeTruthy();
+
+    const bodyContent = popover.prop('bodyContent') as any;
+    const popoverBody = mount(<>{bodyContent}</>);
+
+    const linkBtn = popoverBody.find('button[data-test="data-planes-view-unhealthy"]').first();
+    expect(linkBtn.exists()).toBeTruthy();
+
+    (router.navigate as jest.Mock).mockClear();
+    linkBtn.simulate('click');
+
+    expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
+    const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
+    expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
+    expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
+    expect(url).toMatch(/[?&]health=Failure/);
+    expect(url).toMatch(/[?&]health=Degraded/);
+    expect(url).toMatch(/[?&]health=Not(\+|%20)Ready/);
   });
 });
