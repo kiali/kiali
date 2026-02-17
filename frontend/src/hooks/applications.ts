@@ -17,7 +17,6 @@ export type ApplicationsResult = {
   apps: AppRateItem[];
   isLoading: boolean;
   metrics: {
-    latency: string;
     no_traffic: string;
     rps: string;
   };
@@ -28,8 +27,7 @@ export const useApplications = (): ApplicationsResult => {
   const { lastRefreshAt } = useRefreshInterval();
   const [isLoading, setIsLoading] = React.useState(false);
   const [apps, setApps] = React.useState<AppRateItem[]>([]);
-  const [metrics, setMetrics] = React.useState<{ latency: string; no_traffic: string; rps: string }>({
-    latency: '',
+  const [metrics, setMetrics] = React.useState<{ no_traffic: string; rps: string }>({
     no_traffic: '',
     rps: ''
   });
@@ -49,7 +47,6 @@ export const useApplications = (): ApplicationsResult => {
         const noTrafficCount = appRates.filter(app => app.requestRateIn + app.requestRateOut <= 0).length;
 
         setMetrics({
-          latency: '0',
           no_traffic: String(noTrafficCount),
           rps: rpsFormatted
         });
@@ -57,7 +54,7 @@ export const useApplications = (): ApplicationsResult => {
       .catch(error => {
         addError(t('Error fetching Applications.'), error);
         setApps([]);
-        setMetrics({ latency: '', rps: '', no_traffic: '' });
+        setMetrics({ rps: '', no_traffic: '' });
       })
       .finally(() => {
         setIsLoading(false);

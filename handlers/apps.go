@@ -29,7 +29,6 @@ type appParams struct {
 	// Optional
 	IncludeHealth         bool `json:"health"`
 	IncludeIstioResources bool `json:"istioResources"`
-	IncludeMetrics        bool `json:"metrics"`
 }
 
 func (p *appParams) extract(r *http.Request, conf *config.Config) {
@@ -47,10 +46,6 @@ func (p *appParams) extract(r *http.Request, conf *config.Config) {
 	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
 	if err != nil {
 		p.IncludeIstioResources = true
-	}
-	p.IncludeMetrics, err = strconv.ParseBool(query.Get("metrics"))
-	if err != nil {
-		p.IncludeMetrics = false
 	}
 }
 
@@ -100,8 +95,8 @@ func ClusterApps(
 
 		for _, ns := range nss {
 			criteria := business.AppCriteria{
-				Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
-				IncludeHealth: p.IncludeHealth, IncludeMetrics: p.IncludeMetrics, RateInterval: p.RateInterval, QueryTime: p.QueryTime,
+				Cluster: p.ClusterName, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources,
+				Namespace: ns, QueryTime: p.QueryTime, RateInterval: p.RateInterval,
 			}
 
 			if p.IncludeHealth {

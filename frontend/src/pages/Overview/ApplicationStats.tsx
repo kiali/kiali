@@ -14,7 +14,7 @@ import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { namespaceItemsSelector } from 'store/Selectors';
 import { OverviewCardLoadingState } from './OverviewCardState';
-import { ResourcesFullIcon, TachometerAltIcon } from '@patternfly/react-icons';
+import { ResourcesFullIcon } from '@patternfly/react-icons';
 
 const chartContainerStyle = kialiStyle({
   display: 'flex',
@@ -129,9 +129,6 @@ export const ApplicationStats: React.FC = () => {
                 <span
                   style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}
                 >{`${metrics.no_traffic} apps with no traffic`}</span>
-              </FlexItem>
-              <FlexItem style={{ marginLeft: '1.2rem' }}>
-                <TachometerAltIcon /> {`Latency ${metrics.latency} ms`}
               </FlexItem>
             </Flex>
           </CardBody>

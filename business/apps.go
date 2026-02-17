@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/common/model"
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -46,14 +45,13 @@ type AppService struct {
 }
 
 type AppCriteria struct {
-	Namespace             string
-	Cluster               string
 	AppName               string
-	IncludeIstioResources bool
+	Cluster               string
 	IncludeHealth         bool
-	IncludeMetrics        bool
-	RateInterval          string
+	IncludeIstioResources bool
+	Namespace             string
 	QueryTime             time.Time
+	RateInterval          string
 }
 
 func joinMap(m1 map[string][]string, m2 map[string]string) {
@@ -215,82 +213,6 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 				appItem.Health, err = in.businessLayer.Health.GetAppHealth(ctx, namespace, cluster, appItem.Name, criteria.RateInterval, criteria.QueryTime, valueApp)
 				if err != nil {
 					log.Errorf("Error fetching Health in namespace %s for app %s: %s", namespace, appItem.Name, err)
-				}
-			}
-		}
-		if criteria.IncludeMetrics {
-			appItem.Metrics = map[string]string{}
-			duration := string(in.conf.HealthConfig.Compute.Duration)
-			// Request rates
-			inRates, outRates, err := in.prom.GetAppRequestRates(ctx, namespace, cluster, appItem.Name, duration, criteria.QueryTime)
-			if err != nil {
-				log.Errorf("Error fetching app request rates for app %s: %v", appItem.Name, err)
-			}
-			inRate, hasIn := sumPromValue(inRates)
-			outRate, hasOut := sumPromValue(outRates)
-			if !hasIn && !hasOut {
-				inLabels := NewMetricsLabelsBuilder("inbound", in.conf).
-					QueryScope().
-					App(appItem.Name, namespace).
-					Reporter("destination", false).
-					Build()
-				outLabels := NewMetricsLabelsBuilder("outbound", in.conf).
-					QueryScope().
-					App(appItem.Name, namespace).
-					Reporter("source", false).
-					Build()
-
-				inQuery := fmt.Sprintf("sum(rate(istio_requests_total%s[%s]))", inLabels, duration)
-				outQuery := fmt.Sprintf("sum(rate(istio_requests_total%s[%s]))", outLabels, duration)
-
-				inValue, inWarnings, err := in.prom.API().Query(ctx, inQuery, criteria.QueryTime)
-				if err != nil {
-					log.Errorf("Error fetching app request rates (canonical_service, inbound) for app %s: %v", appItem.Name, err)
-				} else if len(inWarnings) > 0 {
-					log.Warningf("Prometheus warnings for app request rates (canonical_service, inbound) for app %s: %v", appItem.Name, inWarnings)
-				}
-
-				outValue, outWarnings, err := in.prom.API().Query(ctx, outQuery, criteria.QueryTime)
-				if err != nil {
-					log.Errorf("Error fetching app request rates (canonical_service, outbound) for app %s: %v", appItem.Name, err)
-				} else if len(outWarnings) > 0 {
-					log.Warningf("Prometheus warnings for app request rates (canonical_service, outbound) for app %s: %v", appItem.Name, outWarnings)
-				}
-
-				inRate, _ = sumPromValue(inValue)
-				outRate, _ = sumPromValue(outValue)
-			}
-			appItem.Metrics["request_rate_in"] = fmt.Sprintf("%.2f", inRate)
-			appItem.Metrics["request_rate_out"] = fmt.Sprintf("%.2f", outRate)
-			appItem.Metrics["request_rate_total"] = fmt.Sprintf("%.2f", inRate+outRate)
-
-			// Latency
-			latencyLabels := NewMetricsLabelsBuilder("inbound", in.conf).
-				QueryScope().
-				App(appItem.Name, namespace).
-				Reporter("destination", false).
-				Build()
-
-			latencyQueries := map[string]string{
-				"request_latency_p50_ms": fmt.Sprintf("histogram_quantile(0.5, sum(rate(istio_request_duration_milliseconds_bucket%s[%s])) by (le))", latencyLabels, duration),
-				"request_latency_p90_ms": fmt.Sprintf("histogram_quantile(0.9, sum(rate(istio_request_duration_milliseconds_bucket%s[%s])) by (le))", latencyLabels, duration),
-				"request_latency_p99_ms": fmt.Sprintf("histogram_quantile(0.99, sum(rate(istio_request_duration_milliseconds_bucket%s[%s])) by (le))", latencyLabels, duration),
-			}
-
-			for metricName, query := range latencyQueries {
-				value, warnings, err := in.prom.API().Query(ctx, query, criteria.QueryTime)
-				if err != nil {
-					log.Debugf("Error fetching app latency metric %s for app %s: %v", metricName, appItem.Name, err)
-					continue
-				}
-				if len(warnings) > 0 {
-					log.Debugf("Prometheus warnings for app latency metric %s for app %s: %v", metricName, appItem.Name, warnings)
-				}
-				if latency, ok := sumPromValue(value); ok {
-					if appItem.Metrics == nil {
-						appItem.Metrics = map[string]string{}
-					}
-					appItem.Metrics[metricName] = fmt.Sprintf("%.2f", latency)
 				}
 			}
 		}
@@ -676,22 +598,4 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 		}
 	}
 	return tracingName
-}
-
-func sumPromValue(value model.Value) (float64, bool) {
-	switch v := value.(type) {
-	case model.Vector:
-		if len(v) == 0 {
-			return 0, false
-		}
-		sum := 0.0
-		for _, sample := range v {
-			sum += float64(sample.Value)
-		}
-		return sum, true
-	case *model.Scalar:
-		return float64(v.Value), true
-	default:
-		return 0, false
-	}
 }
