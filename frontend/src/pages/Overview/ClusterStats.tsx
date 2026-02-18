@@ -22,11 +22,9 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { isHealthy, isUnhealthy } from 'utils/StatusUtils';
+import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
 import { isControlPlaneAccessible } from 'utils/MeshUtils';
 import { StatCountPopover } from './StatCountPopover';
-
-type ClusterIssue = { issues: number; name: string; unknownStatus: boolean };
 
 export const ClusterStats: React.FC = () => {
   const { isError, isLoading, refresh, statusMap } = useClusterStatus();
