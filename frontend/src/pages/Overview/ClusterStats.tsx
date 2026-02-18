@@ -8,6 +8,7 @@ import { useClusterStatus } from 'hooks/clusters';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
+import { Status } from 'types/IstioStatus';
 import {
   cardStyle,
   cardBodyStyle,
@@ -22,10 +23,12 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
+import { isControlPlaneAccessible } from 'utils/MeshUtils';
 import { StatCountPopover } from './StatCountPopover';
 
 export const ClusterStats: React.FC = () => {
   const { isError, isLoading, refresh, statusMap } = useClusterStatus();
+  const hasMeshAccess = isControlPlaneAccessible();
 
   // Calculate stats from statusMap
   const total = Object.keys(statusMap).length;
@@ -35,18 +38,29 @@ export const ClusterStats: React.FC = () => {
   // Get clusters with issues
   const clustersWithIssues = Object.entries(statusMap).reduce((acc, [clusterName, components]) => {
     // Calculate issues once
-    const issueCount = components.filter(isUnhealthy).length;
+    const unhealthyComponents = components.filter(isUnhealthy);
+    const issueCount = unhealthyComponents.length;
+    const unknownStatus = unhealthyComponents.some(c => c.status === Status.NotFound);
 
     // Only add to accumulator if there are actual issues
     if (issueCount > 0) {
       acc.push({
         issues: issueCount,
-        name: clusterName
+        name: clusterName,
+        unknownStatus
       });
     }
 
     return acc;
   }, [] as ClusterIssue[]);
+
+  const hasUnknownIssues = clustersWithIssues.some(c => c.unknownStatus);
+  const hasKnownIssues = clustersWithIssues.some(c => !c.unknownStatus);
+  const issuesIcon = hasKnownIssues ? (
+    <KialiIcon.ExclamationTriangle />
+  ) : hasUnknownIssues ? (
+    <KialiIcon.Unknown />
+  ) : null;
 
   const popoverContent = (
     <>
@@ -54,9 +68,11 @@ export const ClusterStats: React.FC = () => {
         <div key={cluster.name} className={popoverItemStyle}>
           <span>
             <PFBadge badge={PFBadges.Cluster} size="sm" />
-            <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link>
+            {hasMeshAccess ? <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link> : cluster.name}
           </span>
-          <span className={popoverItemStatusStyle}>{t('{{count}} issue', { count: cluster.issues })}</span>
+          <span className={popoverItemStatusStyle}>
+            {cluster.unknownStatus ? t('Unknown status') : t('{{count}} issue', { count: cluster.issues })}
+          </span>
         </div>
       ))}
     </>
@@ -90,14 +106,14 @@ export const ClusterStats: React.FC = () => {
                 ariaLabel={t('Clusters with issues')}
                 headerContent={
                   <span className={popoverHeaderStyle}>
-                    <KialiIcon.ExclamationTriangle /> {t('Clusters')}
+                    {issuesIcon} {t('Clusters')}
                   </span>
                 }
                 bodyContent={popoverContent}
                 trigger={
                   <div className={classes(statItemStyle, clickableStyle)} data-test="clusters-issues">
                     <span className={linkStyle}>{unhealthy}</span>
-                    <KialiIcon.ExclamationTriangle />
+                    {issuesIcon}
                   </div>
                 }
               />
@@ -105,7 +121,7 @@ export const ClusterStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      {!isLoading && !isError && (
+      {!isLoading && !isError && hasMeshAccess && (
         <CardFooter>
           <Link to={`/${Paths.MESH}`} className={linkStyle}>
             {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
