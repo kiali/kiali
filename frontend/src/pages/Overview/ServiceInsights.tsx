@@ -311,7 +311,7 @@ export const ServiceInsights: React.FC = () => {
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
-                <Tooltip content={formatRequestRate(svc.requestCount ?? 0)} position={TooltipPosition.top}>
+                <Tooltip content={formatRequestRate(svc.requestRate ?? 0)} position={TooltipPosition.top}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                     {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
                     {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}

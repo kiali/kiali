@@ -1,84 +1,70 @@
 import * as React from 'react';
 import * as API from '../services/Api';
-import { AppListItemResponse } from '../types/AppList';
 import { useRefreshInterval } from './refresh';
 import { addError } from '../utils/AlertUtils';
 import { useKialiTranslation } from '../utils/I18nUtils';
-import { isMultiCluster, serverConfig } from '../config';
+
+export type AppRateItem = {
+  appName: string;
+  cluster: string;
+  healthStatus: string;
+  namespace: string;
+  requestRateIn: number;
+  requestRateOut: number;
+};
 
 export type ApplicationsResult = {
-  applications: AppListItemResponse[];
+  apps: AppRateItem[];
+  isError: boolean;
   isLoading: boolean;
   metrics: {
-    latency: string;
     no_traffic: string;
-    rps: string;
+    rpsIn: string;
+    rpsOut: string;
   };
+  retry: () => void;
 };
 
 export const useApplications = (): ApplicationsResult => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
   const [isLoading, setIsLoading] = React.useState(false);
-  const [applications, setApplications] = React.useState<AppListItemResponse[]>([]);
-  const [metrics, setMetrics] = React.useState<{ latency: string; no_traffic: string; rps: string }>({
-    latency: '',
+  const [isError, setIsError] = React.useState(false);
+  const [apps, setApps] = React.useState<AppRateItem[]>([]);
+  const [metrics, setMetrics] = React.useState<{ no_traffic: string; rpsIn: string; rpsOut: string }>({
     no_traffic: '',
-    rps: ''
+    rpsIn: '',
+    rpsOut: ''
   });
 
-  const fetchApplications = React.useCallback((): void => {
+  const fetchAppRates = React.useCallback((): void => {
     setIsLoading(true);
-    const fetchPromises: Promise<AppListItemResponse[]>[] = [];
+    setIsError(false);
 
-    if (isMultiCluster) {
-      for (let cluster in serverConfig.clusters) {
-        fetchPromises.push(
-          API.getClusterApps('', { health: 'true', istioResources: 'false', metrics: 'true' }, cluster).then(
-            response => response.data.applications
-          )
-        );
-      }
-    } else {
-      fetchPromises.push(
-        API.getClusterApps('', { health: 'true', istioResources: 'false', metrics: 'true' }, undefined).then(
-          response => response.data.applications
-        )
-      );
-    }
+    API.getOverviewAppRates()
+      .then(response => {
+        const appRates = response.data.apps ?? [];
+        setApps(appRates);
 
-    Promise.all(fetchPromises)
-      .then(results => {
-        const apps = results.flat();
-        setApplications(apps);
+        const formatRps = (value: number): string =>
+          value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value.toFixed(1);
 
-        const rpsValues = apps
-          .map(app => Number.parseFloat(app.metrics?.request_rate_total ?? ''))
-          .filter(value => Number.isFinite(value));
-        const rpsSum = rpsValues.reduce((acc, value) => acc + value, 0);
-        const rpsFormatted =
-          rpsValues.length === 0 ? '' : rpsSum >= 1000 ? `${(rpsSum / 1000).toFixed(1)}K` : rpsSum.toFixed(1);
+        const rpsInSum = appRates.reduce((acc, app) => acc + app.requestRateIn, 0);
+        const rpsOutSum = appRates.reduce((acc, app) => acc + app.requestRateOut, 0);
 
-        const latencyValues = apps
-          .map(app => Number.parseFloat(app.metrics?.request_latency_p50_ms ?? ''))
-          .filter(value => Number.isFinite(value));
-        const latencyAvg =
-          latencyValues.length > 0 ? latencyValues.reduce((acc, value) => acc + value, 0) / latencyValues.length : 0;
-        const noTrafficCount = apps.filter(app => {
-          const value = Number.parseFloat(app.metrics?.request_rate_total ?? '');
-          return !Number.isFinite(value) || value <= 0;
-        }).length;
+        const noTrafficCount = appRates.filter(app => app.requestRateIn + app.requestRateOut <= 0).length;
 
         setMetrics({
-          latency: latencyValues.length > 0 ? latencyAvg.toFixed(2) : '',
           no_traffic: String(noTrafficCount),
-          rps: rpsFormatted
+          rpsIn: appRates.length === 0 ? '' : formatRps(rpsInSum),
+          rpsOut: appRates.length === 0 ? '' : formatRps(rpsOutSum)
         });
       })
       .catch(error => {
         addError(t('Error fetching Applications.'), error);
-        setApplications([]);
-        setMetrics({ latency: '', rps: '', no_traffic: '' });
+        setIsError(true);
+        setApps([]);
+        setMetrics({ rpsIn: '', rpsOut: '', no_traffic: '' });
       })
       .finally(() => {
         setIsLoading(false);
@@ -86,12 +72,14 @@ export const useApplications = (): ApplicationsResult => {
   }, [t]);
 
   React.useEffect(() => {
-    fetchApplications();
-  }, [lastRefreshAt, fetchApplications]);
+    fetchAppRates();
+  }, [lastRefreshAt, fetchAppRates]);
 
   return {
-    applications,
+    apps,
+    isError,
     isLoading,
-    metrics
+    metrics,
+    retry: fetchAppRates
   };
 };

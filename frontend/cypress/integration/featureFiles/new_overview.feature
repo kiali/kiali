@@ -130,3 +130,36 @@ Feature: New Overview - Overview cards
     Given Service insights mock APIs are observed
     And user is at the "overview" page
     Then Service insights card shows mock data tables
+
+  @core-2
+  Scenario: Applications card shows loading state without footer link
+    Given Applications API responds slowly
+    And user is at the "overview" page
+    Then Applications card shows loading state without footer link
+
+  @core-2
+  Scenario: Applications card shows error state without footer link
+    Given Applications API fails
+    And user is at the "overview" page
+    Then Applications card shows error state without footer link
+
+  @core-2
+  Scenario: Applications card can retry after error
+    Given Applications API fails once
+    And user is at the "overview" page
+    Then Applications card shows error state without footer link
+    When user clicks Try Again in Applications card
+    Then Applications card shows data and footer link
+
+  @core-2
+  Scenario: Applications card footer link navigates to Applications list
+    Given Applications API is observed
+    And user is at the "overview" page
+    When user clicks View all applications in Applications card
+    Then user is redirected to Applications list with all namespaces
+
+  @core-2
+  Scenario: Applications card shows mock rate data
+    Given Applications mock API returns data
+    And user is at the "overview" page
+    Then Applications card shows mock rate data

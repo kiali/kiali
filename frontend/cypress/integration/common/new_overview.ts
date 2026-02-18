@@ -1,13 +1,16 @@
 import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
+const APP_RATES_API_PATHNAME = '**/api/overview/metrics/apps/rates';
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
 const CLUSTERS_API_URL = '**/api/istio/status*';
 const SERVICE_LATENCIES_API_PATHNAME = '**/api/overview/metrics/services/latency';
 const SERVICE_RATES_API_PATHNAME = '**/api/overview/metrics/services/rates';
 
-let shouldWaitServiceInsightsRetry = false;
+let didAppsCardRetry = false;
 let didServiceInsightsRetry = false;
 let lastClickedServiceInsightsHref: string | undefined;
+let shouldWaitAppsCardRetry = false;
+let shouldWaitServiceInsightsRetry = false;
 
 const istioConfigsWithNoValidations = {
   permissions: {},
@@ -439,7 +442,7 @@ Given('Service insights mock APIs are observed', () => {
             errorRate: 0.5495495495495495,
             healthStatus: 'Failure',
             namespace: 'bookinfo',
-            requestCount: 1.5578947368421052,
+            requestRate: 1.5578947368421052,
             serviceName: 'reviews'
           },
           {
@@ -447,7 +450,7 @@ Given('Service insights mock APIs are observed', () => {
             errorRate: 0.45759717314487636,
             healthStatus: 'Failure',
             namespace: 'beta',
-            requestCount: 1.9859649122807015,
+            requestRate: 1.9859649122807015,
             serviceName: 'w-server'
           }
         ]
@@ -768,4 +771,177 @@ Then('user is redirected to that Service details page', () => {
   cy.contains('button, a', 'Overview').should('be.visible');
   cy.contains('button, a', 'Traffic').should('be.visible');
   cy.contains('button, a', 'Inbound Metrics').should('be.visible');
+});
+
+// ==================== Applications Card ====================
+
+const getAppsCard = (): Cypress.Chainable => {
+  return cy.getBySel('apps-card');
+};
+
+Given('Applications API responds slowly', () => {
+  didAppsCardRetry = false;
+  cy.intercept(
+    { method: 'GET', pathname: APP_RATES_API_PATHNAME },
+    { delay: 2000, statusCode: 200, body: { apps: [] } }
+  ).as('appRates');
+});
+
+Given('Applications API fails', () => {
+  didAppsCardRetry = false;
+  cy.intercept({ method: 'GET', pathname: APP_RATES_API_PATHNAME }, { statusCode: 500, body: {} }).as('appRates');
+});
+
+Given('Applications API fails once', () => {
+  didAppsCardRetry = false;
+  shouldWaitAppsCardRetry = true;
+
+  // Observe subsequent (retry) calls without modifying them.
+  cy.intercept({ method: 'GET', pathname: APP_RATES_API_PATHNAME }).as('appRates');
+
+  cy.intercept({ method: 'GET', pathname: APP_RATES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
+    'appRatesFailOnce'
+  );
+});
+
+Given('Applications mock API returns data', () => {
+  didAppsCardRetry = false;
+  cy.intercept(
+    { method: 'GET', pathname: APP_RATES_API_PATHNAME },
+    {
+      statusCode: 200,
+      body: {
+        apps: [
+          {
+            appName: 'productpage',
+            cluster: 'Kubernetes',
+            healthStatus: 'Healthy',
+            namespace: 'bookinfo',
+            requestRateIn: 3.5,
+            requestRateOut: 2.1
+          },
+          {
+            appName: 'reviews',
+            cluster: 'Kubernetes',
+            healthStatus: 'Degraded',
+            namespace: 'bookinfo',
+            requestRateIn: 1.2,
+            requestRateOut: 0.8
+          },
+          {
+            appName: 'idle-app',
+            cluster: 'Kubernetes',
+            healthStatus: 'Healthy',
+            namespace: 'bookinfo',
+            requestRateIn: 0,
+            requestRateOut: 0
+          }
+        ]
+      }
+    }
+  ).as('appRatesMock');
+});
+
+Given('Applications API is observed', () => {
+  didAppsCardRetry = false;
+  cy.intercept({ method: 'GET', pathname: APP_RATES_API_PATHNAME }).as('appRates');
+});
+
+Then('Applications card shows loading state without footer link', () => {
+  getAppsCard().within(() => {
+    cy.contains('Fetching applications data').should('be.visible');
+    cy.getBySel('apps-card-view-all').should('not.exist');
+  });
+});
+
+Then('Applications card shows error state without footer link', () => {
+  if (shouldWaitAppsCardRetry) {
+    cy.wait('@appRatesFailOnce');
+  } else {
+    cy.wait('@appRates');
+  }
+
+  getAppsCard().within(() => {
+    cy.contains('Failed to load applications data').should('be.visible');
+    cy.contains('button', 'Try Again').should('be.visible');
+    cy.getBySel('apps-card-view-all').should('not.exist');
+  });
+});
+
+When('user clicks Try Again in Applications card', () => {
+  getAppsCard().within(() => {
+    cy.contains('button', 'Try Again').should('be.visible').click();
+  });
+
+  if (shouldWaitAppsCardRetry) {
+    cy.wait('@appRates');
+    didAppsCardRetry = true;
+    shouldWaitAppsCardRetry = false;
+  }
+});
+
+Then('Applications card shows data and footer link', () => {
+  if (!didAppsCardRetry) {
+    cy.wait('@appRates');
+  }
+
+  getAppsCard().within(() => {
+    cy.contains('Fetching applications data').should('not.exist');
+    cy.contains('Failed to load applications data').should('not.exist');
+    cy.getBySel('apps-card-view-all').should('be.visible');
+  });
+});
+
+When('user clicks View all applications in Applications card', () => {
+  cy.wait('@appRates');
+
+  getAppsCard().within(() => {
+    cy.getBySel('apps-card-view-all').should('be.visible').click();
+  });
+});
+
+Then('user is redirected to Applications list with all namespaces', () => {
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/applications$/);
+  cy.location('search').then(search => {
+    const params = new URLSearchParams(search);
+
+    const urlNamespaces = Array.from(
+      new Set(
+        (params.get('namespaces') ?? '')
+          .split(',')
+          .map(n => n.trim())
+          .filter(Boolean)
+      )
+    ).sort();
+
+    expect(urlNamespaces.length, 'namespaces query param should be present').to.be.greaterThan(0);
+
+    cy.request('api/namespaces').then(resp => {
+      const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
+      expect(urlNamespaces).to.deep.eq(allNamespaces);
+    });
+  });
+});
+
+Then('Applications card shows mock rate data', () => {
+  cy.wait('@appRatesMock');
+
+  getAppsCard().within(() => {
+    cy.contains('Fetching applications data').should('not.exist');
+    cy.contains('Failed to load applications data').should('not.exist');
+    cy.getBySel('apps-card-view-all').should('be.visible');
+  });
+
+  // Rates section: verify inbound and outbound are displayed
+  cy.getBySel('apps-card-rates').within(() => {
+    cy.contains('Inbound').should('be.visible');
+    cy.contains('RPS').should('be.visible');
+    cy.contains('Outbound').should('be.visible');
+    cy.contains('apps with no traffic').should('be.visible');
+  });
+
+  // Health chart section: verify the donut chart is rendered
+  cy.getBySel('apps-card-health').within(() => {
+    cy.contains('Total applications').should('be.visible');
+  });
 });

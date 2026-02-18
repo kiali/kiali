@@ -1545,6 +1545,21 @@ export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiR
   return newRequest<void>(HTTP_VERBS.DELETE, urls.chatConversations, { conversationIDs: conversationIDsParam }, {});
 };
 
+export const getOverviewAppRates = (): Promise<
+  ApiResponse<{
+    apps: Array<{
+      appName: string;
+      cluster: string;
+      healthStatus: string;
+      namespace: string;
+      requestRateIn: number;
+      requestRateOut: number;
+    }>;
+  }>
+> => {
+  return newRequest(HTTP_VERBS.GET, urls.overviewAppRates, {}, {});
+};
+
 export const getOverviewServiceLatencies = (
   params: { limit?: number; rateInterval?: string } = {}
 ): Promise<
@@ -1561,7 +1576,7 @@ export const getOverviewServiceRates = (
       cluster: string;
       errorRate: number;
       namespace: string;
-      requestCount: number;
+      requestRate: number;
       serviceName: string;
     }>;
   }>

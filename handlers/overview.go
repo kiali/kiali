@@ -338,7 +338,7 @@ func overviewServiceRatesFromHealthCache(
 		namespace    string
 		serviceName  string
 		errorRate    float64 // 0-1 decimal
-		requestCount float64
+		requestRate  float64
 		healthStatus models.HealthStatus
 	}
 
@@ -369,12 +369,12 @@ func overviewServiceRatesFromHealthCache(
 
 				// ErrorRatio is 0-100 (percentage); API expects 0-1 decimal
 				errorRate := sh.Status.ErrorRatio / 100.0
-				requestCount := sh.Status.TotalRequestRate
-				if requestCount == 0 {
+				requestRate := sh.Status.TotalRequestRate
+				if requestRate == 0 {
 					// Fallback: Status.TotalRequestRate can be 0 if computed before CombineReporters or in edge cases; use raw Requests.
-					requestCount = sh.Requests.GetTotalRequestRate()
+					requestRate = sh.Requests.GetTotalRequestRate()
 				}
-				if requestCount <= 0 {
+				if requestRate <= 0 {
 					continue // do not include zero-rate services
 				}
 
@@ -383,7 +383,7 @@ func overviewServiceRatesFromHealthCache(
 					namespace:    ns.Name,
 					serviceName:  svcName,
 					errorRate:    errorRate,
-					requestCount: requestCount,
+					requestRate:  requestRate,
 					healthStatus: sh.Status.Status,
 				})
 			}
@@ -395,7 +395,7 @@ func overviewServiceRatesFromHealthCache(
 		if all[i].errorRate != all[j].errorRate {
 			return all[i].errorRate > all[j].errorRate
 		}
-		return all[i].requestCount > all[j].requestCount
+		return all[i].requestRate > all[j].requestRate
 	})
 
 	// Take top `limit`
@@ -410,12 +410,113 @@ func overviewServiceRatesFromHealthCache(
 			ErrorRate:    s.errorRate,
 			HealthStatus: s.healthStatus,
 			Namespace:    s.namespace,
-			RequestCount: s.requestCount,
+			RequestRate:  s.requestRate,
 			ServiceName:  s.serviceName,
 		})
 	}
 
 	return services
+}
+
+// OverviewAppRates returns app request rates across all clusters and namespaces.
+// Data is aggregated from the health cache. Data is sorted by app request rate, desc.
+// When the health cache is disabled, an empty list is returned.
+func OverviewAppRates(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		zl := log.FromContext(ctx)
+
+		var apps []models.AppRequests
+
+		if conf.KialiInternal.HealthCache.Enabled {
+			apps = overviewAppRatesFromHealthCache(r, ctx, zl, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		} else {
+			zl.Trace().Msg("OverviewAppRates: health cache is disabled, returning empty list")
+		}
+
+		RespondWithJSON(w, http.StatusOK, models.AppRatesResponse{Apps: apps})
+	}
+}
+
+// overviewAppRatesFromHealthCache aggregates app request rates from the health cache.
+func overviewAppRatesFromHealthCache(
+	r *http.Request,
+	ctx context.Context,
+	zl *zerolog.Logger,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) []models.AppRequests {
+	layer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+	if err != nil {
+		zl.Warn().Err(err).Msg("OverviewAppRates: could not get business layer, returning empty list")
+		return nil
+	}
+
+	var all []models.AppRequests
+	clusters := kialiCache.GetClusters()
+
+	for _, cluster := range clusters {
+		namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster.Name)
+		if err != nil {
+			zl.Debug().Err(err).Str("cluster", cluster.Name).Msg("OverviewAppRates: could not get namespaces for cluster")
+			continue
+		}
+
+		for _, ns := range namespaces {
+			cachedData, found := kialiCache.GetHealth(cluster.Name, ns.Name, internalmetrics.HealthTypeApp)
+			if !found || cachedData == nil {
+				continue
+			}
+
+			for appName, ah := range cachedData.AppHealth {
+				if ah == nil {
+					continue
+				}
+
+				var healthStatus models.HealthStatus
+				if ah.Status != nil {
+					healthStatus = ah.Status.Status
+				}
+				if healthStatus == "" {
+					healthStatus = models.HealthStatusNA
+				}
+
+				rateIn := ah.Requests.GetInboundRequestRate()
+				rateOut := ah.Requests.GetOutboundRequestRate()
+
+				all = append(all, models.AppRequests{
+					AppName:        appName,
+					Cluster:        cluster.Name,
+					HealthStatus:   healthStatus,
+					Namespace:      ns.Name,
+					RequestRateIn:  rateIn,
+					RequestRateOut: rateOut,
+				})
+			}
+		}
+	}
+
+	// Sort: highest total request rate first
+	sort.Slice(all, func(i, j int) bool {
+		return (all[i].RequestRateIn + all[i].RequestRateOut) > (all[j].RequestRateIn + all[j].RequestRateOut)
+	})
+
+	return all
 }
 
 // hasAllClusterNamespaceAccess returns true if the user has access to the same set of namespaces

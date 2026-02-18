@@ -1794,6 +1794,27 @@ func NewRoutes(
 			HandlerFunc:   handlers.OverviewServiceRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			Authenticated: true,
 		},
+		// swagger:route GET /overview/metrics/apps/rates overview overviewAppRates
+		// ---
+		// Endpoint to fetch app request rates across all clusters and namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: appRatesResponse
+		{
+			Name:          "OverviewAppRates",
+			LogGroupName:  log.MetricsLogName,
+			Method:        "GET",
+			Pattern:       "/api/overview/metrics/apps/rates",
+			HandlerFunc:   handlers.OverviewAppRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			Authenticated: true,
+		},
 		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI
 		// ---
 		// Endpoint to chat with AI
