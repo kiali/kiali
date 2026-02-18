@@ -439,6 +439,8 @@ When('the user refreshes the page', () => {
 When('user filters for config {string}', (configName: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', configName).click();
+
+  ensureKialiFinishedLoading();
 });
 
 When(
@@ -571,6 +573,8 @@ Then('the user filters by {string} for {string}', (filter: string, filterValue: 
   } else if (filter === 'Label') {
     cy.get('input#filter_input_label').type(`${filterValue}{enter}`);
   }
+
+  ensureKialiFinishedLoading();
 });
 
 Then('user only sees {string}', (sees: string) => {

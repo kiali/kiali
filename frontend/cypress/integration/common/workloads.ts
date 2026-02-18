@@ -1,11 +1,12 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists } from './table';
+import { ensureKialiFinishedLoading } from './transition';
 
 const activateFilter = (state: string): void => {
   //decided to pause the refresh, because I'm intercepting the very same request that is used for the timed refresh
   cy.get('button#workload-list-refresh-toggle').click();
   cy.get('button[id="0"]').click();
-  cy.get('#loading_kiali_spinner').should('not.exist');
+  ensureKialiFinishedLoading();
 
   cy.intercept({
     pathname: '**/api/clusters/workloads',
@@ -44,6 +45,8 @@ Given('a degraded workload in the mesh', function () {
 When('user filters for workload type {string}', (workloadType: string) => {
   cy.get('div#filter_select_value-toggle').find('button').click();
   cy.contains('div#filter_select_value button', workloadType).click();
+
+  ensureKialiFinishedLoading();
 });
 
 Then('user sees {string} in workloads table', (workload: string) => {

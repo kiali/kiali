@@ -42,16 +42,22 @@ Then('the health column on the {string} row has a health icon', (row: string) =>
 When('user filters for service type {string}', (serviceType: string) => {
   cy.get('div#filter_select_value-toggle').find('button').click();
   cy.contains('div#filter_select_value button', serviceType).click();
+
+  ensureKialiFinishedLoading();
 });
 
 When('user filters for sidecar {string}', (sidecarState: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', sidecarState).click();
+
+  ensureKialiFinishedLoading();
 });
 
 When('user filters for health {string}', (health: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', health).click();
+
+  ensureKialiFinishedLoading();
 });
 
 Then('user should only see healthy services in the table', () => {
@@ -63,6 +69,8 @@ Then('user should only see healthy services in the table', () => {
 
 When('user filters for label {string}', (label: string) => {
   cy.get('input#filter_input_label').type(`${label}{enter}`);
+
+  ensureKialiFinishedLoading();
 });
 
 When('user applies kiali api {string} annotations', (type: string) => {
