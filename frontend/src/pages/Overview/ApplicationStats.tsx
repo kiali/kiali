@@ -42,6 +42,15 @@ const legendIconStyle = kialiStyle({
   height: '1rem'
 });
 
+const emptyStateStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100%',
+  color: PFColors.Color200
+});
+
 export const ApplicationStats: React.FC = () => {
   const { apps, isError, isLoading, metrics, retry } = useApplications();
   const allNamespaces = useKialiSelector(namespaceItemsSelector);
@@ -119,6 +128,17 @@ export const ApplicationStats: React.FC = () => {
 
     if (isError) {
       return <OverviewCardErrorState message={t('Failed to load applications data')} onTryAgain={retry} />;
+    }
+
+    if (total === 0) {
+      return (
+        <CardBody className={cardBodyStyle}>
+          <div className={emptyStateStyle}>
+            <div>{t('No application overview available')}</div>
+            <div>{t('No applications or health cache is disabled')}</div>
+          </div>
+        </CardBody>
+      );
     }
 
     return (

@@ -356,6 +356,8 @@
   "No {{direction}} traffic": "没有 {{direction}} traffic",
   "No {{type}} found": "No {{type}} found",
   "No {{type}} were found in the selected namespaces.": "No {{type}} were found in the selected namespaces.",
+  "No application overview available": "No application overview available",
+  "No applications or health cache is disabled": "No applications or health cache is disabled",
   "No components available to monitor.": "No components available to monitor.",
   "No Conditions Defined": "No Conditions Defined",
   "No enrolled services found": "No enrolled services found",
