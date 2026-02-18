@@ -17,7 +17,12 @@ import { ServiceInsights } from './ServiceInsights';
 const overviewPageStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
-  gap: '1rem'
+  height: 'calc(100vh - 136px)'
+});
+
+const gridStyle = kialiStyle({
+  flex: 1,
+  gridTemplateRows: 'auto 1fr'
 });
 
 const durationLabelStyle = kialiStyle({
@@ -58,7 +63,7 @@ export const OverviewPage: React.FC = () => {
         }
       />
 
-      <Grid hasGutter>
+      <Grid hasGutter className={gridStyle}>
         <GridItem span={6}>
           <Grid hasGutter>
             <GridItem span={4}>
