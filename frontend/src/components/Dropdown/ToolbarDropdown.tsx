@@ -26,6 +26,8 @@ type ToolbarDropdownProps = {
   nameDropdownClassName?: string;
   onToggle?: (isOpen: boolean) => void;
   options: { [k: string]: string } | string[];
+  toggleAriaLabel?: string;
+  toggleIcon?: React.ReactNode;
   tooltip?: string;
   tooltipPosition?: TooltipPosition;
   value?: number | string;
@@ -55,8 +57,11 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
       isExpanded={isOpen}
       isDisabled={props.disabled}
       className={props.className}
+      aria-label={props.toggleAriaLabel ?? props.label}
+      icon={props.toggleIcon}
+      variant={props.toggleIcon ? 'plain' : undefined}
     >
-      {props.label}
+      {!props.toggleIcon && props.label}
     </MenuToggle>
   );
 

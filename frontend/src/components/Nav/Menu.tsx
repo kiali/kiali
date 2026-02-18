@@ -1,7 +1,7 @@
-import _ from 'lodash';
 import * as React from 'react';
+import _ from 'lodash';
 import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-compat';
-import { Nav, NavList, NavItem } from '@patternfly/react-core';
+import { Divider, Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ExternalServiceInfo } from '../../types/StatusState';
@@ -11,6 +11,7 @@ import { t } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { isTempoService } from '../../utils/tracing/UrlProviders/Tempo';
 import { TempoUrlFormat } from '../../types/StatusState';
+import { MenuItem } from '../../types/Routes';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -106,6 +107,26 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
       return baseUrl;
     };
 
+    const renderNavItem = (item: MenuItem): React.ReactNode => {
+      const title = item.title;
+
+      if (item.id === 'tracing') {
+        if (baseTracingUrl) {
+          const tracingUrlWithParams = buildTracingUrlWithParams(baseTracingUrl);
+          return <ExternalLink key={item.to} href={tracingUrlWithParams} name={t(title)} />;
+        }
+        return null;
+      }
+
+      return (
+        <NavItem isActive={activeMenuItem === item} key={item.to}>
+          <Link id={item.id} to={item.to} onClick={() => navigate(item.to)}>
+            {t(title)}
+          </Link>
+        </NavItem>
+      );
+    };
+
     return allNavMenuItems
       .filter(item => {
         if (item.id === 'mesh') {
@@ -114,29 +135,16 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
 
         return true;
       })
-      .map(item => {
-        let title = item.title;
-
-        if (item.id === 'tracing') {
-          if (baseTracingUrl) {
-            const tracingUrlWithParams = buildTracingUrlWithParams(baseTracingUrl);
-            return <ExternalLink key={item.to} href={tracingUrlWithParams} name={t(title)} />;
-          }
-          return null;
+      .flatMap(item => {
+        if (item.separator) {
+          return [renderNavItem(item), <Divider key={`${item.id}-divider`} />];
         }
-
-        return (
-          <NavItem isActive={activeMenuItem === item} key={item.to}>
-            <Link id={item.id} to={item.to} onClick={() => navigate(item.to)}>
-              {t(title)}
-            </Link>
-          </NavItem>
-        );
+        return renderNavItem(item);
       });
   };
 
   return (
-    <Nav aria-label="Nav" >
+    <Nav aria-label="Nav">
       <NavList className={navListStyle}>{renderMenuItems()}</NavList>
     </Nav>
   );

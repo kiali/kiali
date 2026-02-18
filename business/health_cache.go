@@ -65,9 +65,17 @@ type healthMonitor struct {
 
 // Start starts the background health refresh loop.
 func (m *healthMonitor) Start(ctx context.Context) {
-	interval := m.conf.HealthConfig.Compute.RefreshInterval
-	timeout := m.conf.HealthConfig.Compute.Timeout
-	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", interval, timeout)
+	interval, err := m.conf.HealthConfig.Compute.RefreshInterval.ToDuration()
+	if err != nil {
+		m.logger.Warn().Err(err).Str("refreshInterval", string(m.conf.HealthConfig.Compute.RefreshInterval)).Msg("Invalid refresh interval, using 3m")
+		interval = 3 * time.Minute
+	}
+	timeout, err := m.conf.HealthConfig.Compute.Timeout.ToDuration()
+	if err != nil {
+		m.logger.Warn().Err(err).Str("timeout", string(m.conf.HealthConfig.Compute.Timeout)).Msg("Invalid timeout, using 10m")
+		timeout = 10 * time.Minute
+	}
+	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", m.conf.HealthConfig.Compute.RefreshInterval, m.conf.HealthConfig.Compute.Timeout)
 
 	// Prime the cache with an initial refresh (with timeout)
 	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -145,6 +153,10 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 // This Layer is reused for all namespace health computations in a refresh cycle.
 func (m *healthMonitor) createHealthLayer() (*Layer, error) {
 	userClients := m.clientFactory.GetSAClientsAsUserClientInterfaces()
+	discovery, ok := m.discovery.(*istio.Discovery)
+	if !ok {
+		return nil, fmt.Errorf("unsupported discovery type for health monitor: %T", m.discovery)
+	}
 
 	// Use the existing NewLayerWithSAClients which creates a complete Layer
 	// Pass nil for tracing client and grafana since health computation doesn't need them
@@ -156,7 +168,7 @@ func (m *healthMonitor) createHealthLayer() (*Layer, error) {
 		nil, // traceClient - not needed for health
 		&FakeControlPlaneMonitor{},
 		nil, // grafana - not needed for health
-		m.discovery.(*istio.Discovery),
+		discovery,
 		userClients,
 	)
 }
@@ -299,18 +311,22 @@ func (m *healthMonitor) exportHealthStatusMetrics(
 // since the last run exceeds the configured duration, it extends the interval to cover
 // the elapsed period (with a 10% buffer).
 func (m *healthMonitor) calculateDuration() string {
-	configuredDuration := m.conf.HealthConfig.Compute.Duration
+	configuredDuration, err := m.conf.HealthConfig.Compute.Duration.ToDuration()
+	if err != nil {
+		m.logger.Warn().Err(err).Str("duration", string(m.conf.HealthConfig.Compute.Duration)).Msg("Invalid duration, using 5m")
+		return "5m"
+	}
 
 	// First run - use the configured duration
 	if m.lastRun.IsZero() {
-		return formatDuration(configuredDuration)
+		return string(m.conf.HealthConfig.Compute.Duration)
 	}
 
 	elapsed := time.Since(m.lastRun)
 
 	// If elapsed time is within the configured duration, use the configured duration
 	if elapsed <= configuredDuration {
-		return formatDuration(configuredDuration)
+		return string(m.conf.HealthConfig.Compute.Duration)
 	}
 
 	// Elapsed time exceeds configured duration - extend the interval

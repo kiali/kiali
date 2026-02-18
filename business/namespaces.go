@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 
 	apps_v1 "k8s.io/api/apps/v1"
@@ -64,6 +66,16 @@ func NewNamespaceService(
 func (in *NamespaceService) GetClusterList() []string {
 	var clusterList []string
 	for cluster := range in.userClients {
+		clusterList = append(clusterList, cluster)
+	}
+	return clusterList
+}
+
+// GetKialiSAClusterList returns a list of cluster names based on the Kiali SA clients.
+// This represents all clusters that Kiali itself has access to.
+func (in *NamespaceService) GetKialiSAClusterList() []string {
+	var clusterList []string
+	for cluster := range in.kialiSAClients {
 		clusterList = append(clusterList, cluster)
 	}
 	return clusterList
@@ -205,13 +217,46 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		cpnSet[n] = struct{}{}
 	}
 
+	// Revisions for control plane namespaces from the mesh.
+	cpRevisionsByNamespace := make(map[string][]string)
+	if mesh, err := in.discovery.Mesh(ctx); err == nil {
+		for _, cp := range mesh.ControlPlanes {
+			if cp.Cluster != nil && cp.Cluster.Name == cluster {
+				rev := cp.Revision
+				if rev == "" {
+					rev = models.DefaultRevisionLabel
+				}
+				cpRevisionsByNamespace[cp.IstiodNamespace] = append(cpRevisionsByNamespace[cp.IstiodNamespace], rev)
+			}
+		}
+		// Deduplicate and sort for consistent display
+		for ns := range cpRevisionsByNamespace {
+			revs := cpRevisionsByNamespace[ns]
+			seen := make(map[string]struct{}, len(revs))
+			unique := revs[:0]
+			for _, r := range revs {
+				if _, ok := seen[r]; !ok {
+					seen[r] = struct{}{}
+					unique = append(unique, r)
+				}
+			}
+			sort.Strings(unique)
+			cpRevisionsByNamespace[ns] = unique
+		}
+	}
+
 	for i := range namespaces {
 		_, ok := cpnSet[namespaces[i].Name]
 		namespaces[i].IsControlPlane = ok
 
-		if ok && in.kialiCache.IsAmbientEnabled(cluster) {
-			ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
-			in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+		if ok {
+			if revs, hasRevs := cpRevisionsByNamespace[namespaces[i].Name]; hasRevs && len(revs) > 0 {
+				namespaces[i].Revision = strings.Join(revs, ",")
+			}
+			if in.kialiCache.IsAmbientEnabled(cluster) {
+				ztunnelDaemonSets := in.kialiCache.GetZtunnelDaemonset(cluster)
+				in.validateControlPlaneNamespaceAmbient(ctx, &namespaces[i], cluster, ztunnelDaemonSets)
+			}
 		}
 	}
 
@@ -235,6 +280,50 @@ func (in *NamespaceService) GetClusterNamespaces(ctx context.Context, cluster st
 	}
 
 	return clusterNamespaces, nil
+}
+
+// GetKialiSAClusterNamespaces returns the namespaces accessible to the Kiali Service Account
+// for the specified cluster, filtered by discovery selectors. This is useful for comparing
+// against user-accessible namespaces to determine if the user has full namespace access.
+func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
+	saClient, ok := in.kialiSAClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA", cluster)
+	}
+
+	// Check cache first using the SA token
+	if cachedNs, found := in.kialiCache.GetNamespaces(cluster, saClient.GetToken()); found {
+		return cachedNs, nil
+	}
+
+	var namespaces []models.Namespace
+
+	if in.conf.Deployment.ClusterWideAccess {
+		nss, err := saClient.GetNamespaces("")
+		if err != nil {
+			return nil, err
+		}
+		namespaces = models.CastNamespaceCollection(nss, cluster)
+	} else {
+		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		k8sNamespaces := make([]core_v1.Namespace, 0)
+		for _, ans := range accessibleNamespaces {
+			k8sNs, err := saClient.GetNamespace(ans)
+			if err != nil {
+				if errors.IsNotFound(err) || errors.IsForbidden(err) {
+					continue
+				}
+				return nil, err
+			}
+			k8sNamespaces = append(k8sNamespaces, *k8sNs)
+		}
+		namespaces = models.CastNamespaceCollection(k8sNamespaces, cluster)
+	}
+
+	// Apply discovery selector filtering
+	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
+
+	return namespaces, nil
 }
 
 // GetNamespaceClusters is a convenience routine that filters GetNamespaces for a particular namespace

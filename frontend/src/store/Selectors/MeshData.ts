@@ -38,13 +38,13 @@ export const decorateMeshData = (meshData: MeshElements): DecoratedMeshElements 
         if (decoratedNode.data.healthData && decoratedNode.data.name !== 'kiali') {
           switch (decoratedNode.data.healthData) {
             case Status.Healthy:
-              decoratedNode.data.healthStatus = HEALTHY.name;
+              decoratedNode.data.healthStatus = HEALTHY.id;
               break;
             case Status.NotReady:
-              decoratedNode.data.healthStatus = DEGRADED.name;
+              decoratedNode.data.healthStatus = DEGRADED.id;
               break;
             default:
-              decoratedNode.data.healthStatus = FAILURE.name;
+              decoratedNode.data.healthStatus = FAILURE.id;
           }
         }
 

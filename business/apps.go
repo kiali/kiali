@@ -45,13 +45,13 @@ type AppService struct {
 }
 
 type AppCriteria struct {
-	Namespace             string
-	Cluster               string
 	AppName               string
-	IncludeIstioResources bool
+	Cluster               string
 	IncludeHealth         bool
-	RateInterval          string
+	IncludeIstioResources bool
+	Namespace             string
 	QueryTime             time.Time
+	RateInterval          string
 }
 
 func joinMap(m1 map[string][]string, m2 map[string]string) {

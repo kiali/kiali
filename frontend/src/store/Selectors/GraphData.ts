@@ -159,7 +159,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
         // We still create Health objects for detailed tooltips, but use the backend status for display.
         if (decoratedNode.data.healthData) {
           if (Array.isArray(decoratedNode.data.healthData)) {
-            decoratedNode.data.healthStatus = NA.name;
+            decoratedNode.data.healthStatus = NA.id;
           } else if (decoratedNode.data.healthData.workloadStatus !== undefined) {
             // Workload health
             decoratedNode.data.health = WorkloadHealth.fromJson(
@@ -173,7 +173,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               }
             );
             // Use backend-calculated status (getStatus checks backendStatus first)
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().name;
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
           } else if (decoratedNode.data.healthData.workloadStatuses !== undefined) {
             // App health
             decoratedNode.data.health = AppHealth.fromJson(
@@ -187,7 +187,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               }
             );
             // Use backend-calculated status (getStatus checks backendStatus first)
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().name;
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
           } else {
             // Service health
             decoratedNode.data.health = ServiceHealth.fromJson(
@@ -201,7 +201,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
               }
             );
             // Use backend-calculated status (getStatus checks backendStatus first)
-            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().name;
+            decoratedNode.data.healthStatus = decoratedNode.data.health.getStatus().id;
           }
         }
         const isIstio = isIstioNamespace(decoratedNode.data.namespace) ? true : undefined;

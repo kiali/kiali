@@ -8,17 +8,24 @@ import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
-const titles = ['applications', 'istio', 'istio/new', 'mesh', 'services', 'workloads'];
+const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
 
 type ReduxProps = {
   istioAPIEnabled: boolean;
 };
 
+const titleSuffixStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 400,
+  marginLeft: '0.75rem',
+  color: 'var(--pf-global--Color--200)'
+});
+
 type Props = ReduxProps & {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
-  showClusterSelector?: boolean;
+  titleSuffix?: React.ReactNode;
 };
 
 const containerStyle = kialiStyle({
@@ -32,7 +39,9 @@ const flexStyle = kialiStyle({
 });
 
 const rightToolbarStyle = kialiStyle({
-  marginLeft: 'auto'
+  position: 'absolute',
+  right: '3rem',
+  zIndex: 1
 });
 
 const actionsToolbarStyle = kialiStyle({
@@ -94,7 +103,10 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
       </div>
 
       <div className={flexStyle}>
-        <div>{title}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+          {title}
+          {props.titleSuffix && <span className={titleSuffixStyle}>{props.titleSuffix}</span>}
+        </div>
 
         {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
       </div>

@@ -114,3 +114,33 @@ func (r RequestHealth) GetErrorRatio() float64 {
 
 	return totalErrors / totalRequests
 }
+
+// GetInboundRequestRate returns the inbound request rate (req/s).
+// Returns 0 if no data is available.
+func (r RequestHealth) GetInboundRequestRate() float64 {
+	var total float64
+	for _, codeMap := range r.Inbound {
+		for _, count := range codeMap {
+			total += count
+		}
+	}
+	return total
+}
+
+// GetOutboundRequestRate returns the outbound request rate (req/s).
+// Returns 0 if no data is available.
+func (r RequestHealth) GetOutboundRequestRate() float64 {
+	var total float64
+	for _, codeMap := range r.Outbound {
+		for _, count := range codeMap {
+			total += count
+		}
+	}
+	return total
+}
+
+// GetTotalRequestRate returns the total request rate (req/s) from inbound and outbound traffic.
+// Returns 0 if no data is available.
+func (r RequestHealth) GetTotalRequestRate() float64 {
+	return r.GetInboundRequestRate() + r.GetOutboundRequestRate()
+}

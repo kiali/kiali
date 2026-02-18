@@ -1118,11 +1118,11 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           target: 'node',
           selector: isNegation
             ? [
-                { prop: NodeAttr.healthStatus, op: '!=', val: HEALTHY.name },
-                { prop: NodeAttr.healthStatus, op: '!=', val: NA.name },
-                { prop: NodeAttr.healthStatus, op: '!=', val: NOT_READY.name }
+                { prop: NodeAttr.healthStatus, op: '!=', val: HEALTHY.id },
+                { prop: NodeAttr.healthStatus, op: '!=', val: NA.id },
+                { prop: NodeAttr.healthStatus, op: '!=', val: NOT_READY.id }
               ]
-            : { prop: NodeAttr.healthStatus, val: HEALTHY.name }
+            : { prop: NodeAttr.healthStatus, val: HEALTHY.id }
         };
       case 'idle':
         if (!this.props.showIdleNodes) {

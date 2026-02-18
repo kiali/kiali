@@ -11,8 +11,8 @@ import (
 
 func TestCalculateDuration_FirstRun(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 5 * time.Minute
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "1m"
 
 	monitor := &healthMonitor{
 		conf:    conf,
@@ -25,8 +25,8 @@ func TestCalculateDuration_FirstRun(t *testing.T) {
 
 func TestCalculateDuration_ElapsedWithinDuration(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 5 * time.Minute
-	conf.HealthConfig.Compute.RefreshInterval = 2 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "2m"
 
 	// Simulate a run that happened 3 minutes ago (within the 5 minute duration)
 	lastRunTime := time.Now().Add(-3 * time.Minute)
@@ -43,8 +43,8 @@ func TestCalculateDuration_ElapsedWithinDuration(t *testing.T) {
 
 func TestCalculateDuration_ElapsedExceedsDuration(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 2 * time.Minute
-	conf.HealthConfig.Compute.RefreshInterval = 1 * time.Minute
+	conf.HealthConfig.Compute.Duration = "2m"
+	conf.HealthConfig.Compute.RefreshInterval = "1m"
 
 	// Simulate a run that happened 5 minutes ago (exceeds the 2 minute duration)
 	lastRunTime := time.Now().Add(-5 * time.Minute)
@@ -68,8 +68,8 @@ func TestCalculateDuration_ElapsedExceedsDuration(t *testing.T) {
 
 func TestCalculateDuration_ElapsedAtBoundary(t *testing.T) {
 	conf := config.NewConfig()
-	conf.HealthConfig.Compute.Duration = 5 * time.Minute
-	conf.HealthConfig.Compute.RefreshInterval = 2 * time.Minute
+	conf.HealthConfig.Compute.Duration = "5m"
+	conf.HealthConfig.Compute.RefreshInterval = "2m"
 
 	// Simulate a run that happened just under 5 minutes ago (within boundary)
 	// Using 4m59s to ensure we're within the duration even with test execution time
