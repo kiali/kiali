@@ -16,38 +16,42 @@ Feature: Controlling sidecar injection
 	@sleep-app
 	@core-2
 	Scenario: Override the default policy for automatic sidecar injection by enabling it in a namespace
-		Given a namespace without override configuration for automatic sidecar injection
-		When I visit the overview page
-		And user filters "sleep" namespace
+		Given user is at the "namespaces" list page
+		And a namespace without override configuration for automatic sidecar injection
+		When user selects filter "Namespace"
+		And user filters for name "sleep"
 		And I override the default automatic sidecar injection policy in the namespace to enabled
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
 	@core-2
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to disabled
-		Given a namespace which has override configuration for automatic sidecar injection
+		Given user is at the "namespaces" list page
+		And a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "enabled"
-		When I visit the overview page
-		And user filters "sleep" namespace
+		When user selects filter "Namespace"
+		And user filters for name "sleep"
 		And I change the override configuration for automatic sidecar injection policy in the namespace to "disable" it
 		Then I should see the override annotation for sidecar injection in the namespace as "disabled"
 
 	@sleep-app
 	@core-2
 	Scenario: Switch the override configuration for automatic sidecar injection in a namespace to enabled
-		Given a namespace which has override configuration for automatic sidecar injection
+		Given user is at the "namespaces" list page
+		And a namespace which has override configuration for automatic sidecar injection
 		And the override configuration for sidecar injection is "disabled"
-		When I visit the overview page
-		And user filters "sleep" namespace
+		When user selects filter "Namespace"
+		And user filters for name "sleep"
 		And I change the override configuration for automatic sidecar injection policy in the namespace to "enable" it
 		Then I should see the override annotation for sidecar injection in the namespace as "enabled"
 
 	@sleep-app
 	@core-2
 	Scenario: Switch to using the default policy for automatic sidecar injection in a namespace
-		Given a namespace which has override configuration for automatic sidecar injection
-		When I visit the overview page
-		And user filters "sleep" namespace
+		Given user is at the "namespaces" list page
+		And a namespace which has override configuration for automatic sidecar injection
+		When user selects filter "Namespace"
+		And user filters for name "sleep"
 		And I remove override configuration for sidecar injection in the namespace
 		Then I should see no override annotation for sidecar injection in the namespace
 

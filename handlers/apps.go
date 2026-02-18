@@ -95,8 +95,8 @@ func ClusterApps(
 
 		for _, ns := range nss {
 			criteria := business.AppCriteria{
-				Cluster: p.ClusterName, Namespace: ns, IncludeIstioResources: p.IncludeIstioResources,
-				IncludeHealth: p.IncludeHealth, RateInterval: p.RateInterval, QueryTime: p.QueryTime,
+				Cluster: p.ClusterName, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources,
+				Namespace: ns, QueryTime: p.QueryTime, RateInterval: p.RateInterval,
 			}
 
 			if p.IncludeHealth {

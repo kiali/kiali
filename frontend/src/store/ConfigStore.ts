@@ -30,7 +30,10 @@ import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
 
 declare const window;
 
-const persistKey = `kiali-${webRoot !== '/' ? webRoot.substring(1) : 'root'}`;
+// `webRoot` can be undefined in some unit tests that mock `app/History`. Be defensive to avoid crashing at import-time.
+const safeWebRoot = typeof webRoot === 'string' && webRoot.length > 0 ? webRoot : '/';
+const persistKeySuffix = safeWebRoot !== '/' ? safeWebRoot.replace(/^\//, '') : 'root';
+const persistKey = `kiali-${persistKeySuffix}`;
 
 // Needed to be able to whitelist fields but allowing to keep an initialState
 const whitelistInputWithInitialState = (

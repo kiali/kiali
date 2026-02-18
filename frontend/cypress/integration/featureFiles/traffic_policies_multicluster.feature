@@ -11,7 +11,7 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
 
   Scenario: Create a Traffic Policy in a local cluster
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
-    And user is at the "overview" page
+    And user is at the "namespaces" list page
     And user decides to "create" a Traffic Policy in the "east" "bookinfo"
     And user confirms to "create" the Traffic Policy
     Then an info message "Traffic policies created for bookinfo namespace." is displayed
@@ -21,13 +21,13 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
     And user should not see the generated Traffic policy objects located in the "west" cluster
 
   Scenario: Update a Traffic Policy scenario in a local cluster
-    When user is at the "overview" page
+    When user is at the "namespaces" list page
     And user decides to "update" a Traffic Policy in the "east" "bookinfo"
     And user confirms to "update" the Traffic Policy
     Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
   Scenario: Delete the Traffic Policy scenario in a local cluster
-    When user is at the "overview" page
+    When user is at the "namespaces" list page
     And user decides to "delete" a Traffic Policy in the "east" "bookinfo"
     And user confirms to "delete" the Traffic Policy
     Then an info message "Traffic policies deleted for bookinfo namespace." is displayed
@@ -38,7 +38,7 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
   @multi-primary
   Scenario: Create a Traffic Policy in a remote cluster
     When user deletes a Traffic Policy and the resource is no longer available in any cluster
-    And user is at the "overview" page
+    And user is at the "namespaces" list page
     And user decides to "create" a Traffic Policy in the "west" "bookinfo"
     And user confirms to "create" the Traffic Policy
     Then an info message "Traffic policies created for bookinfo namespace." is displayed
@@ -49,14 +49,14 @@ Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary set
 
   @multi-primary
   Scenario: Update a Traffic Policy scenario in a remote cluster
-    When user is at the "overview" page
+    When user is at the "namespaces" list page
     And user decides to "update" a Traffic Policy in the "west" "bookinfo"
     And user confirms to "update" the Traffic Policy
     Then an info message "Traffic policies updated for bookinfo namespace." is displayed
 
   @multi-primary
   Scenario: Delete the Traffic Policy scenario in a remote cluster
-    When user is at the "overview" page
+    When user is at the "namespaces" list page
     And user decides to "delete" a Traffic Policy in the "west" "bookinfo"
     And user confirms to "delete" the Traffic Policy
     Then an info message "Traffic policies deleted for bookinfo namespace." is displayed

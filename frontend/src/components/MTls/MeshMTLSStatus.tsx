@@ -15,7 +15,7 @@ import { MeshTlsActions } from '../../actions/MeshTlsActions';
 import { TimeInMilliseconds } from '../../types/Common';
 import { Namespace } from '../../types/Namespace';
 import { connectRefresh } from '../Refresh/connectRefresh';
-import { MTLSIconTypes } from './NamespaceMTLSStatus';
+import { MTLSIconTypes } from './MTLSIconTypes';
 
 type ReduxStateProps = {
   autoMTLSEnabled: boolean;
@@ -80,7 +80,8 @@ const statusDescriptors = new Map<string, StatusDescriptor>([
 
 const iconStyle = kialiStyle({
   marginRight: '0.5rem',
-  width: '0.75rem'
+  width: '1em',
+  height: '1em'
 });
 
 class MeshMTLSStatusComponent extends React.Component<Props> {

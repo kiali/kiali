@@ -3,7 +3,7 @@ import { shallowToJson } from 'enzyme-to-json';
 import { shallow } from 'enzyme';
 import { ValidationSummary } from '../ValidationSummary';
 
-const testScenario = (summary: any) => {
+const testScenario = (summary: any): void => {
   const wrapper = shallow(summary);
   expect(shallowToJson(wrapper)).toBeDefined();
   expect(shallowToJson(wrapper)).toMatchSnapshot();
@@ -26,7 +26,7 @@ describe('ValidationSummary renders', () => {
     testScenario(<ValidationSummary id={'3'} errors={1} warnings={2} objectCount={3} type="istio" />);
   });
 
-  it('N/A when all istio components are valid', () => {
+  it('n/a when all istio components are valid', () => {
     testScenario(<ValidationSummary id={'4'} errors={0} warnings={0} objectCount={0} type="istio" />);
   });
 

@@ -168,7 +168,7 @@ Then('user sees control plane side panel', () => {
   };
   waitForMemoryMetrics();
   it('control pannel should be visible', { retries: 3 }, () => {
-    cy.get('#refresh_button').click();
+    cy.get('[data-test="refresh-button"]').click();
     cy.get('#loading_kiali_spinner').should('not.exist');
 
     cy.get('#target-panel-control-plane')

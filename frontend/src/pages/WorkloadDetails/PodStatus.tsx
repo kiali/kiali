@@ -31,7 +31,7 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
 
   const showTooltip = (): boolean => {
     const validationSeverity: ValidationTypes = highestSeverity(props.checks || []);
-    return proxyStatusSeverity.name !== HEALTHY.name || validationSeverity !== ValidationTypes.Correct;
+    return proxyStatusSeverity.id !== HEALTHY.id || validationSeverity !== ValidationTypes.Correct;
   };
 
   if (showTooltip()) {

@@ -1,12 +1,8 @@
 import * as React from 'react';
-import * as API from '../../services/Api';
-import { addError } from '../../utils/AlertUtils';
 import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
-import { MessageType } from '../../types/NotificationCenter';
 import { Namespace } from '../../types/Namespace';
 import { KialiAppState } from '../../store/Store';
-import { istioStatusSelector, namespaceItemsSelector } from '../../store/Selectors';
-import { IstioStatusActions } from '../../actions/IstioStatusActions';
+import { namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import {
   Content,
@@ -22,8 +18,6 @@ import { IstioStatusList } from './IstioStatusList';
 import { PFColors } from '../Pf/PfColors';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
-import { KialiDispatch } from 'types/Redux';
-import { connectRefresh } from '../Refresh/connectRefresh';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
@@ -31,25 +25,17 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { TimeInMilliseconds } from 'types/Common';
+import { useClusterStatus, ClusterStatusMap } from '../../hooks/clusters';
 
-export type ClusterStatusMap = { [cluster: string]: ComponentStatus[] };
+export type { ClusterStatusMap };
 
 const ISSUE_COUNT_THRESHOLD = 3;
 
 type ReduxStateProps = {
   namespaces?: Namespace[];
-  statusMap: ClusterStatusMap; // map of clusters to ComponentStatus[]
 };
 
-type ReduxDispatchProps = {
-  setIstioStatus: (statusMap: ClusterStatusMap) => void;
-};
-
-type Props = ReduxStateProps &
-  ReduxDispatchProps & {
-    lastRefreshAt: TimeInMilliseconds;
-  };
+type Props = ReduxStateProps;
 
 const ValidToColor = {
   'true-true-true': PFColors.Danger,
@@ -107,7 +93,7 @@ const clusterStatusHeaderStyle = kialiStyle({
   marginBottom: PFSpacer.xs
 });
 
-const meshLinkStyle = kialiStyle({
+export const meshLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'flex-start',
   marginTop: PFSpacer.sm,
@@ -145,38 +131,18 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
   const [expandedClusters, setExpandedClusters] = React.useState<Set<string>>(new Set());
   const [tooltipKey, setTooltipKey] = React.useState<number>(0);
 
-  const { namespaces, setIstioStatus, lastRefreshAt } = props;
+  const { namespaces } = props;
 
-  const fetchStatus = React.useCallback((): void => {
-    API.getIstioStatus()
-      .then(response => {
-        const statusMap: ClusterStatusMap = {};
+  // Memoize options to prevent recreating on every render
+  const clusterStatusOptions = React.useMemo(
+    () => ({
+      hasNamespaces: namespaces ? namespaces.length > 0 : true
+    }),
+    [namespaces]
+  );
 
-        response.data.forEach(status => {
-          if (!statusMap[status.cluster]) {
-            statusMap[status.cluster] = [];
-          }
-          statusMap[status.cluster].push(status);
-        });
-
-        setIstioStatus(statusMap);
-      })
-      .catch(error => {
-        // User without namespaces can't have access to mTLS information. Reduce severity to info.
-        const informative = namespaces && namespaces.length < 1;
-
-        if (informative) {
-          addError(t('Istio deployment status disabled.'), error, true, MessageType.INFO);
-        } else {
-          addError(t('Error fetching Istio deployment status.'), error);
-        }
-      });
-  }, [namespaces, setIstioStatus, t]);
-
-  React.useEffect(() => {
-    // retrieve status for all clusters
-    fetchStatus();
-  }, [pathname, lastRefreshAt, fetchStatus]);
+  // Use cluster status hook with namespace-aware error handling
+  const { statusMap } = useClusterStatus(clusterStatusOptions);
 
   React.useEffect(() => {
     // Force tooltip to close on route changes by remounting it with a new key
@@ -193,7 +159,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     ); // non-health core component has much higher severity
 
   const healthyComponents = (): boolean => {
-    const values = Object.values(props.statusMap).flat();
+    const values = Object.values(statusMap).flat();
     return values.reduce((healthy: boolean, compStatus: ComponentStatus) => {
       return healthy && compStatus.status === Status.Healthy;
     }, true);
@@ -201,14 +167,14 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 
   const allHealthy = healthyComponents();
   const sortedClusters = React.useMemo(() => {
-    return Object.keys(props.statusMap)
+    return Object.keys(statusMap)
       .filter(cl => {
         // When all components are healthy, show all clusters
         // When there are failures, only show clusters with failures
         if (allHealthy) {
           return true;
         }
-        const components = props.statusMap[cl] || [];
+        const components = statusMap[cl] || [];
         return components.some(comp => comp.status !== Status.Healthy);
       })
       .sort((a, b) => {
@@ -219,16 +185,16 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         if (!isHomeA && isHomeB) return 1;
 
         // Otherwise sort by severity
-        const worstA = getSeverity(props.statusMap[a]);
-        const worstB = getSeverity(props.statusMap[b]);
+        const worstA = getSeverity(statusMap[a]);
+        const worstB = getSeverity(statusMap[b]);
         return worstB - worstA;
       })
       .slice(0, 5); // Show 5 clusters
-  }, [props.statusMap, allHealthy]);
+  }, [statusMap, allHealthy]);
 
   // Check if there are multiple distinct meshes across all components
   const hasMultipleMeshes = (): boolean => {
-    const allComponents = Object.values(props.statusMap).flat();
+    const allComponents = Object.values(statusMap).flat();
     const meshes = new Set<string>();
     allComponents.forEach(comp => {
       if (comp.meshId) {
@@ -351,7 +317,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
       <Content>
         <Content className={clusterStatusHeaderStyle}>{t('Cluster Status')}</Content>
         {sortedClusters.map(cl => {
-          const components = props.statusMap[cl] || [];
+          const components = statusMap[cl] || [];
           const isExpanded = expandedClusters.has(cl);
           const hasFailures = hasFailingComponents(components);
 
@@ -422,7 +388,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     let coreUnhealthy = false;
     let addonUnhealthy = false;
     let notReady = false;
-    const values = Object.values(props.statusMap).flat();
+    const values = Object.values(statusMap).flat();
 
     Object.keys(values ?? {}).forEach((compKey: string) => {
       const { status, isCore } = values[compKey];
@@ -487,14 +453,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  namespaces: namespaceItemsSelector(state),
-  statusMap: istioStatusSelector(state)
+  namespaces: namespaceItemsSelector(state)
 });
 
-const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  setIstioStatus: (statusMap: ClusterStatusMap) => {
-    dispatch(IstioStatusActions.setinfo(statusMap));
-  }
-});
-
-export const IstioStatus = connectRefresh(connect(mapStateToProps, mapDispatchToProps)(IstioStatusComponent));
+export const IstioStatus = connect(mapStateToProps)(IstioStatusComponent);

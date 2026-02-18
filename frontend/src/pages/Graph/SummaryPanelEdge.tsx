@@ -334,7 +334,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
       case NodeMetricType.AGGREGATE:
         switch (destMetricType) {
           case NodeMetricType.APP:
-            label = 'destination_app';
+            label = 'destination_canonical_service';
             break;
           case NodeMetricType.SERVICE:
             label = 'destination_service_name';
@@ -347,7 +347,7 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         }
         break;
       case NodeMetricType.APP:
-        label = 'source_app';
+        label = 'source_canonical_service';
         break;
       case NodeMetricType.SERVICE:
         label = 'destination_service_name';

@@ -49,8 +49,9 @@ func (c *HealthCalculator) CalculateAppHealth(
 	}
 
 	return CalculatedHealth{
-		Status:     status,
-		ErrorRatio: errorRatio,
+		ErrorRatio:       errorRatio,
+		Status:           status,
+		TotalRequestRate: health.Requests.GetTotalRequestRate(),
 	}
 }
 
@@ -71,8 +72,9 @@ func (c *HealthCalculator) CalculateServiceHealth(
 	status, errorRatio := c.calculateRequestStatus(health.Requests, tolerances)
 
 	return CalculatedHealth{
-		Status:     status,
-		ErrorRatio: errorRatio,
+		ErrorRatio:       errorRatio,
+		Status:           status,
+		TotalRequestRate: health.Requests.GetTotalRequestRate(),
 	}
 }
 
@@ -97,8 +99,9 @@ func (c *HealthCalculator) CalculateWorkloadHealth(
 
 	// Return the worse of the two
 	return CalculatedHealth{
-		Status:     models.MergeHealthStatus(wsStatus, reqStatus),
-		ErrorRatio: errorRatio,
+		ErrorRatio:       errorRatio,
+		Status:           models.MergeHealthStatus(wsStatus, reqStatus),
+		TotalRequestRate: health.Requests.GetTotalRequestRate(),
 	}
 }
 

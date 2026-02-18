@@ -25,8 +25,9 @@ type NamespaceWorkloadHealth map[string]*WorkloadHealth
 // CalculatedHealthStatus represents the calculated health status with additional context
 // This is populated by the backend's health calculation logic.
 type CalculatedHealthStatus struct {
-	ErrorRatio float64      `json:"errorRatio,omitempty"` // Actual error ratio as percentage (0-100)
-	Status     HealthStatus `json:"status"`               // Calculated health status (Healthy, Degraded, Failure, NotReady, NA)
+	ErrorRatio       float64      `json:"errorRatio,omitempty"`       // Actual error ratio as percentage (0-100)
+	Status           HealthStatus `json:"status"`                     // Calculated health status (Healthy, Degraded, Failure, NotReady, NA)
+	TotalRequestRate float64      `json:"totalRequestRate,omitempty"` // Total request rate (req/s) from inbound and outbound traffic
 }
 
 // ServiceHealth contains aggregated health from various sources, for a given service

@@ -1,6 +1,5 @@
 import { store } from '../../store/ConfigStore';
-import { Show } from '../../pages/Overview/OverviewPage';
-import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, Show, TimeRange } from '../../types/Common';
 import { HEALTHY } from '../../types/Health';
 
 // Specific actions that should be communicated to the parent of the Kiosk
@@ -15,7 +14,7 @@ export const kioskGraphAction = (
   targetPage: string
 ): void => {
   let showInParent = `/graph/namespaces?namespaces=${namespace}`;
-  if (healthStatus === HEALTHY.name) {
+  if (healthStatus === HEALTHY.id) {
     showInParent += '&graphFind=healthy';
   } else {
     showInParent += '&graphFind=!healthy';

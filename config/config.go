@@ -889,22 +889,35 @@ type Rate struct {
 	Tolerance []Tolerance `yaml:"tolerance,omitempty" json:"tolerance"`
 }
 
+// DurationString is a duration expressed as a string (e.g. "5m", "1h") for config and API responses.
+// Use ToDuration() to convert to time.Duration where needed.
+type DurationString string
+
+// ToDuration parses the duration string to time.Duration. Returns an error if the string is empty or invalid.
+func (d DurationString) ToDuration() (time.Duration, error) {
+	s := string(d)
+	if s == "" {
+		return 0, fmt.Errorf("duration string is empty")
+	}
+	return time.ParseDuration(s)
+}
+
 // HealthCompute provides configuration for health pre-computation and caching
 type HealthCompute struct {
-	// Duration is the time period over which health is calculated.
+	// Duration is the time period over which health is calculated (e.g. "5m", "1h").
 	// Used as the rate interval for Prometheus queries.
 	// Minimum: 1m
 	// Default: 5m
-	Duration time.Duration `yaml:"duration,omitempty"`
+	Duration DurationString `yaml:"duration,omitempty" json:"duration,omitempty"`
 
-	// RefreshInterval is the interval between health cache refreshes.
+	// RefreshInterval is the interval between health cache refreshes (e.g. "2m").
 	// Default: 3m
-	RefreshInterval time.Duration `yaml:"refresh_interval,omitempty"`
+	RefreshInterval DurationString `yaml:"refresh_interval,omitempty" json:"refreshInterval,omitempty"`
 
-	// Timeout is the maximum time allowed for a single health refresh cycle.
+	// Timeout is the maximum time allowed for a single health refresh cycle (e.g. "5m").
 	// If exceeded, the refresh is cancelled and the next cycle starts on schedule.
 	// Default: 10m
-	Timeout time.Duration `yaml:"timeout,omitempty"`
+	Timeout DurationString `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 }
 
 // HealthConfig holds both custom rate configurations for computing health, as well as the configuration about
@@ -1099,9 +1112,9 @@ func NewConfig() (c *Config) {
 		},
 		HealthConfig: HealthConfig{
 			Compute: HealthCompute{
-				Duration:        5 * time.Minute,
-				RefreshInterval: 3 * time.Minute,
-				Timeout:         10 * time.Minute,
+				Duration:        "5m",
+				RefreshInterval: "3m",
+				Timeout:         "10m",
 			},
 		},
 		IstioLabels: IstioLabels{
@@ -2038,9 +2051,13 @@ func Validate(conf *Config) error {
 	}
 
 	// Validate health config duration (minimum 1 minute)
-	if conf.HealthConfig.Compute.Duration < time.Minute {
-		log.Warningf("health_config.compute.duration [%v] is less than the minimum of 1m. Setting to 1m.", conf.HealthConfig.Compute.Duration)
-		conf.HealthConfig.Compute.Duration = time.Minute
+	if d, err := conf.HealthConfig.Compute.Duration.ToDuration(); err != nil || d < time.Minute {
+		if err != nil {
+			log.Warningf("health_config.compute.duration [%s] is invalid: %v. Setting to 1m.", conf.HealthConfig.Compute.Duration, err)
+		} else {
+			log.Warningf("health_config.compute.duration [%s] is less than the minimum of 1m. Setting to 1m.", conf.HealthConfig.Compute.Duration)
+		}
+		conf.HealthConfig.Compute.Duration = "1m"
 	}
 
 	return nil
