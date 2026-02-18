@@ -53,7 +53,15 @@ Usage:
     [--monitored-namespaces <csv>] \
     [--prometheus-thanos-url <url>] \
     [--allow-skip-tls-verify <true|false>] \
-    [--restart-kiali <true|false>]
+    [--restart-kiali <true|false>] \
+    [--global-metrics <true|false>] \
+    [--deploy-thanos <true|false>] \
+    [--thanos-namespace <ns>] \
+    [--thanos-receive-route-host <host>] \
+    [--remote-write-filter-regex <regex>] \
+    [--disable-cluster-monitoring-remote-write <true|false>] \
+    [--restart-prometheus <true|false>] \
+    [--label-namespaces-for-uwm <true|false>]
 
 Required:
   --cluster1-context         Kube context of the "home" cluster (where Kiali UI runs)
@@ -69,6 +77,21 @@ Optional:
   --prometheus-thanos-url    Thanos Querier URL (default: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091)
   --allow-skip-tls-verify    Passed to kiali-prepare-remote-cluster.sh if needed (default: false)
   --restart-kiali            Restart Kiali deployment on cluster1 at the end (default: true)
+  --global-metrics           Configure a "global metrics" setup using Thanos Receive+Query in cluster1 and remote_write
+                            from both clusters. This helps Kiali see metrics from multiple clusters from a single endpoint.
+                            Default: false
+  --deploy-thanos            If true (and --global-metrics true), deploy a minimal Thanos Receive+Query stack in cluster1.
+                            Default: false
+  --thanos-namespace         Namespace where Thanos is (or will be) deployed in cluster1. Default: thanos
+  --thanos-receive-route-host If set, use this host for remote_write from cluster2 (https://<host>/api/v1/receive).
+                            If empty, the script will look up Route 'thanos-receive' in the Thanos namespace.
+                            Default: <auto>
+  --remote-write-filter-regex Regex used to reduce what is exported via remote_write (avoid MemoryPressure/evictions).
+                            Default: istio_.*|envoy_.*|up
+  --disable-cluster-monitoring-remote-write If true, remove/avoid remote_write on prometheus-k8s (cluster monitoring) in both clusters
+                            to prevent exporting the whole platform metrics set. Default: true
+  --restart-prometheus       If true, restart Prometheus statefulsets after config changes. Default: true
+  --label-namespaces-for-uwm If true, label monitored namespaces with openshift.io/user-monitoring=true in both clusters. Default: true
 
 Example:
   CTX_CLUSTER1='default/api-...:6443/kube:admin'
@@ -93,6 +116,15 @@ PROM_THANO_URL="https://thanos-querier.openshift-monitoring.svc.cluster.local:90
 ALLOW_SKIP_TLS_VERIFY="false"
 RESTART_KIALI="true"
 
+GLOBAL_METRICS="false"
+DEPLOY_THANOS="false"
+THANOS_NAMESPACE="thanos"
+THANOS_RECEIVE_ROUTE_HOST=""
+REMOTE_WRITE_FILTER_REGEX='istio_.*|envoy_.*|up'
+DISABLE_CLUSTER_MONITORING_REMOTE_WRITE="true"
+RESTART_PROMETHEUS="true"
+LABEL_NAMESPACES_FOR_UWM="true"
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cluster1-context) CTX_CLUSTER1="$2"; shift 2 ;;
@@ -106,6 +138,14 @@ while [[ $# -gt 0 ]]; do
     --prometheus-thanos-url) PROM_THANO_URL="$2"; shift 2 ;;
     --allow-skip-tls-verify) ALLOW_SKIP_TLS_VERIFY="$2"; shift 2 ;;
     --restart-kiali) RESTART_KIALI="$2"; shift 2 ;;
+    --global-metrics) GLOBAL_METRICS="$2"; shift 2 ;;
+    --deploy-thanos) DEPLOY_THANOS="$2"; shift 2 ;;
+    --thanos-namespace) THANOS_NAMESPACE="$2"; shift 2 ;;
+    --thanos-receive-route-host) THANOS_RECEIVE_ROUTE_HOST="$2"; shift 2 ;;
+    --remote-write-filter-regex) REMOTE_WRITE_FILTER_REGEX="$2"; shift 2 ;;
+    --disable-cluster-monitoring-remote-write) DISABLE_CLUSTER_MONITORING_REMOTE_WRITE="$2"; shift 2 ;;
+    --restart-prometheus) RESTART_PROMETHEUS="$2"; shift 2 ;;
+    --label-namespaces-for-uwm) LABEL_NAMESPACES_FOR_UWM="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) error "Unknown option: $1 (use --help)" ;;
   esac
@@ -119,6 +159,21 @@ if [[ "${ALLOW_SKIP_TLS_VERIFY}" != "true" && "${ALLOW_SKIP_TLS_VERIFY}" != "fal
 fi
 if [[ "${RESTART_KIALI}" != "true" && "${RESTART_KIALI}" != "false" ]]; then
   error "--restart-kiali must be true or false"
+fi
+if [[ "${GLOBAL_METRICS}" != "true" && "${GLOBAL_METRICS}" != "false" ]]; then
+  error "--global-metrics must be true or false"
+fi
+if [[ "${DEPLOY_THANOS}" != "true" && "${DEPLOY_THANOS}" != "false" ]]; then
+  error "--deploy-thanos must be true or false"
+fi
+if [[ "${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}" != "true" && "${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}" != "false" ]]; then
+  error "--disable-cluster-monitoring-remote-write must be true or false"
+fi
+if [[ "${RESTART_PROMETHEUS}" != "true" && "${RESTART_PROMETHEUS}" != "false" ]]; then
+  error "--restart-prometheus must be true or false"
+fi
+if [[ "${LABEL_NAMESPACES_FOR_UWM}" != "true" && "${LABEL_NAMESPACES_FOR_UWM}" != "false" ]]; then
+  error "--label-namespaces-for-uwm must be true or false"
 fi
 
 require_bin oc
@@ -142,6 +197,200 @@ apply_yaml() {
   local context="$1"
   local yaml="$2"
   echo "${yaml}" | oc --context "${context}" apply -f -
+}
+
+label_namespaces_for_uwm() {
+  local context="$1"
+  shift
+  local namespaces=("$@")
+
+  for ns in "${namespaces[@]}"; do
+    if [[ -z "${ns}" ]]; then
+      continue
+    fi
+    oc --context "${context}" label namespace "${ns}" openshift.io/user-monitoring=true --overwrite >/dev/null 2>&1 || true
+  done
+}
+
+deploy_thanos_global_cluster1() {
+  info "Deploying minimal Thanos Receive+Query in cluster1 (namespace: ${THANOS_NAMESPACE})"
+
+  oc --context "${CTX_CLUSTER1}" create namespace "${THANOS_NAMESPACE}" --dry-run=client -o yaml | oc --context "${CTX_CLUSTER1}" apply -f -
+
+  # Minimal Receive+Query. IMPORTANT: Receive requires external labels (see Thanos docs).
+  # This is intentionally minimal/hack-oriented; production setups should use a proper Helm chart and storage backend.
+  cat <<EOF | oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: thanos-receive-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-receive
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-receive
+  template:
+    metadata:
+      labels:
+        app: thanos-receive
+    spec:
+      containers:
+      - name: thanos-receive
+        image: quay.io/thanos/thanos:v0.37.2
+        args:
+        - receive
+        - --log.level=info
+        - --label=receive_cluster="cluster1"
+        - --label=receive_replica="0"
+        - --tsdb.path=/var/thanos/receive
+        - --grpc-address=0.0.0.0:10901
+        - --http-address=0.0.0.0:10902
+        - --remote-write.address=0.0.0.0:19291
+        ports:
+        - name: grpc
+          containerPort: 10901
+        - name: http
+          containerPort: 10902
+        - name: remote
+          containerPort: 19291
+        volumeMounts:
+        - name: data
+          mountPath: /var/thanos/receive
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: thanos-receive-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-receive
+spec:
+  selector:
+    app: thanos-receive
+  ports:
+  - name: grpc
+    port: 10901
+    targetPort: grpc
+  - name: http
+    port: 10902
+    targetPort: http
+  - name: remote
+    port: 19291
+    targetPort: remote
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+  template:
+    metadata:
+      labels:
+        app: thanos-query
+    spec:
+      containers:
+      - name: thanos-query
+        image: quay.io/thanos/thanos:v0.37.2
+        args:
+        - query
+        - --log.level=info
+        - --http-address=0.0.0.0:9090
+        - --grpc-address=0.0.0.0:10901
+        - --store=thanos-receive.${THANOS_NAMESPACE}.svc.cluster.local:10901
+        ports:
+        - name: http
+          containerPort: 9090
+        - name: grpc
+          containerPort: 10901
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-query
+spec:
+  selector:
+    app: thanos-query
+  ports:
+  - name: http
+    port: 9090
+    targetPort: http
+EOF
+
+  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" rollout status deployment/thanos-receive --timeout=10m || true
+  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" rollout status deployment/thanos-query --timeout=10m || true
+
+  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" create route edge thanos-receive --service=thanos-receive --port=remote --insecure-policy=Redirect >/dev/null 2>&1 || true
+}
+
+configure_global_metrics_remote_write() {
+  info "Configuring remote_write to Thanos Receive (global metrics) (filter: ${REMOTE_WRITE_FILTER_REGEX})"
+
+  local receive_url_cluster1="http://thanos-receive.${THANOS_NAMESPACE}.svc.cluster.local:19291/api/v1/receive"
+
+  local receive_host="${THANOS_RECEIVE_ROUTE_HOST}"
+  if [[ -z "${receive_host}" ]]; then
+    receive_host="$(oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" get route thanos-receive -o jsonpath='{.spec.host}' 2>/dev/null || true)"
+  fi
+  if [[ -z "${receive_host}" ]]; then
+    error "Unable to determine Thanos Receive Route host in cluster1. Create it first or pass --thanos-receive-route-host."
+  fi
+  local receive_url_cluster2="https://${receive_host}/api/v1/receive"
+
+  info "Thanos Receive URL for cluster1 (in-cluster): ${receive_url_cluster1}"
+  info "Thanos Receive URL for cluster2 (route): ${receive_url_cluster2}"
+
+  # Reduce cardinality to avoid MemoryPressure/evictions: keep only Istio/Envoy and basic 'up'.
+  # NOTE: these patches overwrite the full config.yaml content in their respective ConfigMaps.
+
+  if [[ "${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}" == "true" ]]; then
+    info "Disabling cluster-monitoring remote_write (prometheus-k8s) in both clusters to avoid exporting platform metrics"
+    oc --context "${CTX_CLUSTER1}" -n openshift-monitoring patch cm cluster-monitoring-config --type=merge -p "$(cat <<EOF
+{"data":{"config.yaml":"enableUserWorkload: true\nprometheusK8s:\n  externalLabels:\n    cluster_name: cluster1\n"}}
+EOF
+)"
+    oc --context "${CTX_CLUSTER2}" -n openshift-monitoring patch cm cluster-monitoring-config --type=merge -p "$(cat <<EOF
+{"data":{"config.yaml":"enableUserWorkload: true\nprometheusK8s:\n  externalLabels:\n    cluster_name: cluster2\n"}}
+EOF
+)"
+  fi
+
+  info "Configuring UWM remote_write in both clusters"
+  oc --context "${CTX_CLUSTER1}" -n openshift-user-workload-monitoring patch cm user-workload-monitoring-config --type=merge -p "$(cat <<EOF
+{"data":{"config.yaml":"prometheus:\n  externalLabels:\n    cluster_name: cluster1\n  remoteWrite:\n  - url: ${receive_url_cluster1}\n    writeRelabelConfigs:\n    - sourceLabels: [__name__]\n      regex: \"${REMOTE_WRITE_FILTER_REGEX}\"\n      action: keep\n"}}
+EOF
+)"
+
+  oc --context "${CTX_CLUSTER2}" -n openshift-user-workload-monitoring patch cm user-workload-monitoring-config --type=merge -p "$(cat <<EOF
+{"data":{"config.yaml":"prometheus:\n  externalLabels:\n    cluster_name: cluster2\n  remoteWrite:\n  - url: ${receive_url_cluster2}\n    tlsConfig:\n      insecureSkipVerify: true\n    writeRelabelConfigs:\n    - sourceLabels: [__name__]\n      regex: \"${REMOTE_WRITE_FILTER_REGEX}\"\n      action: keep\n"}}
+EOF
+)"
+
+  if [[ "${RESTART_PROMETHEUS}" == "true" ]]; then
+    info "Restarting Prometheus statefulsets to apply remote_write configuration"
+    oc --context "${CTX_CLUSTER1}" -n openshift-user-workload-monitoring rollout restart sts/prometheus-user-workload || true
+    oc --context "${CTX_CLUSTER2}" -n openshift-user-workload-monitoring rollout restart sts/prometheus-user-workload || true
+
+    if [[ "${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}" == "true" ]]; then
+      oc --context "${CTX_CLUSTER1}" -n openshift-monitoring rollout restart sts/prometheus-k8s || true
+      oc --context "${CTX_CLUSTER2}" -n openshift-monitoring rollout restart sts/prometheus-k8s || true
+    fi
+  fi
 }
 
 enable_user_workload_monitoring() {
@@ -446,10 +695,33 @@ info "MONITORED_NAMESPACES=${MONITORED_NAMESPACES_CSV}"
 info "PROM_THANO_URL=${PROM_THANO_URL}"
 info "ALLOW_SKIP_TLS_VERIFY=${ALLOW_SKIP_TLS_VERIFY}"
 info "RESTART_KIALI=${RESTART_KIALI}"
+info "GLOBAL_METRICS=${GLOBAL_METRICS}"
+info "DEPLOY_THANOS=${DEPLOY_THANOS}"
+info "THANOS_NAMESPACE=${THANOS_NAMESPACE}"
+info "THANOS_RECEIVE_ROUTE_HOST=${THANOS_RECEIVE_ROUTE_HOST}"
+info "REMOTE_WRITE_FILTER_REGEX=${REMOTE_WRITE_FILTER_REGEX}"
+info "DISABLE_CLUSTER_MONITORING_REMOTE_WRITE=${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}"
+info "RESTART_PROMETHEUS=${RESTART_PROMETHEUS}"
+info "LABEL_NAMESPACES_FOR_UWM=${LABEL_NAMESPACES_FOR_UWM}"
 
 info "=== Step 1: Enable user workload monitoring in both clusters ==="
 enable_user_workload_monitoring "${CTX_CLUSTER1}"
 enable_user_workload_monitoring "${CTX_CLUSTER2}"
+
+if [[ "${LABEL_NAMESPACES_FOR_UWM}" == "true" ]]; then
+  info "Labeling monitored namespaces for User Workload Monitoring in both clusters"
+  IFS=',' read -r -a monitored_ns_arr_for_labels <<< "${MONITORED_NAMESPACES_CSV}"
+  label_namespaces_for_uwm "${CTX_CLUSTER1}" "${monitored_ns_arr_for_labels[@]}"
+  label_namespaces_for_uwm "${CTX_CLUSTER2}" "${monitored_ns_arr_for_labels[@]}"
+fi
+
+if [[ "${GLOBAL_METRICS}" == "true" ]]; then
+  info "=== Step 1b: Global metrics (optional) ==="
+  if [[ "${DEPLOY_THANOS}" == "true" ]]; then
+    deploy_thanos_global_cluster1
+  fi
+  configure_global_metrics_remote_write
+fi
 
 info "=== Step 2: Apply Telemetry (enable Prometheus metrics) in both clusters ==="
 apply_telemetry_prometheus "${CTX_CLUSTER1}"
