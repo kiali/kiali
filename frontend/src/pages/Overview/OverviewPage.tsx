@@ -83,7 +83,7 @@ export const OverviewPage: React.FC = () => {
           <ApplicationStats />
         </GridItem>
 
-        <GridItem span={7}>
+        <GridItem span={8}>
           <ServiceInsights />
         </GridItem>
       </Grid>
