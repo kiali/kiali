@@ -112,7 +112,8 @@ ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v2 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v3 --replicas=0
 ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} ratings-v1 --replicas=0
 if [ "${WAYPOINT}" != "true" ]; then
-  # For the baseline bookinfo namespace, move all reviews versions to the west cluster.
+  # For the baseline bookinfo namespace, move all reviews versions to the west cluster. This is to ensure
+  # that some traffic always routes to the west cluster (for testing)
   ${CLIENT_EXE} scale deploy -n ${BOOKINFO_NAMESPACE} reviews-v1 --replicas=0
 fi
 
