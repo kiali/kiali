@@ -11,7 +11,6 @@ Feature: Manual Refresh option
   Background:
     Given user is at administrator perspective
 
-  @ossmc
   @core-2
   Scenario: Namespaces page shows manual
     When user is at the "namespaces" page with manual refresh

@@ -1,6 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
+import { ensureKialiFinishedLoading } from './transition';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -110,6 +111,26 @@ When('user filters for istio config type {string}', (istioType: string) => {
   cy.get('input[placeholder="Filter by Istio Config Type"]').type(`${istioType}{enter}`);
 
   cy.get(`li[label="${istioType}"]`).should('be.visible').find('button').click();
+});
+
+When('user selects the {string} namespace', (namespace: string) => {
+  cy.getBySel('namespace-dropdown').click();
+  cy.get(`input[type="checkbox"][value="${namespace}"]`).check();
+  cy.getBySel('namespace-dropdown').click();
+
+  ensureKialiFinishedLoading();
+});
+
+Then('the namespace dropdown is sorted alphabetically', () => {
+  cy.getBySel('namespace-dropdown').click();
+  cy.get('input[type="checkbox"]').should('have.length.greaterThan', 1);
+  cy.get('input[type="checkbox"]').then($checkboxes => {
+    const namespaces = Array.from($checkboxes)
+      .filter(checkbox => checkbox.getAttribute('value') !== null)
+      .map(checkbox => checkbox.getAttribute('value'));
+    const sortedNamespaces = namespaces.slice().sort();
+    expect(namespaces).to.deep.equal(sortedNamespaces);
+  });
 });
 
 // checkCol
