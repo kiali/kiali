@@ -7,7 +7,7 @@ Feature: Kiali masthead cluster components status
 
   Background:
     Given user is at administrator perspective
-    And user is at the "namespaces" list page
+    And user is at the "overview" page
 
   @multi-cluster
   Scenario: Cluster components healthy

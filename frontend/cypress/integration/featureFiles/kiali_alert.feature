@@ -4,7 +4,7 @@ Feature: Kiali alerts verify
 
   Background:
     Given user is at administrator perspective
-    And user is at the "namespaces" list page
+    And user is at the "overview" page
 
   @smoke
   @core-2
