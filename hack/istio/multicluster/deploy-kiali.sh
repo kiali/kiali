@@ -41,7 +41,7 @@ deploy_kiali() {
     local effective_version=""
     if [ -n "${ISTIO_VERSION:-}" ]; then
       effective_version="$(kiali_istio_normalize_version "${ISTIO_VERSION}")" || {
-        echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'. Expected '#.#.#' or '#.#-dev'." >&2
+        echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'." >&2
         exit 1
       }
     else
@@ -52,12 +52,10 @@ deploy_kiali() {
       }
     fi
 
-    local tracing_use_waypoint_name="false"
     if kiali_istio_version_lt "${effective_version}" "1.28.0"; then
-      tracing_use_waypoint_name="true"
+      echo "Ambient detected. Istio version resolved to [${effective_version}]. Setting external_services.tracing.use_waypoint_name=true"
+      helm_args+=(--set external_services.tracing.use_waypoint_name="true")
     fi
-    echo "Ambient detected. Istio version resolved to [${effective_version}]. Setting external_services.tracing.use_waypoint_name=${tracing_use_waypoint_name}"
-    helm_args+=(--set external_services.tracing.use_waypoint_name="${tracing_use_waypoint_name}")
   fi
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then

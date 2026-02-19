@@ -4,7 +4,6 @@
 # Refer to the --help output for a description of this script and its available options.
 #
 
-#set +u
 
 EXTERNAL_CONTROLPLANE="external-controlplane"
 EXTERNAL_KIALI="external-kiali"
@@ -17,7 +16,7 @@ KEYCLOAK_REQUESTS_MEMORY=""
 CLUSTER2_AMBIENT="true"
 
 INSTALL_PERSES="false"
-#HELM_CHARTS_DIR="${HELM_CHARTS_DIR:-}"
+
 ISTIO_VERSION="${ISTIO_VERSION:-}"
 
 infomsg() {
@@ -35,7 +34,7 @@ determine_tracing_use_waypoint_name() {
   local effective_version=""
   if [ -n "${ISTIO_VERSION:-}" ]; then
     effective_version="$(kiali_istio_normalize_version "${ISTIO_VERSION}")" || {
-      echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'. Expected '#.#.#' or '#.#-dev'." >&2
+      echo "ERROR: Unable to parse --istio-version value '${ISTIO_VERSION}'." >&2
       return 1
     }
   else
@@ -389,6 +388,11 @@ setup_kind_singlecluster() {
 
   local tracing_use_waypoint_name
   tracing_use_waypoint_name="$(determine_tracing_use_waypoint_name)"
+  local tracing_use_waypoint_args=()
+  # use_waypoint_name defaults to false. Only set it explicitly when true.
+  if [ "${tracing_use_waypoint_name}" == "true" ]; then
+    tracing_use_waypoint_args=(--set external_services.tracing.use_waypoint_name="true")
+  fi
   infomsg "external_services.tracing.use_waypoint_name=${tracing_use_waypoint_name} (ambient=${AMBIENT:-false}, istio_version=${ISTIO_VERSION:-auto})"
 
   PERSES_ARGS=()
@@ -443,7 +447,7 @@ setup_kind_singlecluster() {
     "${PERSES_ARGS[@]}" \
     --set external_services.tracing.enabled="true" \
     --set external_services.tracing.external_url="http://tracing.istio-system:16685/jaeger" \
-    --set external_services.tracing.use_waypoint_name="${tracing_use_waypoint_name}" \
+    "${tracing_use_waypoint_args[@]}" \
     --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
@@ -512,6 +516,11 @@ setup_kind_tempo() {
 
   local tracing_use_waypoint_name
   tracing_use_waypoint_name="$(determine_tracing_use_waypoint_name)"
+  local tracing_use_waypoint_args=()
+  # use_waypoint_name defaults to false. Only set it explicitly when true.
+  if [ "${tracing_use_waypoint_name}" == "true" ]; then
+    tracing_use_waypoint_args=(--set external_services.tracing.use_waypoint_name="true")
+  fi
   infomsg "external_services.tracing.use_waypoint_name=${tracing_use_waypoint_name} (ambient=${AMBIENT:-false}, istio_version=${ISTIO_VERSION:-auto})"
 
   if [ "${DEPLOY_KIALI}" != "true" ]; then
@@ -543,7 +552,7 @@ setup_kind_tempo() {
     --set external_services.tracing.external_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.internal_url="http://tempo-cr-query-frontend.tempo:3200" \
     --set external_services.tracing.use_grpc="false" \
-    --set external_services.tracing.use_waypoint_name="${tracing_use_waypoint_name}" \
+    "${tracing_use_waypoint_args[@]}" \
     --set external_services.istio.validation_reconcile_interval="5s" \
     --set health_config.rate[0].kind="service" \
     --set health_config.rate[0].name="y-server" \
