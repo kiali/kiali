@@ -74,15 +74,12 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       });
     case getType(GraphActions.updateSummary):
       return updateState(state, {
-        summaryData: updateState(
-          state.summaryData,
-          action.payload
-            ? {
-                summaryType: action.payload.summaryType,
-                summaryTarget: action.payload.summaryTarget
-              }
-            : null
-        )
+        summaryData: action.payload
+          ? updateState(state.summaryData, {
+              summaryType: action.payload.summaryType,
+              summaryTarget: action.payload.summaryTarget
+            })
+          : null
       });
     // Filter actions
     //

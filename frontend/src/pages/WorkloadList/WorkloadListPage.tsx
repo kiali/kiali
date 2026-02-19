@@ -79,7 +79,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (!namespaceEquals(this.props.activeNamespaces, prevProps.activeNamespaces) ||
           (this.props.refreshInterval !== prevProps.refreshInterval &&
-            this.props.refreshInterval !== RefreshIntervalPause) ||
+            (this.props.refreshInterval !== RefreshIntervalPause ||
+              prevProps.refreshInterval === RefreshIntervalManual)) ||
           this.state.currentSortField !== prevCurrentSortField ||
           this.state.isSortAscending !== prevIsSortAscending))
     ) {

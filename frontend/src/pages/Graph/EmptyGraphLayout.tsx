@@ -12,6 +12,7 @@ import * as _ from 'lodash';
 import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
+import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
 import { t } from 'utils/I18nUtils';
@@ -86,7 +87,14 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   render(): React.ReactNode {
     if (this.props.isError) {
       return (
-        <EmptyState  headingLevel="h5" icon={KialiIcon.Error}  titleText={t('Error loading graph')} id="empty-graph-error" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          headingLevel="h5"
+          icon={KialiIcon.Error}
+          titleText={t('Error loading graph')}
+          id="empty-graph-error"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>{this.props.error}</EmptyStateBody>
         </EmptyState>
       );
@@ -94,8 +102,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (this.props.isLoading) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('Loading graph')} id="empty-graph-is-loading" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
-          </EmptyState>
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('Loading graph')}
+          id="empty-graph-is-loading"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        ></EmptyState>
       );
     }
 
@@ -103,7 +116,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (this.props.namespaces?.length === 0) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('No namespace is selected')} id="empty-graph-no-namespace" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('No namespace is selected')}
+          id="empty-graph-no-namespace"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             {t('There is currently no namespace selected, please select one using the Namespace selector.')}
           </EmptyStateBody>
@@ -112,25 +131,18 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     }
 
     if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded && !this.props.isMiniGraph) {
-      return (
-        <EmptyState  headingLevel="h5"   titleText={t('Manual refresh required')}
-          id="empty-graph-manual"
-          data-test="manual-refresh"
-          variant={EmptyStateVariant.lg}
-          className={emptyStateStyle}
-        >
-          <EmptyStateBody>
-            {t(
-              'The refresh interval is set to "Manual". To render the graph, select your desired filters and options and then click the Refresh button. Or, if preferred, change the setting to the desired interval.'
-            )}
-          </EmptyStateBody>
-        </EmptyState>
-      );
+      return <ManualRefreshEmptyState className={emptyStateStyle} />;
     }
 
     if (isGraphEmpty && !this.props.isMiniGraph) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('Empty Graph')} id="empty-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('Empty Graph')}
+          id="empty-graph"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>
             {t(
               'There is currently no graph available for the selected namespaces. This usually means the namespaces do not have measurable traffic for the selected time period:'
@@ -170,11 +182,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
     // TODO: Implement minigraph in offline mode.
     if (this.props.isMiniGraph && serverConfig.runMode === RunMode.OFFLINE) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={
-              <>
-                <KialiIcon.Offline /> {t('offline')}
-              </>
-            }
+        <EmptyState
+          headingLevel="h5"
+          titleText={
+            <>
+              <KialiIcon.Offline /> {t('offline')}
+            </>
+          }
           id="empty-mini-graph"
           data-test="minigraph-offline"
           variant={EmptyStateVariant.lg}
@@ -187,7 +201,13 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
 
     if (isGraphEmpty && this.props.isMiniGraph) {
       return (
-        <EmptyState  headingLevel="h5"   titleText={t('Empty Graph')} id="empty-mini-graph" variant={EmptyStateVariant.lg} className={emptyStateStyle}>
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('Empty Graph')}
+          id="empty-mini-graph"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
           <EmptyStateBody>{t('No graph traffic for the time period.')}</EmptyStateBody>
         </EmptyState>
       );
