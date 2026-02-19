@@ -44,6 +44,14 @@ MESH_ID=""
 CLUSTER_NAME=""
 NETWORK_ID=""
 
+# Sail operator install source configuration.
+# These can be provided via environment variables (preferred for multicluster scripts)
+# or via command line args (useful for direct/manual usage).
+SAIL_OPERATOR_HELM_REPO="${SAIL_OPERATOR_HELM_REPO:-https://istio-ecosystem.github.io/sail-operator}"
+SAIL_OPERATOR_CHART_VERSION="${SAIL_OPERATOR_CHART_VERSION:-}"
+SAIL_OPERATOR_GIT_REPO="${SAIL_OPERATOR_GIT_REPO:-https://github.com/istio-ecosystem/sail-operator.git}"
+SAIL_OPERATOR_GIT_REF="${SAIL_OPERATOR_GIT_REF:-}"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -84,6 +92,22 @@ while [[ $# -gt 0 ]]; do
       NETWORK_ID="$2"
       shift;shift
       ;;
+    --sail-operator-helm-repo)
+      SAIL_OPERATOR_HELM_REPO="$2"
+      shift;shift
+      ;;
+    --sail-operator-chart-version)
+      SAIL_OPERATOR_CHART_VERSION="$2"
+      shift;shift
+      ;;
+    --sail-operator-git-repo)
+      SAIL_OPERATOR_GIT_REPO="$2"
+      shift;shift
+      ;;
+    --sail-operator-git-ref)
+      SAIL_OPERATOR_GIT_REF="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -110,6 +134,21 @@ Valid command line arguments:
        Cluster name for multicluster setup. Required for multicluster configurations.
   -n|--network <network-id>:
        Network ID for multicluster setup. Required for multicluster configurations.
+  --sail-operator-helm-repo <url>:
+       Helm repository URL where the Sail Operator chart is hosted.
+       Default: ${SAIL_OPERATOR_HELM_REPO}
+  --sail-operator-chart-version <version>:
+       Sail Operator Helm chart version to install (useful for RCs if published in the chart repo).
+       Example: 1.27.0-rc.0
+       Default: <latest>
+  --sail-operator-git-repo <url>:
+       Git repository URL for Sail Operator (used when --sail-operator-git-ref is set).
+       Default: ${SAIL_OPERATOR_GIT_REPO}
+  --sail-operator-git-ref <ref>:
+       Install Sail Operator Helm chart directly from a git ref (branch or tag).
+       This is useful to test Sail 'main/master' before a release is cut.
+       Examples: main, master, v1.27.0-rc.0
+       Default: <unset> (install from Helm repo)
   -h|--help:
        this message
 HELPMSG
