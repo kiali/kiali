@@ -1,4 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 // Some of the steps from istio_config_validation_filters.feature are implemented in
 // the istio_config_type_filters.ts file. This is because some steps are identical.
@@ -45,6 +46,7 @@ When('a validation filter {string} is applied', (category: string) => {
   cy.get('button#filter_select_value-toggle').click();
   cy.contains('div#filter_select_value button', category).click();
 
+  ensureKialiFinishedLoading();
   cy.get('#filter-selection > :nth-child(2)').contains(category).parent().should('be.visible');
 });
 
@@ -63,6 +65,6 @@ When('user chooses {int} validation filters', (count: number) => {
     cy.get('button#filter_select_value-toggle').click();
     cy.get('div#filter_select_value').find('button').eq(i).click();
 
-    cy.get('#loading_kiali_spinner').should('not.exist');
+    ensureKialiFinishedLoading();
   }
 });
