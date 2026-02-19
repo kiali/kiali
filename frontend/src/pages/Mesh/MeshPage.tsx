@@ -42,7 +42,7 @@ import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
-import { getValidMeshLayout, MeshLayout } from './layouts/layoutFactory';
+import { getValidMeshLayout, MeshLayout } from './layouts/LayoutFactory';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { setAIContext } from 'helpers/ChatAI';
 
@@ -64,6 +64,7 @@ type ReduxStateProps = {
 };
 
 type ReduxDispatchProps = {
+  dispatch: KialiDispatch;
   endTour: () => void;
   onReady: (controller: Controller) => void;
   setDefinition: (meshDefinition: MeshDefinition) => void;
@@ -72,7 +73,6 @@ type ReduxDispatchProps = {
   setUpdateTime: (val: TimeInMilliseconds) => void;
   startTour: ({ info, stop }) => void;
   toggleLegend: () => void;
-  dispatch: KialiDispatch;
 };
 
 type MeshPageProps = ReduxStateProps &
@@ -317,10 +317,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
       }
     });
 
-    setAIContext(
-      this.props.dispatch,
-      `Mesh status`
-    );
+    setAIContext(this.props.dispatch, `Mesh status`);
     this.props.setDefinition(this.meshDataSource.meshDefinition);
   };
 

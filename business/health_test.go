@@ -554,6 +554,438 @@ var (
 	}
 )
 
+// TestFillAppRequestRates_SourceHTTPOnly tests the fault injection scenario:
+// source app has HTTP capability but destination is "unknown" (not HTTP-capable).
+// The source's outbound traffic should still be counted.
+func TestFillAppRequestRates_SourceHTTPOnly(t *testing.T) {
+	assert := assert.New(t)
+
+	srcApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	destApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceAppHealth{
+		"productpage": srcApp,
+		"unknown":     destApp,
+	}
+	// Only the source is HTTP-capable; destination ("unknown") is not
+	appHTTPTraffic := map[string]bool{
+		"productpage": true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_canonical_service": "unknown",
+				"source_canonical_service":      "productpage",
+				"request_protocol":              "http",
+				"response_code":                 "500",
+				"reporter":                      "source",
+			},
+			Value:     model.SampleValue(2.5),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	// Source (productpage) should have outbound traffic recorded
+	assert.Equal(map[string]map[string]float64{
+		"http": {"500": 2.5},
+	}, srcApp.Requests.Outbound, "source app should have outbound traffic even when dest is not HTTP-capable")
+
+	// Destination (unknown) should have NO inbound (not HTTP-capable)
+	assert.Equal(map[string]map[string]float64{}, destApp.Requests.Inbound, "dest app should have no inbound when not HTTP-capable")
+}
+
+// TestFillAppRequestRates_DestHTTPOnly tests the reverse scenario:
+// destination app has HTTP capability but source does not.
+// The destination's inbound traffic should still be counted.
+func TestFillAppRequestRates_DestHTTPOnly(t *testing.T) {
+	assert := assert.New(t)
+
+	srcApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	destApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceAppHealth{
+		"external-src": srcApp,
+		"reviews":      destApp,
+	}
+	// Only the destination is HTTP-capable
+	appHTTPTraffic := map[string]bool{
+		"reviews": true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_canonical_service": "reviews",
+				"source_canonical_service":      "external-src",
+				"request_protocol":              "http",
+				"response_code":                 "200",
+				"reporter":                      "destination",
+			},
+			Value:     model.SampleValue(10),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	// Destination (reviews) should have inbound traffic recorded
+	assert.NotEmpty(destApp.Requests.Inbound, "dest app should have inbound traffic when it is HTTP-capable")
+
+	// Source (external-src) should have NO outbound (not HTTP-capable)
+	assert.Equal(map[string]map[string]float64{}, srcApp.Requests.Outbound, "source app should have no outbound when not HTTP-capable")
+}
+
+// TestFillAppRequestRates_BothHTTP tests that when both source and destination are
+// HTTP-capable, both inbound and outbound are aggregated.
+func TestFillAppRequestRates_BothHTTP(t *testing.T) {
+	assert := assert.New(t)
+
+	srcApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	destApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceAppHealth{
+		"productpage": srcApp,
+		"reviews":     destApp,
+	}
+	appHTTPTraffic := map[string]bool{
+		"productpage": true,
+		"reviews":     true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_canonical_service": "reviews",
+				"source_canonical_service":      "productpage",
+				"request_protocol":              "http",
+				"response_code":                 "200",
+				"reporter":                      "source",
+			},
+			Value:     model.SampleValue(7),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	// Source should have outbound
+	assert.Equal(map[string]map[string]float64{
+		"http": {"200": 7},
+	}, srcApp.Requests.Outbound, "source app should have outbound when both are HTTP-capable")
+
+	// Destination should have inbound (via CombineReporters which merges source/dest reporter data)
+	assert.NotEmpty(destApp.Requests.Inbound, "dest app should have inbound when both are HTTP-capable")
+}
+
+// TestFillAppRequestRates_NeitherHTTP tests that when neither source nor destination is
+// HTTP-capable, no traffic is aggregated.
+func TestFillAppRequestRates_NeitherHTTP(t *testing.T) {
+	assert := assert.New(t)
+
+	srcApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	destApp := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceAppHealth{
+		"src-app":  srcApp,
+		"dest-app": destApp,
+	}
+	// Neither app is HTTP-capable
+	appHTTPTraffic := map[string]bool{}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_canonical_service": "dest-app",
+				"source_canonical_service":      "src-app",
+				"request_protocol":              "http",
+				"response_code":                 "200",
+				"reporter":                      "source",
+			},
+			Value:     model.SampleValue(5),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	assert.Equal(map[string]map[string]float64{}, srcApp.Requests.Outbound, "source should have no outbound when neither is HTTP-capable")
+	assert.Equal(map[string]map[string]float64{}, destApp.Requests.Inbound, "dest should have no inbound when neither is HTTP-capable")
+}
+
+// TestFillAppRequestRates_EmptyLabels tests that samples with empty/missing labels
+// are handled gracefully.
+func TestFillAppRequestRates_EmptyLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	appHealth := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{},
+		Requests:         models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceAppHealth{
+		"myapp": appHealth,
+	}
+	appHTTPTraffic := map[string]bool{
+		"myapp": true,
+	}
+
+	// Sample with empty source and destination labels
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"request_protocol": "http",
+				"response_code":    "200",
+				"reporter":         "source",
+			},
+			Value:     model.SampleValue(1),
+			Timestamp: model.Now(),
+		},
+	}
+
+	// Should not panic
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	assert.Equal(map[string]map[string]float64{}, appHealth.Requests.Inbound)
+	assert.Equal(map[string]map[string]float64{}, appHealth.Requests.Outbound)
+}
+
+// TestFillWorkloadRequestRates_SourceHTTPOnly tests the fault injection scenario for workloads:
+// source workload has HTTP capability but destination is "unknown" (not HTTP-capable).
+// The source's outbound traffic should still be counted.
+func TestFillWorkloadRequestRates_SourceHTTPOnly(t *testing.T) {
+	assert := assert.New(t)
+
+	srcWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "productpage-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	destWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "unknown"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceWorkloadHealth{
+		"productpage-v1": srcWkd,
+		"unknown":        destWkd,
+	}
+	// Only the source workload is HTTP-capable
+	wlHTTPTraffic := map[string]bool{
+		"productpage-v1": true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_workload": "unknown",
+				"source_workload":      "productpage-v1",
+				"request_protocol":     "http",
+				"response_code":        "503",
+				"reporter":             "source",
+			},
+			Value:     model.SampleValue(3),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+
+	// Source (productpage-v1) should have outbound traffic
+	assert.Equal(map[string]map[string]float64{
+		"http": {"503": 3},
+	}, srcWkd.Requests.Outbound, "source workload should have outbound traffic even when dest is not HTTP-capable")
+
+	// Destination (unknown) should have NO inbound
+	assert.Equal(map[string]map[string]float64{}, destWkd.Requests.Inbound, "dest workload should have no inbound when not HTTP-capable")
+}
+
+// TestFillWorkloadRequestRates_DestHTTPOnly tests the reverse scenario for workloads:
+// destination workload has HTTP capability but source does not.
+func TestFillWorkloadRequestRates_DestHTTPOnly(t *testing.T) {
+	assert := assert.New(t)
+
+	srcWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "external-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	destWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "reviews-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceWorkloadHealth{
+		"external-v1": srcWkd,
+		"reviews-v1":  destWkd,
+	}
+	// Only the destination workload is HTTP-capable
+	wlHTTPTraffic := map[string]bool{
+		"reviews-v1": true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_workload": "reviews-v1",
+				"source_workload":      "external-v1",
+				"request_protocol":     "http",
+				"response_code":        "200",
+				"reporter":             "destination",
+			},
+			Value:     model.SampleValue(8),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+
+	// Destination should have inbound traffic
+	assert.NotEmpty(destWkd.Requests.Inbound, "dest workload should have inbound traffic when HTTP-capable")
+
+	// Source should have NO outbound (not HTTP-capable)
+	assert.Equal(map[string]map[string]float64{}, srcWkd.Requests.Outbound, "source workload should have no outbound when not HTTP-capable")
+}
+
+// TestFillWorkloadRequestRates_BothHTTP tests that when both source and destination
+// workloads are HTTP-capable, both inbound and outbound are aggregated.
+func TestFillWorkloadRequestRates_BothHTTP(t *testing.T) {
+	assert := assert.New(t)
+
+	srcWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "productpage-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	destWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "reviews-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceWorkloadHealth{
+		"productpage-v1": srcWkd,
+		"reviews-v1":     destWkd,
+	}
+	wlHTTPTraffic := map[string]bool{
+		"productpage-v1": true,
+		"reviews-v1":     true,
+	}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_workload": "reviews-v1",
+				"source_workload":      "productpage-v1",
+				"request_protocol":     "http",
+				"response_code":        "200",
+				"reporter":             "source",
+			},
+			Value:     model.SampleValue(10),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+
+	// Source should have outbound
+	assert.Equal(map[string]map[string]float64{
+		"http": {"200": 10},
+	}, srcWkd.Requests.Outbound, "source workload should have outbound when both are HTTP-capable")
+
+	// Destination should have inbound
+	assert.NotEmpty(destWkd.Requests.Inbound, "dest workload should have inbound when both are HTTP-capable")
+}
+
+// TestFillWorkloadRequestRates_NeitherHTTP tests that when neither workload is
+// HTTP-capable, no traffic is aggregated.
+func TestFillWorkloadRequestRates_NeitherHTTP(t *testing.T) {
+	assert := assert.New(t)
+
+	srcWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "src-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	destWkd := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "dest-v1"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceWorkloadHealth{
+		"src-v1":  srcWkd,
+		"dest-v1": destWkd,
+	}
+	wlHTTPTraffic := map[string]bool{}
+
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"destination_workload": "dest-v1",
+				"source_workload":      "src-v1",
+				"request_protocol":     "http",
+				"response_code":        "200",
+				"reporter":             "source",
+			},
+			Value:     model.SampleValue(5),
+			Timestamp: model.Now(),
+		},
+	}
+
+	fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+
+	assert.Equal(map[string]map[string]float64{}, srcWkd.Requests.Outbound, "source should have no outbound when neither is HTTP-capable")
+	assert.Equal(map[string]map[string]float64{}, destWkd.Requests.Inbound, "dest should have no inbound when neither is HTTP-capable")
+}
+
+// TestFillWorkloadRequestRates_EmptyLabels tests that samples with empty/missing labels
+// are handled gracefully for workloads.
+func TestFillWorkloadRequestRates_EmptyLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	wkdHealth := &models.WorkloadHealth{
+		WorkloadStatus: &models.WorkloadStatus{Name: "myworkload"},
+		Requests:       models.NewEmptyRequestHealth(),
+	}
+	allHealth := models.NamespaceWorkloadHealth{
+		"myworkload": wkdHealth,
+	}
+	wlHTTPTraffic := map[string]bool{
+		"myworkload": true,
+	}
+
+	// Sample with empty source and destination labels
+	rates := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"request_protocol": "http",
+				"response_code":    "200",
+				"reporter":         "source",
+			},
+			Value:     model.SampleValue(1),
+			Timestamp: model.Now(),
+		},
+	}
+
+	// Should not panic
+	fillWorkloadRequestRates(allHealth, rates, wlHTTPTraffic)
+
+	assert.Equal(map[string]map[string]float64{}, wkdHealth.Requests.Inbound)
+	assert.Equal(map[string]map[string]float64{}, wkdHealth.Requests.Outbound)
+}
+
 func fakePodsHealthReview() []core_v1.Pod {
 	return []core_v1.Pod{
 		{

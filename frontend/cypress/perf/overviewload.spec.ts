@@ -5,22 +5,18 @@ describe('Overview performance tests', () => {
     cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
-  // Test namespaces should be created before running the perf tests
-  describe('Overview page with namespaces', () => {
+  describe('Overview page with cards', () => {
     before(() => {
       cy.writeFile(reportFilePath, '\n[Overview page]\n\n', { flag: 'a+' });
     });
 
-    it('loads the overview page', () => {
-      // Getting an average to smooth out the results.
+    it('loads the overview page', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       let sum = 0;
 
       const visitsList = Array.from({ length: visits });
 
       cy.wrap(visitsList)
         .each(() => {
-          // Disabling refresh so that we can see how long it takes to load the page without additional requests
-          // being made due to the refresh.
           cy.visit({
             url: '/console/overview?refresh=0',
             onBeforeLoad(win) {
@@ -29,7 +25,16 @@ describe('Overview performance tests', () => {
           })
             .its('performance')
             .then(performance => {
-              cy.get('.pf-v6-l-grid').should('be.visible');
+              cy.on('uncaught:exception', () => {
+                return false;
+              });
+
+              // Wait for the main overview cards to be visible
+              cy.getBySel('control-planes-card').should('be.visible');
+              cy.getBySel('clusters-card').should('be.visible');
+              cy.getBySel('data-planes-card').should('be.visible');
+              cy.getBySel('apps-card').should('be.visible');
+              cy.getBySel('service-insights-card').should('be.visible');
 
               cy.get('#loading_kiali_spinner', { timeout: 300000 })
                 .should('not.exist')
@@ -47,7 +52,7 @@ describe('Overview performance tests', () => {
         .then(() => {
           sum = sum / visitsList.length;
 
-          const contents = `Init page load time: ${compareToBaseline(sum, Cypress.env(baselines)[`overview`])}\n`;
+          const contents = `Init page load time: ${compareToBaseline(sum, Cypress.env(baselines).overview)}\n`;
           cy.writeFile(reportFilePath, contents, { flag: 'a+' });
         });
     });

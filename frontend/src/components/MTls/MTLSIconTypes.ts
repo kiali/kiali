@@ -1,0 +1,6 @@
+export enum MTLSIconTypes {
+  ARROW_DOWN = 'ARROW_DOWN',
+  LOCK_FULL = 'LOCK_FULL',
+  LOCK_HOLLOW = 'LOCK_HOLLOW',
+  LOCK_OPEN = 'LOCK_OPEN'
+}
