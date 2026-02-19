@@ -162,6 +162,9 @@ DORP="${DORP:-podman}"
 # Set true if the kiali home cluster is out of the mesh (not co-located with an istio control plane)
 IGNORE_HOME_CLUSTER="${IGNORE_HOME_CLUSTER:-false}"
 
+# Default to Sail installation for the multicluster hack scripts unless explicitly overridden.
+SAIL="${SAIL:-true}"
+
 # The namespace where Istio will be found - this namespace must be the same on both clusters
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
 
@@ -537,6 +540,11 @@ while [[ $# -gt 0 ]]; do
       SINGLE_KIALI="$2"
       shift;shift
       ;;
+    --sail)
+      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--sail must be 'true' or 'false'" && exit 1
+      SAIL="$2"
+      shift;shift
+      ;;
     -te|--tempo)
       TEMPO="$2"
       shift;shift
@@ -618,6 +626,7 @@ Valid command line arguments:
                        If this is left as empty string, it will be the same as --network1. (Default: "")
   -sc|--single-cluster <bool>: If "true", perform action just in CLUSTER 1. (Default: false)
   -sk|--single-kiali <bool>: If "true", a single kiali will be deployed for the whole mesh. (Default: true)
+  --sail <bool>: If "true", install Istio using Sail. If "false", use istioctl where supported. (Default: true)
   -te|--tempo <bool>: If "true", Tempo instead of Jaeger will be installed. (Default: false)
   -w|--waypoint <bool>: If "true", configure waypoint for the bookinfo namespace (Default: false; only valid when --ambient is true)
   -h|--help: this message
@@ -816,6 +825,7 @@ export AMBIENT \
        MESH_ID \
        NETWORK1_ID \
        NETWORK2_ID \
+       SAIL \
        SINGLE_KIALI \
        SINGLE_CLUSTER \
        TEMPO
@@ -846,6 +856,7 @@ ISTIO_NAMESPACE=$ISTIO_NAMESPACE
 ISTIO_HUB=$ISTIO_HUB
 ISTIO_TAG=$ISTIO_TAG
 ISTIO_VERSION=$ISTIO_VERSION
+SAIL=$SAIL
 KEYCLOAK_CERTS_DIR=$KEYCLOAK_CERTS_DIR
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
 KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_REQUESTS_MEMORY

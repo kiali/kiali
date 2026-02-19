@@ -7,7 +7,7 @@ install_ambient_on_cluster() {
   local pass="${3}"
   local cluster_name="${4}"
   local network="${5}"
-  local sail="${6}"
+  local sail="${6:-true}"
   
   echo "==== INSTALL ISTIO ON CLUSTER [${cluster_name}] - ${context}"
   switch_cluster "${context}" "${user}" "${pass}"
@@ -48,43 +48,33 @@ install_ambient_on_cluster() {
       exit 1
     fi
   else
-    # Create the IstioOperator configuration for ambient multi-cluster
-    local config_yaml=$(mktemp)
-    cat <<EOF > "${config_yaml}"
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  profile: ambient
-  components:
-    pilot:
-      k8s:
-        env:
-          - name: AMBIENT_ENABLE_MULTI_NETWORK
-            value: "true"
-  values:
-    global:
-      meshID: ${MESH_ID}
-      multiCluster:
-        clusterName: ${cluster_name}
-      network: ${network}
-EOF
+    echo "Using istioctl to install Istio"
 
-    echo "Istio configuration file created at: ${config_yaml}"
-    echo "Configuration content:"
-    cat "${config_yaml}"
+    # Use the existing install-istio-via-istioctl.sh script with ambient profile and multicluster configuration
+    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    ISTIO_INSTALL_SCRIPT="${HACK_SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 
-    # Install Istio using istioctl directly with ambient profile
-    "${ISTIOCTL}" install --skip-confirmation=true -f "${config_yaml}"
-    if [ "$?" != "0" ]; then
-      echo "Failed to install Istio with ambient profile"
-      rm -f "${config_yaml}"
+    if [ ! -x "${ISTIO_INSTALL_SCRIPT}" ]; then
+      echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
       exit 1
     fi
 
-    # Install addons
-    install_istio_addons "kubectl"
-    # Clean up the temporary file
-    rm -f "${config_yaml}"
+    # Install Istio using the istioctl install script with ambient profile and multicluster configuration.
+    # NOTE: We rely on switch_cluster() to ensure kubectl/oc is pointed at the right cluster.
+    echo "Installing Istio with ambient profile and multicluster configuration..."
+    "${ISTIO_INSTALL_SCRIPT}" \
+      --client-exe kubectl \
+      --config-profile ambient \
+      --mesh-id "${MESH_ID}" \
+      --cluster-name "${cluster_name}" \
+      --network "${network}" \
+      --addons "prometheus grafana jaeger" \
+      --set "values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK=true"
+
+    if [ "$?" != "0" ]; then
+      echo "Failed to install Istio with ambient profile using istioctl"
+      exit 1
+    fi
   fi
   echo "Istio ambient installation completed for cluster: ${cluster_name}"
 }
@@ -93,8 +83,9 @@ install_ambient_multicluster() {
 
   CLIENT_EXE="kubectl"
   local SAIL="${1:-true}"
-  if [ "${SAIL}" == "true" ]; then
-    # Setup Istio environment using shared function
+  # Setup Istio environment (for access to ISTIO_DIR/istioctl and sample manifests).
+  # Do this lazily only if not already set by the caller.
+  if [ -z "${ISTIO_DIR:-}" ]; then
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
     setup_istio_environment "${HACK_SCRIPT_DIR}"
   fi

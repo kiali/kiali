@@ -44,6 +44,14 @@ MESH_ID=""
 CLUSTER_NAME=""
 NETWORK_ID=""
 
+# Sail operator install source configuration.
+# These can be provided via environment variables (preferred for multicluster scripts)
+# or via command line args (useful for direct/manual usage).
+SAIL_OPERATOR_HELM_REPO="${SAIL_OPERATOR_HELM_REPO:-https://istio-ecosystem.github.io/sail-operator}"
+SAIL_OPERATOR_CHART_VERSION="${SAIL_OPERATOR_CHART_VERSION:-}"
+SAIL_OPERATOR_GIT_REPO="${SAIL_OPERATOR_GIT_REPO:-https://github.com/istio-ecosystem/sail-operator.git}"
+SAIL_OPERATOR_GIT_REF="${SAIL_OPERATOR_GIT_REF:-}"
+
 # process command line args
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -84,6 +92,22 @@ while [[ $# -gt 0 ]]; do
       NETWORK_ID="$2"
       shift;shift
       ;;
+    --sail-operator-helm-repo)
+      SAIL_OPERATOR_HELM_REPO="$2"
+      shift;shift
+      ;;
+    --sail-operator-chart-version)
+      SAIL_OPERATOR_CHART_VERSION="$2"
+      shift;shift
+      ;;
+    --sail-operator-git-repo)
+      SAIL_OPERATOR_GIT_REPO="$2"
+      shift;shift
+      ;;
+    --sail-operator-git-ref)
+      SAIL_OPERATOR_GIT_REF="$2"
+      shift;shift
+      ;;
     -h|--help)
       cat <<HELPMSG
 Valid command line arguments:
@@ -110,6 +134,21 @@ Valid command line arguments:
        Cluster name for multicluster setup. Required for multicluster configurations.
   -n|--network <network-id>:
        Network ID for multicluster setup. Required for multicluster configurations.
+  --sail-operator-helm-repo <url>:
+       Helm repository URL where the Sail Operator chart is hosted.
+       Default: ${SAIL_OPERATOR_HELM_REPO}
+  --sail-operator-chart-version <version>:
+       Sail Operator Helm chart version to install (useful for RCs if published in the chart repo).
+       Example: 1.27.0-rc.0
+       Default: <latest>
+  --sail-operator-git-repo <url>:
+       Git repository URL for Sail Operator (used when --sail-operator-git-ref is set).
+       Default: ${SAIL_OPERATOR_GIT_REPO}
+  --sail-operator-git-ref <ref>:
+       Install Sail Operator Helm chart directly from a git ref (branch or tag).
+       This is useful to test Sail 'main/master' before a release is cut.
+       Examples: main, master, v1.27.0-rc.0
+       Default: <unset> (install from Helm repo)
   -h|--help:
        this message
 HELPMSG
@@ -127,12 +166,68 @@ if is_in_array "tempo" "jaeger" "${ADDONS}"; then
     exit 1
 fi
 
-helm upgrade sail-operator sail-operator \
-  --install \
-  --create-namespace \
-  --namespace sail-operator \
-  --wait \
-  --repo https://istio-ecosystem.github.io/sail-operator
+echo "Sail Operator install configuration:"
+echo "- SAIL_OPERATOR_HELM_REPO=${SAIL_OPERATOR_HELM_REPO}"
+echo "- SAIL_OPERATOR_CHART_VERSION=${SAIL_OPERATOR_CHART_VERSION}"
+echo "- SAIL_OPERATOR_GIT_REPO=${SAIL_OPERATOR_GIT_REPO}"
+echo "- SAIL_OPERATOR_GIT_REF=${SAIL_OPERATOR_GIT_REF}"
+
+install_sail_operator() {
+  local chart_version_args=()
+  if [ -n "${SAIL_OPERATOR_CHART_VERSION}" ]; then
+    chart_version_args=(--version "${SAIL_OPERATOR_CHART_VERSION}")
+  fi
+
+  if [ -n "${SAIL_OPERATOR_GIT_REF}" ]; then
+    ensure_command "git"
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    # Expand tmp_dir now; local vars won't exist at EXIT time.
+    trap "rm -rf '${tmp_dir}'" EXIT
+
+    echo "Installing Sail Operator from git ref [${SAIL_OPERATOR_GIT_REF}] repo [${SAIL_OPERATOR_GIT_REPO}]"
+    git clone --depth 1 --branch "${SAIL_OPERATOR_GIT_REF}" "${SAIL_OPERATOR_GIT_REPO}" "${tmp_dir}/sail-operator"
+
+    local chart_path=""
+    local chart_candidates=(
+      "${tmp_dir}/sail-operator/charts/sail-operator"
+      "${tmp_dir}/sail-operator/chart/sail-operator"
+      "${tmp_dir}/sail-operator/chart"
+      "${tmp_dir}/sail-operator/charts"
+    )
+    for c in "${chart_candidates[@]}"; do
+      if [ -f "${c}/Chart.yaml" ]; then
+        chart_path="${c}"
+        break
+      fi
+    done
+    if [ -z "${chart_path}" ]; then
+      echo "ERROR: Could not find Sail Operator Helm chart (Chart.yaml) in the cloned repo."
+      echo "Searched candidates:"
+      for c in "${chart_candidates[@]}"; do
+        echo "- ${c}"
+      done
+      echo "Repo layout might have changed. Please update hack/istio/install-istio-via-sail.sh accordingly."
+      exit 1
+    fi
+
+    helm upgrade sail-operator "${chart_path}" \
+      --install \
+      --create-namespace \
+      --namespace sail-operator \
+      --wait
+  else
+    helm upgrade sail-operator sail-operator \
+      --install \
+      --create-namespace \
+      --namespace sail-operator \
+      --wait \
+      --repo "${SAIL_OPERATOR_HELM_REPO}" \
+      "${chart_version_args[@]}"
+  fi
+}
+
+install_sail_operator
 
 # Pin based on Istio version:
 ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
