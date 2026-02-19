@@ -113,6 +113,7 @@ KIALI_NAME="kiali"
 KIALI_SERVICE_ACCOUNT="kiali-service-account"
 MONITORED_NAMESPACES_CSV="bookinfo,istio-system,sample,ztunnel"
 PROM_THANO_URL="https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"
+PROM_THANO_URL_EXPLICIT="false"
 ALLOW_SKIP_TLS_VERIFY="false"
 RESTART_KIALI="true"
 
@@ -135,7 +136,7 @@ while [[ $# -gt 0 ]]; do
     --kiali-name) KIALI_NAME="$2"; shift 2 ;;
     --kiali-service-account) KIALI_SERVICE_ACCOUNT="$2"; shift 2 ;;
     --monitored-namespaces) MONITORED_NAMESPACES_CSV="$2"; shift 2 ;;
-    --prometheus-thanos-url) PROM_THANO_URL="$2"; shift 2 ;;
+    --prometheus-thanos-url) PROM_THANO_URL="$2"; PROM_THANO_URL_EXPLICIT="true"; shift 2 ;;
     --allow-skip-tls-verify) ALLOW_SKIP_TLS_VERIFY="$2"; shift 2 ;;
     --restart-kiali) RESTART_KIALI="$2"; shift 2 ;;
     --global-metrics) GLOBAL_METRICS="$2"; shift 2 ;;
@@ -191,6 +192,12 @@ if ! oc --context "${CTX_CLUSTER1}" get crd kialis.kiali.io &>/dev/null; then
 fi
 if ! oc --context "${CTX_CLUSTER2}" get crd kialis.kiali.io &>/dev/null; then
   error "Kiali CRD not found in cluster2. Install Kiali Operator first (missing CRD kialis.kiali.io)."
+fi
+
+# If global metrics is enabled and user didn't explicitly set the Prometheus URL,
+# point Kiali to the global Thanos Query service deployed in cluster1.
+if [[ "${GLOBAL_METRICS}" == "true" && "${PROM_THANO_URL_EXPLICIT}" == "false" ]]; then
+  PROM_THANO_URL="http://thanos-query.${THANOS_NAMESPACE}.svc.cluster.local:9090"
 fi
 
 apply_yaml() {
