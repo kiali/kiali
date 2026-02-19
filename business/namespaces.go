@@ -323,6 +323,8 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	// Apply discovery selector filtering
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 
+	in.kialiCache.SetNamespaces(saClient.GetToken(), namespaces)
+
 	return namespaces, nil
 }
 
