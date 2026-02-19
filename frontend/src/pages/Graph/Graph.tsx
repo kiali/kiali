@@ -699,17 +699,6 @@ const TopologyContent: React.FC<{
     graphLayout(controller, LayoutType.Layout);
   }, [controller, layoutName]);
 
-  //
-  // Set back to graph summary at unmount-time (not every post-render)
-  //
-  React.useEffect(() => {
-    return () => {
-      if (updateSummary) {
-        updateSummary({ summaryType: 'graph', summaryTarget: controller });
-      }
-    };
-  }, [controller, updateSummary]);
-
   // Enable the selection-based zoom
   useEventListener<GraphAreaSelectedEventListener>(
     GRAPH_AREA_SELECTED_EVENT,

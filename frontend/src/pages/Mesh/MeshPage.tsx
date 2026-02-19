@@ -192,15 +192,17 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   componentDidUpdate(prev: MeshPageProps): void {
     const curr = this.props;
 
-    // we need to consider URL prop here because redux may not yet reflect any change applied in the Refresh component, and
-    // the initial update needs to know whether to wait on fetching the mesh data.
+    // Check URL as a fallback only when Redux hasn't changed yet (initial mount), because
+    // HistoryManager may lag behind Redux when the user changes the interval via the dropdown.
     const manualRefresh =
-      curr.refreshInterval === RefreshIntervalManual || HistoryManager.getRefresh() === RefreshIntervalManual;
+      curr.refreshInterval === RefreshIntervalManual ||
+      (prev.refreshInterval === curr.refreshInterval && HistoryManager.getRefresh() === RefreshIntervalManual);
 
     if (
       prev.lastRefreshAt !== curr.lastRefreshAt ||
       (!manualRefresh &&
-        ((prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
+        ((prev.refreshInterval !== curr.refreshInterval &&
+          (curr.refreshInterval !== RefreshIntervalPause || prev.refreshInterval === RefreshIntervalManual)) ||
           prev.duration !== curr.duration ||
           (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
           (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||

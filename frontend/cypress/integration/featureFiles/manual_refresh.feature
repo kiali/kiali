@@ -12,6 +12,11 @@ Feature: Manual Refresh option
     Given user is at administrator perspective
 
   @core-2
+  Scenario: Overview page shows manual
+    When user is at the "overview" page with manual refresh
+    Then user "sees" manual refresh messaging
+
+  @core-2
   Scenario: Namespaces page shows manual
     When user is at the "namespaces" page with manual refresh
     Then user "sees" manual refresh messaging

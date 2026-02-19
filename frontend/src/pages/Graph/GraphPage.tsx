@@ -403,10 +403,11 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       (n1, n2) => n1.name === n2.name
     );
 
-    // we need to consider URL prop here because redux may not yet reflect any change applied in the Refresh component, and
-    // the initial update needs to know whether to wait on fetching the graph data.
+    // Check URL as a fallback only when Redux hasn't changed yet (initial mount), because
+    // HistoryManager may lag behind Redux when the user changes the interval via the dropdown.
     const manualRefresh =
-      curr.refreshInterval === RefreshIntervalManual || HistoryManager.getRefresh() === RefreshIntervalManual;
+      curr.refreshInterval === RefreshIntervalManual ||
+      (prev.refreshInterval === curr.refreshInterval && HistoryManager.getRefresh() === RefreshIntervalManual);
 
     if (
       // refresh the graph but keep the side-panel
@@ -418,7 +419,8 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
               curr.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP))) ||
           (prev.findValue !== curr.findValue && curr.findValue.includes('label:')) ||
           (prev.hideValue !== curr.hideValue && curr.hideValue.includes('label:')) ||
-          (prev.refreshInterval !== curr.refreshInterval && curr.refreshInterval !== RefreshIntervalPause) ||
+          (prev.refreshInterval !== curr.refreshInterval &&
+            (curr.refreshInterval !== RefreshIntervalPause || prev.refreshInterval === RefreshIntervalManual)) ||
           prev.replayQueryTime !== curr.replayQueryTime ||
           prev.showSecurity !== curr.showSecurity ||
           prev.showVirtualServices !== curr.showVirtualServices ||
@@ -460,6 +462,8 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceError);
     this.graphDataSource.removeListener('fetchSuccess', this.handleGraphDataSourceSuccess);
     this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
+
+    this.props.updateSummary(INITIAL_GRAPH_STATE.summaryData);
   }
 
   render(): React.ReactNode {

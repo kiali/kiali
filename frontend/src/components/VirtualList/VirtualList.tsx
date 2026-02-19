@@ -19,7 +19,7 @@ import { HistoryManager, URLParam } from '../../app/History';
 import { config, RenderResource, Resource, ResourceType } from './Config';
 import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
-import { CubesIcon, PlusCircleIcon, SearchIcon, SyncAltIcon } from '@patternfly/react-icons';
+import { CubesIcon, PlusCircleIcon, SearchIcon } from '@patternfly/react-icons';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
@@ -34,6 +34,7 @@ import { SortableTh } from 'components/Table/SimpleTable';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
+import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { t } from 'utils/I18nUtils';
 import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
@@ -225,21 +226,6 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   };
 
   private renderEmptyState = (typeDisplay: string): React.ReactNode => {
-    // Manual refresh required
-    if (this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded) {
-      return (
-        <EmptyState
-          headingLevel="h5"
-          icon={SyncAltIcon}
-          titleText={t('Manual refresh required')}
-          data-test="manual-refresh"
-          variant={EmptyStateVariant.full}
-        >
-          <EmptyStateBody>{t('Click the Refresh button to load the list.')}</EmptyStateBody>
-        </EmptyState>
-      );
-    }
-
     // Custom empty state provided by parent
     if (this.props.emptyState) {
       return this.props.emptyState;
@@ -351,10 +337,16 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       </Table>
     );
 
+    const isManualRefresh = this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded;
+
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+        {isManualRefresh ? (
+          <ManualRefreshEmptyState />
+        ) : (
+          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+        )}
       </div>
     );
   }

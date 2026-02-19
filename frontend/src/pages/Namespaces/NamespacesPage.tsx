@@ -186,7 +186,8 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (prevProps.navCollapse !== this.props.navCollapse ||
           (prevProps.refreshInterval !== this.props.refreshInterval &&
-            this.props.refreshInterval !== RefreshIntervalPause)))
+            (this.props.refreshInterval !== RefreshIntervalPause ||
+              prevProps.refreshInterval === RefreshIntervalManual))))
     ) {
       this.load();
     }
