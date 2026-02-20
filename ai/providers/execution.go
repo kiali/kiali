@@ -44,7 +44,7 @@ func ExecuteToolCallsInParallel(
 		go func(index int, call mcp.ToolsProcessor) {
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
-			citations := []get_citations.Citation{}
+			referencedDocuments := []types.ReferencedDocument{}
 			if err := ctx.Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
@@ -98,7 +98,7 @@ func ExecuteToolCallsInParallel(
 				}
 				if call.Name == "get_citations" {
 					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
-						citations = append(citations, mcpRes.Citations...)
+						referencedDocuments = append(referencedDocuments, mcpRes.ReferencedDocuments...)
 					}
 				}
 				results[index] = mcp.ToolCallResult{
@@ -108,9 +108,9 @@ func ExecuteToolCallsInParallel(
 						Param:   nil,
 						Role:    "tool",
 					},
-					Code:      http.StatusOK,
-					Actions:   actions,
-					Citations: citations,
+					Code:                http.StatusOK,
+					Actions:             actions,
+					ReferencedDocuments: referencedDocuments,
 				}
 				return
 			}
@@ -138,9 +138,9 @@ func ExecuteToolCallsInParallel(
 					Param:   nil,
 					Role:    "tool",
 				},
-				Code:      http.StatusOK,
-				Actions:   actions,
-				Citations: citations,
+				Code:                http.StatusOK,
+				Actions:             actions,
+				ReferencedDocuments: referencedDocuments,
 			}
 		}(i, toolCall)
 	}

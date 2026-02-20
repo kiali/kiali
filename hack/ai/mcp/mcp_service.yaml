@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: ${MCP}-mcp-server
+  name: ${MCP}-mcp-server
+  namespace: ${MCP_NAMESPACE}
+spec:
+  ports:
+  - name: mcp
+    port: 8080
+    targetPort: mcp
+  selector:
+    app.kubernetes.io/name: ${MCP}-mcp-server

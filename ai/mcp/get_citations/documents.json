@@ -12,8 +12,7 @@
         "troubleshooting"
       ],
       "url": "https://kiali.io/docs/faq/graph/#my-graph-is-empty",
-      "title": "Troubleshooting Empty Kiali Graph",
-      "description": "Troubleshooting guide for when the Kiali Service Mesh graph shows no nodes or traffic. Covers common causes like missing sidecars, idle traffic, incorrect namespace selection, and time range settings."
+      "title": "Troubleshooting Empty Kiali Graph"
     },
     {
       "id": "health-config",
@@ -27,8 +26,7 @@
         "KPI"
       ],
       "url": "https://kiali.io/docs/configuration/health/",
-      "title": "Kiali Health Configuration Guide",
-      "description": "Configuration guide for customizing how Kiali calculates health. Includes setting thresholds for error rates and latency, and configuring custom health checks for workloads."
+      "title": "Kiali Health Configuration Guide"
     },
     {
       "id": "distributed-tracing",
@@ -43,8 +41,7 @@
         "opentelemetry"
       ],
       "url": "https://kiali.io/docs/features/tracing/",
-      "title": "Kiali Distributed Tracing Integration",
-      "description": "Guide on integrating distributed tracing (Jaeger, Tempo, OpenTelemetry) with Kiali. Explains how to view trace spans correlated with metrics and troubleshoot missing trace data."
+      "title": "Kiali Distributed Tracing Integration"
     },
     {
       "id": "validation-errors",
@@ -58,8 +55,7 @@
         "kia0002"
       ],
       "url": "https://kiali.io/docs/features/validations/",
-      "title": "Kiali Configuration Validations",
-      "description": "Reference for Kiali's semantic validations of Istio objects. Explains specific error codes (KIAxxxx) for VirtualServices, DestinationRules, and Gateways, and how to resolve them."
+      "title": "Kiali Configuration Validations"
     },
     {
       "id": "installation-guide",
@@ -74,8 +70,7 @@
         "prerequisites"
       ],
       "url": "https://kiali.io/docs/installation/installation-guide/",
-      "title": "Kiali Installation Guide",
-      "description": "Comprehensive guide for installing Kiali using the Kiali Operator or Helm Charts. Covers prerequisites, deployment strategies, and verification steps."
+      "title": "Kiali Installation Guide"
     },
     {
       "id": "auth-strategies",
@@ -91,8 +86,7 @@
         "rbac"
       ],
       "url": "https://kiali.io/docs/configuration/authentication/",
-      "title": "Kiali Authentication Strategies",
-      "description": "Documentation on configuring Kiali access control. Details supported authentication strategies including Anonymous, OpenID Connect, Openshift, and Token-based login."
+      "title": "Kiali Authentication Strategies"
     },
     {
       "id": "istio-wizards",
@@ -107,8 +101,7 @@
         "code generation"
       ],
       "url": "https://kiali.io/docs/features/wizards/",
-      "title": "Kiali Istio Wizards",
-      "description": "Guide to using Kiali's UI wizards for generating Istio configuration. Includes wizards for Request Routing, Fault Injection, Traffic Shifting, and Circuit Breaking."
+      "title": "Kiali Istio Wizards"
     },
     {
       "id": "multi-cluster",
@@ -121,8 +114,7 @@
         "cross-cluster"
       ],
       "url": "https://kiali.io/docs/configuration/multi-cluster/",
-      "title": "Kiali Multi-Cluster Configuration",
-      "description": "Guide for configuring Kiali to view and manage a multi-cluster Istio mesh. Covers the unified dashboard setup and granting Kiali access to remote cluster kubeconfigs."
+      "title": "Kiali Multi-Cluster Configuration"
     },
     {
       "id": "kiali-debugging",
@@ -136,8 +128,7 @@
         "operator logs"
       ],
       "url": "https://kiali.io/docs/configuration/debugging-kiali/",
-      "title": "Debugging Kiali Server",
-      "description": "Instructions for debugging the Kiali server itself. Includes changing log levels (trace/debug), accessing operator logs, and profiling performance issues."
+      "title": "Debugging Kiali Server"
     },
     {
       "id": "prometheus-tuning",
@@ -151,8 +142,7 @@
         "scrape interval"
       ],
       "url": "https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/",
-      "title": "Kiali Prometheus Configuration",
-      "description": "Configuration details for connecting Kiali to Prometheus. Includes tuning caching parameters for performance and handling custom Prometheus URLs or authentication."
+      "title": "Kiali Prometheus Configuration"
     }
   ],
   "istio": [

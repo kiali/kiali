@@ -1,0 +1,6 @@
+toolsets = ["core","ossm"]
+log_level = 0
+port = "8080"
+[toolset_configs.kiali]
+url = "https://kiali.istio-system:20001/"
+insecure = true

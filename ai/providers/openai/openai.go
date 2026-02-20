@@ -72,9 +72,9 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			if result.Error != nil {
 				return &types.AIResponse{Error: result.Error.Error()}, result.Code
 			}
-			if len(result.Actions) > 0 || len(result.Citations) > 0 {
+			if len(result.Actions) > 0 || len(result.ReferencedDocuments) > 0 {
 				response.Actions = append(response.Actions, result.Actions...)
-				response.Citations = append(response.Citations, result.Citations...)
+				response.ReferencedDocuments = append(response.ReferencedDocuments, result.ReferencedDocuments...)
 			} else {
 				conversation = append(conversation, result.Message)
 			}
@@ -95,12 +95,12 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			if err := ctx.Err(); err != nil {
 				return providers.NewContextCanceledResponse(err)
 			}
-			response.Answer = providers.ParseMarkdownResponse(finalResp.Choices[0].Message.Content)
+			response.Response = providers.ParseMarkdownResponse(finalResp.Choices[0].Message.Content)
 		} else {
-			response.Answer = responseAnswer
+			response.Response = responseAnswer
 		}
 	} else {
-		response.Answer = providers.ParseMarkdownResponse(msg.Content)
+		response.Response = providers.ParseMarkdownResponse(msg.Content)
 	}
 
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
