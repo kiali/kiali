@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardBody, CardFooter, CardHeader, CardTitle, Flex, FlexItem } from '@patternfly/react-core';
 import { ChartDonut } from '@patternfly/react-charts/victory';
 import { PFColors } from 'components/Pf/PfColors';
-import { KialiIcon } from 'config/KialiIcon';
+import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -181,31 +181,31 @@ export const ApplicationStats: React.FC = () => {
             </div>
             <div className={legendContainerStyle}>
               <div className={legendItemStyle} onClick={() => navigateToHealthFilter(FAILURE.id)}>
-                <KialiIcon.ExclamationCircle className={legendIconStyle} />
+                {createIcon({ ...FAILURE, className: `${legendIconStyle}` })}
                 <span>
                   {failure} {t('Failure')}
                 </span>
               </div>
               <div className={legendItemStyle} onClick={() => navigateToHealthFilter(DEGRADED.id)}>
-                <KialiIcon.ExclamationTriangle className={legendIconStyle} />
+                {createIcon({ ...DEGRADED, className: `${legendIconStyle}` })}
                 <span>
                   {degraded} {t('Degraded')}
                 </span>
               </div>
               <div className={legendItemStyle} onClick={() => navigateToHealthFilter(HEALTHY.id)}>
-                <KialiIcon.Success className={legendIconStyle} />
+                {createIcon({ ...HEALTHY, className: `${legendIconStyle}` })}
                 <span>
                   {healthy} {t('Healthy')}
                 </span>
               </div>
               <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NOT_READY.id)}>
-                <KialiIcon.Delete className={legendIconStyle} />
+                {createIcon({ ...NOT_READY, className: `${legendIconStyle}` })}
                 <span>
                   {notReady} {t('Not ready')}
                 </span>
               </div>
               <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NA.id)}>
-                <KialiIcon.Unknown className={legendIconStyle} />
+                {createIcon({ ...NA, className: `${legendIconStyle}` })}
                 <span>
                   {noHealthInfo} {t('No health information')}
                 </span>
