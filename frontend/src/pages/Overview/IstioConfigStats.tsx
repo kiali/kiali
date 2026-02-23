@@ -11,6 +11,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
+import { getIstioObjectGVK } from 'utils/IstioConfigUtils';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 import {
   cardStyle,
@@ -97,9 +98,10 @@ export const IstioConfigStats: React.FC = () => {
   };
 
   const buildDetailUrl = (item: typeof istioConfigStats.issues[number]): string => {
-    return `/${Paths.ISTIO}/${item.namespace}/${item.kind.toLowerCase()}/${item.name}${
-      item.cluster ? `?clusterName=${item.cluster}` : ''
-    }`;
+    const gvk = getIstioObjectGVK(item.apiVersion, item.kind);
+    const clusterParam = item.cluster ? `?clusterName=${item.cluster}` : '';
+
+    return `/namespaces/${item.namespace}/${Paths.ISTIO}/${gvk.Group}/${gvk.Version}/${gvk.Kind}/${item.name}${clusterParam}`;
   };
 
   const renderPopoverContent = (

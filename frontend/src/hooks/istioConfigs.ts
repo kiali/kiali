@@ -14,6 +14,7 @@ export enum IstioConfigStatusLabel {
 }
 
 export type IstioConfigIssue = {
+  apiVersion: string;
   cluster?: string;
   kind: string;
   name: string;
@@ -84,6 +85,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
           if (!item.validation) {
             warnings++;
             issues.push({
+              apiVersion: item.apiVersion,
               cluster: item.cluster,
               kind: item.kind,
               name: item.name,
@@ -97,6 +99,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
           if (!item.validation.valid) {
             errors++;
             issues.push({
+              apiVersion: item.apiVersion,
               cluster: item.cluster,
               kind: item.kind,
               name: item.name,
@@ -112,6 +115,7 @@ export const useIstioConfigStatus = (): IstioConfigStats => {
           if (hasWarnings) {
             warnings++;
             issues.push({
+              apiVersion: item.apiVersion,
               cluster: item.cluster,
               kind: item.kind,
               name: item.name,

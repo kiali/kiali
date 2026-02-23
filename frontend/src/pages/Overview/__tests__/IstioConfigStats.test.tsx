@@ -126,6 +126,7 @@ describe('Overview IstioConfigStats', () => {
       issues: [
         // 4 issues ensures popover footer button is rendered (MAX=3)
         {
+          apiVersion: 'networking.istio.io/v1',
           cluster: 'c1',
           kind: 'VirtualService',
           name: 'vs1',
@@ -134,6 +135,7 @@ describe('Overview IstioConfigStats', () => {
           status: 'Warning'
         },
         {
+          apiVersion: 'networking.istio.io/v1',
           cluster: 'c1',
           kind: 'DestinationRule',
           name: 'dr1',
@@ -141,8 +143,17 @@ describe('Overview IstioConfigStats', () => {
           severity: 'warning',
           status: 'Warning'
         },
-        { cluster: 'c1', kind: 'Gateway', name: 'gw1', namespace: 'ns1', severity: 'warning', status: 'Not Validated' },
         {
+          apiVersion: 'networking.istio.io/v1',
+          cluster: 'c1',
+          kind: 'Gateway',
+          name: 'gw1',
+          namespace: 'ns1',
+          severity: 'warning',
+          status: 'Not Validated'
+        },
+        {
+          apiVersion: 'networking.istio.io/v1',
           cluster: 'c1',
           kind: 'ServiceEntry',
           name: 'se1',
