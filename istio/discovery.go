@@ -244,6 +244,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 
 type MeshDiscovery interface {
 	Clusters() []models.KubeCluster
+	GetControlPlaneForNamespace(ctx context.Context, cluster, namespace string) *models.ControlPlane
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
 	GetRootNamespace(ctx context.Context, cluster, namespace string) string
 	IsControlPlane(ctx context.Context, cluster, namespace string) bool
@@ -341,6 +342,14 @@ func (in *Discovery) HasControlPlane(ctx context.Context, cluster string, ns str
 	}
 
 	return false
+}
+
+// GetControlPlaneForNamespace returns the control plane managing the given namespace, or nil if not in mesh.
+func (in *Discovery) GetControlPlaneForNamespace(ctx context.Context, cluster, namespace string) *models.ControlPlane {
+	in.meshMutex.Lock()
+	defer in.meshMutex.Unlock()
+
+	return in.namespaceMap[in.namespaceMapKey(cluster, namespace)]
 }
 
 // GetRootNamespace returns the Istio root namespace for the control plane managing the given namespace.

@@ -178,7 +178,7 @@ type kialiCacheImpl struct {
 
 	refreshDuration time.Duration
 
-	// RegistryStatusStore stores the registry status and should be key'd off of the cluster name.
+	// RegistryStatusStore stores the registry status key'd by "cluster:revision".
 	registryStatusStore store.Store[string, *kubernetes.RegistryStatus]
 
 	// validations key'd by the validation key

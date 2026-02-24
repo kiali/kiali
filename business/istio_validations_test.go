@@ -778,19 +778,26 @@ func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runt
 
 func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
-	cache := cache.NewTestingCache(t, k8s, cfg)
+	kialiCache := cache.NewTestingCache(t, k8s, cfg)
 	conf := config.NewConfig()
-	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
-		conf.KubernetesConfig.ClusterName: {
+	kialiCache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
+		cache.RegistryStatusKey(conf.KubernetesConfig.ClusterName, "default", "istio-system"): {
 			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
 		},
 	})
 
+	cp := models.ControlPlane{
+		Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+		IstiodNamespace: "istio-system",
+		MeshConfig:      models.NewMeshConfig(),
+		Revision:        "default",
+	}
 	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
+		GetControlPlaneForNamespaceReturn: &cp,
+		MeshReturn:                        models.Mesh{ControlPlanes: []models.ControlPlane{cp}},
 	}
 
-	return NewLayerBuilder(t, &cfg).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
+	return NewLayerBuilder(t, &cfg).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
 }
 
 func mockMultiNamespaceGateways(conf *config.Config) []runtime.Object {

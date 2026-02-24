@@ -113,16 +113,13 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 			proxyStatus = append(proxyStatus, pstatus...)
 		}
 
-		// Services can just be done once per cluster since these are shared across revisions
-		// Whereas the proxy status is per revision.
-		if len(controlPlanes) > 0 {
-			// Since it doesn't matter what revision we choose, just choose the first one.
-			controlPlane := controlPlanes[0]
+		// Fetch registry from each control plane; each has its own service registry (multi-mesh support).
+		for _, controlPlane := range controlPlanes {
 			log := log.With().Str("revision", controlPlane.Revision).Logger()
 			if controlPlane.Status != kubernetes.ComponentHealthy {
-				log.Warn().Msg("After choosing first revision - Skipping controlplane because it is not healthy.")
+				log.Warn().Msg("Skipping controlplane for registry - not healthy.")
 				if controlPlane.Status == kubernetes.ComponentUnreachable {
-					log.Warn().Msg("After choosing first revision - unable to proxy Istiod pods. " +
+					log.Warn().Msg("unable to proxy Istiod pods. " +
 						"Make sure your Kubernetes API server has access to the Istio control plane through 8080 port")
 				}
 				continue
@@ -136,7 +133,7 @@ func (p *controlPlaneMonitor) RefreshIstioCache(ctx context.Context) error {
 			}
 
 			status.Services = services
-			registryStatus[cluster] = status
+			registryStatus[cache.RegistryStatusKey(cluster, controlPlane.Revision, controlPlane.IstiodNamespace)] = status
 		}
 	}
 

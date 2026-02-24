@@ -155,17 +155,25 @@ func BenchmarkValidate(b *testing.B) {
 		fakeIstioObjects = append(fakeIstioObjects, ns)
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
-	cache := cache.NewTestingCache(b, k8s, *conf)
-	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
-		conf.KubernetesConfig.ClusterName: {
+	kialiCache := cache.NewTestingCache(b, k8s, *conf)
+	kialiCache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
+		cache.RegistryStatusKey(conf.KubernetesConfig.ClusterName, "default", "istio-system"): {
 			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
 		},
 	})
 
-	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}, MeshConfig: models.NewMeshConfig()}}},
+	cp := models.ControlPlane{
+		Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+		Config:          models.ControlPlaneConfiguration{},
+		IstiodNamespace: "istio-system",
+		MeshConfig:      models.NewMeshConfig(),
+		Revision:        "default",
 	}
-	vs := NewLayerBuilder(b, conf).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
+	discovery := &istiotest.FakeDiscovery{
+		GetControlPlaneForNamespaceReturn: &cp,
+		MeshReturn:                        models.Mesh{ControlPlanes: []models.ControlPlane{cp}},
+	}
+	vs := NewLayerBuilder(b, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
 
 	var changeMap ValidationChangeMap
 	if conf.ExternalServices.Istio.ValidationChangeDetectionEnabled {

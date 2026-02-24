@@ -19,13 +19,15 @@ type RegistryCriteria struct {
 	// Note this flag is only supported in Registry queries
 	AllNamespaces   bool
 	Cluster         string
+	IstiodNamespace string
 	Namespace       string
+	Revision        string
 	ServiceName     string
 	ServiceSelector string
 }
 
 func (in *RegistryStatusService) GetRegistryServices(criteria RegistryCriteria) []*kubernetes.RegistryService {
-	registryStatus := in.kialiCache.GetRegistryStatus(criteria.Cluster)
+	registryStatus := in.kialiCache.GetRegistryStatus(criteria.Cluster, criteria.Revision, criteria.IstiodNamespace)
 	registryServices := filterRegistryServices(registryStatus, criteria)
 	return registryServices
 }

@@ -182,14 +182,13 @@ func TestRefreshIstioCache(t *testing.T) {
 		},
 	}
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
-	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
+	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", ""))
 	err := cpm.RefreshIstioCache(context.TODO())
 	require.NoError(err)
 
-	registryServices := cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName)
-	require.NotNil(registryServices)
-
-	assert.Len(registryServices.Services, 79)
+	registryStatus := cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", "")
+	require.NotNil(registryStatus)
+	assert.Len(registryStatus.Services, 79)
 	// This is a pod that exists in the test data at: "../tests/data/registry/registry-syncz.json"
 	podProxyStatus := cache.GetPodProxyStatus("Kubernetes", "beta", "b-client-8b97458bb-tghx9")
 	require.NotNil(podProxyStatus)
@@ -212,7 +211,7 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	cancel()
 	cpm.PollIstiodForProxyStatus(ctx)
 
-	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
+	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", ""))
 }
 
 func TestPollingPopulatesCache(t *testing.T) {
@@ -259,11 +258,11 @@ func TestPollingPopulatesCache(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	require.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
+	require.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", ""))
 	cpm.PollIstiodForProxyStatus(ctx)
 	// Cache should be populated after PollIstiod returns because the
 	// pump gets primed before polling starts.
-	require.NotNil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
+	require.NotNil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", ""))
 
 	// Clear the registry to make sure it gets populated again through polling.
 	cache.SetRegistryStatus(nil)
@@ -273,7 +272,7 @@ func TestPollingPopulatesCache(t *testing.T) {
 			require.Fail("Timed out waiting for cache to be populated")
 			return
 		default:
-			if cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName) != nil {
+			if cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName, "", "") != nil {
 				return
 			}
 		}

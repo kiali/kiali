@@ -146,6 +146,14 @@ type ControlPlane struct {
 	Version *ExternalServiceInfo `json:"version,omitempty"`
 }
 
+// RevisionOrDefault returns the revision, or DefaultRevisionLabel when empty.
+func RevisionOrDefault(revision string) string {
+	if revision == "" {
+		return DefaultRevisionLabel
+	}
+	return revision
+}
+
 // IsMaistra determines if the controlplane is Maistra or not.
 // TODO: Remove this when maistra 2.6 goes out of support.
 func (c ControlPlane) IsMaistra() bool {
