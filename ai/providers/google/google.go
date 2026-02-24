@@ -80,6 +80,11 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 			if len(result.Citations) > 0 {
 				response.Citations = append(response.Citations, result.Citations...)
 			}
+			// For get_logs, return tool output directly as the final answer.
+			if result.Message.Name == "get_logs" && result.Message.Content != "" {
+				response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
+				continue
+			}
 			if result.Message.Content != "" {
 				conversation = append(conversation, types.ConversationMessage{
 					Content: result.Message.Content,
@@ -90,6 +95,12 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
+		}
+		if response.Answer != "" {
+			// Do not store raw logs in the conversation history; they can contaminate later answers.
+			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
+			return response, http.StatusOK
 		}
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {

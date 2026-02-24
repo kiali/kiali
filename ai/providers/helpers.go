@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcp"
@@ -14,6 +15,8 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/log"
 )
+
+var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
 func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool, string) {
 	shouldGenerate := false
@@ -56,6 +59,12 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		// Remove tool messages where the tool name is in the exclusion list
 		if msg.Role == "tool" && mcp.ExcludedToolNames[msg.Name] {
 			log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
+			continue
+		}
+		// Avoid persisting large log dumps in conversation history; they can contaminate later answers.
+		// Heuristic: codeblock fences + date-like timestamps + large payload.
+		if msg.Role == "assistant" && strings.HasPrefix(msg.Content, "~~~\n") && strings.HasSuffix(msg.Content, "~~~\n") && len(msg.Content) > 4000 && dateLikeRegexp.MatchString(msg.Content) {
+			log.Debugf("Removing large log-like assistant message from conversation history")
 			continue
 		}
 		cleaned = append(cleaned, msg)

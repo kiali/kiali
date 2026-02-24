@@ -201,7 +201,12 @@ func Execute(
 	// If we had warnings (e.g. workload resolution), we keep them in server logs only to preserve the exact pods_log output format.
 	_ = warnings
 
-	return out, http.StatusOK
+	if parsed.Format == "plain" {
+		return out, http.StatusOK
+	}
+	// Default: wrap in code block so chat preserves line breaks.
+	// Use ~~~ per Kiali prompt requirements.
+	return "~~~\n" + out + "~~~\n", http.StatusOK
 }
 
 func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, string, int) {
@@ -214,6 +219,10 @@ func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, s
 	out.Container = mcputil.GetStringArg(args, "container", "container_name", "containerName")
 	out.ClusterName = mcputil.GetStringArg(args, "cluster_name", "clusterName")
 	out.Previous = mcputil.AsBool(args["previous"])
+	out.Format = strings.ToLower(mcputil.GetStringArg(args, "format"))
+	if out.Format == "" || (out.Format != "plain" && out.Format != "codeblock") {
+		out.Format = "codeblock"
+	}
 
 	tailLines, _, tailErr := parseTailArg(args)
 	if tailErr != "" {
@@ -339,7 +348,7 @@ func resolvePodFromWorkload(r *http.Request, businessLayer *business.Layer, clus
 		Cluster:               cluster,
 		Namespace:             namespace,
 		WorkloadName:          workload,
-		WorkloadGVK:           schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"},
+		WorkloadGVK:           schema.GroupVersionKind{Group: "", Version: "", Kind: ""},
 		IncludeHealth:         false,
 		IncludeIstioResources: false,
 		IncludeServices:       false,

@@ -12,6 +12,9 @@ type GetLogsArgs struct {
 	TailLines  int      `json:"tail_lines,omitempty"`
 	Severities []string `json:"severities,omitempty"`
 	Previous   bool     `json:"previous,omitempty"`
+	// Format controls how logs are returned. "plain" matches kubernetes-mcp-server pods_log (raw text)
+	// "codeblock" wraps output in ~~~ fences for readable chat rendering
+	Format string `json:"format,omitempty"`
 }
 
 type GetLogsResponse struct {

@@ -76,11 +76,24 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 				response.Actions = append(response.Actions, result.Actions...)
 				response.Citations = append(response.Citations, result.Citations...)
 			} else {
+				// For get_logs, return tool output directly as the final answer.
+				// This avoids an extra model call that can return empty content, and preserves log formatting.
+				if result.Message.Name == "get_logs" && result.Message.Content != "" {
+					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
+					continue
+				}
 				conversation = append(conversation, result.Message)
 			}
 		}
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
+		}
+
+		// If get_logs already set the answer, skip final model generation.
+		if response.Answer != "" {
+			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
+			return response, http.StatusOK
 		}
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
