@@ -32,4 +32,8 @@
         type: "string"
         description: "Output formatting for chat. 'codeblock' wraps logs in ~~~ fences (recommended). 'plain' returns raw text like kubernetes-mcp-server pods_log."
         enum: ["codeblock", "plain"]
+      analyze:
+        type: "boolean"
+        description: "If true, the AI model will analyze the logs and provide insights. If false (default), logs are returned directly without analysis."
+        default: false
 

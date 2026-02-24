@@ -76,24 +76,28 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 				response.Actions = append(response.Actions, result.Actions...)
 				response.Citations = append(response.Citations, result.Citations...)
 			} else {
-				// For get_logs, return tool output directly as the final answer.
-				// This avoids an extra model call that can return empty content, and preserves log formatting.
+				// For get_logs with analyze=false, return logs directly without AI analysis
 				if result.Message.Name == "get_logs" && result.Message.Content != "" {
-					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-					continue
+					// Check if analyze parameter is false (default)
+					analyze := false
+					if result.Message.Param != nil {
+						if params, ok := result.Message.Param.(map[string]interface{}); ok {
+							if analyzeVal, ok := params["analyze"].(bool); ok {
+								analyze = analyzeVal
+							}
+						}
+					}
+					if !analyze {
+						// Return logs directly without model analysis
+						response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
+						continue
+					}
 				}
 				conversation = append(conversation, result.Message)
 			}
 		}
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
-		}
-
-		// If get_logs already set the answer, skip final model generation.
-		if response.Answer != "" {
-			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-			return response, http.StatusOK
 		}
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {

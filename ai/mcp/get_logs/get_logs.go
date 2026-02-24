@@ -219,6 +219,7 @@ func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, s
 	out.Container = mcputil.GetStringArg(args, "container", "container_name", "containerName")
 	out.ClusterName = mcputil.GetStringArg(args, "cluster_name", "clusterName")
 	out.Previous = mcputil.AsBool(args["previous"])
+	out.Analyze = mcputil.AsBool(args["analyze"])
 	out.Format = strings.ToLower(mcputil.GetStringArg(args, "format"))
 	if out.Format == "" || (out.Format != "plain" && out.Format != "codeblock") {
 		out.Format = "codeblock"

@@ -15,6 +15,8 @@ type GetLogsArgs struct {
 	// Format controls how logs are returned. "plain" matches kubernetes-mcp-server pods_log (raw text)
 	// "codeblock" wraps output in ~~~ fences for readable chat rendering
 	Format string `json:"format,omitempty"`
+	// Analyze controls whether the AI model should analyze the logs (true) or return them directly (false, default)
+	Analyze bool `json:"analyze,omitempty"`
 }
 
 type GetLogsResponse struct {

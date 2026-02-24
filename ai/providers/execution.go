@@ -135,7 +135,7 @@ func ExecuteToolCallsInParallel(
 				Message: types.ConversationMessage{
 					Content: toolContent,
 					Name:    call.Name,
-					Param:   nil,
+					Param:   call.Args,
 					Role:    "tool",
 				},
 				Code:      http.StatusOK,
