@@ -1,0 +1,31 @@
+- name: "get_logs"
+  description: "Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log."
+  input_schema:
+    type: "object"
+    required: ["namespace", "name"]
+    properties:
+      namespace:
+        type: "string"
+        description: "Namespace to get the Pod logs from"
+      name:
+        type: "string"
+        description: "Name of the Pod to get the logs from. If it does not exist, it will be treated as a workload name and a running pod will be selected."
+      workload:
+        type: "string"
+        description: "Optional workload name override (used when name lookup fails)."
+      container:
+        type: "string"
+        description: "Name of the Pod container to get the logs from (Optional)"
+      tail:
+        type: "integer"
+        description: "Number of lines to retrieve from the end of the logs (Optional, default: 50). Cannot exceed 200 lines."
+      severity:
+        type: "string"
+        description: "Optional severity filter applied client-side. Accepts 'ERROR', 'WARN' or combinations like 'ERROR,WARN'."
+      previous:
+        type: "boolean"
+        description: "Return previous terminated container logs (Optional)"
+      cluster_name:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
+
