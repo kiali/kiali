@@ -108,6 +108,14 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
+
+		// If get_logs with analyze=false already set the answer, return it directly
+		if response.Answer != "" {
+			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
+			return response, http.StatusOK
+		}
+
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
 			result, err = p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(conversation).([]*genai.Content), &genai.GenerateContentConfig{})

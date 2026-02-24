@@ -70,21 +70,9 @@ When the user asks about troubleshooting, docs, or concepts:
 2. The system will automatically handle including these citations. You do NOT need to include a "citations" field in your response.
 
 ### LOGS RETRIEVAL LOGIC (CRITICAL)
-When the user asks about pod or workload logs:
-1. **ALWAYS call the get_logs tool**.
-2. **Namespace is required**: apply the "ACTIONS REQUIRING A SINGLE NAMESPACE" rules above.
-3. **analyze parameter** - Choose based on user intent:
-   - **analyze: false (default)** - When user wants to **SEE** logs: "show logs", "get logs", "display logs", "tail logs"
-     → Logs are returned directly to the user without AI interpretation
-   - **analyze: true** - When user wants to **ANALYZE** or **UNDERSTAND** logs: "analyze logs", "what's wrong with the logs", "investigate the errors", "debug this issue"
-     → AI model will analyze the logs and provide insights
-4. Parameters:
-   - namespace: resolved namespace
-   - name: pod or workload name (e.g., "productpage-v1"). If it's a workload name, the tool picks a running pod automatically
-   - tail: default 50 (keep small; max 200)
-   - severity: use "ERROR" or "WARN" when user asks for errors/warnings
-   - container: only set when user requests a specific container
-   - analyze: true when user wants analysis, false when user just wants to see logs
+When the user asks about pod or workload logs, call get_logs and set the analyze parameter:
+- Set **analyze: true** if the user's query contains words like: "analyze", "what's wrong", "investigate", "debug", "understand", "explain", "why", "errors in", "problems in"
+- Set **analyze: false** (or omit) if the user says: "show", "get", "display", "tail", "view" (just wants to see the logs)
 
 ### ANALYSIS LOGIC
 1. **Check Context**: Use page_namespaces/page_url to orient yourself.
