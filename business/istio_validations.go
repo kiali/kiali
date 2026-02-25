@@ -293,9 +293,13 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	defer internalmetrics.ObserveDurationAndLogResults(ctx, in.conf, timer, "ValidationProcessingTime", nil, "Total validation time")
 
 	validations := models.IstioValidations{}
+	var controlPlanes []models.ControlPlane
+	if vInfo.mesh != nil {
+		controlPlanes = vInfo.mesh.ControlPlanes
+	}
 	vInfo.clusterInfo = &validationClusterInfo{
 		cluster:          cluster,
-		registryServices: in.getRegistryServicesForCluster(cluster, vInfo.mesh.ControlPlanes),
+		registryServices: in.getRegistryServicesForCluster(cluster, controlPlanes),
 	}
 
 	// grab all config for the cluster
@@ -552,9 +556,13 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return nil, models.IstioReferencesMap{}, err
 	}
 
+	var controlPlanes []models.ControlPlane
+	if vInfo.mesh != nil {
+		controlPlanes = vInfo.mesh.ControlPlanes
+	}
 	vInfo.clusterInfo = &validationClusterInfo{
 		cluster:          cluster,
-		registryServices: in.getRegistryServicesForCluster(cluster, vInfo.mesh.ControlPlanes),
+		registryServices: in.getRegistryServicesForCluster(cluster, controlPlanes),
 	}
 	cp := in.mesh.discovery.GetControlPlaneForNamespace(ctx, cluster, namespace)
 	vInfo.nsInfo = &validationNamespaceInfo{
@@ -943,9 +951,11 @@ func (in *IstioValidationsService) meshConfigForNamespace(vInfo *validationInfo)
 	if cp := vInfo.nsInfo.controlPlane; cp != nil && cp.MeshConfig != nil {
 		return cp.MeshConfig
 	}
-	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.MeshConfig
+	if vInfo.mesh != nil {
+		for _, controlPlane := range vInfo.mesh.ControlPlanes {
+			if controlPlane.Cluster.IsKialiHome {
+				return controlPlane.MeshConfig
+			}
 		}
 	}
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
@@ -956,9 +966,11 @@ func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) 
 	if cp := vInfo.nsInfo.controlPlane; cp != nil && cp.MeshConfig != nil {
 		vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = cp.MeshConfig.EnableAutoMtls.Value
 	}
-	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.MeshConfig.EnableAutoMtls.Value
+	if vInfo.mesh != nil {
+		for _, controlPlane := range vInfo.mesh.ControlPlanes {
+			if controlPlane.Cluster.IsKialiHome {
+				vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.MeshConfig.EnableAutoMtls.Value
+			}
 		}
 	}
 	return nil
@@ -968,9 +980,11 @@ func (in *IstioValidationsService) isGatewayToNamespace(vInfo *validationInfo) b
 	if cp := vInfo.nsInfo.controlPlane; cp != nil && cp.MeshConfig != nil {
 		return cp.IsGatewayToNamespace
 	}
-	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.IsGatewayToNamespace
+	if vInfo.mesh != nil {
+		for _, controlPlane := range vInfo.mesh.ControlPlanes {
+			if controlPlane.Cluster.IsKialiHome {
+				return controlPlane.IsGatewayToNamespace
+			}
 		}
 	}
 	return false
@@ -980,9 +994,11 @@ func (in *IstioValidationsService) isPolicyAllowAny(vInfo *validationInfo) bool 
 	if cp := vInfo.nsInfo.controlPlane; cp != nil && cp.MeshConfig != nil && cp.MeshConfig.OutboundTrafficPolicy != nil {
 		return cp.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
 	}
-	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
+	if vInfo.mesh != nil {
+		for _, controlPlane := range vInfo.mesh.ControlPlanes {
+			if controlPlane.Cluster.IsKialiHome {
+				return controlPlane.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
+			}
 		}
 	}
 	return false
