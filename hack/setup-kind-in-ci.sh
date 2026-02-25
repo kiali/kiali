@@ -184,7 +184,16 @@ if [ -z "${ISTIO_VERSION}" ]; then
     ISTIO_VERSION="1.23.6"
   elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
     ISTIO_VERSION="1.26.8"
+  elif [ "${TARGET_BRANCH}" == "v2.17" ]; then
+    ISTIO_VERSION="1.27.5"
+  elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
+    ISTIO_VERSION="1.28.3"
   fi
+fi
+
+# Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
+if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
+  echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
 fi
 
 KIND_NODE_IMAGE=""
@@ -194,6 +203,10 @@ elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
 elif [[ "${ISTIO_VERSION}" == 1.26.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
+elif [[ "${ISTIO_VERSION}" == 1.27.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
+elif [[ "${ISTIO_VERSION}" == 1.28.* ]]; then
+  KIND_NODE_IMAGE="kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then

@@ -77,7 +77,7 @@ jobs:
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -85,7 +85,7 @@ jobs:
   integration_tests_frontend_core_1:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-1.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -93,7 +93,7 @@ jobs:
   integration_tests_frontend_core_2:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-2.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -101,7 +101,7 @@ jobs:
   integration_tests_frontend_core_optional:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -109,7 +109,7 @@ jobs:
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -117,7 +117,7 @@ jobs:
   integration_tests_frontend_ambient_multi_primary:
     name: Run frontend Ambient Multi-Primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -125,7 +125,7 @@ jobs:
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -133,7 +133,7 @@ jobs:
   integration_tests_frontend_local_offline:
     name: Run frontend local and offline mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -141,7 +141,7 @@ jobs:
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -149,7 +149,7 @@ jobs:
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -157,7 +157,7 @@ jobs:
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -166,7 +166,7 @@ jobs:
   integration_tests_frontend_multicluster_external_kiali:
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
 
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
@@ -183,7 +183,7 @@ jobs:
   mcp_contract_tests:
     name: MCP Contract Tests (kubernetes-mcp-server)
     uses: ./.github/workflows/mcp-contract-tests.yml
-    needs: [build_backend]
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
