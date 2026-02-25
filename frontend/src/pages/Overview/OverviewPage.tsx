@@ -45,6 +45,12 @@ const secondRowItemStyle = kialiStyle({
   }
 });
 
+const rightToolbarStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem'
+});
+
 export const OverviewPage: React.FC = () => {
   const dispatch = useKialiDispatch();
   const { lastRefreshAt, refreshInterval } = useRefreshInterval();
@@ -86,7 +92,7 @@ export const OverviewPage: React.FC = () => {
       <DefaultSecondaryMasthead
         hideNamespaceSelector={true}
         rightToolbar={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className={rightToolbarStyle}>
             <span className={durationLabelStyle}>{t('Last {{duration}}', { duration: durationLabel })}</span>
             <Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />
           </div>

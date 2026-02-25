@@ -10,23 +10,12 @@ import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
 
-type ReduxProps = {
-  istioAPIEnabled: boolean;
-};
-
 const titleSuffixStyle = kialiStyle({
   fontSize: '0.875rem',
   fontWeight: 400,
   marginLeft: '0.75rem',
-  color: 'var(--pf-global--Color--200)'
+  color: PFColors.Color200
 });
-
-type Props = ReduxProps & {
-  actionsToolbar?: JSX.Element;
-  hideNamespaceSelector?: boolean;
-  rightToolbar?: JSX.Element;
-  titleSuffix?: React.ReactNode;
-};
 
 const containerStyle = kialiStyle({
   borderBottom: `1px solid ${PFColors.BorderColor100}`,
@@ -35,6 +24,12 @@ const containerStyle = kialiStyle({
 
 const flexStyle = kialiStyle({
   display: 'flex',
+  flexWrap: 'wrap'
+});
+
+const titleStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'baseline',
   flexWrap: 'wrap'
 });
 
@@ -48,6 +43,17 @@ const actionsToolbarStyle = kialiStyle({
   marginLeft: 'auto',
   paddingTop: '0.75rem'
 });
+
+type ReduxProps = {
+  istioAPIEnabled: boolean;
+};
+
+type Props = ReduxProps & {
+  actionsToolbar?: JSX.Element;
+  hideNamespaceSelector?: boolean;
+  rightToolbar?: JSX.Element;
+  titleSuffix?: React.ReactNode;
+};
 
 const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
   const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
@@ -103,7 +109,7 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
       </div>
 
       <div className={flexStyle}>
-        <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+        <div className={titleStyle}>
           {title}
           {props.titleSuffix && <span className={titleSuffixStyle}>{props.titleSuffix}</span>}
         </div>

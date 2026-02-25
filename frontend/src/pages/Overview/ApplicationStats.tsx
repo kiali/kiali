@@ -61,7 +61,7 @@ const ratesContainerStyle = kialiStyle({
   marginBottom: '1rem',
   display: 'flex',
   justifyContent: 'center',
-  gap: '1.5rem',
+  gap: '2rem',
   fontSize: '1rem'
 });
 
