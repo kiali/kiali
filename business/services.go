@@ -367,30 +367,39 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 // existing K8s Service (by name) are included.
 func (in *SvcService) buildServiceEntryOverviews(serviceEntries []*networking_v1.ServiceEntry, existingServices []core_v1.Service, namespace string, istioConfigList models.IstioConfigList, cluster string) []models.ServiceOverview {
 	services := []models.ServiceOverview{}
-	if namespace == "" {
-		return services
-	}
-
-	existingSet := make(map[string]struct{})
+	existingSet := make(map[string]struct{}, len(existingServices))
+	clusterNamespaces := make([]string, 0, len(existingServices))
+	clusterNamespaceSet := make(map[string]struct{}, len(existingServices))
 	for _, svc := range existingServices {
-		if svc.Namespace == namespace {
-			existingSet[svc.Name] = struct{}{}
+		if namespace != "" && svc.Namespace != namespace {
+			continue
+		}
+		existingSet[fmt.Sprintf("%s/%s", svc.Namespace, svc.Name)] = struct{}{}
+		if _, found := clusterNamespaceSet[svc.Namespace]; !found {
+			clusterNamespaceSet[svc.Namespace] = struct{}{}
+			clusterNamespaces = append(clusterNamespaces, svc.Namespace)
 		}
 	}
 
 	addedHosts := make(map[string]struct{})
 	for _, se := range serviceEntries {
-		if se.Namespace != namespace {
+		if namespace != "" && se.Namespace != namespace {
 			continue
 		}
 		for _, hostname := range se.Spec.Hosts {
-			if _, exists := existingSet[hostname]; exists {
+			host := kubernetes.GetHost(hostname, se.Namespace, clusterNamespaces, in.conf)
+			dedupServiceName, dedupNamespace := kubernetes.ParseTwoPartHost(host)
+			if dedupNamespace != "" && dedupServiceName != "" {
+				if _, exists := existingSet[fmt.Sprintf("%s/%s", dedupNamespace, dedupServiceName)]; exists {
+					continue
+				}
+			}
+
+			addedHostKey := fmt.Sprintf("%s/%s", se.Namespace, hostname)
+			if _, alreadyAdded := addedHosts[addedHostKey]; alreadyAdded {
 				continue
 			}
-			if _, alreadyAdded := addedHosts[hostname]; alreadyAdded {
-				continue
-			}
-			addedHosts[hostname] = struct{}{}
+			addedHosts[addedHostKey] = struct{}{}
 
 			svcServiceEntries := kubernetes.FilterServiceEntriesByHostname(istioConfigList.ServiceEntries, hostname)
 			svcDestinationRules := kubernetes.FilterDestinationRulesByHostname(istioConfigList.DestinationRules, hostname)

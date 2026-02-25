@@ -547,6 +547,58 @@ func TestServiceListSEMultipleHosts(t *testing.T) {
 	require.True(names["api-v3.example.com"])
 }
 
+func TestServiceListForClusterAllNamespacesIncludesServiceEntryServices(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	bookinfoSE := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "bookinfo-external",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"bookinfo-external.example.com"},
+		},
+	}
+	travelSE := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "travel-external",
+			Namespace: "travel",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"travel-external.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("travel"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "travel"}},
+		bookinfoSE,
+		travelSE,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:              "",
+		IncludeIstioResources:  true,
+		IncludeHealth:          false,
+		IncludeOnlyDefinitions: true,
+	}
+	serviceList, err := svc.GetServiceListForCluster(context.TODO(), criteria, conf.KubernetesConfig.ClusterName)
+	require.NoError(err)
+
+	names := make(map[string]bool)
+	for _, s := range serviceList.Services {
+		names[s.Name] = true
+	}
+	require.True(names["bookinfo-external.example.com"])
+	require.True(names["travel-external.example.com"])
+}
+
 func TestServiceListSEDeduplicatesAgainstK8sService(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -586,6 +638,48 @@ func TestServiceListSEDeduplicatesAgainstK8sService(t *testing.T) {
 	}
 	assert.True(names["reviews"])
 	assert.True(names["external-only.example.com"])
+}
+
+func TestServiceListSEDeduplicatesAgainstK8sServiceFQDN(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "reviews-se",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"reviews.bookinfo.svc.cluster.local", "external-only.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.Len(serviceList.Services, 2)
+	names := make(map[string]bool)
+	for _, s := range serviceList.Services {
+		names[s.Name] = true
+	}
+	assert.True(names["reviews"])
+	assert.True(names["external-only.example.com"])
+	assert.False(names["reviews.bookinfo.svc.cluster.local"])
 }
 
 func TestServiceListSEDifferentNamespaceSkipped(t *testing.T) {
