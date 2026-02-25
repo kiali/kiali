@@ -11,7 +11,6 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/kubernetes"
 )
 
 type ServiceOverview struct {
@@ -57,7 +56,6 @@ type ServiceOverview struct {
 	// ServiceRegistry values:
 	// Kubernetes: 	is a service registry backed by k8s API server
 	// External: 	is a service registry for externally provided ServiceEntries
-	// Federation:  special case when registry is provided from a federated environment
 	ServiceRegistry string `json:"serviceRegistry"`
 
 	// Health
@@ -198,18 +196,23 @@ func (s *Service) Parse(cluster string, service *core_v1.Service, conf *config.C
 	}
 }
 
-func (s *Service) ParseRegistryService(cluster string, service *kubernetes.RegistryService) {
-	if service != nil {
-		s.Cluster = cluster
-		s.HealthAnnotations = map[string]string{}
-		s.Labels = service.Attributes.Labels
-		s.Name = service.Attributes.Name
-		s.Namespace = service.Attributes.Namespace
-		s.Ports.ParseServiceRegistryPorts(service)
-		s.Selectors = service.Attributes.LabelSelectors
-		// It will expect "External" or "Federation"
-		s.Type = service.Attributes.ServiceRegistry
+func (s *Service) ParseServiceEntryService(cluster string, se *networking_v1.ServiceEntry, hostname string) {
+	if se == nil {
+		return
 	}
+	s.Cluster = cluster
+	s.HealthAnnotations = map[string]string{}
+	s.Labels = se.Labels
+	s.Name = hostname
+	s.Namespace = se.Namespace
+	for _, sePort := range se.Spec.Ports {
+		s.Ports = append(s.Ports, Port{
+			Name:     sePort.Name,
+			Port:     int32(sePort.Number),
+			Protocol: sePort.Protocol,
+		})
+	}
+	s.Type = "External"
 }
 
 func (s *ServiceDetails) SetService(cluster string, svc *core_v1.Service, conf *config.Config) {

@@ -15,8 +15,8 @@ type SidecarChecker struct {
 	Cluster               string
 	Conf                  *config.Config
 	Discovery             istio.MeshDiscovery
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespaces            models.Namespaces
-	RegistryServices      []*kubernetes.RegistryService
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	WorkloadsPerNamespace map[string]models.Workloads
@@ -28,7 +28,7 @@ func NewSidecarChecker(
 	conf *config.Config,
 	discovery istio.MeshDiscovery,
 	namespaces models.Namespaces,
-	registryServices []*kubernetes.RegistryService,
+	kubeServiceHosts kubernetes.KubeServiceHosts,
 	serviceEntries []*networking_v1.ServiceEntry,
 	sidecars []*networking_v1.Sidecar,
 	workloadsPerNamespace map[string]models.Workloads,
@@ -37,8 +37,8 @@ func NewSidecarChecker(
 		Cluster:               cluster,
 		Conf:                  conf,
 		Discovery:             discovery,
+		KubeServiceHosts:      kubeServiceHosts,
 		Namespaces:            namespaces,
-		RegistryServices:      registryServices,
 		ServiceEntries:        serviceEntries,
 		Sidecars:              sidecars,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -89,7 +89,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
-		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, RegistryServices: s.RegistryServices},
+		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, KubeServiceHosts: s.KubeServiceHosts},
 		sidecars.NewGlobalChecker(s.Cluster, s.Discovery, sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}

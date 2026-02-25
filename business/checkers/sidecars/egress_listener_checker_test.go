@@ -21,9 +21,10 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 	c.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
 	config.Set(c)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeMultiRegistryServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"*/*",
@@ -46,9 +47,10 @@ func TestEgressHostFormatCorrect(t *testing.T) {
 func TestEgressHostNotFoundService(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeServicesWithSelector("reviews", "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServicesLabels("reviews", "bookinfo"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -65,9 +67,10 @@ func TestEgressHostNotFoundService(t *testing.T) {
 func TestEgressHostNotFoundWronglyExportedService(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"reviews.bookinfo2.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("reviews.bookinfo2.svc.cluster.local", "bookinfo", "wrong"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -84,9 +87,10 @@ func TestEgressHostNotFoundWronglyExportedService(t *testing.T) {
 func TestEgressHostFoundExportedService(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"reviews.bookinfo2.svc.cluster.local"}, "bookinfo2")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("reviews.bookinfo2.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -100,9 +104,10 @@ func TestEgressHostFoundExportedService(t *testing.T) {
 func TestEgressHostFoundLocalService(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"reviews.bookinfo2.svc.cluster.local"}, "bookinfo2")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("reviews.bookinfo2.svc.cluster.local", "bookinfo2", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -116,9 +121,10 @@ func TestEgressHostFoundLocalService(t *testing.T) {
 func TestEgressExportedInternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -132,9 +138,10 @@ func TestEgressExportedInternalServiceEntryPresent(t *testing.T) {
 func TestEgressExportedExternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/www.myhost.com",
@@ -148,9 +155,10 @@ func TestEgressExportedExternalServiceEntryPresent(t *testing.T) {
 func TestWildcardHostEgressExportedExternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/*.myhost.com",
@@ -167,9 +175,10 @@ func TestWildcardHostEgressExportedExternalServiceEntryNotPresent(t *testing.T) 
 func TestEgressExportedExternalWildcardServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"*.myhost.com"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/www.myhost.com",
@@ -183,9 +192,10 @@ func TestEgressExportedExternalWildcardServiceEntryPresent(t *testing.T) {
 func TestEgressExportedInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details.bookinfo2.svc.cluster.local"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo.svc.cluster.local",
@@ -202,9 +212,10 @@ func TestEgressExportedInternalServiceEntryNotPresent(t *testing.T) {
 func TestEgressExportedExternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshExternalServiceEntry("details-se", "bookinfo3", []string{"www.myhost.com"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/www.wrong.com",
@@ -221,9 +232,10 @@ func TestEgressExportedExternalServiceEntryNotPresent(t *testing.T) {
 func TestEgressExportedWildcardInternalServiceEntryPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo2.svc.cluster.local"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -237,9 +249,10 @@ func TestEgressExportedWildcardInternalServiceEntryPresent(t *testing.T) {
 func TestEgressExportedWildcardInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"*.bookinfo3.svc.cluster.local"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/*.bookinfo2.svc.cluster.local",
@@ -256,9 +269,10 @@ func TestEgressExportedWildcardInternalServiceEntryNotPresent(t *testing.T) {
 func TestEgressExportedNonFQDNInternalServiceEntryNotPresent(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf:             config.Get(),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateEmptyMeshInternalServiceEntry("details-se", "bookinfo3", []string{"details"})}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/details.bookinfo2.svc.cluster.local",
@@ -324,45 +338,48 @@ func TestEgressServiceNotFound(t *testing.T) {
 	}
 }
 
-func TestEgressRegistryService(t *testing.T) {
+func TestEgressKubeService(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf: config.Get(),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		RegistryServices: data.CreateFakeRegistryServices("boggus.bookinfo.svc.cluster.local", "bookinfo", "."),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
 }
 
-func TestEgressRegistryServiceExported(t *testing.T) {
+func TestEgressKubeServiceExported(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf: config.Get(),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		RegistryServices: data.CreateFakeRegistryServices("boggus.bookinfo.svc.cluster.local", "bookinfo2", "*"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.Empty(vals)
 	assert.True(valid)
 }
 
-func TestEgressRegistryServiceNotFound(t *testing.T) {
+func TestEgressKubeServiceNotFound(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf: config.Get(),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		RegistryServices: data.CreateFakeRegistryServices("wrong.bookinfo.svc.cluster.local", "bookinfo", "."),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -376,15 +393,16 @@ func TestEgressRegistryServiceNotFound(t *testing.T) {
 	}
 }
 
-func TestEgressRegistryServiceNotFoundWronglyExported(t *testing.T) {
+func TestEgressKubeServiceNotFoundWronglyExported(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
 	vals, valid := EgressHostChecker{
 		Conf: config.Get(),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		RegistryServices: data.CreateFakeRegistryServices("boggus.bookinfo.svc.cluster.local", "bookinfo", "bookinfo2"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -398,15 +416,16 @@ func TestEgressRegistryServiceNotFoundWronglyExported(t *testing.T) {
 	}
 }
 
-func TestEgressRegistryServiceNotFoundWronglyExported2(t *testing.T) {
+func TestEgressKubeServiceNotFoundWronglyExported2(t *testing.T) {
 	assert := assert.New(t)
 
+	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo2")
 	vals, valid := EgressHostChecker{
 		Conf: config.Get(),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		RegistryServices: data.CreateFakeRegistryServices("boggus.bookinfo.svc.cluster.local", "bookinfo2", "."),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.NotEmpty(vals)

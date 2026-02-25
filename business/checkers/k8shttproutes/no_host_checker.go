@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	core_v1 "k8s.io/api/core/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -17,7 +18,7 @@ type NoHostChecker struct {
 	K8sHTTPRoute       *k8s_networking_v1.HTTPRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         []string
-	RegistryServices   []*kubernetes.RegistryService
+	Services           []core_v1.Service
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -48,13 +49,10 @@ func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace,
 	if refNamespace != nil && string(*refNamespace) != "" {
 		namespace = string(*refNamespace)
 	}
-	fqdn := kubernetes.GetHost(string(refName), namespace, n.Namespaces, n.Conf)
-	//service name should not be set in fqdn format
-	// if the http route is referencing to a service from the same namespace, then service should exist there
-	// if the http route is referencing to a service from other namespace, then a ReferenceGrant should exist to cross namespace reference, and the service should exist in remote namespace
+	// BackendRefs use simple names; dotted names are invalid for kind: Service
 	if strings.Contains(string(refName), ".") ||
-		(namespace == n.K8sHTTPRoute.Namespace && !n.checkDestination(fqdn.String(), namespace)) ||
-		(namespace != n.K8sHTTPRoute.Namespace && (!n.checkReferenceGrant(n.K8sHTTPRoute.Namespace, namespace) || !n.checkDestination(fqdn.String(), namespace))) {
+		(namespace == n.K8sHTTPRoute.Namespace && !n.checkDestination(string(refName), namespace)) ||
+		(namespace != n.K8sHTTPRoute.Namespace && (!n.checkReferenceGrant(n.K8sHTTPRoute.Namespace, namespace) || !n.checkDestination(string(refName), namespace))) {
 		validation := models.Build("k8sroutes.nohost.namenotfound", location)
 		*validations = append(*validations, &validation)
 		return false
@@ -62,10 +60,13 @@ func (n NoHostChecker) checkReference(refNamespace *k8s_networking_v1.Namespace,
 	return true
 }
 
-func (n NoHostChecker) checkDestination(sHost string, itemNamespace string) bool {
-	// Use RegistryService to check destinations that may not be covered with previous check
-	// i.e. Multi-cluster or Federation validations
-	return kubernetes.HasMatchingRegistryService(itemNamespace, sHost, n.RegistryServices)
+func (n NoHostChecker) checkDestination(svcName string, namespace string) bool {
+	for _, svc := range n.Services {
+		if svc.Name == svcName && svc.Namespace == namespace {
+			return true
+		}
+	}
+	return false
 }
 
 func (n NoHostChecker) checkReferenceGrant(fromNamespace string, toNamespace string) bool {

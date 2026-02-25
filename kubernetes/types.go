@@ -225,53 +225,6 @@ type SyncStatus struct {
 	EndpointAcked string `json:"endpoint_acked,omitempty"`
 }
 
-type RegistryService struct {
-	Pilot string
-	IstioService
-}
-
-// Mapped from https://github.com/istio/istio/blob/master/pilot/pkg/model/service.go
-// It's a helper to fetch the /debug/registryz results before to parse it to the Kiali's Service model
-// Not all fields from /debug/registryz are mapped, only those needed by Kiali
-// There may be differences between Istio 1.11.x and 1.12.x to be addressed case by case in the mapping
-type IstioService struct {
-	Attributes struct {
-		// ServiceRegistry values:
-		// Kubernetes: 	is a service registry backed by k8s API server
-		// External: 	is a service registry for externally provided ServiceEntries
-		// Federation:  special case when registry is provided from a federated environment
-		ServiceRegistry string            `json:"ServiceRegistry,omitempty"`
-		Name            string            `json:"Name,omitempty"`
-		Namespace       string            `json:"Namespace,omitempty"`
-		Labels          map[string]string `json:"Labels,omitempty"`
-		// ExportTo key values:
-		// ".":		Private implies namespace local config
-		// "*":		Public implies config is visible to all
-		// "~":		None implies service is visible to no one. Used for services only
-		ExportTo       map[string]struct{} `json:"ExportTo,omitempty"`
-		LabelSelectors map[string]string   `json:"LabelSelectors,omitempty"`
-		// ClusterExternalAddresses and ClusterExternalPorts are not mapped into the model
-		// Kiali won't use it yet and these attributes changes between Istio 1.11.x and Istio 1.12.x and may bring conflicts
-	} `json:"Attributes,omitempty"`
-	Ports []struct {
-		Name     string `json:"name,omitempty"`
-		Port     int    `json:"port"`
-		Protocol string `json:"protocol,omitempty"`
-	} `json:"ports"`
-	Hostname        string `json:"hostname"`
-	ResourceVersion string `json:"ResourceVersion"`
-	// ClusterVIPs defined in Istio 1.11.x
-	ClusterVIPs11 map[string]string `json:"cluster-vips,omitempty"`
-	// ClusterVIPs defined in Istio 1.12.x
-	ClusterVIPs12 struct {
-		Addresses map[string][]string `json:"Addresses,omitempty"`
-	} `json:"clusterVIPs,omitempty"`
-}
-
-type RegistryStatus struct {
-	Services []*RegistryService
-}
-
 func GetPatchType(patchType string) types.PatchType {
 	switch patchType {
 	case "json":

@@ -15,10 +15,10 @@ import (
 
 type K8sInferencePoolReferences struct {
 	Conf                  *config.Config
-	Namespaces            []string
 	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
 	K8sInferencePools     []*k8s_inference_v1.InferencePool
-	RegistryServices      []*kubernetes.RegistryService
+	KubeServiceHosts      kubernetes.KubeServiceHosts
+	Namespaces            []string
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
@@ -69,7 +69,7 @@ func (r K8sInferencePoolReferences) getServiceReferences(pool *k8s_inference_v1.
 	result := make([]models.ServiceReference, 0)
 
 	fqdn := kubernetes.GetHost(string(pool.Spec.EndpointPickerRef.Name), pool.Namespace, r.Namespaces, r.Conf)
-	if kubernetes.HasMatchingRegistryService(pool.Namespace, fqdn.String(), r.RegistryServices) {
+	if r.KubeServiceHosts.IsValidForNamespace(fqdn.String(), pool.Namespace) {
 		result = append(result, models.ServiceReference{Name: string(pool.Spec.EndpointPickerRef.Name), Namespace: pool.Namespace})
 	}
 	return result

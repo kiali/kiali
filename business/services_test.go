@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"os"
 	"sort"
 	"testing"
 	"time"
@@ -11,13 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -56,67 +55,6 @@ func TestServiceListParsing(t *testing.T) {
 	assert.Contains(serviceNames, "httpbin")
 	assert.Equal("Namespace", serviceList.Services[0].Namespace)
 	assert.Equal("Namespace", serviceList.Services[1].Namespace)
-}
-
-func TestParseRegistryServices(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	conf := config.NewConfig()
-	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
-	config.Set(conf)
-
-	serviceEntries := []*networking_v1.ServiceEntry{}
-	configzFile := "../tests/data/registry/services-configz.json"
-	configz, err := os.ReadFile(configzFile)
-	require.NoError(err)
-	require.NoError(yaml.Unmarshal(configz, &serviceEntries))
-	require.Equal(2, len(serviceEntries))
-
-	objs := []runtime.Object{kubetest.FakeNamespace("electronic-shop")}
-	objs = append(objs, kubernetes.ToRuntimeObjects(serviceEntries)...)
-	k8s := kubetest.NewFakeK8sClient(objs...)
-	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
-
-	servicesz := "../tests/data/registry/services-registryz.json"
-	bServicesz, err := os.ReadFile(servicesz)
-	assert.NoError(err)
-	rServices := map[string][]byte{
-		"istiod1": bServicesz,
-	}
-	registryServices, err2 := parseRegistryServices(rServices)
-	assert.NoError(err2)
-
-	assert.Equal(3, len(registryServices))
-
-	istioConfigList := models.IstioConfigList{
-		ServiceEntries: serviceEntries,
-	}
-
-	parsedServices := svc.buildRegistryServices(registryServices, istioConfigList, config.DefaultClusterID)
-	require.Equal(3, len(parsedServices))
-	assert.Equal(1, len(parsedServices[0].IstioReferences))
-	assert.Equal(1, len(parsedServices[1].IstioReferences))
-	assert.Equal(0, len(parsedServices[2].IstioReferences))
-}
-
-func TestFilterLocalIstioRegistry(t *testing.T) {
-	assert := assert.New(t)
-
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	servicesz := "../tests/data/registry/istio-east-registryz.json"
-	bServicesz, err := os.ReadFile(servicesz)
-	assert.NoError(err)
-	rServices := map[string][]byte{
-		"istiod1": bServicesz,
-	}
-	registryServices, err2 := parseRegistryServices(rServices)
-	assert.NoError(err2)
-
-	assert.Equal(true, filterIstioServiceByClusterId("istio-east", registryServices[0]))
-	assert.Equal(false, filterIstioServiceByClusterId("istio-east", registryServices[1]))
 }
 
 func TestGetServiceListFromMultipleClusters(t *testing.T) {
@@ -508,4 +446,395 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 	assert.Equal("Deployment exposing same port as Service not found", s.Validations[validationKey].Checks[0].Message)
 	assert.Equal(models.SeverityLevel("warning"), s.Validations[validationKey].Checks[0].Severity)
 	assert.Equal("spec/ports[0]", s.Validations[validationKey].Checks[0].Path)
+}
+
+func TestServiceListIncludesServiceEntryServices(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"app": "external"},
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"external-api.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 2)
+
+	var seService *models.ServiceOverview
+	for i := range serviceList.Services {
+		if serviceList.Services[i].Name == "external-api.example.com" {
+			seService = &serviceList.Services[i]
+			break
+		}
+	}
+	require.NotNil(seService, "SE-backed service not found in list")
+	assert.Equal("External", seService.ServiceRegistry)
+	assert.True(seService.IstioSidecar)
+	assert.Equal("bookinfo", seService.Namespace)
+	assert.Equal(conf.KubernetesConfig.ClusterName, seService.Cluster)
+	assert.Equal(map[string]string{"app": "external"}, seService.Labels)
+
+	require.NotEmpty(seService.IstioReferences)
+	foundSERef := false
+	for _, ref := range seService.IstioReferences {
+		if ref.Name == "external-api" && ref.ObjectGVK == kubernetes.ServiceEntries {
+			foundSERef = true
+			break
+		}
+	}
+	assert.True(foundSERef, "ServiceEntry reference not found in IstioReferences")
+}
+
+func TestServiceListSEMultipleHosts(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "multi-host-se",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"api-v1.example.com", "api-v2.example.com", "api-v3.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 3)
+
+	names := make(map[string]bool)
+	for _, s := range serviceList.Services {
+		names[s.Name] = true
+	}
+	require.True(names["api-v1.example.com"])
+	require.True(names["api-v2.example.com"])
+	require.True(names["api-v3.example.com"])
+}
+
+func TestServiceListSEDeduplicatesAgainstK8sService(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "reviews-se",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"reviews", "external-only.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.Len(serviceList.Services, 2)
+	names := make(map[string]bool)
+	for _, s := range serviceList.Services {
+		names[s.Name] = true
+	}
+	assert.True(names["reviews"])
+	assert.True(names["external-only.example.com"])
+}
+
+func TestServiceListSEDifferentNamespaceSkipped(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "other-ns-se",
+			Namespace: "other-namespace",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"external.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("other-namespace"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 1)
+	require.Equal("reviews", serviceList.Services[0].Name)
+}
+
+func TestServiceListSEDuplicateHostnameAcrossSEs(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se1 := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "se-one",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"shared.example.com", "unique-a.example.com"},
+		},
+	}
+	se2 := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "se-two",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"shared.example.com", "unique-b.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		se1, se2,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 3)
+
+	names := make(map[string]int)
+	for _, s := range serviceList.Services {
+		names[s.Name]++
+	}
+	require.Equal(1, names["shared.example.com"], "shared hostname should appear only once")
+	require.Equal(1, names["unique-a.example.com"])
+	require.Equal(1, names["unique-b.example.com"])
+}
+
+func TestGetServiceFallbackToServiceEntry(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api-se",
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"app": "external-api"},
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"external-api.example.com"},
+			Ports: []*api_networking_v1.ServicePort{
+				{Name: "http", Number: 80, Protocol: "HTTP"},
+			},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	s, err := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "external-api.example.com")
+	require.NoError(err)
+
+	assert.Equal("external-api.example.com", s.Name)
+	assert.Equal("bookinfo", s.Namespace)
+	assert.Equal("External", s.Type)
+	assert.Equal(conf.KubernetesConfig.ClusterName, s.Cluster)
+	assert.Equal(map[string]string{"app": "external-api"}, s.Labels)
+	require.Len(s.Ports, 1)
+	assert.Equal("http", s.Ports[0].Name)
+	assert.Equal(int32(80), s.Ports[0].Port)
+}
+
+func TestGetServiceNotFoundWhenNoSEMatch(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "unrelated-se",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"unrelated.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	_, err := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "nonexistent-service")
+	require.Error(err)
+}
+
+func TestGetServiceDetailsSubServicesVersioned(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	mainSvc := &core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo", Labels: map[string]string{"app": "reviews"}},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": "reviews"},
+			Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+		},
+	}
+	subSvcV1 := &core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-v1", Namespace: "bookinfo", Labels: map[string]string{"app": "reviews"}},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": "reviews", "version": "v1"},
+			Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+		},
+	}
+	subSvcV2 := &core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-v2", Namespace: "bookinfo", Labels: map[string]string{"app": "reviews"}},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": "reviews", "version": "v2"},
+			Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+		},
+	}
+	unrelatedSvc := &core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo", Labels: map[string]string{"app": "ratings"}},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": "ratings", "version": "v1"},
+			Ports:    []core_v1.ServicePort{{Name: "http", Port: 9081, Protocol: "TCP"}},
+		},
+	}
+
+	clients := map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			kubetest.FakeNamespace("bookinfo"),
+			mainSvc, subSvcV1, subSvcV2, unrelatedSvc,
+		),
+	}
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+	promMock := new(prometheustest.PromAPIMock)
+	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
+	prom.Inject(promMock)
+
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
+
+	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now(), false)
+	require.NoError(err)
+
+	require.Len(s.SubServices, 2)
+	subNames := make(map[string]bool)
+	for _, sub := range s.SubServices {
+		subNames[sub.Name] = true
+	}
+	assert.True(subNames["reviews-v1"])
+	assert.True(subNames["reviews-v2"])
+	assert.False(subNames["ratings"])
+	assert.False(subNames["reviews"])
+}
+
+func TestGetServiceDetailsSubServicesFallbackToMainService(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	mainSvc := &core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo", Labels: map[string]string{"app": "reviews"}},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": "reviews"},
+			Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+		},
+	}
+
+	clients := map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			kubetest.FakeNamespace("bookinfo"),
+			mainSvc,
+		),
+	}
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+	promMock := new(prometheustest.PromAPIMock)
+	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
+	prom.Inject(promMock)
+
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
+
+	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now(), false)
+	require.NoError(err)
+
+	require.Len(s.SubServices, 1)
+	assert.Equal("reviews", s.SubServices[0].Name)
+	assert.Equal(9080, s.SubServices[0].Ports["http"])
 }

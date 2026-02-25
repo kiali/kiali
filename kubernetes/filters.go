@@ -342,60 +342,6 @@ func FilterPodsByService(s *core_v1.Service, allPods []core_v1.Pod) []core_v1.Po
 	return pods
 }
 
-// Filter Istio registry that are not persent as kubernetes services
-func FilterRegistryServicesByServices(registryServices []*RegistryService, services []core_v1.Service) []*RegistryService {
-	filtered := []*RegistryService{}
-	keys := make(map[string]map[string]struct{})
-	for _, svc := range services {
-		if _, ok := keys[svc.Namespace]; !ok {
-			keys[svc.Namespace] = make(map[string]struct{})
-		}
-		keys[svc.Namespace][svc.Name] = struct{}{}
-	}
-	for _, rSvc := range registryServices {
-		if _, ok := keys[rSvc.Attributes.Namespace][rSvc.Attributes.Name]; !ok {
-			filtered = append(filtered, rSvc)
-		}
-	}
-	return filtered
-}
-
-func FilterRegistryServicesBySelector(selector labels.Selector, namespace string, registryServices []*RegistryService) []*RegistryService {
-	// From given Registry Services, this method filters those services which are exported to given namespace and have labels matching the given selector
-	filtered := []*RegistryService{}
-	for _, rSvc := range registryServices {
-		// here is a hack with providing own hostname
-		if FilterByRegistryService(namespace, rSvc.Hostname, rSvc) && selector.Matches(labels.Set(rSvc.Attributes.Labels)) {
-			filtered = append(filtered, rSvc)
-		}
-	}
-	return filtered
-}
-
-func FilterByRegistryService(namespace string, hostname string, registryService *RegistryService) bool {
-	// Basic filter using Hostname, also consider exported Namespaces of Service
-	// but for a first iteration if it's found in the registry it will be considered "valid" to reduce the number of false validation errors
-	if hostname == registryService.Hostname {
-		exportTo := registryService.Attributes.ExportTo
-		// TODO
-		// if len(exportTo) == 0 {
-		// exportTo = Mesh.GetMeshConfig().DefaultServiceExportTo
-		// }
-		if len(exportTo) > 0 {
-			for exportToNs := range exportTo {
-				// take only namespaces where it is exported to, exported to the own namespace, or if it is exported to all namespaces
-				if exportToNs == "*" || exportToNs == namespace || (exportToNs == "." && registryService.Attributes.Namespace == namespace) {
-					return true
-				}
-			}
-		} else {
-			// no exportTo field, means service exported to all namespaces
-			return true
-		}
-	}
-	return false
-}
-
 func FilterRequestAuthenticationsBySelector(workloadSelector string, requestauthentications []*security_v1.RequestAuthentication) []*security_v1.RequestAuthentication {
 	filtered := []*security_v1.RequestAuthentication{}
 	workloadLabels := mapWorkloadSelector(workloadSelector)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	core_v1 "k8s.io/api/core/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
@@ -17,11 +18,11 @@ func TestNoCrashOnEmptyRouteGRPC(t *testing.T) {
 	assert := assert.New(t)
 
 	typeValidations := K8sGRPCRouteChecker{
-		Conf:             config.Get(),
-		K8sGRPCRoutes:    []*k8s_networking_v1.GRPCRoute{},
-		K8sGateways:      []*k8s_networking_v1.Gateway{},
-		RegistryServices: data.CreateEmptyRegistryServices(),
-		Namespaces:       models.Namespaces{},
+		Conf:          config.Get(),
+		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{},
+		K8sGateways:   []*k8s_networking_v1.Gateway{},
+		Services:      []core_v1.Service{},
+		Namespaces:    models.Namespaces{},
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -55,17 +56,18 @@ func TestWithoutServiceGRPC(t *testing.T) {
 	config.Set(conf)
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo2", "*")
+	fakeServices := append(
+		data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local"}, "bookinfo"),
+		data.CreateFakeMultiServices([]string{"details.bookinfo2.svc.cluster.local"}, "bookinfo2")...)
 
 	vals := K8sGRPCRouteChecker{
 		Conf: config.Get(),
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
-		K8sGateways:      []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
-		RegistryServices: append(registryService1, registryService2...),
-		Namespaces:       models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		K8sGateways: []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
+		Services:    fakeServices,
+		Namespaces:  models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
 	}.Check()
 
 	assert.NotEmpty(vals)

@@ -16,20 +16,19 @@ import (
 // A business layer is created per token/user. Any data that
 // needs to be saved across layers is saved in the Kiali Cache.
 type Layer struct {
-	App            AppService
-	Health         HealthService
-	IstioConfig    IstioConfigService
-	IstioStatus    IstioStatusService
-	Tracing        TracingService
-	Mesh           MeshService
-	Namespace      NamespaceService
-	ProxyLogging   ProxyLoggingService
-	ProxyStatus    ProxyStatusService
-	RegistryStatus RegistryStatusService
-	Svc            SvcService
-	TLS            TLSService
-	Validations    IstioValidationsService
-	Workload       WorkloadService
+	App          AppService
+	Health       HealthService
+	IstioConfig  IstioConfigService
+	IstioStatus  IstioStatusService
+	Tracing      TracingService
+	Mesh         MeshService
+	Namespace    NamespaceService
+	ProxyLogging ProxyLoggingService
+	ProxyStatus  ProxyStatusService
+	Svc          SvcService
+	TLS          TLSService
+	Validations  IstioValidationsService
+	Workload     WorkloadService
 }
 
 func newLayer(
@@ -57,7 +56,6 @@ func newLayer(
 	temporaryLayer.ProxyStatus = NewProxyStatusService(conf, cache, kialiSAClients, &temporaryLayer.Namespace)
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{conf: conf, userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
-	temporaryLayer.RegistryStatus = RegistryStatusService{conf: conf, kialiCache: cache}
 	temporaryLayer.Svc = SvcService{conf: conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}
 	temporaryLayer.TLS = TLSService{conf: conf, discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Validations = NewValidationsService(conf, &temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	api_security_v1 "istio.io/api/security/v1"
-	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -19,8 +19,7 @@ type MtlsEnabledChecker struct {
 	Cluster               string
 	Conf                  *config.Config
 	MtlsDetails           kubernetes.MTLSDetails
-	RegistryServices      []*kubernetes.RegistryService
-	ServiceEntries        []networking_v1.ServiceEntry
+	Services              []core_v1.Service
 }
 
 // Checks if mTLS is enabled, mark all Authz Policies with error
@@ -133,7 +132,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set, namespace string
 		DestinationRules:    c.MtlsDetails.DestinationRules,
 		MatchingLabels:      labels,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
-		RegistryServices:    c.RegistryServices,
+		Services:            c.Services,
 	}.WorkloadMtlsStatus(namespace, c.Conf)
 
 	switch workloadmTlsStatus {

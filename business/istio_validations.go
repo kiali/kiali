@@ -11,8 +11,10 @@ import (
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/business/references"
@@ -123,9 +125,9 @@ type validationNamespaceInfo struct {
 }
 
 type validationClusterInfo struct {
-	cluster          string                        // the cluster being validated
-	istioConfig      *models.IstioConfigList       // config for the cluster (all namespaces)
-	registryServices []*kubernetes.RegistryService // registry services for the cluster (all namespaces)
+	cluster     string                  // the cluster being validated
+	istioConfig *models.IstioConfigList // config for the cluster (all namespaces)
+	services    []core_v1.Service       // K8s services for the cluster (all namespaces)
 }
 
 // changeMap key values are determined by the validation logic, and typically identifies a config object,
@@ -293,13 +295,18 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	validations := models.IstioValidations{}
 	vInfo.clusterInfo = &validationClusterInfo{
-		cluster:          cluster,
-		registryServices: []*kubernetes.RegistryService{},
+		cluster: cluster,
 	}
 
-	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
-		vInfo.clusterInfo.registryServices = registryStatus.Services
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return false, nil, fmt.Errorf("unable to get kube cache for cluster [%s]: %w", cluster, err)
 	}
+	var svcList core_v1.ServiceList
+	if err := kubeCache.List(ctx, &svcList, &client.ListOptions{}); err != nil {
+		return false, nil, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
+	}
+	vInfo.clusterInfo.services = svcList.Items
 
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
@@ -378,8 +385,8 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 	cluster := vInfo.clusterInfo.cluster
 
 	// loop through the services and gather up their resourceVersions
-	for _, s := range vInfo.clusterInfo.registryServices {
-		change = vInfo.update("SV", cluster, s.Attributes.Namespace, s.Attributes.Name, s.ResourceVersion) || change
+	for _, s := range vInfo.clusterInfo.services {
+		change = vInfo.update("SV", cluster, s.Namespace, s.Name, s.ResourceVersion) || change
 	}
 
 	// loop through the config and gather up their resourceVersions
@@ -476,22 +483,23 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	workloadsPerNamespace := vInfo.wlMap[cluster]
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
-	registryServices := vInfo.clusterInfo.registryServices
+	services := vInfo.clusterInfo.services
+	kubeServiceHosts := kubernetes.NewKubeServiceHosts(services, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
 	conf := in.conf
 
 	return []checkers.ObjectChecker{
-		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
+		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
 		checkers.DestinationRulesChecker{Conf: conf, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries, Cluster: cluster},
 		checkers.GatewayChecker{Conf: conf, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh), Cluster: cluster},
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
-		checkers.K8sGRPCRouteChecker{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
-		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
+		checkers.K8sGRPCRouteChecker{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services, Cluster: cluster},
+		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
-		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
+		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
 		checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
-		checkers.NewSidecarChecker(cluster, conf, in.mesh.discovery, namespaces, registryServices, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
+		checkers.NewSidecarChecker(cluster, conf, in.mesh.discovery, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
 		checkers.TelemetryChecker{Telemetries: istioConfigList.Telemetries, Namespaces: namespaces},
 		checkers.VirtualServiceChecker{Conf: conf, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, Cluster: cluster},
 		checkers.WasmPluginChecker{WasmPlugins: istioConfigList.WasmPlugins, Namespaces: namespaces},
@@ -549,6 +557,16 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		mtlsDetails: &kubernetes.MTLSDetails{},
 	}
 
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil, istioReferences, fmt.Errorf("unable to get kube cache for cluster [%s]: %w", cluster, err)
+	}
+	var svcList core_v1.ServiceList
+	if err := kubeCache.List(ctx, &svcList, &client.ListOptions{}); err != nil {
+		return nil, istioReferences, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
+	}
+	vInfo.clusterInfo.services = svcList.Items
+
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
 		IncludeDestinationRules:       true,
@@ -572,10 +590,6 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	}
 	vInfo.clusterInfo.istioConfig = clusterIstioConfigList
 
-	if registryStatus := in.kialiCache.GetRegistryStatus(cluster); registryStatus != nil {
-		vInfo.clusterInfo.registryServices = registryStatus.Services
-	}
-
 	if err := in.setNamespaceIstioConfig(vInfo); err != nil {
 		return nil, nil, err
 	}
@@ -590,12 +604,13 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	workloadsPerNamespace := vInfo.wlMap[cluster]
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
-	registryServices := vInfo.clusterInfo.registryServices
+	services := vInfo.clusterInfo.services
+	kubeServiceHosts := kubernetes.NewKubeServiceHosts(services, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
 	conf := in.conf
 
-	noServiceChecker := checkers.NoServiceChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh)}
+	noServiceChecker := checkers.NoServiceChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh)}
 
 	switch objectGVK {
 	case kubernetes.Gateways:
@@ -610,24 +625,24 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker}
-		referenceChecker = references.DestinationRuleReferences{Conf: conf, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices}
+		referenceChecker = references.DestinationRuleReferences{Conf: conf, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, KubeServiceHosts: kubeServiceHosts, Services: services}
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
-		referenceChecker = references.ServiceEntryReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, RegistryServices: registryServices}
+		referenceChecker = references.ServiceEntryReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars}
 	case kubernetes.Sidecars:
-		sidecarsChecker := checkers.NewSidecarChecker(cluster, conf, in.mesh.discovery, namespaces, registryServices, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace)
+		sidecarsChecker := checkers.NewSidecarChecker(cluster, conf, in.mesh.discovery, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{sidecarsChecker}
-		referenceChecker = references.SidecarReferences{Conf: conf, Sidecars: istioConfigList.Sidecars, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace}
+		referenceChecker = references.SidecarReferences{Conf: conf, Sidecars: istioConfigList.Sidecars, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, KubeServiceHosts: kubeServiceHosts, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{
 			Conf:                  conf,
 			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Cluster:               cluster, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, ServiceAccounts: vInfo.saMap,
-			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh),
+			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh),
 		}
 		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
-		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, in.mesh.discovery, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, registryServices, workloadsPerNamespace)
+		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, in.mesh.discovery, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
 		peerAuthnChecker := checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace)
@@ -662,16 +677,16 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		}
 		referenceChecker = references.K8sGatewayReferences{Conf: conf, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.K8sGRPCRoutes:
-		grpcRouteChecker := checkers.K8sGRPCRouteChecker{Conf: conf, Cluster: cluster, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
+		grpcRouteChecker := checkers.K8sGRPCRouteChecker{Conf: conf, Cluster: cluster, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, grpcRouteChecker}
 		referenceChecker = references.K8sGRPCRouteReferences{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants}
 	case kubernetes.K8sHTTPRoutes:
-		httpRouteChecker := checkers.K8sHTTPRouteChecker{Conf: conf, Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices}
+		httpRouteChecker := checkers.K8sHTTPRouteChecker{Conf: conf, Cluster: cluster, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, httpRouteChecker}
 		referenceChecker = references.K8sHTTPRouteReferences{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, Namespaces: nsNames, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, K8sInferencePools: istioConfigList.K8sInferencePools}
 	case kubernetes.K8sInferencePools:
 		// Validation on K8sInferencePools is not expected
-		referenceChecker = references.K8sInferencePoolReferences{Conf: conf, Namespaces: nsNames, K8sInferencePools: istioConfigList.K8sInferencePools, RegistryServices: registryServices, WorkloadsPerNamespace: workloadsPerNamespace, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
+		referenceChecker = references.K8sInferencePoolReferences{Conf: conf, Namespaces: nsNames, K8sInferencePools: istioConfigList.K8sInferencePools, KubeServiceHosts: kubeServiceHosts, WorkloadsPerNamespace: workloadsPerNamespace, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes}
 	case kubernetes.K8sReferenceGrants:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
@@ -981,7 +996,10 @@ func isAmbient(namespaces []models.Namespace, namespace string) bool {
 }
 
 func getNsNames(nss []models.Namespace) []string {
-	names := make([]string, len(nss))
+	// Pre-existing bug fix: was make([]string, len(nss)) which pre-fills with
+	// empty strings, then append added real names after them. Use length 0 with
+	// capacity so append starts at index 0.
+	names := make([]string, 0, len(nss))
 	for _, ns := range nss {
 		names = append(names, ns.Name)
 	}

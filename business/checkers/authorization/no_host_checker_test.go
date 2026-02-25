@@ -17,15 +17,14 @@ import (
 func TestPresentService(t *testing.T) {
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	validations, valid := NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"details", "reviews"}),
 		Namespaces:          []string{"outside", "bookinfo"},
 		ServiceEntries:      map[string][]string{},
-		RegistryServices:    append(registryService1, registryService2...),
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		PolicyAllowAny:      true,
 	}.Check()
 
@@ -37,15 +36,14 @@ func TestPresentService(t *testing.T) {
 func TestNonExistingService(t *testing.T) {
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"details", "wrong"}),
 		Namespaces:          []string{"outside", "bookinfo"},
 		ServiceEntries:      map[string][]string{},
-		RegistryServices:    append(registryService1, registryService2...),
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 		PolicyAllowAny:      true,
 	}.Check()
 
@@ -61,15 +59,14 @@ func TestNonExistingService(t *testing.T) {
 func TestWildcardHost(t *testing.T) {
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"*", "*.bookinfo", "*.bookinfo.svc.cluster.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
 		ServiceEntries:      map[string][]string{},
-		RegistryServices:    append(registryService1, registryService2...),
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	// Well configured object
@@ -80,15 +77,14 @@ func TestWildcardHost(t *testing.T) {
 func TestWildcardHostOutsideNamespace(t *testing.T) {
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"*.outside", "*.outside.svc.cluster.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
 		ServiceEntries:      map[string][]string{},
-		RegistryServices:    append(registryService1, registryService2...),
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
 	}.Check()
 
 	assert.False(valid)
@@ -363,49 +359,54 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.False(valid)
 	assert.NotEmpty(validations)
 
-	registryService := data.CreateFakeRegistryServices("ratings.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "*")
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.mesh1-imports.local"
+	config.Set(conf)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}, "mesh2-bookinfo")
 
 	validations, valid = NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
-		RegistryServices:    registryService,
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
 
-	registryService = data.CreateFakeRegistryServices("ratings2.mesh2-bookinfo.svc.mesh1-imports.local", "bookinfo", "*")
+	fakeServices2 := data.CreateFakeMultiServices([]string{"ratings2.mesh2-bookinfo.svc.mesh1-imports.local"}, "mesh2-bookinfo")
 
 	validations, valid = NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
-		RegistryServices:    registryService,
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices2, conf),
 	}.Check()
 
 	assert.False(valid)
 	assert.NotEmpty(validations)
 
-	registryService = data.CreateFakeRegistryServices("ratings.bookinfo.svc.cluster.local", "bookinfo", "*")
+	config.Set(config.NewConfig())
+	fakeServices3 := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	validations, valid = NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"ratings.bookinfo.svc.cluster.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
-		RegistryServices:    registryService,
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices3, config.Get()),
 	}.Check()
 
 	assert.True(valid)
 	assert.Empty(validations)
 
-	registryService = data.CreateFakeRegistryServices("ratings.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices4 := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	validations, valid = NoHostChecker{
 		Conf:                config.Get(),
 		AuthorizationPolicy: authPolicyWithHost([]string{"ratings2.bookinfo.svc.cluster.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
-		RegistryServices:    registryService,
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices4, config.Get()),
 	}.Check()
 
 	assert.False(valid)

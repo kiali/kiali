@@ -162,10 +162,6 @@ const serviceTypeFilter: FilterType = {
     {
       id: 'External',
       title: 'External'
-    },
-    {
-      id: 'Federation',
-      title: 'Federation'
     }
   ]
 };

@@ -445,7 +445,7 @@ type IstioConfig struct {
 	IstioAPIEnabled                bool              `yaml:"istio_api_enabled" json:"istioApiEnabled"`
 	IstioIdentityDomain            string            `yaml:"istio_identity_domain,omitempty" json:"istioIdentityDomain,omitempty"`
 	// IstiodPollingIntervalSeconds is how often in seconds Kiali will poll istiod(s) for
-	// proxy status and registry services. Polling is not performed if IstioAPIEnabled is false.
+	// proxy status. Polling is not performed if IstioAPIEnabled is false.
 	IstiodPollingIntervalSeconds     int  `yaml:"istiod_polling_interval_seconds,omitempty" json:"istiodPollingIntervalSeconds,omitempty"`
 	ValidationChangeDetectionEnabled bool `yaml:"validation_change_detection_enabled,omitempty" json:"validationChangeDetectionEnabled,omitempty"`
 	// ValidationReconcileInterval sets how often Kiali will validate Istio configuration.

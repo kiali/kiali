@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -14,7 +15,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForK8sInferencePool(pool *k8s_inference_v1.InferencePool, workloads models.Workloads, services []*kubernetes.RegistryService, httpRoutes []*k8s_networking_v1.HTTPRoute) models.IstioReferences {
+func prepareTestForK8sInferencePool(pool *k8s_inference_v1.InferencePool, workloads models.Workloads, services []core_v1.Service, httpRoutes []*k8s_networking_v1.HTTPRoute) models.IstioReferences {
 	conf := config.Get()
 	if conf.KubernetesConfig.ClusterName == "" {
 		conf.KubernetesConfig.ClusterName = "Kubernetes"
@@ -22,13 +23,13 @@ func prepareTestForK8sInferencePool(pool *k8s_inference_v1.InferencePool, worklo
 
 	references := K8sInferencePoolReferences{
 		Conf:              conf,
-		Namespaces:        []string{pool.Namespace, "different-ns"},
 		K8sHTTPRoutes:     httpRoutes,
 		K8sInferencePools: []*k8s_inference_v1.InferencePool{pool},
+		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(services, conf),
+		Namespaces:        []string{pool.Namespace, "different-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			pool.Namespace: workloads,
 		},
-		RegistryServices: services,
 	}
 	return *references.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sInferencePools, Namespace: pool.Namespace, Name: pool.Name}]
 }
@@ -45,7 +46,7 @@ func TestK8sInferencePoolReferences(t *testing.T) {
 		data.CreateWorkload("test-ns", "workload2", map[string]string{"app": "vllm-llama3-8b-instruct-new"}),
 		data.CreateWorkload("test-ns", "other-workload", map[string]string{"app": "other-app"}),
 	}
-	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
+	services := data.CreateFakeMultiServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns")
 	httpRoutes := []*k8s_networking_v1.HTTPRoute{
 		fakeHTTPRoute("route-to-pool", "test-ns", "test-pool"),
 		fakeHTTPRoute("route-to-other-pool", "test-ns", "other-pool"), // Should not be matched
@@ -78,7 +79,7 @@ func TestK8sInferencePoolNoWorkloadReferences(t *testing.T) {
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
-	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
+	services := data.CreateFakeMultiServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns")
 
 	references := prepareTestForK8sInferencePool(pool, workloads, services, nil)
 
@@ -99,7 +100,7 @@ func TestK8sInferencePoolNoServiceReference(t *testing.T) {
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "vllm-llama3-8b-instruct"}),
 	}
-	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
+	services := data.CreateFakeMultiServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns")
 
 	references := prepareTestForK8sInferencePool(pool, workloads, services, nil)
 
@@ -124,7 +125,7 @@ func TestK8sInferencePoolNoReferences(t *testing.T) {
 	workloads := models.Workloads{
 		data.CreateWorkload("test-ns", "workload1", map[string]string{"app": "my-app"}),
 	}
-	services := data.CreateFakeMultiRegistryServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns", ".")
+	services := data.CreateFakeMultiServices([]string{"my-service-epp.test-ns.svc.cluster.local", "other-service"}, "test-ns")
 	httpRoutes := []*k8s_networking_v1.HTTPRoute{
 		{
 			ObjectMeta: metav1.ObjectMeta{Name: "route-to-service", Namespace: "test-ns"},

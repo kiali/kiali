@@ -34,7 +34,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
     tt: 'Fault Injection: Delay',
     style: { backgroundColor: PFColors.Purple500 }
   } as PFBadgeType,
-  FederatedService: { badge: 'FS', tt: 'Federated Service' } as PFBadgeType,
+
   GRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute' } as PFBadgeType,
   Gateway: { badge: 'G', tt: 'Gateway' } as PFBadgeType,
   Grafana: { badge: 'GR', tt: 'Grafana' } as PFBadgeType,

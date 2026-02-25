@@ -13,9 +13,9 @@ import (
 
 type NoHostChecker struct {
 	Conf              *config.Config
+	KubeServiceHosts  kubernetes.KubeServiceHosts
 	Namespaces        []string
 	PolicyAllowAny    bool
-	RegistryServices  []*kubernetes.RegistryService
 	ServiceEntryHosts map[string][]string
 	VirtualService    *networking_v1.VirtualService
 }
@@ -109,7 +109,10 @@ func (n NoHostChecker) checkDestination(sHost string, itemNamespace string) bool
 		}
 	}
 
-	// Use RegistryService to check destinations that may not be covered with previous check
-	// i.e. Multi-cluster or Federation validations
-	return kubernetes.HasMatchingRegistryService(itemNamespace, sHost, n.RegistryServices)
+	// Check K8s Services via FQDN map
+	if n.KubeServiceHosts.IsValidForNamespace(sHost, itemNamespace) {
+		return true
+	}
+
+	return false
 }

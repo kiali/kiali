@@ -19,12 +19,11 @@ func TestValidRefHost(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -40,13 +39,12 @@ func TestMissingGrant(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
-		RegistryServices: append(registryService1, registryService2...),
-		K8sHTTPRoute:     data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
+		Conf:         config.Get(),
+		Services:     fakeServices,
+		K8sHTTPRoute: data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 
 	assert.False(valid)
@@ -68,12 +66,11 @@ func TestWrongGrant(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -96,12 +93,11 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "", data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -117,12 +113,11 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "", data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -143,14 +138,13 @@ func TestNoValidRefHost(t *testing.T) {
 	c.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
 	config.Set(c)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("details.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "details.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("ratings", "bookinfo", data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"})))),
 	}.Check()
@@ -179,12 +173,11 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 
 	assert := assert.New(t)
 
-	registryService1 := data.CreateFakeRegistryServices("other.bookinfo.svc.cluster.local", "bookinfo", "*")
-	registryService2 := data.CreateFakeRegistryServices("reviews.bookinfo.svc.cluster.local", "bookinfo", "*")
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
 		Conf:               config.Get(),
-		RegistryServices:   append(registryService1, registryService2...),
+		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews.bookinfo.svc.cluster.local", "", data.AddBackendRefToHTTPRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()

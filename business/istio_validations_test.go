@@ -32,7 +32,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+		[]string{"details", "product", "product2", "customer"})
 
 	changeMap := map[string]string{}
 	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
@@ -57,7 +57,7 @@ func TestGetNamespaceValidations(t *testing.T) {
 
 	// refresh the config but keep the changeMap, and we should see new validations. (note PeerAuthentication config updates its ResourceVersion)
 	vs = mockCombinedValidationService(t, conf, fakeIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+		[]string{"details", "product", "product2", "customer"})
 	vInfo, err = vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, changeMap)
 	require.NoError(err)
 	validationPerformed, validations, err = vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
@@ -73,7 +73,7 @@ func TestNamespaceLabelChangeTriggersValidation(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+		[]string{"details", "product", "product2", "customer"})
 
 	// Initial validation run
 	changeMap := map[string]string{}
@@ -113,7 +113,7 @@ func TestGetIstioObjectValidations(t *testing.T) {
 	config.Set(conf)
 
 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
-		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+		[]string{"details", "product", "customer"})
 
 	validations, _, _ := vs.ValidateIstioObject(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "product-vs")
 
@@ -776,15 +776,9 @@ func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runt
 	return NewLayerBuilder(t, &conf).WithClient(k8s).Build().Validations
 }
 
-func fakeValidationMeshServiceWithRegistryStatus(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
+func fakeValidationMeshServiceWithDiscovery(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	cache := cache.NewTestingCache(t, k8s, cfg)
-	conf := config.NewConfig()
-	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
-		conf.KubernetesConfig.ClusterName: {
-			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		},
-	})
 
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
@@ -857,7 +851,7 @@ func mockCombinedValidationService(t *testing.T, conf *config.Config, istioConfi
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.WorkloadEntries)...)
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.RequestAuthentications)...)
 
-	return fakeValidationMeshServiceWithRegistryStatus(t, *config.NewConfig(), services, fakeIstioObjects...)
+	return fakeValidationMeshServiceWithDiscovery(t, *config.NewConfig(), services, fakeIstioObjects...)
 }
 
 func mockAmbient(t *testing.T, conf *config.Config) []runtime.Object {

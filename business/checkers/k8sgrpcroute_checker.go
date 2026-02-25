@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	core_v1 "k8s.io/api/core/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
@@ -17,7 +18,7 @@ type K8sGRPCRouteChecker struct {
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         models.Namespaces
-	RegistryServices   []*kubernetes.RegistryService
+	Services           []core_v1.Service
 }
 
 // Check runs checks for the all namespaces actions as well as for the single namespace validations
@@ -58,7 +59,7 @@ func (in K8sGRPCRouteChecker) runChecks(rt *k8s_networking_v1.GRPCRoute, gateway
 			Namespaces:         in.Namespaces.GetNames(),
 			K8sGRPCRoute:       rt,
 			K8sReferenceGrants: in.K8sReferenceGrants,
-			RegistryServices:   in.RegistryServices,
+			Services:           in.Services,
 		},
 	}
 

@@ -845,13 +845,6 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 		return err
 	}
 
-	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
-		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
-		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
-			log.FromContext(ctx).Error().Msgf("Error while refreshing Istio cache: %s", err)
-		}
-	}
-
 	in.waitForObjectDeletion(ctx, cluster, details.Object)
 
 	// Remove validations for the object to refresh the validation cache.
@@ -1206,13 +1199,6 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 	}
 	if err != nil {
 		return istioConfigDetail, err
-	}
-
-	if in.conf.ExternalServices.Istio.IstioAPIEnabled {
-		// Refreshing the istio cache in case something has changed with the registry services. Not sure if this is really needed.
-		if err := in.controlPlaneMonitor.RefreshIstioCache(ctx); err != nil {
-			log.FromContext(ctx).Error().Msgf("Error while refreshing Istio cache: %s", err)
-		}
 	}
 
 	in.waitForCacheCreate(ctx, cluster, istioConfigDetail.Object)

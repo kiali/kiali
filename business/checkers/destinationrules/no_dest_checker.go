@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -14,10 +15,11 @@ import (
 type NoDestinationChecker struct {
 	Conf                  *config.Config
 	DestinationRule       *networking_v1.DestinationRule
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespaces            []string
 	PolicyAllowAny        bool
-	RegistryServices      []*kubernetes.RegistryService
 	ServiceEntries        []*networking_v1.ServiceEntry
+	Services              []core_v1.Service
 	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.Workloads
 }
@@ -84,10 +86,10 @@ func (n NoDestinationChecker) hasMatchingWorkload(host kubernetes.Host, subsetLa
 
 	var selectors map[string]string
 
-	// Find the correct service
-	for _, s := range n.RegistryServices {
-		if s.Attributes.Name == localSvc && s.Attributes.Namespace == localNs {
-			selectors = s.Attributes.LabelSelectors
+	// Find the correct K8s Service's selector
+	for _, svc := range n.Services {
+		if svc.Name == localSvc && svc.Namespace == localNs {
+			selectors = svc.Spec.Selector
 			break
 		}
 	}
@@ -142,11 +144,11 @@ func (n NoDestinationChecker) hasMatchingService(host kubernetes.Host, itemNames
 		return true
 	}
 
-	// Use RegistryService to check destinations that may not be covered with previous check
-	// i.e. Multi-cluster or Federation validations
-	if kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), n.RegistryServices) {
+	// Check K8s Services via FQDN map
+	if n.KubeServiceHosts.IsValidForNamespace(host.String(), itemNamespace) {
 		return true
 	}
+
 	return false
 }
 

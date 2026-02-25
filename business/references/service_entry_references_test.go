@@ -10,19 +10,17 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/tests/data"
 )
 
 func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *networking_v1.DestinationRule, se *networking_v1.ServiceEntry, sc *networking_v1.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
+		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
 		Conf:                  config.Get(),
+		DestinationRules:      []*networking_v1.DestinationRule{dr},
 		Namespace:             "bookinfo",
 		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
 		ServiceEntries:        []*networking_v1.ServiceEntry{se},
 		Sidecars:              []*networking_v1.Sidecar{sc},
-		DestinationRules:      []*networking_v1.DestinationRule{dr},
-		RegistryServices:      append(data.CreateFakeRegistryServices("foo-dev.bookinfo.svc.cluster.local", "bookinfo", "."), data.CreateFakeRegistryServices("foo-dev.istio-system.svc.cluster.local", "istio-system", "*")...),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: se.Namespace, Name: se.Name}]
 }
@@ -38,10 +36,10 @@ func TestServiceEntryReferences(t *testing.T) {
 	// Check Workload references empty
 	assert.Empty(references.WorkloadReferences)
 
-	// Check Service references
-	assert.Len(references.ServiceReferences, 1)
-	assert.Equal(references.ServiceReferences[0].Name, "foo-dev.istio-system.svc.cluster.local")
-	assert.Equal(references.ServiceReferences[0].Namespace, "istio-system")
+	// Check Service references (built from se.Spec.Hosts)
+	assert.Len(references.ServiceReferences, 2)
+	assert.Contains([]string{references.ServiceReferences[0].Name, references.ServiceReferences[1].Name}, "foo-dev.istio-system.svc.cluster.local")
+	assert.Contains([]string{references.ServiceReferences[0].Name, references.ServiceReferences[1].Name}, "foo-dev.bookinfo.svc.cluster.local")
 
 	// Check DR and AuthPolicy references
 	assert.Len(references.ObjectReferences, 3)
@@ -63,9 +61,11 @@ func TestServiceEntryNoReferences(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	// Setup mocks
+	// Setup mocks - fakeServiceEntry has hosts ["*.googleapis.com"], so we get 1 ServiceReference from hosts
 	references := prepareTestForServiceEntry(getAuthPolicy(t), getAPDestinationRule(t), fakeServiceEntry(), getSidecar(t))
-	assert.Empty(references.ServiceReferences)
+	assert.Len(references.ServiceReferences, 1)
+	assert.Equal("*.googleapis.com", references.ServiceReferences[0].Name)
+	assert.Equal("test", references.ServiceReferences[0].Namespace)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
 }

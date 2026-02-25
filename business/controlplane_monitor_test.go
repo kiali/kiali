@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -24,26 +23,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/certtest"
 )
-
-func TestRegistryServices(t *testing.T) {
-	assert := assert.New(t)
-	require := require.New(t)
-
-	registryz := "../tests/data/registry/registry-registryz.json"
-	bRegistryz, err := os.ReadFile(registryz)
-	require.NoError(err)
-
-	rRegistry := map[string][]byte{
-		"istiod1": bRegistryz,
-	}
-
-	registry, err2 := parseRegistryServices(rRegistry)
-	require.NoError(err2)
-	require.NotNil(registry)
-
-	assert.Equal(79, len(registry))
-	assert.Equal("*.msn.com", registry[0].Attributes.Name)
-}
 
 type fakeForwarder struct {
 	kubernetes.UserClientInterface
@@ -68,16 +47,10 @@ func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destination
 func istiodTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
-	// Note: This test server is used by polling code running in background goroutines.
-	// Avoid using t.Fatalf/t.FailNow from inside the handler goroutine (it can cause flakes)
-	// and ignore benign write errors that can happen when the client disconnects mid-response.
-	registryzBytes := kubernetes.ReadFile(t, "../tests/data/registry/registry-registryz.json")
 	synczBytes := kubernetes.ReadFile(t, "../tests/data/registry/registry-syncz.json")
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/debug/registryz":
-			_, _ = w.Write(registryzBytes)
 		case "/debug/syncz":
 			_, _ = w.Write(synczBytes)
 		case "/debug", "/ready":
@@ -182,14 +155,9 @@ func TestRefreshIstioCache(t *testing.T) {
 		},
 	}
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
-	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	err := cpm.RefreshIstioCache(context.TODO())
 	require.NoError(err)
 
-	registryServices := cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName)
-	require.NotNil(registryServices)
-
-	assert.Len(registryServices.Services, 79)
 	// This is a pod that exists in the test data at: "../tests/data/registry/registry-syncz.json"
 	podProxyStatus := cache.GetPodProxyStatus("Kubernetes", "beta", "b-client-8b97458bb-tghx9")
 	require.NotNil(podProxyStatus)
@@ -197,8 +165,6 @@ func TestRefreshIstioCache(t *testing.T) {
 }
 
 func TestCancelingContextEndsPolling(t *testing.T) {
-	assert := assert.New(t)
-
 	conf := config.NewConfig()
 	kubernetes.SetConfig(t, *conf)
 
@@ -211,8 +177,6 @@ func TestCancelingContextEndsPolling(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	cpm.PollIstiodForProxyStatus(ctx)
-
-	assert.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 }
 
 func TestPollingPopulatesCache(t *testing.T) {
@@ -240,7 +204,6 @@ func TestPollingPopulatesCache(t *testing.T) {
 		istioConfigMap,
 		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
-	// RefreshIstioCache relies on this being set.
 	k8s.KubeClusterInfo.Name = conf.KubernetesConfig.ClusterName
 
 	fakeForwarder := &fakeForwarder{
@@ -254,28 +217,13 @@ func TestPollingPopulatesCache(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(k8sclients), cache, conf)
 	cpm := NewControlPlaneMonitor(cache, cf, conf, discovery)
-	// Make this really low so that we get something sooner.
 	cpm.pollingInterval = time.Millisecond * 1
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	require.Nil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
 	cpm.PollIstiodForProxyStatus(ctx)
 	// Cache should be populated after PollIstiod returns because the
 	// pump gets primed before polling starts.
-	require.NotNil(cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName))
-
-	// Clear the registry to make sure it gets populated again through polling.
-	cache.SetRegistryStatus(nil)
-	for {
-		select {
-		case <-time.After(time.Millisecond * 300):
-			require.Fail("Timed out waiting for cache to be populated")
-			return
-		default:
-			if cache.GetRegistryStatus(conf.KubernetesConfig.ClusterName) != nil {
-				return
-			}
-		}
-	}
+	podProxyStatus := cache.GetPodProxyStatus("Kubernetes", "beta", "b-client-8b97458bb-tghx9")
+	require.NotNil(podProxyStatus)
 }

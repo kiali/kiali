@@ -11,14 +11,13 @@ import (
 )
 
 type ServiceEntryReferences struct {
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
+	DestinationRules      []*networking_v1.DestinationRule
 	Namespace             string
 	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
-	AuthorizationPolicies []*security_v1.AuthorizationPolicy
-	DestinationRules      []*networking_v1.DestinationRule
-	RegistryServices      []*kubernetes.RegistryService
 }
 
 func (n ServiceEntryReferences) References() models.IstioReferencesMap {
@@ -112,19 +111,11 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.Serv
 func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEntry) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 	keys := make(map[string]bool)
-	allServices := make([]models.ServiceReference, 0)
 	for _, seHost := range se.Spec.Hosts {
-		for _, rStatus := range n.RegistryServices {
-			if kubernetes.FilterByRegistryService(se.Namespace, seHost, rStatus) {
-				allServices = append(allServices, models.ServiceReference{Name: rStatus.Hostname, Namespace: rStatus.Attributes.Namespace})
-			}
-		}
-	}
-	// filter unique references
-	for _, s := range allServices {
-		key := util.BuildNameNSKey(s.Name, s.Namespace)
+		ref := models.ServiceReference{Name: seHost, Namespace: se.Namespace}
+		key := util.BuildNameNSKey(ref.Name, ref.Namespace)
 		if !keys[key] {
-			result = append(result, s)
+			result = append(result, ref)
 			keys[key] = true
 		}
 	}

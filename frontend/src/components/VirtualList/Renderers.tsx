@@ -235,9 +235,6 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
       case 'External':
         serviceBadge = PFBadges.ExternalService;
         break;
-      case 'Federation':
-        serviceBadge = PFBadges.FederatedService;
-        break;
     }
   }
 

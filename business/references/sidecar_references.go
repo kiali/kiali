@@ -14,9 +14,9 @@ import (
 
 type SidecarReferences struct {
 	Conf                  *config.Config
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            models.Namespaces
-	RegistryServices      []*kubernetes.RegistryService
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	WorkloadsPerNamespace map[string]models.Workloads
@@ -43,7 +43,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)
-					// if No ServiceEntry or VS is found, look into Services as RegistryServices contains all
+					// if no ServiceEntry is found, look into K8s Services via FQDN map
 					if len(configRef) == 0 {
 						references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(fqdn, namespace)...)
 					}
@@ -69,7 +69,7 @@ func getHostComponents(host string) (string, string, bool) {
 
 func (n SidecarReferences) getServiceReferences(host kubernetes.Host, itemNamespace string) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
-	if kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), n.RegistryServices) {
+	if n.KubeServiceHosts.IsValidForNamespace(host.String(), itemNamespace) {
 		result = append(result, models.ServiceReference{Name: host.Service, Namespace: host.Namespace})
 	}
 	return result

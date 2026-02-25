@@ -1426,8 +1426,6 @@ func istiodTestServer(t *testing.T) *httptest.Server {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var file string
 		switch r.URL.Path {
-		case "/debug/registryz":
-			file = "../tests/data/registry/registry-registryz.json"
 		case "/debug/syncz":
 			file = "../tests/data/registry/registry-syncz.json"
 		case "/debug":

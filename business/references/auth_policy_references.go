@@ -15,14 +15,14 @@ import (
 
 type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
-	Conf                  *config.Config
 	Cluster               string
+	Conf                  *config.Config
 	Discovery             istio.MeshDiscovery
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	VirtualServices       []*networking_v1.VirtualService
-	RegistryServices      []*kubernetes.RegistryService
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
@@ -36,19 +36,19 @@ func NewAuthorizationPolicyReferences(
 	namespaces []string,
 	serviceEntries []*networking_v1.ServiceEntry,
 	virtualServices []*networking_v1.VirtualService,
-	registryServices []*kubernetes.RegistryService,
+	kubeServiceHosts kubernetes.KubeServiceHosts,
 	workloadsPerNamespace map[string]models.Workloads,
 ) AuthorizationPolicyReferences {
 	return AuthorizationPolicyReferences{
 		AuthorizationPolicies: authorizationPolicies,
-		Conf:                  conf,
 		Cluster:               cluster,
+		Conf:                  conf,
 		Discovery:             discovery,
+		KubeServiceHosts:      kubeServiceHosts,
 		Namespace:             namespace,
 		Namespaces:            namespaces,
 		ServiceEntries:        serviceEntries,
 		VirtualServices:       virtualServices,
-		RegistryServices:      registryServices,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 	}
 }
@@ -74,7 +74,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)
-							// if No ServiceEntry or VS is found, look into Services as RegistryServices contains all
+							// if no ServiceEntry or VS is found, look into K8s Services via FQDN map
 							if len(configRef) == 0 {
 								references.ServiceReferences = append(references.ServiceReferences, n.getServiceReferences(fqdn, namespace)...)
 							}
@@ -92,7 +92,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 
 func (n AuthorizationPolicyReferences) getServiceReferences(host kubernetes.Host, itemNamespace string) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
-	if kubernetes.HasMatchingRegistryService(itemNamespace, host.String(), n.RegistryServices) {
+	if n.KubeServiceHosts.IsValidForNamespace(host.String(), itemNamespace) {
 		result = append(result, models.ServiceReference{Name: host.Service, Namespace: host.Namespace})
 	}
 	return result

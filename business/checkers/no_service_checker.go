@@ -2,6 +2,7 @@ package checkers
 
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers/destinationrules"
 	"github.com/kiali/kiali/business/checkers/virtualservices"
@@ -16,7 +17,8 @@ type NoServiceChecker struct {
 	IstioConfigList       *models.IstioConfigList
 	WorkloadsPerNamespace map[string]models.Workloads
 	AuthorizationDetails  *kubernetes.RBACDetails
-	RegistryServices      []*kubernetes.RegistryService
+	KubeServiceHosts      kubernetes.KubeServiceHosts
+	Services              []core_v1.Service
 	PolicyAllowAny        bool
 	Cluster               string
 }
@@ -24,25 +26,21 @@ type NoServiceChecker struct {
 func (in NoServiceChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	if len(in.RegistryServices) == 0 {
-		return validations
-	}
-
 	serviceHosts := kubernetes.ServiceEntryHostnames(in.IstioConfigList.ServiceEntries)
 	gatewayNames := kubernetes.GatewayNames(in.IstioConfigList.Gateways, in.Conf)
 
 	for _, virtualService := range in.IstioConfigList.VirtualServices {
-		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.RegistryServices, in.PolicyAllowAny, in.Cluster, in.Conf))
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.KubeServiceHosts, in.PolicyAllowAny, in.Cluster, in.Conf))
 
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames, in.Cluster, in.Conf))
 	}
 	for _, destinationRule := range in.IstioConfigList.DestinationRules {
-		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.WorkloadsPerNamespace, in.IstioConfigList.ServiceEntries, in.Namespaces, in.RegistryServices, in.IstioConfigList.VirtualServices, in.PolicyAllowAny, in.Cluster, in.Conf))
+		validations.MergeValidations(runDestinationRuleCheck(destinationRule, in.WorkloadsPerNamespace, in.IstioConfigList.ServiceEntries, in.Namespaces, in.KubeServiceHosts, in.Services, in.IstioConfigList.VirtualServices, in.PolicyAllowAny, in.Cluster, in.Conf))
 	}
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, policyAllowAny bool, cluster string, conf *config.Config) models.IstioValidations {
+func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, policyAllowAny bool, cluster string, conf *config.Config) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices, cluster)
 
 	result, valid := virtualservices.NoHostChecker{
@@ -50,7 +48,7 @@ func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, servic
 		Namespaces:        clusterNamespaces.GetNames(),
 		VirtualService:    virtualService,
 		ServiceEntryHosts: serviceHosts,
-		RegistryServices:  registryStatus,
+		KubeServiceHosts:  kubeServiceHosts,
 		PolicyAllowAny:    policyAllowAny,
 	}.Check()
 
@@ -76,7 +74,7 @@ func runGatewayCheck(virtualService *networking_v1.VirtualService, gatewayNames 
 }
 
 func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, workloads map[string]models.Workloads,
-	serviceEntries []*networking_v1.ServiceEntry, clusterNamespaces models.Namespaces, registryStatus []*kubernetes.RegistryService, virtualServices []*networking_v1.VirtualService,
+	serviceEntries []*networking_v1.ServiceEntry, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, services []core_v1.Service, virtualServices []*networking_v1.VirtualService,
 	policyAllowAny bool, cluster string, conf *config.Config) models.IstioValidations {
 	key, validations := EmptyValidValidation(destinationRule.Name, destinationRule.Namespace, kubernetes.DestinationRules, cluster)
 
@@ -87,7 +85,8 @@ func runDestinationRuleCheck(destinationRule *networking_v1.DestinationRule, wor
 		DestinationRule:       destinationRule,
 		VirtualServices:       virtualServices,
 		ServiceEntries:        serviceEntries,
-		RegistryServices:      registryStatus,
+		KubeServiceHosts:      kubeServiceHosts,
+		Services:              services,
 		PolicyAllowAny:        policyAllowAny,
 	}.Check()
 

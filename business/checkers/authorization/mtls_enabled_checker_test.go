@@ -244,7 +244,7 @@ func mtlsCheckerTestPrep(scenario string, autoMtls bool, t *testing.T) models.Is
 	validations := MtlsEnabledChecker{
 		Conf:                  config.Get(),
 		AuthorizationPolicies: loader.GetResources().AuthorizationPolicies,
-		RegistryServices:      data.CreateFakeRegistryServicesLabels("ratings", "bookinfo"),
+		Services:              data.CreateFakeServicesWithSelector("ratings", "bookinfo"),
 		MtlsDetails: kubernetes.MTLSDetails{
 			DestinationRules:        loader.GetResources().DestinationRules,
 			MeshPeerAuthentications: loader.FindPeerAuthenticationIn("istio-system"),

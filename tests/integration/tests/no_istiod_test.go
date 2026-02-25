@@ -37,13 +37,13 @@ func TestNoIstiod(t *testing.T) {
 	require.NoError(instance.UpdateConfig(ctx, cfg))
 	require.NoError(instance.Restart(ctx))
 
-	t.Run("ServicesListNoRegistryServices", servicesListNoRegistryServices)
+	t.Run("ServicesListNoIstiod", servicesListNoIstiod)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
 	t.Run("emptyValidations", emptyValidations)
 }
 
-func servicesListNoRegistryServices(t *testing.T) {
+func servicesListNoIstiod(t *testing.T) {
 	require := require.New(t)
 	serviceList, err := kiali.ServicesList(kiali.BOOKINFO)
 

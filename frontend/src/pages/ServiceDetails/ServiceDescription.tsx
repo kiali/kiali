@@ -143,9 +143,6 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
       case 'External':
         serviceBadge = PFBadges.ExternalService;
         break;
-      case 'Federation':
-        serviceBadge = PFBadges.FederatedService;
-        break;
       default:
         serviceBadge = PFBadges.Service;
     }

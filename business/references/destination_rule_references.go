@@ -2,6 +2,7 @@ package references
 
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -13,10 +14,11 @@ import (
 type DestinationRuleReferences struct {
 	Conf                  *config.Config
 	DestinationRules      []*networking_v1.DestinationRule
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            []string
-	RegistryServices      []*kubernetes.RegistryService
 	ServiceEntries        []*networking_v1.ServiceEntry
+	Services              []core_v1.Service
 	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.Workloads
 }
@@ -44,8 +46,10 @@ func (n DestinationRuleReferences) getServiceReferences(dr *networking_v1.Destin
 	result := make([]models.ServiceReference, 0)
 
 	fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces, n.Conf)
-	if !fqdn.IsWildcard() && kubernetes.HasMatchingRegistryService(dr.Namespace, fqdn.String(), n.RegistryServices) {
-		result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
+	if !fqdn.IsWildcard() {
+		if n.KubeServiceHosts.IsValidForNamespace(fqdn.String(), n.Namespace) {
+			result = append(result, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
+		}
 	}
 	return result
 }
@@ -65,10 +69,10 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 
 	var selectors map[string]string
 
-	// Find the correct service
-	for _, s := range n.RegistryServices {
-		if s.Attributes.Name == localSvc && s.Attributes.Namespace == localNs {
-			selectors = s.Attributes.LabelSelectors
+	// Find the correct service via K8s Service Spec.Selector
+	for _, s := range n.Services {
+		if s.Name == localSvc && s.Namespace == localNs && len(s.Spec.Selector) > 0 {
+			selectors = s.Spec.Selector
 			break
 		}
 	}

@@ -12,6 +12,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	apps_v1 "k8s.io/api/apps/v1"
+	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -175,6 +176,112 @@ func ServiceEntryHostnames(serviceEntries []*networking_v1.ServiceEntry) map[str
 	}
 
 	return hostnames
+}
+
+const ExportToAnnotation = "networking.istio.io/exportTo"
+
+type kubeServiceEntry struct {
+	exportTo  []string
+	namespace string
+}
+
+// KubeServiceHosts maps K8s Service hostnames to metadata supporting namespace-visibility-aware lookups.
+// Each service is registered under three FQDN key forms so that checkers find a match regardless of
+// which hostname format the Istio resource uses (full FQDN, short FQDN, or two-part).
+//
+// Visibility is determined by a two-level fallback: the networking.istio.io/exportTo annotation on
+// the K8s Service takes precedence; when absent, the mesh-wide DefaultServiceExportTo is applied;
+// when both are absent the service is visible to all namespaces (Istio's default).
+type KubeServiceHosts struct {
+	entries map[string]*kubeServiceEntry
+}
+
+// NewKubeServiceHosts builds a KubeServiceHosts from K8s Services.
+// defaultExportTo is the mesh-wide DefaultServiceExportTo from the Istio MeshConfig;
+// it is applied when a service has no networking.istio.io/exportTo annotation.
+// Pass nil when the mesh config is unavailable (e.g. in unit tests) to treat
+// unannotated services as visible to all namespaces.
+func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaultExportTo []string) KubeServiceHosts {
+	entries := make(map[string]*kubeServiceEntry, len(services)*3)
+	clusterDomain := conf.ExternalServices.Istio.IstioIdentityDomain
+
+	for _, svc := range services {
+		entry := &kubeServiceEntry{
+			namespace: svc.Namespace,
+		}
+		if ann, ok := svc.Annotations[ExportToAnnotation]; ok {
+			entry.exportTo = parseExportToAnnotation(ann)
+		} else {
+			entry.exportTo = defaultExportTo
+		}
+
+		fqdn := fmt.Sprintf("%s.%s.%s", svc.Name, svc.Namespace, clusterDomain)
+		shortFqdn := fmt.Sprintf("%s.%s.svc", svc.Name, svc.Namespace)
+		twoPart := fmt.Sprintf("%s.%s", svc.Name, svc.Namespace)
+
+		entries[fqdn] = entry
+		entries[shortFqdn] = entry
+		entries[twoPart] = entry
+	}
+
+	return KubeServiceHosts{entries: entries}
+}
+
+// KubeServiceFQDNs builds a KubeServiceHosts without mesh-config defaults.
+// Use this only in unit tests where the mesh config is not available;
+// production code should call NewKubeServiceHosts with the mesh default.
+func KubeServiceFQDNs(services []core_v1.Service, conf *config.Config) KubeServiceHosts {
+	return NewKubeServiceHosts(services, conf, nil)
+}
+
+func parseExportToAnnotation(annotation string) []string {
+	parts := strings.Split(annotation, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// HasHost returns true if the hostname exists in the map, ignoring ExportTo visibility.
+func (h KubeServiceHosts) HasHost(host string) bool {
+	_, found := h.entries[host]
+	return found
+}
+
+// IsValidForNamespace returns true if the hostname exists AND the service is exported to
+// the given namespace. When neither the annotation nor a mesh default is set, the service
+// is visible to all namespaces.
+func (h KubeServiceHosts) IsValidForNamespace(host string, namespace string) bool {
+	entry, found := h.entries[host]
+	if !found {
+		return false
+	}
+
+	if len(entry.exportTo) == 0 {
+		return true
+	}
+
+	for _, export := range entry.exportTo {
+		switch export {
+		case "*":
+			return true
+		case ".":
+			if entry.namespace == namespace {
+				return true
+			}
+		case "~":
+			continue
+		default:
+			if export == namespace {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // mapPortToVirtualServiceProtocol transforms Istio's Port-definitions' protocol names to VirtualService's protocol names

@@ -3,45 +3,29 @@ package data
 import (
 	"strings"
 
-	"github.com/kiali/kiali/kubernetes"
+	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func CreateEmptyRegistryServices() []*kubernetes.RegistryService {
-	return []*kubernetes.RegistryService{{}}
+// CreateFakeServicesWithSelector creates K8s Services for use with KubeServiceFQDNs.
+func CreateFakeServicesWithSelector(service string, namespace string) []core_v1.Service {
+	return []core_v1.Service{{
+		ObjectMeta: metav1.ObjectMeta{Name: service, Namespace: namespace},
+		Spec: core_v1.ServiceSpec{
+			Selector: map[string]string{"app": service},
+		},
+	}}
 }
 
-func CreateFakeRegistryServicesLabels(service string, namespace string) []*kubernetes.RegistryService {
-	registryService := kubernetes.RegistryService{}
-	registryService.Hostname = service + "." + namespace + ".svc.cluster.local"
-	registryService.Attributes.Name = service
-	registryService.Attributes.Namespace = namespace
-	registryService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.Attributes.ExportTo["*"] = struct{}{}
-	registryService.Attributes.Labels = make(map[string]string)
-	registryService.Attributes.Labels["app"] = service
-	registryService.Attributes.Labels["version"] = "v1"
-	registryService.Attributes.LabelSelectors = make(map[string]string)
-	registryService.Attributes.LabelSelectors["app"] = service
-
-	return []*kubernetes.RegistryService{&registryService}
-}
-
-func CreateFakeRegistryServices(host string, namespace string, exportToNamespace string) []*kubernetes.RegistryService {
-	registryService := kubernetes.RegistryService{}
-	registryService.Hostname = host
-	registryService.Attributes.Namespace = namespace
-	registryService.Attributes.Name = strings.Split(host, ".")[0]
-	registryService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.Attributes.ExportTo[exportToNamespace] = struct{}{}
-
-	return []*kubernetes.RegistryService{&registryService}
-}
-
-func CreateFakeMultiRegistryServices(hosts []string, namespace string, exportToNamespace string) []*kubernetes.RegistryService {
-	result := make([]*kubernetes.RegistryService, 0)
+// CreateFakeMultiServices creates K8s Services for use with KubeServiceFQDNs.
+func CreateFakeMultiServices(hosts []string, namespace string) []core_v1.Service {
+	result := make([]core_v1.Service, 0, len(hosts))
 	for _, host := range hosts {
-		result = append(result, CreateFakeRegistryServices(host, namespace, exportToNamespace)...)
+		name := strings.Split(host, ".")[0]
+		result = append(result, core_v1.Service{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+			Spec:       core_v1.ServiceSpec{},
+		})
 	}
-
 	return result
 }

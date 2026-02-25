@@ -9,7 +9,6 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -148,41 +147,6 @@ func TestFilterPodsByController(t *testing.T) {
 			assert.Equal(tc.expectedLen, len(pods))
 		})
 	}
-}
-
-func TestFilterRegistryServicesBySelector(t *testing.T) {
-	assert := assert.New(t)
-
-	selector := labels.SelectorFromSet(labels.Set(map[string]string{"app": "details"}))
-
-	rs1 := CreateFakeRegistryService("details.bookinfo", "bookinfo", ".", map[string]string{"app": "details"})
-	rs2 := CreateFakeRegistryService("reviews.bookinfo", "bookinfo2", "*", map[string]string{"app": "reviews", "version": "v1"})
-	rs3 := CreateFakeRegistryService("ratings.bookinfo", "bookinfo3", "bookinfo", map[string]string{"app": "ratings", "version": "v1"})
-	rs4 := CreateFakeRegistryService("details.bookinfo2", "bookinfo", "*", map[string]string{"app": "details2"})
-	rs5 := CreateFakeRegistryService("details.bookinfo", "bookinfo2", "bookinfo", map[string]string{})
-	rs6 := CreateFakeRegistryService("details.bookinfo3", "bookinfo3", "bookinfo2", map[string]string{"app": "details"})
-	rs7 := CreateFakeRegistryService("details.bookinfo", "bookinfo", ".", map[string]string{"app": "details"})
-	rs8 := CreateFakeRegistryService("details.bookinfo", "bookinfo2", "bookinfo", map[string]string{"app": "details"})
-	rs9 := CreateFakeRegistryService("details.bookinfo2", "bookinfo2", "", map[string]string{"app": "details"})
-
-	registryServices := []*RegistryService{rs1, rs2, rs3, rs4, rs5, rs6, rs7, rs8, rs9}
-
-	filtered := FilterRegistryServicesBySelector(selector, "bookinfo", registryServices)
-	assert.Len(filtered, 3)
-	assert.Equal(rs1, filtered[0])
-	assert.Equal(rs7, filtered[1])
-	assert.Equal(rs8, filtered[2])
-}
-
-func CreateFakeRegistryService(host string, namespace string, exportToNamespace string, labels map[string]string) *RegistryService {
-	registryService := RegistryService{}
-	registryService.Hostname = host
-	registryService.Attributes.Namespace = namespace
-	registryService.Attributes.Labels = labels
-	registryService.Attributes.ExportTo = make(map[string]struct{})
-	registryService.Attributes.ExportTo[exportToNamespace] = struct{}{}
-
-	return &registryService
 }
 
 func TestFilterByNamespaces(t *testing.T) {

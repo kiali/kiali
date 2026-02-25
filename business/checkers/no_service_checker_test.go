@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -19,7 +20,8 @@ func TestNoCrashOnEmpty(t *testing.T) {
 	typeValidations := NoServiceChecker{
 		Conf:             config.Get(),
 		IstioConfigList:  emptyIstioConfigList(),
-		RegistryServices: data.CreateEmptyRegistryServices(),
+		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, config.Get(), nil),
+		Services:         []core_v1.Service{},
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -30,6 +32,10 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 	config.Set(conf)
 
 	assert := assert.New(t)
+
+	fakeServices := append(
+		data.CreateFakeMultiServices([]string{"product.test.svc.cluster.local"}, "test"),
+		data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")...)
 
 	vals := NoServiceChecker{
 		Conf: config.Get(),
@@ -46,8 +52,8 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
-		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "test"),
-			data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*")...),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		Services:             fakeServices,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -63,6 +69,10 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	assert := assert.New(t)
 
+	fakeServices := append(
+		data.CreateFakeMultiServices([]string{"product.test.svc.cluster.local"}, "test"),
+		data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local"}, "test")...)
+
 	vals := NoServiceChecker{
 		Conf:            config.Get(),
 		IstioConfigList: fakeIstioConfigList(),
@@ -76,8 +86,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "productv2", appVersionLabel("product", "v2")),
 			}},
 		AuthorizationDetails: &kubernetes.RBACDetails{},
-		RegistryServices: append(data.CreateFakeRegistryServices("product.test.svc.cluster.local", "test", "."),
-			data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local"}, "test", "*")...),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		Services:             fakeServices,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -87,6 +97,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.Equal(1, len(customerDr.Checks))
 	assert.Equal("spec/host", customerDr.Checks[0].Path)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.matchingregistry", customerDr.Checks[0]))
+
+	fakeServices2 := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
 
 	vals = NoServiceChecker{
 		Conf: config.Get(),
@@ -100,7 +112,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices2, conf),
+		Services:             fakeServices2,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -114,6 +127,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", productVs.Checks[1].Path)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", productVs.Checks[1]))
 
+	fakeServices3 := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
+
 	vals = NoServiceChecker{
 		Conf: config.Get(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
@@ -126,12 +141,15 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices3, conf),
+		Services:             fakeServices3,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
 	assert.NotEmpty(vals)
 	assert.True(vals[models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "test", Name: "customer-dr"}].Valid)
+
+	fakeServices4 := data.CreateFakeMultiServices([]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
 
 	vals = NoServiceChecker{
 		Conf: config.Get(),
@@ -145,7 +163,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices4, conf),
+		Services:             fakeServices4,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 
@@ -163,10 +182,13 @@ func TestObjectWithoutGateway(t *testing.T) {
 	gateways = append(gateways, "non-existant-gateway")
 
 	istioDetails.VirtualServices[0].Spec.Gateways = gateways
+	fakeServices := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
+
 	vals := NoServiceChecker{
 		Conf:                 config.Get(),
 		IstioConfigList:      istioDetails,
-		RegistryServices:     data.CreateFakeMultiRegistryServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test", "*"),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		Services:             fakeServices,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
 

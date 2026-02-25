@@ -5,11 +5,75 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	api_networking_v1 "istio.io/api/networking/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 )
+
+func TestParseServiceEntryService(t *testing.T) {
+	assert := assert.New(t)
+
+	se := fakeServiceEntry("external-api.example.com", "bookinfo",
+		map[string]string{"app": "external-api"},
+		[]fakePort{{Name: "http", Number: 80, Protocol: "HTTP"}, {Name: "https", Number: 443, Protocol: "HTTPS"}},
+	)
+
+	svc := Service{}
+	svc.ParseServiceEntryService("east", se, "external-api.example.com")
+
+	assert.Equal("east", svc.Cluster)
+	assert.Equal("external-api.example.com", svc.Name)
+	assert.Equal("bookinfo", svc.Namespace)
+	assert.Equal("External", svc.Type)
+	assert.Equal(map[string]string{"app": "external-api"}, svc.Labels)
+	assert.Equal(map[string]string{}, svc.HealthAnnotations)
+	assert.Len(svc.Ports, 2)
+	assert.Equal("http", svc.Ports[0].Name)
+	assert.Equal(int32(80), svc.Ports[0].Port)
+	assert.Equal("HTTP", svc.Ports[0].Protocol)
+	assert.Equal("https", svc.Ports[1].Name)
+	assert.Equal(int32(443), svc.Ports[1].Port)
+	assert.Equal("HTTPS", svc.Ports[1].Protocol)
+}
+
+func TestParseServiceEntryServiceMultiHost(t *testing.T) {
+	assert := assert.New(t)
+
+	se := fakeServiceEntry("api-v1.example.com", "bookinfo",
+		map[string]string{"app": "api"},
+		[]fakePort{{Name: "http", Number: 80, Protocol: "HTTP"}},
+	)
+	se.Spec.Hosts = append(se.Spec.Hosts, "api-v2.example.com", "api-v3.example.com")
+
+	svc := Service{}
+	svc.ParseServiceEntryService("west", se, "api-v2.example.com")
+
+	assert.Equal("api-v2.example.com", svc.Name)
+	assert.Equal("bookinfo", svc.Namespace)
+}
+
+func TestParseServiceEntryServiceNilSE(t *testing.T) {
+	svc := Service{Name: "untouched"}
+	svc.ParseServiceEntryService("east", nil, "anything")
+
+	assert.Equal(t, "untouched", svc.Name)
+}
+
+func TestParseServiceEntryServiceNoPorts(t *testing.T) {
+	assert := assert.New(t)
+
+	se := fakeServiceEntry("external-api.example.com", "bookinfo", nil, nil)
+
+	svc := Service{}
+	svc.ParseServiceEntryService("east", se, "external-api.example.com")
+
+	assert.Equal("external-api.example.com", svc.Name)
+	assert.Empty(svc.Ports)
+	assert.Equal("External", svc.Type)
+}
 
 func TestServiceDetailParsing(t *testing.T) {
 	assert := assert.New(t)
@@ -112,4 +176,32 @@ func fakeWorkloads() WorkloadOverviews {
 	wo = append(wo, w1)
 	wo = append(wo, w2)
 	return wo
+}
+
+type fakePort struct {
+	Name     string
+	Number   uint32
+	Protocol string
+}
+
+func fakeServiceEntry(host, namespace string, labels map[string]string, ports []fakePort) *networking_v1.ServiceEntry {
+	sePorts := make([]*api_networking_v1.ServicePort, 0, len(ports))
+	for _, p := range ports {
+		sePorts = append(sePorts, &api_networking_v1.ServicePort{
+			Name:     p.Name,
+			Number:   p.Number,
+			Protocol: p.Protocol,
+		})
+	}
+	return &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      host,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{host},
+			Ports: sePorts,
+		},
+	}
 }

@@ -219,19 +219,6 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.Virt
 	return false
 }
 
-// HasMatchingRegistryService returns true when the FDQN of the host (from given namespace) param matches
-// with one registry service of the registryServices param.
-func HasMatchingRegistryService(namespace string, host string, registryServices []*RegistryService) bool {
-	for _, rStatus := range registryServices {
-		// We assume that on these cases the host.Service is provided in FQDN
-		// i.e. ratings.mesh2-bookinfo.svc.mesh1-imports.local
-		if FilterByRegistryService(namespace, host, rStatus) {
-			return true
-		}
-	}
-	return false
-}
-
 // HasMatchingReferenceGrant returns true when the From matches to given fromNamespace and fromKind and To matched given toNamespace and toKind.
 func HasMatchingReferenceGrant(fromNamespace string, toNamespace string, fromKind string, toKind string, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant) bool {
 	for _, rGrant := range referenceGrants {

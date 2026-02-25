@@ -3,6 +3,7 @@ package checkers
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
 
 	"github.com/kiali/kiali/business/checkers/authorization"
 	"github.com/kiali/kiali/business/checkers/common"
@@ -14,12 +15,13 @@ import (
 type AuthorizationPolicyChecker struct {
 	Cluster               string
 	Conf                  *config.Config
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	MtlsDetails           kubernetes.MTLSDetails
 	Namespaces            []string
 	PolicyAllowAny        bool
-	RegistryServices      []*kubernetes.RegistryService
 	ServiceAccounts       map[string][]string
 	ServiceEntries        []*networking_v1.ServiceEntry
+	Services              []core_v1.Service
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.Workloads
@@ -39,7 +41,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 		Cluster:               a.Cluster,
 		Conf:                  a.Conf,
 		MtlsDetails:           a.MtlsDetails,
-		RegistryServices:      a.RegistryServices,
+		Services:              a.Services,
 	}.Check())
 
 	return validations
@@ -59,7 +61,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.Authorizat
 		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies, matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces},
 		authorization.NoHostChecker{Conf: a.Conf, AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, RegistryServices: a.RegistryServices, PolicyAllowAny: a.PolicyAllowAny},
+			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, KubeServiceHosts: a.KubeServiceHosts, PolicyAllowAny: a.PolicyAllowAny},
 		authorization.PrincipalsChecker{Cluster: a.Cluster, AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccounts},
 	}
 

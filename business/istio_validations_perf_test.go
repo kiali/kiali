@@ -156,11 +156,6 @@ func BenchmarkValidate(b *testing.B) {
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	cache := cache.NewTestingCache(b, k8s, *conf)
-	cache.SetRegistryStatus(map[string]*kubernetes.RegistryStatus{
-		conf.KubernetesConfig.ClusterName: {
-			Services: data.CreateFakeMultiRegistryServices(services, "test", "*"),
-		},
-	})
 
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, Config: models.ControlPlaneConfiguration{}, MeshConfig: models.NewMeshConfig()}}},

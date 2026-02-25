@@ -2,8 +2,6 @@ package models
 
 import (
 	core_v1 "k8s.io/api/core/v1"
-
-	"github.com/kiali/kiali/kubernetes"
 )
 
 type Ports []Port
@@ -39,18 +37,4 @@ func (port *Port) ParseEndpointPort(p core_v1.EndpointPort) {
 	port.Name = p.Name
 	port.Protocol = string(p.Protocol)
 	port.Port = p.Port
-}
-
-func (ports *Ports) ParseServiceRegistryPorts(rs *kubernetes.RegistryService) {
-	if rs == nil {
-		return
-	}
-	for _, rsPort := range rs.Ports {
-		port := Port{
-			Name:     rsPort.Name,
-			Port:     int32(rsPort.Port),
-			Protocol: rsPort.Protocol,
-		}
-		*ports = append(*ports, port)
-	}
 }

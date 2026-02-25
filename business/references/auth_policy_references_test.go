@@ -15,16 +15,18 @@ import (
 )
 
 func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
+	conf := config.Get()
+	services := data.CreateFakeServicesWithSelector("foo-dev", "istio-system")
 	drReferences := NewAuthorizationPolicyReferences(
 		[]*security_v1.AuthorizationPolicy{ap},
-		config.Get(),
+		conf,
 		config.DefaultClusterID,
 		&istiotest.FakeDiscovery{},
 		"bookinfo",
 		[]string{"bookinfo", "bookinfo2", "bookinfo3"},
 		[]*networking_v1.ServiceEntry{se},
 		[]*networking_v1.VirtualService{vs},
-		data.CreateFakeRegistryServicesLabels("foo-dev", "istio-system"),
+		kubernetes.KubeServiceFQDNs(services, conf),
 		map[string]models.Workloads{
 			"istio-system": {
 				data.CreateWorkload("istio-system", "istiod", map[string]string{"app": "istio-ingressgateway"}),

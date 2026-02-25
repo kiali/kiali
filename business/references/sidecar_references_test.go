@@ -13,19 +13,19 @@ import (
 )
 
 func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
+	conf := config.Get()
+	services := data.CreateFakeServicesWithSelector("foo-service", "istio-system")
 	drReferences := SidecarReferences{
-		Conf:      config.Get(),
-		Namespace: "istio-system",
-		Namespaces: models.Namespaces{
-			{Name: "istio-system"},
-		},
-		Sidecars:       []*networking_v1.Sidecar{sc},
-		ServiceEntries: []*networking_v1.ServiceEntry{se},
+		Conf:             conf,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(services, conf),
+		Namespace:        "istio-system",
+		Namespaces:       models.Namespaces{{Name: "istio-system"}},
+		ServiceEntries:   []*networking_v1.ServiceEntry{se},
+		Sidecars:         []*networking_v1.Sidecar{sc},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"istio-system": {
 				data.CreateWorkload("istio-system", "istiod", map[string]string{"app": "istio-ingressgateway"}),
 			}},
-		RegistryServices: data.CreateFakeRegistryServicesLabels("foo-service", "istio-system"),
 	}
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.Sidecars, Namespace: sc.Namespace, Name: sc.Name}]
 }

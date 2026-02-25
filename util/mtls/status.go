@@ -3,6 +3,7 @@ package mtls
 import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
@@ -17,12 +18,12 @@ const (
 )
 
 type MtlsStatus struct {
-	PeerAuthentications []*security_v1.PeerAuthentication
+	AllowPermissive     bool
+	AutoMtlsEnabled     bool
 	DestinationRules    []*networking_v1.DestinationRule
 	MatchingLabels      labels.Labels
-	AutoMtlsEnabled     bool
-	AllowPermissive     bool
-	RegistryServices    []*kubernetes.RegistryService
+	PeerAuthentications []*security_v1.PeerAuthentication
+	Services            []core_v1.Service
 }
 
 type TlsStatus struct {
@@ -65,6 +66,14 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string, conf *config.Config) st
 		} else {
 			continue
 		}
+		// Pre-existing bug fix: when a PA uses only MatchExpressions (no MatchLabels),
+		// selectorLabels is nil. labels.Set(nil).AsSelector() produces an empty selector
+		// that matches everything, causing all services to be treated as matching.
+		// K8s Service selectors are simple key=value maps, so we cannot evaluate
+		// MatchExpressions against them — skip PAs that have no MatchLabels.
+		if len(selectorLabels) == 0 {
+			continue
+		}
 		selector := labels.Set(selectorLabels).AsSelector()
 		match := selector.Matches(m.MatchingLabels)
 		if !match {
@@ -81,22 +90,20 @@ func (m MtlsStatus) WorkloadMtlsStatus(namespace string, conf *config.Config) st
 			if len(m.DestinationRules) == 0 {
 				return MTLSNotEnabled
 			} else {
-				// Filter DR that applies to the Services matching with the selector
-				// Fetch hosts from DRs and its mtls mode [details, ISTIO_STATUS]
-				// Filter Svc and extract its workloads selectors
-				filteredRSvcs := kubernetes.FilterRegistryServicesBySelector(selector, namespace, m.RegistryServices)
-				nameNamespaces := []NameNamespace{}
-				for _, rSvc := range filteredRSvcs {
-					nameNamespaces = append(nameNamespaces, NameNamespace{rSvc.Attributes.Name, rSvc.Attributes.Namespace})
-				}
-				for _, nameNamespace := range nameNamespaces {
-					filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, nameNamespace.Namespace, nameNamespace.Name, conf)
-					for _, dr := range filteredDrs {
-						enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
-						if enabled || mode == "MUTUAL" {
-							return MTLSEnabled
-						} else if mode == "DISABLE" {
-							return MTLSDisabled
+				// Filter K8s Services whose selector matches the PA selector, then check DRs
+				for _, svc := range m.Services {
+					if svc.Namespace != namespace || len(svc.Spec.Selector) == 0 {
+						continue
+					}
+					if selector.Matches(labels.Set(svc.Spec.Selector)) {
+						filteredDrs := kubernetes.FilterDestinationRulesByService(m.DestinationRules, svc.Namespace, svc.Name, conf)
+						for _, dr := range filteredDrs {
+							enabled, mode := kubernetes.DestinationRuleHasMTLSEnabled(dr)
+							if enabled || mode == "MUTUAL" {
+								return MTLSEnabled
+							} else if mode == "DISABLE" {
+								return MTLSDisabled
+							}
 						}
 					}
 				}
