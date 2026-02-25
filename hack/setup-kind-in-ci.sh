@@ -157,6 +157,11 @@ if [ -z "${ISTIO_VERSION}" ]; then
   fi
 fi
 
+# Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
+if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
+  echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
+fi
+
 KIND_NODE_IMAGE=""
 if [ "${ISTIO_VERSION}" == 1.18.* ]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
