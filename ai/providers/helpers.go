@@ -144,6 +144,99 @@ func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types
 	}
 }
 
+// ToolResultProcessingResult contains the processed tool results and metadata
+type ToolResultProcessingResult struct {
+	Response          *types.AIResponse
+	Conversation      []types.ConversationMessage
+	GetLogsContent    string
+	GetLogsAnalyze    bool
+	ShouldReturnEarly bool
+}
+
+// ProcessToolResults processes tool execution results in a standardized way
+// This function handles special cases for specific tools (get_pod_performance, get_logs)
+// and builds the response and conversation accordingly
+func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
+	result := ToolResultProcessingResult{
+		Response:     &types.AIResponse{},
+		Conversation: conversation,
+	}
+
+	for _, toolResult := range toolResults {
+		// Handle errors
+		if toolResult.Error != nil {
+			result.Response.Error = toolResult.Error.Error()
+			result.ShouldReturnEarly = true
+			return result
+		}
+
+		// Collect actions and citations
+		if len(toolResult.Actions) > 0 {
+			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
+		}
+		if len(toolResult.Citations) > 0 {
+			result.Response.Citations = append(result.Response.Citations, toolResult.Citations...)
+		}
+
+		// Skip adding to conversation if we have actions/citations
+		if len(toolResult.Actions) > 0 || len(toolResult.Citations) > 0 {
+			continue
+		}
+
+		// Special handling for get_pod_performance: return markdown summary directly
+		// This avoids depending on a second model call to "re-say" the table
+		if toolResult.Message.Name == "get_pod_performance" && toolResult.Message.Content != "" {
+			result.Response.Answer = ParseMarkdownResponse(toolResult.Message.Content)
+			result.ShouldReturnEarly = true
+			return result
+		}
+
+		// Special handling for get_logs
+		if toolResult.Message.Name == "get_logs" && toolResult.Message.Content != "" {
+			// Check if analyze parameter is false (default is false)
+			analyze := false
+			if toolResult.Message.Param != nil {
+				if params, ok := toolResult.Message.Param.(map[string]interface{}); ok {
+					log.Debugf("[ProcessToolResults] get_logs params: %+v", params)
+					if analyzeVal, ok := params["analyze"].(bool); ok {
+						analyze = analyzeVal
+						log.Debugf("[ProcessToolResults] get_logs analyze param found: %v", analyze)
+					} else {
+						log.Debugf("[ProcessToolResults] get_logs analyze param not found or not bool, defaulting to false")
+					}
+				} else {
+					log.Debugf("[ProcessToolResults] get_logs Param is not map[string]interface{}, type is: %T", toolResult.Message.Param)
+				}
+			} else {
+				log.Debugf("[ProcessToolResults] get_logs Param is nil")
+			}
+
+			if !analyze {
+				// Return logs directly without model analysis
+				log.Debugf("[ProcessToolResults] get_logs returning logs directly (analyze=false)")
+				result.Response.Answer = ParseMarkdownResponse(toolResult.Message.Content)
+				result.ShouldReturnEarly = true
+				return result
+			}
+
+			// analyze=true: keep tool content available for fallback if model returns unusable output
+			log.Debugf("[ProcessToolResults] get_logs deferring to AI analysis (analyze=true)")
+			result.GetLogsContent = toolResult.Message.Content
+			result.GetLogsAnalyze = true
+			// Do not append raw logs to the stored conversation; we will inject them only
+			// into the analysis request to avoid contaminating future turns
+			continue
+		}
+
+		// Default: append tool message to conversation
+		if toolResult.Message.Content != "" {
+			result.Conversation = append(result.Conversation, toolResult.Message)
+		}
+	}
+
+	return result
+}
+
 func FormatToolContent(result interface{}) (string, error) {
 	switch v := result.(type) {
 	case string:

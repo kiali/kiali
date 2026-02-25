@@ -34,11 +34,25 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	ctx := r.Context()
 	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
 	p.InitializeConversation(&conversation, req)
+
+	// Create a temporary conversation with context for the API call
+	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+	conversationWithContext := p.AddContextToConversation(conversation, req)
+
+	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
+	for i, msg := range conversationWithContext {
+		contentPreview := msg.Content
+		if len(contentPreview) > 100 {
+			contentPreview = contentPreview[:100] + "..."
+		}
+		log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
+	}
+
 	resp, err := p.client.Chat.Completions.New(
 		r.Context(),
 		openai.ChatCompletionNewParams{
 			Model:    openai.ChatModel(p.model),
-			Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
+			Messages: p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion),
 			Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
 		},
 	)
@@ -56,7 +70,8 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
 		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 	}
-	conversation = append(conversation, p.ProviderToConversation(resp))
+	// DO NOT add the assistant response with tool calls to the conversation yet
+	// We will add only the final answer to avoid contaminating future interactions with tool call metadata
 	msg := resp.Choices[0].Message
 	response := &types.AIResponse{}
 	getLogsContent := ""
@@ -70,62 +85,41 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// Add tool results to conversation in the original order
-		for _, result := range toolResults {
-			if result.Error != nil {
-				return &types.AIResponse{Error: result.Error.Error()}, result.Code
-			}
-			if len(result.Actions) > 0 || len(result.Citations) > 0 {
-				response.Actions = append(response.Actions, result.Actions...)
-				response.Citations = append(response.Citations, result.Citations...)
-			} else {
-				// For get_pod_performance, return the markdown summary directly.
-				// This avoids depending on a second model call to "re-say" the table.
-				if result.Message.Name == "get_pod_performance" && result.Message.Content != "" {
-					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-					continue
-				}
-				// For get_logs with analyze=false, return logs directly without AI analysis
-				if result.Message.Name == "get_logs" && result.Message.Content != "" {
-					// Check if analyze parameter is false (default)
-					analyze := false
-					if result.Message.Param != nil {
-						if params, ok := result.Message.Param.(map[string]interface{}); ok {
-							if analyzeVal, ok := params["analyze"].(bool); ok {
-								analyze = analyzeVal
-							}
-						}
-					}
-					if !analyze {
-						// Return logs directly without model analysis
-						response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-						continue
-					}
-					// analyze=true: keep tool content available for fallback if model returns unusable output.
-					getLogsContent = result.Message.Content
-					getLogsAnalyze = true
-					// Do not append raw logs to the stored conversation; we will inject them only
-					// into the analysis request to avoid contaminating future turns.
-					continue
-				}
-				conversation = append(conversation, result.Message)
-			}
-		}
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
-		}
+		// Process tool results using standardized logic
+		processResult := providers.ProcessToolResults(toolResults, conversation)
+		response = processResult.Response
+		conversation = processResult.Conversation
+		getLogsContent = processResult.GetLogsContent
+		getLogsAnalyze = processResult.GetLogsAnalyze
 
-		// If get_logs with analyze=false already set the answer, return it directly
-		if response.Answer != "" {
+		// If there was an error or we should return early, do so
+		if processResult.ShouldReturnEarly {
+			if response.Error != "" {
+				return response, http.StatusInternalServerError
+			}
+			// Add final response to conversation before storing
+			if response.Answer != "" {
+				conversation = append(conversation, types.ConversationMessage{
+					Content: response.Answer,
+					Name:    "",
+					Param:   nil,
+					Role:    "assistant",
+				})
+			}
 			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
 			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 			return response, http.StatusOK
 		}
 
+		if err := ctx.Err(); err != nil {
+			return providers.NewContextCanceledResponse(err)
+		}
+
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
 			log.Debugf("[Chat AI] OpenAI provider conversation after tool calls: %+v", conversation)
-			messagesForAnalysis := conversation
+			// Add context to conversation for analysis (temporary, not saved)
+			messagesForAnalysis := p.AddContextToConversation(conversation, req)
 			if getLogsAnalyze && getLogsContent != "" {
 				messagesForAnalysis = append(messagesForAnalysis, types.ConversationMessage{
 					Role: "user",
@@ -162,6 +156,17 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		response.Answer = providers.ParseMarkdownResponse(msg.Content)
 	}
 
+	// Add the final assistant response to conversation (without tool call metadata)
+	// This keeps conversational context without confusing future tool selections
+	if response.Answer != "" {
+		conversation = append(conversation, types.ConversationMessage{
+			Content: response.Answer,
+			Name:    "",
+			Param:   nil,
+			Role:    "assistant",
+		})
+	}
+
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 	return response, http.StatusOK
@@ -171,7 +176,8 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 	if conversation == nil {
 		return
 	}
-	if len(*conversation) == 0 {
+	isNewConversation := len(*conversation) == 0
+	if isNewConversation {
 		// Initialize base system instruction when empty.
 		*conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
@@ -181,15 +187,6 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 		},
 		}
 	}
-	contextBytes, _ := json.Marshal(req.Context)
-	// Adding context to the conversation. This is the system message that is sent to the AI.
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: contextContent,
-		Name:    "",
-		Param:   nil,
-		Role:    "system",
-	})
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
 	*conversation = append(*conversation, types.ConversationMessage{
 		Content: req.Query,
@@ -197,6 +194,37 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 		Param:   nil,
 		Role:    "user",
 	})
+}
+
+// AddContextToConversation creates a temporary copy of the conversation with context added
+// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+func (p *OpenAIProvider) AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
+	if len(conversation) == 0 {
+		return conversation
+	}
+
+	// Create a copy to avoid modifying the original
+	result := make([]types.ConversationMessage, 0, len(conversation)+1)
+
+	// Add system instruction (should be first)
+	result = append(result, conversation[0])
+
+	// Add context as second message (after system instruction, before user messages)
+	contextBytes, _ := json.Marshal(req.Context)
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	result = append(result, types.ConversationMessage{
+		Content: contextContent,
+		Name:    "",
+		Param:   nil,
+		Role:    "system",
+	})
+
+	// Add the rest of the conversation
+	if len(conversation) > 1 {
+		result = append(result, conversation[1:]...)
+	}
+
+	return result
 }
 
 func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {

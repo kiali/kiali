@@ -39,6 +39,10 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 
 	p.InitializeConversation(&conversation, req)
 
+	// Create a temporary conversation with context for the API call
+	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+	conversationWithContext := p.AddContextToConversation(conversation, req)
+
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
 		Tools: p.GetToolDefinitions().([]*genai.Tool),
@@ -49,7 +53,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		},
 	}
 
-	chat, err := p.client.Chats.Create(ctx, p.model, config, p.ConversationToProvider(conversation).([]*genai.Content))
+	chat, err := p.client.Chats.Create(ctx, p.model, config, p.ConversationToProvider(conversationWithContext).([]*genai.Content))
 	if err != nil {
 		log.Debugf("Google provider error: %v", err)
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
@@ -58,11 +62,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	if err != nil {
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
-	conversation = append(conversation, types.ConversationMessage{
-		Content: req.Query,
-		Name:    "",
-		Role:    "user",
-	})
+	// User query was already added to conversation in InitializeConversation, no need to add again
 	functionCalls := result.FunctionCalls()
 	getLogsContent := ""
 	getLogsAnalyze := false
@@ -73,65 +73,41 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
-		for _, result := range toolResults {
-			if result.Error != nil {
-				return &types.AIResponse{Error: result.Error.Error()}, result.Code
+
+		// Process tool results using standardized logic
+		processResult := providers.ProcessToolResults(toolResults, conversation)
+		response = processResult.Response
+		conversation = processResult.Conversation
+		getLogsContent = processResult.GetLogsContent
+		getLogsAnalyze = processResult.GetLogsAnalyze
+
+		// If there was an error or we should return early, do so
+		if processResult.ShouldReturnEarly {
+			if response.Error != "" {
+				return response, http.StatusInternalServerError
 			}
-			if len(result.Actions) > 0 {
-				response.Actions = append(response.Actions, result.Actions...)
-			}
-			if len(result.Citations) > 0 {
-				response.Citations = append(response.Citations, result.Citations...)
-			}
-			// For get_logs with analyze=false, return logs directly without AI analysis
-			if result.Message.Name == "get_pod_performance" && result.Message.Content != "" {
-				response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-				continue
-			}
-			if result.Message.Name == "get_logs" && result.Message.Content != "" {
-				// Check if analyze parameter is false (default)
-				analyze := false
-				if result.Message.Param != nil {
-					if params, ok := result.Message.Param.(map[string]interface{}); ok {
-						if analyzeVal, ok := params["analyze"].(bool); ok {
-							analyze = analyzeVal
-						}
-					}
-				}
-				if !analyze {
-					// Return logs directly without model analysis
-					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-					continue
-				}
-				// analyze=true: keep tool content available for fallback if model returns unusable output.
-				getLogsContent = result.Message.Content
-				getLogsAnalyze = true
-				// Do not append raw logs to the stored conversation; we will inject them only
-				// into the analysis request to avoid contaminating future turns.
-				continue
-			}
-			if result.Message.Content != "" {
+			// Add final response to conversation before storing
+			if response.Answer != "" {
 				conversation = append(conversation, types.ConversationMessage{
-					Content: result.Message.Content,
+					Content: response.Answer,
 					Name:    "",
-					Role:    "tool",
+					Param:   nil,
+					Role:    "assistant",
 				})
 			}
-		}
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
-		}
-
-		// If get_logs with analyze=false already set the answer, return it directly
-		if response.Answer != "" {
 			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
 			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 			return response, http.StatusOK
 		}
 
+		if err := ctx.Err(); err != nil {
+			return providers.NewContextCanceledResponse(err)
+		}
+
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
-			contentsForAnalysis := conversation
+			// Add context to conversation for analysis (temporary, not saved)
+			contentsForAnalysis := p.AddContextToConversation(conversation, req)
 			if getLogsAnalyze && getLogsContent != "" {
 				contentsForAnalysis = append(contentsForAnalysis, types.ConversationMessage{
 					Role: "user",
@@ -164,7 +140,18 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	} else {
 		response.Answer = providers.ParseMarkdownResponse(result.Text())
 	}
-	conversation = append(conversation, p.ProviderToConversation(result))
+
+	// Add the final assistant response to conversation (without tool call metadata)
+	// This keeps conversational context without confusing future tool selections
+	if response.Answer != "" {
+		conversation = append(conversation, types.ConversationMessage{
+			Content: response.Answer,
+			Name:    "",
+			Param:   nil,
+			Role:    "assistant",
+		})
+	}
+
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 
@@ -193,7 +180,8 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 	if conversation == nil {
 		return
 	}
-	if len(*conversation) == 0 {
+	isNewConversation := len(*conversation) == 0
+	if isNewConversation {
 		// Initialize base system instruction when empty.
 		*conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
@@ -202,16 +190,44 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 		},
 		}
 	}
-	contextBytes, _ := json.Marshal(req.Context)
-	// Adding context to the conversation. This is the system message that is sent to the AI.
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	// Adding user query to the conversation. This is the user message that is sent to the AI.
 	*conversation = append(*conversation, types.ConversationMessage{
+		Content: req.Query,
+		Name:    "",
+		Param:   nil,
+		Role:    "user",
+	})
+}
+
+// AddContextToConversation creates a temporary copy of the conversation with context added
+// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+func (p *GoogleAIProvider) AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
+	if len(conversation) == 0 {
+		return conversation
+	}
+
+	// Create a copy to avoid modifying the original
+	result := make([]types.ConversationMessage, 0, len(conversation)+1)
+
+	// Add system instruction (should be first)
+	result = append(result, conversation[0])
+
+	// Add context as second message (after system instruction, before user messages)
+	contextBytes, _ := json.Marshal(req.Context)
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	result = append(result, types.ConversationMessage{
 		Content: contextContent,
 		Name:    "",
 		Param:   nil,
 		Role:    "system",
-	},
-	)
+	})
+
+	// Add the rest of the conversation
+	if len(conversation) > 1 {
+		result = append(result, conversation[1:]...)
+	}
+
+	return result
 }
 
 func (p *GoogleAIProvider) GetToolDefinitions() interface{} {
