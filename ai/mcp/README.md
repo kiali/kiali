@@ -244,7 +244,34 @@ Retrieves detailed information or lists of Kubernetes resources (services, workl
 
 ---
 
-### 5. `get_traces`
+### 5. `get_pod_performance`
+
+Returns a **human-readable summary table** (Markdown) for current CPU/memory usage (from Prometheus) compared to **Kubernetes requests/limits** (from the Pod spec).
+
+**Action**: Query Prometheus for resource usage and compare vs requests/limits.
+
+**Parameters**:
+- `namespace` (string, required): Namespace of the Pod/workload.
+- `podName` (string, optional): Name of the Pod.
+- `workloadName` (string, optional): Name of the workload. If provided, the tool will look up the workload and pick one of its Pods. If the workload is not found, it falls back to treating this value as a Pod name.
+- `timeRange` (string, optional): Time window used to compute CPU usage rate (e.g., `"5m"`, `"10m"`, `"1h"`). Default `"10m"`.
+- `queryTime` (string, optional): End time (RFC3339). Default now.
+- `clusterName` (string, optional): Cluster name. Defaults to the cluster in Kiali configuration.
+
+**Returns**: Object with `cpu` and `memory` sections containing `usage`, `request`, `limit`, plus `usage_request_ratio` and `usage_limit_ratio` (and per-container breakdown when available).
+
+**Example**:
+```json
+{
+  "namespace": "bookinfo",
+  "workloadName": "reviews-v1",
+  "timeRange": "10m"
+}
+```
+
+---
+
+### 6. `get_traces`
 
 Fetches a distributed trace from the configured tracing backend (Jaeger/Tempo) and returns a compact summary highlighting **latency bottlenecks** and/or **error chains**.
 
@@ -283,7 +310,7 @@ Fetches a distributed trace from the configured tracing backend (Jaeger/Tempo) a
 
 ---
 
-### 6. `manage_istio_config`
+### 7. `manage_istio_config`
 
 Manages Istio configuration objects: list, get, create, patch, and delete operations.
 
@@ -430,6 +457,7 @@ The AI model automatically calls these tools based on user queries:
 - When users ask about documentation or troubleshooting → `get_citations`
 - When users ask about mesh health or topology → `get_mesh_graph`
 - When users ask about specific resources → `get_resource_detail`
+- When users ask about Pod CPU/memory usage or resource pressure → `get_pod_performance`
 - When users want to manage Istio config → `manage_istio_config`
 
 The AI combines results from multiple tools to provide comprehensive answers with navigation actions and citations.

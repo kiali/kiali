@@ -81,6 +81,10 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 				response.Citations = append(response.Citations, result.Citations...)
 			}
 			// For get_logs with analyze=false, return logs directly without AI analysis
+			if result.Message.Name == "get_pod_performance" && result.Message.Content != "" {
+				response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
+				continue
+			}
 			if result.Message.Name == "get_logs" && result.Message.Content != "" {
 				// Check if analyze parameter is false (default)
 				analyze := false

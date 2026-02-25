@@ -1,0 +1,27 @@
+- name: "get_pod_performance"
+  description: "Returns a human-readable markdown table with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'."
+  input_schema:
+    type: "object"
+    required: ["namespace"]
+    anyOf:
+    - required: ["podName"]
+    - required: ["workloadName"]
+    properties:
+      namespace:
+        type: "string"
+        description: "Kubernetes namespace of the Pod."
+      podName:
+        type: "string"
+        description: "Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first."
+      workloadName:
+        type: "string"
+        description: "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName."
+      timeRange:
+        type: "string"
+        description: "Time window used to compute CPU rate (Prometheus duration like '5m', '10m', '1h', '1d'). Defaults to '10m'."
+      queryTime:
+        type: "string"
+        description: "Optional end timestamp (RFC3339) for the query. Defaults to now."
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration (KubeConfig)."
