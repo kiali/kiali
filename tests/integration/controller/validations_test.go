@@ -68,13 +68,28 @@ var _ = Describe("Validations controller", Ordered, func() {
 		It("Should create validations in the kiali cache when a new VirtualService is created", func(ctx SpecContext) {
 			Expect(kialiCache.Validations().Items()).Should(BeEmpty())
 
-			By("By creating a VirtualService")
+			By("By creating a VirtualService with a gateway")
 			istioSystemNamespace := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "istio-system",
 				},
 			}
 			err := k8sClient.Create(ctx, istioSystemNamespace)
+			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
+			gw := &networkingv1.Gateway{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-gateway",
+					Namespace: "default",
+				},
+				Spec: apinetworkingv1.Gateway{
+					Selector: map[string]string{"istio": "ingressgateway"},
+					Servers: []*apinetworkingv1.Server{{
+						Hosts: []string{"test.com"},
+						Port:  &apinetworkingv1.Port{Name: "http", Number: 80, Protocol: "HTTP"},
+					}},
+				},
+			}
+			err = k8sClient.Create(ctx, gw)
 			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
 			vs := &networkingv1.VirtualService{
 				ObjectMeta: metav1.ObjectMeta{
@@ -142,11 +157,16 @@ var _ = Describe("Validations controller", Ordered, func() {
 		})
 
 		It("Should delete validations in the kiali cache when the VirtualService is deleted", func(ctx SpecContext) {
-			By("By deleting a VirtualService")
+			By("By deleting the VirtualService and its Gateway")
 			vs := &networkingv1.VirtualService{}
 			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "default"}
 			Expect(k8sClient.Get(ctx, vsKey, vs)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, vs)).Should(Succeed())
+
+			gw := &networkingv1.Gateway{}
+			gwKey := types.NamespacedName{Name: "test-gateway", Namespace: "default"}
+			Expect(k8sClient.Get(ctx, gwKey, gw)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, gw)).Should(Succeed())
 
 			By("By checking that the validations are then deleted from the kiali cache")
 			Eventually(func() bool {
