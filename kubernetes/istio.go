@@ -259,23 +259,30 @@ func (h KubeServiceHosts) IsValidForNamespace(host string, namespace string) boo
 	if !found {
 		return false
 	}
+	return IsExportedTo(entry.exportTo, entry.namespace, namespace)
+}
 
-	if len(entry.exportTo) == 0 {
+// IsExportedTo checks whether a resource with the given exportTo list is visible from
+// viewerNamespace. resourceNamespace is the namespace the resource lives in, needed to
+// evaluate the "." (same-namespace) token. An empty exportTo list means the resource
+// is visible to all namespaces (Istio's default behaviour).
+func IsExportedTo(exportTo []string, resourceNamespace, viewerNamespace string) bool {
+	if len(exportTo) == 0 {
 		return true
 	}
 
-	for _, export := range entry.exportTo {
+	for _, export := range exportTo {
 		switch export {
 		case "*":
 			return true
 		case ".":
-			if entry.namespace == namespace {
+			if resourceNamespace == viewerNamespace {
 				return true
 			}
 		case "~":
 			continue
 		default:
-			if export == namespace {
+			if export == viewerNamespace {
 				return true
 			}
 		}

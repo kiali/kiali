@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -68,6 +70,146 @@ func TestServiceEntryNoReferences(t *testing.T) {
 	assert.Equal("test", references.ServiceReferences[0].Namespace)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
+}
+
+func TestServiceEntryReferencesExportToNone(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{}
+	se.Name = "external-api"
+	se.Namespace = "team-a"
+	se.Spec.Hosts = []string{"api.example.com"}
+	se.Spec.ExportTo = []string{"~"}
+
+	refs := ServiceEntryReferences{
+		Conf:           conf,
+		Namespace:      "team-a",
+		Namespaces:     []string{"team-a"},
+		ServiceEntries: []*networking_v1.ServiceEntry{se},
+	}
+	result := refs.References()
+	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "team-a", Name: "external-api"}]
+	assert.Empty(seRefs.ServiceReferences)
+}
+
+func TestServiceEntryReferencesExportToOtherNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{}
+	se.Name = "shared-api"
+	se.Namespace = "infra"
+	se.Spec.Hosts = []string{"api.internal.com"}
+	se.Spec.ExportTo = []string{"consumer-ns"}
+
+	refs := ServiceEntryReferences{
+		Conf:           conf,
+		Namespace:      "infra",
+		Namespaces:     []string{"infra", "consumer-ns"},
+		ServiceEntries: []*networking_v1.ServiceEntry{se},
+	}
+	result := refs.References()
+	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "infra", Name: "shared-api"}]
+	assert.Empty(seRefs.ServiceReferences)
+}
+
+func TestServiceEntryReferencesKubeServiceNotVisible(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	svc := fakeService("reviews", "bookinfo")
+	svc.Annotations = map[string]string{
+		kubernetes.ExportToAnnotation: "bookinfo",
+	}
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+
+	se := &networking_v1.ServiceEntry{}
+	se.Name = "override-reviews"
+	se.Namespace = "other-ns"
+	se.Spec.Hosts = []string{"reviews.bookinfo.svc.cluster.local"}
+
+	refs := ServiceEntryReferences{
+		Conf:             conf,
+		KubeServiceHosts: kubeHosts,
+		Namespace:        "other-ns",
+		Namespaces:       []string{"other-ns", "bookinfo"},
+		ServiceEntries:   []*networking_v1.ServiceEntry{se},
+	}
+	result := refs.References()
+	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "other-ns", Name: "override-reviews"}]
+	assert.Empty(seRefs.ServiceReferences)
+}
+
+func TestServiceEntryReferencesKubeServiceVisible(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	svc := fakeService("reviews", "bookinfo")
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+
+	se := &networking_v1.ServiceEntry{}
+	se.Name = "override-reviews"
+	se.Namespace = "bookinfo"
+	se.Spec.Hosts = []string{"reviews.bookinfo.svc.cluster.local"}
+
+	refs := ServiceEntryReferences{
+		Conf:             conf,
+		KubeServiceHosts: kubeHosts,
+		Namespace:        "bookinfo",
+		Namespaces:       []string{"bookinfo"},
+		ServiceEntries:   []*networking_v1.ServiceEntry{se},
+	}
+	result := refs.References()
+	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "bookinfo", Name: "override-reviews"}]
+	assert.Len(seRefs.ServiceReferences, 1)
+	assert.Equal("reviews.bookinfo.svc.cluster.local", seRefs.ServiceReferences[0].Name)
+}
+
+func TestServiceEntryReferencesMixed(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	svc := fakeService("reviews", "bookinfo")
+	svc.Annotations = map[string]string{
+		kubernetes.ExportToAnnotation: "bookinfo",
+	}
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+
+	se := &networking_v1.ServiceEntry{}
+	se.Name = "mixed-se"
+	se.Namespace = "other-ns"
+	se.Spec.Hosts = []string{
+		"reviews.bookinfo.svc.cluster.local",
+		"api.example.com",
+	}
+	se.Spec.ExportTo = []string{"*"}
+
+	refs := ServiceEntryReferences{
+		Conf:             conf,
+		KubeServiceHosts: kubeHosts,
+		Namespace:        "other-ns",
+		Namespaces:       []string{"other-ns", "bookinfo"},
+		ServiceEntries:   []*networking_v1.ServiceEntry{se},
+	}
+	result := refs.References()
+	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "other-ns", Name: "mixed-se"}]
+	assert.Len(seRefs.ServiceReferences, 1)
+	assert.Equal("api.example.com", seRefs.ServiceReferences[0].Name)
+}
+
+func fakeService(name, namespace string) core_v1.Service {
+	return core_v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
 }
 
 func getAPDestinationRule(t *testing.T) *networking_v1.DestinationRule {

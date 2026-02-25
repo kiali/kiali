@@ -14,6 +14,7 @@ type ServiceEntryReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
 	DestinationRules      []*networking_v1.DestinationRule
+	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            []string
 	ServiceEntries        []*networking_v1.ServiceEntry
@@ -112,6 +113,14 @@ func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEn
 	result := make([]models.ServiceReference, 0)
 	keys := make(map[string]bool)
 	for _, seHost := range se.Spec.Hosts {
+		if n.KubeServiceHosts.HasHost(seHost) {
+			if !n.KubeServiceHosts.IsValidForNamespace(seHost, se.Namespace) {
+				continue
+			}
+		} else if !kubernetes.IsExportedTo(se.Spec.ExportTo, se.Namespace, se.Namespace) {
+			continue
+		}
+
 		ref := models.ServiceReference{Name: seHost, Namespace: se.Namespace}
 		key := util.BuildNameNSKey(ref.Name, ref.Namespace)
 		if !keys[key] {
