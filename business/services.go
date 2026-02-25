@@ -181,27 +181,28 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		deployments = depList.Items
 	}
 
-	// Cross-namespace query of all Istio Resources to find references
-	// References MAY have visibility for a user but not access if they are not allowed to access to the namespace
-	if criteria.IncludeIstioResources {
-		istioCriteria := IstioConfigCriteria{
-			IncludeDestinationRules:   true,
-			IncludeGateways:           true,
-			IncludeK8sGateways:        true,
-			IncludeK8sGRPCRoutes:      true,
-			IncludeK8sHTTPRoutes:      true,
-			IncludeK8sInferencePools:  true,
-			IncludeK8sReferenceGrants: true,
-			IncludeServiceEntries:     true,
-			IncludeVirtualServices:    true,
-		}
-		istioConfigs, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, istioCriteria)
-		if err != nil {
-			log.Errorf("Error fetching IstioConfigList per cluster [%s] per namespace [%s]: %s", cluster, criteria.Namespace, err)
-			return nil, err
-		}
-		istioConfigList = *istioConfigs
+	// ServiceEntries are always fetched because buildServiceEntryOverviews needs
+	// them to produce SE-backed services (replacing the old Istio Service Registry).
+	// The remaining Istio resources are only needed for building references/badges.
+	istioCriteria := IstioConfigCriteria{
+		IncludeServiceEntries: true,
 	}
+	if criteria.IncludeIstioResources {
+		istioCriteria.IncludeDestinationRules = true
+		istioCriteria.IncludeGateways = true
+		istioCriteria.IncludeK8sGateways = true
+		istioCriteria.IncludeK8sGRPCRoutes = true
+		istioCriteria.IncludeK8sHTTPRoutes = true
+		istioCriteria.IncludeK8sInferencePools = true
+		istioCriteria.IncludeK8sReferenceGrants = true
+		istioCriteria.IncludeVirtualServices = true
+	}
+	istioConfigs, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, istioCriteria)
+	if err != nil {
+		log.Errorf("Error fetching IstioConfigList per cluster [%s] per namespace [%s]: %s", cluster, criteria.Namespace, err)
+		return nil, err
+	}
+	istioConfigList = *istioConfigs
 
 	// Convert to Kiali model
 	services := in.buildServiceList(cluster, criteria.Namespace, svcs, pods, deployments, istioConfigList, criteria)

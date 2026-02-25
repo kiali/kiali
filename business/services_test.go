@@ -896,6 +896,154 @@ func TestGetServiceDetailsSubServicesVersioned(t *testing.T) {
 	assert.False(subNames["reviews"])
 }
 
+func TestServiceListSEAppearsWithoutIstioResources(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"app": "external"},
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"foo.bookinfo.ext"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: false,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 2)
+
+	names := make(map[string]bool)
+	for _, s := range serviceList.Services {
+		names[s.Name] = true
+	}
+	assert.True(names["reviews"])
+	assert.True(names["foo.bookinfo.ext"], "SE-backed service must appear even when IncludeIstioResources is false")
+}
+
+// With the Istiod service registry removed, ServiceEntries are now the source
+// of SE-backed services. They must always be included in the service list,
+// regardless of whether the caller requests Istio resources. This test uses the
+// exact criteria the graph idle node appender uses to verify that SE-backed
+// services remain visible.
+func TestServiceListSEAppearsForGraphAppenderPattern(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"foo.bookinfo.ext"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Cluster:                conf.KubernetesConfig.ClusterName,
+		Namespace:              "bookinfo",
+		IncludeHealth:          false,
+		IncludeOnlyDefinitions: true,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 2)
+
+	var seService *models.ServiceOverview
+	for i := range serviceList.Services {
+		if serviceList.Services[i].Name == "foo.bookinfo.ext" {
+			seService = &serviceList.Services[i]
+			break
+		}
+	}
+	require.NotNil(seService, "SE-backed service must appear with IncludeOnlyDefinitions=true, IncludeIstioResources=false")
+	assert.Equal("External", seService.ServiceRegistry)
+	assert.Equal("bookinfo", seService.Namespace)
+	assert.Equal(conf.KubernetesConfig.ClusterName, seService.Cluster)
+}
+
+func TestServiceListSEReferencesLimitedWithoutIstioResources(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"foo.bookinfo.ext"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	withIstio := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	withIstioList, err := svc.GetServiceList(context.TODO(), withIstio)
+	require.NoError(err)
+	require.Len(withIstioList.Services, 1)
+
+	withoutIstio := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: false,
+		IncludeHealth:         false,
+	}
+	withoutIstioList, err := svc.GetServiceList(context.TODO(), withoutIstio)
+	require.NoError(err)
+	require.Len(withoutIstioList.Services, 1)
+
+	assert.Equal("foo.bookinfo.ext", withIstioList.Services[0].Name)
+	assert.Equal("foo.bookinfo.ext", withoutIstioList.Services[0].Name)
+
+	// With IncludeIstioResources=true, the SE reference should be present
+	assert.NotEmpty(withIstioList.Services[0].IstioReferences,
+		"SE reference should be present when IncludeIstioResources is true")
+
+	// With IncludeIstioResources=false, the SE reference is still present
+	// because ServiceEntries are always fetched.
+	assert.NotEmpty(withoutIstioList.Services[0].IstioReferences,
+		"SE reference should still be present since ServiceEntries are always fetched")
+}
+
 func TestGetServiceDetailsSubServicesFallbackToMainService(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
