@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
-import { Link } from 'react-router-dom-v5-compat';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle, Popover, PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { KialiLink } from 'components/Link/KialiLink';
 import { t } from 'utils/I18nUtils';
 import { useControlPlanes } from 'hooks/controlPlanes';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -17,13 +17,12 @@ import {
   popoverItemStatusStyle,
   popoverItemStyle,
   statItemStyle,
-  statsContainerStyle,
-  noUnderlineStyle
+  statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { isUnhealthy, isHealthy } from 'utils/StatusUtils';
-import { StatCountPopover } from './StatCountPopover';
-import { buildControlPlanesUrl, buildMeshUrlWithClusterFilter, navigateToUrl } from './Links';
+import { buildControlPlanesUrl, buildMeshUrl, resetMeshFilters } from './LinkBuilder';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
 
 export const ControlPlaneStats: React.FC = () => {
   const { controlPlanes, isError, isLoading, refresh } = useControlPlanes();
@@ -42,7 +41,9 @@ export const ControlPlaneStats: React.FC = () => {
         <div key={`${cp.cluster.name}-${cp.istiodName}`} className={popoverItemStyle}>
           <span>
             <PFBadge badge={PFBadges.Istio} size="sm" />
-            <Link to={buildMeshUrlWithClusterFilter(cp.cluster.name)}>{cp.istiodName}</Link>
+            <KialiLink to={buildMeshUrl(cp.cluster.name)} onClick={resetMeshFilters}>
+              {cp.istiodName}
+            </KialiLink>
           </span>
           <span className={popoverItemStatusStyle}>{cp.status}</span>
         </div>
@@ -72,36 +73,34 @@ export const ControlPlaneStats: React.FC = () => {
               </div>
             )}
             {unhealthy > 0 && (
-              <StatCountPopover
-                ariaLabel={t('Control planes with issues')}
+              <Popover
+                aria-label={t('Control planes with issues')}
+                position={PopoverPosition.right}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationTriangle /> {t('Control planes')}
                   </span>
                 }
                 bodyContent={popoverContent}
-                trigger={
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="control-planes-issues">
-                    <span className={linkStyle}>{unhealthy}</span>
-                    <KialiIcon.ExclamationTriangle />
-                  </div>
-                }
-              />
+              >
+                <div className={classes(statItemStyle, clickableStyle)} data-test="control-planes-issues">
+                  <span className={linkStyle}>{unhealthy}</span>
+                  <KialiIcon.ExclamationTriangle />
+                </div>
+              </Popover>
             )}
           </div>
         )}
       </CardBody>
       {!isLoading && !isError && (
         <CardFooter>
-          <Button
-            variant="link"
-            isInline
-            className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(buildControlPlanesUrl())}
-            data-test="control-planes-view-namespaces"
+          <KialiLink
+            to={buildControlPlanesUrl()}
+            onClick={() => FilterSelected.resetFilters()}
+            dataTest="control-planes-view-namespaces"
           >
             {t('View Control planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Button>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

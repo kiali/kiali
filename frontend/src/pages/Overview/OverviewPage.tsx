@@ -20,8 +20,7 @@ import { ServiceInsights } from './ServiceInsights';
 
 const overviewPageStyle = kialiStyle({
   display: 'flex',
-  flexDirection: 'column',
-  height: 'calc(100vh - 136px)'
+  flexDirection: 'column'
 });
 
 const gridStyle = kialiStyle({

@@ -9,10 +9,6 @@ import { healthConfig } from '../../../types/__testData__/HealthConfig';
 import { naTextStyle } from 'styles/HealthStyle';
 import { namespaceNaIconStyle } from '../NamespaceStyle';
 
-jest.mock('utils/NavigationUtils', () => ({
-  kialiNavigate: jest.fn()
-}));
-
 describe('NamespaceHealthStatus', () => {
   beforeAll(() => {
     setServerConfig(healthConfig);

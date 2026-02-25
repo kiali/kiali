@@ -84,12 +84,3 @@ export const statusLabelStyle = kialiStyle({
     }
   }
 });
-
-export const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});

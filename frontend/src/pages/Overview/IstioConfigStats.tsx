@@ -1,18 +1,24 @@
 import * as React from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label } from '@patternfly/react-core';
-import { Link } from 'react-router-dom-v5-compat';
+import {
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Label,
+  Popover,
+  PopoverPosition
+} from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
+import { KialiLink } from 'components/Link/KialiLink';
 import { t } from 'utils/I18nUtils';
 import { IstioConfigStatusLabel, useIstioConfigStatus } from 'hooks/istioConfigs';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { PFColors } from 'components/Pf/PfColors';
-import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
-import { getIstioObjectGVK } from 'utils/IstioConfigUtils';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
+import { buildIstioDetailUrl, buildIstioListUrl } from './LinkBuilder';
 import {
   cardStyle,
   cardBodyStyle,
@@ -25,11 +31,10 @@ import {
   popoverItemStatusStyle,
   statItemStyle,
   statsContainerStyle,
-  statusLabelStyle,
-  noUnderlineStyle
+  statusLabelStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { StatCountPopover } from './StatCountPopover';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
 
 const WARNING_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.Warning, IstioConfigStatusLabel.NotValidated];
 const ERROR_FILTERS: IstioConfigStatusLabel[] = [IstioConfigStatusLabel.NotValid];
@@ -79,31 +84,6 @@ export const IstioConfigStats: React.FC = () => {
   const warningIssues = istioConfigStats.issues.filter(i => i.severity === 'warning');
   const errorIssues = istioConfigStats.issues.filter(i => i.severity === 'error');
 
-  const buildIstioListUrl = (opts?: { configFilters?: IstioConfigStatusLabel[]; namespaces?: string[] }): string => {
-    const params = new URLSearchParams();
-    if (opts?.namespaces && opts.namespaces.length > 0) {
-      params.append('namespaces', opts.namespaces.join(','));
-    }
-    opts?.configFilters?.forEach(label => params.append('config', label));
-    if (opts?.configFilters && opts.configFilters.length > 0) {
-      params.append('opLabel', 'or');
-    }
-    const qs = params.toString();
-    return `/${Paths.ISTIO}${qs ? `?${qs}` : ''}`;
-  };
-
-  const navigateToUrl = (url: string): void => {
-    FilterSelected.resetFilters();
-    router.navigate(url);
-  };
-
-  const buildDetailUrl = (item: typeof istioConfigStats.issues[number]): string => {
-    const gvk = getIstioObjectGVK(item.apiVersion, item.kind);
-    const clusterParam = item.cluster ? `?clusterName=${item.cluster}` : '';
-
-    return `/namespaces/${item.namespace}/${Paths.ISTIO}/${gvk.Group}/${gvk.Version}/${gvk.Kind}/${item.name}${clusterParam}`;
-  };
-
   const renderPopoverContent = (
     issues: typeof istioConfigStats.issues,
     viewAllText: string,
@@ -117,7 +97,9 @@ export const IstioConfigStats: React.FC = () => {
             <div key={`${item.cluster}-${item.namespace}-${item.kind}-${item.name}`} className={popoverItemStyle}>
               <span>
                 <PFBadge badge={PFBadges[item.kind] ?? PFBadges.IstioConfig} size="sm" />
-                <Link to={buildDetailUrl(item)}>{item.name}</Link>
+                <KialiLink to={buildIstioDetailUrl(item)} onClick={() => FilterSelected.resetFilters()}>
+                  {item.name}
+                </KialiLink>
               </span>
               <Label
                 className={classes(statusLabelStyle, popoverItemStatusStyle)}
@@ -132,16 +114,13 @@ export const IstioConfigStats: React.FC = () => {
         })}
         {issues.length > MAX_POPOVER_ITEMS && (
           <div className={popoverFooterStyle}>
-            <Button
-              variant="link"
-              className={classes(linkStyle, noUnderlineStyle)}
-              isInline
-              onClick={() =>
-                navigateToUrl(buildIstioListUrl({ configFilters: viewAllStatuses, namespaces: allNamespaceNames }))
-              }
+            <KialiLink
+              to={buildIstioListUrl({ configFilters: viewAllStatuses, namespaces: allNamespaceNames })}
+              onClick={() => FilterSelected.resetFilters()}
+              className={classes(linkStyle)}
             >
               {t(viewAllText)}
-            </Button>
+            </KialiLink>
           </div>
         )}
       </>
@@ -173,52 +152,50 @@ export const IstioConfigStats: React.FC = () => {
               </div>
             )}
             {istioConfigStats.warnings > 0 && (
-              <StatCountPopover
-                ariaLabel={t('Istio configs with warnings')}
+              <Popover
+                aria-label={t('Istio configs with warnings')}
+                position={PopoverPosition.right}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationTriangle /> {t('Istio configs')}
                   </span>
                 }
                 bodyContent={renderPopoverContent(warningIssues, 'View warning Istio configs', WARNING_FILTERS)}
-                trigger={
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-warnings">
-                    <span className={linkStyle}>{istioConfigStats.warnings}</span>
-                    <KialiIcon.ExclamationTriangle />
-                  </div>
-                }
-              />
+              >
+                <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-warnings">
+                  <span className={linkStyle}>{istioConfigStats.warnings}</span>
+                  <KialiIcon.ExclamationTriangle />
+                </div>
+              </Popover>
             )}
             {istioConfigStats.errors > 0 && (
-              <StatCountPopover
-                ariaLabel={t('Istio configs with errors')}
+              <Popover
+                aria-label={t('Istio configs with errors')}
+                position={PopoverPosition.right}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     <KialiIcon.ExclamationCircle /> {t('Istio configs')}
                   </span>
                 }
                 bodyContent={renderPopoverContent(errorIssues, 'View invalid Istio configs', ERROR_FILTERS)}
-                trigger={
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-errors">
-                    <span className={linkStyle}>{istioConfigStats.errors}</span>
-                    <KialiIcon.ExclamationCircle />
-                  </div>
-                }
-              />
+              >
+                <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-errors">
+                  <span className={linkStyle}>{istioConfigStats.errors}</span>
+                  <KialiIcon.ExclamationCircle />
+                </div>
+              </Popover>
             )}
           </div>
         )}
       </CardBody>
       {!istioConfigStats.isLoading && !istioConfigStats.isError && (
         <CardFooter>
-          <Button
-            variant="link"
-            isInline
-            className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(buildIstioListUrl({ namespaces: allNamespaceNames }))}
+          <KialiLink
+            to={buildIstioListUrl({ namespaces: allNamespaceNames })}
+            onClick={() => FilterSelected.resetFilters()}
           >
             {t('View Istio config')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Button>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-  Button,
   Card,
   CardBody,
   CardFooter,
@@ -12,13 +11,13 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { LongArrowAltDownIcon } from '@patternfly/react-icons';
-import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { isMultiCluster, Paths } from 'config';
 import { t } from 'utils/I18nUtils';
-import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
+import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
 import { ServiceLatency, ServiceRequests } from 'types/Overview';
@@ -28,9 +27,8 @@ import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCard
 import { useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { router, URLParam } from 'app/History';
+import { URLParam } from 'app/History';
 import { helpIconStyle } from 'styles/IconStyle';
-import { classes } from 'typestyle';
 
 const tablesContainerStyle = kialiStyle({
   display: 'flex',
@@ -129,15 +127,6 @@ const formatRequestRate = (reqPerSec: number): string => {
   return `${reqPerSec.toFixed(2)} req/s`;
 };
 
-const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});
-
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
     <div style={{ textAlign: 'left' }}>
@@ -181,11 +170,6 @@ export const ServiceInsights: React.FC = () => {
     const qs = params.toString();
     return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
   }, [allNamespaceNames]);
-
-  const navigateToUrl = React.useCallback((url: string): void => {
-    FilterSelected.resetFilters();
-    router.navigate(url);
-  }, []);
 
   const fetchData = React.useCallback(async (): Promise<void> => {
     try {
@@ -256,9 +240,9 @@ export const ServiceInsights: React.FC = () => {
                   content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}
                   position={TooltipPosition.topStart}
                 >
-                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
+                  <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
                     {svc.serviceName}
-                  </Link>
+                  </KialiLink>
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
@@ -305,9 +289,9 @@ export const ServiceInsights: React.FC = () => {
             <tr key={`rate-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
               <td className={tableCellStyle}>
                 <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
-                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
+                  <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
                     {svc.serviceName}
-                  </Link>
+                  </KialiLink>
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
@@ -371,15 +355,13 @@ export const ServiceInsights: React.FC = () => {
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
       {!isLoading && !isError && (
         <CardFooter>
-          <Button
+          <KialiLink
+            to={buildServicesListUrl()}
+            onClick={() => FilterSelected.resetFilters()}
             data-test="service-insights-view-all-services"
-            variant="link"
-            isInline
-            className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(buildServicesListUrl())}
           >
             {t('View all services')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Button>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

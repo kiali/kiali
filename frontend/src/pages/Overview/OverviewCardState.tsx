@@ -31,15 +31,6 @@ const errorIconStyle = kialiStyle({
   fontSize: '3rem'
 });
 
-const tryAgainStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});
-
 type OverviewCardStateBaseProps = {
   className?: string;
 };
@@ -70,7 +61,7 @@ export const OverviewCardErrorState: React.FC<OverviewCardErrorStateProps> = pro
       {props.icon ?? <KialiIcon.Unknown className={errorIconStyle} size="xl" color={PFColors.Color200} />}
       <div className={helperTextStyle}>{props.message}</div>
       {props.onTryAgain && (
-        <Button className={tryAgainStyle} variant="link" isInline onClick={props.onTryAgain}>
+        <Button variant="link" isInline onClick={props.onTryAgain}>
           {t('Try Again')}
         </Button>
       )}

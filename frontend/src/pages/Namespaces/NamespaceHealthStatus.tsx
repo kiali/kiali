@@ -7,7 +7,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { durationSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds } from '../../types/Common';
-import { Button, pluralize, Popover, PopoverPosition } from '@patternfly/react-core';
+import { pluralize, Popover, PopoverPosition } from '@patternfly/react-core';
 import { namespaceNaIconStyle, statusIconStyle, statusTextStyle } from './NamespaceStyle';
 import { naTextStyle } from 'styles/HealthStyle';
 import { classes } from 'typestyle';
@@ -17,10 +17,9 @@ import { URLParam } from 'app/History';
 import { camelCase } from 'lodash';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { kialiNavigate } from 'utils/NavigationUtils';
+import { KialiLink } from 'components/Link/KialiLink';
 import {
   linkStyle as overviewLinkStyle,
-  noUnderlineStyle,
   popoverHeaderStyle,
   popoverItemStatusStyle,
   popoverItemStyle
@@ -78,11 +77,6 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     params.set(URLParam.NAMESPACES, props.name);
     statusIds.forEach(id => params.append(healthFilterParam, id));
     return `/${targetPage}?${params.toString()}`;
-  };
-
-  const navigateToUrl = (url: string): void => {
-    FilterSelected.resetFilters();
-    kialiNavigate(url);
   };
 
   const statusCounts = (status?: NamespaceStatus): UnhealthyCounts => ({
@@ -147,14 +141,9 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     return (
       <div className={popoverItemStyle}>
         <span>
-          <Button
-            variant="link"
-            isInline
-            className={classes(overviewLinkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(url)}
-          >
+          <KialiLink to={url} onClick={() => FilterSelected.resetFilters()} className={classes(overviewLinkStyle)}>
             {`${label} (${total})`}
-          </Button>
+          </KialiLink>
         </span>
         <span className={popoverItemStatusStyle}>{renderResourceHealthSummary(counts)}</span>
       </div>

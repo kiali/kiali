@@ -10,16 +10,22 @@ jest.mock('hooks/clusters', () => ({
   useClusterStatus: jest.fn()
 }));
 
+jest.mock('hooks/redux', () => ({
+  useKialiSelector: jest.fn()
+}));
+
 jest.mock('utils/MeshUtils', () => ({
   isControlPlaneAccessible: jest.fn()
 }));
 
 const useClusterStatusMock = require('hooks/clusters').useClusterStatus as jest.Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 const isControlPlaneAccessibleMock = require('utils/MeshUtils').isControlPlaneAccessible as jest.Mock;
 
 describe('Overview ClusterStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
   });
 
   const mountComponent = (): ReactWrapper => {
@@ -82,9 +88,11 @@ describe('Overview ClusterStats', () => {
     const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
 
     const links = popoverBody.find('a');
-    expect(links.someWhere(a => (a.prop('href') as string).includes(`/${Paths.MESH}?cluster=c2`))).toBeTruthy();
-    expect(links.someWhere(a => (a.prop('href') as string).includes(`/${Paths.MESH}?cluster=c3`))).toBeTruthy();
-    expect(links.someWhere(a => (a.prop('href') as string).includes(`/${Paths.MESH}?cluster=c4`))).toBeTruthy();
+    // buildMeshUrl uses meshHide param with "cluster!=X" to filter the mesh view
+    expect(links.someWhere(a => (a.prop('href') as string).includes(`/${Paths.MESH}?meshHide=`))).toBeTruthy();
+    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c2'))).toBeTruthy();
+    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c3'))).toBeTruthy();
+    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c4'))).toBeTruthy();
 
     // NotFound status should render Unknown status instead of "1 issue"
     expect(popoverBody.text()).toContain('Unknown status');

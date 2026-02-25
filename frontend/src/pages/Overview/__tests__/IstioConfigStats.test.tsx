@@ -30,11 +30,12 @@ jest.mock('app/History', () => ({
 const useIstioConfigStatusMock = require('hooks/istioConfigs').useIstioConfigStatus as jest.Mock;
 const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as jest.Mock;
-const routerMock = require('app/History').router;
 
 describe('Overview IstioConfigStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default fallback for kiosk state (used by KialiLink)
+    useKialiSelectorMock.mockReturnValue('');
   });
 
   const mountComponent = (): ReactWrapper => {
@@ -99,19 +100,21 @@ describe('Overview IstioConfigStats', () => {
     const wrapper = mountComponent();
     expect(wrapper.text()).toContain('Istio configs (10)');
 
-    wrapper
-      .find('button')
-      .filterWhere(b => b.text().includes('View Istio config'))
-      .first()
-      .simulate('click');
+    const viewLink = wrapper
+      .find('a')
+      .filterWhere(a => a.text().includes('View Istio config'))
+      .first();
+    expect(viewLink.exists()).toBeTruthy();
 
-    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
-    expect(routerMock.navigate as jest.Mock).toHaveBeenCalledTimes(1);
-    const url = (routerMock.navigate as jest.Mock).mock.calls[0][0] as string;
-
+    // Verify link href is correctly built
+    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
     expect(url.startsWith(`/${Paths.ISTIO}?`)).toBeTruthy();
     // namespaces should be "a,b" (sorted, deduped)
     expect(decodeURIComponent(url)).toContain('namespaces=a,b');
+
+    // Verify onClick handler calls resetFilters
+    viewLink.simulate('click');
+    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 
   it('adds config status filters when clicking "View warning Istio configs" in the popover footer', () => {
@@ -176,16 +179,14 @@ describe('Overview IstioConfigStats', () => {
     const bodyContent = popover.prop('bodyContent') as any;
     const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
 
-    popoverBody
-      .find('button')
-      .filterWhere(b => b.text().includes('View warning Istio configs'))
-      .first()
-      .simulate('click');
+    const viewLink = popoverBody
+      .find('a')
+      .filterWhere(a => a.text().includes('View warning Istio configs'))
+      .first();
+    expect(viewLink.exists()).toBeTruthy();
 
-    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
-    expect(routerMock.navigate as jest.Mock).toHaveBeenCalledTimes(1);
-
-    const url = (routerMock.navigate as jest.Mock).mock.calls[0][0] as string;
+    // Verify link href is correctly built with config filters
+    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
     expect(url.startsWith(`/${Paths.ISTIO}?`)).toBeTruthy();
 
     const decoded = decodeURIComponent(url);
@@ -195,5 +196,9 @@ describe('Overview IstioConfigStats', () => {
     expect(decoded).toMatch(/[?&]config=Not(\+|%20)Validated/);
     expect(decoded).toContain('opLabel=or');
     expect(decoded).toContain('namespaces=ns1');
+
+    // Verify onClick handler calls resetFilters
+    viewLink.simulate('click');
+    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 });

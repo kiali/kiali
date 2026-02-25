@@ -1,26 +1,31 @@
 import * as React from 'react';
 import { Card, CardBody, CardFooter, CardHeader, CardTitle, Flex, FlexItem } from '@patternfly/react-core';
 import { ChartDonut } from '@patternfly/react-charts/victory';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
 import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
-import { cardStyle, cardBodyStyle, linkStyle, iconStyle } from './OverviewStyles';
+import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from 'types/Health';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { router } from 'app/History';
 import { useKialiSelector } from 'hooks/redux';
 import { namespaceItemsSelector } from 'store/Selectors';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 import { ResourcesFullIcon } from '@patternfly/react-icons';
+import { buildApplicationsUrl } from './LinkBuilder';
 
-const chartContainerStyle = kialiStyle({
+const healthContainerStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
-  gap: '4rem',
-  marginTop: '1rem'
+  gap: '4rem'
+});
+
+const chartStyle = kialiStyle({
+  width: '280px',
+  height: '280px',
+  paddingTop: '1rem'
 });
 
 const legendContainerStyle = kialiStyle({
@@ -49,6 +54,21 @@ const emptyStateStyle = kialiStyle({
   justifyContent: 'center',
   height: '100%',
   color: PFColors.Color200
+});
+
+const ratesContainerStyle = kialiStyle({
+  marginTop: '0.5rem',
+  marginBottom: '1rem',
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '1.5rem',
+  fontSize: '1rem'
+});
+
+const noTrafficStyle = kialiStyle({
+  fontSize: '0.875rem',
+  marginLeft: '1.2rem',
+  color: PFColors.Blue400
 });
 
 export const ApplicationStats: React.FC = () => {
@@ -81,18 +101,9 @@ export const ApplicationStats: React.FC = () => {
     }
   });
 
-  const navigateToApplications = (): void => {
-    const namespaces = allNamespaces ? allNamespaces.map(ns => ns.name).join(',') : '';
-    let url = `/${Paths.APPLICATIONS}`;
+  const namespaceNames = React.useMemo(() => (allNamespaces ? allNamespaces.map(ns => ns.name) : []), [allNamespaces]);
 
-    if (namespaces) {
-      url += `?namespaces=${namespaces}`;
-    }
-
-    router.navigate(url);
-  };
-
-  const navigateToHealthFilter = (healthStatus: string): void => {
+  const setHealthFilter = (healthStatus: string): void => {
     FilterSelected.setSelected({
       filters: [
         {
@@ -102,13 +113,6 @@ export const ApplicationStats: React.FC = () => {
       ],
       op: 'or'
     });
-
-    navigateToApplications();
-  };
-
-  const resetFiltersAndNavigate = (): void => {
-    FilterSelected.resetFilters();
-    navigateToApplications();
   };
 
   const chartData = [
@@ -143,23 +147,19 @@ export const ApplicationStats: React.FC = () => {
 
     return (
       <>
-        <CardBody style={{ display: 'flex', marginTop: '1rem' }} data-test="apps-card-rates">
-          <Flex style={{ marginLeft: '1.2rem', fontSize: '1rem' }}>
+        <CardBody className={cardBodyStyle}>
+          <Flex className={ratesContainerStyle} data-test="apps-card-rates">
             <FlexItem>
               <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
               <br />
-              <span
-                style={{ fontSize: '0.875rem', marginLeft: '1.2rem', color: PFColors.Blue400 }}
-              >{`${metrics.no_traffic} apps with no traffic`}</span>
+              <span className={noTrafficStyle}>{`${metrics.no_traffic} apps with no traffic`}</span>
             </FlexItem>
-            <FlexItem style={{ marginLeft: '1.2rem' }}>
+            <FlexItem>
               <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
             </FlexItem>
           </Flex>
-        </CardBody>
-        <CardBody className={cardBodyStyle} data-test="apps-card-health">
-          <div className={chartContainerStyle}>
-            <div style={{ width: '280px', height: '280px' }}>
+          <div className={healthContainerStyle} data-test="apps-card-health">
+            <div className={chartStyle}>
               <ChartDonut
                 ariaDesc={t('Application health status')}
                 constrainToVisibleArea
@@ -180,36 +180,56 @@ export const ApplicationStats: React.FC = () => {
               />
             </div>
             <div className={legendContainerStyle}>
-              <div className={legendItemStyle} onClick={() => navigateToHealthFilter(FAILURE.id)}>
-                {createIcon({ ...FAILURE, className: `${legendIconStyle}` })}
+              <KialiLink
+                to={buildApplicationsUrl(namespaceNames)}
+                onClick={() => setHealthFilter(FAILURE.id)}
+                className={legendItemStyle}
+              >
+                {createIcon({ ...FAILURE, className: legendIconStyle })}
                 <span>
                   {failure} {t('Failure')}
                 </span>
-              </div>
-              <div className={legendItemStyle} onClick={() => navigateToHealthFilter(DEGRADED.id)}>
-                {createIcon({ ...DEGRADED, className: `${legendIconStyle}` })}
+              </KialiLink>
+              <KialiLink
+                to={buildApplicationsUrl(namespaceNames)}
+                onClick={() => setHealthFilter(DEGRADED.id)}
+                className={legendItemStyle}
+              >
+                {createIcon({ ...DEGRADED, className: legendIconStyle })}
                 <span>
                   {degraded} {t('Degraded')}
                 </span>
-              </div>
-              <div className={legendItemStyle} onClick={() => navigateToHealthFilter(HEALTHY.id)}>
-                {createIcon({ ...HEALTHY, className: `${legendIconStyle}` })}
+              </KialiLink>
+              <KialiLink
+                to={buildApplicationsUrl(namespaceNames)}
+                onClick={() => setHealthFilter(HEALTHY.id)}
+                className={legendItemStyle}
+              >
+                {createIcon({ ...HEALTHY, className: legendIconStyle })}
                 <span>
                   {healthy} {t('Healthy')}
                 </span>
-              </div>
-              <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NOT_READY.id)}>
-                {createIcon({ ...NOT_READY, className: `${legendIconStyle}` })}
+              </KialiLink>
+              <KialiLink
+                to={buildApplicationsUrl(namespaceNames)}
+                onClick={() => setHealthFilter(NOT_READY.id)}
+                className={legendItemStyle}
+              >
+                {createIcon({ ...NOT_READY, className: legendIconStyle })}
                 <span>
                   {notReady} {t('Not ready')}
                 </span>
-              </div>
-              <div className={legendItemStyle} onClick={() => navigateToHealthFilter(NA.id)}>
-                {createIcon({ ...NA, className: `${legendIconStyle}` })}
+              </KialiLink>
+              <KialiLink
+                to={buildApplicationsUrl(namespaceNames)}
+                onClick={() => setHealthFilter(NA.id)}
+                className={legendItemStyle}
+              >
+                {createIcon({ ...NA, className: legendIconStyle })}
                 <span>
                   {noHealthInfo} {t('No health information')}
                 </span>
-              </div>
+              </KialiLink>
             </div>
           </div>
         </CardBody>
@@ -225,14 +245,13 @@ export const ApplicationStats: React.FC = () => {
       {renderContent()}
       {!isLoading && !isError && (
         <CardFooter>
-          <span
+          <KialiLink
+            to={buildApplicationsUrl(namespaceNames)}
+            onClick={() => FilterSelected.resetFilters()}
             data-test="apps-card-view-all"
-            onClick={resetFiltersAndNavigate}
-            className={linkStyle}
-            style={{ cursor: 'pointer' }}
           >
             {t('View all applications')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </span>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

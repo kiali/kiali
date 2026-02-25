@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Paths } from '../../config';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
-import { KioskLink } from './KioskLink';
+import { KialiLink } from './KialiLink';
 import { isMultiCluster } from '../../config';
 
 type ServiceLinkProps = {
@@ -48,6 +48,8 @@ const ServiceLinkItem: React.FC<ServiceLinkProps> = (props: ServiceLinkProps) =>
   const href = getServiceURL(name, namespace, cluster, query);
 
   return (
-    <KioskLink linkName={`${namespace}/${name}`} dataTest={`service-${namespace}-${name}`} href={href}></KioskLink>
+    <KialiLink dataTest={`service-${namespace}-${name}`} to={href}>
+      {`${namespace}/${name}`}
+    </KialiLink>
   );
 };
