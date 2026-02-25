@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"google.golang.org/genai"
 
@@ -63,6 +64,8 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		Role:    "user",
 	})
 	functionCalls := result.FunctionCalls()
+	getLogsContent := ""
+	getLogsAnalyze := false
 	if len(functionCalls) > 0 {
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
 		log.Debugf("Google provider tool names: %v", toolNames)
@@ -100,6 +103,12 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
 					continue
 				}
+				// analyze=true: keep tool content available for fallback if model returns unusable output.
+				getLogsContent = result.Message.Content
+				getLogsAnalyze = true
+				// Do not append raw logs to the stored conversation; we will inject them only
+				// into the analysis request to avoid contaminating future turns.
+				continue
 			}
 			if result.Message.Content != "" {
 				conversation = append(conversation, types.ConversationMessage{
@@ -122,14 +131,33 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
-			result, err = p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(conversation).([]*genai.Content), &genai.GenerateContentConfig{})
+			contentsForAnalysis := conversation
+			if getLogsAnalyze && getLogsContent != "" {
+				contentsForAnalysis = append(contentsForAnalysis, types.ConversationMessage{
+					Role: "user",
+					Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
+						"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
+						getLogsContent,
+				})
+			}
+			result, err = p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(contentsForAnalysis).([]*genai.Content), &genai.GenerateContentConfig{})
 			if err != nil {
 				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 			}
 			if err := ctx.Err(); err != nil {
 				return providers.NewContextCanceledResponse(err)
 			}
-			response.Answer = providers.ParseMarkdownResponse(result.Text())
+			raw := result.Text()
+			response.Answer = providers.ParseMarkdownResponse(raw)
+			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
+			if getLogsAnalyze && getLogsContent != "" {
+				trimmed := strings.TrimSpace(response.Answer)
+				looksLikePseudoTool := strings.Contains(raw, "execute_browse") || strings.Contains(raw, "\\u003cexecute_browse") || strings.Contains(raw, "<execute_browse>")
+				looksLikeNonAnswer := len(trimmed) < 40 && (strings.HasPrefix(strings.ToLower(trimmed), "analyse") || strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
+				if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
+					response.Answer = providers.ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
+				}
+			}
 		} else {
 			response.Answer = responseAnswer
 		}

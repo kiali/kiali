@@ -246,7 +246,7 @@ Retrieves detailed information or lists of Kubernetes resources (services, workl
 
 ### 5. `get_pod_performance`
 
-Returns a **human-readable summary table** (Markdown) for current CPU/memory usage (from Prometheus) compared to **Kubernetes requests/limits** (from the Pod spec).
+Returns a **human-readable summary** (Markdown text + fixed-width tables) for current CPU/memory usage (from Prometheus) compared to **Kubernetes requests/limits** (from the Pod spec).
 
 **Action**: Query Prometheus for resource usage and compare vs requests/limits.
 
@@ -258,7 +258,10 @@ Returns a **human-readable summary table** (Markdown) for current CPU/memory usa
 - `queryTime` (string, optional): End time (RFC3339). Default now.
 - `clusterName` (string, optional): Cluster name. Defaults to the cluster in Kiali configuration.
 
-**Returns**: Object with `cpu` and `memory` sections containing `usage`, `request`, `limit`, plus `usage_request_ratio` and `usage_limit_ratio` (and per-container breakdown when available).
+**Returns**: A single text response containing:
+- Context (cluster, namespace, workload, pod, time window)
+- Fixed-width CPU and Memory tables (TOTAL + per-container best-effort)
+- Optional Notes when Prometheus returns no data or partial results
 
 **Example**:
 ```json

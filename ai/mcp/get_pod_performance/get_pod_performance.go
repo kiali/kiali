@@ -1,7 +1,7 @@
 package get_pod_performance
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -10,8 +10,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
@@ -20,7 +19,6 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
@@ -77,21 +75,29 @@ func Execute(
 	// If workloadName is provided, try to resolve to a concrete pod.
 	// If the workload doesn't exist, fall back to using workloadName as podName.
 	if workloadName != "" {
-		resolvedPodName, state, err := resolvePodFromWorkload(r.Context(), businessLayer, clusterName, namespace, workloadName, queryTime)
+		res, err := mcputil.ResolvePodFromWorkloadOrPod(
+			r.Context(),
+			businessLayer,
+			clusterName,
+			namespace,
+			workloadName,
+			podName,
+			queryTime,
+			mcputil.ResolvePodOptions{
+				PreferRunning:        true,
+				PreferNonProxyOnly:   false,
+				RequirePods:          true,
+				FallbackToPodOnError: true,
+			},
+		)
 		if err != nil {
+			if errors.Is(err, mcputil.ErrWorkloadHasNoPods) {
+				return fmt.Sprintf("workload %q in namespace %q exists but has no pods", workloadName, namespace), http.StatusNotFound
+			}
 			return err.Error(), http.StatusInternalServerError
 		}
-		if state == "resolved" {
-			resp.PodName = resolvedPodName
-			resp.Resolved = "workload"
-		} else if state == "no_pods" {
-			return fmt.Sprintf("workload %q in namespace %q exists but has no pods", workloadName, namespace), http.StatusNotFound
-		} else if resp.PodName == "" {
-			resp.PodName = workloadName
-			resp.Resolved = "pod"
-		} else {
-			resp.Resolved = "pod"
-		}
+		resp.PodName = res.PodName
+		resp.Resolved = res.ResolvedFrom
 	} else {
 		resp.Resolved = "pod"
 	}
@@ -99,7 +105,7 @@ func Execute(
 	// Always compute requests/limits from the Pod spec so we can return that even if metrics are missing.
 	pod, podErr := getPod(r, clientFactory, clusterName, namespace, resp.PodName)
 	if podErr != nil {
-		if errors.IsNotFound(podErr) {
+		if k8serrors.IsNotFound(podErr) {
 			return podErr.Error(), http.StatusNotFound
 		}
 		return podErr.Error(), http.StatusInternalServerError
@@ -176,13 +182,13 @@ func Execute(
 func renderHumanSummary(resp PodPerformanceResponse) string {
 	var b strings.Builder
 
-	b.WriteString("**Rendimiento (CPU/Mem) — uso vs requests/limits**\n\n")
+	b.WriteString("**Performance (CPU/Memory) — usage vs requests/limits**\n\n")
 	b.WriteString(fmt.Sprintf("- **Cluster**: `%s`\n", resp.Cluster))
 	b.WriteString(fmt.Sprintf("- **Namespace**: `%s`\n", resp.Namespace))
 	if resp.Workload != "" {
 		b.WriteString(fmt.Sprintf("- **Workload**: `%s`\n", resp.Workload))
 	}
-	b.WriteString(fmt.Sprintf("- **Pod**: `%s` (resuelto desde: `%s`)\n", resp.PodName, resp.Resolved))
+	b.WriteString(fmt.Sprintf("- **Pod**: `%s` (resolved from: `%s`)\n", resp.PodName, resp.Resolved))
 	b.WriteString(fmt.Sprintf("- **Window**: `%s`\n", resp.TimeRange))
 	b.WriteString(fmt.Sprintf("- **Query time**: `%s`\n\n", resp.QueryTime.UTC().Format(time.RFC3339)))
 
@@ -197,57 +203,48 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 		rows = append(rows, containers...)
 	}
 
-	nameWidth := 5
-	for _, r := range rows {
-		if len(r.Container) > nameWidth {
-			nameWidth = len(r.Container)
-		}
-	}
-	if nameWidth > 24 {
-		nameWidth = 24
-	}
-
 	// A short verdict line (best-effort).
 	b.WriteString(renderVerdict(resp))
 	b.WriteString("\n")
 
-	b.WriteString("CPU (cores/millicores)\n\n")
-	b.WriteString("    ")
-	b.WriteString(fmt.Sprintf("%-*s  %8s  %8s  %8s  %7s  %7s\n", nameWidth, "SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"))
-	b.WriteString("    ")
-	b.WriteString(fmt.Sprintf("%s\n", strings.Repeat("-", nameWidth+2+8+2+8+2+8+2+7+2+7)))
-	for _, r := range rows {
-		scope := truncateRight(r.Container, nameWidth)
-		b.WriteString("    ")
-		b.WriteString(fmt.Sprintf("%-*s  %8s  %8s  %8s  %7s  %7s\n",
-			nameWidth,
-			scope,
-			formatCPU(r.CPU.Usage),
-			formatCPU(r.CPU.Request),
-			formatCPU(r.CPU.Limit),
-			formatPercent(r.CPU.UsageRequestRatio),
-			formatPercent(r.CPU.UsageLimitRatio),
-		))
+	cpuTable := mcputil.TextTable{
+		Indent:  "    ",
+		Headers: []string{"SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"},
+		AlignRight: map[int]bool{
+			1: true, 2: true, 3: true, 4: true, 5: true,
+		},
+	}
+	memTable := mcputil.TextTable{
+		Indent:  "    ",
+		Headers: []string{"SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"},
+		AlignRight: map[int]bool{
+			1: true, 2: true, 3: true, 4: true, 5: true,
+		},
 	}
 
-	b.WriteString("\nMemoria\n\n")
-	b.WriteString("    ")
-	b.WriteString(fmt.Sprintf("%-*s  %10s  %10s  %10s  %7s  %7s\n", nameWidth, "SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"))
-	b.WriteString("    ")
-	b.WriteString(fmt.Sprintf("%s\n", strings.Repeat("-", nameWidth+2+10+2+10+2+10+2+7+2+7)))
 	for _, r := range rows {
-		scope := truncateRight(r.Container, nameWidth)
-		b.WriteString("    ")
-		b.WriteString(fmt.Sprintf("%-*s  %10s  %10s  %10s  %7s  %7s\n",
-			nameWidth,
-			scope,
-			formatBytes(r.Memory.Usage),
-			formatBytes(r.Memory.Request),
-			formatBytes(r.Memory.Limit),
-			formatPercent(r.Memory.UsageRequestRatio),
-			formatPercent(r.Memory.UsageLimitRatio),
-		))
+		cpuTable.Rows = append(cpuTable.Rows, []string{
+			r.Container,
+			mcputil.FormatCores(floatFromScalar(r.CPU.Usage)),
+			mcputil.FormatCores(floatFromScalar(r.CPU.Request)),
+			mcputil.FormatCores(floatFromScalar(r.CPU.Limit)),
+			mcputil.FormatPercentRatio(r.CPU.UsageRequestRatio),
+			mcputil.FormatPercentRatio(r.CPU.UsageLimitRatio),
+		})
+		memTable.Rows = append(memTable.Rows, []string{
+			r.Container,
+			mcputil.FormatBinaryBytes(floatFromScalar(r.Memory.Usage)),
+			mcputil.FormatBinaryBytes(floatFromScalar(r.Memory.Request)),
+			mcputil.FormatBinaryBytes(floatFromScalar(r.Memory.Limit)),
+			mcputil.FormatPercentRatio(r.Memory.UsageRequestRatio),
+			mcputil.FormatPercentRatio(r.Memory.UsageLimitRatio),
+		})
 	}
+
+	b.WriteString("CPU (cores/millicores)\n\n")
+	b.WriteString(cpuTable.Render())
+	b.WriteString("\nMemory\n\n")
+	b.WriteString(memTable.Render())
 
 	if len(resp.Errors) > 0 {
 		keys := make([]string, 0, len(resp.Errors))
@@ -260,175 +257,32 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 		for _, k := range keys {
 			msg := resp.Errors[k]
 			// Keep this short; the table already conveys N/A.
-			b.WriteString(fmt.Sprintf("- **%s**: %s\n", escapeTable(k), escapeTable(msg)))
+			b.WriteString(fmt.Sprintf("- **%s**: %s\n", k, msg))
 		}
 	}
 
 	return b.String()
 }
 
-func escapeTable(s string) string {
-	// Avoid breaking markdown table cells.
-	return strings.ReplaceAll(s, "|", "\\|")
-}
-
-func formatCPU(v *ScalarValue) string {
-	if v == nil {
-		return "N/A"
-	}
-	cores := v.Value
-	if cores == 0 {
-		return "0"
-	}
-	if cores < 1 {
-		return fmt.Sprintf("%.0fm", cores*1000)
-	}
-	if cores < 10 {
-		return fmt.Sprintf("%.2f", cores)
-	}
-	return fmt.Sprintf("%.1f", cores)
-}
-
-func formatBytes(v *ScalarValue) string {
-	if v == nil {
-		return "N/A"
-	}
-	bytes := v.Value
-	if bytes == 0 {
-		return "0"
-	}
-	const unit = 1024
-	if bytes < unit {
-		return fmt.Sprintf("%.0fB", bytes)
-	}
-	div, exp := float64(unit), 0
-	for n := bytes / unit; n >= unit && exp < 4; n /= unit {
-		div *= unit
-		exp++
-	}
-	suffix := []string{"KiB", "MiB", "GiB", "TiB", "PiB"}[exp]
-	val := bytes / div
-	if val < 10 {
-		return fmt.Sprintf("%.2f%s", val, suffix)
-	}
-	if val < 100 {
-		return fmt.Sprintf("%.1f%s", val, suffix)
-	}
-	return fmt.Sprintf("%.0f%s", val, suffix)
-}
-
-func formatPercent(r *float64) string {
-	if r == nil {
-		return "-"
-	}
-	return fmt.Sprintf("%.0f%%", (*r)*100)
-}
-
 func renderVerdict(resp PodPerformanceResponse) string {
 	// Keep this conservative and short.
 	var parts []string
 	if resp.Memory.UsageRequestRatio != nil {
-		parts = append(parts, fmt.Sprintf("Mem vs request: %s", formatPercent(resp.Memory.UsageRequestRatio)))
+		parts = append(parts, fmt.Sprintf("Memory vs request: %s", mcputil.FormatPercentRatio(resp.Memory.UsageRequestRatio)))
 	}
 	if resp.Memory.UsageLimitRatio != nil {
-		parts = append(parts, fmt.Sprintf("Mem vs limit: %s", formatPercent(resp.Memory.UsageLimitRatio)))
+		parts = append(parts, fmt.Sprintf("Memory vs limit: %s", mcputil.FormatPercentRatio(resp.Memory.UsageLimitRatio)))
 	}
 	if resp.CPU.UsageRequestRatio != nil {
-		parts = append(parts, fmt.Sprintf("CPU vs request: %s", formatPercent(resp.CPU.UsageRequestRatio)))
+		parts = append(parts, fmt.Sprintf("CPU vs request: %s", mcputil.FormatPercentRatio(resp.CPU.UsageRequestRatio)))
 	}
 	if resp.CPU.UsageLimitRatio != nil {
-		parts = append(parts, fmt.Sprintf("CPU vs limit: %s", formatPercent(resp.CPU.UsageLimitRatio)))
+		parts = append(parts, fmt.Sprintf("CPU vs limit: %s", mcputil.FormatPercentRatio(resp.CPU.UsageLimitRatio)))
 	}
 	if len(parts) == 0 {
 		return ""
 	}
-	return "**Resumen**: " + strings.Join(parts, " · ") + "\n"
-}
-
-func truncateRight(s string, max int) string {
-	if max <= 0 || len(s) <= max {
-		return s
-	}
-	if max <= 1 {
-		return s[:max]
-	}
-	return s[:max-1] + "…"
-}
-
-// resolvePodFromWorkload tries to locate a workload by name and pick a representative pod.
-// It returns state:
-// - "resolved": workload found and pod selected
-// - "no_pods": workload found but has no pods
-// - "not_found": workload not found
-func resolvePodFromWorkload(ctx context.Context, businessLayer *business.Layer, clusterName, namespace, workloadName string, queryTime time.Time) (podName string, state string, err error) {
-	if businessLayer == nil {
-		return "", "not_found", nil
-	}
-
-	criteria := business.WorkloadCriteria{
-		Cluster:               clusterName,
-		Namespace:             namespace,
-		WorkloadName:          workloadName,
-		WorkloadGVK:           schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"},
-		IncludeHealth:         false,
-		IncludeIstioResources: false,
-		IncludeServices:       false,
-		QueryTime:             queryTime,
-	}
-	w, err := businessLayer.Workload.GetWorkload(ctx, criteria)
-	if err != nil {
-		// If workload doesn't exist, the caller will fall back to treating workloadName as podName.
-		if errors.IsNotFound(err) {
-			return "", "not_found", nil
-		}
-		// Don't fail the whole tool call if workload lookup fails for non-NotFound reasons
-		// (RBAC, transient API errors, etc.). Let the caller fall back to direct pod lookup.
-		return "", "not_found", nil
-	}
-	if w == nil || len(w.Pods) == 0 {
-		// Workload exists but has no pods (scaled to 0, pending, etc.)
-		return "", "no_pods", nil
-	}
-	return pickBestPodName(w.Pods), "resolved", nil
-}
-
-func pickBestPodName(pods models.Pods) string {
-	// Prefer Running & Ready.
-	best := ""
-	for _, p := range pods {
-		if p == nil || p.Name == "" {
-			continue
-		}
-		if p.Status == "Running" && isPodReady(p) {
-			return p.Name
-		}
-		if best == "" && p.Status == "Running" {
-			best = p.Name
-		}
-		if best == "" {
-			best = p.Name
-		}
-	}
-	return best
-}
-
-func isPodReady(p *models.Pod) bool {
-	if p == nil {
-		return false
-	}
-	// Consider the application containers (non-proxy) readiness.
-	if len(p.Containers) == 0 {
-		return false
-	}
-	for _, c := range p.Containers {
-		if c == nil {
-			continue
-		}
-		if !c.IsReady {
-			return false
-		}
-	}
-	return true
+	return "**Summary**: " + strings.Join(parts, " · ") + "\n"
 }
 
 type containerRequestsLimits struct {
@@ -480,14 +334,22 @@ func fillFromPrometheus(r *http.Request, prom prometheus.ClientInterface, namesp
 	cpuTotalQuery := fmt.Sprintf(`sum(rate(container_cpu_usage_seconds_total{namespace=%q,pod=%q,container!="" ,container!="POD"}[%s]))`, namespace, podName, timeRange)
 	memTotalQuery := fmt.Sprintf(`sum(container_memory_working_set_bytes{namespace=%q,pod=%q,container!="" ,container!="POD"})`, namespace, podName)
 
-	if v, err := queryFloat(r.Context(), prom, cpuTotalQuery, queryTime); err != nil {
-		resp.Errors["cpu_usage"] = err.Error()
+	if v, err := mcputil.PromQueryFloat64(r.Context(), prom, cpuTotalQuery, queryTime); err != nil {
+		if errors.Is(err, mcputil.ErrNoData) {
+			resp.Errors["cpu_usage"] = "no data returned by Prometheus"
+		} else {
+			resp.Errors["cpu_usage"] = err.Error()
+		}
 	} else {
 		resp.CPU.Usage = &ScalarValue{Value: v, Unit: "cores"}
 	}
 
-	if v, err := queryFloat(r.Context(), prom, memTotalQuery, queryTime); err != nil {
-		resp.Errors["memory_usage"] = err.Error()
+	if v, err := mcputil.PromQueryFloat64(r.Context(), prom, memTotalQuery, queryTime); err != nil {
+		if errors.Is(err, mcputil.ErrNoData) {
+			resp.Errors["memory_usage"] = "no data returned by Prometheus"
+		} else {
+			resp.Errors["memory_usage"] = err.Error()
+		}
 	} else {
 		resp.Memory.Usage = &ScalarValue{Value: v, Unit: "bytes"}
 	}
@@ -496,13 +358,21 @@ func fillFromPrometheus(r *http.Request, prom prometheus.ClientInterface, namesp
 	cpuByContainerQuery := fmt.Sprintf(`sum by (container) (rate(container_cpu_usage_seconds_total{namespace=%q,pod=%q,container!="" ,container!="POD"}[%s]))`, namespace, podName, timeRange)
 	memByContainerQuery := fmt.Sprintf(`sum by (container) (container_memory_working_set_bytes{namespace=%q,pod=%q,container!="" ,container!="POD"})`, namespace, podName)
 
-	cpuByContainer, err := queryVectorByLabel(r.Context(), prom, cpuByContainerQuery, queryTime, "container")
+	cpuByContainer, err := mcputil.PromQueryVectorByLabel(r.Context(), prom, cpuByContainerQuery, queryTime, "container")
 	if err != nil {
-		resp.Errors["cpu_usage_by_container"] = err.Error()
+		if errors.Is(err, mcputil.ErrNoData) {
+			resp.Errors["cpu_usage_by_container"] = "no data returned by Prometheus"
+		} else {
+			resp.Errors["cpu_usage_by_container"] = err.Error()
+		}
 	}
-	memByContainer, err := queryVectorByLabel(r.Context(), prom, memByContainerQuery, queryTime, "container")
+	memByContainer, err := mcputil.PromQueryVectorByLabel(r.Context(), prom, memByContainerQuery, queryTime, "container")
 	if err != nil {
-		resp.Errors["memory_usage_by_container"] = err.Error()
+		if errors.Is(err, mcputil.ErrNoData) {
+			resp.Errors["memory_usage_by_container"] = "no data returned by Prometheus"
+		} else {
+			resp.Errors["memory_usage_by_container"] = err.Error()
+		}
 	}
 
 	if len(cpuByContainer) == 0 && len(memByContainer) == 0 {
@@ -545,49 +415,10 @@ func ratio(n *ScalarValue, d *ScalarValue) *float64 {
 	return &v
 }
 
-func queryFloat(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time) (float64, error) {
-	result, warnings, err := prom.API().Query(ctx, query, queryTime)
-	_ = warnings // warnings are best-effort; surface errors only
-	if err != nil {
-		return 0, err
+func floatFromScalar(v *ScalarValue) *float64 {
+	if v == nil {
+		return nil
 	}
-	return modelValueToSingleFloat(result)
-}
-
-func queryVectorByLabel(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time, label string) (map[string]float64, error) {
-	result, _, err := prom.API().Query(ctx, query, queryTime)
-	if err != nil {
-		return nil, err
-	}
-	vec, ok := result.(model.Vector)
-	if !ok {
-		if scalar, ok2 := result.(*model.Scalar); ok2 {
-			return map[string]float64{"": float64(scalar.Value)}, nil
-		}
-		return nil, fmt.Errorf("unexpected prometheus result type %T", result)
-	}
-	out := map[string]float64{}
-	for _, sample := range vec {
-		key := string(sample.Metric[model.LabelName(label)])
-		out[key] = float64(sample.Value)
-	}
-	return out, nil
-}
-
-func modelValueToSingleFloat(v model.Value) (float64, error) {
-	switch t := v.(type) {
-	case model.Vector:
-		if len(t) == 0 {
-			return 0, fmt.Errorf("no data")
-		}
-		sum := 0.0
-		for _, s := range t {
-			sum += float64(s.Value)
-		}
-		return sum, nil
-	case *model.Scalar:
-		return float64(t.Value), nil
-	default:
-		return 0, fmt.Errorf("unexpected prometheus result type %T", v)
-	}
+	x := v.Value
+	return &x
 }

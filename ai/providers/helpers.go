@@ -41,7 +41,16 @@ func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool,
 
 func ParseMarkdownResponse(content string) string {
 	// Fix code blocks: replace ``` with ~~~ (AI sometimes uses wrong delimiter)
-	return strings.ReplaceAll(content, "```", "~~~")
+	content = strings.ReplaceAll(content, "```", "~~~")
+
+	// Defensive sanitization: sometimes models emit pseudo-tool tags like <execute_browse>...</execute_browse>.
+	// These are not supported by Kiali and can leak to the UI as raw text.
+	content = strings.ReplaceAll(content, `\u003c`, "<")
+	content = strings.ReplaceAll(content, `\u003e`, ">")
+	content = strings.ReplaceAll(content, "<execute_browse>", "")
+	content = strings.ReplaceAll(content, "</execute_browse>", "")
+
+	return content
 }
 
 func NewContextCanceledResponse(err error) (*types.AIResponse, int) {
@@ -60,6 +69,19 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		if msg.Role == "tool" && mcp.ExcludedToolNames[msg.Name] {
 			log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
 			continue
+		}
+		// Avoid persisting tool log dumps in conversation history; they can contaminate later answers.
+		// This can happen both when the tool name is preserved (OpenAI path) and when it isn't (Google path).
+		if msg.Role == "tool" {
+			if msg.Name == "get_logs" {
+				log.Debugf("Removing get_logs tool message from conversation history")
+				continue
+			}
+			// Heuristic for unnamed tool messages that look like logs.
+			if strings.HasPrefix(msg.Content, "~~~\n") && strings.HasSuffix(msg.Content, "~~~\n") && len(msg.Content) > 1500 && dateLikeRegexp.MatchString(msg.Content) {
+				log.Debugf("Removing log-like tool message from conversation history")
+				continue
+			}
 		}
 		// Avoid persisting large log dumps in conversation history; they can contaminate later answers.
 		// Heuristic: codeblock fences + date-like timestamps + large payload.

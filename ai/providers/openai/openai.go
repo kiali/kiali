@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	openai "github.com/openai/openai-go/v3"
 
@@ -58,6 +59,8 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	conversation = append(conversation, p.ProviderToConversation(resp))
 	msg := resp.Choices[0].Message
 	response := &types.AIResponse{}
+	getLogsContent := ""
+	getLogsAnalyze := false
 	if len(msg.ToolCalls) > 0 {
 		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
 		log.Debugf("[Chat AI] OpenAI provider tool calls: %v", toolNames)
@@ -98,6 +101,12 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 						response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
 						continue
 					}
+					// analyze=true: keep tool content available for fallback if model returns unusable output.
+					getLogsContent = result.Message.Content
+					getLogsAnalyze = true
+					// Do not append raw logs to the stored conversation; we will inject them only
+					// into the analysis request to avoid contaminating future turns.
+					continue
 				}
 				conversation = append(conversation, result.Message)
 			}
@@ -116,9 +125,18 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
 		if shouldGenerate {
 			log.Debugf("[Chat AI] OpenAI provider conversation after tool calls: %+v", conversation)
+			messagesForAnalysis := conversation
+			if getLogsAnalyze && getLogsContent != "" {
+				messagesForAnalysis = append(messagesForAnalysis, types.ConversationMessage{
+					Role: "user",
+					Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
+						"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
+						getLogsContent,
+				})
+			}
 			finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 				Model:    openai.ChatModel(p.model),
-				Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
+				Messages: p.ConversationToProvider(messagesForAnalysis).([]openai.ChatCompletionMessageParamUnion),
 			})
 			if err != nil {
 				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
@@ -126,7 +144,17 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			if err := ctx.Err(); err != nil {
 				return providers.NewContextCanceledResponse(err)
 			}
-			response.Answer = providers.ParseMarkdownResponse(finalResp.Choices[0].Message.Content)
+			raw := finalResp.Choices[0].Message.Content
+			response.Answer = providers.ParseMarkdownResponse(raw)
+			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
+			if getLogsAnalyze && getLogsContent != "" {
+				trimmed := strings.TrimSpace(response.Answer)
+				looksLikePseudoTool := strings.Contains(raw, "execute_browse") || strings.Contains(raw, "\\u003cexecute_browse") || strings.Contains(raw, "<execute_browse>")
+				looksLikeNonAnswer := len(trimmed) < 40 && (strings.HasPrefix(strings.ToLower(trimmed), "analyse") || strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
+				if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
+					response.Answer = providers.ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
+				}
+			}
 		} else {
 			response.Answer = responseAnswer
 		}
