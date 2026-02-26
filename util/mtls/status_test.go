@@ -66,6 +66,26 @@ func TestWorkloadMtlsStatusPermissiveWithMatchingDR(t *testing.T) {
 	assert.Equal(MTLSEnabled, status.WorkloadMtlsStatus("bookinfo", conf))
 }
 
+func TestWorkloadMtlsStatusPermissiveWithMutualDR(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+
+	status := MtlsStatus{
+		PeerAuthentications: []*security_v1.PeerAuthentication{
+			peerAuthnWithSelector("pa1", "bookinfo", map[string]string{"app": "reviews"}, "PERMISSIVE"),
+		},
+		DestinationRules: []*networking_v1.DestinationRule{
+			destinationRuleWithMTLS("dr1", "bookinfo", "reviews.bookinfo.svc.cluster.local", "MUTUAL"),
+		},
+		MatchingLabels: labels.Set{"app": "reviews"},
+		Services: []core_v1.Service{
+			k8sService("reviews", "bookinfo", map[string]string{"app": "reviews"}),
+		},
+	}
+
+	assert.Equal(MTLSEnabled, status.WorkloadMtlsStatus("bookinfo", conf))
+}
+
 func TestWorkloadMtlsStatusPermissiveNoDR(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
