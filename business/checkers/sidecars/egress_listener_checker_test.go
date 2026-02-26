@@ -87,10 +87,14 @@ func TestEgressHostNotFoundWronglyExportedService(t *testing.T) {
 func TestEgressHostFoundExportedService(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	fakeServices := data.CreateFakeMultiServices([]string{"reviews.bookinfo2.svc.cluster.local"}, "bookinfo2")
+	fakeServices[0].Annotations = map[string]string{kubernetes.ExportToAnnotation: "*"}
 	vals, valid := EgressHostChecker{
-		Conf:             config.Get(),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		Conf:             conf,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -104,10 +108,13 @@ func TestEgressHostFoundExportedService(t *testing.T) {
 func TestEgressHostFoundLocalService(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	fakeServices := data.CreateFakeMultiServices([]string{"reviews.bookinfo2.svc.cluster.local"}, "bookinfo2")
 	vals, valid := EgressHostChecker{
-		Conf:             config.Get(),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		Conf:             conf,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{data.CreateExternalServiceEntry()}),
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo2/reviews.bookinfo2.svc.cluster.local",
@@ -341,13 +348,17 @@ func TestEgressServiceNotFound(t *testing.T) {
 func TestEgressKubeService(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo")
+	fakeServices[0].Annotations = map[string]string{kubernetes.ExportToAnnotation: "."}
 	vals, valid := EgressHostChecker{
-		Conf: config.Get(),
+		Conf: conf,
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.Empty(vals)
@@ -357,13 +368,17 @@ func TestEgressKubeService(t *testing.T) {
 func TestEgressKubeServiceExported(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo")
+	fakeServices[0].Annotations = map[string]string{kubernetes.ExportToAnnotation: "*"}
 	vals, valid := EgressHostChecker{
-		Conf: config.Get(),
+		Conf: conf,
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.Empty(vals)
@@ -396,13 +411,17 @@ func TestEgressKubeServiceNotFound(t *testing.T) {
 func TestEgressKubeServiceNotFoundWronglyExported(t *testing.T) {
 	assert := assert.New(t)
 
-	fakeServices := data.CreateFakeMultiServices([]string{"wrong.bookinfo.svc.cluster.local"}, "bookinfo")
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"boggus.bookinfo.svc.cluster.local"}, "bookinfo")
+	fakeServices[0].Annotations = map[string]string{kubernetes.ExportToAnnotation: "bookinfo2"}
 	vals, valid := EgressHostChecker{
-		Conf: config.Get(),
+		Conf: conf,
 		Sidecar: sidecarWithHosts([]string{
 			"bookinfo/boggus.bookinfo.svc.cluster.local",
 		}),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.NotEmpty(vals)
