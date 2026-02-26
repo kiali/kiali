@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	openai "github.com/openai/openai-go/v3"
 
@@ -34,127 +35,126 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
 	p.InitializeConversation(&conversation, req)
 
-	// Iterate tool-calling until the model returns a final answer (or we hit a safety cap).
-	// We keep the persistent conversation free of context/tool-call metadata; context is injected per request.
-	const maxToolRounds = 5
-	final := &types.AIResponse{}
-	pendingLogsContent := ""
-	pendingLogsAnalyze := false
+	// Create a temporary conversation with context for the API call
+	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+	conversationWithContext := p.AddContextToConversation(conversation, req)
 
-	for round := 0; round < maxToolRounds; round++ {
-		// Create a temporary conversation with context for the API call.
-		// The context is NOT saved to the persistent conversation to avoid contaminating future interactions.
-		conversationWithContext := p.AddContextToConversation(conversation, req)
-
-		// If get_logs asked for analyze=true, inject raw logs only for this request (not persisted).
-		if pendingLogsAnalyze && pendingLogsContent != "" {
-			conversationWithContext = append(conversationWithContext, types.ConversationMessage{
-				Role: "user",
-				Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
-					"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
-					pendingLogsContent,
-			})
-			// Only inject once; future rounds should be based on the model's response.
-			pendingLogsAnalyze = false
-			pendingLogsContent = ""
+	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
+	for i, msg := range conversationWithContext {
+		contentPreview := msg.Content
+		if len(contentPreview) > 100 {
+			contentPreview = contentPreview[:100] + "..."
 		}
+		log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
+	}
 
-		log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
-		for i, msg := range conversationWithContext {
-			contentPreview := msg.Content
-			if len(contentPreview) > 100 {
-				contentPreview = contentPreview[:100] + "..."
-			}
-			log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
-		}
+	resp, err := p.client.Chat.Completions.New(
+		r.Context(),
+		openai.ChatCompletionNewParams{
+			Model:    openai.ChatModel(p.model),
+			Messages: p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion),
+			Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
+		},
+	)
 
-		resp, err := p.client.Chat.Completions.New(
-			r.Context(),
-			openai.ChatCompletionNewParams{
-				Model:    openai.ChatModel(p.model),
-				Messages: p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion),
-				Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
-			},
-		)
-		if err != nil {
-			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-		}
-		if err := ctx.Err(); err != nil {
-			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools context error: %v", err)
-			return providers.NewContextCanceledResponse(err)
-		}
-		if len(resp.Choices) == 0 {
-			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
-			return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
-		}
+	if err != nil {
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
+		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+	}
+	if err := ctx.Err(); err != nil {
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools context error: %v", err)
+		return providers.NewContextCanceledResponse(err)
+	}
 
-		// DO NOT add the assistant response (may include tool-call metadata) to the stored conversation.
-		msg := resp.Choices[0].Message
-
-		// No tools requested: final answer.
-		if len(msg.ToolCalls) == 0 {
-			final.Answer = providers.ParseMarkdownResponse(msg.Content)
-			break
-		}
-
+	if len(resp.Choices) == 0 {
+		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
+		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
+	}
+	// DO NOT add the assistant response with tool calls to the conversation yet
+	// We will add only the final answer to avoid contaminating future interactions with tool call metadata
+	msg := resp.Choices[0].Message
+	response := &types.AIResponse{}
+	getLogsContent := ""
+	getLogsAnalyze := false
+	if len(msg.ToolCalls) > 0 {
 		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
-		log.Debugf("[Chat AI] OpenAI provider tool calls (round=%d): %v", round, toolNames)
-
+		log.Debugf("[Chat AI] OpenAI provider tool calls: %v", toolNames)
+		// Execute tool calls in parallel since they don't depend on each other
 		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
+		// Process tool results using standardized logic
 		processResult := providers.ProcessToolResults(toolResults, conversation)
-		if processResult.Response != nil {
-			if len(processResult.Response.Actions) > 0 {
-				final.Actions = append(final.Actions, processResult.Response.Actions...)
-			}
-			if len(processResult.Response.Citations) > 0 {
-				final.Citations = append(final.Citations, processResult.Response.Citations...)
-			}
-			if processResult.Response.Error != "" {
-				final.Error = processResult.Response.Error
-			}
-			// Some tools (e.g. get_pod_performance, get_logs analyze=false) return a ready answer.
-			if processResult.Response.Answer != "" {
-				final.Answer = processResult.Response.Answer
-			}
-		}
+		response = processResult.Response
 		conversation = processResult.Conversation
+		getLogsContent = processResult.GetLogsContent
+		getLogsAnalyze = processResult.GetLogsAnalyze
 
+		// If there was an error or we should return early, do so
 		if processResult.ShouldReturnEarly {
-			if final.Error != "" {
-				code := processResult.ErrorCode
-				if code == 0 {
-					code = http.StatusInternalServerError
-				}
-				return final, code
+			if response.Error != "" {
+				return response, http.StatusInternalServerError
 			}
-			// Tool produced a direct answer.
-			break
+			// Add final response to conversation before storing
+			if response.Answer != "" {
+				conversation = append(conversation, types.ConversationMessage{
+					Content: response.Answer,
+					Name:    "",
+					Param:   nil,
+					Role:    "assistant",
+				})
+			}
+			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
+			return response, http.StatusOK
 		}
 
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// If the model only called excluded tools, we can respond immediately without another model round.
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(final, toolNames)
-		if !shouldGenerate {
-			final.Answer = responseAnswer
-			break
+		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
+		if shouldGenerate {
+			log.Debugf("[Chat AI] OpenAI provider conversation after tool calls: %+v", conversation)
+			// Add context to conversation for analysis (temporary, not saved)
+			messagesForAnalysis := p.AddContextToConversation(conversation, req)
+			if getLogsAnalyze && getLogsContent != "" {
+				messagesForAnalysis = append(messagesForAnalysis, types.ConversationMessage{
+					Role: "user",
+					Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
+						"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
+						getLogsContent,
+				})
+			}
+			finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+				Model:    openai.ChatModel(p.model),
+				Messages: p.ConversationToProvider(messagesForAnalysis).([]openai.ChatCompletionMessageParamUnion),
+			})
+			if err != nil {
+				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+			}
+			if err := ctx.Err(); err != nil {
+				return providers.NewContextCanceledResponse(err)
+			}
+			raw := finalResp.Choices[0].Message.Content
+			response.Answer = providers.ParseMarkdownResponse(raw)
+			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
+			if getLogsAnalyze && getLogsContent != "" {
+				trimmed := strings.TrimSpace(response.Answer)
+				looksLikePseudoTool := strings.Contains(raw, "execute_browse") || strings.Contains(raw, "\\u003cexecute_browse") || strings.Contains(raw, "<execute_browse>")
+				looksLikeNonAnswer := len(trimmed) < 40 && (strings.HasPrefix(strings.ToLower(trimmed), "analyse") || strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
+				if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
+					response.Answer = providers.ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
+				}
+			}
+		} else {
+			response.Answer = responseAnswer
 		}
-
-		// Prepare one-shot log analysis injection for the next round (not persisted).
-		if processResult.GetLogsAnalyze && processResult.GetLogsContent != "" {
-			pendingLogsAnalyze = true
-			pendingLogsContent = processResult.GetLogsContent
-		}
+	} else {
+		response.Answer = providers.ParseMarkdownResponse(msg.Content)
 	}
-
-	response := final
 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
