@@ -16,6 +16,9 @@ import (
 func TestValidHost(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", -1),
 		data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("reviews", "v1", -1),
 			data.CreateEmptyVirtualService("reviews", "bookinfo", []string{"reviews"}),
@@ -25,8 +28,8 @@ func TestValidHost(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		Conf:             conf,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 		VirtualService:   virtualService,
 	}.Check()
 
@@ -34,8 +37,11 @@ func TestValidHost(t *testing.T) {
 	assert.Empty(vals)
 }
 
-func TestValidHostExported(t *testing.T) {
+func TestValidHostWithTwoPartName(t *testing.T) {
 	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
 
 	virtualService := data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("ratings.bookinfo2", "v1", -1),
 		data.AddTcpRoutesToVirtualService(data.CreateTcpRoute("ratings.bookinfo2", "v1", -1),
@@ -48,9 +54,9 @@ func TestValidHostExported(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"reviews.bookinfo.svc.cluster.local"}, "bookinfo")...)
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		Conf:             conf,
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.True(valid)
@@ -97,7 +103,7 @@ func TestNoValidHost(t *testing.T) {
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 }
 
-func TestNoValidExportedHost(t *testing.T) {
+func TestNoValidHostWrongNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
@@ -174,7 +180,7 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	assert.Equal("spec/tcp[0]/route[0]/destination/host", vals[0].Path)
 }
 
-func TestInvalidServiceNamespaceFormatExportedHost(t *testing.T) {
+func TestInvalidServiceNamespaceFormatCrossNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
