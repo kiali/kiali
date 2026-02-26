@@ -86,8 +86,12 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		// Avoid persisting large log dumps in conversation history; they can contaminate later answers.
 		// Heuristic: codeblock fences + date-like timestamps + large payload.
 		if msg.Role == "assistant" && strings.HasPrefix(msg.Content, "~~~\n") && strings.HasSuffix(msg.Content, "~~~\n") && len(msg.Content) > 4000 && dateLikeRegexp.MatchString(msg.Content) {
-			log.Debugf("Removing large log-like assistant message from conversation history")
-			continue
+			// Do not drop the message entirely
+			// could cause the model to repeat the same tool call next turn (e.g. ask get_logs again).
+			log.Debugf("Replacing large log-like assistant message with placeholder in conversation history")
+			msg.Content = "Log output was returned in a previous response but omitted from the stored conversation history to avoid large/contaminating payloads."
+			msg.Name = ""
+			msg.Param = nil
 		}
 		cleaned = append(cleaned, msg)
 	}
@@ -150,6 +154,7 @@ type ToolResultProcessingResult struct {
 	Conversation      []types.ConversationMessage
 	GetLogsContent    string
 	GetLogsAnalyze    bool
+	ErrorCode         int
 	ShouldReturnEarly bool
 }
 
@@ -166,6 +171,10 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		// Handle errors
 		if toolResult.Error != nil {
 			result.Response.Error = toolResult.Error.Error()
+			result.ErrorCode = toolResult.Code
+			if result.ErrorCode == 0 {
+				result.ErrorCode = http.StatusInternalServerError
+			}
 			result.ShouldReturnEarly = true
 			return result
 		}

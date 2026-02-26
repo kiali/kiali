@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"google.golang.org/genai"
 
@@ -33,15 +32,10 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		p.client = client
 	}
-	response := &types.AIResponse{}
 	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
 	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
 	p.InitializeConversation(&conversation, req)
-
-	// Create a temporary conversation with context for the API call
-	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := p.AddContextToConversation(conversation, req)
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
@@ -52,94 +46,97 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 			},
 		},
 	}
+	// Iterate tool-calling until the model returns a final answer (or we hit a safety cap).
+	// Context is injected per request; it is not persisted.
+	const maxToolRounds = 5
+	final := &types.AIResponse{}
+	pendingLogsContent := ""
+	pendingLogsAnalyze := false
 
-	chat, err := p.client.Chats.Create(ctx, p.model, config, p.ConversationToProvider(conversationWithContext).([]*genai.Content))
-	if err != nil {
-		log.Debugf("Google provider error: %v", err)
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-	}
-	result, err := chat.SendMessage(ctx, genai.Part{Text: req.Query})
-	if err != nil {
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-	}
-	// User query was already added to conversation in InitializeConversation, no need to add again
-	functionCalls := result.FunctionCalls()
-	getLogsContent := ""
-	getLogsAnalyze := false
-	if len(functionCalls) > 0 {
+	for round := 0; round < maxToolRounds; round++ {
+		// Create a temporary conversation with context for this model request (not persisted).
+		conversationWithContext := p.AddContextToConversation(conversation, req)
+
+		// If get_logs asked for analyze=true, inject raw logs only for this request (not persisted).
+		if pendingLogsAnalyze && pendingLogsContent != "" {
+			conversationWithContext = append(conversationWithContext, types.ConversationMessage{
+				Role: "user",
+				Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
+					"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
+					pendingLogsContent,
+			})
+			pendingLogsAnalyze = false
+			pendingLogsContent = ""
+		}
+
+		result, err := p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(conversationWithContext).([]*genai.Content), config)
+		if err != nil {
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
+		if err := ctx.Err(); err != nil {
+			return providers.NewContextCanceledResponse(err)
+		}
+
+		functionCalls := result.FunctionCalls()
+		if len(functionCalls) == 0 {
+			final.Answer = providers.ParseMarkdownResponse(result.Text())
+			break
+		}
+
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
-		log.Debugf("Google provider tool names: %v", toolNames)
+		log.Debugf("Google provider tool names (round=%d): %v", round, toolNames)
+
 		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// Process tool results using standardized logic
 		processResult := providers.ProcessToolResults(toolResults, conversation)
-		response = processResult.Response
+		if processResult.Response != nil {
+			if len(processResult.Response.Actions) > 0 {
+				final.Actions = append(final.Actions, processResult.Response.Actions...)
+			}
+			if len(processResult.Response.Citations) > 0 {
+				final.Citations = append(final.Citations, processResult.Response.Citations...)
+			}
+			if processResult.Response.Error != "" {
+				final.Error = processResult.Response.Error
+			}
+			// Some tools return a ready-to-display answer (get_pod_performance, get_logs analyze=false).
+			if processResult.Response.Answer != "" {
+				final.Answer = processResult.Response.Answer
+			}
+		}
 		conversation = processResult.Conversation
-		getLogsContent = processResult.GetLogsContent
-		getLogsAnalyze = processResult.GetLogsAnalyze
 
-		// If there was an error or we should return early, do so
 		if processResult.ShouldReturnEarly {
-			if response.Error != "" {
-				return response, http.StatusInternalServerError
+			if final.Error != "" {
+				code := processResult.ErrorCode
+				if code == 0 {
+					code = http.StatusInternalServerError
+				}
+				return final, code
 			}
-			// Add final response to conversation before storing
-			if response.Answer != "" {
-				conversation = append(conversation, types.ConversationMessage{
-					Content: response.Answer,
-					Name:    "",
-					Param:   nil,
-					Role:    "assistant",
-				})
-			}
-			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-			return response, http.StatusOK
+			break
 		}
 
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
-		if shouldGenerate {
-			// Add context to conversation for analysis (temporary, not saved)
-			contentsForAnalysis := p.AddContextToConversation(conversation, req)
-			if getLogsAnalyze && getLogsContent != "" {
-				contentsForAnalysis = append(contentsForAnalysis, types.ConversationMessage{
-					Role: "user",
-					Content: "Analyze the following Kubernetes pod logs and explain what is happening. " +
-						"Do not output any pseudo-tool tags (for example <execute_browse>). Use Markdown.\n\n" +
-						getLogsContent,
-				})
-			}
-			result, err = p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(contentsForAnalysis).([]*genai.Content), &genai.GenerateContentConfig{})
-			if err != nil {
-				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-			}
-			if err := ctx.Err(); err != nil {
-				return providers.NewContextCanceledResponse(err)
-			}
-			raw := result.Text()
-			response.Answer = providers.ParseMarkdownResponse(raw)
-			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
-			if getLogsAnalyze && getLogsContent != "" {
-				trimmed := strings.TrimSpace(response.Answer)
-				looksLikePseudoTool := strings.Contains(raw, "execute_browse") || strings.Contains(raw, "\\u003cexecute_browse") || strings.Contains(raw, "<execute_browse>")
-				looksLikeNonAnswer := len(trimmed) < 40 && (strings.HasPrefix(strings.ToLower(trimmed), "analyse") || strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
-				if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
-					response.Answer = providers.ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
-				}
-			}
-		} else {
-			response.Answer = responseAnswer
+		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(final, toolNames)
+		if !shouldGenerate {
+			final.Answer = responseAnswer
+			break
 		}
-	} else {
-		response.Answer = providers.ParseMarkdownResponse(result.Text())
+
+		if processResult.GetLogsAnalyze && processResult.GetLogsContent != "" {
+			pendingLogsAnalyze = true
+			pendingLogsContent = processResult.GetLogsContent
+		}
 	}
+
+	response := final
 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
