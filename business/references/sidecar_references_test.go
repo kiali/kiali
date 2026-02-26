@@ -12,7 +12,7 @@ import (
 	"github.com/kiali/kiali/tests/data"
 )
 
-func prepareTestForSidecar(sc *networking_v1.Sidecar, vs *networking_v1.VirtualService, se *networking_v1.ServiceEntry) models.IstioReferences {
+func prepareTestForSidecar(sc *networking_v1.Sidecar, se *networking_v1.ServiceEntry) models.IstioReferences {
 	conf := config.Get()
 	services := data.CreateFakeServicesWithSelector("foo-service", "istio-system")
 	drReferences := SidecarReferences{
@@ -36,7 +36,7 @@ func TestSidecarReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForSidecar(getSidecar(t), getAPVirtualService(t), getAPServiceEntry(t))
+	references := prepareTestForSidecar(getSidecar(t), getAPServiceEntry(t))
 	// Check Service references
 	assert.Len(references.ServiceReferences, 1)
 	assert.Equal(references.ServiceReferences[0].Name, "foo-service")
@@ -60,7 +60,7 @@ func TestSidecarServiceReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForSidecar(getSidecar(t), fakeVirtualService(t), fakeServiceEntry())
+	references := prepareTestForSidecar(getSidecar(t), fakeServiceEntry())
 	assert.Empty(references.ObjectReferences)
 
 	// Check Service references
@@ -80,7 +80,7 @@ func TestSidecarNoReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForSidecar(data.CreateSidecar("foo-dev", "istio-system"), getAPVirtualService(t), getAPServiceEntry(t))
+	references := prepareTestForSidecar(data.CreateSidecar("foo-dev", "istio-system"), getAPServiceEntry(t))
 	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
