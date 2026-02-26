@@ -731,7 +731,7 @@ func TestGetVSReferencesNotExisting(t *testing.T) {
 // 	config.Set(conf)
 
 // 	vs := mockCombinedValidationService(t, conf, fakeIstioConfigList(),
-// 		[]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "product2.test.svc.cluster.local", "customer.test.svc.cluster.local"})
+// 		[]string{"details", "product", "product2", "customer"})
 
 // 	v, err := vs.userClients[conf.KubernetesConfig.ClusterName].Istio().NetworkingV1().VirtualServices("test").Get(context.Background(), "product-vs", v1.GetOptions{})
 // 	require.NoError(err)
@@ -776,7 +776,7 @@ func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runt
 	return NewLayerBuilder(t, &conf).WithClient(k8s).Build().Validations
 }
 
-func fakeValidationMeshServiceWithDiscovery(t *testing.T, cfg config.Config, services []string, objects ...runtime.Object) IstioValidationsService {
+func fakeValidationMeshServiceWithDiscovery(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	cache := cache.NewTestingCache(t, k8s, cfg)
 
@@ -851,7 +851,7 @@ func mockCombinedValidationService(t *testing.T, conf *config.Config, istioConfi
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.WorkloadEntries)...)
 	fakeIstioObjects = append(fakeIstioObjects, kubernetes.ToRuntimeObjects(istioConfigList.RequestAuthentications)...)
 
-	return fakeValidationMeshServiceWithDiscovery(t, *config.NewConfig(), services, fakeIstioObjects...)
+	return fakeValidationMeshServiceWithDiscovery(t, *config.NewConfig(), fakeIstioObjects...)
 }
 
 func mockAmbient(t *testing.T, conf *config.Config) []runtime.Object {
