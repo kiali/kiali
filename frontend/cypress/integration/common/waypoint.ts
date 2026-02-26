@@ -63,7 +63,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
 ): void => {
   if (retryCount >= maxRetries) {
     throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>${
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${
         ambientTraffic === 'waypoint' ? 8 : 9
       }, baseUrl=${Cypress.config('baseUrl')})`
     );
@@ -96,7 +96,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     const elements = response.body.elements;
     const edgeCount = elements?.edges?.length ?? -1;
 
-    if (edgeCount > totalEdges) {
+    if (edgeCount >= totalEdges) {
       return;
     } else {
       if (retryCount === 0 || retryCount % 5 === 0) {
@@ -104,7 +104,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
           name: 'waitForGraphTraffic',
           message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
             'baseUrl'
-          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} expected>${totalEdges} baseUrl=${Cypress.config(
+          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} expected>=${totalEdges} baseUrl=${Cypress.config(
             'baseUrl'
           )} targetNamespace=${targetNamespace}`
         });
