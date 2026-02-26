@@ -162,6 +162,11 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		Conversation: conversation,
 	}
 
+	// Some tools return user-ready markdown; if multiple tools are called together,
+	// we want to combine their outputs instead of returning early on the first one.
+	var podPerformanceMarkdown string
+	var logsMarkdown string
+
 	for _, toolResult := range toolResults {
 		// Handle errors
 		if toolResult.Error != nil {
@@ -186,9 +191,8 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		// Special handling for get_pod_performance: return markdown summary directly
 		// This avoids depending on a second model call to "re-say" the table
 		if toolResult.Message.Name == "get_pod_performance" && toolResult.Message.Content != "" {
-			result.Response.Answer = ParseMarkdownResponse(toolResult.Message.Content)
-			result.ShouldReturnEarly = true
-			return result
+			podPerformanceMarkdown = ParseMarkdownResponse(toolResult.Message.Content)
+			continue
 		}
 
 		// Special handling for get_logs
@@ -212,11 +216,12 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 			}
 
 			if !analyze {
-				// Return logs directly without model analysis
-				log.Debugf("[ProcessToolResults] get_logs returning logs directly (analyze=false)")
-				result.Response.Answer = ParseMarkdownResponse(toolResult.Message.Content)
-				result.ShouldReturnEarly = true
-				return result
+				// Return logs directly without model analysis.
+				// But don't return early here: other tools (like get_pod_performance) might
+				// have been called in the same turn and should be included too.
+				log.Debugf("[ProcessToolResults] get_logs captured logs (analyze=false)")
+				logsMarkdown = ParseMarkdownResponse(toolResult.Message.Content)
+				continue
 			}
 
 			// analyze=true: keep tool content available for fallback if model returns unusable output
@@ -232,6 +237,19 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		if toolResult.Message.Content != "" {
 			result.Conversation = append(result.Conversation, toolResult.Message)
 		}
+	}
+
+	// If we have direct markdown from tools, build a combined answer and return it.
+	if podPerformanceMarkdown != "" || logsMarkdown != "" {
+		parts := make([]string, 0, 2)
+		if logsMarkdown != "" {
+			parts = append(parts, logsMarkdown)
+		}
+		if podPerformanceMarkdown != "" {
+			parts = append(parts, podPerformanceMarkdown)
+		}
+		result.Response.Answer = strings.Join(parts, "\n\n")
+		result.ShouldReturnEarly = true
 	}
 
 	return result
