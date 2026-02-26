@@ -71,7 +71,7 @@ func TestDestinationRuleNoReferences(t *testing.T) {
 	config.Set(conf)
 
 	// Setup mocks
-	references := prepareTestForDestinationRule(data.CreateEmptyDestinationRule("reviews", "bookinfo", "reviews.bookinfo.svc.cluster.local"), getVirtualService(t))
+	references := prepareTestForDestinationRule(data.CreateEmptyDestinationRule("bookinfo", "reviews", "reviews.bookinfo.svc.cluster.local"), getVirtualService(t))
 	assert.Empty(references.ServiceReferences)
 	assert.Empty(references.WorkloadReferences)
 }
