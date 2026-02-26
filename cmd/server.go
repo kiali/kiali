@@ -158,6 +158,8 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 
 	if conf.ExternalServices.Istio.IstioAPIEnabled {
 		cpm.PollIstiodForProxyStatus(ctx)
+	} else {
+		log.Debug("Istio API is disabled; istiod will not be polled for proxy status")
 	}
 
 	// Start health monitor for pre-computing health data (if enabled)
