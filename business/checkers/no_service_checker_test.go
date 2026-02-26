@@ -17,10 +17,13 @@ import (
 func TestNoCrashOnEmpty(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	typeValidations := NoServiceChecker{
-		Conf:             config.Get(),
+		Conf:             conf,
 		IstioConfigList:  emptyIstioConfigList(),
-		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, config.Get(), nil),
+		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, conf, nil),
 		Services:         []core_v1.Service{},
 	}.Check()
 
@@ -178,8 +181,9 @@ func TestObjectWithoutGateway(t *testing.T) {
 	assert := assert.New(t)
 
 	istioDetails := fakeIstioConfigList()
-	gateways := make([]string, 1)
-	gateways = append(gateways, "non-existant-gateway")
+	// Test both an empty gateway name and a non-existent one; the original code
+	// used make([]string, 1) which obscured the intent of testing an empty string.
+	gateways := []string{"", "non-existant-gateway"}
 
 	istioDetails.VirtualServices[0].Spec.Gateways = gateways
 	fakeServices := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
