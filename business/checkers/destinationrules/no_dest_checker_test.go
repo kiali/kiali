@@ -348,17 +348,20 @@ func TestSubsetNotReferenced(t *testing.T) {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), conf),
-		Services:         data.CreateFakeServicesWithSelector("reviews", "test-namespace"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{},
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
 	assert.Equal(models.Unknown, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
 	assert.Equal("spec/subsets[0]", vals[0].Path)
+	assert.Equal(models.Unknown, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[1]))
+	assert.Equal("spec/subsets[1]", vals[1].Path)
 }
 
 func TestSubsetReferenced(t *testing.T) {
@@ -384,8 +387,8 @@ func TestSubsetReferenced(t *testing.T) {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), conf),
-		Services:         data.CreateFakeServicesWithSelector("reviews", "test-namespace"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{vs},
 	}.Check()
@@ -457,17 +460,20 @@ func TestWronglyReferenced(t *testing.T) {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), conf),
-		Services:         data.CreateFakeServicesWithSelector("reviews", "test-namespace"),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{vs},
 	}.Check()
 
 	assert.True(valid)
-	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
 	assert.Equal(models.Unknown, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[0]))
 	assert.Equal("spec/subsets[0]", vals[0].Path)
+	assert.Equal(models.Unknown, vals[1].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("destinationrules.nodest.subsetlabels", vals[1]))
+	assert.Equal("spec/subsets[1]", vals[1].Path)
 }
 
 func TestFailCrossNamespaceHost(t *testing.T) {
