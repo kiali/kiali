@@ -71,7 +71,7 @@ func (n DestinationRuleReferences) getWorkloadReferences(dr *networking_v1.Desti
 
 	// Find the correct service via K8s Service Spec.Selector
 	for _, s := range n.Services {
-		if s.Name == localSvc && s.Namespace == localNs && len(s.Spec.Selector) > 0 {
+		if s.Name == localSvc && s.Namespace == localNs {
 			selectors = s.Spec.Selector
 			break
 		}
