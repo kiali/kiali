@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -123,6 +126,41 @@ func testSubsetPresenceValidationsFound(scenario string, t *testing.T) {
 	tb.AssertValidationsPresent(2, true)
 	tb.AssertValidationAt(0, models.WarningSeverity, "spec/http[0]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/http[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
+}
+
+func TestNilDestinationWeight(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-vs", Namespace: "bookinfo"},
+		Spec: api_networking_v1.VirtualService{
+			Hosts: []string{"reviews"},
+			Http: []*api_networking_v1.HTTPRoute{
+				{Route: []*api_networking_v1.HTTPRouteDestination{nil}},
+			},
+			Tcp: []*api_networking_v1.TCPRoute{
+				{Route: []*api_networking_v1.RouteDestination{nil}},
+			},
+			Tls: []*api_networking_v1.TLSRoute{
+				{Route: []*api_networking_v1.RouteDestination{nil}},
+			},
+		},
+	}
+
+	assert.NotPanics(func() {
+		vals, valid := SubsetPresenceChecker{
+			Conf:           conf,
+			Namespaces:     []string{"bookinfo"},
+			DRSubsets:      make(models.DestinationRuleSubsets),
+			VirtualService: vs,
+		}.Check()
+
+		assert.True(valid)
+		assert.Empty(vals)
+	})
 }
 
 func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, conf *config.Config) models.DestinationRuleSubsets {
