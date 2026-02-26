@@ -125,9 +125,10 @@ type validationNamespaceInfo struct {
 }
 
 type validationClusterInfo struct {
-	cluster     string                  // the cluster being validated
-	istioConfig *models.IstioConfigList // config for the cluster (all namespaces)
-	services    []core_v1.Service       // K8s services for the cluster (all namespaces)
+	cluster          string                      // the cluster being validated
+	istioConfig      *models.IstioConfigList     // config for the cluster (all namespaces)
+	kubeServiceHosts kubernetes.KubeServiceHosts // pre-built host lookup from K8s services
+	services         []core_v1.Service           // K8s services for the cluster (all namespaces)
 }
 
 // changeMap key values are determined by the validation logic, and typically identifies a config object,
@@ -307,6 +308,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		return false, nil, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
 	}
 	vInfo.clusterInfo.services = svcList.Items
+	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHosts(svcList.Items, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
 
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
@@ -484,7 +486,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
 	services := vInfo.clusterInfo.services
-	kubeServiceHosts := kubernetes.NewKubeServiceHosts(services, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
+	kubeServiceHosts := vInfo.clusterInfo.kubeServiceHosts
 	conf := in.conf
 
 	return []checkers.ObjectChecker{
@@ -566,6 +568,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return nil, istioReferences, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
 	}
 	vInfo.clusterInfo.services = svcList.Items
+	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHosts(svcList.Items, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
 
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -605,7 +608,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	mtlsDetails := vInfo.nsInfo.mtlsDetails
 	rbacDetails := vInfo.nsInfo.rbacDetails
 	services := vInfo.clusterInfo.services
-	kubeServiceHosts := kubernetes.NewKubeServiceHosts(services, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
+	kubeServiceHosts := vInfo.clusterInfo.kubeServiceHosts
 	var objectCheckers []checkers.ObjectChecker
 	var referenceChecker ReferenceChecker
 	conf := in.conf
