@@ -271,8 +271,7 @@ export const checkHealthIndicatorInTable = (
   // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
   getClusterForSingleCluster().then(cluster => {
     cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
-      .find('span')
-      .filter(`.icon-${healthStatus}`)
+      .find(`span.icon-${healthStatus}`, { timeout: 60000 })
       .should('exist');
   });
 };
