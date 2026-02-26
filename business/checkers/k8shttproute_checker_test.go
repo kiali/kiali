@@ -17,8 +17,11 @@ import (
 func TestNoCrashOnEmptyRoute(t *testing.T) {
 	assert := assert.New(t)
 
+	conf := config.NewConfig()
+	config.Set(conf)
+
 	typeValidations := K8sHTTPRouteChecker{
-		Conf:          config.Get(),
+		Conf:          conf,
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{},
 		K8sGateways:   []*k8s_networking_v1.Gateway{},
 		Services:      []core_v1.Service{},
@@ -61,13 +64,13 @@ func TestWithoutService(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"details.bookinfo2.svc.cluster.local"}, "bookinfo2")...)
 
 	vals := K8sHTTPRouteChecker{
-		Conf: config.Get(),
+		Conf: conf,
 		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
 			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
-			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
+			data.AddBackendRefToHTTPRoute("ratings", "bookinfo2", data.CreateHTTPRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
 		K8sGateways: []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo"), data.CreateEmptyK8sGateway("gatewayapi2", "bookinfo2")},
 		Services:    fakeServices,
-		Namespaces:  models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}, models.Namespace{Name: "bookinfo3"}},
+		Namespaces:  models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}},
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -78,4 +81,27 @@ func TestWithoutService(t *testing.T) {
 	route2 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: "bookinfo2", Name: "route2"}]
 	assert.False(route2.Valid)
 	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", route2.Checks[0]))
+}
+
+func TestWithoutReferenceGrant(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	assert := assert.New(t)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
+
+	vals := K8sHTTPRouteChecker{
+		Conf: conf,
+		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{
+			data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.CreateHTTPRoute("route1", "bookinfo2", "gatewayapi", []string{"bookinfo2"}))},
+		K8sGateways: []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo2")},
+		Services:    fakeServices,
+		Namespaces:  models.Namespaces{models.Namespace{Name: "bookinfo"}, models.Namespace{Name: "bookinfo2"}},
+	}.Check()
+
+	assert.NotEmpty(vals)
+
+	route1 := vals[models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: "bookinfo2", Name: "route1"}]
+	assert.False(route1.Valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", route1.Checks[0]))
 }
