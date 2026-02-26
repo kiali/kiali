@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
 
@@ -316,25 +317,9 @@ func (a *ServiceEntryAppender) isAccessible(cluster, namespace string) bool {
 func isExportedToNamespace(se *networking_v1.ServiceEntry, namespace string, meshExportTo []string) bool {
 	exportTo := se.Spec.ExportTo
 	if len(exportTo) == 0 {
-		// using mesh defaultExportTo values
 		exportTo = meshExportTo
 	}
-	if len(exportTo) == 0 {
-		return true
-	}
-	for _, export := range exportTo {
-		if export == "*" {
-			return true
-		}
-		if export == "." && se.Namespace == namespace {
-			return true
-		}
-		if export == se.Namespace {
-			return true
-		}
-	}
-
-	return false
+	return kubernetes.IsExportedTo(exportTo, se.Namespace, namespace)
 }
 
 // aggregateEdges identifies edges that are going from <node> to <serviceEntryNode> and
