@@ -26,6 +26,7 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { t } from 'utils/I18nUtils';
+import { getPagePath } from 'utils/NavigationUtils';
 import {
   getGVKTypeString,
   getIstioObjectGVK,
@@ -313,9 +314,8 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
   ___?: Health,
   statefulFilter?: StatefulFiltersRef
 ) => {
-  let path = window.location.pathname;
-  path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
-  const labelFilt = path === 'overview' || path === 'namespaces' ? NsLabelFilter : labelFilter;
+  const path = getPagePath();
+  const labelFilt = path === 'namespaces' ? NsLabelFilter : labelFilter;
   const filters = getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
 
   return (

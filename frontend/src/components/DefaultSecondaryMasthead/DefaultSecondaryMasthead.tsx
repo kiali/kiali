@@ -7,6 +7,7 @@ import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { getPagePath } from '../../utils/NavigationUtils';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
 
@@ -57,10 +58,7 @@ type Props = ReduxProps & {
 
 const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
   const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
-    let path = window.location.pathname;
-
-    // Remove the first path segment (e.g., '/console/' or '/ossmconsole/') to get the actual page path
-    path = path.replace(/^\/?[^/]+\//, '');
+    const path = getPagePath();
 
     if (titles.some(t => path.startsWith(t))) {
       let title = `${path.charAt(0).toUpperCase()}${path.slice(1)}`;

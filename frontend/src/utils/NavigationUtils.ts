@@ -27,3 +27,13 @@ export const kialiNavigate = (url: string, options?: NavigateOptions): void => {
     router.navigate(url, options);
   }
 };
+
+/**
+ * Get the page path from the current URL by removing the first path segment
+ * (e.g., '/console/' or '/ossmconsole/').
+ *
+ * @returns The page path without the app prefix (e.g., 'overview', 'applications', 'services')
+ */
+export const getPagePath = (): string => {
+  return window.location.pathname.replace(/^\/?[^/]+\//, '');
+};
