@@ -366,6 +366,14 @@ func (in *SvcService) buildKubernetesServices(svcs []core_v1.Service, pods []cor
 // buildServiceEntryOverviews converts ServiceEntry resources into ServiceOverview entries
 // for the service list. Only SE hosts in the target namespace that don't overlap with an
 // existing K8s Service (by name) are included.
+//
+// This replaces the old buildRegistryServices which consumed Istio's /debug/registryz
+// endpoint. Because the Istio registry is no longer available, some fields are less rich:
+//   - AppLabel is always false: the registry carried resolved label selectors that let us
+//     check for an "app" label; ServiceEntry resources have no selector concept.
+//   - Selector is always empty for the same reason.
+//   - Labels come from the ServiceEntry object metadata rather than from Istio's internal
+//     resolved view, so they may differ from what the registry previously reported.
 func (in *SvcService) buildServiceEntryOverviews(serviceEntries []*networking_v1.ServiceEntry, existingServices []core_v1.Service, namespace string, istioConfigList models.IstioConfigList, cluster string) []models.ServiceOverview {
 	services := []models.ServiceOverview{}
 	existingSet := make(map[string]struct{}, len(existingServices))
