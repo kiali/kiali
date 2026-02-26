@@ -3,7 +3,9 @@ import { PFColors } from 'components/Pf/PfColors';
 
 // Common card styles
 export const cardStyle = kialiStyle({
-  height: '100%'
+  display: 'flex',
+  height: '100%',
+  flex: 1
 });
 
 export const cardBodyStyle = kialiStyle({

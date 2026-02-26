@@ -20,12 +20,13 @@ import { ServiceInsights } from './ServiceInsights';
 
 const overviewPageStyle = kialiStyle({
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  height: '100%'
 });
 
 const gridStyle = kialiStyle({
   flex: 1,
-  gridTemplateRows: 'auto 1fr'
+  overflow: 'auto'
 });
 
 const durationLabelStyle = kialiStyle({
@@ -37,12 +38,7 @@ const durationLabelStyle = kialiStyle({
 
 const secondRowItemStyle = kialiStyle({
   display: 'flex',
-  minHeight: '40vh',
-  $nest: {
-    '& > *': {
-      flex: 1
-    }
-  }
+  minHeight: '50vh'
 });
 
 const rightToolbarStyle = kialiStyle({
@@ -99,39 +95,41 @@ export const OverviewPage: React.FC = () => {
         }
       />
 
-      {!loaded ? (
-        <ManualRefreshEmptyState />
-      ) : (
-        <Grid hasGutter className={gridStyle}>
-          <GridItem span={6}>
-            <Grid hasGutter>
-              <GridItem span={4}>
-                <ClusterStats />
-              </GridItem>
+      <div className={gridStyle}>
+        {!loaded ? (
+          <ManualRefreshEmptyState />
+        ) : (
+          <Grid hasGutter>
+            <GridItem span={6}>
+              <Grid hasGutter>
+                <GridItem span={4}>
+                  <ClusterStats />
+                </GridItem>
 
-              <GridItem span={4}>
-                <IstioConfigStats />
-              </GridItem>
+                <GridItem span={4}>
+                  <IstioConfigStats />
+                </GridItem>
 
-              <GridItem span={4}>
-                <ControlPlaneStats />
-              </GridItem>
-            </Grid>
-          </GridItem>
+                <GridItem span={4}>
+                  <ControlPlaneStats />
+                </GridItem>
+              </Grid>
+            </GridItem>
 
-          <GridItem span={6}>
-            <DataPlaneStats />
-          </GridItem>
+            <GridItem span={6}>
+              <DataPlaneStats />
+            </GridItem>
 
-          <GridItem span={4} className={secondRowItemStyle}>
-            <ApplicationStats />
-          </GridItem>
+            <GridItem span={4} className={secondRowItemStyle}>
+              <ApplicationStats />
+            </GridItem>
 
-          <GridItem span={8}>
-            <ServiceInsights />
-          </GridItem>
-        </Grid>
-      )}
+            <GridItem span={8}>
+              <ServiceInsights />
+            </GridItem>
+          </Grid>
+        )}
+      </div>
     </div>
   );
 };

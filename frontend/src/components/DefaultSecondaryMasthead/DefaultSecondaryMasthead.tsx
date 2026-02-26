@@ -59,7 +59,8 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
   const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
     let path = window.location.pathname;
 
-    path = path.substring(path.lastIndexOf('/console') + '/console'.length + 1);
+    // Remove the first path segment (e.g., '/console/' or '/ossmconsole/') to get the actual page path
+    path = path.replace(/^\/?[^/]+\//, '');
 
     if (titles.some(t => path.startsWith(t))) {
       let title = `${path.charAt(0).toUpperCase()}${path.slice(1)}`;

@@ -26,6 +26,7 @@ const rightToolbarStyle = kialiStyle({
 const actionsToolbarStyle = kialiStyle({
   position: 'absolute',
   right: '3rem',
+  top: '9rem',
   zIndex: 1
 });
 

@@ -61,7 +61,7 @@ const ratesContainerStyle = kialiStyle({
   marginBottom: '1rem',
   display: 'flex',
   justifyContent: 'center',
-  gap: '2rem',
+  gap: '2.5rem',
   fontSize: '1rem'
 });
 
@@ -146,94 +146,92 @@ export const ApplicationStats: React.FC = () => {
     }
 
     return (
-      <>
-        <CardBody className={cardBodyStyle}>
-          <Flex className={ratesContainerStyle} data-test="apps-card-rates">
-            <FlexItem>
-              <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
-              <br />
-              <span className={noTrafficStyle}>{`${metrics.no_traffic} apps with no traffic`}</span>
-            </FlexItem>
-            <FlexItem>
-              <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
-            </FlexItem>
-          </Flex>
-          <div className={healthContainerStyle} data-test="apps-card-health">
-            <div className={chartStyle}>
-              <ChartDonut
-                ariaDesc={t('Application health status')}
-                constrainToVisibleArea
-                data={chartData}
-                labels={({ datum }) => `${datum.x}: ${datum.y}`}
-                legendPosition="right"
-                padding={{
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                  top: 20
-                }}
-                title={`${total}`}
-                subTitle={t('Total applications')}
-                width={225}
-                height={225}
-                colorScale={colorScale}
-              />
-            </div>
-            <div className={legendContainerStyle}>
-              <KialiLink
-                to={buildApplicationsUrl(namespaceNames)}
-                onClick={() => setHealthFilter(FAILURE.id)}
-                className={legendItemStyle}
-              >
-                {createIcon({ ...FAILURE, className: legendIconStyle })}
-                <span>
-                  {failure} {t('Failure')}
-                </span>
-              </KialiLink>
-              <KialiLink
-                to={buildApplicationsUrl(namespaceNames)}
-                onClick={() => setHealthFilter(DEGRADED.id)}
-                className={legendItemStyle}
-              >
-                {createIcon({ ...DEGRADED, className: legendIconStyle })}
-                <span>
-                  {degraded} {t('Degraded')}
-                </span>
-              </KialiLink>
-              <KialiLink
-                to={buildApplicationsUrl(namespaceNames)}
-                onClick={() => setHealthFilter(HEALTHY.id)}
-                className={legendItemStyle}
-              >
-                {createIcon({ ...HEALTHY, className: legendIconStyle })}
-                <span>
-                  {healthy} {t('Healthy')}
-                </span>
-              </KialiLink>
-              <KialiLink
-                to={buildApplicationsUrl(namespaceNames)}
-                onClick={() => setHealthFilter(NOT_READY.id)}
-                className={legendItemStyle}
-              >
-                {createIcon({ ...NOT_READY, className: legendIconStyle })}
-                <span>
-                  {notReady} {t('Not ready')}
-                </span>
-              </KialiLink>
-              <KialiLink
-                to={buildApplicationsUrl(namespaceNames)}
-                onClick={() => setHealthFilter(NA.id)}
-                className={legendItemStyle}
-              >
-                {createIcon({ ...NA, className: legendIconStyle })}
-                <span>
-                  {noHealthInfo} {t('No health information')}
-                </span>
-              </KialiLink>
-            </div>
+      <CardBody className={cardBodyStyle}>
+        <Flex className={ratesContainerStyle} data-test="apps-card-rates">
+          <FlexItem>
+            <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
+            <br />
+            <span className={noTrafficStyle}>{`${metrics.no_traffic} apps with no traffic`}</span>
+          </FlexItem>
+          <FlexItem>
+            <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
+          </FlexItem>
+        </Flex>
+        <div className={healthContainerStyle} data-test="apps-card-health">
+          <div className={chartStyle}>
+            <ChartDonut
+              ariaDesc={t('Application health status')}
+              constrainToVisibleArea
+              data={chartData}
+              labels={({ datum }) => `${datum.x}: ${datum.y}`}
+              legendPosition="right"
+              padding={{
+                bottom: 20,
+                left: 20,
+                right: 20,
+                top: 20
+              }}
+              title={`${total}`}
+              subTitle={t('Total applications')}
+              width={225}
+              height={225}
+              colorScale={colorScale}
+            />
           </div>
-        </CardBody>
-      </>
+          <div className={legendContainerStyle}>
+            <KialiLink
+              to={buildApplicationsUrl(namespaceNames)}
+              onClick={() => setHealthFilter(FAILURE.id)}
+              className={legendItemStyle}
+            >
+              {createIcon({ ...FAILURE, className: legendIconStyle })}
+              <span>
+                {failure} {t('Failure')}
+              </span>
+            </KialiLink>
+            <KialiLink
+              to={buildApplicationsUrl(namespaceNames)}
+              onClick={() => setHealthFilter(DEGRADED.id)}
+              className={legendItemStyle}
+            >
+              {createIcon({ ...DEGRADED, className: legendIconStyle })}
+              <span>
+                {degraded} {t('Degraded')}
+              </span>
+            </KialiLink>
+            <KialiLink
+              to={buildApplicationsUrl(namespaceNames)}
+              onClick={() => setHealthFilter(HEALTHY.id)}
+              className={legendItemStyle}
+            >
+              {createIcon({ ...HEALTHY, className: legendIconStyle })}
+              <span>
+                {healthy} {t('Healthy')}
+              </span>
+            </KialiLink>
+            <KialiLink
+              to={buildApplicationsUrl(namespaceNames)}
+              onClick={() => setHealthFilter(NOT_READY.id)}
+              className={legendItemStyle}
+            >
+              {createIcon({ ...NOT_READY, className: legendIconStyle })}
+              <span>
+                {notReady} {t('Not ready')}
+              </span>
+            </KialiLink>
+            <KialiLink
+              to={buildApplicationsUrl(namespaceNames)}
+              onClick={() => setHealthFilter(NA.id)}
+              className={legendItemStyle}
+            >
+              {createIcon({ ...NA, className: legendIconStyle })}
+              <span>
+                {noHealthInfo} {t('No health information')}
+              </span>
+            </KialiLink>
+          </div>
+        </div>
+      </CardBody>
     );
   };
 

@@ -5,6 +5,7 @@ import { Outlet } from 'react-router-dom-v5-compat';
 import { t } from 'utils/I18nUtils';
 import { pathRoutes } from 'routes';
 import { router } from 'app/History';
+import { kialiStyle } from 'styles/StyleUtils';
 
 // Add error boundary element to every path route
 pathRoutes.forEach(route => {
@@ -27,9 +28,16 @@ pathRoutes.forEach(route => {
   );
 });
 
+const renderPageStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0
+});
+
 export const RenderPage: React.FC<{ isGraph: boolean }> = () => {
   return (
-    <div>
+    <div className={renderPageStyle}>
       <Outlet />
     </div>
   );
