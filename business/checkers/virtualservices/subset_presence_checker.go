@@ -26,7 +26,7 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			continue
 		}
 		for destWeightIdx, destinationWeight := range httpRoute.Route {
-			if destinationWeight == nil && destinationWeight.Destination == nil {
+			if destinationWeight == nil || destinationWeight.Destination == nil {
 				continue
 			}
 			host := destinationWeight.Destination.Host
@@ -50,7 +50,7 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			continue
 		}
 		for destWeightIdx, destinationWeight := range tcpRoute.Route {
-			if destinationWeight == nil && destinationWeight.Destination == nil {
+			if destinationWeight == nil || destinationWeight.Destination == nil {
 				continue
 			}
 			host := destinationWeight.Destination.Host
@@ -75,7 +75,7 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 			continue
 		}
 		for destWeightIdx, destinationWeight := range tlsRoute.Route {
-			if destinationWeight == nil && destinationWeight.Destination == nil {
+			if destinationWeight == nil || destinationWeight.Destination == nil {
 				continue
 			}
 			host := destinationWeight.Destination.Host
