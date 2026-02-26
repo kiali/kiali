@@ -115,8 +115,9 @@ var _ = Describe("Validations controller", Ordered, func() {
 
 			By("By checking that the validations are created in the kiali cache")
 			Eventually(func() bool {
-				validations := kialiCache.Validations().Items()
-				return len(validations) > 0
+				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
+				_, found := kialiCache.Validations().Get(validationKey)
+				return found
 			}, timeout, interval).Should(BeTrue())
 		})
 
