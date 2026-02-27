@@ -148,13 +148,10 @@ func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types
 type ToolResultProcessingResult struct {
 	Response          *types.AIResponse
 	Conversation      []types.ConversationMessage
-	GetLogsContent    string
-	GetLogsAnalyze    bool
 	ShouldReturnEarly bool
 }
 
 // ProcessToolResults processes tool execution results in a standardized way
-// This function handles special cases for specific tools (get_pod_performance, get_logs)
 // and builds the response and conversation accordingly
 func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
 	result := ToolResultProcessingResult{
@@ -221,26 +218,6 @@ func AddContextToConversation(conversation []types.ConversationMessage, req type
 	}
 
 	return result
-}
-
-// ApplyGetLogsFallback checks if the AI response is empty or contains pseudo-tools
-// and falls back to raw logs if the model couldn't analyze them reliably
-func ApplyGetLogsFallback(response *types.AIResponse, raw string, getLogsAnalyze bool, getLogsContent string) {
-	if !getLogsAnalyze || getLogsContent == "" {
-		return
-	}
-
-	trimmed := strings.TrimSpace(response.Answer)
-	looksLikePseudoTool := strings.Contains(raw, "execute_browse") ||
-		strings.Contains(raw, "\\u003cexecute_browse") ||
-		strings.Contains(raw, "<execute_browse>")
-	looksLikeNonAnswer := len(trimmed) < 40 &&
-		(strings.HasPrefix(strings.ToLower(trimmed), "analyse") ||
-			strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
-
-	if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
-		response.Answer = ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
-	}
 }
 
 func FormatToolContent(result interface{}) (string, error) {

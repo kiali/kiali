@@ -67,8 +67,6 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	}
 
 	response := &types.AIResponse{}
-	getLogsContent := ""
-	getLogsAnalyze := false
 
 	result, err := chat.SendMessage(ctx, genai.Part{Text: req.Query})
 	if err != nil {
@@ -78,10 +76,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	for iter := 0; ; iter++ {
 		functionCalls := result.FunctionCalls()
 		if len(functionCalls) == 0 {
-			raw := result.Text()
-			response.Answer = providers.ParseMarkdownResponse(raw)
-			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
-			providers.ApplyGetLogsFallback(response, raw, getLogsAnalyze, getLogsContent)
+			response.Answer = providers.ParseMarkdownResponse(result.Text())
 			break
 		}
 
@@ -103,10 +98,6 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 			response.Citations = append(response.Citations, processResult.Response.Citations...)
 		}
 		conversation = processResult.Conversation
-		if processResult.GetLogsAnalyze && processResult.GetLogsContent != "" {
-			getLogsAnalyze = true
-			getLogsContent = processResult.GetLogsContent
-		}
 
 		if processResult.ShouldReturnEarly {
 			if processResult.Response.Answer != "" {

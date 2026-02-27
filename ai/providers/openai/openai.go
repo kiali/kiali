@@ -53,8 +53,6 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	toolDefs := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
 
 	response := &types.AIResponse{}
-	getLogsContent := ""
-	getLogsAnalyze := false
 
 	for iter := 0; ; iter++ {
 		resp, err := p.client.Chat.Completions.New(
@@ -80,10 +78,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 
 		msg := resp.Choices[0].Message
 		if len(msg.ToolCalls) == 0 {
-			raw := msg.Content
-			response.Answer = providers.ParseMarkdownResponse(raw)
-			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
-			providers.ApplyGetLogsFallback(response, raw, getLogsAnalyze, getLogsContent)
+			response.Answer = providers.ParseMarkdownResponse(msg.Content)
 			break
 		}
 
@@ -116,10 +111,6 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			response.Citations = append(response.Citations, processResult.Response.Citations...)
 		}
 		conversation = processResult.Conversation
-		if processResult.GetLogsAnalyze && processResult.GetLogsContent != "" {
-			getLogsAnalyze = true
-			getLogsContent = processResult.GetLogsContent
-		}
 
 		// Early return paths: tools that should return their own markdown directly.
 		if processResult.ShouldReturnEarly {
