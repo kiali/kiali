@@ -31,4 +31,4 @@
         description: "Name of the Istio object. Required for patch,get,create and delete actions."
       json_data:
         type: "string"
-        description: "JSON data to apply or create the object. Required for create and patch actions."
+        description: "JSON or YAML data to apply or create the object. Required for create and patch actions."

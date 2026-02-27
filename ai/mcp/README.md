@@ -324,34 +324,36 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 - `cluster` (string, optional): Cluster name. Defaults to the cluster in Kiali configuration.
 - `namespace` (string, optional): Namespace. If not provided for `list`, returns all Istio objects across all namespaces.
 - `group` (string, required for create/patch/get): API group (e.g., `"networking.istio.io"`, `"gateway.networking.k8s.io"`).
-- `version` (string, required for create/patch/get): API version (e.g., `"v1alpha3"`, `"v1beta1"`).
+- `version` (string, required for create/patch/get): API version (e.g., `"v1"`).
 - `kind` (string, required for create/patch/get): Object kind (e.g., `"VirtualService"`, `"DestinationRule"`, `"Gateway"`).
 - `object` (string, required for patch/delete): Name of the Istio object.
-- `json_data` (string, required for create/patch): JSON data for the object (as string).
+- `json_data` (string, required for create/patch): JSON or YAML data for the object (as string).
 
 **Returns**: 
-- For `list`: Array of Istio objects
-- For `get`: Single Istio object
+- For `list`: JSON list of Istio objects and validations (verbose)
+- For `get`: Compact YAML of the requested Istio object (minimal metadata/spec)
 - For `create`/`patch`/`delete`: Success/error message
 
 **Example 1**: List all VirtualServices in bookinfo namespace
 ```json
 {
   "action": "list",
+  "confirmed": true,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "VirtualService"
 }
 ```
 
-**Example 2**: Get a specific VirtualService
+**Example 2**: Get a specific VirtualService (returns compact YAML)
 ```json
 {
   "action": "get",
+  "confirmed": true,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "VirtualService",
   "object": "reviews"
 }
@@ -361,11 +363,12 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 ```json
 {
   "action": "create",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "DestinationRule",
-  "json_data": "{\"apiVersion\":\"networking.istio.io/v1alpha3\",\"kind\":\"DestinationRule\",\"metadata\":{\"name\":\"reviews\",\"namespace\":\"bookinfo\"},\"spec\":{\"host\":\"reviews\",\"trafficPolicy\":{\"loadBalancer\":{\"simple\":\"LEAST_CONN\"}}}}"
+  "json_data": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata:\n  name: reviews\n  namespace: bookinfo\nspec:\n  host: reviews\n  trafficPolicy:\n    loadBalancer:\n      simple: LEAST_CONN\n"
 }
 ```
 
@@ -373,9 +376,10 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 ```json
 {
   "action": "patch",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "VirtualService",
   "object": "reviews",
   "json_data": "{\"spec\":{\"http\":[{\"match\":[{\"headers\":{\"end-user\":{\"exact\":\"jason\"}}}],\"route\":[{\"destination\":{\"host\":\"reviews\",\"subset\":\"v2\"}}]}]}}"
@@ -386,9 +390,10 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 ```json
 {
   "action": "delete",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "DestinationRule",
   "object": "reviews"
 }

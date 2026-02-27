@@ -27,15 +27,17 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		"delete": true,
 	}
 	if sensitiveActions[action] && !confirmed {
+		previewActions := createFileAction(args)
 		// Return a response that forces the AI to stop and talk to the user
 		return struct {
 			Actions []get_action_ui.Action `json:"actions"`
 			Result  string                 `json:"result"`
 		}{
-			Actions: createFileAction(args),
+			Actions: previewActions,
 			Result: fmt.Sprintf(
-				"⚠️ OPERATION PAUSED: You are about to perform a '%s' operation. "+
-					"This is a sensitive action. Please ask the user: 'Are you sure you want to %s this Istio object?' "+
+				"OPERATION PAUSED: You are about to perform a '%s' operation. "+
+					"A YAML preview has been prepared (see the attached file). "+
+					"Please ask the user: 'Does this look correct, and do you want me to proceed with %s?' "+
 					"If they say yes, call this tool again with the exact same arguments and 'confirmed': true.",
 				action, action),
 		}, 200 // Return success (200) so the AI processes the message
@@ -59,8 +61,12 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 
 func createFileAction(args map[string]interface{}) []get_action_ui.Action {
 	action, _ := args["action"].(string)
+	cluster, _ := args["cluster"].(string)
 	object, _ := args["object"].(string)
 	kind, _ := args["kind"].(string)
+	group, _ := args["group"].(string)
+	version, _ := args["version"].(string)
+	namespace, _ := args["namespace"].(string)
 	jsonData, _ := args["json_data"].(string)
 
 	// Get initials of Kind in lowercase
@@ -75,12 +81,34 @@ func createFileAction(args map[string]interface{}) []get_action_ui.Action {
 	sanitizedObject := strings.ReplaceAll(object, " ", "_")
 
 	fileName := fmt.Sprintf("%s_%s.yaml", initials, sanitizedObject)
+
+	payload := jsonData
+	if strings.TrimSpace(jsonData) != "" {
+		if yml, err := normalizeToYAML(jsonData); err == nil {
+			payload = yml
+		}
+	} else {
+		apiVersion := version
+		if strings.TrimSpace(group) != "" {
+			apiVersion = strings.TrimSpace(group) + "/" + strings.TrimSpace(version)
+		}
+		if strings.TrimSpace(kind) != "" && strings.TrimSpace(object) != "" && strings.TrimSpace(namespace) != "" && strings.TrimSpace(apiVersion) != "" {
+			payload = stubManifestYAML(apiVersion, kind, object, namespace)
+		}
+	}
 	return []get_action_ui.Action{
 		{
-			Title:    fmt.Sprintf("Preview of files to %s", action),
-			FileName: fileName,
-			Kind:     get_action_ui.ActionKindFile,
-			Payload:  jsonData,
+			Title:     fmt.Sprintf("Preview of files to %s", action),
+			FileName:  fileName,
+			Kind:      get_action_ui.ActionKindFile,
+			Payload:   payload,
+			Operation: action,
+			Cluster:   cluster,
+			Namespace: namespace,
+			Group:     group,
+			Version:   version,
+			KindName:  kind,
+			Object:    object,
 		},
 	}
 }

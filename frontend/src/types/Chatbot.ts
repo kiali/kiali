@@ -3,34 +3,42 @@ import { MessageProps } from '@patternfly/chatbot';
 export const CHATBOT_CONVERSATION_ALWAYS_NAVIGATE = 'chatbot_conversation_always_navigate';
 
 export type ContextRequest = {
-  page_url: string;
   page_description: string;
   page_namespaces: string[];
+  page_url: string;
 };
 
 type LLMRequest = {
-  query: string;
-  conversation_id?: string | null;
   context: ContextRequest;
+  conversation_id?: string | null;
   media_type?: 'text/plain' | 'application/json';
+  query: string;
 };
 
 export type ActionKind = 'navigation' | 'file';
 
 export type Action = {
+  cluster?: string;
   fileName?: string; // Only for file action kind
-  title: string;
+  group?: string;
   kind: ActionKind;
+  // Optional metadata for file actions to allow editing/applying directly.
+  kindName?: string;
+  namespace?: string;
+  object?: string;
+  operation?: 'create' | 'patch' | 'delete';
   payload: string;
+  title: string;
+  version?: string;
 };
 
 type LLMResponse = {
-  answer: string;
   actions: Action[];
+  answer: string;
   citations: ReferencedDocument[];
-  used_models: ModelResponse;
-  truncated?: boolean;
   error?: string;
+  truncated?: boolean;
+  used_models: ModelResponse;
 };
 
 export type ChatRequest = LLMRequest;
@@ -42,45 +50,45 @@ export type ModelResponse = {
 };
 
 export type AlertMessage = {
-  title: string;
   message: string;
+  title: string;
   variant: 'success' | 'danger' | 'warning' | 'info' | 'custom';
 };
 
 export type ReferencedDocument = {
+  body: string;
   link: string;
   title: string;
-  body: string;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
-  referenced_documents: ReferencedDocument[];
   actions?: Action[];
-  scrollToHere?: boolean;
   collapse?: boolean;
+  referenced_documents: ReferencedDocument[];
+  scrollToHere?: boolean;
 };
 
 export type Prompt = {
-  title: string;
   message: string;
   query: string;
+  title: string;
 };
 
 export type ProviderAI = {
-  name: string;
-  description: string;
   defaultModel: string;
+  description: string;
   models: ModelAI[];
+  name: string;
 };
 
 export type ModelAI = {
-  name: string;
-  model: string;
   description: string;
+  model: string;
+  name: string;
 };
 
 export type ChatAIConfig = {
+  defaultProvider: string;
   enabled: boolean;
   providers: ProviderAI[];
-  defaultProvider: string;
 };

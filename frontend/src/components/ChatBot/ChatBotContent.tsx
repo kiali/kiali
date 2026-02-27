@@ -89,6 +89,9 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
                 scrollToHere={scrollToHere}
                 innerRef={messagesEndRef}
                 displayMode={displayMode}
+                context={context}
+                onSendMessage={handleSend}
+                setAlertMessage={setAlertMessage}
               />
             );
           }

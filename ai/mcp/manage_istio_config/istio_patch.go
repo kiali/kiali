@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -34,7 +35,13 @@ func IstioPatch(r *http.Request, args map[string]interface{}, businessLayer *bus
 		return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
 	}
 
-	createdConfigDetails, err := businessLayer.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, gvk, object, jsonData)
+	// Accept either JSON or YAML input (normalized to JSON for merge patch).
+	patchBytes, err := yaml.YAMLToJSON([]byte(jsonData))
+	if err != nil {
+		return fmt.Sprintf("Invalid json_data (must be valid JSON or YAML): %s", err.Error()), http.StatusBadRequest
+	}
+
+	createdConfigDetails, err := businessLayer.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, gvk, object, string(patchBytes))
 	if err != nil {
 		return err.Error(), http.StatusInternalServerError
 	}

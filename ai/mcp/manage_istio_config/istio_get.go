@@ -9,8 +9,6 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
@@ -41,50 +39,17 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 		return err.Error(), http.StatusInternalServerError
 	}
 
-	validationsResult := make(chan error)
-	exportTo := istioConfigDetails.GetExportTo()
-	istioConfigValidations := models.IstioValidations{}
-	istioConfigReferences := models.IstioReferencesMap{}
-
-	go func(istioConfigValidations *models.IstioValidations, istioConfigReferences *models.IstioReferencesMap) {
-		defer func() {
-			close(validationsResult)
-		}()
-		if len(exportTo) != 0 {
-			// validations should be done per exported namespaces to apply exportTo configs
-			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-			for _, ns := range loadedNamespaces {
-				if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-					istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObject(ctx, cluster, ns.Name, gvk, object)
-					if err != nil {
-						validationsResult <- err
-					}
-					*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-					*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
-				}
-			}
-		}
-		// also validate own namespace
-		istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, gvk, object)
-		if err != nil {
-			validationsResult <- err
-		}
-		*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-		*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
-	}(&istioConfigValidations, &istioConfigReferences)
-
-	istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[gvk.String()]
-	err = <-validationsResult
-	if err != nil {
-		return err.Error(), http.StatusInternalServerError
+	// Reduce tool verbosity: return a compact YAML representation of the resource only.
+	// (No validations/references/help fields; those add significant token usage.)
+	obj := istioConfigDetails.Object
+	if obj == nil {
+		return fmt.Sprintf("No object returned for %s/%s/%s %s in namespace %s", group, version, kind, object, namespace), http.StatusInternalServerError
 	}
 
-	if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectGVK: gvk, Namespace: namespace, Name: object, Cluster: cluster}]; found {
-		istioConfigDetails.IstioValidation = validation
-	}
-	if references, found := istioConfigReferences[models.IstioReferenceKey{ObjectGVK: gvk, Namespace: namespace, Name: object}]; found {
-		istioConfigDetails.IstioReferences = references
+	yml, yErr := compactRuntimeObjectYAML(obj, gvk)
+	if yErr != nil {
+		return fmt.Sprintf("Error while rendering istio config as YAML: %s", yErr.Error()), http.StatusInternalServerError
 	}
 
-	return istioConfigDetails, http.StatusOK
+	return "~~~\n" + yml + "~~~\n", http.StatusOK
 }
