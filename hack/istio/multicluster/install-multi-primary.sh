@@ -176,16 +176,16 @@ if [ "${AMBIENT}" == "true" ]; then
  if [ "${CLUSTER2_AMBIENT}" == "true" ]; then
     echo "==== Installing Istio Ambient on both clusters (default behavior)"
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
     install_ambient_multicluster
   else
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+      kubectl --context=${CLUSTER1_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
     kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+      kubectl --context=${CLUSTER2_CONTEXT} apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
 
     # Setup Istio environment (needed for install_ambient_on_cluster)
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"

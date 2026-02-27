@@ -74,7 +74,7 @@ var (
 	K8sInferencePools  = K8sInferenceGroupVersionV1.WithKind(K8sInferencePoolsType)
 	K8sReferenceGrants = K8sNetworkingGroupVersionV1Beta1.WithKind(K8sReferenceGrantType)
 	K8sTCPRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
-	K8sTLSRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTLSRouteType)
+	K8sTLSRoutes       = K8sNetworkingGroupVersionV1.WithKind(K8sTLSRouteType)
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies = SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType)

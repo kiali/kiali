@@ -410,8 +410,8 @@ const createPermissionsForNamespace = (): Record<string, { create: boolean; dele
   'gateway.networking.k8s.io/v1, Kind=Gateway': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1, Kind=HTTPRoute': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1, Kind=GRPCRoute': { create: true, delete: true, update: true },
+  'gateway.networking.k8s.io/v1, Kind=TLSRoute': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1alpha2, Kind=TCPRoute': { create: true, delete: true, update: true },
-  'gateway.networking.k8s.io/v1alpha2, Kind=TLSRoute': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1beta1, Kind=ReferenceGrant': { create: true, delete: true, update: true }
 });
 

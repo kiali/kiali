@@ -33,7 +33,7 @@ func (o *K8SClientMock) MockIstio(objects ...runtime.Object) {
 }
 
 func (o *K8SClientMock) MockGatewayApi(objects ...runtime.Object) {
-	o.gatewayapiClientSet = gatewayapifake.NewSimpleClientset(objects...)
+	o.gatewayapiClientSet = gatewayapifake.NewSimpleClientset(objects...) //nolint:staticcheck // SA1019
 }
 
 func (o *K8SClientMock) MockInferenceApi(objects ...runtime.Object) {

@@ -146,9 +146,9 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 		}
 	}
 
-	kubeClient := kubefake.NewSimpleClientset(kubeObjects...)
+	kubeClient := kubefake.NewSimpleClientset(kubeObjects...) //nolint:staticcheck // SA1019
 	istioClient := istiofake.NewSimpleClientset(istioObjects...)
-	gatewayAPIClient := gatewayapifake.NewSimpleClientset(gatewayapiObjects...)
+	gatewayAPIClient := gatewayapifake.NewSimpleClientset(gatewayapiObjects...) //nolint:staticcheck // SA1019
 	inferenceAPIClient := inferenceapifake.NewSimpleClientset(inferenceapiObjects...)
 	osAppsClient := osappsfake.NewSimpleClientset(osAppsObjects...)
 	projectClient := projectfake.NewSimpleClientset(projectObjects...)

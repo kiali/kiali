@@ -39,7 +39,7 @@ type IstioConfigList struct {
 	K8sInferencePools  []*k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
-	K8sTLSRoutes       []*k8s_networking_v1alpha2.TLSRoute      `json:"-"`
+	K8sTLSRoutes       []*k8s_networking_v1.TLSRoute            `json:"-"`
 
 	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"-"`
 	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"-"`
@@ -245,7 +245,7 @@ func (i *IstioConfigList) ConvertToResponse() {
 		i.K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
 	}
 	if i.K8sTLSRoutes == nil {
-		i.K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
+		i.K8sTLSRoutes = []*k8s_networking_v1.TLSRoute{}
 	}
 
 	if i.AuthorizationPolicies == nil {
@@ -288,7 +288,7 @@ type IstioConfigDetails struct {
 	K8sInferencePool  *k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"-"`
 	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"-"`
-	K8sTLSRoute       *k8s_networking_v1alpha2.TLSRoute      `json:"-"`
+	K8sTLSRoute       *k8s_networking_v1.TLSRoute            `json:"-"`
 
 	Permissions           ResourcePermissions `json:"-"`
 	IstioValidation       *IstioValidation    `json:"-"`
@@ -514,7 +514,7 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 		icd.K8sTCPRoute = &tcpRoute
 
 	case kubernetes.K8sTLSRoutes:
-		var tlsRoute k8s_networking_v1alpha2.TLSRoute
+		var tlsRoute k8s_networking_v1.TLSRoute
 		if err := json.Unmarshal(temp.Resource, &tlsRoute); err != nil {
 			return err
 		}
@@ -697,7 +697,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].K8sInferencePools = []*k8s_inference_v1.InferencePool{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
-			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1alpha2.TLSRoute{}
+			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1.TLSRoute{}
 			filtered[ns].VirtualServices = []*networking_v1.VirtualService{}
 			filtered[ns].ServiceEntries = []*networking_v1.ServiceEntry{}
 			filtered[ns].Sidecars = []*networking_v1.Sidecar{}

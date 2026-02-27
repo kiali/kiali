@@ -221,7 +221,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		K8sInferencePools:  []*k8s_inference_v1.InferencePool{},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
 		K8sTCPRoutes:       []*k8s_networking_v1alpha2.TCPRoute{},
-		K8sTLSRoutes:       []*k8s_networking_v1alpha2.TLSRoute{},
+		K8sTLSRoutes:       []*k8s_networking_v1.TLSRoute{},
 
 		AuthorizationPolicies:  []*security_v1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1.PeerAuthentication{},
@@ -383,8 +383,8 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sTCPRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsExpGatewayAPI() && criteria.Include(kubernetes.K8sTLSRoutes) {
-		list := &k8s_networking_v1alpha2.TLSRouteList{}
+	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sTLSRoutes) {
+		list := &k8s_networking_v1.TLSRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
@@ -685,7 +685,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.Object = istioConfigDetail.K8sTCPRoute
 		}
 	case kubernetes.K8sTLSRoutes:
-		istioConfigDetail.K8sTLSRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Get(ctx, object, getOpts)
+		istioConfigDetail.K8sTLSRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().TLSRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sTLSRoutes.Kind
 			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.K8sTLSRoutes.GroupVersion().String()
@@ -817,7 +817,7 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.K8sTCPRoutes:
 		err = userClient.GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sTLSRoutes:
-		err = userClient.GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1().TLSRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.ServiceEntries:
 		err = userClient.Istio().NetworkingV1().ServiceEntries(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Sidecars:
@@ -953,8 +953,8 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.K8sTCPRoute, err = userClient.GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sTCPRoute
 	case kubernetes.K8sTLSRoutes.String():
-		istioConfigDetail.K8sTLSRoute = &k8s_networking_v1alpha2.TLSRoute{}
-		istioConfigDetail.K8sTLSRoute, err = userClient.GatewayAPI().GatewayV1alpha2().TLSRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sTLSRoute = &k8s_networking_v1.TLSRoute{}
+		istioConfigDetail.K8sTLSRoute, err = userClient.GatewayAPI().GatewayV1().TLSRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sTLSRoute
 	case kubernetes.ServiceEntries.String():
 		istioConfigDetail.ServiceEntry = &networking_v1.ServiceEntry{}

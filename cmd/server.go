@@ -298,6 +298,7 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
 						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
 						objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
+						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TLSRoute{})
 					}
 					// Only include experimental types if their APIs are available
 					if isInferenceAPI {
@@ -305,7 +306,6 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 					}
 					if isExpGatewayAPI {
 						objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TLSRoute{})
 					}
 					for _, obj := range objectsToRemove {
 						log.Debugf("Removing informer for: %T", obj)
