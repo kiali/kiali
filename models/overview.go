@@ -29,6 +29,22 @@ type ServiceRatesResponse struct {
 	Services []ServiceRequests `json:"services"`
 }
 
+// ServiceTraffic represents a single service's TCP traffic rate.
+// TcpRate is bytes per second, and is computed as received+sent.
+type ServiceTraffic struct {
+	Cluster      string       `json:"cluster"`
+	HealthStatus HealthStatus `json:"healthStatus,omitempty"`
+	Namespace    string       `json:"namespace"`
+	ServiceName  string       `json:"serviceName"`
+	TcpRate      float64      `json:"tcpRate"` // bytes per second
+}
+
+// ServiceTrafficResponse contains the sorted list of service TCP traffic rates
+type ServiceTrafficResponse struct {
+	HasWaypoints bool             `json:"hasWaypoints"`
+	Services     []ServiceTraffic `json:"services"`
+}
+
 // AppRequests represents a single app's request statistics from the health cache
 type AppRequests struct {
 	AppName        string       `json:"appName"`

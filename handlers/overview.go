@@ -311,6 +311,146 @@ func OverviewServiceRates(
 	}
 }
 
+// OverviewServiceTraffic returns the top service TCP traffic rates (bytes/s) across all clusters and namespaces.
+// Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
+func OverviewServiceTraffic(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		zl := log.FromContext(ctx)
+
+		rateInterval := string(conf.HealthConfig.Compute.Duration)
+
+		// Use the business layer to respect discovery selectors and per-user namespace visibility.
+		layer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error creating business layer: "+err.Error())
+			return
+		}
+
+		hasWaypoints := len(layer.Workload.GetWaypoints(ctx)) > 0
+
+		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
+		var services []models.ServiceTraffic
+		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
+		queryTime := time.Now()
+
+		// If Kiali is scoped (CWA=false and/or discovery selectors are configured), we must not run an
+		// unfiltered cross-namespace query. Instead, always run per-cluster queries with a namespace filter.
+		discoverySelectorsConfigured := len(conf.Deployment.DiscoverySelectors.Default) > 0 ||
+			len(conf.Deployment.DiscoverySelectors.Overrides) > 0
+		scopedByConfig := !conf.Deployment.ClusterWideAccess || discoverySelectorsConfigured
+
+		// For users with full access, execute a single, cross-cluster, cross-namespace query.
+		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
+			labels := `destination_workload!="unknown"`
+
+			query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+			zl.Trace().Msgf("OverviewServiceTraffic query: %s", query)
+
+			result, warnings, err := prom.API().Query(ctx, query, queryTime)
+			if len(warnings) > 0 {
+				zl.Warn().Msgf("OverviewServiceTraffic. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+			}
+			if err != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+err.Error())
+				return
+			}
+
+			vector, ok := result.(model.Vector)
+			if !ok {
+				RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type")
+				return
+			}
+			services = convertToServiceTcpTraffic(vector)
+
+		} else {
+			services = make([]models.ServiceTraffic, 0, overviewServiceMetricsLimit)
+			successfulClusterQueries := 0
+			failedClusterQueries := 0
+			var lastQueryErr error
+
+			userClusters := layer.Namespace.GetClusterList()
+
+			for _, cluster := range userClusters {
+				labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
+				if scopedByConfig || !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
+					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
+					if err != nil {
+						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceTraffic: could not get namespaces for cluster")
+						continue
+					}
+					nsRegex := buildNamespaceRegex(namespaces)
+					if nsRegex == "" {
+						continue
+					}
+
+					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
+				}
+
+				query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query: %s", query)
+
+				result, warnings, err := prom.API().Query(ctx, query, queryTime)
+				if len(warnings) > 0 {
+					zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceTraffic. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+				}
+				if err != nil {
+					failedClusterQueries++
+					lastQueryErr = err
+					zl.Warn().Err(err).Str("cluster", cluster).Msg("OverviewServiceTraffic: Prometheus query failed for cluster")
+					continue
+				}
+
+				vector, ok := result.(model.Vector)
+				if !ok {
+					failedClusterQueries++
+					lastQueryErr = fmt.Errorf("unexpected Prometheus result type: %T", result)
+					zl.Warn().Str("cluster", cluster).Msg("OverviewServiceTraffic: unexpected Prometheus result type for cluster")
+					continue
+				}
+
+				clusterServices := convertToServiceTcpTraffic(vector)
+				for i := range clusterServices {
+					// Some telemetry setups may omit destination_cluster. If we scoped the query to a cluster, default it.
+					if clusterServices[i].Cluster == "" {
+						clusterServices[i].Cluster = cluster
+					}
+				}
+
+				services = append(services, clusterServices...)
+				successfulClusterQueries++
+			}
+
+			// If Prometheus queries failed for all clusters, surface an error (so UI shows error state).
+			if successfulClusterQueries == 0 && failedClusterQueries > 0 && lastQueryErr != nil {
+				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus in service traffic: "+lastQueryErr.Error())
+				return
+			}
+
+			// Sort and take global top N across all clusters.
+			sort.Slice(services, func(i, j int) bool {
+				return services[i].TcpRate > services[j].TcpRate
+			})
+			if overviewServiceMetricsLimit < len(services) {
+				services = services[:overviewServiceMetricsLimit]
+			}
+		}
+
+		enrichServiceTrafficWithHealth(services, kialiCache, conf)
+		response := models.ServiceTrafficResponse{HasWaypoints: hasWaypoints, Services: services}
+		RespondWithJSON(w, http.StatusOK, response)
+	}
+}
+
 // overviewServiceRatesFromHealthCache aggregates service error and request rates from the health cache.
 // Error rates use the health config (tolerances); request rate is total req/s from cached RequestHealth.
 func overviewServiceRatesFromHealthCache(
@@ -517,6 +657,90 @@ func overviewAppRatesFromHealthCache(
 	})
 
 	return all
+}
+
+// buildServiceTcpTrafficQuery constructs a PromQL query for TCP traffic (bytes/s).
+// Uses topk to return only the top results sorted by highest throughput.
+// If conf.ExternalServices.Prometheus.QueryScope is defined, the scope labels are
+// injected into the query's label selectors.
+func buildServiceTcpTrafficQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+	queryScope := conf.ExternalServices.Prometheus.QueryScope
+	for labelName, labelValue := range queryScope {
+		labels = fmt.Sprintf("%s,%s=\"%s\"", labels, prometheus.SanitizeLabelName(labelName), labelValue)
+	}
+
+	// L4 telemetry can be backwards in Istio; we sum both metrics so total throughput is accurate.
+	return fmt.Sprintf(
+		`round(topk(%d, (sum(rate(istio_tcp_sent_bytes_total{%s}[%s])) by (%s) + sum(rate(istio_tcp_received_bytes_total{%s}[%s])) by (%s)) > 0), 0.001)`,
+		limit,
+		labels,
+		rateInterval,
+		groupBy,
+		labels,
+		rateInterval,
+		groupBy,
+	)
+}
+
+// convertToServiceTcpTraffic converts a Prometheus vector to a slice of ServiceTraffic.
+func convertToServiceTcpTraffic(vector model.Vector) []models.ServiceTraffic {
+	services := make([]models.ServiceTraffic, 0, len(vector))
+
+	for _, sample := range vector {
+		if math.IsNaN(float64(sample.Value)) {
+			continue
+		}
+
+		cluster := string(sample.Metric["destination_cluster"])
+		namespace := string(sample.Metric["destination_service_namespace"])
+		serviceName := string(sample.Metric["destination_service_name"])
+
+		if serviceName == "" {
+			continue
+		}
+
+		services = append(services, models.ServiceTraffic{
+			Cluster:     cluster,
+			Namespace:   namespace,
+			ServiceName: serviceName,
+			TcpRate:     float64(sample.Value),
+		})
+	}
+
+	return services
+}
+
+// enrichServiceTrafficWithHealth sets HealthStatus on each ServiceTraffic from the health cache.
+// One cache lookup per distinct (cluster, namespace) keeps it efficient.
+func enrichServiceTrafficWithHealth(services []models.ServiceTraffic, kialiCache cache.KialiCache, conf *config.Config) {
+	if !conf.KialiInternal.HealthCache.Enabled || kialiCache == nil {
+		for i := range services {
+			services[i].HealthStatus = models.HealthStatusNA
+		}
+		return
+	}
+
+	type nsKey struct{ cluster, namespace string }
+	cacheByNs := make(map[nsKey]models.NamespaceServiceHealth)
+	for _, s := range services {
+		key := nsKey{s.Cluster, s.Namespace}
+		if _, ok := cacheByNs[key]; ok {
+			continue
+		}
+		cached, _ := kialiCache.GetHealth(s.Cluster, s.Namespace, internalmetrics.HealthTypeService)
+		if cached != nil {
+			cacheByNs[key] = cached.ServiceHealth
+		}
+	}
+	for i := range services {
+		key := nsKey{services[i].Cluster, services[i].Namespace}
+		svcHealth := cacheByNs[key]
+		if sh := svcHealth[services[i].ServiceName]; sh != nil && sh.Status != nil {
+			services[i].HealthStatus = sh.Status.Status
+		} else {
+			services[i].HealthStatus = models.HealthStatusNA
+		}
+	}
 }
 
 // hasAllClusterNamespaceAccess returns true if the user has access to the same set of namespaces

@@ -19,6 +19,7 @@ import {
   ServiceHealth,
   WorkloadHealth
 } from '../types/Health';
+import { HealthStatusId } from 'types/Health';
 import {
   IstioConfigDetails,
   IstioConfigDetailsQuery,
@@ -1596,4 +1597,21 @@ export const getOverviewServiceRates = (
   }>
 > => {
   return newRequest(HTTP_VERBS.GET, urls.overviewServiceRates, params, {});
+};
+
+export const getOverviewServiceTraffic = (
+  params: { limit?: number; rateInterval?: string } = {}
+): Promise<
+  ApiResponse<{
+    hasWaypoints: boolean;
+    services: Array<{
+      cluster: string;
+      healthStatus?: HealthStatusId;
+      namespace: string;
+      serviceName: string;
+      tcpRate: number;
+    }>;
+  }>
+> => {
+  return newRequest(HTTP_VERBS.GET, urls.overviewServiceTraffic, params, {});
 };
