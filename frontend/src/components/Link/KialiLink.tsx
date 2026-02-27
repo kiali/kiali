@@ -23,8 +23,8 @@ export const KialiLink: React.FC<KialiLinkProps> = (props: KialiLinkProps) => {
   };
 
   return isParentKiosk(kiosk) ? (
-    <Button variant="link" isInline className={props.className} onClick={handleClick} data-test={props.dataTest}>
-      {props.children}
+    <Button variant="link" isInline onClick={handleClick} data-test={props.dataTest}>
+      <span className={props.className}>{props.children}</span>
     </Button>
   ) : (
     <Link to={props.to} className={props.className} data-test={props.dataTest} onClick={props.onClick}>
