@@ -1,6 +1,8 @@
-import { router } from '../app/History';
+import { location, router } from '../app/History';
 import { store } from '../store/ConfigStore';
 import { isParentKiosk, kioskContextMenuAction } from '../components/Kiosk/KioskActions';
+
+const OSSM_CONSOLE = 'ossmconsole';
 
 interface NavigateOptions {
   relative?: 'route' | 'path';
@@ -29,11 +31,22 @@ export const kialiNavigate = (url: string, options?: NavigateOptions): void => {
 };
 
 /**
- * Get the page path from the current URL by removing the first path segment
- * (e.g., '/console/' or '/ossmconsole/').
+ * Get the page path from the current URL. In OSSMC, the plugin prefix must be removed.
  *
- * @returns The page path without the app prefix (e.g., 'overview', 'applications', 'services')
+ * @returns The page path without the plugin prefix (e.g., 'overview', 'applications', 'services')
  */
 export const getPagePath = (): string => {
-  return window.location.pathname.replace(/^\/?[^/]+\//, '');
+  let pathname = location.getPathname();
+
+  // Remove leading slash first to normalize the path
+  if (pathname.startsWith('/')) {
+    pathname = pathname.substring(1);
+  }
+
+  // Remove the plugin prefix for OSSMC
+  if (pathname.startsWith(`${OSSM_CONSOLE}/`)) {
+    pathname = pathname.substring(OSSM_CONSOLE.length + 1);
+  }
+
+  return pathname;
 };
