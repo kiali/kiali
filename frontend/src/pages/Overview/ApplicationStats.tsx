@@ -246,7 +246,7 @@ export const ApplicationStats: React.FC = () => {
           <KialiLink
             to={buildApplicationsUrl(namespaceNames)}
             onClick={() => FilterSelected.resetFilters()}
-            data-test="apps-card-view-all"
+            dataTest="apps-card-view-all"
           >
             {t('View all applications')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
           </KialiLink>

@@ -358,7 +358,7 @@ export const ServiceInsights: React.FC = () => {
           <KialiLink
             to={buildServicesListUrl()}
             onClick={() => FilterSelected.resetFilters()}
-            data-test="service-insights-view-all-services"
+            dataTest="service-insights-view-all-services"
           >
             {t('View all services')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
           </KialiLink>
