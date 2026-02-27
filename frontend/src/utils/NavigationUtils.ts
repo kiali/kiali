@@ -36,7 +36,7 @@ export const kialiNavigate = (url: string, options?: NavigateOptions): void => {
  * @returns The page path without the plugin prefix (e.g., 'overview', 'applications', 'services')
  */
 export const getPagePath = (): string => {
-  let pathname = location.getPathname();
+  let pathname = location.getPathname() ?? '';
 
   // Remove leading slash first to normalize the path
   if (pathname.startsWith('/')) {
