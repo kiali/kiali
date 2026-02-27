@@ -21,7 +21,8 @@ import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
-import { ServiceLatency, ServiceRequests } from 'types/Overview';
+import { ServiceLatency, ServiceRequests, ServiceTraffic } from 'types/Overview';
+import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
@@ -31,13 +32,23 @@ import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { URLParam } from 'app/History';
 import { helpIconStyle } from 'styles/IconStyle';
 
-const tablesContainerStyle = kialiStyle({
-  display: 'flex',
-  gap: '1.5rem'
+const tablesContainer3ColStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: '1.5rem',
+  alignItems: 'start',
+  overflowX: 'auto'
+});
+
+const tablesContainer1ColStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  gap: '1.5rem',
+  alignItems: 'start'
 });
 
 const tableContainerStyle = kialiStyle({
-  flex: 1
+  minWidth: 0
 });
 
 const tableStyle = kialiStyle({
@@ -128,6 +139,32 @@ const formatRequestRate = (t: (key: string, opts?: TOptions) => string, reqPerSe
   return t('{{rate}} req/s', { rate: reqPerSec.toFixed(2) });
 };
 
+const formatByteRate = (bytesPerSec: number): string => {
+  const abs = Math.abs(bytesPerSec);
+  if (abs < 1024) {
+    return `${bytesPerSec.toFixed(2)} B/s`;
+  }
+  const kib = bytesPerSec / 1024;
+  if (Math.abs(kib) < 1024) {
+    return `${kib.toFixed(2)} KiB/s`;
+  }
+  const mib = kib / 1024;
+  if (Math.abs(mib) < 1024) {
+    return `${mib.toFixed(2)} MiB/s`;
+  }
+  const gib = mib / 1024;
+  return `${gib.toFixed(2)} GiB/s`;
+};
+
+const noUnderlineStyle = kialiStyle({
+  textDecoration: 'none',
+  $nest: {
+    '&, &:hover, &:focus, &:active': {
+      textDecoration: 'none'
+    }
+  }
+});
+
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
     <div style={{ textAlign: 'left' }}>
@@ -156,9 +193,23 @@ export const ServiceInsights: React.FC = () => {
     return Array.from(new Set(namespaces.map(ns => ns.name))).sort();
   }, [activeNamespaces, namespaceItems]);
 
+  const allNamespacesAmbient = React.useMemo((): boolean => {
+    const namespaces = namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
+    if (!namespaces || namespaces.length === 0) {
+      return false;
+    }
+    const dataPlanes = namespaces.filter(isDataPlaneNamespace);
+    if (dataPlanes.length === 0) {
+      return false;
+    }
+    return dataPlanes.every(ns => !!ns.isAmbient);
+  }, [activeNamespaces, namespaceItems]);
+
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
+  const [traffic, setTraffic] = React.useState<ServiceTraffic[]>([]);
+  const [hasWaypoints, setHasWaypoints] = React.useState<boolean | undefined>(undefined);
   const [isError, setIsError] = React.useState(false);
 
   const buildServicesListUrl = React.useCallback((): string => {
@@ -178,13 +229,16 @@ export const ServiceInsights: React.FC = () => {
       setIsLoading(true);
       setIsError(false);
 
-      const [latenciesResponse, ratesResponse] = await Promise.all([
+      const [latenciesResponse, ratesResponse, trafficResponse] = await Promise.all([
         API.getOverviewServiceLatencies(),
-        API.getOverviewServiceRates()
+        API.getOverviewServiceRates(),
+        API.getOverviewServiceTraffic()
       ]);
 
       setLatencies(latenciesResponse.data.services || []);
       setRates(ratesResponse.data.services || []);
+      setTraffic(trafficResponse.data.services || []);
+      setHasWaypoints(trafficResponse.data.hasWaypoints);
     } catch (err) {
       setIsError(true);
       // eslint-disable-next-line no-console
@@ -311,6 +365,58 @@ export const ServiceInsights: React.FC = () => {
     );
   };
 
+  const renderTrafficTable = (): React.ReactNode => {
+    const servicesWithTraffic = traffic.filter(svc => (svc.tcpRate ?? 0) > 0);
+
+    if (servicesWithTraffic.length === 0) {
+      return (
+        <div className={emptyStateStyle}>
+          <div>{t('TCP traffic not available')}</div>
+          <div>{t('No TCP traffic or TCP metrics are unavailable')}</div>
+        </div>
+      );
+    }
+
+    return (
+      <table className={tableStyle} data-test="service-insights-traffic-table">
+        <colgroup>
+          <col style={{ width: '60%' }} />
+          <col style={{ width: '40%' }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th className={tableHeaderStyle}>{t('Name')}</th>
+            <th className={tableHeaderStyle}>
+              <span>{t('TCP')}</span>
+              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {servicesWithTraffic.map((svc, idx) => (
+            <tr key={`traffic-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
+              <td className={tableCellStyle}>
+                <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
+                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
+                    {svc.serviceName}
+                  </Link>
+                </Tooltip>
+              </td>
+              <td className={rateCellStyle}>
+                <Tooltip content={formatByteRate(svc.tcpRate ?? 0)} position={TooltipPosition.top}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                    {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+                    {formatByteRate(svc.tcpRate ?? 0)}
+                  </span>
+                </Tooltip>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
   const renderContent = (): React.ReactNode => {
     if (isLoading) {
       return <OverviewCardLoadingState message={t('Fetching service data')} />;
@@ -320,14 +426,25 @@ export const ServiceInsights: React.FC = () => {
       return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
 
+    // In ambient-only setups without waypoints, HTTP-focused metrics (error rate/latency) are typically unavailable.
+    // We use explicit waypoint detection (instead of checking for empty data) to avoid false negatives (e.g. gateways only).
+    const showOnlyTcpTable = allNamespacesAmbient && hasWaypoints === false;
+
     return (
-      <div className={tablesContainerStyle}>
-        <div className={tableContainerStyle} data-test="service-insights-rates">
-          {renderRatesTable()}
+      <div className={showOnlyTcpTable ? tablesContainer1ColStyle : tablesContainer3ColStyle}>
+        <div className={tableContainerStyle} data-test="service-insights-traffic">
+          {renderTrafficTable()}
         </div>
-        <div className={tableContainerStyle} data-test="service-insights-latencies">
-          {renderLatenciesTable()}
-        </div>
+        {!showOnlyTcpTable && (
+          <div className={tableContainerStyle} data-test="service-insights-rates">
+            {renderRatesTable()}
+          </div>
+        )}
+        {!showOnlyTcpTable && (
+          <div className={tableContainerStyle} data-test="service-insights-latencies">
+            {renderLatenciesTable()}
+          </div>
+        )}
       </div>
     );
   };
@@ -343,7 +460,7 @@ export const ServiceInsights: React.FC = () => {
             bodyContent={
               <>
                 {t(
-                  'Top services ranked by error rate and P95 latency. Status icons indicate health for the time period. Services with identical error rates are sorted by request rate.'
+                  'Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.'
                 )}
               </>
             }
