@@ -2,7 +2,6 @@ package openai_provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -37,7 +36,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 
 	// Create a temporary conversation with context for the API call
 	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := p.AddContextToConversation(conversation, req)
+	conversationWithContext := providers.AddContextToConversation(conversation, req)
 
 	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
 	for i, msg := range conversationWithContext {
@@ -84,14 +83,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			raw := msg.Content
 			response.Answer = providers.ParseMarkdownResponse(raw)
 			// If the model returned empty output or unsupported pseudo-tags, fall back to raw logs.
-			if getLogsAnalyze && getLogsContent != "" {
-				trimmed := strings.TrimSpace(response.Answer)
-				looksLikePseudoTool := strings.Contains(raw, "execute_browse") || strings.Contains(raw, "\\u003cexecute_browse") || strings.Contains(raw, "<execute_browse>")
-				looksLikeNonAnswer := len(trimmed) < 40 && (strings.HasPrefix(strings.ToLower(trimmed), "analyse") || strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
-				if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
-					response.Answer = providers.ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
-				}
-			}
+			providers.ApplyGetLogsFallback(response, raw, getLogsAnalyze, getLogsContent)
 			break
 		}
 
@@ -206,37 +198,6 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 		Param:   nil,
 		Role:    "user",
 	})
-}
-
-// AddContextToConversation creates a temporary copy of the conversation with context added
-// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-func (p *OpenAIProvider) AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
-	if len(conversation) == 0 {
-		return conversation
-	}
-
-	// Create a copy to avoid modifying the original
-	result := make([]types.ConversationMessage, 0, len(conversation)+1)
-
-	// Add system instruction (should be first)
-	result = append(result, conversation[0])
-
-	// Add context as second message (after system instruction, before user messages)
-	contextBytes, _ := json.Marshal(req.Context)
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	result = append(result, types.ConversationMessage{
-		Content: contextContent,
-		Name:    "",
-		Param:   nil,
-		Role:    "system",
-	})
-
-	// Add the rest of the conversation
-	if len(conversation) > 1 {
-		result = append(result, conversation[1:]...)
-	}
-
-	return result
 }
 
 func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {

@@ -162,11 +162,6 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		Conversation: conversation,
 	}
 
-	// Some tools return user-ready markdown; if multiple tools are called together,
-	// we want to combine their outputs instead of returning early on the first one.
-	var podPerformanceMarkdown string
-	var logsMarkdown string
-
 	for _, toolResult := range toolResults {
 		// Handle errors
 		if toolResult.Error != nil {
@@ -188,71 +183,64 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 			continue
 		}
 
-		// Special handling for get_pod_performance: return markdown summary directly
-		// This avoids depending on a second model call to "re-say" the table
-		if toolResult.Message.Name == "get_pod_performance" && toolResult.Message.Content != "" {
-			podPerformanceMarkdown = ParseMarkdownResponse(toolResult.Message.Content)
-			continue
-		}
-
-		// Special handling for get_logs
-		if toolResult.Message.Name == "get_logs" && toolResult.Message.Content != "" {
-			// Check if analyze parameter is false (default is false)
-			analyze := false
-			if toolResult.Message.Param != nil {
-				if params, ok := toolResult.Message.Param.(map[string]interface{}); ok {
-					log.Debugf("[ProcessToolResults] get_logs params: %+v", params)
-					if analyzeVal, ok := params["analyze"].(bool); ok {
-						analyze = analyzeVal
-						log.Debugf("[ProcessToolResults] get_logs analyze param found: %v", analyze)
-					} else {
-						log.Debugf("[ProcessToolResults] get_logs analyze param not found or not bool, defaulting to false")
-					}
-				} else {
-					log.Debugf("[ProcessToolResults] get_logs Param is not map[string]interface{}, type is: %T", toolResult.Message.Param)
-				}
-			} else {
-				log.Debugf("[ProcessToolResults] get_logs Param is nil")
-			}
-
-			if !analyze {
-				// Return logs directly without model analysis.
-				// But don't return early here: other tools (like get_pod_performance) might
-				// have been called in the same turn and should be included too.
-				log.Debugf("[ProcessToolResults] get_logs captured logs (analyze=false)")
-				logsMarkdown = ParseMarkdownResponse(toolResult.Message.Content)
-				continue
-			}
-
-			// analyze=true: keep tool content available for fallback if model returns unusable output
-			log.Debugf("[ProcessToolResults] get_logs deferring to AI analysis (analyze=true)")
-			result.GetLogsContent = toolResult.Message.Content
-			result.GetLogsAnalyze = true
-			// Do not append raw logs to the stored conversation; we will inject them only
-			// into the analysis request to avoid contaminating future turns
-			continue
-		}
-
 		// Default: append tool message to conversation
 		if toolResult.Message.Content != "" {
 			result.Conversation = append(result.Conversation, toolResult.Message)
 		}
 	}
 
-	// If we have direct markdown from tools, build a combined answer and return it.
-	if podPerformanceMarkdown != "" || logsMarkdown != "" {
-		parts := make([]string, 0, 2)
-		if logsMarkdown != "" {
-			parts = append(parts, logsMarkdown)
-		}
-		if podPerformanceMarkdown != "" {
-			parts = append(parts, podPerformanceMarkdown)
-		}
-		result.Response.Answer = strings.Join(parts, "\n\n")
-		result.ShouldReturnEarly = true
+	return result
+}
+
+// AddContextToConversation creates a temporary copy of the conversation with context added
+// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+func AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
+	if len(conversation) == 0 {
+		return conversation
+	}
+
+	// Create a copy to avoid modifying the original
+	result := make([]types.ConversationMessage, 0, len(conversation)+1)
+
+	// Add system instruction (should be first)
+	result = append(result, conversation[0])
+
+	// Add context as second message (after system instruction, before user messages)
+	contextBytes, _ := json.Marshal(req.Context)
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	result = append(result, types.ConversationMessage{
+		Content: contextContent,
+		Name:    "",
+		Param:   nil,
+		Role:    "system",
+	})
+
+	// Add the rest of the conversation
+	if len(conversation) > 1 {
+		result = append(result, conversation[1:]...)
 	}
 
 	return result
+}
+
+// ApplyGetLogsFallback checks if the AI response is empty or contains pseudo-tools
+// and falls back to raw logs if the model couldn't analyze them reliably
+func ApplyGetLogsFallback(response *types.AIResponse, raw string, getLogsAnalyze bool, getLogsContent string) {
+	if !getLogsAnalyze || getLogsContent == "" {
+		return
+	}
+
+	trimmed := strings.TrimSpace(response.Answer)
+	looksLikePseudoTool := strings.Contains(raw, "execute_browse") ||
+		strings.Contains(raw, "\\u003cexecute_browse") ||
+		strings.Contains(raw, "<execute_browse>")
+	looksLikeNonAnswer := len(trimmed) < 40 &&
+		(strings.HasPrefix(strings.ToLower(trimmed), "analyse") ||
+			strings.HasPrefix(strings.ToLower(trimmed), "analyze"))
+
+	if trimmed == "" || looksLikePseudoTool || looksLikeNonAnswer {
+		response.Answer = ParseMarkdownResponse("I couldn't analyze the logs reliably. Here are the logs:\n\n" + getLogsContent)
+	}
 }
 
 func FormatToolContent(result interface{}) (string, error) {
