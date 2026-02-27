@@ -2,7 +2,9 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { clusterParameterExists } from './navigation';
 
 const openTab = (tab: string): void => {
-  cy.contains('.pf-v6-c-tabs__list button', tab).should('be.visible').click();
+  // Use force:true because the tab button may be reported as covered by its parent
+  // scroll container (.pf-v6-c-tabs__list) due to flexbox layout, but is still clickable
+  cy.contains('.pf-v6-c-tabs__list button', tab).should('be.visible').click({ force: true });
 };
 
 Then('sd::user sees a list with content {string}', (tab: string) => {

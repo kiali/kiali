@@ -204,7 +204,7 @@ When('user opens the Istio configs warnings popover', () => {
 });
 
 When('user clicks the {string} popover action', (label: string) => {
-  cy.contains('button', label).should('be.visible').click();
+  cy.contains(label).should('be.visible').click();
 });
 
 Then('user is redirected to Istio config list with all namespaces and warning filters', () => {
