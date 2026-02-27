@@ -9,6 +9,10 @@ export default defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,
   defaultCommandTimeout: 40000,
+  retries: {
+    runMode: 2,
+    openMode: 0
+  },
   animationDistanceThreshold: 20,
   execTimeout: 150000,
   pageLoadTimeout: 90000,

@@ -1,7 +1,6 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { Visualization } from '@patternfly/react-topology';
-import { elems, select, selectAnd, selectOr } from './graph';
+import { assertGraphReady, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 import { enableKialiFeature, GRAPH_CACHE_CONFIG } from './kiali-config';
 
@@ -145,49 +144,35 @@ Then('the display menu has default settings', () => {
 });
 
 Then('the graph reflects default settings', () => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes, edges }) => {
+    let numEdges = selectOr(edges, [
+      [{ prop: EdgeAttr.responseTime, op: 'truthy' }],
+      [{ prop: EdgeAttr.throughput, op: 'truthy' }]
+    ]).length;
+    assert.equal(numEdges, 0);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes, edges } = elems(controller);
+    numEdges = selectOr(edges, [
+      [{ prop: EdgeAttr.hasTraffic, op: 'falsy' }],
+      [{ prop: EdgeAttr.isMTLS, op: '=', val: undefined }]
+    ]).length;
+    assert.equal(numEdges, 0);
 
-      // no nonDefault edge label info
-      let numEdges = selectOr(edges, [
-        [{ prop: EdgeAttr.responseTime, op: 'truthy' }],
-        [{ prop: EdgeAttr.throughput, op: 'truthy' }]
-      ]).length;
-      assert.equal(numEdges, 0);
+    let numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'app' }).length;
+    assert.isAbove(numNodes, 0);
+    numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'namespace' }).length;
+    assert.isAbove(numNodes, 0);
 
-      // no idle edges, mtls
-      numEdges = selectOr(edges, [
-        [{ prop: EdgeAttr.hasTraffic, op: 'falsy' }],
-        [{ prop: EdgeAttr.isMTLS, op: '=', val: undefined }]
-      ]).length;
-      assert.equal(numEdges, 0);
+    numNodes = select(nodes, { prop: NodeAttr.nodeType, op: '=', val: 'service' }).length;
+    assert.isAbove(numNodes, 0);
 
-      // boxes
-      let numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'app' }).length;
-      assert.isAbove(numNodes, 0);
-      numNodes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'namespace' }).length;
-      assert.isAbove(numNodes, 0);
-
-      // service nodes
-      numNodes = select(nodes, { prop: NodeAttr.nodeType, op: '=', val: 'service' }).length;
-      assert.isAbove(numNodes, 0);
-
-      // a variety of not-found tests
-      numNodes = selectOr(nodes, [
-        [{ prop: NodeAttr.isBox, op: '=', val: 'cluster' }],
-        [{ prop: NodeAttr.isIdle, op: 'truthy' }],
-        [{ prop: NodeAttr.rank, op: 'truthy' }],
-        [{ prop: NodeAttr.nodeType, op: '=', val: 'operation' }]
-      ]).length;
-      assert.equal(numNodes, 0);
-    });
+    numNodes = selectOr(nodes, [
+      [{ prop: NodeAttr.isBox, op: '=', val: 'cluster' }],
+      [{ prop: NodeAttr.isIdle, op: 'truthy' }],
+      [{ prop: NodeAttr.rank, op: 'truthy' }],
+      [{ prop: NodeAttr.nodeType, op: '=', val: 'operation' }]
+    ]).length;
+    assert.equal(numNodes, 0);
+  });
 });
 
 Then('user sees {string} edge labels', (el: string) => {
@@ -205,19 +190,10 @@ Then('user sees {string} edge labels', (el: string) => {
       rate = el;
   }
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges } = elems(controller);
-
-      const numEdges = select(edges, { prop: rate, op: '>', val: 0 }).length;
-      assert.isAbove(numEdges, 0);
-    });
+  assertGraphReady(({ edges }) => {
+    const numEdges = select(edges, { prop: rate, op: '>', val: 0 }).length;
+    assert.isAbove(numEdges, 0);
+  });
 });
 
 Then('user sees {string} edge label option is closed', (edgeLabel: string) => {
@@ -227,19 +203,10 @@ Then('user sees {string} edge label option is closed', (edgeLabel: string) => {
 Then('user does not see {string} boxing', (boxByType: string) => {
   validateInput(`boxBy${boxByType}`, 'does not appear');
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const numBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: boxByType.toLowerCase() }).length;
-      assert.equal(numBoxes, 0);
-    });
+  assertGraphReady(({ nodes }) => {
+    const numBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: boxByType.toLowerCase() }).length;
+    assert.equal(numBoxes, 0);
+  });
 });
 
 // In older versions of Istio, when this was written, this istio-system namespace
@@ -252,118 +219,73 @@ Then('user does not see {string} boxing', (boxByType: string) => {
 Then('idle edges {string} in the graph', (action: string) => {
   validateInput('filterIdleEdges', action);
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ edges }) => {
+    const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+    const numIdleEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '=', val: undefined }).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges } = elems(controller);
-
-      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
-      const numIdleEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '=', val: undefined }).length;
-
-      if (action === 'appear') {
-        assert.isAbove(numEdges, 0);
-        assert.isAtLeast(numIdleEdges, 0);
-      } else {
-        assert.isAbove(numEdges, 0);
-        assert.equal(numIdleEdges, 0);
-      }
-    });
+    if (action === 'appear') {
+      assert.isAbove(numEdges, 0);
+      assert.isAtLeast(numIdleEdges, 0);
+    } else {
+      assert.isAbove(numEdges, 0);
+      assert.equal(numIdleEdges, 0);
+    }
+  });
 });
 
 Then('idle nodes {string} in the graph', (action: string) => {
   validateInput('filterIdleNodes', action);
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    let numNodes = select(nodes, { prop: NodeAttr.isIdle, op: 'truthy' }).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      let numNodes = select(nodes, { prop: NodeAttr.isIdle, op: 'truthy' }).length;
-
-      if (action === 'appear') {
-        assert.isAbove(numNodes, 0);
-      } else {
-        assert.equal(numNodes, 0);
-      }
-    });
+    if (action === 'appear') {
+      assert.isAbove(numNodes, 0);
+    } else {
+      assert.equal(numNodes, 0);
+    }
+  });
 });
 
 Then('ranks {string} in the graph', (action: string) => {
   validateInput('rank', action);
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    let numNodes = select(nodes, { prop: NodeAttr.rank, op: '>', val: '0' }).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      let numNodes = select(nodes, { prop: NodeAttr.rank, op: '>', val: '0' }).length;
-
-      if (action === 'appear') {
-        assert.isAbove(numNodes, 0);
-      } else {
-        assert.equal(numNodes, 0);
-      }
-    });
+    if (action === 'appear') {
+      assert.isAbove(numNodes, 0);
+    } else {
+      assert.equal(numNodes, 0);
+    }
+  });
 });
 
 Then('user does not see service nodes', () => {
   validateInput('filterServiceNodes', 'do not appear');
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    let numBoxes = selectAnd(nodes, [
+      { prop: NodeAttr.nodeType, op: '=', val: 'service' },
+      { prop: NodeAttr.isOutside, op: '=', val: undefined }
+    ]).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      let numBoxes = selectAnd(nodes, [
-        { prop: NodeAttr.nodeType, op: '=', val: 'service' },
-        { prop: NodeAttr.isOutside, op: '=', val: undefined }
-      ]).length;
-
-      assert.equal(numBoxes, 0);
-    });
+    assert.equal(numBoxes, 0);
+  });
 });
 
 Then('security {string} in the graph', (action: string) => {
   validateInput('filterSecurity', action);
 
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ edges }) => {
+    let numEdges = select(edges, { prop: EdgeAttr.isMTLS, op: '>', val: 0 }).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges } = elems(controller);
-
-      let numEdges = select(edges, { prop: EdgeAttr.isMTLS, op: '>', val: 0 }).length;
-
-      if (action === 'appears') {
-        assert.isAbove(numEdges, 0);
-      } else {
-        assert.equal(numEdges, 0);
-      }
-    });
+    if (action === 'appears') {
+      assert.isAbove(numEdges, 0);
+    } else {
+      assert.equal(numEdges, 0);
+    }
+  });
 });
 
 Then('{string} option {string} in the graph', (option: string, action: string) => {
@@ -383,20 +305,10 @@ Then('{string} option {string} in the graph', (option: string, action: string) =
 
   validateInput(option, action);
 
-  // this is just a sanity check to ensure the graph is still rendered after the option change, and there was no crash
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges, nodes } = elems(controller);
-
-      assert.isAbove(edges.length, 0);
-      assert.isAbove(nodes.length, 0);
-    });
+  assertGraphReady(({ nodes, edges }) => {
+    assert.isAbove(edges.length, 0);
+    assert.isAbove(nodes.length, 0);
+  });
 });
 
 Then('the {string} option should {string} and {string}', (option: string, optionState: string, checkState: string) => {
@@ -418,25 +330,16 @@ Then('the {string} option should {string} and {string}', (option: string, option
 });
 
 Then('only a single cluster box should be visible', () => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const clusterBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'cluster' }).length;
+    assert.equal(clusterBoxes, 0);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const clusterBoxes = select(nodes, { prop: NodeAttr.isBox, op: '=', val: 'cluster' }).length;
-      assert.equal(clusterBoxes, 0);
-
-      const namespaceBoxes = selectAnd(nodes, [
-        { prop: NodeAttr.isBox, op: '=', val: 'namespace' },
-        { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
-      ]).length;
-      assert.equal(namespaceBoxes, 1);
-    });
+    const namespaceBoxes = selectAnd(nodes, [
+      { prop: NodeAttr.isBox, op: '=', val: 'namespace' },
+      { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
+    ]).length;
+    assert.equal(namespaceBoxes, 1);
+  });
 });
 
 const validateInput = (option: string, action: string): void => {
@@ -502,111 +405,60 @@ Then(
 );
 
 Then('{int} edges appear in the graph', (graphEdges: number) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges } = elems(controller);
-
-      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
-      // It can be more, depending on the service version redirection
-      assert.isAtLeast(numEdges, graphEdges);
-    });
+  assertGraphReady(({ edges }) => {
+    const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+    assert.isAtLeast(numEdges, graphEdges);
+  });
 });
 
 Then('{int} nodes appear in the graph', (graphNodes: number) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const visibleNodes = nodes.filter(n => {
-        const data = n.getData?.() as any;
-        return data?.nodeType === 'app' || data?.nodeType === 'service';
-      });
-
-      expect(visibleNodes).to.have.lengthOf(graphNodes);
+  assertGraphReady(({ nodes }) => {
+    const visibleNodes = nodes.filter(n => {
+      const data = n.getData?.() as any;
+      return data?.nodeType === 'app' || data?.nodeType === 'service';
     });
+
+    expect(visibleNodes).to.have.lengthOf(graphNodes);
+  });
 });
 
 // For some data, when Prometheus is installed in the istio-system namespace, it generates an additional edge.
 // This step expects the provided number including Prometheus; if Prometheus is absent, we accept one fewer edge.
 // Does not happen with cluster monitoring
 Then('{int} edges appear in the graph including Prometheus', (graphEdges: number) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      // Check if Prometheus deployment exists
-      cy.exec(`kubectl get deployments -A | grep prometheus | wc -l`).then(result => {
-        const prometheusPodsCount = parseInt(result.stdout.trim());
-        const { state } = $graph[0];
+  cy.exec(`kubectl get deployments -A | grep prometheus | wc -l`, { failOnNonZeroExit: false }).then(result => {
+    const prometheusPodsCount = parseInt(result.stdout.trim()) || 0;
 
-        const controller = state.graphRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
-        const { edges } = elems(controller);
-
-        const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
-
-        // If no Prometheus pods exist, validate against graphEdges
-        // If Prometheus pods exist, validate against graphEdges - 1
-        const expectedEdges = prometheusPodsCount > 0 ? graphEdges - 1 : graphEdges;
-
-        // It can be more, depending on the service version redirection
-        assert.isAtLeast(numEdges, expectedEdges);
-      });
+    assertGraphReady(({ edges }) => {
+      const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;
+      const expectedEdges = prometheusPodsCount > 0 ? graphEdges - 1 : graphEdges;
+      assert.isAtLeast(numEdges, expectedEdges);
     });
+  });
 });
 
 Then('the {string} node {string} exists', (nodeName: string, action: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', 1)
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const foundNode = nodes.filter(node => node.getData().workload === nodeName);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const foundNode = nodes.filter(node => node.getData().workload === nodeName);
-
-      if (action === 'does') {
-        assert.equal(foundNode.length, 1);
-      } else {
-        assert.equal(foundNode.length, 0);
-      }
-    });
+    if (action === 'does') {
+      assert.equal(foundNode.length, 1);
+    } else {
+      assert.equal(foundNode.length, 0);
+    }
+  });
 });
 
 Then('the {string} service {string} exists', (serviceName: string, action: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', 1)
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const foundNode = nodes.filter(node => node.getData().service === serviceName);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const foundNode = nodes.filter(node => node.getData().service === serviceName);
-
-      if (action === 'does') {
-        assert.equal(foundNode.length, 1);
-      } else {
-        assert.equal(foundNode.length, 0);
-      }
-    });
+    if (action === 'does') {
+      assert.equal(foundNode.length, 1);
+    } else {
+      assert.equal(foundNode.length, 0);
+    }
+  });
 });
 
 type GraphCacheMetrics = {

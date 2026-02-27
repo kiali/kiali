@@ -1,4 +1,4 @@
-import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { After, Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const APP_RATES_API_PATHNAME = '**/api/overview/metrics/apps/rates';
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
@@ -11,6 +11,14 @@ let didServiceInsightsRetry = false;
 let lastClickedServiceInsightsHref: string | undefined;
 let shouldWaitAppsCardRetry = false;
 let shouldWaitServiceInsightsRetry = false;
+
+Before(() => {
+  didAppsCardRetry = false;
+  didServiceInsightsRetry = false;
+  lastClickedServiceInsightsHref = undefined;
+  shouldWaitAppsCardRetry = false;
+  shouldWaitServiceInsightsRetry = false;
+});
 
 const istioConfigsWithNoValidations = {
   permissions: {},

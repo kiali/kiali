@@ -1,5 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { Controller, Edge, isEdge, isNode, Visualization, Node } from '@patternfly/react-topology';
+import { assertGraphReady } from './graph';
 
 const clearFindAndHide = (): void => {
   cy.get('#graph_hide').clear();
@@ -26,56 +26,30 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
     },
     {
       app: 'w-server',
-      version: undefined, // Service does not have version
+      version: undefined,
       namespace: 'alpha'
     }
   ];
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
+  assertGraphReady(({ nodes }) => {
+    const unhealthyNodes = nodes
+      .filter(n => n.getData().isFind)
+      .map(n => ({
+        app: n.getData().app,
+        version: n.getData().version,
+        namespace: n.getData().namespace
+      }));
 
-      const unhealthyNodes = nodes
-        .filter(n => n.getData().isFind)
-        .map(n => ({
-          app: n.getData().app,
-          version: n.getData().version,
-          namespace: n.getData().namespace
-        }));
-
-      assert.includeDeepMembers(unhealthyNodes, expectedUnhealthyNodes, 'Unexpected unhealthy nodes');
-    });
+    assert.includeDeepMembers(unhealthyNodes, expectedUnhealthyNodes, 'Unexpected unhealthy nodes');
+  });
 });
 
 Then('user sees nothing highlighted on the graph', () => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const filteredNodes = nodes.filter(n => n.getData().isFind);
-      assert.equal(filteredNodes.length, 0, 'Unexpected number of highlighted nodes');
-    });
+  assertGraphReady(({ nodes }) => {
+    const filteredNodes = nodes.filter(n => n.getData().isFind);
+    assert.equal(filteredNodes.length, 0, 'Unexpected number of highlighted nodes');
+  });
 });
-
-const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
-  const elems = c.getElements();
-
-  return {
-    nodes: elems.filter(e => isNode(e)) as Node[],
-    edges: elems.filter(e => isEdge(e)) as Edge[]
-  };
-};
 
 When('user hides unhealthy workloads', () => {
   clearFindAndHide();
@@ -84,23 +58,14 @@ When('user hides unhealthy workloads', () => {
 });
 
 Then('user sees no unhealthy workloads on the graph', () => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const visibleNodes = nodes.filter(n => n.isVisible());
+    const noUnhealthyNodes = visibleNodes.every(
+      node => node.getData().healthStatus !== 'Failure' || node.getData().nodeType === 'box'
+    );
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const visibleNodes = nodes.filter(n => n.isVisible());
-      const noUnhealthyNodes = visibleNodes.every(
-        node => node.getData().healthStatus !== 'Failure' || node.getData().nodeType === 'box'
-      );
-
-      assert.equal(noUnhealthyNodes, true, 'Unhealthy nodes are still visible');
-    });
+    assert.equal(noUnhealthyNodes, true, 'Unhealthy nodes are still visible');
+  });
 });
 
 Then('user sees preset find options', () => {
@@ -122,23 +87,14 @@ When('user selects the preset hide option {string}', (option: string) => {
 });
 
 Then('user sees no healthy workloads on the graph', () => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const visibleNodes = nodes.filter(n => n.isVisible());
+    const noHealthyNodes = visibleNodes.every(
+      node => node.getData().healthStatus !== 'Healthy' || node.getData().nodeType === 'box'
+    );
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const visibleNodes = nodes.filter(n => n.isVisible());
-      const noUnhealthyNodes = visibleNodes.every(
-        node => node.getData().healthStatus !== 'Healthy' || node.getData().nodeType === 'box'
-      );
-
-      assert.equal(noUnhealthyNodes, true, 'Unhealthy nodes are still visible');
-    });
+    assert.equal(noHealthyNodes, true, 'Healthy nodes are still visible');
+  });
 });
 
 When('user seeks help for find and hide', () => {
