@@ -256,6 +256,8 @@ export const getClusterForSingleCluster = (): Cypress.Chainable<string> => {
 };
 
 // Only works for a single cluster.
+// Retries by clicking the Refresh button if the expected health indicator
+// isn't found, so that fresh data is fetched while keeping manual refresh mode.
 export const checkHealthIndicatorInTable = (
   targetNamespace: string,
   targetType: string | null,
@@ -266,13 +268,28 @@ export const checkHealthIndicatorInTable = (
     ? `${targetNamespace}_${targetType}_${targetRowItemName}`
     : `${targetNamespace}_${targetRowItemName}`;
 
-  // cy.getBySel(`VirtualItem_Ns${selector}]`).find('span').filter(`.icon-${healthStatus}`).should('exist');
-  // VirtualItem_Clustercluster-default_Nsbookinfo_details
-  // VirtualItem_Clustercluster-default_Nsbookinfo_productpage
   getClusterForSingleCluster().then(cluster => {
-    cy.getBySel(`VirtualItem_Cluster${cluster}_Ns${selector}`)
-      .find(`span.icon-${healthStatus}`, { timeout: 60000 })
-      .should('exist');
+    const rowSelector = `VirtualItem_Cluster${cluster}_Ns${selector}`;
+    const maxRetries = 3;
+
+    const checkHealth = (retriesLeft: number): void => {
+      cy.getBySel(rowSelector).then($row => {
+        const found = $row.find(`span.icon-${healthStatus}`).length > 0;
+
+        if (found) {
+          cy.wrap($row).find(`span.icon-${healthStatus}`).should('exist');
+        } else if (retriesLeft > 0) {
+          cy.getBySel('refresh-button').click();
+          ensureKialiFinishedLoading();
+          cy.wait(10000);
+          checkHealth(retriesLeft - 1);
+        } else {
+          cy.wrap($row).find(`span.icon-${healthStatus}`).should('exist');
+        }
+      });
+    };
+
+    checkHealth(maxRetries);
   });
 };
 
