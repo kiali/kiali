@@ -218,9 +218,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           });
         });
       } else if (auth_strategy === 'anonymous') {
-        // Auth disabled: we can still wait for multicluster/ambient telemetry readiness
-        // using direct API requests without needing a session cookie.
-        if (tags.includes('ambient-multi-primary')) {
+        if (tags.includes('ambient-multi-primary') || tags.includes('waypoint-multicluster')) {
           ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
         } else if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
           ensureMulticlusterApplicationsAreHealthy(Date.now());
