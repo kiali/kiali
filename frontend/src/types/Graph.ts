@@ -419,6 +419,7 @@ export interface GraphNodeData {
   };
   isIdle?: boolean;
   isInaccessible?: boolean;
+  isInjected?: boolean;
   isK8sGatewayAPI?: boolean;
   isMisconfigured?: string;
   isOutOfMesh?: boolean;
@@ -621,6 +622,7 @@ export const NodeAttr = {
   isGateway: 'isGateway',
   isIdle: 'isIdle',
   isInaccessible: 'isInaccessible',
+  isInjected: 'isInjected',
   isIstio: 'isIstio',
   isMisconfigured: 'isMisconfigured',
   isOutOfMesh: 'isOutOfMesh',
