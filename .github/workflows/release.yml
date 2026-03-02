@@ -228,7 +228,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: build
         path: frontend/build
@@ -268,7 +268,7 @@ jobs:
           #   binary_name: kiali-windows-amd64.exe
     steps:
     - name: Download cross-platform binaries
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: cross-platform-binaries
         path: dist
@@ -326,13 +326,13 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: build
         path: frontend/build
 
     - name: Download cross-platform binaries
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: cross-platform-binaries
         path: dist
