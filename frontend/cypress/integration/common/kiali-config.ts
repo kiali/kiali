@@ -205,8 +205,8 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
         `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
       );
 
-      // Capture previous value
-      cy.exec(`yq '${featureConfig.configPath} // ""' /tmp/kiali-config.yaml`, {
+      // Capture previous value (avoid yq's // alternative operator which treats false as falsy)
+      cy.exec(`yq '${featureConfig.configPath}' /tmp/kiali-config.yaml`, {
         failOnNonZeroExit: false
       }).then(r => {
         Cypress.env(featureConfig.envKeyPrev, r.stdout.trim());
@@ -266,7 +266,7 @@ export const restoreKialiFeature = (featureConfig: KialiFeatureConfig): void => 
     `kubectl get configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`,
     { failOnNonZeroExit: false }
   ).then(() => {
-    if (prev === '') {
+    if (prev === '' || prev === 'null') {
       cy.exec(`yq -i 'del(${featureConfig.configPath})' /tmp/kiali-config.yaml`, { failOnNonZeroExit: false });
     } else {
       cy.exec(`yq -i '${featureConfig.configPath} = ${prevBool}' /tmp/kiali-config.yaml`, {
