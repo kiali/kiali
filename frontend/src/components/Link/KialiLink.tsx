@@ -23,9 +23,7 @@ export const KialiLink: React.FC<KialiLinkProps> = (props: KialiLinkProps) => {
   };
 
   return isParentKiosk(kiosk) ? (
-    <Button variant="link" isInline onClick={handleClick} data-test={props.dataTest}>
-      {/* Wrap children in span because PF Button adds internal spans that break
-          parent flexbox CSS properties when applied via className */}
+    <Button variant="link" isInline onClick={handleClick} data-test={props.dataTest} data-href={props.to}>
       <span className={props.className}>{props.children}</span>
     </Button>
   ) : (
