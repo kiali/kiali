@@ -3,7 +3,7 @@ import { Card, CardBody, CardFooter, CardHeader, CardTitle, Popover, PopoverPosi
 import { KialiIcon } from 'config/KialiIcon';
 import { KialiLink } from 'components/Link/KialiLink';
 import { t } from 'utils/I18nUtils';
-import { buildMeshUrl, resetMeshFilters } from './LinkBuilder';
+import { buildMeshUrl } from './LinkBuilder';
 import { useClusterStatus } from 'hooks/clusters';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
@@ -23,7 +23,7 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
-import { isControlPlaneAccessible } from 'utils/MeshUtils';
+import { isControlPlaneAccessible, resetMeshFilters } from 'utils/MeshUtils';
 
 export const ClusterStats: React.FC = () => {
   const { isError, isLoading, refresh, statusMap } = useClusterStatus();

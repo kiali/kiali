@@ -21,8 +21,9 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { isUnhealthy, isHealthy } from 'utils/StatusUtils';
-import { buildControlPlanesUrl, buildMeshUrl, resetMeshFilters } from './LinkBuilder';
+import { buildControlPlanesUrl, buildMeshUrl } from './LinkBuilder';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
+import { resetMeshFilters } from 'utils/MeshUtils';
 
 export const ControlPlaneStats: React.FC = () => {
   const { controlPlanes, isError, isLoading, refresh } = useControlPlanes();

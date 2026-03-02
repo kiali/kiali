@@ -3,8 +3,6 @@ import { camelCase } from 'lodash';
 import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
 import { isMultiCluster, Paths } from '../../config';
 import { DEGRADED, FAILURE, HealthStatusId, NOT_READY } from '../../types/Health';
-import { store } from '../../store/ConfigStore';
-import { MeshToolbarActions } from '../../actions/MeshToolbarActions';
 import { IstioConfigStatusLabel } from 'hooks/istioConfigs';
 import { getIstioObjectGVK } from 'utils/IstioConfigUtils';
 
@@ -12,12 +10,6 @@ const typeFilterParam = camelCase(categoryFilter.category);
 const healthFilterParam = camelCase(healthFilter.category);
 const controlPlaneParamValue = NamespaceCategory.CONTROL_PLANE;
 const dataPlaneParamValue = NamespaceCategory.DATA_PLANE;
-
-// Reset mesh find/hide filters in Redux state
-export const resetMeshFilters = (): void => {
-  store.dispatch(MeshToolbarActions.setFindValue(''));
-  store.dispatch(MeshToolbarActions.setHideValue(''));
-};
 
 export const buildMeshUrl = (clusterName?: string): string => {
   if (clusterName) {
