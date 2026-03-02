@@ -165,7 +165,7 @@ jobs:
 
     - name: Upload debug info artifact
       if: failure()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: debug-info-mcp-contract-tests
         path: kiali/debug-output

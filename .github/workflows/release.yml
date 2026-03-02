@@ -239,7 +239,7 @@ jobs:
         ./hack/build-cross-platform.sh -v -o dist
 
     - name: Upload cross-platform binaries
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: cross-platform-binaries
         path: dist/kiali-*
