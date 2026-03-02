@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: Download frontend core test reports
       continue-on-error: true
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         pattern: 'junit-frontend-core-*-report'
         path: artifacts/
@@ -58,7 +58,7 @@ jobs:
     # See: https://github.com/orgs/community/discussions/25220
     - name: Download backend test results and metadata
       continue-on-error: true
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         pattern: '{junit-rest-report,backend-test-metadata,pr-metadata}'
         path: artifacts/
@@ -66,7 +66,7 @@ jobs:
         run-id: ${{ github.event.workflow_run.id }}
 
     - name: Download merged frontend report
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: merged-frontend-report
         path: frontend-core/cypress/results/
