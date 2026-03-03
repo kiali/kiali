@@ -148,6 +148,10 @@ type fakeForwarder struct {
 }
 
 func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	return f.ForwardGetRequestWithBearerToken(namespace, podName, destinationPort, path, "")
+}
+
+func (f *fakeForwarder) ForwardGetRequestWithBearerToken(namespace, podName string, destinationPort int, path, _ string) ([]byte, error) {
 	url, _ := url.JoinPath("http://"+f.hostname+":"+strconv.Itoa(destinationPort), path)
 	resp, err := http.Get(url)
 	if err != nil {

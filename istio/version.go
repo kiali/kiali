@@ -198,6 +198,12 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 			return nil, err
 		}
 
+		// Send Kiali's service account bearer token so requests succeed when
+		// Istiod debug endpoint auth is enforced (Istio 1.27+).
+		if token := client.GetToken(); token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return nil, err
@@ -205,10 +211,9 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			body, err := io.ReadAll(resp.Body)
-			// Try and read the body here in case the error message is useful.
-			if err != nil {
-				return nil, fmt.Errorf("getting istio version returned error code: [%d]", resp.StatusCode)
+			body, _ := io.ReadAll(resp.Body)
+			if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+				return nil, fmt.Errorf("getting istio version returned [%d] - check that Kiali's service account/namespace has access to Istiod debug endpoints. body: %s", resp.StatusCode, body)
 			}
 			return nil, fmt.Errorf("getting istio version returned error code: [%d]. body: %s", resp.StatusCode, body)
 		}
@@ -238,7 +243,9 @@ func GetVersion(ctx context.Context, conf *config.Config, client kubernetes.Clie
 	})
 	istiod := GetLatestPod(istiods)
 
-	resp, err := client.ForwardGetRequest(istiod.Namespace, istiod.Name, controlPlane.MonitoringPort, "/version")
+	// Send Kiali's service account bearer token so requests succeed when
+	// Istiod debug endpoint auth is enforced (Istio 1.27+).
+	resp, err := client.ForwardGetRequestWithBearerToken(istiod.Namespace, istiod.Name, controlPlane.MonitoringPort, "/version", client.GetToken())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mesh version: %s", err)
 	}

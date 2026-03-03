@@ -1473,6 +1473,10 @@ type fakeForwarder struct {
 }
 
 func (f *fakeForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	return f.ForwardGetRequestWithBearerToken(namespace, podName, destinationPort, path, "")
+}
+
+func (f *fakeForwarder) ForwardGetRequestWithBearerToken(namespace, podName string, destinationPort int, path, _ string) ([]byte, error) {
 	url, _ := url.JoinPath(f.testURL, path)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -1538,6 +1542,10 @@ type badForwarder struct {
 }
 
 func (f *badForwarder) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	return nil, fmt.Errorf("unable to forward request")
+}
+
+func (f *badForwarder) ForwardGetRequestWithBearerToken(namespace, podName string, destinationPort int, path, _ string) ([]byte, error) {
 	return nil, fmt.Errorf("unable to forward request")
 }
 

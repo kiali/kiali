@@ -193,7 +193,9 @@ func (p *controlPlaneMonitor) getIstiodDebugStatus(client kubernetes.ClientInter
 			// The 15014 port on Istiod is open for control plane monitoring.
 			// Here's the Istio doc page about the port usage by istio:
 			// https://istio.io/latest/docs/ops/deployment/requirements/#ports-used-by-istio
-			res, err := client.ForwardGetRequest(namespace, name, controlPlane.MonitoringPort, debugPath)
+			// Send Kiali's service account bearer token so requests succeed when
+			// Istiod debug endpoint auth is enforced (Istio 1.27+).
+			res, err := client.ForwardGetRequestWithBearerToken(namespace, name, controlPlane.MonitoringPort, debugPath, client.GetToken())
 			if err != nil {
 				errChan <- fmt.Errorf("%s: %s", name, err.Error())
 			} else {

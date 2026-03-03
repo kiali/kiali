@@ -6,6 +6,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"reflect"
@@ -62,6 +63,7 @@ type K8SClientInterface interface {
 	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 	ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error)
+	ForwardGetRequestWithBearerToken(namespace, podName string, destinationPort int, path, bearerToken string) ([]byte, error)
 	StreamPodLogs(namespace, name string, opts *core_v1.PodLogOptions) (io.ReadCloser, error)
 }
 
@@ -86,6 +88,10 @@ type OSUserClientInterface interface {
 }
 
 func (in *K8SClient) ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error) {
+	return in.ForwardGetRequestWithBearerToken(namespace, podName, destinationPort, path, "")
+}
+
+func (in *K8SClient) ForwardGetRequestWithBearerToken(namespace, podName string, destinationPort int, path, bearerToken string) ([]byte, error) {
 	localPort := httputil.Pool.GetFreePort()
 	defer httputil.Pool.FreePort(localPort)
 
@@ -102,10 +108,18 @@ func (in *K8SClient) ForwardGetRequest(namespace, podName string, destinationPor
 	// Defering the finish of the port-forwarding
 	defer f.Stop()
 
+	var customHeaders map[string]string
+	if bearerToken != "" {
+		customHeaders = map[string]string{"Authorization": "Bearer " + bearerToken}
+	}
+
 	// Ready to create a request
-	resp, code, _, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", localPort, path), nil, 10*time.Second, nil, nil, in.conf)
+	resp, code, _, err := httputil.HttpGet(fmt.Sprintf("http://localhost:%d%s", localPort, path), nil, 10*time.Second, customHeaders, nil, in.conf)
+	if code == http.StatusUnauthorized || code == http.StatusForbidden {
+		return resp, fmt.Errorf("error fetching [%s] from [%s/%s]: Istiod returned [%d] - check that Kiali's service account/namespace has access to Istiod debug endpoints", path, namespace, podName, code)
+	}
 	if code >= 400 {
-		return resp, fmt.Errorf("error fetching %s from %s/%s. Response code: %d", path, namespace, podName, code)
+		return resp, fmt.Errorf("error fetching [%s] from [%s/%s]: Response code: [%d]", path, namespace, podName, code)
 	}
 
 	return resp, err
