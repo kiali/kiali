@@ -2,9 +2,6 @@ import * as React from 'react';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { NamespaceDropdown } from '../Dropdown/NamespaceDropdown';
 import { kialiStyle } from 'styles/StyleUtils';
-import { KialiIcon } from '../../config/KialiIcon';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { getPagePath } from '../../utils/NavigationUtils';
@@ -45,18 +42,14 @@ const actionsToolbarStyle = kialiStyle({
   paddingTop: '0.75rem'
 });
 
-type ReduxProps = {
-  istioAPIEnabled: boolean;
-};
-
-type Props = ReduxProps & {
+type Props = {
   actionsToolbar?: JSX.Element;
   hideNamespaceSelector?: boolean;
   rightToolbar?: JSX.Element;
   titleSuffix?: React.ReactNode;
 };
 
-const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
+export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
   const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
     const path = getPagePath();
 
@@ -81,13 +74,6 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
             <Title headingLevel="h1" size={TitleSizes['2xl']} style={{ margin: '1rem 0 0.5rem' }}>
               {title}
             </Title>
-
-            {!props.istioAPIEnabled && path.startsWith('istio/new/') && (
-              <div>
-                <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when creating the configuration as the
-                Istio config validations are disabled when the Istio API is disabled.
-              </div>
-            )}
           </>
         ),
         disabled: disabled
@@ -118,9 +104,3 @@ const DefaultSecondaryMastheadComponent: React.FC<Props> = (props: Props) => {
     </div>
   );
 };
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
-});
-
-export const DefaultSecondaryMasthead = connect(mapStateToProps)(DefaultSecondaryMastheadComponent);

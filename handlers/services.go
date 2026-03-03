@@ -159,7 +159,7 @@ func ServiceDetails(
 		}
 
 		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 
@@ -237,7 +237,7 @@ func ServiceUpdate(
 		}
 
 		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 

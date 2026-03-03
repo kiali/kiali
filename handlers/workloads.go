@@ -175,7 +175,7 @@ func WorkloadDetails(
 		}
 
 		includeValidations := p.IncludeValidations
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 
@@ -255,7 +255,7 @@ func WorkloadUpdate(
 		cluster := clusterNameFromQuery(conf, query)
 
 		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 

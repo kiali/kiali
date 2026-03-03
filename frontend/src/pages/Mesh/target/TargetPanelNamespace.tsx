@@ -187,7 +187,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
 
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.state.status && (
@@ -220,7 +220,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                     </span>
                   )}
 
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.renderStatus()}
@@ -241,7 +241,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                       <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
                     </span>
                   )}
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.renderStatus()}

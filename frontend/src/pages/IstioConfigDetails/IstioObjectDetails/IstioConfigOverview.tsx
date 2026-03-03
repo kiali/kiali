@@ -37,7 +37,6 @@ import { infoStyle } from 'styles/IconStyle';
 interface IstioConfigOverviewProps {
   cluster?: string;
   helpMessages?: HelpMessage[];
-  istioAPIEnabled: boolean;
   istioObjectDetails: IstioConfigDetails;
   istioValidations?: ObjectValidation;
   kiosk: string;
@@ -51,10 +50,6 @@ interface IstioConfigOverviewProps {
 
 const iconStyle = kialiStyle({
   display: 'inline-block'
-});
-
-const warnStyle = kialiStyle({
-  marginRight: '0.125rem'
 });
 
 const healthIconStyle = kialiStyle({
@@ -218,13 +213,6 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
       {props.helpMessages && props.helpMessages.length > 0 && (
         <StackItem>
           <IstioConfigHelp helpMessages={props.helpMessages} selectedLine={props.selectedLine}></IstioConfigHelp>
-        </StackItem>
-      )}
-
-      {!props.istioAPIEnabled && props.cluster === homeCluster?.name && (
-        <StackItem>
-          <KialiIcon.Warning className={warnStyle} /> <b>Istio API is disabled.</b> Be careful when editing the
-          configuration as the Istio config validations are disabled when the Istio API is disabled.
         </StackItem>
       )}
 

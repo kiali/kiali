@@ -47,14 +47,12 @@ import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  istioAPIEnabled: boolean;
 };
 
 interface Props extends ServiceId, ReduxProps {
   cluster?: string;
   duration: DurationInSeconds;
   gateways: Gateway[];
-  istioAPIEnabled: boolean;
   k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
   serviceDetails?: ServiceDetailsInfo;
@@ -316,7 +314,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           peerAuthentications={this.props.peerAuthentications}
           tlsStatus={this.props.serviceDetails?.namespaceMTLS}
           onClose={this.handleWizardClose}
-          istioAPIEnabled={this.props.istioAPIEnabled}
         />
 
         {this.state.showConfirmDeleteTrafficRouting && (
@@ -336,8 +333,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  duration: durationSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  duration: durationSelector(state)
 });
 
 export const ServiceInfo = connect(mapStateToProps)(ServiceInfoComponent);
