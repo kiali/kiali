@@ -3,11 +3,12 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "inlineSourceMap": false,
-    "sourceMap": false,
-    "target": "es5",
     "lib": ["es2019", "dom"],
     "resolveJsonModule": true,
-    "types": ["cypress", "cypress-react-selector", "node"]
+    "rootDir": ".",
+    "sourceMap": false,
+    "target": "es5",
+    "types": ["cypress", "node"]
   },
   "include": ["**/*.ts"]
 }
