@@ -16,8 +16,8 @@ import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { isMultiCluster, Paths } from 'config';
-import { t } from 'utils/I18nUtils';
 import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
 import { ServiceLatency, ServiceRequests } from 'types/Overview';
@@ -120,11 +120,11 @@ const formatErrorRate = (rate: number): string => {
   return `${(rate * 100).toFixed(2)}%`;
 };
 
-const formatRequestRate = (reqPerSec: number): string => {
+const formatRequestRate = (t: (key: string, opts?: any) => string, reqPerSec: number): string => {
   if (reqPerSec >= 1000) {
-    return `${(reqPerSec / 1000).toFixed(2)}k req/s`;
+    return t('{{rate}}k req/s', { rate: (reqPerSec / 1000).toFixed(2) });
   }
-  return `${reqPerSec.toFixed(2)} req/s`;
+  return t('{{rate}} req/s', { rate: reqPerSec.toFixed(2) });
 };
 
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
@@ -144,6 +144,7 @@ const buildTooltipContent = (cluster: string, namespace: string, serviceName: st
 };
 
 export const ServiceInsights: React.FC = () => {
+  const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
   const namespaceItems = useKialiSelector(namespaceItemsSelector);
   const activeNamespaces = useKialiSelector(activeNamespacesSelector);
@@ -295,7 +296,7 @@ export const ServiceInsights: React.FC = () => {
                 </Tooltip>
               </td>
               <td className={rateCellStyle}>
-                <Tooltip content={formatRequestRate(svc.requestRate ?? 0)} position={TooltipPosition.top}>
+                <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                     {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
                     {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}

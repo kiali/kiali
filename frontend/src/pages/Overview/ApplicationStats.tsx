@@ -4,7 +4,7 @@ import { ChartDonut } from '@patternfly/react-charts/victory';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useApplications } from 'hooks/applications';
 import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
@@ -72,6 +72,7 @@ const noTrafficStyle = kialiStyle({
 });
 
 export const ApplicationStats: React.FC = () => {
+  const { t } = useKialiTranslation();
   const { apps, isError, isLoading, metrics, retry } = useApplications();
   const allNamespaces = useKialiSelector(namespaceItemsSelector);
 
@@ -149,12 +150,12 @@ export const ApplicationStats: React.FC = () => {
       <CardBody className={cardBodyStyle}>
         <Flex className={ratesContainerStyle} data-test="apps-card-rates">
           <FlexItem>
-            <ResourcesFullIcon /> {`Inbound ${metrics.rpsIn} RPS`}
+            <ResourcesFullIcon /> {t('Inbound {{rps}} RPS', { rps: metrics.rpsIn })}
             <br />
             <span className={noTrafficStyle}>{`${metrics.no_traffic} apps with no traffic`}</span>
           </FlexItem>
           <FlexItem>
-            <ResourcesFullIcon /> {`Outbound ${metrics.rpsOut} RPS`}
+            <ResourcesFullIcon /> {t('Outbound {{rps}} RPS', { rps: metrics.rpsOut })}
           </FlexItem>
         </Flex>
         <div className={healthContainerStyle} data-test="apps-card-health">
