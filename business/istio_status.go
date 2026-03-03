@@ -58,8 +58,45 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	)
 	defer end()
 
-	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
+	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled {
 		return kubernetes.IstioComponentStatus{}, nil
+	}
+
+	// When Istio API is disabled we cannot query istiod for component health, but we still
+	// want to resolve clusters to support queries about clusters.
+	if !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
+		mesh, err := iss.discovery.Mesh(ctx)
+		if err != nil {
+			return nil, err
+		}
+		result := kubernetes.IstioComponentStatus{}
+		seen := make(map[string]bool)
+		for _, cp := range mesh.ControlPlanes {
+			if cp.Cluster != nil && !seen[cp.Cluster.Name] {
+				seen[cp.Cluster.Name] = true
+				meshId := getMeshId(&cp)
+				result = append(result, kubernetes.ComponentStatus{
+					Cluster:   cp.Cluster.Name,
+					Name:      cp.IstiodName,
+					Namespace: cp.IstiodNamespace,
+					Status:    kubernetes.ComponentHealthy,
+					IsCore:    true,
+					MeshId:    meshId,
+				})
+			}
+			for _, cl := range cp.ManagedClusters {
+				if cl != nil && !seen[cl.Name] {
+					seen[cl.Name] = true
+					result = append(result, kubernetes.ComponentStatus{
+						Cluster: cl.Name,
+						Name:    "istiod",
+						Status:  kubernetes.ComponentHealthy,
+						IsCore:  true,
+					})
+				}
+			}
+		}
+		return result, nil
 	}
 
 	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
