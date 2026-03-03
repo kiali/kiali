@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ols-route
+  namespace: openshift-lightspeed
+spec:
+  to:
+    name: lightspeed-app-server
+    weight: 100
+    kind: Service
+  port:
+    targetPort: https
+  tls:
+    termination: reencrypt
+  wildcardPolicy: None

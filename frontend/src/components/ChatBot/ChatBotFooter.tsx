@@ -3,18 +3,23 @@ import { ChatbotFooter, ChatbotFootnote, ChatbotFootnoteProps, MessageBar } from
 import { style } from 'typestyle';
 import { FOOTNOTE_LABEL } from 'config/Constants';
 import { Switch } from '@patternfly/react-core';
-import { CHATBOT_CONVERSATION_ALWAYS_NAVIGATE } from 'types/Chatbot';
+import { CHATBOT_CONVERSATION_ALWAYS_NAVIGATE, Tool } from 'types/Chatbot';
+import { ResponseToolModal } from './ChatMessage/ResponseToolModal';
 
 type ChatBotFooterProps = {
   setAlertMessage: () => void;
   handleSend: (msg: string | number, context?: any) => void;
+  toolModalOpen: boolean;
+  tool: Tool | undefined;
+  setToolModalOpen: (toolModalOpen: boolean) => void;
+  setTool: (tool: Tool | undefined) => void;
 };
 
 const footnoteProps: ChatbotFootnoteProps = {
   label: FOOTNOTE_LABEL
 };
 
-export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({ setAlertMessage, handleSend }) => {
+export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({ setAlertMessage, handleSend, toolModalOpen, tool, setToolModalOpen, setTool }) => {
   const [alwaysNavigate, setAlwaysNavigate] = useState(false);
 
   useEffect(() => {
@@ -46,6 +51,7 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({ setAlertMessage, h
           }
         }}
       />
+      <ResponseToolModal isOpen={toolModalOpen} onClose={() => {setToolModalOpen(false); setTool(undefined);}} tool={tool} />
       <Switch
         id={CHATBOT_CONVERSATION_ALWAYS_NAVIGATE}
         label={'Allow Chatbot to navigate'}

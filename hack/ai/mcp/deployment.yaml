@@ -1,0 +1,48 @@
+# creats a 1 pod deployment for the cluster-health-analyzer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: ${MCP}-mcp-server
+  name: ${MCP}-mcp-server
+  namespace: ${MCP_NAMESPACE}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ${MCP}-mcp-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${MCP}-mcp-server
+    spec:
+      serviceAccountName: ${MCP}-mcp-server
+      automountServiceAccountToken: true
+      containers:
+      - name: ${MCP}-mcp-server
+        image: "${MCP_IMAGE}"
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        command:
+          - "/${MCP}-mcp-server"
+        args:         
+          - --config-dir
+          - "/config"     
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
+        ports:
+        - containerPort: 8080
+          name: mcp
+        terminationMessagePolicy: FallbackToLogsOnError
+      volumes:
+      - name: config
+        configMap:
+          name: ${MCP}-mcp-server-config  
