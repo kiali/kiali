@@ -89,7 +89,7 @@ func (s *ExpirationStore[K, V]) Replace(items map[K]V) {
 }
 
 func (s *ExpirationStore[K, V]) checkAndRemoveExpiredKeys(ctx context.Context) <-chan struct{} {
-	stopped := make(chan struct{})
+	stopped := make(chan struct{}, 1)
 	go func() {
 		for {
 			select {
