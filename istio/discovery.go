@@ -636,6 +636,9 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				} else {
 					controlPlane.Status = status.Status
 				}
+			} else {
+				// When Istio API is disabled we do not probe istiod; assume healthy
+				controlPlane.Status = kubernetes.ComponentHealthy
 			}
 
 			mesh.ControlPlanes = append(mesh.ControlPlanes, controlPlane)
