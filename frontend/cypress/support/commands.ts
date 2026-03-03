@@ -22,6 +22,22 @@ declare global {
       getBySel(selector: string, ...args: any): Chainable<JQuery<HTMLElement>>;
 
       /**
+       * Get the current state of a React component.
+       * Must be chained from a ReactNode (from getReact).
+       * @example cy.getReact('MyComponent').then(c => c[0]).getCurrentState()
+       */
+      getCurrentState(): Chainable<any>;
+
+      /**
+       * Get props from a React component. Optionally get a specific prop by name.
+       * Must be chained from a ReactNode (from getReact).
+       * @param propName - Optional name of specific prop to retrieve
+       * @example cy.getReact('MyComponent').then(c => c[0]).getProps()
+       * @example cy.getReact('MyComponent').then(c => c[0]).getProps('onClick')
+       */
+      getProps(propName?: string): Chainable<any>;
+
+      /**
        * Get React components by component name, props, and/or state.
        * Compatible with React 16, 17, and 18.
        * @param componentName - Name of the React component (supports wildcards like *oint)
@@ -64,6 +80,13 @@ declare global {
        * Logout from Kiali
        */
       logout(): Chainable<Subject>;
+
+      /**
+       * Get the nth element from an array of React nodes.
+       * @param index - The index of the element to get
+       * @example cy.getReact('MyComponent').nthNode(0)
+       */
+      nthNode(index: number): Chainable<ReactNode>;
 
       /**
        * Wait for React to be loaded on the page.
@@ -378,4 +401,38 @@ Cypress.Commands.add('getReact', (componentName: string, reactOpts: ReactOpts = 
   };
 
   return resolveValue();
+});
+
+// Get the current state of a React component (child command)
+Cypress.Commands.add('getCurrentState', { prevSubject: true }, (subject: ReactNode) => {
+  if (!subject || typeof subject !== 'object') {
+    throw new Error('getCurrentState: subject must be a ReactNode object');
+  }
+
+  cy.log('Getting current state');
+  return cy.wrap(subject.state);
+});
+
+// Get props from a React component (child command)
+Cypress.Commands.add('getProps', { prevSubject: true }, (subject: ReactNode, propName?: string) => {
+  if (!subject || typeof subject !== 'object') {
+    throw new Error('getProps: subject must be a ReactNode object');
+  }
+
+  cy.log(`Getting props${propName ? `: ${propName}` : ''}`);
+
+  if (propName) {
+    return cy.wrap(subject.props?.[propName]);
+  }
+  return cy.wrap(subject.props);
+});
+
+// Get the nth element from an array of React nodes (child command)
+Cypress.Commands.add('nthNode', { prevSubject: true }, (subject: ReactNode[], index: number) => {
+  if (!Array.isArray(subject)) {
+    throw new Error('nthNode: subject must be an array of ReactNode objects');
+  }
+
+  cy.log(`Getting node at index ${index}`);
+  return cy.wrap(subject[index]);
 });
