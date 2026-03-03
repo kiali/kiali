@@ -3,7 +3,9 @@ import { PFColors } from 'components/Pf/PfColors';
 
 // Common card styles
 export const cardStyle = kialiStyle({
-  height: '100%'
+  display: 'flex',
+  height: '100%',
+  flex: 1
 });
 
 export const cardBodyStyle = kialiStyle({
@@ -81,15 +83,6 @@ export const statusLabelStyle = kialiStyle({
     },
     '& .pf-v6-c-label__content': {
       color: 'var(--pf-t--global--text--color--primary--default)'
-    }
-  }
-});
-
-export const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
     }
   }
 });

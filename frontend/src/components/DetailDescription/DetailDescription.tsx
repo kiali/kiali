@@ -2,27 +2,20 @@ import * as React from 'react';
 import { AppWorkload } from '../../types/App';
 import { PopoverPosition, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Link } from 'react-router-dom-v5-compat';
+import { KialiLink } from '../Link/KialiLink';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import * as H from '../../types/Health';
 import { HealthSubItem } from '../../types/Health';
 import { renderTrafficStatus } from '../Health/HealthDetails';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { KialiIcon, createIcon } from '../../config/KialiIcon';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from '../../config';
 import { WorkloadInfo } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
 import { infoStyle } from 'styles/IconStyle';
 
-type ReduxProps = {
-  kiosk: string;
-};
-
-type Props = ReduxProps & {
+type Props = {
   apps?: string[];
   cluster?: string;
   health?: H.Health;
@@ -61,34 +54,19 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWaypoints = (): React.ReactNode => {
     const waypointList = props.waypointWorkloads?.map(waypoint => {
       let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
-      // Still the kiosk context actions will handle the action
-      // This is needed by cypress, if no link is specified, is the same as the current url
-      const ossmcHref = `/k8s/ns/${waypoint.namespace}/deployments/${waypoint.name}/ossmconsole`;
       if (props.cluster && isMultiCluster) {
         href = `${href}?clusterName=${props.cluster}`;
       }
-      const link = isParentKiosk(props.kiosk) ? (
-        <Link
-          to={ossmcHref}
-          data-test="waypoint-link"
-          onClick={() => {
-            kioskContextMenuAction(href);
-          }}
-        >
-          {waypoint.name}
-        </Link>
-      ) : (
-        <Link to={href} data-test="waypoint-link">
-          {waypoint.name}
-        </Link>
-      );
+
       return (
         <li key={`App_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
           <div className={iconStyle}>
             <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
           </div>
 
-          <span>{link}</span>
+          <KialiLink to={href} dataTest="waypoint-link">
+            {waypoint.name}
+          </KialiLink>
         </li>
       );
     });
@@ -108,26 +86,13 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
-    const link = isParentKiosk(props.kiosk) ? (
-      <Link
-        to=""
-        onClick={() => {
-          kioskContextMenuAction(href);
-        }}
-      >
-        {appName}
-      </Link>
-    ) : (
-      <Link to={href}>{appName}</Link>
-    );
-
     return (
       <li key={`App_${namespace}_${appName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
         </div>
 
-        <span>{link}</span>
+        <KialiLink to={href}>{appName}</KialiLink>
       </li>
     );
   };
@@ -139,26 +104,13 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
-    const link = isParentKiosk(props.kiosk) ? (
-      <Link
-        to=""
-        onClick={() => {
-          kioskContextMenuAction(href);
-        }}
-      >
-        {serviceName}
-      </Link>
-    ) : (
-      <Link to={href}>{serviceName}</Link>
-    );
-
     return (
       <li key={`Service_${serviceName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
 
-        <span>{link}</span>
+        <KialiLink to={href}>{serviceName}</KialiLink>
       </li>
     );
   };
@@ -203,26 +155,13 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
-    const link = isParentKiosk(props.kiosk) ? (
-      <Link
-        to=""
-        onClick={() => {
-          kioskContextMenuAction(href);
-        }}
-      >
-        {workload.workloadName}
-      </Link>
-    ) : (
-      <Link to={href}>{workload.workloadName}</Link>
-    );
-
     return (
       <span key={`WorkloadItem_${workload.workloadName}`}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
         </div>
 
-        {link}
+        <KialiLink to={href}>{workload.workloadName}</KialiLink>
 
         <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
           <KialiIcon.Info className={infoStyle} />
@@ -254,26 +193,13 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         href = `${href}?clusterName=${props.cluster}`;
       }
 
-      const link = isParentKiosk(props.kiosk) ? (
-        <Link
-          to=""
-          onClick={() => {
-            kioskContextMenuAction(href);
-          }}
-        >
-          {workload.workloadName}
-        </Link>
-      ) : (
-        <Link to={href}>{workload.workloadName}</Link>
-      );
-
       return (
         <span key={`WorkloadItem_${workload.workloadName}`}>
           <div className={iconStyle}>
             <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
           </div>
 
-          {link}
+          <KialiLink to={href}>{workload.workloadName}</KialiLink>
 
           <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
             <KialiIcon.Info className={infoStyle} />
@@ -406,8 +332,4 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   );
 };
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk
-});
-
-export const DetailDescription = connect(mapStateToProps)(DetailDescriptionComponent);
+export const DetailDescription = DetailDescriptionComponent;

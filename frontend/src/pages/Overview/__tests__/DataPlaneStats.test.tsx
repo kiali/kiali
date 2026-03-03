@@ -2,15 +2,19 @@ import * as React from 'react';
 import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { ReactWrapper } from 'enzyme';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { DataPlaneStats } from '../DataPlaneStats';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
 import { Paths } from 'config';
 import * as NamespaceHealthService from 'services/NamespaceHealth';
-import { router } from 'app/History';
 
 jest.mock('hooks/namespaces', () => ({
   useNamespaces: jest.fn()
+}));
+
+jest.mock('hooks/redux', () => ({
+  useKialiSelector: jest.fn()
 }));
 
 jest.mock('react-redux', () => {
@@ -39,6 +43,7 @@ jest.mock('app/History', () => ({
 
 const useNamespacesMock = require('hooks/namespaces').useNamespaces as jest.Mock;
 const useSelectorMock = require('react-redux').useSelector as jest.Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 
 type TestNamespaceHealth = {
   appHealth: Record<string, any>;
@@ -71,7 +76,11 @@ const flushAllPromises = async (): Promise<void> => {
 const mountAndFlush = async (): Promise<ReactWrapper> => {
   let wrapper!: ReactWrapper;
   await act(async () => {
-    wrapper = mount(<DataPlaneStats />);
+    wrapper = mount(
+      <MemoryRouter>
+        <DataPlaneStats />
+      </MemoryRouter>
+    );
   });
   await act(async () => {
     await flushAllPromises();
@@ -84,6 +93,7 @@ describe('Overview DataPlaneStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useSelectorMock.mockReturnValue(60);
+    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
   });
 
   it('fetches health only for data-plane namespaces and sets total to ambient+sidecar', async () => {
@@ -146,10 +156,11 @@ describe('Overview DataPlaneStats', () => {
     expect(wrapper.find('[data-test="data-planes-unhealthy"]').text()).toContain('4');
     expect(wrapper.find('[data-test="data-planes-na"]').text()).toContain('1');
 
-    expect(wrapper.find('button[data-test="data-planes-view"]').exists()).toBeTruthy();
-    wrapper.find('button[data-test="data-planes-view"]').simulate('click');
-    expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
-    const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
+    const viewLink = wrapper.find('[data-test="data-planes-view"]').first();
+    expect(viewLink.exists()).toBeTruthy();
+
+    // Verify link href is correctly built (use 'to' prop from Link component if 'href' not available)
+    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     // Data plane filter should be present; URLSearchParams encodes spaces as '+'
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
@@ -181,16 +192,13 @@ describe('Overview DataPlaneStats', () => {
     expect(popover.exists()).toBeTruthy();
 
     const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<>{bodyContent}</>);
+    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
 
-    const linkBtn = popoverBody.find('button[data-test="data-planes-view-unhealthy"]').first();
+    const linkBtn = popoverBody.find('[data-test="data-planes-view-unhealthy"]').first();
     expect(linkBtn.exists()).toBeTruthy();
 
-    (router.navigate as jest.Mock).mockClear();
-    linkBtn.simulate('click');
-
-    expect(router.navigate as jest.Mock).toHaveBeenCalledTimes(1);
-    const url = (router.navigate as jest.Mock).mock.calls[0][0] as string;
+    // Verify link href is correctly built with all health filters (use 'to' prop from Link component if 'href' not available)
+    const url = (linkBtn.prop('href') as string) ?? (linkBtn.prop('to') as string);
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
     expect(url).toMatch(/[?&]health=Failure/);

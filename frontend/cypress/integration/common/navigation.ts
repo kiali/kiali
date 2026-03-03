@@ -189,15 +189,14 @@ Given(
 );
 
 // A simple function to check whether the DOM (or a subset of DOM has the cluster parameter in its links). This is related to multi-cluster testing.
+// In kiosk mode, KialiLink renders buttons with data-href instead of anchors with href.
 export const clusterParameterExists = (present: boolean): void => {
-  let exist = '';
+  const assertion = present ? 'include' : 'not.include';
 
-  if (!present) {
-    exist = 'not.';
-  }
-
-  cy.get('a').each($el => {
-    cy.wrap($el).should('have.attr', 'href').and(`${exist}include`, 'clusterName=');
+  // Check anchor elements (Kiali standalone) and button elements with data-href (kiosk mode)
+  cy.get('a[href], button[data-href]').each($el => {
+    const attr = $el.is('a') ? 'href' : 'data-href';
+    cy.wrap($el).should('have.attr', attr).and(assertion, 'clusterName=');
   });
 };
 

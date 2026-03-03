@@ -2,7 +2,7 @@ import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
-import { KioskLink } from './KioskLink';
+import { KialiLink } from './KialiLink';
 
 type WorkloadLinkProps = {
   cluster?: string;
@@ -46,11 +46,12 @@ const WorkloadLinkItem: React.FC<WorkloadLinkProps> = (props: WorkloadLinkProps)
   const { name, namespace, cluster, query } = props;
   const href = getWorkloadLink(name, namespace, cluster, query);
   return (
-    <KioskLink
-      linkName={`${namespace}/${name}`}
+    <KialiLink
       // @TODO put cluster in link when all objects have multicluster support
       dataTest={`workload-${namespace}-${name}`}
-      href={href}
-    ></KioskLink>
+      to={href}
+    >
+      {`${namespace}/${name}`}
+    </KialiLink>
   );
 };

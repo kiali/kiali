@@ -10,6 +10,10 @@ jest.mock('hooks/controlPlanes', () => ({
   useControlPlanes: jest.fn()
 }));
 
+jest.mock('hooks/redux', () => ({
+  useKialiSelector: jest.fn()
+}));
+
 jest.mock('components/Filters/StatefulFilters', () => ({
   FilterSelected: { resetFilters: jest.fn() }
 }));
@@ -22,14 +26,15 @@ jest.mock('app/History', () => ({
 }));
 
 const useControlPlanesMock = require('hooks/controlPlanes').useControlPlanes as jest.Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as jest.Mock;
-const routerMock = require('app/History').router;
 
 describe('Overview ControlPlaneStats', () => {
   const refresh = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
   });
 
   const mountComponent = (): ReactWrapper => {
@@ -93,13 +98,17 @@ describe('Overview ControlPlaneStats', () => {
     expect(wrapper.text()).toContain('Control planes (2)');
     expect(wrapper.find('[data-test="control-planes-issues"]').text()).toContain('1');
 
-    wrapper.find('button[data-test="control-planes-view-namespaces"]').simulate('click');
-    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
-    expect(routerMock.navigate as jest.Mock).toHaveBeenCalledTimes(1);
+    const viewLink = wrapper.find('[data-test="control-planes-view-namespaces"]').first();
+    expect(viewLink.exists()).toBeTruthy();
 
-    const url = (routerMock.navigate as jest.Mock).mock.calls[0][0] as string;
+    // Verify link href is correctly built (use 'to' prop from Link component if 'href' not available)
+    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     expect(url).toMatch(/[?&]type=Control(\+|%20)plane/);
+
+    // Verify onClick handler calls resetFilters
+    viewLink.simulate('click');
+    expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 
   it('builds mesh link with cluster hide filter for control planes with issues', () => {

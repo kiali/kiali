@@ -90,8 +90,13 @@ export const globalStyle = kialiStyle({
     /**
      * Remove underline from links
      */
-    '& a': {
-      textDecoration: 'none'
+    '& a, & .pf-m-link': {
+      textDecoration: 'none',
+      $nest: {
+        '&, &:hover, &:focus, &:active': {
+          textDecoration: 'none'
+        }
+      }
     },
 
     /**

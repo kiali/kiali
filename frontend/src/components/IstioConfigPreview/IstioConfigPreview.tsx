@@ -1,18 +1,16 @@
 import * as React from 'react';
 import {
-	Button,
-	ButtonVariant,
-	Tab,
-	TabProps,
-	Tabs,
-	Toolbar,
-	ToolbarGroup,
-	ToolbarItem,
-	Tooltip
+  Button,
+  ButtonVariant,
+  Tab,
+  TabProps,
+  Tabs,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarItem,
+  Tooltip
 } from '@patternfly/react-core';
-import {
-	Modal
-} from '@patternfly/react-core/deprecated';
+import { Modal } from '@patternfly/react-core/deprecated';
 import {
   AuthorizationPolicy,
   DestinationRule,
@@ -38,6 +36,7 @@ import { download } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 import { dump } from 'js-yaml';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { getPagePath } from '../../utils/NavigationUtils';
 
 export type IstioConfigItem =
   | AuthorizationPolicy
@@ -96,7 +95,7 @@ type TabsChild = TabElement | boolean | null | undefined;
 export class IstioConfigPreview extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    const newIstioPage = window.location.pathname.split('/')[2] === 'istio';
+    const newIstioPage = getPagePath().startsWith('istio');
 
     this.state = {
       copied: false,

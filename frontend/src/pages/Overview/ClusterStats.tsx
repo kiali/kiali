@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Card, CardBody, CardFooter, CardHeader, CardTitle } from '@patternfly/react-core';
-import { Link } from 'react-router-dom-v5-compat';
+import { Card, CardBody, CardFooter, CardHeader, CardTitle, Popover, PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { Paths } from 'config';
+import { KialiLink } from 'components/Link/KialiLink';
 import { t } from 'utils/I18nUtils';
+import { buildMeshUrl } from './LinkBuilder';
 import { useClusterStatus } from 'hooks/clusters';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
@@ -23,8 +23,7 @@ import {
 } from './OverviewStyles';
 import { classes } from 'typestyle';
 import { ClusterIssue, isHealthy, isUnhealthy } from 'utils/StatusUtils';
-import { isControlPlaneAccessible } from 'utils/MeshUtils';
-import { StatCountPopover } from './StatCountPopover';
+import { isControlPlaneAccessible, resetMeshFilters } from 'utils/MeshUtils';
 
 export const ClusterStats: React.FC = () => {
   const { isError, isLoading, refresh, statusMap } = useClusterStatus();
@@ -68,7 +67,13 @@ export const ClusterStats: React.FC = () => {
         <div key={cluster.name} className={popoverItemStyle}>
           <span>
             <PFBadge badge={PFBadges.Cluster} size="sm" />
-            {hasMeshAccess ? <Link to={`/${Paths.MESH}?cluster=${cluster.name}`}>{cluster.name}</Link> : cluster.name}
+            {hasMeshAccess ? (
+              <KialiLink to={buildMeshUrl(cluster.name)} onClick={resetMeshFilters}>
+                {cluster.name}
+              </KialiLink>
+            ) : (
+              cluster.name
+            )}
           </span>
           <span className={popoverItemStatusStyle}>
             {cluster.unknownStatus ? t('Unknown status') : t('{{count}} issue', { count: cluster.issues })}
@@ -102,30 +107,30 @@ export const ClusterStats: React.FC = () => {
               </div>
             )}
             {unhealthy > 0 && (
-              <StatCountPopover
-                ariaLabel={t('Clusters with issues')}
+              <Popover
+                aria-label={t('Clusters with issues')}
+                position={PopoverPosition.right}
                 headerContent={
                   <span className={popoverHeaderStyle}>
                     {issuesIcon} {t('Clusters')}
                   </span>
                 }
                 bodyContent={popoverContent}
-                trigger={
-                  <div className={classes(statItemStyle, clickableStyle)} data-test="clusters-issues">
-                    <span className={linkStyle}>{unhealthy}</span>
-                    {issuesIcon}
-                  </div>
-                }
-              />
+              >
+                <div className={classes(statItemStyle, clickableStyle)} data-test="clusters-issues">
+                  <span className={linkStyle}>{unhealthy}</span>
+                  {issuesIcon}
+                </div>
+              </Popover>
             )}
           </div>
         )}
       </CardBody>
       {!isLoading && !isError && hasMeshAccess && (
         <CardFooter>
-          <Link to={`/${Paths.MESH}`} className={linkStyle}>
+          <KialiLink to={buildMeshUrl()} onClick={resetMeshFilters}>
             {t('View Mesh')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Link>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

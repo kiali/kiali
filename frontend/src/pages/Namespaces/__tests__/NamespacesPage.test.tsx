@@ -20,6 +20,13 @@ jest.mock('components/Badge/ControlPlaneBadge', () => ({
   ControlPlaneBadge: () => <span data-test="ControlPlaneBadge" />
 }));
 
+// DefaultSecondaryMasthead uses router via getPagePath; mock it to avoid router issues in tests.
+jest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
+  DefaultSecondaryMasthead: ({ children }: { children?: React.ReactNode }) => (
+    <div data-test="DefaultSecondaryMasthead">{children}</div>
+  )
+}));
+
 jest.mock('../../../services/Api', () => ({
   getNamespaces: jest.fn(),
   getClustersHealth: jest.fn(),
@@ -53,11 +60,18 @@ jest.mock('../../../app/History', () => ({
     SORT: 'sort'
   },
   location: {
-    getPathname: jest.fn(() => ''),
+    getPathname: jest.fn(() => '/namespaces'),
     getSearch: jest.fn(() => '')
   },
   router: {
-    navigate: jest.fn()
+    navigate: jest.fn(),
+    state: {
+      location: {
+        pathname: '/namespaces',
+        search: ''
+      }
+    },
+    basename: '/console'
   },
   webRoot: '/'
 }));

@@ -1,7 +1,18 @@
 import * as React from 'react';
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label } from '@patternfly/react-core';
+import {
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Label,
+  Popover,
+  PopoverPosition
+} from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
@@ -17,7 +28,6 @@ import {
   clickableStyle,
   iconStyle,
   linkStyle,
-  noUnderlineStyle,
   popoverFooterStyle,
   popoverHeaderStyle,
   popoverItemStatusStyle,
@@ -26,8 +36,7 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { StatCountPopover } from './StatCountPopover';
-import { buildDataPlanesUrl, buildUnhealthyDataPlanesUrl, navigateToUrl } from './Links';
+import { buildDataPlanesUrl, buildUnhealthyDataPlanesUrl } from './LinkBuilder';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 
 const namespaceContainerStyle = kialiStyle({
@@ -115,9 +124,9 @@ export const DataPlaneStats: React.FC = () => {
   const popoverContentFor = (
     list: NamespaceWithHealthStatus[],
     viewAll?: {
-      onClick: () => void;
       testId?: string;
       text: string;
+      to: string;
     }
   ): React.ReactNode => (
     <>
@@ -132,15 +141,14 @@ export const DataPlaneStats: React.FC = () => {
       ))}
       {viewAll && list.length > MAX_POPOVER_ITEMS && (
         <div className={popoverFooterStyle}>
-          <Button
-            variant="link"
-            isInline
-            className={classes(linkStyle, noUnderlineStyle)}
-            onClick={viewAll.onClick}
-            data-test={viewAll.testId}
+          <KialiLink
+            to={viewAll.to}
+            onClick={() => FilterSelected.resetFilters()}
+            className={classes(linkStyle)}
+            dataTest={viewAll.testId}
           >
             {viewAll.text}
-          </Button>
+          </KialiLink>
         </div>
       )}
     </>
@@ -206,49 +214,45 @@ export const DataPlaneStats: React.FC = () => {
                 </div>
               )}
               {unhealthyCount > 0 && (
-                <StatCountPopover
-                  ariaLabel={t('Unhealthy Data planes')}
-                  triggerAction="click"
-                  showClose={true}
+                <Popover
+                  aria-label={t('Unhealthy Data planes')}
+                  position={PopoverPosition.right}
                   headerContent={
                     <span className={popoverHeaderStyle}>
                       {createIcon(DEGRADED)} {t('Data planes')}
                     </span>
                   }
                   bodyContent={popoverContentFor(unhealthyNamespaces, {
-                    onClick: () => navigateToUrl(buildUnhealthyDataPlanesUrl()),
                     testId: 'data-planes-view-unhealthy',
-                    text: t('View all Unhealthy Data planes')
+                    text: t('View all Unhealthy Data planes'),
+                    to: buildUnhealthyDataPlanesUrl()
                   })}
-                  trigger={
-                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-unhealthy">
-                      <span className={linkStyle}>{unhealthyCount}</span>
-                      {createIcon(DEGRADED)}
-                    </div>
-                  }
-                />
+                >
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-unhealthy">
+                    <span className={linkStyle}>{unhealthyCount}</span>
+                    {createIcon(DEGRADED)}
+                  </div>
+                </Popover>
               )}
               {naCount > 0 && (
-                <StatCountPopover
-                  ariaLabel={t('Data planes with no health information')}
-                  triggerAction="click"
-                  showClose={true}
+                <Popover
+                  aria-label={t('Data planes with no health information')}
+                  position={PopoverPosition.right}
                   headerContent={
                     <span className={popoverHeaderStyle}>
                       {createIcon(NA)} {t('Data planes')}
                     </span>
                   }
                   bodyContent={popoverContentFor(namespacesNA, {
-                    onClick: () => navigateToUrl(buildDataPlanesUrl(NA.id as HealthStatusId)),
-                    text: t('View all n/a Data planes')
+                    text: t('View all n/a Data planes'),
+                    to: buildDataPlanesUrl(NA.id as HealthStatusId)
                   })}
-                  trigger={
-                    <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
-                      <span className={linkStyle}>{naCount}</span>
-                      {createIcon(NA)}
-                    </div>
-                  }
-                />
+                >
+                  <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
+                    <span className={linkStyle}>{naCount}</span>
+                    {createIcon(NA)}
+                  </div>
+                </Popover>
               )}
             </div>
             <div className={verticalDividerStyle} />
@@ -277,15 +281,13 @@ export const DataPlaneStats: React.FC = () => {
       </CardBody>
       {!isCardLoading && !isCardError && (
         <CardFooter>
-          <Button
-            variant="link"
-            isInline
-            className={classes(linkStyle, noUnderlineStyle)}
-            onClick={() => navigateToUrl(buildDataPlanesUrl())}
-            data-test="data-planes-view"
+          <KialiLink
+            to={buildDataPlanesUrl()}
+            onClick={() => FilterSelected.resetFilters()}
+            dataTest="data-planes-view"
           >
             {t('View Data planes')} <KialiIcon.ArrowRight className={iconStyle} color={PFColors.Link} />
-          </Button>
+          </KialiLink>
         </CardFooter>
       )}
     </Card>

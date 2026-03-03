@@ -6,6 +6,7 @@ import { healthHandlers } from './handlers/health';
 import { istioHandlers } from './handlers/istio';
 import { meshHandlers } from './handlers/mesh';
 import { namespaceHandlers } from './handlers/namespaces';
+import { overviewHandlers } from './handlers/overview';
 import { statusHandlers } from './handlers/status';
 import { tracingHandlers } from './handlers/tracing';
 import { trafficHandlers } from './handlers/traffic';
@@ -19,6 +20,7 @@ export const handlers = [
   ...istioHandlers,
   ...meshHandlers,
   ...namespaceHandlers,
+  ...overviewHandlers,
   ...statusHandlers,
   ...tracingHandlers,
   ...trafficHandlers,

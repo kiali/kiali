@@ -32,13 +32,13 @@ import { NotificationCenter } from 'components/NotificationCenter/NotificationCe
 import { ChatBot } from 'components/ChatBot/ChatBot';
 
 type ReduxStateProps = {
+  chatbotEnabled: boolean;
   externalServices: ExternalServiceInfo[];
   kiosk: string;
   navCollapsed: boolean;
   showNotificationCenter: boolean;
   theme: string;
   tracingUrl?: string;
-  chatbotEnabled: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -49,7 +49,9 @@ type NavigationProps = ReduxStateProps & ReduxDispatchProps;
 
 const flexBoxColumnStyle = kialiStyle({
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0
 });
 
 export const NavigationComponent: React.FC<NavigationProps> = (props: NavigationProps) => {
