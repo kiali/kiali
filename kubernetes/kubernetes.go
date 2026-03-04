@@ -231,7 +231,6 @@ func (in *K8SClient) IsGatewayAPI() bool {
 			K8sGatewayClassType: "gatewayclasses",
 			K8sHTTPRouteType:    "httproutes",
 			K8sGRPCRouteType:    "grpcroutes",
-			K8sTLSRouteType:     "tlsroutes",
 		}
 		v1beta1Types := map[string]string{
 			K8sReferenceGrantType: "referencegrants",
@@ -241,6 +240,23 @@ func (in *K8SClient) IsGatewayAPI() bool {
 		in.isGatewayAPI = &isGatewayAPI
 	}
 	return *in.isGatewayAPI
+}
+
+// HasTLSRouteInV1 returns true if TLSRoute exists in gateway.networking.k8s.io/v1 (GW API 1.5+).
+func (in *K8SClient) HasTLSRouteInV1() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.GatewayAPI() == nil {
+		return false
+	}
+	if in.hasTLSRouteInV1 == nil {
+		v1Types := map[string]string{
+			K8sTLSRouteType: "tlsroutes",
+		}
+		hasTLSRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
+		in.hasTLSRouteInV1 = &hasTLSRoute
+	}
+	return *in.hasTLSRouteInV1
 }
 
 func (in *K8SClient) IsInferenceAPI() bool {
@@ -286,6 +302,8 @@ func (in *K8SClient) IsIstioGateway() bool {
 	return *in.isIstioGateway
 }
 
+// IsExpGatewayAPI checks if K8s GW API Experimental CRDs are installed
+// TODO: remove once GW API v1.5.0 becomes the minimal supported version
 func (in *K8SClient) IsExpGatewayAPI() bool {
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()

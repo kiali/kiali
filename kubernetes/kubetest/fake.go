@@ -200,6 +200,7 @@ type FakeK8sClient struct {
 func (c *FakeK8sClient) IsOpenShift() bool                  { return c.OpenShift }
 func (c *FakeK8sClient) IsExpGatewayAPI() bool              { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsGatewayAPI() bool                 { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) HasTLSRouteInV1() bool              { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsInferenceAPI() bool               { return c.InferenceAPIEnabled }
 func (c *FakeK8sClient) IsIstioGateway() bool               { return c.IstioGatewayInstalled }
 func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIInstalled }

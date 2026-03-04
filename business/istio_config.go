@@ -383,7 +383,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sTCPRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sTLSRoutes) {
+	if userClient.IsGatewayAPI() && userClient.HasTLSRouteInV1() && criteria.Include(kubernetes.K8sTLSRoutes) {
 		list := &k8s_networking_v1.TLSRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
