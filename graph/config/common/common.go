@@ -108,6 +108,7 @@ type NodeData struct {
 	IsGateway             *GWInfo             `json:"isGateway,omitempty"`             // Istio ingress/egress gateway information
 	IsIdle                bool                `json:"isIdle,omitempty"`                // true | false
 	IsInaccessible        bool                `json:"isInaccessible,omitempty"`        // true if the node exists in an inaccessible namespace
+	IsInjected            bool                `json:"isInjected,omitempty"`            // true when node is an injected (synthetic) service node
 	IsK8sGatewayAPI       bool                `json:"isK8sGatewayAPI,omitempty"`       // true (object is auto-generated from K8s API Gateway) | false
 	IsOutOfMesh           bool                `json:"isOutOfMesh,omitempty"`           // true (has missing sidecar) | false
 	IsOutside             bool                `json:"isOutside,omitempty"`             // true | false
@@ -326,6 +327,11 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// node is not accessible to the current user
 		if val, ok := n.Metadata[graph.IsInaccessible]; ok {
 			nd.IsInaccessible = val.(bool)
+		}
+
+		// node may be an injected (synthetic) service node - exclude from total traffic in app/workload graphs
+		if val, ok := n.Metadata[graph.IsInjected]; ok {
+			nd.IsInjected = val.(bool)
 		}
 
 		// node may have a circuit breaker
