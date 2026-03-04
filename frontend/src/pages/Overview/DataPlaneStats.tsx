@@ -85,17 +85,17 @@ const MAX_POPOVER_ITEMS = 3;
 const getHealthStatusLabel = (status?: HealthStatusId): string => {
   switch (status) {
     case DEGRADED.id:
-      return DEGRADED.name;
+      return t(DEGRADED.name);
     case FAILURE.id:
-      return FAILURE.name;
+      return t(FAILURE.name);
     case NOT_READY.id:
-      return NOT_READY.name;
+      return t(NOT_READY.name);
     case HEALTHY.id:
-      return HEALTHY.name;
+      return t(HEALTHY.name);
     case NA.id:
-      return 'n/a';
+      return t('n/a');
     default:
-      return status ?? t('Unknown');
+      return t(status ?? 'Unknown');
   }
 };
 

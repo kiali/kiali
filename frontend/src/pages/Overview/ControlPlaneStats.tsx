@@ -46,7 +46,7 @@ export const ControlPlaneStats: React.FC = () => {
               {cp.istiodName}
             </KialiLink>
           </span>
-          <span className={popoverItemStatusStyle}>{cp.status}</span>
+          <span className={popoverItemStatusStyle}>{t(cp.status ?? 'Unknown')}</span>
         </div>
       ))}
     </>
