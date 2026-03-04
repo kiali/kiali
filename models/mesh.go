@@ -9,6 +9,8 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/log"
 )
 
 const (
@@ -50,32 +52,21 @@ type Mesh struct {
 // ControlPlaneForNamespace returns the control plane that manages the given namespace in the cluster.
 // Prefers exact match (namespace in ManagedNamespaces), then Kiali home, then first that manages the cluster.
 func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) *ControlPlane {
-	var candidates []*ControlPlane
-	for i := range m.ControlPlanes {
-		cp := &m.ControlPlanes[i]
-		for _, cl := range cp.ManagedClusters {
-			if cl != nil && cl.Name == cluster {
-				candidates = append(candidates, cp)
-				break
-			}
-		}
-	}
-	if len(candidates) == 0 {
-		return nil
-	}
-	for _, cp := range candidates {
+	for _, cp := range m.ControlPlanes {
 		for _, ns := range cp.ManagedNamespaces {
 			if ns.Name == namespace && (ns.Cluster == "" || ns.Cluster == cluster) {
-				return cp
+				return &cp
 			}
 		}
 	}
-	for _, cp := range candidates {
-		if cp.Cluster != nil && cp.Cluster.IsKialiHome {
-			return cp
+	log.Errorf("Unable to find control plane which manages a namespace: %s in a cluster %s", namespace, cluster)
+	for _, cp := range m.ControlPlanes {
+		if cp.Cluster != nil && cp.Cluster.Name == cluster && cp.Cluster.IsKialiHome {
+			return &cp
 		}
 	}
-	return candidates[0]
+	log.Errorf("Unable to find control plane which manages a namespace: %s", namespace)
+	return nil
 }
 
 // Tag maps a controlplane revision to a namespace label.

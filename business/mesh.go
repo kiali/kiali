@@ -93,6 +93,7 @@ func (in *MeshService) GetMeshConfigForNamespace(cluster, namespace string) *mod
 	if cp != nil && cp.MeshConfig != nil {
 		return cp.MeshConfig
 	}
+	log.Errorf("Unable to find mesh config for a namespace: %s in a cluster %s", namespace, cluster)
 	return in.GetMeshConfig()
 }
 
