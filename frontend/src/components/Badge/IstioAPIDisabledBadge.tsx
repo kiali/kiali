@@ -12,7 +12,7 @@ export const IstioAPIDisabledBadge: React.FC<{ style?: React.CSSProperties }> = 
 
   return (
     <Label style={{ marginLeft: '0.5rem', ...style }} color="orange" isCompact data-test="istio-api-disabled-badge">
-      Istio API disabled
+      {t('Istio API disabled')}
     </Label>
   );
 };
