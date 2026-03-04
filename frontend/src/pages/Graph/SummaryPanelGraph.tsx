@@ -2,10 +2,9 @@ import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { Node, Visualization } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import _ from 'lodash';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
+import { GraphType, NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
@@ -35,7 +34,7 @@ import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { NodeData } from 'pages/Graph/GraphElems';
-import { edgesIn, edgesOut, elems, leafNodes, select } from 'helpers/GraphHelpers';
+import { edgesIn, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
@@ -363,18 +362,38 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     const controller = this.props.data.summaryTarget as Visualization;
     const { nodes } = elems(controller);
 
-    // when getting total traffic rates don't count requests from injected service nodes
-    const nonServiceNodes = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE, op: '!=' });
-    const nonBoxNodes = select(nonServiceNodes, { prop: NodeAttr.isBox, op: 'falsy' });
-    const totalEdges = edgesOut(nonBoxNodes as Node[]).length;
+    // when getting total traffic rates don't count requests from injected service nodes.
+    // Service graph is built by reducing an injected workload graph, so its nodes still have
+    // isInjected=true; for that graph type use all nodes for total.
+    const nodesForTotal =
+      this.props.graphType === GraphType.SERVICE
+        ? nodes
+        : selectOr(nodes, [
+            [{ prop: NodeAttr.nodeType, op: '!=', val: NodeType.SERVICE }],
+            [{ prop: NodeAttr.isInjected, op: 'falsy' }]
+          ]);
+    const nonBoxNodes = select(nodesForTotal, { prop: NodeAttr.isBox, op: 'falsy' });
+    const totalEdges = edgesOut(nonBoxNodes as Node[]);
     const inboundEdges = edgesOut(select(nodes, { prop: NodeAttr.isRoot, op: 'truthy' }) as Node[]);
-    const allLeafNodes = leafNodes(nodes) as Node[];
-    const outboundEdges = edgesIn(
-      _.union(
-        select(allLeafNodes, { prop: NodeAttr.isOutside, op: 'truthy' }),
-        select(allLeafNodes, { prop: NodeAttr.isServiceEntry, op: 'truthy' })
-      ) as Node[]
-    );
+
+    // Get nodes inside the requested namespaces (not boxes)
+    const requestedNamespaces = this.props.namespaces.map(ns => ns.name);
+    const insideNodes = select(
+      nodes.filter(n => {
+        const nodeData = n.getData() as NodeData;
+        return requestedNamespaces.includes(nodeData[NodeAttr.namespace]);
+      }),
+      { prop: NodeAttr.isBox, op: 'falsy' }
+    ) as Node[];
+
+    // Get nodes outside the requested namespaces
+    const outsideNodes = nodes.filter(n => {
+      const nodeData = n.getData() as NodeData;
+      return !requestedNamespaces.includes(nodeData[NodeAttr.namespace]);
+    }) as Node[];
+
+    // outbound edges are from inside nodes to outside nodes
+    const outboundEdges = edgesIn(outsideNodes, insideNodes);
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),

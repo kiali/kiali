@@ -653,6 +653,8 @@ When(
         }
       });
       ensureKialiFinishedLoading();
+      // Wait for refresh button debounce (500ms) to allow next click
+      cy.wait(600);
     }
   }
 );
@@ -682,6 +684,8 @@ When(
         }
       });
       ensureKialiFinishedLoading();
+      // Wait for refresh button debounce (500ms) to allow next click
+      cy.wait(600);
     }
   }
 );

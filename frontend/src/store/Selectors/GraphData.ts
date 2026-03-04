@@ -72,6 +72,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
       isGateway: undefined,
       isIdle: undefined,
       isInaccessible: undefined,
+      isInjected: undefined,
       isIstio: undefined,
       isMisconfigured: undefined,
       isOutside: undefined,
