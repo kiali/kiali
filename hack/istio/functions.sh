@@ -2,6 +2,25 @@
 
 # This file contains useful functions which are used in other hack scripts in this dirrectory.
 
+# ensure_gateway_api_crds [version] [context_args]
+# Installs Gateway API CRDs if not already present.
+# Uses K8S_GATEWAY_API_VERSION if set, else defaults to v1.5.0.
+# Uses CLIENT_EXE (kubectl/oc) for cluster operations.
+# Optional: version - override (e.g. v1.5.0); context_args - for multicluster (e.g. "--context=kind-dataplane")
+ensure_gateway_api_crds() {
+  local version="${1:-${K8S_GATEWAY_API_VERSION:-v1.5.0}}"
+  local context_args="${2:-}"
+  local client="${CLIENT_EXE:-kubectl}"
+
+  if [ -z "${version}" ]; then
+    version=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" 2>/dev/null | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | tr -d '\r' || echo "v1.5.0")
+  fi
+
+  echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${version} will be installed now."
+  ${client} get crd gateways.gateway.networking.k8s.io ${context_args} &> /dev/null || \
+    { ${client} kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${version}" | ${client} apply -f - ${context_args}; }
+}
+
 # Returns 0 if a smcp in given namespaces contains .spec.mode=ClusterWide, 1 otherwise.
 is_cluster_wide() {
   local mode=$(${CLIENT_EXE} get smcp -n ${ISTIO_NAMESPACE} -o=jsonpath='{.items[0].spec.mode}' 2> /dev/null || true)

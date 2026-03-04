@@ -48,6 +48,7 @@ SPIRE_NAMESPACE="spire"
 
 # Script directory
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${SCRIPT_DIR}/functions.sh
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -780,17 +781,11 @@ else
   done
 
   if [ "${K8S_GATEWAY_API_ENABLED}" == "true" ]; then
-    if [ "${K8S_GATEWAY_API_VERSION}" == "" ]; then
-      echo "Gateway API Version is not specified, taking the latest released version"
-      K8S_GATEWAY_API_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
-    fi
     if [ "${K8S_GATEWAY_API_IE_VERSION}" == "" ]; then
       echo "Gateway API Inference Extension Version is not specified, taking the latest released version"
       K8S_GATEWAY_API_IE_VERSION=`curl --head --silent "https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g"`
     fi
-    echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${K8S_GATEWAY_API_VERSION} will be installed now."
-    $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-      { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=${K8S_GATEWAY_API_VERSION}" | $CLIENT_EXE apply -f -; }
+    ensure_gateway_api_crds
     echo "Verifying that Gateway API Inference Extension is installed; if it is not then Gateway API Inference Extension version ${K8S_GATEWAY_API_IE_VERSION} will be installed now."
     $CLIENT_EXE get crd inferencepools.inference.networking.k8s.io &> /dev/null || \
       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=${K8S_GATEWAY_API_IE_VERSION}" | $CLIENT_EXE apply -f -; }

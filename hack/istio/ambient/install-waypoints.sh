@@ -7,6 +7,9 @@
 #
 ##############################################################################
 
+HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${HACK_SCRIPT_DIR}/../functions.sh
+
 CLIENT_EXE="oc"
 : ${ARCH:=amd64}
 
@@ -109,10 +112,7 @@ if [ "${DELETE}" == "true" ]; then
   fi
 fi
 
-# Verify Gateway API
-echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-$CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-  { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.5.0" | $CLIENT_EXE apply -f -; }
+ensure_gateway_api_crds
 
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   for namespace in "${waypoint_namespaces[@]}"; do
