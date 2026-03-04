@@ -133,9 +133,14 @@ func TestControlPlanes(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: mesh,
 	}
+	cpm := &business.FakeControlPlaneMonitor{}
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+	traceLoader := func() tracing.ClientInterface { return nil }
+	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
 
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
-	handler := handlers.WithAuthInfo(authInfo, handlers.ControlPlanes(cache, cf, conf, discovery))
+	handler := handlers.WithAuthInfo(authInfo, handlers.ControlPlanes(cache, cf, conf, discovery, cpm, prom, traceLoader, grafanaSvc))
 	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
 	w := httptest.NewRecorder()
 
@@ -170,8 +175,13 @@ func TestControlPlanesUnauthorized(t *testing.T) {
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: mesh,
 	}
+	cpm := &business.FakeControlPlaneMonitor{}
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+	traceLoader := func() tracing.ClientInterface { return nil }
+	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
 
-	handler := handlers.ControlPlanes(cache, cf, conf, discovery)
+	handler := handlers.ControlPlanes(cache, cf, conf, discovery, cpm, prom, traceLoader, grafanaSvc)
 	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
 	w := httptest.NewRecorder()
 

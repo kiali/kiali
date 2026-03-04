@@ -20,7 +20,16 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
-func ControlPlanes(cache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery istio.MeshDiscovery) http.HandlerFunc {
+func ControlPlanes(
+	cache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	conf *config.Config,
+	discovery istio.MeshDiscovery,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
@@ -38,6 +47,20 @@ func ControlPlanes(cache cache.KialiCache, clientFactory kubernetes.ClientFactor
 		mesh := *m
 
 		filterAccessibleControlPlanes(r.Context(), namespaceService, &mesh)
+
+		// When Istio API is disabled, discovery defaults Status to Healthy. Override with
+		// health-cache (or on-demand) status so the Overview matches the Namespaces page.
+		if !conf.ExternalServices.Istio.IstioAPIEnabled {
+			layer, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+			if err == nil {
+				for i := range mesh.ControlPlanes {
+					cp := &mesh.ControlPlanes[i]
+					if cp.Cluster != nil {
+						cp.Status = layer.IstioStatus.GetNamespaceStatus(r.Context(), cp.Cluster.Name, cp.IstiodNamespace)
+					}
+				}
+			}
+		}
 
 		RespondWithJSON(w, http.StatusOK, mesh.ControlPlanes)
 	}
