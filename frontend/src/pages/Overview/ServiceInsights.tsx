@@ -11,6 +11,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { LongArrowAltDownIcon } from '@patternfly/react-icons';
+import type { TOptions } from 'i18next';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
@@ -120,7 +121,7 @@ const formatErrorRate = (rate: number): string => {
   return `${(rate * 100).toFixed(2)}%`;
 };
 
-const formatRequestRate = (t: (key: string, opts?: any) => string, reqPerSec: number): string => {
+const formatRequestRate = (t: (key: string, opts?: TOptions) => string, reqPerSec: number): string => {
   if (reqPerSec >= 1000) {
     return t('{{rate}}k req/s', { rate: (reqPerSec / 1000).toFixed(2) });
   }
