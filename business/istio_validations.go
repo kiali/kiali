@@ -308,7 +308,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		return false, nil, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
 	}
 	vInfo.clusterInfo.services = svcList.Items
-	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHosts(svcList.Items, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
+	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHostsWithNamespaceDefaults(svcList.Items, in.conf, buildNamespaceToExportTo(vInfo.mesh, cluster, svcList.Items))
 
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
@@ -490,14 +490,14 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 	conf := in.conf
 
 	return []checkers.ObjectChecker{
-		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
+		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo), Cluster: cluster, ServiceAccounts: vInfo.saMap},
 		checkers.DestinationRulesChecker{Conf: conf, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries, Cluster: cluster},
-		checkers.GatewayChecker{Conf: conf, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh), Cluster: cluster},
+		checkers.GatewayChecker{Conf: conf, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo), Cluster: cluster},
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
 		checkers.K8sGRPCRouteChecker{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services, Cluster: cluster},
 		checkers.K8sHTTPRouteChecker{Conf: conf, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services, Cluster: cluster},
 		checkers.K8sReferenceGrantChecker{K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Cluster: cluster},
-		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster},
+		checkers.NoServiceChecker{Conf: conf, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo), Cluster: cluster},
 		checkers.NewPeerAuthenticationChecker(cluster, conf, in.mesh.discovery, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace, Cluster: cluster},
 		checkers.ServiceEntryChecker{ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries, Cluster: cluster},
@@ -568,7 +568,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return nil, istioReferences, fmt.Errorf("unable to list services for cluster [%s]: %w", cluster, err)
 	}
 	vInfo.clusterInfo.services = svcList.Items
-	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHosts(svcList.Items, in.conf, in.mesh.GetMeshConfig().DefaultServiceExportTo)
+	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHostsWithNamespaceDefaults(svcList.Items, in.conf, buildNamespaceToExportTo(vInfo.mesh, cluster, svcList.Items))
 
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -613,12 +613,12 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	var referenceChecker ReferenceChecker
 	conf := in.conf
 
-	noServiceChecker := checkers.NoServiceChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh)}
+	noServiceChecker := checkers.NoServiceChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo)}
 
 	switch objectGVK {
 	case kubernetes.Gateways:
 		objectCheckers = []checkers.ObjectChecker{
-			checkers.GatewayChecker{Conf: conf, Cluster: cluster, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh)},
+			checkers.GatewayChecker{Conf: conf, Cluster: cluster, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo)},
 		}
 		referenceChecker = references.GatewayReferences{Conf: conf, Gateways: istioConfigList.Gateways, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.VirtualServices:
@@ -642,7 +642,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			Conf:                  conf,
 			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
 			Cluster:               cluster, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, ServiceAccounts: vInfo.saMap,
-			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh),
+			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: in.isPolicyAllowAny(vInfo),
 		}
 		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
 		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, in.mesh.discovery, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
@@ -879,12 +879,13 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(vsList []*networki
 	if vInfo.nsInfo.namespace.Name == "" {
 		return kubernetes.FilterAutogeneratedVirtualServices(vsList)
 	}
-	meshExportTo := in.mesh.GetMeshConfig().DefaultVirtualServiceExportTo
+	cluster := vInfo.clusterInfo.cluster
 	var result []*networking_v1.VirtualService
 	for _, vs := range vsList {
 		if kubernetes.IsAutogenerated(vs.Name) {
 			continue
 		}
+		meshExportTo := in.mesh.GetMeshConfigForNamespace(cluster, vs.Namespace).DefaultVirtualServiceExportTo
 		if in.isExportedObjectIncluded(vs.Spec.ExportTo, meshExportTo, vs.Namespace, vInfo) {
 			result = append(result, vs)
 		}
@@ -896,9 +897,10 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(dr []*networking_v
 	if vInfo.nsInfo.namespace.Name == "" {
 		return dr
 	}
-	meshExportTo := in.mesh.GetMeshConfig().DefaultDestinationRuleExportTo
+	cluster := vInfo.clusterInfo.cluster
 	var result []*networking_v1.DestinationRule
 	for _, d := range dr {
+		meshExportTo := in.mesh.GetMeshConfigForNamespace(cluster, d.Namespace).DefaultDestinationRuleExportTo
 		if in.isExportedObjectIncluded(d.Spec.ExportTo, meshExportTo, d.Namespace, vInfo) {
 			result = append(result, d)
 		}
@@ -910,9 +912,10 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(se []*networking_v
 	if vInfo.nsInfo.namespace == nil {
 		return se
 	}
-	meshExportTo := in.mesh.GetMeshConfig().DefaultServiceExportTo
+	cluster := vInfo.clusterInfo.cluster
 	var result []*networking_v1.ServiceEntry
 	for _, s := range se {
+		meshExportTo := in.mesh.GetMeshConfigForNamespace(cluster, s.Namespace).DefaultServiceExportTo
 		if in.isExportedObjectIncluded(s.Spec.ExportTo, meshExportTo, s.Namespace, vInfo) {
 			result = append(result, s)
 		}
@@ -946,37 +949,52 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	return false
 }
 
-// setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the kiali home control plane
-func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
-	// TODO: Multi-primary support
-	for _, controlPlane := range vInfo.mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = controlPlane.MeshConfig.EnableAutoMtls.Value
+// buildNamespaceToExportTo precomputes namespace -> DefaultServiceExportTo for unique namespaces.
+// Call ControlPlaneForNamespace once per namespace instead of per service (O(namespaces) vs O(services)).
+func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core_v1.Service) map[string][]string {
+	seen := make(map[string]struct{})
+	for _, svc := range services {
+		seen[svc.Namespace] = struct{}{}
+	}
+	result := make(map[string][]string, len(seen))
+	for ns := range seen {
+		cp := mesh.ControlPlaneForNamespace(cluster, ns)
+		if cp != nil && cp.MeshConfig != nil {
+			result[ns] = cp.MeshConfig.DefaultServiceExportTo
 		}
 	}
+	return result
+}
 
+// setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the control plane
+// that manages the namespace being validated (multi-primary support).
+func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
+	cluster := vInfo.clusterInfo.cluster
+	namespace := vInfo.nsInfo.namespace.Name
+	cp := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp != nil && cp.MeshConfig != nil {
+		vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = cp.MeshConfig.EnableAutoMtls.Value
+	}
 	return nil
 }
 
-func (in *IstioValidationsService) isGatewayToNamespace(mesh *models.Mesh) bool {
-	// TODO: Multi-primary support
-	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.IsGatewayToNamespace
-		}
+func (in *IstioValidationsService) isGatewayToNamespace(vInfo *validationInfo) bool {
+	cluster := vInfo.clusterInfo.cluster
+	namespace := vInfo.nsInfo.namespace.Name
+	cp := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp != nil {
+		return cp.IsGatewayToNamespace
 	}
-
 	return false
 }
 
-func (in *IstioValidationsService) isPolicyAllowAny(mesh *models.Mesh) bool {
-	// TODO: Multi-primary support
-	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
-		}
+func (in *IstioValidationsService) isPolicyAllowAny(vInfo *validationInfo) bool {
+	cluster := vInfo.clusterInfo.cluster
+	namespace := vInfo.nsInfo.namespace.Name
+	cp := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp != nil && cp.MeshConfig != nil {
+		return cp.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY
 	}
-
 	return false
 }
 

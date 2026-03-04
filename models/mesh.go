@@ -47,6 +47,37 @@ type Mesh struct {
 	ExternalKiali *ExternalKialiInstance
 }
 
+// ControlPlaneForNamespace returns the control plane that manages the given namespace in the cluster.
+// Prefers exact match (namespace in ManagedNamespaces), then Kiali home, then first that manages the cluster.
+func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) *ControlPlane {
+	var candidates []*ControlPlane
+	for i := range m.ControlPlanes {
+		cp := &m.ControlPlanes[i]
+		for _, cl := range cp.ManagedClusters {
+			if cl != nil && cl.Name == cluster {
+				candidates = append(candidates, cp)
+				break
+			}
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	for _, cp := range candidates {
+		for _, ns := range cp.ManagedNamespaces {
+			if ns.Name == namespace && (ns.Cluster == "" || ns.Cluster == cluster) {
+				return cp
+			}
+		}
+	}
+	for _, cp := range candidates {
+		if cp.Cluster != nil && cp.Cluster.IsKialiHome {
+			return cp
+		}
+	}
+	return candidates[0]
+}
+
 // Tag maps a controlplane revision to a namespace label.
 // It allows you to keep your dataplane revision labels stable
 // while changing the controlplane revision so that you don't

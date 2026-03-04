@@ -377,6 +377,48 @@ func TestKubeServiceHostsNilMeshDefaultVisibleEverywhere(t *testing.T) {
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "istio-system"))
 }
 
+func TestKubeServiceHostsWithNamespaceDefaults(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+
+	services := []core_v1.Service{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"},
+			Spec: core_v1.ServiceSpec{
+				Ports: []core_v1.ServicePort{{Name: "http", Protocol: core_v1.ProtocolTCP, Port: 9080}},
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo2"},
+			Spec: core_v1.ServiceSpec{
+				Ports: []core_v1.ServicePort{{Name: "http", Protocol: core_v1.ProtocolTCP, Port: 9080}},
+			},
+		},
+	}
+
+	t.Run("nil map same as NewKubeServiceHosts with nil default", func(t *testing.T) {
+		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, conf, nil)
+		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
+		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
+		assert.True(hosts.IsValidForNamespace("ratings.bookinfo2.svc.cluster.local", "bookinfo"))
+	})
+
+	t.Run("per-namespace exportTo", func(t *testing.T) {
+		namespaceToExportTo := map[string][]string{
+			"bookinfo":  {"."},
+			"bookinfo2": {"*"},
+		}
+		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, conf, namespaceToExportTo)
+		// bookinfo uses "." - visible only in bookinfo
+		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
+		assert.False(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
+		// bookinfo2 uses "*" - visible everywhere
+		assert.True(hosts.IsValidForNamespace("ratings.bookinfo2.svc.cluster.local", "bookinfo"))
+		assert.True(hosts.IsValidForNamespace("ratings.bookinfo2.svc.cluster.local", "bookinfo2"))
+		assert.True(hosts.IsValidForNamespace("ratings.bookinfo2.svc.cluster.local", "other-ns"))
+	})
+}
+
 func TestGetClusterInfoFromIstiod(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)

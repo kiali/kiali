@@ -60,7 +60,7 @@ func (in *MeshService) IsControlPlane(ctx context.Context, cluster, namespace st
 // This returns the home cluster's mesh config, if possible. For external
 // Kiali deployments it returns the mesh config of a random control plane.
 // If no mesh config can be found, an empty mesh config is returned.
-// TODO: Remove when validations can read from a specific controlplane.
+// Prefer GetMeshConfigForNamespace when cluster and namespace are available (multi-primary).
 func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	mesh, err := in.discovery.Mesh(context.TODO())
 	if err != nil {
@@ -68,9 +68,8 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 		return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
 	}
 
-	// TODO: Multi-primary support
 	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
+		if controlPlane.Cluster != nil && controlPlane.Cluster.IsKialiHome {
 			return controlPlane.MeshConfig
 		}
 	}
@@ -79,6 +78,22 @@ func (in *MeshService) GetMeshConfig() *models.MeshConfig {
 	}
 
 	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
+}
+
+// GetMeshConfigForNamespace returns the mesh config for the control plane that manages the given
+// namespace in the cluster. Use this instead of GetMeshConfig() when validating or filtering
+// resources for a specific namespace (multi-primary support).
+func (in *MeshService) GetMeshConfigForNamespace(cluster, namespace string) *models.MeshConfig {
+	mesh, err := in.discovery.Mesh(context.TODO())
+	if err != nil {
+		log.Errorf("Error getting mesh config for namespace: %s", err)
+		return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
+	}
+	cp := mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp != nil && cp.MeshConfig != nil {
+		return cp.MeshConfig
+	}
+	return in.GetMeshConfig()
 }
 
 func (in *MeshService) Clusters() []models.KubeCluster {

@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
+	apinetworkingv1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -246,6 +248,65 @@ func mockValidationInfo(conf *config.Config, namespaces map[string]bool, namespa
 		},
 	}
 	return vInfo
+}
+
+func TestMultiPrimaryFilterExportToNamespacesVS(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Mesh with two control planes: CP1 manages bookinfo with DefaultVSExportTo ["."],
+	// CP2 manages bookinfo2 with DefaultVSExportTo ["*"].
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: ""}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"."},
+					},
+				},
+			},
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: false},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo2", Cluster: ""}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"*"},
+					},
+				},
+			},
+		},
+	}
+
+	vsBookinfo := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"reviews"}},
+	}
+	vsBookinfo2 := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo2"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"ratings"}},
+	}
+	vsList := []*networking_v1.VirtualService{vsBookinfo, vsBookinfo2}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshServiceWithMesh(t, *conf, mesh, objs...)
+
+	// Viewing bookinfo: vsBookinfo has . (visible in bookinfo), vsBookinfo2 has * (visible everywhere)
+	vInfoBookinfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "bookinfo2": false, "default": false}, "bookinfo")
+	filteredBookinfo := v.filterVSExportToNamespaces(vsList, &vInfoBookinfo)
+	assert.Len(filteredBookinfo, 2, "viewing bookinfo: both VSs should be included")
+
+	// Viewing bookinfo2: vsBookinfo has . (not visible in bookinfo2), vsBookinfo2 has * (visible everywhere)
+	vInfoBookinfo2 := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "bookinfo2": false, "default": false}, "bookinfo2")
+	filteredBookinfo2 := v.filterVSExportToNamespaces(vsList, &vInfoBookinfo2)
+	assert.Len(filteredBookinfo2, 1, "viewing bookinfo2: only bookinfo2 VS should be included")
+	assert.Equal("ratings", filteredBookinfo2[0].Name)
+	assert.Equal("bookinfo2", filteredBookinfo2[0].Namespace)
 }
 
 func TestFilterExportToNamespacesVS(t *testing.T) {
@@ -777,12 +838,16 @@ func fakeValidationMeshService(t *testing.T, conf config.Config, objects ...runt
 }
 
 func fakeValidationMeshServiceWithDiscovery(t *testing.T, cfg config.Config, objects ...runtime.Object) IstioValidationsService {
+	return fakeValidationMeshServiceWithMesh(t, cfg, models.Mesh{
+		ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}},
+	}, objects...)
+}
+
+func fakeValidationMeshServiceWithMesh(t *testing.T, cfg config.Config, mesh models.Mesh, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
 	cache := cache.NewTestingCache(t, k8s, cfg)
 
-	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{IsKialiHome: true}, MeshConfig: models.NewMeshConfig()}}},
-	}
+	discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
 
 	return NewLayerBuilder(t, &cfg).WithClient(k8s).WithCache(cache).WithDiscovery(discovery).Build().Validations
 }
