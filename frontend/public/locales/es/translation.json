@@ -267,6 +267,7 @@
   "Infra node": "Nodo de infraestructura",
   "Istio {{type}} created": "Istio {{type}} creado",
   "Istio Ambient ztunnel detected in the Control plane": "Istio Ambient ztunnel detectado en el plano de control",
+  "Istio API disabled": "Istio API disabled",
   "Istio Component List": "Lista de componentes de Istio",
   "Istio config": "Configuración de Istio",
   "Istio Config": "Configuración de Istio",
