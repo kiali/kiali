@@ -1,7 +1,5 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
-import { elems } from './graph';
-import { Visualization } from '@patternfly/react-topology';
-import { GraphDataSource } from 'services/GraphDataSource';
+import { assertGraphReady, assertMiniGraphReady } from './graph';
 
 Then(`user does not see the {string} link`, link => {
   cy.get('div[role="dialog"]').find(`#${link}`).should('not.exist');
@@ -12,41 +10,23 @@ Then(`user see the {string} link`, link => {
 });
 
 Then('the nodes located in the {string} cluster should be restricted', (cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
-
-      filteredNodes.forEach(node => {
-        assert.isTrue(node.getData().isInaccessible);
-      });
+    filteredNodes.forEach(node => {
+      assert.isTrue(node.getData().isInaccessible);
     });
+  });
 });
 
 Then('the nodes on the minigraph located in the {string} cluster should be restricted', (cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertMiniGraphReady(({ nodes }) => {
+    const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const filteredNodes = nodes.filter(node => node.getData().cluster === cluster && !node.getData().isBox);
-
-      filteredNodes.forEach(node => {
-        assert.isTrue(node.getData().isInaccessible);
-      });
+    filteredNodes.forEach(node => {
+      assert.isTrue(node.getData().isInaccessible);
     });
+  });
 });
 
 Then(

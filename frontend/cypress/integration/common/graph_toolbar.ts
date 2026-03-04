@@ -1,7 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { EdgeAttr } from 'types/Graph';
-import { elems, select } from './graph';
-import { Visualization } from '@patternfly/react-topology';
+import { assertGraphReady, select } from './graph';
 
 When(
   'user graphs {string} namespaces with refresh {string} and duration {string}',
@@ -133,24 +132,15 @@ Then('user does not see graph traffic menu', () => {
 });
 
 Then('user {string} {string} traffic', (action: string, protocol: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ edges }) => {
+    const numEdges = select(edges, { prop: EdgeAttr.protocol, op: '=', val: protocol }).length;
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges } = elems(controller);
-
-      const numEdges = select(edges, { prop: EdgeAttr.protocol, op: '=', val: protocol }).length;
-
-      if (action === 'sees') {
-        assert.isAbove(numEdges, 0);
-      } else {
-        assert.equal(numEdges, 0);
-      }
-    });
+    if (action === 'sees') {
+      assert.isAbove(numEdges, 0);
+    } else {
+      assert.equal(numEdges, 0);
+    }
+  });
 });
 
 Then(`user does not see any traffic`, () => {
@@ -237,18 +227,8 @@ Then('user sees selected graph refresh {string}', (refresh: string) => {
 });
 
 Then('user sees a {string} graph', graphType => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      assert.equal(state.graphData.fetchParams.graphType, graphType);
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      assert.isAbove(nodes.length, 0);
-    });
+  assertGraphReady(({ nodes }, state) => {
+    assert.equal(state.graphData.fetchParams.graphType, graphType);
+    assert.isAbove(nodes.length, 0);
+  });
 });
