@@ -70,7 +70,6 @@ import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
 import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
 import _ from 'lodash';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
-import { KialiIcon } from '../../config/KialiIcon';
 import { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
@@ -941,13 +940,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               this.onConfirmPreview(items);
             }}
           />
-          {!this.props.istioAPIEnabled && (
-            <div style={{ padding: ' 0 0 20px 0' }}>
-              <KialiIcon.Warning /> <b>Istio API is disabled.</b> Be careful when editing the configuration as the Istio
-              config validations are disabled when the Istio API is disabled.
-            </div>
-          )}
-
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
               serviceName={this.props.serviceName}

@@ -256,6 +256,7 @@
   "Infra node": "Infra node",
   "Istio {{type}} created": "Istio {{type}} created",
   "Istio Ambient ztunnel detected in the Control plane": "在Istio的控制平面中检测到环境ztunnel",
+  "Istio API disabled": "Istio API disabled",
   "Istio Component List": "Istio Component List",
   "Istio config": "Istio配置",
   "Istio Config": "Istio配置",

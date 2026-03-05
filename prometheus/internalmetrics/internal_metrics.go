@@ -613,13 +613,14 @@ func GetTracingProcessingTimePrometheusTimer(queryGroup string) *prometheus.Time
 // Health metrics helper functions
 //
 
-// HealthType represents the type of health (app, service, workload)
+// HealthType represents the type of health (app, service, workload, or namespace for all types)
 type HealthType string
 
 const (
-	HealthTypeApp      HealthType = "app"
-	HealthTypeService  HealthType = "service"
-	HealthTypeWorkload HealthType = "workload"
+	HealthTypeApp       HealthType = "app"
+	HealthTypeNamespace HealthType = "namespace" // all types (app + service + workload)
+	HealthTypeService   HealthType = "service"
+	HealthTypeWorkload  HealthType = "workload"
 )
 
 // GetHealthRefreshDurationTimer returns a timer for measuring health refresh duration.

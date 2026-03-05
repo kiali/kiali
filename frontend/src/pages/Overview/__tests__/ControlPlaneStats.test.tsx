@@ -10,6 +10,10 @@ jest.mock('hooks/controlPlanes', () => ({
   useControlPlanes: jest.fn()
 }));
 
+jest.mock('components/Badge/IstioAPIDisabledBadge', () => ({
+  IstioAPIDisabledBadge: () => null
+}));
+
 jest.mock('hooks/redux', () => ({
   useKialiSelector: jest.fn()
 }));

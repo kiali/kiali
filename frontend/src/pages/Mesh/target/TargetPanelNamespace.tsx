@@ -10,7 +10,7 @@ import {
   targetPanelStyle
 } from './TargetPanelCommon';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { Card, CardBody, CardHeader, Label, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
 import { ValidationStatus } from 'types/IstioObjects';
 import { NamespaceAction, NamespaceActions } from '../../Namespaces/NamespaceActions';
@@ -24,6 +24,7 @@ import { ControlPlaneDonut } from '../components/ControlPlaneDonut';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
 import { ControlPlaneVersionBadge } from 'components/Badge/ControlPlaneVersionBadge';
 import { AmbientBadge } from 'components/Badge/AmbientBadge';
+import { IstioAPIDisabledBadge } from 'components/Badge/IstioAPIDisabledBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
@@ -187,7 +188,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ display: 'inline-block', width: '125px' }}>Istio config</div>
 
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.state.status && (
@@ -220,7 +221,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                     </span>
                   )}
 
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.renderStatus()}
@@ -241,7 +242,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
                       <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
                     </span>
                   )}
-                  {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+                  {this.renderIstioConfigStatus(nsInfo)}
                 </div>
 
                 {this.renderStatus()}
@@ -364,11 +365,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
           <ControlPlaneVersionBadge version={ns.labels ? ns.labels['istio.io/rev'] : ''} />
         )}
 
-        {isControlPlane && !this.props.istioAPIEnabled && (
-          <Label style={{ marginLeft: '0.5rem' }} color="orange" isCompact>
-            Istio API disabled
-          </Label>
-        )}
+        {isControlPlane && <IstioAPIDisabledBadge />}
 
         {!isControlPlane && serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
           <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>

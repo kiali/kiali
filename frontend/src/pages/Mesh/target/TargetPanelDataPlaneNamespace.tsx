@@ -155,7 +155,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
               </span>
             )}
 
-            {this.props.istioAPIEnabled ? this.renderIstioConfigStatus(nsInfo) : 'N/A'}
+            {this.renderIstioConfigStatus(nsInfo)}
           </div>
 
           {this.renderStatus()}

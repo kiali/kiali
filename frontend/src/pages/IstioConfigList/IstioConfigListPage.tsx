@@ -35,7 +35,6 @@ import { setAIContext } from 'helpers/ChatAI';
 
 interface ReduxProps {
   activeNamespaces: Namespace[];
-  istioAPIEnabled: boolean;
 }
 
 type IstioConfigListPageProps = ReduxProps & DispatchProp;
@@ -180,10 +179,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
             listItems: updatedList
           },
           () => {
-            setAIContext(
-              this.props.dispatch,
-              `Istio Config List of namespaces ${namespaces.join(',')}`
-            );
+            setAIContext(this.props.dispatch, `Istio Config List of namespaces ${namespaces.join(',')}`);
           }
         );
       })
@@ -202,13 +198,8 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
     toggles: ActiveTogglesInfo,
     cluster?: string
   ): Promise<IstioConfigItem[]> {
-    let validate = false;
-
-    if (this.props.istioAPIEnabled) {
-      validate = !!toggles.get('configuration');
-    }
-
-    // Request all configs from all namespaces, as in backend all configs are always loaded from registry
+    // Request validations when the Configuration Validation toggle is on.
+    const validate = !!toggles.get('configuration');
     return this.promises
       .register(`configs${cluster}`, API.getAllIstioConfigs(typeFilters, validate, '', '', cluster))
       .then(response => {
@@ -219,15 +210,12 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
   render(): React.ReactNode {
     const hiddenColumns = isMultiCluster ? ([] as string[]) : ['cluster'];
 
-    if (this.props.istioAPIEnabled) {
-      Toggles.getToggles().forEach((v, k) => {
-        if (!v) {
-          hiddenColumns.push(k);
-        }
-      });
-    } else {
-      hiddenColumns.push('configuration');
-    }
+    // Hide columns for toggles that are off (same logic whether or not Istio API is enabled).
+    Toggles.getToggles().forEach((v, k) => {
+      if (!v) {
+        hiddenColumns.push(k);
+      }
+    });
 
     return (
       <>
@@ -240,9 +228,9 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
           <VirtualList rows={this.state.listItems} hiddenColumns={hiddenColumns} sort={this.onSort} type="istio">
             <StatefulFilters
               initialFilters={IstioConfigListFilters.availableFilters}
-              initialToggles={this.props.istioAPIEnabled ? this.initialToggles : undefined}
+              initialToggles={this.initialToggles}
               onFilterChange={this.onFilterChange}
-              onToggleChange={this.props.istioAPIEnabled ? this.onFilterChange : undefined}
+              onToggleChange={this.onFilterChange}
             />
           </VirtualList>
         </RenderContent>
@@ -252,8 +240,7 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  activeNamespaces: activeNamespacesSelector(state),
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
+  activeNamespaces: activeNamespacesSelector(state)
 });
 
 export const IstioConfigListPage = connect(mapStateToProps)(IstioConfigListPageComponent);

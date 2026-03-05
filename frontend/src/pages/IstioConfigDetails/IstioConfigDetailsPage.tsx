@@ -87,7 +87,6 @@ const paramToTab: { [key: string]: number } = {
 };
 
 interface ReduxProps {
-  istioAPIEnabled: boolean;
   kiosk: string;
   theme: string;
 }
@@ -146,19 +145,18 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
   };
 
-  newIstioObjectPromise = (props: IstioConfigId, validate: boolean): Promise<ApiResponse<IstioConfigDetails>> => {
+  newIstioObjectPromise = (props: IstioConfigId): Promise<ApiResponse<IstioConfigDetails>> => {
     return API.getIstioConfigDetail(
       props.namespace,
       { Group: props.objectGroup, Version: props.objectVersion, Kind: props.objectKind },
       props.objectName,
-      validate,
+      true,
       this.state.cluster
     );
   };
 
   fetchIstioObjectDetailsFromProps = (props: IstioConfigId): void => {
-    const validate = this.props.istioAPIEnabled ? true : false;
-    const promiseConfigDetails = this.newIstioObjectPromise(props, validate);
+    const promiseConfigDetails = this.newIstioObjectPromise(props);
 
     // Note that adapters/templates are not supported yet for validations
     promiseConfigDetails
@@ -538,7 +536,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     helpMessages={helpMessages}
                     selectedLine={this.state.selectedEditorLine}
                     kiosk={this.props.kiosk}
-                    istioAPIEnabled={this.props.istioAPIEnabled}
                   />
                 )}
               </>
@@ -688,7 +685,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   theme: state.globalState.theme
 });
 

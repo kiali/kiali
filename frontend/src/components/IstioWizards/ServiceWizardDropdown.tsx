@@ -32,17 +32,11 @@ import { ServiceWizardActionsDropdownGroup, DELETE_TRAFFIC_ROUTING } from './Ser
 import { ConfirmDeleteTrafficRoutingModal } from './ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { ServiceOverview } from '../../types/ServiceList';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
-type ReduxProps = {
-  istioAPIEnabled: boolean;
-};
-
-type Props = ReduxProps & {
+type Props = {
   annotations: { [key: string]: string };
   cluster?: string;
   destinationRules: DestinationRule[];
@@ -63,7 +57,7 @@ type Props = ReduxProps & {
   workloads: WorkloadOverview[];
 };
 
-const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
+export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
   const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
   const [isActionsOpen, setIsActionsOpen] = React.useState<boolean>(false);
   const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
@@ -267,7 +261,6 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
         peerAuthentications={props.peerAuthentications}
         tlsStatus={props.tlsStatus}
         onClose={onClose}
-        istioAPIEnabled={props.istioAPIEnabled}
       />
 
       <ConfirmDeleteTrafficRoutingModal
@@ -282,9 +275,3 @@ const ServiceWizardDropdownComponent: React.FC<Props> = (props: Props) => {
     </>
   );
 };
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled
-});
-
-export const ServiceWizardDropdown = connect(mapStateToProps)(ServiceWizardDropdownComponent);

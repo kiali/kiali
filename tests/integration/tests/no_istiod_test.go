@@ -40,7 +40,7 @@ func TestNoIstiod(t *testing.T) {
 	t.Run("ServicesListNoIstiod", servicesListNoIstiod)
 	t.Run("NoProxyStatus", noProxyStatus)
 	t.Run("istioStatus", istioStatus)
-	t.Run("emptyValidations", emptyValidations)
+	t.Run("validationsPerformed", validationsPerformed)
 }
 
 func servicesListNoIstiod(t *testing.T) {
@@ -87,7 +87,7 @@ func noProxyStatus(t *testing.T) {
 	}
 }
 
-func emptyValidations(t *testing.T) {
+func validationsPerformed(t *testing.T) {
 	name := "ingress-app"
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-simple-gateway.yaml")
@@ -103,8 +103,11 @@ func emptyValidations(t *testing.T) {
 	require.NotNil(config.Gateway)
 	require.Equal(name, config.Gateway.Name)
 	require.Equal(kiali.BOOKINFO, config.Gateway.Namespace)
-	require.Nil(config.IstioValidation)
-	require.Nil(config.IstioReferences)
+	// Validations run even when Istio API is disabled (they use Kiali cache and K8s only).
+	require.NotNil(config.IstioValidation)
+	require.Equal(name, config.IstioValidation.Name)
+	require.Equal(kiali.BOOKINFO, config.IstioValidation.Namespace)
+	require.Equal(k8s.Gateways.String(), config.IstioValidation.ObjectGVK.String())
 }
 
 func istioStatus(t *testing.T) {

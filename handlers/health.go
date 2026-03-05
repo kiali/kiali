@@ -92,16 +92,18 @@ func ClusterHealth(
 		healthCacheEnabled := conf.KialiInternal.HealthCache.Enabled
 
 		if healthCacheEnabled {
-			// Serve from cache
+			// Serve from cache. One GetHealth per namespace (cache key is cluster+namespace; value has all types).
 			allFromCache := true
 			for _, ns := range nss {
-				for _, ht := range healthTypes {
-					// GetHealth now tracks cache hit/miss metrics internally
-					cachedData, found := kialiCache.GetHealth(cluster, ns, healthTypeToMetricType(ht))
-					if !found {
-						// Cache miss - return "unknown" status for this namespace
-						allFromCache = false
-						log.Debugf("health cache miss for cluster=%s namespace=%s type=%s, returning unknown status", cluster, ns, ht)
+				metricType := internalmetrics.HealthTypeNamespace
+				if len(healthTypes) == 1 {
+					metricType = healthTypeToMetricType(healthTypes[0])
+				}
+				cachedData, found := kialiCache.GetHealth(cluster, ns, metricType)
+				if !found {
+					allFromCache = false
+					log.Debugf("health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
+					for _, ht := range healthTypes {
 						switch ht {
 						case "app":
 							result.AppHealth[ns] = &models.NamespaceAppHealth{}
@@ -110,10 +112,10 @@ func ClusterHealth(
 						case "workload":
 							result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
 						}
-						continue
 					}
-
-					// Use cached data
+					continue
+				}
+				for _, ht := range healthTypes {
 					switch ht {
 					case "app":
 						result.AppHealth[ns] = &cachedData.AppHealth

@@ -59,7 +59,7 @@ func IstioConfigList(
 		}
 
 		cluster := clusterNameFromQuery(conf, query)
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 
@@ -131,7 +131,7 @@ func IstioConfigDetails(
 		}
 
 		cluster := clusterNameFromQuery(conf, query)
-		if !conf.ExternalServices.Istio.IstioAPIEnabled || !conf.IsValidationsEnabled() {
+		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
 

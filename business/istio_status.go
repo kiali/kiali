@@ -15,6 +15,8 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/httputil"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -27,11 +29,13 @@ func NewIstioStatusService(
 	tracing *TracingService,
 	userClients map[string]kubernetes.UserClientInterface,
 	workloads *WorkloadService,
+	health *HealthService,
 ) IstioStatusService {
 	return IstioStatusService{
 		cache:               cache,
 		conf:                conf,
 		discovery:           discovery,
+		health:              health,
 		homeClusterSAClient: homeClusterSAClient,
 		tracing:             tracing,
 		userClients:         userClients,
@@ -45,6 +49,7 @@ type IstioStatusService struct {
 	cache               cache.KialiCache
 	conf                *config.Config
 	discovery           istio.MeshDiscovery
+	health              *HealthService
 	homeClusterSAClient kubernetes.ClientInterface
 	tracing             *TracingService
 	userClients         map[string]kubernetes.UserClientInterface
@@ -58,8 +63,50 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	)
 	defer end()
 
-	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled || !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
+	if !iss.conf.ExternalServices.Istio.ComponentStatuses.Enabled {
 		return kubernetes.IstioComponentStatus{}, nil
+	}
+
+	// When Istio API is disabled we cannot query istiod for component health, but we still
+	// want to resolve clusters to support queries about clusters.
+	// Use the health cache (workload health for the control plane namespace) when available.
+	if !iss.conf.ExternalServices.Istio.IstioAPIEnabled {
+		mesh, err := iss.discovery.Mesh(ctx)
+		if err != nil {
+			return nil, err
+		}
+		result := kubernetes.IstioComponentStatus{}
+		seen := make(map[string]bool)
+		for _, cp := range mesh.ControlPlanes {
+			var cpStatus string
+			if cp.Cluster != nil {
+				cpStatus = iss.GetNamespaceStatus(ctx, cp.Cluster.Name, cp.IstiodNamespace)
+			}
+			if cp.Cluster != nil && !seen[cp.Cluster.Name] {
+				seen[cp.Cluster.Name] = true
+				meshId := getMeshId(&cp)
+				result = append(result, kubernetes.ComponentStatus{
+					Cluster:   cp.Cluster.Name,
+					Name:      cp.IstiodName,
+					Namespace: cp.IstiodNamespace,
+					Status:    cpStatus,
+					IsCore:    true,
+					MeshId:    meshId,
+				})
+			}
+			for _, cl := range cp.ManagedClusters {
+				if cl != nil && !seen[cl.Name] {
+					seen[cl.Name] = true
+					result = append(result, kubernetes.ComponentStatus{
+						Cluster: cl.Name,
+						Name:    "istiod",
+						Status:  cpStatus,
+						IsCore:  true,
+					})
+				}
+			}
+		}
+		return result, nil
 	}
 
 	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
@@ -252,6 +299,109 @@ func getMeshId(cp *models.ControlPlane) string {
 		meshId = cp.MeshConfig.TrustDomain
 	}
 	return meshId
+}
+
+// GetNamespaceStatus returns the component status (Healthy, NotReady, Unhealthy) for the given
+// cluster and namespace by merging app, service, and workload health from the health cache, or
+// by computing health on-demand when the cache is disabled.
+func (iss *IstioStatusService) GetNamespaceStatus(ctx context.Context, cluster, namespace string) string {
+	cachedData, found := iss.cache.GetHealth(cluster, namespace, internalmetrics.HealthTypeNamespace)
+	if found && cachedData != nil {
+		return iss.mergeCachedHealthToStatus(cachedData)
+	}
+	// Cache miss: compute on-demand when health service is available (e.g. when health cache is disabled)
+	if iss.health != nil {
+		criteria := NamespaceHealthCriteria{
+			Cluster:        cluster,
+			IncludeMetrics: true,
+			Namespace:      namespace,
+			QueryTime:      util.Clock.Now(),
+			RateInterval:   "10m",
+		}
+		appHealth, appErr := iss.health.GetNamespaceAppHealth(ctx, criteria)
+		serviceHealth, svcErr := iss.health.GetNamespaceServiceHealth(ctx, criteria)
+		workloadHealth, wkErr := iss.health.GetNamespaceWorkloadHealth(ctx, criteria)
+		if appErr != nil && svcErr != nil && wkErr != nil {
+			log.Debugf("failed to compute namespace health for %s/%s: app=%v service=%v workload=%v", cluster, namespace, appErr, svcErr, wkErr)
+			return kubernetes.ComponentHealthy
+		}
+		var worst models.HealthStatus
+		for _, ah := range appHealth {
+			if ah != nil && ah.Status != nil {
+				if worst == "" {
+					worst = ah.Status.Status
+				} else {
+					worst = models.MergeHealthStatus(worst, ah.Status.Status)
+				}
+			}
+		}
+		for _, sh := range serviceHealth {
+			if sh != nil && sh.Status != nil {
+				if worst == "" {
+					worst = sh.Status.Status
+				} else {
+					worst = models.MergeHealthStatus(worst, sh.Status.Status)
+				}
+			}
+		}
+		for _, wh := range workloadHealth {
+			if wh != nil && wh.Status != nil {
+				if worst == "" {
+					worst = wh.Status.Status
+				} else {
+					worst = models.MergeHealthStatus(worst, wh.Status.Status)
+				}
+			}
+		}
+		return healthStatusToComponentStatus(worst)
+	}
+	return kubernetes.ComponentHealthy
+}
+
+func (iss *IstioStatusService) mergeCachedHealthToStatus(cachedData *models.CachedHealthData) string {
+	var worst models.HealthStatus
+	for _, ah := range cachedData.AppHealth {
+		if ah != nil && ah.Status != nil {
+			if worst == "" {
+				worst = ah.Status.Status
+			} else {
+				worst = models.MergeHealthStatus(worst, ah.Status.Status)
+			}
+		}
+	}
+	for _, sh := range cachedData.ServiceHealth {
+		if sh != nil && sh.Status != nil {
+			if worst == "" {
+				worst = sh.Status.Status
+			} else {
+				worst = models.MergeHealthStatus(worst, sh.Status.Status)
+			}
+		}
+	}
+	for _, wh := range cachedData.WorkloadHealth {
+		if wh != nil && wh.Status != nil {
+			if worst == "" {
+				worst = wh.Status.Status
+			} else {
+				worst = models.MergeHealthStatus(worst, wh.Status.Status)
+			}
+		}
+	}
+	return healthStatusToComponentStatus(worst)
+}
+
+// healthStatusToComponentStatus maps models.HealthStatus to kubernetes component status string.
+func healthStatusToComponentStatus(h models.HealthStatus) string {
+	switch h {
+	case models.HealthStatusHealthy:
+		return kubernetes.ComponentHealthy
+	case models.HealthStatusNotReady:
+		return kubernetes.ComponentNotReady
+	case models.HealthStatusFailure, models.HealthStatusDegraded:
+		return kubernetes.ComponentUnhealthy
+	default:
+		return kubernetes.ComponentHealthy
+	}
 }
 
 // makeNamespaceKey creates a "cluster:namespace" key for namespace-based lookups.

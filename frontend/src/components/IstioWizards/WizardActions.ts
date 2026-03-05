@@ -150,7 +150,6 @@ export type ServiceWizardProps = {
   createOrUpdate: boolean;
   destinationRules: DestinationRule[];
   gateways: string[];
-  istioAPIEnabled: boolean;
   k8sGRPCRoutes: K8sGRPCRoute[];
   k8sGateways: string[];
   k8sHTTPRoutes: K8sHTTPRoute[];

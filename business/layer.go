@@ -50,7 +50,7 @@ func newLayer(
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, cache, prom, grafana, userClients)
 	temporaryLayer.Health = NewHealthService(temporaryLayer, conf, cache, prom, userClients)
 	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, saClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
-	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload)
+	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload, &temporaryLayer.Health)
 	temporaryLayer.Namespace = NewNamespaceService(cache, conf, discovery, kialiSAClients, userClients)
 	temporaryLayer.Mesh = NewMeshService(conf, discovery, kialiSAClients)
 	temporaryLayer.ProxyStatus = NewProxyStatusService(conf, cache, kialiSAClients, &temporaryLayer.Namespace)

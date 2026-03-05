@@ -160,6 +160,18 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		cpm.PollIstiodForProxyStatus(ctx)
 	} else {
 		log.Debug("Istio API is disabled; istiod will not be polled for proxy status")
+		// When Istio API is disabled, PollIstiodForProxyStatus is never called, so
+		// discovery.Mesh() (which populates the cluster list via Clusters()) never runs
+		// at startup. The health monitor's first refresh uses cache.GetClusters(); if
+		// it is nil, the refresh skips entirely ("No clusters found"), so the health
+		// cache stays empty until the next interval and the overview shows cache misses.
+		// Prime the cluster cache by resolving the mesh once so the health monitor
+		// has a non-empty cluster list on its initial run.
+		if hcm != nil {
+			if _, err := discovery.Mesh(ctx); err != nil {
+				log.Warningf("Failed to prime cluster cache for health monitor (Istio API disabled): %s", err)
+			}
+		}
 	}
 
 	// Start health monitor for pre-computing health data (if enabled)
