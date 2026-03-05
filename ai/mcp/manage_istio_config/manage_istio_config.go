@@ -1,10 +1,13 @@
 package manage_istio_config
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"unicode"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/business"
@@ -175,4 +178,45 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 		return fmt.Errorf("invalid action %q: must be one of list, create, patch, get, delete", action)
 	}
 	return nil
+}
+
+func normalizeToYAML(jsonOrYAML string) (string, error) {
+	// Accept JSON or YAML; JSON is valid YAML, but YAMLToJSON normalizes either.
+	jsonBytes, err := yaml.YAMLToJSON([]byte(jsonOrYAML))
+	if err != nil {
+		return "", err
+	}
+
+	var v interface{}
+	if err := json.Unmarshal(jsonBytes, &v); err != nil {
+		return "", err
+	}
+
+	yml, err := yaml.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	if len(yml) > 0 && yml[len(yml)-1] != '\n' {
+		yml = append(yml, '\n')
+	}
+	return string(yml), nil
+}
+
+func stubManifestYAML(apiVersion, kind, name, namespace string) string {
+	m := map[string]interface{}{
+		"apiVersion": strings.TrimSpace(apiVersion),
+		"kind":       strings.TrimSpace(kind),
+		"metadata": map[string]interface{}{
+			"name":      strings.TrimSpace(name),
+			"namespace": strings.TrimSpace(namespace),
+		},
+	}
+	b, err := yaml.Marshal(m)
+	if err != nil {
+		return ""
+	}
+	if len(b) > 0 && b[len(b)-1] != '\n' {
+		b = append(b, '\n')
+	}
+	return string(b)
 }

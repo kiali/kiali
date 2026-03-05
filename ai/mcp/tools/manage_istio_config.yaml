@@ -29,6 +29,9 @@
       object:
         type: "string"
         description: "Name of the Istio object. Required for patch,get,create and delete actions."
+      service_name:
+        type: "string"
+        description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action. Matches service name in VirtualService hosts/routes and DestinationRule host fields."
       json_data:
         type: "string"
         description: "JSON or YAML data to apply or create the object. Required for create and patch actions."

@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -52,4 +55,57 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	}
 
 	return "~~~\n" + yml + "~~~\n", http.StatusOK
+}
+
+func compactRuntimeObjectYAML(obj runtime.Object, fallbackGVK schema.GroupVersionKind) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("nil object")
+	}
+
+	typeAccessor, _ := meta.TypeAccessor(obj)
+	objAccessor, _ := meta.Accessor(obj)
+
+	apiVersion := ""
+	kind := ""
+	if typeAccessor != nil {
+		apiVersion = typeAccessor.GetAPIVersion()
+		kind = typeAccessor.GetKind()
+	}
+	if apiVersion == "" {
+		apiVersion = fallbackGVK.GroupVersion().String()
+	}
+	if kind == "" {
+		kind = fallbackGVK.Kind
+	}
+
+	name := ""
+	namespace := ""
+	if objAccessor != nil {
+		name = objAccessor.GetName()
+		namespace = objAccessor.GetNamespace()
+	}
+
+	// Convert to generic map to reliably extract spec and avoid large metadata.
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return "", err
+	}
+
+	out := map[string]interface{}{
+		"apiVersion": apiVersion,
+		"kind":       kind,
+		"metadata": map[string]interface{}{
+			"name":      name,
+			"namespace": namespace,
+		},
+	}
+	if spec, ok := u["spec"]; ok {
+		out["spec"] = spec
+	}
+
+	b, err := yaml.Marshal(out)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

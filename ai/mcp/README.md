@@ -327,12 +327,13 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 - `version` (string, required for create/patch/get): API version (e.g., `"v1"`).
 - `kind` (string, required for create/patch/get): Object kind (e.g., `"VirtualService"`, `"DestinationRule"`, `"Gateway"`).
 - `object` (string, required for patch/delete): Name of the Istio object.
+- `service_name` (string, optional): Filter Istio configurations by service. Only applicable for `list` action. Returns VirtualServices, DestinationRules, and Gateways that affect the specified service.
 - `json_data` (string, required for create/patch): JSON or YAML data for the object (as string).
 
-**Returns**: 
-- For `list`: JSON list of Istio objects and validations (verbose)
+**Returns**:
+- For `list`: Compact YAML of filtered VirtualServices, DestinationRules, and Gateways (minimal metadata/spec, validation warnings as comments)
 - For `get`: Compact YAML of the requested Istio object (minimal metadata/spec)
-- For `create`/`patch`/`delete`: Success/error message
+- For `create`/`patch`/`delete`: Success/error message or YAML preview if not confirmed
 
 **Example 1**: List all VirtualServices in bookinfo namespace
 ```json
@@ -403,9 +404,20 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 ```json
 {
   "action": "list",
+  "confirmed": true,
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "VirtualService"
+}
+```
+
+**Example 7**: List Istio configs for a specific service (returns compact YAML)
+```json
+{
+  "action": "list",
+  "confirmed": true,
+  "namespace": "bookinfo",
+  "service_name": "reviews"
 }
 ```
 
