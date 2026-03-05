@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, Status } from '../../types/Health';
+import {
+  DEGRADED,
+  FAILURE,
+  HEALTHY,
+  HealthStatusId,
+  NA,
+  NOT_READY,
+  Status,
+  statusFromString
+} from '../../types/Health';
 import { NamespaceStatus } from '../../types/NamespaceInfo';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { createIcon } from '../../config/KialiIcon';
@@ -11,7 +20,6 @@ import { pluralize, Popover, PopoverPosition } from '@patternfly/react-core';
 import { namespaceNaIconStyle, statusIconStyle, statusTextStyle } from './NamespaceStyle';
 import { naTextStyle } from 'styles/HealthStyle';
 import { classes } from 'typestyle';
-import { combinedWorstStatus } from 'utils/NamespaceUtils';
 import { Paths } from 'config';
 import { URLParam } from 'app/History';
 import { camelCase } from 'lodash';
@@ -36,6 +44,7 @@ type Props = ReduxProps & {
   statusApp?: NamespaceStatus;
   statusService?: NamespaceStatus;
   statusWorkload?: NamespaceStatus;
+  worstStatus: string;
 };
 
 type UnhealthyCounts = {
@@ -53,13 +62,13 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     let count = 0;
     [props.statusApp, props.statusService, props.statusWorkload].forEach(status => {
       if (status) {
-        count += status.inError.length + status.inWarning.length + status.inNotReady.length;
+        count += (status.inError?.length ?? 0) + (status.inWarning?.length ?? 0) + (status.inNotReady?.length ?? 0);
       }
     });
     return count;
   };
 
-  const worstStatus = combinedWorstStatus(props.statusApp, props.statusService, props.statusWorkload);
+  const worstStatus = statusFromString(props.worstStatus);
 
   const unhealthyCount = getUnhealthyCount();
   const isHealthy = worstStatus === HEALTHY;
@@ -79,10 +88,10 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     return `/${targetPage}?${params.toString()}`;
   };
 
-  const statusCounts = (status?: NamespaceStatus): UnhealthyCounts => ({
-    degraded: status?.inWarning.length ?? 0,
-    failure: status?.inError.length ?? 0,
-    notReady: status?.inNotReady.length ?? 0
+  const statusCounts = (status?: NamespaceStatus | null): UnhealthyCounts => ({
+    degraded: status?.inWarning?.length ?? 0,
+    failure: status?.inError?.length ?? 0,
+    notReady: status?.inNotReady?.length ?? 0
   });
 
   const appCounts = statusCounts(props.statusApp);

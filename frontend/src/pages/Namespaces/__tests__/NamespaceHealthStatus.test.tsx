@@ -24,7 +24,8 @@ describe('NamespaceHealthStatus', () => {
   );
 
   const defaultProps = {
-    name: 'test-namespace'
+    name: 'test-namespace',
+    worstStatus: 'NA'
   };
 
   it('renders Healthy when all statuses are healthy', () => {
@@ -38,7 +39,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Healthy" />
       </Provider>
     );
 
@@ -57,7 +58,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
       </Provider>
     );
 
@@ -77,7 +78,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Degraded" />
       </Provider>
     );
 
@@ -96,7 +97,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="NA" />
       </Provider>
     );
 
@@ -138,6 +139,7 @@ describe('NamespaceHealthStatus', () => {
           statusApp={statusApp}
           statusService={statusService}
           statusWorkload={statusWorkload}
+          worstStatus="NA"
         />
       </Provider>
     );
@@ -159,7 +161,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
       </Provider>
     );
 
@@ -203,7 +205,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
       </Provider>
     );
 
@@ -222,7 +224,7 @@ describe('NamespaceHealthStatus', () => {
 
     const wrapper = mount(
       <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} />
+        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Degraded" />
       </Provider>
     );
 

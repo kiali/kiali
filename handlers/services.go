@@ -36,7 +36,7 @@ type serviceListParams struct {
 func (p *serviceListParams) extract(conf *config.Config, r *http.Request) {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(conf, r, vars)
+	p.baseExtract(conf, r)
 	p.Namespace = vars["namespace"]
 	var err error
 	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))

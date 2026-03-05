@@ -21,6 +21,7 @@ export type NamespaceInfo = {
   statusWorkload?: NamespaceStatus;
   tlsStatus?: TLSStatus;
   validations?: ValidationStatus;
+  worstStatus?: string;
 };
 
 export type NamespaceStatus = {

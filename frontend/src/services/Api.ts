@@ -890,6 +890,7 @@ export const getClustersHealth = async (
     const namespaceAppHealth = response.data['namespaceAppHealth'];
     const namespaceServiceHealth = response.data['namespaceServiceHealth'];
     const namespaceWorkloadHealth = response.data['namespaceWorkloadHealth'];
+    const namespaceHealthAggregates = response.data['namespaceHealth'];
 
     if (namespaceAppHealth) {
       Object.keys(namespaceAppHealth).forEach(ns => allNamespaces.add(ns));
@@ -943,11 +944,24 @@ export const getClustersHealth = async (
         });
       }
 
-      namespaceHealthMap.set(ns, {
+      const agg = namespaceHealthAggregates?.[ns];
+      const emptyBucket = {
+        inError: [],
+        inNotReady: [],
+        inSuccess: [],
+        inWarning: [],
+        notAvailable: []
+      };
+      const healthEntry: NamespaceHealth = {
         appHealth,
         serviceHealth,
-        workloadHealth
-      });
+        workloadHealth,
+        statusApp: agg?.statusApp ?? emptyBucket,
+        statusService: agg?.statusService ?? emptyBucket,
+        statusWorkload: agg?.statusWorkload ?? emptyBucket,
+        worstStatus: agg?.worstStatus ?? 'NA'
+      };
+      namespaceHealthMap.set(ns, healthEntry);
     });
 
     return namespaceHealthMap;

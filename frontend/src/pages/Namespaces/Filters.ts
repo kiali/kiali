@@ -200,11 +200,11 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
     }
 
     // Check if any status matches the filter criteria
-    const hasNotReady = allStatuses.some(s => s && s.inNotReady.length > 0);
-    const hasError = allStatuses.some(s => s && s.inError.length > 0);
-    const hasWarning = allStatuses.some(s => s && s.inWarning.length > 0);
-    const hasSuccess = allStatuses.some(s => s && s.inSuccess.length > 0);
-    const hasNotAvailable = allStatuses.some(s => s && s.notAvailable.length > 0);
+    const hasNotReady = allStatuses.some(s => s && (s.inNotReady?.length ?? 0) > 0);
+    const hasError = allStatuses.some(s => s && (s.inError?.length ?? 0) > 0);
+    const hasWarning = allStatuses.some(s => s && (s.inWarning?.length ?? 0) > 0);
+    const hasSuccess = allStatuses.some(s => s && (s.inSuccess?.length ?? 0) > 0);
+    const hasNotAvailable = allStatuses.some(s => s && (s.notAvailable?.length ?? 0) > 0);
     const hasOnlySuccess = hasSuccess && !hasError && !hasWarning;
     const hasOnlyNA = hasNotAvailable && !hasError && !hasWarning && !hasNotReady && !hasSuccess;
 

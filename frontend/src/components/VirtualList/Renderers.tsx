@@ -573,6 +573,7 @@ export const nsHealth: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
         statusApp={ns.statusApp}
         statusService={ns.statusService}
         statusWorkload={ns.statusWorkload}
+        worstStatus={ns.worstStatus ?? 'NA'}
       />
     </Td>
   );

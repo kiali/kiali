@@ -34,7 +34,7 @@ type appParams struct {
 func (p *appParams) extract(r *http.Request, conf *config.Config) {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(conf, r, vars)
+	p.baseExtract(conf, r)
 	p.Namespace = vars["namespace"]
 	p.ClusterName = clusterNameFromQuery(conf, query)
 	p.AppName = vars["app"]

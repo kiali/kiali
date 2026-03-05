@@ -8,9 +8,27 @@ import (
 
 // ClustersNamespaceHealth is a map NamespaceHealth for namespaces of given clusters
 type ClustersNamespaceHealth struct {
-	AppHealth      map[string]*NamespaceAppHealth      `json:"namespaceAppHealth,omitempty"`
-	ServiceHealth  map[string]*NamespaceServiceHealth  `json:"namespaceServiceHealth,omitempty"`
-	WorkloadHealth map[string]*NamespaceWorkloadHealth `json:"namespaceWorkloadHealth,omitempty"`
+	AppHealth       map[string]*NamespaceAppHealth       `json:"namespaceAppHealth,omitempty"`
+	NamespaceHealth map[string]*NamespaceHealthAggregate `json:"namespaceHealth,omitempty"`
+	ServiceHealth   map[string]*NamespaceServiceHealth   `json:"namespaceServiceHealth,omitempty"`
+	WorkloadHealth  map[string]*NamespaceWorkloadHealth  `json:"namespaceWorkloadHealth,omitempty"`
+}
+
+// NamespaceHealthBucket buckets entity names by health status (matches frontend NamespaceStatus)
+type NamespaceHealthBucket struct {
+	InError      []string `json:"inError"`
+	InNotReady   []string `json:"inNotReady"`
+	InSuccess    []string `json:"inSuccess"`
+	InWarning    []string `json:"inWarning"`
+	NotAvailable []string `json:"notAvailable"`
+}
+
+// NamespaceHealthAggregate is the pre-aggregated namespace health returned with cluster health (matches frontend)
+type NamespaceHealthAggregate struct {
+	StatusApp      *NamespaceHealthBucket `json:"statusApp,omitempty"`
+	StatusService  *NamespaceHealthBucket `json:"statusService,omitempty"`
+	StatusWorkload *NamespaceHealthBucket `json:"statusWorkload,omitempty"`
+	WorstStatus    string                 `json:"worstStatus"`
 }
 
 // NamespaceAppsHealth is a list of app name x health for a given namespace
@@ -236,4 +254,149 @@ func (ps ProxyStatus) IsSynced() bool {
 // isComponentStatusSynced returns true when componentStatus is Synced
 func isComponentStatusSynced(componentStatus string) bool {
 	return componentStatus == "Synced"
+}
+
+// newNamespaceHealthBucket returns a bucket with all slices initialized so JSON never marshals null.
+func newNamespaceHealthBucket() *NamespaceHealthBucket {
+	return &NamespaceHealthBucket{
+		InError:      []string{},
+		InNotReady:   []string{},
+		InSuccess:    []string{},
+		InWarning:    []string{},
+		NotAvailable: []string{},
+	}
+}
+
+// bucketFromAppHealth builds a NamespaceHealthBucket from app health map
+func bucketFromAppHealth(m NamespaceAppHealth) *NamespaceHealthBucket {
+	if m == nil {
+		return nil
+	}
+	b := newNamespaceHealthBucket()
+	for name, ah := range m {
+		if ah == nil || ah.Status == nil {
+			b.NotAvailable = append(b.NotAvailable, name)
+			continue
+		}
+		switch ah.Status.Status {
+		case HealthStatusFailure:
+			b.InError = append(b.InError, name)
+		case HealthStatusDegraded:
+			b.InWarning = append(b.InWarning, name)
+		case HealthStatusHealthy:
+			b.InSuccess = append(b.InSuccess, name)
+		case HealthStatusNotReady:
+			b.InNotReady = append(b.InNotReady, name)
+		default:
+			b.NotAvailable = append(b.NotAvailable, name)
+		}
+	}
+	return b
+}
+
+// bucketFromServiceHealth builds a NamespaceHealthBucket from service health map
+func bucketFromServiceHealth(m NamespaceServiceHealth) *NamespaceHealthBucket {
+	if m == nil {
+		return nil
+	}
+	b := newNamespaceHealthBucket()
+	for name, sh := range m {
+		if sh == nil || sh.Status == nil {
+			b.NotAvailable = append(b.NotAvailable, name)
+			continue
+		}
+		switch sh.Status.Status {
+		case HealthStatusFailure:
+			b.InError = append(b.InError, name)
+		case HealthStatusDegraded:
+			b.InWarning = append(b.InWarning, name)
+		case HealthStatusHealthy:
+			b.InSuccess = append(b.InSuccess, name)
+		case HealthStatusNotReady:
+			b.InNotReady = append(b.InNotReady, name)
+		default:
+			b.NotAvailable = append(b.NotAvailable, name)
+		}
+	}
+	return b
+}
+
+// bucketFromWorkloadHealth builds a NamespaceHealthBucket from workload health map
+func bucketFromWorkloadHealth(m NamespaceWorkloadHealth) *NamespaceHealthBucket {
+	if m == nil {
+		return nil
+	}
+	b := newNamespaceHealthBucket()
+	for name, wh := range m {
+		if wh == nil || wh.Status == nil {
+			b.NotAvailable = append(b.NotAvailable, name)
+			continue
+		}
+		switch wh.Status.Status {
+		case HealthStatusFailure:
+			b.InError = append(b.InError, name)
+		case HealthStatusDegraded:
+			b.InWarning = append(b.InWarning, name)
+		case HealthStatusHealthy:
+			b.InSuccess = append(b.InSuccess, name)
+		case HealthStatusNotReady:
+			b.InNotReady = append(b.InNotReady, name)
+		default:
+			b.NotAvailable = append(b.NotAvailable, name)
+		}
+	}
+	return b
+}
+
+// worstStatusFromBucket returns the worst HealthStatus represented in a bucket
+func worstStatusFromBucket(b *NamespaceHealthBucket) HealthStatus {
+	if b == nil {
+		return HealthStatusNA
+	}
+	if len(b.InError) > 0 {
+		return HealthStatusFailure
+	}
+	if len(b.InWarning) > 0 {
+		return HealthStatusDegraded
+	}
+	if len(b.InNotReady) > 0 {
+		return HealthStatusNotReady
+	}
+	if len(b.InSuccess) > 0 {
+		return HealthStatusHealthy
+	}
+	return HealthStatusNA
+}
+
+// AggregateNamespaceStatus derives NamespaceHealthAggregate from app, service, and workload health maps
+func AggregateNamespaceStatus(
+	appHealth *NamespaceAppHealth,
+	serviceHealth *NamespaceServiceHealth,
+	workloadHealth *NamespaceWorkloadHealth,
+) *NamespaceHealthAggregate {
+	var app NamespaceAppHealth
+	var svc NamespaceServiceHealth
+	var wl NamespaceWorkloadHealth
+	if appHealth != nil {
+		app = *appHealth
+	}
+	if serviceHealth != nil {
+		svc = *serviceHealth
+	}
+	if workloadHealth != nil {
+		wl = *workloadHealth
+	}
+	statusApp := bucketFromAppHealth(app)
+	statusService := bucketFromServiceHealth(svc)
+	statusWorkload := bucketFromWorkloadHealth(wl)
+	worst := MergeHealthStatus(
+		worstStatusFromBucket(statusApp),
+		MergeHealthStatus(worstStatusFromBucket(statusService), worstStatusFromBucket(statusWorkload)),
+	)
+	return &NamespaceHealthAggregate{
+		StatusApp:      statusApp,
+		StatusService:  statusService,
+		StatusWorkload: statusWorkload,
+		WorstStatus:    string(worst),
+	}
 }
