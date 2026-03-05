@@ -298,11 +298,13 @@ func TestMultiPrimaryFilterExportToNamespacesVS(t *testing.T) {
 
 	// Viewing bookinfo: vsBookinfo has . (visible in bookinfo), vsBookinfo2 has * (visible everywhere)
 	vInfoBookinfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "bookinfo2": false, "default": false}, "bookinfo")
+	vInfoBookinfo.mesh = &mesh
 	filteredBookinfo := v.filterVSExportToNamespaces(vsList, &vInfoBookinfo)
 	assert.Len(filteredBookinfo, 2, "viewing bookinfo: both VSs should be included")
 
 	// Viewing bookinfo2: vsBookinfo has . (not visible in bookinfo2), vsBookinfo2 has * (visible everywhere)
 	vInfoBookinfo2 := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "bookinfo2": false, "default": false}, "bookinfo2")
+	vInfoBookinfo2.mesh = &mesh
 	filteredBookinfo2 := v.filterVSExportToNamespaces(vsList, &vInfoBookinfo2)
 	assert.Len(filteredBookinfo2, 1, "viewing bookinfo2: only bookinfo2 VS should be included")
 	assert.Equal("ratings", filteredBookinfo2[0].Name)

@@ -52,6 +52,8 @@ func TestControlPlaneForNamespace(t *testing.T) {
 		require.NotNil(t, cp1)
 		require.NotNil(t, cp2)
 		assert.NotSame(t, cp1, cp2)
+		assert.True(t, cp1.Cluster.IsKialiHome, "bookinfo should be managed by the Kiali-home CP")
+		assert.False(t, cp2.Cluster.IsKialiHome, "bookinfo2 should be managed by the non-home CP")
 		assert.Equal(t, "bookinfo", cp1.ManagedNamespaces[0].Name)
 		assert.Equal(t, "bookinfo2", cp2.ManagedNamespaces[0].Name)
 	})

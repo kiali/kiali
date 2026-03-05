@@ -202,29 +202,16 @@ type KubeServiceHosts struct {
 // Pass nil when the mesh config is unavailable (e.g. in unit tests) to treat
 // unannotated services as visible to all namespaces.
 func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaultExportTo []string) KubeServiceHosts {
-	entries := make(map[string]*kubeServiceEntry, len(services)*3)
-	clusterDomain := conf.ExternalServices.Istio.IstioIdentityDomain
-
-	for _, svc := range services {
-		entry := &kubeServiceEntry{
-			namespace: svc.Namespace,
+	var nsMap map[string][]string
+	if defaultExportTo != nil {
+		nsMap = make(map[string][]string)
+		for _, svc := range services {
+			if _, ok := nsMap[svc.Namespace]; !ok {
+				nsMap[svc.Namespace] = defaultExportTo
+			}
 		}
-		if ann, ok := svc.Annotations[ExportToAnnotation]; ok {
-			entry.exportTo = parseExportToAnnotation(ann)
-		} else {
-			entry.exportTo = defaultExportTo
-		}
-
-		fqdn := fmt.Sprintf("%s.%s.%s", svc.Name, svc.Namespace, clusterDomain)
-		shortFqdn := fmt.Sprintf("%s.%s.svc", svc.Name, svc.Namespace)
-		twoPart := fmt.Sprintf("%s.%s", svc.Name, svc.Namespace)
-
-		entries[fqdn] = entry
-		entries[shortFqdn] = entry
-		entries[twoPart] = entry
 	}
-
-	return KubeServiceHosts{entries: entries}
+	return NewKubeServiceHostsWithNamespaceDefaults(services, conf, nsMap)
 }
 
 // NewKubeServiceHostsWithNamespaceDefaults builds KubeServiceHosts using a precomputed map of

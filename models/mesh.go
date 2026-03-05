@@ -50,20 +50,22 @@ type Mesh struct {
 }
 
 // ControlPlaneForNamespace returns the control plane that manages the given namespace in the cluster.
-// Prefers exact match (namespace in ManagedNamespaces), then Kiali home, then nil and logging an error.
+// Prefers exact match (namespace in ManagedNamespaces), then Kiali home, then nil.
 func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) *ControlPlane {
-	for _, cp := range m.ControlPlanes {
+	for i := range m.ControlPlanes {
+		cp := &m.ControlPlanes[i]
 		for _, ns := range cp.ManagedNamespaces {
 			if ns.Name == namespace && (ns.Cluster == "" || ns.Cluster == cluster) {
-				return &cp
+				return cp
 			}
 		}
 	}
-	for _, cp := range m.ControlPlanes {
+	for i := range m.ControlPlanes {
+		cp := &m.ControlPlanes[i]
 		if cp.Cluster != nil && cp.Cluster.Name == cluster && cp.Cluster.IsKialiHome {
 			log.Warningf("ControlPlaneForNamespace: no exact match for cluster=%s namespace=%s in ManagedNamespaces; falling back to Kiali home",
 				cluster, namespace)
-			return &cp
+			return cp
 		}
 	}
 	log.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s (no ManagedNamespaces match and no Kiali home for cluster)",
