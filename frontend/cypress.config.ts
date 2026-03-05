@@ -20,15 +20,13 @@ export default defineConfig({
   responseTimeout: 15000,
   fixturesFolder: 'cypress/fixtures',
   env: {
-    'cypress-react-selector': {
-      root: '#root'
-    },
+    rootSelector: '#root',
     cookie: false,
     omitFiltered: true,
     filterSpecs: true
   },
   e2e: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'http://localhost:3001',
     async setupNodeEvents(
       on: Cypress.PluginEvents,
       config: Cypress.PluginConfigOptions

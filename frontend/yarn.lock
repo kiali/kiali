@@ -5293,13 +5293,6 @@ cypress-multi-reporters@^1.6.0:
     debug "^4.1.1"
     lodash "^4.17.15"
 
-cypress-react-selector@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/cypress-react-selector/-/cypress-react-selector-3.0.0.tgz#e86018fffea07ba40c7a1f467a89b475a83cbcae"
-  integrity sha512-AQCgwbcMDkIdYcf6knvLxqzBnejahIbJPHqUhARi8k+QbM8sgUBDds98PaHJVMdPiX2J8RJjXHmUMPD8VerPSw==
-  dependencies:
-    resq "1.10.2"
-
 cypress@^13.6.1:
   version "13.6.1"
   resolved "https://registry.yarnpkg.com/cypress/-/cypress-13.6.1.tgz#c5f714f08551666ed3ac1fa95718eabb23a416df"
@@ -6781,11 +6774,6 @@ extsprintf@1.3.0, extsprintf@^1.2.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/extsprintf/-/extsprintf-1.3.0.tgz#96918440e3041a7a414f8c52e3c574eb3c3e1e05"
   integrity sha512-11Ndz7Nv+mvAC1j0ktTa7fAb0vLyGGX+rMHNBYQviQDGU0Hw7lhctJANqbPhu9nV9/izT/IntTgZ7Im/9LJs9g==
-
-fast-deep-equal@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
-  integrity sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk=
 
 fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
@@ -12474,13 +12462,6 @@ resolve@^2.0.0-next.4:
     is-core-module "^2.9.0"
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
-
-resq@1.10.2:
-  version "1.10.2"
-  resolved "https://registry.yarnpkg.com/resq/-/resq-1.10.2.tgz#cedf4f20d53f6e574b1e12afbda446ad9576c193"
-  integrity sha512-HmgVS3j+FLrEDBTDYysPdPVF9/hioDMJ/otOiQDKqk77YfZeeLOj0qi34yObumcud1gBpk+wpBTEg4kMicD++A==
-  dependencies:
-    fast-deep-equal "^2.0.1"
 
 restore-cursor@^3.1.0:
   version "3.1.0"
