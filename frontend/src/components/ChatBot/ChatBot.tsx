@@ -19,7 +19,8 @@ import { ChatBotMock } from './ChatBotMock';
 import { ContextRequest, ExtendedMessage, ProviderAI } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
-import { ToggleIcon } from './icons/ToogleIcon';
+import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-lightbkg.svg';
+import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-darkbkg.svg';
 import * as API from 'services/Api';
 import { saveConversation, loadConversations, loadConversation } from 'utils/ConversationStorage';
 
@@ -96,6 +97,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
 
   const theme = useKialiTheme();
   const isDarkTheme = theme === Theme.DARK;
+  const ClosedToggleIcon = isDarkTheme ? KialiIconDark : KialiIconLight;
 
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -103,6 +105,17 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   const [conversations, setConversations] = useState<Conversation[] | { [key: string]: Conversation[] }>(
     conversationList
   );
+  const toggleBg = isDarkTheme ? 'var(--pf-t--color--gray--90)' : 'var(--pf-t--color--white)';
+  const toggleBorder = isDarkTheme ? 'var(--pf-t--color--white)' : 'var(--pf-t--color--gray--90)';
+
+  const chatbotToggleStyle = {
+    borderRadius: '50%',
+    width: '3rem',
+    height: '3rem',
+    background: toggleBg,
+    backgroundColor: toggleBg,
+    border: `1px solid ${toggleBorder}`
+  } as React.CSSProperties;
   const [backendConversationIds, setBackendConversationIds] = useState<string[]>([]);
   const historyRef = useRef<HTMLButtonElement>(null);
   // Mock API
@@ -303,8 +316,10 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
       <ChatbotToggle
         tooltipLabel={t('Chat with AI')}
         isChatbotVisible={chatbotVisible}
-        onToggleChatbot={() => setChatbotVisible(!chatbotVisible)}
-        closedToggleIcon={() => ToggleIcon(isDarkTheme)}
+        onToggleChatbot={() => setChatbotVisible(prev => !prev)}
+        isRound={true}
+        closedToggleIcon={() => <ClosedToggleIcon style={{ height: '2.5rem', width: '2.5rem' }} />}
+        style={chatbotToggleStyle}
       />
       <Chatbot isVisible={chatbotVisible} displayMode={displayMode}>
         <ChatbotConversationHistoryNav
