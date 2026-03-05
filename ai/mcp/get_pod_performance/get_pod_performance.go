@@ -208,14 +208,14 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 	b.WriteString("\n")
 
 	cpuTable := mcputil.TextTable{
-		Indent:  "    ",
+		Indent:  "",
 		Headers: []string{"SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"},
 		AlignRight: map[int]bool{
 			1: true, 2: true, 3: true, 4: true, 5: true,
 		},
 	}
 	memTable := mcputil.TextTable{
-		Indent:  "    ",
+		Indent:  "",
 		Headers: []string{"SCOPE", "USAGE", "REQ", "LIM", "%REQ", "%LIM"},
 		AlignRight: map[int]bool{
 			1: true, 2: true, 3: true, 4: true, 5: true,
@@ -242,9 +242,13 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 	}
 
 	b.WriteString("CPU (cores/millicores)\n\n")
+	b.WriteString("~~~\n")
 	b.WriteString(cpuTable.Render())
+	b.WriteString("~~~\n")
 	b.WriteString("\nMemory\n\n")
+	b.WriteString("~~~\n")
 	b.WriteString(memTable.Render())
+	b.WriteString("~~~\n")
 
 	if len(resp.Errors) > 0 {
 		keys := make([]string, 0, len(resp.Errors))

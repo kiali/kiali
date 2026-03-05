@@ -54,11 +54,12 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 
 	response := &types.AIResponse{}
 
-	for iter := 0; ; iter++ {
+	const maxToolIterations = 5
+	for iter := 0; iter < maxToolIterations; iter++ {
 		resp, err := p.client.Chat.Completions.New(
 			ctx,
 			openai.ChatCompletionNewParams{
-				Model:    openai.ChatModel(p.model),
+				Model:    p.model,
 				Messages: messagesForModel,
 				Tools:    toolDefs,
 			},
@@ -80,6 +81,10 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		if len(msg.ToolCalls) == 0 {
 			response.Answer = providers.ParseMarkdownResponse(msg.Content)
 			break
+		}
+		if iter == maxToolIterations-1 {
+			log.Debugf("[Chat AI] OpenAI provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			return &types.AIResponse{Error: fmt.Sprintf("openai reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
 		}
 
 		// Append the assistant tool-call message, then the tool responses, then ask the model again.

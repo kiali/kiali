@@ -73,11 +73,16 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
 
-	for iter := 0; ; iter++ {
+	const maxToolIterations = 5
+	for iter := 0; iter < maxToolIterations; iter++ {
 		functionCalls := result.FunctionCalls()
 		if len(functionCalls) == 0 {
 			response.Answer = providers.ParseMarkdownResponse(result.Text())
 			break
+		}
+		if iter == maxToolIterations-1 {
+			log.Debugf("[Chat AI] Google provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			return &types.AIResponse{Error: fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
 		}
 
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
