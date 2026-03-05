@@ -73,8 +73,7 @@ const timeout = 300000; // 5 minutes
 
 function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
   if (Date.now() - startTime > timeout) {
-    cy.log('Timeout reached without meeting the condition.');
-    return;
+    throw new Error(`Timed out after ${timeout / 1000}s waiting for multicluster applications to become healthy.`);
   }
 
   cy.request(
@@ -100,8 +99,9 @@ function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
 
 function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): void {
   if (Date.now() - startTime > timeout) {
-    cy.log('Timeout reached without meeting the condition.');
-    return;
+    throw new Error(
+      `Timed out after ${timeout / 1000}s waiting for ambient multicluster applications to become healthy.`
+    );
   }
 
   cy.request(
@@ -218,9 +218,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           });
         });
       } else if (auth_strategy === 'anonymous') {
-        // Auth disabled: we can still wait for multicluster/ambient telemetry readiness
-        // using direct API requests without needing a session cookie.
-        if (tags.includes('ambient-multi-primary')) {
+        if (tags.includes('ambient-multi-primary') || tags.includes('waypoint-multicluster')) {
           ensureAmbientMulticlusterApplicationsAreHealthy(Date.now());
         } else if (tags.includes('multi-cluster') || tags.includes('multi-primary')) {
           ensureMulticlusterApplicationsAreHealthy(Date.now());

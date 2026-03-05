@@ -354,7 +354,7 @@ for addon in ${ADDONS}; do
     ${SCRIPT_DIR}/tempo/install-tempo-env.sh -c kubectl -ot true
 
     kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
-    kubectl wait pods --all -n opentelemetry-operator-system --for=condition=Ready --timeout=5m
+    kubectl -n opentelemetry-operator-system wait deployment --all --for=condition=Available --timeout=5m
     # Wait 10 seconds until https://github.com/open-telemetry/opentelemetry-operator/issues/3194 is fixed.
     sleep 10
     kubectl apply -f ${SCRIPT_DIR}/tempo/resources/otel-collector.yaml

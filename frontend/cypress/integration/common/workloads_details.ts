@@ -1,10 +1,7 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { clusterParameterExists } from './navigation';
-
-const openTab = (tab: string): void => {
-  cy.get('#basic-tabs').should('exist').contains(tab).click();
-};
+import { openTab } from './transition';
 
 const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('exist').contains(tab).click();

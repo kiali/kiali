@@ -1,7 +1,6 @@
 export const ensureKialiFinishedLoading = (): void => {
   cy.getBySel('loading-screen').should('not.exist');
   cy.getBySel('login-form').should('not.exist');
-
   cy.get('#loading_kiali_spinner').should('not.exist');
 };
 

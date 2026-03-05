@@ -89,8 +89,6 @@ Feature: Kiali Apps List page
   @offline
   Scenario: The healthy status of a logical mesh application is reported in the list of applications
     Given a healthy application in the cluster
-    When I fetch the list of applications
-    And user selects the "bookinfo" namespace
     Then the application should be listed as "healthy"
 
   @bookinfo-app
@@ -99,7 +97,6 @@ Feature: Kiali Apps List page
   @core-1
   Scenario: The idle status of a logical mesh application is reported in the list of applications
     Given an idle sleep application in the cluster
-    When I fetch the list of applications
     And user selects the "sleep" namespace
     Then the application should be listed as "idle"
     And the health status of the application should be "Not Ready"
@@ -109,7 +106,6 @@ Feature: Kiali Apps List page
   @core-1
   Scenario: The failing status of a logical mesh application is reported in the list of applications
     Given a failing application in the mesh
-    When I fetch the list of applications
     And user selects the "alpha" namespace
     Then the application should be listed as "failure"
     And the health status of the application should be "Failure"
@@ -119,7 +115,6 @@ Feature: Kiali Apps List page
   @core-1
   Scenario: The degraded status of a logical mesh application is reported in the list of applications
     Given a degraded application in the mesh
-    When I fetch the list of applications
     And user selects the "alpha" namespace
     Then the application should be listed as "degraded"
     And the health status of the application should be "Degraded"

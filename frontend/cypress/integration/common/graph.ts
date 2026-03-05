@@ -11,63 +11,36 @@ Then('user does not see a minigraph', () => {
 });
 
 Then('user sees a minigraph', () => {
-  cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      assert.isAbove(nodes.length, 0);
-    });
+  assertMiniGraphReady(({ nodes }) => {
+    assert.isAbove(nodes.length, 0);
+  });
 });
 
 Then('user sees the {string} namespace deployed across the east and west clusters', (namespace: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes }) => {
+    const namespaceBoxes = nodes.filter(
+      node => node.getData().isBox === 'namespace' && node.getData().namespace === namespace
+    );
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const namespaceBoxes = nodes.filter(
-        node => node.getData().isBox === 'namespace' && node.getData().namespace === namespace
-      );
-
-      expect(namespaceBoxes.length).to.equal(2);
-      expect(namespaceBoxes.filter(node => node.getData().cluster === 'east').length).to.equal(1);
-      expect(namespaceBoxes.filter(node => node.getData().cluster === 'west').length).to.equal(1);
-    });
+    expect(namespaceBoxes.length).to.equal(2);
+    expect(namespaceBoxes.filter(node => node.getData().cluster === 'east').length).to.equal(1);
+    expect(namespaceBoxes.filter(node => node.getData().cluster === 'west').length).to.equal(1);
+  });
 });
 
 Then('nodes in the {string} cluster should contain the cluster name in their links', (cluster: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes, edges }) => {
+    const clusterNodes = nodes.filter(node => node.getData().cluster === cluster);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges, nodes } = elems(controller);
+    clusterNodes.forEach(node => {
+      const links = edges.filter(edge => edge.getData().source === node.getId());
 
-      const clusterNodes = nodes.filter(node => node.getData().cluster === cluster);
-
-      clusterNodes.forEach(node => {
-        const links = edges.filter(edge => edge.getData().source === node.getId());
-
-        links.forEach(link => {
-          const sourceNode = clusterNodes.find(node => node.getId() === link.getData().source);
-          expect(sourceNode?.getData().cluster).to.equal(cluster);
-        });
+      links.forEach(link => {
+        const sourceNode = clusterNodes.find(node => node.getId() === link.getData().source);
+        expect(sourceNode?.getData().cluster).to.equal(cluster);
       });
     });
+  });
 });
 
 Then(
@@ -144,6 +117,38 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
     nodes: elems.filter(e => isNode(e)) as Node[],
     edges: elems.filter(e => isEdge(e)) as Edge[]
   };
+};
+
+/**
+ * Retryable assertion wrapper for the full-page graph. Uses `.should()` instead
+ * of `.then()` so Cypress automatically retries the callback when an assertion
+ * fails, eliminating race conditions with graph data loading.
+ */
+export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
+  cy.waitForReact();
+  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
+    .should('have.length', '1')
+    .should(($graph: any) => {
+      const { state } = $graph[0];
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      fn(elems(controller), state);
+    });
+};
+
+/**
+ * Retryable assertion wrapper for the mini graph card.
+ */
+export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
+  cy.waitForReact();
+  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
+    .should('have.length', '1')
+    .should(($graph: any) => {
+      const { state } = $graph[0];
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      fn(elems(controller), state);
+    });
 };
 
 export type SelectOp =
@@ -240,127 +245,94 @@ Then('user sees ambient workloads in the graph', () => {
 });
 
 Then('user sees graph workloads from both clusters', () => {
-  cy.waitForReact();
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      // Look for workload nodes from different clusters
-      const workloadNodes = nodes.filter(node => {
-        const data = node.getData();
-        return data.nodeType === 'workload' && data.cluster;
-      });
-
-      // Should have workloads from at least 2 different clusters
-      const clusters = new Set(workloadNodes.map(node => node.getData().cluster));
-      assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
+  assertGraphReady(({ nodes }) => {
+    const workloadNodes = nodes.filter(node => {
+      const data = node.getData();
+      return data.nodeType === 'workload' && data.cluster;
     });
+
+    const clusters = new Set(workloadNodes.map(node => node.getData().cluster));
+    assert.isAtLeast(clusters.size, 2, 'Should have workloads from multiple clusters');
+  });
 });
 
 Then(
   'the waypoint node {string} is visible in the graph for the {string} cluster',
   (workload: string, cluster: string) => {
-    cy.waitForReact();
-    cy.get('#loading_kiali_spinner').should('not.exist');
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-      .should('have.length', '1')
-      .then($graph => {
-        const { state } = $graph[0];
+    assertGraphReady(({ nodes }) => {
+      const target = workload.toLowerCase();
 
-        const controller = state.graphRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
-        const { nodes } = elems(controller);
+      const matches = nodes.filter(node => {
+        const data = node.getData();
+        const label = (node as any)?.getLabel?.() as string | undefined;
 
-        const target = workload.toLowerCase();
+        const candidates = [data.workload, data.app, data.service, data.name, label].filter(
+          v => typeof v === 'string'
+        ) as string[];
 
-        const matches = nodes.filter(node => {
-          const data = node.getData();
-          const label = (node as any)?.getLabel?.() as string | undefined;
-
-          const candidates = [data.workload, data.app, data.service, data.name, label].filter(
-            v => typeof v === 'string'
-          ) as string[];
-
-          return (
-            data.isBox === undefined &&
-            data.cluster === cluster &&
-            data.isWaypoint === true &&
-            candidates.some(c => {
-              const lc = c.toLowerCase();
-              return lc === target || lc.startsWith(`${target}-`);
-            })
-          );
-        });
-
-        if (matches.length === 0) {
-          const waypointNodes = nodes
-            .map(node => {
-              const data = node.getData();
-              return {
-                app: data.app,
-                cluster: data.cluster,
-                isWaypoint: data.isWaypoint,
-                name: data.name,
-                service: data.service,
-                workload: data.workload
-              };
-            })
-            .filter(n => n.cluster === cluster && n.isWaypoint === true);
-
-          Cypress.log({
-            name: 'waypointNodeNotFound',
-            message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
-          });
-        }
-
-        expect(matches.length).to.be.at.least(1);
+        return (
+          data.isBox === undefined &&
+          data.cluster === cluster &&
+          data.isWaypoint === true &&
+          candidates.some(c => {
+            const lc = c.toLowerCase();
+            return lc === target || lc.startsWith(`${target}-`);
+          })
+        );
       });
+
+      if (matches.length === 0) {
+        const waypointNodes = nodes
+          .map(node => {
+            const data = node.getData();
+            return {
+              app: data.app,
+              cluster: data.cluster,
+              isWaypoint: data.isWaypoint,
+              name: data.name,
+              service: data.service,
+              workload: data.workload
+            };
+          })
+          .filter(n => n.cluster === cluster && n.isWaypoint === true);
+
+        Cypress.log({
+          name: 'waypointNodeNotFound',
+          message: `cluster=${cluster} workload=${workload} waypointNodes=${JSON.stringify(waypointNodes)}`
+        });
+      }
+
+      expect(matches.length).to.be.at.least(1);
+    });
   }
 );
 
 Then('there is traffic from cluster {string} and cluster {string}', (cluster1: string, cluster2: string) => {
-  cy.waitForReact();
-  cy.get('#loading_kiali_spinner').should('not.exist');
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
+  assertGraphReady(({ nodes, edges }) => {
+    const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic === true);
 
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { edges, nodes } = elems(controller);
+    const nodeById = new Map(nodes.map(n => [n.getId(), n]));
+    const clustersWithTraffic = new Set<string>();
 
-      // Only consider edges that actually have traffic.
-      const trafficEdges = edges.filter(edge => edge.getData()?.hasTraffic === true);
+    trafficEdges.forEach(edge => {
+      const srcId = edge.getData()?.source as string | undefined;
+      const dstId = edge.getData()?.target as string | undefined;
 
-      const nodeById = new Map(nodes.map(n => [n.getId(), n]));
-      const clustersWithTraffic = new Set<string>();
+      const srcNode = srcId ? nodeById.get(srcId) : undefined;
+      const dstNode = dstId ? nodeById.get(dstId) : undefined;
 
-      trafficEdges.forEach(edge => {
-        const srcId = edge.getData()?.source as string | undefined;
-        const dstId = edge.getData()?.target as string | undefined;
+      const srcCluster = srcNode?.getData()?.cluster as string | undefined;
+      const dstCluster = dstNode?.getData()?.cluster as string | undefined;
 
-        const srcNode = srcId ? nodeById.get(srcId) : undefined;
-        const dstNode = dstId ? nodeById.get(dstId) : undefined;
-
-        const srcCluster = srcNode?.getData()?.cluster as string | undefined;
-        const dstCluster = dstNode?.getData()?.cluster as string | undefined;
-
-        if (srcCluster) {
-          clustersWithTraffic.add(srcCluster);
-        }
-        if (dstCluster) {
-          clustersWithTraffic.add(dstCluster);
-        }
-      });
-
-      expect(Array.from(clustersWithTraffic)).to.include(cluster1);
-      expect(Array.from(clustersWithTraffic)).to.include(cluster2);
+      if (srcCluster) {
+        clustersWithTraffic.add(srcCluster);
+      }
+      if (dstCluster) {
+        clustersWithTraffic.add(dstCluster);
+      }
     });
+
+    expect(Array.from(clustersWithTraffic)).to.include(cluster1);
+    expect(Array.from(clustersWithTraffic)).to.include(cluster2);
+  });
 });

@@ -1,9 +1,6 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { clusterParameterExists } from './navigation';
-
-const openTab = (tab: string): void => {
-  cy.get('#basic-tabs').should('be.visible').contains(tab).click();
-};
+import { openTab } from './transition';
 
 Then('user sees details information for a remote workload', () => {
   cy.getBySel('workload-description-card').within(() => {
