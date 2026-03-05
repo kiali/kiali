@@ -13,7 +13,5 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-import 'cypress-react-selector';
-
 // Import commands.js using ES2015 syntax:
 import './commands';
