@@ -21,6 +21,7 @@ fi
 set -u
 
 SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source "${SCRIPT_DIR}/../functions.sh"
 
 switch_cluster() {
   local context="${1}"

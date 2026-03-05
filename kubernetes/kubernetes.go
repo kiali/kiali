@@ -242,6 +242,23 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	return *in.isGatewayAPI
 }
 
+// HasTLSRouteInV1 returns true if TLSRoute exists in gateway.networking.k8s.io/v1 (GW API 1.5+).
+func (in *K8SClient) HasTLSRouteInV1() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.GatewayAPI() == nil {
+		return false
+	}
+	if in.hasTLSRouteInV1 == nil {
+		v1Types := map[string]string{
+			K8sTLSRouteType: "tlsroutes",
+		}
+		hasTLSRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
+		in.hasTLSRouteInV1 = &hasTLSRoute
+	}
+	return *in.hasTLSRouteInV1
+}
+
 func (in *K8SClient) IsInferenceAPI() bool {
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()
@@ -285,6 +302,8 @@ func (in *K8SClient) IsIstioGateway() bool {
 	return *in.isIstioGateway
 }
 
+// IsExpGatewayAPI checks if K8s GW API Experimental CRDs are installed
+// TODO: remove once GW API v1.5.0 becomes the minimal supported version
 func (in *K8SClient) IsExpGatewayAPI() bool {
 	in.rwMutex.Lock()
 	defer in.rwMutex.Unlock()
@@ -294,7 +313,6 @@ func (in *K8SClient) IsExpGatewayAPI() bool {
 	if in.isExpGatewayAPI == nil {
 		v1alpha2Types := map[string]string{
 			K8sTCPRouteType: "tcproutes",
-			K8sTLSRouteType: "tlsroutes",
 		}
 		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types, true)
 		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2

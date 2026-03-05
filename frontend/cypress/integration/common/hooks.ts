@@ -102,7 +102,7 @@ Before({ tags: '@gateway-api' }, () => {
     if (result.code !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
-      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.4.0" | kubectl apply -f -;')
+      cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.5.0" | kubectl apply -f -;')
         .its('code')
         .should('eq', 0)
         .then(() => {
@@ -120,7 +120,7 @@ Before({ tags: '@gateway-api-ie' }, () => {
       cy.log('Gateway API Inference Extension not found. Enabling it now.');
 
       cy.exec(
-        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.3.0" | kubectl apply -f -;'
+        'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.3.1" | kubectl apply -f -;'
       )
         .its('code')
         .should('eq', 0)

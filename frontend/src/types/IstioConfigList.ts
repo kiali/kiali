@@ -108,7 +108,7 @@ export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
   [gvkType.K8sInferencePool]: { Group: 'inference.networking.k8s.io', Version: 'v1', Kind: 'InferencePool' },
   [gvkType.K8sReferenceGrant]: { Group: 'gateway.networking.k8s.io', Version: 'v1beta1', Kind: 'ReferenceGrant' },
   [gvkType.K8sTCPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
-  [gvkType.K8sTLSRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TLSRoute' },
+  [gvkType.K8sTLSRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'TLSRoute' },
 
   [gvkType.CronJob]: { Group: 'batch', Version: 'v1', Kind: 'CronJob' },
   [gvkType.DaemonSet]: { Group: 'apps', Version: 'v1', Kind: 'DaemonSet' },

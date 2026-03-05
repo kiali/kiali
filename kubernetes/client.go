@@ -55,6 +55,7 @@ type ClientInterface interface {
 	IsOpenShift() bool
 	IsExpGatewayAPI() bool
 	IsGatewayAPI() bool
+	HasTLSRouteInV1() bool
 	IsInferenceAPI() bool
 	IsIstioGateway() bool
 	IsIstioAPI() bool
@@ -115,6 +116,8 @@ type K8SClient struct {
 	isExpGatewayAPI *bool
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
+	// hasTLSRouteInV1 private variable will check if TLSRoute exists in v1 (GW API 1.5+)
+	hasTLSRouteInV1 *bool
 	// isInferenceAPI private variable will check if K8s Gateway API Inference Extension CRD exists on cluster or not
 	isInferenceAPI *bool
 	gatewayapi     gatewayapiclient.Interface

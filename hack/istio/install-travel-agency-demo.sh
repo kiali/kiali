@@ -149,9 +149,7 @@ do
    if [ "${n}" == "ztunnel" ]; then
      AMBIENT_ENABLED="true"
      # Verify Gateway API
-     echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-     $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-       { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.4.0" | $CLIENT_EXE apply -f -; }
+     ensure_gateway_api_crds
      break
    fi
 done

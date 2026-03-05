@@ -14,6 +14,7 @@ AMBIENT_NS="test-ambient"
 : ${ARCH:=amd64}
 CLIENT_EXE="oc"
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+source ${HACK_SCRIPT_DIR}/../functions.sh
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 SIDECAR_NS="test-sidecar"
 WAYPOINT="false"
@@ -189,9 +190,7 @@ NAD
 
 # Use waypoint?
 if [ "${WAYPOINT}" == "true" ]; then
-  echo "Verifying that Gateway API is installed; if it is not then it will be installed now."
-  $CLIENT_EXE get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-    { $CLIENT_EXE kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.4.0" | $CLIENT_EXE apply -f -; }
+  ensure_gateway_api_crds
   ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n ${AMBIENT_NS}
   ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/use-waypoint=waypoint
 fi
