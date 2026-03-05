@@ -104,13 +104,6 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		conversation = processResult.Conversation
 
-		if processResult.ShouldReturnEarly {
-			if processResult.Response.Answer != "" {
-				response.Answer = processResult.Response.Answer
-			}
-			break
-		}
-
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
 			Actions:   response.Actions,
 			Citations: response.Citations,

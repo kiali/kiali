@@ -115,15 +115,6 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		if len(processResult.Response.Citations) > 0 {
 			response.Citations = append(response.Citations, processResult.Response.Citations...)
 		}
-		conversation = processResult.Conversation
-
-		// Early return paths: tools that should return their own markdown directly.
-		if processResult.ShouldReturnEarly {
-			if processResult.Response.Answer != "" {
-				response.Answer = processResult.Response.Answer
-			}
-			break
-		}
 
 		// If the only outputs were actions/citations, don't ask the model to generate prose.
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{

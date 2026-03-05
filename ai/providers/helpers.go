@@ -159,13 +159,6 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		Conversation: conversation,
 	}
 
-	// Some tools already return a human-ready markdown/text answer (e.g., fixed-width tables).
-	// For these, we should return their content directly rather than asking the model to rewrite it,
-	// which can break formatting in the UI (e.g., converting to GFM tables).
-	returnDirectAnswerTools := map[string]bool{
-		"get_pod_performance": true,
-	}
-
 	for _, toolResult := range toolResults {
 		// Handle errors
 		if toolResult.Error != nil {
@@ -180,13 +173,6 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		}
 		if len(toolResult.Citations) > 0 {
 			result.Response.Citations = append(result.Response.Citations, toolResult.Citations...)
-		}
-
-		// Return direct answer for tools that provide display-ready markdown/text.
-		if toolResult.Message.Role == "tool" && returnDirectAnswerTools[toolResult.Message.Name] && toolResult.Message.Content != "" {
-			result.Response.Answer = toolResult.Message.Content
-			result.ShouldReturnEarly = true
-			return result
 		}
 
 		// Skip adding to conversation if we have actions/citations
