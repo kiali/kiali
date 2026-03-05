@@ -2,10 +2,13 @@
   "extends": "../tsconfig",
   "compilerOptions": {
     "esModuleInterop": true,
-    "target": "es5",
+    "inlineSourceMap": false,
     "lib": ["es2019", "dom"],
     "resolveJsonModule": true,
-    "types": ["cypress", "cypress-react-selector", "node"]
+    "rootDir": ".",
+    "sourceMap": false,
+    "target": "es5",
+    "types": ["cypress", "node"]
   },
   "include": ["**/*.ts"]
 }
