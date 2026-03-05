@@ -11,7 +11,6 @@ import (
 
 	core_v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
@@ -86,14 +85,28 @@ func Execute(
 	}
 
 	if workloadName != "" {
-		selectedPodName, selectedPod, w, status, werr := resolvePodFromWorkload(r, businessLayer, parsed.ClusterName, parsed.Namespace, workloadName)
-		if werr == nil && status == http.StatusOK && selectedPod != nil {
-			warnings = append(warnings, "Resolved input as workload and selected pod: "+selectedPodName)
-			podName = selectedPodName
-			podModel = selectedPod
-		} else if werr == nil && status != http.StatusOK && status != http.StatusNotFound {
-			// Unexpected workload errors should surface.
-			return w, status
+		res, err := mcputil.ResolvePodFromWorkloadOrPod(
+			r.Context(),
+			businessLayer,
+			parsed.ClusterName,
+			parsed.Namespace,
+			workloadName,
+			podName,
+			util.Clock.Now(),
+			mcputil.ResolvePodOptions{
+				PreferRunning:        true,
+				PreferNonProxyOnly:   true,
+				RequirePods:          false,
+				FallbackToPodOnError: false,
+			},
+		)
+		if err != nil {
+			return err.Error(), http.StatusInternalServerError
+		}
+		if res.ResolvedFrom == "workload" && res.Pod != nil && res.PodName != "" {
+			warnings = append(warnings, "Resolved input as workload and selected pod: "+res.PodName)
+			podName = res.PodName
+			podModel = res.Pod
 		}
 	}
 
@@ -201,6 +214,12 @@ func Execute(
 	// If we had warnings (e.g. workload resolution), we keep them in server logs only to preserve the exact pods_log output format.
 	_ = warnings
 
+	// Defensive: It's possible to get entries that have neither timestamp nor message (or are whitespace-only),
+	// which would render as an empty code block in chat ("no output").
+	if strings.TrimSpace(out) == "" {
+		return fmt.Sprintf("No log content was returned for pod %s in namespace %s (empty log entries).", parsed.Pod, parsed.Namespace), http.StatusOK
+	}
+
 	if parsed.Format == "plain" {
 		return out, http.StatusOK
 	}
@@ -219,7 +238,6 @@ func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, s
 	out.Container = mcputil.GetStringArg(args, "container", "container_name", "containerName")
 	out.ClusterName = mcputil.GetStringArg(args, "cluster_name", "clusterName")
 	out.Previous = mcputil.AsBool(args["previous"])
-	out.Analyze = mcputil.AsBool(args["analyze"])
 	out.Format = strings.ToLower(mcputil.GetStringArg(args, "format"))
 	if out.Format == "" || (out.Format != "plain" && out.Format != "codeblock") {
 		out.Format = "codeblock"
@@ -339,71 +357,6 @@ func containerCandidates(requested string, pod *models.Pod) ([]string, []string,
 		return []string{containers[0]}, nil, http.StatusOK
 	}
 	return nil, []string{"container is required when a pod has multiple containers. available containers: " + strings.Join(containers, ", ")}, http.StatusBadRequest
-}
-
-func resolvePodFromWorkload(r *http.Request, businessLayer *business.Layer, cluster, namespace, workload string) (string, *models.Pod, string, int, error) {
-	if strings.TrimSpace(workload) == "" {
-		return "", nil, "workload name is empty", http.StatusBadRequest, nil
-	}
-	criteria := business.WorkloadCriteria{
-		Cluster:               cluster,
-		Namespace:             namespace,
-		WorkloadName:          workload,
-		WorkloadGVK:           schema.GroupVersionKind{Group: "", Version: "", Kind: ""},
-		IncludeHealth:         false,
-		IncludeIstioResources: false,
-		IncludeServices:       false,
-		QueryTime:             util.Clock.Now(),
-		RateInterval:          "10m",
-	}
-	wk, err := businessLayer.Workload.GetWorkload(r.Context(), criteria)
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return "", nil, err.Error(), http.StatusNotFound, err
-		}
-		return "", nil, err.Error(), http.StatusInternalServerError, err
-	}
-	if wk == nil || len(wk.Pods) == 0 {
-		return "", nil, "workload has no pods", http.StatusNotFound, nil
-	}
-
-	// Prefer a Running pod that is not "proxy-only" (i.e. has at least one non-proxy container).
-	for _, p := range wk.Pods {
-		if p != nil && strings.EqualFold(p.Status, "Running") && hasNonProxyContainers(p) {
-			return p.Name, p, "", http.StatusOK, nil
-		}
-	}
-	// Next, any Running pod.
-	for _, p := range wk.Pods {
-		if p != nil && strings.EqualFold(p.Status, "Running") {
-			return p.Name, p, "", http.StatusOK, nil
-		}
-	}
-	// Next, any pod with non-proxy containers.
-	for _, p := range wk.Pods {
-		if p != nil && hasNonProxyContainers(p) {
-			return p.Name, p, "", http.StatusOK, nil
-		}
-	}
-	// Otherwise first pod.
-	for _, p := range wk.Pods {
-		if p != nil && p.Name != "" {
-			return p.Name, p, "", http.StatusOK, nil
-		}
-	}
-	return "", nil, "workload pods are empty", http.StatusNotFound, nil
-}
-
-func hasNonProxyContainers(pod *models.Pod) bool {
-	if pod == nil {
-		return false
-	}
-	for _, c := range pod.Containers {
-		if c != nil && c.Name != "" && c.Name != models.IstioProxy {
-			return true
-		}
-	}
-	return false
 }
 
 func filterEntriesBySeverity(entries []podLogEntry, severities []string) []podLogEntry {

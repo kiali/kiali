@@ -2,9 +2,9 @@ package google_provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"google.golang.org/genai"
 
@@ -32,11 +32,14 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		p.client = client
 	}
-	response := &types.AIResponse{}
 	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
 	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
 	p.InitializeConversation(&conversation, req)
+
+	// Create a temporary conversation with context for the API call
+	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+	conversationWithContext := providers.AddContextToConversation(conversation, req)
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
@@ -48,91 +51,110 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		},
 	}
 
-	chat, err := p.client.Chats.Create(ctx, p.model, config, p.ConversationToProvider(conversation).([]*genai.Content))
+	// If the query is in conversationWithContext
+	// it must be removed to avoid duplication.
+	contentsForChat := p.ConversationToProvider(conversationWithContext).([]*genai.Content)
+	if len(contentsForChat) > 0 {
+		last := contentsForChat[len(contentsForChat)-1]
+		if last != nil && last.Role == genai.RoleUser && len(last.Parts) == 1 && last.Parts[0] != nil && last.Parts[0].Text == req.Query {
+			contentsForChat = contentsForChat[:len(contentsForChat)-1]
+		}
+	}
+	chat, err := p.client.Chats.Create(ctx, p.model, config, contentsForChat)
 	if err != nil {
 		log.Debugf("Google provider error: %v", err)
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
+
+	response := &types.AIResponse{}
+
 	result, err := chat.SendMessage(ctx, genai.Part{Text: req.Query})
 	if err != nil {
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
-	conversation = append(conversation, types.ConversationMessage{
-		Content: req.Query,
-		Name:    "",
-		Role:    "user",
-	})
-	functionCalls := result.FunctionCalls()
-	if len(functionCalls) > 0 {
+
+	const maxToolIterations = 5
+	for iter := 0; iter < maxToolIterations; iter++ {
+		functionCalls := result.FunctionCalls()
+		if len(functionCalls) == 0 {
+			response.Answer = providers.ParseMarkdownResponse(result.Text())
+			break
+		}
+		if iter == maxToolIterations-1 {
+			log.Debugf("[Chat AI] Google provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			return &types.AIResponse{Error: fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+		}
+
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
-		log.Debugf("Google provider tool names: %v", toolNames)
+		log.Debugf("Google provider tool names (iter=%d): %v", iter, toolNames)
 		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
-		for _, result := range toolResults {
-			if result.Error != nil {
-				return &types.AIResponse{Error: result.Error.Error()}, result.Code
+
+		processResult := providers.ProcessToolResults(toolResults, conversation)
+		if processResult.Response.Error != "" {
+			return processResult.Response, http.StatusInternalServerError
+		}
+		if len(processResult.Response.Actions) > 0 {
+			response.Actions = append(response.Actions, processResult.Response.Actions...)
+		}
+		if len(processResult.Response.Citations) > 0 {
+			response.Citations = append(response.Citations, processResult.Response.Citations...)
+		}
+		conversation = processResult.Conversation
+
+		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
+			Actions:   response.Actions,
+			Citations: response.Citations,
+		}, toolNames)
+		if !shouldGenerate {
+			response.Answer = responseAnswer
+			break
+		}
+
+		// Send function responses back to the chat (all tool calls in a single turn).
+		parts := make([]genai.Part, 0, len(toolResults))
+		for i, toolResult := range toolResults {
+			if toolResult.Error != nil {
+				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
 			}
-			if len(result.Actions) > 0 {
-				response.Actions = append(response.Actions, result.Actions...)
+			content := toolResult.Message.Content
+			if strings.TrimSpace(content) == "" {
+				content = "OK"
 			}
-			if len(result.Citations) > 0 {
-				response.Citations = append(response.Citations, result.Citations...)
-			}
-			// For get_logs with analyze=false, return logs directly without AI analysis
-			if result.Message.Name == "get_logs" && result.Message.Content != "" {
-				// Check if analyze parameter is false (default)
-				analyze := false
-				if result.Message.Param != nil {
-					if params, ok := result.Message.Param.(map[string]interface{}); ok {
-						if analyzeVal, ok := params["analyze"].(bool); ok {
-							analyze = analyzeVal
-						}
-					}
-				}
-				if !analyze {
-					// Return logs directly without model analysis
-					response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-					continue
-				}
-			}
-			if result.Message.Content != "" {
-				conversation = append(conversation, types.ConversationMessage{
-					Content: result.Message.Content,
-					Name:    "",
-					Role:    "tool",
-				})
-			}
+			parts = append(parts, genai.Part{
+				FunctionResponse: &genai.FunctionResponse{
+					Name: tools[i].Name,
+					ID:   tools[i].ToolCallID,
+					Response: map[string]any{
+						"output": content,
+					},
+				},
+			})
+		}
+
+		result, err = chat.SendMessage(ctx, parts...)
+		if err != nil {
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// If get_logs with analyze=false already set the answer, return it directly
-		if response.Answer != "" {
-			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-			return response, http.StatusOK
-		}
-
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
-		if shouldGenerate {
-			result, err = p.client.Models.GenerateContent(ctx, p.model, p.ConversationToProvider(conversation).([]*genai.Content), &genai.GenerateContentConfig{})
-			if err != nil {
-				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-			}
-			if err := ctx.Err(); err != nil {
-				return providers.NewContextCanceledResponse(err)
-			}
-			response.Answer = providers.ParseMarkdownResponse(result.Text())
-		} else {
-			response.Answer = responseAnswer
-		}
-	} else {
-		response.Answer = providers.ParseMarkdownResponse(result.Text())
 	}
-	conversation = append(conversation, p.ProviderToConversation(result))
+
+	// Add the final assistant response to conversation (without tool call metadata)
+	// This keeps conversational context without confusing future tool selections
+	if response.Answer != "" {
+		conversation = append(conversation, types.ConversationMessage{
+			Content: response.Answer,
+			Name:    "",
+			Param:   nil,
+			Role:    "assistant",
+		})
+	}
+
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 
@@ -161,7 +183,8 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 	if conversation == nil {
 		return
 	}
-	if len(*conversation) == 0 {
+	isNewConversation := len(*conversation) == 0
+	if isNewConversation {
 		// Initialize base system instruction when empty.
 		*conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
@@ -170,16 +193,13 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 		},
 		}
 	}
-	contextBytes, _ := json.Marshal(req.Context)
-	// Adding context to the conversation. This is the system message that is sent to the AI.
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	// Adding user query to the conversation. This is the user message that is sent to the AI.
 	*conversation = append(*conversation, types.ConversationMessage{
-		Content: contextContent,
+		Content: req.Query,
 		Name:    "",
 		Param:   nil,
-		Role:    "system",
-	},
-	)
+		Role:    "user",
+	})
 }
 
 func (p *GoogleAIProvider) GetToolDefinitions() interface{} {

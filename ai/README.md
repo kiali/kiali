@@ -159,7 +159,9 @@ The AI uses MCP tools to interact with Kiali and the mesh:
 - `get_action_ui`: Builds UI navigation actions.
 - `get_citations`: Finds relevant documentation links.
 - `get_mesh_graph`: Returns mesh health and topology summaries.
+- `get_pod_performance`: Returns current Pod CPU/memory usage vs requests/limits.
 - `get_resource_detail`: Fetches service/workload details or lists.
+- `get_traces`: Fetches and summarizes distributed traces.
 - `manage_istio_config`: List/get/create/patch/delete Istio objects.
 
 For detailed tool documentation, see `ai/mcp/README.md`.

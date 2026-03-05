@@ -2,9 +2,9 @@ package openai_provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	openai "github.com/openai/openai-go/v3"
 
@@ -33,99 +33,129 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	ctx := r.Context()
 	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
 	p.InitializeConversation(&conversation, req)
-	resp, err := p.client.Chat.Completions.New(
-		r.Context(),
-		openai.ChatCompletionNewParams{
-			Model:    openai.ChatModel(p.model),
-			Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
-			Tools:    p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam),
-		},
-	)
 
-	if err != nil {
-		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-	}
-	if err := ctx.Err(); err != nil {
-		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools context error: %v", err)
-		return providers.NewContextCanceledResponse(err)
+	// Create a temporary conversation with context for the API call
+	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+	conversationWithContext := providers.AddContextToConversation(conversation, req)
+
+	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
+	for i, msg := range conversationWithContext {
+		contentPreview := msg.Content
+		if len(contentPreview) > 100 {
+			contentPreview = contentPreview[:100] + "..."
+		}
+		log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
 	}
 
-	if len(resp.Choices) == 0 {
-		log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
-		return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
-	}
-	conversation = append(conversation, p.ProviderToConversation(resp))
-	msg := resp.Choices[0].Message
+	// We keep OpenAI-native messages for the iterative tool loop.
+	// The persisted conversation will include only the user prompts and final assistant answer.
+	messagesForModel := p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion)
+	toolDefs := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+
 	response := &types.AIResponse{}
-	if len(msg.ToolCalls) > 0 {
+
+	const maxToolIterations = 5
+	for iter := 0; iter < maxToolIterations; iter++ {
+		resp, err := p.client.Chat.Completions.New(
+			ctx,
+			openai.ChatCompletionNewParams{
+				Model:    p.model,
+				Messages: messagesForModel,
+				Tools:    toolDefs,
+			},
+		)
+		if err != nil {
+			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
+		if err := ctx.Err(); err != nil {
+			log.Debugf("[Chat AI] OpenAI provider context error: %v", err)
+			return providers.NewContextCanceledResponse(err)
+		}
+		if len(resp.Choices) == 0 {
+			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
+			return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
+		}
+
+		msg := resp.Choices[0].Message
+		if len(msg.ToolCalls) == 0 {
+			response.Answer = providers.ParseMarkdownResponse(msg.Content)
+			break
+		}
+		if iter == maxToolIterations-1 {
+			log.Debugf("[Chat AI] OpenAI provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			return &types.AIResponse{Error: fmt.Sprintf("openai reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+		}
+
+		// Append the assistant tool-call message, then the tool responses, then ask the model again.
+		assistantWithToolCalls := openai.ChatCompletionAssistantMessageParam{
+			ToolCalls: make([]openai.ChatCompletionMessageToolCallUnionParam, 0, len(msg.ToolCalls)),
+		}
+		for _, tc := range msg.ToolCalls {
+			assistantWithToolCalls.ToolCalls = append(assistantWithToolCalls.ToolCalls, tc.ToParam())
+		}
+		messagesForModel = append(messagesForModel, openai.ChatCompletionMessageParamUnion{OfAssistant: &assistantWithToolCalls})
+
 		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
-		log.Debugf("[Chat AI] OpenAI provider tool calls: %v", toolNames)
-		// Execute tool calls in parallel since they don't depend on each other
+		log.Debugf("[Chat AI] OpenAI provider tool calls (iter=%d): %v", iter, toolNames)
+
 		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// Add tool results to conversation in the original order
-		for _, result := range toolResults {
-			if result.Error != nil {
-				return &types.AIResponse{Error: result.Error.Error()}, result.Code
-			}
-			if len(result.Actions) > 0 || len(result.Citations) > 0 {
-				response.Actions = append(response.Actions, result.Actions...)
-				response.Citations = append(response.Citations, result.Citations...)
-			} else {
-				// For get_logs with analyze=false, return logs directly without AI analysis
-				if result.Message.Name == "get_logs" && result.Message.Content != "" {
-					// Check if analyze parameter is false (default)
-					analyze := false
-					if result.Message.Param != nil {
-						if params, ok := result.Message.Param.(map[string]interface{}); ok {
-							if analyzeVal, ok := params["analyze"].(bool); ok {
-								analyze = analyzeVal
-							}
-						}
-					}
-					if !analyze {
-						// Return logs directly without model analysis
-						response.Answer = providers.ParseMarkdownResponse(result.Message.Content)
-						continue
-					}
-				}
-				conversation = append(conversation, result.Message)
-			}
+		// Process tool results using standardized logic (accumulate actions/citations).
+		processResult := providers.ProcessToolResults(toolResults, conversation)
+		if processResult.Response.Error != "" {
+			return processResult.Response, http.StatusInternalServerError
 		}
+		if len(processResult.Response.Actions) > 0 {
+			response.Actions = append(response.Actions, processResult.Response.Actions...)
+		}
+		if len(processResult.Response.Citations) > 0 {
+			response.Citations = append(response.Citations, processResult.Response.Citations...)
+		}
+
+		// If the only outputs were actions/citations, don't ask the model to generate prose.
+		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
+			Actions:   response.Actions,
+			Citations: response.Citations,
+		}, toolNames)
+		if !shouldGenerate {
+			response.Answer = responseAnswer
+			break
+		}
+
+		// Append tool outputs to the OpenAI conversation (linked by tool_call_id).
+		// Note: even "excluded" tools must produce a tool response for OpenAI, otherwise
+		// the next model call can fail with "missing tool responses".
+		for i, toolResult := range toolResults {
+			if toolResult.Error != nil {
+				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
+			}
+			content := toolResult.Message.Content
+			if strings.TrimSpace(content) == "" {
+				content = "OK"
+			}
+			messagesForModel = append(messagesForModel, openai.ToolMessage(content, tools[i].ToolCallID))
+		}
+
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// If get_logs with analyze=false already set the answer, return it directly
-		if response.Answer != "" {
-			providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-			log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-			return response, http.StatusOK
-		}
+		// Continue loop: model may request additional tool calls.
+	}
 
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(response, toolNames)
-		if shouldGenerate {
-			log.Debugf("[Chat AI] OpenAI provider conversation after tool calls: %+v", conversation)
-			finalResp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-				Model:    openai.ChatModel(p.model),
-				Messages: p.ConversationToProvider(conversation).([]openai.ChatCompletionMessageParamUnion),
-			})
-			if err != nil {
-				return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-			}
-			if err := ctx.Err(); err != nil {
-				return providers.NewContextCanceledResponse(err)
-			}
-			response.Answer = providers.ParseMarkdownResponse(finalResp.Choices[0].Message.Content)
-		} else {
-			response.Answer = responseAnswer
-		}
-	} else {
-		response.Answer = providers.ParseMarkdownResponse(msg.Content)
+	// Add the final assistant response to conversation (without tool call metadata)
+	// This keeps conversational context without confusing future tool selections
+	if response.Answer != "" {
+		conversation = append(conversation, types.ConversationMessage{
+			Content: response.Answer,
+			Name:    "",
+			Param:   nil,
+			Role:    "assistant",
+		})
 	}
 
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
@@ -137,7 +167,8 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 	if conversation == nil {
 		return
 	}
-	if len(*conversation) == 0 {
+	isNewConversation := len(*conversation) == 0
+	if isNewConversation {
 		// Initialize base system instruction when empty.
 		*conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
@@ -147,15 +178,6 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 		},
 		}
 	}
-	contextBytes, _ := json.Marshal(req.Context)
-	// Adding context to the conversation. This is the system message that is sent to the AI.
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: contextContent,
-		Name:    "",
-		Param:   nil,
-		Role:    "system",
-	})
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
 	*conversation = append(*conversation, types.ConversationMessage{
 		Content: req.Query,
