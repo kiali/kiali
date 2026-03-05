@@ -49,6 +49,7 @@ type TestNamespaceHealth = {
   appHealth: Record<string, any>;
   serviceHealth: Record<string, any>;
   workloadHealth: Record<string, any>;
+  worstStatus: string;
 };
 
 const makeNamespaceHealth = (status: any): TestNamespaceHealth => ({
@@ -58,7 +59,8 @@ const makeNamespaceHealth = (status: any): TestNamespaceHealth => ({
     }
   },
   serviceHealth: {},
-  workloadHealth: {}
+  workloadHealth: {},
+  worstStatus: status?.id ?? 'NA'
 });
 
 const flushPromises = async (): Promise<void> => {

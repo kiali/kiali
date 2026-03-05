@@ -194,6 +194,16 @@ func TestClustersHealthTypeApp(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, result.AppHealth)
 	assert.Contains(t, result.AppHealth, "ns")
+	// Response should include pre-aggregated namespace health for each namespace
+	require.NotNil(t, result.NamespaceHealth)
+	assert.Contains(t, result.NamespaceHealth, "ns")
+	agg := result.NamespaceHealth["ns"]
+	require.NotNil(t, agg)
+	assert.Equal(t, "NA", agg.WorstStatus)
+	// Buckets may be nil for empty health; when present, slice fields should be arrays (not null)
+	if agg.StatusApp != nil {
+		assert.NotNil(t, agg.StatusApp.InError)
+	}
 }
 
 // TestClustersHealthTypeService tests the type=service query parameter
