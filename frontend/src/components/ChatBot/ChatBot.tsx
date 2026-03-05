@@ -105,8 +105,6 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   const [conversations, setConversations] = useState<Conversation[] | { [key: string]: Conversation[] }>(
     conversationList
   );
-
-  const chatbotToggleRef = useRef<HTMLButtonElement>(null);
   const toggleBg = isDarkTheme ? 'var(--pf-t--color--gray--90)' : 'var(--pf-t--color--white)';
   const toggleBorder = isDarkTheme ? 'var(--pf-t--color--white)' : 'var(--pf-t--color--gray--90)';
 
@@ -318,7 +316,6 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
       <ChatbotToggle
         tooltipLabel={t('Chat with AI')}
         isChatbotVisible={chatbotVisible}
-        ref={chatbotToggleRef}
         onToggleChatbot={() => setChatbotVisible(prev => !prev)}
         isRound={true}
         closedToggleIcon={() => <ClosedToggleIcon style={{ height: '2.5rem', width: '2.5rem' }} />}
