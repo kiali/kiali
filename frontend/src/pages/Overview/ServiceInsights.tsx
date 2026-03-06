@@ -348,7 +348,6 @@ export const ServiceInsights: React.FC = () => {
               </>
             }
             position={PopoverPosition.top}
-            triggerAction="hover"
           >
             <KialiIcon.Help className={helpIconStyle} />
           </Popover>
