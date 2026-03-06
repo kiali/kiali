@@ -56,7 +56,6 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
-import { namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -219,20 +218,21 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             const previous = this.state.namespaces.find(prev => prev.name === ns.name && prev.cluster === ns.cluster);
 
             return {
-              name: ns.name,
+              annotations: ns.annotations,
               cluster: ns.cluster,
               isAmbient: ns.isAmbient,
               isControlPlane: ns.isControlPlane,
+              istioConfig: previous ? previous.istioConfig : undefined,
+              labels: ns.labels,
+              name: ns.name,
+              revision: ns.revision,
               status: previous ? previous.status : undefined,
               statusApp: previous ? previous.statusApp : undefined,
               statusService: previous ? previous.statusService : undefined,
               statusWorkload: previous ? previous.statusWorkload : undefined,
               tlsStatus: previous ? previous.tlsStatus : undefined,
               validations: previous ? previous.validations : undefined,
-              istioConfig: previous ? previous.istioConfig : undefined,
-              labels: ns.labels,
-              annotations: ns.annotations,
-              revision: ns.revision
+              worstStatus: previous ? previous.worstStatus : undefined
             };
           });
 
@@ -324,13 +324,13 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           nsInfo.statusApp = undefined;
           nsInfo.statusService = undefined;
           nsInfo.statusWorkload = undefined;
+          nsInfo.worstStatus = undefined;
           return;
         }
-
-        const statuses = namespaceStatusesFromNamespaceHealth(nsHealth);
-        nsInfo.statusApp = statuses.statusApp;
-        nsInfo.statusService = statuses.statusService;
-        nsInfo.statusWorkload = statuses.statusWorkload;
+        nsInfo.statusApp = nsHealth.statusApp;
+        nsInfo.statusService = nsHealth.statusService;
+        nsInfo.statusWorkload = nsHealth.statusWorkload;
+        nsInfo.worstStatus = nsHealth.worstStatus;
       });
     } catch (err) {
       this.handleApiError('Could not fetch health', err as ApiError);

@@ -13,6 +13,7 @@ import { calculateErrorRate } from './ErrorRate';
 import { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
 import { HealthAnnotationType } from './HealthAnnotation';
+import { NamespaceStatus } from './NamespaceInfo';
 import { t } from 'utils/I18nUtils';
 
 interface HealthConfig {
@@ -723,10 +724,15 @@ export type NamespaceAppHealth = { [app: string]: AppHealth };
 export type NamespaceServiceHealth = { [service: string]: ServiceHealth };
 export type NamespaceWorkloadHealth = { [workload: string]: WorkloadHealth };
 
+// Pre-aggregated status fields from backend (always present when UI and backend are paired).
 export type NamespaceHealth = {
   appHealth: NamespaceAppHealth;
   serviceHealth: NamespaceServiceHealth;
+  statusApp: NamespaceStatus;
+  statusService: NamespaceStatus;
+  statusWorkload: NamespaceStatus;
   workloadHealth: NamespaceWorkloadHealth;
+  worstStatus: string;
 };
 
 export type WithAppHealth<T> = T & { health: AppHealth };

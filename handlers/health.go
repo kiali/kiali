@@ -83,9 +83,10 @@ func ClusterHealth(
 		}
 
 		result := models.ClustersNamespaceHealth{
-			AppHealth:      map[string]*models.NamespaceAppHealth{},
-			ServiceHealth:  map[string]*models.NamespaceServiceHealth{},
-			WorkloadHealth: map[string]*models.NamespaceWorkloadHealth{},
+			AppHealth:       map[string]*models.NamespaceAppHealth{},
+			NamespaceHealth: map[string]*models.NamespaceHealthAggregate{},
+			ServiceHealth:   map[string]*models.NamespaceServiceHealth{},
+			WorkloadHealth:  map[string]*models.NamespaceWorkloadHealth{},
 		}
 
 		// Check if health cache is enabled
@@ -189,6 +190,15 @@ func ClusterHealth(
 			}
 		}
 
+		// Derive pre-aggregated namespace status for each namespace (from cached or on-demand data)
+		for _, ns := range nss {
+			result.NamespaceHealth[ns] = models.AggregateNamespaceStatus(
+				result.AppHealth[ns],
+				result.ServiceHealth[ns],
+				result.WorkloadHealth[ns],
+			)
+		}
+
 		RespondWithJSON(w, http.StatusOK, result)
 	}
 }
@@ -209,7 +219,7 @@ type baseHealthParams struct {
 	QueryTime time.Time
 }
 
-func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request, vars map[string]string) {
+func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request) {
 	queryParams := r.URL.Query()
 	p.RateInterval = defaultHealthRateInterval
 	p.QueryTime = util.Clock.Now()

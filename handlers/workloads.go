@@ -43,7 +43,7 @@ type workloadParams struct {
 func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(conf, r, vars)
+	p.baseExtract(conf, r)
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 

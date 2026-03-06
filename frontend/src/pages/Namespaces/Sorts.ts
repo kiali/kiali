@@ -39,11 +39,11 @@ export const sortFields: SortField<NamespaceInfo>[] = [
           let worstPriority = 6;
           [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
             if (status) {
-              if (status.inError.length > 0 && worstPriority > 1) worstPriority = 1;
-              else if (status.inWarning.length > 0 && worstPriority > 2) worstPriority = 2;
-              else if (status.inNotReady.length > 0 && worstPriority > 3) worstPriority = 3;
-              else if (status.inSuccess.length > 0 && worstPriority > 4) worstPriority = 4;
-              else if (status.notAvailable.length > 0 && worstPriority > 5) worstPriority = 5;
+              if ((status.inError?.length ?? 0) > 0 && worstPriority > 1) worstPriority = 1;
+              else if ((status.inWarning?.length ?? 0) > 0 && worstPriority > 2) worstPriority = 2;
+              else if ((status.inNotReady?.length ?? 0) > 0 && worstPriority > 3) worstPriority = 3;
+              else if ((status.inSuccess?.length ?? 0) > 0 && worstPriority > 4) worstPriority = 4;
+              else if ((status.notAvailable?.length ?? 0) > 0 && worstPriority > 5) worstPriority = 5;
             }
           });
           return worstPriority;
@@ -56,7 +56,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
         let count = 0;
         [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
           if (status) {
-            count += status.inError.length;
+            count += status.inError?.length ?? 0;
           }
         });
         return count;
@@ -67,7 +67,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
         let count = 0;
         [ns.statusApp, ns.statusService, ns.statusWorkload].forEach(status => {
           if (status) {
-            count += status.inWarning.length;
+            count += status.inWarning?.length ?? 0;
           }
         });
         return count;

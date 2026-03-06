@@ -27,6 +27,7 @@
    1. [Removing Client-Side Health Calculation](#removing-client-side-health-calculation)
    2. [Simplified Health API](#simplified-health-api)
    3. [Payload Optimization](#payload-optimization)
+   4. [Namespaces Page: Backend-Derived Namespace Status](#namespaces-page-backend-derived-namespace-status)
 8. [Design Decisions](#design-decisions)
    1. [Backend-First Health Calculation](#backend-first-health-calculation)
    2. [Separate Health Cache and Graph Health](#separate-health-cache-and-graph-health)
@@ -483,6 +484,26 @@ The graph API response is now smaller:
 - `healthStatus` string field (small, simple)
 
 Net result: Reduced payload size and bandwidth usage.
+
+## Namespaces Page: Backend-Derived Namespace Status
+
+The **Namespaces** page displays per-namespace health (Health column and popover with Apps/Workloads/Services breakdown). To avoid duplicating aggregation logic on the frontend, the cluster health API is extended to include **pre-aggregated namespace status** for each namespace in the response.
+
+**Backend behavior:**
+
+- When building the cluster health response (from cache or on-demand), for each namespace the backend derives an aggregated view from the existing app, service, and workload health maps:
+  - **statusApp**, **statusService**, **statusWorkload**: Same structure as the frontend `NamespaceStatus` (entity names bucketed into `inError`, `inWarning`, `inSuccess`, `inNotReady`, `notAvailable`) so the frontend contract remains unchanged.
+  - **worstStatus**: A single health status for the namespace (Healthy, Degraded, Failure, Not Ready, or NA), derived by merging the worst status across app, service, and workload—the same logic as `IstioStatusService.GetNamespaceStatus` and the former frontend `combinedWorstStatus`.
+- This aggregation is computed **when building the response** from the existing cached or on-demand health data. Namespace status is **not** cached separately; derivation is cheap (iterate maps, bucket by status) and keeps a single source of truth in the health cache.
+- The response includes a **`namespaceHealth`** map (namespace name → aggregate); each value carries `statusApp`, `statusService`, `statusWorkload`, and `worstStatus`.
+
+**Frontend behavior:**
+
+- The Namespaces page reads the new fields from the cluster health response and assigns them to each namespace (e.g. `statusApp`, `statusService`, `statusWorkload`, `worstStatus`).
+- The page **no longer** runs `namespaceStatusesFromNamespaceHealth` or `combinedWorstStatus` for this flow; it uses the backend-provided values. The Health column and popover use `worstStatus` and the per-type status buckets from the API.
+- Frontend aggregation helpers (`namespaceStatusesFromNamespaceHealth`, `namespaceStatusFromHealthMap`, and `combinedWorstStatus` for this path) can be removed or limited to other consumers, so the Namespaces page is a pure presentation layer for health.
+
+**Design choice:** The full bucket structure (entity name arrays per status) is retained rather than switching to counts-only. This preserves the existing frontend contract and allows any consumer that relies on bucket contents to continue working without change.
 
 # Design Decisions
 

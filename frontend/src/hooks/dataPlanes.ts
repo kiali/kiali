@@ -5,9 +5,9 @@ import * as API from 'services/Api';
 import { ApiError } from 'types/Api';
 import { Namespace } from 'types/Namespace';
 import { DurationInSeconds } from 'types/Common';
-import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, statusFromString } from 'types/Health';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
-import { combinedWorstStatus, isDataPlaneNamespace, namespaceStatusesFromNamespaceHealth } from 'utils/NamespaceUtils';
+import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 
 export type NamespaceWithHealthStatus = Namespace & { healthStatus: HealthStatusId };
 
@@ -100,9 +100,7 @@ export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSecon
             if (!nsHealth) {
               return;
             }
-
-            const statuses = namespaceStatusesFromNamespaceHealth(nsHealth);
-            const worst = combinedWorstStatus(statuses.statusApp, statuses.statusService, statuses.statusWorkload);
+            const worst = statusFromString(nsHealth.worstStatus);
             nextHealth[nsKey(cluster, name)] = worst.id as HealthStatusId;
           });
         });
