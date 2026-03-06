@@ -270,6 +270,9 @@ func AggregateEdgeTraffic(edge, aggregateEdge *Edge) {
 		if val, ok := edge.Metadata[grpc]; ok {
 			addToMetadataValue(aggregateEdge.Metadata, grpc, val.(float64))
 		}
+		if val, ok := edge.Metadata[grpcNoResponse]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, grpcNoResponse, val.(float64))
+		}
 		if val, ok := edge.Metadata[grpcErr]; ok {
 			addToMetadataValue(aggregateEdge.Metadata, grpcErr, val.(float64))
 		}
@@ -279,6 +282,9 @@ func AggregateEdgeTraffic(edge, aggregateEdge *Edge) {
 	case http:
 		if val, ok := edge.Metadata[http]; ok {
 			addToMetadataValue(aggregateEdge.Metadata, http, val.(float64))
+		}
+		if val, ok := edge.Metadata[httpNoResponse]; ok {
+			addToMetadataValue(aggregateEdge.Metadata, httpNoResponse, val.(float64))
 		}
 		if val, ok := edge.Metadata[http3xx]; ok {
 			addToMetadataValue(aggregateEdge.Metadata, http3xx, val.(float64))
