@@ -463,6 +463,71 @@ func TestGetMetricsStats(t *testing.T) {
 	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h"].ResponseTimes)
 }
 
+func TestGetZtunnelMetrics(t *testing.T) {
+	assert := assert.New(t)
+	srv, api, err := setupMocked()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	q := models.IstioMetricsQuery{}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+
+	ztunnelLabels := `{pod=~"ztunnel-.*"}`
+	api.MockRange("sum(rate(istio_tcp_connections_opened_total"+ztunnelLabels+"[5m])) by (pod)", 1.0)
+	api.MockRange("sum(rate(istio_tcp_connections_closed_total"+ztunnelLabels+"[5m])) by (pod)", 2.0)
+	api.MockRange(`sum(istio_build{component="ztunnel"}) by (tag)`, 1.0)
+	api.MockRange("sum(container_memory_working_set_bytes"+ztunnelLabels+") by (pod)", 100.0)
+	api.MockRange("sum(irate(container_cpu_usage_seconds_total"+ztunnelLabels+"[5m])) by (pod)", 0.5)
+	api.MockRange("sum(rate(istio_tcp_received_bytes_total"+ztunnelLabels+"[5m])) by (pod)", 10.0)
+	api.MockRange("sum(rate(istio_tcp_sent_bytes_total"+ztunnelLabels+"[5m])) by (pod)", 20.0)
+	api.MockRange("sum(workload_manager_active_proxy_count"+ztunnelLabels+") by (pod)", 3.0)
+
+	metrics, err := srv.GetZtunnelMetrics(context.Background(), q)
+	assert.NoError(err)
+	assert.Len(metrics, 6)
+
+	assert.Contains(metrics, "ztunnel_connections")
+	assert.Len(metrics["ztunnel_connections"], 2, "ztunnel_connections should have 2 series (opened + closed)")
+
+	assert.Contains(metrics, "ztunnel_bytes_transmitted")
+	assert.Len(metrics["ztunnel_bytes_transmitted"], 2, "ztunnel_bytes_transmitted should have 2 series (received + sent)")
+
+	assert.NotEmpty(metrics["ztunnel_versions"])
+	assert.NotEmpty(metrics["ztunnel_memory_usage"])
+	assert.NotEmpty(metrics["ztunnel_cpu_usage"])
+	assert.NotEmpty(metrics["ztunnel_workload_manager"])
+}
+
+func TestGetResourceMetrics(t *testing.T) {
+	assert := assert.New(t)
+	srv, api, err := setupMocked()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	q := models.IstioMetricsQuery{
+		App: "myapp",
+	}
+	q.FillDefaults()
+	q.RateInterval = "5m"
+
+	labels := `{pod=~"myapp-.*"}`
+	api.MockRange("sum(container_memory_working_set_bytes"+labels+") by (pod)", 50.0)
+	api.MockRange("sum(irate(container_cpu_usage_seconds_total{pod=~\"myapp-.*\"}[5m])) by (pod)", 0.25)
+
+	metrics, err := srv.GetResourceMetrics(context.Background(), q)
+	assert.NoError(err)
+	assert.Len(metrics, 2)
+
+	assert.Contains(metrics, "memory_usage")
+	assert.NotEmpty(metrics["memory_usage"], "memory_usage should have at least one series")
+
+	assert.Contains(metrics, "cpu_usage")
+	assert.NotEmpty(metrics["cpu_usage"], "cpu_usage should have at least one series")
+}
+
 func createSample(value float64) *model.Sample {
 	return &model.Sample{
 		Timestamp: model.Now(),
