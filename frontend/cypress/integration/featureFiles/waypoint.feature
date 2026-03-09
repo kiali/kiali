@@ -132,6 +132,7 @@ Feature: Kiali Waypoint related features
     And the "Labels" column on the "bookinfo" row has the text "istio.io/use-waypoint=waypoint"
 
   # TODO: Remove once namespace actions exist in OSSMC
+  @ossmc
   Scenario: [OSSMC] Namespace is labeled with the waypoint label via API
     Given user is at administrator perspective
     When Namespace "bookinfo" is labeled with the waypoint label "waypoint" via API
