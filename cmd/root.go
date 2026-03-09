@@ -83,7 +83,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 			}
 			log.Infof("GOMAXPROCS automatically set to [%d]", runtime.GOMAXPROCS(0))
 
-			// Automatically set GOMEMLIMIT to 90% of the container cgroup memory limit (falls back to system memory).
+			// Automatically set GOMEMLIMIT to the library's default ratio of the container cgroup memory limit (falls back to system memory).
 			// This prevents OOM kills by making the Go GC aware of the real memory ceiling.
 			// To override the ratio, set the AUTOMEMLIMIT env var (e.g. AUTOMEMLIMIT=0.8). To disable entirely,
 			// set AUTOMEMLIMIT=off or set GOMEMLIMIT directly.
