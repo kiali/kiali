@@ -111,3 +111,7 @@ frontend/public/locales/en
 
 # Mock Service Worker (generated for development only)
 frontend/public/mockServiceWorker.js
+
+# Yarn 4 (managed by corepack)
+frontend/.yarn
+frontend/.pnp.*

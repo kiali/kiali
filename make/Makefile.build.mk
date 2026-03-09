@@ -42,7 +42,7 @@ build: go-check check-ui
 
 ## build-ui: Runs the yarn commands to build the frontend UI
 build-ui:
-	@cd ${ROOTDIR}/frontend && yarn install --frozen-lockfile && yarn run build
+	@cd ${ROOTDIR}/frontend && yarn install --immutable && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
