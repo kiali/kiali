@@ -395,12 +395,14 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
   cy.get(`[data-test=waypoint-link]`).should('exist');
 
   cy.get(`[data-test=waypoint-link]`).then($waypointLink => {
+    // Depending on the component, the data-test might be set on the <a> itself
+    // or on a container that contains the <a>.
     // Kiali typically renders an <a href="...">. OSSMC can render a <button data-href="...">.
     const $anchor = $waypointLink.filter('a').add($waypointLink.find('a')).first();
-    const $button = $waypointLink.filter('button').add($waypointLink.find('button')).first();
 
-    const href = ($anchor.attr('href') ?? $button.attr('data-href') ?? '').toString();
-    expect(href.length, 'waypoint link href/data-href').to.be.greaterThan(0);
+    expect($anchor.length, 'waypoint link anchor').to.be.greaterThan(0);
+
+    const href = $anchor.attr('href') ?? '';
     expect(href).to.include(`clusterName=${cluster}`);
   });
 });
