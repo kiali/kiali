@@ -82,7 +82,7 @@ jobs:
 
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: yarn install --immutable
+      run: corepack enable && yarn install --immutable
 
     - name: Setup KinD cluster with Istio and Kiali
       run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
