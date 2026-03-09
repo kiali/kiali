@@ -15,15 +15,26 @@ A UI for the Kiali Istio Observability Project
 git clone https://github.com/kiali/kiali.git
 cd kiali/frontend
 
-# Install Yarn
-npm install -g yarn
+# Enable corepack (ships with Node.js 16+)
+corepack enable
 
-# Install kiali-ui dependencies
+# Install kiali-ui dependencies (corepack will automatically use the correct Yarn version)
 yarn install
 
 # Start a development server
 yarn start
 ----
+
+[NOTE]
+====
+**Yarn Version Management**
+
+Kiali uses Yarn 4 managed via link:https://nodejs.org/api/corepack.html[corepack]. The exact Yarn version is specified in `package.json` via the `packageManager` field, ensuring all developers use the same version.
+
+If you have an older global Yarn installation, you may want to remove it to avoid confusion: `npm uninstall -g yarn`
+
+After enabling corepack, running `yarn` in the frontend directory will automatically download and use the correct version.
+====
 
 [NOTE]
 On some platforms, `yarn start` may fail with an error like `Error: ENOSPC: System limit for number of file watchers reached`. To fix this, you need to increase the limit of file watchers on your system. The command may vary depending on the platform, please refer to link:https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers[these instructions].
@@ -59,8 +70,8 @@ reloads any changes to the browser for rapid development.
 
 The Kiali UI is a React application written in Typescript.
 
-We use `yarn` as the package manager, if adding dependencies to `package.json`
-make sure you install them with `yarn` and commit the `yarn.lock` file.
+We use Yarn 4 (managed via corepack) as the package manager. If adding dependencies
+to `package.json`, make sure you install them with `yarn` and commit the `yarn.lock` file.
 
 === Running Kiali Frontend
 

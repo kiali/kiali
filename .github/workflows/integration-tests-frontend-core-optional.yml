@@ -64,7 +64,7 @@ jobs:
     # Need to install frontend dependencies to run cypress tests.
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: yarn install --frozen-lockfile
+      run: yarn install --immutable
 
     - name: Run frontend core optional integration tests
       run: hack/run-integration-tests.sh --test-suite frontend-core-optional --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)

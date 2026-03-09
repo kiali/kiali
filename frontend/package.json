@@ -192,8 +192,7 @@
     "react-dom": "^17.0.1"
   },
   "engines": {
-    "node": ">=24.0.0",
-    "yarn": ">=1.0.0"
+    "node": ">=24.0.0"
   },
   "browserslist": [
     ">10%",
@@ -208,5 +207,6 @@
     "workerDirectory": [
       "public"
     ]
-  }
+  },
+  "packageManager": "yarn@4.13.0"
 }
