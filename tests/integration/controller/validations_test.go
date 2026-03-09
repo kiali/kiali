@@ -79,7 +79,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 			gw := &networkingv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-gateway",
-					Namespace: "default",
+					Namespace: "bookinfo",
 				},
 				Spec: apinetworkingv1.Gateway{
 					Selector: map[string]string{"istio": "ingressgateway"},
@@ -94,7 +94,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 			vs := &networkingv1.VirtualService{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-vs",
-					Namespace: "default",
+					Namespace: "bookinfo",
 				},
 				Spec: apinetworkingv1.VirtualService{
 					Hosts:    []string{"test.com"},
@@ -115,20 +115,20 @@ var _ = Describe("Validations controller", Ordered, func() {
 
 			By("By checking that the validations are created in the kiali cache")
 			Eventually(func() bool {
-				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
+				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "bookinfo", ObjectGVK: kubernetes.VirtualServices}
 				_, found := kialiCache.Validations().Get(validationKey)
 				return found
 			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("Should update validations in the kiali cache when an existing VirtualService is updated", func(ctx SpecContext) {
-			validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
+			validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "bookinfo", ObjectGVK: kubernetes.VirtualServices}
 			validation, found := kialiCache.Validations().Get(validationKey)
 			Expect(found).To(BeTrue())
 			Expect(validation.Checks).Should(BeEmpty())
 			By("By updating a VirtualService")
 			vs := &networkingv1.VirtualService{}
-			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "default"}
+			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "bookinfo"}
 			Expect(k8sClient.Get(ctx, vsKey, vs)).Should(Succeed())
 			// Duplicate routes should be invalid.
 			vs.Spec.Http = []*apinetworkingv1.HTTPRoute{
@@ -160,18 +160,18 @@ var _ = Describe("Validations controller", Ordered, func() {
 		It("Should delete validations in the kiali cache when the VirtualService is deleted", func(ctx SpecContext) {
 			By("By deleting the VirtualService and its Gateway")
 			vs := &networkingv1.VirtualService{}
-			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "default"}
+			vsKey := types.NamespacedName{Name: "test-vs", Namespace: "bookinfo"}
 			Expect(k8sClient.Get(ctx, vsKey, vs)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, vs)).Should(Succeed())
 
 			gw := &networkingv1.Gateway{}
-			gwKey := types.NamespacedName{Name: "test-gateway", Namespace: "default"}
+			gwKey := types.NamespacedName{Name: "test-gateway", Namespace: "bookinfo"}
 			Expect(k8sClient.Get(ctx, gwKey, gw)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, gw)).Should(Succeed())
 
 			By("By checking that the validations are then deleted from the kiali cache")
 			Eventually(func() bool {
-				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "default", ObjectGVK: kubernetes.VirtualServices}
+				validationKey := models.IstioValidationKey{Name: "test-vs", Namespace: "bookinfo", ObjectGVK: kubernetes.VirtualServices}
 				_, found := kialiCache.Validations().Get(validationKey)
 				return !found && len(kialiCache.Validations().Items()) == 0
 			}, timeout, interval).Should(BeTrue())

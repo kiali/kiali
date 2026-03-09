@@ -34,25 +34,49 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 
 	lb := business.NewLayerBuilder(t, conf).WithClient(k8s)
 
+	var meshConfig *models.MeshConfig
 	if len(meshExportTo) != 0 {
-		discovery := &istiotest.FakeDiscovery{
-			MeshReturn: models.Mesh{
-				ControlPlanes: []models.ControlPlane{{
-					Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
-					MeshConfig: &models.MeshConfig{
-						MeshConfig: &istiov1alpha1.MeshConfig{
-							DefaultServiceExportTo:         []string{meshExportTo[0]},
-							DefaultDestinationRuleExportTo: []string{meshExportTo[0]},
-							DefaultVirtualServiceExportTo:  []string{meshExportTo[0]},
-						},
-					},
-				}},
+		meshConfig = &models.MeshConfig{
+			MeshConfig: &istiov1alpha1.MeshConfig{
+				DefaultServiceExportTo:         []string{meshExportTo[0]},
+				DefaultDestinationRuleExportTo: []string{meshExportTo[0]},
+				DefaultVirtualServiceExportTo:  []string{meshExportTo[0]},
 			},
 		}
-		lb.WithDiscovery(discovery)
+	} else {
+		meshConfig = models.NewMeshConfig()
 	}
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster: &models.KubeCluster{Name: config.DefaultClusterID, IsKialiHome: true},
+				ManagedNamespaces: []models.Namespace{
+					{Name: "testNamespace"},
+					{Name: "otherNamespace"},
+				},
+				MeshConfig: meshConfig,
+			}},
+		},
+	}
+	lb.WithDiscovery(discovery)
 
 	return lb.Build()
+}
+
+func defaultSEDiscovery(cluster string, namespaces ...string) *istiotest.FakeDiscovery {
+	managed := make([]models.Namespace, 0, len(namespaces))
+	for _, ns := range namespaces {
+		managed = append(managed, models.Namespace{Name: ns})
+	}
+	return &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				ManagedNamespaces: managed,
+				MeshConfig:        models.NewMeshConfig(),
+			}},
+		},
+	}
 }
 
 func setupServiceEntries(t *testing.T, namespace string, exportTo []string, meshExportTo []string) *business.Layer {
@@ -1096,7 +1120,8 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).
+		WithDiscovery(defaultSEDiscovery(config.DefaultClusterID, "namespace")).Build()
 
 	// Create a VersionedApp traffic map where a workload is calling a remote service entry and also an internal one
 	trafficMap := make(map[string]*graph.Node)
@@ -1187,7 +1212,8 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 	config.Set(conf)
 
-	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).
+		WithDiscovery(defaultSEDiscovery(config.DefaultClusterID, "testNamespace", "otherNamespace", "fooNamespace")).Build()
 
 	assert := assert.New(t)
 
@@ -1317,7 +1343,8 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	istioObjects := append([]runtime.Object{SE1, SE2}, kubetest.FakeNamespace("otherNamespace"))
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
-	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).
+		WithDiscovery(defaultSEDiscovery(config.DefaultClusterID, "testNamespace", "otherNamespace")).Build()
 
 	assert := assert.New(t)
 
@@ -1611,7 +1638,21 @@ func TestSEKiali7589(t *testing.T) {
 		"cluster2": client2,
 	}
 
-	businessLayer := business.NewLayerBuilder(t, conf).WithClients(clients).Build()
+	multiClusterDiscovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: "cluster1", IsKialiHome: true},
+				ManagedNamespaces: []models.Namespace{{Name: namespace}},
+				MeshConfig:        models.NewMeshConfig(),
+			}, {
+				Cluster:           &models.KubeCluster{Name: "cluster2"},
+				ManagedNamespaces: []models.Namespace{{Name: namespace}},
+				MeshConfig:        models.NewMeshConfig(),
+			}},
+		},
+	}
+	businessLayer := business.NewLayerBuilder(t, conf).WithClients(clients).
+		WithDiscovery(multiClusterDiscovery).Build()
 
 	// VersionedApp graph
 	trafficMap := make(map[string]*graph.Node)

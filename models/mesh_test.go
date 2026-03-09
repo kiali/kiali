@@ -25,10 +25,12 @@ func TestControlPlaneForNamespace(t *testing.T) {
 				},
 			}},
 		}
-		cp := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		cp, err := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		require.NoError(t, err)
 		require.NotNil(t, cp)
 		assert.Equal(t, cluster, cp.Cluster.Name)
-		cp = mesh.ControlPlaneForNamespace(cluster, "default")
+		cp, err = mesh.ControlPlaneForNamespace(cluster, "default")
+		require.NoError(t, err)
 		require.NotNil(t, cp)
 	})
 
@@ -47,8 +49,10 @@ func TestControlPlaneForNamespace(t *testing.T) {
 				},
 			},
 		}
-		cp1 := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
-		cp2 := mesh.ControlPlaneForNamespace(cluster, "bookinfo2")
+		cp1, err := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		require.NoError(t, err)
+		cp2, err := mesh.ControlPlaneForNamespace(cluster, "bookinfo2")
+		require.NoError(t, err)
 		require.NotNil(t, cp1)
 		require.NotNil(t, cp2)
 		assert.NotSame(t, cp1, cp2)
@@ -72,14 +76,16 @@ func TestControlPlaneForNamespace(t *testing.T) {
 				},
 			}},
 		}
-		cp := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		cp, err := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		require.NoError(t, err)
 		require.NotNil(t, cp)
-		cpWest := mesh.ControlPlaneForNamespace("west", "bookinfo")
+		cpWest, err := mesh.ControlPlaneForNamespace("west", "bookinfo")
+		require.NoError(t, err)
 		require.NotNil(t, cpWest)
 		assert.Same(t, cp.Cluster, cpWest.Cluster)
 	})
 
-	t.Run("fallback to Kiali home when ManagedNamespaces empty", func(t *testing.T) {
+	t.Run("returns error when ManagedNamespaces empty", func(t *testing.T) {
 		mesh := models.Mesh{
 			ControlPlanes: []models.ControlPlane{
 				{
@@ -94,20 +100,50 @@ func TestControlPlaneForNamespace(t *testing.T) {
 				},
 			},
 		}
-		cp := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
-		require.NotNil(t, cp)
-		assert.True(t, cp.Cluster.IsKialiHome)
+		cp, err := mesh.ControlPlaneForNamespace(cluster, "bookinfo")
+		assert.Error(t, err)
+		assert.Nil(t, cp)
 	})
 
-	t.Run("unknown cluster returns nil", func(t *testing.T) {
+	t.Run("unknown cluster returns error", func(t *testing.T) {
 		mesh := models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
 				Cluster:         &models.KubeCluster{Name: cluster},
 				ManagedClusters: []*models.KubeCluster{{Name: cluster}},
 			}},
 		}
-		cp := mesh.ControlPlaneForNamespace("unknown-cluster", "bookinfo")
+		cp, err := mesh.ControlPlaneForNamespace("unknown-cluster", "bookinfo")
+		assert.Error(t, err)
 		assert.Nil(t, cp)
+	})
+
+	t.Run("matches IstiodNamespace", func(t *testing.T) {
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{},
+			}},
+		}
+		cp, err := mesh.ControlPlaneForNamespace(cluster, "istio-system")
+		require.NoError(t, err)
+		require.NotNil(t, cp)
+		assert.Equal(t, "istio-system", cp.IstiodNamespace)
+	})
+
+	t.Run("matches RootNamespace", func(t *testing.T) {
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster},
+				IstiodNamespace:   "istio-system",
+				RootNamespace:     "istio-root",
+				ManagedNamespaces: []models.Namespace{},
+			}},
+		}
+		cp, err := mesh.ControlPlaneForNamespace(cluster, "istio-root")
+		require.NoError(t, err)
+		require.NotNil(t, cp)
+		assert.Equal(t, "istio-root", cp.RootNamespace)
 	})
 }
 

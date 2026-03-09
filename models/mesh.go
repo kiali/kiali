@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -50,27 +51,23 @@ type Mesh struct {
 }
 
 // ControlPlaneForNamespace returns the control plane that manages the given namespace in the cluster.
-// Prefers exact match (namespace in ManagedNamespaces), then Kiali home, then nil.
-func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) *ControlPlane {
+// Returns an error if no control plane has the namespace in its ManagedNamespaces, IstiodNamespace, or RootNamespace.
+func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) (*ControlPlane, error) {
 	for i := range m.ControlPlanes {
 		cp := &m.ControlPlanes[i]
+		// Control plane's own namespace and root namespace are always considered managed
+		if (cp.IstiodNamespace == namespace || cp.RootNamespace == namespace) && cp.Cluster != nil && cp.Cluster.Name == cluster {
+			return cp, nil
+		}
 		for _, ns := range cp.ManagedNamespaces {
 			if ns.Name == namespace && (ns.Cluster == "" || ns.Cluster == cluster) {
-				return cp
+				return cp, nil
 			}
 		}
 	}
-	for i := range m.ControlPlanes {
-		cp := &m.ControlPlanes[i]
-		if cp.Cluster != nil && cp.Cluster.Name == cluster && cp.Cluster.IsKialiHome {
-			log.Warningf("ControlPlaneForNamespace: no exact match for cluster=%s namespace=%s in ManagedNamespaces; falling back to Kiali home",
-				cluster, namespace)
-			return cp
-		}
-	}
-	log.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s (no ManagedNamespaces match and no Kiali home for cluster)",
-		cluster, namespace)
-	return nil
+	err := fmt.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s", cluster, namespace)
+	log.Debug(err)
+	return nil, err
 }
 
 // Tag maps a controlplane revision to a namespace label.

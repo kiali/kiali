@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 
 	"github.com/kiali/kiali/business"
@@ -14,18 +15,19 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func TestGetMeshConfig(t *testing.T) {
-	check := assert.New(t)
-
+func TestGetMeshConfigForNamespace(t *testing.T) {
 	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
 
-	// Create a MeshService and invoke IsMeshConfigured
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = kubetest.NewFakeK8sClient()
+	k8sclients[cluster] = kubetest.NewFakeK8sClient()
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+				Cluster: &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				ManagedNamespaces: []models.Namespace{
+					{Name: "bookinfo"},
+				},
 				MeshConfig: &models.MeshConfig{
 					MeshConfig: &istiov1alpha1.MeshConfig{
 						DefaultServiceExportTo:         []string{"*"},
@@ -39,10 +41,18 @@ func TestGetMeshConfig(t *testing.T) {
 
 	meshSvc := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
 
-	meshConfig := meshSvc.GetMeshConfig()
+	t.Run("returns mesh config for managed namespace", func(t *testing.T) {
+		meshConfig, err := meshSvc.GetMeshConfigForNamespace(cluster, "bookinfo")
+		require.NoError(t, err)
+		require.NotNil(t, meshConfig)
+		assert.Equal(t, []string{"."}, meshConfig.DefaultVirtualServiceExportTo)
+		assert.Equal(t, []string{"."}, meshConfig.DefaultDestinationRuleExportTo)
+		assert.Equal(t, []string{"*"}, meshConfig.DefaultServiceExportTo)
+	})
 
-	check.NotNil(meshConfig, "Mesh Config")
-	check.Equal([]string{"."}, meshConfig.DefaultVirtualServiceExportTo)
-	check.Equal([]string{"."}, meshConfig.DefaultDestinationRuleExportTo)
-	check.Equal([]string{"*"}, meshConfig.DefaultServiceExportTo)
+	t.Run("returns error for unmanaged namespace", func(t *testing.T) {
+		meshConfig, err := meshSvc.GetMeshConfigForNamespace(cluster, "unknown")
+		assert.Error(t, err)
+		assert.Nil(t, meshConfig)
+	})
 }
