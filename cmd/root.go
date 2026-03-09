@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/spf13/cobra"
@@ -80,6 +81,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 			if err != nil {
 				return fmt.Errorf("failed to set maxprocs: %v", err)
 			}
+			log.Infof("GOMAXPROCS automatically set to [%d]", runtime.GOMAXPROCS(0))
 
 			// Automatically set GOMEMLIMIT to 90% of the container cgroup memory limit (falls back to system memory).
 			// This prevents OOM kills by making the Go GC aware of the real memory ceiling.
