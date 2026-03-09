@@ -547,50 +547,6 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 	return out
 }
 
-func compactIstioConfigAsYAML(
-	virtualServices []*networking_v1.VirtualService,
-	destinationRules []*networking_v1.DestinationRule,
-	gateways []*networking_v1.Gateway,
-	warnings []string,
-) (string, error) {
-	docs := []string{}
-
-	for _, w := range warnings {
-		// Keep warnings as YAML comments (low token cost, useful for debugging missing refs).
-		if strings.TrimSpace(w) != "" {
-			docs = append(docs, "# "+strings.TrimSpace(w))
-		}
-	}
-
-	for _, vs := range virtualServices {
-		doc, err := compactRuntimeObjectYAML(vs, kubernetes.VirtualServices)
-		if err != nil {
-			return "", err
-		}
-		docs = append(docs, doc)
-	}
-	for _, dr := range destinationRules {
-		doc, err := compactRuntimeObjectYAML(dr, kubernetes.DestinationRules)
-		if err != nil {
-			return "", err
-		}
-		docs = append(docs, doc)
-	}
-	for _, gw := range gateways {
-		doc, err := compactRuntimeObjectYAML(gw, kubernetes.Gateways)
-		if err != nil {
-			return "", err
-		}
-		docs = append(docs, doc)
-	}
-
-	out := strings.Join(docs, "\n---\n")
-	if out != "" && !strings.HasSuffix(out, "\n") {
-		out += "\n"
-	}
-	return out, nil
-}
-
 func filterGatewaysReferencedByVirtualServices(
 	ctx context.Context,
 	businessLayer *business.Layer,

@@ -55,18 +55,13 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 	if action == "create" || action == "patch" {
 		previewActions := createFileAction(ctx, args, businessLayer, conf)
 		if !confirmed {
-			// Return a response that forces the AI to stop and talk to the user
+			// Return the editor action. The UI can apply directly from the editor.
 			return struct {
 				Actions []get_action_ui.Action `json:"actions"`
 				Result  string                 `json:"result"`
 			}{
 				Actions: previewActions,
-				Result: fmt.Sprintf(
-					"OPERATION PAUSED: You are about to perform a '%s' operation. "+
-						"A YAML preview has been prepared (see the attached file). "+
-						"Please ask the user: 'Does this look correct, and do you want me to proceed with %s?' "+
-						"If they say yes, call this tool again with the exact same arguments and 'confirmed': true.",
-					action, action),
+				Result:  fmt.Sprintf("Edit the YAML and click %s to apply.", strings.Title(action)),
 			}, 200 // Return success (200) so the AI processes the message
 		}
 
@@ -119,6 +114,10 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 
 func createFileAction(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) []get_action_ui.Action {
 	action, _ := args["action"].(string)
+	operation := strings.ToLower(strings.TrimSpace(action))
+	if operation != "create" && operation != "patch" && operation != "delete" {
+		operation = ""
+	}
 	cluster, _ := args["cluster"].(string)
 	object, _ := args["object"].(string)
 	kind, _ := args["kind"].(string)
@@ -168,7 +167,7 @@ func createFileAction(ctx context.Context, args map[string]interface{}, business
 			FileName:  fileName,
 			Kind:      get_action_ui.ActionKindFile,
 			Payload:   payload,
-			Operation: action,
+			Operation: operation,
 			Cluster:   cluster,
 			Namespace: namespace,
 			Group:     group,

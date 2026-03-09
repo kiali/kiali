@@ -3,7 +3,6 @@ package manage_istio_config
 import (
 	"context"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,9 +15,10 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 )
 
-func TestIstioGet_ReturnsCompactYAML(t *testing.T) {
+func TestIstioGet_ReturnsIstioConfigDetails(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
@@ -48,21 +48,17 @@ func TestIstioGet_ReturnsCompactYAML(t *testing.T) {
 	res, status := IstioGet(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	out, ok := res.(string)
-	require.True(t, ok, "expected string output, got %T", res)
+	details, ok := res.(models.IstioConfigDetails)
+	require.True(t, ok, "expected models.IstioConfigDetails output, got %T", res)
 
-	assert.True(t, strings.HasPrefix(out, "~~~\n"), "expected output wrapped in code block")
-	assert.Contains(t, out, "apiVersion: networking.istio.io/v1")
-	assert.Contains(t, out, "kind: VirtualService")
-	assert.Contains(t, out, "metadata:")
-	assert.Contains(t, out, "name: reviews")
-	assert.Contains(t, out, "namespace: bookinfo")
-	assert.Contains(t, out, "spec:")
+	// Core shape: resource + gvk/namespace wrapper.
+	assert.Equal(t, "bookinfo", details.Namespace.Name)
+	assert.Equal(t, "networking.istio.io", details.ObjectGVK.Group)
+	assert.Equal(t, "v1", details.ObjectGVK.Version)
+	assert.Equal(t, "VirtualService", details.ObjectGVK.Kind)
 
-	// Ensure it is not verbose (no extra sections from IstioConfigDetails wrapper).
-	assert.NotContains(t, out, "\"validation\"")
-	assert.NotContains(t, out, "\"references\"")
-	assert.NotContains(t, out, "resourceVersion:")
-	assert.NotContains(t, out, "managedFields:")
-	assert.NotContains(t, out, "status:")
+	require.NotNil(t, details.VirtualService)
+	assert.Equal(t, "reviews", details.VirtualService.Name)
+	assert.Equal(t, "bookinfo", details.VirtualService.Namespace)
+	assert.Equal(t, []string{"reviews"}, details.VirtualService.Spec.Hosts)
 }
