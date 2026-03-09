@@ -86,7 +86,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 			// To override the ratio, set the AUTOMEMLIMIT env var (e.g. AUTOMEMLIMIT=0.8). To disable entirely,
 			// set AUTOMEMLIMIT=off or set GOMEMLIMIT directly.
 			// Both can be configured via the Kiali CR or Helm chart's deployment.custom_envs field.
-			if _, err := memlimit.SetGoMemLimitWithOpts(
+			if limit, err := memlimit.SetGoMemLimitWithOpts(
 				memlimit.WithProvider(
 					memlimit.ApplyFallback(
 						memlimit.FromCgroup,
@@ -95,6 +95,10 @@ Complete documentation is available at http://kiali.io/docs/.`,
 				),
 			); err != nil {
 				log.Warningf("Failed to set GOMEMLIMIT automatically: %v", err)
+			} else if limit > 0 {
+				log.Infof("GOMEMLIMIT automatically set to [%.1f] MiB ([%d] bytes)", float64(limit)/1024/1024, limit)
+			} else {
+				log.Debugf("GOMEMLIMIT was not changed (already set, no limit detected, or disabled via AUTOMEMLIMIT=off)")
 			}
 
 			// Ensure config resources are cleaned up when function exits
