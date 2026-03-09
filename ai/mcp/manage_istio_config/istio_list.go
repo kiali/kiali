@@ -8,6 +8,9 @@ import (
 	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -16,19 +19,43 @@ import (
 )
 
 var istioConfigCriteria = business.IstioConfigCriteria{
-	IncludeGateways:              true,
-	IncludeK8sGateways:           true,
-	IncludeK8sGRPCRoutes:         true,
-	IncludeK8sHTTPRoutes:         true,
-	IncludeK8sInferencePools:     true,
-	IncludeK8sReferenceGrants:    true,
-	IncludeK8sTCPRoutes:          true,
-	IncludeK8sTLSRoutes:          true,
-	IncludeVirtualServices:       true,
-	IncludeDestinationRules:      true,
-	IncludeServiceEntries:        true,
-	IncludeSidecars:              true,
-	IncludeAuthorizationPolicies: true,
+	IncludeGateways:               true,
+	IncludeK8sGateways:            true,
+	IncludeK8sGRPCRoutes:          true,
+	IncludeK8sHTTPRoutes:          true,
+	IncludeK8sInferencePools:      true,
+	IncludeK8sReferenceGrants:     true,
+	IncludeK8sTCPRoutes:           true,
+	IncludeK8sTLSRoutes:           true,
+	IncludeVirtualServices:        true,
+	IncludeDestinationRules:       true,
+	IncludeServiceEntries:         true,
+	IncludeSidecars:               true,
+	IncludeAuthorizationPolicies:  true,
+	IncludePeerAuthentications:    true,
+	IncludeRequestAuthentications: true,
+	IncludeWorkloadEntries:        true,
+	IncludeWorkloadGroups:         true,
+	IncludeEnvoyFilters:           true,
+	IncludeWasmPlugins:            true,
+	IncludeTelemetry:              true,
+}
+
+type IstioListItem struct {
+	Name       string            `json:"name"`
+	Namespace  string            `json:"namespace"`
+	Type       string            `json:"type"`
+	Validation ValidationSummary `json:"validation"`
+}
+
+type ValidationSummary struct {
+	Valid  bool                     `json:"valid"`
+	Checks []ValidationCheckSummary `json:"checks,omitempty"`
+}
+
+type ValidationCheckSummary struct {
+	Severity string `json:"severity"`
+	Message  string `json:"message"`
 }
 
 func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
@@ -64,6 +91,24 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	virtualServices := istioConfig.VirtualServices
 	destinationRules := istioConfig.DestinationRules
 	gateways := istioConfig.Gateways
+	serviceEntries := istioConfig.ServiceEntries
+	sidecars := istioConfig.Sidecars
+	envoyFilters := istioConfig.EnvoyFilters
+	workloadEntries := istioConfig.WorkloadEntries
+	workloadGroups := istioConfig.WorkloadGroups
+	wasmPlugins := istioConfig.WasmPlugins
+	telemetries := istioConfig.Telemetries
+	authorizationPolicies := istioConfig.AuthorizationPolicies
+	peerAuthentications := istioConfig.PeerAuthentications
+	requestAuthentications := istioConfig.RequestAuthentications
+
+	k8sGateways := istioConfig.K8sGateways
+	k8sHTTPRoutes := istioConfig.K8sHTTPRoutes
+	k8sGRPCRoutes := istioConfig.K8sGRPCRoutes
+	k8sTCPRoutes := istioConfig.K8sTCPRoutes
+	k8sTLSRoutes := istioConfig.K8sTLSRoutes
+	k8sReferenceGrants := istioConfig.K8sReferenceGrants
+	k8sInferencePools := istioConfig.K8sInferencePools
 
 	// Filter by service name if provided
 	if serviceName != "" {
@@ -157,29 +202,249 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	gateways, _ = filterGatewaysReferencedByVirtualServices(ctx, businessLayer, cluster, virtualServices, gateways)
 
 	// Get validation warnings for context
-	warnings := []string{}
 	istioValidations, err := businessLayer.Validations.GetValidations(ctx, cluster)
-	if err == nil {
-		// Extract warning/error messages from validations (compact, not the full validation objects)
-		for key, validation := range istioValidations {
-			if !validation.Valid {
-				for _, check := range validation.Checks {
-					if check.Severity == "error" || check.Severity == "warning" {
-						warnings = append(warnings, fmt.Sprintf("%s %s/%s: %s", key.ObjectGVK.Kind, key.Namespace, key.Name, check.Message))
-					}
-				}
-			}
+	if err != nil {
+		// If validations fail, we still return the list; we just omit validation details.
+		istioValidations = models.IstioValidations{}
+	}
+
+	items := make([]IstioListItem, 0, len(virtualServices)+len(destinationRules)+len(gateways))
+
+	for _, vs := range virtualServices {
+		if vs == nil {
+			continue
 		}
+		items = append(items, IstioListItem{
+			Name:       vs.Name,
+			Namespace:  vs.Namespace,
+			Type:       "VirtualService",
+			Validation: validationSummaryForRuntimeObject(vs, kubernetes.VirtualServices, istioValidations, cluster),
+		})
+	}
+	for _, dr := range destinationRules {
+		if dr == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       dr.Name,
+			Namespace:  dr.Namespace,
+			Type:       "DestinationRule",
+			Validation: validationSummaryForRuntimeObject(dr, kubernetes.DestinationRules, istioValidations, cluster),
+		})
+	}
+	for _, gw := range gateways {
+		if gw == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       gw.Name,
+			Namespace:  gw.Namespace,
+			Type:       "Gateway",
+			Validation: validationSummaryForRuntimeObject(gw, kubernetes.Gateways, istioValidations, cluster),
+		})
 	}
 
-	// Return compact YAML instead of the full verbose object
-	yml, yErr := compactIstioConfigAsYAML(virtualServices, destinationRules, gateways, warnings)
-	if yErr != nil {
-		return fmt.Sprintf("Error while rendering istio config as YAML: %s", yErr.Error()), http.StatusInternalServerError
+	// Remaining supported types (not affected by service_name filtering).
+	for _, se := range serviceEntries {
+		if se == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       se.Name,
+			Namespace:  se.Namespace,
+			Type:       kubernetes.ServiceEntries.Kind,
+			Validation: validationSummaryForRuntimeObject(se, kubernetes.ServiceEntries, istioValidations, cluster),
+		})
+	}
+	for _, sc := range sidecars {
+		if sc == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       sc.Name,
+			Namespace:  sc.Namespace,
+			Type:       kubernetes.Sidecars.Kind,
+			Validation: validationSummaryForRuntimeObject(sc, kubernetes.Sidecars, istioValidations, cluster),
+		})
+	}
+	for _, ef := range envoyFilters {
+		if ef == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       ef.Name,
+			Namespace:  ef.Namespace,
+			Type:       kubernetes.EnvoyFilters.Kind,
+			Validation: validationSummaryForRuntimeObject(ef, kubernetes.EnvoyFilters, istioValidations, cluster),
+		})
+	}
+	for _, we := range workloadEntries {
+		if we == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       we.Name,
+			Namespace:  we.Namespace,
+			Type:       kubernetes.WorkloadEntries.Kind,
+			Validation: validationSummaryForRuntimeObject(we, kubernetes.WorkloadEntries, istioValidations, cluster),
+		})
+	}
+	for _, wg := range workloadGroups {
+		if wg == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       wg.Name,
+			Namespace:  wg.Namespace,
+			Type:       kubernetes.WorkloadGroups.Kind,
+			Validation: validationSummaryForRuntimeObject(wg, kubernetes.WorkloadGroups, istioValidations, cluster),
+		})
+	}
+	for _, wp := range wasmPlugins {
+		if wp == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       wp.Name,
+			Namespace:  wp.Namespace,
+			Type:       kubernetes.WasmPlugins.Kind,
+			Validation: validationSummaryForRuntimeObject(wp, kubernetes.WasmPlugins, istioValidations, cluster),
+		})
+	}
+	for _, tl := range telemetries {
+		if tl == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       tl.Name,
+			Namespace:  tl.Namespace,
+			Type:       kubernetes.Telemetries.Kind,
+			Validation: validationSummaryForRuntimeObject(tl, kubernetes.Telemetries, istioValidations, cluster),
+		})
+	}
+	for _, ap := range authorizationPolicies {
+		if ap == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       ap.Name,
+			Namespace:  ap.Namespace,
+			Type:       kubernetes.AuthorizationPolicies.Kind,
+			Validation: validationSummaryForRuntimeObject(ap, kubernetes.AuthorizationPolicies, istioValidations, cluster),
+		})
+	}
+	for _, pa := range peerAuthentications {
+		if pa == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       pa.Name,
+			Namespace:  pa.Namespace,
+			Type:       kubernetes.PeerAuthentications.Kind,
+			Validation: validationSummaryForRuntimeObject(pa, kubernetes.PeerAuthentications, istioValidations, cluster),
+		})
+	}
+	for _, ra := range requestAuthentications {
+		if ra == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       ra.Name,
+			Namespace:  ra.Namespace,
+			Type:       kubernetes.RequestAuthentications.Kind,
+			Validation: validationSummaryForRuntimeObject(ra, kubernetes.RequestAuthentications, istioValidations, cluster),
+		})
 	}
 
-	// Wrap in code block for readability
-	return "~~~\n" + yml + "~~~\n", http.StatusOK
+	for _, kgw := range k8sGateways {
+		if kgw == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       kgw.Name,
+			Namespace:  kgw.Namespace,
+			Type:       kubernetes.K8sGateways.Kind,
+			Validation: validationSummaryForRuntimeObject(kgw, kubernetes.K8sGateways, istioValidations, cluster),
+		})
+	}
+	for _, hr := range k8sHTTPRoutes {
+		if hr == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       hr.Name,
+			Namespace:  hr.Namespace,
+			Type:       kubernetes.K8sHTTPRoutes.Kind,
+			Validation: validationSummaryForRuntimeObject(hr, kubernetes.K8sHTTPRoutes, istioValidations, cluster),
+		})
+	}
+	for _, gr := range k8sGRPCRoutes {
+		if gr == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       gr.Name,
+			Namespace:  gr.Namespace,
+			Type:       kubernetes.K8sGRPCRoutes.Kind,
+			Validation: validationSummaryForRuntimeObject(gr, kubernetes.K8sGRPCRoutes, istioValidations, cluster),
+		})
+	}
+	for _, tr := range k8sTCPRoutes {
+		if tr == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       tr.Name,
+			Namespace:  tr.Namespace,
+			Type:       kubernetes.K8sTCPRoutes.Kind,
+			Validation: validationSummaryForRuntimeObject(tr, kubernetes.K8sTCPRoutes, istioValidations, cluster),
+		})
+	}
+	for _, tlr := range k8sTLSRoutes {
+		if tlr == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       tlr.Name,
+			Namespace:  tlr.Namespace,
+			Type:       kubernetes.K8sTLSRoutes.Kind,
+			Validation: validationSummaryForRuntimeObject(tlr, kubernetes.K8sTLSRoutes, istioValidations, cluster),
+		})
+	}
+	for _, rg := range k8sReferenceGrants {
+		if rg == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       rg.Name,
+			Namespace:  rg.Namespace,
+			Type:       kubernetes.K8sReferenceGrants.Kind,
+			Validation: validationSummaryForRuntimeObject(rg, kubernetes.K8sReferenceGrants, istioValidations, cluster),
+		})
+	}
+	for _, ip := range k8sInferencePools {
+		if ip == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       ip.Name,
+			Namespace:  ip.Namespace,
+			Type:       kubernetes.K8sInferencePools.Kind,
+			Validation: validationSummaryForRuntimeObject(ip, kubernetes.K8sInferencePools, istioValidations, cluster),
+		})
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Namespace != items[j].Namespace {
+			return items[i].Namespace < items[j].Namespace
+		}
+		if items[i].Type != items[j].Type {
+			return items[i].Type < items[j].Type
+		}
+		return items[i].Name < items[j].Name
+	})
+
+	return items, http.StatusOK
 }
 
 // matchesServiceHost checks if a host specification matches the service name.
@@ -212,6 +477,74 @@ func matchesServiceHost(host, serviceName string) bool {
 	}
 
 	return false
+}
+
+func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.GroupVersionKind, validations models.IstioValidations, cluster string) ValidationSummary {
+	typeAcc, _ := meta.TypeAccessor(obj)
+	objAcc, _ := meta.Accessor(obj)
+
+	apiVersion := ""
+	kind := ""
+	if typeAcc != nil {
+		apiVersion = typeAcc.GetAPIVersion()
+		kind = typeAcc.GetKind()
+	}
+	if apiVersion == "" {
+		apiVersion = fallbackGVK.GroupVersion().String()
+	}
+	if kind == "" {
+		kind = fallbackGVK.Kind
+	}
+
+	name := ""
+	namespace := ""
+	if objAcc != nil {
+		name = objAcc.GetName()
+		namespace = objAcc.GetNamespace()
+	}
+
+	// Default: valid when we don't find a validation entry.
+	out := ValidationSummary{Valid: true}
+	if apiVersion == "" || kind == "" || name == "" {
+		return out
+	}
+
+	gv, err := schema.ParseGroupVersion(apiVersion)
+	if err != nil {
+		return out
+	}
+
+	key := models.IstioValidationKey{
+		ObjectGVK: schema.GroupVersionKind{Group: gv.Group, Version: gv.Version, Kind: kind},
+		Name:      name,
+		Namespace: namespace,
+		Cluster:   cluster,
+	}
+
+	v, ok := validations[key]
+	if !ok || v == nil {
+		return out
+	}
+
+	out.Valid = v.Valid
+	checks := make([]ValidationCheckSummary, 0, len(v.Checks))
+	for _, c := range v.Checks {
+		if c == nil {
+			continue
+		}
+		sev := string(c.Severity)
+		if sev != "error" && sev != "warning" {
+			continue
+		}
+		checks = append(checks, ValidationCheckSummary{
+			Severity: sev,
+			Message:  c.Message,
+		})
+	}
+	if len(checks) > 0 {
+		out.Checks = checks
+	}
+	return out
 }
 
 func compactIstioConfigAsYAML(

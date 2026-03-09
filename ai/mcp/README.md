@@ -331,7 +331,7 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 - `json_data` (string, required for create/patch): JSON or YAML data for the object (as string).
 
 **Returns**:
-- For `list`: Compact YAML of filtered VirtualServices, DestinationRules, and Gateways (minimal metadata/spec, validation warnings as comments)
+- For `list`: Array of Istio objects with `name`, `namespace`, `type`, and `validation` (covers all supported Istio/K8s gateway config kinds returned by the backend criteria)
 - For `get`: Compact YAML of the requested Istio object (minimal metadata/spec)
 - For `create`/`patch`/`delete`: Success/error message or YAML preview if not confirmed
 

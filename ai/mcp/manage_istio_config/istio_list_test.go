@@ -3,7 +3,6 @@ package manage_istio_config
 import (
 	"context"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -80,21 +79,19 @@ func TestIstioList_ReturnsCompactYAML(t *testing.T) {
 	res, status := IstioList(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	out, ok := res.(string)
-	require.True(t, ok, "expected string output, got %T", res)
+	out, ok := res.([]IstioListItem)
+	require.True(t, ok, "expected []IstioListItem output, got %T", res)
+	require.Len(t, out, 2)
 
-	assert.True(t, strings.HasPrefix(out, "~~~\n"), "expected output wrapped in code block")
-	assert.Contains(t, out, "apiVersion: networking.istio.io/v1")
-	assert.Contains(t, out, "kind: VirtualService")
-	assert.Contains(t, out, "kind: DestinationRule")
-	assert.Contains(t, out, "name: reviews")
-	assert.Contains(t, out, "namespace: bookinfo")
+	// Validate items are present and compact
+	assert.Equal(t, "bookinfo", out[0].Namespace)
+	assert.NotEmpty(t, out[0].Name)
+	assert.NotEmpty(t, out[0].Type)
 
-	// Ensure it is compact (no verbose validation/reference objects)
-	assert.NotContains(t, out, `"validation"`)
-	assert.NotContains(t, out, `"references"`)
-	assert.NotContains(t, out, "resourceVersion:")
-	assert.NotContains(t, out, "managedFields:")
+	// Default validation when validations cannot be found (e.g., in unit tests)
+	for _, item := range out {
+		assert.True(t, item.Validation.Valid)
+	}
 }
 
 func TestIstioList_FilterByService(t *testing.T) {
@@ -145,14 +142,23 @@ func TestIstioList_FilterByService(t *testing.T) {
 	res, status := IstioList(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	out, ok := res.(string)
-	require.True(t, ok, "expected string output, got %T", res)
+	out, ok := res.([]IstioListItem)
+	require.True(t, ok, "expected []IstioListItem output, got %T", res)
+
+	names := map[string]struct{}{}
+	for _, item := range out {
+		names[item.Name] = struct{}{}
+	}
 
 	// Should contain reviews-related configs
-	assert.Contains(t, out, "reviews-vs")
-	assert.Contains(t, out, "reviews-dr")
+	_, hasReviewsVS := names["reviews-vs"]
+	_, hasReviewsDR := names["reviews-dr"]
+	assert.True(t, hasReviewsVS)
+	assert.True(t, hasReviewsDR)
 
 	// Should NOT contain ratings-related configs
-	assert.NotContains(t, out, "ratings-vs")
-	assert.NotContains(t, out, "ratings-dr")
+	_, hasRatingsVS := names["ratings-vs"]
+	_, hasRatingsDR := names["ratings-dr"]
+	assert.False(t, hasRatingsVS)
+	assert.False(t, hasRatingsDR)
 }
