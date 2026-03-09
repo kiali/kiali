@@ -34,7 +34,7 @@
     "Some build environments we use do not include npm access, and installing yarn is not possible."
   ],
   "scripts": {
-    "build": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi",
+    "build": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi'",
     "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
     "build:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
     "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
@@ -87,7 +87,7 @@
     "precypress:run:junit": "npm run cypress:delete:reports",
     "prepare": "cd .. && husky install frontend/.husky",
     "prettier": "prettier --write \"**/*.{ts,tsx,scss,json}\"",
-    "start": "if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi",
+    "start": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi'",
     "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
     "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
     "msw:init": "[ -f public/mockServiceWorker.js ] || npx msw init public/ --save=false",
