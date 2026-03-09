@@ -122,12 +122,20 @@ Feature: Kiali Waypoint related features
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" object in "bookinfo" namespace with "waypoint" name Istio Config is valid
 
+  # TODO: Remove tag once namespace actions exist in OSSMC
+  @skip-ossmc
   Scenario: [Namespaces] Namespace is labeled with the waypoint labels
     Given user is at the "namespaces" list page
     When user selects filter "Namespace"
     And user filters for name "bookinfo"
     Then user sees the "bookinfo" namespace in the namespaces page
     And the "Labels" column on the "bookinfo" row has the text "istio.io/use-waypoint=waypoint"
+
+  # TODO: Remove once namespace actions exist in OSSMC
+  Scenario: [OSSMC] Namespace is labeled with the waypoint label via API
+    Given user is at administrator perspective
+    When Namespace "bookinfo" is labeled with the waypoint label "waypoint" via API
+    Then the "bookinfo" namespace has the label "istio-io.use-waypoint=waypoint"
 
   Scenario: [Traffic] Waypoint for different namespaces working as expected
     Given user is at the "graph" page
@@ -419,6 +427,8 @@ Feature: Kiali Waypoint related features
     Then 4 edges appear in the graph
     Then user "closes" traffic menu
 
+  # TODO: Remove skip-ossmc tag once the namespace page is created in OSSMC
+  @skip-ossmc
   Scenario: [Namespaces] Add to Ambient in the test-sidecar namespace
     Given user is at the "namespaces" list page
     When user selects filter "Namespace"
