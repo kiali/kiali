@@ -32,6 +32,10 @@
       service_name:
         type: "string"
         description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action. Matches service name in VirtualService hosts/routes and DestinationRule host fields."
-      json_data:
+      data:
         type: "string"
-        description: "JSON or YAML data to apply or create the object. Required for create and patch actions."
+        description: "DATA: JSON or YAML manifest to apply or create the object. Required for create and patch actions."
+      data_format:
+        type: "string"
+        description: "Optional hint for the payload format. Usually leave as 'auto'."
+        enum: ["auto", "json", "yaml"]

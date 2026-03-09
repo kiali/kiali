@@ -328,7 +328,7 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
 - `kind` (string, required for create/patch/get): Object kind (e.g., `"VirtualService"`, `"DestinationRule"`, `"Gateway"`).
 - `object` (string, required for patch/delete): Name of the Istio object.
 - `service_name` (string, optional): Filter Istio configurations by service. Only applicable for `list` action. Returns VirtualServices, DestinationRules, and Gateways that affect the specified service.
-- `json_data` (string, required for create/patch): JSON or YAML data for the object (as string).
+- `data` (string, required for create/patch): JSON or YAML data for the object (as string).
 
 **Returns**:
 - For `list`: Array of Istio objects with `name`, `namespace`, `type`, and `validation` (covers all supported Istio/K8s gateway config kinds returned by the backend criteria)
@@ -369,7 +369,7 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
   "group": "networking.istio.io",
   "version": "v1",
   "kind": "DestinationRule",
-  "json_data": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata:\n  name: reviews\n  namespace: bookinfo\nspec:\n  host: reviews\n  trafficPolicy:\n    loadBalancer:\n      simple: LEAST_CONN\n"
+  "data": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata:\n  name: reviews\n  namespace: bookinfo\nspec:\n  host: reviews\n  trafficPolicy:\n    loadBalancer:\n      simple: LEAST_CONN\n"
 }
 ```
 
@@ -383,7 +383,7 @@ Manages Istio configuration objects: list, get, create, patch, and delete operat
   "version": "v1",
   "kind": "VirtualService",
   "object": "reviews",
-  "json_data": "{\"spec\":{\"http\":[{\"match\":[{\"headers\":{\"end-user\":{\"exact\":\"jason\"}}}],\"route\":[{\"destination\":{\"host\":\"reviews\",\"subset\":\"v2\"}}]}]}}"
+  "data": "{\"spec\":{\"http\":[{\"match\":[{\"headers\":{\"end-user\":{\"exact\":\"jason\"}}}],\"route\":[{\"destination\":{\"host\":\"reviews\",\"subset\":\"v2\"}}]}]}}"
 }
 ```
 

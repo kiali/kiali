@@ -19,7 +19,7 @@ func IstioPatch(r *http.Request, args map[string]interface{}, businessLayer *bus
 	version, _ := args["version"].(string)
 	kind, _ := args["kind"].(string)
 	object, _ := args["object"].(string)
-	jsonData, _ := args["json_data"].(string)
+	data, _ := args["data"].(string)
 
 	if cluster == "" {
 		cluster = conf.KubernetesConfig.ClusterName
@@ -36,9 +36,9 @@ func IstioPatch(r *http.Request, args map[string]interface{}, businessLayer *bus
 	}
 
 	// Accept either JSON or YAML input (normalized to JSON for merge patch).
-	patchBytes, err := yaml.YAMLToJSON([]byte(jsonData))
+	patchBytes, err := yaml.YAMLToJSON([]byte(data))
 	if err != nil {
-		return fmt.Sprintf("Invalid json_data (must be valid JSON or YAML): %s", err.Error()), http.StatusBadRequest
+		return fmt.Sprintf("Invalid data (must be valid JSON or YAML): %s", err.Error()), http.StatusBadRequest
 	}
 
 	createdConfigDetails, err := businessLayer.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, gvk, object, string(patchBytes))
@@ -46,6 +46,6 @@ func IstioPatch(r *http.Request, args map[string]interface{}, businessLayer *bus
 		return err.Error(), http.StatusInternalServerError
 	}
 
-	audit(r, "UPDATE", namespace, gvk.String(), "Name: ["+object+"], Patch: "+jsonData)
+	audit(r, "UPDATE", namespace, gvk.String(), "Name: ["+object+"], Patch: "+data)
 	return createdConfigDetails, http.StatusOK
 }
