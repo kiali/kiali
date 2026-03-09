@@ -9,6 +9,8 @@ import (
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/yaml"
@@ -61,7 +63,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 				Result  string                 `json:"result"`
 			}{
 				Actions: previewActions,
-				Result:  fmt.Sprintf("Edit the YAML and click %s to apply.", strings.Title(action)),
+				Result:  fmt.Sprintf("Edit the YAML and click %s to apply.", cases.Title(language.Und).String(action)),
 			}, 200 // Return success (200) so the AI processes the message
 		}
 
