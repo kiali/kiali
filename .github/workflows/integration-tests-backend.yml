@@ -15,6 +15,7 @@ on:
         default: ""
 
 env:
+  BUILD_BRANCH: ${{ inputs.build_branch }}
   TARGET_BRANCH: ${{ inputs.target_branch }}
 
 jobs:
