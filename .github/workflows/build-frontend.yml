@@ -20,6 +20,9 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
+    - name: Enable corepack
+      run: corepack enable
+
     - name: Setup node
       uses: actions/setup-node@v6
       with:

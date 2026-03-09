@@ -45,6 +45,9 @@ jobs:
 
     # This caches the yarn deps but does not touch node_modules so it's still necessary
     # to run 'yarn install' later to link these into node_modules.
+    - name: Enable corepack
+      run: corepack enable
+
     - name: Setup node
       uses: actions/setup-node@v6
       with:
@@ -64,7 +67,7 @@ jobs:
     # Need to install frontend dependencies to run cypress tests.
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: corepack enable && yarn install --immutable
+      run: yarn install --immutable
 
     - name: Run frontend core 1 integration tests
       run: hack/run-integration-tests.sh --test-suite frontend-core-1 --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
