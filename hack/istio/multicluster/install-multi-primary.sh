@@ -173,15 +173,13 @@ fi
 source ${SCRIPT_DIR}/setup-ca.sh
 
 if [ "${AMBIENT}" == "true" ]; then
+ ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
+ ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
  if [ "${CLUSTER2_AMBIENT}" == "true" ]; then
     echo "==== Installing Istio Ambient on both clusters (default behavior)"
-    ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
-    ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
     install_ambient_multicluster
   else
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
-    ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
-    ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
 
     # Setup Istio environment (needed for install_ambient_on_cluster)
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
