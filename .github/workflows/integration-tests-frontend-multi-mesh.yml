@@ -64,7 +64,7 @@ jobs:
     # Need to install frontend dependencies to run cypress tests.
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: yarn install --immutable
+      run: corepack enable && yarn install --immutable
 
     - name: Run frontend integration tests for multi mesh
       run: hack/run-integration-tests.sh --test-suite frontend-multi-mesh --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
