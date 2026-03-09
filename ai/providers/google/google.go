@@ -77,7 +77,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	for iter := 0; iter < maxToolIterations; iter++ {
 		functionCalls := result.FunctionCalls()
 		if len(functionCalls) == 0 {
-			response.Answer = providers.ParseMarkdownResponse(result.Text())
+			response.Response = providers.ParseMarkdownResponse(result.Text())
 			break
 		}
 		if iter == maxToolIterations-1 {
@@ -99,17 +99,17 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		if len(processResult.Response.Actions) > 0 {
 			response.Actions = append(response.Actions, processResult.Response.Actions...)
 		}
-		if len(processResult.Response.Citations) > 0 {
-			response.Citations = append(response.Citations, processResult.Response.Citations...)
+		if len(processResult.Response.ReferencedDocuments) > 0 {
+			response.ReferencedDocuments = append(response.ReferencedDocuments, processResult.Response.ReferencedDocuments...)
 		}
 		conversation = processResult.Conversation
 
 		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
-			Actions:   response.Actions,
-			Citations: response.Citations,
+			Actions:             response.Actions,
+			ReferencedDocuments: response.ReferencedDocuments,
 		}, toolNames)
 		if !shouldGenerate {
-			response.Answer = responseAnswer
+			response.Response = responseAnswer
 			break
 		}
 
@@ -146,9 +146,9 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
-	if response.Answer != "" {
+	if response.Response != "" {
 		conversation = append(conversation, types.ConversationMessage{
-			Content: response.Answer,
+			Content: response.Response,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",

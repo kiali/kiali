@@ -12,8 +12,7 @@
         "troubleshooting"
       ],
       "url": "https://kiali.io/docs/faq/graph/#my-graph-is-empty",
-      "title": "Troubleshooting Empty Kiali Graph",
-      "description": "Troubleshooting guide for when the Kiali Service Mesh graph shows no nodes or traffic. Covers common causes like missing sidecars, idle traffic, incorrect namespace selection, and time range settings."
+      "title": "Troubleshooting Empty Kiali Graph"
     },
     {
       "id": "health-config",
@@ -27,8 +26,7 @@
         "KPI"
       ],
       "url": "https://kiali.io/docs/configuration/health/",
-      "title": "Kiali Health Configuration Guide",
-      "description": "Configuration guide for customizing how Kiali calculates health. Includes setting thresholds for error rates and latency, and configuring custom health checks for workloads."
+      "title": "Kiali Health Configuration Guide"
     },
     {
       "id": "distributed-tracing",
@@ -43,8 +41,7 @@
         "opentelemetry"
       ],
       "url": "https://kiali.io/docs/features/tracing/",
-      "title": "Kiali Distributed Tracing Integration",
-      "description": "Guide on integrating distributed tracing (Jaeger, Tempo, OpenTelemetry) with Kiali. Explains how to view trace spans correlated with metrics and troubleshoot missing trace data."
+      "title": "Kiali Distributed Tracing Integration"
     },
     {
       "id": "validation-errors",
@@ -58,8 +55,7 @@
         "kia0002"
       ],
       "url": "https://kiali.io/docs/features/validations/",
-      "title": "Kiali Configuration Validations",
-      "description": "Reference for Kiali's semantic validations of Istio objects. Explains specific error codes (KIAxxxx) for VirtualServices, DestinationRules, and Gateways, and how to resolve them."
+      "title": "Kiali Configuration Validations"
     },
     {
       "id": "installation-guide",
@@ -74,8 +70,7 @@
         "prerequisites"
       ],
       "url": "https://kiali.io/docs/installation/installation-guide/",
-      "title": "Kiali Installation Guide",
-      "description": "Comprehensive guide for installing Kiali using the Kiali Operator or Helm Charts. Covers prerequisites, deployment strategies, and verification steps."
+      "title": "Kiali Installation Guide"
     },
     {
       "id": "auth-strategies",
@@ -91,8 +86,7 @@
         "rbac"
       ],
       "url": "https://kiali.io/docs/configuration/authentication/",
-      "title": "Kiali Authentication Strategies",
-      "description": "Documentation on configuring Kiali access control. Details supported authentication strategies including Anonymous, OpenID Connect, Openshift, and Token-based login."
+      "title": "Kiali Authentication Strategies"
     },
     {
       "id": "istio-wizards",
@@ -107,8 +101,7 @@
         "code generation"
       ],
       "url": "https://kiali.io/docs/features/wizards/",
-      "title": "Kiali Istio Wizards",
-      "description": "Guide to using Kiali's UI wizards for generating Istio configuration. Includes wizards for Request Routing, Fault Injection, Traffic Shifting, and Circuit Breaking."
+      "title": "Kiali Istio Wizards"
     },
     {
       "id": "multi-cluster",
@@ -121,8 +114,7 @@
         "cross-cluster"
       ],
       "url": "https://kiali.io/docs/configuration/multi-cluster/",
-      "title": "Kiali Multi-Cluster Configuration",
-      "description": "Guide for configuring Kiali to view and manage a multi-cluster Istio mesh. Covers the unified dashboard setup and granting Kiali access to remote cluster kubeconfigs."
+      "title": "Kiali Multi-Cluster Configuration"
     },
     {
       "id": "kiali-debugging",
@@ -136,8 +128,7 @@
         "operator logs"
       ],
       "url": "https://kiali.io/docs/configuration/debugging-kiali/",
-      "title": "Debugging Kiali Server",
-      "description": "Instructions for debugging the Kiali server itself. Includes changing log levels (trace/debug), accessing operator logs, and profiling performance issues."
+      "title": "Debugging Kiali Server"
     },
     {
       "id": "prometheus-tuning",
@@ -151,8 +142,7 @@
         "scrape interval"
       ],
       "url": "https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/",
-      "title": "Kiali Prometheus Configuration",
-      "description": "Configuration details for connecting Kiali to Prometheus. Includes tuning caching parameters for performance and handling custom Prometheus URLs or authentication."
+      "title": "Kiali Prometheus Configuration"
     }
   ],
   "istio": [
@@ -169,8 +159,7 @@
         "tls"
       ],
       "url": "https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/",
-      "title": "Istio Mutual TLS Migration",
-      "description": "Step-by-step guide for migrating services to Mutual TLS (mTLS). Explains how to configure PeerAuthentication policies and verify encryption status."
+      "title": "Istio Mutual TLS Migration"
     },
     {
       "id": "traffic-shifting",
@@ -185,8 +174,7 @@
         "deployment"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/",
-      "title": "Istio Traffic Shifting (Canary Rollouts)",
-      "description": "Task guide for gradually migrating traffic from an old version of a microservice to a new one (Canary Deployment) using VirtualServices and percentage-based weights."
+      "title": "Istio Traffic Shifting (Canary Rollouts)"
     },
     {
       "id": "circuit-breaking",
@@ -200,8 +188,7 @@
         "failure recovery"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/",
-      "title": "Istio Circuit Breaking Fundamentals",
-      "description": "Guide to configuring circuit breakers in Istio to prevent cascading failures. Covers Outlier Detection, Connection Pool settings, and Max Requests configuration."
+      "title": "Istio Circuit Breaking Fundamentals"
     },
     {
       "id": "authorization-policy",
@@ -216,8 +203,7 @@
         "security"
       ],
       "url": "https://istio.io/latest/docs/tasks/security/authorization/authz-http/",
-      "title": "Istio Authorization Policies",
-      "description": "Task guide for setting up access control using AuthorizationPolicy. Explains how to allow or deny traffic based on namespace, service accounts, and HTTP methods."
+      "title": "Istio Authorization Policies"
     },
     {
       "id": "ingress-gateway",
@@ -231,8 +217,7 @@
         "cert-manager"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/",
-      "title": "Istio Ingress Gateway Setup",
-      "description": "Guide to exposing internal services to the external world using the Istio Ingress Gateway. Covers Gateway resources, VirtualService binding, and TLS termination."
+      "title": "Istio Ingress Gateway Setup"
     },
     {
       "id": "virtual-service-ref",
@@ -247,8 +232,7 @@
         "crd"
       ],
       "url": "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
-      "title": "Istio VirtualService Reference",
-      "description": "Technical reference for the VirtualService CRD. Defines traffic routing rules, match conditions (headers, URI), retries, timeouts, and destination weighting."
+      "title": "Istio VirtualService Reference"
     },
     {
       "id": "destination-rule-ref",
@@ -262,8 +246,7 @@
         "crd"
       ],
       "url": "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
-      "title": "Istio DestinationRule Reference",
-      "description": "Technical reference for the DestinationRule CRD. Defines policies that apply after routing, including LoadBalancer settings, Subsets (versions), and outlier detection."
+      "title": "Istio DestinationRule Reference"
     },
     {
       "id": "sidecar-injection",
@@ -278,8 +261,7 @@
         "pod spec"
       ],
       "url": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
-      "title": "Istio Sidecar Injection",
-      "description": "Explanation of how the Envoy sidecar proxy is injected into pods. Covers automatic injection via namespace labeling and manual injection using istioctl."
+      "title": "Istio Sidecar Injection"
     },
     {
       "id": "istioctl-analyze",
@@ -294,8 +276,7 @@
         "ops"
       ],
       "url": "https://istio.io/latest/docs/ops/diagnostic-tools/istioctl-analyze/",
-      "title": "Diagnose Configuration with Istioctl Analyze",
-      "description": "Guide to using 'istioctl analyze' to detect potential issues with Istio configuration. Helps identify validation errors, missing resources, and misconfigurations."
+      "title": "Diagnose Configuration with Istioctl Analyze"
     },
     {
       "id": "request-timeouts",
@@ -309,8 +290,7 @@
         "http request"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/request-timeouts/",
-      "title": "Configuring Request Timeouts",
-      "description": "Task guide on configuring HTTP request timeouts in Istio. Explains how to use VirtualServices to abort requests that take too long to respond."
+      "title": "Configuring Request Timeouts"
     },
     {
       "id": "fault-injection",
@@ -324,8 +304,7 @@
         "http fault"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/fault-injection/",
-      "title": "Istio Fault Injection",
-      "description": "Guide to injecting artificial faults (delays or aborts) into the service mesh to test application resilience and failure recovery mechanisms."
+      "title": "Istio Fault Injection"
     },
     {
       "id": "gateway-api",
@@ -338,8 +317,7 @@
         "api"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/",
-      "title": "Istio Kubernetes Gateway API",
-      "description": "Instructions for using the modern Kubernetes Gateway API (Gateway, HTTPRoute) with Istio as an alternative to the classic Istio Gateway/VirtualService resources."
+      "title": "Istio Kubernetes Gateway API"
     },
     {
       "id": "traffic-mirroring",
@@ -353,8 +331,7 @@
         "observability"
       ],
       "url": "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
-      "title": "Istio Traffic Mirroring",
-      "description": "Task guide on shadowing (mirroring) live traffic to a separate service version for testing purposes without affecting the production response."
+      "title": "Istio Traffic Mirroring"
     },
     {
       "id": "jwt-auth",
@@ -369,8 +346,7 @@
         "openid"
       ],
       "url": "https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/",
-      "title": "JWT Access Control",
-      "description": "Guide to enforcing access control based on JSON Web Tokens (JWT). Covers RequestAuthentication resources and AuthorizationPolicy rules."
+      "title": "JWT Access Control"
     },
     {
       "id": "workload-entry",
@@ -383,8 +359,7 @@
         "mesh expansion"
       ],
       "url": "https://istio.io/latest/docs/reference/config/networking/workload-entry/",
-      "title": "Istio WorkloadEntry Reference",
-      "description": "Reference for the WorkloadEntry CRD, used to onboard non-Kubernetes workloads (VMs, bare metal) into the Istio Service Mesh."
+      "title": "Istio WorkloadEntry Reference"
     }
   ]
 }

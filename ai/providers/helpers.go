@@ -33,8 +33,8 @@ func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool,
 	if len(response.Actions) > 0 {
 		return false, "I have found the following actions: "
 	}
-	if len(response.Citations) > 0 {
-		return false, "I have found the following citations: "
+	if len(response.ReferencedDocuments) > 0 {
+		return false, "I have found the following referenced documents: "
 	}
 	return true, ""
 }
@@ -171,12 +171,12 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 		if len(toolResult.Actions) > 0 {
 			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
 		}
-		if len(toolResult.Citations) > 0 {
-			result.Response.Citations = append(result.Response.Citations, toolResult.Citations...)
+		if len(toolResult.ReferencedDocuments) > 0 {
+			result.Response.ReferencedDocuments = append(result.Response.ReferencedDocuments, toolResult.ReferencedDocuments...)
 		}
 
 		// Skip adding to conversation if we have actions/citations
-		if len(toolResult.Actions) > 0 || len(toolResult.Citations) > 0 {
+		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocuments) > 0 {
 			continue
 		}
 
