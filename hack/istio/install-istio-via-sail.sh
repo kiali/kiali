@@ -127,15 +127,31 @@ if is_in_array "tempo" "jaeger" "${ADDONS}"; then
     exit 1
 fi
 
+# Pin Sail operator chart version to match Istio major.minor so we install a compatible
+# operator (e.g. Istio 1.26.8 -> Sail chart 1.26.3). Without this, Helm installs the
+# latest chart (e.g. 1.29.0), which can break CI for older branches like v2.11.
+ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+SAIL_CHART_VERSION=""
+case "${ISTIO_MINOR}" in
+  1.26) SAIL_CHART_VERSION="1.26.3" ;;
+  1.27) SAIL_CHART_VERSION="1.27.3" ;;
+  1.28) SAIL_CHART_VERSION="1.28.3" ;;
+  1.29) SAIL_CHART_VERSION="1.29.0" ;;
+  *)    SAIL_CHART_VERSION="" ;;
+esac
+if [ -n "${SAIL_CHART_VERSION}" ]; then
+  echo "Pinning Sail operator Helm chart to version ${SAIL_CHART_VERSION} (Istio ${ISTIO_VERSION:-})"
+fi
+
 helm upgrade sail-operator sail-operator \
   --install \
   --create-namespace \
   --namespace sail-operator \
   --wait \
-  --repo https://istio-ecosystem.github.io/sail-operator
+  --repo https://istio-ecosystem.github.io/sail-operator \
+  ${SAIL_CHART_VERSION:+--version "$SAIL_CHART_VERSION"}
 
-# Pin based on Istio version:
-ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+# Pin Gateway API version based on Istio version:
 case "${ISTIO_MINOR}" in
   1.23) K8S_GATEWAY_API_VERSION="v1.1.0" ;;
   1.26) K8S_GATEWAY_API_VERSION="v1.3.0" ;;
