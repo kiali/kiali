@@ -1838,7 +1838,7 @@ func NewRoutes(
 			handlers.ChatAI(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
-		// swagger:route GET /chat/conversations chat aiChatAI
+		// swagger:route GET /chat/conversations chat aiChatConversations
 		// ---
 		// Endpoint to get the list of conversations for the user
 		//
@@ -1861,7 +1861,7 @@ func NewRoutes(
 			handlers.ChatConversations(conf, aiStore),
 			true,
 		},
-		// swagger:route DELETE /chat/conversations chat aiChatAI
+		// swagger:route DELETE /chat/conversations chat aiChatDeleteConversations
 		// ---
 		// Endpoint to delete conversations for the user
 		//
@@ -1869,13 +1869,6 @@ func NewRoutes(
 		//     - application/json
 		//
 		//     Schemes: http, https
-		//
-		//     Parameters:
-		//       - name: conversationIDs
-		//         in: query
-		//         description: Comma-separated list of conversation IDs to delete
-		//         required: true
-		//         type: string
 		//
 		// responses:
 		//      500: internalError
