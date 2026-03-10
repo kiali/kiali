@@ -354,7 +354,7 @@ func OverviewServiceTraffic(
 			labels := `destination_workload!="unknown"`
 
 			query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-			zl.Trace().Msgf("OverviewServiceTraffic query: %s", query)
+			zl.Trace().Msgf("OverviewServiceTraffic query (tcp): %s", query)
 
 			result, warnings, err := prom.API().Query(ctx, query, queryTime)
 			if len(warnings) > 0 {
@@ -371,6 +371,25 @@ func OverviewServiceTraffic(
 				return
 			}
 			services = convertToServiceTcpTraffic(vector)
+
+			// Fallback: Some environments don't have L4 TCP metrics at service-level. Use the same L7 throughput
+			// base metrics as the graph (request/response bytes) so Service Insights can still show throughput.
+			if len(services) == 0 {
+				fallbackQuery := buildServiceL7ThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+				zl.Trace().Msgf("OverviewServiceTraffic query (l7 fallback): %s", fallbackQuery)
+
+				fallbackResult, fallbackWarnings, fallbackErr := prom.API().Query(ctx, fallbackQuery, queryTime)
+				if len(fallbackWarnings) > 0 {
+					zl.Warn().Msgf("OverviewServiceTraffic (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
+				}
+				if fallbackErr == nil {
+					if fallbackVector, ok := fallbackResult.(model.Vector); ok {
+						services = convertToServiceTcpTraffic(fallbackVector)
+					}
+				} else {
+					zl.Debug().Err(fallbackErr).Msg("OverviewServiceTraffic (fallback): Prometheus query failed")
+				}
+			}
 
 		} else {
 			services = make([]models.ServiceTraffic, 0, overviewServiceMetricsLimit)
@@ -397,7 +416,7 @@ func OverviewServiceTraffic(
 				}
 
 				query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query: %s", query)
+				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query (tcp): %s", query)
 
 				result, warnings, err := prom.API().Query(ctx, query, queryTime)
 				if len(warnings) > 0 {
@@ -419,6 +438,25 @@ func OverviewServiceTraffic(
 				}
 
 				clusterServices := convertToServiceTcpTraffic(vector)
+
+				// Fallback to L7 throughput if TCP metrics return empty.
+				if len(clusterServices) == 0 {
+					fallbackQuery := buildServiceL7ThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+					zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query (l7 fallback): %s", fallbackQuery)
+
+					fallbackResult, fallbackWarnings, fallbackErr := prom.API().Query(ctx, fallbackQuery, queryTime)
+					if len(fallbackWarnings) > 0 {
+						zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceTraffic (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
+					}
+					if fallbackErr == nil {
+						if fallbackVector, ok := fallbackResult.(model.Vector); ok {
+							clusterServices = convertToServiceTcpTraffic(fallbackVector)
+						}
+					} else {
+						zl.Debug().Err(fallbackErr).Str("cluster", cluster).Msg("OverviewServiceTraffic (fallback): Prometheus query failed")
+					}
+				}
+
 				for i := range clusterServices {
 					// Some telemetry setups may omit destination_cluster. If we scoped the query to a cluster, default it.
 					if clusterServices[i].Cluster == "" {
@@ -672,6 +710,26 @@ func buildServiceTcpTrafficQuery(conf *config.Config, labels, groupBy, rateInter
 	// L4 telemetry can be backwards in Istio; we sum both metrics so total throughput is accurate.
 	return fmt.Sprintf(
 		`round(topk(%d, (sum(rate(istio_tcp_sent_bytes_total{%s}[%s])) by (%s) + sum(rate(istio_tcp_received_bytes_total{%s}[%s])) by (%s)) > 0), 0.001)`,
+		limit,
+		labels,
+		rateInterval,
+		groupBy,
+		labels,
+		rateInterval,
+		groupBy,
+	)
+}
+
+// buildServiceL7ThroughputQuery constructs a PromQL query for L7 throughput (bytes/s), using the same base metrics
+// as the graph (request/response bytes). This is used as a fallback for environments where L4 TCP metrics are not available.
+func buildServiceL7ThroughputQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+	queryScope := conf.ExternalServices.Prometheus.QueryScope
+	for labelName, labelValue := range queryScope {
+		labels = fmt.Sprintf("%s,%s=\"%s\"", labels, prometheus.SanitizeLabelName(labelName), labelValue)
+	}
+
+	return fmt.Sprintf(
+		`round(topk(%d, (sum(rate(istio_request_bytes_sum{%s}[%s])) by (%s) + sum(rate(istio_response_bytes_sum{%s}[%s])) by (%s)) > 0), 0.001)`,
 		limit,
 		labels,
 		rateInterval,
