@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Button,
   Card,
   CardBody,
   CardFooter,
@@ -13,7 +14,6 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { LongArrowAltDownIcon } from '@patternfly/react-icons';
 import type { TOptions } from 'i18next';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
@@ -183,15 +183,6 @@ const formatByteRate = (bytesPerSec: number): string => {
   return `${gib.toFixed(2)} GiB/s`;
 };
 
-const noUnderlineStyle = kialiStyle({
-  textDecoration: 'none',
-  $nest: {
-    '&, &:hover, &:focus, &:active': {
-      textDecoration: 'none'
-    }
-  }
-});
-
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
     <div style={{ textAlign: 'left' }}>
@@ -280,11 +271,6 @@ export const ServiceInsights: React.FC = () => {
     const qs = params.toString();
     return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
   }, [allNamespaceNames]);
-
-  const navigateToUrl = React.useCallback((url: string): void => {
-    FilterSelected.resetFilters();
-    router.navigate(url);
-  }, []);
 
   const onOpenManageColumns = React.useCallback((): void => {
     setDraftMetrics(selectedMetrics);
