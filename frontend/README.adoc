@@ -15,10 +15,10 @@ A UI for the Kiali Istio Observability Project
 git clone https://github.com/kiali/kiali.git
 cd kiali/frontend
 
-# Enable corepack (ships with Node.js 16+)
+# Enable corepack to install yarn (ships with Node.js)
 corepack enable
 
-# Install kiali-ui dependencies (corepack will automatically use the correct Yarn version)
+# Install kiali-ui dependencies
 yarn install
 
 # Start a development server
@@ -70,8 +70,7 @@ reloads any changes to the browser for rapid development.
 
 The Kiali UI is a React application written in Typescript.
 
-We use Yarn 4 (managed via corepack) as the package manager. If adding dependencies
-to `package.json`, make sure you install them with `yarn` and commit the `yarn.lock` file.
+We use yarn as the package manager. When adding dependencies to `package.json`, install them with `yarn install` and commit the `yarn.lock` file
 
 === Running Kiali Frontend
 
