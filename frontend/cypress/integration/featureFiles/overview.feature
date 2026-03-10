@@ -90,7 +90,7 @@ Feature: New Overview - Overview cards
     And the user refreshes the page
     Then Clusters card shows all healthy clusters
 
-    @core-2
+  @core-2
   Scenario: Service insights card shows loading state without tables or footer link
     Given Service insights APIs respond slowly
     And user is at the "overview" page

@@ -228,6 +228,9 @@ export const ServiceInsights: React.FC = () => {
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
   const [traffic, setTraffic] = React.useState<ServiceTraffic[]>([]);
   const [hasWaypoints, setHasWaypoints] = React.useState<boolean | undefined>(undefined);
+  const [latenciesError, setLatenciesError] = React.useState(false);
+  const [ratesError, setRatesError] = React.useState(false);
+  const [trafficError, setTrafficError] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
 
   const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
@@ -291,6 +294,9 @@ export const ServiceInsights: React.FC = () => {
     try {
       setIsLoading(true);
       setIsError(false);
+      setLatenciesError(false);
+      setRatesError(false);
+      setTrafficError(false);
 
       const [latenciesResult, ratesResult, trafficResult] = await Promise.allSettled([
         API.getOverviewServiceLatencies(),
@@ -305,6 +311,7 @@ export const ServiceInsights: React.FC = () => {
         anySuccess = true;
       } else {
         setLatencies([]);
+        setLatenciesError(true);
       }
 
       if (ratesResult.status === 'fulfilled') {
@@ -312,6 +319,7 @@ export const ServiceInsights: React.FC = () => {
         anySuccess = true;
       } else {
         setRates([]);
+        setRatesError(true);
       }
 
       if (trafficResult.status === 'fulfilled') {
@@ -321,6 +329,7 @@ export const ServiceInsights: React.FC = () => {
       } else {
         setTraffic([]);
         setHasWaypoints(undefined);
+        setTrafficError(true);
       }
 
       if (!anySuccess) {
@@ -328,6 +337,9 @@ export const ServiceInsights: React.FC = () => {
       }
     } catch (err) {
       setIsError(true);
+      setLatenciesError(true);
+      setRatesError(true);
+      setTrafficError(true);
       // eslint-disable-next-line no-console
       console.error('Error fetching service insights data:', err);
     } finally {
@@ -502,22 +514,42 @@ export const ServiceInsights: React.FC = () => {
     );
   };
 
+  const effectiveMetrics = React.useMemo(() => {
+    return {
+      errorRates: selectedMetrics.errorRates,
+      latency: selectedMetrics.latency,
+      tcp: selectedMetrics.tcp
+    };
+  }, [selectedMetrics.errorRates, selectedMetrics.latency, selectedMetrics.tcp]);
+
+  const visibleTablesCount = React.useMemo(() => {
+    return Number(effectiveMetrics.errorRates) + Number(effectiveMetrics.latency) + Number(effectiveMetrics.tcp);
+  }, [effectiveMetrics]);
+
+  const visibleErrorCount = React.useMemo(() => {
+    return (
+      Number(effectiveMetrics.errorRates && ratesError) +
+      Number(effectiveMetrics.latency && latenciesError) +
+      Number(effectiveMetrics.tcp && trafficError)
+    );
+  }, [effectiveMetrics, latenciesError, ratesError, trafficError]);
+
+  const showCardErrorState = React.useMemo(() => {
+    if (isLoading || visibleTablesCount === 0) {
+      return false;
+    }
+    // If all visible tables errored (or all requests failed), show the card-level error state.
+    return isError || visibleErrorCount === visibleTablesCount;
+  }, [isError, isLoading, visibleErrorCount, visibleTablesCount]);
+
   const renderContent = (): React.ReactNode => {
     if (isLoading) {
       return <OverviewCardLoadingState message={t('Fetching service data')} />;
     }
 
-    if (isError) {
+    if (showCardErrorState) {
       return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
-
-    const effectiveMetrics = {
-      errorRates: selectedMetrics.errorRates,
-      latency: selectedMetrics.latency,
-      tcp: selectedMetrics.tcp
-    };
-    const visibleTablesCount =
-      Number(effectiveMetrics.errorRates) + Number(effectiveMetrics.latency) + Number(effectiveMetrics.tcp);
 
     if (!effectiveMetrics.errorRates && !effectiveMetrics.latency && !effectiveMetrics.tcp) {
       return (
@@ -585,7 +617,7 @@ export const ServiceInsights: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
-      {!isLoading && !isError && (
+      {!isLoading && !showCardErrorState && (
         <CardFooter>
           <KialiLink
             to={buildServicesListUrl()}
