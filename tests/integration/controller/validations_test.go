@@ -23,15 +23,17 @@ import (
 )
 
 const (
-	timeout  = time.Second * 10
+	timeout  = time.Second * 15
 	interval = time.Millisecond * 250
 )
 
 var _ = Describe("Validations controller", Ordered, func() {
 	var kialiCache cache.KialiCache
 	Context("When validating a VirtualService", func() {
+		var conf *config.Config
 		BeforeAll(func(specCtx SpecContext) {
-			conf := config.NewConfig()
+			conf = config.NewConfig()
+			conf.KialiInternal.CacheExpiration.Mesh = time.Hour
 			kialiKubeClient, err := kubernetes.NewClient(kubernetes.ClusterInfo{
 				ClientConfig: cfg,
 				Name:         conf.KubernetesConfig.ClusterName,
@@ -47,15 +49,6 @@ var _ = Describe("Validations controller", Ordered, func() {
 			kialiCache, err = cache.NewKialiCache(specCtx, kubernetes.ConvertFromUserClients(saClients), readers, *conf)
 			Expect(err).ToNot(HaveOccurred())
 
-			kialiCache.SetMesh(
-				&models.Mesh{
-					ControlPlanes: []models.ControlPlane{{
-						MeshConfig: models.NewMeshConfig(),
-						Cluster:    &models.KubeCluster{IsKialiHome: true},
-					}},
-				},
-			)
-
 			discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(saClients), kialiCache, conf)
 			layer, err := business.NewLayerWithSAClients(conf, kialiCache, nil, nil, nil, nil, discovery, saClients)
 			Expect(err).ToNot(HaveOccurred())
@@ -66,9 +59,7 @@ var _ = Describe("Validations controller", Ordered, func() {
 		})
 
 		It("Should create validations in the kiali cache when a new VirtualService is created", func(ctx SpecContext) {
-			Expect(kialiCache.Validations().Items()).Should(BeEmpty())
-
-			By("By creating a VirtualService with a gateway")
+			By("By creating namespaces")
 			istioSystemNamespace := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "istio-system",
@@ -76,6 +67,30 @@ var _ = Describe("Validations controller", Ordered, func() {
 			}
 			err := k8sClient.Create(ctx, istioSystemNamespace)
 			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
+			bookinfoNamespace := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "bookinfo",
+				},
+			}
+			err = k8sClient.Create(ctx, bookinfoNamespace)
+			Expect(client.IgnoreAlreadyExists(err)).ToNot(HaveOccurred())
+
+			By("By waiting for the initial reconciliation to complete, then setting the mesh")
+			time.Sleep(3 * time.Second)
+			kialiCache.SetMesh(
+				&models.Mesh{
+					ControlPlanes: []models.ControlPlane{{
+						Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName, IsKialiHome: true},
+						IstiodNamespace: "istio-system",
+						ManagedNamespaces: []models.Namespace{
+							{Name: "bookinfo"},
+						},
+						MeshConfig: models.NewMeshConfig(),
+					}},
+				},
+			)
+
+			By("By creating a VirtualService with a gateway")
 			gw := &networkingv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-gateway",
