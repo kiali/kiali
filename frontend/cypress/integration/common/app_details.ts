@@ -30,18 +30,10 @@ Then('user sees inbound metrics information', () => {
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact();
 
-  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
-    // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then(
-      (metricsComponents: any) =>
-        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
+  // Charts render only when dashboard data is loaded. The metrics component does not forward
+  // data-test to the DOM; with unmountOnExit only this tab's content is mounted.
+  cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
 });
 
 Then('user sees outbound metrics information', () => {
@@ -49,18 +41,10 @@ Then('user sees outbound metrics information', () => {
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact();
 
-  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
-    // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then(
-      (metricsComponents: any) =>
-        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
+  // Charts render only when dashboard data is loaded. The metrics component does not forward
+  // data-test to the DOM; with unmountOnExit only this tab's content is mounted.
+  cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
 });
 
 Then('user can filter spans by app {string}', (app: string) => {
