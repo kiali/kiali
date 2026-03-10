@@ -386,7 +386,6 @@ type ByLabelsParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"byLabels[]"`
 }
 
@@ -416,7 +415,6 @@ type FiltersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"filters[]"`
 }
 
@@ -436,7 +434,6 @@ type QuantilesParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"quantiles[]"`
 }
 
