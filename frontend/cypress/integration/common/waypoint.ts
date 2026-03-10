@@ -383,11 +383,11 @@ Then("the user doesn't see a L7 link", () => {
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-description-card]').should('contain', 'L7');
   cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
-  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint);
+  cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint);
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
-  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click({ force: true });
+  cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint).click({ force: true });
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
 });
 
