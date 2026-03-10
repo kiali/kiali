@@ -103,7 +103,7 @@ const healthValues: FilterValue[] = [
   { id: FAILURE.id, title: FAILURE.name },
   { id: DEGRADED.id, title: DEGRADED.name },
   { id: HEALTHY.id, title: HEALTHY.name },
-  { id: NA.id, title: NA.name }
+  { id: NA.name, title: NA.name }
 ];
 
 export enum NamespaceCategory {
@@ -206,7 +206,8 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
     const hasSuccess = allStatuses.some(s => s && (s.inSuccess?.length ?? 0) > 0);
     const hasNotAvailable = allStatuses.some(s => s && (s.notAvailable?.length ?? 0) > 0);
     const hasOnlySuccess = hasSuccess && !hasError && !hasWarning;
-    const hasOnlyNA = hasNotAvailable && !hasError && !hasWarning && !hasNotReady && !hasSuccess;
+    const hasAnyComponent = hasNotReady || hasError || hasWarning || hasSuccess || hasNotAvailable;
+    const hasOnlyNA = !hasAnyComponent || (hasNotAvailable && !hasError && !hasWarning && !hasNotReady && !hasSuccess);
 
     return (
       (showInNotReady && hasNotReady) ||

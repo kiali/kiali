@@ -1,5 +1,7 @@
 import * as React from 'react';
 import deepFreeze from 'deep-freeze';
+import { PopoverPosition } from '@patternfly/react-core';
+import { Th } from '@patternfly/react-table';
 import { AppListItem } from '../../types/AppList';
 import { AppWorkload } from 'types/App';
 import { WorkloadListItem, Workload } from '../../types/Workload';
@@ -12,8 +14,8 @@ import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { PFBadges, PFBadgeType } from '../../components/Pf/PfBadges';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
-import { TypeHeader } from '../../pages/Namespaces/TypeHeader';
-import { HealthHeader } from '../../pages/Namespaces/HealthHeader';
+import { TypePopoverBody, TypePopoverHeader } from '../../pages/Namespaces/TypeHeader';
+import { HealthPopoverBody, HealthPopoverHeader } from '../../pages/Namespaces/HealthHeader';
 
 export type SortResource = AppListItem | WorkloadListItem | ServiceListItem;
 export type TResource = SortResource | IstioConfigItem;
@@ -54,7 +56,7 @@ export const noAmbientLabels = (r: SortResource): boolean => {
 };
 
 export type ResourceType<R extends RenderResource> = {
-  headerContent?: React.ReactNode;
+  info?: React.ComponentProps<typeof Th>['info'];
   name: string;
   param?: string;
   renderer?: Renderer<R>;
@@ -194,17 +196,29 @@ export type Resource = {
 };
 
 const namespacesHealth: ResourceType<NamespaceInfo> = {
+  info: {
+    popover: React.createElement(HealthPopoverBody),
+    popoverProps: {
+      headerContent: React.createElement(HealthPopoverHeader),
+      position: PopoverPosition.top
+    }
+  },
   name: 'Health',
   param: 'h',
   renderer: Renderers.nsHealth,
   sortable: true,
   title: 'Health',
-  width: 20,
-  headerContent: React.createElement(HealthHeader)
+  width: 20
 };
 
 const typeNamespaces: ResourceType<NamespaceInfo> = {
-  headerContent: React.createElement(TypeHeader),
+  info: {
+    popover: React.createElement(TypePopoverBody),
+    popoverProps: {
+      headerContent: React.createElement(TypePopoverHeader),
+      position: PopoverPosition.top
+    }
+  },
   name: 'Type',
   param: 'type',
   renderer: Renderers.nsType,

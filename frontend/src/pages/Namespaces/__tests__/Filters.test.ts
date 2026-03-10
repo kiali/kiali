@@ -14,12 +14,23 @@ describe('Namespaces Filters', () => {
   });
 
   describe('healthFilter', () => {
-    it('includes "No health information" option (NA)', () => {
-      expect(healthFilter.filterValues?.some(v => v.id === NA.id)).toBeTruthy();
+    it('includes n/a option (NA)', () => {
+      expect(healthFilter.filterValues?.some(v => v.id === NA.name)).toBeTruthy();
     });
 
     it('matches NA when namespace has no status fields', () => {
       const ns: any = { name: 'ns1' };
+      const filters: any = { filters: [{ value: NA.name }] };
+      expect(healthFilter.run(ns, filters)).toBe(true);
+    });
+
+    it('matches NA when status objects exist but all arrays are empty (no components)', () => {
+      const ns: any = {
+        name: 'ns1',
+        statusApp: { inError: [], inWarning: [], inNotReady: [], inSuccess: [], notAvailable: [] },
+        statusService: { inError: [], inWarning: [], inNotReady: [], inSuccess: [], notAvailable: [] },
+        statusWorkload: { inError: [], inWarning: [], inNotReady: [], inSuccess: [], notAvailable: [] }
+      };
       const filters: any = { filters: [{ value: NA.name }] };
       expect(healthFilter.run(ns, filters)).toBe(true);
     });

@@ -185,7 +185,7 @@ export const NA: Status = {
   color: PFColors.Color200,
   icon: UnknownIcon,
   id: 'NA',
-  name: t('No health information'),
+  name: t('n/a'),
   priority: 0,
   status: 'custom'
 };

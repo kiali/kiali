@@ -88,7 +88,7 @@ const getHealthStatusLabel = (status?: HealthStatusId): string => {
     case HEALTHY.id:
       return t(HEALTHY.name);
     case NA.id:
-      return t('n/a');
+      return NA.name;
     default:
       return t(status ?? 'Unknown');
   }
@@ -134,7 +134,7 @@ export const DataPlaneStats: React.FC = () => {
           <span className={popoverItemStatusStyle}>{getHealthStatusLabel(ns.healthStatus)}</span>
         </div>
       ))}
-      {viewAll && list.length > MAX_POPOVER_ITEMS && (
+      {viewAll && (
         <div className={popoverFooterStyle}>
           <KialiLink
             to={viewAll.to}
@@ -240,7 +240,7 @@ export const DataPlaneStats: React.FC = () => {
                   }
                   bodyContent={popoverContentFor(namespacesNA, {
                     text: t('View all n/a Data planes'),
-                    to: buildDataPlanesUrl(NA.id as HealthStatusId)
+                    to: buildDataPlanesUrl(NA.name as HealthStatusId)
                   })}
                 >
                   <div className={classes(statItemStyle, clickableStyle)} data-test="data-planes-na">
