@@ -9,6 +9,11 @@ type ServiceLatency struct {
 	ServiceName  string       `json:"serviceName"`
 }
 
+func (s *ServiceLatency) GetCluster() string             { return s.Cluster }
+func (s *ServiceLatency) GetNamespace() string           { return s.Namespace }
+func (s *ServiceLatency) GetServiceName() string         { return s.ServiceName }
+func (s *ServiceLatency) SetHealthStatus(h HealthStatus) { s.HealthStatus = h }
+
 // ServiceLatencyResponse contains the sorted list of service latencies
 type ServiceLatencyResponse struct {
 	Services []ServiceLatency `json:"services"`
@@ -38,6 +43,11 @@ type ServiceTraffic struct {
 	ServiceName  string       `json:"serviceName"`
 	TcpRate      float64      `json:"tcpRate"` // bytes per second
 }
+
+func (s *ServiceTraffic) GetCluster() string             { return s.Cluster }
+func (s *ServiceTraffic) GetNamespace() string           { return s.Namespace }
+func (s *ServiceTraffic) GetServiceName() string         { return s.ServiceName }
+func (s *ServiceTraffic) SetHealthStatus(h HealthStatus) { s.HealthStatus = h }
 
 // ServiceTrafficResponse contains the sorted list of service TCP traffic rates
 type ServiceTrafficResponse struct {

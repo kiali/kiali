@@ -199,12 +199,20 @@ func buildNamespaceRegex(namespaces []models.Namespace) string {
 	return "^(?:" + strings.Join(ns, "|") + ")$"
 }
 
-// enrichServiceLatenciesWithHealth sets HealthStatus on each ServiceLatency from the health cache.
+// serviceHealthEnricher defines the interface for enriching services with health status.
+type serviceHealthEnricher interface {
+	GetCluster() string
+	GetNamespace() string
+	GetServiceName() string
+	SetHealthStatus(status models.HealthStatus)
+}
+
+// enrichServicesWithHealth sets HealthStatus on services from the health cache.
 // One cache lookup per distinct (cluster, namespace) keeps it efficient.
-func enrichServiceLatenciesWithHealth(services []models.ServiceLatency, kialiCache cache.KialiCache, conf *config.Config) {
+func enrichServicesWithHealth[T serviceHealthEnricher](services []T, kialiCache cache.KialiCache, conf *config.Config) {
 	if !conf.KialiInternal.HealthCache.Enabled || kialiCache == nil {
-		for i := range services {
-			services[i].HealthStatus = models.HealthStatusNA
+		for _, s := range services {
+			s.SetHealthStatus(models.HealthStatusNA)
 		}
 		return
 	}
@@ -212,24 +220,34 @@ func enrichServiceLatenciesWithHealth(services []models.ServiceLatency, kialiCac
 	type nsKey struct{ cluster, namespace string }
 	cacheByNs := make(map[nsKey]models.NamespaceServiceHealth)
 	for _, s := range services {
-		key := nsKey{s.Cluster, s.Namespace}
+		key := nsKey{s.GetCluster(), s.GetNamespace()}
 		if _, ok := cacheByNs[key]; ok {
 			continue
 		}
-		cached, _ := kialiCache.GetHealth(s.Cluster, s.Namespace, internalmetrics.HealthTypeService)
+		cached, _ := kialiCache.GetHealth(s.GetCluster(), s.GetNamespace(), internalmetrics.HealthTypeService)
 		if cached != nil {
 			cacheByNs[key] = cached.ServiceHealth
 		}
 	}
-	for i := range services {
-		key := nsKey{services[i].Cluster, services[i].Namespace}
+	for _, s := range services {
+		key := nsKey{s.GetCluster(), s.GetNamespace()}
 		svcHealth := cacheByNs[key]
-		if sh := svcHealth[services[i].ServiceName]; sh != nil && sh.Status != nil {
-			services[i].HealthStatus = sh.Status.Status
+		if sh := svcHealth[s.GetServiceName()]; sh != nil && sh.Status != nil {
+			s.SetHealthStatus(sh.Status.Status)
 		} else {
-			services[i].HealthStatus = models.HealthStatusNA
+			s.SetHealthStatus(models.HealthStatusNA)
 		}
 	}
+}
+
+// enrichServiceLatenciesWithHealth sets HealthStatus on each ServiceLatency from the health cache.
+func enrichServiceLatenciesWithHealth(services []models.ServiceLatency, kialiCache cache.KialiCache, conf *config.Config) {
+	// Convert to slice of pointers
+	ptrs := make([]*models.ServiceLatency, len(services))
+	for i := range services {
+		ptrs[i] = &services[i]
+	}
+	enrichServicesWithHealth(ptrs, kialiCache, conf)
 }
 
 // buildLatencyQuery constructs a PromQL query for p95 latency.
@@ -697,47 +715,42 @@ func overviewAppRatesFromHealthCache(
 	return all
 }
 
-// buildServiceTcpTrafficQuery constructs a PromQL query for TCP traffic (bytes/s).
+// buildServiceThroughputQuery constructs a PromQL query for service throughput (bytes/s).
 // Uses topk to return only the top results sorted by highest throughput.
 // If conf.ExternalServices.Prometheus.QueryScope is defined, the scope labels are
 // injected into the query's label selectors.
-func buildServiceTcpTrafficQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+func buildServiceThroughputQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int, metric1, metric2 string) string {
 	queryScope := conf.ExternalServices.Prometheus.QueryScope
 	for labelName, labelValue := range queryScope {
 		labels = fmt.Sprintf("%s,%s=\"%s\"", labels, prometheus.SanitizeLabelName(labelName), labelValue)
 	}
 
-	// L4 telemetry can be backwards in Istio; we sum both metrics so total throughput is accurate.
 	return fmt.Sprintf(
-		`round(topk(%d, (sum(rate(istio_tcp_sent_bytes_total{%s}[%s])) by (%s) + sum(rate(istio_tcp_received_bytes_total{%s}[%s])) by (%s)) > 0), 0.001)`,
+		`round(topk(%d, (sum(rate(%s{%s}[%s])) by (%s) + sum(rate(%s{%s}[%s])) by (%s)) > 0), 0.001)`,
 		limit,
+		metric1,
 		labels,
 		rateInterval,
 		groupBy,
+		metric2,
 		labels,
 		rateInterval,
 		groupBy,
 	)
 }
 
+// buildServiceTcpTrafficQuery constructs a PromQL query for TCP traffic (bytes/s).
+// L4 telemetry can be backwards in Istio; we sum both metrics so total throughput is accurate.
+func buildServiceTcpTrafficQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+	return buildServiceThroughputQuery(conf, labels, groupBy, rateInterval, limit,
+		"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total")
+}
+
 // buildServiceL7ThroughputQuery constructs a PromQL query for L7 throughput (bytes/s), using the same base metrics
 // as the graph (request/response bytes). This is used as a fallback for environments where L4 TCP metrics are not available.
 func buildServiceL7ThroughputQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
-	queryScope := conf.ExternalServices.Prometheus.QueryScope
-	for labelName, labelValue := range queryScope {
-		labels = fmt.Sprintf("%s,%s=\"%s\"", labels, prometheus.SanitizeLabelName(labelName), labelValue)
-	}
-
-	return fmt.Sprintf(
-		`round(topk(%d, (sum(rate(istio_request_bytes_sum{%s}[%s])) by (%s) + sum(rate(istio_response_bytes_sum{%s}[%s])) by (%s)) > 0), 0.001)`,
-		limit,
-		labels,
-		rateInterval,
-		groupBy,
-		labels,
-		rateInterval,
-		groupBy,
-	)
+	return buildServiceThroughputQuery(conf, labels, groupBy, rateInterval, limit,
+		"istio_request_bytes_sum", "istio_response_bytes_sum")
 }
 
 // convertToServiceTcpTraffic converts a Prometheus vector to a slice of ServiceTraffic.
@@ -769,36 +782,13 @@ func convertToServiceTcpTraffic(vector model.Vector) []models.ServiceTraffic {
 }
 
 // enrichServiceTrafficWithHealth sets HealthStatus on each ServiceTraffic from the health cache.
-// One cache lookup per distinct (cluster, namespace) keeps it efficient.
 func enrichServiceTrafficWithHealth(services []models.ServiceTraffic, kialiCache cache.KialiCache, conf *config.Config) {
-	if !conf.KialiInternal.HealthCache.Enabled || kialiCache == nil {
-		for i := range services {
-			services[i].HealthStatus = models.HealthStatusNA
-		}
-		return
-	}
-
-	type nsKey struct{ cluster, namespace string }
-	cacheByNs := make(map[nsKey]models.NamespaceServiceHealth)
-	for _, s := range services {
-		key := nsKey{s.Cluster, s.Namespace}
-		if _, ok := cacheByNs[key]; ok {
-			continue
-		}
-		cached, _ := kialiCache.GetHealth(s.Cluster, s.Namespace, internalmetrics.HealthTypeService)
-		if cached != nil {
-			cacheByNs[key] = cached.ServiceHealth
-		}
-	}
+	// Convert to slice of pointers
+	ptrs := make([]*models.ServiceTraffic, len(services))
 	for i := range services {
-		key := nsKey{services[i].Cluster, services[i].Namespace}
-		svcHealth := cacheByNs[key]
-		if sh := svcHealth[services[i].ServiceName]; sh != nil && sh.Status != nil {
-			services[i].HealthStatus = sh.Status.Status
-		} else {
-			services[i].HealthStatus = models.HealthStatusNA
-		}
+		ptrs[i] = &services[i]
 	}
+	enrichServicesWithHealth(ptrs, kialiCache, conf)
 }
 
 // hasAllClusterNamespaceAccess returns true if the user has access to the same set of namespaces

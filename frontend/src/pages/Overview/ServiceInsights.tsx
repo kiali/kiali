@@ -17,7 +17,6 @@ import {
 import type { TOptions } from 'i18next';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
-import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
@@ -206,13 +205,16 @@ export const ServiceInsights: React.FC = () => {
   const activeNamespaces = useKialiSelector(activeNamespacesSelector);
 
   // Use all known namespaces when available
-  const allNamespaceNames = React.useMemo(() => {
-    const namespaces = namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
-    return Array.from(new Set(namespaces.map(ns => ns.name))).sort();
+  const effectiveNamespaces = React.useMemo(() => {
+    return namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
   }, [activeNamespaces, namespaceItems]);
 
+  const allNamespaceNames = React.useMemo(() => {
+    return Array.from(new Set(effectiveNamespaces.map(ns => ns.name))).sort();
+  }, [effectiveNamespaces]);
+
   const allNamespacesAmbient = React.useMemo((): boolean => {
-    const namespaces = namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
+    const namespaces = effectiveNamespaces;
     if (!namespaces || namespaces.length === 0) {
       return false;
     }
@@ -221,7 +223,7 @@ export const ServiceInsights: React.FC = () => {
       return false;
     }
     return dataPlanes.every(ns => !!ns.isAmbient);
-  }, [activeNamespaces, namespaceItems]);
+  }, [effectiveNamespaces]);
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
@@ -362,18 +364,32 @@ export const ServiceInsights: React.FC = () => {
     []
   );
 
-  const renderLatenciesTable = (): React.ReactNode => {
-    if (latencies.length === 0) {
+  interface ServiceTableConfig<T> {
+    columnTitle: string;
+    data: T[];
+    dataTestId: string;
+    emptyMessage: string;
+    emptyTitle: string;
+    keyPrefix: string;
+    renderValueCell: (item: T) => React.ReactNode;
+  }
+
+  const renderServiceTable = <
+    T extends { cluster: string; healthStatus?: string; namespace: string; serviceName: string }
+  >(
+    config: ServiceTableConfig<T>
+  ): React.ReactNode => {
+    if (config.data.length === 0) {
       return (
         <div className={emptyStateStyle}>
-          <div>{t('Latencies not available')}</div>
-          <div>{t('No HTTP traffic or response time metrics are unavailable')}</div>
+          <div>{t(config.emptyTitle)}</div>
+          <div>{t(config.emptyMessage)}</div>
         </div>
       );
     }
 
     return (
-      <table className={tableStyle} data-test="service-insights-latencies-table">
+      <table className={tableStyle} data-test={config.dataTestId}>
         <colgroup>
           <col style={{ width: '60%' }} />
           <col style={{ width: '40%' }} />
@@ -382,136 +398,85 @@ export const ServiceInsights: React.FC = () => {
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle}>
-              <span>{t('Latency')}</span>
+              <span>{t(config.columnTitle)}</span>
               <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {latencies.map((svc, idx) => (
-            <tr key={`latency-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
+          {config.data.map((svc, idx) => (
+            <tr
+              key={`${config.keyPrefix}-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`}
+              className={tableRowStyle}
+            >
               <td className={tableCellStyle}>
-                <Tooltip
-                  content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}
-                  position={TooltipPosition.topStart}
-                >
+                <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
                   <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
                     {svc.serviceName}
                   </KialiLink>
                 </Tooltip>
               </td>
-              <td className={rateCellStyle}>
-                {createIcon({
-                  ...statusFromString(svc.healthStatus ?? 'NA'),
-                  className: statusIconStyle
-                })}
-                {formatLatency(svc.latency)}
-              </td>
+              <td className={rateCellStyle}>{config.renderValueCell(svc)}</td>
             </tr>
           ))}
         </tbody>
       </table>
     );
+  };
+
+  const renderLatenciesTable = (): React.ReactNode => {
+    return renderServiceTable({
+      data: latencies,
+      dataTestId: 'service-insights-latencies-table',
+      emptyTitle: 'Latencies not available',
+      emptyMessage: 'No HTTP traffic or response time metrics are unavailable',
+      columnTitle: 'Latency',
+      keyPrefix: 'latency',
+      renderValueCell: svc => (
+        <>
+          {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+          {formatLatency(svc.latency)}
+        </>
+      )
+    });
   };
 
   const renderRatesTable = (): React.ReactNode => {
-    if (rates.length === 0) {
-      return (
-        <div className={emptyStateStyle}>
-          <div>{t('Error Rates not available')}</div>
-          <div>{t('No HTTP traffic or health cache is disabled')}</div>
-        </div>
-      );
-    }
-
-    return (
-      <table className={tableStyle} data-test="service-insights-rates-table">
-        <colgroup>
-          <col style={{ width: '60%' }} />
-          <col style={{ width: '40%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th className={tableHeaderStyle}>{t('Name')}</th>
-            <th className={tableHeaderStyle}>
-              <span>{t('Errors')}</span>
-              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rates.map((svc, idx) => (
-            <tr key={`rate-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
-              <td className={tableCellStyle}>
-                <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
-                  <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
-                    {svc.serviceName}
-                  </KialiLink>
-                </Tooltip>
-              </td>
-              <td className={rateCellStyle}>
-                <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                    {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
-                    {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
-                  </span>
-                </Tooltip>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    return renderServiceTable({
+      data: rates,
+      dataTestId: 'service-insights-rates-table',
+      emptyTitle: 'Error Rates not available',
+      emptyMessage: 'No HTTP traffic or health cache is disabled',
+      columnTitle: 'Errors',
+      keyPrefix: 'rate',
+      renderValueCell: svc => (
+        <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+            {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
+          </span>
+        </Tooltip>
+      )
+    });
   };
 
   const renderTrafficTable = (): React.ReactNode => {
-    if (traffic.length === 0) {
-      return (
-        <div className={emptyStateStyle}>
-          <div>{t('TCP traffic not available')}</div>
-          <div>{t('No TCP traffic or TCP metrics are unavailable')}</div>
-        </div>
-      );
-    }
-
-    return (
-      <table className={tableStyle} data-test="service-insights-traffic-table">
-        <colgroup>
-          <col style={{ width: '60%' }} />
-          <col style={{ width: '40%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th className={tableHeaderStyle}>{t('Name')}</th>
-            <th className={tableHeaderStyle}>
-              <span>{t('Throughput')}</span>
-              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {traffic.map((svc, idx) => (
-            <tr key={`traffic-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
-              <td className={tableCellStyle}>
-                <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
-                  <Link to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
-                    {svc.serviceName}
-                  </Link>
-                </Tooltip>
-              </td>
-              <td className={rateCellStyle}>
-                <Tooltip content={formatByteRate(svc.tcpRate ?? 0)} position={TooltipPosition.top}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                    {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
-                    {formatByteRate(svc.tcpRate ?? 0)}
-                  </span>
-                </Tooltip>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+    return renderServiceTable({
+      data: traffic,
+      dataTestId: 'service-insights-traffic-table',
+      emptyTitle: 'TCP traffic not available',
+      emptyMessage: 'No TCP traffic or TCP metrics are unavailable',
+      columnTitle: 'Throughput',
+      keyPrefix: 'traffic',
+      renderValueCell: svc => (
+        <Tooltip content={formatByteRate(svc.tcpRate ?? 0)} position={TooltipPosition.top}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+            {formatByteRate(svc.tcpRate ?? 0)}
+          </span>
+        </Tooltip>
+      )
+    });
   };
 
   const effectiveMetrics = React.useMemo(() => {
@@ -653,7 +618,7 @@ export const ServiceInsights: React.FC = () => {
       >
         <p style={{ marginTop: 0 }}>
           {t(
-            'Select de metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
+            'Select the metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
           )}
         </p>
 
@@ -668,7 +633,7 @@ export const ServiceInsights: React.FC = () => {
               />
               <Checkbox
                 id="service-insights-metrics-latency"
-                label={t('latency')}
+                label={t('Latency')}
                 isChecked={draftMetrics.latency}
                 onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, latency: checked }))}
               />
