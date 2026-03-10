@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Kiali CI"]
     types:
-      - completed
+    - completed
 
 jobs:
   merge-reports:
@@ -24,7 +24,7 @@ jobs:
     - name: Setup Node.js for merging reports
       uses: actions/setup-node@v6
       with:
-        node-version: "20"
+        node-version: "24"
 
     - name: Merge frontend core reports
       continue-on-error: true
