@@ -6,7 +6,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/spf13/cobra"
 	"go.uber.org/automaxprocs/maxprocs"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -78,6 +80,27 @@ Complete documentation is available at http://kiali.io/docs/.`,
 			defer undo()
 			if err != nil {
 				return fmt.Errorf("failed to set maxprocs: %v", err)
+			}
+			log.Infof("GOMAXPROCS automatically set to [%d]", runtime.GOMAXPROCS(0))
+
+			// Automatically set GOMEMLIMIT to the library's default ratio of the container cgroup memory limit (falls back to system memory).
+			// This prevents OOM kills by making the Go GC aware of the real memory ceiling.
+			// To override the ratio, set the AUTOMEMLIMIT env var (e.g. AUTOMEMLIMIT=0.8). To disable entirely,
+			// set AUTOMEMLIMIT=off or set GOMEMLIMIT directly.
+			// Both can be configured via the Kiali CR or Helm chart's deployment.custom_envs field.
+			if limit, err := memlimit.SetGoMemLimitWithOpts(
+				memlimit.WithProvider(
+					memlimit.ApplyFallback(
+						memlimit.FromCgroup,
+						memlimit.FromSystem,
+					),
+				),
+			); err != nil {
+				log.Warningf("Failed to set GOMEMLIMIT automatically: %v", err)
+			} else if limit > 0 {
+				log.Infof("GOMEMLIMIT automatically set to [%.1f] MiB ([%d] bytes)", float64(limit)/1024/1024, limit)
+			} else {
+				log.Debugf("GOMEMLIMIT was not changed (already set, no limit detected, or disabled via AUTOMEMLIMIT=off)")
 			}
 
 			// Ensure config resources are cleaned up when function exits
