@@ -75,7 +75,7 @@ jobs:
       with:
         ref: ${{ inputs.release_branch }}
     - name: Login to Quay.io
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: quay.io
         username: ${{ secrets.QUAY_USER }}
@@ -105,7 +105,7 @@ jobs:
       with:
         ref: ${{ inputs.release_branch }}
     - name: Login to Quay.io
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: quay.io
         username: ${{ secrets.QUAY_USER }}
