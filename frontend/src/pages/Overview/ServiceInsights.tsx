@@ -5,6 +5,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Checkbox,
+  Form,
+  FormGroup,
   Popover,
   PopoverPosition,
   Tooltip,
@@ -12,6 +15,9 @@ import {
 } from '@patternfly/react-core';
 import { LongArrowAltDownIcon } from '@patternfly/react-icons';
 import type { TOptions } from 'i18next';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
+import { Link } from 'react-router-dom-v5-compat';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
@@ -34,7 +40,7 @@ import { helpIconStyle } from 'styles/IconStyle';
 
 const tablesContainer3ColStyle = kialiStyle({
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))',
   gap: '1.5rem',
   alignItems: 'start',
   overflowX: 'auto'
@@ -45,6 +51,27 @@ const tablesContainer1ColStyle = kialiStyle({
   gridTemplateColumns: 'minmax(0, 1fr)',
   gap: '1.5rem',
   alignItems: 'start'
+});
+
+const cardHeaderTitleLayoutStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
+  gap: '0.5rem'
+});
+
+const cardHeaderTitleLeftStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  minWidth: 0
+});
+
+const cardHeaderTitleActionsStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.25rem'
 });
 
 const tableContainerStyle = kialiStyle({
@@ -212,6 +239,36 @@ export const ServiceInsights: React.FC = () => {
   const [hasWaypoints, setHasWaypoints] = React.useState<boolean | undefined>(undefined);
   const [isError, setIsError] = React.useState(false);
 
+  const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
+  const [hasCustomizedMetrics, setHasCustomizedMetrics] = React.useState(false);
+  const [selectedMetrics, setSelectedMetrics] = React.useState<{ errorRates: boolean; latency: boolean; tcp: boolean }>(
+    {
+      errorRates: true,
+      latency: true,
+      tcp: false
+    }
+  );
+  const [draftMetrics, setDraftMetrics] = React.useState(selectedMetrics);
+
+  const isAmbientOnlyWithoutWaypoints = React.useMemo((): boolean => {
+    return allNamespacesAmbient && hasWaypoints === false;
+  }, [allNamespacesAmbient, hasWaypoints]);
+
+  React.useEffect(() => {
+    if (hasCustomizedMetrics) {
+      return;
+    }
+
+    // Default behavior:
+    // - Non-ambient (or ambient w/ waypoints): show Errors + Latency by default.
+    // - Ambient-only without waypoints: show Throughput by default.
+    setSelectedMetrics(
+      isAmbientOnlyWithoutWaypoints
+        ? { errorRates: false, latency: false, tcp: true }
+        : { errorRates: true, latency: true, tcp: false }
+    );
+  }, [hasCustomizedMetrics, isAmbientOnlyWithoutWaypoints]);
+
   const buildServicesListUrl = React.useCallback((): string => {
     const params = new URLSearchParams();
     if (allNamespaceNames.length > 0) {
@@ -224,21 +281,65 @@ export const ServiceInsights: React.FC = () => {
     return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
   }, [allNamespaceNames]);
 
+  const navigateToUrl = React.useCallback((url: string): void => {
+    FilterSelected.resetFilters();
+    router.navigate(url);
+  }, []);
+
+  const onOpenManageColumns = React.useCallback((): void => {
+    setDraftMetrics(selectedMetrics);
+    setIsManageColumnsOpen(true);
+  }, [selectedMetrics]);
+
+  const onCancelManageColumns = React.useCallback((): void => {
+    setIsManageColumnsOpen(false);
+  }, []);
+
+  const onSaveManageColumns = React.useCallback((): void => {
+    setSelectedMetrics(draftMetrics);
+    setHasCustomizedMetrics(true);
+    setIsManageColumnsOpen(false);
+  }, [draftMetrics]);
+
   const fetchData = React.useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
       setIsError(false);
 
-      const [latenciesResponse, ratesResponse, trafficResponse] = await Promise.all([
+      const [latenciesResult, ratesResult, trafficResult] = await Promise.allSettled([
         API.getOverviewServiceLatencies(),
         API.getOverviewServiceRates(),
         API.getOverviewServiceTraffic()
       ]);
 
-      setLatencies(latenciesResponse.data.services || []);
-      setRates(ratesResponse.data.services || []);
-      setTraffic(trafficResponse.data.services || []);
-      setHasWaypoints(trafficResponse.data.hasWaypoints);
+      let anySuccess = false;
+
+      if (latenciesResult.status === 'fulfilled') {
+        setLatencies(latenciesResult.value.data.services || []);
+        anySuccess = true;
+      } else {
+        setLatencies([]);
+      }
+
+      if (ratesResult.status === 'fulfilled') {
+        setRates(ratesResult.value.data.services || []);
+        anySuccess = true;
+      } else {
+        setRates([]);
+      }
+
+      if (trafficResult.status === 'fulfilled') {
+        setTraffic(trafficResult.value.data.services || []);
+        setHasWaypoints(trafficResult.value.data.hasWaypoints);
+        anySuccess = true;
+      } else {
+        setTraffic([]);
+        setHasWaypoints(undefined);
+      }
+
+      if (!anySuccess) {
+        setIsError(true);
+      }
     } catch (err) {
       setIsError(true);
       // eslint-disable-next-line no-console
@@ -366,9 +467,7 @@ export const ServiceInsights: React.FC = () => {
   };
 
   const renderTrafficTable = (): React.ReactNode => {
-    const servicesWithTraffic = traffic.filter(svc => (svc.tcpRate ?? 0) > 0);
-
-    if (servicesWithTraffic.length === 0) {
+    if (traffic.length === 0) {
       return (
         <div className={emptyStateStyle}>
           <div>{t('TCP traffic not available')}</div>
@@ -387,13 +486,13 @@ export const ServiceInsights: React.FC = () => {
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle}>
-              <span>{t('TCP')}</span>
+              <span>{t('Throughput')}</span>
               <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {servicesWithTraffic.map((svc, idx) => (
+          {traffic.map((svc, idx) => (
             <tr key={`traffic-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
               <td className={tableCellStyle}>
                 <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
@@ -426,23 +525,37 @@ export const ServiceInsights: React.FC = () => {
       return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
 
-    // In ambient-only setups without waypoints, HTTP-focused metrics (error rate/latency) are typically unavailable.
-    // We use explicit waypoint detection (instead of checking for empty data) to avoid false negatives (e.g. gateways only).
-    const showOnlyTcpTable = allNamespacesAmbient && hasWaypoints === false;
+    const effectiveMetrics = {
+      errorRates: selectedMetrics.errorRates,
+      latency: selectedMetrics.latency,
+      tcp: selectedMetrics.tcp
+    };
+    const visibleTablesCount =
+      Number(effectiveMetrics.errorRates) + Number(effectiveMetrics.latency) + Number(effectiveMetrics.tcp);
+
+    if (!effectiveMetrics.errorRates && !effectiveMetrics.latency && !effectiveMetrics.tcp) {
+      return (
+        <div className={emptyStateStyle}>
+          <div>{t('No metrics selected')}</div>
+        </div>
+      );
+    }
 
     return (
-      <div className={showOnlyTcpTable ? tablesContainer1ColStyle : tablesContainer3ColStyle}>
-        <div className={tableContainerStyle} data-test="service-insights-traffic">
-          {renderTrafficTable()}
-        </div>
-        {!showOnlyTcpTable && (
+      <div className={visibleTablesCount === 1 ? tablesContainer1ColStyle : tablesContainer3ColStyle}>
+        {effectiveMetrics.errorRates && (
           <div className={tableContainerStyle} data-test="service-insights-rates">
             {renderRatesTable()}
           </div>
         )}
-        {!showOnlyTcpTable && (
+        {effectiveMetrics.latency && (
           <div className={tableContainerStyle} data-test="service-insights-latencies">
             {renderLatenciesTable()}
+          </div>
+        )}
+        {effectiveMetrics.tcp && (
+          <div className={tableContainerStyle} data-test="service-insights-traffic">
+            {renderTrafficTable()}
           </div>
         )}
       </div>
@@ -453,21 +566,36 @@ export const ServiceInsights: React.FC = () => {
     <Card className={cardStyle} data-test="service-insights-card">
       <CardHeader>
         <CardTitle>
-          <span>{t('Service Insights')}</span>
-          <Popover
-            aria-label={t('Service insights information')}
-            headerContent={<span>{t('Service Insights')}</span>}
-            bodyContent={
-              <>
-                {t(
-                  'Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.'
-                )}
-              </>
-            }
-            position={PopoverPosition.top}
-          >
-            <KialiIcon.Help className={helpIconStyle} />
-          </Popover>
+          <div className={cardHeaderTitleLayoutStyle}>
+            <div className={cardHeaderTitleLeftStyle}>
+              <span>{t('Service Insights')}</span>
+              <Popover
+                aria-label={t('Service insights information')}
+                headerContent={<span>{t('Service Insights')}</span>}
+                bodyContent={
+                  <>
+                    {t(
+                      'Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.'
+                    )}
+                  </>
+                }
+                position={PopoverPosition.top}
+                triggerAction="hover"
+              >
+                <KialiIcon.Help className={helpIconStyle} />
+              </Popover>
+            </div>
+
+            <div className={cardHeaderTitleActionsStyle}>
+              <Button
+                data-test="service-insights-manage-columns"
+                variant="plain"
+                aria-label={t('Manage columns')}
+                icon={<CogIcon />}
+                onClick={onOpenManageColumns}
+              />
+            </div>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
@@ -482,6 +610,60 @@ export const ServiceInsights: React.FC = () => {
           </KialiLink>
         </CardFooter>
       )}
+
+      <Modal
+        id="service-insights-manage-columns-modal"
+        data-test="service-insights-manage-columns-modal"
+        aria-label={t('Manage columns')}
+        title={t('Manage columns')}
+        variant={ModalVariant.small}
+        isOpen={isManageColumnsOpen}
+        onClose={onCancelManageColumns}
+        actions={[
+          <Button
+            key="save"
+            variant="primary"
+            onClick={onSaveManageColumns}
+            isDisabled={!draftMetrics.errorRates && !draftMetrics.latency && !draftMetrics.tcp}
+          >
+            {t('Save')}
+          </Button>,
+          <Button key="cancel" variant="link" onClick={onCancelManageColumns}>
+            {t('Cancel')}
+          </Button>
+        ]}
+      >
+        <p style={{ marginTop: 0 }}>
+          {t(
+            'Select de metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
+          )}
+        </p>
+
+        <Form style={{ marginTop: '1rem' }}>
+          <FormGroup label={t('Metrics')} fieldId="service-insights-metrics-checkboxes">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Checkbox
+                id="service-insights-metrics-error-rates"
+                label={t('Error rates')}
+                isChecked={draftMetrics.errorRates}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, errorRates: checked }))}
+              />
+              <Checkbox
+                id="service-insights-metrics-latency"
+                label={t('latency')}
+                isChecked={draftMetrics.latency}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, latency: checked }))}
+              />
+              <Checkbox
+                id="service-insights-metrics-tcp"
+                label={t('Throughput')}
+                isChecked={draftMetrics.tcp}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, tcp: checked }))}
+              />
+            </div>
+          </FormGroup>
+        </Form>
+      </Modal>
     </Card>
   );
 };
