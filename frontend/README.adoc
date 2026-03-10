@@ -15,7 +15,7 @@ A UI for the Kiali Istio Observability Project
 git clone https://github.com/kiali/kiali.git
 cd kiali/frontend
 
-# Enable corepack to install yarn (ships with Node.js)
+# Enable corepack to use yarn (ships with Node.js)
 corepack enable
 
 # Install kiali-ui dependencies
