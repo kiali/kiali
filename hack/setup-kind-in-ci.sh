@@ -173,10 +173,9 @@ TEMPO="${TEMPO:-false}"
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
 
-# If a specific version of Istio hasn't been provided, try and guess the right one
-# based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
-# https://kiali.io/docs/installation/installation-guide/prerequisites/
-# https://istio.io/latest/docs/releases/supported-releases/
+# If a specific version of Istio hasn't been provided, set it from the Kiali branch (see compatibility matrices).
+# When using Sail, install-istio-via-sail.sh will pin the Sail chart and map unsupported patch versions
+# (e.g. 1.26.8) to a CRD-supported value (e.g. v1.26-latest).
 if [ -z "${ISTIO_VERSION}" ]; then
   if [ "${TARGET_BRANCH}" == "v1.73" ]; then
     ISTIO_VERSION="1.18.7"
@@ -191,13 +190,16 @@ if [ -z "${ISTIO_VERSION}" ]; then
   fi
 fi
 
+# Export so child processes (e.g. install-istio-via-sail.sh) see it for Sail chart pinning and Gateway API version.
+export ISTIO_VERSION
+
 # Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
 if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
   echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
 fi
 
 KIND_NODE_IMAGE=""
-if [ "${ISTIO_VERSION}" == 1.18.* ]; then
+if [[ "${ISTIO_VERSION}" == 1.18.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
 elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
