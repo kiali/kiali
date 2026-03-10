@@ -5,6 +5,7 @@ const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
 const CLUSTERS_API_URL = '**/api/istio/status*';
 const SERVICE_LATENCIES_API_PATHNAME = '**/api/overview/metrics/services/latency';
 const SERVICE_RATES_API_PATHNAME = '**/api/overview/metrics/services/rates';
+const SERVICE_TRAFFIC_API_PATHNAME = '**/api/overview/metrics/services/traffic';
 
 let didAppsCardRetry = false;
 let didServiceInsightsRetry = false;
@@ -435,6 +436,7 @@ Given('Service insights APIs are observed', () => {
   didServiceInsightsRetry = false;
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME }).as('serviceTraffic');
 });
 
 // this is specifically to mock the serviceRates API because when cache is disabled (by default for cypress)
@@ -443,6 +445,7 @@ Given('Service insights mock APIs are observed', () => {
   didServiceInsightsRetry = false;
   // no need at this time to mock the latencies
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatenciesMock');
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME }).as('serviceTrafficMock');
   cy.intercept(
     { method: 'GET', pathname: SERVICE_RATES_API_PATHNAME },
     {
@@ -484,6 +487,12 @@ Given('Service insights APIs respond slowly', () => {
       res.delay = 2000;
     });
   }).as('serviceRates');
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME }, req => {
+    req.continue(res => {
+      res.delay = 2000;
+    });
+  }).as('serviceTraffic');
 });
 
 Given('Service insights APIs fail', () => {
@@ -494,6 +503,9 @@ Given('Service insights APIs fail', () => {
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }, { statusCode: 500, body: {} }).as(
     'serviceRates'
   );
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME }, { statusCode: 500, body: {} }).as(
+    'serviceTraffic'
+  );
 });
 
 Given('Service insights APIs fail once', () => {
@@ -503,6 +515,7 @@ Given('Service insights APIs fail once', () => {
   // Observe subsequent (retry) calls without modifying them.
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME }).as('serviceTraffic');
 
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
     'serviceLatenciesFailOnce'
@@ -510,6 +523,10 @@ Given('Service insights APIs fail once', () => {
 
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
     'serviceRatesFailOnce'
+  );
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_TRAFFIC_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
+    'serviceTrafficFailOnce'
   );
 });
 
@@ -524,9 +541,11 @@ Then('Service insights card shows error state without tables or footer link', ()
   if (shouldWaitServiceInsightsRetry) {
     cy.wait('@serviceLatenciesFailOnce');
     cy.wait('@serviceRatesFailOnce');
+    cy.wait('@serviceTrafficFailOnce');
   } else {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceTraffic');
   }
 
   getServiceInsightsCard().within(() => {
@@ -544,6 +563,7 @@ When('user clicks Try Again in Service insights card', () => {
   if (shouldWaitServiceInsightsRetry) {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceTraffic');
     didServiceInsightsRetry = true;
     shouldWaitServiceInsightsRetry = false;
   }
@@ -554,6 +574,7 @@ Then('Service insights card shows data tables and footer link', () => {
   if (!didServiceInsightsRetry) {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceTraffic');
   }
 
   getServiceInsightsCard().within(() => {
@@ -592,6 +613,7 @@ Then('Service insights card shows data tables and footer link', () => {
 Then('Service insights card shows mock data tables', () => {
   cy.wait('@serviceLatenciesMock');
   cy.wait('@serviceRatesMock');
+  cy.wait('@serviceTrafficMock');
 
   getServiceInsightsCard().within(() => {
     cy.contains('Fetching service data').should('not.exist');
@@ -624,6 +646,7 @@ Then('Service insights card shows mock data tables', () => {
 When('user clicks View all services in Service insights card', () => {
   cy.wait('@serviceLatencies');
   cy.wait('@serviceRates');
+  cy.wait('@serviceTraffic');
 
   getServiceInsightsCard().within(() => {
     cy.getBySel('service-insights-view-all-services').should('be.visible').click();
