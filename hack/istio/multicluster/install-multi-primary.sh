@@ -173,15 +173,13 @@ fi
 source ${SCRIPT_DIR}/setup-ca.sh
 
 if [ "${AMBIENT}" == "true" ]; then
+ ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
+ ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
  if [ "${CLUSTER2_AMBIENT}" == "true" ]; then
     echo "==== Installing Istio Ambient on both clusters (default behavior)"
-    ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
-    ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
-    install_ambient_multicluster
+    install_ambient_multicluster "${SAIL}"
   else
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
-    ensure_gateway_api_crds "" "--context=${CLUSTER1_CONTEXT}"
-    ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
 
     # Setup Istio environment (needed for install_ambient_on_cluster)
     HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
@@ -189,7 +187,7 @@ if [ "${AMBIENT}" == "true" ]; then
 
     # Install ambient on cluster 1 (east)
     echo "==== INSTALL ISTIO AMBIENT ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
-    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}"
+    install_ambient_on_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}" "${CLUSTER1_NAME}" "${NETWORK1_ID}" "${SAIL}"
 
     # Install regular Istio on cluster 2 (west)
     MC_WEST_YAML=$(mktemp)

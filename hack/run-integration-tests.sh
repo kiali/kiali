@@ -12,6 +12,7 @@ BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 BOOKINFO_ONLY="false"
 CLUSTER_TYPE="kind"
 CLUSTER2_AMBIENT="true"
+SAIL=""
 FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_CORE_1="frontend-core-1"
@@ -28,6 +29,10 @@ HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
+SAIL_OPERATOR_CHART_VERSION=""
+SAIL_OPERATOR_GIT_REF=""
+SAIL_OPERATOR_GIT_REPO=""
+SAIL_OPERATOR_HELM_REPO=""
 SETUP_ONLY="false"
 STERN="false"
 TEMPO="false"
@@ -92,12 +97,36 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
+    -s|--sail)
+      SAIL="${2}"
+      if [ "${SAIL}" != "true" -a "${SAIL}" != "false" ]; then
+        echo "--sail option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     -st|--stern)
       STERN="${2}"
       if [ "${STERN}" != "true" -a "${STERN}" != "false" ]; then
         echo "--stern option must be one of 'true' or 'false'"
         exit 1
       fi
+      shift;shift
+      ;;
+    --sail-operator-chart-version)
+      SAIL_OPERATOR_CHART_VERSION="${2}"
+      shift;shift
+      ;;
+    --sail-operator-git-ref)
+      SAIL_OPERATOR_GIT_REF="${2}"
+      shift;shift
+      ;;
+    --sail-operator-git-repo)
+      SAIL_OPERATOR_GIT_REPO="${2}"
+      shift;shift
+      ;;
+    --sail-operator-helm-repo)
+      SAIL_OPERATOR_HELM_REPO="${2}"
       shift;shift
       ;;
     -t|--tempo)
@@ -166,9 +195,27 @@ Valid command line arguments:
   -so|--setup-only <true|false>
     If true, only setup the test environment and exit without running the tests.
     Default: false
+  -s|--sail <true|false>
+    If true, install Istio using Sail (default for multicluster scripts).
+    If false, install Istio using istioctl where supported.
+    Default: unset (suite-dependent; for frontend-multi-primary ambient, Sail remains the default unless you pass false)
   -st|--stern <true|false>
     If true, will setup stern logging binary.
     Default: false
+  --sail-operator-chart-version <version>
+    Sail Operator Helm chart version to install (useful for RCs if published in the chart repo).
+    Example: 1.27.0-rc.0
+    Default: <latest>
+  --sail-operator-git-ref <ref>
+    Install Sail Operator Helm chart directly from a git ref (branch or tag), such as 'main'/'master' or an RC tag.
+    Examples: main, master, v1.27.0-rc.0
+    Default: <unset> (install from Helm repo)
+  --sail-operator-git-repo <url>
+    Git repository URL for Sail Operator (used when --sail-operator-git-ref is set).
+    Default: https://github.com/istio-ecosystem/sail-operator.git
+  --sail-operator-helm-repo <url>
+    Helm repository URL where the Sail Operator chart is hosted.
+    Default: https://istio-ecosystem.github.io/sail-operator
   -t|--tempo <true|false>
     If true, Tempo will be installed instead of Jaeger. Just for primary-remote suite
     Default: false
@@ -220,7 +267,12 @@ HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
 KEYCLOAK_REQUESTS_MEMORY=$KEYCLOAK_LIMIT_MEMORY
+SAIL_OPERATOR_CHART_VERSION=$SAIL_OPERATOR_CHART_VERSION
+SAIL_OPERATOR_GIT_REF=$SAIL_OPERATOR_GIT_REF
+SAIL_OPERATOR_GIT_REPO=$SAIL_OPERATOR_GIT_REPO
+SAIL_OPERATOR_HELM_REPO=$SAIL_OPERATOR_HELM_REPO
 SETUP_ONLY=$SETUP_ONLY
+SAIL=$SAIL
 STERN=$STERN
 TESTS_ONLY=$TESTS_ONLY
 TEST_SUITE=$TEST_SUITE
@@ -232,6 +284,23 @@ EOM
 
 set -eo pipefail
 
+#
+# Propagate Sail operator install configuration to all underlying hack scripts.
+# This is required for multicluster flows where Sail install happens deep in nested scripts.
+#
+if [ -n "${SAIL_OPERATOR_CHART_VERSION}" ]; then
+  export SAIL_OPERATOR_CHART_VERSION
+fi
+if [ -n "${SAIL_OPERATOR_GIT_REF}" ]; then
+  export SAIL_OPERATOR_GIT_REF
+fi
+if [ -n "${SAIL_OPERATOR_GIT_REPO}" ]; then
+  export SAIL_OPERATOR_GIT_REPO
+fi
+if [ -n "${SAIL_OPERATOR_HELM_REPO}" ]; then
+  export SAIL_OPERATOR_HELM_REPO
+fi
+
 if [ -n "${ISTIO_VERSION}" ]; then
   ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
 else
@@ -242,6 +311,12 @@ if [ -n "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR_ARG="--helm-charts-dir ${HELM_CHARTS_DIR}"
 else
   HELM_CHARTS_DIR_ARG=""
+fi
+
+if [ -n "${SAIL}" ]; then
+  SAIL_ARG="--sail ${SAIL}"
+else
+  SAIL_ARG=""
 fi
 
 # Install go-junit-report if not already installed
@@ -685,7 +760,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG $WAYPOINT_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy ${AUTH_STRATEGY} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG $AMBIENT_ARG $CLUSTER2_AMBIENT_ARG $WAYPOINT_ARG
   fi
 
   ensureKialiServerReady
