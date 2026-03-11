@@ -78,7 +78,7 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     if (isNA) {
       return 'n/a';
     }
-    return isHealthy ? t('Healthy') : t('Unhealthy');
+    return isHealthy ? t('Healthy') : worstStatus.name;
   };
 
   const buildListUrlForHealth = (targetPage: Paths, statusIds: HealthStatusId[]): string => {
@@ -189,7 +189,7 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
               showClose={true}
               headerContent={
                 <span className={popoverHeaderStyle}>
-                  {createIcon(worstStatus)} {t('Unhealthy')}
+                  {createIcon(worstStatus)} {worstStatus.name}
                 </span>
               }
               bodyContent={

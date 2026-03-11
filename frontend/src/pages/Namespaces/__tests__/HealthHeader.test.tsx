@@ -32,10 +32,22 @@ describe('HealthPopoverBody', () => {
     expect(wrapper.text()).toContain('All components are healthy');
   });
 
-  it('contains Unhealthy status description', () => {
+  it('contains Degraded status description', () => {
     const wrapper = shallow(<HealthPopoverBody />);
-    expect(wrapper.text()).toContain('Unhealthy');
-    expect(wrapper.text()).toContain('One or more components are unhealthy');
+    expect(wrapper.text()).toContain('Degraded');
+    expect(wrapper.text()).toContain('One or more components have warnings');
+  });
+
+  it('contains Failure status description', () => {
+    const wrapper = shallow(<HealthPopoverBody />);
+    expect(wrapper.text()).toContain('Failure');
+    expect(wrapper.text()).toContain('One or more components have errors');
+  });
+
+  it('contains Not Ready status description', () => {
+    const wrapper = shallow(<HealthPopoverBody />);
+    expect(wrapper.text()).toContain('Not Ready');
+    expect(wrapper.text()).toContain('One or more components are not ready');
   });
 
   it('contains n/a status description', () => {

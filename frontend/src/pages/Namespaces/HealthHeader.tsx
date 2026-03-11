@@ -12,8 +12,14 @@ export const HealthPopoverBody: React.FC = () => {
       <div style={{ marginBottom: '0.25rem' }}>
         <strong>{t('Healthy')}</strong>: {t('All components are healthy.')}
       </div>
-      <div>
-        <strong>{t('Unhealthy')}</strong>: {t('One or more components are unhealthy.')}
+      <div style={{ marginBottom: '0.25rem' }}>
+        <strong>{t('Degraded')}</strong>: {t('One or more components have warnings.')}
+      </div>
+      <div style={{ marginBottom: '0.25rem' }}>
+        <strong>{t('Failure')}</strong>: {t('One or more components have errors.')}
+      </div>
+      <div style={{ marginBottom: '0.25rem' }}>
+        <strong>{t('Not Ready')}</strong>: {t('One or more components are not ready.')}
       </div>
       <div>
         <strong>{'n/a'}</strong>: {t('No components available to monitor.')}
