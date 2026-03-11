@@ -104,17 +104,15 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
     return API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
-        this.setState(
-          {
-            app: details.data,
-            health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
-              rateInterval: this.props.duration,
-              hasSidecar: details.data.workloads.some(w => w.istioSidecar),
-              hasAmbient: details.data.workloads.some(w => w.isAmbient)
-            }),
-            isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
-          }          
-        );
+        this.setState({
+          app: details.data,
+          health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
+            rateInterval: this.props.duration,
+            hasSidecar: details.data.workloads.some(w => w.istioSidecar),
+            hasAmbient: details.data.workloads.some(w => w.isAmbient)
+          }),
+          isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
+        });
       })
       .catch(error => {
         addError('Could not fetch App Details.', error);

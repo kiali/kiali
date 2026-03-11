@@ -38,15 +38,20 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
 }) => {
   const { pathname } = useLocation();
   const conversationID = useSelector((state: KialiAppState) => state.aiChat.get('conversationID'));
-  const chatHistory: ImmutableList<ImmutableMap<string, unknown>> = useSelector((state: KialiAppState) => state.aiChat.get('chatHistory'));
+  const chatHistory: ImmutableList<ImmutableMap<string, unknown>> = useSelector((state: KialiAppState) =>
+    state.aiChat.get('chatHistory')
+  );
   const category = pathname.split('/')[1];
-  const [promptData, setPromptData] = useState<any>(DataPrompts[category] || []);  
-  
-  const scrollIntoView = React.useCallback((behavior = 'smooth') => {
-    defer(() => {
-      chatHistoryEndRef?.current?.scrollIntoView({ behavior: behavior as ScrollBehavior });
-    });
-  }, [chatHistoryEndRef]);
+  const [promptData, setPromptData] = useState<any>(DataPrompts[category] || []);
+
+  const scrollIntoView = React.useCallback(
+    (behavior = 'smooth') => {
+      defer(() => {
+        chatHistoryEndRef?.current?.scrollIntoView({ behavior: behavior as ScrollBehavior });
+      });
+    },
+    [chatHistoryEndRef]
+  );
   const generatePrompts = React.useCallback((): void => {
     setPromptData(
       (DataPrompts[category] || []).map(prompt => ({
@@ -83,15 +88,13 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             {alertMessage.message}
           </ChatbotAlert>
         )}
-        {chatHistory
-          .map((entry, index) => (
-            <ChatHistoryEntry
-              conversationID={conversationID}
-              entryIndex={index}
-              key={(entry.get('id') as string) ?? index}
-            />
-          ))
-        }
+        {chatHistory.map((entry, index) => (
+          <ChatHistoryEntry
+            conversationID={conversationID}
+            entryIndex={index}
+            key={(entry.get('id') as string) ?? index}
+          />
+        ))}
         <div ref={chatHistoryEndRef} />
       </MessageBox>
     </ChatbotContent>

@@ -173,11 +173,9 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
           this.state.isSortAscending
         );
 
-        this.setState(
-          {
-            listItems: updatedList
-          }
-        );
+        this.setState({
+          listItems: updatedList
+        });
       })
       .catch(istioError => {
         if (!istioError.isCanceled) {

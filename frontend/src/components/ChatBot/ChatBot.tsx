@@ -399,8 +399,13 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 context={props.context}
                 chatHistoryEndRef={chatHistoryEndRef}
               />
-              <ChatBotPrompt setAlertMessage={() => setAlertMessage(undefined)} handleSend={onHandleSend} 
-              provider={selectedProvider.name} model={selectedModel.name} scrollIntoView={scrollIntoView}/>
+              <ChatBotPrompt
+                setAlertMessage={() => setAlertMessage(undefined)}
+                handleSend={onHandleSend}
+                provider={selectedProvider.name}
+                model={selectedModel.name}
+                scrollIntoView={scrollIntoView}
+              />
             </>
           }
         />

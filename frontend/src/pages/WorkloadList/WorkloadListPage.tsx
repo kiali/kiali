@@ -198,7 +198,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           listItems: sortedWorkloadsItems,
           loaded: true
         });
-
       })
       .catch(err => {
         if (!err.isCanceled) {

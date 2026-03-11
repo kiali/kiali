@@ -146,12 +146,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       this.props.duration
     )
       .then(results => {
-        this.setState(
-          {
-            serviceDetails: results,
-            validations: results.validations
-          }
-        );
+        this.setState({
+          serviceDetails: results,
+          validations: results.validations
+        });
       })
       .catch(error => {
         addError('Could not fetch Service Details.', error);

@@ -129,21 +129,19 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           this.setState({ waypointServiceFilter: details.data.services[0].name });
         }
 
-        this.setState(
-          {
-            workload: details.data,
-            health: WorkloadHealth.fromJson(
-              this.props.workloadId.namespace,
-              this.props.workloadId.workload,
-              details.data.health,
-              {
-                rateInterval: this.props.duration,
-                hasSidecar: details.data.istioSidecar,
-                hasAmbient: details.data.isAmbient
-              }
-            )
-          }           
-        );
+        this.setState({
+          workload: details.data,
+          health: WorkloadHealth.fromJson(
+            this.props.workloadId.namespace,
+            this.props.workloadId.workload,
+            details.data.health,
+            {
+              rateInterval: this.props.duration,
+              hasSidecar: details.data.istioSidecar,
+              hasAmbient: details.data.isAmbient
+            }
+          )
+        });
       })
       .catch(error => {
         addError('Could not fetch Workload.', error);

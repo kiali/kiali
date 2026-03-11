@@ -15,7 +15,7 @@ const ToolLabel: React.FC<ToolProps> = ({ entryIndex, toolID }) => {
   const dispatch = useDispatch();
 
   const tool: ImmutableMap<string, unknown> = useSelector((s: KialiAppState) =>
-    s.aiChat.get('chatHistory').get(entryIndex).get('tools').get(toolID),
+    s.aiChat.get('chatHistory').get(entryIndex).get('tools').get(toolID)
   );
 
   const onClick = React.useCallback(() => {
@@ -42,15 +42,14 @@ type ResponseToolsProps = {
 
 export const ResponseTools: React.FC<ResponseToolsProps> = ({ entryIndex }) => {
   const tools: ImmutableMap<string, ImmutableMap<string, unknown>> = useSelector((s: KialiAppState) =>
-    s.aiChat.get('chatHistory').get(entryIndex).get('tools'),
+    s.aiChat.get('chatHistory').get(entryIndex).get('tools')
   );
 
   return (
     <LabelGroup numLabels={4}>
-      {tools.keySeq().map((toolID) => (
+      {tools.keySeq().map(toolID => (
         <ToolLabel entryIndex={entryIndex} key={toolID} toolID={toolID} />
       ))}
     </LabelGroup>
   );
 };
-

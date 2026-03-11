@@ -10,8 +10,7 @@ import { KialiAppState } from 'store/Store';
 import { chatOpenToolClear } from 'actions/ChatAIActions';
 import { t } from 'utils/I18nUtils';
 
-export const ToolModal: React.FC = () => { 
-
+export const ToolModal: React.FC = () => {
   const dispatch = useDispatch();
 
   const tool: ImmutableMap<string, unknown> = useSelector((s: KialiAppState) => {
@@ -76,13 +75,13 @@ export const ToolModal: React.FC = () => {
         {argsFormatted ? (
           <>
             The following output was generated when running{' '}
-            <span className="kiali-chatbot-plugin__code-inline">{ name }</span> with arguments{' '}
-            <span className="kiali-chatbot-plugin__code-inline">{ argsFormatted }</span>.
+            <span className="kiali-chatbot-plugin__code-inline">{name}</span> with arguments{' '}
+            <span className="kiali-chatbot-plugin__code-inline">{argsFormatted}</span>.
           </>
         ) : (
           <>
             The following output was generated when running{' '}
-            <span className="kiali-chatbot-plugin__code-inline">{ name }</span> with no arguments.
+            <span className="kiali-chatbot-plugin__code-inline">{name}</span> with no arguments.
           </>
         )}
       </p>
@@ -101,12 +100,7 @@ export const ToolModal: React.FC = () => {
           <CodeBlockCode className="kiali-chatbot-plugin__code-block-code">{content}</CodeBlockCode>
         </CodeBlock>
       ) : (
-        <Alert
-          className="kiali-chatbot-plugin__alert"
-          isInline
-          title={t('No output returned')}
-          variant="info"
-        />
+        <Alert className="kiali-chatbot-plugin__alert" isInline title={t('No output returned')} variant="info" />
       )}
     </Modal>
   );

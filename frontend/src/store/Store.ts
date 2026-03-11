@@ -183,7 +183,7 @@ export interface ChatAISettings {
   displayMode: ChatbotDisplayMode;
 }
 
-export type ChatAIState= ImmutableMap<string, any>;
+export type ChatAIState = ImmutableMap<string, any>;
 
 // This defines the Kiali Global Application State
 export interface KialiAppState {

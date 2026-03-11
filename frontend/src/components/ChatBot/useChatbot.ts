@@ -130,7 +130,11 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
 
   const botMessage = (response: ChatResponse | string): ExtendedMessage => {
     const rawContent =
-      typeof response === 'object' ? (typeof response.data.response === 'string' ? response.data.response : '') : response;
+      typeof response === 'object'
+        ? typeof response.data.response === 'string'
+          ? response.data.response
+          : ''
+        : response;
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
     const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
     const content = isMockApi ? safeContent : escapeHtml(safeContent);
@@ -168,7 +172,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       setValidated('error');
       return;
     }
-    
+
     const userMessage: ExtendedMessage = {
       role: 'user',
       content: prompt ? prompt : query.toString(),
@@ -178,7 +182,6 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       referenced_documents: []
     };
     addMessage(userMessage);
-
 
     let nextConversationId = conversationId ?? undefined;
     if (!nextConversationId) {
@@ -203,30 +206,29 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
         references: [],
         text: '',
         tools: ImmutableMap(),
-        who: 'ai',
-      }),
-    );   
+        who: 'ai'
+      })
+    );
 
     try {
       const resp = await API.postChatAI(selectedProvider.name, selectedModel.name, chatRequest);
 
-      console.log("resp", resp);
+      console.log('resp', resp);
       if (resp.status === 200) {
         const reader = resp.body?.getReader();
-        if (!reader) throw new Error("No readable stream");
+        if (!reader) throw new Error('No readable stream');
         const decoder = new TextDecoder();
         let responseText = '';
 
         const dispatchTokens = throttle(
           () => dispatch(chatHistoryUpdateByID({ id: chatEntryID, entry: { text: responseText } })),
           100,
-          { leading: false, trailing: true },
+          { leading: false, trailing: true }
         );
-         // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
+        // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
         let buffer = '';
 
-
-        while(true){
+        while (true) {
           const { value, done } = await reader.read();
           if (done) {
             break;
@@ -239,66 +241,72 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
           // string as the last element, so we just hold an empty buffer and process all lines.
           buffer = lines.pop() ?? '';
           lines
-          .filter((s) => s.startsWith('data: '))
-          .forEach((s) => {
-            const line = s.slice(5).trim();
-            let json;
-            try {
-              json = JSON.parse(line);
-            } catch (parseError) {
-              // eslint-disable-next-line no-console
-              console.error(`Failed to parse JSON string "${line}"`, parseError);
-            }
-            if (json && json.event && json.data) {
-              if (json.event === 'start') {
-                setConversationId(json.data.conversation_id);
-                console.log("start event");
-              } else if (json.event === 'token') {
-                responseText += json.data.token;
-                dispatchTokens();
-              } else if (json.event === 'end') {
-                dispatchTokens.flush();
-                dispatch(
-                  chatHistoryUpdateByID({ id: chatEntryID, entry: {
-                    isStreaming: false,
-                    isTruncated: json.data.truncated === true,
-                    references: json.data.referenced_documents,
-                  }}),
-                );
-              } else if (json.event === 'tool_call') {
-                const { args, id, name: toolName } = json.data;
-                dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { name: toolName, args } }));
-              } else if (json.event === 'tool_result') {
-                const { content, id, status } = json.data;
-                dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { content, status } }));
-              } else if (json.event === 'error') {
-                dispatchTokens.flush();
-                dispatch(
-                  chatHistoryUpdateByID({ id: chatEntryID, entry: {
-                    error: {
-                      message: json.data.detail,
-                      response: resp,
-                    },
-                    isStreaming: false,
-                  }}),
-                );
-              } else {
-                console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
+            .filter(s => s.startsWith('data: '))
+            .forEach(s => {
+              const line = s.slice(5).trim();
+              let json;
+              try {
+                json = JSON.parse(line);
+              } catch (parseError) {
+                // eslint-disable-next-line no-console
+                console.error(`Failed to parse JSON string "${line}"`, parseError);
               }
-            }
-          });
-        }      
+              if (json && json.event && json.data) {
+                if (json.event === 'start') {
+                  setConversationId(json.data.conversation_id);
+                  console.log('start event');
+                } else if (json.event === 'token') {
+                  responseText += json.data.token;
+                  dispatchTokens();
+                } else if (json.event === 'end') {
+                  dispatchTokens.flush();
+                  dispatch(
+                    chatHistoryUpdateByID({
+                      id: chatEntryID,
+                      entry: {
+                        isStreaming: false,
+                        isTruncated: json.data.truncated === true,
+                        references: json.data.referenced_documents
+                      }
+                    })
+                  );
+                } else if (json.event === 'tool_call') {
+                  const { args, id, name: toolName } = json.data;
+                  dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { name: toolName, args } }));
+                } else if (json.event === 'tool_result') {
+                  const { content, id, status } = json.data;
+                  dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { content, status } }));
+                } else if (json.event === 'error') {
+                  dispatchTokens.flush();
+                  dispatch(
+                    chatHistoryUpdateByID({
+                      id: chatEntryID,
+                      entry: {
+                        error: {
+                          message: json.data.detail,
+                          response: resp
+                        },
+                        isStreaming: false
+                      }
+                    })
+                  );
+                } else {
+                  console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
+                }
+              }
+            });
+        }
       } else {
-        console.error("Error in handleSend:", resp.statusText);
-      }    
+        console.error('Error in handleSend:', resp.statusText);
+      }
     } catch (error) {
-      console.error("Error in handleSend:", error);
+      console.error('Error in handleSend:', error);
       setIsLoading(false);
       setIsStreaming(false);
       setAlertMessage({
-        title: "Error",
-        message: "An error occurred while sending the message",
-        variant: "danger"
+        title: 'Error',
+        message: 'An error occurred while sending the message',
+        variant: 'danger'
       });
     }
   };
@@ -326,7 +334,6 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     query,
     setQuery,
     isStreaming,
-    setIsStreaming,
-    
+    setIsStreaming
   };
 };

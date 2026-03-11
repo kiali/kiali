@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Modal as PatternflyModal, ModalHeader, ModalBody} from '@patternfly/react-core';
+import { Modal as PatternflyModal, ModalHeader, ModalBody } from '@patternfly/react-core';
 
 type Props = {
   children: React.ReactNode;
@@ -16,8 +16,6 @@ export const Modal: React.FC<Props> = ({ children, className, isOpen, onClose, t
     onClose={onClose}
   >
     <ModalHeader title={title} />
-    <ModalBody>
-        {children}
-    </ModalBody>
+    <ModalBody>{children}</ModalBody>
   </PatternflyModal>
 );
