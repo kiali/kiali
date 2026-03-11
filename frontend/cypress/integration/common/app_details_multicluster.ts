@@ -6,7 +6,6 @@ import { Visualization } from '@patternfly/react-topology';
 import { NodeType } from 'types/Graph';
 import { elems } from 'helpers/GraphHelpers';
 import { nodeInfo } from './graph';
-import { GraphDataSource } from 'services/GraphDataSource';
 
 Then('user sees details information for the remote {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -25,18 +24,11 @@ Then(
 
     openTab(`${metrics} Metrics`);
     cy.wait('@fetchMetrics');
-    cy.waitForReact();
 
-    cy.getReact('IstioMetricsComponent', { props: { 'data-test': `${metrics.toLowerCase()}-metrics-component` } })
-      // HOCs can match the component name. This filters the HOCs for just the bare component.
-      .then(
-        (metricsComponents: any) =>
-          metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
-      )
-      .getCurrentState()
-      .then(state => {
-        cy.wrap(state.dashboard).should('not.be.empty');
-      });
+    // Charts render only when dashboard data is loaded. The metrics component does not forward
+    // data-test to the DOM; with unmountOnExit only this tab's content is mounted, so we assert
+    // on chart presence directly.
+    cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
   }
 );
 
