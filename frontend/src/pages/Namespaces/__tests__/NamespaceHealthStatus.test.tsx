@@ -47,7 +47,7 @@ describe('NamespaceHealthStatus', () => {
     expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeFalsy();
   });
 
-  it('renders Unhealthy when there are errors', () => {
+  it('renders Failure when there are errors', () => {
     const statusApp: NamespaceStatus = {
       inError: ['app1'],
       inWarning: [],
@@ -62,12 +62,12 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('Failure');
     expect(wrapper.text()).toContain('1 issue');
     expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeTruthy();
   });
 
-  it('renders Unhealthy when there are warnings', () => {
+  it('renders Degraded when there are warnings', () => {
     const statusApp: NamespaceStatus = {
       inError: [],
       inWarning: ['app1'],
@@ -82,7 +82,7 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('Degraded');
     expect(wrapper.text()).toContain('1 issue');
   });
 
@@ -102,7 +102,9 @@ describe('NamespaceHealthStatus', () => {
     );
 
     expect(wrapper.text()).toContain('n/a');
-    expect(wrapper.text()).not.toContain('Unhealthy');
+    expect(wrapper.text()).not.toContain('Failure');
+    expect(wrapper.text()).not.toContain('Degraded');
+    expect(wrapper.text()).not.toContain('Not Ready');
     expect(wrapper.text()).not.toContain('Healthy');
     expect(wrapper.text()).not.toContain('issue');
   });
@@ -145,12 +147,14 @@ describe('NamespaceHealthStatus', () => {
     );
 
     expect(wrapper.text()).toContain('n/a');
-    expect(wrapper.text()).not.toContain('Unhealthy');
+    expect(wrapper.text()).not.toContain('Failure');
+    expect(wrapper.text()).not.toContain('Degraded');
+    expect(wrapper.text()).not.toContain('Not Ready');
     expect(wrapper.text()).not.toContain('Healthy');
     expect(wrapper.text()).not.toContain('issue');
   });
 
-  it('renders Unhealthy when there are errors even if notAvailable items exist', () => {
+  it('renders Failure when there are errors even if notAvailable items exist', () => {
     const statusApp: NamespaceStatus = {
       inError: ['app1'],
       inWarning: [],
@@ -165,7 +169,7 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('Failure');
     expect(wrapper.text()).not.toContain('n/a');
     expect(wrapper.text()).toContain('1 issue');
   });
@@ -209,7 +213,7 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('Failure');
     expect(wrapper.text()).toContain('3 issues');
   });
 
@@ -228,7 +232,7 @@ describe('NamespaceHealthStatus', () => {
       </Provider>
     );
 
-    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('Degraded');
     expect(wrapper.text()).toContain('1 issue');
   });
 });
