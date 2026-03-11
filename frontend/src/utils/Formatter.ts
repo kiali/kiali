@@ -1,9 +1,31 @@
 type D3FormatFunc = (specifier: string) => (n: number | { valueOf(): number }) => string;
 
-export const getUnit = (d3Format: D3FormatFunc, unit: string, val: number) => {
+// Formats a byte rate (bytes/sec) using IEC units (KiB/MiB/GiB) with fixed decimals.
+export const formatByteRateIEC = (bytesPerSec: number, fractionDigits = 2): string => {
+  if (!Number.isFinite(bytesPerSec)) {
+    bytesPerSec = 0;
+  }
+
+  const abs = Math.abs(bytesPerSec);
+  if (abs < 1024) {
+    return `${bytesPerSec.toFixed(fractionDigits)} B/s`;
+  }
+  const kib = bytesPerSec / 1024;
+  if (Math.abs(kib) < 1024) {
+    return `${kib.toFixed(fractionDigits)} KiB/s`;
+  }
+  const mib = kib / 1024;
+  if (Math.abs(mib) < 1024) {
+    return `${mib.toFixed(fractionDigits)} MiB/s`;
+  }
+  const gib = mib / 1024;
+  return `${gib.toFixed(fractionDigits)} GiB/s`;
+};
+
+export const getUnit = (d3Format: D3FormatFunc, unit: string, val: number): string => {
   // Round to dismiss float imprecision
   val = Math.round(val * 10000) / 10000;
-  var unitResult = '';
+  let unitResult = '';
   switch (unit) {
     case 'seconds':
       unitResult = formatSI(d3Format, val, 's', true);
@@ -36,7 +58,7 @@ export const getUnit = (d3Format: D3FormatFunc, unit: string, val: number) => {
   return unitResult.split(' ')[1];
 };
 
-export const getFormatter = (d3Format: D3FormatFunc, unit: string, withUnit: boolean = false) => {
+export const getFormatter = (d3Format: D3FormatFunc, unit: string, withUnit = false) => {
   return (val: number): string => {
     // Round to dismiss float imprecision
     val = Math.round(val * 10000) / 10000;
@@ -82,7 +104,7 @@ const formatData = (
   withUnit: boolean
 ): string => {
   if (Math.abs(val) < threshold) {
-    return val + ' ';
+    return `${val} `;
   }
   let u = -1;
   do {
@@ -90,7 +112,7 @@ const formatData = (
     ++u;
   } while (Math.abs(val) >= threshold && u < units.length - 1);
   const unit = d3Format('~r')(val);
-  return withUnit ? unit + ' ' + units[u] : unit;
+  return withUnit ? `${unit} ${units[u]}` : unit;
 };
 
 const formatSI = (d3Format: D3FormatFunc, val: number, suffix: string, withUnit: boolean): string => {
@@ -104,10 +126,10 @@ const formatSI = (d3Format: D3FormatFunc, val: number, suffix: string, withUnit:
     const c = fmt.charAt(i);
     if (c >= '0' && c <= '9') {
       const res = fmt.substr(0, i + 1);
-      return withUnit ? res + ' ' + si + suffix : res;
+      return withUnit ? `${res} ${si}${suffix}` : res;
     }
     si = c + si;
   }
   // Weird: no number found?
-  return withUnit ? fmt + suffix : fmt;
+  return withUnit ? `${fmt}${suffix}` : fmt;
 };
