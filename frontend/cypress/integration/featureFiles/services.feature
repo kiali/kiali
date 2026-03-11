@@ -140,7 +140,7 @@ Feature: Kiali Services page
     Given a service in the cluster with no traffic
     When user selects the "sleep" namespace
     Then the service should be listed as "na"
-    And the health status of the service should be "No health information"
+    And the health status of the service should be "n/a"
 
   # TODO: offline - no service health
   @error-rates-app
