@@ -28,8 +28,8 @@ import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
-import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
-import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
+import { Button, EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip } from '@patternfly/react-core';
+import { CogIcon, CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
@@ -56,6 +56,8 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
+import { config as virtualListConfig } from '../../components/VirtualList/Config';
+import { ManageColumnsModal, ManagedColumn } from './ManageColumnsModal';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -80,10 +82,12 @@ type State = {
   grafanaLinks: ExternalLink[];
   kind: string;
   loaded: boolean;
+  managedColumns: ManagedColumn[];
   namespaces: NamespaceInfo[];
   nsTarget: string;
   opTarget: string;
   persesLinks: ExternalLink[];
+  showColumnManagement: boolean;
   showTrafficPoliciesModal: boolean;
 };
 
@@ -163,10 +167,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       grafanaLinks: [],
       kind: '',
       loaded: false,
+      managedColumns: this.initManagedColumns(),
       namespaces: [],
       nsTarget: '',
       opTarget: '',
       persesLinks: [],
+      showColumnManagement: false,
       showTrafficPoliciesModal: false
     };
   }
@@ -178,6 +184,21 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       this.load();
     }
   }
+
+  private initManagedColumns = (): ManagedColumn[] => {
+    const columns = virtualListConfig.namespaces.columns
+      .filter(c => c.title && c.title.trim().length > 0)
+      .map(c => {
+        const id = c.title.toLowerCase();
+        return {
+          id,
+          title: c.title,
+          isShown: true,
+          isDisabled: id === 'namespace'
+        } as ManagedColumn;
+      });
+    return columns;
+  };
 
   componentDidUpdate(prevProps: NamespacesProps): void {
     if (
@@ -1053,6 +1074,8 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
       hiddenColumns.push('revision');
     }
+    const userHidden = this.state.managedColumns.filter(c => !c.isShown).map(c => c.id);
+    const allHiddenColumns = hiddenColumns.concat(userHidden);
 
     return (
       <>
@@ -1069,16 +1092,38 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             sort={this.sort}
             statefulProps={this.sFNamespacesToolbar}
             actions={namespaceActions}
-            hiddenColumns={hiddenColumns}
+            hiddenColumns={allHiddenColumns}
             type="namespaces"
           >
             <StatefulFilters
               initialFilters={availableFilters}
               onFilterChange={this.onChange}
               ref={this.sFNamespacesToolbar}
+              rightToolbar={
+                <Tooltip content={t('Manage columns')}>
+                  <Button
+                    style={{ paddingRight: '10px' }}
+                    variant="plain"
+                    aria-label={t('Manage columns')}
+                    data-test="namespaces-manage-columns"
+                    onClick={() => this.setState({ showColumnManagement: true })}
+                  >
+                    <CogIcon />
+                  </Button>
+                </Tooltip>
+              }
             />
           </VirtualList>
         </RenderContent>
+
+        <ManageColumnsModal
+          columns={this.state.managedColumns}
+          isOpen={this.state.showColumnManagement}
+          onClose={() => this.setState({ showColumnManagement: false })}
+          onApply={(cols: ManagedColumn[]) => {
+            this.setState({ managedColumns: cols, showColumnManagement: false });
+          }}
+        />
 
         <NamespaceTrafficPolicies
           opTarget={this.state.opTarget}
