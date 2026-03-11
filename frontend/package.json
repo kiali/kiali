@@ -111,7 +111,7 @@
     "@types/jest": "23.3.10",
     "@types/js-yaml": "^4.0.5",
     "@types/lodash-es": "4.17.x",
-    "@types/node": "^24.0.0",
+    "@types/node": "^20.14.9",
     "@types/react": "^17.0.1",
     "@types/react-datepicker": "^4.15.0",
     "@types/react-dom": "^17.0.1",
