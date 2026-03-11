@@ -10,6 +10,7 @@ export const UserSettingsActions = {
   setTimeRange: createStandardAction(ActionKeys.SET_TIME_RANGE)<TimeRange>(),
   setRefreshInterval: createStandardAction(ActionKeys.SET_REFRESH_INTERVAL)<IntervalInMilliseconds>(),
   setReplayQueryTime: createStandardAction(ActionKeys.SET_REPLAY_QUERY_TIME)<TimeInMilliseconds>(),
+  setServiceInsightsMetrics: createStandardAction(ActionKeys.SET_SERVICE_INSIGHTS_METRICS)<string | undefined>(),
   toggleReplayActive: createAction(ActionKeys.TOGGLE_REPLAY_ACTIVE)
 };
 

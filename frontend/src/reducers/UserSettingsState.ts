@@ -8,7 +8,7 @@ import { UserSettingsActions } from '../actions/UserSettingsActions';
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
   duration: config.toolbar.defaultDuration,
   timeRange: config.toolbar.defaultTimeRange,
-  interface: { navCollapse: false },
+  interface: { navCollapse: false, serviceInsightsMetrics: undefined },
   refreshInterval: config.toolbar.defaultRefreshInterval,
   replayActive: false,
   replayQueryTime: 0
@@ -21,7 +21,11 @@ export const UserSettingsStateReducer = (
   switch (action.type) {
     case getType(UserSettingsActions.navCollapse):
       return updateState(state, {
-        interface: { navCollapse: action.payload.collapse }
+        interface: { ...state.interface, navCollapse: action.payload.collapse }
+      });
+    case getType(UserSettingsActions.setServiceInsightsMetrics):
+      return updateState(state, {
+        interface: { ...state.interface, serviceInsightsMetrics: action.payload }
       });
     case getType(UserSettingsActions.setDuration):
       return updateState(state, {

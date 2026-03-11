@@ -31,12 +31,48 @@ import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
-import { useKialiSelector } from 'hooks/redux';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { URLParam } from 'app/History';
+import { HistoryManager, URLParam } from 'app/History';
 import { helpIconStyle } from 'styles/IconStyle';
 import { formatByteRateIEC } from 'utils/Formatter';
+import { UserSettingsActions } from 'actions/UserSettingsActions';
+
+type ServiceInsightsMetricsSelection = { errorRates: boolean; latency: boolean; tcp: boolean };
+
+const encodeServiceInsightsMetrics = (m: ServiceInsightsMetricsSelection): string => {
+  const parts: string[] = [];
+  if (m.errorRates) {
+    parts.push('e');
+  }
+  if (m.latency) {
+    parts.push('l');
+  }
+  if (m.tcp) {
+    parts.push('t');
+  }
+  return parts.join(',');
+};
+
+const decodeServiceInsightsMetrics = (raw: string | undefined): ServiceInsightsMetricsSelection | undefined => {
+  if (!raw) {
+    return undefined;
+  }
+  const tokens = new Set(
+    raw
+      .split(',')
+      .map(t => t.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const decoded = {
+    errorRates: tokens.has('e'),
+    latency: tokens.has('l'),
+    tcp: tokens.has('t')
+  };
+  // Require at least one metric, otherwise treat as absent/invalid.
+  return decoded.errorRates || decoded.latency || decoded.tcp ? decoded : undefined;
+};
 
 const tablesContainer3ColStyle = kialiStyle({
   display: 'grid',
@@ -187,8 +223,10 @@ const buildTooltipContent = (cluster: string, namespace: string, serviceName: st
 export const ServiceInsights: React.FC = () => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
+  const dispatch = useKialiDispatch();
   const namespaceItems = useKialiSelector(namespaceItemsSelector);
   const activeNamespaces = useKialiSelector(activeNamespacesSelector);
+  const persistedMetricsRaw = useKialiSelector(state => state.userSettings.interface.serviceInsightsMetrics);
 
   // Use all known namespaces when available
   const effectiveNamespaces = React.useMemo(() => {
@@ -221,16 +259,59 @@ export const ServiceInsights: React.FC = () => {
   const [throughputError, setThroughputError] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
 
+  const urlMetricsRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+  const urlMetrics = decodeServiceInsightsMetrics(urlMetricsRaw);
+  const reduxMetrics = decodeServiceInsightsMetrics(persistedMetricsRaw);
+  const initialMetrics = urlMetrics ?? reduxMetrics;
+  const initialMetricsRaw =
+    urlMetricsRaw && urlMetrics ? urlMetricsRaw : persistedMetricsRaw && reduxMetrics ? persistedMetricsRaw : undefined;
+
   const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
-  const [hasCustomizedMetrics, setHasCustomizedMetrics] = React.useState(false);
-  const [selectedMetrics, setSelectedMetrics] = React.useState<{ errorRates: boolean; latency: boolean; tcp: boolean }>(
-    {
-      errorRates: true,
-      latency: true,
-      tcp: false
+  const [hasCustomizedMetrics, setHasCustomizedMetrics] = React.useState<boolean>(() => !!initialMetrics);
+  const [selectedMetrics, setSelectedMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
+    return (
+      initialMetrics ?? {
+        errorRates: true,
+        latency: true,
+        tcp: false
+      }
+    );
+  });
+  const [draftMetrics, setDraftMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
+    return (
+      initialMetrics ?? {
+        errorRates: true,
+        latency: true,
+        tcp: false
+      }
+    );
+  });
+
+  // If URL has persisted selection, apply it once and prevent default selection logic.
+  React.useEffect(() => {
+    const fromUrlRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+    const fromUrl = decodeServiceInsightsMetrics(fromUrlRaw);
+    const fromRedux = decodeServiceInsightsMetrics(persistedMetricsRaw);
+
+    if (fromUrlRaw && fromUrl) {
+      // Ensure URL is persisted to redux.
+      if (fromUrlRaw !== persistedMetricsRaw) {
+        dispatch(UserSettingsActions.setServiceInsightsMetrics(fromUrlRaw));
+      }
+      return;
     }
-  );
-  const [draftMetrics, setDraftMetrics] = React.useState(selectedMetrics);
+
+    if (fromRedux && persistedMetricsRaw) {
+      HistoryManager.setParam(URLParam.SERVICE_INSIGHTS_METRICS, persistedMetricsRaw);
+    }
+  }, [dispatch, persistedMetricsRaw]);
+
+  React.useEffect(() => {
+    if (initialMetricsRaw && initialMetricsRaw !== persistedMetricsRaw) {
+      dispatch(UserSettingsActions.setServiceInsightsMetrics(initialMetricsRaw));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isAmbientOnlyWithoutWaypoints = React.useMemo((): boolean => {
     return allNamespacesAmbient && hasWaypoints === false;
@@ -258,10 +339,11 @@ export const ServiceInsights: React.FC = () => {
     }
     params.set(URLParam.DIRECTION, 'asc');
     params.set(URLParam.SORT, 'he');
+    params.set(URLParam.SERVICE_INSIGHTS_METRICS, encodeServiceInsightsMetrics(selectedMetrics));
 
     const qs = params.toString();
     return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
-  }, [allNamespaceNames]);
+  }, [allNamespaceNames, selectedMetrics]);
 
   const onOpenManageColumns = React.useCallback((): void => {
     setDraftMetrics(selectedMetrics);
@@ -276,7 +358,10 @@ export const ServiceInsights: React.FC = () => {
     setSelectedMetrics(draftMetrics);
     setHasCustomizedMetrics(true);
     setIsManageColumnsOpen(false);
-  }, [draftMetrics]);
+    const encoded = encodeServiceInsightsMetrics(draftMetrics);
+    dispatch(UserSettingsActions.setServiceInsightsMetrics(encoded));
+    HistoryManager.setParam(URLParam.SERVICE_INSIGHTS_METRICS, encoded);
+  }, [dispatch, draftMetrics]);
 
   const fetchData = React.useCallback(async (): Promise<void> => {
     try {
