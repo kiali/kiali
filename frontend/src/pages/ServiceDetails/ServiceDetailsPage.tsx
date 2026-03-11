@@ -36,7 +36,6 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
-import { setAIContext } from 'helpers/ChatAI';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -151,12 +150,6 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           {
             serviceDetails: results,
             validations: results.validations
-          },
-          () => {
-            setAIContext(
-              this.props.dispatch,
-              `Service Details of ${this.props.serviceId.service} in namespace ${this.props.serviceId.namespace}`
-            );
           }
         );
       })

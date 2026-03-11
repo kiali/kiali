@@ -9,6 +9,7 @@ import (
 	"google.golang.org/genai"
 
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
@@ -17,29 +18,33 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 )
 
-func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
+func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
+	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) {
 	ctx := r.Context()
 	if p.client == nil {
 		client, err := genai.NewClient(ctx, &p.config)
 		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+			providers.StreamError(onChunk, err.Error())
+			return
 		}
 		p.client = client
 	}
-	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
-	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
-
-	p.InitializeConversation(&conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(r, &req, aiStore)
+	if req.ConversationID == "" {
+		providers.Log(p, providers.LogLevelDebug, "Conversation", "Creating new conversation")
+		req.ConversationID = aiStore.GenerateConversationID()
+	}
+	conversation := &ptr.Conversation
+	p.InitializeConversation(conversation, req)
+	providers.Log(p, providers.LogLevelDebug, "Conversation", "Conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
 	// Create a temporary conversation with context for the API call
 	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
+	conversationWithContext := providers.AddContextToConversation(*conversation, req)
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
@@ -62,71 +67,67 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 	}
 	chat, err := p.client.Chats.Create(ctx, p.model, config, contentsForChat)
 	if err != nil {
-		log.Debugf("Google provider error: %v", err)
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		providers.Log(p, providers.LogLevelError, "Chat", "Error: %v", err)
+		providers.StreamError(onChunk, err.Error())
+		return
 	}
 
-	response := &types.AIResponse{}
+	response := ""
+	endStream := &types.StreamEndData{}
+	actions := []get_action_ui.Action{}
+	referencedDocuments := []types.ReferencedDocument{}
 
 	result, err := chat.SendMessage(ctx, genai.Part{Text: req.Query})
 	if err != nil {
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		providers.StreamError(onChunk, err.Error())
+		return
 	}
 
 	const maxToolIterations = 5
 	for iter := 0; iter < maxToolIterations; iter++ {
 		functionCalls := result.FunctionCalls()
 		if len(functionCalls) == 0 {
-			response.Response = providers.ParseMarkdownResponse(result.Text())
+			response = providers.ParseMarkdownResponse(result.Text())
 			break
 		}
 		if iter == maxToolIterations-1 {
-			log.Debugf("[Chat AI] Google provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
-			return &types.AIResponse{Error: fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+			providers.Log(p, providers.LogLevelDebug, "ToolIterations", "Reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			providers.StreamError(onChunk, fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations))
+			return
 		}
 
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
-		log.Debugf("Google provider tool names (iter=%d): %v", iter, toolNames)
-		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		providers.Log(p, providers.LogLevelDebug, "ToolNames", "Tool names (iter=%d): %v", iter, toolNames)
+		toolResults, acts, docs := providers.ExecuteToolCallsInParallel(p, ctx, onChunk, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		actions = append(actions, acts...)
+		referencedDocuments = append(referencedDocuments, docs...)
+
 		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
+			providers.StreamError(onChunk, err.Error())
+			return
 		}
 
-		processResult := providers.ProcessToolResults(toolResults, conversation)
+		processResult := providers.ProcessToolResults(toolResults, *conversation)
 		if processResult.Response.Error != "" {
-			return processResult.Response, http.StatusInternalServerError
-		}
-		if len(processResult.Response.Actions) > 0 {
-			response.Actions = append(response.Actions, processResult.Response.Actions...)
-		}
-		if len(processResult.Response.ReferencedDocuments) > 0 {
-			response.ReferencedDocuments = append(response.ReferencedDocuments, processResult.Response.ReferencedDocuments...)
-		}
-		conversation = processResult.Conversation
-
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
-			Actions:             response.Actions,
-			ReferencedDocuments: response.ReferencedDocuments,
-		}, toolNames)
-		if !shouldGenerate {
-			response.Response = responseAnswer
-			break
+			providers.StreamError(onChunk, processResult.Response.Error)
+			return
 		}
 
 		// Send function responses back to the chat (all tool calls in a single turn).
 		parts := make([]genai.Part, 0, len(toolResults))
 		for i, toolResult := range toolResults {
-			if toolResult.Error != nil {
-				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
+			if toolResult.Status == "error" {
+				providers.StreamError(onChunk, toolResult.Content)
+				return
 			}
-			content := toolResult.Message.Content
+			content := toolResult.Content
 			if strings.TrimSpace(content) == "" {
 				content = "OK"
 			}
 			parts = append(parts, genai.Part{
 				FunctionResponse: &genai.FunctionResponse{
 					Name: tools[i].Name,
-					ID:   tools[i].ToolCallID,
+					ID:   tools[i].ID,
 					Response: map[string]any{
 						"output": content,
 					},
@@ -136,44 +137,53 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 
 		result, err = chat.SendMessage(ctx, parts...)
 		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+			providers.StreamError(onChunk, err.Error())
+			return
 		}
 		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
+			providers.StreamError(onChunk, err.Error())
+			return
 		}
 
 	}
 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
-	if response.Response != "" {
-		conversation = append(conversation, types.ConversationMessage{
-			Content: response.Response,
+	if response != "" {
+		providers.SendStreamEvent(onChunk, "token", types.StreamTokenData{
+			ID:    len(*conversation),
+			Token: response,
+		})
+		*conversation = append(*conversation, types.ConversationMessage{
+			Content: response,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",
 		})
 	}
+	endStream.Actions = actions
+	endStream.ReferencedDocuments = referencedDocuments
+	endStream.Truncated = true
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, *conversation)
+	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s: %+v", req.ConversationID, response)
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-
-	return response, http.StatusOK
+	providers.SendStreamEvent(onChunk, "end", endStream)
 }
 
-func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string) {
+func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string) {
 	toolsSlice, ok := toolCall.([]*genai.FunctionCall)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}
+		return []types.StreamToolCallData{}, []string{}
 	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	tools := make([]types.StreamToolCallData, len(toolsSlice))
 	for i, tool := range toolsSlice {
 		toolNames[i] = tool.Name
-		tools[i] = mcp.ToolsProcessor{
-			Args:       tool.Args,
-			Name:       tool.Name,
-			ToolCallID: tool.ID,
+		tools[i] = types.StreamToolCallData{
+			Args: tool.Args,
+			Name: tool.Name,
+			ID:   tool.ID,
+			Type: "tool_call",
 		}
 	}
 	return tools, toolNames
@@ -284,7 +294,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 
 	chat, err := p.client.Chats.Create(ctx, p.model, &genai.GenerateContentConfig{}, p.ConversationToProvider(conversation).([]*genai.Content))
 	if err != nil {
-		log.Warningf("[Chat AI] Failed to create chat in reduce conversation: %v", err)
+		providers.Log(p, providers.LogLevelWarn, "ReduceConversation", "Failed to create chat in reduce conversation: %v", err)
 		return conversation // Return original if chat creation fails
 	}
 	resp, err := chat.SendMessage(ctx,
@@ -292,7 +302,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 		genai.Part{Text: fmt.Sprintf("Summarize the following chat history: %+v", toSummarize)},
 	)
 	if err != nil {
-		log.Warningf("[Chat AI] Failed to send message in reduce conversation: %v", err)
+		providers.Log(p, providers.LogLevelWarn, "ReduceConversation", "Failed to send message in reduce conversation: %v", err)
 		return conversation // Return original if message sending fails
 	}
 

@@ -44,7 +44,6 @@ import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
 import { getValidMeshLayout, MeshLayout } from './layouts/LayoutFactory';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
-import { setAIContext } from 'helpers/ChatAI';
 
 type ReduxStateProps = {
   activeTour?: TourInfo;
@@ -318,8 +317,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
         timestamp: meshTimestamp * 1000
       }
     });
-
-    setAIContext(this.props.dispatch, `Mesh status`);
     this.props.setDefinition(this.meshDataSource.meshDefinition);
   };
 

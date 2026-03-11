@@ -19,12 +19,11 @@ var documentsFS embed.FS
 
 // Document represents a single document entry from documents.json
 type Document struct {
-	ID          string   `json:"id"`
-	Keywords    []string `json:"keywords"`
-	URL         string   `json:"url"`
-	Title       string   `json:"title"`
-	Domain      string   `json:"domain,omitempty"` // Domain is added during loading
-	Description string   `json:"description,omitempty"`
+	ID       string   `json:"id"`
+	Keywords []string `json:"keywords"`
+	URL      string   `json:"url"`
+	Title    string   `json:"title"`
+	Domain   string   `json:"domain,omitempty"` // Domain is added during loading
 }
 
 // documentsByDomain represents the structure of documents.json
@@ -89,7 +88,9 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 
 	// Find top 3 matches
 	topMatches := findTopMatches(documents, inputKeywords, 3)
-
+	if len(topMatches) == 0 {
+		log.Debugf("ChatAI - MCP - Citations: No top matches found")
+	}
 	// Convert to citations
 	referencedDocuments := make([]types.ReferencedDocument, len(topMatches))
 	for i, doc := range topMatches {

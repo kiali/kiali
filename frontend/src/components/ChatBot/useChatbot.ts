@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
+import { Map as ImmutableMap } from 'immutable';
 import axios from 'axios';
+import { throttle, uniqueId } from 'lodash-es';
 import {
   AlertMessage,
   CHATBOT_CONVERSATION_ALWAYS_NAVIGATE,
@@ -22,6 +24,8 @@ import userLogo from './icons/chat_avatar.svg';
 import logo from './icons/kiali_logo.svg';
 import { router } from 'app/History';
 import { saveConversation } from 'utils/ConversationStorage';
+import { useDispatch, useSelector } from 'react-redux';
+import { chatHistoryPush, chatHistoryUpdateByID, chatHistoryUpdateTool } from 'actions/ChatAIActions';
 
 const botName = document.getElementById('bot_name')?.innerText ?? KIALI_PRODUCT_NAME;
 
@@ -72,16 +76,23 @@ type UseChatbotResult = {
   setMessages: Dispatch<SetStateAction<ExtendedMessage[]>>;
   setSelectedModel: Dispatch<SetStateAction<ModelAI>>;
   setSelectedProvider: Dispatch<SetStateAction<ProviderAI>>;
+  isStreaming: boolean;
+  setIsStreaming: Dispatch<SetStateAction<boolean>>;
+  query: string;
+  setQuery: Dispatch<SetStateAction<string>>;
 };
 
 export const useChatbot = (userName: string, provider: ProviderAI, model: ModelAI): UseChatbotResult => {
   const isMountedRef = useRef(true);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
+  const [query, setQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<ModelAI>(model);
   const [selectedProvider, setSelectedProvider] = useState<ProviderAI>(provider);
   const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>(INITIAL_NOTICE);
   const [conversationId, setConversationId] = useState<string | null | undefined>(undefined);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     return () => {
@@ -117,18 +128,9 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     });
   };
 
-  const show429Message = async (): Promise<void> => {
-    // Insert a 3-sec delay before showing the "Too Many Request" message
-    // for reducing the number of chat requests when the server is busy.
-    await delay(3000);
-    const newBotMessage = {
-      ...tooManyRequestsMessage()
-    };
-    addMessage(newBotMessage);
-  };
   const botMessage = (response: ChatResponse | string): ExtendedMessage => {
     const rawContent =
-      typeof response === 'object' ? (typeof response.answer === 'string' ? response.answer : '') : response;
+      typeof response === 'object' ? (typeof response.data.response === 'string' ? response.data.response : '') : response;
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
     const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
     const content = isMockApi ? safeContent : escapeHtml(safeContent);
@@ -138,7 +140,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       name: botName,
       avatar: logo,
       timestamp: getTimestamp(),
-      referenced_documents: typeof response === 'object' ? response.citations : []
+      referenced_documents: typeof response === 'object' ? response.data.referenced_documents : []
     };
 
     return message;
@@ -158,6 +160,15 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     context: ContextRequest,
     prompt: string | undefined = undefined
   ): Promise<void> => {
+    if (isStreaming) {
+      return;
+    }
+
+    if (!query || query.trim().length === 0) {
+      setValidated('error');
+      return;
+    }
+    
     const userMessage: ExtendedMessage = {
       role: 'user',
       content: prompt ? prompt : query.toString(),
@@ -168,6 +179,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     };
     addMessage(userMessage);
 
+
     let nextConversationId = conversationId ?? undefined;
     if (!nextConversationId) {
       nextConversationId = generateConversationId();
@@ -177,79 +189,119 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     const chatRequest: ChatRequest = {
       conversation_id: nextConversationId,
       query: query.toString(),
+      media_type: 'application/json',
       context: context
     };
     setIsLoading(true);
+    const chatEntryID = uniqueId('ChatEntry_');
+    dispatch(
+      chatHistoryPush({
+        id: chatEntryID,
+        isCancelled: false,
+        isStreaming: true,
+        isTruncated: false,
+        references: [],
+        text: '',
+        tools: ImmutableMap(),
+        who: 'ai',
+      }),
+    );   
 
     try {
       const resp = await API.postChatAI(selectedProvider.name, selectedModel.name, chatRequest);
 
+      console.log("resp", resp);
       if (resp.status === 200) {
-        const chatResponse: ChatResponse = resp.data;
-        const referenced_documents = chatResponse.citations;
+        const reader = resp.body?.getReader();
+        if (!reader) throw new Error("No readable stream");
+        const decoder = new TextDecoder();
+        let responseText = '';
 
-        const newBotMessage: any = botMessage(chatResponse);
-        newBotMessage.referenced_documents = referenced_documents;
-        if (chatResponse.actions && chatResponse.actions.length > 0) {
-          const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
-          const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
+        const dispatchTokens = throttle(
+          () => dispatch(chatHistoryUpdateByID({ id: chatEntryID, entry: { text: responseText } })),
+          100,
+          { leading: false, trailing: true },
+        );
+         // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
+        let buffer = '';
 
-          if (navigationActions.length > 0) {
-            newBotMessage.content =
-              alwaysNavigate && navigationActions.length === 1
-                ? `Ok, navigating to the ${navigationActions[0].title}...`
-                : 'Here is the link provided for the ChatBot:';
+
+        while(true){
+          const { value, done } = await reader.read();
+          if (done) {
+            break;
           }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
 
-          if (alwaysNavigate && navigationActions.length === 1) {
-            router.navigate(navigationActions[0].payload);
-          } else {
-            newBotMessage.actions = chatResponse.actions;
-          }
-        }
-        if (isMountedRef.current) {
-          addMessage(newBotMessage);
-        }
-      } else {
-        const errorMessage = resp.data?.error || `Bot returned status_code ${resp.status}`;
-        if (isMountedRef.current) {
-          setAlertMessage({
-            title: 'Error',
-            message: errorMessage,
-            variant: 'danger'
+          // Keep the last line in the buffer. If the chunk ended mid-line, this holds the incomplete
+          // line until more data arrives. If the chunk ended with '\n', split() produces an empty
+          // string as the last element, so we just hold an empty buffer and process all lines.
+          buffer = lines.pop() ?? '';
+          lines
+          .filter((s) => s.startsWith('data: '))
+          .forEach((s) => {
+            const line = s.slice(5).trim();
+            let json;
+            try {
+              json = JSON.parse(line);
+            } catch (parseError) {
+              // eslint-disable-next-line no-console
+              console.error(`Failed to parse JSON string "${line}"`, parseError);
+            }
+            if (json && json.event && json.data) {
+              if (json.event === 'start') {
+                setConversationId(json.data.conversation_id);
+                console.log("start event");
+              } else if (json.event === 'token') {
+                responseText += json.data.token;
+                dispatchTokens();
+              } else if (json.event === 'end') {
+                dispatchTokens.flush();
+                dispatch(
+                  chatHistoryUpdateByID({ id: chatEntryID, entry: {
+                    isStreaming: false,
+                    isTruncated: json.data.truncated === true,
+                    references: json.data.referenced_documents,
+                  }}),
+                );
+              } else if (json.event === 'tool_call') {
+                const { args, id, name: toolName } = json.data;
+                dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { name: toolName, args } }));
+              } else if (json.event === 'tool_result') {
+                const { content, id, status } = json.data;
+                dispatch(chatHistoryUpdateTool({ id: chatEntryID, toolID: id, tool: { content, status } }));
+              } else if (json.event === 'error') {
+                dispatchTokens.flush();
+                dispatch(
+                  chatHistoryUpdateByID({ id: chatEntryID, entry: {
+                    error: {
+                      message: json.data.detail,
+                      response: resp,
+                    },
+                    isStreaming: false,
+                  }}),
+                );
+              } else {
+                console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
+              }
+            }
           });
-        }
-      }
-    } catch (e) {
-      if (isTimeoutError(e)) {
-        if (isMountedRef.current) {
-          addMessage(timeoutMessage());
-        }
-      } else if (isTooManyRequestsError(e)) {
-        if (isMountedRef.current) {
-          await show429Message();
-        }
+        }      
       } else {
-        const errorMessage = axios.isAxiosError(e)
-          ? e.response?.data?.error || e.message
-          : e instanceof Error
-          ? e.message
-          : String(e);
-        if (isMountedRef.current) {
-          setAlertMessage({
-            title: 'Error',
-            message: `An unexpected error occurred: ${errorMessage}`,
-            variant: 'danger'
-          });
-        }
-      }
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
+        console.error("Error in handleSend:", resp.statusText);
+      }    
+    } catch (error) {
+      console.error("Error in handleSend:", error);
+      setIsLoading(false);
+      setIsStreaming(false);
+      setAlertMessage({
+        title: "Error",
+        message: "An error occurred while sending the message",
+        variant: "danger"
+      });
     }
   };
-
   // Save conversation to storage whenever messages or conversationId changes
   useEffect(() => {
     if (conversationId && messages.length > 0) {
@@ -270,6 +322,11 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     selectedModel,
     setSelectedModel,
     selectedProvider,
-    setSelectedProvider
+    setSelectedProvider,
+    query,
+    setQuery,
+    isStreaming,
+    setIsStreaming,
+    
   };
 };

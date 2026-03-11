@@ -27,7 +27,6 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
-import { setAIContext } from 'helpers/ChatAI';
 
 type AppDetailsState = {
   app?: App;
@@ -114,13 +113,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
               hasAmbient: details.data.workloads.some(w => w.isAmbient)
             }),
             isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
-          },
-          () => {
-            setAIContext(
-              this.props.dispatch,
-              `App Details of ${this.props.appId.app} in namespace ${this.props.appId.namespace}`
-            );
-          }
+          }          
         );
       })
       .catch(error => {

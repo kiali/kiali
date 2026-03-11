@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -18,13 +17,14 @@ import (
 
 // AIProvider exposes a minimal interface to send chat requests.
 type AIProvider interface {
+	GetName() string
 	InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest)
 	ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage
 	GetToolDefinitions() interface{}
-	TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string)
+	TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}
 	ProviderToConversation(providerMessage interface{}) types.ConversationMessage
-	SendChat(r *http.Request,
+	SendChat(onChunk func(chunk string), r *http.Request,
 		req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface,
-		clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int)
+		clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery)
 }

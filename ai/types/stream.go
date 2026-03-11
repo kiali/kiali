@@ -3,6 +3,8 @@ package types
 import (
 	"encoding/json"
 	"io"
+
+	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 )
 
 // StreamWriter is an io.Writer that can flush (e.g. for SSE incremental delivery).
@@ -53,9 +55,10 @@ type ReferencedDocument struct {
 
 // StreamEndData is the payload for event "end".
 type StreamEndData struct {
-	AvailableQuotas     map[string]any       `json:"available_quotas,omitempty"`
-	InputTokens         int64                `json:"input_tokens"`
-	OutputTokens        int64                `json:"output_tokens"`
-	ReferencedDocuments []ReferencedDocument `json:"referenced_documents,omitempty"`
-	Truncated           bool                 `json:"truncated"`
+	AvailableQuotas     map[string]any         `json:"available_quotas,omitempty"`
+	InputTokens         int64                  `json:"input_tokens"`
+	OutputTokens        int64                  `json:"output_tokens"`
+	ReferencedDocuments []ReferencedDocument   `json:"referenced_documents,omitempty"`
+	Actions             []get_action_ui.Action `json:"actions,omitempty"`
+	Truncated           bool                   `json:"truncated"`
 }

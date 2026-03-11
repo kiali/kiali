@@ -31,7 +31,6 @@ import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { isMultiCluster, serverConfig } from '../../config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
-import { setAIContext } from 'helpers/ChatAI';
 
 interface ReduxProps {
   activeNamespaces: Namespace[];
@@ -177,9 +176,6 @@ class IstioConfigListPageComponent extends FilterComponent.Component<
         this.setState(
           {
             listItems: updatedList
-          },
-          () => {
-            setAIContext(this.props.dispatch, `Istio Config List of namespaces ${namespaces.join(',')}`);
           }
         );
       })

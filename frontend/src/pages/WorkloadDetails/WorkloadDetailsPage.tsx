@@ -30,7 +30,6 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
-import { setAIContext } from 'helpers/ChatAI';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -143,13 +142,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
                 hasAmbient: details.data.isAmbient
               }
             )
-          },
-          () => {
-            setAIContext(
-              this.props.dispatch,
-              `Workload Details of ${this.props.workloadId.workload} in namespace ${this.props.workloadId.namespace}`
-            );
-          }
+          }           
         );
       })
       .catch(error => {

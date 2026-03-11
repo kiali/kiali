@@ -18,25 +18,28 @@ import (
 
 var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
-func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool, string) {
-	shouldGenerate := false
-	for _, toolName := range toolNames {
-		if !mcp.ExcludedToolNames[toolName] {
-			shouldGenerate = true
-			break
-		}
-	}
-	if shouldGenerate {
-		return true, ""
-	}
+type LogLevel int
 
-	if len(response.Actions) > 0 {
-		return false, "I have found the following actions: "
+const (
+	LogLevelDebug LogLevel = iota
+	LogLevelInfo
+	LogLevelWarn
+	LogLevelError
+)
+
+func Log(provider AIProvider, level LogLevel, category string, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	prefix := fmt.Sprintf("[Chat AI][%s][%s]", provider.GetName(), category)
+	switch level {
+	case LogLevelDebug:
+		log.Debugf("%s %s", prefix, msg)
+	case LogLevelInfo:
+		log.Infof("%s %s", prefix, msg)
+	case LogLevelWarn:
+		log.Warningf("%s %s", prefix, msg)
+	case LogLevelError:
+		log.Errorf("%s %s", prefix, msg)
 	}
-	if len(response.ReferencedDocuments) > 0 {
-		return false, "I have found the following referenced documents: "
-	}
-	return true, ""
 }
 
 func ParseMarkdownResponse(content string) string {
@@ -94,24 +97,19 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 	*conversation = cleaned
 }
 
-func GetStoreConversation(r *http.Request, req types.AIRequest, aiStore types.AIStore) (*types.Conversation, string, []types.ConversationMessage) {
-	var conversation []types.ConversationMessage
-	var ptr *types.Conversation
+func GetStoreConversation(r *http.Request, req *types.AIRequest, aiStore types.AIStore) (*types.Conversation, string) {
+	ptr := &types.Conversation{}
 	sessionID := authentication.GetSessionIDContext(r.Context())
-	if aiStore.Enabled() {
+	if aiStore.Enabled() && req.ConversationID != "" {
 		log.Debugf("Getting conversation for session ID: %s", sessionID)
 		var found bool
 		ptr, found = aiStore.GetConversation(sessionID, req.ConversationID)
 		if found && ptr != nil {
 			log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
-			conversation = ptr.Conversation
-		} else {
-			log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
-			// Create a new Conversation struct for storage later
-			ptr = &types.Conversation{}
+			return ptr, sessionID
 		}
 	}
-	return ptr, sessionID, conversation
+	return ptr, sessionID
 }
 
 func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest, conversation []types.ConversationMessage) {
@@ -153,7 +151,7 @@ type ToolResultProcessingResult struct {
 
 // ProcessToolResults processes tool execution results in a standardized way
 // and builds the response and conversation accordingly
-func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
+func ProcessToolResults(toolResults []types.StreamToolResultData, conversation []types.ConversationMessage) ToolResultProcessingResult {
 	result := ToolResultProcessingResult{
 		Response:     &types.AIResponse{},
 		Conversation: conversation,
@@ -161,31 +159,11 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 
 	for _, toolResult := range toolResults {
 		// Handle errors
-		if toolResult.Error != nil {
-			result.Response.Error = toolResult.Error.Error()
-			result.ShouldReturnEarly = true
+		if toolResult.Status == "error" {
+			result.Response.Error = toolResult.Content
 			return result
 		}
-
-		// Collect actions and citations
-		if len(toolResult.Actions) > 0 {
-			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
-		}
-		if len(toolResult.ReferencedDocuments) > 0 {
-			result.Response.ReferencedDocuments = append(result.Response.ReferencedDocuments, toolResult.ReferencedDocuments...)
-		}
-
-		// Skip adding to conversation if we have actions/citations
-		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocuments) > 0 {
-			continue
-		}
-
-		// Default: append tool message to conversation
-		if toolResult.Message.Content != "" {
-			result.Conversation = append(result.Conversation, toolResult.Message)
-		}
 	}
-
 	return result
 }
 

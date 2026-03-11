@@ -155,7 +155,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
-  chatbotEnabled: state.chatAi.enabled
+  chatbotEnabled: state.aiChatSettings?.enabled
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

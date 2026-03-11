@@ -9,4 +9,5 @@ type AIStore interface {
 	SetConversation(sessionID string, conversationID string, conversation *Conversation) error
 	GetConversationIDs(sessionID string) []string
 	DeleteConversations(sessionID string, conversationIDs []string) error
+	GenerateConversationID() string
 }

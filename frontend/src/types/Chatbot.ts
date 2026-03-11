@@ -1,4 +1,5 @@
 import { MessageProps } from '@patternfly/chatbot';
+import { Map as ImmutableMap } from 'immutable';
 
 export const CHATBOT_CONVERSATION_ALWAYS_NAVIGATE = 'chatbot_conversation_always_navigate';
 
@@ -25,12 +26,8 @@ export type Action = {
 };
 
 type LLMResponse = {
-  answer: string;
-  actions: Action[];
-  citations: ReferencedDocument[];
-  used_models: ModelResponse;
-  truncated?: boolean;
-  error?: string;
+  event: string;
+  data: any;
 };
 
 export type ChatRequest = LLMRequest;
@@ -47,14 +44,14 @@ export type AlertMessage = {
   variant: 'success' | 'danger' | 'warning' | 'info' | 'custom';
 };
 
-export type ReferencedDocument = {
-  link: string;
-  title: string;
-  body: string;
+export type ErrorType = {
+  message?: string;
+  moreInfo?: string;
+  response?: Response;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
-  referenced_documents: ReferencedDocument[];
+  referenced_documents: ReferencedDoc[];
   actions?: Action[];
   scrollToHere?: boolean;
   collapse?: boolean;
@@ -84,3 +81,36 @@ export type ChatAIConfig = {
   providers: ProviderAI[];
   defaultProvider: string;
 };
+
+export type ReferencedDoc = {
+  doc_title: string;
+  doc_url: string;
+};
+
+export type Tool = {
+  args: { [key: string]: Array<string> };
+  content: string;
+  name: string;
+  status: 'error' | 'success';
+};
+// ChatHistory
+type ChatEntryUser = {
+  text: string;
+  who: 'user';
+};
+
+type ChatEntryAI = {
+  error?: ErrorType;
+  id: string;
+  isCancelled: boolean;
+  isStreaming: boolean;
+  isTruncated: boolean;
+  references?: Array<ReferencedDoc>;
+  actions?: Array<Action>;
+  text?: string;
+  tools?: ImmutableMap<string, Tool>;
+  userFeedback?: ImmutableMap<string, object>;
+  who: 'ai';
+};
+
+export type ChatEntry = ChatEntryAI | ChatEntryUser;

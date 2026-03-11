@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -73,17 +74,46 @@ func ChatAI(
 		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
 		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
 		defer requestTimer.ObserveDuration()
-		resp, code := provider.SendChat(r, req, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
+		// Add headers to prevent any buffering along the way
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+		// Disable gzip for this specific endpoint to ensure real-time streaming
+		w.Header().Set("Content-Encoding", "identity")
 
-		if resp == nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI response is empty")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			RespondWithError(w, http.StatusInternalServerError, "Streaming unsupported")
 			return
 		}
-		if code != http.StatusOK && resp.Error != "" {
-			RespondWithError(w, code, resp.Error)
-			return
+
+		// Also try to flush using ResponseController if available
+		rc := http.NewResponseController(w)
+		_ = rc.Flush()
+
+		if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
+			if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
+				f.Flush()
+			}
 		}
-		RespondWithJSONIndent(w, code, resp)
+
+		onChunk := func(chunk string) {
+			fmt.Fprintf(w, "data: %s\n\n", chunk)
+			flusher.Flush()
+
+			// Try to flush ResponseController if available
+			rc := http.NewResponseController(w)
+			_ = rc.Flush()
+
+			// Try to unwrap and flush if it's a wrapped writer
+			if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
+				if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
+					f.Flush()
+				}
+			}
+		}
+		provider.SendChat(onChunk, r, req, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
 	}
 }
 
