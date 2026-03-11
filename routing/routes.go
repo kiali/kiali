@@ -1838,6 +1838,29 @@ func NewRoutes(
 			handlers.ChatAI(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
+		// swagger:route POST /chat/mcp/{tool_name} MCPTools
+		// ---
+		// Endpoint to call MCP tool
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      404: notFoundError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatMCP",
+			log.ChatAILogName,
+			"POST",
+			"/api/chat/mcp/{tool_name}",
+			handlers.ChatMCP(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
+			true,
+		},
 		// swagger:route GET /chat/conversations chat aiChatConversations
 		// ---
 		// Endpoint to get the list of conversations for the user

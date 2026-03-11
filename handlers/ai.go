@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/mux"
 
 	"github.com/kiali/kiali/ai"
+	"github.com/kiali/kiali/ai/mcp"
 	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -16,11 +18,58 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 )
+
+func ChatMCP(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	aiStore aiTypes.AIStore,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	perses *perses.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		toolName := params["tool_name"]
+		if len(mcp.DefaultToolHandlers) == 0 {
+			log.Infof("[AI]Loading tools...")
+			if err := mcp.LoadTools(); err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+				return
+			}
+		}
+		tool, ok := mcp.DefaultToolHandlers[toolName]
+		if !ok {
+			RespondWithError(w, http.StatusInternalServerError, "Tool not found")
+			return
+		}
+		var args map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
+		}
+		mcpResult, code := tool.Call(r, args, businessLayer, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		if code != http.StatusOK {
+			RespondWithError(w, code, fmt.Sprintf("Tool %s returned error: %v", toolName, mcpResult))
+			return
+		}
+		RespondWithJSON(w, code, mcpResult)
+	}
+}
 
 func ChatAI(
 	conf *config.Config,
