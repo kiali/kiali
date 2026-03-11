@@ -1599,7 +1599,7 @@ export const getOverviewServiceRates = (
   return newRequest(HTTP_VERBS.GET, urls.overviewServiceRates, params, {});
 };
 
-export const getOverviewServiceTraffic = (
+export const getOverviewServiceThroughput = (
   params: { limit?: number; rateInterval?: string } = {}
 ): Promise<
   ApiResponse<{
@@ -1613,5 +1613,5 @@ export const getOverviewServiceTraffic = (
     }>;
   }>
 > => {
-  return newRequest(HTTP_VERBS.GET, urls.overviewServiceTraffic, params, {});
+  return newRequest(HTTP_VERBS.GET, urls.overviewServiceThroughput, params, {});
 };

@@ -329,9 +329,9 @@ func OverviewServiceRates(
 	}
 }
 
-// OverviewServiceTraffic returns the top service TCP traffic rates (bytes/s) across all clusters and namespaces.
+// OverviewServiceThroughput returns the top service throughput rates (bytes/s) across all clusters and namespaces.
 // Uses healthConfig.compute.duration for the rate interval and a fixed limit (overviewServiceMetricsLimit).
-func OverviewServiceTraffic(
+func OverviewServiceThroughput(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
 	clientFactory kubernetes.ClientFactory,
@@ -357,7 +357,7 @@ func OverviewServiceTraffic(
 		hasWaypoints := len(layer.Workload.GetWaypoints(ctx)) > 0
 
 		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
-		var services []models.ServiceTraffic
+		var services []models.ServiceThroughput
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
 		queryTime := time.Now()
 
@@ -371,12 +371,12 @@ func OverviewServiceTraffic(
 		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
 			labels := `destination_workload!="unknown"`
 
-			query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-			zl.Trace().Msgf("OverviewServiceTraffic query (tcp): %s", query)
+			query := buildServiceTcpThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+			zl.Trace().Msgf("OverviewServiceThroughput query (tcp): %s", query)
 
 			result, warnings, err := prom.API().Query(ctx, query, queryTime)
 			if len(warnings) > 0 {
-				zl.Warn().Msgf("OverviewServiceTraffic. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+				zl.Warn().Msgf("OverviewServiceThroughput. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 			}
 			if err != nil {
 				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus: "+err.Error())
@@ -388,29 +388,29 @@ func OverviewServiceTraffic(
 				RespondWithError(w, http.StatusInternalServerError, "Unexpected Prometheus result type")
 				return
 			}
-			services = convertToServiceTcpTraffic(vector)
+			services = convertToServiceTcpThroughput(vector)
 
 			// Fallback: Some environments don't have L4 TCP metrics at service-level. Use the same L7 throughput
 			// base metrics as the graph (request/response bytes) so Service Insights can still show throughput.
 			if len(services) == 0 {
 				fallbackQuery := buildServiceL7ThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-				zl.Trace().Msgf("OverviewServiceTraffic query (l7 fallback): %s", fallbackQuery)
+				zl.Trace().Msgf("OverviewServiceThroughput query (l7 fallback): %s", fallbackQuery)
 
 				fallbackResult, fallbackWarnings, fallbackErr := prom.API().Query(ctx, fallbackQuery, queryTime)
 				if len(fallbackWarnings) > 0 {
-					zl.Warn().Msgf("OverviewServiceTraffic (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
+					zl.Warn().Msgf("OverviewServiceThroughput (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
 				}
 				if fallbackErr == nil {
 					if fallbackVector, ok := fallbackResult.(model.Vector); ok {
-						services = convertToServiceTcpTraffic(fallbackVector)
+						services = convertToServiceTcpThroughput(fallbackVector)
 					}
 				} else {
-					zl.Debug().Err(fallbackErr).Msg("OverviewServiceTraffic (fallback): Prometheus query failed")
+					zl.Debug().Err(fallbackErr).Msg("OverviewServiceThroughput (fallback): Prometheus query failed")
 				}
 			}
 
 		} else {
-			services = make([]models.ServiceTraffic, 0, overviewServiceMetricsLimit)
+			services = make([]models.ServiceThroughput, 0, overviewServiceMetricsLimit)
 			successfulClusterQueries := 0
 			failedClusterQueries := 0
 			var lastQueryErr error
@@ -422,7 +422,7 @@ func OverviewServiceTraffic(
 				if scopedByConfig || !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
 					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 					if err != nil {
-						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceTraffic: could not get namespaces for cluster")
+						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceThroughput: could not get namespaces for cluster")
 						continue
 					}
 					nsRegex := buildNamespaceRegex(namespaces)
@@ -433,17 +433,17 @@ func OverviewServiceTraffic(
 					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
 				}
 
-				query := buildServiceTcpTrafficQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query (tcp): %s", query)
+				query := buildServiceTcpThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
+				zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceThroughput query (tcp): %s", query)
 
 				result, warnings, err := prom.API().Query(ctx, query, queryTime)
 				if len(warnings) > 0 {
-					zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceTraffic. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
+					zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceThroughput. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
 				}
 				if err != nil {
 					failedClusterQueries++
 					lastQueryErr = err
-					zl.Warn().Err(err).Str("cluster", cluster).Msg("OverviewServiceTraffic: Prometheus query failed for cluster")
+					zl.Warn().Err(err).Str("cluster", cluster).Msg("OverviewServiceThroughput: Prometheus query failed for cluster")
 					continue
 				}
 
@@ -451,27 +451,27 @@ func OverviewServiceTraffic(
 				if !ok {
 					failedClusterQueries++
 					lastQueryErr = fmt.Errorf("unexpected Prometheus result type: %T", result)
-					zl.Warn().Str("cluster", cluster).Msg("OverviewServiceTraffic: unexpected Prometheus result type for cluster")
+					zl.Warn().Str("cluster", cluster).Msg("OverviewServiceThroughput: unexpected Prometheus result type for cluster")
 					continue
 				}
 
-				clusterServices := convertToServiceTcpTraffic(vector)
+				clusterServices := convertToServiceTcpThroughput(vector)
 
 				// Fallback to L7 throughput if TCP metrics return empty.
 				if len(clusterServices) == 0 {
 					fallbackQuery := buildServiceL7ThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
-					zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceTraffic query (l7 fallback): %s", fallbackQuery)
+					zl.Trace().Str("cluster", cluster).Msgf("OverviewServiceThroughput query (l7 fallback): %s", fallbackQuery)
 
 					fallbackResult, fallbackWarnings, fallbackErr := prom.API().Query(ctx, fallbackQuery, queryTime)
 					if len(fallbackWarnings) > 0 {
-						zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceTraffic (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
+						zl.Warn().Str("cluster", cluster).Msgf("OverviewServiceThroughput (fallback). Prometheus Warnings: [%s]", strings.Join(fallbackWarnings, ","))
 					}
 					if fallbackErr == nil {
 						if fallbackVector, ok := fallbackResult.(model.Vector); ok {
-							clusterServices = convertToServiceTcpTraffic(fallbackVector)
+							clusterServices = convertToServiceTcpThroughput(fallbackVector)
 						}
 					} else {
-						zl.Debug().Err(fallbackErr).Str("cluster", cluster).Msg("OverviewServiceTraffic (fallback): Prometheus query failed")
+						zl.Debug().Err(fallbackErr).Str("cluster", cluster).Msg("OverviewServiceThroughput (fallback): Prometheus query failed")
 					}
 				}
 
@@ -488,7 +488,7 @@ func OverviewServiceTraffic(
 
 			// If Prometheus queries failed for all clusters, surface an error (so UI shows error state).
 			if successfulClusterQueries == 0 && failedClusterQueries > 0 && lastQueryErr != nil {
-				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus in service traffic: "+lastQueryErr.Error())
+				RespondWithError(w, http.StatusServiceUnavailable, "Error querying Prometheus in service throughput: "+lastQueryErr.Error())
 				return
 			}
 
@@ -501,8 +501,8 @@ func OverviewServiceTraffic(
 			}
 		}
 
-		enrichServiceTrafficWithHealth(services, kialiCache, conf)
-		response := models.ServiceTrafficResponse{HasWaypoints: hasWaypoints, Services: services}
+		enrichServiceThroughputWithHealth(services, kialiCache, conf)
+		response := models.ServiceThroughputResponse{HasWaypoints: hasWaypoints, Services: services}
 		RespondWithJSON(w, http.StatusOK, response)
 	}
 }
@@ -739,9 +739,9 @@ func buildServiceThroughputQuery(conf *config.Config, labels, groupBy, rateInter
 	)
 }
 
-// buildServiceTcpTrafficQuery constructs a PromQL query for TCP traffic (bytes/s).
+// buildServiceTcpThroughputQuery constructs a PromQL query for TCP throughput (bytes/s).
 // L4 telemetry can be backwards in Istio; we sum both metrics so total throughput is accurate.
-func buildServiceTcpTrafficQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
+func buildServiceTcpThroughputQuery(conf *config.Config, labels, groupBy, rateInterval string, limit int) string {
 	return buildServiceThroughputQuery(conf, labels, groupBy, rateInterval, limit,
 		"istio_tcp_sent_bytes_total", "istio_tcp_received_bytes_total")
 }
@@ -753,9 +753,9 @@ func buildServiceL7ThroughputQuery(conf *config.Config, labels, groupBy, rateInt
 		"istio_request_bytes_sum", "istio_response_bytes_sum")
 }
 
-// convertToServiceTcpTraffic converts a Prometheus vector to a slice of ServiceTraffic.
-func convertToServiceTcpTraffic(vector model.Vector) []models.ServiceTraffic {
-	services := make([]models.ServiceTraffic, 0, len(vector))
+// convertToServiceTcpThroughput converts a Prometheus vector to a slice of ServiceThroughput.
+func convertToServiceTcpThroughput(vector model.Vector) []models.ServiceThroughput {
+	services := make([]models.ServiceThroughput, 0, len(vector))
 
 	for _, sample := range vector {
 		if math.IsNaN(float64(sample.Value)) {
@@ -770,7 +770,7 @@ func convertToServiceTcpTraffic(vector model.Vector) []models.ServiceTraffic {
 			continue
 		}
 
-		services = append(services, models.ServiceTraffic{
+		services = append(services, models.ServiceThroughput{
 			Cluster:     cluster,
 			Namespace:   namespace,
 			ServiceName: serviceName,
@@ -781,10 +781,10 @@ func convertToServiceTcpTraffic(vector model.Vector) []models.ServiceTraffic {
 	return services
 }
 
-// enrichServiceTrafficWithHealth sets HealthStatus on each ServiceTraffic from the health cache.
-func enrichServiceTrafficWithHealth(services []models.ServiceTraffic, kialiCache cache.KialiCache, conf *config.Config) {
+// enrichServiceThroughputWithHealth sets HealthStatus on each ServiceThroughput from the health cache.
+func enrichServiceThroughputWithHealth(services []models.ServiceThroughput, kialiCache cache.KialiCache, conf *config.Config) {
 	// Convert to slice of pointers
-	ptrs := make([]*models.ServiceTraffic, len(services))
+	ptrs := make([]*models.ServiceThroughput, len(services))
 	for i := range services {
 		ptrs[i] = &services[i]
 	}

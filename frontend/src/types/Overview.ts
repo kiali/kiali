@@ -29,8 +29,8 @@ export interface ServiceRequestsResponse {
   services: ServiceRequests[];
 }
 
-// ServiceTraffic represents a single service's TCP traffic rate.
-export interface ServiceTraffic {
+// ServiceThroughput represents a single service's throughput rate (bytes/s).
+export interface ServiceThroughput {
   cluster: string;
   healthStatus?: HealthStatusId;
   namespace: string;
@@ -38,10 +38,10 @@ export interface ServiceTraffic {
   tcpRate: number; // bytes per second
 }
 
-// ServiceTrafficResponse contains the sorted list of service TCP traffic rates
-export interface ServiceTrafficResponse {
+// ServiceThroughputResponse contains the sorted list of service throughput rates
+export interface ServiceThroughputResponse {
   hasWaypoints: boolean;
-  services: ServiceTraffic[];
+  services: ServiceThroughput[];
 }
 
 // Query parameters for the overview metrics endpoints
