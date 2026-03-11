@@ -36,6 +36,7 @@ import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selector
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { URLParam } from 'app/History';
 import { helpIconStyle } from 'styles/IconStyle';
+import { formatByteRateIEC } from 'utils/Formatter';
 
 const tablesContainer3ColStyle = kialiStyle({
   display: 'grid',
@@ -165,22 +166,7 @@ const formatRequestRate = (t: (key: string, opts?: TOptions) => string, reqPerSe
   return t('{{rate}} req/s', { rate: reqPerSec.toFixed(2) });
 };
 
-const formatByteRate = (bytesPerSec: number): string => {
-  const abs = Math.abs(bytesPerSec);
-  if (abs < 1024) {
-    return `${bytesPerSec.toFixed(2)} B/s`;
-  }
-  const kib = bytesPerSec / 1024;
-  if (Math.abs(kib) < 1024) {
-    return `${kib.toFixed(2)} KiB/s`;
-  }
-  const mib = kib / 1024;
-  if (Math.abs(mib) < 1024) {
-    return `${mib.toFixed(2)} MiB/s`;
-  }
-  const gib = mib / 1024;
-  return `${gib.toFixed(2)} GiB/s`;
-};
+const formatByteRate = (bytesPerSec: number): string => formatByteRateIEC(bytesPerSec, 2);
 
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
