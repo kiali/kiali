@@ -1,13 +1,10 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { KialiIcon } from '../../config/KialiIcon';
-import { headerWithHelpStyle } from './NamespaceStyle';
 
-export const TypeHeader: React.FC = () => {
+export const TypePopoverBody: React.FC = () => {
   const { t } = useKialiTranslation();
 
-  const popoverBody = (
+  return (
     <div style={{ textAlign: 'left' }}>
       <div>
         <strong>{t('CP')}</strong> - {t('Control plane')}: {t('Istio control plane.')}
@@ -20,21 +17,9 @@ export const TypeHeader: React.FC = () => {
       </div>
     </div>
   );
+};
 
-  return (
-    <div className={headerWithHelpStyle}>
-      <span>{t('Type')}</span>
-      <Popover
-        aria-label={t('Namespace type information')}
-        headerContent={<span>{t('Namespace type')}</span>}
-        bodyContent={popoverBody}
-        position={PopoverPosition.top}
-        triggerAction="hover"
-      >
-        <Button variant={ButtonVariant.link} isInline>
-          <KialiIcon.Help />
-        </Button>
-      </Popover>
-    </div>
-  );
+export const TypePopoverHeader: React.FC = () => {
+  const { t } = useKialiTranslation();
+  return <span>{t('Namespace type')}</span>;
 };

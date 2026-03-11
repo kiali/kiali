@@ -315,11 +315,12 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
               <Th
                 key={`column_${index}`}
                 dataLabel={column.title}
+                info={column.info}
                 sort={this.getSortParams(column, index, sortBy, this.onSort)}
                 width={column.width}
                 textCenter={column.textCenter}
               >
-                {column.headerContent || column.title}
+                {column.title}
               </Th>
             ))}
           </Tr>
