@@ -26,7 +26,7 @@ import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
-import { ServiceLatency, ServiceRequests, ServiceTraffic } from 'types/Overview';
+import { ServiceLatency, ServiceRequests, ServiceThroughput } from 'types/Overview';
 import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
@@ -228,11 +228,11 @@ export const ServiceInsights: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
-  const [traffic, setTraffic] = React.useState<ServiceTraffic[]>([]);
+  const [throughput, setThroughput] = React.useState<ServiceThroughput[]>([]);
   const [hasWaypoints, setHasWaypoints] = React.useState<boolean | undefined>(undefined);
   const [latenciesError, setLatenciesError] = React.useState(false);
   const [ratesError, setRatesError] = React.useState(false);
-  const [trafficError, setTrafficError] = React.useState(false);
+  const [throughputError, setThroughputError] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
 
   const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
@@ -298,12 +298,12 @@ export const ServiceInsights: React.FC = () => {
       setIsError(false);
       setLatenciesError(false);
       setRatesError(false);
-      setTrafficError(false);
+      setThroughputError(false);
 
-      const [latenciesResult, ratesResult, trafficResult] = await Promise.allSettled([
+      const [latenciesResult, ratesResult, throughputResult] = await Promise.allSettled([
         API.getOverviewServiceLatencies(),
         API.getOverviewServiceRates(),
-        API.getOverviewServiceTraffic()
+        API.getOverviewServiceThroughput()
       ]);
 
       let anySuccess = false;
@@ -324,14 +324,14 @@ export const ServiceInsights: React.FC = () => {
         setRatesError(true);
       }
 
-      if (trafficResult.status === 'fulfilled') {
-        setTraffic(trafficResult.value.data.services || []);
-        setHasWaypoints(trafficResult.value.data.hasWaypoints);
+      if (throughputResult.status === 'fulfilled') {
+        setThroughput(throughputResult.value.data.services || []);
+        setHasWaypoints(throughputResult.value.data.hasWaypoints);
         anySuccess = true;
       } else {
-        setTraffic([]);
+        setThroughput([]);
         setHasWaypoints(undefined);
-        setTrafficError(true);
+        setThroughputError(true);
       }
 
       if (!anySuccess) {
@@ -341,7 +341,7 @@ export const ServiceInsights: React.FC = () => {
       setIsError(true);
       setLatenciesError(true);
       setRatesError(true);
-      setTrafficError(true);
+      setThroughputError(true);
       // eslint-disable-next-line no-console
       console.error('Error fetching service insights data:', err);
     } finally {
@@ -460,12 +460,12 @@ export const ServiceInsights: React.FC = () => {
     });
   };
 
-  const renderTrafficTable = (): React.ReactNode => {
+  const renderThroughputTable = (): React.ReactNode => {
     return renderServiceTable({
-      data: traffic,
+      data: throughput,
       dataTestId: 'service-insights-traffic-table',
-      emptyTitle: 'TCP traffic not available',
-      emptyMessage: 'No TCP traffic or TCP metrics are unavailable',
+      emptyTitle: 'Throughput not available',
+      emptyMessage: 'No throughput metrics are available',
       columnTitle: 'Throughput',
       keyPrefix: 'traffic',
       renderValueCell: svc => (
@@ -495,9 +495,9 @@ export const ServiceInsights: React.FC = () => {
     return (
       Number(effectiveMetrics.errorRates && ratesError) +
       Number(effectiveMetrics.latency && latenciesError) +
-      Number(effectiveMetrics.tcp && trafficError)
+      Number(effectiveMetrics.tcp && throughputError)
     );
-  }, [effectiveMetrics, latenciesError, ratesError, trafficError]);
+  }, [effectiveMetrics, latenciesError, ratesError, throughputError]);
 
   const showCardErrorState = React.useMemo(() => {
     if (isLoading || visibleTablesCount === 0) {
@@ -538,7 +538,7 @@ export const ServiceInsights: React.FC = () => {
         )}
         {effectiveMetrics.tcp && (
           <div className={tableContainerStyle} data-test="service-insights-traffic">
-            {renderTrafficTable()}
+            {renderThroughputTable()}
           </div>
         )}
       </div>
@@ -558,7 +558,7 @@ export const ServiceInsights: React.FC = () => {
                 bodyContent={
                   <>
                     {t(
-                      'Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.'
+                      'Top services ranked by throughput (bytes per second), error rate and P95 latency. Status icons indicate health for the time period.'
                     )}
                   </>
                 }

@@ -34,9 +34,9 @@ type ServiceRatesResponse struct {
 	Services []ServiceRequests `json:"services"`
 }
 
-// ServiceTraffic represents a single service's TCP traffic rate.
+// ServiceThroughput represents a single service's throughput rate (bytes/s).
 // TcpRate is bytes per second, and is computed as received+sent.
-type ServiceTraffic struct {
+type ServiceThroughput struct {
 	Cluster      string       `json:"cluster"`
 	HealthStatus HealthStatus `json:"healthStatus,omitempty"`
 	Namespace    string       `json:"namespace"`
@@ -44,15 +44,15 @@ type ServiceTraffic struct {
 	TcpRate      float64      `json:"tcpRate"` // bytes per second
 }
 
-func (s *ServiceTraffic) GetCluster() string             { return s.Cluster }
-func (s *ServiceTraffic) GetNamespace() string           { return s.Namespace }
-func (s *ServiceTraffic) GetServiceName() string         { return s.ServiceName }
-func (s *ServiceTraffic) SetHealthStatus(h HealthStatus) { s.HealthStatus = h }
+func (s *ServiceThroughput) GetCluster() string             { return s.Cluster }
+func (s *ServiceThroughput) GetNamespace() string           { return s.Namespace }
+func (s *ServiceThroughput) GetServiceName() string         { return s.ServiceName }
+func (s *ServiceThroughput) SetHealthStatus(h HealthStatus) { s.HealthStatus = h }
 
-// ServiceTrafficResponse contains the sorted list of service TCP traffic rates
-type ServiceTrafficResponse struct {
-	HasWaypoints bool             `json:"hasWaypoints"`
-	Services     []ServiceTraffic `json:"services"`
+// ServiceThroughputResponse contains the sorted list of service throughput rates
+type ServiceThroughputResponse struct {
+	HasWaypoints bool                `json:"hasWaypoints"`
+	Services     []ServiceThroughput `json:"services"`
 }
 
 // AppRequests represents a single app's request statistics from the health cache

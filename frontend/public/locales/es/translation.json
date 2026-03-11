@@ -565,7 +565,7 @@
   "To List": "Lista de destino",
   "To read the FAQ entry about why your graph may be empty, ": "Para leer la entrada de la FAQ sobre por qué su gráfico puede estar vacío, ",
   "Toggle the calendar": "Toggle the calendar",
-  "Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.": "Top services ranked by TCP bytes per second, error rate and P95 latency. Status icons indicate health for the time period.",
+  "Top services ranked by throughput (bytes per second), error rate and P95 latency. Status icons indicate health for the time period.": "Top services ranked by throughput (bytes per second), error rate and P95 latency. Status icons indicate health for the time period.",
   "Total applications": "Total de aplicaciones",
   "Traffic": "Tráfico",
   "Traffic Animation": "Animación de tráfico",
