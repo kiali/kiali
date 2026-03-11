@@ -227,6 +227,15 @@ const typeNamespaces: ResourceType<NamespaceInfo> = {
   width: 10
 };
 
+const modeNamespaces: ResourceType<NamespaceInfo> = {
+  name: 'Mode',
+  param: 'mode',
+  renderer: Renderers.nsMode,
+  sortable: true,
+  title: 'Mode',
+  width: 10
+};
+
 const revisionNamespaces: ResourceType<NamespaceInfo> = {
   name: 'Revision',
   param: 'rev',
@@ -259,6 +268,7 @@ const namespacesList: Resource = {
   columns: [
     nsItemNamespaces,
     typeNamespaces,
+    modeNamespaces,
     revisionNamespaces,
     cluster,
     namespacesHealth,

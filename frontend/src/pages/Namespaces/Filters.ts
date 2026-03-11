@@ -10,7 +10,7 @@ import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from '../../types/Health';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
-import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { getNamespaceMode, isDataPlaneNamespace } from 'utils/NamespaceUtils';
 
 export const nameFilter: RunnableFilter<NamespaceInfo> = {
   category: t('Namespace'),
@@ -243,10 +243,37 @@ export const categoryFilter: RunnableFilter<NamespaceInfo> = {
   }
 };
 
+const modeValues: FilterValue[] = [
+  { id: 'ambient', title: t('Ambient') },
+  { id: 'sidecar', title: t('Sidecar') },
+  { id: 'notApplicable', title: t('Not applicable') }
+];
+
+export const modeFilter: RunnableFilter<NamespaceInfo> = {
+  category: t('Mode'),
+  placeholder: t('Filter by Mode'),
+  filterType: AllFilterTypes.select,
+  action: FILTER_ACTION_APPEND,
+  filterValues: modeValues,
+  run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
+    if (filters.filters.length === 0) {
+      return true;
+    }
+
+    const mode = getNamespaceMode(ns);
+    const modeId = mode === 'ambient' ? 'ambient' : mode === 'sidecar' ? 'sidecar' : 'notApplicable';
+    const modeTitle = mode === 'ambient' ? t('Ambient') : mode === 'sidecar' ? t('Sidecar') : t('Not applicable');
+
+    // Filters in URL usually use titles; accept both id/title for stability.
+    return filters.filters.some(f => f.value === modeId || f.value === modeTitle);
+  }
+};
+
 export const availableFilters: RunnableFilter<NamespaceInfo>[] = [
   nameFilter,
   healthFilter,
   categoryFilter,
+  modeFilter,
   mtlsFilter,
   labelFilter
 ];

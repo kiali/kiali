@@ -1,6 +1,7 @@
 import { SortField } from '../../types/SortFilters';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { t } from 'utils/I18nUtils';
+import { getNamespaceMode } from 'utils/NamespaceUtils';
 
 export const sortFields: SortField<NamespaceInfo>[] = [
   {
@@ -16,6 +17,24 @@ export const sortFields: SortField<NamespaceInfo>[] = [
         return 1;
       }
       // If same category, sort by name
+      return a.name.localeCompare(b.name);
+    }
+  },
+  {
+    id: 'mode',
+    title: t('Mode'),
+    isNumeric: false,
+    param: 'mode',
+    compare: (a: NamespaceInfo, b: NamespaceInfo): number => {
+      const prio = (ns: NamespaceInfo): number => {
+        const m = getNamespaceMode(ns);
+        return m === 'ambient' ? 0 : m === 'sidecar' ? 1 : 2;
+      };
+      const ap = prio(a);
+      const bp = prio(b);
+      if (ap !== bp) {
+        return ap - bp;
+      }
       return a.name.localeCompare(b.name);
     }
   },
