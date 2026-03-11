@@ -166,28 +166,52 @@ if is_in_array "tempo" "jaeger" "${ADDONS}"; then
     exit 1
 fi
 
-# Pin Sail operator chart version to match Istio major.minor so we install a compatible
-# operator. Without this, Helm installs the latest chart, which can break CI for older branches.
-# Determine the latest Sail chart version for this Istio minor by fetching the Helm repo index.
-ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
-SAIL_CHART_VERSION=""
-if [ -n "${ISTIO_MINOR}" ]; then
-  SAIL_INDEX=$(curl -sL "https://istio-ecosystem.github.io/sail-operator/index.yaml" 2>/dev/null) || true
-  if [ -n "${SAIL_INDEX}" ]; then
-    SAIL_CHART_VERSION=$(echo "${SAIL_INDEX}" | yq '.entries.sail-operator[].version' - 2>/dev/null | grep -E "^${ISTIO_MINOR}\." | sort -V | tail -1) || true
-  fi
-fi
-if [ -n "${SAIL_CHART_VERSION}" ]; then
-  echo "Pinning Sail operator Helm chart to version ${SAIL_CHART_VERSION} (Istio ${ISTIO_VERSION:-})"
-fi
+# Install Sail operator using one of two methods:
+# 1. From a git ref (e.g., main/master branch or RC tag) - useful for testing unreleased versions
+# 2. From a Helm repository (default) - standard installation method
+if [ -n "${SAIL_OPERATOR_GIT_REF}" ]; then
+  # Method 1: Install from git ref
+  echo "Installing Sail operator from git ref: ${SAIL_OPERATOR_GIT_REF} (${SAIL_OPERATOR_GIT_REPO})"
+  TEMP_DIR=$(mktemp -d)
+  trap "rm -rf ${TEMP_DIR}" EXIT
 
-helm upgrade sail-operator sail-operator \
-  --install \
-  --create-namespace \
-  --namespace sail-operator \
-  --wait \
-  --repo https://istio-ecosystem.github.io/sail-operator \
-  ${SAIL_CHART_VERSION:+--version "$SAIL_CHART_VERSION"}
+  git clone --depth 1 --branch "${SAIL_OPERATOR_GIT_REF}" "${SAIL_OPERATOR_GIT_REPO}" "${TEMP_DIR}"
+
+  helm upgrade sail-operator "${TEMP_DIR}/chart" \
+    --install \
+    --create-namespace \
+    --namespace sail-operator \
+    --wait
+else
+  # Method 2: Install from Helm repository (default)
+  # Pin Sail operator chart version to match Istio major.minor so we install a compatible
+  # operator. Without this, Helm installs the latest chart, which can break CI for older branches.
+  ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+  SAIL_CHART_VERSION=""
+
+  # If user provided an explicit chart version, use it. Otherwise, auto-detect based on Istio version.
+  if [ -n "${SAIL_OPERATOR_CHART_VERSION}" ]; then
+    SAIL_CHART_VERSION="${SAIL_OPERATOR_CHART_VERSION}"
+    echo "Using explicitly configured Sail operator chart version: ${SAIL_CHART_VERSION}"
+  elif [ -n "${ISTIO_MINOR}" ]; then
+    # Auto-detect latest compatible version for this Istio minor
+    SAIL_INDEX=$(curl -sL "${SAIL_OPERATOR_HELM_REPO}/index.yaml" 2>/dev/null) || true
+    if [ -n "${SAIL_INDEX}" ]; then
+      SAIL_CHART_VERSION=$(echo "${SAIL_INDEX}" | yq '.entries.sail-operator[].version' - 2>/dev/null | grep -E "^${ISTIO_MINOR}\." | sort -V | tail -1) || true
+    fi
+    if [ -n "${SAIL_CHART_VERSION}" ]; then
+      echo "Auto-detected Sail operator chart version ${SAIL_CHART_VERSION} for Istio ${ISTIO_VERSION:-}"
+    fi
+  fi
+
+  helm upgrade sail-operator sail-operator \
+    --install \
+    --create-namespace \
+    --namespace sail-operator \
+    --wait \
+    --repo "${SAIL_OPERATOR_HELM_REPO}" \
+    ${SAIL_CHART_VERSION:+--version "$SAIL_CHART_VERSION"}
+fi
 
 # Pin Gateway API version based on Istio version:
 case "${ISTIO_MINOR}" in

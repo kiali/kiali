@@ -177,7 +177,7 @@ if [ "${AMBIENT}" == "true" ]; then
  ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
  if [ "${CLUSTER2_AMBIENT}" == "true" ]; then
     echo "==== Installing Istio Ambient on both clusters (default behavior)"
-    install_ambient_multicluster
+    install_ambient_multicluster "${SAIL}"
   else
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
 
