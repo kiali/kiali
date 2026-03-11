@@ -62,13 +62,10 @@ helm upgrade sail-operator sail-operator \
   --wait \
   --repo https://istio-ecosystem.github.io/sail-operator
 
-# Pin Gateway API version based on Istio version:
+# Pin based on Istio version:
 ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
 case "${ISTIO_MINOR}" in
   1.23) K8S_GATEWAY_API_VERSION="v1.1.0" ;;
-  1.24) K8S_GATEWAY_API_VERSION="v1.2.0" ;;
-  1.25) K8S_GATEWAY_API_VERSION="v1.2.0" ;;
-  1.26) K8S_GATEWAY_API_VERSION="v1.3.0" ;;
   *)    K8S_GATEWAY_API_VERSION=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | cat -v | sed "s/\^M//g") ;;
 esac
 
