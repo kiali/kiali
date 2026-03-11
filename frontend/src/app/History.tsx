@@ -94,6 +94,7 @@ export enum URLParam {
   RANGE_DURATION = 'rangeDuration',
   REFRESH_INTERVAL = 'refresh',
   REPORTER = 'reporter',
+  SERVICE_INSIGHTS_METRICS = 'siMetrics',
   SHOW_AVERAGE = 'avg',
   SHOW_SPANS = 'spans',
   SHOW_TRENDLINES = 'trendlines',

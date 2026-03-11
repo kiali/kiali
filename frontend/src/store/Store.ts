@@ -163,6 +163,7 @@ export interface NotificationCenterState {
 
 export interface InterfaceSettings {
   navCollapse: boolean;
+  serviceInsightsMetrics?: string;
 }
 
 export interface UserSettings {
