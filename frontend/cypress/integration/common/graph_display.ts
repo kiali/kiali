@@ -115,6 +115,8 @@ Then(`user sees empty graph`, () => {
 });
 
 Then(`user sees the {string} namespace`, ns => {
+  // Wait for graph (and thus summary panel) to be ready before asserting on the panel (avoids race)
+  assertGraphReady(() => { });
   cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`div#ns-${ns}`).should('be.visible');
 });
 
@@ -376,6 +378,8 @@ Given(
 Then(
   'the Istio objects for the {string} namespace for both clusters should be grouped together in the panel',
   (namespace: string) => {
+    // Wait for graph (and thus side panel) to be ready before asserting on the panel (avoids race)
+    assertGraphReady(() => { });
     cy.get('#graph-side-panel')
       .find(`#ns-${namespace}`)
       .within(() => {
