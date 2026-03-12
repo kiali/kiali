@@ -1,11 +1,11 @@
 import {
   Checkbox,
-  Tooltip,
-  TooltipPosition,
   Dropdown,
   DropdownList,
   MenuToggleElement,
-  MenuToggle
+  MenuToggle,
+  Popover,
+  PopoverPosition
 } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
@@ -27,7 +27,7 @@ import {
 } from 'styles/DropdownStyles';
 import { KialiDispatch } from 'types/Redux';
 import { serverConfig } from '../../../config';
-import { infoStyle } from 'styles/IconStyle';
+import { helpIconStyle } from 'styles/IconStyle';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -60,6 +60,7 @@ interface DisplayOptionType {
 }
 
 const marginBottom = 20;
+const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
 
 const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsProps) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
@@ -117,9 +118,19 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
               </label>
 
               {item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
-                </Tooltip>
+                <Popover
+                  key={`popover_${item.id}`}
+                  position={PopoverPosition.right}
+                  triggerAction="click"
+                  bodyContent={<div style={{ textAlign: 'left' }}>{item.tooltip}</div>}
+                  minWidth={DISPLAY_MENU_POPOVER_WIDTH}
+                  maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
+                  showClose={true}
+                >
+                  <span style={{ cursor: 'pointer' }}>
+                    <KialiIcon.Help className={item.iconClassName ?? helpIconStyle} />
+                  </span>
+                </Popover>
               )}
             </div>
           ))}

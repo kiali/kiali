@@ -14,7 +14,12 @@ export const menuStyle = kialiStyle({
 // this emulates Select component .pf-v6-c-select__menu but w/o cursor manipulation
 export const menuEntryStyle = kialiStyle({
   display: 'inline-block',
-  width: '100%'
+  width: '100%',
+  $nest: {
+    '&:hover': {
+      backgroundColor: PFColors.BackgroundColor200
+    }
+  }
 });
 
 // this emulates Select component .pf-v6-c-select__menu-group-title but with less bottom padding to conserve space
@@ -48,4 +53,44 @@ export const groupMenuStyle = kialiStyle({
 export const kebabToggleStyle = kialiStyle({
   paddingLeft: '0.5rem',
   paddingRight: '0.5rem'
+});
+
+// Display menu: row with left content and right-aligned help icon (icon shown only on hover)
+export const displayMenuRowStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  boxSizing: 'border-box',
+  $nest: {
+    '&:hover': {
+      backgroundColor: PFColors.BackgroundColor200
+    }
+  }
+});
+
+export const displayMenuRowContentStyle = kialiStyle({
+  flex: '1 1 auto',
+  minWidth: 0
+});
+
+export const displayMenuRowIconStyle = kialiStyle({
+  flexShrink: 0,
+  marginLeft: 'auto',
+  paddingLeft: '0.5rem',
+  paddingRight: '8px', // min 8px spacing from right edge of menu
+  background: 'none',
+  border: 'none'
+});
+
+// Global toggle section at top of Display menu
+export const displayMenuToggleSectionStyle = kialiStyle({
+  padding: '0.5rem 1rem',
+  borderBottom: `1px solid ${PFColors.BorderColor200}`
+});
+
+export const displayMenuToggleDescriptionStyle = kialiStyle({
+  fontSize: 'var(--pf-v6-global--FontSize--sm)',
+  color: PFColors.Color200,
+  marginTop: '0.25rem',
+  paddingLeft: '1.75rem'
 });

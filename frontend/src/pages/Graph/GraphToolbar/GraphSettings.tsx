@@ -1,12 +1,12 @@
 import {
   Radio,
   Checkbox,
-  Tooltip,
-  TooltipPosition,
   Dropdown,
   DropdownList,
   MenuToggleElement,
-  MenuToggle
+  MenuToggle,
+  Popover,
+  PopoverPosition
 } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
@@ -24,10 +24,13 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  itemStyleWithInfo,
+  displayMenuRowIconStyle,
+  displayMenuRowContentStyle,
+  displayMenuRowStyle,
+  displayMenuToggleDescriptionStyle,
+  displayMenuToggleSectionStyle,
   itemStyleWithoutInfo,
   menuStyle,
-  menuEntryStyle,
   titleStyle
 } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
@@ -35,7 +38,8 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { getDisabledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
-import { infoStyle } from 'styles/IconStyle';
+import { helpIconStyle } from 'styles/IconStyle';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -77,7 +81,14 @@ type GraphSettingsProps = ReduxStateProps &
     disabled: boolean;
   };
 
-type GraphSettingsState = { disabledFeatures?: KialiDisabledFeatures; isOpen: boolean };
+const DISPLAY_MENU_HELP_STORAGE_KEY = 'kiali-display-menu-help-enabled';
+
+type GraphSettingsState = {
+  disabledFeatures?: KialiDisabledFeatures;
+  isOpen: boolean;
+  enableMenuHelp: boolean;
+  hoveredRowId: string | null;
+};
 
 interface DisplayOptionType {
   iconClassName?: string;
@@ -92,13 +103,24 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
+// Consistent width for all Display menu help popovers
+const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
+
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
+  private hoverDelayTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: GraphSettingsProps) {
     super(props);
 
+    const storedHelp = typeof window !== 'undefined' ? localStorage.getItem(DISPLAY_MENU_HELP_STORAGE_KEY) : null;
+    const enableMenuHelp = storedHelp !== null ? storedHelp === 'true' : true;
+
     this.state = {
-      isOpen: false
+      isOpen: false,
+      enableMenuHelp,
+      hoveredRowId: null
     };
+    this.hoverDelayTimer = null;
 
     // Let URL override current redux state at construction time. Update URL as needed.
     this.handleURLBool(
@@ -346,10 +368,77 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
+  componentWillUnmount(): void {
+    if (this.hoverDelayTimer !== null) {
+      clearTimeout(this.hoverDelayTimer);
+    }
+  }
+
   private onToggle = (isOpen: boolean): void => {
-    this.setState({
-      isOpen
-    });
+    this.setState({ isOpen });
+  };
+
+  private setEnableMenuHelp = (enabled: boolean): void => {
+    this.setState({ enableMenuHelp: enabled });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(DISPLAY_MENU_HELP_STORAGE_KEY, String(enabled));
+    }
+  };
+
+  private readonly HOVER_DELAY_MS = 200;
+
+  private handleRowMouseEnter = (rowId: string): void => {
+    if (!this.state.enableMenuHelp) return;
+    this.hoverDelayTimer = window.setTimeout(() => {
+      this.setState({ hoveredRowId: rowId });
+      this.hoverDelayTimer = null;
+    }, this.HOVER_DELAY_MS);
+  };
+
+  private handleRowMouseLeave = (): void => {
+    if (this.hoverDelayTimer !== null) {
+      clearTimeout(this.hoverDelayTimer);
+      this.hoverDelayTimer = null;
+    }
+    this.setState({ hoveredRowId: null });
+  };
+
+  private renderDisplayMenuRow = (
+    rowId: string,
+    content: React.ReactNode,
+    tooltipContent?: React.ReactNode
+  ): React.ReactNode => {
+    const { enableMenuHelp, hoveredRowId } = this.state;
+    const showIcon = enableMenuHelp && tooltipContent && hoveredRowId === rowId;
+
+    if (!enableMenuHelp || !tooltipContent) {
+      return <div className={displayMenuRowStyle}>{content}</div>;
+    }
+    return (
+      <div
+        className={displayMenuRowStyle}
+        onMouseEnter={() => this.handleRowMouseEnter(rowId)}
+        onMouseLeave={this.handleRowMouseLeave}
+      >
+        <div className={displayMenuRowContentStyle}>{content}</div>
+        {showIcon && (
+          <div className={displayMenuRowIconStyle}>
+            <Popover
+              position={PopoverPosition.right}
+              triggerAction="click"
+              bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
+              minWidth={DISPLAY_MENU_POPOVER_WIDTH}
+              maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
+              showClose={true}
+            >
+              <span style={{ cursor: 'pointer' }}>
+                <KialiIcon.Help className={helpIconStyle} />
+              </span>
+            </Popover>
+          </div>
+        )}
+      </div>
+    );
   };
 
   private getMenuOptions = (): React.ReactNode => {
@@ -725,67 +814,58 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
         <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
-          <div style={{ marginTop: '0.5rem' }}>
-            <span className={titleStyle} style={{ paddingRight: 0 }}>
-              Show Edge Labels
-            </span>
-
-            <Tooltip
-              key="tooltip_show_edge_labels"
-              position={TooltipPosition.right}
-              content={
-                <div style={{ textAlign: 'left' }}>
-                  <div>
-                    Values for multiple label selections are stacked in the same order as the options below. Hover or
-                    selection will always show units, an additionally show protocol.
-                  </div>
-                </div>
-              }
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
+          {/* Global toggle: Enable menu help */}
+          <div className={displayMenuToggleSectionStyle}>
+            <Checkbox
+              id="display-menu-enable-help"
+              isChecked={this.state.enableMenuHelp}
+              label={t('Enable menu help')}
+              onChange={(_event, checked) => this.setEnableMenuHelp(!!checked)}
+            />
+            <div className={displayMenuToggleDescriptionStyle}>
+              {t('Show help indicators for all menu options.')}
+            </div>
           </div>
 
-          {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
-            <div key={edgeLabelOption.id} className={menuEntryStyle}>
-              <label
-                key={edgeLabelOption.id}
-                className={edgeLabelOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-              >
-                <Checkbox
-                  id={edgeLabelOption.id}
-                  isChecked={edgeLabelOption.isChecked}
-                  isDisabled={this.props.disabled || edgeLabelOption.isDisabled}
-                  key={edgeLabelOption.id}
-                  label={edgeLabelOption.labelText}
-                  name="edgeLabelOptions"
-                  onChange={(event: React.FormEvent, _checked: boolean) => this.toggleEdgeLabelMode(event)}
-                  value={edgeLabelOption.id}
-                />
-              </label>
+          {this.renderDisplayMenuRow(
+            'show-edge-labels-title',
+            <div style={{ marginTop: '0.5rem' }}>
+              <span className={titleStyle} style={{ paddingRight: 0 }}>
+                Show Edge Labels
+              </span>
+            </div>,
+            <div style={{ textAlign: 'left' }}>
+              <div>
+                Values for multiple label selections are stacked in the same order as the options below. Hover or
+                selection will always show units, an additionally show protocol.
+              </div>
+            </div>
+          )}
 
-              {edgeLabelOption.tooltip && (
-                <Tooltip
-                  key={`tooltip_${edgeLabelOption.id}`}
-                  position={TooltipPosition.right}
-                  content={edgeLabelOption.tooltip}
-                >
-                  <KialiIcon.Info
-                    className={edgeLabelOption.iconClassName ?? infoStyle}
-                    color={edgeLabelOption.iconColor}
+          {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
+            <React.Fragment key={edgeLabelOption.id}>
+              {this.renderDisplayMenuRow(
+                `edge-${edgeLabelOption.id}`,
+                <label key={edgeLabelOption.id} className={itemStyleWithoutInfo}>
+                  <Checkbox
+                    id={edgeLabelOption.id}
+                    isChecked={edgeLabelOption.isChecked}
+                    isDisabled={this.props.disabled || edgeLabelOption.isDisabled}
+                    label={edgeLabelOption.labelText}
+                    name="edgeLabelOptions"
+                    onChange={(event: React.FormEvent, _checked: boolean) => this.toggleEdgeLabelMode(event)}
+                    value={edgeLabelOption.id}
                   />
-                </Tooltip>
+                </label>,
+                edgeLabelOption.tooltip || undefined
               )}
 
               {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP && responseTimeOptions.some(o => o.isChecked) && (
                 <div>
-                  {responseTimeOptions.map((rtOption: DisplayOptionType) => (
-                    <div key={rtOption.id} className={menuEntryStyle}>
-                      <label
-                        key={rtOption.id}
-                        className={rtOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
+                  {responseTimeOptions.map((rtOption: DisplayOptionType) =>
+                    this.renderDisplayMenuRow(
+                      `rt-${rtOption.id}`,
+                      <label key={rtOption.id} className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                         <Radio
                           id={rtOption.id}
                           isChecked={rtOption.isChecked}
@@ -798,34 +878,19 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           style={{ paddingLeft: '0.25rem' }}
                           value={rtOption.id}
                         />
-                      </label>
-
-                      {rtOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${rtOption.id}`}
-                          position={TooltipPosition.right}
-                          content={rtOption.tooltip}
-                        >
-                          <KialiIcon.Info
-                            className={edgeLabelOption.iconClassName ?? infoStyle}
-                            color={edgeLabelOption.iconColor}
-                          />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
+                      </label>,
+                      rtOption.tooltip || undefined
+                    )
+                  )}
                 </div>
               )}
 
               {edgeLabelOption.id === EdgeLabelMode.THROUGHPUT_GROUP && throughputOptions.some(o => o.isChecked) && (
                 <div>
-                  {throughputOptions.map((throughputOption: DisplayOptionType) => (
-                    <div key={throughputOption.id} className={menuEntryStyle}>
-                      <label
-                        key={throughputOption.id}
-                        className={throughputOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
+                  {throughputOptions.map((throughputOption: DisplayOptionType) =>
+                    this.renderDisplayMenuRow(
+                      `throughput-${throughputOption.id}`,
+                      <label key={throughputOption.id} className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                         <Radio
                           id={throughputOption.id}
                           isChecked={throughputOption.isChecked}
@@ -838,56 +903,39 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           style={{ paddingLeft: '0.5rem' }}
                           value={throughputOption.id}
                         />
-                      </label>
-
-                      {throughputOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${throughputOption.id}`}
-                          position={TooltipPosition.right}
-                          content={throughputOption.tooltip}
-                        >
-                          <KialiIcon.Info
-                            className={throughputOption.iconClassName ?? infoStyle}
-                            color={throughputOption.iconColor}
-                          />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
+                      </label>,
+                      throughputOption.tooltip || undefined
+                    )
+                  )}
                 </div>
               )}
-            </div>
+            </React.Fragment>
           ))}
 
           <div className={titleStyle}>Show</div>
 
           {visibilityOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
-                <Checkbox
-                  id={item.id}
-                  isChecked={item.isChecked}
-                  isDisabled={this.props.disabled || item.isDisabled}
-                  label={item.labelText}
-                  onChange={item.onChange}
-                />
-              </label>
-
-              {item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
-                </Tooltip>
+            <React.Fragment key={item.id}>
+              {this.renderDisplayMenuRow(
+                `visibility-${item.id}`,
+                <label key={item.id} className={itemStyleWithoutInfo}>
+                  <Checkbox
+                    id={item.id}
+                    isChecked={item.isChecked}
+                    isDisabled={this.props.disabled || item.isDisabled}
+                    label={item.labelText}
+                    onChange={item.onChange}
+                  />
+                </label>,
+                item.tooltip || undefined
               )}
 
               {item.id === 'rank' && rank && (
                 <div>
-                  {scoringOptions.map((scoringOption: DisplayOptionType) => (
-                    <div key={scoringOption.id} className={menuEntryStyle}>
-                      <label
-                        key={scoringOption.id}
-                        className={scoringOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                        style={{ paddingLeft: '2rem' }}
-                      >
+                  {scoringOptions.map((scoringOption: DisplayOptionType) =>
+                    this.renderDisplayMenuRow(
+                      `scoring-${scoringOption.id}`,
+                      <label key={scoringOption.id} className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                         <Checkbox
                           id={scoringOption.id}
                           isChecked={scoringOption.isChecked}
@@ -898,32 +946,21 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           style={{ paddingLeft: '0.25rem' }}
                           value={scoringOption.id}
                         />
-                      </label>
-
-                      {scoringOption.tooltip && (
-                        <Tooltip
-                          key={`tooltip_${scoringOption.id}`}
-                          position={TooltipPosition.right}
-                          content={scoringOption.tooltip}
-                        >
-                          <KialiIcon.Info
-                            className={scoringOption.iconClassName ?? infoStyle}
-                            color={scoringOption.iconColor}
-                          />
-                        </Tooltip>
-                      )}
-                    </div>
-                  ))}
+                      </label>,
+                      scoringOption.tooltip || undefined
+                    )
+                  )}
                 </div>
               )}
-            </div>
+            </React.Fragment>
           ))}
 
           <div className={titleStyle}>Show Badges</div>
 
-          {badgeOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
+          {badgeOptions.map((item: DisplayOptionType) =>
+            this.renderDisplayMenuRow(
+              `badge-${item.id}`,
+              <label key={item.id} className={itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -931,15 +968,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   label={item.labelText}
                   onChange={item.onChange}
                 />
-              </label>
-
-              {item.tooltip && (
-                <Tooltip key={`tooltip_${item.id}`} position={TooltipPosition.right} content={item.tooltip}>
-                  <KialiIcon.Info className={item.iconClassName ?? infoStyle} color={item.iconColor} />
-                </Tooltip>
-              )}
-            </div>
-          ))}
+              </label>,
+              item.tooltip || undefined
+            )
+          )}
         </div>
       </BoundingClientAwareComponent>
     );
