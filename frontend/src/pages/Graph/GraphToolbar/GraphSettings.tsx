@@ -436,9 +436,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               onShown={() => this.setState({ popoverOpenRowId: rowId })}
               onHidden={() => this.setState({ popoverOpenRowId: null })}
             >
-              <span style={{ cursor: 'pointer' }}>
-                <KialiIcon.Help className={helpIconStyle} />
-              </span>
+              <KialiIcon.Help className={helpIconStyle} />
             </Popover>
           </div>
         )}

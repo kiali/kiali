@@ -127,9 +127,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
               onShown={() => setPopoverOpenRowId(rowId)}
               onHidden={() => setPopoverOpenRowId(null)}
             >
-              <span style={{ cursor: 'pointer' }}>
-                <KialiIcon.Help className={helpIconStyle} />
-              </span>
+              <KialiIcon.Help className={helpIconStyle} />
             </Popover>
           </div>
         )}
