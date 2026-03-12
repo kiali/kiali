@@ -23,7 +23,9 @@ describe('HealthPopoverBody', () => {
 
   it('contains aggregate state description', () => {
     const wrapper = shallow(<HealthPopoverBody />);
-    expect(wrapper.text()).toContain('The aggregate state of all apps, services and workloads within the namespace.');
+    expect(wrapper.text()).toContain(
+      'Health represents the aggregated status of all apps, services, and workloads within the namespace.'
+    );
   });
 
   it('contains Healthy status description', () => {

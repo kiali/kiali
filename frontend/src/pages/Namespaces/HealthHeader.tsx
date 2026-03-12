@@ -7,7 +7,10 @@ export const HealthPopoverBody: React.FC = () => {
   return (
     <div style={{ textAlign: 'left' }}>
       <div style={{ marginBottom: '0.5rem' }}>
-        {t('The aggregate state of all apps, services and workloads within the namespace.')}
+        {t('Health represents the aggregated status of all apps, services, and workloads within the namespace.')}
+      </div>
+      <div style={{ marginBottom: '0.5rem' }}>
+        {t("A namespace's status is determined by its lowest-performing component.")}
       </div>
       <div style={{ marginBottom: '0.25rem' }}>
         <strong>{t('Healthy')}</strong>: {t('All components are healthy.')}

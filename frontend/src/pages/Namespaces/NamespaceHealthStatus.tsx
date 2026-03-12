@@ -211,7 +211,16 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
         <div className={isNA ? naTextStyle : statusTextStyle}>{getStatusText()}</div>
       </div>
       {!isHealthy && !isNA && unhealthyCount > 0 && (
-        <div style={{ marginLeft: '1.375rem', marginTop: '0.125rem' }}>{pluralize(unhealthyCount, 'issue')}</div>
+        <div
+          style={{
+            marginLeft: '1.375rem',
+            marginTop: '0.125rem',
+            fontSize: 'var(--pf-t--global--font--size--sm)',
+            color: 'var(--pf-t--global--text--color--subtle)'
+          }}
+        >
+          {pluralize(unhealthyCount, 'issue')}
+        </div>
       )}
     </div>
   );
