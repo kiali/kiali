@@ -357,7 +357,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
 			// Skip validations for a particular namespace, mesh config was not found
-			log.Debug(err)
+			log.Trace(err)
 			continue
 		}
 
