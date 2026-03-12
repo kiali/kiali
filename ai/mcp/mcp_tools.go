@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 
@@ -42,7 +43,22 @@ var ExcludedToolNames = map[string]bool{
 	"get_action_ui": true,
 }
 
+var (
+	loadToolsOnce sync.Once
+	loadToolsErr  error
+)
+
 func LoadTools() error {
+	loadToolsOnce.Do(func() {
+		loadToolsErr = loadToolsImpl()
+	})
+	return loadToolsErr
+}
+
+func loadToolsImpl() error {
+	if len(DefaultToolHandlers) > 0 {
+		return nil
+	}
 	entries, err := fs.ReadDir(toolsFS, "tools")
 	if err != nil {
 		return fmt.Errorf("read tools directory: %w", err)

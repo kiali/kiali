@@ -18,7 +18,6 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -40,12 +39,9 @@ func ChatMCP(
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		toolName := params["tool_name"]
-		if len(mcp.DefaultToolHandlers) == 0 {
-			log.Infof("[AI]Loading tools...")
-			if err := mcp.LoadTools(); err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-				return
-			}
+		if err := mcp.LoadTools(); err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
 		}
 		tool, ok := mcp.DefaultToolHandlers[toolName]
 		if !ok {

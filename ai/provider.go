@@ -8,16 +8,12 @@ import (
 	googleProvider "github.com/kiali/kiali/ai/providers/google"
 	openaiProvider "github.com/kiali/kiali/ai/providers/openai"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/log"
 )
 
 // NewAIProvider builds the AI provider configured for the given model name.
 func NewAIProvider(conf *config.Config, providerName string, modelName string) (providers.AIProvider, error) {
-	if len(mcp.DefaultToolHandlers) == 0 {
-		log.Infof("[AI]Loading tools...")
-		if err := mcp.LoadTools(); err != nil {
-			return nil, err
-		}
+	if err := mcp.LoadTools(); err != nil {
+		return nil, err
 	}
 	provider, err := getProvider(conf, providerName)
 	if err != nil {
