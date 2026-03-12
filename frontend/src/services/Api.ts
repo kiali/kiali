@@ -1603,7 +1603,6 @@ export const getOverviewServiceThroughput = (
   params: { limit?: number; rateInterval?: string } = {}
 ): Promise<
   ApiResponse<{
-    hasWaypoints: boolean;
     services: Array<{
       cluster: string;
       healthStatus?: HealthStatusId;
