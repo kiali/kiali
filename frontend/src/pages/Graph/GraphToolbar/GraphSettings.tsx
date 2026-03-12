@@ -85,9 +85,10 @@ const DISPLAY_MENU_HELP_STORAGE_KEY = 'kiali-display-menu-help-enabled';
 
 type GraphSettingsState = {
   disabledFeatures?: KialiDisabledFeatures;
-  isOpen: boolean;
   enableMenuHelp: boolean;
   hoveredRowId: string | null;
+  isOpen: boolean;
+  popoverOpenRowId: string | null;
 };
 
 interface DisplayOptionType {
@@ -103,11 +104,8 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
-// Consistent width for all Display menu help popovers
-const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
-
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
-  private hoverDelayTimer: ReturnType<typeof setTimeout> | null = null;
+  private hoverDelayTimer: number | null = null;
 
   constructor(props: GraphSettingsProps) {
     super(props);
@@ -116,9 +114,10 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     const enableMenuHelp = storedHelp !== null ? storedHelp === 'true' : true;
 
     this.state = {
-      isOpen: false,
       enableMenuHelp,
-      hoveredRowId: null
+      hoveredRowId: null,
+      isOpen: false,
+      popoverOpenRowId: null
     };
     this.hoverDelayTimer = null;
 
@@ -370,7 +369,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
   componentWillUnmount(): void {
     if (this.hoverDelayTimer !== null) {
-      clearTimeout(this.hoverDelayTimer);
+      window.clearTimeout(this.hoverDelayTimer);
     }
   }
 
@@ -397,19 +396,24 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
 
   private handleRowMouseLeave = (): void => {
     if (this.hoverDelayTimer !== null) {
-      clearTimeout(this.hoverDelayTimer);
+      window.clearTimeout(this.hoverDelayTimer);
       this.hoverDelayTimer = null;
     }
-    this.setState({ hoveredRowId: null });
+    // Don't hide the icon if a popover is currently open
+    if (this.state.popoverOpenRowId === null) {
+      this.setState({ hoveredRowId: null });
+    }
   };
 
   private renderDisplayMenuRow = (
     rowId: string,
     content: React.ReactNode,
-    tooltipContent?: React.ReactNode
+    tooltipContent?: React.ReactNode,
+    headerTitle?: string
   ): React.ReactNode => {
-    const { enableMenuHelp, hoveredRowId } = this.state;
-    const showIcon = enableMenuHelp && tooltipContent && hoveredRowId === rowId;
+    const { enableMenuHelp, hoveredRowId, popoverOpenRowId } = this.state;
+    // Show icon if hovering OR if the popover is open for this row
+    const showIcon = enableMenuHelp && tooltipContent && (hoveredRowId === rowId || popoverOpenRowId === rowId);
 
     if (!enableMenuHelp || !tooltipContent) {
       return <div className={displayMenuRowStyle}>{content}</div>;
@@ -426,10 +430,11 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             <Popover
               position={PopoverPosition.right}
               triggerAction="click"
+              headerContent={headerTitle}
               bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
-              minWidth={DISPLAY_MENU_POPOVER_WIDTH}
-              maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
               showClose={true}
+              onShown={() => this.setState({ popoverOpenRowId: rowId })}
+              onHidden={() => this.setState({ popoverOpenRowId: null })}
             >
               <span style={{ cursor: 'pointer' }}>
                 <KialiIcon.Help className={helpIconStyle} />
@@ -822,9 +827,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
               label={t('Enable menu help')}
               onChange={(_event, checked) => this.setEnableMenuHelp(!!checked)}
             />
-            <div className={displayMenuToggleDescriptionStyle}>
-              {t('Show help indicators for all menu options.')}
-            </div>
+            <div className={displayMenuToggleDescriptionStyle}>{t('Show help indicators for all menu options.')}</div>
           </div>
 
           {this.renderDisplayMenuRow(
@@ -839,7 +842,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 Values for multiple label selections are stacked in the same order as the options below. Hover or
                 selection will always show units, an additionally show protocol.
               </div>
-            </div>
+            </div>,
+            'Show Edge Labels'
           )}
 
           {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
@@ -857,7 +861,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                     value={edgeLabelOption.id}
                   />
                 </label>,
-                edgeLabelOption.tooltip || undefined
+                edgeLabelOption.tooltip || undefined,
+                edgeLabelOption.labelText
               )}
 
               {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP && responseTimeOptions.some(o => o.isChecked) && (
@@ -879,7 +884,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           value={rtOption.id}
                         />
                       </label>,
-                      rtOption.tooltip || undefined
+                      rtOption.tooltip || undefined,
+                      rtOption.labelText
                     )
                   )}
                 </div>
@@ -904,7 +910,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           value={throughputOption.id}
                         />
                       </label>,
-                      throughputOption.tooltip || undefined
+                      throughputOption.tooltip || undefined,
+                      throughputOption.labelText
                     )
                   )}
                 </div>
@@ -927,7 +934,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                     onChange={item.onChange}
                   />
                 </label>,
-                item.tooltip || undefined
+                item.tooltip || undefined,
+                item.labelText
               )}
 
               {item.id === 'rank' && rank && (
@@ -947,7 +955,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                           value={scoringOption.id}
                         />
                       </label>,
-                      scoringOption.tooltip || undefined
+                      scoringOption.tooltip || undefined,
+                      scoringOption.labelText
                     )
                   )}
                 </div>
@@ -969,7 +978,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                   onChange={item.onChange}
                 />
               </label>,
-              item.tooltip || undefined
+              item.tooltip || undefined,
+              item.labelText
             )
           )}
         </div>
