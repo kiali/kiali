@@ -81,9 +81,9 @@ jobs:
                   }
                 }
                 END {
-                  # The latest patch version is not always available in Sail. Use -latest as patch version
-                  for (m in minor_ga) { split(minor_ga[m], version_parts, "."); minor_ga[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_ga[m] }
-                  for (m in minor_rc) { split(minor_rc[m], version_parts, "."); minor_rc[m] = version_parts[1] "." version_parts[2] "-latest"; print minor_rc[m] }
+                  # Print the highest patch version for each minor (will be validated against Sail later)
+                  for (m in minor_ga) { print minor_ga[m] }
+                  for (m in minor_rc) { print minor_rc[m] }
                 }' | sort -Vr | grep -v '^$' | head -n $((OFFSET + 1)))"
               break
             else
@@ -96,8 +96,68 @@ jobs:
             fi
           done
 
+          # Validate against Sail Operator supported Istio versions
+          # Fetch supported versions from Sail Operator's versions.yaml in GitHub
+          echo "Fetching Sail Operator supported Istio versions..."
+          SAIL_VERSIONS_URL="https://raw.githubusercontent.com/istio-ecosystem/sail-operator/main/bundle/versions.yaml"
+
+          SAIL_SUPPORTED_VERSIONS=$(curl -sL "${SAIL_VERSIONS_URL}" 2>/dev/null | \
+            grep -E "^\s+version:" | \
+            awk '{print $2}' | \
+            sed 's/"//g' | \
+            grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | \
+            sort -V)
+
+          if [ -n "$SAIL_SUPPORTED_VERSIONS" ]; then
+            echo "Sail Operator supported Istio versions:"
+            echo "$SAIL_SUPPORTED_VERSIONS" | tail -20
+
+            # Validate each version against Sail supported versions, use highest if not supported
+            VALIDATED_VERSIONS=""
+            while IFS= read -r version; do
+              if [ -z "$version" ]; then
+                continue
+              fi
+
+              # Remove 'v' prefix if present
+              REQUESTED=$(echo "$version" | sed 's/^v//')
+
+              # Check if this exact version is supported by Sail
+              if echo "$SAIL_SUPPORTED_VERSIONS" | grep -q "^v${REQUESTED}$"; then
+                echo "Istio ${REQUESTED} is supported by Sail Operator"
+                VALIDATED_VERSIONS="${VALIDATED_VERSIONS}${REQUESTED}\n"
+              else
+                # Extract minor version (e.g., 1.27 from 1.27.8)
+                MINOR=$(echo "$REQUESTED" | cut -d. -f1-2)
+
+                # Find the highest Sail-supported version for this minor
+                HIGHEST_SUPPORTED=$(echo "$SAIL_SUPPORTED_VERSIONS" | \
+                  grep "^v${MINOR}\." | \
+                  sort -V | \
+                  tail -1 | \
+                  sed 's/^v//')
+
+                if [ -n "$HIGHEST_SUPPORTED" ]; then
+                  echo "Istio ${REQUESTED} not supported by Sail -> Using ${HIGHEST_SUPPORTED} (highest for ${MINOR}.x)"
+                  VALIDATED_VERSIONS="${VALIDATED_VERSIONS}${HIGHEST_SUPPORTED}\n"
+                else
+                  echo "WARNING: No Sail-supported versions found for Istio ${MINOR}.x, skipping ${REQUESTED}"
+                fi
+              fi
+            done <<< "${LATEST_ISTIO_VERSIONS}"
+
+            if [ -n "$VALIDATED_VERSIONS" ]; then
+              LATEST_ISTIO_VERSIONS=$(echo -e "${VALIDATED_VERSIONS}" | grep -v '^$')
+            else
+              echo "ERROR: No Sail-compatible Istio versions found!"
+              exit 1
+            fi
+          else
+            echo "WARNING: Could not fetch Sail Operator supported versions, proceeding without validation"
+          fi
+
           ISTIO_VERSION=$(echo "${LATEST_ISTIO_VERSIONS}" | tail -n 1)
-          echo "The latest Istio versions are:"
+          echo "The latest Istio versions (validated against Sail Operator) are:"
           echo "${LATEST_ISTIO_VERSIONS}"
           echo "The Istio minor version offset is [${OFFSET}], thus the Istio version to be used in the tests will be: ${ISTIO_VERSION}"
         else
