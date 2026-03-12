@@ -49,7 +49,7 @@ func ChatMCP(
 		}
 		tool, ok := mcp.DefaultToolHandlers[toolName]
 		if !ok {
-			RespondWithError(w, http.StatusInternalServerError, "Tool not found")
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' not found", toolName))
 			return
 		}
 		var args map[string]interface{}
