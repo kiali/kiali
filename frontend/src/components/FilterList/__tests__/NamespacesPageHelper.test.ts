@@ -6,6 +6,7 @@ import { FilterSelected } from '../../Filters/StatefulFilters';
 const allNamespaces: NamespaceInfo[] = [
   {
     name: 'a',
+    worstStatus: 'Degraded',
     statusApp: {
       inNotReady: [],
       inError: [],
@@ -16,6 +17,7 @@ const allNamespaces: NamespaceInfo[] = [
   },
   {
     name: 'b',
+    worstStatus: 'Failure',
     statusApp: {
       inNotReady: [],
       inError: ['b-tres'],
@@ -26,6 +28,7 @@ const allNamespaces: NamespaceInfo[] = [
   },
   {
     name: 'c',
+    worstStatus: 'Healthy',
     statusApp: {
       inNotReady: [],
       inError: [],
@@ -74,9 +77,8 @@ describe('Namespaces Page', () => {
       FilterSelected.getSelected()
     );
 
-    expect(filteredNamespaces.length).toEqual(2);
+    expect(filteredNamespaces.length).toEqual(1);
     expect(filteredNamespaces[0].name).toEqual('a');
-    expect(filteredNamespaces[1].name).toEqual('b');
   });
 
   it('filters Failure namespaces', () => {
