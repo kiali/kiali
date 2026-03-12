@@ -293,9 +293,30 @@ spec:
 EOF
 )
 
+# Determine ZTunnel API version based on Istio version
+# Extract version from the Istio YAML spec if available, otherwise fall back to ISTIO_MINOR
+ISTIO_VERSION_FROM_YAML=$(yq '.spec.version // ""' <<< "$ISTIO_YAML" 2>/dev/null || echo "")
+if [ -z "$ISTIO_VERSION_FROM_YAML" ]; then
+  ISTIO_VERSION_FROM_YAML="${ISTIO_VERSION:-}"
+fi
+
+# Determine minor version (e.g., "1.27" from "v1.27.0" or "v1.27-latest")
+if [[ "$ISTIO_VERSION_FROM_YAML" =~ ^v?([0-9]+\.[0-9]+) ]]; then
+  DETECTED_ISTIO_MINOR="${BASH_REMATCH[1]}"
+else
+  DETECTED_ISTIO_MINOR="${ISTIO_MINOR:-}"
+fi
+
+# Istio 1.27 uses v1alpha1 for ZTunnel, while 1.28+ uses v1
+ZTUNNEL_API_VERSION="sailoperator.io/v1"
+if [ "$DETECTED_ISTIO_MINOR" == "1.27" ]; then
+  ZTUNNEL_API_VERSION="sailoperator.io/v1alpha1"
+  echo "Using ZTunnel API version ${ZTUNNEL_API_VERSION} for Istio ${DETECTED_ISTIO_MINOR}"
+fi
+
 ztunnelYAML=$(
 cat <<EOF
-apiVersion: sailoperator.io/v1
+apiVersion: ${ZTUNNEL_API_VERSION}
 kind: ZTunnel
 metadata:
   name: default
