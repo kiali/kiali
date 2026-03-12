@@ -465,6 +465,38 @@ The AI model automatically calls these tools based on user queries:
 
 The AI combines results from multiple tools to provide comprehensive answers with navigation actions and citations.
 
+## MCP TOOLS Tokenaizer
+
+<!-- MCP-TOOLS-TOKENAIZER -->
+
+### manage_istio_config
+
+| Description | Characters | Tokens (OpenAI) |
+|---|---|---|
+| List all Istio config | 6433 | 1735 |
+| List Istio config for bookinfo namespace | 6433 | 1735 |
+| Get Gateway for bookinfo namespace | 2772 | 702 |
+
+
+### get_mesh_graph
+
+| Description | Characters | Tokens (OpenAI) |
+|---|---|---|
+| Get Graph for bookinfo namespace | 18011 | 5945 |
+| Get App Graph for istio-system and bookinfo namespaces | 14616 | 4749 |
+
+
+### get_resource_detail
+
+| Description | Characters | Tokens (OpenAI) |
+|---|---|---|
+| Get List of services for ns bookinfo | 2446 | 613 |
+| Get List of workloads for ns bookinfo | 13485 | 3491 |
+| Get Details of workload reviews-v1 for ns bookinfo | 3915 | 1080 |
+| Get Details of service reviews for ns bookinfo | 10683 | 2789 |
+
+<!-- MCP-TOOLS-TOKENAIZER-END -->
+
 ## Adding New Tools
 
 To add a new MCP tool:

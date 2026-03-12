@@ -1,0 +1,145 @@
+name: MCP Tokens Count
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+  pull_request:
+    paths:
+    - 'ai/mcp/**'
+    branches:
+    - master
+    - 'v*.*'
+  workflow_dispatch:
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref_name }}
+
+jobs:
+  mcp_tokens_count:
+    name: MCP Tokens Count
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_call' && github.event.pull_request)
+    runs-on: ubuntu-latest
+    env:
+      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
+      # prevents extra Cypress installation progress messages
+      CI: 1
+      # avoid warnings like "tput: No value for $TERM and no -T specified"
+      TERM: xterm
+    continue-on-error: true
+    steps:
+    - name: Check out Kiali code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.build_branch || github.ref }}
+
+    - name: Install Helm
+      uses: Azure/setup-helm@v4.3.1
+      with:
+        version: 'v3.18.4'
+
+    - name: Setup node
+      uses: actions/setup-node@v6
+      with:
+        node-version: "24"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
+
+    - name: Download go binary
+      uses: actions/download-artifact@v8
+      with:
+        name: kiali
+        path: ~/go/bin/
+
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali || true
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: yarn install --frozen-lockfile
+
+    - name: Setup KinD cluster with Istio and Kiali
+      run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+
+    - name: Get Kiali external URL from MetalLB
+      id: get_kiali_url
+      run: |
+        # Wait for Kiali LoadBalancer to get an external IP
+        echo "Waiting for Kiali LoadBalancer to get external IP..."
+        kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=300s
+
+        # Get the external IP from MetalLB
+        KIALI_IP=$(kubectl get svc kiali -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        if [ -z "$KIALI_IP" ]; then
+          echo "ERROR: Failed to get Kiali LoadBalancer IP"
+          kubectl get svc kiali -n istio-system
+          exit 1
+        fi
+
+        # Kiali service uses port 80, so the URL is http://IP/kiali
+        KIALI_URL="http://${KIALI_IP}/kiali"
+        echo "Kiali URL: $KIALI_URL"
+        echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
+
+        # Verify Kiali is accessible
+        echo "Verifying Kiali is accessible at ${KIALI_URL}..."
+        for i in {1..30}; do
+          CURL_OUTPUT=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${KIALI_URL}/api/status" 2>&1)
+          HTTP_CODE=$(echo "$CURL_OUTPUT" | grep "HTTP_CODE:" | cut -d: -f2)
+          RESPONSE_BODY=$(echo "$CURL_OUTPUT" | sed '/HTTP_CODE:/d')
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Kiali is accessible at ${KIALI_URL}"
+            break
+          else
+            echo "Attempt $i/30: HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Curl output:"
+              echo "$CURL_OUTPUT"
+            fi
+          fi
+
+          if [ $i -eq 30 ]; then
+            echo "ERROR: Kiali is not accessible after 30 attempts"
+            echo "Final curl output:"
+            echo "$CURL_OUTPUT"
+            exit 1
+          fi
+          sleep 2
+        done
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Run MCP tokens comparison
+      env:
+        KIALI_URL: ${{ env.KIALI_URL }}
+      run: |
+        make compare-mcp-tokens
+
+    - name: Comment PR
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{secrets.KIALI_PROJECT_TOKEN}}
+        script: |
+          const fs = require('fs');
+          const diff = fs.readFileSync('_output/mcp_tokens_diff.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number || context.payload.pull_request.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: diff
+          })
+

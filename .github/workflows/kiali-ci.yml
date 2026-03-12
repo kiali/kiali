@@ -181,6 +181,16 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ""
 
+  mcp_tokens_count:
+    name: MCP Tokens Count
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/mcp-tokens-count.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ""
+
   store_pr_metadata:
     name: Store PR metadata
     runs-on: ubuntu-latest
