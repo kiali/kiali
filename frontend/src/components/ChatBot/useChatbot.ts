@@ -130,8 +130,8 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     const rawContent =
       typeof response === 'object' ? (typeof response.answer === 'string' ? response.answer : '') : response;
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
-    const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
-    const content = isMockApi ? safeContent : escapeHtml(safeContent);
+    // Don't escape HTML in markdown content - ReactMarkdown handles escaping safely
+    const content = safeContent;
     const message: ExtendedMessage = {
       role: 'bot',
       content,
