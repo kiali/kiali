@@ -186,7 +186,8 @@ else
   # Method 2: Install from Helm repository (default)
   # Pin Sail operator chart version to match Istio major.minor so we install a compatible
   # operator. Without this, Helm installs the latest chart, which can break CI for older branches.
-  ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+  # Extract X.Y from formats like: X.Y.Z, X.Y-latest, vX.Y.Z, vX.Y-latest
+  ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | sed -E 's/^v?([0-9]+\.[0-9]+).*/\1/')
   SAIL_CHART_VERSION=""
 
   # If user provided an explicit chart version, use it. Otherwise, auto-detect based on Istio version.
@@ -408,13 +409,24 @@ fi
 
 # Sail operator CRDs only allow specific version strings per minor (e.g. v1.26.0-v1.26.3 and v1.26-latest).
 # Map any requested z-stream (vX.Y.Z) to the -latest variant for that minor so the CR validates on all branches.
+# Also normalize X.Y-latest (without 'v') to vX.Y-latest (with 'v') format.
 REQUESTED_VERSION=$(yq '.spec.version // ""' <<< "$ISTIO_YAML")
-if [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  MINOR="${REQUESTED_VERSION#v}"
-  MINOR="${MINOR%.*}"
-  SAIL_VERSION="v${MINOR}-latest"
-  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq ".spec.version = \"${SAIL_VERSION}\"" -)
-  echo "Mapping Istio version ${REQUESTED_VERSION} to ${SAIL_VERSION} (Sail CRD only allows specific versions per minor; using -latest)"
+if [[ -n "$REQUESTED_VERSION" ]]; then
+  # Case 1: Patch version (vX.Y.Z) → vX.Y-latest
+  if [[ "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    MINOR="${REQUESTED_VERSION#v}"
+    MINOR="${MINOR%.*}"
+    SAIL_VERSION="v${MINOR}-latest"
+    ISTIO_YAML=$(echo "$ISTIO_YAML" | yq ".spec.version = \"${SAIL_VERSION}\"" -)
+    echo "Mapping Istio version ${REQUESTED_VERSION} to ${SAIL_VERSION} (Sail CRD only allows specific versions per minor; using -latest)"
+  # Case 2: X.Y-latest or vX.Y-latest → vX.Y-latest (normalize to 'v' prefix)
+  elif [[ "$REQUESTED_VERSION" =~ ^v?([0-9]+\.[0-9]+)-latest$ ]]; then
+    SAIL_VERSION="v${BASH_REMATCH[1]}-latest"
+    if [ "$REQUESTED_VERSION" != "$SAIL_VERSION" ]; then
+      ISTIO_YAML=$(echo "$ISTIO_YAML" | yq ".spec.version = \"${SAIL_VERSION}\"" -)
+      echo "Normalizing Istio version ${REQUESTED_VERSION} to ${SAIL_VERSION} (Sail requires 'v' prefix)"
+    fi
+  fi
 fi
 
 ISTIO_NAME=$(yq '.metadata.name' <<< "$ISTIO_YAML")
