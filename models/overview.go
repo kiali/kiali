@@ -51,8 +51,7 @@ func (s *ServiceThroughput) SetHealthStatus(h HealthStatus) { s.HealthStatus = h
 
 // ServiceThroughputResponse contains the sorted list of service throughput rates
 type ServiceThroughputResponse struct {
-	HasWaypoints bool                `json:"hasWaypoints"`
-	Services     []ServiceThroughput `json:"services"`
+	Services []ServiceThroughput `json:"services"`
 }
 
 // AppRequests represents a single app's request statistics from the health cache

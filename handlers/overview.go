@@ -354,8 +354,6 @@ func OverviewServiceThroughput(
 			return
 		}
 
-		hasWaypoints := len(layer.Workload.GetWaypoints(ctx)) > 0
-
 		// Aggregate by destination_cluster, destination_service_namespace, destination_service_name
 		var services []models.ServiceThroughput
 		groupBy := "destination_cluster,destination_service_namespace,destination_service_name"
@@ -502,8 +500,7 @@ func OverviewServiceThroughput(
 		}
 
 		enrichServiceThroughputWithHealth(services, kialiCache, conf)
-		response := models.ServiceThroughputResponse{HasWaypoints: hasWaypoints, Services: services}
-		RespondWithJSON(w, http.StatusOK, response)
+		RespondWithJSON(w, http.StatusOK, models.ServiceThroughputResponse{Services: services})
 	}
 }
 

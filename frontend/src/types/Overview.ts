@@ -40,7 +40,6 @@ export interface ServiceThroughput {
 
 // ServiceThroughputResponse contains the sorted list of service throughput rates
 export interface ServiceThroughputResponse {
-  hasWaypoints: boolean;
   services: ServiceThroughput[];
 }
 

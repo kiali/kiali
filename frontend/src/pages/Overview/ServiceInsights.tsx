@@ -27,7 +27,6 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
 import { ServiceLatency, ServiceRequests, ServiceThroughput } from 'types/Overview';
-import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
@@ -237,23 +236,10 @@ export const ServiceInsights: React.FC = () => {
     return Array.from(new Set(effectiveNamespaces.map(ns => ns.name))).sort();
   }, [effectiveNamespaces]);
 
-  const allNamespacesAmbient = React.useMemo((): boolean => {
-    const namespaces = effectiveNamespaces;
-    if (!namespaces || namespaces.length === 0) {
-      return false;
-    }
-    const dataPlanes = namespaces.filter(isDataPlaneNamespace);
-    if (dataPlanes.length === 0) {
-      return false;
-    }
-    return dataPlanes.every(ns => !!ns.isAmbient);
-  }, [effectiveNamespaces]);
-
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
   const [throughput, setThroughput] = React.useState<ServiceThroughput[]>([]);
-  const [hasWaypoints, setHasWaypoints] = React.useState<boolean | undefined>(undefined);
   const [latenciesError, setLatenciesError] = React.useState(false);
   const [ratesError, setRatesError] = React.useState(false);
   const [throughputError, setThroughputError] = React.useState(false);
@@ -262,47 +248,39 @@ export const ServiceInsights: React.FC = () => {
   const urlMetricsRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
   const urlMetrics = decodeServiceInsightsMetrics(urlMetricsRaw);
   const reduxMetrics = decodeServiceInsightsMetrics(persistedMetricsRaw);
-  const initialMetrics = urlMetrics ?? reduxMetrics;
   const initialMetricsRaw =
     urlMetricsRaw && urlMetrics ? urlMetricsRaw : persistedMetricsRaw && reduxMetrics ? persistedMetricsRaw : undefined;
 
+  // When there's no URL preference, columns are set from data after load (effect below)
+  const hasUrlPreference = !!(urlMetricsRaw && urlMetrics);
   const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
-  const [hasCustomizedMetrics, setHasCustomizedMetrics] = React.useState<boolean>(() => !!initialMetrics);
   const [selectedMetrics, setSelectedMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
-    return (
-      initialMetrics ?? {
-        errorRates: true,
-        latency: true,
-        tcp: false
-      }
-    );
+    if (hasUrlPreference) {
+      return urlMetrics!;
+    }
+    if (reduxMetrics) {
+      return reduxMetrics;
+    }
+    return { errorRates: false, latency: false, tcp: false };
   });
   const [draftMetrics, setDraftMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
-    return (
-      initialMetrics ?? {
-        errorRates: true,
-        latency: true,
-        tcp: false
-      }
-    );
+    if (hasUrlPreference) {
+      return urlMetrics!;
+    }
+    if (reduxMetrics) {
+      return reduxMetrics;
+    }
+    return { errorRates: false, latency: false, tcp: false };
   });
 
-  // If URL has persisted selection, apply it once and prevent default selection logic.
+  // If URL has the metrics param, persist it to redux. We do not push redux to URL when URL is empty
+  // so that "no URL preference" keeps using data-based default columns.
   React.useEffect(() => {
     const fromUrlRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
     const fromUrl = decodeServiceInsightsMetrics(fromUrlRaw);
-    const fromRedux = decodeServiceInsightsMetrics(persistedMetricsRaw);
 
-    if (fromUrlRaw && fromUrl) {
-      // Ensure URL is persisted to redux.
-      if (fromUrlRaw !== persistedMetricsRaw) {
-        dispatch(UserSettingsActions.setServiceInsightsMetrics(fromUrlRaw));
-      }
-      return;
-    }
-
-    if (fromRedux && persistedMetricsRaw) {
-      HistoryManager.setParam(URLParam.SERVICE_INSIGHTS_METRICS, persistedMetricsRaw);
+    if (fromUrlRaw && fromUrl && fromUrlRaw !== persistedMetricsRaw) {
+      dispatch(UserSettingsActions.setServiceInsightsMetrics(fromUrlRaw));
     }
   }, [dispatch, persistedMetricsRaw]);
 
@@ -313,24 +291,24 @@ export const ServiceInsights: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isAmbientOnlyWithoutWaypoints = React.useMemo((): boolean => {
-    return allNamespacesAmbient && hasWaypoints === false;
-  }, [allNamespacesAmbient, hasWaypoints]);
-
+  // When there's no URL or Redux preference, show by default only the columns that have data
   React.useEffect(() => {
-    if (hasCustomizedMetrics) {
+    if (isLoading) {
       return;
     }
-
-    // Default behavior:
-    // - Non-ambient (or ambient w/ waypoints): show Errors + Latency by default.
-    // - Ambient-only without waypoints: show Throughput by default.
-    setSelectedMetrics(
-      isAmbientOnlyWithoutWaypoints
-        ? { errorRates: false, latency: false, tcp: true }
-        : { errorRates: true, latency: true, tcp: false }
-    );
-  }, [hasCustomizedMetrics, isAmbientOnlyWithoutWaypoints]);
+    const urlRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+    if (urlRaw && decodeServiceInsightsMetrics(urlRaw)) {
+      return;
+    }
+    if (persistedMetricsRaw && decodeServiceInsightsMetrics(persistedMetricsRaw)) {
+      return;
+    }
+    setSelectedMetrics({
+      errorRates: rates.length > 0,
+      latency: latencies.length > 0,
+      tcp: throughput.length > 0
+    });
+  }, [isLoading, rates.length, latencies.length, throughput.length, persistedMetricsRaw]);
 
   const buildServicesListUrl = React.useCallback((): string => {
     const params = new URLSearchParams();
@@ -356,7 +334,6 @@ export const ServiceInsights: React.FC = () => {
 
   const onSaveManageColumns = React.useCallback((): void => {
     setSelectedMetrics(draftMetrics);
-    setHasCustomizedMetrics(true);
     setIsManageColumnsOpen(false);
     const encoded = encodeServiceInsightsMetrics(draftMetrics);
     dispatch(UserSettingsActions.setServiceInsightsMetrics(encoded));
@@ -397,11 +374,9 @@ export const ServiceInsights: React.FC = () => {
 
       if (throughputResult.status === 'fulfilled') {
         setThroughput(throughputResult.value.data.services || []);
-        setHasWaypoints(throughputResult.value.data.hasWaypoints);
         anySuccess = true;
       } else {
         setThroughput([]);
-        setHasWaypoints(undefined);
         setThroughputError(true);
       }
 
