@@ -86,7 +86,9 @@ func TestIstioList_ReturnsCompactYAML(t *testing.T) {
 	// Validate items are present and compact
 	assert.Equal(t, "bookinfo", out[0].Namespace)
 	assert.NotEmpty(t, out[0].Name)
-	assert.NotEmpty(t, out[0].Type)
+	assert.NotEmpty(t, out[0].Group)
+	assert.NotEmpty(t, out[0].Version)
+	assert.NotEmpty(t, out[0].Kind)
 
 	// Default validation when validations cannot be found (e.g., in unit tests)
 	for _, item := range out {

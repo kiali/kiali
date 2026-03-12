@@ -44,7 +44,9 @@ var istioConfigCriteria = business.IstioConfigCriteria{
 type IstioListItem struct {
 	Name       string            `json:"name"`
 	Namespace  string            `json:"namespace"`
-	Type       string            `json:"type"`
+	Group      string            `json:"group"`
+	Version    string            `json:"version"`
+	Kind       string            `json:"kind"`
 	Validation ValidationSummary `json:"validation"`
 }
 
@@ -217,7 +219,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       vs.Name,
 			Namespace:  vs.Namespace,
-			Type:       "VirtualService",
+			Group:      kubernetes.VirtualServices.Group,
+			Version:    kubernetes.VirtualServices.Version,
+			Kind:       kubernetes.VirtualServices.Kind,
 			Validation: validationSummaryForRuntimeObject(vs, kubernetes.VirtualServices, istioValidations, cluster),
 		})
 	}
@@ -228,7 +232,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       dr.Name,
 			Namespace:  dr.Namespace,
-			Type:       "DestinationRule",
+			Group:      kubernetes.DestinationRules.Group,
+			Version:    kubernetes.DestinationRules.Version,
+			Kind:       kubernetes.DestinationRules.Kind,
 			Validation: validationSummaryForRuntimeObject(dr, kubernetes.DestinationRules, istioValidations, cluster),
 		})
 	}
@@ -239,7 +245,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       gw.Name,
 			Namespace:  gw.Namespace,
-			Type:       "Gateway",
+			Group:      kubernetes.Gateways.Group,
+			Version:    kubernetes.Gateways.Version,
+			Kind:       kubernetes.Gateways.Kind,
 			Validation: validationSummaryForRuntimeObject(gw, kubernetes.Gateways, istioValidations, cluster),
 		})
 	}
@@ -252,7 +260,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       se.Name,
 			Namespace:  se.Namespace,
-			Type:       kubernetes.ServiceEntries.Kind,
+			Group:      kubernetes.ServiceEntries.Group,
+			Version:    kubernetes.ServiceEntries.Version,
+			Kind:       kubernetes.ServiceEntries.Kind,
 			Validation: validationSummaryForRuntimeObject(se, kubernetes.ServiceEntries, istioValidations, cluster),
 		})
 	}
@@ -263,7 +273,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       sc.Name,
 			Namespace:  sc.Namespace,
-			Type:       kubernetes.Sidecars.Kind,
+			Group:      kubernetes.Sidecars.Group,
+			Version:    kubernetes.Sidecars.Version,
+			Kind:       kubernetes.Sidecars.Kind,
 			Validation: validationSummaryForRuntimeObject(sc, kubernetes.Sidecars, istioValidations, cluster),
 		})
 	}
@@ -274,7 +286,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       ef.Name,
 			Namespace:  ef.Namespace,
-			Type:       kubernetes.EnvoyFilters.Kind,
+			Group:      kubernetes.EnvoyFilters.Group,
+			Version:    kubernetes.EnvoyFilters.Version,
+			Kind:       kubernetes.EnvoyFilters.Kind,
 			Validation: validationSummaryForRuntimeObject(ef, kubernetes.EnvoyFilters, istioValidations, cluster),
 		})
 	}
@@ -285,7 +299,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       we.Name,
 			Namespace:  we.Namespace,
-			Type:       kubernetes.WorkloadEntries.Kind,
+			Group:      kubernetes.WorkloadEntries.Group,
+			Version:    kubernetes.WorkloadEntries.Version,
+			Kind:       kubernetes.WorkloadEntries.Kind,
 			Validation: validationSummaryForRuntimeObject(we, kubernetes.WorkloadEntries, istioValidations, cluster),
 		})
 	}
@@ -296,7 +312,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       wg.Name,
 			Namespace:  wg.Namespace,
-			Type:       kubernetes.WorkloadGroups.Kind,
+			Group:      kubernetes.WorkloadGroups.Group,
+			Version:    kubernetes.WorkloadGroups.Version,
+			Kind:       kubernetes.WorkloadGroups.Kind,
 			Validation: validationSummaryForRuntimeObject(wg, kubernetes.WorkloadGroups, istioValidations, cluster),
 		})
 	}
@@ -307,7 +325,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       wp.Name,
 			Namespace:  wp.Namespace,
-			Type:       kubernetes.WasmPlugins.Kind,
+			Group:      kubernetes.WasmPlugins.Group,
+			Version:    kubernetes.WasmPlugins.Version,
+			Kind:       kubernetes.WasmPlugins.Kind,
 			Validation: validationSummaryForRuntimeObject(wp, kubernetes.WasmPlugins, istioValidations, cluster),
 		})
 	}
@@ -318,7 +338,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       tl.Name,
 			Namespace:  tl.Namespace,
-			Type:       kubernetes.Telemetries.Kind,
+			Group:      kubernetes.Telemetries.Group,
+			Version:    kubernetes.Telemetries.Version,
+			Kind:       kubernetes.Telemetries.Kind,
 			Validation: validationSummaryForRuntimeObject(tl, kubernetes.Telemetries, istioValidations, cluster),
 		})
 	}
@@ -329,7 +351,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       ap.Name,
 			Namespace:  ap.Namespace,
-			Type:       kubernetes.AuthorizationPolicies.Kind,
+			Group:      kubernetes.AuthorizationPolicies.Group,
+			Version:    kubernetes.AuthorizationPolicies.Version,
+			Kind:       kubernetes.AuthorizationPolicies.Kind,
 			Validation: validationSummaryForRuntimeObject(ap, kubernetes.AuthorizationPolicies, istioValidations, cluster),
 		})
 	}
@@ -340,7 +364,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       pa.Name,
 			Namespace:  pa.Namespace,
-			Type:       kubernetes.PeerAuthentications.Kind,
+			Group:      kubernetes.PeerAuthentications.Group,
+			Version:    kubernetes.PeerAuthentications.Version,
+			Kind:       kubernetes.PeerAuthentications.Kind,
 			Validation: validationSummaryForRuntimeObject(pa, kubernetes.PeerAuthentications, istioValidations, cluster),
 		})
 	}
@@ -351,7 +377,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       ra.Name,
 			Namespace:  ra.Namespace,
-			Type:       kubernetes.RequestAuthentications.Kind,
+			Group:      kubernetes.RequestAuthentications.Group,
+			Version:    kubernetes.RequestAuthentications.Version,
+			Kind:       kubernetes.RequestAuthentications.Kind,
 			Validation: validationSummaryForRuntimeObject(ra, kubernetes.RequestAuthentications, istioValidations, cluster),
 		})
 	}
@@ -363,7 +391,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       kgw.Name,
 			Namespace:  kgw.Namespace,
-			Type:       kubernetes.K8sGateways.Kind,
+			Group:      kubernetes.K8sGateways.Group,
+			Version:    kubernetes.K8sGateways.Version,
+			Kind:       kubernetes.K8sGateways.Kind,
 			Validation: validationSummaryForRuntimeObject(kgw, kubernetes.K8sGateways, istioValidations, cluster),
 		})
 	}
@@ -374,7 +404,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       hr.Name,
 			Namespace:  hr.Namespace,
-			Type:       kubernetes.K8sHTTPRoutes.Kind,
+			Group:      kubernetes.K8sHTTPRoutes.Group,
+			Version:    kubernetes.K8sHTTPRoutes.Version,
+			Kind:       kubernetes.K8sHTTPRoutes.Kind,
 			Validation: validationSummaryForRuntimeObject(hr, kubernetes.K8sHTTPRoutes, istioValidations, cluster),
 		})
 	}
@@ -385,7 +417,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       gr.Name,
 			Namespace:  gr.Namespace,
-			Type:       kubernetes.K8sGRPCRoutes.Kind,
+			Group:      kubernetes.K8sGRPCRoutes.Group,
+			Version:    kubernetes.K8sGRPCRoutes.Version,
+			Kind:       kubernetes.K8sGRPCRoutes.Kind,
 			Validation: validationSummaryForRuntimeObject(gr, kubernetes.K8sGRPCRoutes, istioValidations, cluster),
 		})
 	}
@@ -396,7 +430,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       tr.Name,
 			Namespace:  tr.Namespace,
-			Type:       kubernetes.K8sTCPRoutes.Kind,
+			Group:      kubernetes.K8sTCPRoutes.Group,
+			Version:    kubernetes.K8sTCPRoutes.Version,
+			Kind:       kubernetes.K8sTCPRoutes.Kind,
 			Validation: validationSummaryForRuntimeObject(tr, kubernetes.K8sTCPRoutes, istioValidations, cluster),
 		})
 	}
@@ -407,7 +443,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       tlr.Name,
 			Namespace:  tlr.Namespace,
-			Type:       kubernetes.K8sTLSRoutes.Kind,
+			Group:      kubernetes.K8sTLSRoutes.Group,
+			Version:    kubernetes.K8sTLSRoutes.Version,
+			Kind:       kubernetes.K8sTLSRoutes.Kind,
 			Validation: validationSummaryForRuntimeObject(tlr, kubernetes.K8sTLSRoutes, istioValidations, cluster),
 		})
 	}
@@ -418,7 +456,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       rg.Name,
 			Namespace:  rg.Namespace,
-			Type:       kubernetes.K8sReferenceGrants.Kind,
+			Group:      kubernetes.K8sReferenceGrants.Group,
+			Version:    kubernetes.K8sReferenceGrants.Version,
+			Kind:       kubernetes.K8sReferenceGrants.Kind,
 			Validation: validationSummaryForRuntimeObject(rg, kubernetes.K8sReferenceGrants, istioValidations, cluster),
 		})
 	}
@@ -429,7 +469,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		items = append(items, IstioListItem{
 			Name:       ip.Name,
 			Namespace:  ip.Namespace,
-			Type:       kubernetes.K8sInferencePools.Kind,
+			Group:      kubernetes.K8sInferencePools.Group,
+			Version:    kubernetes.K8sInferencePools.Version,
+			Kind:       kubernetes.K8sInferencePools.Kind,
 			Validation: validationSummaryForRuntimeObject(ip, kubernetes.K8sInferencePools, istioValidations, cluster),
 		})
 	}
@@ -438,8 +480,8 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		if items[i].Namespace != items[j].Namespace {
 			return items[i].Namespace < items[j].Namespace
 		}
-		if items[i].Type != items[j].Type {
-			return items[i].Type < items[j].Type
+		if items[i].Kind != items[j].Kind {
+			return items[i].Kind < items[j].Kind
 		}
 		return items[i].Name < items[j].Name
 	})
