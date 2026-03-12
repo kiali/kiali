@@ -515,7 +515,10 @@ export const ServiceInsights: React.FC = () => {
       columnTitle: 'Throughput',
       keyPrefix: 'traffic',
       renderValueCell: svc => (
-        <Tooltip content={formatByteRate(svc.tcpRate ?? 0)} position={TooltipPosition.top}>
+        <Tooltip
+          content={`TCP sent bytes: ${formatByteRate(svc.tcpRate ?? 0)} (bytes returned by the destination service)`}
+          position={TooltipPosition.top}
+        >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
             {formatByteRate(svc.tcpRate ?? 0)}
