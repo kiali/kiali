@@ -184,6 +184,7 @@ include make/Makefile.operator.mk
 include make/Makefile.molecule.mk
 include make/Makefile.ui.mk
 include make/Makefile.olm.mk
+include make/Makefile.ai.mk
 
 .PHONY: help
 help: Makefile
@@ -211,6 +212,9 @@ help: Makefile
 	@echo
 	@echo "OLM targets"
 	@sed -n 's/^##//p' make/Makefile.olm.mk | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
+	@echo "AI targets"
+	@sed -n 's/^##//p' make/Makefile.ai.mk | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
 	@echo "Misc targets"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'

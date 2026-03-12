@@ -1,0 +1,50 @@
+{
+  "manage_istio_config": {
+    "List all Istio config": {
+      "action": "list"
+    },
+    "List Istio config for bookinfo namespace": {
+      "action": "list",
+      "namespace": "bookinfo"
+    },
+    "Get Gateway for bookinfo namespace": {
+      "action": "get",
+      "namespace": "bookinfo",
+      "kind": "Gateway",
+      "object": "bookinfo-gateway",
+      "group": "networking.istio.io",
+      "version": "v1"
+    }
+  },
+  "get_mesh_graph": {
+    "Get Graph for bookinfo namespace": {
+      "namespace": "bookinfo",
+      "graphType": "versionedApp"
+    },
+    "Get App Graph for istio-system and bookinfo namespaces": {
+      "namespaces": "istio-system,bookinfo",
+      "graphType": "app",
+      "duration": "60s"
+    }
+  },
+  "get_resource_detail": {
+    "Get List of services for ns bookinfo": {
+      "resourceType": "service",
+      "namespaces": "bookinfo"
+    },
+    "Get List of workloads for ns bookinfo": {
+      "resourceType": "workload",
+      "namespaces": "bookinfo"
+    },
+    "Get Details of workload reviews-v1 for ns bookinfo": {
+      "resourceType": "workload",
+      "namespaces": "bookinfo",
+      "resourceName": "reviews-v1"
+    },
+    "Get Details of service reviews for ns bookinfo": {
+      "resourceType": "service",
+      "namespaces": "bookinfo",
+      "resourceName": "reviews"
+    }
+  }
+}
