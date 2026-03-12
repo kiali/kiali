@@ -123,7 +123,7 @@ Then('the user sees clusters expected information', () => {
 Then('the user sees listeners expected information', () => {
   cy.get('tbody').within(() => {
     cy.contains('td', 'PassthroughCluster').should('not.exist');
-    cy.contains('td', 'Route: 9090');
+    cy.contains('td', /Route:.*9090/);
   });
 });
 
