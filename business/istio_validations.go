@@ -364,7 +364,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		objectCheckers, err := in.getAllObjectCheckers(vInfo)
 		// Skip validations for a particular namespace, mesh config was not found
 		if err != nil {
-			log.Debug(err)
+			log.Trace(err)
 			continue
 		}
 
