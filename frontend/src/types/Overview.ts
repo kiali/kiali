@@ -29,6 +29,20 @@ export interface ServiceRequestsResponse {
   services: ServiceRequests[];
 }
 
+// ServiceThroughput represents a single service's throughput rate (bytes/s).
+export interface ServiceThroughput {
+  cluster: string;
+  healthStatus?: HealthStatusId;
+  namespace: string;
+  serviceName: string;
+  tcpRate: number; // bytes per second
+}
+
+// ServiceThroughputResponse contains the sorted list of service throughput rates
+export interface ServiceThroughputResponse {
+  services: ServiceThroughput[];
+}
+
 // Query parameters for the overview metrics endpoints
 export interface OverviewMetricsQuery {
   limit?: number;

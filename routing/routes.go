@@ -1794,6 +1794,27 @@ func NewRoutes(
 			HandlerFunc:   handlers.OverviewServiceRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			Authenticated: true,
 		},
+		// swagger:route GET /overview/metrics/services/throughput overview overviewServiceThroughput
+		// ---
+		// Endpoint to fetch top service throughput (bytes/s) across all clusters and namespaces
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: serviceRequestsResponse
+		{
+			Name:          "OverviewServiceThroughput",
+			LogGroupName:  log.MetricsLogName,
+			Method:        "GET",
+			Pattern:       "/api/overview/metrics/services/throughput",
+			HandlerFunc:   handlers.OverviewServiceThroughput(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			Authenticated: true,
+		},
 		// swagger:route GET /overview/metrics/apps/rates overview overviewAppRates
 		// ---
 		// Endpoint to fetch app request rates across all clusters and namespaces

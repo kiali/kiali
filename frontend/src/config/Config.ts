@@ -161,6 +161,7 @@ const conf = {
       overviewAppRates: 'api/overview/metrics/apps/rates',
       overviewServiceLatencies: 'api/overview/metrics/services/latency',
       overviewServiceRates: 'api/overview/metrics/services/rates',
+      overviewServiceThroughput: 'api/overview/metrics/services/throughput',
       namespaceInfo: (namespace: string) => `api/namespaces/${namespace}/info`,
       namespaceMetrics: (namespace: string) => `api/namespaces/${namespace}/metrics`,
       namespaceTls: (namespace: string) => `api/namespaces/${namespace}/tls`,

@@ -5,6 +5,7 @@ const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
 const CLUSTERS_API_URL = '**/api/istio/status*';
 const SERVICE_LATENCIES_API_PATHNAME = '**/api/overview/metrics/services/latency';
 const SERVICE_RATES_API_PATHNAME = '**/api/overview/metrics/services/rates';
+const SERVICE_THROUGHPUT_API_PATHNAME = '**/api/overview/metrics/services/throughput';
 
 let didAppsCardRetry = false;
 let didServiceInsightsRetry = false;
@@ -435,6 +436,7 @@ Given('Service insights APIs are observed', () => {
   didServiceInsightsRetry = false;
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+  cy.intercept({ method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME }).as('serviceThroughput');
 });
 
 // this is specifically to mock the serviceRates API because when cache is disabled (by default for cypress)
@@ -443,6 +445,7 @@ Given('Service insights mock APIs are observed', () => {
   didServiceInsightsRetry = false;
   // no need at this time to mock the latencies
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatenciesMock');
+  cy.intercept({ method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME }).as('serviceThroughputMock');
   cy.intercept(
     { method: 'GET', pathname: SERVICE_RATES_API_PATHNAME },
     {
@@ -484,6 +487,12 @@ Given('Service insights APIs respond slowly', () => {
       res.delay = 2000;
     });
   }).as('serviceRates');
+
+  cy.intercept({ method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME }, req => {
+    req.continue(res => {
+      res.delay = 2000;
+    });
+  }).as('serviceThroughput');
 });
 
 Given('Service insights APIs fail', () => {
@@ -494,6 +503,9 @@ Given('Service insights APIs fail', () => {
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }, { statusCode: 500, body: {} }).as(
     'serviceRates'
   );
+  cy.intercept({ method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME }, { statusCode: 500, body: {} }).as(
+    'serviceThroughput'
+  );
 });
 
 Given('Service insights APIs fail once', () => {
@@ -503,6 +515,7 @@ Given('Service insights APIs fail once', () => {
   // Observe subsequent (retry) calls without modifying them.
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME }).as('serviceLatencies');
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME }).as('serviceRates');
+  cy.intercept({ method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME }).as('serviceThroughput');
 
   cy.intercept({ method: 'GET', pathname: SERVICE_LATENCIES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
     'serviceLatenciesFailOnce'
@@ -511,6 +524,11 @@ Given('Service insights APIs fail once', () => {
   cy.intercept({ method: 'GET', pathname: SERVICE_RATES_API_PATHNAME, times: 1 }, { statusCode: 500, body: {} }).as(
     'serviceRatesFailOnce'
   );
+
+  cy.intercept(
+    { method: 'GET', pathname: SERVICE_THROUGHPUT_API_PATHNAME, times: 1 },
+    { statusCode: 500, body: {} }
+  ).as('serviceThroughputFailOnce');
 });
 
 Then('Service insights card shows loading state without tables or footer link', () => {
@@ -524,9 +542,11 @@ Then('Service insights card shows error state without tables or footer link', ()
   if (shouldWaitServiceInsightsRetry) {
     cy.wait('@serviceLatenciesFailOnce');
     cy.wait('@serviceRatesFailOnce');
+    cy.wait('@serviceThroughputFailOnce');
   } else {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceThroughput');
   }
 
   getServiceInsightsCard().within(() => {
@@ -544,6 +564,7 @@ When('user clicks Try Again in Service insights card', () => {
   if (shouldWaitServiceInsightsRetry) {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceThroughput');
     didServiceInsightsRetry = true;
     shouldWaitServiceInsightsRetry = false;
   }
@@ -554,6 +575,7 @@ Then('Service insights card shows data tables and footer link', () => {
   if (!didServiceInsightsRetry) {
     cy.wait('@serviceLatencies');
     cy.wait('@serviceRates');
+    cy.wait('@serviceThroughput');
   }
 
   getServiceInsightsCard().within(() => {
@@ -562,36 +584,48 @@ Then('Service insights card shows data tables and footer link', () => {
     cy.getBySel('service-insights-view-all-services').should('be.visible');
   });
 
-  // Rates section: should be empty because it depends on health cache, which is disabled during
-  // standard cypress testing.
-  cy.getBySel('service-insights-rates').within(() => {
-    cy.contains('not available').should('be.visible');
+  // With no URL preference, only tables that have data are shown. Assert at least one table section
+  // is visible and run section-specific checks where present (rates often empty in cypress, latencies may have data).
+  getServiceInsightsCard().within($card => {
+    const rates = $card.find('[data-test="service-insights-rates"]');
+    const latencies = $card.find('[data-test="service-insights-latencies"]');
+    const traffic = $card.find('[data-test="service-insights-traffic"]');
+    expect(rates.length + latencies.length + traffic.length).to.be.greaterThan(0);
   });
 
-  // Latencies section: table should have data because this queries prometheus directly
-  cy.getBySel('service-insights-latencies').within(() => {
-    cy.get('table').then(_ => {
-      cy.contains('th', 'Name').should('be.visible');
-      cy.contains('th', 'Latency').should('be.visible');
+  cy.get('body').then($body => {
+    if ($body.find('[data-test="service-insights-rates"]').length > 0) {
+      cy.getBySel('service-insights-rates').within(() => {
+        cy.contains('not available').should('be.visible');
+      });
+    }
+    if ($body.find('[data-test="service-insights-latencies"]').length > 0) {
+      cy.getBySel('service-insights-latencies').within(() => {
+        cy.get('table').then(_ => {
+          cy.contains('th', 'Name').should('be.visible');
+          cy.contains('th', 'Latency').should('be.visible');
 
-      cy.get('tbody tr').then($rows => {
-        if ($rows.length === 0) {
-          return;
-        }
-        cy.wrap($rows[0]).within(() => {
-          cy.get('a')
-            .should('have.attr', 'href')
-            .and('match', /\/namespaces\/.+\/services\/.+/);
-          cy.contains(/ms|s/).should('be.visible');
+          cy.get('tbody tr').then($rows => {
+            if ($rows.length === 0) {
+              return;
+            }
+            cy.wrap($rows[0]).within(() => {
+              cy.get('a')
+                .should('have.attr', 'href')
+                .and('match', /\/namespaces\/.+\/services\/.+/);
+              cy.contains(/ms|s/).should('be.visible');
+            });
+          });
         });
       });
-    });
+    }
   });
 });
 
 Then('Service insights card shows mock data tables', () => {
   cy.wait('@serviceLatenciesMock');
   cy.wait('@serviceRatesMock');
+  cy.wait('@serviceThroughputMock');
 
   getServiceInsightsCard().within(() => {
     cy.contains('Fetching service data').should('not.exist');
@@ -624,6 +658,7 @@ Then('Service insights card shows mock data tables', () => {
 When('user clicks View all services in Service insights card', () => {
   cy.wait('@serviceLatencies');
   cy.wait('@serviceRates');
+  cy.wait('@serviceThroughput');
 
   getServiceInsightsCard().within(() => {
     cy.getBySel('service-insights-view-all-services').should('be.visible').click();

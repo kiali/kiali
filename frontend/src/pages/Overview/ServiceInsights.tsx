@@ -1,17 +1,22 @@
 import * as React from 'react';
 import {
+  Button,
   Card,
   CardBody,
   CardFooter,
   CardHeader,
   CardTitle,
+  Checkbox,
+  Form,
+  FormGroup,
   Popover,
   PopoverPosition,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { LongArrowAltDownIcon } from '@patternfly/react-icons';
 import type { TOptions } from 'i18next';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
@@ -21,23 +26,91 @@ import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
-import { ServiceLatency, ServiceRequests } from 'types/Overview';
+import { ServiceLatency, ServiceRequests, ServiceThroughput } from 'types/Overview';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
-import { useKialiSelector } from 'hooks/redux';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { activeNamespacesSelector, namespaceItemsSelector } from 'store/Selectors';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { URLParam } from 'app/History';
+import { HistoryManager, URLParam } from 'app/History';
 import { helpIconStyle } from 'styles/IconStyle';
+import { formatByteRateIEC } from 'utils/Formatter';
+import { UserSettingsActions } from 'actions/UserSettingsActions';
 
-const tablesContainerStyle = kialiStyle({
+type ServiceInsightsMetricsSelection = { errorRates: boolean; latency: boolean; tcp: boolean };
+
+const encodeServiceInsightsMetrics = (m: ServiceInsightsMetricsSelection): string => {
+  const parts: string[] = [];
+  if (m.errorRates) {
+    parts.push('e');
+  }
+  if (m.latency) {
+    parts.push('l');
+  }
+  if (m.tcp) {
+    parts.push('t');
+  }
+  return parts.join(',');
+};
+
+const decodeServiceInsightsMetrics = (raw: string | undefined): ServiceInsightsMetricsSelection | undefined => {
+  if (!raw) {
+    return undefined;
+  }
+  const tokens = new Set(
+    raw
+      .split(',')
+      .map(t => t.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const decoded = {
+    errorRates: tokens.has('e'),
+    latency: tokens.has('l'),
+    tcp: tokens.has('t')
+  };
+  // Require at least one metric, otherwise treat as absent/invalid.
+  return decoded.errorRates || decoded.latency || decoded.tcp ? decoded : undefined;
+};
+
+const tablesContainer3ColStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))',
+  gap: '1.5rem',
+  alignItems: 'start',
+  overflowX: 'auto'
+});
+
+const tablesContainer1ColStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  gap: '1.5rem',
+  alignItems: 'start'
+});
+
+const cardHeaderTitleLayoutStyle = kialiStyle({
   display: 'flex',
-  gap: '1.5rem'
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
+  gap: '0.5rem'
+});
+
+const cardHeaderTitleLeftStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  minWidth: 0
+});
+
+const cardHeaderTitleActionsStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.25rem'
 });
 
 const tableContainerStyle = kialiStyle({
-  flex: 1
+  minWidth: 0
 });
 
 const tableStyle = kialiStyle({
@@ -128,6 +201,8 @@ const formatRequestRate = (t: (key: string, opts?: TOptions) => string, reqPerSe
   return t('{{rate}} req/s', { rate: reqPerSec.toFixed(2) });
 };
 
+const formatByteRate = (bytesPerSec: number): string => formatByteRateIEC(bytesPerSec, 2);
+
 const buildTooltipContent = (cluster: string, namespace: string, serviceName: string): React.ReactNode => {
   return (
     <div style={{ textAlign: 'left' }}>
@@ -147,19 +222,93 @@ const buildTooltipContent = (cluster: string, namespace: string, serviceName: st
 export const ServiceInsights: React.FC = () => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
+  const dispatch = useKialiDispatch();
   const namespaceItems = useKialiSelector(namespaceItemsSelector);
   const activeNamespaces = useKialiSelector(activeNamespacesSelector);
+  const persistedMetricsRaw = useKialiSelector(state => state.userSettings.interface.serviceInsightsMetrics);
 
   // Use all known namespaces when available
-  const allNamespaceNames = React.useMemo(() => {
-    const namespaces = namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
-    return Array.from(new Set(namespaces.map(ns => ns.name))).sort();
+  const effectiveNamespaces = React.useMemo(() => {
+    return namespaceItems && namespaceItems.length > 0 ? namespaceItems : activeNamespaces;
   }, [activeNamespaces, namespaceItems]);
+
+  const allNamespaceNames = React.useMemo(() => {
+    return Array.from(new Set(effectiveNamespaces.map(ns => ns.name))).sort();
+  }, [effectiveNamespaces]);
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [latencies, setLatencies] = React.useState<ServiceLatency[]>([]);
   const [rates, setRates] = React.useState<ServiceRequests[]>([]);
+  const [throughput, setThroughput] = React.useState<ServiceThroughput[]>([]);
+  const [latenciesError, setLatenciesError] = React.useState(false);
+  const [ratesError, setRatesError] = React.useState(false);
+  const [throughputError, setThroughputError] = React.useState(false);
   const [isError, setIsError] = React.useState(false);
+
+  const urlMetricsRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+  const urlMetrics = decodeServiceInsightsMetrics(urlMetricsRaw);
+  const reduxMetrics = decodeServiceInsightsMetrics(persistedMetricsRaw);
+  const initialMetricsRaw =
+    urlMetricsRaw && urlMetrics ? urlMetricsRaw : persistedMetricsRaw && reduxMetrics ? persistedMetricsRaw : undefined;
+
+  // When there's no URL preference, columns are set from data after load (effect below)
+  const hasUrlPreference = !!(urlMetricsRaw && urlMetrics);
+  const [isManageColumnsOpen, setIsManageColumnsOpen] = React.useState(false);
+  const [selectedMetrics, setSelectedMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
+    if (hasUrlPreference) {
+      return urlMetrics!;
+    }
+    if (reduxMetrics) {
+      return reduxMetrics;
+    }
+    return { errorRates: false, latency: false, tcp: false };
+  });
+  const [draftMetrics, setDraftMetrics] = React.useState<ServiceInsightsMetricsSelection>(() => {
+    if (hasUrlPreference) {
+      return urlMetrics!;
+    }
+    if (reduxMetrics) {
+      return reduxMetrics;
+    }
+    return { errorRates: false, latency: false, tcp: false };
+  });
+
+  // If URL has the metrics param, persist it to redux. We do not push redux to URL when URL is empty
+  // so that "no URL preference" keeps using data-based default columns.
+  React.useEffect(() => {
+    const fromUrlRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+    const fromUrl = decodeServiceInsightsMetrics(fromUrlRaw);
+
+    if (fromUrlRaw && fromUrl && fromUrlRaw !== persistedMetricsRaw) {
+      dispatch(UserSettingsActions.setServiceInsightsMetrics(fromUrlRaw));
+    }
+  }, [dispatch, persistedMetricsRaw]);
+
+  React.useEffect(() => {
+    if (initialMetricsRaw && initialMetricsRaw !== persistedMetricsRaw) {
+      dispatch(UserSettingsActions.setServiceInsightsMetrics(initialMetricsRaw));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When there's no URL or Redux preference, show by default only the columns that have data
+  React.useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    const urlRaw = HistoryManager.getParam(URLParam.SERVICE_INSIGHTS_METRICS);
+    if (urlRaw && decodeServiceInsightsMetrics(urlRaw)) {
+      return;
+    }
+    if (persistedMetricsRaw && decodeServiceInsightsMetrics(persistedMetricsRaw)) {
+      return;
+    }
+    setSelectedMetrics({
+      errorRates: true,
+      latency: true,
+      tcp: throughput.length > 0
+    });
+  }, [isLoading, rates.length, latencies.length, throughput.length, persistedMetricsRaw]);
 
   const buildServicesListUrl = React.useCallback((): string => {
     const params = new URLSearchParams();
@@ -168,25 +317,77 @@ export const ServiceInsights: React.FC = () => {
     }
     params.set(URLParam.DIRECTION, 'asc');
     params.set(URLParam.SORT, 'he');
+    params.set(URLParam.SERVICE_INSIGHTS_METRICS, encodeServiceInsightsMetrics(selectedMetrics));
 
     const qs = params.toString();
     return `/${Paths.SERVICES}${qs ? `?${qs}` : ''}`;
-  }, [allNamespaceNames]);
+  }, [allNamespaceNames, selectedMetrics]);
+
+  const onOpenManageColumns = React.useCallback((): void => {
+    setDraftMetrics(selectedMetrics);
+    setIsManageColumnsOpen(true);
+  }, [selectedMetrics]);
+
+  const onCancelManageColumns = React.useCallback((): void => {
+    setIsManageColumnsOpen(false);
+  }, []);
+
+  const onSaveManageColumns = React.useCallback((): void => {
+    setSelectedMetrics(draftMetrics);
+    setIsManageColumnsOpen(false);
+    const encoded = encodeServiceInsightsMetrics(draftMetrics);
+    dispatch(UserSettingsActions.setServiceInsightsMetrics(encoded));
+    HistoryManager.setParam(URLParam.SERVICE_INSIGHTS_METRICS, encoded);
+  }, [dispatch, draftMetrics]);
 
   const fetchData = React.useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
       setIsError(false);
+      setLatenciesError(false);
+      setRatesError(false);
+      setThroughputError(false);
 
-      const [latenciesResponse, ratesResponse] = await Promise.all([
+      const [latenciesResult, ratesResult, throughputResult] = await Promise.allSettled([
         API.getOverviewServiceLatencies(),
-        API.getOverviewServiceRates()
+        API.getOverviewServiceRates(),
+        API.getOverviewServiceThroughput()
       ]);
 
-      setLatencies(latenciesResponse.data.services || []);
-      setRates(ratesResponse.data.services || []);
+      let anySuccess = false;
+
+      if (latenciesResult.status === 'fulfilled') {
+        setLatencies(latenciesResult.value.data.services || []);
+        anySuccess = true;
+      } else {
+        setLatencies([]);
+        setLatenciesError(true);
+      }
+
+      if (ratesResult.status === 'fulfilled') {
+        setRates(ratesResult.value.data.services || []);
+        anySuccess = true;
+      } else {
+        setRates([]);
+        setRatesError(true);
+      }
+
+      if (throughputResult.status === 'fulfilled') {
+        setThroughput(throughputResult.value.data.services || []);
+        anySuccess = true;
+      } else {
+        setThroughput([]);
+        setThroughputError(true);
+      }
+
+      if (!anySuccess) {
+        setIsError(true);
+      }
     } catch (err) {
       setIsError(true);
+      setLatenciesError(true);
+      setRatesError(true);
+      setThroughputError(true);
       // eslint-disable-next-line no-console
       console.error('Error fetching service insights data:', err);
     } finally {
@@ -209,18 +410,32 @@ export const ServiceInsights: React.FC = () => {
     []
   );
 
-  const renderLatenciesTable = (): React.ReactNode => {
-    if (latencies.length === 0) {
+  interface ServiceTableConfig<T> {
+    columnTitle: string;
+    data: T[];
+    dataTestId: string;
+    emptyMessage: string;
+    emptyTitle: string;
+    keyPrefix: string;
+    renderValueCell: (item: T) => React.ReactNode;
+  }
+
+  const renderServiceTable = <
+    T extends { cluster: string; healthStatus?: string; namespace: string; serviceName: string }
+  >(
+    config: ServiceTableConfig<T>
+  ): React.ReactNode => {
+    if (config.data.length === 0) {
       return (
         <div className={emptyStateStyle}>
-          <div>{t('Latencies not available')}</div>
-          <div>{t('No HTTP traffic or response time metrics are unavailable')}</div>
+          <div>{t(config.emptyTitle)}</div>
+          <div>{t(config.emptyMessage)}</div>
         </div>
       );
     }
 
     return (
-      <table className={tableStyle} data-test="service-insights-latencies-table">
+      <table className={tableStyle} data-test={config.dataTestId}>
         <colgroup>
           <col style={{ width: '60%' }} />
           <col style={{ width: '40%' }} />
@@ -229,66 +444,17 @@ export const ServiceInsights: React.FC = () => {
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle}>
-              <span>{t('Latency')}</span>
+              <span>{t(config.columnTitle)}</span>
               <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {latencies.map((svc, idx) => (
-            <tr key={`latency-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
-              <td className={tableCellStyle}>
-                <Tooltip
-                  content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}
-                  position={TooltipPosition.topStart}
-                >
-                  <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
-                    {svc.serviceName}
-                  </KialiLink>
-                </Tooltip>
-              </td>
-              <td className={rateCellStyle}>
-                {createIcon({
-                  ...statusFromString(svc.healthStatus ?? 'NA'),
-                  className: statusIconStyle
-                })}
-                {formatLatency(svc.latency)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  };
-
-  const renderRatesTable = (): React.ReactNode => {
-    if (rates.length === 0) {
-      return (
-        <div className={emptyStateStyle}>
-          <div>{t('Error Rates not available')}</div>
-          <div>{t('No HTTP traffic or health cache is disabled')}</div>
-        </div>
-      );
-    }
-
-    return (
-      <table className={tableStyle} data-test="service-insights-rates-table">
-        <colgroup>
-          <col style={{ width: '60%' }} />
-          <col style={{ width: '40%' }} />
-        </colgroup>
-        <thead>
-          <tr>
-            <th className={tableHeaderStyle}>{t('Name')}</th>
-            <th className={tableHeaderStyle}>
-              <span>{t('Errors')}</span>
-              <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rates.map((svc, idx) => (
-            <tr key={`rate-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`} className={tableRowStyle}>
+          {config.data.map((svc, idx) => (
+            <tr
+              key={`${config.keyPrefix}-${svc.cluster}-${svc.namespace}-${svc.serviceName}-${idx}`}
+              className={tableRowStyle}
+            >
               <td className={tableCellStyle}>
                 <Tooltip content={buildTooltipContent(svc.cluster, svc.namespace, svc.serviceName)}>
                   <KialiLink to={buildServiceDetailUrl(svc)} className={serviceLinkStyle}>
@@ -296,14 +462,7 @@ export const ServiceInsights: React.FC = () => {
                   </KialiLink>
                 </Tooltip>
               </td>
-              <td className={rateCellStyle}>
-                <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                    {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
-                    {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
-                  </span>
-                </Tooltip>
-              </td>
+              <td className={rateCellStyle}>{config.renderValueCell(svc)}</td>
             </tr>
           ))}
         </tbody>
@@ -311,23 +470,152 @@ export const ServiceInsights: React.FC = () => {
     );
   };
 
+  const renderLatenciesTable = (): React.ReactNode => {
+    return renderServiceTable({
+      data: latencies,
+      dataTestId: 'service-insights-latencies-table',
+      emptyTitle: 'Latencies not available',
+      emptyMessage: 'No HTTP traffic or response time metrics are unavailable',
+      columnTitle: 'Latency',
+      keyPrefix: 'latency',
+      renderValueCell: svc => (
+        <>
+          {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+          {formatLatency(svc.latency)}
+        </>
+      )
+    });
+  };
+
+  const renderRatesTable = (): React.ReactNode => {
+    return renderServiceTable({
+      data: rates,
+      dataTestId: 'service-insights-rates-table',
+      emptyTitle: 'Error Rates not available',
+      emptyMessage: 'No HTTP traffic or health cache is disabled',
+      columnTitle: 'Errors',
+      keyPrefix: 'rate',
+      renderValueCell: svc => (
+        <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+            {formatErrorRate(Math.max(0, Math.min(1, svc.errorRate)))}
+          </span>
+        </Tooltip>
+      )
+    });
+  };
+
+  const renderThroughputTable = (): React.ReactNode => {
+    return renderServiceTable({
+      data: throughput,
+      dataTestId: 'service-insights-traffic-table',
+      emptyTitle: 'Throughput not available',
+      emptyMessage: 'No throughput metrics are available',
+      columnTitle: 'Throughput',
+      keyPrefix: 'traffic',
+      renderValueCell: svc => (
+        <Tooltip
+          content={`TCP sent bytes: ${formatByteRate(svc.tcpRate ?? 0)} (bytes returned by the destination service)`}
+          position={TooltipPosition.top}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon({ ...statusFromString(svc.healthStatus ?? 'NA'), className: statusIconStyle })}
+            {formatByteRate(svc.tcpRate ?? 0)}
+          </span>
+        </Tooltip>
+      )
+    });
+  };
+
+  const effectiveMetrics = React.useMemo(() => {
+    return {
+      errorRates: selectedMetrics.errorRates,
+      latency: selectedMetrics.latency,
+      tcp: selectedMetrics.tcp
+    };
+  }, [selectedMetrics.errorRates, selectedMetrics.latency, selectedMetrics.tcp]);
+
+  const visibleTablesCount = React.useMemo(() => {
+    return Number(effectiveMetrics.errorRates) + Number(effectiveMetrics.latency) + Number(effectiveMetrics.tcp);
+  }, [effectiveMetrics]);
+
+  const visibleErrorCount = React.useMemo(() => {
+    return (
+      Number(effectiveMetrics.errorRates && ratesError) +
+      Number(effectiveMetrics.latency && latenciesError) +
+      Number(effectiveMetrics.tcp && throughputError)
+    );
+  }, [effectiveMetrics, latenciesError, ratesError, throughputError]);
+
+  const showCardErrorState = React.useMemo(() => {
+    if (isLoading) {
+      return false;
+    }
+    // All requests failed (e.g. no URL preference and all returned error → selectedMetrics become all false)
+    if (isError) {
+      return true;
+    }
+    if (visibleTablesCount === 0) {
+      return false;
+    }
+    return visibleErrorCount === visibleTablesCount;
+  }, [isError, isLoading, visibleErrorCount, visibleTablesCount]);
+
+  const allVisibleTablesEmpty = React.useMemo(() => {
+    const ratesEmpty = !effectiveMetrics.errorRates || rates.length === 0;
+    const latenciesEmpty = !effectiveMetrics.latency || latencies.length === 0;
+    const throughputEmpty = !effectiveMetrics.tcp || throughput.length === 0;
+    return ratesEmpty && latenciesEmpty && throughputEmpty;
+  }, [
+    effectiveMetrics.errorRates,
+    effectiveMetrics.latency,
+    effectiveMetrics.tcp,
+    rates.length,
+    latencies.length,
+    throughput.length
+  ]);
+
+  const showNoDataMessage = hasUrlPreference && visibleTablesCount > 0 && allVisibleTablesEmpty && !showCardErrorState;
+
   const renderContent = (): React.ReactNode => {
     if (isLoading) {
       return <OverviewCardLoadingState message={t('Fetching service data')} />;
     }
 
-    if (isError) {
+    if (showCardErrorState) {
+      return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
+    }
+
+    if (!effectiveMetrics.errorRates && !effectiveMetrics.latency && !effectiveMetrics.tcp) {
+      return (
+        <div className={emptyStateStyle}>
+          <div>{t('No metrics selected')}</div>
+        </div>
+      );
+    }
+
+    if (showNoDataMessage) {
       return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
 
     return (
-      <div className={tablesContainerStyle}>
-        <div className={tableContainerStyle} data-test="service-insights-rates">
-          {renderRatesTable()}
-        </div>
-        <div className={tableContainerStyle} data-test="service-insights-latencies">
-          {renderLatenciesTable()}
-        </div>
+      <div className={visibleTablesCount === 1 ? tablesContainer1ColStyle : tablesContainer3ColStyle}>
+        {effectiveMetrics.errorRates && (
+          <div className={tableContainerStyle} data-test="service-insights-rates">
+            {renderRatesTable()}
+          </div>
+        )}
+        {effectiveMetrics.latency && (
+          <div className={tableContainerStyle} data-test="service-insights-latencies">
+            {renderLatenciesTable()}
+          </div>
+        )}
+        {effectiveMetrics.tcp && (
+          <div className={tableContainerStyle} data-test="service-insights-traffic">
+            {renderThroughputTable()}
+          </div>
+        )}
       </div>
     );
   };
@@ -336,25 +624,40 @@ export const ServiceInsights: React.FC = () => {
     <Card className={cardStyle} data-test="service-insights-card">
       <CardHeader>
         <CardTitle>
-          <span>{t('Service Insights')}</span>
-          <Popover
-            aria-label={t('Service insights information')}
-            headerContent={<span>{t('Service Insights')}</span>}
-            bodyContent={
-              <>
-                {t(
-                  'Top services ranked by error rate and P95 latency. Status icons indicate health for the time period. Services with identical error rates are sorted by request rate.'
-                )}
-              </>
-            }
-            position={PopoverPosition.top}
-          >
-            <KialiIcon.Help className={helpIconStyle} />
-          </Popover>
+          <div className={cardHeaderTitleLayoutStyle}>
+            <div className={cardHeaderTitleLeftStyle}>
+              <span>{t('Service Insights')}</span>
+              <Popover
+                aria-label={t('Service insights information')}
+                headerContent={<span>{t('Service Insights')}</span>}
+                bodyContent={
+                  <>
+                    {t(
+                      'Top services ranked by throughput (bytes per second), error rate and P95 latency. Status icons indicate health for the time period.'
+                    )}
+                  </>
+                }
+                position={PopoverPosition.top}
+                triggerAction="hover"
+              >
+                <KialiIcon.Help className={helpIconStyle} />
+              </Popover>
+            </div>
+
+            <div className={cardHeaderTitleActionsStyle}>
+              <Button
+                data-test="service-insights-manage-columns"
+                variant="plain"
+                aria-label={t('Manage columns')}
+                icon={<CogIcon />}
+                onClick={onOpenManageColumns}
+              />
+            </div>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
-      {!isLoading && !isError && (
+      {!isLoading && !showCardErrorState && !showNoDataMessage && (
         <CardFooter>
           <KialiLink
             to={buildServicesListUrl()}
@@ -365,6 +668,60 @@ export const ServiceInsights: React.FC = () => {
           </KialiLink>
         </CardFooter>
       )}
+
+      <Modal
+        id="service-insights-manage-columns-modal"
+        data-test="service-insights-manage-columns-modal"
+        aria-label={t('Manage columns')}
+        title={t('Manage columns')}
+        variant={ModalVariant.small}
+        isOpen={isManageColumnsOpen}
+        onClose={onCancelManageColumns}
+        actions={[
+          <Button
+            key="save"
+            variant="primary"
+            onClick={onSaveManageColumns}
+            isDisabled={!draftMetrics.errorRates && !draftMetrics.latency && !draftMetrics.tcp}
+          >
+            {t('Save')}
+          </Button>,
+          <Button key="cancel" variant="link" onClick={onCancelManageColumns}>
+            {t('Cancel')}
+          </Button>
+        ]}
+      >
+        <p style={{ marginTop: 0 }}>
+          {t(
+            'Select the metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
+          )}
+        </p>
+
+        <Form style={{ marginTop: '1rem' }}>
+          <FormGroup label={t('Metrics')} fieldId="service-insights-metrics-checkboxes">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Checkbox
+                id="service-insights-metrics-error-rates"
+                label={t('Error rates')}
+                isChecked={draftMetrics.errorRates}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, errorRates: checked }))}
+              />
+              <Checkbox
+                id="service-insights-metrics-latency"
+                label={t('Latency')}
+                isChecked={draftMetrics.latency}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, latency: checked }))}
+              />
+              <Checkbox
+                id="service-insights-metrics-tcp"
+                label={t('Throughput')}
+                isChecked={draftMetrics.tcp}
+                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, tcp: checked }))}
+              />
+            </div>
+          </FormGroup>
+        </Form>
+      </Modal>
     </Card>
   );
 };
