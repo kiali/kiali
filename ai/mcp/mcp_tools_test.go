@@ -64,21 +64,24 @@ func TestLoadTools_Idempotent(t *testing.T) {
 
 func TestLoadTools_ThreadSafety(t *testing.T) {
 	// This test should be run with: go test -race
-	// It verifies that concurrent reads and the initial write don't cause data races
-
+	// It verifies that concurrent LoadTools() calls and concurrent map reads don't cause data races.
 	var wg sync.WaitGroup
+	errCh := make(chan error, 50)
 
-	// Concurrent readers
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			LoadTools()                  // May trigger initial load
-			_ = len(DefaultToolHandlers) // Concurrent read
+			errCh <- LoadTools()
+			_ = len(DefaultToolHandlers) // Concurrent read after load
 		}()
 	}
 
 	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		require.NoError(t, err)
+	}
 }
 
 func TestToolDef_Call_UnknownTool(t *testing.T) {
