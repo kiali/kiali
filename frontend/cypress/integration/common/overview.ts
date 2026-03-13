@@ -584,30 +584,41 @@ Then('Service insights card shows data tables and footer link', () => {
     cy.getBySel('service-insights-view-all-services').should('be.visible');
   });
 
-  // Rates section: should be empty because it depends on health cache, which is disabled during
-  // standard cypress testing.
-  cy.getBySel('service-insights-rates').within(() => {
-    cy.contains('not available').should('be.visible');
+  // With no URL preference, only tables that have data are shown. Assert at least one table section
+  // is visible and run section-specific checks where present (rates often empty in cypress, latencies may have data).
+  getServiceInsightsCard().within($card => {
+    const rates = $card.find('[data-test="service-insights-rates"]');
+    const latencies = $card.find('[data-test="service-insights-latencies"]');
+    const traffic = $card.find('[data-test="service-insights-traffic"]');
+    expect(rates.length + latencies.length + traffic.length).to.be.greaterThan(0);
   });
 
-  // Latencies section: table should have data because this queries prometheus directly
-  cy.getBySel('service-insights-latencies').within(() => {
-    cy.get('table').then(_ => {
-      cy.contains('th', 'Name').should('be.visible');
-      cy.contains('th', 'Latency').should('be.visible');
+  cy.get('body').then($body => {
+    if ($body.find('[data-test="service-insights-rates"]').length > 0) {
+      cy.getBySel('service-insights-rates').within(() => {
+        cy.contains('not available').should('be.visible');
+      });
+    }
+    if ($body.find('[data-test="service-insights-latencies"]').length > 0) {
+      cy.getBySel('service-insights-latencies').within(() => {
+        cy.get('table').then(_ => {
+          cy.contains('th', 'Name').should('be.visible');
+          cy.contains('th', 'Latency').should('be.visible');
 
-      cy.get('tbody tr').then($rows => {
-        if ($rows.length === 0) {
-          return;
-        }
-        cy.wrap($rows[0]).within(() => {
-          cy.get('a')
-            .should('have.attr', 'href')
-            .and('match', /\/namespaces\/.+\/services\/.+/);
-          cy.contains(/ms|s/).should('be.visible');
+          cy.get('tbody tr').then($rows => {
+            if ($rows.length === 0) {
+              return;
+            }
+            cy.wrap($rows[0]).within(() => {
+              cy.get('a')
+                .should('have.attr', 'href')
+                .and('match', /\/namespaces\/.+\/services\/.+/);
+              cy.contains(/ms|s/).should('be.visible');
+            });
+          });
         });
       });
-    });
+    }
   });
 });
 
