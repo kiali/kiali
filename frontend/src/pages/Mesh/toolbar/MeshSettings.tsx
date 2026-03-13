@@ -19,10 +19,11 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import {
   containerStyle,
-  itemStyleWithInfo,
+  displayMenuRowContentStyle,
+  displayMenuRowIconStyle,
+  displayMenuRowStyle,
   itemStyleWithoutInfo,
   menuStyle,
-  menuEntryStyle,
   titleStyle
 } from 'styles/DropdownStyles';
 import { KialiDispatch } from 'types/Redux';
@@ -60,11 +61,79 @@ interface DisplayOptionType {
 }
 
 const marginBottom = 20;
-const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
+const HOVER_DELAY_MS = 200;
 
 const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsProps) => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const [hoveredRowId, setHoveredRowId] = React.useState<string | null>(null);
+  const [popoverOpenRowId, setPopoverOpenRowId] = React.useState<string | null>(null);
+  const hoverDelayTimer = React.useRef<number | null>(null);
   const { t } = useKialiTranslation();
+
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hoverDelayTimer.current !== null) {
+        window.clearTimeout(hoverDelayTimer.current);
+      }
+    };
+  }, []);
+
+  const handleRowMouseEnter = (rowId: string): void => {
+    hoverDelayTimer.current = window.setTimeout(() => {
+      setHoveredRowId(rowId);
+      hoverDelayTimer.current = null;
+    }, HOVER_DELAY_MS);
+  };
+
+  const handleRowMouseLeave = (): void => {
+    if (hoverDelayTimer.current !== null) {
+      window.clearTimeout(hoverDelayTimer.current);
+      hoverDelayTimer.current = null;
+    }
+    // Don't hide the icon if a popover is currently open
+    if (popoverOpenRowId === null) {
+      setHoveredRowId(null);
+    }
+  };
+
+  const renderDisplayMenuRow = (
+    rowId: string,
+    content: React.ReactNode,
+    tooltipContent?: React.ReactNode,
+    headerTitle?: string
+  ): React.ReactNode => {
+    // Show icon if hovering OR if the popover is open for this row
+    const showIcon = tooltipContent && (hoveredRowId === rowId || popoverOpenRowId === rowId);
+
+    if (!tooltipContent) {
+      return <div className={displayMenuRowStyle}>{content}</div>;
+    }
+    return (
+      <div
+        className={displayMenuRowStyle}
+        onMouseEnter={() => handleRowMouseEnter(rowId)}
+        onMouseLeave={handleRowMouseLeave}
+      >
+        <div className={displayMenuRowContentStyle}>{content}</div>
+        {showIcon && (
+          <div className={displayMenuRowIconStyle}>
+            <Popover
+              position={PopoverPosition.right}
+              triggerAction="click"
+              headerContent={headerTitle}
+              bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
+              showClose={true}
+              onShown={() => setPopoverOpenRowId(rowId)}
+              onHidden={() => setPopoverOpenRowId(null)}
+            >
+              <KialiIcon.Help className={helpIconStyle} />
+            </Popover>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const getMenuOptions = (): React.ReactNode => {
     // map our attributes from redux
@@ -79,7 +148,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         isChecked: showGateways,
         labelText: t('Gateways'),
         onChange: toggleGateways,
-        tooltip: <div style={{ textAlign: 'left' }}>{t('When enabled, include gateways in the mesh topology.')}</div>
+        tooltip: <div>{t('When enabled, include gateways in the mesh topology.')}</div>
       }
     ];
 
@@ -89,11 +158,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         isChecked: showWaypoints,
         labelText: t('Waypoints'),
         onChange: toggleWaypoints,
-        tooltip: (
-          <div style={{ textAlign: 'left' }}>
-            <div>{t('When enabled in an Ambient environment, include waypoints in the mesh topology.')}</div>
-          </div>
-        )
+        tooltip: <div>{t('When enabled in an Ambient environment, include waypoints in the mesh topology.')}</div>
       });
     }
 
@@ -102,12 +167,13 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         className={containerStyle}
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
-        <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
-          <div className={titleStyle}>Show</div>
+        <div id="mesh-display-menu" className={menuStyle} style={{ width: '15em' }}>
+          <div className={titleStyle}>{t('Show')}</div>
 
-          {visibilityOptions.map((item: DisplayOptionType) => (
-            <div key={item.id} className={menuEntryStyle}>
-              <label key={item.id} className={item.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}>
+          {visibilityOptions.map((item: DisplayOptionType) =>
+            renderDisplayMenuRow(
+              `visibility-${item.id}`,
+              <label key={item.id} className={itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -115,25 +181,11 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
                   label={item.labelText}
                   onChange={item.onChange}
                 />
-              </label>
-
-              {item.tooltip && (
-                <Popover
-                  key={`popover_${item.id}`}
-                  position={PopoverPosition.right}
-                  triggerAction="click"
-                  bodyContent={<div style={{ textAlign: 'left' }}>{item.tooltip}</div>}
-                  minWidth={DISPLAY_MENU_POPOVER_WIDTH}
-                  maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
-                  showClose={true}
-                >
-                  <span style={{ cursor: 'pointer' }}>
-                    <KialiIcon.Help className={item.iconClassName ?? helpIconStyle} />
-                  </span>
-                </Popover>
-              )}
-            </div>
-          ))}
+              </label>,
+              item.tooltip,
+              item.labelText
+            )
+          )}
         </div>
       </BoundingClientAwareComponent>
     );
@@ -149,7 +201,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
           isExpanded={isOpen}
           isDisabled={props.disabled}
         >
-          Display
+          {t('Display')}
         </MenuToggle>
       )}
       isOpen={isOpen}
