@@ -25,7 +25,7 @@
       previous:
         type: "boolean"
         description: "Return previous terminated container logs (Optional)"
-      cluster_name:
+      clusterName:
         type: "string"
         description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
       format:

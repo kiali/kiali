@@ -21,12 +21,6 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const (
-	defaultLimit           = 10
-	defaultLookbackSeconds = 600 // 10m
-	defaultMaxSpans        = 7
-)
-
 func Execute(
 	r *http.Request,
 	args map[string]interface{},
@@ -101,31 +95,17 @@ func Execute(
 }
 
 func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
-	out := GetTracesArgs{
-		Limit:           defaultLimit,
-		LookbackSeconds: defaultLookbackSeconds,
-		MaxSpans:        defaultMaxSpans,
-	}
+	out := GetTracesArgs{}
 
-	out.TraceID = mcputil.GetStringArg(args, "trace_id")
+	out.TraceID = mcputil.GetStringArg(args, "trace_id", "traceId")
 	out.Namespace = mcputil.GetStringArg(args, "namespace")
-	out.ServiceName = mcputil.GetStringArg(args, "service_name")
-	out.ClusterName = mcputil.GetStringArg(args, "cluster_name")
-	out.ErrorOnly = mcputil.AsBool(args["error_only"])
+	out.ServiceName = mcputil.GetStringArg(args, "service_name", "serviceName")
+	out.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "cluster_name", "clusterName")
+	out.ErrorOnly = mcputil.AsBool(args["errorOnly"])
 
-	if v := mcputil.AsInt(args["limit"]); v > 0 {
-		out.Limit = v
-	}
-	if v := mcputil.AsInt(args["lookback_seconds"]); v > 0 {
-		out.LookbackSeconds = v
-	}
-	if v := mcputil.AsInt(args["max_spans"]); v > 0 {
-		out.MaxSpans = v
-	}
-
-	if out.ClusterName == "" && conf != nil {
-		out.ClusterName = conf.KubernetesConfig.ClusterName
-	}
+	out.Limit = mcputil.AsIntOrDefault(args, mcputil.DefaultTracesLimit, "limit")
+	out.LookbackSeconds = mcputil.AsIntOrDefault(args, mcputil.DefaultLookbackSeconds, "lookback_seconds", "lookbackSeconds")
+	out.MaxSpans = mcputil.AsIntOrDefault(args, mcputil.DefaultMaxSpans, "max_spans", "maxSpans")
 
 	return out
 }
@@ -253,9 +233,6 @@ func traceHasErrorIndicators(trace jaegerModels.Trace) bool {
 }
 
 func summarizeTrace(trace jaegerModels.Trace, maxSpans int) TraceSummary {
-	if maxSpans <= 0 {
-		maxSpans = defaultMaxSpans
-	}
 
 	byID := make(map[string]*jaegerModels.Span, len(trace.Spans))
 	for i := range trace.Spans {

@@ -5,10 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/models"
 )
-
-const DefaultRateInterval = "10m"
 
 // computeMeshHealthSummary processes the health JSON and creates an aggregated summary.
 // The health data corresponds to the type specified in queryParams (app, workload, or service).
@@ -23,7 +22,7 @@ func computeMeshHealthSummary(healthData models.ClustersNamespaceHealth, toolArg
 
 	rateInterval := toolArgs.RateInterval
 	if rateInterval == "" {
-		rateInterval = DefaultRateInterval
+		rateInterval = mcputil.DefaultRateInterval
 	}
 
 	// Create empty health structures for types we don't have
