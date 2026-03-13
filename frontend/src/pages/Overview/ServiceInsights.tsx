@@ -549,11 +549,17 @@ export const ServiceInsights: React.FC = () => {
   }, [effectiveMetrics, latenciesError, ratesError, throughputError]);
 
   const showCardErrorState = React.useMemo(() => {
-    if (isLoading || visibleTablesCount === 0) {
+    if (isLoading) {
       return false;
     }
-    // If all visible tables errored (or all requests failed), show the card-level error state.
-    return isError || visibleErrorCount === visibleTablesCount;
+    // All requests failed (e.g. no URL preference and all returned error → selectedMetrics become all false)
+    if (isError) {
+      return true;
+    }
+    if (visibleTablesCount === 0) {
+      return false;
+    }
+    return visibleErrorCount === visibleTablesCount;
   }, [isError, isLoading, visibleErrorCount, visibleTablesCount]);
 
   const allVisibleTablesEmpty = React.useMemo(() => {
