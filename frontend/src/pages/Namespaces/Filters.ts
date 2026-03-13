@@ -6,7 +6,7 @@ import {
   RunnableFilter,
   FilterValue
 } from '../../types/Filters';
-import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from '../../types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, statusFromString } from '../../types/Health';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
@@ -103,7 +103,7 @@ const healthValues: FilterValue[] = [
   { id: FAILURE.id, title: FAILURE.name },
   { id: DEGRADED.id, title: DEGRADED.name },
   { id: HEALTHY.id, title: HEALTHY.name },
-  { id: NA.name, title: NA.name }
+  { id: NA.id, title: NA.name }
 ];
 
 export enum NamespaceCategory {
@@ -183,38 +183,22 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
-    const { showInNotReady, showInError, showInWarning, showInSuccess, showInNA, noFilter } = summarizeHealthFilters(
+    const { noFilter, showInNotReady, showInError, showInWarning, showInSuccess, showInNA } = summarizeHealthFilters(
       filters
     );
 
     if (noFilter) {
       return true;
     }
-    // Namespaces page: check all three status types (statusApp, statusService, statusWorkload)
-    // Collect all statuses from the three types
-    const allStatuses = [ns.statusApp, ns.statusService, ns.statusWorkload].filter(s => s !== undefined);
 
-    if (allStatuses.length === 0) {
-      // No health information received for this namespace
-      return showInNA;
-    }
-
-    // Check if any status matches the filter criteria
-    const hasNotReady = allStatuses.some(s => s && (s.inNotReady?.length ?? 0) > 0);
-    const hasError = allStatuses.some(s => s && (s.inError?.length ?? 0) > 0);
-    const hasWarning = allStatuses.some(s => s && (s.inWarning?.length ?? 0) > 0);
-    const hasSuccess = allStatuses.some(s => s && (s.inSuccess?.length ?? 0) > 0);
-    const hasNotAvailable = allStatuses.some(s => s && (s.notAvailable?.length ?? 0) > 0);
-    const hasOnlySuccess = hasSuccess && !hasError && !hasWarning;
-    const hasAnyComponent = hasNotReady || hasError || hasWarning || hasSuccess || hasNotAvailable;
-    const hasOnlyNA = !hasAnyComponent || (hasNotAvailable && !hasError && !hasWarning && !hasNotReady && !hasSuccess);
+    const worst = statusFromString(ns.worstStatus ?? 'NA');
 
     return (
-      (showInNotReady && hasNotReady) ||
-      (showInError && hasError) ||
-      (showInWarning && hasWarning) ||
-      (showInSuccess && hasOnlySuccess) ||
-      (showInNA && hasOnlyNA)
+      (showInError && worst === FAILURE) ||
+      (showInWarning && worst === DEGRADED) ||
+      (showInNotReady && worst === NOT_READY) ||
+      (showInSuccess && worst === HEALTHY) ||
+      (showInNA && worst === NA)
     );
   }
 };

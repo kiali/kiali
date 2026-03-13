@@ -34,7 +34,9 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { kialiStyle } from 'styles/StyleUtils';
 import { LabelFilters } from './LabelFilter';
 import { arrayEquals } from 'utils/Common';
-import { labelFilter } from './CommonFilters';
+import { healthFilter, labelFilter } from './CommonFilters';
+import { statusFromString } from '../../types/Health';
+import { createIcon } from '../../config/KialiIcon';
 import { HistoryManager, location } from 'app/History';
 import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
@@ -46,7 +48,7 @@ import { classes } from 'typestyle';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
-  rowGap: "var(--pf-t--global--spacer--md)",
+  rowGap: 'var(--pf-t--global--spacer--md)',
   $nest: {
     '& > .pf-v6-c-toolbar__content': {
       paddingLeft: 0
@@ -55,7 +57,7 @@ const toolbarStyle = kialiStyle({
 });
 
 const bottomPadding = kialiStyle({
-  paddingBottom: "var(--pf-t--global--spacer--md)"
+  paddingBottom: 'var(--pf-t--global--spacer--md)'
 });
 
 const formSelectStyle = kialiStyle({
@@ -538,7 +540,14 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           <SelectList>
             {currentFilterType.filterValues.map(filter => (
               <SelectOption id={filter.id} key={filter.id} value={filter.id}>
-                {t(filter.title)}
+                {currentFilterType.category === healthFilter.category ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {createIcon(statusFromString(filter.id))}
+                    {t(filter.title)}
+                  </span>
+                ) : (
+                  t(filter.title)
+                )}
               </SelectOption>
             ))}
           </SelectList>

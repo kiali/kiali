@@ -162,7 +162,7 @@ export const INFO: Status = {
 
 export const NOT_READY: Status = {
   className: 'icon-idle',
-  color: PFColors.Cyan300,
+  color: PFColors.Custom,
   icon: NewProcessIcon,
   id: 'Not Ready',
   name: t('Not Ready'),
