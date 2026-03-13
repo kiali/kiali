@@ -1,5 +1,6 @@
 - name: "get_traces"
   description: "Fetches a distributed trace (Jaeger/Tempo) by trace_id or searches by service_name (optionally only error traces) and summarizes bottlenecks and error spans."
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     properties:

@@ -1,5 +1,6 @@
 - name: "get_pod_performance"
   description: "Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'."
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     required: ["namespace"]

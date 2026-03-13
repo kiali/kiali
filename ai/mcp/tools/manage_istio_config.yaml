@@ -1,5 +1,6 @@
 - name: "manage_istio_config"
   description: "Manages the Istio config for the given cluster, namespace, group, version, kind and object. For action 'list', returns an array of objects with {name, namespace, type, validation}."
+  toolset: [default]
   input_schema:
     type: "object"
     required: ["action", "confirmed"]

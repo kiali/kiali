@@ -1,5 +1,6 @@
 - name: "get_action_ui"
   description: "Returns the action to navigate in the Kiali UI when user request see graph or mesh graph,list/get/show resources or a detailed resource information"
+  toolset: [mcp, default]
   input_schema:
     type: "object"
     required: ["resourceType"]

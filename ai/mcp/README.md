@@ -433,6 +433,7 @@ all `*.yaml`/`*.yml` files and registers them by name.
 
 - `name`: Tool name, must match the implementation switch in `mcp_tools.go`.
 - `description`: Short description sent to the model.
+- `toolset`: List of handler sets this tool belongs to. Values: `default` (chatbot UI when header `kiali_chatbot` is set), `mcp` (full MCP). A tool can be in one or both; the two sets are independent. Example: `toolset: [default, mcp]`.
 - `input_schema`: JSON Schema object describing the tool parameters.
 
 Example:
@@ -440,6 +441,7 @@ Example:
 ```yaml
 - name: "get_mesh_graph"
   description: "Returns the mesh graph data for the given namespaces and graph type."
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     properties:
