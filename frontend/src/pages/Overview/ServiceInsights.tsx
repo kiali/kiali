@@ -556,6 +556,22 @@ export const ServiceInsights: React.FC = () => {
     return isError || visibleErrorCount === visibleTablesCount;
   }, [isError, isLoading, visibleErrorCount, visibleTablesCount]);
 
+  const allVisibleTablesEmpty = React.useMemo(() => {
+    const ratesEmpty = !effectiveMetrics.errorRates || rates.length === 0;
+    const latenciesEmpty = !effectiveMetrics.latency || latencies.length === 0;
+    const throughputEmpty = !effectiveMetrics.tcp || throughput.length === 0;
+    return ratesEmpty && latenciesEmpty && throughputEmpty;
+  }, [
+    effectiveMetrics.errorRates,
+    effectiveMetrics.latency,
+    effectiveMetrics.tcp,
+    rates.length,
+    latencies.length,
+    throughput.length
+  ]);
+
+  const showNoDataMessage = hasUrlPreference && visibleTablesCount > 0 && allVisibleTablesEmpty && !showCardErrorState;
+
   const renderContent = (): React.ReactNode => {
     if (isLoading) {
       return <OverviewCardLoadingState message={t('Fetching service data')} />;
@@ -571,6 +587,10 @@ export const ServiceInsights: React.FC = () => {
           <div>{t('No metrics selected')}</div>
         </div>
       );
+    }
+
+    if (showNoDataMessage) {
+      return <OverviewCardErrorState message={t('Failed to load service data')} onTryAgain={fetchData} />;
     }
 
     return (
@@ -631,7 +651,7 @@ export const ServiceInsights: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardBody className={cardBodyStyle}>{renderContent()}</CardBody>
-      {!isLoading && !showCardErrorState && (
+      {!isLoading && !showCardErrorState && !showNoDataMessage && (
         <CardFooter>
           <KialiLink
             to={buildServicesListUrl()}
