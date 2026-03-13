@@ -72,24 +72,20 @@ export const OverviewPage: React.FC = () => {
           <ManualRefreshEmptyState />
         ) : (
           <Grid hasGutter>
-            <GridItem span={6}>
-              <Grid hasGutter>
-                <GridItem span={4}>
-                  <ClusterStats />
-                </GridItem>
-
-                <GridItem span={4}>
-                  <IstioConfigStats />
-                </GridItem>
-
-                <GridItem span={4}>
-                  <ControlPlaneStats />
-                </GridItem>
-              </Grid>
+            <GridItem span={2}>
+              <ClusterStats />
             </GridItem>
 
-            <GridItem span={6}>
+            <GridItem span={2}>
+              <ControlPlaneStats />
+            </GridItem>
+
+            <GridItem span={5}>
               <DataPlaneStats />
+            </GridItem>
+
+            <GridItem span={3}>
+              <IstioConfigStats />
             </GridItem>
 
             <GridItem span={4} className={secondRowItemStyle}>
