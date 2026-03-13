@@ -127,15 +127,30 @@ if is_in_array "tempo" "jaeger" "${ADDONS}"; then
     exit 1
 fi
 
+# Pin Sail operator chart version to match Istio major.minor so we install a compatible
+# operator. Without this, Helm installs the latest chart, which can break CI for older branches.
+# Determine the latest Sail chart version for this Istio minor by fetching the Helm repo index.
+ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+SAIL_CHART_VERSION=""
+if [ -n "${ISTIO_MINOR}" ]; then
+  SAIL_INDEX=$(curl -sL "https://istio-ecosystem.github.io/sail-operator/index.yaml" 2>/dev/null) || true
+  if [ -n "${SAIL_INDEX}" ]; then
+    SAIL_CHART_VERSION=$(echo "${SAIL_INDEX}" | yq '.entries.sail-operator[].version' - 2>/dev/null | grep -E "^${ISTIO_MINOR}\." | sort -V | tail -1) || true
+  fi
+fi
+if [ -n "${SAIL_CHART_VERSION}" ]; then
+  echo "Pinning Sail operator Helm chart to version ${SAIL_CHART_VERSION} (Istio ${ISTIO_VERSION:-})"
+fi
+
 helm upgrade sail-operator sail-operator \
   --install \
   --create-namespace \
   --namespace sail-operator \
   --wait \
-  --repo https://istio-ecosystem.github.io/sail-operator
+  --repo https://istio-ecosystem.github.io/sail-operator \
+  ${SAIL_CHART_VERSION:+--version "$SAIL_CHART_VERSION"}
 
-# Pin based on Istio version:
-ISTIO_MINOR=$(echo "${ISTIO_VERSION:-}" | cut -d. -f1-2)
+# Pin Gateway API version based on Istio version:
 case "${ISTIO_MINOR}" in
   1.23) K8S_GATEWAY_API_VERSION="v1.1.0" ;;
   1.26) K8S_GATEWAY_API_VERSION="v1.3.0" ;;
@@ -305,6 +320,17 @@ fi
 
 if [ -n "${CUSTOM_INSTALL_SETTINGS}" ]; then
   ISTIO_YAML=$(printf "%s" "$ISTIO_YAML" | yq "$CUSTOM_INSTALL_SETTINGS")
+fi
+
+# Sail operator CRDs only allow specific version strings per minor (e.g. v1.26.0-v1.26.3 and v1.26-latest).
+# Map any requested z-stream (vX.Y.Z) to the -latest variant for that minor so the CR validates on all branches.
+REQUESTED_VERSION=$(yq '.spec.version // ""' <<< "$ISTIO_YAML")
+if [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  MINOR="${REQUESTED_VERSION#v}"
+  MINOR="${MINOR%.*}"
+  SAIL_VERSION="v${MINOR}-latest"
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq ".spec.version = \"${SAIL_VERSION}\"" -)
+  echo "Mapping Istio version ${REQUESTED_VERSION} to ${SAIL_VERSION} (Sail CRD only allows specific versions per minor; using -latest)"
 fi
 
 ISTIO_NAME=$(yq '.metadata.name' <<< "$ISTIO_YAML")
