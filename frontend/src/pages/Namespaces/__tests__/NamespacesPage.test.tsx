@@ -108,6 +108,7 @@ const mockNamespaces: NamespaceInfo[] = [
 const defaultReduxProps = {
   duration: 600 as DurationInSeconds,
   externalServices: [],
+  hiddenColumnIds: [],
   istioAPIEnabled: true,
   kiosk: '',
   language: 'en',
