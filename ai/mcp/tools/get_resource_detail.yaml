@@ -1,5 +1,6 @@
 - name: "get_resource_detail"
   description: "Returns the resource detail data for the given resource type, namespaces and resource name."
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     required: ["resourceType"]

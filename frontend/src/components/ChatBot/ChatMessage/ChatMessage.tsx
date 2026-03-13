@@ -10,23 +10,29 @@ import { ChatMessageMarkdown } from './ChatMessageMarkdown';
 type ChatMessageProps = {
   actions: Action[];
   collapse?: boolean;
+  context?: any;
   displayMode: ChatbotDisplayMode;
   index: string;
   innerRef: React.RefObject<HTMLDivElement>;
   message: MessageProps;
+  onSendMessage?: (query: string | number, context?: any, title?: string) => void;
   referenced_documents: ReferencedDocument[];
   scrollToHere?: boolean;
+  setAlertMessage?: (alertMessage?: any) => void;
 };
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   actions,
+  context,
   displayMode,
   referenced_documents,
   collapse,
   message,
   index,
   scrollToHere,
-  innerRef
+  innerRef,
+  onSendMessage,
+  setAlertMessage
 }) => {
   const renderAction = (actions: Action[]): React.ReactNode => {
     return actions.map(action => (
@@ -118,8 +124,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     <FileAttachment
                       key={action.fileName}
                       fileName={action.fileName || ''}
-                      code={action.payload}
+                      action={action}
                       displayMode={displayMode}
+                      context={context}
+                      onSendMessage={onSendMessage}
+                      setAlertMessage={setAlertMessage}
                     />
                   ))}
               </div>

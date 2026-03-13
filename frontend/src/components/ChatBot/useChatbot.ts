@@ -58,6 +58,32 @@ const escapeHtml = (unsafe: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+// Escape HTML but preserve code blocks (delimited by ~~~ or ```)
+const escapeHtmlPreservingCodeBlocks = (content: string): string => {
+  // Split content by code blocks (both ~~~ and ```)
+  const codeBlockRegex = /(~~~[\s\S]*?~~~|```[\s\S]*?```)/g;
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(content)) !== null) {
+    // Escape the text before the code block
+    if (match.index > lastIndex) {
+      parts.push(escapeHtml(content.substring(lastIndex, match.index)));
+    }
+    // Keep the code block as-is (don't escape)
+    parts.push(match[0]);
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Escape any remaining text after the last code block
+  if (lastIndex < content.length) {
+    parts.push(escapeHtml(content.substring(lastIndex)));
+  }
+
+  return parts.join('');
+};
+
 type UseChatbotResult = {
   alertMessage: AlertMessage | undefined;
   botMessage: (response: ChatResponse | string) => ExtendedMessage;
@@ -131,7 +157,8 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       typeof response === 'object' ? (typeof response.answer === 'string' ? response.answer : '') : response;
     const safeContent = typeof rawContent === 'string' ? rawContent : String(rawContent);
     const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
-    const content = isMockApi ? safeContent : escapeHtml(safeContent);
+    // Escape HTML outside code blocks, but preserve code blocks unchanged
+    const content = isMockApi ? safeContent : escapeHtmlPreservingCodeBlocks(safeContent);
     const message: ExtendedMessage = {
       role: 'bot',
       content,

@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
 	"github.com/kiali/kiali/ai/mcp/get_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
+	"github.com/kiali/kiali/ai/mcp/manage_istio_config_read"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -36,7 +37,13 @@ import (
 //go:embed tools
 var toolsFS embed.FS
 
-var DefaultToolHandlers = map[string]ToolDef{}
+var (
+	// MCPToolHandlers contains tools with toolset including "mcp" (full MCP).
+	MCPToolHandlers = map[string]ToolDef{}
+	// DefaultToolHandlers contains tools with toolset including "default" (chatbot UI when header kiali_chatbot is set).
+	// The two sets are independent; a tool can be in one or both via the toolset field in its YAML.
+	DefaultToolHandlers = map[string]ToolDef{}
+)
 
 var ExcludedToolNames = map[string]bool{
 	"get_citations": true,
@@ -56,7 +63,7 @@ func LoadTools() error {
 }
 
 func loadToolsImpl() error {
-	if len(DefaultToolHandlers) > 0 {
+	if len(MCPToolHandlers) > 0 || len(DefaultToolHandlers) > 0 {
 		return nil
 	}
 	entries, err := fs.ReadDir(toolsFS, "tools")
@@ -79,11 +86,21 @@ func loadToolsImpl() error {
 		if err != nil {
 			return fmt.Errorf("load tool definition %s: %w", name, err)
 		}
-		DefaultToolHandlers[definition.Name] = definition
+		for _, set := range definition.Toolset {
+			switch set {
+			case "mcp":
+				MCPToolHandlers[definition.Name] = definition
+			case "default":
+				DefaultToolHandlers[definition.Name] = definition
+			}
+		}
 	}
-	names := slices.Collect(maps.Keys(DefaultToolHandlers))
-	slices.Sort(names)
-	log.Infof("[AI]Loaded %d tools: %s", len(names), strings.Join(names, ", "))
+	mcpNames := slices.Collect(maps.Keys(MCPToolHandlers))
+	slices.Sort(mcpNames)
+	log.Infof("[AI]Loaded %d MCP tools: %s", len(mcpNames), strings.Join(mcpNames, ", "))
+	defaultNames := slices.Collect(maps.Keys(DefaultToolHandlers))
+	slices.Sort(defaultNames)
+	log.Infof("[AI]Default (chatbot) toolset: %d tools: %s", len(defaultNames), strings.Join(defaultNames, ", "))
 
 	return nil
 }
@@ -140,6 +157,8 @@ func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *bu
 		return get_pod_performance.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 	case "manage_istio_config":
 		return manage_istio_config.Execute(r, args, business, conf)
+	case "manage_istio_config_read":
+		return manage_istio_config_read.Execute(r, args, business, conf)
 	case "get_action_ui":
 		return get_action_ui.Execute(r, args, business, conf)
 	case "get_citations":

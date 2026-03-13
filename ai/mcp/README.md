@@ -313,96 +313,88 @@ Fetches a distributed trace from the configured tracing backend (Jaeger/Tempo) a
 
 ---
 
-### 7. `manage_istio_config`
+### 7. `manage_istio_config_read`
 
-Manages Istio configuration objects: list, get, create, patch, and delete operations.
+Read-only: list or get Istio configuration objects.
 
-**Purpose**: Query and modify Istio configuration objects like VirtualServices, DestinationRules, Gateways, etc.
+**Purpose**: Query Istio configuration (VirtualServices, DestinationRules, Gateways, etc.) without modifying anything.
 
 **Parameters**:
-- `action` (string, required): Action to perform - `"list"`, `"get"`, `"create"`, `"patch"`, or `"delete"`.
+- `action` (string, required): `"list"` or `"get"`.
 - `cluster` (string, optional): Cluster name. Defaults to the cluster in Kiali configuration.
-- `namespace` (string, optional): Namespace. If not provided for `list`, returns all Istio objects across all namespaces.
-- `group` (string, required for create/patch/get): API group (e.g., `"networking.istio.io"`, `"gateway.networking.k8s.io"`).
-- `version` (string, required for create/patch/get): API version (e.g., `"v1alpha3"`, `"v1beta1"`).
-- `kind` (string, required for create/patch/get): Object kind (e.g., `"VirtualService"`, `"DestinationRule"`, `"Gateway"`).
-- `object` (string, required for patch/delete): Name of the Istio object.
-- `json_data` (string, required for create/patch): JSON data for the object (as string).
+- `namespace` (string, optional): For `list`, omit to get all namespaces. For `get`, required.
+- `group`, `version`, `kind` (required for `get`): API group/version/kind of the object.
+- `object` (string, required for `get`): Name of the Istio object.
+- `service_name` (string, optional): Filter by service. Only for `list`.
 
-**Returns**: 
-- For `list`: Array of Istio objects
-- For `get`: Single Istio object
-- For `create`/`patch`/`delete`: Success/error message
+**Returns**: For `list`, array of objects with `name`, `namespace`, `type`, `validation`. For `get`, compact YAML of the object.
 
-**Example 1**: List all VirtualServices in bookinfo namespace
+**Example**: List VirtualServices in bookinfo, then get one
 ```json
-{
-  "action": "list",
-  "namespace": "bookinfo",
-  "group": "networking.istio.io",
-  "version": "v1alpha3",
-  "kind": "VirtualService"
-}
+{"action": "list", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService"}
+```
+```json
+{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "object": "reviews"}
 ```
 
-**Example 2**: Get a specific VirtualService
-```json
-{
-  "action": "get",
-  "namespace": "bookinfo",
-  "group": "networking.istio.io",
-  "version": "v1alpha3",
-  "kind": "VirtualService",
-  "object": "reviews"
-}
-```
+---
 
-**Example 3**: Create a new DestinationRule
+### 8. `manage_istio_config`
+
+Create, patch, or delete Istio configuration. For list/get use `manage_istio_config_read`.
+
+**Purpose**: Modify Istio configuration objects (create, patch, delete). Always use `confirmed: false` first to show a preview, then `confirmed: true` after user confirms.
+
+**Parameters**:
+- `action` (string, required): `"create"`, `"patch"`, or `"delete"`.
+- `confirmed` (boolean, required): `false` for preview; `true` to execute.
+- `cluster`, `namespace`, `group`, `version`, `kind` (required).
+- `object` (string, required): Name of the Istio object.
+- `data` (string, required for create/patch): JSON or YAML for the object.
+
+**Returns**: Success/error or YAML preview when not confirmed.
+
+**Example**: Create a new DestinationRule
 ```json
 {
   "action": "create",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "DestinationRule",
-  "json_data": "{\"apiVersion\":\"networking.istio.io/v1alpha3\",\"kind\":\"DestinationRule\",\"metadata\":{\"name\":\"reviews\",\"namespace\":\"bookinfo\"},\"spec\":{\"host\":\"reviews\",\"trafficPolicy\":{\"loadBalancer\":{\"simple\":\"LEAST_CONN\"}}}}"
+  "data": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata:\n  name: reviews\n  namespace: bookinfo\nspec:\n  host: reviews\n  trafficPolicy:\n    loadBalancer:\n      simple: LEAST_CONN\n"
 }
 ```
 
-**Example 4**: Patch an existing VirtualService
+**Example 2**: Patch an existing VirtualService
 ```json
 {
   "action": "patch",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "VirtualService",
   "object": "reviews",
-  "json_data": "{\"spec\":{\"http\":[{\"match\":[{\"headers\":{\"end-user\":{\"exact\":\"jason\"}}}],\"route\":[{\"destination\":{\"host\":\"reviews\",\"subset\":\"v2\"}}]}]}}"
+  "data": "{\"spec\":{\"http\":[{\"match\":[{\"headers\":{\"end-user\":{\"exact\":\"jason\"}}}],\"route\":[{\"destination\":{\"host\":\"reviews\",\"subset\":\"v2\"}}]}]}}"
 }
 ```
 
-**Example 5**: Delete a DestinationRule
+**Example 3**: Delete a DestinationRule
 ```json
 {
   "action": "delete",
+  "confirmed": false,
   "namespace": "bookinfo",
   "group": "networking.istio.io",
-  "version": "v1alpha3",
+  "version": "v1",
   "kind": "DestinationRule",
   "object": "reviews"
 }
 ```
 
-**Example 6**: List all Istio objects across all namespaces
-```json
-{
-  "action": "list",
-  "group": "networking.istio.io",
-  "version": "v1alpha3",
-  "kind": "VirtualService"
-}
-```
+(For list/get examples see `manage_istio_config_read` above.)
 
 ---
 
@@ -416,6 +408,7 @@ all `*.yaml`/`*.yml` files and registers them by name.
 
 - `name`: Tool name, must match the implementation switch in `mcp_tools.go`.
 - `description`: Short description sent to the model.
+- `toolset`: List of handler sets this tool belongs to. Values: `default` (chatbot UI when header `kiali_chatbot` is set), `mcp` (full MCP). A tool can be in one or both; the two sets are independent. Example: `toolset: [default, mcp]`.
 - `input_schema`: JSON Schema object describing the tool parameters.
 
 Example:
@@ -423,6 +416,7 @@ Example:
 ```yaml
 - name: "get_mesh_graph"
   description: "Returns the mesh graph data for the given namespaces and graph type."
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     properties:
@@ -461,7 +455,8 @@ The AI model automatically calls these tools based on user queries:
 - When users ask about mesh health or topology → `get_mesh_graph`
 - When users ask about specific resources → `get_resource_detail`
 - When users ask about Pod CPU/memory usage or resource pressure → `get_pod_performance`
-- When users want to manage Istio config → `manage_istio_config`
+- When users want to list or get Istio config → `manage_istio_config_read`
+- When users want to create, patch, or delete Istio config → `manage_istio_config`
 
 The AI combines results from multiple tools to provide comprehensive answers with navigation actions and citations.
 

@@ -43,7 +43,11 @@ func ChatMCP(
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 			return
 		}
-		tool, ok := mcp.DefaultToolHandlers[toolName]
+		handlers := mcp.MCPToolHandlers
+		if r.Header.Get("kiali_chatbot") != "" {
+			handlers = mcp.DefaultToolHandlers
+		}
+		tool, ok := handlers[toolName]
 		if !ok {
 			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' not found", toolName))
 			return
