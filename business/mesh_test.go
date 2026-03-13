@@ -1,6 +1,7 @@
 package business_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-func TestGetMeshConfigForNamespace(t *testing.T) {
+func TestGetMesh(t *testing.T) {
 	conf := config.NewConfig()
 	cluster := conf.KubernetesConfig.ClusterName
 
@@ -41,18 +42,45 @@ func TestGetMeshConfigForNamespace(t *testing.T) {
 
 	meshSvc := business.NewMeshService(conf, discovery, kubernetes.ConvertFromUserClients(k8sclients))
 
-	t.Run("returns mesh config for managed namespace", func(t *testing.T) {
-		meshConfig, err := meshSvc.GetMeshConfigForNamespace(cluster, "bookinfo")
+	t.Run("returns mesh", func(t *testing.T) {
+		mesh, err := meshSvc.GetMesh(context.TODO())
 		require.NoError(t, err)
-		require.NotNil(t, meshConfig)
-		assert.Equal(t, []string{"."}, meshConfig.DefaultVirtualServiceExportTo)
-		assert.Equal(t, []string{"."}, meshConfig.DefaultDestinationRuleExportTo)
-		assert.Equal(t, []string{"*"}, meshConfig.DefaultServiceExportTo)
+		require.NotNil(t, mesh)
+		require.Len(t, mesh.ControlPlanes, 1)
 	})
 
-	t.Run("returns error for unmanaged namespace", func(t *testing.T) {
-		meshConfig, err := meshSvc.GetMeshConfigForNamespace(cluster, "unknown")
-		assert.Error(t, err)
-		assert.Nil(t, meshConfig)
+	t.Run("BuildNamespaceToMeshConfig returns config for managed namespace", func(t *testing.T) {
+		mesh, err := meshSvc.GetMesh(context.TODO())
+		require.NoError(t, err)
+
+		nsMeshConfigs := mesh.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo"})
+		require.NotNil(t, nsMeshConfigs)
+
+		mc, ok := nsMeshConfigs["bookinfo"]
+		require.True(t, ok)
+		assert.Equal(t, []string{"."}, mc.DefaultVirtualServiceExportTo)
+		assert.Equal(t, []string{"."}, mc.DefaultDestinationRuleExportTo)
+		assert.Equal(t, []string{"*"}, mc.DefaultServiceExportTo)
+	})
+
+	t.Run("BuildNamespaceToMeshConfig skips unmanaged namespace", func(t *testing.T) {
+		mesh, err := meshSvc.GetMesh(context.TODO())
+		require.NoError(t, err)
+
+		nsMeshConfigs := mesh.BuildNamespaceToMeshConfig(cluster, []string{"unknown"})
+		require.NotNil(t, nsMeshConfigs)
+		assert.Empty(t, nsMeshConfigs)
+	})
+
+	t.Run("BuildNamespaceToExportTo returns DefaultServiceExportTo", func(t *testing.T) {
+		mesh, err := meshSvc.GetMesh(context.TODO())
+		require.NoError(t, err)
+
+		nsExportTo := mesh.BuildNamespaceToExportTo(cluster, []string{"bookinfo"})
+		require.NotNil(t, nsExportTo)
+
+		exportTo, ok := nsExportTo["bookinfo"]
+		require.True(t, ok)
+		assert.Equal(t, []string{"*"}, exportTo)
 	})
 }

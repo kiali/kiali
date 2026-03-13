@@ -921,7 +921,7 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(vsList []*networki
 		for _, vs := range vsList {
 			nsNames = append(nsNames, vs.Namespace)
 		}
-		nsMeshConfigs = buildNamespaceToMeshConfig(vInfo.mesh, cluster, nsNames)
+		nsMeshConfigs = vInfo.mesh.BuildNamespaceToMeshConfig(cluster, nsNames)
 	}
 
 	var result []*networking_v1.VirtualService
@@ -954,7 +954,7 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(dr []*networking_v
 		for _, d := range dr {
 			nsNames = append(nsNames, d.Namespace)
 		}
-		nsMeshConfigs = buildNamespaceToMeshConfig(vInfo.mesh, cluster, nsNames)
+		nsMeshConfigs = vInfo.mesh.BuildNamespaceToMeshConfig(cluster, nsNames)
 	}
 
 	var result []*networking_v1.DestinationRule
@@ -984,7 +984,7 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(se []*networking_v
 		for _, s := range se {
 			nsNames = append(nsNames, s.Namespace)
 		}
-		nsMeshConfigs = buildNamespaceToMeshConfig(vInfo.mesh, cluster, nsNames)
+		nsMeshConfigs = vInfo.mesh.BuildNamespaceToMeshConfig(cluster, nsNames)
 	}
 
 	var result []*networking_v1.ServiceEntry
@@ -1043,13 +1043,13 @@ func filterByNamespace[T interface{ GetNamespace() string }, V any](items []T, a
 
 // filterIstioConfigByManagedNamespaces removes Istio configs from namespaces that are not in
 // the mesh, preventing configs from non-mesh namespaces (e.g., "default") from being used in
-// validation of mesh-belonging namespaces. Uses buildNamespaceToMeshConfig to determine which
+// validation of mesh-belonging namespaces. Uses BuildNamespaceToMeshConfig to determine which
 // namespaces are managed, and also includes root/control plane namespaces for mesh-wide configs.
 func filterIstioConfigByManagedNamespaces(config *models.IstioConfigList, mesh *models.Mesh, cluster string, namespaces []string) {
 	if mesh == nil {
 		return
 	}
-	allowed := buildNamespaceToMeshConfig(mesh, cluster, namespaces)
+	allowed := mesh.BuildNamespaceToMeshConfig(cluster, namespaces)
 	for _, cp := range mesh.ControlPlanes {
 		if cp.RootNamespace != "" {
 			allowed[cp.RootNamespace] = cp.MeshConfig
@@ -1075,49 +1075,14 @@ func filterIstioConfigByManagedNamespaces(config *models.IstioConfigList, mesh *
 	config.WorkloadGroups = filterByNamespace(config.WorkloadGroups, allowed)
 }
 
-// buildNamespaceToMeshConfig precomputes namespace -> MeshConfig for unique namespaces using mesh directly.
-// Avoids MeshService → discovery.Mesh() chain; call ControlPlaneForNamespace once per namespace.
-// Namespaces without a matching control plane are silently skipped.
-func buildNamespaceToMeshConfig(mesh *models.Mesh, cluster string, namespaces []string) map[string]*models.MeshConfig {
-	if mesh == nil {
-		return nil
-	}
-	seen := make(map[string]struct{})
-	for _, ns := range namespaces {
-		seen[ns] = struct{}{}
-	}
-	result := make(map[string]*models.MeshConfig, len(seen))
-	for ns := range seen {
-		cp, err := mesh.ControlPlaneForNamespace(cluster, ns)
-		if cp == nil || err != nil {
-			continue
-		}
-		if cp.MeshConfig != nil {
-			result[ns] = cp.MeshConfig
-		}
-	}
-	return result
-}
-
-// buildNamespaceToExportTo precomputes namespace -> DefaultServiceExportTo for unique namespaces.
-// Call ControlPlaneForNamespace once per namespace instead of per service (O(namespaces) vs O(services)).
-// Namespaces without a matching control plane are silently skipped.
+// buildNamespaceToExportTo precomputes namespace -> DefaultServiceExportTo for unique service namespaces.
+// Delegates to Mesh.BuildNamespaceToExportTo after extracting namespace names from the service list.
 func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core_v1.Service) map[string][]string {
-	seen := make(map[string]struct{})
+	nsNames := make([]string, 0, len(services))
 	for _, svc := range services {
-		seen[svc.Namespace] = struct{}{}
+		nsNames = append(nsNames, svc.Namespace)
 	}
-	result := make(map[string][]string, len(seen))
-	for ns := range seen {
-		cp, err := mesh.ControlPlaneForNamespace(cluster, ns)
-		if cp == nil || err != nil {
-			continue
-		}
-		if cp.MeshConfig != nil {
-			result[ns] = cp.MeshConfig.DefaultServiceExportTo
-		}
-	}
-	return result
+	return mesh.BuildNamespaceToExportTo(cluster, nsNames)
 }
 
 // setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the control plane

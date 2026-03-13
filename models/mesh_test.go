@@ -147,6 +147,104 @@ func TestControlPlaneForNamespace(t *testing.T) {
 	})
 }
 
+func TestBuildNamespaceToMeshConfig(t *testing.T) {
+	cluster := "Kubernetes"
+	meshConfig := &models.MeshConfig{
+		MeshConfig: &istiov1alpha1.MeshConfig{
+			DefaultServiceExportTo:         []string{"*"},
+			DefaultDestinationRuleExportTo: []string{"."},
+			DefaultVirtualServiceExportTo:  []string{"."},
+		},
+	}
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster},
+			IstiodNamespace:   "istio-system",
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "travel"}},
+			MeshConfig:        meshConfig,
+		}},
+	}
+
+	t.Run("returns config for managed namespaces", func(t *testing.T) {
+		result := mesh.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo", "travel"})
+		require.Len(t, result, 2)
+		assert.Equal(t, meshConfig, result["bookinfo"])
+		assert.Equal(t, meshConfig, result["travel"])
+	})
+
+	t.Run("skips unmanaged namespaces", func(t *testing.T) {
+		result := mesh.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo", "unknown"})
+		require.Len(t, result, 1)
+		assert.Equal(t, meshConfig, result["bookinfo"])
+	})
+
+	t.Run("deduplicates namespaces", func(t *testing.T) {
+		result := mesh.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo", "bookinfo", "bookinfo"})
+		require.Len(t, result, 1)
+		assert.Equal(t, meshConfig, result["bookinfo"])
+	})
+
+	t.Run("includes IstiodNamespace", func(t *testing.T) {
+		result := mesh.BuildNamespaceToMeshConfig(cluster, []string{"istio-system"})
+		require.Len(t, result, 1)
+		assert.Equal(t, meshConfig, result["istio-system"])
+	})
+
+	t.Run("nil mesh returns empty map", func(t *testing.T) {
+		var nilMesh *models.Mesh
+		result := nilMesh.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo"})
+		assert.NotNil(t, result)
+		assert.Empty(t, result)
+	})
+
+	t.Run("nil MeshConfig in control plane is skipped", func(t *testing.T) {
+		m := &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster},
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+				MeshConfig:        nil,
+			}},
+		}
+		result := m.BuildNamespaceToMeshConfig(cluster, []string{"bookinfo"})
+		assert.Empty(t, result)
+	})
+}
+
+func TestBuildNamespaceToExportTo(t *testing.T) {
+	cluster := "Kubernetes"
+	meshConfig := &models.MeshConfig{
+		MeshConfig: &istiov1alpha1.MeshConfig{
+			DefaultServiceExportTo: []string{"*"},
+		},
+	}
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        meshConfig,
+		}},
+	}
+
+	t.Run("returns DefaultServiceExportTo for managed namespaces", func(t *testing.T) {
+		result := mesh.BuildNamespaceToExportTo(cluster, []string{"bookinfo"})
+		require.Len(t, result, 1)
+		assert.Equal(t, []string{"*"}, result["bookinfo"])
+	})
+
+	t.Run("skips unmanaged namespaces", func(t *testing.T) {
+		result := mesh.BuildNamespaceToExportTo(cluster, []string{"unknown"})
+		assert.Empty(t, result)
+	})
+
+	t.Run("nil mesh returns empty", func(t *testing.T) {
+		var nilMesh *models.Mesh
+		result := nilMesh.BuildNamespaceToExportTo(cluster, []string{"bookinfo"})
+		assert.Empty(t, result)
+	})
+}
+
 func TestMeshConfigJSONMarshal(t *testing.T) {
 	cases := map[string]struct {
 		OutboundTrafficPolicy *istiov1alpha1.MeshConfig_OutboundTrafficPolicy

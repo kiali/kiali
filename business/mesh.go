@@ -54,18 +54,11 @@ func (in *MeshService) IsControlPlane(ctx context.Context, cluster, namespace st
 	return in.discovery.IsControlPlane(ctx, cluster, namespace)
 }
 
-// GetMeshConfigForNamespace returns the mesh config for the control plane that manages the given
-// namespace in the cluster.
-func (in *MeshService) GetMeshConfigForNamespace(cluster, namespace string) (*models.MeshConfig, error) {
-	mesh, err := in.discovery.Mesh(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	cp, err := mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil || err != nil {
-		return nil, err
-	}
-	return cp.MeshConfig, nil
+// GetMesh returns the cached mesh. It wraps discovery.Mesh() so callers outside
+// the business package can fetch the mesh once and reuse it without repeated
+// mutex acquisition.
+func (in *MeshService) GetMesh(ctx context.Context) (*models.Mesh, error) {
+	return in.discovery.Mesh(ctx)
 }
 
 func (in *MeshService) Clusters() []models.KubeCluster {
