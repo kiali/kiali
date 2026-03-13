@@ -26,6 +26,7 @@ describe('HealthPopoverBody', () => {
     expect(wrapper.text()).toContain(
       'Health represents the aggregated status of all apps, services, and workloads within the namespace.'
     );
+    expect(wrapper.text()).toContain("A namespace's status is determined by its lowest-performing component.");
   });
 
   it('contains Healthy status description', () => {
@@ -34,21 +35,15 @@ describe('HealthPopoverBody', () => {
     expect(wrapper.text()).toContain('All components are healthy');
   });
 
-  it('contains Degraded status description', () => {
+  it('contains Unhealthy status with sub-statuses', () => {
     const wrapper = shallow(<HealthPopoverBody />);
-    expect(wrapper.text()).toContain('Degraded');
-    expect(wrapper.text()).toContain('One or more components have warnings');
-  });
-
-  it('contains Failure status description', () => {
-    const wrapper = shallow(<HealthPopoverBody />);
+    expect(wrapper.text()).toContain('Unhealthy');
+    expect(wrapper.text()).toContain('One or more components are unhealthy');
     expect(wrapper.text()).toContain('Failure');
     expect(wrapper.text()).toContain('One or more components have errors');
-  });
-
-  it('contains Not Ready status description', () => {
-    const wrapper = shallow(<HealthPopoverBody />);
-    expect(wrapper.text()).toContain('Not Ready');
+    expect(wrapper.text()).toContain('Degraded');
+    expect(wrapper.text()).toContain('One or more components have warnings');
+    expect(wrapper.text()).toContain('Not ready');
     expect(wrapper.text()).toContain('One or more components are not ready');
   });
 

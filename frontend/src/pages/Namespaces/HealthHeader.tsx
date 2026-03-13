@@ -15,15 +15,21 @@ export const HealthPopoverBody: React.FC = () => {
       <div style={{ marginBottom: '0.25rem' }}>
         <strong>{t('Healthy')}</strong>: {t('All components are healthy.')}
       </div>
-      <div style={{ marginBottom: '0.25rem' }}>
-        <strong>{t('Degraded')}</strong>: {t('One or more components have warnings.')}
+      <div>
+        <strong>{t('Unhealthy')}</strong>: {t('One or more components are unhealthy.')}
       </div>
-      <div style={{ marginBottom: '0.25rem' }}>
-        <strong>{t('Failure')}</strong>: {t('One or more components have errors.')}
-      </div>
-      <div style={{ marginBottom: '0.25rem' }}>
-        <strong>{t('Not Ready')}</strong>: {t('One or more components are not ready.')}
-      </div>
+      <div>{t('Including:')}</div>
+      <ul style={{ margin: '0.125rem 0 0.25rem 1.25rem', paddingLeft: 0, listStyleType: 'disc' }}>
+        <li>
+          <strong>{t('Failure')}</strong>: {t('One or more components have errors.')}
+        </li>
+        <li>
+          <strong>{t('Degraded')}</strong>: {t('One or more components have warnings.')}
+        </li>
+        <li>
+          <strong>{t('Not ready')}</strong>: {t('One or more components are not ready.')}
+        </li>
+      </ul>
       <div>
         <strong>{'n/a'}</strong>: {t('No components available to monitor.')}
       </div>
