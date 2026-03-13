@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
 	"github.com/kiali/kiali/ai/mcp/get_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
+	"github.com/kiali/kiali/ai/mcp/manage_istio_config_read"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -156,6 +157,8 @@ func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *bu
 		return get_pod_performance.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 	case "manage_istio_config":
 		return manage_istio_config.Execute(r, args, business, conf)
+	case "manage_istio_config_read":
+		return manage_istio_config_read.Execute(r, args, business, conf)
 	case "get_action_ui":
 		return get_action_ui.Execute(r, args, business, conf)
 	case "get_citations":

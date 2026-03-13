@@ -79,7 +79,8 @@ When the user asks about pod or workload logs, call get_logs and set the analyze
 2. **Tool Execution**:
    - Navigation intent? -> 'get_action_ui'
    - Documentation intent? -> 'get_citations'
-   - Config intent? -> 'manage_istio_config' (confirmed=false)
+   - List or get Istio config? -> 'manage_istio_config_read'
+   - Create/patch/delete Istio config? -> 'manage_istio_config' (confirmed=false)
 3. **Gather Data**: Use other MCP tools to fetch metrics/graph/config if analysis is needed.   
 4. **Assembly**:
    - **Answer**: Write the text response. If you triggered a "file" action via 'manage_istio_config', mention it in the text (e.g., "Please review the attached YAML"). Use Markdown format and ~~~ for code blocks.

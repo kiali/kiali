@@ -20,25 +20,52 @@ import (
 	"github.com/kiali/kiali/config"
 )
 
-func Execute(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
+// ExecuteReadOnly runs read-only actions (list, get) for Istio config. Use this for the manage_istio_config_read tool.
+func ExecuteReadOnly(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
 	ctx := r.Context()
-	// Extract parameters
 	action, _ := args["action"].(string)
-	confirmed, _ := args["confirmed"].(bool)
-	// Validate input
-	if err := validateIstioConfigInput(args); err != nil {
+	if err := validateReadOnlyIstioConfigInput(args); err != nil {
 		return err.Error(), http.StatusBadRequest
 	}
-
-	// If the action targets a specific Istio/K8s config object type, validate it early.
-	// This avoids prompting for confirmation for unsupported types.
 	if action != "list" {
 		group, _ := args["group"].(string)
 		version, _ := args["version"].(string)
 		kind, _ := args["kind"].(string)
 		gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
 		if !business.GetIstioAPI(gvk) {
-			// Friendly hint for common mismatch.
+			if group == "gateway.networking.k8s.io" && kind == "Gateway" && version == "v1beta1" {
+				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusBadRequest
+			}
+			return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
+		}
+	}
+	switch action {
+	case "list":
+		return IstioList(ctx, args, businessLayer, conf)
+	case "get":
+		return IstioGet(ctx, args, businessLayer, conf)
+	default:
+		return fmt.Errorf("invalid action %q: must be one of list, get", action), http.StatusBadRequest
+	}
+}
+
+func Execute(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
+	ctx := r.Context()
+	action, _ := args["action"].(string)
+	confirmed, _ := args["confirmed"].(bool)
+	if action == "list" || action == "get" {
+		return fmt.Errorf("for list and get actions use the manage_istio_config_read tool"), http.StatusBadRequest
+	}
+	if err := validateIstioConfigInput(args); err != nil {
+		return err.Error(), http.StatusBadRequest
+	}
+
+	if action != "list" {
+		group, _ := args["group"].(string)
+		version, _ := args["version"].(string)
+		kind, _ := args["kind"].(string)
+		gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
+		if !business.GetIstioAPI(gvk) {
 			if group == "gateway.networking.k8s.io" && kind == "Gateway" && version == "v1beta1" {
 				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusBadRequest
 			}
@@ -52,8 +79,6 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		"delete": true,
 	}
 
-	// For create/patch we always return a file action so the UI can show the editor,
-	// regardless of whether the operation is executed.
 	if action == "create" || action == "patch" {
 		previewActions := createFileAction(ctx, args, businessLayer, conf)
 		if !confirmed {
@@ -101,16 +126,11 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		}, 200 // Return success (200) so the AI processes the message
 	}
 
-	// Execute action
 	switch action {
-	case "list":
-		return IstioList(ctx, args, businessLayer, conf)
-	case "get":
-		return IstioGet(ctx, args, businessLayer, conf)
 	case "delete":
 		return IstioDelete(r, args, businessLayer, conf)
 	default:
-		return fmt.Errorf("invalid action %q: must be one of list, create, patch, get, delete", action), http.StatusBadRequest
+		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action), http.StatusBadRequest
 	}
 }
 
@@ -243,13 +263,40 @@ func renderMergedPatchPreviewYAML(ctx context.Context, args map[string]interface
 	return out, nil
 }
 
-// validateIstioConfigInput centralizes validation rules for manage istio config tool.
-// Rules:
-// - If action is not "list": namespace, group, version, kind are required
-// - If action is "create": data is required
-// - If action is "patch": name and data is required
-// - If action is "get": name is required
-// - If action is "patch": name is required
+// validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
+func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
+	action, _ := args["action"].(string)
+	namespace, _ := args["namespace"].(string)
+	group, _ := args["group"].(string)
+	version, _ := args["version"].(string)
+	kind, _ := args["kind"].(string)
+	object, _ := args["object"].(string)
+	switch action {
+	case "list":
+		return nil
+	case "get":
+		if namespace == "" {
+			return fmt.Errorf("namespace is required for action %q", action)
+		}
+		if group == "" {
+			return fmt.Errorf("group is required for action %q", action)
+		}
+		if version == "" {
+			return fmt.Errorf("version is required for action %q", action)
+		}
+		if kind == "" {
+			return fmt.Errorf("kind is required for action %q", action)
+		}
+		if object == "" {
+			return fmt.Errorf("name is required for action %q", action)
+		}
+		return nil
+	default:
+		return fmt.Errorf("invalid action %q: must be one of list, get", action)
+	}
+}
+
+// validateIstioConfigInput centralizes validation rules for manage istio config tool (write actions).
 func validateIstioConfigInput(args map[string]interface{}) error {
 	action, _ := args["action"].(string)
 	namespace, _ := args["namespace"].(string)
@@ -260,20 +307,18 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 	data, _ := args["data"].(string)
 	payload := data
 	switch action {
-	case "list", "create", "patch", "get", "delete":
-		if action != "list" {
-			if namespace == "" {
-				return fmt.Errorf("namespace is required for action %q", action)
-			}
-			if group == "" {
-				return fmt.Errorf("group is required for action %q", action)
-			}
-			if version == "" {
-				return fmt.Errorf("version is required for action %q", action)
-			}
-			if kind == "" {
-				return fmt.Errorf("kind is required for action %q", action)
-			}
+	case "create", "patch", "delete":
+		if namespace == "" {
+			return fmt.Errorf("namespace is required for action %q", action)
+		}
+		if group == "" {
+			return fmt.Errorf("group is required for action %q", action)
+		}
+		if version == "" {
+			return fmt.Errorf("version is required for action %q", action)
+		}
+		if kind == "" {
+			return fmt.Errorf("kind is required for action %q", action)
 		}
 		if action == "create" {
 			if strings.TrimSpace(payload) == "" {
@@ -290,12 +335,6 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 			if strings.TrimSpace(payload) == "" {
 				return fmt.Errorf("data is required for action %q", action)
 			}
-
-		}
-		if action == "get" {
-			if object == "" {
-				return fmt.Errorf("name is required for action %q", action)
-			}
 		}
 		if action == "delete" {
 			if object == "" {
@@ -303,7 +342,7 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 			}
 		}
 	default:
-		return fmt.Errorf("invalid action %q: must be one of list, create, patch, get, delete", action)
+		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action)
 	}
 	return nil
 }

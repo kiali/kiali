@@ -1,41 +1,38 @@
 - name: "manage_istio_config"
-  description: "Manages the Istio config for the given cluster, namespace, group, version, kind and object. For action 'list', returns an array of objects with {name, namespace, type, validation}."
-  toolset: [default]
+  description: "Create, patch, or delete Istio config. For list and get (read-only) use manage_istio_config_read."
+  toolset: [mcp]
   input_schema:
     type: "object"
     required: ["action", "confirmed"]
     properties:
       action:
         type: "string"
-        description: "Action to perform"
-        enum: ["list", "get", "create", "patch", "delete"]
+        description: "Action to perform (write)"
+        enum: ["create", "patch", "delete"]
       confirmed:
         type: "boolean"
-        description: "CRITICAL: For 'create', 'patch', or 'delete' actions. If 'true', the destructive action (create/patch/delete) is executed. If 'false' (or omitted) for create/patch, the tool will return a YAML PREVIEW of the object. You should display this YAML to the user and ask for confirmation before calling this tool again with confirmed=true."
+        description: "CRITICAL: If 'true', the destructive action (create/patch/delete) is executed. If 'false' (or omitted) for create/patch, the tool returns a YAML PREVIEW. Display it to the user and ask for confirmation before calling again with confirmed=true."
       cluster:
         type: "string"
         description: "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)"
       namespace:
         type: "string"
-        description: "Namespace containing the Istio object, if not provided, will return all istio objects across all namespaces in the cluster"
+        description: "Namespace containing the Istio object. Required."
       group:
         type: "string"
-        description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for create, patch, and get actions."
+        description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required."
       version:
         type: "string"
-        description: "API version. IMPORTANT: Use 'v1' for VirtualService, DestinationRule, and Gateway. Do NOT use 'v1alpha3'.. Required for create, patch, and get actions."
+        description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required."
       kind:
         type: "string"
-        description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for create, patch, and get actions."
+        description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required."
       object:
         type: "string"
-        description: "Name of the Istio object. Required for patch,get,create and delete actions."
-      service_name:
-        type: "string"
-        description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action. Matches service name in VirtualService hosts/routes and DestinationRule host fields."
+        description: "Name of the Istio object. Required for create, patch, and delete."
       data:
         type: "string"
-        description: "DATA: JSON or YAML manifest to apply or create the object. Required for create and patch actions."
+        description: "JSON or YAML manifest to apply or create the object. Required for create and patch actions."
       data_format:
         type: "string"
         description: "Optional hint for the payload format. Usually leave as 'auto'."

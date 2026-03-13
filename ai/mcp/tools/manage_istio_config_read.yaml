@@ -1,0 +1,32 @@
+- name: "manage_istio_config_read"
+  description: "Read-only Istio config: list or get objects. For action 'list', returns an array of objects with {name, namespace, type, validation}. For create, patch, or delete use manage_istio_config."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    required: ["action"]
+    properties:
+      action:
+        type: "string"
+        description: "Action to perform (read-only)"
+        enum: ["list", "get"]
+      cluster:
+        type: "string"
+        description: "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)"
+      namespace:
+        type: "string"
+        description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required."
+      group:
+        type: "string"
+        description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action."
+      version:
+        type: "string"
+        description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action."
+      kind:
+        type: "string"
+        description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for 'get' action."
+      object:
+        type: "string"
+        description: "Name of the Istio object. Required for 'get' action."
+      service_name:
+        type: "string"
+        description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action."
