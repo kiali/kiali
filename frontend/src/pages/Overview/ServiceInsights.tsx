@@ -304,8 +304,8 @@ export const ServiceInsights: React.FC = () => {
       return;
     }
     setSelectedMetrics({
-      errorRates: rates.length > 0,
-      latency: latencies.length > 0,
+      errorRates: true,
+      latency: true,
       tcp: throughput.length > 0
     });
   }, [isLoading, rates.length, latencies.length, throughput.length, persistedMetricsRaw]);
