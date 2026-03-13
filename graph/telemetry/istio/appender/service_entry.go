@@ -115,8 +115,8 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, g
 	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
 	meshConfig, err := globalInfo.Business.Mesh.GetMeshConfigForNamespace(cluster, namespace)
-	if err != nil {
-		log.Debug(err)
+	if meshConfig == nil || err != nil {
+		log.Trace(err)
 		return false
 	}
 	defaultServiceExportTo := meshConfig.DefaultServiceExportTo

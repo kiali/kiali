@@ -62,7 +62,7 @@ func (in *MeshService) GetMeshConfigForNamespace(cluster, namespace string) (*mo
 		return nil, err
 	}
 	cp, err := mesh.ControlPlaneForNamespace(cluster, namespace)
-	if err != nil {
+	if cp == nil || err != nil {
 		return nil, err
 	}
 	return cp.MeshConfig, nil

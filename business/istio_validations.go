@@ -351,7 +351,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		err := in.setNamespaceIstioConfig(vInfo)
 		if err != nil {
 			// Skip validations for a particular namespace, mesh config was not found
-			log.Debug(err)
+			log.Trace(err)
 			continue
 		}
 
@@ -615,12 +615,12 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	vInfo.clusterInfo.istioConfig = clusterIstioConfigList
 
 	if err := in.setNamespaceIstioConfig(vInfo); err != nil {
-		log.Debug(err)
+		log.Trace(err)
 		return nil, istioReferences, nil
 	}
 
 	if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
-		log.Debug(err)
+		log.Trace(err)
 		return nil, istioReferences, nil
 	}
 
@@ -638,13 +638,13 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 
 	policyAllowAny, err := in.isPolicyAllowAny(vInfo)
 	if err != nil {
-		log.Debug(err)
+		log.Trace(err)
 		return nil, istioReferences, nil
 	}
 
 	gatewayToNamespace, err := in.isGatewayToNamespace(vInfo)
 	if err != nil {
-		log.Debug(err)
+		log.Trace(err)
 		return nil, istioReferences, nil
 	}
 
@@ -1089,7 +1089,7 @@ func buildNamespaceToMeshConfig(mesh *models.Mesh, cluster string, namespaces []
 	result := make(map[string]*models.MeshConfig, len(seen))
 	for ns := range seen {
 		cp, err := mesh.ControlPlaneForNamespace(cluster, ns)
-		if err != nil {
+		if cp == nil || err != nil {
 			continue
 		}
 		if cp.MeshConfig != nil {
@@ -1110,7 +1110,7 @@ func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core
 	result := make(map[string][]string, len(seen))
 	for ns := range seen {
 		cp, err := mesh.ControlPlaneForNamespace(cluster, ns)
-		if err != nil {
+		if cp == nil || err != nil {
 			continue
 		}
 		if cp.MeshConfig != nil {
@@ -1126,7 +1126,7 @@ func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) 
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
 	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if err != nil {
+	if cp == nil || err != nil {
 		return err
 	}
 	if cp.MeshConfig != nil && cp.MeshConfig.EnableAutoMtls != nil {
@@ -1139,7 +1139,7 @@ func (in *IstioValidationsService) isGatewayToNamespace(vInfo *validationInfo) (
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
 	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if err != nil {
+	if cp == nil || err != nil {
 		return false, err
 	}
 	return cp.IsGatewayToNamespace, nil
@@ -1149,7 +1149,7 @@ func (in *IstioValidationsService) isPolicyAllowAny(vInfo *validationInfo) (bool
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
 	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if err != nil {
+	if cp == nil || err != nil {
 		return false, err
 	}
 	if cp.MeshConfig != nil && cp.MeshConfig.OutboundTrafficPolicy != nil {
