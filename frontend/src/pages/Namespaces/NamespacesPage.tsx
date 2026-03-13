@@ -28,8 +28,8 @@ import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
-import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
-import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
+import { Button, EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip } from '@patternfly/react-core';
+import { CogIcon, CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
@@ -56,6 +56,9 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
+import { config as virtualListConfig } from '../../components/VirtualList/Config';
+import { ManageColumnsModal, ManagedColumn } from './ManageColumnsModal';
+import { NamespacesListActions } from '../../actions/NamespacesListActions';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -84,12 +87,14 @@ type State = {
   nsTarget: string;
   opTarget: string;
   persesLinks: ExternalLink[];
+  showColumnManagement: boolean;
   showTrafficPoliciesModal: boolean;
 };
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
   externalServices: any[];
+  hiddenColumnIds: string[];
   istioAPIEnabled: boolean;
   kiosk: string;
   language: string;
@@ -167,17 +172,69 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       nsTarget: '',
       opTarget: '',
       persesLinks: [],
+      showColumnManagement: false,
       showTrafficPoliciesModal: false
     };
   }
 
   componentDidMount(): void {
+    this.syncColumnsFromURL();
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
   }
+
+  private syncColumnsFromURL = (): void => {
+    const urlParam = HistoryManager.getParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
+    if (urlParam !== undefined) {
+      const ids = urlParam
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      const validIds = this.getDefaultManagedColumns()
+        .map(c => c.id)
+        .filter(id => id !== 'namespace');
+      const filtered = ids.filter(id => validIds.includes(id));
+      if (filtered.length > 0 && !this.arrayEquals(filtered, this.props.hiddenColumnIds)) {
+        this.props.dispatch(NamespacesListActions.setHiddenColumns(filtered));
+      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
+        this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
+      }
+    } else if (this.props.hiddenColumnIds.length > 0) {
+      HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
+    }
+  };
+
+  private arrayEquals = (a: string[], b: string[]): boolean => {
+    if (a.length !== b.length) return false;
+    const set = new Set(b);
+    return a.every(x => set.has(x));
+  };
+
+  private getDefaultManagedColumns = (): ManagedColumn[] => {
+    return virtualListConfig.namespaces.columns
+      .filter(c => c.title && c.title.trim().length > 0)
+      .map(c => {
+        const id = c.title.toLowerCase();
+        return {
+          id,
+          title: c.title,
+          isShown: true,
+          isDisabled: id === 'namespace'
+        } as ManagedColumn;
+      });
+  };
+
+  private getManagedColumns = (): ManagedColumn[] => {
+    const defaultCols = this.getDefaultManagedColumns();
+    const hiddenSet = new Set(this.props.hiddenColumnIds);
+    return defaultCols.map(c => ({
+      ...c,
+      isShown: !hiddenSet.has(c.id) // isShown when not in hidden set
+    }));
+  };
 
   componentDidUpdate(prevProps: NamespacesProps): void {
     if (
@@ -1053,6 +1110,8 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
       hiddenColumns.push('revision');
     }
+    const userHidden = this.props.hiddenColumnIds;
+    const allHiddenColumns = hiddenColumns.concat(userHidden);
 
     return (
       <>
@@ -1069,16 +1128,45 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             sort={this.sort}
             statefulProps={this.sFNamespacesToolbar}
             actions={namespaceActions}
-            hiddenColumns={hiddenColumns}
+            hiddenColumns={allHiddenColumns}
             type="namespaces"
           >
             <StatefulFilters
               initialFilters={availableFilters}
               onFilterChange={this.onChange}
               ref={this.sFNamespacesToolbar}
+              rightToolbar={
+                <Tooltip content={t('Manage columns')}>
+                  <Button
+                    style={{ paddingRight: '10px' }}
+                    variant="plain"
+                    aria-label={t('Manage columns')}
+                    data-test="namespaces-manage-columns"
+                    onClick={() => this.setState({ showColumnManagement: true })}
+                  >
+                    <CogIcon />
+                  </Button>
+                </Tooltip>
+              }
             />
           </VirtualList>
         </RenderContent>
+
+        <ManageColumnsModal
+          columns={this.getManagedColumns()}
+          isOpen={this.state.showColumnManagement}
+          onClose={() => this.setState({ showColumnManagement: false })}
+          onApply={(cols: ManagedColumn[]) => {
+            const hiddenIds = cols.filter(c => !c.isShown).map(c => c.id);
+            this.props.dispatch(NamespacesListActions.setHiddenColumns(hiddenIds));
+            if (hiddenIds.length > 0) {
+              HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, hiddenIds.join(','));
+            } else {
+              HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
+            }
+            this.setState({ showColumnManagement: false });
+          }}
+        />
 
         <NamespaceTrafficPolicies
           opTarget={this.state.opTarget}
@@ -1105,6 +1193,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state),
   externalServices: state.statusState.externalServices,
+  hiddenColumnIds: state.namespacesList.hiddenColumnIds,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   language: languageSelector(state),

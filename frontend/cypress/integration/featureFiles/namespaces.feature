@@ -73,3 +73,12 @@ Feature: Kiali Namespaces page
     When user sorts the list by column "Namespace" in "descending" order
     Then the list is sorted by column "Namespace" in "descending" order
 
+  @core-2
+  @offline
+  Scenario: Hide Mode column on namespaces page
+    Then user sees the "bookinfo" namespace in the namespaces page
+    When user opens manage columns on namespaces page
+    And user unchecks column "Mode" in manage columns
+    And user saves manage columns
+    Then the "Mode" column "disappears" on namespaces page
+

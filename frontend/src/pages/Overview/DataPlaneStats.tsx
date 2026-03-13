@@ -36,7 +36,7 @@ import {
   statsContainerStyle
 } from './OverviewStyles';
 import { classes } from 'typestyle';
-import { buildDataPlanesUrl, buildUnhealthyDataPlanesUrl } from './LinkBuilder';
+import { buildDataPlanesByModeUrl, buildDataPlanesUrl, buildUnhealthyDataPlanesUrl } from './LinkBuilder';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
 
 const namespaceContainerStyle = kialiStyle({
@@ -255,13 +255,27 @@ export const DataPlaneStats: React.FC = () => {
               <div className={labelGroupStyle}>
                 {ambient > 0 && (
                   <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{ambient}</span>
+                    <KialiLink
+                      to={buildDataPlanesByModeUrl('ambient')}
+                      onClick={() => FilterSelected.resetFilters()}
+                      className={classes(linkStyle, labelNumberStyle)}
+                      dataTest="data-planes-ambient"
+                    >
+                      {ambient}
+                    </KialiLink>
                     <Label variant="outline">{t('Ambient')}</Label>
                   </div>
                 )}
                 {sidecar > 0 && (
                   <div className={labelItemStyle}>
-                    <span className={labelNumberStyle}>{sidecar}</span>
+                    <KialiLink
+                      to={buildDataPlanesByModeUrl('sidecar')}
+                      onClick={() => FilterSelected.resetFilters()}
+                      className={classes(linkStyle, labelNumberStyle)}
+                      dataTest="data-planes-sidecar"
+                    >
+                      {sidecar}
+                    </KialiLink>
                     <Label variant="outline">{t('Sidecar')}</Label>
                   </div>
                 )}

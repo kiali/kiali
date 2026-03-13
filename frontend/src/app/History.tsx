@@ -86,6 +86,7 @@ export enum URLParam {
   TRACING_TRACE_ID = 'traceId',
   TRACING_SPAN_ID = 'spanId',
   NAMESPACES = 'namespaces',
+  NAMESPACES_HIDDEN_COLUMNS = 'nshide',
   OVERVIEW_TYPE = 'otype',
   DIRECTION_TYPE = 'drtype',
   QUANTILES = 'quantiles',

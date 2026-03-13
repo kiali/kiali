@@ -1,6 +1,6 @@
 import { URLParam } from '../../app/History';
 import { camelCase } from 'lodash';
-import { categoryFilter, healthFilter, NamespaceCategory } from '../Namespaces/Filters';
+import { categoryFilter, healthFilter, modeFilter, NamespaceCategory } from '../Namespaces/Filters';
 import { isMultiCluster, Paths } from '../../config';
 import { DEGRADED, FAILURE, HealthStatusId, NOT_READY } from '../../types/Health';
 import { IstioConfigStatusLabel } from 'hooks/istioConfigs';
@@ -8,6 +8,7 @@ import { getIstioObjectGVK } from 'utils/IstioConfigUtils';
 
 const typeFilterParam = camelCase(categoryFilter.category);
 const healthFilterParam = camelCase(healthFilter.category);
+const modeFilterParam = camelCase(modeFilter.category);
 const controlPlaneParamValue = NamespaceCategory.CONTROL_PLANE;
 const dataPlaneParamValue = NamespaceCategory.DATA_PLANE;
 
@@ -31,6 +32,13 @@ export const buildDataPlanesUrl = (status?: HealthStatusId): string => {
     params.set(healthFilterParam, status);
   }
 
+  return `/${Paths.NAMESPACES}?${params.toString()}`;
+};
+
+export const buildDataPlanesByModeUrl = (mode: 'ambient' | 'sidecar'): string => {
+  const params = new URLSearchParams();
+  params.set(typeFilterParam, dataPlaneParamValue);
+  params.set(modeFilterParam, mode);
   return `/${Paths.NAMESPACES}?${params.toString()}`;
 };
 
