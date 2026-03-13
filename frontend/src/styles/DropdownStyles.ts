@@ -68,6 +68,15 @@ export const displayMenuRowStyle = kialiStyle({
   }
 });
 
+// Section title row (e.g. "Show Edge Labels"): no hover background, not a menu item, vertical center align with content
+export const displayMenuRowStyleNoHover = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  boxSizing: 'border-box',
+  marginTop: '0.5rem'
+});
+
 export const displayMenuRowContentStyle = kialiStyle({
   flex: '1 1 auto',
   minWidth: 0
@@ -77,9 +86,24 @@ export const displayMenuRowIconStyle = kialiStyle({
   flexShrink: 0,
   marginLeft: 'auto',
   paddingLeft: '0.5rem',
-  paddingRight: '8px', // min 8px spacing from right edge of menu
+  paddingRight: '0.5rem',
   background: 'none',
-  border: 'none'
+  border: 'none',
+  display: 'flex',
+  alignItems: 'center'
+});
+
+// Popover trigger: clickable icon
+export const displayMenuPopoverTriggerStyle = kialiStyle({
+  cursor: 'pointer'
+});
+
+// Popover trigger for section title row: align icon vertically with label text
+export const displayMenuPopoverTriggerSectionStyle = kialiStyle({
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  alignSelf: 'center'
 });
 
 // Global toggle section at top of Display menu

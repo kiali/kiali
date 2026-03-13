@@ -27,8 +27,9 @@ import {
   displayMenuRowIconStyle,
   displayMenuRowContentStyle,
   displayMenuRowStyle,
-  displayMenuToggleDescriptionStyle,
-  displayMenuToggleSectionStyle,
+  displayMenuRowStyleNoHover,
+  displayMenuPopoverTriggerStyle,
+  displayMenuPopoverTriggerSectionStyle,
   itemStyleWithoutInfo,
   menuStyle,
   titleStyle
@@ -38,7 +39,7 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { getDisabledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
-import { helpIconStyle } from 'styles/IconStyle';
+import { helpIconStyle, helpIconStyleSectionTitle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
@@ -81,13 +82,10 @@ type GraphSettingsProps = ReduxStateProps &
     disabled: boolean;
   };
 
-const DISPLAY_MENU_HELP_STORAGE_KEY = 'kiali-display-menu-help-enabled';
-
 type GraphSettingsState = {
   disabledFeatures?: KialiDisabledFeatures;
-  enableMenuHelp: boolean;
-  hoveredRowId: string | null;
   isOpen: boolean;
+  hoveredRowId: string | null;
   popoverOpenRowId: string | null;
 };
 
@@ -104,19 +102,21 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
+// Consistent width for all Display menu help popovers
+const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
+
+// Section title help icon color (e.g. "Show Edge Labels")
+const DISPLAY_MENU_SECTION_TITLE_ICON_COLOR = '#707070';
+
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   private hoverDelayTimer: number | null = null;
 
   constructor(props: GraphSettingsProps) {
     super(props);
 
-    const storedHelp = typeof window !== 'undefined' ? localStorage.getItem(DISPLAY_MENU_HELP_STORAGE_KEY) : null;
-    const enableMenuHelp = storedHelp !== null ? storedHelp === 'true' : true;
-
     this.state = {
-      enableMenuHelp,
-      hoveredRowId: null,
       isOpen: false,
+      hoveredRowId: null,
       popoverOpenRowId: null
     };
     this.hoverDelayTimer = null;
@@ -377,17 +377,9 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     this.setState({ isOpen });
   };
 
-  private setEnableMenuHelp = (enabled: boolean): void => {
-    this.setState({ enableMenuHelp: enabled });
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(DISPLAY_MENU_HELP_STORAGE_KEY, String(enabled));
-    }
-  };
-
   private readonly HOVER_DELAY_MS = 200;
 
   private handleRowMouseEnter = (rowId: string): void => {
-    if (!this.state.enableMenuHelp) return;
     this.hoverDelayTimer = window.setTimeout(() => {
       this.setState({ hoveredRowId: rowId });
       this.hoverDelayTimer = null;
@@ -408,21 +400,25 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
   private renderDisplayMenuRow = (
     rowId: string,
     content: React.ReactNode,
-    tooltipContent?: React.ReactNode,
-    headerTitle?: string
+    popoverContent?: React.ReactNode,
+    popoverTitle?: React.ReactNode,
+    options?: { alwaysShowHelpIcon?: boolean }
   ): React.ReactNode => {
-    const { enableMenuHelp, hoveredRowId, popoverOpenRowId } = this.state;
-    // Show icon if hovering OR if the popover is open for this row
-    const showIcon = enableMenuHelp && tooltipContent && (hoveredRowId === rowId || popoverOpenRowId === rowId);
+    const { hoveredRowId, popoverOpenRowId } = this.state;
+    const alwaysShow = options?.alwaysShowHelpIcon === true;
+    const showIcon =
+      popoverContent &&
+      (alwaysShow || hoveredRowId === rowId || popoverOpenRowId === rowId);
 
-    if (!enableMenuHelp || !tooltipContent) {
+    if (!popoverContent) {
       return <div className={displayMenuRowStyle}>{content}</div>;
     }
+    const rowStyle = alwaysShow ? displayMenuRowStyleNoHover : displayMenuRowStyle;
     return (
       <div
-        className={displayMenuRowStyle}
-        onMouseEnter={() => this.handleRowMouseEnter(rowId)}
-        onMouseLeave={this.handleRowMouseLeave}
+        className={rowStyle}
+        onMouseEnter={alwaysShow ? undefined : () => this.handleRowMouseEnter(rowId)}
+        onMouseLeave={alwaysShow ? undefined : this.handleRowMouseLeave}
       >
         <div className={displayMenuRowContentStyle}>{content}</div>
         {showIcon && (
@@ -430,13 +426,24 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
             <Popover
               position={PopoverPosition.right}
               triggerAction="click"
-              headerContent={headerTitle}
-              bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
+              headerContent={popoverTitle ?? t('Help')}
+              bodyContent={<div style={{ textAlign: 'left' }}>{popoverContent}</div>}
+              minWidth={DISPLAY_MENU_POPOVER_WIDTH}
+              maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
               showClose={true}
               onShown={() => this.setState({ popoverOpenRowId: rowId })}
               onHidden={() => this.setState({ popoverOpenRowId: null })}
             >
-              <KialiIcon.Help className={helpIconStyle} />
+              <span
+                className={
+                  alwaysShow ? displayMenuPopoverTriggerSectionStyle : displayMenuPopoverTriggerStyle
+                }
+              >
+                <KialiIcon.Help
+                  className={alwaysShow ? helpIconStyleSectionTitle : helpIconStyle}
+                  color={alwaysShow ? DISPLAY_MENU_SECTION_TITLE_ICON_COLOR : undefined}
+                />
+              </span>
             </Popover>
           </div>
         )}
@@ -817,31 +824,19 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
         maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
       >
         <div id="graph-display-menu" className={menuStyle} style={{ width: '15em' }}>
-          {/* Global toggle: Enable menu help */}
-          <div className={displayMenuToggleSectionStyle}>
-            <Checkbox
-              id="display-menu-enable-help"
-              isChecked={this.state.enableMenuHelp}
-              label={t('Enable menu help')}
-              onChange={(_event, checked) => this.setEnableMenuHelp(!!checked)}
-            />
-            <div className={displayMenuToggleDescriptionStyle}>{t('Show help indicators for all menu options.')}</div>
-          </div>
-
           {this.renderDisplayMenuRow(
             'show-edge-labels-title',
-            <div style={{ marginTop: '0.5rem' }}>
-              <span className={titleStyle} style={{ paddingRight: 0 }}>
-                Show Edge Labels
-              </span>
-            </div>,
+            <span className={titleStyle} style={{ paddingRight: 0 }}>
+              {t('Show Edge Labels')}
+            </span>,
             <div style={{ textAlign: 'left' }}>
               <div>
                 Values for multiple label selections are stacked in the same order as the options below. Hover or
                 selection will always show units, an additionally show protocol.
               </div>
             </div>,
-            'Show Edge Labels'
+            t('Show Edge Labels'),
+            { alwaysShowHelpIcon: true }
           )}
 
           {edgeLabelOptions.map((edgeLabelOption: DisplayOptionType) => (
