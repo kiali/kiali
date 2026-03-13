@@ -5,6 +5,7 @@ import { HelpDropdownAction } from './HelpDropdownActions';
 import { LoginAction } from './LoginActions';
 import { NotificationCenterAction } from './NotificationCenterActions';
 import { NamespaceAction } from './NamespaceAction';
+import { NamespacesListAction } from './NamespacesListActions';
 import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { TracingAction } from './TracingActions';
@@ -34,5 +35,6 @@ export type KialiAppAction =
   | NotificationCenterAction
   | MetricsStatsAction
   | NamespaceAction
+  | NamespacesListAction
   | TourAction
   | UserSettingsAction;

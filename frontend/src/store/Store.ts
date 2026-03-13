@@ -67,6 +67,11 @@ export interface NamespaceState {
   readonly namespacesPerCluster: Map<string, string[]>; // map clusterName -> namespaces on cluster
 }
 
+/** Namespaces list page: column visibility (persisted in URL and Redux, not localStorage) */
+export interface NamespacesListState {
+  readonly hiddenColumnIds: string[];
+}
+
 // Various pages are described here with their various sections
 export interface GraphToolbarState {
   // Toggle props
@@ -197,6 +202,7 @@ export interface KialiAppState {
   meshTLSStatus: TLSStatus;
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
+  namespacesList: NamespacesListState;
   notificationCenter: NotificationCenterState;
   statusState: StatusState;
   tourState: TourState;

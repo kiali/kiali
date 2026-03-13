@@ -7,6 +7,7 @@ import { HelpDropdownStateReducer } from './HelpDropdownState';
 import { GraphDataStateReducer } from './GraphDataState';
 import { GlobalStateReducer } from './GlobalState';
 import { NamespaceStateReducer } from './NamespaceState';
+import { NamespacesListStateReducer } from './NamespacesListState';
 import { ClusterStateReducer } from './ClusterState';
 import { UserSettingsStateReducer } from './UserSettingsState';
 import { TourStateReducer } from './TourState';
@@ -32,6 +33,7 @@ export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   notificationCenter: NotificationCenterReducer,
   metricsStats: MetricsStatsStateReducer,
   namespaces: NamespaceStateReducer,
+  namespacesList: NamespacesListStateReducer,
   statusState: HelpDropdownStateReducer,
   tourState: TourStateReducer,
   tracingState: TracingStateReducer,

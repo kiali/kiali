@@ -1,5 +1,5 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { getClusterForSingleCluster, getColWithRowText } from './table';
+import { colExists, getClusterForSingleCluster, getColWithRowText } from './table';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);
@@ -55,4 +55,21 @@ Then('badge for {string} is visible in the namespaces page in the namespace {str
   getClusterForSingleCluster().then(cluster => {
     cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).contains(label).should('be.visible');
   });
+});
+
+When('user opens manage columns on namespaces page', () => {
+  cy.getBySel('namespaces-manage-columns').click();
+});
+
+When('user unchecks column {string} in manage columns', (columnTitle: string) => {
+  const id = columnTitle.toLowerCase();
+  cy.get(`[data-test="manage-columns-list"] #manage-column-${id}`).uncheck();
+});
+
+When('user saves manage columns', () => {
+  cy.getBySel('manage-columns-save').click();
+});
+
+Then('the {string} column {string} on namespaces page', (col: string, action: 'appears' | 'disappears') => {
+  colExists(col, action === 'appears');
 });
