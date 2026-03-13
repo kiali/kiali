@@ -21,14 +21,17 @@ Feature: Kiali Mesh page
     And user closes mesh tour
     Then user "does not see" mesh tour
 
+  @lpinterop
   Scenario: See mesh
     When user sees mesh side panel
     Then user sees expected mesh infra
 
+  @lpinterop
   Scenario: Test istiod
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
+  @lpinterop
   Scenario: Grafana Infra
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
@@ -37,10 +40,12 @@ Feature: Kiali Mesh page
     When user selects tracing mesh node
     Then user sees tracing node side panel
 
+  @lpinterop
   Scenario: Prometheus Infra
     When user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
+  @lpinterop
   Scenario: Test DataPlane
     When user selects mesh node with label "Data Plane"
     Then user sees data plane side panel

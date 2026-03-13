@@ -10,6 +10,7 @@ Feature: Kiali Graph page - Side panel menu actions
     Given user is at administrator perspective
 
   @bookinfo-app
+  @lpinterop
   Scenario: Actions in kebab menu of the side panel for a service node with existing traffic routing
     Given user graphs "bookinfo" namespaces
     And user clicks the "productpage" "service" node
