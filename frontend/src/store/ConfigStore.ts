@@ -27,6 +27,7 @@ import { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
 import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
+import { INITIAL_CHAT_AI_SETTINGS } from 'reducers/ChatAISettings';
 
 declare const window;
 
@@ -101,7 +102,8 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
 // Redux 4.0 actually required this
 const initialStore: KialiAppState = {
   authentication: INITIAL_LOGIN_STATE,
-  chatAi: INITIAL_CHAT_AI_STATE,
+  aiChatSettings: INITIAL_CHAT_AI_SETTINGS,
+  aiChat: INITIAL_CHAT_AI_STATE,
   clusters: INITIAL_CLUSTER_STATE,
   globalState: INITIAL_GLOBAL_STATE,
   graph: INITIAL_GRAPH_STATE,

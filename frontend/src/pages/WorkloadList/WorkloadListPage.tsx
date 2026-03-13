@@ -27,7 +27,6 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
-import { setAIContext } from 'helpers/ChatAI';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
   loaded: boolean;
@@ -199,11 +198,6 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           listItems: sortedWorkloadsItems,
           loaded: true
         });
-
-        setAIContext(
-          this.props.dispatch,
-          `Workload List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
-        );
       })
       .catch(err => {
         if (!err.isCanceled) {

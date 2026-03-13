@@ -10,13 +10,19 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 )
 
 // OpenAIProvider implements AIProvider using openai-go.
 type OpenAIProvider struct {
+	name   string
 	client openai.Client
 	model  string
+}
+
+func (p *OpenAIProvider) GetName() string {
+	return p.name
 }
 
 type BaseURL string
@@ -34,6 +40,7 @@ func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, mod
 	}
 
 	return &OpenAIProvider{
+		name:   provider.Name,
 		client: openai.NewClient(opts...),
 		model:  model.Model,
 	}, nil
@@ -95,21 +102,22 @@ func (p *OpenAIProvider) GetToolDefinitions() interface{} {
 	return tools
 }
 
-func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string) {
+func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string) {
 	toolsSlice, ok := toolCall.([]openai.ChatCompletionMessageToolCallUnion)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}
+		return []types.StreamToolCallData{}, []string{}
 	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	tools := make([]types.StreamToolCallData, len(toolsSlice))
 	for i, tool := range toolsSlice {
 		toolNames[i] = tool.Function.Name
 		args := map[string]any{}
 		_ = json.Unmarshal([]byte(tool.Function.Arguments), &args)
-		tools[i] = mcp.ToolsProcessor{
-			Args:       args,
-			Name:       tool.Function.Name,
-			ToolCallID: tool.ID,
+		tools[i] = types.StreamToolCallData{
+			Args: args,
+			Name: tool.Function.Name,
+			ID:   tool.ID,
+			Type: "tool_call",
 		}
 	}
 	return tools, toolNames

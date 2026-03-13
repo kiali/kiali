@@ -27,7 +27,6 @@ import { basicTabStyle } from 'styles/TabStyles';
 import { serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
-import { setAIContext } from 'helpers/ChatAI';
 
 type AppDetailsState = {
   app?: App;
@@ -105,23 +104,15 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
     return API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
-        this.setState(
-          {
-            app: details.data,
-            health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
-              rateInterval: this.props.duration,
-              hasSidecar: details.data.workloads.some(w => w.istioSidecar),
-              hasAmbient: details.data.workloads.some(w => w.isAmbient)
-            }),
-            isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
-          },
-          () => {
-            setAIContext(
-              this.props.dispatch,
-              `App Details of ${this.props.appId.app} in namespace ${this.props.appId.namespace}`
-            );
-          }
-        );
+        this.setState({
+          app: details.data,
+          health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
+            rateInterval: this.props.duration,
+            hasSidecar: details.data.workloads.some(w => w.istioSidecar),
+            hasAmbient: details.data.workloads.some(w => w.isAmbient)
+          }),
+          isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
+        });
       })
       .catch(error => {
         addError('Could not fetch App Details.', error);

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -18,12 +19,11 @@ var documentsFS embed.FS
 
 // Document represents a single document entry from documents.json
 type Document struct {
-	ID          string   `json:"id"`
-	Keywords    []string `json:"keywords"`
-	URL         string   `json:"url"`
-	Title       string   `json:"title"`
-	Domain      string   `json:"domain,omitempty"` // Domain is added during loading
-	Description string   `json:"description,omitempty"`
+	ID       string   `json:"id"`
+	Keywords []string `json:"keywords"`
+	URL      string   `json:"url"`
+	Title    string   `json:"title"`
+	Domain   string   `json:"domain,omitempty"` // Domain is added during loading
 }
 
 // documentsByDomain represents the structure of documents.json
@@ -34,8 +34,8 @@ type documentsByDomain struct {
 
 // GetCitationsResponse encapsulates the citations tool response.
 type GetCitationsResponse struct {
-	Citations []Citation `json:"citations,omitempty"`
-	Errors    string     `json:"errors,omitempty"`
+	ReferencedDocuments []types.ReferencedDocument `json:"referenced_documents,omitempty"`
+	Errors              string                     `json:"errors,omitempty"`
 }
 
 // documentMatch represents a document with its match count
@@ -48,8 +48,8 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	keywordsStr := mcputil.GetStringArg(args, "keywords")
 	if keywordsStr == "" {
 		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "keywords parameter is required and must be a string",
+			ReferencedDocuments: []types.ReferencedDocument{},
+			Errors:              "keywords parameter is required and must be a string",
 		}, http.StatusBadRequest
 	}
 
@@ -65,8 +65,8 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 
 	if len(inputKeywords) == 0 {
 		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "no valid keywords provided",
+			ReferencedDocuments: []types.ReferencedDocument{},
+			Errors:              "no valid keywords provided",
 		}, http.StatusBadRequest
 	}
 
@@ -81,27 +81,28 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	if err != nil {
 		log.Errorf("Failed to load documents.json: %v", err)
 		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "Failed to load documents: " + err.Error(),
+			ReferencedDocuments: []types.ReferencedDocument{},
+			Errors:              "Failed to load documents: " + err.Error(),
 		}, http.StatusInternalServerError
 	}
 
 	// Find top 3 matches
 	topMatches := findTopMatches(documents, inputKeywords, 3)
-
+	if len(topMatches) == 0 {
+		log.Debugf("ChatAI - MCP - Citations: No top matches found")
+	}
 	// Convert to citations
-	citations := make([]Citation, len(topMatches))
+	referencedDocuments := make([]types.ReferencedDocument, len(topMatches))
 	for i, doc := range topMatches {
-		citations[i] = Citation{
-			Link:  doc.URL,
-			Title: doc.Title,
-			Body:  doc.Description, // Body can be empty or populated from the document if needed
+		referencedDocuments[i] = types.ReferencedDocument{
+			DocURL:   doc.URL,
+			DocTitle: doc.Title,
 		}
 	}
 
 	resp := GetCitationsResponse{
-		Citations: citations,
-		Errors:    "",
+		ReferencedDocuments: referencedDocuments,
+		Errors:              "",
 	}
 
 	return resp, http.StatusOK

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
@@ -72,7 +73,14 @@ func NewServer(ctx context.Context,
 
 	handler := http.Handler(router)
 	if conf.Server.GzipEnabled {
-		handler = configureGzipHandler(router)
+		// We don't want to gzip the AI chat stream because it breaks Server-Sent Events (SSE) real-time streaming
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.Contains(r.URL.Path, "/api/chat/") {
+				router.ServeHTTP(w, r)
+			} else {
+				configureGzipHandler(router).ServeHTTP(w, r)
+			}
+		})
 	}
 
 	// The Kiali server has only a single http server ever during its lifetime. But to support

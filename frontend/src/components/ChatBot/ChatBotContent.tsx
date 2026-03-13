@@ -1,16 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import {
   ChatbotAlert,
   ChatbotContent,
   ChatbotDisplayMode,
   ChatbotWelcomePrompt,
-  Message,
   MessageBox
 } from '@patternfly/chatbot';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
-import { ChatMessage } from './ChatMessage/ChatMessage';
+import { KialiAppState } from 'store/Store';
+import { useSelector } from 'react-redux';
+import { ChatHistoryEntry } from './ChatHistory/ChatHistory';
+import { defer } from 'lodash';
 
 type ChatBotContentProps = {
   alertMessage?: AlertMessage;
@@ -22,6 +25,7 @@ type ChatBotContentProps = {
   messages: ExtendedMessage[];
   setAlertMessage: (alertMessage?: AlertMessage) => void;
   username: string;
+  chatHistoryEndRef: React.RefObject<HTMLDivElement>;
 };
 
 export const ChatBotContent: React.FC<ChatBotContentProps> = ({
@@ -29,18 +33,25 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
   alertMessage,
   handleSend,
   setAlertMessage,
-  isLoading,
-  displayMode,
-  messages,
-  botMessage,
-  context
+  context,
+  chatHistoryEndRef
 }) => {
   const { pathname } = useLocation();
+  const conversationID = useSelector((state: KialiAppState) => state.aiChat.get('conversationID'));
+  const chatHistory: ImmutableList<ImmutableMap<string, unknown>> = useSelector((state: KialiAppState) =>
+    state.aiChat.get('chatHistory')
+  );
   const category = pathname.split('/')[1];
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [promptData, setPromptData] = useState<any>(DataPrompts[category] || []);
-  const scrollToBottom = (): void => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
+  const scrollIntoView = React.useCallback(
+    (behavior = 'smooth') => {
+      defer(() => {
+        chatHistoryEndRef?.current?.scrollIntoView({ behavior: behavior as ScrollBehavior });
+      });
+    },
+    [chatHistoryEndRef]
+  );
   const generatePrompts = React.useCallback((): void => {
     setPromptData(
       (DataPrompts[category] || []).map(prompt => ({
@@ -51,9 +62,10 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
     );
   }, [category, context, handleSend]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  React.useEffect(() => {
+    scrollIntoView('instant');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     generatePrompts();
@@ -76,28 +88,14 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             {alertMessage.message}
           </ChatbotAlert>
         )}
-        {messages.map(
-          ({ referenced_documents, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
-            return (
-              <ChatMessage
-                key={`chatbot_message_${index}`}
-                index={index.toString()}
-                message={message}
-                referenced_documents={referenced_documents}
-                collapse={collapse}
-                actions={actions || []}
-                scrollToHere={scrollToHere}
-                innerRef={messagesEndRef}
-                displayMode={displayMode}
-              />
-            );
-          }
-        )}
-        {messages.at(-1)?.role === 'user' && isLoading ? (
-          <Message botWord="Kiali AI" key="bott_message_9999" {...botMessage('...')} isLoading={true} />
-        ) : (
-          <></>
-        )}
+        {chatHistory.map((entry, index) => (
+          <ChatHistoryEntry
+            conversationID={conversationID}
+            entryIndex={index}
+            key={(entry.get('id') as string) ?? index}
+          />
+        ))}
+        <div ref={chatHistoryEndRef} />
       </MessageBox>
     </ChatbotContent>
   );

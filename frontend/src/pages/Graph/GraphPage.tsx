@@ -76,7 +76,6 @@ import { elementsChanged } from 'helpers/GraphHelpers';
 import { getValidGraphLayout } from 'utils/GraphUtils';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
-import { setAIContext } from 'helpers/ChatAI';
 
 // GraphURLPathProps holds path variable values.  Currently all path variables are relevant only to a node graph
 export type GraphURLPathProps = {
@@ -649,10 +648,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
         timestamp: graphTimestamp * 1000
       } as GraphData
     });
-    setAIContext(
-      this.props.dispatch,
-      `Graph of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
-    );
     this.props.setGraphDefinition(this.graphDataSource.graphDefinition);
   };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChatbotDisplayMode, Message, MessageProps } from '@patternfly/chatbot';
 import { Button, ExpandableSection } from '@patternfly/react-core';
-import { Action, ExtendedMessage, ReferencedDocument } from 'types/Chatbot';
+import { Action, ExtendedMessage, ReferencedDoc } from 'types/Chatbot';
 import { router } from 'app/History';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { FileAttachment } from './FileAttachment';
@@ -14,7 +14,7 @@ type ChatMessageProps = {
   index: string;
   innerRef: React.RefObject<HTMLDivElement>;
   message: MessageProps;
-  referenced_documents: ReferencedDocument[];
+  referenced_documents: ReferencedDoc[];
   scrollToHere?: boolean;
 };
 
@@ -45,7 +45,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const getMessage = (
     message: Omit<ExtendedMessage, 'referenced_documents' | 'scrollToHere' | 'collapse' | 'actions'>,
     index: string,
-    referenced_documents: ReferencedDocument[],
+    referenced_documents: ReferencedDoc[],
     collapse?: boolean,
     actions?: Action[]
   ): React.ReactNode => {
@@ -56,9 +56,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         referenced_documents && referenced_documents.length > 0
           ? {
               sources: referenced_documents.map(document => ({
-                link: document.link,
-                title: document.title,
-                body: `${document.body.substring(0, 30)}...`,
+                link: document.doc_url,
+                title: document.doc_title,
                 isExternal: true
               }))
             }

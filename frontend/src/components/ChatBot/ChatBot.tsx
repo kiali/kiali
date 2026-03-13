@@ -14,7 +14,7 @@ import { ChatBotHeader } from './ChatBotHeader';
 import { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { useChatbot } from './useChatbot';
-import { ChatBotFooter } from './ChatBotFooter';
+import { ChatBotPrompt } from './ChatBotPrompt';
 import { ChatBotMock } from './ChatBotMock';
 import { ContextRequest, ExtendedMessage, ProviderAI } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
@@ -23,6 +23,7 @@ import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-li
 import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-darkbkg.svg';
 import * as API from 'services/Api';
 import { saveConversation, loadConversations, loadConversation } from 'utils/ConversationStorage';
+import { defer } from 'lodash-es';
 
 type ReduxStateProps = {
   context: ContextRequest;
@@ -156,6 +157,12 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
     setCurrentConversation(undefined, []);
     updateConversationList();
   };
+  const chatHistoryEndRef = React.useRef<HTMLDivElement>(null);
+  const scrollIntoView = React.useCallback((behavior = 'smooth') => {
+    defer(() => {
+      chatHistoryEndRef.current?.scrollIntoView({ behavior: behavior as ScrollBehavior });
+    });
+  }, []);
 
   // Load conversations from backend and storage
   const loadConversationsFromBackend = useCallback(async (): Promise<void> => {
@@ -390,8 +397,15 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 isLoading={isLoading}
                 botMessage={botMessage}
                 context={props.context}
+                chatHistoryEndRef={chatHistoryEndRef}
               />
-              <ChatBotFooter setAlertMessage={() => setAlertMessage(undefined)} handleSend={onHandleSend} />
+              <ChatBotPrompt
+                setAlertMessage={() => setAlertMessage(undefined)}
+                handleSend={onHandleSend}
+                provider={selectedProvider.name}
+                model={selectedModel.name}
+                scrollIntoView={scrollIntoView}
+              />
             </>
           }
         />
@@ -402,9 +416,9 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   username: state.authentication.session?.username ?? '',
-  context: state.chatAi.context,
-  providers: state.chatAi.providers,
-  defaultProvider: state.chatAi.defaultProvider
+  context: state.aiChatSettings.context,
+  providers: state.aiChatSettings.providers,
+  defaultProvider: state.aiChatSettings.defaultProvider
 });
 
 export const ChatBot = connect(mapStateToProps)(ChatBotComponent);

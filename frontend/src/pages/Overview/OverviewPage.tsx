@@ -4,10 +4,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { serverConfig } from 'config/ServerConfig';
 import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from 'components/Refresh/Refresh';
-import { useKialiDispatch } from 'hooks/redux';
 import { useManualRefreshState } from 'hooks/refresh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
-import { setAIContext } from 'helpers/ChatAI';
 import { t } from 'utils/I18nUtils';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
@@ -46,12 +44,7 @@ const rightToolbarStyle = kialiStyle({
 });
 
 export const OverviewPage: React.FC = () => {
-  const dispatch = useKialiDispatch();
   const loaded = useManualRefreshState();
-
-  React.useEffect(() => {
-    setAIContext(dispatch, 'Overview page');
-  }, [dispatch]);
 
   const durationLabel = serverConfig.healthConfig?.compute?.duration ?? '5m';
 

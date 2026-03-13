@@ -11,9 +11,14 @@ import (
 
 // GoogleGenAIProvider implements AIProvider using google-go.
 type GoogleAIProvider struct {
+	name   string
 	client *google.Client
 	config google.ClientConfig
 	model  string
+}
+
+func (p *GoogleAIProvider) GetName() string {
+	return p.name
 }
 
 func NewGoogleAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*GoogleAIProvider, error) {
@@ -21,7 +26,7 @@ func NewGoogleAIProvider(conf *config.Config, provider *config.ProviderConfig, m
 	if err != nil {
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
-	return &GoogleAIProvider{client: nil, config: opts, model: model.Model}, nil
+	return &GoogleAIProvider{name: provider.Name, client: nil, config: opts, model: model.Model}, nil
 }
 
 func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (google.ClientConfig, error) {

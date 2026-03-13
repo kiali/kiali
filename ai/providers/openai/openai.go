@@ -8,6 +8,8 @@ import (
 
 	openai "github.com/openai/openai-go/v3"
 
+	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
@@ -21,127 +23,166 @@ import (
 	"github.com/kiali/kiali/prometheus"
 )
 
-func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
-	if req.ConversationID == "" {
-		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
-	}
+func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
+	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) {
 
 	if req.Query == "" {
-		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
+		providers.StreamError(onChunk, "query is required")
+		return
 	}
 	ctx := r.Context()
-	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
-	p.InitializeConversation(&conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(r, &req, aiStore)
+	if req.ConversationID == "" {
+		providers.Log(p, providers.LogLevelDebug, "Conversation", "Create")
+		req.ConversationID = aiStore.GenerateConversationID()
+	}
+	conversation := &ptr.Conversation
+	p.InitializeConversation(conversation, req)
 
+	providers.SendStreamEvent(onChunk, "start", types.StreamStartData{
+		ConversationID: req.ConversationID,
+	})
 	// Create a temporary conversation with context for the API call
 	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
-
-	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
+	conversationWithContext := providers.AddContextToConversation(*conversation, req)
 	for i, msg := range conversationWithContext {
 		contentPreview := msg.Content
 		if len(contentPreview) > 100 {
 			contentPreview = contentPreview[:100] + "..."
 		}
-		log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
+		providers.Log(p, providers.LogLevelDebug, "Conversation", "Message[%d] role=%s content=%q", i, msg.Role, contentPreview)
 	}
 
 	// We keep OpenAI-native messages for the iterative tool loop.
-	// The persisted conversation will include only the user prompts and final assistant answer.
-	messagesForModel := p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion)
-	toolDefs := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
 
-	response := &types.AIResponse{}
+	toolDefs := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+	response := ""
+	endStream := &types.StreamEndData{}
+	actions := []get_action_ui.Action{}
+	referencedDocuments := []types.ReferencedDocument{}
+	// The persisted conversation will include only the user prompts and final assistant answer.
+	params := openai.ChatCompletionNewParams{
+		Model:    p.model,
+		Messages: p.ConversationToProvider(conversationWithContext).([]openai.ChatCompletionMessageParamUnion),
+		Tools:    toolDefs,
+		StreamOptions: openai.ChatCompletionStreamOptionsParam{
+			IncludeUsage: openai.Bool(true),
+		},
+	}
 
 	const maxToolIterations = 5
+
 	for iter := 0; iter < maxToolIterations; iter++ {
-		resp, err := p.client.Chat.Completions.New(
-			ctx,
-			openai.ChatCompletionNewParams{
-				Model:    p.model,
-				Messages: messagesForModel,
-				Tools:    toolDefs,
-			},
-		)
-		if err != nil {
-			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools: %v", err)
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-		}
-		if err := ctx.Err(); err != nil {
-			log.Debugf("[Chat AI] OpenAI provider context error: %v", err)
-			return providers.NewContextCanceledResponse(err)
-		}
-		if len(resp.Choices) == 0 {
-			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
-			return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
+		// Initial chat completion request with streaming
+		stream := p.client.Chat.Completions.NewStreaming(ctx, params)
+		// acumulator for the stream
+		acc := openai.ChatCompletionAccumulator{}
+		tokenID := 0
+		// analyze the stream by chunk
+		for stream.Next() {
+			chunk := stream.Current()
+			acc.AddChunk(chunk)
+			if chunk.Usage.PromptTokens > 0 {
+				endStream.InputTokens += chunk.Usage.PromptTokens
+			}
+			if chunk.Usage.CompletionTokens > 0 {
+				endStream.OutputTokens += chunk.Usage.CompletionTokens
+			}
+			//  Display the content as it arrives
+			if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+				chunContent := chunk.Choices[0].Delta.Content
+				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", chunk.Choices[0].Delta.Content)
+				providers.SendStreamEvent(onChunk, "token", types.StreamTokenData{
+					ID:    tokenID,
+					Token: chunContent,
+				})
+				response += chunContent
+				tokenID++
+			}
 		}
 
-		msg := resp.Choices[0].Message
-		if len(msg.ToolCalls) == 0 {
-			response.Answer = providers.ParseMarkdownResponse(msg.Content)
+		if err := stream.Err(); err != nil {
+			providers.Log(p, providers.LogLevelError, "SendChat", "Error in send chat with tools: %v", err)
+			providers.StreamError(onChunk, err.Error())
+			return
+		}
+		// Access the accumulated message and tool calls
+		var toolCalls []openai.ChatCompletionMessageToolCallUnion
+		if len(acc.Choices) > 0 {
+			toolCalls = acc.Choices[0].Message.ToolCalls
+			if len(toolCalls) == 0 {
+				break // no tool calls found, we are done
+			}
+			providers.Log(p, providers.LogLevelDebug, "ToolCalls", "Tool calls (iter=%d): %v", iter, toolCalls)
+		} else {
+			// Not called tool calls, we are done
 			break
 		}
+
+		// There is function calls
+
+		if err := ctx.Err(); err != nil {
+			providers.Log(p, providers.LogLevelError, "Context", "Context error: %v", err)
+			providers.StreamError(onChunk, err.Error())
+			return
+		}
+
 		if iter == maxToolIterations-1 {
-			log.Debugf("[Chat AI] OpenAI provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
-			return &types.AIResponse{Error: fmt.Sprintf("openai reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+			providers.Log(p, providers.LogLevelDebug, "ToolIterations", "Reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+			return
 		}
 
-		// Append the assistant tool-call message, then the tool responses, then ask the model again.
-		assistantWithToolCalls := openai.ChatCompletionAssistantMessageParam{
-			ToolCalls: make([]openai.ChatCompletionMessageToolCallUnionParam, 0, len(msg.ToolCalls)),
-		}
-		for _, tc := range msg.ToolCalls {
-			assistantWithToolCalls.ToolCalls = append(assistantWithToolCalls.ToolCalls, tc.ToParam())
-		}
-		messagesForModel = append(messagesForModel, openai.ChatCompletionMessageParamUnion{OfAssistant: &assistantWithToolCalls})
+		tools, toolNames := p.TransformToolCallToToolsProcessor(toolCalls)
+		providers.Log(p, providers.LogLevelDebug, "ToolCalls", "Tool calls (iter=%d): %v", iter, toolNames)
 
-		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
-		log.Debugf("[Chat AI] OpenAI provider tool calls (iter=%d): %v", iter, toolNames)
+		toolResults, acts, docs := providers.ExecuteToolCallsInParallel(p, ctx, onChunk, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		providers.Log(p, providers.LogLevelDebug, "ToolResults", "Tool results (iter=%d): %v", iter, toolResults)
+		actions = append(actions, acts...)
+		referencedDocuments = append(referencedDocuments, docs...)
 
-		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
+			providers.StreamError(onChunk, err.Error())
+			providers.Log(p, providers.LogLevelError, "Context", "Context error: %v", err)
+			return
 		}
-
+		// We need to check if there is a tool called not excluded
+		hasNotExcludedTool := false
+		for _, tool := range toolNames {
+			if !mcp.ExcludedToolNames[tool] {
+				hasNotExcludedTool = true
+				break
+			}
+		}
+		if !hasNotExcludedTool {
+			break // no not excluded tool calls found, we are done
+		}
 		// Process tool results using standardized logic (accumulate actions/citations).
-		processResult := providers.ProcessToolResults(toolResults, conversation)
+		processResult := providers.ProcessToolResults(toolResults, *conversation)
 		if processResult.Response.Error != "" {
-			return processResult.Response, http.StatusInternalServerError
-		}
-		if len(processResult.Response.Actions) > 0 {
-			response.Actions = append(response.Actions, processResult.Response.Actions...)
-		}
-		if len(processResult.Response.Citations) > 0 {
-			response.Citations = append(response.Citations, processResult.Response.Citations...)
+			providers.Log(p, providers.LogLevelError, "ProcessToolResults", "Error in process tool results: %v", processResult.Response.Error)
+			providers.StreamError(onChunk, processResult.Response.Error)
+			return
 		}
 
-		// If the only outputs were actions/citations, don't ask the model to generate prose.
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
-			Actions:   response.Actions,
-			Citations: response.Citations,
-		}, toolNames)
-		if !shouldGenerate {
-			response.Answer = responseAnswer
-			break
-		}
-
-		// Append tool outputs to the OpenAI conversation (linked by tool_call_id).
+		// Append tool outputs to the OpenAI conversation (linked by ID).
 		// Note: even "excluded" tools must produce a tool response for OpenAI, otherwise
 		// the next model call can fail with "missing tool responses".
-		for i, toolResult := range toolResults {
-			if toolResult.Error != nil {
-				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
+		for _, toolResult := range toolResults {
+			if toolResult.Status == "error" {
+				providers.Log(p, providers.LogLevelError, "ToolResult", "Error in tool result: %v", toolResult.Content)
+				return
 			}
-			content := toolResult.Message.Content
-			if strings.TrimSpace(content) == "" {
-				content = "OK"
+			content := toolResult.Content
+			if strings.TrimSpace(content) != "" {
+				providers.Log(p, providers.LogLevelDebug, "ToolResult", "Tool result added to meessageForModel(iter=%d): ID:%s Content:%s", iter, toolResult.ID, content)
+				params.Messages = append(params.Messages, openai.ToolMessage(content, toolResult.ID))
 			}
-			messagesForModel = append(messagesForModel, openai.ToolMessage(content, tools[i].ToolCallID))
 		}
 
 		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
+			providers.StreamError(onChunk, err.Error())
+			providers.Log(p, providers.LogLevelError, "Context", "Context error: %v", err)
+			return
 		}
 
 		// Continue loop: model may request additional tool calls.
@@ -149,18 +190,21 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
-	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
-			Content: response.Answer,
+	if response != "" {
+		*conversation = append(*conversation, types.ConversationMessage{
+			Content: response,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",
 		})
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-	return response, http.StatusOK
+	endStream.Actions = actions
+	endStream.ReferencedDocuments = referencedDocuments
+	endStream.Truncated = false
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, *conversation)
+	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s: %+v", req.ConversationID, response)
+	providers.SendStreamEvent(onChunk, "end", *endStream)
 }
 
 func (p *OpenAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {

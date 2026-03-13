@@ -1,3 +1,4 @@
+import { Map as ImmutableMap } from 'immutable';
 import { NotificationGroup } from '../types/NotificationCenter';
 import { Namespace } from '../types/Namespace';
 import {
@@ -32,6 +33,7 @@ import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 import { ProviderAI } from 'types/Chatbot';
+import { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 // Store is the Redux Data store
 
@@ -173,12 +175,16 @@ export interface TourState {
   activeTour?: TourInfo;
 }
 
-export interface ChatAIState {
+export interface ChatAISettings {
   context: any;
   defaultProvider: string;
   enabled: boolean;
   providers: ProviderAI[];
+  displayMode: ChatbotDisplayMode;
 }
+
+export type ChatAIState = ImmutableMap<string, any>;
+
 // This defines the Kiali Global Application State
 export interface KialiAppState {
   // Global state === across multiple pages
@@ -186,7 +192,9 @@ export interface KialiAppState {
   /** Page Settings */
   authentication: LoginState;
   /** Chatbot Settings */
-  chatAi: ChatAIState;
+  aiChatSettings: ChatAISettings;
+  /** Chatbot State */
+  aiChat: ChatAIState;
   clusters: ClusterState;
   globalState: GlobalState;
   graph: GraphState;

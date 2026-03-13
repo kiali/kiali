@@ -53,7 +53,6 @@ import { drawerPanelStyle, istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
-import { setAIContext } from 'helpers/ChatAI';
 
 const editorDrawer = kialiStyle({
   margin: 0
@@ -174,10 +173,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
             currentTab: activeTab(tabName, this.defaultTab())
           },
           () => {
-            setAIContext(
-              this.props.dispatch,
-              `Istio Config Details of ${this.props.istioConfigId.objectName} in namespace ${this.props.istioConfigId.namespace}`
-            );
             this.resizeEditor();
           }
         );

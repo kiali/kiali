@@ -28,7 +28,6 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
-import { setAIContext } from 'helpers/ChatAI';
 
 type ServiceListPageState = FilterComponent.State<ServiceListItem> & {
   loaded: boolean;
@@ -195,11 +194,6 @@ class ServiceListPageComponent extends FilterComponent.Component<
           listItems: sortedServiceListItems,
           loaded: true
         });
-
-        setAIContext(
-          this.props.dispatch,
-          `Service List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
-        );
       })
       .catch(err => {
         if (!err.isCanceled) {

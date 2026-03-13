@@ -23,9 +23,11 @@ import (
 
 // ExecuteToolCallsInParallel executes all tool calls in parallel and returns results in order
 func ExecuteToolCallsInParallel(
+	p AIProvider,
 	ctx context.Context,
+	onChunk func(chunk string),
 	r *http.Request,
-	toolCalls []mcp.ToolsProcessor,
+	toolCalls []types.StreamToolCallData,
 	business *business.Layer,
 	prom prometheus.ClientInterface,
 	clientFactory kubernetes.ClientFactory,
@@ -34,46 +36,62 @@ func ExecuteToolCallsInParallel(
 	grafana *grafana.Service,
 	perses *perses.Service,
 	discovery *istio.Discovery,
-) []mcp.ToolCallResult {
-	results := make([]mcp.ToolCallResult, len(toolCalls))
+) ([]types.StreamToolResultData, []get_action_ui.Action, []types.ReferencedDocument) {
+	results := make([]types.StreamToolResultData, len(toolCalls))
+	actions := []get_action_ui.Action{}
+	referencedDocuments := []types.ReferencedDocument{}
 	var wg sync.WaitGroup
-	log.Debugf("Executing %d tool calls in parallel", len(toolCalls))
+	Log(p, LogLevelDebug, "ToolCalls", "Executing %d tool calls in parallel", len(toolCalls))
 	// Execute all tool calls in parallel
 	for i, toolCall := range toolCalls {
+		if !mcp.ExcludedToolNames[toolCall.Name] {
+			Log(p, LogLevelDebug, "ToolCall", "Sending tool_call event: %s", toolCall.Name)
+			SendStreamEvent(onChunk, "tool_call", toolCall)
+		}
 		wg.Add(1)
-		go func(index int, call mcp.ToolsProcessor) {
+		go func(index int, call types.StreamToolCallData) {
 			defer wg.Done()
-			actions := []get_action_ui.Action{}
-			citations := []get_citations.Citation{}
 			if err := ctx.Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			handler, ok := mcp.DefaultToolHandlers[call.Name]
 			if !ok {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("tool handler not found: %s", call.Name),
-					Code:  http.StatusInternalServerError,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("tool handler not found: %s", call.Name).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			mcpResult, code := handler.Call(r, call.Args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 			if code != http.StatusOK {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult),
-					Code:  code,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 			if err := ctx.Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
@@ -98,55 +116,58 @@ func ExecuteToolCallsInParallel(
 				}
 				if call.Name == "get_citations" {
 					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
-						citations = append(citations, mcpRes.Citations...)
+						log.Debugf("ChatAI: Added citations: %+v", mcpRes)
+						referencedDocuments = append(referencedDocuments, mcpRes.ReferencedDocuments...)
 					}
 				}
-				results[index] = mcp.ToolCallResult{
-					Message: types.ConversationMessage{
-						Content: "",
-						Name:    call.Name,
-						Param:   nil,
-						Role:    "tool",
-					},
-					Code:      http.StatusOK,
-					Actions:   actions,
-					Citations: citations,
+				results[index] = types.StreamToolResultData{
+					Content: "UI command sent to user successfully. You will not receive data from this tool. Use other tools if you need data.",
+					ID:      call.ID,
+					Round:   1,
+					Status:  "success",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			toolContent, err := FormatToolContent(mcpResult)
 			if err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("failed to format tool %s content: %w", call.Name, err),
-					Code:  http.StatusInternalServerError,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("failed to format tool %s content: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 			if err := ctx.Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
-
-			results[index] = mcp.ToolCallResult{
-				Message: types.ConversationMessage{
-					Content: toolContent,
-					Name:    call.Name,
-					Param:   call.Args,
-					Role:    "tool",
-				},
-				Code:      http.StatusOK,
-				Actions:   actions,
-				Citations: citations,
+			toolResult := types.StreamToolResultData{
+				Content: toolContent,
+				ID:      call.ID,
+				Round:   1,
+				Status:  "success",
+				Type:    "tool_result",
 			}
+			if !mcp.ExcludedToolNames[toolCall.Name] {
+				log.Debugf("Sending tool_result event: %s", toolCall.Name)
+				SendStreamEvent(onChunk, "tool_result", toolResult)
+			}
+			results[index] = toolResult
 		}(i, toolCall)
 	}
 
 	// Wait for all tool calls to complete
 	wg.Wait()
 
-	return results
+	return results, actions, referencedDocuments
 }

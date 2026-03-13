@@ -26,7 +26,6 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
-import { setAIContext } from 'helpers/ChatAI';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const refreshStyle = kialiStyle({
@@ -164,11 +163,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           listItems: sortedAppListItems,
           loaded: true
         });
-
-        setAIContext(
-          this.props.dispatch,
-          `App List of namespaces ${this.props.activeNamespaces.map(ns => ns.name).join(',')}`
-        );
       })
       .catch(err => {
         if (!err.isCanceled) {
