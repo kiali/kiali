@@ -1,6 +1,6 @@
 - name: "manage_istio_config"
   description: "Create, patch, or delete Istio config. For list and get (read-only) use manage_istio_config_read."
-  toolset: [mcp]
+  toolset: [default, mcp]
   input_schema:
     type: "object"
     required: ["action", "confirmed"]
@@ -32,7 +32,40 @@
         description: "Name of the Istio object. Required for create, patch, and delete."
       data:
         type: "string"
-        description: "JSON or YAML manifest to apply or create the object. Required for create and patch actions."
+        description: |
+          COMPLETE JSON or YAML manifest to apply or create the object. Required for create and patch actions.
+
+          CRITICAL for CREATE action: You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type:
+
+          Gateway example (networking.istio.io/v1):
+            spec:
+              selector:
+                istio: ingressgateway
+              servers:
+              - port:
+                  number: 80
+                  name: http
+                  protocol: HTTP  # REQUIRED
+                hosts:
+                - "*"              # REQUIRED
+
+          VirtualService example (networking.istio.io/v1):
+            spec:
+              hosts:
+              - "*"
+              http:
+              - route:
+                - destination:
+                    host: servicename
+
+          DestinationRule example (networking.istio.io/v1):
+            spec:
+              host: servicename.namespace.svc.cluster.local
+              trafficPolicy:
+                loadBalancer:
+                  simple: ROUND_ROBIN
+
+          DO NOT provide partial specs with only one or two fields. The manifest will be merged with existing objects or templates, but arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element.
       data_format:
         type: "string"
         description: "Optional hint for the payload format. Usually leave as 'auto'."

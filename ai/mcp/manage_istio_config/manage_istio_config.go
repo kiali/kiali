@@ -73,12 +73,6 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		}
 	}
 
-	sensitiveActions := map[string]bool{
-		"create": true,
-		"patch":  true,
-		"delete": true,
-	}
-
 	if action == "create" || action == "patch" {
 		previewActions := createFileAction(ctx, args, businessLayer, conf)
 		if !confirmed {
@@ -88,7 +82,12 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 				Result  string                 `json:"result"`
 			}{
 				Actions: previewActions,
-				Result:  fmt.Sprintf("Edit the YAML and click %s to apply.", cases.Title(language.Und).String(action)),
+				Result: fmt.Sprintf(
+					"PREVIEW READY: A YAML preview for the '%s' operation has been prepared (see the attached file). "+
+						"The user can review and edit the YAML, then click %s to apply it. "+
+						"Show the preview to the user and ask: 'Does this look correct, and do you want me to proceed with %s?' "+
+						"If they say yes, call this tool again with the exact same arguments and 'confirmed': true.",
+					action, cases.Title(language.Und).String(action), action),
 			}, 200 // Return success (200) so the AI processes the message
 		}
 
@@ -109,7 +108,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		}, status
 	}
 
-	if sensitiveActions[action] && !confirmed {
+	if action == "delete" && !confirmed {
 		previewActions := createFileAction(ctx, args, businessLayer, conf)
 		// Return a response that forces the AI to stop and talk to the user
 		return struct {
@@ -118,9 +117,8 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		}{
 			Actions: previewActions,
 			Result: fmt.Sprintf(
-				"OPERATION PAUSED: You are about to perform a '%s' operation. "+
-					"A YAML preview has been prepared (see the attached file). "+
-					"Please ask the user: 'Does this look correct, and do you want me to proceed with %s?' "+
+				"PREVIEW READY: A YAML preview for the '%s' operation has been prepared (see the attached file). "+
+					"Show the preview to the user and ask: 'Does this look correct, and do you want me to proceed with %s?' "+
 					"If they say yes, call this tool again with the exact same arguments and 'confirmed': true.",
 				action, action),
 		}, 200 // Return success (200) so the AI processes the message
@@ -168,6 +166,13 @@ func createFileAction(ctx context.Context, args map[string]interface{}, business
 		if action == "patch" && businessLayer != nil && conf != nil && strings.TrimSpace(namespace) != "" && strings.TrimSpace(group) != "" && strings.TrimSpace(version) != "" && strings.TrimSpace(kind) != "" && strings.TrimSpace(object) != "" {
 			if merged, err := renderMergedPatchPreviewYAML(ctx, args, businessLayer, conf); err == nil && strings.TrimSpace(merged) != "" {
 				payload = merged
+			} else if yml, err := normalizeToYAML(data); err == nil {
+				payload = yml
+			}
+		} else if action == "create" && businessLayer != nil && conf != nil {
+			// For create, try to load existing object and merge LLM changes, or use template with defaults.
+			if yml, err := ensureCompleteCreateYAML(args, data, ctx, businessLayer, conf); err == nil && strings.TrimSpace(yml) != "" {
+				payload = yml
 			} else if yml, err := normalizeToYAML(data); err == nil {
 				payload = yml
 			}
@@ -261,6 +266,163 @@ func renderMergedPatchPreviewYAML(ctx context.Context, args map[string]interface
 		out += "\n"
 	}
 	return out, nil
+}
+
+// ensureCompleteCreateYAML ensures the YAML for CREATE has required Kubernetes metadata fields.
+// Strategy: Try to load existing object first. If exists, merge LLM changes onto it.
+// Otherwise, use template with required defaults.
+func ensureCompleteCreateYAML(args map[string]interface{}, data string, ctx context.Context, businessLayer *business.Layer, conf *config.Config) (string, error) {
+	cluster, _ := args["cluster"].(string)
+	namespace, _ := args["namespace"].(string)
+	group, _ := args["group"].(string)
+	version, _ := args["version"].(string)
+	kind, _ := args["kind"].(string)
+	object, _ := args["object"].(string)
+
+	if cluster == "" {
+		cluster = conf.KubernetesConfig.ClusterName
+	}
+
+	gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
+
+	// Parse the LLM-provided YAML
+	var llmData map[string]interface{}
+	if err := yaml.Unmarshal([]byte(data), &llmData); err != nil {
+		return "", err
+	}
+
+	// Check if the LLM provided a complete K8s document
+	hasAPIVersion := llmData["apiVersion"] != nil && llmData["apiVersion"] != ""
+	hasKind := llmData["kind"] != nil && llmData["kind"] != ""
+	hasMetadata := false
+	if meta, ok := llmData["metadata"].(map[string]interface{}); ok {
+		hasMetadata = meta["name"] != nil && meta["name"] != ""
+	}
+
+	if hasAPIVersion && hasKind && hasMetadata {
+		// LLM provided a complete document - use it as-is
+		return normalizeToYAML(data)
+	}
+
+	// Try to load existing object from cluster (same approach as PATCH preview)
+	var base map[string]interface{}
+	if details, err := businessLayer.IstioConfig.GetIstioConfigDetails(ctx, cluster, namespace, gvk, object); err == nil && details.Object != nil {
+		// Object exists - use it as the base for merging LLM changes
+		u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(details.Object)
+		if err == nil {
+			// Build a clean base (no metadata cruft like resourceVersion, uid, etc.)
+			base = map[string]interface{}{
+				"apiVersion": gvk.GroupVersion().String(),
+				"kind":       gvk.Kind,
+				"metadata": map[string]interface{}{
+					"name":      object,
+					"namespace": namespace,
+				},
+			}
+			if spec, ok := u["spec"]; ok {
+				base["spec"] = spec
+			}
+		}
+	}
+
+	// If no existing object, use template with required defaults
+	if base == nil {
+		base = buildResourceTemplate(gvk, object, namespace)
+	}
+
+	// Use JSON merge patch (same as PATCH preview) to merge LLM data onto base
+	baseJSON, err := json.Marshal(base)
+	if err != nil {
+		return "", err
+	}
+
+	patchJSON, err := yaml.YAMLToJSON([]byte(data))
+	if err != nil {
+		return "", err
+	}
+
+	mergedJSON, err := jsonpatch.MergePatch(baseJSON, patchJSON)
+	if err != nil {
+		return "", err
+	}
+
+	mergedYAML, err := yaml.JSONToYAML(mergedJSON)
+	if err != nil {
+		return "", err
+	}
+
+	out := string(mergedYAML)
+	if out != "" && !strings.HasSuffix(out, "\n") {
+		out += "\n"
+	}
+	return out, nil
+}
+
+// buildResourceTemplate creates a minimal valid template for each Istio resource type
+// with all required fields populated with sensible defaults.
+func buildResourceTemplate(gvk schema.GroupVersionKind, name, namespace string) map[string]interface{} {
+	base := map[string]interface{}{
+		"apiVersion": gvk.GroupVersion().String(),
+		"kind":       gvk.Kind,
+		"metadata": map[string]interface{}{
+			"name":      name,
+			"namespace": namespace,
+		},
+	}
+
+	// Add resource-specific required fields with complete, valid examples
+	switch {
+	case gvk.Group == "networking.istio.io" && gvk.Kind == "Gateway":
+		// Complete Gateway example with all required fields
+		base["spec"] = map[string]interface{}{
+			"selector": map[string]interface{}{
+				"istio": "ingressgateway",
+			},
+			"servers": []interface{}{
+				map[string]interface{}{
+					"port": map[string]interface{}{
+						"number":   80,
+						"name":     "http",
+						"protocol": "HTTP",
+					},
+					"hosts": []interface{}{"*"},
+				},
+			},
+		}
+	case gvk.Group == "networking.istio.io" && gvk.Kind == "VirtualService":
+		base["spec"] = map[string]interface{}{
+			"hosts": []interface{}{"*"},
+			"http": []interface{}{
+				map[string]interface{}{
+					"route": []interface{}{
+						map[string]interface{}{
+							"destination": map[string]interface{}{
+								"host": "example",
+							},
+						},
+					},
+				},
+			},
+		}
+	case gvk.Group == "networking.istio.io" && gvk.Kind == "DestinationRule":
+		base["spec"] = map[string]interface{}{
+			"host": "example",
+		}
+	case gvk.Group == "security.istio.io" && gvk.Kind == "AuthorizationPolicy":
+		base["spec"] = map[string]interface{}{
+			"action": "ALLOW",
+		}
+	case gvk.Group == "security.istio.io" && gvk.Kind == "PeerAuthentication":
+		base["spec"] = map[string]interface{}{
+			"mtls": map[string]interface{}{
+				"mode": "STRICT",
+			},
+		}
+	}
+	// For other resource types, just return the base (apiVersion, kind, metadata)
+	// The LLM should provide a complete spec for those.
+
+	return base
 }
 
 // validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
