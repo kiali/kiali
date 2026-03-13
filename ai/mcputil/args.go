@@ -96,3 +96,23 @@ func AsInt(v interface{}) int {
 		return 0
 	}
 }
+
+func AsIntOrDefault(args map[string]interface{}, defaultValue int, keys ...string) int {
+	for _, key := range keys {
+		if val, ok := args[key]; ok {
+			parsed := AsInt(val)
+			if parsed > 0 {
+				return parsed
+			}
+		}
+	}
+	return defaultValue
+}
+
+func GetStringOrDefault(args map[string]interface{}, defaultValue string, keys ...string) string {
+	value := GetStringArg(args, keys...)
+	if value != "" {
+		return value
+	}
+	return defaultValue
+}

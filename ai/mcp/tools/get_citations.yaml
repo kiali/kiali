@@ -3,7 +3,6 @@
   toolset: [mcp, default]
   input_schema:
     type: "object"
-    required: ["keywords"]
     properties:
       keywords:
         type: "string"
@@ -12,3 +11,4 @@
         type: "string"
         description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains."
         enum: ["kiali", "istio", "all", ""]
+    required: ["keywords"]

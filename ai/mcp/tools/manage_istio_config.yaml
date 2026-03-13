@@ -29,8 +29,13 @@
         description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required."
       object:
         type: "string"
+<<<<<<< HEAD
         description: "Name of the Istio object. Required for create, patch, and delete."
       data:
+=======
+        description: "Name of the Istio object. Required for patch,get,create and delete actions."
+      jsonData:
+>>>>>>> 54a326fe9 (Add tool get_metrics and align schemas and tests)
         type: "string"
         description: "Complete JSON or YAML data to apply or create the object. Required for create and patch actions. You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type. Arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element."
       data_format:

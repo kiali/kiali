@@ -3,16 +3,14 @@
   toolset: [default, mcp]
   input_schema:
     type: "object"
+    required: ["namespaces"]
     properties:
-      namespace:
-        type: "string"
-        description: "Optional single namespace to include in the graph (alternative to namespaces)"
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces to include in the graph"
       graphType:
         type: "string"
-        description: "Type of graph to return. Possible values: versionedApp, app, service, workload"
+        description: "Type of graph to return. Possible values: versionedApp, app, service, workload. Default is versionedApp."
         enum: ["versionedApp", "app", "service", "workload"]
       rateInterval:
         type: "string"

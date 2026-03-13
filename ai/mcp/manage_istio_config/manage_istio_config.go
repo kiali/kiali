@@ -133,18 +133,18 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 }
 
 func createFileAction(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) []get_action_ui.Action {
-	action, _ := args["action"].(string)
+	action, _ := mcputil.GetStringArg(args, "action")
 	operation := strings.ToLower(strings.TrimSpace(action))
 	if operation != "create" && operation != "patch" && operation != "delete" {
 		operation = ""
 	}
-	cluster, _ := args["cluster"].(string)
-	object, _ := args["object"].(string)
-	kind, _ := args["kind"].(string)
-	group, _ := args["group"].(string)
-	version, _ := args["version"].(string)
-	namespace, _ := args["namespace"].(string)
-	data, _ := args["data"].(string)
+	cluster, _ := mcputil.GetStringArg(args, "cluster")
+	object, _ := mcputil.GetStringArg(args, "object")
+	kind, _ := mcputil.GetStringArg(args, "kind")
+	group, _ := mcputil.GetStringArg(args, "group")
+	version, _ := mcputil.GetStringArg(args, "version")
+	namespace, _ := mcputil.GetStringArg(args, "namespace")
+	data, _ := mcputil.GetStringArg(args, "data")
 
 	// Get initials of Kind in lowercase
 	var initials string
@@ -466,8 +466,12 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 	version, _ := args["version"].(string)
 	kind, _ := args["kind"].(string)
 	object, _ := args["object"].(string)
+<<<<<<< HEAD
 	data, _ := args["data"].(string)
 	payload := data
+=======
+	jsonData, _ := args["jsonData"].(string)
+>>>>>>> 54a326fe9 (Add tool get_metrics and align schemas and tests)
 	switch action {
 	case "create", "patch", "delete":
 		if namespace == "" {

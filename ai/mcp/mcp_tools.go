@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_citations"
 	"github.com/kiali/kiali/ai/mcp/get_logs"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_graph"
+	"github.com/kiali/kiali/ai/mcp/get_metrics"
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
 	"github.com/kiali/kiali/ai/mcp/get_traces"
@@ -163,6 +164,8 @@ func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *bu
 		return get_action_ui.Execute(r, args, business, conf)
 	case "get_citations":
 		return get_citations.Execute(r, args, business, conf)
+	case "get_metrics":
+		return get_metrics.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
 	default:
 		return nil, http.StatusNotFound
 	}

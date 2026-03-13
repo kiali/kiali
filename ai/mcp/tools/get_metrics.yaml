@@ -1,0 +1,42 @@
+- name: "get_metrics"
+  description: "Returns metrics for the given resource type, namespaces and resource name."
+  input_schema:
+    type: "object"
+    properties:
+      resourceType:
+        type: "string"
+        description: "Type of resource to get metrics"
+        enum: ["service", "workload", "app"]
+      namespace:
+        type: "string"
+        description: "Namespace to get metrics from."
+      clusterName:
+        type: "string"
+        description: "Cluster name to get metrics from. Optional, defaults to the cluster name in the Kiali configuration (KubeConfig)."
+      resourceName:
+        type: "string"
+        description: "Name of the resource to get metrics for."
+      step:
+        type: "string"
+        description: "Step between data points in seconds (e.g., '15'). Optional, defaults to 15 seconds"
+      rateInterval:
+        type: "string"
+        description: "Rate interval for metrics (e.g., '1m', '5m'). Optional, defaults to '10m'"
+      direction:
+        type: "string"
+        description: "Traffic direction. Optional, defaults to 'outbound'"
+        enum: ["inbound", "outbound"]
+      reporter:
+        type: "string"
+        description: "Metrics reporter: 'source', 'destination', or 'both'. Optional, defaults to 'source'"
+        enum: ["source", "destination", "both"]
+      requestProtocol:
+        type: "string"
+        description: "Desired request protocol for the telemetry: For example, 'http' or 'grpc'. Optional"
+      quantiles:
+        type: "string"
+        description: "Comma-separated list of quantiles for histogram metrics (e.g., '0.5,0.95,0.99'). Optional. Default is 0.5,0.95,0.99,0.999."
+      byLabels:
+        type: "string"
+        description: "Comma-separated list of labels to group metrics by (e.g., 'source_workload,destination_service'). Optional"
+    required: ["resourceType", "namespace", "resourceName"]
