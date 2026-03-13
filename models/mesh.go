@@ -4,11 +4,14 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kiali/kiali/log"
 )
 
 const (
@@ -45,6 +48,64 @@ type Mesh struct {
 	ControlPlanes []ControlPlane
 	// External Kiali mesh management cluster
 	ExternalKiali *ExternalKialiInstance
+}
+
+// ControlPlaneForNamespace returns the control plane that manages the given namespace in the cluster.
+// Returns an error if no control plane has the namespace in its ManagedNamespaces, IstiodNamespace, or RootNamespace.
+func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) (*ControlPlane, error) {
+	for i := range m.ControlPlanes {
+		cp := &m.ControlPlanes[i]
+		// Control plane's own namespace and root namespace are always considered managed
+		if (cp.IstiodNamespace == namespace || cp.RootNamespace == namespace) && cp.Cluster != nil && cp.Cluster.Name == cluster {
+			return cp, nil
+		}
+		for _, ns := range cp.ManagedNamespaces {
+			if ns.Name == namespace && (ns.Cluster == "" || ns.Cluster == cluster) {
+				return cp, nil
+			}
+		}
+	}
+	err := fmt.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s", cluster, namespace)
+	log.Debug(err)
+	return nil, err
+}
+
+// BuildNamespaceToMeshConfig precomputes namespace -> MeshConfig for unique namespaces using the
+// already-fetched mesh directly. This avoids the MeshService -> discovery.Mesh() chain, which holds
+// an exclusive mutex; calling it per-resource in a loop would lock/unlock on every iteration,
+// serializing all callers. Instead we call ControlPlaneForNamespace once per unique namespace.
+// Namespaces without a matching control plane are silently skipped.
+func (m *Mesh) BuildNamespaceToMeshConfig(cluster string, namespaces []string) map[string]*MeshConfig {
+	if m == nil {
+		return make(map[string]*MeshConfig)
+	}
+	seen := make(map[string]struct{})
+	for _, ns := range namespaces {
+		seen[ns] = struct{}{}
+	}
+	result := make(map[string]*MeshConfig, len(seen))
+	for ns := range seen {
+		cp, err := m.ControlPlaneForNamespace(cluster, ns)
+		if cp == nil || err != nil {
+			continue
+		}
+		if cp.MeshConfig != nil {
+			result[ns] = cp.MeshConfig
+		}
+	}
+	return result
+}
+
+// BuildNamespaceToExportTo precomputes namespace -> DefaultServiceExportTo for unique namespaces.
+// Delegates to BuildNamespaceToMeshConfig and extracts the DefaultServiceExportTo field.
+// Namespaces without a matching control plane are silently skipped.
+func (m *Mesh) BuildNamespaceToExportTo(cluster string, namespaces []string) map[string][]string {
+	nsMeshConfigs := m.BuildNamespaceToMeshConfig(cluster, namespaces)
+	result := make(map[string][]string, len(nsMeshConfigs))
+	for ns, mc := range nsMeshConfigs {
+		result[ns] = mc.DefaultServiceExportTo
+	}
+	return result
 }
 
 // Tag maps a controlplane revision to a namespace label.

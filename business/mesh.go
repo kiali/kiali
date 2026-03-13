@@ -3,12 +3,9 @@ package business
 import (
 	"context"
 
-	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -57,28 +54,11 @@ func (in *MeshService) IsControlPlane(ctx context.Context, cluster, namespace st
 	return in.discovery.IsControlPlane(ctx, cluster, namespace)
 }
 
-// This returns the home cluster's mesh config, if possible. For external
-// Kiali deployments it returns the mesh config of a random control plane.
-// If no mesh config can be found, an empty mesh config is returned.
-// TODO: Remove when validations can read from a specific controlplane.
-func (in *MeshService) GetMeshConfig() *models.MeshConfig {
-	mesh, err := in.discovery.Mesh(context.TODO())
-	if err != nil {
-		log.Errorf("Error getting mesh config: %s", err)
-		return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
-	}
-
-	// TODO: Multi-primary support
-	for _, controlPlane := range mesh.ControlPlanes {
-		if controlPlane.Cluster.IsKialiHome {
-			return controlPlane.MeshConfig
-		}
-	}
-	if len(mesh.ControlPlanes) > 0 {
-		return mesh.ControlPlanes[0].MeshConfig
-	}
-
-	return &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
+// GetMesh returns the cached mesh. It wraps discovery.Mesh() so callers outside
+// the business package can fetch the mesh once and reuse it without repeated
+// mutex acquisition.
+func (in *MeshService) GetMesh(ctx context.Context) (*models.Mesh, error) {
+	return in.discovery.Mesh(ctx)
 }
 
 func (in *MeshService) Clusters() []models.KubeCluster {

@@ -93,10 +93,26 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 		return
 	}
 
+	// Fetch mesh once and precompute namespace -> DefaultServiceExportTo for all candidate
+	// (cluster, namespace) pairs. This avoids repeated discovery.Mesh() mutex acquisition inside the loop.
+	nsExportTo := make(map[string][]string)
+	mesh, err := globalInfo.Business.Mesh.GetMesh(ctx)
+	if err == nil && mesh != nil {
+		byCluster := make(map[string][]string)
+		for _, n := range candidates {
+			byCluster[n.Cluster] = append(byCluster[n.Cluster], n.Namespace)
+		}
+		for cluster, namespaces := range byCluster {
+			for ns, exportTo := range mesh.BuildNamespaceToExportTo(cluster, namespaces) {
+				nsExportTo[cluster+":"+ns] = exportTo
+			}
+		}
+	}
+
 	// Otherwise, if there are SE hosts defined for the cluster:namespace, check to see if they apply to the node
 	finalCandidates := []*graph.Node{}
 	for _, n := range candidates {
-		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, globalInfo) {
+		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, nsExportTo, globalInfo) {
 			finalCandidates = append(finalCandidates, n)
 		}
 	}
@@ -107,14 +123,17 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 }
 
 // loadServiceEntryHosts loads serviceEntry hosts for the provided cluster and namespace. Returns true if any are found, otherwise false.
-func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, globalInfo *GlobalInfo) bool {
+// nsExportTo is a precomputed map keyed by "cluster:namespace" -> DefaultServiceExportTo to avoid repeated discovery.Mesh() calls.
+func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, nsExportTo map[string][]string, globalInfo *GlobalInfo) bool {
 	if !a.isAccessible(cluster, namespace) {
 		return false
 	}
 
-	// get the cached hosts for this cluster:namespace, otherwise add to the cache
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
-	defaultServiceExportTo := globalInfo.Business.Mesh.GetMeshConfig().DefaultServiceExportTo
+	defaultServiceExportTo, ok := nsExportTo[cluster+":"+namespace]
+	if !ok {
+		return false
+	}
 	if !found {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
 			IncludeServiceEntries: true,

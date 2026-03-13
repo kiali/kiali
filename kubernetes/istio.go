@@ -202,6 +202,23 @@ type KubeServiceHosts struct {
 // Pass nil when the mesh config is unavailable (e.g. in unit tests) to treat
 // unannotated services as visible to all namespaces.
 func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaultExportTo []string) KubeServiceHosts {
+	var nsMap map[string][]string
+	if defaultExportTo != nil {
+		nsMap = make(map[string][]string)
+		for _, svc := range services {
+			if _, ok := nsMap[svc.Namespace]; !ok {
+				nsMap[svc.Namespace] = defaultExportTo
+			}
+		}
+	}
+	return NewKubeServiceHostsWithNamespaceDefaults(services, conf, nsMap)
+}
+
+// NewKubeServiceHostsWithNamespaceDefaults builds KubeServiceHosts using a precomputed map of
+// namespace -> DefaultServiceExportTo. Use this for multi-primary support: build the map once
+// for unique namespaces (O(namespaces)) instead of resolving per service (O(services)).
+// Pass nil for namespaceToExportTo to treat unannotated services as visible to all namespaces.
+func NewKubeServiceHostsWithNamespaceDefaults(services []core_v1.Service, conf *config.Config, namespaceToExportTo map[string][]string) KubeServiceHosts {
 	entries := make(map[string]*kubeServiceEntry, len(services)*3)
 	clusterDomain := conf.ExternalServices.Istio.IstioIdentityDomain
 
@@ -211,8 +228,10 @@ func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaul
 		}
 		if ann, ok := svc.Annotations[ExportToAnnotation]; ok {
 			entry.exportTo = parseExportToAnnotation(ann)
+		} else if namespaceToExportTo != nil {
+			entry.exportTo = namespaceToExportTo[svc.Namespace]
 		} else {
-			entry.exportTo = defaultExportTo
+			entry.exportTo = nil
 		}
 
 		fqdn := fmt.Sprintf("%s.%s.%s", svc.Name, svc.Namespace, clusterDomain)
