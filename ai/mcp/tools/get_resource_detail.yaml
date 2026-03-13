@@ -7,7 +7,7 @@
       resourceType:
         type: "string"
         description: "Type of resource to get list/details"
-        enum: ["service", "workload", "app", "istio"]
+        enum: ["service", "workload"]
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces"

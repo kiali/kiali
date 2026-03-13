@@ -2,6 +2,7 @@ package get_mesh_graph
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -44,89 +45,39 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
 	var toolArgs MeshGraphArgs
 	ctx := r.Context()
+	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
+	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
+	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "clusterName")
 	// Parse arguments: allow either `namespace` or `namespaces` (comma-separated string)
 	namespaces := make([]string, 0)
-	if v := mcputil.GetStringArg(args, "namespace"); v != "" {
-		namespaces = append(namespaces, v)
-	}
+	seen := map[string]struct{}{}
 	if v := mcputil.GetStringArg(args, "namespaces"); v != "" {
 		for _, ns := range strings.Split(v, ",") {
-			namespaces = append(namespaces, strings.TrimSpace(ns))
-		}
-	}
-	// Deduplicate namespaces if both provided
-	if len(namespaces) > 1 {
-		seen := map[string]struct{}{}
-		unique := make([]string, 0, len(namespaces))
-		for _, ns := range namespaces {
-			key := strings.TrimSpace(ns)
-			if key == "" {
+			ns_trimmed := strings.TrimSpace(ns)
+			if ns_trimmed == "" {
 				continue
 			}
-			if _, ok := seen[key]; ok {
+			if _, ok := seen[ns_trimmed]; ok {
 				continue
 			}
-			seen[key] = struct{}{}
-			unique = append(unique, key)
+			_, err := mcputil.CheckNamespaceAccess(r, conf, kialiCache, discovery, clientFactory, ns_trimmed, toolArgs.ClusterName)
+			if err != nil {
+				return err.Error(), http.StatusForbidden
+			}
+			seen[ns_trimmed] = struct{}{}
+			namespaces = append(namespaces, ns_trimmed)
 		}
-		namespaces = unique
 	}
-	toolArgs.Namespaces = namespaces
 
-	if v := mcputil.GetStringArg(args, "rateInterval"); v != "" {
-		toolArgs.RateInterval = strings.TrimSpace(v)
-	}
-	if v := mcputil.GetStringArg(args, "graphType"); v != "" {
-		toolArgs.GraphType = strings.TrimSpace(v)
-	}
+	toolArgs.Namespaces = namespaces
 
 	resp := GetMeshGraphResponse{
 		Errors: make(map[string]string),
 	}
-	// Default rate interval when not provided.
-	if toolArgs.RateInterval == "" {
-		toolArgs.RateInterval = DefaultRateInterval
-	}
-	// Default graph type when not provided.
-	if toolArgs.GraphType == "" {
-		toolArgs.GraphType = graph.GraphTypeVersionedApp
-	}
-
-	if v := mcputil.GetStringArg(args, "clusterName"); v != "" {
-		toolArgs.ClusterName = strings.TrimSpace(v)
-	} else {
-		toolArgs.ClusterName = conf.KubernetesConfig.ClusterName
-	}
-
-	// Always fetch namespaces first so we can default to all when none are provided.
-	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
-	if nsErr != nil {
-		resp.Errors["namespaces"] = nsErr.Error()
-	} else {
-		if raw, marshalErr := json.Marshal(nsList); marshalErr == nil {
-			resp.Namespaces = raw
-		} else {
-			resp.Errors["namespaces"] = marshalErr.Error()
-		}
-		// If caller didn't provide namespaces, default to all available.
-		if len(namespaces) == 0 {
-			toolArgs.Namespaces = make([]string, 0, len(nsList))
-			for _, ns := range nsList {
-				if ns.Name != "" {
-					toolArgs.Namespaces = append(toolArgs.Namespaces, ns.Name)
-				}
-			}
-		} else {
-			toolArgs.Namespaces = namespaces
-		}
-	}
 
 	// If we still have no namespaces to work with, return early with error info.
 	if len(toolArgs.Namespaces) == 0 {
-		if len(resp.Errors) == 0 {
-			resp.Errors["namespaces"] = "no namespaces available"
-		}
-		return resp, http.StatusBadRequest
+		return errors.New("namespaces argument is empty or there are no namespaces available or you don't have access to any of them"), http.StatusBadRequest
 	}
 
 	var wg sync.WaitGroup

@@ -61,7 +61,7 @@ func createFileAction(args map[string]interface{}) []get_action_ui.Action {
 	action, _ := args["action"].(string)
 	object, _ := args["object"].(string)
 	kind, _ := args["kind"].(string)
-	jsonData, _ := args["json_data"].(string)
+	jsonData, _ := args["jsonData"].(string)
 
 	// Get initials of Kind in lowercase
 	var initials string
@@ -99,7 +99,7 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 	version, _ := args["version"].(string)
 	kind, _ := args["kind"].(string)
 	object, _ := args["object"].(string)
-	jsonData, _ := args["json_data"].(string)
+	jsonData, _ := args["jsonData"].(string)
 	switch action {
 	case "list", "create", "patch", "get", "delete":
 		if action != "list" {

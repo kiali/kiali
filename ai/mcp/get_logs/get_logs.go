@@ -277,7 +277,7 @@ func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, s
 		out.ClusterName = conf.KubernetesConfig.ClusterName
 	}
 	if out.ClusterName == "" {
-		return out, "cluster_name is required", http.StatusBadRequest
+		return out, "clusterName is required", http.StatusBadRequest
 	}
 
 	return out, "", http.StatusOK
