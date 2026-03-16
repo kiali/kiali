@@ -1,12 +1,14 @@
 package get_traces
 
-// GetTracesResponse is a human-oriented summary of a trace intended for LLM consumption.
-// It is intentionally compact: the model can request the full trace via trace_id if needed.
+// GetTracesResponse is a human-oriented summary of traces intended for LLM consumption.
+// When searching by trace_id, returns a single trace summary.
+// When searching by service, returns multiple trace summaries (up to limit).
 type GetTracesResponse struct {
-	Found   bool          `json:"found"`
-	Query   GetTracesArgs `json:"query"`
-	Summary *TraceSummary `json:"summary,omitempty"`
-	TraceID string        `json:"trace_id,omitempty"`
+	Found   bool           `json:"found"`
+	Query   GetTracesArgs  `json:"query"`
+	Summary *TraceSummary  `json:"summary,omitempty"`  // Single trace (when trace_id provided)
+	Traces  []TraceSummary `json:"traces,omitempty"`   // Multiple traces (when searching by service)
+	TraceID string         `json:"trace_id,omitempty"` // Single trace ID (when trace_id provided)
 }
 
 // GetTracesArgs are the supported input parameters. This is echoed back in the response for transparency.
@@ -22,6 +24,7 @@ type GetTracesArgs struct {
 }
 
 type TraceSummary struct {
+	TraceID         string      `json:"trace_id,omitempty"`
 	TotalDurationMs float64     `json:"total_duration_ms"`
 	TotalSpans      int         `json:"total_spans"`
 	Bottlenecks     []SpanBrief `json:"bottlenecks,omitempty"`

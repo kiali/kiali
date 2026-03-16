@@ -24,57 +24,85 @@ func Execute(
 		return "Either trace_id or (namespace + service_name) is required", http.StatusBadRequest
 	}
 
-	traceID := parsed.TraceID
-	if traceID == "" {
-		q := buildServiceQuery(parsed, kialiInterface.Conf, true)
-		traces, err := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(kialiInterface.Request.Context(), parsed.Namespace, parsed.ServiceName, q)
+	ctx := r.Context()
+
+	// Case 1: Specific trace_id provided - return single trace with detailed summary
+	if parsed.TraceID != "" {
+		trace, err := businessLayer.Tracing.GetTraceDetail(ctx, parsed.TraceID)
 		if err != nil {
 			return err.Error(), http.StatusServiceUnavailable
 		}
-		// Some tracing backends/instrumentations don't set error=true even when HTTP 5xx exists.
-		// If user asked for error_only and got nothing, fallback to a broader search and filter locally.
-		if (traces == nil || len(traces.Data) == 0) && parsed.ErrorOnly {
-			q2 := buildServiceQuery(parsed, kialiInterface.Conf, false)
-			traces2, err2 := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(kialiInterface.Request.Context(), parsed.Namespace, parsed.ServiceName, q2)
-			if err2 != nil {
-				return err2.Error(), http.StatusServiceUnavailable
-			}
-			if traces2 != nil && len(traces2.Data) > 0 {
-				traces2.Data = filterTracesWithErrorIndicators(traces2.Data)
-				traces = traces2
-			}
+		if trace == nil {
+			return "Trace not found", http.StatusNotFound
 		}
 
-		if traces == nil || len(traces.Data) == 0 {
-			return GetTracesResponse{Found: false, Query: parsed}, http.StatusOK
+		// Some clients return an object with errors and no data when not found. Keep the 404 semantics.
+		if len(trace.Data.Spans) == 0 && len(trace.Errors) > 0 {
+			return "Trace not found", http.StatusNotFound
 		}
-		best := pickBestTrace(traces.Data, parsed.ErrorOnly)
-		traceID = string(best.TraceID)
+
+		summary := summarizeTrace(trace.Data, parsed.MaxSpans)
+		summary.TraceID = parsed.TraceID
+
+		return GetTracesResponse{
+			Found:   true,
+			Query:   parsed,
+			Summary: &summary,
+			TraceID: parsed.TraceID,
+		}, http.StatusOK
 	}
 
-	trace, err := kialiInterface.BusinessLayer.Tracing.GetTraceDetail(kialiInterface.Request.Context(), traceID)
+	// Case 2: Search by service - return multiple traces
+	q := buildServiceQuery(parsed, conf, true)
+	traces, err := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q)
+
 	if err != nil {
 		return err.Error(), http.StatusServiceUnavailable
 	}
-	if trace == nil {
-		return "Trace not found", http.StatusNotFound
+
+	// Some tracing backends/instrumentations don't set error=true even when HTTP 5xx exists.
+	// If user asked for error_only and got nothing, fallback to a broader search and filter locally.
+	if (traces == nil || len(traces.Data) == 0) && parsed.ErrorOnly {
+		q2 := buildServiceQuery(parsed, conf, false)
+		traces2, err2 := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q2)
+		if err2 != nil {
+			return err2.Error(), http.StatusServiceUnavailable
+		}
+		if traces2 != nil && len(traces2.Data) > 0 {
+			traces2.Data = filterTracesWithErrorIndicators(traces2.Data)
+			traces = traces2
+		}
 	}
 
-	// Some clients return an object with errors and no data when not found. Keep the 404 semantics.
-	if len(trace.Data.Spans) == 0 && len(trace.Errors) > 0 {
-		return "Trace not found", http.StatusNotFound
+	if traces == nil || len(traces.Data) == 0 {
+		return GetTracesResponse{Found: false, Query: parsed}, http.StatusOK
 	}
 
-	summary := summarizeTrace(trace.Data, parsed.MaxSpans)
-
-	resp := GetTracesResponse{
-		Found:   true,
-		Query:   parsed,
-		Summary: &summary,
-		TraceID: traceID,
+	// Fetch details and summarize each trace
+	summaries := make([]TraceSummary, 0, len(traces.Data))
+	for _, t := range traces.Data {
+		traceDetail, err := businessLayer.Tracing.GetTraceDetail(ctx, string(t.TraceID))
+		if err != nil || traceDetail == nil {
+			// Skip traces that can't be fetched
+			continue
+		}
+		if len(traceDetail.Data.Spans) == 0 {
+			continue
+		}
+		summary := summarizeTrace(traceDetail.Data, parsed.MaxSpans)
+		summary.TraceID = string(t.TraceID)
+		summaries = append(summaries, summary)
 	}
 
-	return resp, http.StatusOK
+	if len(summaries) == 0 {
+		return GetTracesResponse{Found: false, Query: parsed}, http.StatusOK
+	}
+
+	return GetTracesResponse{
+		Found:  true,
+		Query:  parsed,
+		Traces: summaries,
+	}, http.StatusOK
 }
 
 func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {

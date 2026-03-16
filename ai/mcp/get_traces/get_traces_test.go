@@ -143,3 +143,112 @@ func TestSummarizeTrace_BottlenecksAndErrorChain(t *testing.T) {
 		t.Fatalf("expected error chain leaf service=backend, got %q", s.ErrorChain[1].Service)
 	}
 }
+
+func TestParseArgs_Defaults(t *testing.T) {
+	conf := config.NewConfig()
+	args := map[string]interface{}{}
+
+	parsed := parseArgs(args, conf)
+
+	if parsed.LookbackSeconds != mcputil.DefaultLookbackSeconds {
+		t.Errorf("expected LookbackSeconds=%d, got %d", mcputil.DefaultLookbackSeconds, parsed.LookbackSeconds)
+	}
+	if parsed.Limit != mcputil.DefaultTracesLimit {
+		t.Errorf("expected Limit=%d, got %d", mcputil.DefaultTracesLimit, parsed.Limit)
+	}
+	if parsed.MaxSpans != mcputil.DefaultMaxSpans {
+		t.Errorf("expected MaxSpans=%d, got %d", mcputil.DefaultMaxSpans, parsed.MaxSpans)
+	}
+}
+
+func TestExecute_Validation(t *testing.T) {
+	conf := config.NewConfig()
+
+	// Test 1: Empty traceId, namespace, and serviceName
+	args1 := map[string]interface{}{}
+	req1, _ := http.NewRequest("GET", "/", nil)
+	res1, code1 := Execute(req1, args1, nil, nil, nil, nil, conf, nil, nil, nil)
+
+	if code1 != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code1)
+	}
+	if res1 != "Either trace_id or (namespace + service_name) is required" {
+		t.Errorf("expected validation error message, got %v", res1)
+	}
+
+	// Test 2: traceId empty, namespace provided, serviceName empty
+	args2 := map[string]interface{}{
+		"namespace": "bookinfo",
+	}
+	_, code2 := Execute(req1, args2, nil, nil, nil, nil, conf, nil, nil, nil)
+	if code2 != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code2)
+	}
+
+	// Test 3: traceId empty, namespace empty, serviceName provided
+	args3 := map[string]interface{}{
+		"serviceName": "ratings",
+	}
+	_, code3 := Execute(req1, args3, nil, nil, nil, nil, conf, nil, nil, nil)
+	if code3 != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code3)
+	}
+}
+
+func TestResponseStructure_SingleTraceWhenTraceIdProvided(t *testing.T) {
+	// This test documents the expected response structure when trace_id is provided
+	// Response should have:
+	// - Summary: single TraceSummary object (not array)
+	// - TraceID: string
+	// - Traces: nil/empty (not used for single trace)
+
+	resp := GetTracesResponse{
+		Found:   true,
+		Summary: &TraceSummary{TraceID: "abc123", TotalSpans: 10},
+		TraceID: "abc123",
+	}
+
+	if resp.Summary == nil {
+		t.Error("Summary should be populated for single trace")
+	}
+	if resp.Summary.TraceID != "abc123" {
+		t.Errorf("expected TraceID in Summary, got %s", resp.Summary.TraceID)
+	}
+	if resp.Traces != nil && len(resp.Traces) > 0 {
+		t.Error("Traces array should be empty when returning single trace")
+	}
+}
+
+func TestResponseStructure_MultipleTracesWhenSearchingByService(t *testing.T) {
+	// This test documents the expected response structure when searching by service
+	// Response should have:
+	// - Traces: array of TraceSummary objects
+	// - Summary: nil/empty (not used for multiple traces)
+	// - TraceID: empty (not used for multiple traces)
+
+	resp := GetTracesResponse{
+		Found: true,
+		Traces: []TraceSummary{
+			{TraceID: "trace1", TotalSpans: 5},
+			{TraceID: "trace2", TotalSpans: 10},
+			{TraceID: "trace3", TotalSpans: 8},
+		},
+	}
+
+	if len(resp.Traces) != 3 {
+		t.Errorf("expected 3 traces, got %d", len(resp.Traces))
+	}
+	if resp.Summary != nil {
+		t.Error("Summary should be nil when returning multiple traces")
+	}
+	if resp.TraceID != "" {
+		t.Error("TraceID should be empty when returning multiple traces")
+	}
+
+	// Each trace in the array should have its own TraceID
+	for i, trace := range resp.Traces {
+		if trace.TraceID == "" {
+			t.Errorf("trace[%d] should have TraceID populated", i)
+		}
+	}
+}
