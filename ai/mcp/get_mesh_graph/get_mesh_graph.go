@@ -45,52 +45,57 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
 	var toolArgs MeshGraphArgs
 	ctx := r.Context()
+
+	// Set defaults for optional parameters
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "clusterName")
-	// Parse arguments: allow either `namespace` or `namespaces` (comma-separated string)
+
+	// Parse namespaces: support both singular "namespace" and plural "namespaces"
 	namespaces := make([]string, 0)
+	var invalidAccess []string
 	seen := map[string]struct{}{}
-	if v := mcputil.GetStringArg(args, "namespaces"); v != "" {
-		for _, ns := range strings.Split(v, ",") {
+
+	// Collect namespace names from both possible parameters
+	namespacesArg := mcputil.GetStringArg(args, "namespaces", "namespace")
+
+	if namespacesArg != "" {
+		for _, ns := range strings.Split(namespacesArg, ",") {
 			ns_trimmed := strings.TrimSpace(ns)
 			if ns_trimmed == "" {
 				continue
 			}
+			// Skip duplicates
 			if _, ok := seen[ns_trimmed]; ok {
 				continue
 			}
+			seen[ns_trimmed] = struct{}{}
+
+			// Validate access to this namespace
 			_, err := mcputil.CheckNamespaceAccess(r, conf, kialiCache, discovery, clientFactory, ns_trimmed, toolArgs.ClusterName)
 			if err != nil {
-				return err.Error(), http.StatusForbidden
+				invalidAccess = append(invalidAccess, ns_trimmed)
+				continue
 			}
-			seen[ns_trimmed] = struct{}{}
 			namespaces = append(namespaces, ns_trimmed)
 		}
-	}
 
-	toolArgs.Namespaces = namespaces
+		// If all requested namespaces are inaccessible, return 403
+		if len(namespaces) == 0 && len(invalidAccess) > 0 {
+			return fmt.Sprintf("requested namespace(s) not accessible or do not exist: %s", strings.Join(invalidAccess, ", ")), http.StatusForbidden
+		}
+	}
 
 	resp := GetMeshGraphResponse{
 		Errors: make(map[string]string),
 	}
 
-	// Default rate interval when not provided.
-	if toolArgs.RateInterval == "" {
-		toolArgs.RateInterval = mcputil.DefaultRateInterval
-	}
-	// Default graph type when not provided.
-	if toolArgs.GraphType == "" {
-		toolArgs.GraphType = graph.GraphTypeVersionedApp
+	// Add warning if some namespaces were skipped
+	if len(invalidAccess) > 0 {
+		resp.Errors["namespaces"] = fmt.Sprintf("requested namespace(s) not accessible or do not exist (skipped): %s", strings.Join(invalidAccess, ", "))
 	}
 
-	if v := mcputil.GetStringArg(args, "clusterName"); v != "" {
-		toolArgs.ClusterName = strings.TrimSpace(v)
-	} else {
-		toolArgs.ClusterName = conf.KubernetesConfig.ClusterName
-	}
-
-	// Always fetch namespaces first so we can default to all when none are provided.
+	// Fetch all available namespaces for the response and for default behavior
 	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
 	if nsErr != nil {
 		return nsErr.Error(), http.StatusBadRequest
@@ -100,7 +105,8 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		return marshalErr.Error(), http.StatusBadRequest
 	}
 	resp.Namespaces = raw
-	// If caller didn't provide namespaces, default to all available.
+
+	// If no namespaces were provided, default to all available
 	if len(namespaces) == 0 {
 		toolArgs.Namespaces = make([]string, 0, len(nsList))
 		for _, ns := range nsList {
@@ -109,31 +115,10 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 			}
 		}
 	} else {
-		// Keep only requested namespaces that exist and are accessible.
-		validSet := make(map[string]struct{}, len(nsList))
-		for _, ns := range nsList {
-			validSet[ns.Name] = struct{}{}
-		}
-		var valid []string
-		var invalid []string
-		for _, name := range namespaces {
-			if _, ok := validSet[name]; ok {
-				valid = append(valid, name)
-			} else {
-				invalid = append(invalid, name)
-			}
-		}
-		toolArgs.Namespaces = valid
-		if len(invalid) > 0 {
-			skipMsg := fmt.Sprintf("requested namespace(s) not accessible or do not exist (skipped): %s", strings.Join(invalid, ", "))
-			if len(valid) == 0 {
-				return skipMsg, http.StatusForbidden
-			}
-			resp.Errors["namespaces"] = skipMsg
-		}
+		toolArgs.Namespaces = namespaces
 	}
 
-	// If we still have no namespaces to work with, return early with error info.
+	// If we still have no namespaces to work with, return early with error info
 	if len(toolArgs.Namespaces) == 0 {
 		return "no namespaces available", http.StatusBadRequest
 	}

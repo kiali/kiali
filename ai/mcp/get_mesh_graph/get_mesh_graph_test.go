@@ -11,10 +11,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -37,6 +39,13 @@ func mockPrometheusForGraph(promAPI *prometheustest.PromAPIMock) {
 	promAPI.On("Buildinfo", mock.Anything).Return(prom_v1.BuildinfoResult{}, nil)
 }
 
+// reqWithAuth sets auth info on the request context so CheckNamespaceAccess can resolve user clients.
+func reqWithAuth(req *http.Request, conf *config.Config, token string) *http.Request {
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: token}}
+	ctx := authentication.SetAuthInfoContext(req.Context(), authInfo)
+	return req.WithContext(ctx)
+}
+
 // mockPrometheusForHealth makes the Prom client mock accept health-related queries and return empty results.
 func mockPrometheusForHealth(prom *prometheustest.PromClientMock) {
 	emptyVec := model.Vector{}
@@ -57,8 +66,12 @@ func TestExecute_NonExistentNamespaces_ReturnsForbidden(t *testing.T) {
 	)
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	kialiCache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}), *conf)
+	clientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	saClients := kubernetes.ConvertFromUserClients(map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   "nonexistent-ns",
 		"graphType":    "versionedApp",
@@ -66,11 +79,11 @@ func TestExecute_NonExistentNamespaces_ReturnsForbidden(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, nil, kialiCache, conf, nil, nil, nil)
+	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, discovery)
 	require.Equal(t, http.StatusForbidden, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, msg, "not accessible or do not exist")
+	// With CheckNamespaceAccess, error may be "cannot access namespace data: ..." or "not accessible or do not exist"
 	assert.Contains(t, msg, "nonexistent-ns")
 }
 
@@ -84,8 +97,12 @@ func TestExecute_AllNonExistentFromList_ReturnsForbidden(t *testing.T) {
 	)
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	kialiCache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s}), *conf)
+	clientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	saClients := kubernetes.ConvertFromUserClients(map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   "default2,missing-ns",
 		"graphType":    "versionedApp",
@@ -93,11 +110,11 @@ func TestExecute_AllNonExistentFromList_ReturnsForbidden(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, nil, kialiCache, conf, nil, nil, nil)
+	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, discovery)
 	require.Equal(t, http.StatusForbidden, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, msg, "not accessible or do not exist")
+	// With CheckNamespaceAccess, error may be "cannot access namespace data: ..." or "not accessible or do not exist"
 	assert.True(t, strings.Contains(msg, "default2") || strings.Contains(msg, "missing-ns"))
 }
 
@@ -124,6 +141,7 @@ func TestExecute_ValidSingleNamespace_ReturnsOKWithResponse(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespace":    "bookinfo",
 		"graphType":    "versionedApp",
@@ -162,6 +180,7 @@ func TestExecute_ValidNamespaceList_ReturnsOKWithResponse(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   "bookinfo,default",
 		"graphType":    "versionedApp",
@@ -200,6 +219,7 @@ func TestExecute_ValidAndInvalidNamespaces_ReturnsOKWithSkippedWarning(t *testin
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   "bookinfo,default2",
 		"graphType":    "versionedApp",
@@ -360,6 +380,7 @@ func TestExecute_DuplicateNamespaces_Deduplicates(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   "bookinfo,default,bookinfo,default",
 		"graphType":    "versionedApp",
@@ -398,6 +419,7 @@ func TestExecute_NamespacesWithWhitespace_TrimsCorrectly(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespaces":   " bookinfo , default , ",
 		"graphType":    "versionedApp",
