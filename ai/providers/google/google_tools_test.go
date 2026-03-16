@@ -55,6 +55,31 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 	assert.Equal(t, expected, converted)
 }
 
+func TestConvertToolToGoogle_FromToolDefinition_GetCitations(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_citations.yaml"))
+	require.NoError(t, err)
+
+	converted := mapToGenAISchema(tool.GetDefinition())
+
+	expected := &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"keywords": {
+				Type:        genai.TypeString,
+				Description: "Comma-separated list of keywords to search for in the documents",
+			},
+			"domain": {
+				Type:        genai.TypeString,
+				Description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains.",
+				Enum:        []string{"kiali", "istio", "all"},
+			},
+		},
+		Required: []string{"keywords"},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
 func TestConvertToolToGoogle_FromToolDefinition_GetLogs(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_logs.yaml"))
 	require.NoError(t, err)
@@ -335,12 +360,12 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 		Properties: map[string]*genai.Schema{
 			"action": {
 				Type:        genai.TypeString,
-				Description: "Action to perform",
-				Enum:        []string{"list", "get", "create", "patch", "delete"},
+				Description: "Action to perform (write)",
+				Enum:        []string{"create", "patch", "delete"},
 			},
 			"confirmed": {
 				Type:        genai.TypeBoolean,
-				Description: "CRITICAL: For 'create', 'patch', or 'delete' actions. If 'true', the destructive action (create/patch/delete) is executed. If 'false' (or omitted) for create/patch, the tool will return a YAML PREVIEW of the object. You should display this YAML to the user and ask for confirmation before calling this tool again with confirmed=true.",
+				Description: "CRITICAL: If 'true', the destructive action (create/patch/delete) is executed. If 'false' (or omitted) for create/patch, the tool returns a YAML PREVIEW. Display it to the user and ask for confirmation before calling again with confirmed=true.",
 			},
 			"cluster": {
 				Type:        genai.TypeString,
@@ -348,27 +373,32 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 			},
 			"namespace": {
 				Type:        genai.TypeString,
-				Description: "Namespace containing the Istio object, if not provided, will return all istio objects across all namespaces in the cluster",
+				Description: "Namespace containing the Istio object. Required.",
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for create, patch, and get actions.",
+				Description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required.",
 			},
 			"version": {
 				Type:        genai.TypeString,
-				Description: "API version. IMPORTANT: Use 'v1' for VirtualService, DestinationRule, and Gateway. Do NOT use 'v1alpha3'.. Required for create, patch, and get actions.",
+				Description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required.",
 			},
 			"kind": {
 				Type:        genai.TypeString,
-				Description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for create, patch, and get actions.",
+				Description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required.",
 			},
 			"object": {
 				Type:        genai.TypeString,
-				Description: "Name of the Istio object. Required for patch,get,create and delete actions.",
+				Description: "Name of the Istio object. Required for create, patch, and delete.",
 			},
-			"jsonData": {
+			"data": {
 				Type:        genai.TypeString,
-				Description: "JSON data to apply or create the object. Required for create and patch actions.",
+				Description: "Complete JSON or YAML data to apply or create the object. Required for create and patch actions. You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type. Arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element.",
+			},
+			"data_format": {
+				Type:        genai.TypeString,
+				Description: "Optional hint for the payload format. Usually leave as 'auto'.",
+				Enum:        []string{"auto", "json", "yaml"},
 			},
 		},
 		Required: []string{"action", "confirmed"},
@@ -376,3 +406,53 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 
 	assert.Equal(t, expected, converted)
 }
+
+func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "manage_istio_config_read.yaml"))
+	require.NoError(t, err)
+
+	converted := mapToGenAISchema(tool.GetDefinition())
+
+	expected := &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"action": {
+				Type:        genai.TypeString,
+				Description: "Action to perform (read-only)",
+				Enum:        []string{"list", "get"},
+			},
+			"cluster": {
+				Type:        genai.TypeString,
+				Description: "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)",
+			},
+			"namespace": {
+				Type:        genai.TypeString,
+				Description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required.",
+			},
+			"group": {
+				Type:        genai.TypeString,
+				Description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
+			},
+			"version": {
+				Type:        genai.TypeString,
+				Description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+			},
+			"kind": {
+				Type:        genai.TypeString,
+				Description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for 'get' action.",
+			},
+			"object": {
+				Type:        genai.TypeString,
+				Description: "Name of the Istio object. Required for 'get' action.",
+			},
+			"service_name": {
+				Type:        genai.TypeString,
+				Description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action.",
+			},
+		},
+		Required: []string{"action"},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
