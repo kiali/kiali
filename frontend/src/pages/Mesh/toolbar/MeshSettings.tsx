@@ -64,8 +64,8 @@ const marginBottom = 20;
 const HOVER_DELAY_MS = 200;
 
 const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsProps) => {
-  const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const [hoveredRowId, setHoveredRowId] = React.useState<string | null>(null);
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const [popoverOpenRowId, setPopoverOpenRowId] = React.useState<string | null>(null);
   const hoverDelayTimer = React.useRef<number | null>(null);
   const { t } = useKialiTranslation();
@@ -91,6 +91,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
       window.clearTimeout(hoverDelayTimer.current);
       hoverDelayTimer.current = null;
     }
+
     // Don't hide the icon if a popover is currently open
     if (popoverOpenRowId === null) {
       setHoveredRowId(null);
@@ -116,21 +117,31 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         onMouseLeave={handleRowMouseLeave}
       >
         <div className={displayMenuRowContentStyle}>{content}</div>
-        {showIcon && (
-          <div className={displayMenuRowIconStyle}>
-            <Popover
-              position={PopoverPosition.right}
-              triggerAction="click"
-              headerContent={headerTitle}
-              bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
-              showClose={true}
-              onShown={() => setPopoverOpenRowId(rowId)}
-              onHidden={() => setPopoverOpenRowId(null)}
-            >
-              <KialiIcon.Help className={helpIconStyle} />
-            </Popover>
-          </div>
-        )}
+        <div
+          className={displayMenuRowIconStyle}
+          style={{
+            opacity: showIcon ? 1 : 0,
+            pointerEvents: showIcon ? 'auto' : 'none'
+          }}
+        >
+          <Popover
+            position={PopoverPosition.right}
+            triggerAction="click"
+            headerContent={headerTitle}
+            bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
+            showClose={true}
+            onShown={() => setPopoverOpenRowId(rowId)}
+            onHidden={() => setPopoverOpenRowId(null)}
+            onHide={() => {
+              // Only clear hoveredRowId if we're closing the popover for the same row
+              if (hoveredRowId === rowId) {
+                setHoveredRowId(null);
+              }
+            }}
+          >
+            <KialiIcon.Help className={helpIconStyle} />
+          </Popover>
+        </div>
       </div>
     );
   };
