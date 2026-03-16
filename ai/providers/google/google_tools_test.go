@@ -26,8 +26,8 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 			},
 			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "Type of resource to get a view of : list resources,details of a resource, traffic/mesh graph or overview of namespaces",
-				Enum:        []string{"service", "workload", "app", "istio", "graph", "overview"},
+				Description: "Type of resource to get a view of : list resources, details of a resource, traffic/mesh graph, overview dashboard, or namespaces list",
+				Enum:        []string{"service", "workload", "app", "istio", "graph", "overview", "namespaces"},
 			},
 			"resourceName": {
 				Type:        genai.TypeString,
