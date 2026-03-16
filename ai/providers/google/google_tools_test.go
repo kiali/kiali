@@ -455,4 +455,3 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 
 	assert.Equal(t, expected, converted)
 }
-
