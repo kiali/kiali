@@ -46,7 +46,7 @@ func Execute(
 	case "app":
 		params.App = resourceName
 	default:
-		return nil, http.StatusBadRequest
+		return "invalid resourceType: must be one of 'service', 'workload', 'app'", http.StatusBadRequest
 	}
 
 	if err := mcputil.ExtractIstioMetricsQueryParams(args, &params, namespaceInfo); err != nil {
