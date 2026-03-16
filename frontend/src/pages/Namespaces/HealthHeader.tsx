@@ -13,21 +13,22 @@ export const HealthPopoverBody: React.FC = () => {
         {t("A namespace's status is determined by its lowest-performing component.")}
       </div>
       <div style={{ marginBottom: '0.25rem' }}>
-        <strong>{t('Healthy')}</strong>: {t('All components are healthy.')}
+        <strong>{t('Healthy')}</strong>: {t('All components operating normally and meeting all performance targets.')}
       </div>
       <div>
-        <strong>{t('Unhealthy')}</strong>: {t('One or more components are unhealthy.')}
+        <strong>{t('Unhealthy')}</strong>: {t('One or more components are not working as expected.')}
       </div>
       <div>{t('Including:')}</div>
       <ul style={{ margin: '0.125rem 0 0.25rem 1.25rem', paddingLeft: 0, listStyleType: 'disc' }}>
         <li>
-          <strong>{t('Failure')}</strong>: {t('One or more components have errors.')}
+          <strong>{t('Failure')}</strong>:{' '}
+          {t('The component is in critical state and failing to meet basic requirements.')}
         </li>
         <li>
-          <strong>{t('Degraded')}</strong>: {t('One or more components have warnings.')}
+          <strong>{t('Degraded')}</strong>: {t('The component is functional but performing below optimal thresholds.')}
         </li>
         <li>
-          <strong>{t('Not ready')}</strong>: {t('One or more components are not ready.')}
+          <strong>{t('Not ready')}</strong>: {t('The component exists but cannot serve traffic yet.')}
         </li>
       </ul>
       <div>
