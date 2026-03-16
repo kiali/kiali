@@ -50,12 +50,11 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "clusterName")
 
-	// Parse arguments: allow either `namespace` or `namespaces` (comma-separated string)
+	// Parse namespaces argument (comma-separated string)
 	namespaces := make([]string, 0)
 	var invalidAccess []string
 	seen := map[string]struct{}{}
 
-	// Collect namespace names from both possible parameters
 	namespacesArg := mcputil.GetStringArg(args, "namespaces")
 
 	if namespacesArg != "" {

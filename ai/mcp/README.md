@@ -139,8 +139,7 @@ Retrieves service mesh topology, health status, and aggregated metrics for names
 **Purpose**: Get high-level mesh overview, health summaries, and topology data for analysis and troubleshooting.
 
 **Parameters**:
-- `namespace` (string, optional): Single namespace to include (alternative to `namespaces`).
-- `namespaces` (string, optional): Comma-separated list of namespaces (e.g., `"bookinfo,default"`).
+- `namespaces` (string, required): Comma-separated list of namespaces (e.g., `"bookinfo,default"`).
 - `rateInterval` (string, optional): Time interval for metrics (e.g., `"10m"`, `"5m"`, `"1h"`). Default is `"10m"`.
 - `graphType` (string, optional): Graph aggregation type - `"versionedApp"`, `"app"`, `"service"`, or `"workload"`. Default is `"versionedApp"`.
 - `clusterName` (string, optional): Cluster name. Defaults to the cluster in Kiali configuration.
@@ -159,7 +158,7 @@ Retrieves service mesh topology, health status, and aggregated metrics for names
 **Example 1**: Get mesh overview for bookinfo namespace
 ```json
 {
-  "namespace": "bookinfo",
+  "namespaces": "bookinfo",
   "rateInterval": "10m",
   "graphType": "versionedApp"
 }

@@ -143,7 +143,7 @@ func TestExecute_ValidSingleNamespace_ReturnsOKWithResponse(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
 	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
-		"namespace":    "bookinfo",
+		"namespaces":   "bookinfo",
 		"graphType":    "versionedApp",
 		"rateInterval": "10m",
 		"clusterName":  "Kubernetes",
@@ -302,7 +302,7 @@ func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
 	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
-		"namespace":    "bookinfo",
+		"namespaces":   "bookinfo",
 		"graphType":    "workload",
 		"rateInterval": "5m",
 		"clusterName":  "Kubernetes",
@@ -342,7 +342,7 @@ func TestExecute_ServiceGraphType_FetchesServiceHealth(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
 	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
-		"namespace":    "bookinfo",
+		"namespaces":   "bookinfo",
 		"graphType":    "service",
 		"rateInterval": "15m",
 		"clusterName":  "Kubernetes",
@@ -457,7 +457,7 @@ func TestExecute_CustomRateInterval_UsesProvidedValue(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
 	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
-		"namespace":    "bookinfo",
+		"namespaces":   "bookinfo",
 		"graphType":    "versionedApp",
 		"rateInterval": "30m",
 		"clusterName":  "Kubernetes",
@@ -494,7 +494,7 @@ func TestExecute_DefaultRateInterval_UsesDefault(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
 	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
-		"namespace":   "bookinfo",
+		"namespaces":  "bookinfo",
 		"graphType":   "versionedApp",
 		"clusterName": "Kubernetes",
 		// No rateInterval provided
