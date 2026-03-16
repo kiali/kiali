@@ -56,7 +56,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	seen := map[string]struct{}{}
 
 	// Collect namespace names from both possible parameters
-	namespacesArg := mcputil.GetStringArg(args, "namespaces", "namespace")
+	namespacesArg := mcputil.GetStringArg(args, "namespaces")
 
 	if namespacesArg != "" {
 		for _, ns := range strings.Split(namespacesArg, ",") {
