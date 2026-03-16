@@ -322,15 +322,15 @@ func TestConvertToolToGoogle_FromToolDefinition_GetTraces(t *testing.T) {
 		Properties: map[string]*genai.Schema{
 			"traceId": {
 				Type:        genai.TypeString,
-				Description: "Trace ID to fetch and summarize. If provided, namespace/service_name are ignored.",
+				Description: "Trace ID to fetch and summarize. If provided, namespace/serviceName are ignored and returns a single trace.",
 			},
 			"namespace": {
 				Type:        genai.TypeString,
-				Description: "Kubernetes namespace of the service (required when trace_id is not provided).",
+				Description: "Kubernetes namespace of the service (required when traceId is not provided).",
 			},
 			"serviceName": {
 				Type:        genai.TypeString,
-				Description: "Service name to search traces for (required when trace_id is not provided).",
+				Description: "Service name to search traces for (required when traceId is not provided). Returns multiple traces up to limit.",
 			},
 			"errorOnly": {
 				Type:        genai.TypeBoolean,
@@ -342,11 +342,11 @@ func TestConvertToolToGoogle_FromToolDefinition_GetTraces(t *testing.T) {
 			},
 			"lookbackSeconds": {
 				Type:        genai.TypeInteger,
-				Description: "How far back to search when using service_name. Default 600 (10m).",
+				Description: "How far back to search when using serviceName. Default 600 (10m).",
 			},
 			"limit": {
 				Type:        genai.TypeInteger,
-				Description: "Max number of traces to consider when searching by service_name. Default 10.",
+				Description: "Maximum number of traces to return when searching by serviceName. Default 10.",
 			},
 			"maxSpans": {
 				Type:        genai.TypeInteger,

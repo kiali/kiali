@@ -448,21 +448,21 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetTraces(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_traces",
-				Description: openai.String("Fetches a distributed trace (Jaeger/Tempo) by trace_id or searches by service_name (optionally only error traces) and summarizes bottlenecks and error spans."),
+				Description: openai.String("Fetches distributed traces from Jaeger/Tempo. When traceId is provided, returns a single trace with detailed summary. When searching by serviceName, returns multiple traces (up to limit) with summaries of bottlenecks and error spans."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"properties": map[string]interface{}{
 						"traceId": map[string]interface{}{
 							"type":        "string",
-							"description": "Trace ID to fetch and summarize. If provided, namespace/service_name are ignored.",
+							"description": "Trace ID to fetch and summarize. If provided, namespace/serviceName are ignored and returns a single trace.",
 						},
 						"namespace": map[string]interface{}{
 							"type":        "string",
-							"description": "Kubernetes namespace of the service (required when trace_id is not provided).",
+							"description": "Kubernetes namespace of the service (required when traceId is not provided).",
 						},
 						"serviceName": map[string]interface{}{
 							"type":        "string",
-							"description": "Service name to search traces for (required when trace_id is not provided).",
+							"description": "Service name to search traces for (required when traceId is not provided). Returns multiple traces up to limit.",
 						},
 						"errorOnly": map[string]interface{}{
 							"type":        "boolean",
@@ -474,11 +474,11 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetTraces(t *testing.T) {
 						},
 						"lookbackSeconds": map[string]interface{}{
 							"type":        "integer",
-							"description": "How far back to search when using service_name. Default 600 (10m).",
+							"description": "How far back to search when using serviceName. Default 600 (10m).",
 						},
 						"limit": map[string]interface{}{
 							"type":        "integer",
-							"description": "Max number of traces to consider when searching by service_name. Default 10.",
+							"description": "Maximum number of traces to return when searching by serviceName. Default 10.",
 						},
 						"maxSpans": map[string]interface{}{
 							"type":        "integer",
