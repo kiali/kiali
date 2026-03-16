@@ -46,12 +46,11 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	var toolArgs MeshGraphArgs
 	ctx := r.Context()
 
-	// Set defaults for optional parameters
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "clusterName")
 
-	// Parse namespaces: support both singular "namespace" and plural "namespaces"
+	// Parse arguments: allow either `namespace` or `namespaces` (comma-separated string)
 	namespaces := make([]string, 0)
 	var invalidAccess []string
 	seen := map[string]struct{}{}
@@ -95,7 +94,14 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		resp.Errors["namespaces"] = fmt.Sprintf("requested namespace(s) not accessible or do not exist (skipped): %s", strings.Join(invalidAccess, ", "))
 	}
 
-	// Fetch all available namespaces for the response and for default behavior
+	// Validate that at least one namespace was provided
+	if len(namespaces) == 0 {
+		return "namespaces parameter is required", http.StatusBadRequest
+	}
+
+	toolArgs.Namespaces = namespaces
+
+	// Fetch all available namespaces for the response
 	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
 	if nsErr != nil {
 		return nsErr.Error(), http.StatusBadRequest
@@ -105,23 +111,6 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		return marshalErr.Error(), http.StatusBadRequest
 	}
 	resp.Namespaces = raw
-
-	// If no namespaces were provided, default to all available
-	if len(namespaces) == 0 {
-		toolArgs.Namespaces = make([]string, 0, len(nsList))
-		for _, ns := range nsList {
-			if ns.Name != "" {
-				toolArgs.Namespaces = append(toolArgs.Namespaces, ns.Name)
-			}
-		}
-	} else {
-		toolArgs.Namespaces = namespaces
-	}
-
-	// If we still have no namespaces to work with, return early with error info
-	if len(toolArgs.Namespaces) == 0 {
-		return "no namespaces available", http.StatusBadRequest
-	}
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex

@@ -238,7 +238,7 @@ func TestExecute_ValidAndInvalidNamespaces_ReturnsOKWithSkippedWarning(t *testin
 	assert.Contains(t, resp.Errors["namespaces"], "default2")
 }
 
-func TestExecute_NoNamespacesProvided_UsesAllAvailable(t *testing.T) {
+func TestExecute_NoNamespacesProvided_ReturnsError(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
@@ -269,14 +269,10 @@ func TestExecute_NoNamespacesProvided_UsesAllAvailable(t *testing.T) {
 	}
 
 	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
-	require.Equal(t, http.StatusOK, code)
-	resp, ok := res.(GetMeshGraphResponse)
+	require.Equal(t, http.StatusBadRequest, code)
+	errMsg, ok := res.(string)
 	require.True(t, ok)
-	require.NotNil(t, resp.Namespaces)
-	assert.NotEmpty(t, resp.Namespaces)
-	// Should have processed all 3 namespaces
-	assert.NotNil(t, resp.Graph)
-	assert.NotNil(t, resp.MeshStatus)
+	assert.Contains(t, errMsg, "namespaces parameter is required")
 }
 
 func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
@@ -304,6 +300,7 @@ func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespace":    "bookinfo",
 		"graphType":    "workload",
@@ -343,6 +340,7 @@ func TestExecute_ServiceGraphType_FetchesServiceHealth(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespace":    "bookinfo",
 		"graphType":    "service",
@@ -457,6 +455,7 @@ func TestExecute_CustomRateInterval_UsesProvidedValue(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespace":    "bookinfo",
 		"graphType":    "versionedApp",
@@ -493,6 +492,7 @@ func TestExecute_DefaultRateInterval_UsesDefault(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 
 	req := httptest.NewRequest(http.MethodPost, "http://kiali/api/chat/mcp/get_mesh_graph", nil)
+	req = reqWithAuth(req, conf, k8s.GetToken())
 	args := map[string]interface{}{
 		"namespace":   "bookinfo",
 		"graphType":   "versionedApp",
