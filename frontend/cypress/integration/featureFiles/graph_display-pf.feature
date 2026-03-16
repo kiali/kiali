@@ -14,17 +14,20 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
   @error-rates-app
+  @lpinterop
   Scenario: Graph no namespaces
     When user graphs "" namespaces
     Then user sees no namespace selected
 
   # gamma will only show nodes when idle-nodes is enabled
   @error-rates-app
+  @lpinterop
   Scenario: Graph gamma namespaces
     When user graphs "gamma" namespaces
     Then user sees empty graph
 
   @error-rates-app
+  @lpinterop
   Scenario: User enables idle nodes
     When user opens display menu
     And user "enables" "idle nodes" option
@@ -32,11 +35,13 @@ Feature: Kiali Graph page - Display menu
     And idle nodes "appear" in the graph
 
   @error-rates-app
+  @lpinterop
   Scenario: User disables idle nodes
     When user "disables" "idle nodes" option
     Then user sees empty graph
 
   @error-rates-app
+  @lpinterop
   Scenario: Graph alpha and beta namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace

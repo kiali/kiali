@@ -10,6 +10,7 @@ Feature: Kiali Workloads page
     And user is at the "workloads" list page
 
   @bookinfo-app
+  @lpinterop
   Scenario: See workloads table with correct info
     When user selects the "bookinfo" namespace
     Then user sees a table with headings
@@ -97,6 +98,7 @@ Feature: Kiali Workloads page
     And table length should be 1
 
   @bookinfo-app
+  @lpinterop
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
@@ -118,7 +120,6 @@ Feature: Kiali Workloads page
     And the health status of the workload should be "Failure"
 
   @error-rates-app
-  @skip-lpinterop
   Scenario: The degraded status of a workload is reported in the list of workloads
     Given a degraded workload in the mesh
     When user selects the "alpha" namespace

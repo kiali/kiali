@@ -13,16 +13,19 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @bookinfo-app
+  @lpinterop
   Scenario: See details for workload
     Then user sees details information for workload
     But no cluster badge for the "workload" should be visible
 
   @bookinfo-app
+  @lpinterop
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
+  @lpinterop
   Scenario: See workload Inbound Metrics
     Then user sees workload inbound metrics information
 
