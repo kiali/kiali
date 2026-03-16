@@ -2,7 +2,7 @@ package get_mesh_graph
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -75,9 +75,67 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		Errors: make(map[string]string),
 	}
 
+	// Default rate interval when not provided.
+	if toolArgs.RateInterval == "" {
+		toolArgs.RateInterval = mcputil.DefaultRateInterval
+	}
+	// Default graph type when not provided.
+	if toolArgs.GraphType == "" {
+		toolArgs.GraphType = graph.GraphTypeVersionedApp
+	}
+
+	if v := mcputil.GetStringArg(args, "clusterName"); v != "" {
+		toolArgs.ClusterName = strings.TrimSpace(v)
+	} else {
+		toolArgs.ClusterName = conf.KubernetesConfig.ClusterName
+	}
+
+	// Always fetch namespaces first so we can default to all when none are provided.
+	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
+	if nsErr != nil {
+		return nsErr.Error(), http.StatusBadRequest
+	}
+	raw, marshalErr := json.Marshal(nsList)
+	if marshalErr != nil {
+		return marshalErr.Error(), http.StatusBadRequest
+	}
+	resp.Namespaces = raw
+	// If caller didn't provide namespaces, default to all available.
+	if len(namespaces) == 0 {
+		toolArgs.Namespaces = make([]string, 0, len(nsList))
+		for _, ns := range nsList {
+			if ns.Name != "" {
+				toolArgs.Namespaces = append(toolArgs.Namespaces, ns.Name)
+			}
+		}
+	} else {
+		// Keep only requested namespaces that exist and are accessible.
+		validSet := make(map[string]struct{}, len(nsList))
+		for _, ns := range nsList {
+			validSet[ns.Name] = struct{}{}
+		}
+		var valid []string
+		var invalid []string
+		for _, name := range namespaces {
+			if _, ok := validSet[name]; ok {
+				valid = append(valid, name)
+			} else {
+				invalid = append(invalid, name)
+			}
+		}
+		toolArgs.Namespaces = valid
+		if len(invalid) > 0 {
+			skipMsg := fmt.Sprintf("requested namespace(s) not accessible or do not exist (skipped): %s", strings.Join(invalid, ", "))
+			if len(valid) == 0 {
+				return skipMsg, http.StatusForbidden
+			}
+			resp.Errors["namespaces"] = skipMsg
+		}
+	}
+
 	// If we still have no namespaces to work with, return early with error info.
 	if len(toolArgs.Namespaces) == 0 {
-		return errors.New("namespaces argument is empty or there are no namespaces available or you don't have access to any of them"), http.StatusBadRequest
+		return "no namespaces available", http.StatusBadRequest
 	}
 
 	var wg sync.WaitGroup
