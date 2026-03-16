@@ -150,66 +150,6 @@ func buildServiceQuery(args GetTracesArgs, conf *config.Config, includeErrorTag 
 	return q
 }
 
-func pickBestTrace(traces []jaegerModels.Trace, errorOnly bool) jaegerModels.Trace {
-	if len(traces) == 0 {
-		return jaegerModels.Trace{}
-	}
-
-	candidates := traces
-	if !errorOnly {
-		withErr := make([]jaegerModels.Trace, 0, len(traces))
-		for _, t := range traces {
-			if estimateErrorSpans(t) > 0 {
-				withErr = append(withErr, t)
-			}
-		}
-		if len(withErr) > 0 {
-			candidates = withErr
-		}
-	}
-
-	best := candidates[0]
-	bestDur := estimateTraceDurationMicros(best)
-	for _, t := range candidates[1:] {
-		d := estimateTraceDurationMicros(t)
-		if d > bestDur {
-			best = t
-			bestDur = d
-		}
-	}
-	return best
-}
-
-func estimateTraceDurationMicros(trace jaegerModels.Trace) uint64 {
-	if len(trace.Spans) == 0 {
-		return 0
-	}
-	minStart := trace.Spans[0].StartTime
-	maxEnd := trace.Spans[0].StartTime + trace.Spans[0].Duration
-	for _, s := range trace.Spans[1:] {
-		if s.StartTime < minStart {
-			minStart = s.StartTime
-		}
-		if end := s.StartTime + s.Duration; end > maxEnd {
-			maxEnd = end
-		}
-	}
-	if maxEnd < minStart {
-		return 0
-	}
-	return maxEnd - minStart
-}
-
-func estimateErrorSpans(trace jaegerModels.Trace) int {
-	count := 0
-	for _, s := range trace.Spans {
-		if isErrorSpan(&s) {
-			count++
-		}
-	}
-	return count
-}
-
 func filterTracesWithErrorIndicators(traces []jaegerModels.Trace) []jaegerModels.Trace {
 	out := make([]jaegerModels.Trace, 0, len(traces))
 	for _, t := range traces {
