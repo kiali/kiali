@@ -53,6 +53,8 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	switch resourceType {
 	case "graph":
 		actions = append(actions, getGraphAction(namespacesValue, graph, graphType))
+	case "namespaces":
+		actions = append(actions, getNamespacesAction())
 	case "overview":
 		actions = append(actions, getOverviewAction())
 	case "istio":
@@ -92,6 +94,14 @@ func getGraphAction(namespaces string, graph string, graphType string) Action {
 		Title:   "View Traffic Graph" + namespacesLabel,
 		Kind:    ActionKindNavigation,
 		Payload: "/graph/namespaces?namespaces=" + namespaces + "&graphType=" + graphType,
+	}
+}
+
+func getNamespacesAction() Action {
+	return Action{
+		Title:   "View Namespaces",
+		Kind:    ActionKindNavigation,
+		Payload: "/namespaces",
 	}
 }
 

@@ -1,0 +1,9 @@
+- name: "get_overview_stats"
+  description: "Returns a comprehensive overview of the service mesh including: cluster health (total/healthy/unhealthy), mesh control planes (istiod name, revision, status, version, managed clusters), data plane health (healthy/degraded/failure/NA, ambient vs sidecar counts), Istio config validation counts (valid/warnings/errors), application health summary with RPS in/out and no-traffic counts, top services by error rate, and top services by P95 latency. Use this tool when the user asks about overall mesh health, clusters, control planes, data planes, applications, service error rates, service latencies, or overview status."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."

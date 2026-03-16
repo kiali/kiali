@@ -31,8 +31,8 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 						},
 						"resourceType": map[string]interface{}{
 							"type":        "string",
-							"description": "Type of resource to get a view of : list resources,details of a resource, traffic/mesh graph or overview of namespaces",
-							"enum":        []interface{}{"service", "workload", "app", "istio", "graph", "overview"},
+							"description": "Type of resource to get a view of : list resources, details of a resource, traffic/mesh graph, overview dashboard, or namespaces list",
+							"enum":        []interface{}{"service", "workload", "app", "istio", "graph", "overview", "namespaces"},
 						},
 						"resourceName": map[string]interface{}{
 							"type":        "string",

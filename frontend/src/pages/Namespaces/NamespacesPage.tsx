@@ -263,7 +263,14 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
 
-            setAIContext(this.props.dispatch, `Namespaces list: ${this.state.namespaces.map(ns => ns.name).join(',')}`);
+            const nsCount = this.state.namespaces.length;
+            const cpCount = this.state.namespaces.filter(ns => ns.isControlPlane).length;
+            setAIContext(
+              this.props.dispatch,
+              `Namespaces page showing ${nsCount} namespaces (${cpCount} control plane, ${
+                nsCount - cpCount
+              } data plane): ${this.state.namespaces.map(ns => ns.name).join(',')}`
+            );
             this.fetchControlPlanes();
           }
         );

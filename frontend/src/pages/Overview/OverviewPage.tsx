@@ -50,7 +50,10 @@ export const OverviewPage: React.FC = () => {
   const loaded = useManualRefreshState();
 
   React.useEffect(() => {
-    setAIContext(dispatch, 'Overview page');
+    setAIContext(
+      dispatch,
+      'Overview page showing clusters, control plane components, data plane namespaces (healthy/degraded/failure, ambient vs sidecar), Istio config validation (valid/warnings/errors), application health donut with RPS in/out, and top services by latency and error rate'
+    );
   }, [dispatch]);
 
   const durationLabel = serverConfig.healthConfig?.compute?.duration ?? '5m';

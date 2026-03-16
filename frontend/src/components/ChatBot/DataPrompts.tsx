@@ -8,6 +8,13 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       query: 'Check my graph'
     }
   ],
+  namespaces: [
+    {
+      title: 'Namespace Status',
+      message: 'Show me the status of my namespaces including control planes and data planes',
+      query: 'What is the status of my namespaces?'
+    }
+  ],
   overview: [
     {
       title: 'Analyze Overview',

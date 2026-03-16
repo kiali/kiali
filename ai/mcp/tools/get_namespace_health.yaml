@@ -1,0 +1,12 @@
+- name: "get_namespace_health"
+  description: "Returns detailed namespace information including type (control plane or data plane), ambient mode, Istio revision, labels, mTLS status, Istio config validations (valid/warnings/errors), and health status summary for apps, services, and workloads. Use this tool when the user asks about namespaces, control planes, data planes, namespace health, mTLS, Istio config per namespace, or namespace status."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to check. If empty, returns info for all accessible namespaces."
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
