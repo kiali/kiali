@@ -163,7 +163,7 @@ func TestResponseStructure_SingleTraceWhenTraceIdProvided(t *testing.T) {
 	if resp.Summary.TraceID != "abc123" {
 		t.Errorf("expected TraceID in Summary, got %s", resp.Summary.TraceID)
 	}
-	if resp.Traces != nil && len(resp.Traces) > 0 {
+	if len(resp.Traces) > 0 {
 		t.Error("Traces array should be empty when returning single trace")
 	}
 }
