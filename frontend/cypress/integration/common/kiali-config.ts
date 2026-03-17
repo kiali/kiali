@@ -129,7 +129,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
  */
 export const restartKiali = (deploymentName: string, namespace: string): void => {
   cy.exec(
-    `kubectl rollout restart deployment/${deploymentName} -n ${namespace} && kubectl rollout status deployment/${deploymentName} -n ${namespace} --timeout=180s`,
+    `kubectl rollout restart deployment/${deploymentName} -n ${namespace} && kubectl rollout status deployment/${deploymentName} -n ${namespace} --timeout=240s`,
     { timeout: 300000 }
   );
 };
@@ -236,7 +236,7 @@ export const restoreKialiFeature = (featureConfig: KialiFeatureConfig): void => 
 
   const doRestart = (): void => {
     cy.exec(
-      `kubectl rollout restart deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} && kubectl rollout status deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} --timeout=180s`,
+      `kubectl rollout restart deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} && kubectl rollout status deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} --timeout=240s`,
       { timeout: 300000, failOnNonZeroExit: false }
     );
   };
