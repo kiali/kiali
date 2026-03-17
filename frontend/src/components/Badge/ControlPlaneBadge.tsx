@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Label, Tooltip } from '@patternfly/react-core';
-import { AmbientBadge } from './AmbientBadge';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { useKialiTheme } from 'utils/ThemeUtils';
@@ -20,11 +19,7 @@ const badgeTooltipLinkStyle = kialiStyle({
   }
 });
 
-interface ControlPlaneBadgeProps {
-  isAmbient?: boolean;
-}
-
-export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = (props: ControlPlaneBadgeProps) => {
+export const ControlPlaneBadge: React.FC = () => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
@@ -55,10 +50,6 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = (props: Contr
           {t('CP')}
         </Label>
       </Tooltip>
-
-      {props.isAmbient && (
-        <AmbientBadge tooltip={t('Istio Ambient ztunnel detected in the Control plane')}></AmbientBadge>
-      )}
     </>
   );
 };

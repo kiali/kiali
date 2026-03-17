@@ -486,13 +486,7 @@ export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
   return (
     <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      {ns.isControlPlane ? (
-        <ControlPlaneBadge isAmbient={ns.isAmbient} />
-      ) : isDataPlane ? (
-        <DataPlaneBadge />
-      ) : (
-        <NotPartOfMeshBadge />
-      )}
+      {ns.isControlPlane ? <ControlPlaneBadge /> : isDataPlane ? <DataPlaneBadge /> : <NotPartOfMeshBadge />}
     </Td>
   );
 };
