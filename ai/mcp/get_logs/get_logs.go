@@ -14,15 +14,9 @@ import (
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
 
@@ -45,22 +39,14 @@ type podLogEntry struct {
 }
 
 func Execute(
-	r *http.Request,
+	kialiInterface *mcputil.KialiInterface,
 	args map[string]interface{},
-	businessLayer *business.Layer,
-	_ prometheus.ClientInterface,
-	_ kubernetes.ClientFactory,
-	_ cache.KialiCache,
-	conf *config.Config,
-	_ *grafana.Service,
-	_ *perses.Service,
-	_ *istio.Discovery,
 ) (interface{}, int) {
 	if config.IsFeatureDisabled(config.FeatureLogView) {
 		return "Pod Logs access is disabled", http.StatusForbidden
 	}
 
-	parsed, errMsg, code := parseArgs(args, conf)
+	parsed, errMsg, code := parseArgs(args, kialiInterface.Conf)
 	if code != http.StatusOK {
 		return errMsg, code
 	}
@@ -86,8 +72,8 @@ func Execute(
 
 	if workloadName != "" {
 		res, err := mcputil.ResolvePodFromWorkloadOrPod(
-			r.Context(),
-			businessLayer,
+			kialiInterface.Request.Context(),
+			kialiInterface.BusinessLayer,
 			parsed.ClusterName,
 			parsed.Namespace,
 			workloadName,
@@ -111,7 +97,7 @@ func Execute(
 	}
 
 	if podModel == nil {
-		podModelResolved, err := businessLayer.Workload.GetPod(parsed.ClusterName, parsed.Namespace, podName)
+		podModelResolved, err := kialiInterface.BusinessLayer.Workload.GetPod(parsed.ClusterName, parsed.Namespace, podName)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				return fmt.Sprintf("failed to get pod %s log in namespace %s: %v", podName, parsed.Namespace, err), http.StatusNotFound
@@ -165,7 +151,7 @@ func Execute(
 
 		rec := httptest.NewRecorder()
 		// `workload` and `service` are only needed for waypoint/ztunnel log types. For app logs they are ignored.
-		if err := businessLayer.Workload.StreamPodLogs(r.Context(), parsed.ClusterName, parsed.Namespace, workloadName, "", parsed.Pod, opts, rec); err != nil {
+		if err := kialiInterface.BusinessLayer.Workload.StreamPodLogs(kialiInterface.Request.Context(), parsed.ClusterName, parsed.Namespace, workloadName, "", parsed.Pod, opts, rec); err != nil {
 			// Match kubernetes-mcp-server error style.
 			if k8serrors.IsNotFound(err) {
 				return fmt.Sprintf("failed to get pod %s log in namespace %s: %v", parsed.Pod, parsed.Namespace, err), http.StatusNotFound

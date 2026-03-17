@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -79,7 +80,7 @@ func TestExecute_NonExistentNamespaces_ReturnsForbidden(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: nil, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusForbidden, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -110,7 +111,7 @@ func TestExecute_AllNonExistentFromList_ReturnsForbidden(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: nil, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusForbidden, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -149,7 +150,7 @@ func TestExecute_ValidSingleNamespace_ReturnsOKWithResponse(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -188,7 +189,7 @@ func TestExecute_ValidNamespaceList_ReturnsOKWithResponse(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -227,7 +228,7 @@ func TestExecute_ValidAndInvalidNamespaces_ReturnsOKWithSkippedWarning(t *testin
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -268,7 +269,7 @@ func TestExecute_NoNamespacesProvided_ReturnsError(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	errMsg, ok := res.(string)
 	require.True(t, ok)
@@ -308,7 +309,7 @@ func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -348,7 +349,7 @@ func TestExecute_ServiceGraphType_FetchesServiceHealth(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -386,7 +387,7 @@ func TestExecute_DuplicateNamespaces_Deduplicates(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -425,7 +426,7 @@ func TestExecute_NamespacesWithWhitespace_TrimsCorrectly(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -463,7 +464,7 @@ func TestExecute_CustomRateInterval_UsesProvidedValue(t *testing.T) {
 		"clusterName":  "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)
@@ -500,7 +501,7 @@ func TestExecute_DefaultRateInterval_UsesDefault(t *testing.T) {
 		// No rateInterval provided
 	}
 
-	res, code := Execute(req, args, businessLayer, promClient, clientFactory, kialiCache, conf, nil, nil, discovery)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
 	require.Equal(t, http.StatusOK, code)
 	resp, ok := res.(CompactGraphResponse)
 	require.True(t, ok)

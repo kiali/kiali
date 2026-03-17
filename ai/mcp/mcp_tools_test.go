@@ -90,7 +90,7 @@ func TestToolDef_Call_UnknownTool(t *testing.T) {
 		Description: "Unknown tool for testing",
 	}
 
-	result, code := tool.Call(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	result, code := tool.Call(nil, nil)
 
 	assert.Nil(t, result, "Unknown tool should return nil")
 	assert.Equal(t, 404, code, "Unknown tool should return 404")

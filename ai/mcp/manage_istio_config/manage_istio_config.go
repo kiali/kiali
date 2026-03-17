@@ -22,8 +22,7 @@ import (
 )
 
 // ExecuteReadOnly runs read-only actions (list, get) for Istio config. Use this for the manage_istio_config_read tool.
-func ExecuteReadOnly(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
-	ctx := r.Context()
+func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	action, _ := args["action"].(string)
 	if err := validateReadOnlyIstioConfigInput(args); err != nil {
 		return err.Error(), http.StatusBadRequest
@@ -42,16 +41,15 @@ func ExecuteReadOnly(r *http.Request, args map[string]interface{}, businessLayer
 	}
 	switch action {
 	case "list":
-		return IstioList(ctx, args, businessLayer, conf)
+		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	case "get":
-		return IstioGet(ctx, args, businessLayer, conf)
+		return IstioGet(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of list, get", action), http.StatusBadRequest
 	}
 }
 
-func Execute(r *http.Request, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
-	ctx := r.Context()
+func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	action, _ := args["action"].(string)
 	confirmed, _ := args["confirmed"].(bool)
 	if action == "list" || action == "get" {
@@ -75,7 +73,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 	}
 
 	if action == "create" || action == "patch" {
-		previewActions := createFileAction(ctx, args, businessLayer, conf)
+		previewActions := createFileAction(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		if !confirmed {
 			// Return the editor action. The UI can apply directly from the editor.
 			return struct {
@@ -96,9 +94,9 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 		var res interface{}
 		var status int
 		if action == "create" {
-			res, status = IstioCreate(r, args, businessLayer, conf)
+			res, status = IstioCreate(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		} else {
-			res, status = IstioPatch(r, args, businessLayer, conf)
+			res, status = IstioPatch(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		}
 		return struct {
 			Actions []get_action_ui.Action `json:"actions"`
@@ -110,7 +108,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 	}
 
 	if action == "delete" && !confirmed {
-		previewActions := createFileAction(ctx, args, businessLayer, conf)
+		previewActions := createFileAction(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		// Return a response that forces the AI to stop and talk to the user
 		return struct {
 			Actions []get_action_ui.Action `json:"actions"`
@@ -127,7 +125,7 @@ func Execute(r *http.Request, args map[string]interface{}, businessLayer *busine
 
 	switch action {
 	case "delete":
-		return IstioDelete(r, args, businessLayer, conf)
+		return IstioDelete(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action), http.StatusBadRequest
 	}

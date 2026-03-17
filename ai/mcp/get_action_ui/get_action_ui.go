@@ -8,7 +8,6 @@ import (
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
@@ -27,7 +26,7 @@ type GetActionUIResponse struct {
 	Errors  string   `json:"errors,omitempty"`
 }
 
-func Execute(r *http.Request, args map[string]interface{}, business *business.Layer, conf *config.Config) (interface{}, int) {
+func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	namespaces := mcputil.GetStringArg(args, "namespaces")
 	resourceType := mcputil.GetStringArg(args, "resourceType")
 	resourceName := mcputil.GetStringArg(args, "resourceName")
@@ -38,7 +37,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 
 	namespacesValue := namespaces
 	if namespaces == "all" || namespaces == "" {
-		nsList, nsErr := business.Namespace.GetClusterNamespaces(r.Context(), clusterName)
+		nsList, nsErr := kialiInterface.BusinessLayer.Namespace.GetClusterNamespaces(kialiInterface.Request.Context(), clusterName)
 		if nsErr != nil {
 			return GetActionUIResponse{
 				Errors: nsErr.Error(),
@@ -58,7 +57,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	case "namespaces":
 		actions = append(actions, getNamespacesAction())
 	case "istio":
-		action, err := getIstioAction(r.Context(), business, clusterName, namespacesValue, resourceName)
+		action, err := getIstioAction(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, clusterName, namespacesValue, resourceName)
 		if err != nil {
 			log.Warningf("Error getting Istio action: %s", err)
 		} else {

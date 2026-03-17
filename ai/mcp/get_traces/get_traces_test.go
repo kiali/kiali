@@ -32,7 +32,7 @@ func TestExecute_Validation(t *testing.T) {
 	// Test 1: Empty traceId, namespace, and serviceName
 	args1 := map[string]interface{}{}
 	req1, _ := http.NewRequest("GET", "/", nil)
-	res1, code1 := Execute(req1, args1, nil, nil, nil, nil, conf, nil, nil, nil)
+	res1, code1 := Execute(&mcputil.KialiInterface{Request: req1, Conf: conf}, args1)
 
 	if code1 != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code1)
@@ -45,7 +45,7 @@ func TestExecute_Validation(t *testing.T) {
 	args1b := map[string]interface{}{
 		"namespace": "bookinfo",
 	}
-	_, code1b := Execute(req1, args1b, nil, nil, nil, nil, conf, nil, nil, nil)
+	_, code1b := Execute(&mcputil.KialiInterface{Request: req1, Conf: conf}, args1b)
 	if code1b != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code1b)
 	}
@@ -54,7 +54,7 @@ func TestExecute_Validation(t *testing.T) {
 	args1c := map[string]interface{}{
 		"service_name": "ratings",
 	}
-	_, code1c := Execute(req1, args1c, nil, nil, nil, nil, conf, nil, nil, nil)
+	_, code1c := Execute(&mcputil.KialiInterface{Request: req1, Conf: conf}, args1c)
 	if code1c != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code1c)
 	}

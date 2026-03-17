@@ -8,21 +8,13 @@ import (
 
 	openai "github.com/openai/openai-go/v3"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
-func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
+func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
 	if req.ConversationID == "" {
 		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
 	}
@@ -30,8 +22,8 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 	if req.Query == "" {
 		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
-	ctx := r.Context()
-	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
+	ctx := kialiInterface.Request.Context()
+	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
 	p.InitializeConversation(&conversation, req)
 
 	// Create a temporary conversation with context for the API call
@@ -99,7 +91,7 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
 		log.Debugf("[Chat AI] OpenAI provider tool calls (iter=%d): %v", iter, toolNames)
 
-		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}

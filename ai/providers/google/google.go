@@ -9,22 +9,14 @@ import (
 	"google.golang.org/genai"
 
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
-func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache, aiStore types.AIStore, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (*types.AIResponse, int) {
-	ctx := r.Context()
+func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
+	ctx := kialiInterface.Request.Context()
 	if p.client == nil {
 		client, err := genai.NewClient(ctx, &p.config)
 		if err != nil {
@@ -32,7 +24,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		p.client = client
 	}
-	ptr, sessionID, conversation := providers.GetStoreConversation(r, req, aiStore)
+	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
 	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
 	p.InitializeConversation(&conversation, req)
@@ -87,7 +79,7 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 
 		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
 		log.Debugf("Google provider tool names (iter=%d): %v", iter, toolNames)
-		toolResults := providers.ExecuteToolCallsInParallel(ctx, r, tools, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}

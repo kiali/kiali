@@ -265,8 +265,8 @@ func TestConvertToolToGoogle_FromToolDefinition_GetPodPerformance(t *testing.T) 
 	assert.Equal(t, expected, converted)
 }
 
-func TestConvertToolToGoogle_FromToolDefinition_GetResourceDetail(t *testing.T) {
-	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_resource_detail.yaml"))
+func TestConvertToolToGoogle_FromToolDefinition_ListOrGetResources(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_or_get_resources.yaml"))
 	require.NoError(t, err)
 
 	converted := mapToGenAISchema(tool.GetDefinition())
@@ -276,20 +276,20 @@ func TestConvertToolToGoogle_FromToolDefinition_GetResourceDetail(t *testing.T) 
 		Properties: map[string]*genai.Schema{
 			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "Type of resource to get list/details",
-				Enum:        []string{"service", "workload"},
+				Description: "The type of resource to query.",
+				Enum:        []string{"service", "workload", "app", "namespace"},
 			},
 			"namespaces": {
 				Type:        genai.TypeString,
-				Description: "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces",
+				Description: "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
 			},
 			"resourceName": {
 				Type:        genai.TypeString,
-				Description: "Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
+				Description: "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
 			},
 			"clusterName": {
 				Type:        genai.TypeString,
-				Description: "Name of the cluster to get resources from. If not provided, will use the cluster name in the Kiali configuration (KubeConfig).",
+				Description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
 			},
 		},
 		Required: []string{"resourceType"},

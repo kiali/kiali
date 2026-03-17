@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -30,7 +31,7 @@ func TestExecute(t *testing.T) {
 			"resourceType": "overview",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -44,7 +45,7 @@ func TestExecute(t *testing.T) {
 			"graph":        "mesh",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -58,7 +59,7 @@ func TestExecute(t *testing.T) {
 			"namespaces":   "bookinfo",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -72,7 +73,7 @@ func TestExecute(t *testing.T) {
 			"namespaces":   "bookinfo",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -88,7 +89,7 @@ func TestExecute(t *testing.T) {
 			"tab":          "logs",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -102,7 +103,7 @@ func TestExecute(t *testing.T) {
 			"namespaces":   "istio-system",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -118,7 +119,7 @@ func TestExecute(t *testing.T) {
 			"tab":          "in_metrics",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -132,7 +133,7 @@ func TestExecute(t *testing.T) {
 			"namespaces":   "all",
 		}
 		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		assert.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
@@ -172,7 +173,7 @@ func TestActionRoutesMatchFrontend(t *testing.T) {
 	}
 
 	for _, args := range testCases {
-		res, status := Execute(req, args, businessLayer, conf)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
 		require.Equal(t, http.StatusOK, status)
 		resp := res.(GetActionUIResponse)
 		require.NotEmpty(t, resp.Actions)

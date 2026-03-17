@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcputil"
 	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -23,6 +24,35 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 )
+
+func GetKialiInterface(
+	r *http.Request,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	perses *perses.Service,
+	discovery *istio.Discovery,
+) (*mcputil.KialiInterface, error) {
+	businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+	if err != nil {
+		return nil, err
+	}
+	return &mcputil.KialiInterface{
+		Request:       r,
+		BusinessLayer: businessLayer,
+		Prom:          prom,
+		ClientFactory: clientFactory,
+		KialiCache:    kialiCache,
+		Conf:          conf,
+		Graphana:      grafana,
+		Perses:        perses,
+		Discovery:     discovery,
+	}, nil
+}
 
 func ChatMCP(
 	conf *config.Config,
@@ -57,12 +87,12 @@ func ChatMCP(
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
-		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 			return
 		}
-		mcpResult, code := tool.Call(r, args, businessLayer, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		mcpResult, code := tool.Call(kialiInterface, args)
 		if code != http.StatusOK {
 			RespondWithError(w, code, fmt.Sprintf("Tool %s returned error: %v", toolName, mcpResult))
 			return
@@ -107,11 +137,6 @@ func ChatAI(
 		} else {
 			req.Username = "anonymous"
 		}
-		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-			return
-		}
 
 		provider, err := ai.NewAIProvider(conf, providerName, modelName)
 		if err != nil {
@@ -122,7 +147,12 @@ func ChatAI(
 		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
 		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
 		defer requestTimer.ObserveDuration()
-		resp, code := provider.SendChat(r, req, businessLayer, prom, clientFactory, kialiCache, aiStore, conf, grafana, perses, discovery)
+		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
+		}
+		resp, code := provider.SendChat(kialiInterface, req, aiStore)
 
 		if resp == nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI response is empty")

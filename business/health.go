@@ -11,9 +11,12 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
+	"github.com/kiali/kiali/util"
 )
 
 func NewHealthService(businessLayer *Layer, conf *config.Config, kialiCache cache.KialiCache, prom prometheus.ClientInterface, userClients map[string]kubernetes.UserClientInterface) HealthService {
@@ -182,6 +185,125 @@ func (in *HealthService) GetWorkloadHealth(ctx context.Context, namespace, clust
 	}
 
 	return health, err
+}
+
+// GetNamespaceHealth returns a health for all resources in given Namespace (thus, it fetches data from K8S and Prometheus)
+func (in *HealthService) GetNamespaceHealth(ctx context.Context, nss []string, cluster string, healthTypes []string, rateInterval string) (models.ClustersNamespaceHealth, string, error) {
+	healthCachedHeader := "false"
+	result := models.ClustersNamespaceHealth{
+		AppHealth:       map[string]*models.NamespaceAppHealth{},
+		NamespaceHealth: map[string]*models.NamespaceHealthAggregate{},
+		ServiceHealth:   map[string]*models.NamespaceServiceHealth{},
+		WorkloadHealth:  map[string]*models.NamespaceWorkloadHealth{},
+	}
+	healthCacheEnabled := in.conf.KialiInternal.HealthCache.Enabled
+	if healthCacheEnabled {
+		// Serve from cache. One GetHealth per namespace (cache key is cluster+namespace; value has all types).
+		allFromCache := true
+		for _, ns := range nss {
+			metricType := internalmetrics.HealthTypeNamespace
+			if len(healthTypes) == 1 {
+				metricType = healthTypeToMetricType(healthTypes[0])
+			}
+			cachedData, found := in.kialiCache.GetHealth(cluster, ns, metricType)
+			if !found {
+				allFromCache = false
+				log.Debugf("health cache miss for cluster=%s namespace=%s, returning unknown status", cluster, ns)
+				for _, ht := range healthTypes {
+					switch ht {
+					case "app":
+						result.AppHealth[ns] = &models.NamespaceAppHealth{}
+					case "service":
+						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+					case "workload":
+						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+					}
+				}
+				continue
+			}
+			for _, ht := range healthTypes {
+				switch ht {
+				case "app":
+					result.AppHealth[ns] = &cachedData.AppHealth
+				case "service":
+					result.ServiceHealth[ns] = &cachedData.ServiceHealth
+				case "workload":
+					result.WorkloadHealth[ns] = &cachedData.WorkloadHealth
+				}
+			}
+		}
+
+		// Set header to indicate data came from cache
+		if allFromCache && len(nss) > 0 {
+			healthCachedHeader = "true"
+		}
+	} else {
+
+		queryTime := util.Clock.Now()
+
+		for _, ns := range nss {
+			criteria := NamespaceHealthCriteria{
+				Cluster:        cluster,
+				IncludeMetrics: true,
+				Namespace:      ns,
+				QueryTime:      queryTime,
+				RateInterval:   rateInterval,
+			}
+
+			for _, ht := range healthTypes {
+				switch ht {
+				case "app":
+					health, err := in.GetNamespaceAppHealth(ctx, criteria)
+					if err != nil {
+						log.Warningf("Error computing app health for namespace %s: %v", ns, err)
+						result.AppHealth[ns] = &models.NamespaceAppHealth{}
+					} else {
+						result.AppHealth[ns] = &health
+					}
+				case "service":
+					health, err := in.GetNamespaceServiceHealth(ctx, criteria)
+					if err != nil {
+						log.Warningf("Error computing service health for namespace %s: %v", ns, err)
+						result.ServiceHealth[ns] = &models.NamespaceServiceHealth{}
+					} else {
+						result.ServiceHealth[ns] = &health
+					}
+				case "workload":
+					health, err := in.GetNamespaceWorkloadHealth(ctx, criteria)
+					if err != nil {
+						log.Warningf("Error computing workload health for namespace %s: %v", ns, err)
+						result.WorkloadHealth[ns] = &models.NamespaceWorkloadHealth{}
+					} else {
+						result.WorkloadHealth[ns] = &health
+					}
+				}
+			}
+		}
+	}
+
+	// Derive pre-aggregated namespace status for each namespace (from cached or on-demand data)
+	for _, ns := range nss {
+		result.NamespaceHealth[ns] = models.AggregateNamespaceStatus(
+			result.AppHealth[ns],
+			result.ServiceHealth[ns],
+			result.WorkloadHealth[ns],
+		)
+	}
+	return result, healthCachedHeader, nil
+
+}
+
+func healthTypeToMetricType(healthType string) internalmetrics.HealthType {
+	switch healthType {
+	case "app":
+		return internalmetrics.HealthTypeApp
+	case "service":
+		return internalmetrics.HealthTypeService
+	case "workload":
+		return internalmetrics.HealthTypeWorkload
+	default:
+		return internalmetrics.HealthTypeApp
+	}
 }
 
 // GetNamespaceAppHealth returns a health for all apps in given Namespace (thus, it fetches data from K8S and Prometheus)

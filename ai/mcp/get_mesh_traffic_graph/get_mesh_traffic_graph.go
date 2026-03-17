@@ -9,17 +9,12 @@ import (
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
 	graphApi "github.com/kiali/kiali/graph/api"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/mesh"
 	meshApi "github.com/kiali/kiali/mesh/api"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
@@ -41,14 +36,13 @@ type GetMeshGraphResponse struct {
 	Errors            map[string]string  `json:"errors,omitempty"`
 }
 
-func Execute(r *http.Request, args map[string]interface{}, business *business.Layer,
-	prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
+func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	var toolArgs MeshGraphArgs
-	ctx := r.Context()
+	ctx := kialiInterface.Request.Context()
 
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
-	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "clusterName")
+	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 
 	// Parse namespaces argument (comma-separated string)
 	namespaces := make([]string, 0)
@@ -70,7 +64,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 			seen[ns_trimmed] = struct{}{}
 
 			// Validate access to this namespace
-			_, err := mcputil.CheckNamespaceAccess(r, conf, kialiCache, discovery, clientFactory, ns_trimmed, toolArgs.ClusterName)
+			_, err := mcputil.CheckNamespaceAccess(kialiInterface.Request, kialiInterface.Conf, kialiInterface.KialiCache, kialiInterface.Discovery, kialiInterface.ClientFactory, ns_trimmed, toolArgs.ClusterName)
 			if err != nil {
 				invalidAccess = append(invalidAccess, ns_trimmed)
 				continue
@@ -101,7 +95,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	toolArgs.Namespaces = namespaces
 
 	// Fetch all available namespaces for the response
-	nsList, nsErr := business.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
+	nsList, nsErr := kialiInterface.BusinessLayer.Namespace.GetClusterNamespaces(ctx, toolArgs.ClusterName)
 	if nsErr != nil {
 		return nsErr.Error(), http.StatusBadRequest
 	}
@@ -118,7 +112,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	// Health
 	go func() {
 		defer wg.Done()
-		payload, code, errMsg := getHealth(r, conf, business, prom, toolArgs)
+		payload, code, errMsg := getHealth(kialiInterface.Request, kialiInterface.Conf, kialiInterface.BusinessLayer, kialiInterface.Prom, toolArgs)
 		if code != http.StatusOK {
 			mu.Lock()
 			resp.Errors["health"] = errMsg
@@ -143,9 +137,9 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 			q.Set("duration", toolArgs.RateInterval)
 		}
 		graphReq.URL.RawQuery = q.Encode()
-		graphOpts := graph.NewOptions(graphReq, business, conf)
+		graphOpts := graph.NewOptions(graphReq, kialiInterface.BusinessLayer, kialiInterface.Conf)
 
-		code, payload, _ := graphApi.GraphNamespaces(ctx, business, prom, graphOpts)
+		code, payload, _ := graphApi.GraphNamespaces(ctx, kialiInterface.BusinessLayer, kialiInterface.Prom, graphOpts)
 		if code != http.StatusOK {
 			mu.Lock()
 			resp.Errors["graph"] = payload.(string)
@@ -174,9 +168,9 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 			mq.Set("namespaces", strings.Join(toolArgs.Namespaces, ","))
 		}
 		meshReq.URL.RawQuery = mq.Encode()
-		meshOpts := mesh.NewOptions(meshReq, &business.Namespace)
+		meshOpts := mesh.NewOptions(meshReq, &kialiInterface.BusinessLayer.Namespace)
 
-		code, payload := meshApi.GraphMesh(ctx, business, meshOpts, clientFactory, kialiCache, conf, grafana, perses, prom, discovery)
+		code, payload := meshApi.GraphMesh(ctx, kialiInterface.BusinessLayer, meshOpts, kialiInterface.ClientFactory, kialiInterface.KialiCache, kialiInterface.Conf, kialiInterface.Graphana, kialiInterface.Perses, kialiInterface.Prom, kialiInterface.Discovery)
 
 		if code != http.StatusOK {
 			mu.Lock()

@@ -17,6 +17,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -97,7 +98,7 @@ func TestExecute_MissingNamespace_ReturnsBadRequest(t *testing.T) {
 		"clusterName": "Kubernetes",
 	}
 
-	res, code := Execute(req, args, nil, nil, nil, nil, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -116,7 +117,7 @@ func TestExecute_MissingName_ReturnsBadRequest(t *testing.T) {
 		"clusterName": "Kubernetes",
 	}
 
-	res, code := Execute(req, args, nil, nil, nil, nil, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -135,7 +136,7 @@ func TestExecute_ClusterNameRequired_ReturnsBadRequest(t *testing.T) {
 		"name":      "my-pod",
 	}
 
-	res, code := Execute(req, args, nil, nil, nil, nil, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -156,7 +157,7 @@ func TestExecute_InvalidTail_ReturnsBadRequest(t *testing.T) {
 		"tail":        "not-a-number",
 	}
 
-	res, code := Execute(req, args, nil, nil, nil, nil, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -173,7 +174,7 @@ func TestExecute_EmptyArgs_NoPanic(t *testing.T) {
 
 	// Empty map
 	args := map[string]interface{}{}
-	res, code := Execute(req, args, nil, nil, nil, nil, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -181,7 +182,7 @@ func TestExecute_EmptyArgs_NoPanic(t *testing.T) {
 
 	// Nil map would be passed as nil from handler; Execute uses args["key"] which is safe.
 	args2 := map[string]interface{}(nil)
-	res2, code2 := Execute(req, args2, nil, nil, nil, nil, conf, nil, nil, nil)
+	res2, code2 := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args2)
 	require.Equal(t, http.StatusBadRequest, code2)
 	msg, ok = res2.(string)
 	require.True(t, ok)
@@ -244,7 +245,7 @@ func TestExecute_PodNotFound_ReturnsNotFound(t *testing.T) {
 		"clusterName": "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 	require.Equal(t, http.StatusNotFound, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -295,7 +296,7 @@ func TestExecute_ContainerNotFound_ReturnsBadRequest(t *testing.T) {
 		"clusterName": "Kubernetes",
 	}
 
-	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
@@ -330,7 +331,7 @@ func TestExecute_ValidTailAliases(t *testing.T) {
 			"clusterName": "Kubernetes",
 			key:           10,
 		}
-		res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, nil)
+		res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 		require.Equal(t, http.StatusOK, code, "get_logs with tail alias %q must return 200", key)
 		msg, ok := res.(string)
 		require.True(t, ok)
@@ -364,7 +365,7 @@ func TestExecute_TailCappedAt200(t *testing.T) {
 		"clusterName": "Kubernetes",
 		"tail":        9999,
 	}
-	res, code := Execute(req, args, businessLayer, nil, clientFactory, kialiCache, conf, nil, nil, nil)
+	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 	require.Equal(t, http.StatusOK, code, "tail 9999 should be capped and return 200")
 	msg, ok := res.(string)
 	require.True(t, ok, "response must be a string (log output)")

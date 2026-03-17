@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcputil"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
@@ -44,7 +42,7 @@ type documentMatch struct {
 	matchCount int
 }
 
-func Execute(r *http.Request, args map[string]interface{}, business *business.Layer, conf *config.Config) (interface{}, int) {
+func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	keywordsStr := mcputil.GetStringArg(args, "keywords")
 	if keywordsStr == "" {
 		return GetCitationsResponse{

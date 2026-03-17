@@ -8,51 +8,34 @@ import (
 	"time"
 
 	"github.com/kiali/kiali/ai/mcputil"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 	"github.com/kiali/kiali/util"
 )
 
 func Execute(
-	r *http.Request,
+	kialiInterface *mcputil.KialiInterface,
 	args map[string]interface{},
-	businessLayer *business.Layer,
-	_ prometheus.ClientInterface,
-	_ kubernetes.ClientFactory,
-	_ cache.KialiCache,
-	conf *config.Config,
-	_ *grafana.Service,
-	_ *perses.Service,
-	_ *istio.Discovery,
 ) (interface{}, int) {
-	parsed := parseArgs(args, conf)
+	parsed := parseArgs(args, kialiInterface.Conf)
 
 	if parsed.TraceID == "" && (parsed.Namespace == "" || parsed.ServiceName == "") {
 		return "Either trace_id or (namespace + service_name) is required", http.StatusBadRequest
 	}
 
-	ctx := r.Context()
-
 	traceID := parsed.TraceID
 	if traceID == "" {
-		q := buildServiceQuery(parsed, conf, true)
-		traces, err := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q)
+		q := buildServiceQuery(parsed, kialiInterface.Conf, true)
+		traces, err := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(kialiInterface.Request.Context(), parsed.Namespace, parsed.ServiceName, q)
 		if err != nil {
 			return err.Error(), http.StatusServiceUnavailable
 		}
 		// Some tracing backends/instrumentations don't set error=true even when HTTP 5xx exists.
 		// If user asked for error_only and got nothing, fallback to a broader search and filter locally.
 		if (traces == nil || len(traces.Data) == 0) && parsed.ErrorOnly {
-			q2 := buildServiceQuery(parsed, conf, false)
-			traces2, err2 := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q2)
+			q2 := buildServiceQuery(parsed, kialiInterface.Conf, false)
+			traces2, err2 := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(kialiInterface.Request.Context(), parsed.Namespace, parsed.ServiceName, q2)
 			if err2 != nil {
 				return err2.Error(), http.StatusServiceUnavailable
 			}
@@ -69,7 +52,7 @@ func Execute(
 		traceID = string(best.TraceID)
 	}
 
-	trace, err := businessLayer.Tracing.GetTraceDetail(ctx, traceID)
+	trace, err := kialiInterface.BusinessLayer.Tracing.GetTraceDetail(kialiInterface.Request.Context(), traceID)
 	if err != nil {
 		return err.Error(), http.StatusServiceUnavailable
 	}

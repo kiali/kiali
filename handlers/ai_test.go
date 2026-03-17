@@ -1,4 +1,4 @@
-package handlers_test
+package handlers
 
 import (
 	"bytes"
@@ -17,7 +17,6 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
@@ -26,7 +25,7 @@ import (
 	"github.com/kiali/kiali/tracing/tracingtest"
 )
 
-func setupChatMCPHandler(t *testing.T) (http.Handler, *config.Config) {
+func SetupChatMCPHandlerForTest(t *testing.T) (http.Handler, *config.Config) {
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
@@ -39,7 +38,7 @@ func setupChatMCPHandler(t *testing.T) (http.Handler, *config.Config) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := &tracingtest.TracingClientMock{}
 
-	handler := handlers.ChatMCP(
+	handler := ChatMCP(
 		conf,
 		kialiCache,
 		nil, // aiStore
@@ -52,7 +51,7 @@ func setupChatMCPHandler(t *testing.T) (http.Handler, *config.Config) {
 		discovery,
 	)
 
-	return handlers.WithFakeAuthInfo(conf, handler), conf
+	return WithFakeAuthInfo(conf, handler), conf
 }
 
 func TestChatMCP_ToolNotFound(t *testing.T) {
@@ -61,7 +60,7 @@ func TestChatMCP_ToolNotFound(t *testing.T) {
 	// Ensure tools are loaded
 	require.NoError(mcp.LoadTools())
 
-	handler, _ := setupChatMCPHandler(t)
+	handler, _ := SetupChatMCPHandlerForTest(t)
 
 	mr := mux.NewRouter()
 	mr.Handle("/api/chat/mcp/{tool_name}", handler)
@@ -84,7 +83,7 @@ func TestChatMCP_InvalidJSON(t *testing.T) {
 	// Ensure tools are loaded
 	require.NoError(mcp.LoadTools())
 
-	handler, _ := setupChatMCPHandler(t)
+	handler, _ := SetupChatMCPHandlerForTest(t)
 
 	mr := mux.NewRouter()
 	mr.Handle("/api/chat/mcp/{tool_name}", handler)
@@ -108,7 +107,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 
 	require.NoError(mcp.LoadTools())
 
-	handler, _ := setupChatMCPHandler(t)
+	handler, _ := SetupChatMCPHandlerForTest(t)
 	mr := mux.NewRouter()
 	mr.Handle("/api/chat/mcp/{tool_name}", handler)
 	ts := httptest.NewServer(mr)
@@ -193,7 +192,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 func TestChatMCP_LoadToolsOnFirstRequest(t *testing.T) {
 	require := require.New(t)
 
-	handler, _ := setupChatMCPHandler(t)
+	handler, _ := SetupChatMCPHandlerForTest(t)
 	mr := mux.NewRouter()
 	mr.Handle("/api/chat/mcp/{tool_name}", handler)
 	ts := httptest.NewServer(mr)
@@ -214,7 +213,7 @@ func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
 	require := require.New(t)
 	require.NoError(mcp.LoadTools())
 
-	handler, _ := setupChatMCPHandler(t)
+	handler, _ := SetupChatMCPHandlerForTest(t)
 	mr := mux.NewRouter()
 	mr.Handle("/api/chat/mcp/{tool_name}", handler)
 	ts := httptest.NewServer(mr)

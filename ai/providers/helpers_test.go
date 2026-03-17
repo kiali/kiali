@@ -11,16 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers/authentication"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 type fakeStore struct {
@@ -96,7 +90,7 @@ func (f *fakeProvider) ProviderToConversation(_ interface{}) types.ConversationM
 	return types.ConversationMessage{}
 }
 
-func (f *fakeProvider) SendChat(_ *http.Request, _ types.AIRequest, _ *business.Layer, _ prometheus.ClientInterface, _ kubernetes.ClientFactory, _ cache.KialiCache, _ types.AIStore, _ *config.Config, _ *grafana.Service, _ *perses.Service, _ *istio.Discovery) (*types.AIResponse, int) {
+func (f *fakeProvider) SendChat(_ *mcputil.KialiInterface, _ types.AIRequest, _ types.AIStore) (*types.AIResponse, int) {
 	return nil, 0
 }
 

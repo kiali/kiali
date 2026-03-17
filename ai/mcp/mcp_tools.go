@@ -20,19 +20,12 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
-	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
 	"github.com/kiali/kiali/ai/mcp/get_traces"
+	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config_read"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 //go:embed tools
@@ -144,28 +137,28 @@ func (t ToolDef) GetDefinition() map[string]interface{} {
 	return t.InputSchema
 }
 
-func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
+func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	switch t.Name {
 	case "get_mesh_traffic_graph":
-		return get_mesh_traffic_graph.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
-	case "get_resource_detail":
-		return get_resource_detail.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		return get_mesh_traffic_graph.Execute(kialiInterface, args)
+	case "list_or_get_resources":
+		return list_or_get_resources.Execute(kialiInterface, args)
 	case "get_traces":
-		return get_traces.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		return get_traces.Execute(kialiInterface, args)
 	case "get_logs":
-		return get_logs.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		return get_logs.Execute(kialiInterface, args)
 	case "get_pod_performance":
-		return get_pod_performance.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		return get_pod_performance.Execute(kialiInterface, args)
 	case "manage_istio_config":
-		return manage_istio_config.Execute(r, args, business, conf)
+		return manage_istio_config.Execute(kialiInterface, args)
 	case "manage_istio_config_read":
-		return manage_istio_config_read.Execute(r, args, business, conf)
+		return manage_istio_config_read.Execute(kialiInterface, args)
 	case "get_action_ui":
-		return get_action_ui.Execute(r, args, business, conf)
+		return get_action_ui.Execute(kialiInterface, args)
 	case "get_citations":
-		return get_citations.Execute(r, args, business, conf)
+		return get_citations.Execute(kialiInterface, args)
 	case "get_metrics":
-		return get_metrics.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+		return get_metrics.Execute(kialiInterface, args)
 	default:
 		return nil, http.StatusNotFound
 	}

@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -9,31 +8,15 @@ import (
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 // ExecuteToolCallsInParallel executes all tool calls in parallel and returns results in order
 func ExecuteToolCallsInParallel(
-	ctx context.Context,
-	r *http.Request,
+	kialiInterface *mcputil.KialiInterface,
 	toolCalls []mcp.ToolsProcessor,
-	business *business.Layer,
-	prom prometheus.ClientInterface,
-	clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache,
-	conf *config.Config,
-	grafana *grafana.Service,
-	perses *perses.Service,
-	discovery *istio.Discovery,
 ) []mcp.ToolCallResult {
 	results := make([]mcp.ToolCallResult, len(toolCalls))
 	var wg sync.WaitGroup
@@ -45,7 +28,7 @@ func ExecuteToolCallsInParallel(
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
 			citations := []get_citations.Citation{}
-			if err := ctx.Err(); err != nil {
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
@@ -62,7 +45,7 @@ func ExecuteToolCallsInParallel(
 				return
 			}
 
-			mcpResult, code := handler.Call(r, call.Args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+			mcpResult, code := handler.Call(kialiInterface, call.Args)
 			if code != http.StatusOK {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult),
@@ -70,7 +53,7 @@ func ExecuteToolCallsInParallel(
 				}
 				return
 			}
-			if err := ctx.Err(); err != nil {
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
@@ -126,7 +109,7 @@ func ExecuteToolCallsInParallel(
 				}
 				return
 			}
-			if err := ctx.Err(); err != nil {
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,

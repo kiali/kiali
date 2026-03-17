@@ -367,8 +367,8 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetPodPerformance(t *testing.T) 
 	assert.Equal(t, expected, converted)
 }
 
-func TestConvertToolToOpenAI_FromToolDefinition_GetResourceDetail(t *testing.T) {
-	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_resource_detail.yaml"))
+func TestConvertToolToOpenAI_FromToolDefinition_ListOrGetResources(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_or_get_resources.yaml"))
 	require.NoError(t, err)
 
 	converted := convertToolToOpenAI(tool)
@@ -376,8 +376,8 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetResourceDetail(t *testing.T) 
 	expected := openai.ChatCompletionToolUnionParam{
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
-				Name:        "get_resource_detail",
-				Description: openai.String("Returns the resource detail data for the given resource type, namespaces and resource name."),
+				Name:        "list_or_get_resources",
+				Description: openai.String("Fetches a list of resources OR retrieves detailed data for a specific resource. If 'resourceName' is omitted, it returns a list. If 'resourceName' is provided, it returns details for that specific resource."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
@@ -386,23 +386,25 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetResourceDetail(t *testing.T) 
 					"properties": map[string]interface{}{
 						"resourceType": map[string]interface{}{
 							"type":        "string",
-							"description": "Type of resource to get list/details",
+							"description": "The type of resource to query.",
 							"enum": []interface{}{
 								"service",
 								"workload",
+								"app",
+								"namespace",
 							},
 						},
 						"namespaces": map[string]interface{}{
 							"type":        "string",
-							"description": "Comma-separated list of namespaces to get services from (e.g. 'bookinfo' or 'bookinfo,default'). If not provided, will list services from all accessible namespaces",
+							"description": "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
 						},
 						"resourceName": map[string]interface{}{
 							"type":        "string",
-							"description": "Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
+							"description": "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
 						},
 						"clusterName": map[string]interface{}{
 							"type":        "string",
-							"description": "Name of the cluster to get resources from. If not provided, will use the cluster name in the Kiali configuration (KubeConfig).",
+							"description": "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
 						},
 					},
 				},

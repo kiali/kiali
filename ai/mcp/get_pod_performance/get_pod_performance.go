@@ -13,28 +13,14 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/ai/mcputil"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
 
 func Execute(
-	r *http.Request,
+	kialiInterface *mcputil.KialiInterface,
 	args map[string]interface{},
-	businessLayer *business.Layer,
-	prom prometheus.ClientInterface,
-	clientFactory kubernetes.ClientFactory,
-	_ cache.KialiCache,
-	conf *config.Config,
-	_ *grafana.Service,
-	_ *perses.Service,
-	_ *istio.Discovery,
 ) (interface{}, int) {
 	namespace := mcputil.GetStringArg(args, "namespace")
 	workloadName := mcputil.GetStringArg(args, "workloadName", "workload_name", "workload")
@@ -50,7 +36,7 @@ func Execute(
 		return "podName or workloadName is required", http.StatusBadRequest
 	}
 	if clusterName == "" {
-		clusterName = conf.KubernetesConfig.ClusterName
+		clusterName = kialiInterface.Conf.KubernetesConfig.ClusterName
 	}
 	if timeRange == "" {
 		timeRange = defaultTimeRange
@@ -76,8 +62,8 @@ func Execute(
 	// If the workload doesn't exist, fall back to using workloadName as podName.
 	if workloadName != "" {
 		res, err := mcputil.ResolvePodFromWorkloadOrPod(
-			r.Context(),
-			businessLayer,
+			kialiInterface.Request.Context(),
+			kialiInterface.BusinessLayer,
 			clusterName,
 			namespace,
 			workloadName,
@@ -103,7 +89,7 @@ func Execute(
 	}
 
 	// Always compute requests/limits from the Pod spec so we can return that even if metrics are missing.
-	pod, podErr := getPod(r, clientFactory, clusterName, namespace, resp.PodName)
+	pod, podErr := getPod(kialiInterface.Request, kialiInterface.ClientFactory, clusterName, namespace, resp.PodName)
 	if podErr != nil {
 		if k8serrors.IsNotFound(podErr) {
 			return podErr.Error(), http.StatusNotFound
@@ -156,7 +142,7 @@ func Execute(
 	}
 
 	// Use resolved pod name (when workloadName was provided).
-	fillFromPrometheus(r, prom, namespace, resp.PodName, timeRange, queryTime, &resp)
+	fillFromPrometheus(kialiInterface.Request, kialiInterface.Prom, namespace, resp.PodName, timeRange, queryTime, &resp)
 
 	// Compute ratios on totals.
 	resp.CPU.UsageRequestRatio = ratio(resp.CPU.Usage, resp.CPU.Request)
