@@ -16,9 +16,8 @@ export const HealthPopoverBody: React.FC = () => {
         <strong>{t('Healthy')}</strong>: {t('All components operating normally and meeting all performance targets.')}
       </div>
       <div>
-        <strong>{t('Unhealthy')}</strong>: {t('One or more components are not working as expected.')}
+        <strong>{t('Unhealthy')}</strong>: {t('One or more components are not working as expected, including:')}
       </div>
-      <div>{t('Including:')}</div>
       <ul style={{ margin: '0.125rem 0 0.25rem 1.25rem', paddingLeft: 0, listStyleType: 'disc' }}>
         <li>
           <strong>{t('Failure')}</strong>:{' '}

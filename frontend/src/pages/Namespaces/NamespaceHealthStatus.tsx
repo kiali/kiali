@@ -117,22 +117,19 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
     }
 
     return (
-      <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontVariantNumeric: 'tabular-nums' }}>
         {items.map(c => (
           <span
             key={c.status.id}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.25rem',
-              justifyContent: 'flex-end'
+              gap: '4px'
             }}
             aria-label={`${c.status.name}: ${c.count}`}
           >
-            <span style={{ width: '1.25rem', display: 'inline-flex', justifyContent: 'center' }}>
-              {createIcon(c.status)}
-            </span>
-            <span style={{ minWidth: '2ch', textAlign: 'right' }}>{c.count}</span>
+            <span style={{ display: 'inline-flex' }}>{createIcon(c.status)}</span>
+            <span>{c.count}</span>
           </span>
         ))}
       </span>
