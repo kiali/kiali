@@ -388,6 +388,12 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
   cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint).click({ force: true });
+  // Wait for navigation before asserting (avoid asserting on previous workload's card).
+  // OSSMC uses /deployments/<name>/ossmconsole; standalone Kiali uses /workloads/<name>.
+  cy.url().should(
+    'satisfy',
+    (url: string) => url.includes(`/workloads/${waypoint}`) || url.includes(`/deployments/${waypoint}/ossmconsole`)
+  );
   cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
 });
 
@@ -486,11 +492,11 @@ Then('validates waypoint Info data for {string}', (type: string) => {
 When('the user validates the Ztunnel tab for the {string} namespace', (namespace: string) => {
   openTab('Ztunnel');
   cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]').should('be.visible');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Waypoint]');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
   cy.get('#ztunnel-details').should('be.visible').contains('Workloads').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]');
+  cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]').should('be.visible');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Node]');
   cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
   // Validate filters in the Namespace column
