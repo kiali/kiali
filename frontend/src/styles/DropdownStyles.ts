@@ -1,6 +1,7 @@
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { NestedCSSProperties } from 'typestyle/lib/types';
+import { PFFontSize } from './PfTypography';
 
 export const containerStyle = kialiStyle({
   overflow: 'auto'
@@ -93,19 +94,6 @@ export const displayMenuRowIconStyle = kialiStyle({
   alignItems: 'center'
 });
 
-// Popover trigger: clickable icon
-export const displayMenuPopoverTriggerStyle = kialiStyle({
-  cursor: 'pointer'
-});
-
-// Popover trigger for section title row: align icon vertically with label text
-export const displayMenuPopoverTriggerSectionStyle = kialiStyle({
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  alignSelf: 'center'
-});
-
 // Global toggle section at top of Display menu
 export const displayMenuToggleSectionStyle = kialiStyle({
   padding: '0.5rem 1rem',
@@ -113,7 +101,7 @@ export const displayMenuToggleSectionStyle = kialiStyle({
 });
 
 export const displayMenuToggleDescriptionStyle = kialiStyle({
-  fontSize: 'var(--pf-v6-global--FontSize--sm)',
+  fontSize: PFFontSize.small,
   color: PFColors.Color200,
   marginTop: '0.25rem',
   paddingLeft: '1.75rem'

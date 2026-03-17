@@ -129,9 +129,9 @@ When('user {string} mesh display option {string}', (action: string, option: stri
   }
 
   if (action === 'enables') {
-    cy.get('div#graph-display-menu').find(`input#${option}`).check();
+    cy.get('div#mesh-display-menu').find(`input#${option}`).check();
   } else {
-    cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
+    cy.get('div#mesh-display-menu').find(`input#${option}`).uncheck();
   }
 });
 

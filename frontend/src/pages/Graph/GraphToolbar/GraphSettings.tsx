@@ -28,8 +28,6 @@ import {
   displayMenuRowContentStyle,
   displayMenuRowStyle,
   displayMenuRowStyleNoHover,
-  displayMenuPopoverTriggerStyle,
-  displayMenuPopoverTriggerSectionStyle,
   itemStyleWithoutInfo,
   menuStyle,
   titleStyle
@@ -39,8 +37,9 @@ import { KialiDispatch } from 'types/Redux';
 import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { getDisabledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
-import { helpIconStyle, helpIconStyleSectionTitle } from 'styles/IconStyle';
+import { helpIconStyle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
+import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -84,8 +83,8 @@ type GraphSettingsProps = ReduxStateProps &
 
 type GraphSettingsState = {
   disabledFeatures?: KialiDisabledFeatures;
-  isOpen: boolean;
   hoveredRowId: string | null;
+  isOpen: boolean;
   popoverOpenRowId: string | null;
 };
 
@@ -105,9 +104,6 @@ const marginBottom = 20;
 // Consistent width for all Display menu help popovers
 const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
 
-// Section title help icon color (e.g. "Show Edge Labels")
-const DISPLAY_MENU_SECTION_TITLE_ICON_COLOR = '#707070';
-
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
   private hoverDelayTimer: number | null = null;
 
@@ -115,8 +111,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     super(props);
 
     this.state = {
-      isOpen: false,
       hoveredRowId: null,
+      isOpen: false,
       popoverOpenRowId: null
     };
     this.hoverDelayTimer = null;
@@ -391,6 +387,7 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       window.clearTimeout(this.hoverDelayTimer);
       this.hoverDelayTimer = null;
     }
+
     // Don't hide the icon if a popover is currently open
     if (this.state.popoverOpenRowId === null) {
       this.setState({ hoveredRowId: null });
@@ -406,47 +403,48 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
   ): React.ReactNode => {
     const { hoveredRowId, popoverOpenRowId } = this.state;
     const alwaysShow = options?.alwaysShowHelpIcon === true;
-    const showIcon =
-      popoverContent &&
-      (alwaysShow || hoveredRowId === rowId || popoverOpenRowId === rowId);
+    const showIcon = popoverContent && (alwaysShow || hoveredRowId === rowId || popoverOpenRowId === rowId);
 
     if (!popoverContent) {
       return <div className={displayMenuRowStyle}>{content}</div>;
     }
+
     const rowStyle = alwaysShow ? displayMenuRowStyleNoHover : displayMenuRowStyle;
+
     return (
       <div
         className={rowStyle}
-        onMouseEnter={alwaysShow ? undefined : () => this.handleRowMouseEnter(rowId)}
-        onMouseLeave={alwaysShow ? undefined : this.handleRowMouseLeave}
+        onMouseEnter={() => this.handleRowMouseEnter(rowId)}
+        onMouseLeave={this.handleRowMouseLeave}
       >
         <div className={displayMenuRowContentStyle}>{content}</div>
-        {showIcon && (
-          <div className={displayMenuRowIconStyle}>
-            <Popover
-              position={PopoverPosition.right}
-              triggerAction="click"
-              headerContent={popoverTitle ?? t('Help')}
-              bodyContent={<div style={{ textAlign: 'left' }}>{popoverContent}</div>}
-              minWidth={DISPLAY_MENU_POPOVER_WIDTH}
-              maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
-              showClose={true}
-              onShown={() => this.setState({ popoverOpenRowId: rowId })}
-              onHidden={() => this.setState({ popoverOpenRowId: null })}
-            >
-              <span
-                className={
-                  alwaysShow ? displayMenuPopoverTriggerSectionStyle : displayMenuPopoverTriggerStyle
-                }
-              >
-                <KialiIcon.Help
-                  className={alwaysShow ? helpIconStyleSectionTitle : helpIconStyle}
-                  color={alwaysShow ? DISPLAY_MENU_SECTION_TITLE_ICON_COLOR : undefined}
-                />
-              </span>
-            </Popover>
-          </div>
-        )}
+        <div
+          className={displayMenuRowIconStyle}
+          style={{
+            opacity: showIcon ? 1 : 0,
+            pointerEvents: showIcon ? 'auto' : 'none'
+          }}
+        >
+          <Popover
+            position={PopoverPosition.right}
+            triggerAction="click"
+            headerContent={popoverTitle ?? t('Help')}
+            bodyContent={<div style={{ textAlign: 'left' }}>{popoverContent}</div>}
+            minWidth={DISPLAY_MENU_POPOVER_WIDTH}
+            maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
+            showClose={true}
+            onShown={() => this.setState({ popoverOpenRowId: rowId })}
+            onHidden={() => this.setState({ popoverOpenRowId: null })}
+            onHide={() => {
+              // Only clear hoveredRowId if we're closing the popover for the same row
+              if (this.state.hoveredRowId === rowId) {
+                this.setState({ hoveredRowId: null });
+              }
+            }}
+          >
+            <KialiIcon.Help className={helpIconStyle} color={alwaysShow ? PFColors.Black500 : undefined} />
+          </Popover>
+        </div>
       </div>
     );
   };
