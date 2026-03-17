@@ -87,7 +87,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 		return ns.Name
 	})
 
-	pas := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, controlPlane.IstiodNamespace)
+	pas := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{controlPlane.IstiodNamespace})
 	drs := kubernetes.FilterByNamespaceNames(istioConfigList.DestinationRules, namespaceNames)
 
 	mtlsStatus := mtls.MtlsStatus{
@@ -135,13 +135,16 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		return models.MTLSStatus{}, err
 	}
 
-	pasAll := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace)
+	pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace})
 	rootNamespace := in.discovery.GetRootNamespace(ctx, cluster, namespace)
 	if rootNamespace == namespace {
 		pasAll = []*security_v1.PeerAuthentication{}
 	}
 	pas := in.filterNamespaceWidePeerAuthentications(pasAll)
-	drs := models.FilterByNamespaces(istioConfigList.DestinationRules, allNamespaces)
+	allNamespaceNames := sliceutil.Map(allNamespaces, func(ns models.Namespace) string {
+		return ns.Name
+	})
+	drs := kubernetes.FilterByNamespaceNames(istioConfigList.DestinationRules, allNamespaceNames)
 
 	ns, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
@@ -191,7 +194,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces)
 
 	for _, namespace := range namespaces {
-		pasAll := kubernetes.FilterByNamespace(istioConfigList.PeerAuthentications, namespace.Name)
+		pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace.Name})
 		rootNamespace := in.discovery.GetRootNamespace(ctx, namespace.Cluster, namespace.Name)
 		if rootNamespace == namespace.Name {
 			pasAll = []*security_v1.PeerAuthentication{}

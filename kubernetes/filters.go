@@ -643,26 +643,6 @@ func FilterByNamespaceNames[T runtime.Object](objects []T, namespaceNames []stri
 	return filtered
 }
 
-// FilterByNamespaces filters a list of runtime.Objects by the provided namespaces.
-// If the object's namespace is not in the provided list of namespaces, the object
-// is filtered out.
-func FilterByNamespace[T runtime.Object](objects []T, namespace string) []T {
-	filtered := []T{}
-	for _, obj := range objects {
-		o, err := meta.Accessor(obj)
-		// This shouldn't happen since we are using runtime.Object for T
-		// and all the API objects should implement meta.Object.
-		if err != nil {
-			return filtered
-		}
-
-		if o.GetNamespace() == namespace {
-			filtered = append(filtered, obj)
-		}
-	}
-	return filtered
-}
-
 func FilterServicesBySelector(services []core_v1.Service, l map[string]string) []core_v1.Service {
 	selector := labels.Set(l)
 	retSvc := []core_v1.Service{}

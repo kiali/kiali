@@ -1029,18 +1029,6 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	return false
 }
 
-// filterByNamespace filters a slice of Kubernetes objects to only include those
-// from the allowed namespaces.
-func filterByNamespace[T interface{ GetNamespace() string }, V any](items []T, allowed map[string]V) []T {
-	result := make([]T, 0, len(items))
-	for _, item := range items {
-		if _, ok := allowed[item.GetNamespace()]; ok {
-			result = append(result, item)
-		}
-	}
-	return result
-}
-
 // filterIstioConfigByManagedNamespaces removes Istio configs from namespaces that are not in
 // the mesh, preventing configs from non-mesh namespaces (e.g., "default") from being used in
 // validation of mesh-belonging namespaces. Uses BuildNamespaceToMeshConfig to determine which
@@ -1050,29 +1038,25 @@ func filterIstioConfigByManagedNamespaces(config *models.IstioConfigList, mesh *
 		return
 	}
 	allowed := mesh.BuildNamespaceToMeshConfig(cluster, namespaces)
-	for _, cp := range mesh.ControlPlanes {
-		if cp.RootNamespace != "" {
-			allowed[cp.RootNamespace] = cp.MeshConfig
-		}
-		allowed[cp.IstiodNamespace] = cp.MeshConfig
-	}
+	allowedNames := slices.Collect(maps.Keys(allowed))
 
-	// Do not filter AuthorizationPolicies and PeerAuthentications as they can be in a root namespace
-	config.DestinationRules = filterByNamespace(config.DestinationRules, allowed)
-	config.Gateways = filterByNamespace(config.Gateways, allowed)
-	config.K8sGateways = filterByNamespace(config.K8sGateways, allowed)
-	config.K8sGRPCRoutes = filterByNamespace(config.K8sGRPCRoutes, allowed)
-	config.K8sHTTPRoutes = filterByNamespace(config.K8sHTTPRoutes, allowed)
-	config.K8sInferencePools = filterByNamespace(config.K8sInferencePools, allowed)
-	config.K8sReferenceGrants = filterByNamespace(config.K8sReferenceGrants, allowed)
-	config.RequestAuthentications = filterByNamespace(config.RequestAuthentications, allowed)
-	config.ServiceEntries = filterByNamespace(config.ServiceEntries, allowed)
-	config.Sidecars = filterByNamespace(config.Sidecars, allowed)
-	config.Telemetries = filterByNamespace(config.Telemetries, allowed)
-	config.VirtualServices = filterByNamespace(config.VirtualServices, allowed)
-	config.WasmPlugins = filterByNamespace(config.WasmPlugins, allowed)
-	config.WorkloadEntries = filterByNamespace(config.WorkloadEntries, allowed)
-	config.WorkloadGroups = filterByNamespace(config.WorkloadGroups, allowed)
+	config.AuthorizationPolicies = kubernetes.FilterByNamespaceNames(config.AuthorizationPolicies, allowedNames)
+	config.DestinationRules = kubernetes.FilterByNamespaceNames(config.DestinationRules, allowedNames)
+	config.Gateways = kubernetes.FilterByNamespaceNames(config.Gateways, allowedNames)
+	config.K8sGateways = kubernetes.FilterByNamespaceNames(config.K8sGateways, allowedNames)
+	config.K8sGRPCRoutes = kubernetes.FilterByNamespaceNames(config.K8sGRPCRoutes, allowedNames)
+	config.K8sHTTPRoutes = kubernetes.FilterByNamespaceNames(config.K8sHTTPRoutes, allowedNames)
+	config.K8sInferencePools = kubernetes.FilterByNamespaceNames(config.K8sInferencePools, allowedNames)
+	config.K8sReferenceGrants = kubernetes.FilterByNamespaceNames(config.K8sReferenceGrants, allowedNames)
+	config.PeerAuthentications = kubernetes.FilterByNamespaceNames(config.PeerAuthentications, allowedNames)
+	config.RequestAuthentications = kubernetes.FilterByNamespaceNames(config.RequestAuthentications, allowedNames)
+	config.ServiceEntries = kubernetes.FilterByNamespaceNames(config.ServiceEntries, allowedNames)
+	config.Sidecars = kubernetes.FilterByNamespaceNames(config.Sidecars, allowedNames)
+	config.Telemetries = kubernetes.FilterByNamespaceNames(config.Telemetries, allowedNames)
+	config.VirtualServices = kubernetes.FilterByNamespaceNames(config.VirtualServices, allowedNames)
+	config.WasmPlugins = kubernetes.FilterByNamespaceNames(config.WasmPlugins, allowedNames)
+	config.WorkloadEntries = kubernetes.FilterByNamespaceNames(config.WorkloadEntries, allowedNames)
+	config.WorkloadGroups = kubernetes.FilterByNamespaceNames(config.WorkloadGroups, allowedNames)
 }
 
 // buildNamespaceToExportTo precomputes namespace -> DefaultServiceExportTo for unique service namespaces.
