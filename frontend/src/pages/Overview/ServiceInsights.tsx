@@ -648,7 +648,7 @@ export const ServiceInsights: React.FC = () => {
               <Button
                 data-test="service-insights-manage-columns"
                 variant="plain"
-                aria-label={t('Manage columns')}
+                aria-label={t('Manage metrics')}
                 icon={<CogIcon />}
                 onClick={onOpenManageColumns}
               />
@@ -672,8 +672,8 @@ export const ServiceInsights: React.FC = () => {
       <Modal
         id="service-insights-manage-columns-modal"
         data-test="service-insights-manage-columns-modal"
-        aria-label={t('Manage columns')}
-        title={t('Manage columns')}
+        aria-label={t('Manage metrics')}
+        title={t('Manage metrics')}
         variant={ModalVariant.small}
         isOpen={isManageColumnsOpen}
         onClose={onCancelManageColumns}
@@ -698,8 +698,24 @@ export const ServiceInsights: React.FC = () => {
         </p>
 
         <Form style={{ marginTop: '1rem' }}>
-          <FormGroup label={t('Metrics')} fieldId="service-insights-metrics-checkboxes">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <FormGroup fieldId="service-insights-metrics-checkboxes">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <Button
+                variant="link"
+                onClick={() => {
+                  const allSelected = draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp;
+                  if (allSelected) {
+                    setDraftMetrics({ errorRates: false, latency: false, tcp: false });
+                  } else {
+                    setDraftMetrics({ errorRates: true, latency: true, tcp: true });
+                  }
+                }}
+                style={{ padding: 0, marginBottom: '0.5rem', textAlign: 'left', textDecoration: 'underline' }}
+              >
+                {draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp
+                  ? t('Unselect all')
+                  : t('Select all')}
+              </Button>
               <Checkbox
                 id="service-insights-metrics-error-rates"
                 label={t('Error rates')}
