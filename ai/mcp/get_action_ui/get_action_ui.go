@@ -55,6 +55,8 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		actions = append(actions, getGraphAction(namespacesValue, graph, graphType))
 	case "overview":
 		actions = append(actions, getOverviewAction())
+	case "namespaces":
+		actions = append(actions, getNamespacesAction())
 	case "istio":
 		action, err := getIstioAction(r.Context(), business, clusterName, namespacesValue, resourceName)
 		if err != nil {
@@ -100,6 +102,14 @@ func getOverviewAction() Action {
 		Title:   "View Overview",
 		Kind:    ActionKindNavigation,
 		Payload: "/overview",
+	}
+}
+
+func getNamespacesAction() Action {
+	return Action{
+		Title:   "View Namespaces",
+		Kind:    ActionKindNavigation,
+		Payload: "/namespaces",
 	}
 }
 
