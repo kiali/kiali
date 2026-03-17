@@ -75,6 +75,7 @@ Feature: Kiali Namespaces page
 
   @core-2
   @offline
+  @selected
   Scenario: Hide Mode column on namespaces page
     Then user sees the "bookinfo" namespace in the namespaces page
     When user opens manage columns on namespaces page
