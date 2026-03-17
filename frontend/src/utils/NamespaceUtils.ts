@@ -8,6 +8,14 @@ type NamespaceLike = {
 
 export type NamespaceMode = 'ambient' | 'sidecar' | 'none';
 
+export interface NamespaceModeInfo {
+  color: 'blue' | 'orange' | 'grey';
+  displayText: string;
+  id: string;
+  mode: NamespaceMode;
+  priority: number;
+}
+
 export const getNamespaceMode = (ns: NamespaceLike): NamespaceMode => {
   if (ns.isAmbient) {
     return 'ambient';
@@ -26,6 +34,38 @@ export const getNamespaceMode = (ns: NamespaceLike): NamespaceMode => {
   }
 
   return 'none';
+};
+
+export const getNamespaceModeInfo = (ns: NamespaceLike): NamespaceModeInfo => {
+  const mode = getNamespaceMode(ns);
+
+  switch (mode) {
+    case 'ambient':
+      return {
+        id: 'ambient',
+        mode: 'ambient',
+        displayText: 'Ambient',
+        color: 'blue',
+        priority: 1
+      };
+    case 'sidecar':
+      return {
+        id: 'sidecar',
+        mode: 'sidecar',
+        displayText: 'Sidecar',
+        color: 'orange',
+        priority: 2
+      };
+    case 'none':
+    default:
+      return {
+        id: 'none',
+        mode: 'none',
+        displayText: 'Not applicable',
+        color: 'grey',
+        priority: 3
+      };
+  }
 };
 
 /**

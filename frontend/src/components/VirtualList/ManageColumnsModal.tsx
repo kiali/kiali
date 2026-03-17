@@ -1,6 +1,14 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Checkbox } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import {
+  Button,
+  ButtonVariant,
+  Checkbox,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant
+} from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -53,12 +61,25 @@ export const ManageColumnsModal: React.FC<Props> = (props: Props) => {
   };
 
   return (
-    <Modal
-      title={t('Manage columns')}
-      variant={ModalVariant.small}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      actions={[
+    <Modal variant={ModalVariant.small} isOpen={props.isOpen} onClose={props.onClose}>
+      <ModalHeader title={t('Manage columns')} />
+      <ModalBody>
+        <div style={{ marginBottom: '0.75rem' }}>{t('Selected columns will be displayed in the table.')}</div>
+        <div className={listStyle} data-test="manage-columns-list">
+          {draft.map(col => (
+            <div key={col.id} className={rowStyle} aria-label={t('Column {{column}}', { column: col.title })}>
+              <Checkbox
+                id={`manage-column-${col.id}`}
+                isChecked={col.isShown}
+                isDisabled={!!col.isDisabled}
+                onChange={(_e, checked) => setShown(col.id, checked)}
+                label={<span className={titleStyle}>{col.title}</span>}
+              />
+            </div>
+          ))}
+        </div>
+      </ModalBody>
+      <ModalFooter>
         <Button
           key="save"
           variant={ButtonVariant.primary}
@@ -66,26 +87,11 @@ export const ManageColumnsModal: React.FC<Props> = (props: Props) => {
           data-test="manage-columns-save"
         >
           {t('Save')}
-        </Button>,
+        </Button>
         <Button key="cancel" variant={ButtonVariant.link} onClick={props.onClose} data-test="manage-columns-cancel">
           {t('Cancel')}
         </Button>
-      ]}
-    >
-      <div style={{ marginBottom: '0.75rem' }}>{t('Selected columns will be displayed in the table.')}</div>
-      <div className={listStyle} data-test="manage-columns-list">
-        {draft.map(col => (
-          <div key={col.id} className={rowStyle} aria-label={t('Column {{column}}', { column: col.title })}>
-            <Checkbox
-              id={`manage-column-${col.id}`}
-              isChecked={col.isShown}
-              isDisabled={!!col.isDisabled}
-              onChange={(_e, checked) => setShown(col.id, checked)}
-              label={<span className={titleStyle}>{col.title}</span>}
-            />
-          </div>
-        ))}
-      </div>
+      </ModalFooter>
     </Modal>
   );
 };

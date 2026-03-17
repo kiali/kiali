@@ -29,9 +29,10 @@ import * as API from '../../services/Api';
 import { sortFields, sortFunc } from './Sorts';
 import { availableFilters, nameFilter } from './Filters';
 import { Button, EmptyState, EmptyStateBody, EmptyStateVariant, Tooltip } from '@patternfly/react-core';
-import { CogIcon, CubesIcon, SearchIcon } from '@patternfly/react-icons';
+import { ColumnsIcon, CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
+import { arrayEquals } from '../../utils/Common';
 import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
@@ -57,7 +58,7 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { config as virtualListConfig } from '../../components/VirtualList/Config';
-import { ManageColumnsModal, ManagedColumn } from './ManageColumnsModal';
+import { ManageColumnsModal, ManagedColumn } from '../../components/VirtualList/ManageColumnsModal';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 
 // Maximum number of namespaces to include in a single backend API call
@@ -197,7 +198,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         .map(c => c.id)
         .filter(id => id !== 'namespace');
       const filtered = ids.filter(id => validIds.includes(id));
-      if (filtered.length > 0 && !this.arrayEquals(filtered, this.props.hiddenColumnIds)) {
+      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
         this.props.dispatch(NamespacesListActions.setHiddenColumns(filtered));
       } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
         this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
@@ -205,12 +206,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     } else if (this.props.hiddenColumnIds.length > 0) {
       HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
     }
-  };
-
-  private arrayEquals = (a: string[], b: string[]): boolean => {
-    if (a.length !== b.length) return false;
-    const set = new Set(b);
-    return a.every(x => set.has(x));
   };
 
   private getDefaultManagedColumns = (): ManagedColumn[] => {
@@ -1138,13 +1133,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               rightToolbar={
                 <Tooltip content={t('Manage columns')}>
                   <Button
-                    style={{ paddingRight: '10px' }}
                     variant="plain"
                     aria-label={t('Manage columns')}
                     data-test="namespaces-manage-columns"
                     onClick={() => this.setState({ showColumnManagement: true })}
                   >
-                    <CogIcon />
+                    <ColumnsIcon />
                   </Button>
                 </Tooltip>
               }
