@@ -81,6 +81,8 @@ type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
   children?: React.ReactNode;
   className?: any;
+  /** Optional column order (title.toLowerCase ids). Used e.g. for namespaces list. */
+  columnOrder?: string[];
   emptyState?: React.ReactNode;
   hiddenColumns?: string[];
   loaded?: boolean;
@@ -154,9 +156,12 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
 
   componentDidUpdate(): void {
     const columns = this.getColumns(this.props.type);
-
-    if (columns.length !== this.state.columns.length) {
-      this.setState({ columns: columns });
+    const prev = this.state.columns;
+    const lengthChanged = columns.length !== prev.length;
+    const orderChanged =
+      columns.length === prev.length && columns.some((col, i) => (prev[i] && col.title !== prev[i].title) || !prev[i]);
+    if (lengthChanged || orderChanged) {
+      this.setState({ columns });
     }
   }
 
@@ -197,6 +202,14 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       columns = conf.columns.filter(
         info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.title.toLowerCase())
       );
+      if (this.props.columnOrder && this.props.columnOrder.length > 0) {
+        const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
+        columns.sort((a, b) => {
+          const ai = orderMap.get(a.title.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+          const bi = orderMap.get(b.title.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+          return ai - bi;
+        });
+      }
     }
 
     if (this.props.actions) {

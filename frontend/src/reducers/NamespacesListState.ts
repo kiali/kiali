@@ -5,7 +5,8 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespacesListActions } from '../actions/NamespacesListActions';
 
 export const INITIAL_NAMESPACES_LIST_STATE: NamespacesListState = {
-  hiddenColumnIds: []
+  hiddenColumnIds: [],
+  columnOrder: []
 };
 
 export const NamespacesListStateReducer = (
@@ -15,6 +16,8 @@ export const NamespacesListStateReducer = (
   switch (action.type) {
     case getType(NamespacesListActions.setHiddenColumns):
       return updateState(state, { hiddenColumnIds: action.payload });
+    case getType(NamespacesListActions.setColumnOrder):
+      return updateState(state, { columnOrder: action.payload });
     default:
       return state;
   }

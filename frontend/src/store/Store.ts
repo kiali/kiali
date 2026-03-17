@@ -67,8 +67,9 @@ export interface NamespaceState {
   readonly namespacesPerCluster: Map<string, string[]>; // map clusterName -> namespaces on cluster
 }
 
-/** Namespaces list page: column visibility (persisted in URL and Redux, not localStorage) */
+/** Namespaces list page: column visibility and order */
 export interface NamespacesListState {
+  readonly columnOrder: string[];
   readonly hiddenColumnIds: string[];
 }
 

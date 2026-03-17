@@ -106,6 +106,7 @@ const mockNamespaces: NamespaceInfo[] = [
 ];
 
 const defaultReduxProps = {
+  columnOrder: [] as string[],
   duration: 600 as DurationInSeconds,
   externalServices: [],
   hiddenColumnIds: [],
