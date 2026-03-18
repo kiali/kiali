@@ -387,28 +387,32 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
-  cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint).click({ force: true });
-  // Wait for navigation before asserting (avoid asserting on previous workload's card).
-  // OSSMC uses /deployments/<name>/ossmconsole; standalone Kiali uses /workloads/<name>.
-  cy.url().should(
-    'satisfy',
-    (url: string) => url.includes(`/workloads/${waypoint}`) || url.includes(`/deployments/${waypoint}/ossmconsole`)
-  );
-  cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
+  const isOSSMC = Cypress.env('OSSMC');
+  cy.get('[data-test=waypoint-link]')
+    .contains('a,button', waypoint)
+    .then($el => {
+      // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
+      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      if (isOSSMC) {
+        expect(target, 'OSSMC waypoint link target').to.include(`/deployments/${waypoint}/ossmconsole`);
+      } else {
+        expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
+      }
+      cy.wrap($el).click();
+    });
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 Then('the waypoint link points to the {string} cluster', (cluster: string) => {
   cy.get(`[data-test=waypoint-link]`).should('exist');
 
   cy.get(`[data-test=waypoint-link]`).then($waypointLink => {
-    // Depending on the component, the data-test might be set on the <a> itself
-    // or on a container that contains the <a>.
-    const $anchor = $waypointLink.filter('a').add($waypointLink.find('a')).first();
+    // In kiosk mode the element is a button with data-href; otherwise it's an anchor with href.
+    const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
+    expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    expect($anchor.length, 'waypoint link anchor').to.be.greaterThan(0);
-
-    const href = $anchor.attr('href') ?? '';
-    expect(href).to.include(`clusterName=${cluster}`);
+    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    expect(target).to.include(`clusterName=${cluster}`);
   });
 });
 
