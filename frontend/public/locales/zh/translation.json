@@ -309,6 +309,7 @@
   "Login to {{cluster}}": "Login to {{cluster}}",
   "Logout": "Logout",
   "Logs": "Logs",
+  "Manage columns": "Manage columns",
   "Manage metrics": "Manage metrics",
   "Manual": "Manual",
   "Manual refresh required": "Manual refresh required",
