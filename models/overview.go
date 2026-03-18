@@ -35,7 +35,7 @@ type ServiceRatesResponse struct {
 }
 
 // ServiceThroughput represents a single service's throughput rate (bytes/s).
-// TcpRate is bytes per second, and is computed as received+sent.
+// TcpRate is the rate (bytes/s) returned returned from the destination service.
 type ServiceThroughput struct {
 	Cluster      string       `json:"cluster"`
 	HealthStatus HealthStatus `json:"healthStatus,omitempty"`
