@@ -56,6 +56,8 @@ export const noAmbientLabels = (r: SortResource): boolean => {
 };
 
 export type ResourceType<R extends RenderResource> = {
+  /** Stable id for column order and hidden columns (optional; falls back to name.toLowerCase()). */
+  id?: string;
   info?: React.ComponentProps<typeof Th>['info'];
   name: string;
   param?: string;
@@ -68,6 +70,7 @@ export type ResourceType<R extends RenderResource> = {
 
 // NamespaceInfo
 const istioConfiguration: ResourceType<NamespaceInfo> = {
+  id: 'istioconfiguration',
   name: 'IstioConfiguration',
   param: 'ic',
   title: 'Istio config',
@@ -78,6 +81,7 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
 
 // General
 const item: ResourceType<TResource> = {
+  id: 'name',
   name: 'Item',
   param: 'wn',
   title: 'Name',
@@ -87,6 +91,7 @@ const item: ResourceType<TResource> = {
 };
 
 const serviceItem: ResourceType<ServiceListItem> = {
+  id: 'name',
   name: 'Item',
   param: 'sn',
   title: 'Name',
@@ -96,6 +101,7 @@ const serviceItem: ResourceType<ServiceListItem> = {
 };
 
 const istioItem: ResourceType<IstioConfigItem> = {
+  id: 'name',
   name: 'Item',
   param: 'in',
   title: 'Name',
@@ -104,6 +110,7 @@ const istioItem: ResourceType<IstioConfigItem> = {
 };
 
 const cluster: ResourceType<TResource> = {
+  id: 'cluster',
   name: 'Cluster',
   param: 'cl',
   title: 'Cluster',
@@ -113,6 +120,7 @@ const cluster: ResourceType<TResource> = {
 };
 
 const namespace: ResourceType<TResource> = {
+  id: 'namespace',
   name: 'Namespace',
   param: 'ns',
   title: 'Namespace',
@@ -122,6 +130,7 @@ const namespace: ResourceType<TResource> = {
 };
 
 const labels: ResourceType<RenderResource> = {
+  id: 'labels',
   name: 'Labels',
   param: 'lb',
   title: 'Labels',
@@ -131,6 +140,7 @@ const labels: ResourceType<RenderResource> = {
 };
 
 const health: ResourceType<TResource> = {
+  id: 'health',
   name: 'Health',
   param: 'he',
   title: 'Health',
@@ -140,6 +150,7 @@ const health: ResourceType<TResource> = {
 };
 
 const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = {
+  id: 'details',
   name: 'Details',
   param: 'is',
   title: 'Details',
@@ -149,6 +160,7 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
 };
 
 const serviceConfiguration: ResourceType<ServiceListItem> = {
+  id: 'configuration',
   name: 'Configuration',
   param: 'cv',
   title: 'Configuration',
@@ -158,6 +170,7 @@ const serviceConfiguration: ResourceType<ServiceListItem> = {
 };
 
 const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
+  id: 'configuration',
   name: 'Configuration',
   param: 'cv',
   title: 'Configuration',
@@ -167,6 +180,7 @@ const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
 };
 
 const workloadType: ResourceType<WorkloadListItem> = {
+  id: 'type',
   name: 'WorkloadType',
   param: 'wt',
   title: 'Type',
@@ -175,6 +189,7 @@ const workloadType: ResourceType<WorkloadListItem> = {
 };
 
 const istioType: ResourceType<IstioConfigItem> = {
+  id: 'type',
   name: 'IstioType',
   param: 'it',
   title: 'Type',
@@ -196,6 +211,7 @@ export type Resource = {
 };
 
 const namespacesHealth: ResourceType<NamespaceInfo> = {
+  id: 'health',
   info: {
     popover: React.createElement(HealthPopoverBody),
     popoverProps: {
@@ -212,6 +228,7 @@ const namespacesHealth: ResourceType<NamespaceInfo> = {
 };
 
 const typeNamespaces: ResourceType<NamespaceInfo> = {
+  id: 'type',
   info: {
     popover: React.createElement(TypePopoverBody),
     popoverProps: {
@@ -228,6 +245,7 @@ const typeNamespaces: ResourceType<NamespaceInfo> = {
 };
 
 const modeNamespaces: ResourceType<NamespaceInfo> = {
+  id: 'mode',
   name: 'Mode',
   param: 'mode',
   renderer: Renderers.nsMode,
@@ -237,6 +255,7 @@ const modeNamespaces: ResourceType<NamespaceInfo> = {
 };
 
 const revisionNamespaces: ResourceType<NamespaceInfo> = {
+  id: 'revision',
   name: 'Revision',
   param: 'rev',
   renderer: Renderers.nsRevision,
@@ -246,6 +265,7 @@ const revisionNamespaces: ResourceType<NamespaceInfo> = {
 };
 
 const nsItemNamespaces: ResourceType<NamespaceInfo> = {
+  id: 'namespace',
   name: 'Namespace',
   param: 'ns',
   renderer: Renderers.nsItem,
@@ -255,6 +275,7 @@ const nsItemNamespaces: ResourceType<NamespaceInfo> = {
 };
 
 const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
+  id: 'mtls',
   name: 'mTLS',
   param: 'm',
   renderer: Renderers.nsTls,

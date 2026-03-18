@@ -81,9 +81,10 @@ type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
   children?: React.ReactNode;
   className?: any;
-  /** Optional column order (title.toLowerCase ids). Used e.g. for namespaces list. */
+  /** Optional column order (stable column ids: column name, case-insensitive). Used e.g. for namespaces list. */
   columnOrder?: string[];
   emptyState?: React.ReactNode;
+  /** Optional hidden column ids (stable column name, case-insensitive). */
   hiddenColumns?: string[];
   loaded?: boolean;
   onResize?: (height: number) => void;
@@ -194,19 +195,24 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     );
   };
 
+  private static getColumnId(column: { id?: string; name: string }): string {
+    return (column.id ?? column.name.toLowerCase()).toLowerCase();
+  }
+
   private getColumns = (type: string): ResourceType<R>[] => {
     let columns = [] as ResourceType<R>[];
     const conf = config[type] as Resource;
 
     if (conf.columns) {
+      const hiddenSet = this.props.hiddenColumns?.map(h => h.toLowerCase()) ?? [];
       columns = conf.columns.filter(
-        info => !this.props.hiddenColumns || !this.props.hiddenColumns.includes(info.title.toLowerCase())
+        info => hiddenSet.length === 0 || !hiddenSet.includes(VirtualListComponent.getColumnId(info))
       );
       if (this.props.columnOrder && this.props.columnOrder.length > 0) {
-        const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
+        const orderMap = new Map(this.props.columnOrder.map((id, i) => [id.toLowerCase(), i]));
         columns.sort((a, b) => {
-          const ai = orderMap.get(a.title.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
-          const bi = orderMap.get(b.title.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
+          const ai = orderMap.get(VirtualListComponent.getColumnId(a)) ?? Number.MAX_SAFE_INTEGER;
+          const bi = orderMap.get(VirtualListComponent.getColumnId(b)) ?? Number.MAX_SAFE_INTEGER;
           return ai - bi;
         });
       }

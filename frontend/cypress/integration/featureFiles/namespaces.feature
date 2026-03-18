@@ -77,11 +77,19 @@ Feature: Kiali Namespaces page
 
   @core-2
   @offline
-  @selected
   Scenario: Hide Mode column on namespaces page
     Then user sees the "bookinfo" namespace in the namespaces page
     When user opens manage columns on namespaces page
     And user unchecks column "Mode" in manage columns
     And user saves manage columns
     Then the "Mode" column "disappears" on namespaces page
+
+  @core-2
+  @offline
+  Scenario: Column order is applied from URL on namespaces page
+    Then user sees the "bookinfo" namespace in the namespaces page
+    When user sets namespaces column order via URL to
+      | Labels | Namespace | Type | Mode | Revision | Health | mTLS | Istio config |
+    Then the table column order on namespaces page is
+      | Labels | Namespace | Type | Mode | Revision | Health | mTLS | Istio config |
 

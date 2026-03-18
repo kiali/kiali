@@ -77,6 +77,7 @@ const chunkArray = <T,>(array: T[], size: number): T[][] => {
 
 type State = {
   clusterTarget?: string;
+  columnResetRequested: boolean;
   controlPlanes?: ControlPlane[];
   grafanaLinks: ExternalLink[];
   kind: string;
@@ -162,6 +163,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
     this.state = {
       clusterTarget: '',
+      columnResetRequested: false,
       controlPlanes: undefined,
       grafanaLinks: [],
       kind: '',
@@ -175,11 +177,67 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     };
   }
 
+  private resetButtonListener: (() => void) | null = null;
+  private resetButtonElement: Element | null = null;
+
   componentDidMount(): void {
     this.syncColumnsFromURL();
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
+      this.load();
+    }
+  }
+
+  componentDidUpdate(prevProps: NamespacesProps, prevState: State): void {
+    const modalJustOpened = this.state.showColumnManagement && !prevState.showColumnManagement;
+    const modalJustClosed = !this.state.showColumnManagement && prevState.showColumnManagement;
+
+    if (modalJustClosed && this.resetButtonListener && this.resetButtonElement) {
+      this.resetButtonElement.removeEventListener('click', this.resetButtonListener as EventListener);
+      this.resetButtonListener = null;
+      this.resetButtonElement = null;
+    }
+
+    if (modalJustOpened) {
+      const runReset = (): void => {
+        this.setState({ columnResetRequested: true });
+        this.props.dispatch(NamespacesListActions.setColumnOrder([]));
+        this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
+        HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
+        HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
+      };
+      this.resetButtonListener = runReset;
+      const findAndAttach = (): void => {
+        const btn = document.querySelector('[data-ouia-component-id="ColumnManagementModal-reset-button"]');
+        if (btn && this.resetButtonListener) {
+          this.resetButtonElement = btn;
+          btn.addEventListener('click', this.resetButtonListener as EventListener, true);
+        }
+      };
+      setTimeout(findAndAttach, 0);
+    }
+
+    if (
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (prevProps.navCollapse !== this.props.navCollapse ||
+          (prevProps.refreshInterval !== this.props.refreshInterval &&
+            (this.props.refreshInterval !== RefreshIntervalPause ||
+              prevProps.refreshInterval === RefreshIntervalManual))))
+    ) {
+      this.load();
+    }
+
+    const refreshChanged =
+      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
+      (this.props.refreshInterval !== RefreshIntervalManual &&
+        (prevProps.navCollapse !== this.props.navCollapse ||
+          (prevProps.refreshInterval !== this.props.refreshInterval &&
+            (this.props.refreshInterval !== RefreshIntervalPause ||
+              prevProps.refreshInterval === RefreshIntervalManual))));
+
+    if (refreshChanged) {
       this.load();
     }
   }
@@ -225,7 +283,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     return virtualListConfig.namespaces.columns
       .filter(c => c.title && c.title.trim().length > 0)
       .map(c => {
-        const id = c.title.toLowerCase();
+        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
         return {
           id,
           title: c.title,
@@ -263,20 +321,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       isUntoggleable: c.id === 'namespace'
     }));
   };
-
-  componentDidUpdate(prevProps: NamespacesProps): void {
-    const refreshChanged =
-      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      (this.props.refreshInterval !== RefreshIntervalManual &&
-        (prevProps.navCollapse !== this.props.navCollapse ||
-          (prevProps.refreshInterval !== this.props.refreshInterval &&
-            (this.props.refreshInterval !== RefreshIntervalPause ||
-              prevProps.refreshInterval === RefreshIntervalManual))));
-
-    if (refreshChanged) {
-      this.load();
-    }
-  }
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
@@ -1160,7 +1204,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               initialFilters={availableFilters}
               onFilterChange={this.onChange}
               ref={this.sFStatefulFilters}
-              rightToolbar={
+              columnManagement={
                 <Tooltip content={t('Manage columns')}>
                   <Button
                     variant="plain"
@@ -1179,26 +1223,34 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         <ColumnManagementModal
           appliedColumns={this.getAppliedColumnsForModal()}
           applyColumns={newColumns => {
-            const orderedIds = newColumns.map(c => c.key);
             const hiddenIds = newColumns.filter(c => !c.isShown).map(c => c.key);
-            this.props.dispatch(NamespacesListActions.setColumnOrder(orderedIds));
-            this.props.dispatch(NamespacesListActions.setHiddenColumns(hiddenIds));
-            if (orderedIds.length > 0) {
-              HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, orderedIds.join(','));
-            } else {
+
+            if (this.state.columnResetRequested) {
+              this.props.dispatch(NamespacesListActions.setColumnOrder([]));
               HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
+            } else {
+              const orderedIds = newColumns.map(c => c.key);
+              this.props.dispatch(NamespacesListActions.setColumnOrder(orderedIds));
+              if (orderedIds.length > 0) {
+                HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, orderedIds.join(','));
+              } else {
+                HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
+              }
             }
+
+            this.props.dispatch(NamespacesListActions.setHiddenColumns(hiddenIds));
             if (hiddenIds.length > 0) {
               HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, hiddenIds.join(','));
             } else {
               HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
             }
-            this.setState({ showColumnManagement: false });
+
+            this.setState({ showColumnManagement: false, columnResetRequested: false });
           }}
           description={t('Selected categories will be displayed in the table. Drag and drop to reorder columns.')}
           enableDragDrop={true}
           isOpen={this.state.showColumnManagement}
-          onClose={() => this.setState({ showColumnManagement: false })}
+          onClose={() => this.setState({ showColumnManagement: false, columnResetRequested: false })}
           title={t('Manage columns')}
         />
 

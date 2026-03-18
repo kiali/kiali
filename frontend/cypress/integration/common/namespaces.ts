@@ -1,4 +1,4 @@
-import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When, TableDefinition } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getClusterForSingleCluster, getColWithRowText } from './table';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
@@ -68,6 +68,39 @@ When('user unchecks column {string} in manage columns', (columnTitle: string) =>
 
 When('user saves manage columns', () => {
   cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
+});
+
+/** Map display title to stable column id (Config column.id or name). */
+const columnTitleToId = (title: string): string => {
+  const map: Record<string, string> = {
+    'Istio config': 'istioconfiguration'
+  };
+  return map[title] ?? title.toLowerCase();
+};
+
+/** Set column order via URL param nsorder. Ensures the table applies that order. */
+When('user sets namespaces column order via URL to', (tableHeadings: TableDefinition) => {
+  const columnTitles = tableHeadings.raw()[0] as string[];
+  const orderParam = columnTitles.map(t => columnTitleToId(t)).join(',');
+  cy.url().then(url => {
+    const u = new URL(url);
+    u.searchParams.set('nsorder', orderParam);
+    cy.visit(u.toString());
+  });
+});
+
+Then('the table column order on namespaces page is', (tableHeadings: TableDefinition) => {
+  const expectedOrder = tableHeadings.raw()[0] as string[];
+  // Wait for column management modal to close so we target the main table
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
+  // Get visible column headers (filter out empty header for actions column)
+  cy.get('table thead th').then($ths => {
+    const actualOrder = $ths
+      .toArray()
+      .map(th => th.getAttribute('data-label'))
+      .filter((label): label is string => label !== null && label !== '');
+    expect(actualOrder).to.deep.equal(expectedOrder);
+  });
 });
 
 Then('the {string} column {string} on namespaces page', (col: string, action: 'appears' | 'disappears') => {

@@ -48,10 +48,11 @@ import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { languageSelector } from 'store/Selectors';
 import { classes } from 'typestyle';
+import { PFSpacer } from 'styles/PfSpacer';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
-  rowGap: 'var(--pf-t--global--spacer--md)',
+  rowGap: PFSpacer.md,
   $nest: {
     '& > .pf-v6-c-toolbar__content': {
       paddingLeft: 0
@@ -60,7 +61,7 @@ const toolbarStyle = kialiStyle({
 });
 
 const bottomPadding = kialiStyle({
-  paddingBottom: 'var(--pf-t--global--spacer--md)'
+  paddingBottom: PFSpacer.md
 });
 
 const formSelectStyle = kialiStyle({
@@ -83,12 +84,12 @@ type StatefulFiltersProps = ReduxProps & {
   children?: React.ReactNode;
   childrenFirst?: boolean;
   cleanState?: boolean; // For shared components, state is not saved in the URL
+  columnManagement?: React.ReactNode;
   initialFilters: FilterType[];
   initialToggles?: ToggleType[];
   onFilterChange: (active: ActiveFiltersInfo) => void;
   onToggleChange?: (active: ActiveTogglesInfo) => void;
   ref?: React.RefObject<StatefulFiltersComponent>;
-  rightToolbar?: React.ReactNode;
   toolbarClass?: string;
 };
 
@@ -676,7 +677,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                 </Select>
                 {this.renderInput()}
               </ToolbarFilter>
-              {this.props.rightToolbar && <ToolbarItem>{this.props.rightToolbar}</ToolbarItem>}
+              {this.props.columnManagement && <ToolbarItem>{this.props.columnManagement}</ToolbarItem>}
             </ToolbarGroup>
 
             <ToolbarGroup>
