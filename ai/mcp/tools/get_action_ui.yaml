@@ -10,8 +10,8 @@
         description: "Comma-separated list of namespaces in case of list/show resources or graph, just one namespace in case of get or show resource. If empty, will use all namespaces accessible to the user."
       resourceType:
         type: "string"
-        description: "Type of resource to get a view of : list resources,details of a resource, traffic/mesh graph or overview of namespaces"
-        enum: ["service", "workload", "app", "istio", "graph", "overview"]
+        description: "Type of resource to get a view of : list resources, details of a resource, traffic/mesh graph, overview dashboard, or namespaces list"
+        enum: ["service", "workload", "app", "istio", "graph", "overview", "namespaces"]
       resourceName:
         type: "string"
         description: "Optional. Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all)."
