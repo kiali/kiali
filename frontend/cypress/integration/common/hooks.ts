@@ -201,6 +201,12 @@ function restoreMeshConfigAfterSharedMeshConfig(): void {
 }
 
 Before({ tags: '@shared-mesh-config' }, () => {
+  // Before runs before Background, so no cy.visit() has run yet and the session is not restored.
+  // cy.request() then has no auth cookies → 401 on OpenShift. Ensure we're logged in first.
+  const authStrategy = Cypress.env('AUTH_STRATEGY');
+  if (authStrategy !== undefined && authStrategy !== 'anonymous') {
+    cy.login(Cypress.env('USERNAME') ?? 'jenkins', Cypress.env('PASSWD'));
+  }
   cy.exec(`kubectl get pods -l app=istiod -n istio-system -o jsonpath="{.items[0].metadata.name}"`).then(result => {
     const podName = result.stdout;
 
