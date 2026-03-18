@@ -1050,14 +1050,34 @@ When modifying Kubernetes resources or Kiali configuration, you must update mult
 - [ ] Add example to: `kiali-operator/crd-docs/cr/kiali.io_v1alpha1_kiali.yaml`
 - [ ] Validate CR: `make validate-cr` in kiali-operator repo
 - [ ] If modified CRD: Run `make sync-crds` in kiali-operator repo
+- [ ] Only if appropriate (usually not): Set value in `cr.spec` section of `helm-charts/kiali-operator/values.yaml`
 - [ ] Set default: `helm-charts/kiali-server/values.yaml`
 - [ ] Sort alphabetically in all files where added
 - [ ] If appropriate: Add test to `kiali-operator/molecule/config-values-test/converge.yml`
+- [ ] If CRD property added/removed/modified: Update `kiali-operator/molecule/config-values-test/kiali-cr-all-yaml`
+
+#### Checklist: Altering Monitoring Dashboard Templates
+
+- [ ] Modify built-in templates: `kiali/config/dashboards/dashboards.go`
 
 #### Checklist: Backporting to Older Versions
 
 - [ ] Duplicate changes from `roles/default/` to versioned roles (e.g., `roles/v1.24/`)
 - [ ] Cherry-pick changes to appropriate git branches
+
+#### Checklist: Adding Support For a New Ansible Role Version
+
+- [ ] Add new role directory by copying `kiali-operator/roles/default/` and naming it `vX.Y` (where X.Y is the new version)
+- [ ] Add new RELATED_IMAGE reference and relatedImages entry to `kiali-operator/manifests/kiali-ossm/manifests/kiali.clusterserviceversion.yaml`
+- [ ] Add new version to `kiali-operator/playbooks/kiali-default-supported-images.yml`
+- [ ] Add new version to `kiali-operator/playbooks/ossmconsole-default-supported-images.yml`
+
+#### Checklist: Removing Support For an Old Ansible Role Version
+
+- [ ] Delete the role directory from `kiali-operator/roles/`
+- [ ] Remove RELATED_IMAGE reference from `kiali-operator/manifests/kiali-ossm/manifests/kiali.clusterserviceversion.yaml`
+- [ ] Remove version from `kiali-operator/playbooks/kiali-default-supported-images.yml`
+- [ ] Remove version from `kiali-operator/playbooks/ossmconsole-default-supported-images.yml`
 
 ### Working with CRDs
 
