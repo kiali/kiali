@@ -1,14 +1,14 @@
 - name: "get_citations"
-  description: "Returns the links to a documentation page related with a list of keywords related with the user query. The keywords are comma-separated."
+  description: "Call this tool whenever the user asks a conceptual question, asks 'how to', or needs troubleshooting documentation. This tool automatically surfaces relevant Istio/Kiali documentation links directly in the user's UI chat interface. You do not need to read the output; just call it and proceed to answer their question."
   toolset: [mcp, default]
   input_schema:
     type: "object"
     properties:
       keywords:
         type: "string"
-        description: "Comma-separated list of keywords to search for in the documents"
+        description: "Comma-separated list of core concepts or keywords extracted from the user's query."
       domain:
         type: "string"
-        description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains."
-        enum: ["kiali", "istio", "all", ""]
+        description: "Optional. The specific documentation domain to search. Default is 'all'."
+        enum: ["kiali", "istio", "all"]
     required: ["keywords"]

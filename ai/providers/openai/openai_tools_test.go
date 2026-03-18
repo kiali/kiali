@@ -21,36 +21,36 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_action_ui",
-				Description: openai.String("Returns the action to navigate in the Kiali UI when user request see graph or mesh graph,list/get/show resources or a detailed resource information"),
+				Description: openai.String("Call this tool WHENEVER the user asks to navigate, view, show, open, or get a visual representation of resources (like graphs, lists, or details). This tool automatically redirects the user's Kiali UI. You do NOT need to analyze the output of this tool; simply call it and acknowledge to the user that you are taking them to the requested view."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"properties": map[string]interface{}{
 						"namespaces": map[string]interface{}{
 							"type":        "string",
-							"description": "Comma-separated list of namespaces in case of list/show resources or graph, just one namespace in case of get or show resource. If empty, will use all namespaces accessible to the user.",
+							"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
 						},
 						"resourceType": map[string]interface{}{
 							"type":        "string",
-							"description": "Type of resource to get a view of : list resources, details of a resource, traffic/mesh graph, overview dashboard, or namespaces list",
+							"description": "The main category of the view to open. Use 'list' for multiple resources, 'details' for a specific resource, 'graph' for topology, or 'overview' for the main dashboard.",
 							"enum":        []interface{}{"service", "workload", "app", "istio", "graph", "overview", "namespaces"},
 						},
 						"resourceName": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional. Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
+							"description": "The specific name of the resource (e.g., 'reviews-v1'). Leave empty if the user wants a list view.",
 						},
 						"graph": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional. If resourceType is graph, you can specify the type of graph to return: Mesh if user request mesh or traffic graph (Values: mesh|traffic). Mesh graph no required namespaces parameter, traffic graph have an optional namespaces parameter. Default graph is traffic",
+							"description": "REQUIRED ONLY IF resourceType is 'graph'. Specifies the graph visualization type.",
 							"enum":        []interface{}{"mesh", "traffic"},
 						},
 						"graphType": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional type of graph to return. Default is 'versionedApp'.",
+							"description": "Granularity of the graph. Default is 'versionedApp'.",
 							"enum":        []interface{}{"versionedApp", "app", "service", "workload"},
 						},
 						"tab": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional. Tab to open in case of show resource details. Default is info.",
+							"description": "The specific tab to open when viewing resource details. Default is 'info'.",
 							"enum":        []interface{}{"info", "logs", "metrics", "in_metrics", "out_metrics", "traffic", "traces", "envoy"},
 						},
 					},
@@ -74,7 +74,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetCitations(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_citations",
-				Description: openai.String("Returns the links to a documentation page related with a list of keywords related with the user query. The keywords are comma-separated."),
+				Description: openai.String("Call this tool whenever the user asks a conceptual question, asks 'how to', or needs troubleshooting documentation. This tool automatically surfaces relevant Istio/Kiali documentation links directly in the user's UI chat interface. You do not need to read the output; just call it and proceed to answer their question."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
@@ -83,16 +83,15 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetCitations(t *testing.T) {
 					"properties": map[string]interface{}{
 						"keywords": map[string]interface{}{
 							"type":        "string",
-							"description": "Comma-separated list of keywords to search for in the documents",
+							"description": "Comma-separated list of core concepts or keywords extracted from the user's query.",
 						},
 						"domain": map[string]interface{}{
 							"type":        "string",
-							"description": "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains.",
+							"description": "Optional. The specific documentation domain to search. Default is 'all'.",
 							"enum": []interface{}{
 								"kiali",
 								"istio",
 								"all",
-								"",
 							},
 						},
 					},

@@ -22,30 +22,30 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 		Properties: map[string]*genai.Schema{
 			"namespaces": {
 				Type:        genai.TypeString,
-				Description: "Comma-separated list of namespaces in case of list/show resources or graph, just one namespace in case of get or show resource. If empty, will use all namespaces accessible to the user.",
+				Description: "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
 			},
 			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "Type of resource to get a view of : list resources, details of a resource, traffic/mesh graph, overview dashboard, or namespaces list",
+				Description: "The main category of the view to open. Use 'list' for multiple resources, 'details' for a specific resource, 'graph' for topology, or 'overview' for the main dashboard.",
 				Enum:        []string{"service", "workload", "app", "istio", "graph", "overview", "namespaces"},
 			},
 			"resourceName": {
 				Type:        genai.TypeString,
-				Description: "Optional. Name of the resource to get details for (optional string - if provided, gets details; if empty, lists all).",
+				Description: "The specific name of the resource (e.g., 'reviews-v1'). Leave empty if the user wants a list view.",
 			},
 			"graph": {
 				Type:        genai.TypeString,
-				Description: "Optional. If resourceType is graph, you can specify the type of graph to return: Mesh if user request mesh or traffic graph (Values: mesh|traffic). Mesh graph no required namespaces parameter, traffic graph have an optional namespaces parameter. Default graph is traffic",
+				Description: "REQUIRED ONLY IF resourceType is 'graph'. Specifies the graph visualization type.",
 				Enum:        []string{"mesh", "traffic"},
 			},
 			"graphType": {
 				Type:        genai.TypeString,
-				Description: "Optional type of graph to return. Default is 'versionedApp'.",
+				Description: "Granularity of the graph. Default is 'versionedApp'.",
 				Enum:        []string{"versionedApp", "app", "service", "workload"},
 			},
 			"tab": {
 				Type:        genai.TypeString,
-				Description: "Optional. Tab to open in case of show resource details. Default is info.",
+				Description: "The specific tab to open when viewing resource details. Default is 'info'.",
 				Enum:        []string{"info", "logs", "metrics", "in_metrics", "out_metrics", "traffic", "traces", "envoy"},
 			},
 		},
@@ -66,11 +66,11 @@ func TestConvertToolToGoogle_FromToolDefinition_GetCitations(t *testing.T) {
 		Properties: map[string]*genai.Schema{
 			"keywords": {
 				Type:        genai.TypeString,
-				Description: "Comma-separated list of keywords to search for in the documents",
+				Description: "Comma-separated list of core concepts or keywords extracted from the user's query.",
 			},
 			"domain": {
 				Type:        genai.TypeString,
-				Description: "Optional. Domain to search for the documents. Possible values: kiali, istio. If not provided, will search in all domains.",
+				Description: "Optional. The specific documentation domain to search. Default is 'all'.",
 				Enum:        []string{"kiali", "istio", "all"},
 			},
 		},

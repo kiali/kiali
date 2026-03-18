@@ -116,16 +116,6 @@ func (p *OpenAIProvider) SendChat(r *http.Request, req types.AIRequest, business
 			response.Citations = append(response.Citations, processResult.Response.Citations...)
 		}
 
-		// If the only outputs were actions/citations, don't ask the model to generate prose.
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
-			Actions:   response.Actions,
-			Citations: response.Citations,
-		}, toolNames)
-		if !shouldGenerate {
-			response.Answer = responseAnswer
-			break
-		}
-
 		// Append tool outputs to the OpenAI conversation (linked by tool_call_id).
 		// Note: even "excluded" tools must produce a tool response for OpenAI, otherwise
 		// the next model call can fail with "missing tool responses".

@@ -91,19 +91,22 @@ func ExecuteToolCallsInParallel(
 			}
 
 			if mcp.ExcludedToolNames[call.Name] {
+				content := ""
 				if call.Name == "get_action_ui" {
 					if mcpRes, ok := mcpResult.(get_action_ui.GetActionUIResponse); ok {
 						actions = append(actions, mcpRes.Actions...)
+						content = "Success. The user's UI has been redirected to the requested view."
 					}
 				}
 				if call.Name == "get_citations" {
 					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
 						citations = append(citations, mcpRes.Citations...)
+						content = "Success. Documentation links have been displayed in the user's UI."
 					}
 				}
 				results[index] = mcp.ToolCallResult{
 					Message: types.ConversationMessage{
-						Content: "",
+						Content: content,
 						Name:    call.Name,
 						Param:   nil,
 						Role:    "tool",

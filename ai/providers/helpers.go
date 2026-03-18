@@ -18,27 +18,6 @@ import (
 
 var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
-func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool, string) {
-	shouldGenerate := false
-	for _, toolName := range toolNames {
-		if !mcp.ExcludedToolNames[toolName] {
-			shouldGenerate = true
-			break
-		}
-	}
-	if shouldGenerate {
-		return true, ""
-	}
-
-	if len(response.Actions) > 0 {
-		return false, "I have found the following actions: "
-	}
-	if len(response.Citations) > 0 {
-		return false, "I have found the following citations: "
-	}
-	return true, ""
-}
-
 func ParseMarkdownResponse(content string) string {
 	// Fix code blocks: replace ``` with ~~~ (AI sometimes uses wrong delimiter)
 	content = strings.ReplaceAll(content, "```", "~~~")

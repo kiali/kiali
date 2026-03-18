@@ -104,15 +104,6 @@ func (p *GoogleAIProvider) SendChat(r *http.Request, req types.AIRequest, busine
 		}
 		conversation = processResult.Conversation
 
-		shouldGenerate, responseAnswer := providers.ShouldGenerateAnswer(&types.AIResponse{
-			Actions:   response.Actions,
-			Citations: response.Citations,
-		}, toolNames)
-		if !shouldGenerate {
-			response.Answer = responseAnswer
-			break
-		}
-
 		// Send function responses back to the chat (all tool calls in a single turn).
 		parts := make([]genai.Part, 0, len(toolResults))
 		for i, toolResult := range toolResults {
