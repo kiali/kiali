@@ -73,39 +73,42 @@ const decodeServiceInsightsMetrics = (raw: string | undefined): ServiceInsightsM
   return decoded.errorRates || decoded.latency || decoded.tcp ? decoded : undefined;
 };
 
-const tablesContainer3ColStyle = kialiStyle({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))',
-  gap: '1.5rem',
+// Min width per table column so horizontal scroll appears before tables overlap (padding/gap preserved).
+const SERVICE_INSIGHTS_TABLE_MIN_WIDTH_PX = 220;
+
+const tablesContainerMultiColStyle = kialiStyle({
   alignItems: 'start',
+  display: 'grid',
+  gap: '2.5rem',
+  minWidth: 0, // Allow shrinking so overflow triggers scroll instead of overlap
   overflowX: 'auto'
 });
 
 const tablesContainer1ColStyle = kialiStyle({
+  alignItems: 'start',
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr)',
-  gap: '1.5rem',
-  alignItems: 'start'
+  gap: '2.5rem',
+  gridTemplateColumns: 'minmax(0, 1fr)'
 });
 
 const cardHeaderTitleLayoutStyle = kialiStyle({
-  display: 'flex',
   alignItems: 'center',
+  display: 'flex',
+  gap: '0.5rem',
   justifyContent: 'space-between',
-  width: '100%',
-  gap: '0.5rem'
+  width: '100%'
 });
 
 const cardHeaderTitleLeftStyle = kialiStyle({
-  display: 'inline-flex',
   alignItems: 'center',
+  display: 'inline-flex',
   gap: '0.5rem',
   minWidth: 0
 });
 
 const cardHeaderTitleActionsStyle = kialiStyle({
-  display: 'inline-flex',
   alignItems: 'center',
+  display: 'inline-flex',
   gap: '0.25rem'
 });
 
@@ -114,16 +117,17 @@ const tableContainerStyle = kialiStyle({
 });
 
 const tableStyle = kialiStyle({
-  width: '100%',
-  borderCollapse: 'collapse'
+  borderCollapse: 'collapse',
+  tableLayout: 'fixed', // Enforces column widths so Name cell can truncate with ellipsis
+  width: '100%'
 });
 
 const tableHeaderStyle = kialiStyle({
-  textAlign: 'left',
-  padding: '0.75rem',
   borderBottom: 'none',
+  color: 'var(--pf-t--global--text--color--primary--default)',
   fontSize: '0.875rem',
-  color: 'var(--pf-t--global--text--color--primary--default)'
+  padding: '0.75rem 0.5rem',
+  textAlign: 'left'
 });
 
 const tableRowStyle = kialiStyle({
@@ -136,29 +140,33 @@ const tableRowStyle = kialiStyle({
 });
 
 const tableCellStyle = kialiStyle({
-  padding: '0.75rem',
-  fontSize: '0.875rem'
+  fontSize: '0.875rem',
+  padding: '0.75rem 0.5rem'
 });
 
 const rateCellStyle = kialiStyle({
-  padding: '0.75rem',
-  fontSize: '0.875rem',
-  display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-start',
+  display: 'flex',
+  fontSize: '0.875rem',
   gap: '0.25rem',
+  justifyContent: 'flex-start',
+  padding: '0.75rem 0.5rem',
   whiteSpace: 'nowrap'
 });
 
 const statusIconStyle = kialiStyle({
-  width: '1rem',
-  height: '1rem'
+  height: '1rem',
+  width: '1rem'
 });
 
 const serviceLinkStyle = kialiStyle({
-  display: 'inline-block',
   color: PFColors.Link,
+  display: 'inline-block',
+  maxWidth: '100%',
+  overflow: 'hidden',
   textDecoration: 'underline !important',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
   $nest: {
     '&, &:hover, &:focus, &:active': {
       textDecoration: 'underline !important'
@@ -167,12 +175,12 @@ const serviceLinkStyle = kialiStyle({
 });
 
 const emptyStateStyle = kialiStyle({
+  alignItems: 'center',
+  color: PFColors.Color200,
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
   height: '100%',
-  color: PFColors.Color200
+  justifyContent: 'center'
 });
 
 const sortIconDisabledStyle = kialiStyle({
@@ -600,7 +608,16 @@ export const ServiceInsights: React.FC = () => {
     }
 
     return (
-      <div className={visibleTablesCount === 1 ? tablesContainer1ColStyle : tablesContainer3ColStyle}>
+      <div
+        className={visibleTablesCount === 1 ? tablesContainer1ColStyle : tablesContainerMultiColStyle}
+        style={
+          visibleTablesCount > 1
+            ? {
+                gridTemplateColumns: `repeat(${visibleTablesCount}, minmax(${SERVICE_INSIGHTS_TABLE_MIN_WIDTH_PX}px, 1fr))`
+              }
+            : undefined
+        }
+      >
         {effectiveMetrics.errorRates && (
           <div className={tableContainerStyle} data-test="service-insights-rates">
             {renderRatesTable()}
