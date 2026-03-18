@@ -172,7 +172,8 @@ Before({ tags: '@remote-istio-crds' }, () => {
 });
 
 After({ tags: '@sleep-app-scaleup-after' }, () => {
-  cy.exec('kubectl scale -n sleep --replicas=1 deployment/sleep');
+  // Restore sleep so later tests have the deployment. Run even if scale fails (e.g. namespace missing).
+  cy.exec('kubectl scale -n sleep --replicas=1 deployment/sleep', { failOnNonZeroExit: false });
 });
 
 // remove resources created in the istio-system namespace to not influence istio instance after the test
@@ -193,6 +194,12 @@ metadata:
   namespace: istio-system
 `;
 
+function restoreMeshConfigAfterSharedMeshConfig(): void {
+  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`, { failOnNonZeroExit: false });
+  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
+  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`, { failOnNonZeroExit: false });
+}
+
 Before({ tags: '@shared-mesh-config' }, () => {
   cy.exec(`kubectl get pods -l app=istiod -n istio-system -o jsonpath="{.items[0].metadata.name}"`).then(result => {
     const podName = result.stdout;
@@ -204,12 +211,20 @@ Before({ tags: '@shared-mesh-config' }, () => {
       let tries = 0;
       const doRequest = (): void => {
         if (tries > maxTries) {
+          restoreMeshConfigAfterSharedMeshConfig();
           throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
         }
 
         tries++;
-        cy.request({ method: 'GET', url: '/api/mesh/graph' }).then(response => {
-          expect(response.status).to.equal(200);
+        cy.request({ method: 'GET', url: '/api/mesh/graph', failOnStatusCode: false }).then(response => {
+          if (response.status !== 200) {
+            // e.g. 401: restore mesh so we don't leave REGISTRY_ONLY for later scenarios
+            restoreMeshConfigAfterSharedMeshConfig();
+            cy.then(() =>
+              expect(response.status, `Expected 200 from /api/mesh/graph, got ${response.status}`).to.equal(200)
+            );
+            return;
+          }
           console.log(response.body.elements.nodes.find(node => node.data.infraType === 'istiod'));
           if (
             response.body.elements.nodes.find(node => node.data.infraType === 'istiod')?.data?.infraData?.config
@@ -229,9 +244,8 @@ Before({ tags: '@shared-mesh-config' }, () => {
 });
 
 After({ tags: '@shared-mesh-config' }, () => {
-  cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`);
-  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
-  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`);
+  // Restore mesh so PolicyAllowAny is back to default (e.g. ALLOW_ANY).
+  restoreMeshConfigAfterSharedMeshConfig();
 });
 
 Before(() => {

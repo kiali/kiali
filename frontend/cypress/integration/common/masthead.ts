@@ -62,6 +62,7 @@ When(
 );
 
 After({ tags: '@component-health-upscale' }, () => {
-  cy.exec(`kubectl scale -n istio-system --replicas=1 deployment/grafana`);
-  cy.exec(`kubectl rollout status deployment grafana -n istio-system`);
+  // Restore grafana so other scenarios (e.g. mesh infra) don't see it as down. Run both even if one fails.
+  cy.exec(`kubectl scale -n istio-system --replicas=1 deployment/grafana`, { failOnNonZeroExit: false });
+  cy.exec(`kubectl rollout status deployment grafana -n istio-system`, { failOnNonZeroExit: false });
 });
