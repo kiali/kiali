@@ -62,11 +62,17 @@ When('user opens manage columns on namespaces page', () => {
 });
 
 When('user unchecks column {string} in manage columns', (columnTitle: string) => {
-  const id = columnTitle.toLowerCase();
+  const id = columnTitleToId(columnTitle);
   cy.get(`[data-testid="column-check-${id}"]`).uncheck();
 });
 
 When('user saves manage columns', () => {
+  cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
+});
+
+When('user resets columns to default on namespaces page', () => {
+  cy.getBySel('namespaces-manage-columns').click();
+  cy.get('[data-ouia-component-id="ColumnManagementModal-reset-button"]').click();
   cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
 });
 

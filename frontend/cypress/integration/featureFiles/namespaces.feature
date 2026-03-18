@@ -83,6 +83,7 @@ Feature: Kiali Namespaces page
     And user unchecks column "Mode" in manage columns
     And user saves manage columns
     Then the "Mode" column "disappears" on namespaces page
+    And user resets columns to default on namespaces page
 
   @core-2
   @offline
