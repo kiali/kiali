@@ -1806,7 +1806,7 @@ func NewRoutes(
 		// responses:
 		//      400: badRequestError
 		//      503: serviceUnavailableError
-		//      200: serviceRequestsResponse
+		//      200: serviceThroughputResponse
 		{
 			Name:          "OverviewServiceThroughput",
 			LogGroupName:  log.MetricsLogName,
