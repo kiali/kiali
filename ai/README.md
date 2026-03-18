@@ -163,8 +163,8 @@ The AI uses MCP tools to interact with Kiali and the mesh:
 - `get_mesh_traffic_graph`: Returns compact service-to-service traffic topology with metrics (throughput, response time, mTLS).
 - `get_metrics`: Returns Istio/Envoy metrics for services, workloads, or apps.
 - `get_pod_performance`: Returns current Pod CPU/memory usage vs requests/limits.
-- `get_traces`: Fetches and summarizes distributed traces (bottlenecks, errors).
 - `list_or_get_resources`: Lists or gets details for services, workloads, apps, and namespaces (compact/LLM-optimized output).
+- `list_traces`: Lists distributed traces for a service. Use `get_trace_details` for a single trace hierarchy.
 - `manage_istio_config_read`: List/get Istio config (read-only).
 - `manage_istio_config`: Create/patch/delete Istio config with confirmation flow.
 

@@ -1,0 +1,27 @@
+- name: "list_traces"
+  description: "Lists distributed traces for a service in a namespace. Returns a summary (namespace, service, total_found, avg_duration_ms) and a list of traces with id, duration_ms, spans_count, root_op, slowest_service, has_errors. Use get_trace_details with a trace id to get full hierarchy."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      namespace:
+        type: "string"
+        description: "Kubernetes namespace of the service (required)."
+      serviceName:
+        type: "string"
+        description: "Service name to search traces for (required). Returns multiple traces up to limit."
+      errorOnly:
+        type: "boolean"
+        description: "If true, only consider traces that contain errors. Default false."
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Defaults to the cluster name in the Kiali configuration."
+      lookbackSeconds:
+        type: "integer"
+        description: "How far back to search. Default 600 (10m)."
+      limit:
+        type: "integer"
+        description: "Maximum number of traces to return. Default 10."
+    required:
+    - namespace
+    - serviceName

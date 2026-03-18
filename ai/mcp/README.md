@@ -144,9 +144,32 @@ Returns a compact service-to-service traffic topology with network metrics (thro
 {"namespaces": "bookinfo", "graphType": "versionedApp"}
 ```
 
+### 6. `list_traces`
+
+Lists distributed traces for a service from the configured tracing backend (Jaeger/Tempo). Returns a **summary** (namespace, service, total_found, avg_duration_ms) and a **traces** list with id, duration_ms, spans_count, root_op, slowest_service, has_errors. Use **get_trace_details** with a trace id to get the full call hierarchy.
+
+**Parameters**:
+- `namespace` (string, required): Namespace of the service.
+- `service_name` (string, required): Service name to search traces for.
+- `error_only` (boolean, optional): If true, only consider error traces.
+- `lookback_seconds` (integer, optional): Search window. Default 600.
+- `limit` (integer, optional): Max traces to return. Default 10.
+
+**Returns**: `GetTracesListResponse` with `summary` and `traces` (list of lightweight items).
+
+**Example**: List traces for a service
+```json
+{
+  "namespace": "bookinfo",
+  "service_name": "reviews",
+  "error_only": true,
+  "lookback_seconds": 900
+}
+```
+
 ---
 
-### 6. `get_metrics`
+### 7. `get_metrics`
 
 Returns Istio/Envoy metrics for a specific resource.
 
@@ -170,7 +193,7 @@ Returns Istio/Envoy metrics for a specific resource.
 
 ---
 
-### 7. `get_pod_performance`
+### 8. `get_pod_performance`
 
 Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits.
 
@@ -185,30 +208,6 @@ Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compa
 **Example**:
 ```json
 {"namespace": "bookinfo", "workloadName": "reviews-v1", "timeRange": "10m"}
-```
-
----
-
-### 8. `get_traces`
-
-Fetches distributed traces from Jaeger/Tempo and summarizes bottlenecks and error spans.
-
-**Parameters**:
-- `traceId` (string, optional): Specific trace ID. If provided, namespace/serviceName are ignored.
-- `namespace` (string, required if no traceId): Namespace of the service.
-- `serviceName` (string, required if no traceId): Service name.
-- `errorOnly` (boolean, optional): Only consider error traces. Default: false.
-- `lookbackSeconds` (integer, optional): Search window. Default: 600 (10 minutes).
-- `limit` (integer, optional): Max traces to consider. Default: 10.
-- `maxSpans` (integer, optional): Max spans per summary section. Default: 7.
-- `clusterName` (string, optional): Cluster name.
-
-**Returns**: `GetTracesResponse` with `summary.bottlenecks`, `summary.error_spans`, and `summary.error_chain`.
-
-**Examples**:
-```json
-{"traceId": "0af7651916cd43dd8448eb211c80319c"}
-{"namespace": "bookinfo", "serviceName": "reviews", "errorOnly": true}
 ```
 
 ---

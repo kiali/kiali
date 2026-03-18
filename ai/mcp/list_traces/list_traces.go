@@ -1,4 +1,4 @@
-package get_traces
+package list_traces
 
 import (
 	"net/http"
@@ -20,51 +20,22 @@ func Execute(
 ) (interface{}, int) {
 	parsed := parseArgs(args, kialiInterface.Conf)
 
-	if parsed.TraceID == "" && (parsed.Namespace == "" || parsed.ServiceName == "") {
-		return "Either trace_id or (namespace + service_name) is required", http.StatusBadRequest
+	if parsed.Namespace == "" || parsed.ServiceName == "" {
+		return "namespace and service_name are required", http.StatusBadRequest
 	}
 
-	ctx := r.Context()
-
-	// Case 1: Specific trace_id provided - return single trace with detailed summary
-	if parsed.TraceID != "" {
-		trace, err := businessLayer.Tracing.GetTraceDetail(ctx, parsed.TraceID)
-		if err != nil {
-			return err.Error(), http.StatusServiceUnavailable
-		}
-		if trace == nil {
-			return "Trace not found", http.StatusNotFound
-		}
-
-		// Some clients return an object with errors and no data when not found. Keep the 404 semantics.
-		if len(trace.Data.Spans) == 0 && len(trace.Errors) > 0 {
-			return "Trace not found", http.StatusNotFound
-		}
-
-		summary := summarizeTrace(trace.Data, parsed.MaxSpans)
-		summary.TraceID = parsed.TraceID
-
-		return GetTracesResponse{
-			Found:   true,
-			Query:   parsed,
-			Summary: &summary,
-			TraceID: parsed.TraceID,
-		}, http.StatusOK
-	}
-
-	// Case 2: Search by service - return multiple traces
+	ctx := kialiInterface.Request.Context()
+	conf := kialiInterface.Conf
 	q := buildServiceQuery(parsed, conf, true)
-	traces, err := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q)
+	traces, err := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q)
 
 	if err != nil {
 		return err.Error(), http.StatusServiceUnavailable
 	}
 
-	// Some tracing backends/instrumentations don't set error=true even when HTTP 5xx exists.
-	// If user asked for error_only and got nothing, fallback to a broader search and filter locally.
 	if (traces == nil || len(traces.Data) == 0) && parsed.ErrorOnly {
 		q2 := buildServiceQuery(parsed, conf, false)
-		traces2, err2 := businessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q2)
+		traces2, err2 := kialiInterface.BusinessLayer.Tracing.GetServiceTraces(ctx, parsed.Namespace, parsed.ServiceName, q2)
 		if err2 != nil {
 			return err2.Error(), http.StatusServiceUnavailable
 		}
@@ -75,40 +46,92 @@ func Execute(
 	}
 
 	if traces == nil || len(traces.Data) == 0 {
-		return GetTracesResponse{Found: false, Query: parsed}, http.StatusOK
+		return GetTracesListResponse{
+			Summary: &TracesListSummary{Namespace: parsed.Namespace, Service: parsed.ServiceName, TotalFound: 0},
+			Traces:  nil,
+		}, http.StatusOK
 	}
 
-	// Fetch details and summarize each trace
 	summaries := make([]TraceSummary, 0, len(traces.Data))
 	for _, t := range traces.Data {
-		traceDetail, err := businessLayer.Tracing.GetTraceDetail(ctx, string(t.TraceID))
+		traceDetail, err := kialiInterface.BusinessLayer.Tracing.GetTraceDetail(ctx, string(t.TraceID))
 		if err != nil || traceDetail == nil {
-			// Skip traces that can't be fetched
 			continue
 		}
 		if len(traceDetail.Data.Spans) == 0 {
 			continue
 		}
-		summary := summarizeTrace(traceDetail.Data, parsed.MaxSpans)
+		summary := summarizeTrace(traceDetail.Data, 10)
 		summary.TraceID = string(t.TraceID)
 		summaries = append(summaries, summary)
 	}
 
 	if len(summaries) == 0 {
-		return GetTracesResponse{Found: false, Query: parsed}, http.StatusOK
+		return GetTracesListResponse{
+			Summary: &TracesListSummary{Namespace: parsed.Namespace, Service: parsed.ServiceName, TotalFound: 0},
+			Traces:  nil,
+		}, http.StatusOK
 	}
 
-	return GetTracesResponse{
-		Found:  true,
-		Query:  parsed,
-		Traces: summaries,
+	items := make([]TraceListItem, 0, len(summaries))
+	var sumDuration float64
+	for _, s := range summaries {
+		item := traceSummaryToListItem(s, parsed.Namespace)
+		items = append(items, item)
+		sumDuration += s.TotalDurationMs
+	}
+	avgMs := sumDuration / float64(len(summaries))
+	return GetTracesListResponse{
+		Summary: &TracesListSummary{
+			Namespace:     parsed.Namespace,
+			Service:       parsed.ServiceName,
+			TotalFound:    len(items),
+			AvgDurationMs: avgMs,
+		},
+		Traces: items,
 	}, http.StatusOK
+}
+
+func traceSummaryToListItem(s TraceSummary, namespace string) TraceListItem {
+	rootOp := ""
+	if len(s.RootSpans) > 0 {
+		r := s.RootSpans[0]
+		status := ""
+		if r.Tags != nil {
+			if v := r.Tags["http.status_code"]; v != "" {
+				status = v
+			} else if v := r.Tags["grpc.status_code"]; v != "" {
+				status = v
+			}
+		}
+		rootOp = r.Service + " " + r.Operation
+		if status != "" {
+			rootOp += " " + status
+		}
+	}
+	slowestService := ""
+	if len(s.Bottlenecks) > 0 {
+		b := s.Bottlenecks[0]
+		// Avoid repeating namespace when service name already contains it (e.g. "productpage.bookinfo")
+		label := b.Service
+		if namespace != "" && !strings.Contains(b.Service, ".") {
+			label = b.Service + "." + namespace
+		}
+		slowestService = label + " (" + strconv.FormatFloat(b.DurationMs, 'f', 1, 64) + "ms)"
+	}
+	return TraceListItem{
+		ID:             s.TraceID,
+		DurationMs:     s.TotalDurationMs,
+		SpansCount:     s.TotalSpans,
+		RootOp:         rootOp,
+		SlowestService: slowestService,
+		HasErrors:      len(s.ErrorSpans) > 0,
+	}
 }
 
 func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
 	out := GetTracesArgs{}
 
-	out.TraceID = mcputil.GetStringArg(args, "trace_id", "traceId")
 	out.Namespace = mcputil.GetStringArg(args, "namespace")
 	out.ServiceName = mcputil.GetStringArg(args, "service_name", "serviceName")
 	out.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "cluster_name", "clusterName")
@@ -116,7 +139,6 @@ func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
 
 	out.Limit = mcputil.AsIntOrDefault(args, mcputil.DefaultTracesLimit, "limit")
 	out.LookbackSeconds = mcputil.AsIntOrDefault(args, mcputil.DefaultLookbackSeconds, "lookback_seconds", "lookbackSeconds")
-	out.MaxSpans = mcputil.AsIntOrDefault(args, mcputil.DefaultMaxSpans, "max_spans", "maxSpans")
 
 	return out
 }
@@ -264,18 +286,6 @@ func summarizeTrace(trace jaegerModels.Trace, maxSpans int) TraceSummary {
 	sort.Slice(errorSpans, func(i, j int) bool { return errorSpans[i].DurationMs > errorSpans[j].DurationMs })
 	errorSpans = takeFirst(errorSpans, maxSpans)
 
-	var chain []SpanBrief
-	if len(errorSpans) > 0 {
-		chain = buildAncestorChain(trace, byID, parentByID, errorSpans[0].SpanID, minStart)
-	}
-
-	warnings := make([]string, 0, len(trace.Warnings))
-	for _, w := range trace.Warnings {
-		if strings.TrimSpace(w) != "" {
-			warnings = append(warnings, w)
-		}
-	}
-
 	totalDurationMs := 0.0
 	if maxEnd >= minStart {
 		totalDurationMs = float64(maxEnd-minStart) / 1000.0
@@ -285,46 +295,9 @@ func summarizeTrace(trace jaegerModels.Trace, maxSpans int) TraceSummary {
 		TotalDurationMs: totalDurationMs,
 		TotalSpans:      len(trace.Spans),
 		Bottlenecks:     bottlenecks,
-		ErrorChain:      chain,
 		ErrorSpans:      errorSpans,
 		RootSpans:       takeFirst(rootSpans, maxSpans),
-		Warnings:        warnings,
 	}
-}
-
-func buildAncestorChain(trace jaegerModels.Trace, byID map[string]*jaegerModels.Span, parentByID map[string]string, spanID string, baseStart uint64) []SpanBrief {
-	chain := make([]SpanBrief, 0, 8)
-	seen := make(map[string]bool, 8)
-
-	curr := spanID
-	for curr != "" && !seen[curr] {
-		seen[curr] = true
-
-		s := byID[curr]
-		if s == nil {
-			break
-		}
-
-		parent := parentByID[curr]
-		chain = append(chain, SpanBrief{
-			DurationMs:    float64(s.Duration) / 1000.0,
-			Operation:     s.OperationName,
-			ParentSpanID:  parent,
-			Service:       spanServiceName(trace, s),
-			SpanID:        curr,
-			StartOffsetMs: float64(s.StartTime-baseStart) / 1000.0,
-			Tags:          interestingTags(s),
-		})
-
-		curr = parent
-	}
-
-	// Reverse into root -> leaf.
-	for i, j := 0, len(chain)-1; i < j; i, j = i+1, j-1 {
-		chain[i], chain[j] = chain[j], chain[i]
-	}
-
-	return chain
 }
 
 func spanServiceName(trace jaegerModels.Trace, span *jaegerModels.Span) string {
