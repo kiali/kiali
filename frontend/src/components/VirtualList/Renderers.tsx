@@ -50,7 +50,7 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
-import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { getNamespaceModeInfo, isDataPlaneNamespace, isRevisionAvailable } from 'utils/NamespaceUtils';
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
@@ -553,6 +553,8 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
     );
   }
 
+  const revAvailable = isRevisionAvailable(ns);
+
   return (
     <Td role="gridcell" dataLabel="Revision" key={`VirtuaItem_Revision_${ns.name}`} style={{ verticalAlign: 'middle' }}>
       <>
@@ -561,7 +563,7 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
             key={`${ns.name}-rev-${idx}`}
             content={
               <span>
-                {ns.isRevisionAvailable === false
+                {!revAvailable
                   ? t('Control plane with revision "{{version}}" does not exist', { version: rev })
                   : t('Istio revision {{version}}', { version: rev })}
               </span>
@@ -569,14 +571,10 @@ export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
           >
             <PFLabel
               variant="outline"
-              color={ns.isRevisionAvailable === false ? 'red' : 'orange'}
+              color={!revAvailable ? 'red' : 'orange'}
               data-test={idx === 0 ? 'data-plane-revision-badge' : undefined}
               style={idx > 0 ? { marginLeft: '0.25rem' } : undefined}
-              icon={
-                ns.isRevisionAvailable === false ? (
-                  <KialiIcon.Warning className={revisionWarningIconStyle} />
-                ) : undefined
-              }
+              icon={!revAvailable ? <KialiIcon.Warning className={revisionWarningIconStyle} /> : undefined}
             >
               {rev}
             </PFLabel>

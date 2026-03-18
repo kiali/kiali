@@ -60,7 +60,7 @@ import {
 } from '../../components/Filters/ListColumnManagementModal';
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
-import { getNamespaceRevisions } from '../../components/VirtualList/Renderers';
+import { setControlPlaneRevisions } from '../../utils/NamespaceUtils';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -319,7 +319,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               cluster: ns.cluster,
               isAmbient: ns.isAmbient,
               isControlPlane: ns.isControlPlane,
-              isRevisionAvailable: previous ? previous.isRevisionAvailable : undefined,
               istioConfig: previous ? previous.istioConfig : undefined,
               labels: ns.labels,
               name: ns.name,
@@ -690,21 +689,8 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     return API.getControlPlanes()
       .then(response => {
         const controlPlanes = response.data;
-        const cpRevisions = new Set(controlPlanes.map(cp => cp.revision));
-
-        this.setState(prevState => ({
-          controlPlanes,
-          namespaces: prevState.namespaces.map(ns => {
-            if (!ns.isControlPlane) {
-              const revisions = getNamespaceRevisions(ns);
-              return {
-                ...ns,
-                isRevisionAvailable: revisions.length === 0 || revisions.every(rev => cpRevisions.has(rev))
-              };
-            }
-            return ns;
-          })
-        }));
+        setControlPlaneRevisions(new Set(controlPlanes.map(cp => cp.revision)));
+        this.setState({ controlPlanes });
       })
       .catch(err => {
         addError('Error fetching control planes.', err);

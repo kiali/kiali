@@ -9,7 +9,6 @@ export type NamespaceInfo = {
   errorMetrics?: Metric[];
   isAmbient?: boolean;
   isControlPlane?: boolean;
-  isRevisionAvailable?: boolean;
   istioConfig?: IstioConfigList;
   labels?: { [key: string]: string };
   metrics?: Metric[];
