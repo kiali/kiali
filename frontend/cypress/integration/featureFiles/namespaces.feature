@@ -90,7 +90,7 @@ Feature: Kiali Namespaces page
   Scenario: Column order is applied from URL on namespaces page
     Then user sees the "bookinfo" namespace in the namespaces page
     When user sets namespaces column order via URL to
-      | Labels | Namespace | Type | Mode | Revision | Health | mTLS | Istio config |
+      | Labels | Namespace | Type | Mode | Health | mTLS | Istio config |
     Then the table column order on namespaces page is
-      | Labels | Namespace | Type | Mode | Revision | Health | mTLS | Istio config |
+      | Labels | Namespace | Type | Mode | Health | mTLS | Istio config |
 
