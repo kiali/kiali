@@ -692,16 +692,19 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         const controlPlanes = response.data;
         const cpRevisions = new Set(controlPlanes.map(cp => cp.revision));
 
-        this.state.namespaces.forEach(ns => {
-          if (!ns.isControlPlane) {
-            const revisions = getNamespaceRevisions(ns);
-            ns.isRevisionAvailable = revisions.length === 0 || revisions.every(rev => cpRevisions.has(rev));
-          }
-        });
-
-        this.setState({
-          controlPlanes
-        });
+        this.setState(prevState => ({
+          controlPlanes,
+          namespaces: prevState.namespaces.map(ns => {
+            if (!ns.isControlPlane) {
+              const revisions = getNamespaceRevisions(ns);
+              return {
+                ...ns,
+                isRevisionAvailable: revisions.length === 0 || revisions.every(rev => cpRevisions.has(rev))
+              };
+            }
+            return ns;
+          })
+        }));
       })
       .catch(err => {
         addError('Error fetching control planes.', err);
