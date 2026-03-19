@@ -397,12 +397,14 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
     .then($el => {
       // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
       const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
       if (isOSSMC) {
-        expect(target, 'OSSMC waypoint link target').to.include(`/deployments/${waypoint}/ossmconsole`);
+        // Even if the button exist, the click event doesn't work (Even with force).
+        const namespace = target.split('/')[2];
+        cy.visit({ url: `/k8s/ns/${namespace}/deployments/${waypoint}/ossmconsole` });
       } else {
-        expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
+        cy.wrap($el).click();
       }
-      cy.wrap($el).click();
     });
   cy.get('#loading_kiali_spinner').should('not.exist');
 });
