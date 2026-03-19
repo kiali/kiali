@@ -133,6 +133,19 @@ func TestConvertToolToGoogle_FromToolDefinition_GetLogs(t *testing.T) {
 	assert.Equal(t, expected, converted)
 }
 
+func TestConvertToolToGoogle_FromToolDefinition_GetMeshStatus(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_status.yaml"))
+	require.NoError(t, err)
+
+	converted := mapToGenAISchema(tool.GetDefinition())
+
+	expected := &genai.Schema{
+		Type: genai.TypeObject,
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
 func TestConvertToolToGoogle_FromToolDefinition_GetMeshGraph(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_traffic_graph.yaml"))
 	require.NoError(t, err)

@@ -280,3 +280,266 @@ func TestWorstHealth(t *testing.T) {
 	assert.Equal(t, kubernetes.ComponentUnhealthy, worstHealth(kubernetes.ComponentHealthy, kubernetes.ComponentUnhealthy))
 	assert.Equal(t, kubernetes.ComponentUnreachable, worstHealth(kubernetes.ComponentUnreachable, kubernetes.ComponentUnhealthy))
 }
+
+func TestComputeHealthFromApps_Healthy(t *testing.T) {
+	appHealth := models.NamespaceAppHealth{
+		"reviews": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 2, DesiredReplicas: 2},
+			},
+		},
+		"ratings": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 1, DesiredReplicas: 1},
+			},
+		},
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromApps(appHealth))
+}
+
+func TestComputeHealthFromApps_Degraded(t *testing.T) {
+	appHealth := models.NamespaceAppHealth{
+		"reviews": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 1, DesiredReplicas: 2},
+			},
+		},
+		"ratings": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 1, DesiredReplicas: 1},
+			},
+		},
+	}
+	assert.Equal(t, "DEGRADED", computeHealthFromApps(appHealth))
+}
+
+func TestComputeHealthFromApps_Unhealthy(t *testing.T) {
+	appHealth := models.NamespaceAppHealth{
+		"reviews": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 0, DesiredReplicas: 2},
+			},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", computeHealthFromApps(appHealth))
+}
+
+func TestComputeHealthFromApps_Empty(t *testing.T) {
+	assert.Equal(t, "HEALTHY", computeHealthFromApps(models.NamespaceAppHealth{}))
+}
+
+func TestComputeHealthFromApps_NilApp(t *testing.T) {
+	appHealth := models.NamespaceAppHealth{
+		"reviews": nil,
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromApps(appHealth))
+}
+
+func TestComputeHealthFromServices_Healthy(t *testing.T) {
+	svcHealth := models.NamespaceServiceHealth{
+		"productpage": &models.ServiceHealth{
+			Requests: models.RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 100},
+				},
+			},
+		},
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromServices(svcHealth))
+}
+
+func TestComputeHealthFromServices_Unhealthy(t *testing.T) {
+	svcHealth := models.NamespaceServiceHealth{
+		"productpage": &models.ServiceHealth{
+			Requests: models.RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 80, "500": 20},
+				},
+			},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", computeHealthFromServices(svcHealth))
+}
+
+func TestComputeHealthFromServices_Degraded(t *testing.T) {
+	svcHealth := models.NamespaceServiceHealth{
+		"productpage": &models.ServiceHealth{
+			Requests: models.RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 99, "500": 1},
+				},
+			},
+		},
+	}
+	assert.Equal(t, "DEGRADED", computeHealthFromServices(svcHealth))
+}
+
+func TestComputeHealthFromServices_Empty(t *testing.T) {
+	assert.Equal(t, "HEALTHY", computeHealthFromServices(models.NamespaceServiceHealth{}))
+}
+
+func TestComputeHealthFromServices_NilService(t *testing.T) {
+	svcHealth := models.NamespaceServiceHealth{
+		"productpage": nil,
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromServices(svcHealth))
+}
+
+func TestComputeHealthFromWorkloads_Healthy(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": &models.WorkloadHealth{
+			WorkloadStatus: &models.WorkloadStatus{AvailableReplicas: 2, DesiredReplicas: 2},
+		},
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestComputeHealthFromWorkloads_Unhealthy(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": &models.WorkloadHealth{
+			WorkloadStatus: &models.WorkloadStatus{AvailableReplicas: 0, DesiredReplicas: 2},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestComputeHealthFromWorkloads_Degraded(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": &models.WorkloadHealth{
+			WorkloadStatus: &models.WorkloadStatus{AvailableReplicas: 1, DesiredReplicas: 3},
+		},
+	}
+	assert.Equal(t, "DEGRADED", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestComputeHealthFromWorkloads_NotReady(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": &models.WorkloadHealth{
+			WorkloadStatus: &models.WorkloadStatus{AvailableReplicas: 0, DesiredReplicas: 0},
+		},
+	}
+	assert.Equal(t, "NOT_READY", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestComputeHealthFromWorkloads_ErrorRate(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": &models.WorkloadHealth{
+			WorkloadStatus: &models.WorkloadStatus{AvailableReplicas: 2, DesiredReplicas: 2},
+			Requests: models.RequestHealth{
+				Inbound: map[string]map[string]float64{
+					"http": {"200": 80, "500": 20},
+				},
+			},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestComputeHealthFromWorkloads_Empty(t *testing.T) {
+	assert.Equal(t, "HEALTHY", computeHealthFromWorkloads(models.NamespaceWorkloadHealth{}))
+}
+
+func TestComputeHealthFromWorkloads_NilWorkload(t *testing.T) {
+	wlHealth := models.NamespaceWorkloadHealth{
+		"reviews-v1": nil,
+	}
+	assert.Equal(t, "HEALTHY", computeHealthFromWorkloads(wlHealth))
+}
+
+func TestEvaluateAppStatus_HealthyWorkloads(t *testing.T) {
+	app := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{
+			{AvailableReplicas: 3, DesiredReplicas: 3},
+		},
+	}
+	assert.Equal(t, "HEALTHY", evaluateAppStatus(app))
+}
+
+func TestEvaluateAppStatus_ScaledToZero(t *testing.T) {
+	app := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{
+			{AvailableReplicas: 0, DesiredReplicas: 0},
+		},
+	}
+	assert.Equal(t, "NOT_READY", evaluateAppStatus(app))
+}
+
+func TestEvaluateAppStatus_PartialReplicas(t *testing.T) {
+	app := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{
+			{AvailableReplicas: 1, DesiredReplicas: 3},
+		},
+	}
+	assert.Equal(t, "DEGRADED", evaluateAppStatus(app))
+}
+
+func TestEvaluateAppStatus_ZeroAvailable(t *testing.T) {
+	app := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{
+			{AvailableReplicas: 0, DesiredReplicas: 2},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", evaluateAppStatus(app))
+}
+
+func TestEvaluateAppStatus_HighErrorRate(t *testing.T) {
+	app := &models.AppHealth{
+		WorkloadStatuses: []*models.WorkloadStatus{
+			{AvailableReplicas: 2, DesiredReplicas: 2},
+		},
+		Requests: models.RequestHealth{
+			Inbound: map[string]map[string]float64{
+				"http": {"200": 80, "500": 20},
+			},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", evaluateAppStatus(app))
+}
+
+func TestEvaluateRequestStatus_NoTraffic(t *testing.T) {
+	req := models.RequestHealth{}
+	assert.Equal(t, "HEALTHY", evaluateRequestStatus(req))
+}
+
+func TestEvaluateRequestStatus_GRPCError(t *testing.T) {
+	req := models.RequestHealth{
+		Inbound: map[string]map[string]float64{
+			"grpc": {"0": 80, "14": 20},
+		},
+	}
+	assert.Equal(t, "UNHEALTHY", evaluateRequestStatus(req))
+}
+
+func TestMergeStatus(t *testing.T) {
+	assert.Equal(t, "HEALTHY", mergeStatus("HEALTHY", "HEALTHY"))
+	assert.Equal(t, "NOT_READY", mergeStatus("HEALTHY", "NOT_READY"))
+	assert.Equal(t, "DEGRADED", mergeStatus("NOT_READY", "DEGRADED"))
+	assert.Equal(t, "DEGRADED", mergeStatus("HEALTHY", "DEGRADED"))
+	assert.Equal(t, "UNHEALTHY", mergeStatus("DEGRADED", "UNHEALTHY"))
+	assert.Equal(t, "UNHEALTHY", mergeStatus("UNHEALTHY", "HEALTHY"))
+}
+
+func TestComputeHealthFromApps_NotReady(t *testing.T) {
+	appHealth := models.NamespaceAppHealth{
+		"reviews": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 0, DesiredReplicas: 0},
+			},
+		},
+		"ratings": &models.AppHealth{
+			WorkloadStatuses: []*models.WorkloadStatus{
+				{AvailableReplicas: 1, DesiredReplicas: 1},
+			},
+		},
+	}
+	assert.Equal(t, "NOT_READY", computeHealthFromApps(appHealth))
+}
+
+func TestIsHTTPOrGRPCError(t *testing.T) {
+	assert.True(t, isHTTPOrGRPCError("http", "500"))
+	assert.True(t, isHTTPOrGRPCError("http", "404"))
+	assert.True(t, isHTTPOrGRPCError("http", "-"))
+	assert.False(t, isHTTPOrGRPCError("http", "200"))
+	assert.True(t, isHTTPOrGRPCError("grpc", "14"))
+	assert.False(t, isHTTPOrGRPCError("grpc", "0"))
+}

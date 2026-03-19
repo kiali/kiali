@@ -83,9 +83,14 @@ func ChatMCP(
 			return
 		}
 		var args map[string]interface{}
-		if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
+		if r.Body != nil && r.ContentLength != 0 {
+			if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+		}
+		if args == nil {
+			args = map[string]interface{}{}
 		}
 		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
 		if err != nil {

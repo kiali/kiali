@@ -1,6 +1,7 @@
 package get_mesh_status
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
+	"github.com/kiali/kiali/util"
 )
 
 func Execute(r *http.Request, args map[string]interface{}, business *business.Layer,
@@ -42,7 +44,10 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 		return "unexpected mesh status response type", http.StatusInternalServerError
 	}
 
-	return transformToSummary(meshConfig), http.StatusOK
+	summary := transformToSummary(meshConfig)
+	enrichNamespaceHealth(ctx, business, summary.Components.DataPlane.MonitoredNamespaces)
+
+	return summary, http.StatusOK
 }
 
 func transformToSummary(cfg meshCommon.Config) MeshSummaryFormatted {
@@ -308,4 +313,167 @@ func alertImpact(infraType string) string {
 
 func containsIgnoreCase(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
+
+const defaultRateInterval = "10m"
+
+func enrichNamespaceHealth(ctx context.Context, biz *business.Layer, namespaces []MeshSummaryMonitoredNamespace) {
+	for i := range namespaces {
+		ns := &namespaces[i]
+		criteria := business.NamespaceHealthCriteria{
+			Cluster:        ns.Cluster,
+			IncludeMetrics: true,
+			Namespace:      ns.Name,
+			QueryTime:      util.Clock.Now(),
+			RateInterval:   defaultRateInterval,
+		}
+
+		worst := "HEALTHY"
+
+		appHealth, err := biz.Health.GetNamespaceAppHealth(ctx, criteria)
+		if err != nil {
+			ns.Health = "UNKNOWN"
+			continue
+		}
+		worst = mergeStatus(worst, computeHealthFromApps(appHealth))
+
+		svcHealth, err := biz.Health.GetNamespaceServiceHealth(ctx, criteria)
+		if err != nil {
+			ns.Health = "UNKNOWN"
+			continue
+		}
+		worst = mergeStatus(worst, computeHealthFromServices(svcHealth))
+
+		wlHealth, err := biz.Health.GetNamespaceWorkloadHealth(ctx, criteria)
+		if err != nil {
+			ns.Health = "UNKNOWN"
+			continue
+		}
+		worst = mergeStatus(worst, computeHealthFromWorkloads(wlHealth))
+
+		ns.Health = worst
+	}
+}
+
+func computeHealthFromApps(appHealth models.NamespaceAppHealth) string {
+	worst := "HEALTHY"
+	for _, app := range appHealth {
+		if app == nil {
+			continue
+		}
+		worst = mergeStatus(worst, evaluateAppStatus(app))
+	}
+	return worst
+}
+
+func computeHealthFromServices(svcHealth models.NamespaceServiceHealth) string {
+	worst := "HEALTHY"
+	for _, svc := range svcHealth {
+		if svc == nil {
+			continue
+		}
+		worst = mergeStatus(worst, evaluateRequestStatus(svc.Requests))
+	}
+	return worst
+}
+
+func computeHealthFromWorkloads(wlHealth models.NamespaceWorkloadHealth) string {
+	worst := "HEALTHY"
+	for _, wl := range wlHealth {
+		if wl == nil {
+			continue
+		}
+		worst = mergeStatus(worst, evaluateWorkloadStatus(wl))
+	}
+	return worst
+}
+
+func evaluateWorkloadStatus(wl *models.WorkloadHealth) string {
+	status := "HEALTHY"
+	if wl.WorkloadStatus != nil {
+		ws := wl.WorkloadStatus
+		if ws.DesiredReplicas == 0 {
+			status = "NOT_READY"
+		} else if ws.AvailableReplicas == 0 {
+			return "UNHEALTHY"
+		} else if ws.AvailableReplicas < ws.DesiredReplicas {
+			status = "DEGRADED"
+		}
+	}
+	return mergeStatus(status, evaluateRequestStatus(wl.Requests))
+}
+
+func evaluateAppStatus(app *models.AppHealth) string {
+	workloadStatus := "HEALTHY"
+	for _, ws := range app.WorkloadStatuses {
+		if ws.DesiredReplicas == 0 {
+			workloadStatus = mergeStatus(workloadStatus, "NOT_READY")
+			continue
+		}
+		if ws.AvailableReplicas == 0 {
+			return "UNHEALTHY"
+		}
+		if ws.AvailableReplicas < ws.DesiredReplicas {
+			workloadStatus = mergeStatus(workloadStatus, "DEGRADED")
+		}
+	}
+
+	requestStatus := evaluateRequestStatus(app.Requests)
+	return mergeStatus(workloadStatus, requestStatus)
+}
+
+func evaluateRequestStatus(req models.RequestHealth) string {
+	status := "HEALTHY"
+	processRequests := func(requests map[string]map[string]float64) {
+		for protocol, codes := range requests {
+			total := 0.0
+			for _, count := range codes {
+				total += count
+			}
+			if total == 0 {
+				continue
+			}
+			for code, count := range codes {
+				if !isHTTPOrGRPCError(protocol, code) {
+					continue
+				}
+				ratio := count / total * 100
+				if ratio >= 10 {
+					status = "UNHEALTHY"
+					return
+				}
+				if ratio > 0 && status != "UNHEALTHY" {
+					status = "DEGRADED"
+				}
+			}
+		}
+	}
+	processRequests(req.Inbound)
+	processRequests(req.Outbound)
+	return status
+}
+
+func isHTTPOrGRPCError(protocol, code string) bool {
+	switch protocol {
+	case "http":
+		if code == "-" {
+			return true
+		}
+		if len(code) == 3 && (code[0] == '4' || code[0] == '5') {
+			return true
+		}
+	case "grpc":
+		if code != "0" {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeStatus(a, b string) string {
+	priority := map[string]int{"HEALTHY": 0, "NOT_READY": 1, "DEGRADED": 2, "UNHEALTHY": 3}
+	if priority[b] > priority[a] {
+		return b
+	}
+	return a
 }

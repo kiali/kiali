@@ -172,6 +172,28 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetLogs(t *testing.T) {
 	assert.Equal(t, expected, converted)
 }
 
+func TestConvertToolToOpenAI_FromToolDefinition_GetMeshStatus(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_status.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToOpenAI(tool)
+
+	expected := openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        "get_mesh_status",
+				Description: openai.String("Returns a concise mesh infrastructure summary optimized for LLM consumption. Includes control plane health, observability stack status, monitored namespaces, component connectivity, and critical alerts. Use this tool first to understand the overall state of the service mesh before drilling into specific namespaces or workloads."),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+				},
+			},
+		},
+	}
+
+	require.NotNil(t, converted.OfFunction)
+	assert.Equal(t, expected, converted)
+}
+
 func TestConvertToolToOpenAI_FromToolDefinition_GetMeshGraph(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_traffic_graph.yaml"))
 	require.NoError(t, err)

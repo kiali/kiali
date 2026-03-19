@@ -50,6 +50,7 @@ type MeshSummaryDataPlane struct {
 
 type MeshSummaryMonitoredNamespace struct {
 	Cluster   string `json:"cluster"`
+	Health    string `json:"health"`
 	IsAmbient bool   `json:"is_ambient,omitempty"`
 	Name      string `json:"name"`
 }

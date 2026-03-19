@@ -3,7 +3,3 @@
   toolset: [default, mcp]
   input_schema:
     type: "object"
-    properties:
-      clusterName:
-        type: "string"
-        description: "Optional cluster name. Default is the cluster name in the Kiali configuration (KubeConfig)."
