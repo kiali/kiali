@@ -451,6 +451,10 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListTraces(t *testing.T) {
 				Description: openai.String("Lists distributed traces for a service in a namespace. Returns a summary (namespace, service, total_found, avg_duration_ms) and a list of traces with id, duration_ms, spans_count, root_op, slowest_service, has_errors. Use get_trace_details with a trace id to get full hierarchy."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
+					"required": []interface{}{
+						"namespace",
+						"serviceName",
+					},
 					"properties": map[string]interface{}{
 						"namespace": map[string]interface{}{
 							"type":        "string",

@@ -345,6 +345,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ListTraces(t *testing.T) {
 				Description: "Maximum number of traces to return. Default 10.",
 			},
 		},
+		Required: []string{"namespace", "serviceName"},
 	}
 
 	assert.Equal(t, expected, converted)
