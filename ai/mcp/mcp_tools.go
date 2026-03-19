@@ -17,6 +17,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_citations"
 	"github.com/kiali/kiali/ai/mcp/get_logs"
+	"github.com/kiali/kiali/ai/mcp/get_mesh_status"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
@@ -143,6 +144,8 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return get_mesh_traffic_graph.Execute(kialiInterface, args)
 	case "list_or_get_resources":
 		return list_or_get_resources.Execute(kialiInterface, args)
+	case "get_mesh_status":
+		return get_mesh_status.Execute(kialiInterface, args)
 	case "get_traces":
 		return get_traces.Execute(kialiInterface, args)
 	case "get_logs":

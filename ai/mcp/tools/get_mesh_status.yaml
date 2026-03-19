@@ -1,0 +1,9 @@
+- name: "get_mesh_status"
+  description: "Returns a concise mesh infrastructure summary optimized for LLM consumption. Includes control plane health, observability stack status, monitored namespaces, component connectivity, and critical alerts. Use this tool first to understand the overall state of the service mesh before drilling into specific namespaces or workloads."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      clusterName:
+        type: "string"
+        description: "Optional cluster name. Default is the cluster name in the Kiali configuration (KubeConfig)."
