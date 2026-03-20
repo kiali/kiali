@@ -1,5 +1,5 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading } from './transition';
+import { ensureKialiFinishedLoading, waitForKialiApiReady } from './transition';
 import { assertGraphReady, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 import { enableKialiFeature, GRAPH_CACHE_CONFIG } from './kiali-config';
@@ -473,6 +473,7 @@ type GraphCacheMetrics = {
 
 Given('graph cache is enabled', () => {
   enableKialiFeature(GRAPH_CACHE_CONFIG);
+  waitForKialiApiReady();
 });
 
 Given('graph cache metrics are recorded', () => {
