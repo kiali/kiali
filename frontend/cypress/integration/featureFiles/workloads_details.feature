@@ -92,7 +92,7 @@ Feature: Kiali Workload Details page
   @core-2
   @offline
   Scenario: See Envoy listeners configuration for a workload
-    When the user filters by "Destination" with value "Route: 9090" on the "Listeners" tab
+    When the user filters by "Destination" with value "9090" on the "Listeners" tab
     Then the user sees listeners expected information
 
   @bookinfo-app

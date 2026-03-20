@@ -13,7 +13,7 @@ import {
   getColWithRowText,
   hasAtLeastOneClass
 } from './table';
-import { openTab } from './transition';
+import { openTab, waitForKialiApiReady } from './transition';
 import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
 
 // Type definition for health cache metrics API response
@@ -255,6 +255,7 @@ Then('user should see no duplicate namespaces', () => {
 // Health cache metrics test steps
 Given('health cache is enabled', () => {
   enableKialiFeature(HEALTH_CACHE_CONFIG);
+  waitForKialiApiReady();
 });
 
 Given('health cache metrics are recorded', () => {
