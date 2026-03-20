@@ -85,6 +85,7 @@ const escapeHtmlPreservingCodeBlocks = (content: string): string => {
 };
 
 type UseChatbotResult = {
+  addBotMessage: (content: string) => void;
   alertMessage: AlertMessage | undefined;
   botMessage: (response: ChatResponse | string) => ExtendedMessage;
   conversationId: string | null | undefined;
@@ -180,6 +181,10 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     return `${Date.now().toString(16)}-${random()}-${random()}`;
   };
 
+  const addBotMessage = (content: string): void => {
+    addMessage(fixedMessage(content));
+  };
+
   const handleSend = async (
     query: string | number,
     context: ContextRequest,
@@ -240,11 +245,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       } else {
         const errorMessage = resp.data?.error || `Bot returned status_code ${resp.status}`;
         if (isMountedRef.current) {
-          setAlertMessage({
-            title: 'Error',
-            message: errorMessage,
-            variant: 'danger'
-          });
+          addMessage(fixedMessage(`**Error:** ${errorMessage}`));
         }
       }
     } catch (e) {
@@ -263,11 +264,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
           ? e.message
           : String(e);
         if (isMountedRef.current) {
-          setAlertMessage({
-            title: 'Error',
-            message: `An unexpected error occurred: ${errorMessage}`,
-            variant: 'danger'
-          });
+          addMessage(fixedMessage(`**Error:** ${errorMessage}`));
         }
       }
     } finally {
@@ -285,6 +282,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
   }, [conversationId, messages]);
 
   return {
+    addBotMessage,
     messages,
     setMessages,
     botMessage,

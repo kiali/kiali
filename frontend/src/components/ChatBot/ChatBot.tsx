@@ -80,6 +80,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
   const defaultProvider = props.providers.filter(provider => provider.name === props.defaultProvider)[0];
   const defaultModel = defaultProvider.models.filter(model => model.name === defaultProvider.defaultModel)[0];
   const {
+    addBotMessage,
     handleSend,
     alertMessage,
     botMessage,
@@ -381,6 +382,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
                 />
               )}
               <ChatBotContent
+                addBotMessage={addBotMessage}
                 username={props.username}
                 displayMode={displayMode}
                 alertMessage={alertMessage}

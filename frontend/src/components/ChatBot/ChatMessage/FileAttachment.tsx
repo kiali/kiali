@@ -12,6 +12,7 @@ import axios from 'axios';
 
 type FileAttachmentProps = {
   action: Action;
+  addBotMessage?: (content: string) => void;
   context?: any;
   displayMode: ChatbotDisplayMode;
   fileName: string;
@@ -26,6 +27,7 @@ const toJsonString = (yamlText: string): string => {
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({
   action,
+  addBotMessage,
   context,
   fileName,
   onSendMessage,
@@ -88,31 +90,47 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
       if (action.operation === 'create') {
         const json = toJsonString(yamlText);
         await API.createIstioConfigDetail(action.namespace!, gvk, json, action.cluster);
-        setAlertMessage({
-          title: 'Success',
-          message: `Created ${action.kindName}/${action.object ?? ''} in ${action.namespace}`,
-          variant: 'success'
-        });
+        const successMsg = `Successfully created **${action.kindName}/${action.object ?? ''}** in namespace **${
+          action.namespace
+        }**`;
+        if (addBotMessage) {
+          addBotMessage(successMsg);
+        } else if (setAlertMessage) {
+          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
+        }
       } else if (action.operation === 'patch') {
         const jsonPatch = toJsonString(yamlText);
         await API.updateIstioConfigDetail(action.namespace!, gvk, action.object!, jsonPatch, action.cluster);
-        setAlertMessage({
-          title: 'Success',
-          message: `Patched ${action.kindName}/${action.object} in ${action.namespace}`,
-          variant: 'success'
-        });
+        const successMsg = `Successfully patched **${action.kindName}/${action.object}** in namespace **${action.namespace}**`;
+        if (addBotMessage) {
+          addBotMessage(successMsg);
+        } else if (setAlertMessage) {
+          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
+        }
       } else if (action.operation === 'delete') {
         await API.deleteIstioConfigDetail(action.namespace!, gvk, action.object!, action.cluster);
-        setAlertMessage({
-          title: 'Success',
-          message: `Deleted ${action.kindName}/${action.object} in ${action.namespace}`,
-          variant: 'success'
-        });
+        const successMsg = `Successfully deleted **${action.kindName}/${action.object}** from namespace **${action.namespace}**`;
+        if (addBotMessage) {
+          addBotMessage(successMsg);
+        } else if (setAlertMessage) {
+          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
+        }
       }
       toggle();
     } catch (e) {
-      if (axios.isAxiosError(e)) {
-        const msg = e?.response?.data?.error || e?.message || String(e);
+      const msg = axios.isAxiosError(e)
+        ? e?.response?.data?.error || e?.message || String(e)
+        : e instanceof Error
+        ? e.message
+        : String(e);
+      if (addBotMessage) {
+        addBotMessage(
+          `**Error:** Failed to ${action.operation} **${action.kindName}/${action.object ?? ''}** in namespace **${
+            action.namespace
+          }**: ${msg}`
+        );
+        toggle();
+      } else if (setAlertMessage) {
         setAlertMessage({ title: 'Error', message: msg, variant: 'danger' });
       }
     }

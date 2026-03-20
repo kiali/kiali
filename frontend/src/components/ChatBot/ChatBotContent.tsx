@@ -13,6 +13,7 @@ import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
 import { ChatMessage } from './ChatMessage/ChatMessage';
 
 type ChatBotContentProps = {
+  addBotMessage: (content: string) => void;
   alertMessage?: AlertMessage;
   botMessage: (response: ChatResponse | string) => ExtendedMessage;
   context: any;
@@ -25,6 +26,7 @@ type ChatBotContentProps = {
 };
 
 export const ChatBotContent: React.FC<ChatBotContentProps> = ({
+  addBotMessage,
   username,
   alertMessage,
   handleSend,
@@ -81,6 +83,7 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             return (
               <ChatMessage
                 key={`chatbot_message_${index}`}
+                addBotMessage={addBotMessage}
                 index={index.toString()}
                 message={message}
                 referenced_documents={referenced_documents}

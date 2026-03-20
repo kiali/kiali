@@ -9,6 +9,7 @@ import { ChatMessageMarkdown } from './ChatMessageMarkdown';
 
 type ChatMessageProps = {
   actions: Action[];
+  addBotMessage?: (content: string) => void;
   collapse?: boolean;
   context?: any;
   displayMode: ChatbotDisplayMode;
@@ -23,6 +24,7 @@ type ChatMessageProps = {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   actions,
+  addBotMessage,
   context,
   displayMode,
   referenced_documents,
@@ -123,6 +125,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   .map(action => (
                     <FileAttachment
                       key={action.fileName}
+                      addBotMessage={addBotMessage}
                       fileName={action.fileName || ''}
                       action={action}
                       displayMode={displayMode}
