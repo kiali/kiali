@@ -72,6 +72,19 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 	}
 
+	// Validate namespace existence early, before building previews or executing
+	// mutations, so the user never sees a YAML editor for a non-existent namespace.
+	{
+		namespace, _ := args["namespace"].(string)
+		cluster, _ := args["cluster"].(string)
+		if cluster == "" {
+			cluster = kialiInterface.Conf.KubernetesConfig.ClusterName
+		}
+		if msg, code := checkNamespaceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, cluster); code != 0 {
+			return msg, code
+		}
+	}
+
 	if action == "create" || action == "patch" {
 		previewActions := createFileAction(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		if !confirmed {
@@ -98,13 +111,20 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		} else {
 			res, status = IstioPatch(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 		}
+		// Always return HTTP 200 so the execution framework passes the result
+		// to the LLM. Otherwise non-200 statuses are treated as fatal errors
+		// and the LLM never sees the failure — it cannot tell the user what
+		// went wrong.
+		if status != http.StatusOK {
+			res = fmt.Sprintf("ERROR: %s", res)
+		}
 		return struct {
 			Actions []get_action_ui.Action `json:"actions"`
 			Result  interface{}            `json:"result"`
 		}{
 			Actions: previewActions,
 			Result:  res,
-		}, status
+		}, http.StatusOK
 	}
 
 	if action == "delete" && !confirmed {
@@ -125,7 +145,11 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 
 	switch action {
 	case "delete":
-		return IstioDelete(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
+		res, status := IstioDelete(kialiInterface.Request, args, kialiInterface.BusinessLayer, kialiInterface.Conf)
+		if status != http.StatusOK {
+			return fmt.Sprintf("ERROR: %s", res), http.StatusOK
+		}
+		return res, http.StatusOK
 	default:
 		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action), http.StatusBadRequest
 	}
@@ -458,15 +482,20 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 }
 
 // validateIstioConfigInput centralizes validation rules for manage istio config tool (write actions).
+// It also normalizes args: if "object" is missing it falls back to "name" or
+// extracts metadata.name from "data", writing the resolved value back into
+// args["object"] so downstream code sees it.
 func validateIstioConfigInput(args map[string]interface{}) error {
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
 	group := mcputil.GetStringArg(args, "group")
 	version := mcputil.GetStringArg(args, "version")
 	kind := mcputil.GetStringArg(args, "kind")
-	object := mcputil.GetStringArg(args, "object")
 	data := mcputil.GetStringArg(args, "data")
 	payload := data
+
+	object := resolveObjectName(args)
+
 	switch action {
 	case "create", "patch", "delete":
 		if namespace == "" {
@@ -486,12 +515,12 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 				return fmt.Errorf("data is required for action %q", action)
 			}
 			if object == "" {
-				return fmt.Errorf("object is required for action %q", action)
+				return fmt.Errorf("object (resource name) is required for action %q — set the 'object' parameter or include metadata.name in the data", action)
 			}
 		}
 		if action == "patch" {
 			if object == "" {
-				return fmt.Errorf("name is required for action %q", action)
+				return fmt.Errorf("object (resource name) is required for action %q — set the 'object' parameter or include metadata.name in the data", action)
 			}
 			if strings.TrimSpace(payload) == "" {
 				return fmt.Errorf("data is required for action %q", action)
@@ -499,7 +528,7 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 		}
 		if action == "delete" {
 			if object == "" {
-				return fmt.Errorf("name is required for action %q", action)
+				return fmt.Errorf("object (resource name) is required for action %q — set the 'object' parameter", action)
 			}
 		}
 	default:

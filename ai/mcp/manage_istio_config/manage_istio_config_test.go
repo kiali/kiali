@@ -2,6 +2,7 @@ package manage_istio_config
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,10 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 	istio_api_v1alpha3 "istio.io/api/networking/v1alpha3"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	api_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -40,6 +44,14 @@ func reqWithAuth() *http.Request {
 	r := httptest.NewRequest("POST", "http://kiali/api/ai/mcp/manage_istio_config", nil)
 	r.Header.Set("Kiali-User", "test-user")
 	return r
+}
+
+func kialiIntf(r *http.Request, businessLayer *business.Layer, conf *config.Config) *mcputil.KialiInterface {
+	return &mcputil.KialiInterface{
+		Request:       r,
+		BusinessLayer: businessLayer,
+		Conf:          conf,
+	}
 }
 
 func existingVS() *networking_v1.VirtualService {
@@ -127,12 +139,12 @@ func TestValidateIstioConfigInput(t *testing.T) {
 		{
 			name:    "create missing object",
 			args:    map[string]interface{}{"action": "create", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "data": "{}"},
-			wantErr: "object is required",
+			wantErr: "object (resource name) is required",
 		},
 		{
 			name:    "patch missing object",
 			args:    map[string]interface{}{"action": "patch", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "data": "{}"},
-			wantErr: "name is required",
+			wantErr: "object (resource name) is required",
 		},
 		{
 			name:    "patch missing data",
@@ -142,7 +154,7 @@ func TestValidateIstioConfigInput(t *testing.T) {
 		{
 			name:    "delete missing object",
 			args:    map[string]interface{}{"action": "delete", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService"},
-			wantErr: "name is required",
+			wantErr: "object (resource name) is required",
 		},
 		{
 			name: "valid create",
@@ -241,7 +253,7 @@ func TestExecute_CreateConfirmed(t *testing.T) {
 	args := baseWriteArgs("create")
 	args["data"] = `{"metadata":{"name":"reviews","namespace":"bookinfo"},"spec":{"hosts":["reviews"]}}`
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -261,7 +273,7 @@ func TestExecute_CreatePreview(t *testing.T) {
 	args["confirmed"] = false
 	args["data"] = `{"spec":{"hosts":["reviews"]}}`
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -281,7 +293,7 @@ func TestExecute_PatchConfirmed(t *testing.T) {
 	args := baseWriteArgs("patch")
 	args["data"] = `{"spec":{"hosts":["reviews","ratings"]}}`
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -301,7 +313,7 @@ func TestExecute_PatchPreview(t *testing.T) {
 	args["confirmed"] = false
 	args["data"] = `{"spec":{"hosts":["reviews","ratings"]}}`
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -320,9 +332,11 @@ func TestExecute_DeleteConfirmed(t *testing.T) {
 
 	args := baseWriteArgs("delete")
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Successfully deleted")
 }
 
 func TestExecute_DeletePreview(t *testing.T) {
@@ -332,7 +346,7 @@ func TestExecute_DeletePreview(t *testing.T) {
 	args := baseWriteArgs("delete")
 	args["confirmed"] = false
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -358,7 +372,7 @@ func TestExecute_RejectsListAction(t *testing.T) {
 		"confirmed": true,
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res.(error).Error(), "manage_istio_config_read")
 }
@@ -372,7 +386,7 @@ func TestExecute_RejectsGetAction(t *testing.T) {
 		"confirmed": true,
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res.(error).Error(), "manage_istio_config_read")
 }
@@ -389,7 +403,7 @@ func TestExecuteReadOnly_InvalidAction(t *testing.T) {
 		"action": "delete",
 	}
 
-	res, status := ExecuteReadOnly(r, args, businessLayer, conf)
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "invalid action")
 }
@@ -403,7 +417,7 @@ func TestExecuteReadOnly_ListSuccess(t *testing.T) {
 		"namespace": "bookinfo",
 	}
 
-	res, status := ExecuteReadOnly(r, args, businessLayer, conf)
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	items, ok := res.([]IstioListItem)
@@ -424,7 +438,7 @@ func TestExecuteReadOnly_GetSuccess(t *testing.T) {
 		"object":    "reviews",
 	}
 
-	res, status := ExecuteReadOnly(r, args, businessLayer, conf)
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 	assert.NotNil(t, res)
 }
@@ -440,7 +454,7 @@ func TestExecute_InvalidYAMLData(t *testing.T) {
 	args := baseWriteArgs("create")
 	args["data"] = `{invalid yaml:::}`
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusOK, status, "confirmed=true should attempt the create; the business layer returns the error")
 
 	b, err := json.Marshal(res)
@@ -465,7 +479,7 @@ func TestExecute_UnmanagedGVK(t *testing.T) {
 		"data":      "{}",
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
@@ -485,7 +499,7 @@ func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
 		"object":    "test",
 	}
 
-	res, status := ExecuteReadOnly(r, args, businessLayer, conf)
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
@@ -505,7 +519,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 		"object":    "test",
 	}
 
-	res, status := ExecuteReadOnly(r, args, businessLayer, conf)
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
@@ -519,10 +533,13 @@ func TestExecute_DeleteNonExistentResource(t *testing.T) {
 	args := baseWriteArgs("delete")
 	args["object"] = "does-not-exist"
 
-	res, status := Execute(r, args, businessLayer, conf)
-	// The business layer returns nil for not-found deletes (graceful handling).
-	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "does-not-exist")
 }
 
 func TestExecute_InvalidActionForWrite(t *testing.T) {
@@ -540,7 +557,7 @@ func TestExecute_InvalidActionForWrite(t *testing.T) {
 		"data":      "{}",
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "invalid action")
 }
@@ -565,7 +582,7 @@ spec:
 	args["object"] = "ratings-vs"
 	args["data"] = yamlData
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -589,7 +606,7 @@ spec:
 	args := baseWriteArgs("patch")
 	args["data"] = yamlPatch
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -608,9 +625,11 @@ func TestExecute_DefaultClusterUsed(t *testing.T) {
 	// Deliberately omit "cluster" so the default is used.
 	delete(args, "cluster")
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Successfully deleted")
 }
 
 func TestExecute_CreateMissingRequiredField(t *testing.T) {
@@ -621,7 +640,7 @@ func TestExecute_CreateMissingRequiredField(t *testing.T) {
 	// Missing "data" field
 	delete(args, "data")
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "data is required")
 }
@@ -634,7 +653,7 @@ func TestExecute_PatchMissingData(t *testing.T) {
 	// Missing "data" field
 	delete(args, "data")
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "data is required")
 }
@@ -646,9 +665,9 @@ func TestExecute_DeleteMissingObject(t *testing.T) {
 	args := baseWriteArgs("delete")
 	delete(args, "object")
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
-	assert.Contains(t, res, "name is required")
+	assert.Contains(t, res, "object (resource name) is required")
 }
 
 // ---------------------------------------------------------------------------
@@ -749,6 +768,27 @@ func TestIstioCreate_InvalidJSON(t *testing.T) {
 	assert.Contains(t, resStr, "Invalid data")
 }
 
+func TestIstioCreate_AlreadyExists(t *testing.T) {
+	businessLayer, conf := setupTest(t, existingVS())
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"metadata":{"name":"reviews","namespace":"bookinfo"},"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := IstioCreate(r, args, businessLayer, conf)
+	assert.Equal(t, http.StatusConflict, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "already exists")
+	assert.Contains(t, resStr, "patch")
+}
+
 func TestIstioCreate_UnmanagedType(t *testing.T) {
 	businessLayer, conf := setupTest(t)
 	r := reqWithAuth()
@@ -806,6 +846,27 @@ func TestIstioPatch_InvalidYAML(t *testing.T) {
 	assert.Contains(t, resStr, "Invalid data")
 }
 
+func TestIstioPatch_NonExistent(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "does-not-exist",
+		"data":      `{"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := IstioPatch(r, args, businessLayer, conf)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "does-not-exist")
+}
+
 func TestIstioPatch_UnmanagedType(t *testing.T) {
 	businessLayer, conf := setupTest(t)
 	r := reqWithAuth()
@@ -840,7 +901,10 @@ func TestIstioDelete_Success(t *testing.T) {
 
 	res, status := IstioDelete(r, args, businessLayer, conf)
 	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Successfully deleted")
+	assert.Contains(t, resStr, "reviews")
 }
 
 func TestIstioDelete_NonExistent(t *testing.T) {
@@ -856,9 +920,11 @@ func TestIstioDelete_NonExistent(t *testing.T) {
 	}
 
 	res, status := IstioDelete(r, args, businessLayer, conf)
-	// Business layer handles not-found gracefully by returning nil.
-	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Resource not found")
+	assert.Contains(t, resStr, "does-not-exist")
 }
 
 func TestIstioDelete_UnmanagedType(t *testing.T) {
@@ -979,7 +1045,7 @@ func TestExecute_CreateDestinationRule(t *testing.T) {
 		"data":      `{"metadata":{"name":"ratings-dr","namespace":"bookinfo"},"spec":{"host":"ratings"}}`,
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
 	b, err := json.Marshal(res)
@@ -1005,9 +1071,11 @@ func TestExecute_DeleteDestinationRule(t *testing.T) {
 		"object":    "reviews-dr",
 	}
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusOK, status)
-	assert.Nil(t, res)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Successfully deleted")
 }
 
 // ---------------------------------------------------------------------------
@@ -1021,7 +1089,7 @@ func TestExecute_CreateWithWhitespaceOnlyData(t *testing.T) {
 	args := baseWriteArgs("create")
 	args["data"] = "   "
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "data is required")
 }
@@ -1033,7 +1101,532 @@ func TestExecute_PatchWithWhitespaceOnlyData(t *testing.T) {
 	args := baseWriteArgs("patch")
 	args["data"] = "\t\n  "
 
-	res, status := Execute(r, args, businessLayer, conf)
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
 	assert.Contains(t, res, "data is required")
+}
+
+// ---------------------------------------------------------------------------
+// 12. Pre-check: existence verification before mutations (through Execute)
+// ---------------------------------------------------------------------------
+
+func TestExecute_PatchNonExistentResource(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := baseWriteArgs("patch")
+	args["object"] = "does-not-exist"
+	args["data"] = `{"spec":{"hosts":["reviews"]}}`
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+
+	b, err := json.Marshal(res)
+	require.NoError(t, err)
+	var resp previewResponse
+	require.NoError(t, json.Unmarshal(b, &resp))
+	require.Len(t, resp.Actions, 1)
+
+	resStr, ok := resp.Result.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "does-not-exist")
+}
+
+func TestExecute_CreateAlreadyExistsDestinationRule(t *testing.T) {
+	businessLayer, conf := setupTest(t, existingDR())
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "create",
+		"confirmed": true,
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "DestinationRule",
+		"object":    "reviews-dr",
+		"data":      `{"metadata":{"name":"reviews-dr","namespace":"bookinfo"},"spec":{"host":"reviews"}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+
+	b, err := json.Marshal(res)
+	require.NoError(t, err)
+	var resp previewResponse
+	require.NoError(t, json.Unmarshal(b, &resp))
+	require.Len(t, resp.Actions, 1)
+
+	resStr, ok := resp.Result.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "already exists")
+	assert.Contains(t, resStr, "patch")
+}
+
+func TestExecute_PatchNonExistentDestinationRule(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "patch",
+		"confirmed": true,
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "DestinationRule",
+		"object":    "no-such-dr",
+		"data":      `{"spec":{"host":"reviews"}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+
+	b, err := json.Marshal(res)
+	require.NoError(t, err)
+	var resp previewResponse
+	require.NoError(t, json.Unmarshal(b, &resp))
+
+	resStr, ok := resp.Result.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "no-such-dr")
+}
+
+func TestExecute_DeleteNonExistentDestinationRule(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "delete",
+		"confirmed": true,
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "DestinationRule",
+		"object":    "no-such-dr",
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "no-such-dr")
+}
+
+// ---------------------------------------------------------------------------
+// 13. Panic recovery tests
+// ---------------------------------------------------------------------------
+
+func TestRecoverFromPanic_CatchesPanic(t *testing.T) {
+	var res interface{}
+	var status int
+
+	func() {
+		defer recoverFromPanic(&res, &status, "VirtualService", "reviews", "bookinfo")
+		panic("simulated nil pointer dereference")
+	}()
+
+	assert.Equal(t, http.StatusInternalServerError, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Internal error")
+	assert.Contains(t, resStr, "VirtualService")
+	assert.Contains(t, resStr, "reviews")
+	assert.Contains(t, resStr, "bookinfo")
+}
+
+func TestRecoverFromPanic_NoPanic(t *testing.T) {
+	var res interface{}
+	var status int
+
+	func() {
+		defer recoverFromPanic(&res, &status, "VirtualService", "reviews", "bookinfo")
+		res = "success"
+		status = http.StatusOK
+	}()
+
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "success", res)
+}
+
+// ---------------------------------------------------------------------------
+// 14. classifyError tests
+// ---------------------------------------------------------------------------
+
+func TestClassifyError(t *testing.T) {
+	tests := []struct {
+		name       string
+		err        error
+		wantStatus int
+		wantMsg    string
+	}{
+		{
+			name:       "not found",
+			err:        api_errors.NewNotFound(schema.GroupResource{Group: "networking.istio.io", Resource: "virtualservices"}, "reviews"),
+			wantStatus: http.StatusNotFound,
+			wantMsg:    "not found",
+		},
+		{
+			name:       "already exists",
+			err:        api_errors.NewAlreadyExists(schema.GroupResource{Group: "networking.istio.io", Resource: "virtualservices"}, "reviews"),
+			wantStatus: http.StatusConflict,
+			wantMsg:    "already exists",
+		},
+		{
+			name:       "forbidden",
+			err:        api_errors.NewForbidden(schema.GroupResource{Group: "networking.istio.io", Resource: "virtualservices"}, "reviews", fmt.Errorf("not allowed")),
+			wantStatus: http.StatusForbidden,
+			wantMsg:    "Access denied",
+		},
+		{
+			name:       "conflict",
+			err:        api_errors.NewConflict(schema.GroupResource{Group: "networking.istio.io", Resource: "virtualservices"}, "reviews", fmt.Errorf("modified")),
+			wantStatus: http.StatusConflict,
+			wantMsg:    "Conflict",
+		},
+		{
+			name:       "bad request",
+			err:        api_errors.NewBadRequest("invalid field"),
+			wantStatus: http.StatusBadRequest,
+			wantMsg:    "invalid field",
+		},
+		{
+			name:       "unknown error",
+			err:        fmt.Errorf("something unexpected"),
+			wantStatus: http.StatusInternalServerError,
+			wantMsg:    "something unexpected",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg, status := classifyError(tt.err, "VirtualService", "reviews", "bookinfo")
+			assert.Equal(t, tt.wantStatus, status)
+			assert.Contains(t, msg, tt.wantMsg)
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 15. Namespace existence pre-check tests
+// ---------------------------------------------------------------------------
+
+func TestIstioCreate_NamespaceDoesNotExist(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"metadata":{"name":"reviews","namespace":"nonexistent-ns"},"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := IstioCreate(r, args, businessLayer, conf)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestIstioPatch_NamespaceDoesNotExist(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := IstioPatch(r, args, businessLayer, conf)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestIstioDelete_NamespaceDoesNotExist(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+	}
+
+	res, status := IstioDelete(r, args, businessLayer, conf)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_CreateInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "create",
+		"confirmed": true,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"metadata":{"name":"reviews","namespace":"nonexistent-ns"},"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_CreatePreviewInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "create",
+		"confirmed": false,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"metadata":{"name":"reviews","namespace":"nonexistent-ns"},"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_PatchInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "patch",
+		"confirmed": true,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_PatchPreviewInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "patch",
+		"confirmed": false,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+		"data":      `{"spec":{"hosts":["reviews"]}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_DeletePreviewInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "delete",
+		"confirmed": false,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestExecute_DeleteInNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "delete",
+		"confirmed": true,
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusNotFound, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
+}
+
+func TestCheckNamespaceExists_ExistingNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+	_ = r
+
+	msg, code := checkNamespaceExists(r.Context(), businessLayer, "bookinfo", conf.KubernetesConfig.ClusterName)
+	assert.Equal(t, 0, code)
+	assert.Empty(t, msg)
+}
+
+func TestCheckNamespaceExists_MissingNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	msg, code := checkNamespaceExists(r.Context(), businessLayer, "no-such-ns", conf.KubernetesConfig.ClusterName)
+	assert.Equal(t, http.StatusNotFound, code)
+	assert.Contains(t, msg, "no-such-ns")
+	assert.Contains(t, msg, "does not exist")
+}
+
+// ---------------------------------------------------------------------------
+// 16. resolveObjectName fallback tests
+// ---------------------------------------------------------------------------
+
+func TestResolveObjectName_FromObject(t *testing.T) {
+	args := map[string]interface{}{"object": "my-vs"}
+	assert.Equal(t, "my-vs", resolveObjectName(args))
+}
+
+func TestResolveObjectName_FromNameFallback(t *testing.T) {
+	args := map[string]interface{}{"name": "my-vs"}
+	assert.Equal(t, "my-vs", resolveObjectName(args))
+	assert.Equal(t, "my-vs", args["object"], "should write back to args[\"object\"]")
+}
+
+func TestResolveObjectName_FromDataMetadata(t *testing.T) {
+	args := map[string]interface{}{
+		"data": `{"metadata":{"name":"from-data"},"spec":{"hosts":["x"]}}`,
+	}
+	assert.Equal(t, "from-data", resolveObjectName(args))
+	assert.Equal(t, "from-data", args["object"], "should write back to args[\"object\"]")
+}
+
+func TestResolveObjectName_FromDataYAML(t *testing.T) {
+	args := map[string]interface{}{
+		"data": "metadata:\n  name: from-yaml\nspec:\n  hosts:\n    - x\n",
+	}
+	assert.Equal(t, "from-yaml", resolveObjectName(args))
+	assert.Equal(t, "from-yaml", args["object"])
+}
+
+func TestResolveObjectName_Empty(t *testing.T) {
+	args := map[string]interface{}{"data": "{}"}
+	assert.Equal(t, "", resolveObjectName(args))
+}
+
+func TestResolveObjectName_ObjectTakesPrecedence(t *testing.T) {
+	args := map[string]interface{}{
+		"object": "explicit",
+		"name":   "fallback",
+		"data":   `{"metadata":{"name":"from-data"}}`,
+	}
+	assert.Equal(t, "explicit", resolveObjectName(args))
+}
+
+func TestValidate_PatchWithNameInsteadOfObject(t *testing.T) {
+	args := map[string]interface{}{
+		"action":    "patch",
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"name":      "reviews",
+		"data":      `{"spec":{"hosts":["reviews"]}}`,
+	}
+	err := validateIstioConfigInput(args)
+	assert.NoError(t, err, "should accept 'name' as fallback for 'object'")
+	assert.Equal(t, "reviews", args["object"], "should populate args[\"object\"] from \"name\"")
+}
+
+func TestValidate_PatchWithNameInData(t *testing.T) {
+	args := map[string]interface{}{
+		"action":    "patch",
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"data":      `{"metadata":{"name":"reviews"},"spec":{"hosts":["reviews"]}}`,
+	}
+	err := validateIstioConfigInput(args)
+	assert.NoError(t, err, "should extract object name from data's metadata.name")
+	assert.Equal(t, "reviews", args["object"])
+}
+
+func TestExecute_CreateAlreadyExistsThroughExecute(t *testing.T) {
+	businessLayer, conf := setupTest(t, existingVS())
+	r := reqWithAuth()
+
+	args := baseWriteArgs("create")
+	args["data"] = `{"metadata":{"name":"reviews","namespace":"bookinfo"},"spec":{"hosts":["reviews"]}}`
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "confirmed=true errors must return 200 so the LLM sees the failure")
+
+	b, err := json.Marshal(res)
+	require.NoError(t, err)
+	var resp previewResponse
+	require.NoError(t, json.Unmarshal(b, &resp))
+	require.Len(t, resp.Actions, 1)
+
+	resStr, ok := resp.Result.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "ERROR:")
+	assert.Contains(t, resStr, "already exists")
+	assert.Contains(t, resStr, "patch")
 }
