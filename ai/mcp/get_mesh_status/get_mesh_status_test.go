@@ -535,6 +535,17 @@ func TestComputeHealthFromApps_NotReady(t *testing.T) {
 	assert.Equal(t, "NOT_READY", computeHealthFromApps(appHealth))
 }
 
+func TestTransformToSummary_DataPlane_EmptyNotNull(t *testing.T) {
+	cfg := meshCommon.Config{
+		Elements:  meshCommon.Elements{},
+		Timestamp: time.Now().Unix(),
+	}
+	summary := transformToSummary(cfg)
+
+	require.NotNil(t, summary.Components.DataPlane.MonitoredNamespaces, "monitored_namespaces should be empty slice, not nil")
+	assert.Empty(t, summary.Components.DataPlane.MonitoredNamespaces)
+}
+
 func TestIsHTTPOrGRPCError(t *testing.T) {
 	assert.True(t, isHTTPOrGRPCError("http", "500"))
 	assert.True(t, isHTTPOrGRPCError("http", "404"))

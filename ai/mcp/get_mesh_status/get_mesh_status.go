@@ -7,31 +7,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/mesh"
 	meshApi "github.com/kiali/kiali/mesh/api"
 	meshCommon "github.com/kiali/kiali/mesh/config/common"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
 
-func Execute(r *http.Request, args map[string]interface{}, business *business.Layer,
-	prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache,
-	conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
-
-	ctx := r.Context()
+func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
+	ctx := ki.Request.Context()
 
 	meshReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "/ai/mesh-status", nil)
-	meshOpts := mesh.NewOptions(meshReq, &business.Namespace)
+	meshOpts := mesh.NewOptions(meshReq, &ki.BusinessLayer.Namespace)
 
-	code, payload := meshApi.GraphMesh(ctx, business, meshOpts, clientFactory, kialiCache, conf, grafana, perses, prom, discovery)
+	code, payload := meshApi.GraphMesh(ctx, ki.BusinessLayer, meshOpts, ki.ClientFactory, ki.KialiCache, ki.Conf, ki.Graphana, ki.Perses, ki.Prom, ki.Discovery)
 	if code != http.StatusOK {
 		if payload != nil {
 			return fmt.Sprintf("mesh status error: %v", payload), code
@@ -45,7 +37,7 @@ func Execute(r *http.Request, args map[string]interface{}, business *business.La
 	}
 
 	summary := transformToSummary(meshConfig)
-	enrichNamespaceHealth(ctx, business, summary.Components.DataPlane.MonitoredNamespaces)
+	enrichNamespaceHealth(ctx, ki.BusinessLayer, summary.Components.DataPlane.MonitoredNamespaces)
 
 	return summary, http.StatusOK
 }
@@ -121,7 +113,7 @@ func extractTrustDomain(nd *meshCommon.NodeData) string {
 func extractComponents(cfg meshCommon.Config) MeshSummaryComponents {
 	var cp MeshSummaryControlPlane
 	obs := MeshSummaryObservabilityStack{}
-	var monitoredNS []MeshSummaryMonitoredNamespace
+	monitoredNS := make([]MeshSummaryMonitoredNamespace, 0)
 
 	worstCPStatus := kubernetes.ComponentHealthy
 
