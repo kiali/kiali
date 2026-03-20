@@ -2,11 +2,12 @@ name: Kiali Molecule Tests
 
 on:
   schedule:
-  # These are in UTC time.
-  # If you change any of these, you must also change the switch statment in the determine-istio-version-to-use task.
-  - cron: '0 2 * * *'
-  - cron: '0 4 * * *'
+  # These are in UTC time (EDT = UTC-4).
+  # Scheduled after the nightly builds (04:00 UTC) to ensure the latest published images are available on quay.io.
+  # If you change any of these, you must also change the switch statement in the determine-istio-version-to-use task.
   - cron: '0 6 * * *'
+  - cron: '0 8 * * *'
+  - cron: '0 10 * * *'
   workflow_dispatch:
     inputs:
       all_tests:
@@ -98,9 +99,9 @@ jobs:
 
         if [[ -z "${OFFSET}" ]]; then
           case "${{ github.event.schedule }}" in
-            "0 2 * * *") OFFSET=0 ;;
-            "0 4 * * *") OFFSET=1 ;;
-            "0 6 * * *") OFFSET=2 ;;
+            "0 6 * * *") OFFSET=0 ;;
+            "0 8 * * *") OFFSET=1 ;;
+            "0 10 * * *") OFFSET=2 ;;
             *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
           esac
         fi
