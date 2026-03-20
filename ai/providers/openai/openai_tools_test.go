@@ -182,7 +182,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMeshStatus(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_mesh_status",
-				Description: openai.String("Returns a concise mesh infrastructure summary optimized for LLM consumption. Includes control plane health, observability stack status, monitored namespaces, component connectivity, and critical alerts. Use this tool first to understand the overall state of the service mesh before drilling into specific namespaces or workloads."),
+				Description: openai.String("Retrieves the high-level health, topology, and environment details of the Istio service mesh. Returns multi-cluster control plane status (istiod), data plane namespace health (including ambient mesh status), observability stack health (Prometheus, Grafana...), and component connectivity. Use this tool as the first step to diagnose mesh-wide issues, verify Istio/Kiali versions, or check overall health before drilling into specific workloads."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 				},
