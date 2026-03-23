@@ -404,7 +404,7 @@ func TestExecuteReadOnly_InvalidAction(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
 	assert.Contains(t, res, "invalid action")
 }
 
@@ -441,6 +441,48 @@ func TestExecuteReadOnly_GetSuccess(t *testing.T) {
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 	assert.NotNil(t, res)
+}
+
+func TestExecuteReadOnly_GetNonExistentConfig(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "get",
+		"namespace": "bookinfo",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "does-not-exist",
+	}
+
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "not found")
+	assert.Contains(t, resStr, "does-not-exist")
+}
+
+func TestExecuteReadOnly_GetNonExistentNamespace(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "get",
+		"namespace": "nonexistent-ns",
+		"group":     "networking.istio.io",
+		"version":   "v1",
+		"kind":      "VirtualService",
+		"object":    "reviews",
+	}
+
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "nonexistent-ns")
+	assert.Contains(t, resStr, "does not exist")
 }
 
 // ---------------------------------------------------------------------------
@@ -500,7 +542,7 @@ func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "Object type not managed")
@@ -520,7 +562,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	}
 
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
-	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
 	resStr, ok := res.(string)
 	require.True(t, ok)
 	assert.Contains(t, resStr, "try version 'v1'")

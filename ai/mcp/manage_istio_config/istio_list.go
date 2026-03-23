@@ -87,7 +87,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	}
 
 	if err != nil {
-		return fmt.Sprintf("Error while getting istio config: %s", err.Error()), http.StatusInternalServerError
+		return fmt.Sprintf("Error while getting istio config: %s", err.Error()), http.StatusOK
 	}
 
 	// Extract native objects for compact output

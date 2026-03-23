@@ -2,11 +2,15 @@ package list_or_get_resources
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/ai/mcputil"
@@ -21,7 +25,12 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
+
 func setupMocks(t *testing.T) *mcputil.KialiInterface {
+	t.Helper()
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
@@ -51,6 +60,10 @@ func setupMocks(t *testing.T) *mcputil.KialiInterface {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// 1. Schema / input validation tests
+// ---------------------------------------------------------------------------
+
 func TestExecute_MissingResourceType(t *testing.T) {
 	util.Clock = util.RealClock{}
 	ki := setupMocks(t)
@@ -59,7 +72,7 @@ func TestExecute_MissingResourceType(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusBadRequest, code)
+	assert.Equal(t, http.StatusOK, code)
 	assert.Equal(t, "Resource type is required", resp)
 }
 
@@ -73,7 +86,7 @@ func TestExecute_InvalidResourceType(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusBadRequest, code)
+	assert.Equal(t, http.StatusOK, code)
 	assert.Contains(t, resp.(string), "unsupported resource type invalid_type")
 }
 
@@ -97,28 +110,6 @@ func TestExecute_ValidResourceTypes(t *testing.T) {
 	}
 }
 
-func TestExecute_InvalidNamespace(t *testing.T) {
-	require := require.New(t)
-	util.Clock = util.RealClock{}
-	ki := setupMocks(t)
-
-	args := map[string]interface{}{
-		"resource_type": "app",
-		"namespaces":    "non-existent-namespace",
-	}
-
-	resp, code := Execute(ki, args)
-
-	assert.Equal(t, http.StatusOK, code)
-
-	respMap, ok := resp.(map[string]interface{})
-	require.True(ok, "Expected response to be a map")
-
-	errorsMap, ok := respMap["errors"].(map[string]string)
-	require.True(ok, "Expected 'errors' to be a map[string]string")
-	assert.Contains(t, errorsMap["namespaces"], "requested namespace(s) not accessible or do not exist (skipped): non-existent-namespace")
-}
-
 func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 	util.Clock = util.RealClock{}
 
@@ -132,7 +123,7 @@ func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 
 		resp, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusBadRequest, code)
+		assert.Equal(t, http.StatusOK, code)
 		assert.Equal(t, "Namespaces are required when resource name is provided", resp)
 	})
 
@@ -148,9 +139,123 @@ func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 
 		_, code := Execute(ki, args)
 
-		assert.NotEqual(t, http.StatusBadRequest, code)
+		assert.Equal(t, http.StatusOK, code)
 	})
 }
+
+func TestExecute_DefaultsRateInterval(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "service",
+	}
+
+	_, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+}
+
+// ---------------------------------------------------------------------------
+// 2. Namespace handling tests
+// ---------------------------------------------------------------------------
+
+func TestExecute_InvalidNamespace(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "app",
+		"namespaces":    "non-existent-namespace",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "non-existent-namespace")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+func TestExecute_AllInvalidNamespacesReturnsErrorMessage(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "service",
+		"namespaces":    "invalid1,invalid2",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "invalid1")
+	assert.Contains(t, respStr, "invalid2")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+func TestExecute_NamespacesWithWhitespace(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "service",
+		"namespaces":    "  invalid1 , invalid2 ",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "invalid1")
+	assert.Contains(t, respStr, "invalid2")
+	assert.NotContains(t, respStr, "  invalid1")
+	assert.NotContains(t, respStr, "invalid2 ,")
+}
+
+func TestExecute_NamespacesWithEmptySegments(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "service",
+		"namespaces":    "invalid1,,invalid2,",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "invalid1")
+	assert.Contains(t, respStr, "invalid2")
+}
+
+func TestExecute_ResourceNameWithMultipleNamespacesReturnsError(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "service",
+		"resource_name": "my-service",
+		"namespaces":    "ns1,ns2",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+// ---------------------------------------------------------------------------
+// 3. Namespace resource type tests
+// ---------------------------------------------------------------------------
 
 func TestExecute_NamespaceResourceType(t *testing.T) {
 	util.Clock = util.RealClock{}
@@ -180,42 +285,103 @@ func TestExecute_NamespaceResourceType(t *testing.T) {
 		resp, code := Execute(ki, args)
 
 		assert.Equal(t, http.StatusOK, code)
-		respMap, ok := resp.(map[string]interface{})
-		if ok {
-			assert.Contains(t, respMap, "errors")
-		}
+		respStr, ok := resp.(string)
+		assert.True(t, ok, "Expected response to be a string")
+		assert.Contains(t, respStr, "nonexistent")
+		assert.Contains(t, respStr, "not found or not accessible")
 	})
 }
 
-func TestExecute_DefaultsRateInterval(t *testing.T) {
+func TestExecute_NamespaceDetailNotFound(t *testing.T) {
 	util.Clock = util.RealClock{}
 	ki := setupMocks(t)
 
 	args := map[string]interface{}{
-		"resource_type": "service",
-	}
-
-	_, code := Execute(ki, args)
-
-	assert.Equal(t, http.StatusOK, code)
-}
-
-func TestExecute_AllInvalidNamespacesReturnsEmptyWithErrors(t *testing.T) {
-	util.Clock = util.RealClock{}
-	ki := setupMocks(t)
-
-	args := map[string]interface{}{
-		"resource_type": "service",
-		"namespaces":    "invalid1,invalid2",
+		"resource_type": "namespace",
+		"resource_name": "nonexistent-namespace",
 	}
 
 	resp, code := Execute(ki, args)
 
 	assert.Equal(t, http.StatusOK, code)
-	respMap, ok := resp.(map[string]interface{})
-	assert.True(t, ok)
-	errorsMap, ok := respMap["errors"].(map[string]string)
-	assert.True(t, ok)
-	assert.Contains(t, errorsMap["namespaces"], "invalid1")
-	assert.Contains(t, errorsMap["namespaces"], "invalid2")
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected response to be a string")
+	assert.Contains(t, respStr, "nonexistent-namespace")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+// ---------------------------------------------------------------------------
+// 4. classifyError tests
+// ---------------------------------------------------------------------------
+
+func TestClassifyError(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		wantMsg string
+	}{
+		{
+			name:    "not found",
+			err:     k8serrors.NewNotFound(schema.GroupResource{Resource: "services"}, "my-svc"),
+			wantMsg: "not found",
+		},
+		{
+			name:    "forbidden",
+			err:     k8serrors.NewForbidden(schema.GroupResource{Resource: "services"}, "my-svc", fmt.Errorf("not allowed")),
+			wantMsg: "Access denied",
+		},
+		{
+			name:    "bad request",
+			err:     k8serrors.NewBadRequest("invalid field"),
+			wantMsg: "invalid field",
+		},
+		{
+			name:    "unknown error",
+			err:     errors.New("something unexpected"),
+			wantMsg: "something unexpected",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			msg := classifyError(tt.err, "service", "reviews", "bookinfo")
+			assert.Contains(t, msg, tt.wantMsg)
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// 5. Panic recovery tests
+// ---------------------------------------------------------------------------
+
+func TestRecoverFromPanic_CatchesPanic(t *testing.T) {
+	var res interface{}
+	var status int
+
+	func() {
+		defer recoverFromPanic(&res, &status, "service", "reviews", "bookinfo")
+		panic("simulated nil pointer dereference")
+	}()
+
+	assert.Equal(t, http.StatusOK, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Internal error")
+	assert.Contains(t, resStr, "service")
+	assert.Contains(t, resStr, "reviews")
+	assert.Contains(t, resStr, "bookinfo")
+}
+
+func TestRecoverFromPanic_NoPanic(t *testing.T) {
+	var res interface{}
+	var status int
+
+	func() {
+		defer recoverFromPanic(&res, &status, "service", "reviews", "bookinfo")
+		res = "success"
+		status = http.StatusOK
+	}()
+
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, "success", res)
 }

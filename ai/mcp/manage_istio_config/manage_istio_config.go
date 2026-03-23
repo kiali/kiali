@@ -22,10 +22,12 @@ import (
 )
 
 // ExecuteReadOnly runs read-only actions (list, get) for Istio config. Use this for the manage_istio_config_read tool.
+// All errors are returned with HTTP 200 so the LLM can interpret and relay
+// them to the user instead of the execution framework treating them as fatal.
 func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	action := mcputil.GetStringArg(args, "action")
 	if err := validateReadOnlyIstioConfigInput(args); err != nil {
-		return err.Error(), http.StatusBadRequest
+		return err.Error(), http.StatusOK
 	}
 	if action != "list" {
 		group := mcputil.GetStringArg(args, "group")
@@ -34,18 +36,30 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 		gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
 		if !business.GetIstioAPI(gvk) {
 			if group == "gateway.networking.k8s.io" && kind == "Gateway" && version == "v1beta1" {
-				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusBadRequest
+				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusOK
 			}
-			return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
+			return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusOK
 		}
 	}
+
+	if action == "get" {
+		namespace, _ := args["namespace"].(string)
+		cluster, _ := args["cluster"].(string)
+		if cluster == "" {
+			cluster = kialiInterface.Conf.KubernetesConfig.ClusterName
+		}
+		if msg, code := checkNamespaceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, cluster); code != 0 {
+			return msg, http.StatusOK
+		}
+	}
+
 	switch action {
 	case "list":
 		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	case "get":
 		return IstioGet(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	default:
-		return fmt.Errorf("invalid action %q: must be one of list, get", action), http.StatusBadRequest
+		return fmt.Sprintf("invalid action %q: must be one of list, get", action), http.StatusOK
 	}
 }
 

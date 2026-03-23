@@ -34,12 +34,13 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	}
 
 	if !business.GetIstioAPI(gvk) {
-		return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
+		return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusOK
 	}
 
 	istioConfigDetails, err := businessLayer.IstioConfig.GetIstioConfigDetails(ctx, cluster, namespace, gvk, object)
 	if err != nil {
-		return err.Error(), http.StatusInternalServerError
+		msg, _ := classifyError(err, kind, object, namespace)
+		return msg, http.StatusOK
 	}
 
 	validationsResult := make(chan error)
@@ -77,7 +78,7 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[gvk.String()]
 	err = <-validationsResult
 	if err != nil {
-		return err.Error(), http.StatusInternalServerError
+		return fmt.Sprintf("Error validating %s %q in namespace %q: %s", kind, object, namespace, err.Error()), http.StatusOK
 	}
 
 	if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectGVK: gvk, Namespace: namespace, Name: object, Cluster: cluster}]; found {
