@@ -228,9 +228,9 @@ var Metrics = MetricsType{
 	HealthStatus: prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "kiali_health_status",
-			Help: "Health status of individual apps, services, and workloads using state cardinality pattern. For each item, exactly one status is set to 1, others are 0. Labels: cluster, namespace, health_type (app/service/workload), name, status (Healthy/Degraded/Failure/Not Ready/NA).",
+			Help: "Health status of individual apps, services, workloads, and namespaces as a numeric value. 0=Healthy (best), 1=Not Ready, 2=Degraded, 3=Failure (worst). NA or missing entities: series removed after max_consecutive_na consecutive health refresh cycles (server config). Labels: cluster, namespace, health_type (app/service/workload/namespace), name.",
 		},
-		[]string{labelCluster, labelNamespace, labelHealthType, labelName, labelHealthStatus},
+		[]string{labelCluster, labelNamespace, labelHealthType, labelName},
 	),
 	TracingProcessingTime: prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -645,23 +645,45 @@ func IncrementHealthCacheMisses(healthType HealthType) {
 	}).Inc()
 }
 
-// HealthStatuses is the list of all possible health status values
-var HealthStatuses = []string{"Healthy", "Degraded", "Failure", "Not Ready", "NA"}
-
-// SetHealthStatusForItem sets the health status for an individual item using the state cardinality pattern.
-// Exactly one status will be set to 1, all others will be set to 0.
-func SetHealthStatusForItem(cluster, namespace string, healthType HealthType, name, currentStatus string) {
-	for _, status := range HealthStatuses {
-		value := 0.0
-		if status == currentStatus {
-			value = 1.0
-		}
-		Metrics.HealthStatus.With(prometheus.Labels{
-			labelCluster:      cluster,
-			labelNamespace:    namespace,
-			labelHealthType:   string(healthType),
-			labelName:         name,
-			labelHealthStatus: status,
-		}).Set(value)
+// HealthStatusValue converts a health status string to a numeric value.
+// Returns (value, ok) where ok is false for "NA" status (should not be exported).
+// Value mapping: 0=Healthy (best), 1=Not Ready, 2=Degraded, 3=Failure (worst).
+func HealthStatusValue(status string) (float64, bool) {
+	switch status {
+	case "Healthy":
+		return 0.0, true
+	case "Not Ready":
+		return 1.0, true
+	case "Degraded":
+		return 2.0, true
+	case "Failure":
+		return 3.0, true
+	case "NA":
+		return 0.0, false
+	default:
+		// Unknown status treated as NA
+		return 0.0, false
 	}
+}
+
+// SetHealthStatusForItem sets the health status gauge for an individual item.
+// Only call this when status is not NA (check with HealthStatusValue first).
+func SetHealthStatusForItem(cluster, namespace string, healthType HealthType, name string, value float64) {
+	Metrics.HealthStatus.With(prometheus.Labels{
+		labelCluster:    cluster,
+		labelNamespace:  namespace,
+		labelHealthType: string(healthType),
+		labelName:       name,
+	}).Set(value)
+}
+
+// DeleteHealthStatusForItem deletes the health status gauge for an individual item.
+// Call this when an entity should no longer be tracked.
+func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType, name string) {
+	Metrics.HealthStatus.Delete(prometheus.Labels{
+		labelCluster:    cluster,
+		labelNamespace:  namespace,
+		labelHealthType: string(healthType),
+		labelName:       name,
+	})
 }

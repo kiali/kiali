@@ -42,25 +42,27 @@ func NewHealthMonitor(
 	prom prometheus.ClientInterface,
 ) *healthMonitor {
 	return &healthMonitor{
-		cache:         cache,
-		clientFactory: clientFactory,
-		conf:          conf,
-		discovery:     discovery,
-		lastRun:       time.Time{},
-		logger:        log.Logger().With().Str("component", "health-monitor").Logger(),
-		prom:          prom,
+		cache:           cache,
+		clientFactory:   clientFactory,
+		conf:            conf,
+		discovery:       discovery,
+		healthStatusExp: NewHealthStatusExporter(conf),
+		lastRun:         time.Time{},
+		logger:          log.Logger().With().Str("component", "health-monitor").Logger(),
+		prom:            prom,
 	}
 }
 
 // healthMonitor pre-computes health for all namespaces and caches the results.
 type healthMonitor struct {
-	cache         cache.KialiCache
-	clientFactory kubernetes.ClientFactory
-	conf          *config.Config
-	discovery     istio.MeshDiscovery
-	lastRun       time.Time
-	logger        zerolog.Logger
-	prom          prometheus.ClientInterface
+	cache           cache.KialiCache
+	clientFactory   kubernetes.ClientFactory
+	conf            *config.Config
+	discovery       istio.MeshDiscovery
+	healthStatusExp *HealthStatusExporter
+	lastRun         time.Time
+	logger          zerolog.Logger
+	prom            prometheus.ClientInterface
 }
 
 // Start starts the background health refresh loop.
@@ -275,35 +277,62 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 	return nil
 }
 
-// exportHealthStatusMetrics exports health status for each individual item as Prometheus metrics
-// using the state cardinality pattern (one metric per state, exactly one set to 1).
-// Uses the pre-calculated Status field from the health data.
+// exportHealthStatusMetrics exports health status for each individual item as Prometheus metrics.
+// Uses the pre-calculated Status field from the health data. Tracks seen entities for reconciliation.
 func (m *healthMonitor) exportHealthStatusMetrics(
 	cluster, namespace string,
 	appHealth models.NamespaceAppHealth,
 	serviceHealth models.NamespaceServiceHealth,
 	workloadHealth models.NamespaceWorkloadHealth,
 ) {
-	// Export app health metrics using pre-calculated status
+	if !m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		return
+	}
+
+	// Track seen entities for reconciliation (to detect entities that disappeared)
+	seenKeys := make(map[entityKey]bool)
+
+	// Export app health severity
 	for appName, health := range appHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeApp, appName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeApp, appName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeApp, appName)] = true
 	}
 
-	// Export service health metrics using pre-calculated status
+	// Export service health severity
 	for svcName, health := range serviceHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeService, svcName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeService, svcName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeService, svcName)] = true
 	}
 
-	// Export workload health metrics using pre-calculated status
+	// Export workload health severity
 	for wkName, health := range workloadHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName)] = true
 	}
+
+	// Export namespace aggregate health (reuse existing aggregation function)
+	namespaceAggregate := models.AggregateNamespaceStatus(&appHealth, &serviceHealth, &workloadHealth)
+	namespaceStatus := "NA"
+	if namespaceAggregate != nil && namespaceAggregate.WorstStatus != "" {
+		namespaceStatus = namespaceAggregate.WorstStatus
+	}
+	m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeNamespace, namespace, namespaceStatus)
+	seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeNamespace, namespace)] = true
+
+	// Reconcile: handle entities that disappeared (treat as NA; same max_consecutive_na streak as Observe)
+	m.healthStatusExp.ReconcileNamespace(cluster, namespace, seenKeys)
 }
 
 // calculateDuration calculates the health duration based on configuration and elapsed time.

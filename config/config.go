@@ -240,10 +240,17 @@ type Cluster struct {
 	SecretName string `yaml:"secret_name,omitempty"`
 }
 
+// HealthStatusConfig provides configuration for health status metrics.
+type HealthStatusConfig struct {
+	Enabled          bool `yaml:"enabled,omitempty"`
+	MaxConsecutiveNA int  `yaml:"max_consecutive_na,omitempty"`
+}
+
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
-	Enabled bool `yaml:"enabled,omitempty"`
-	Port    int  `yaml:"port,omitempty"`
+	Enabled      bool               `yaml:"enabled,omitempty"`
+	HealthStatus HealthStatusConfig `yaml:"health_severity,omitempty"`
+	Port         int                `yaml:"port,omitempty"`
 }
 
 // OtelCollector is OpenTelemetry collector configuration for tracing.
@@ -1256,7 +1263,11 @@ func NewConfig() (c *Config) {
 			Observability: Observability{
 				Metrics: Metrics{
 					Enabled: true,
-					Port:    9090,
+					HealthStatus: HealthStatusConfig{
+						Enabled:          false,
+						MaxConsecutiveNA: 3,
+					},
+					Port: 9090,
 				},
 				Tracing: Tracing{
 					CollectorType: OTELCollectorType,
