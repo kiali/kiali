@@ -6,14 +6,14 @@ on:
       tag_branches:
         description: Branches to bump version (Separate branches by commas)
         required: true
-        default: v1.73,v2.4,v2.11
+        default: v1.73,v2.4,v2.11,v2.17,v2.22
         type: string
   workflow_call:
     inputs:
       tag_branches:
         description: Branches to bump version (Separate branches by commas)
         required: true
-        default: v1.73,v2.4,v2.11
+        default: v1.73,v2.4,v2.11,v2.17,v2.22
         type: string
 jobs:
   initialize:

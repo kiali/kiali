@@ -6,7 +6,7 @@ on:
       tag_branches:
         description: Branches to tag (Separate branches by commas)
         required: true
-        default: v1.73,v2.4,v2.11,v2.17
+        default: v1.73,v2.4,v2.11,v2.17,v2.22
         type: string
 
 jobs:
