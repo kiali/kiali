@@ -269,8 +269,8 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 
 	m.cache.SetHealth(cluster, namespace, cachedData)
 
-	// Export health status metrics if enabled
-	if m.conf.Server.Observability.Metrics.Enabled {
+	// Export health status metrics if enabled (independent of general performance metrics)
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		m.exportHealthStatusMetrics(cluster, namespace, appHealth, serviceHealth, workloadHealth)
 	}
 

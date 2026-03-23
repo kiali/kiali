@@ -249,7 +249,7 @@ type HealthStatusConfig struct {
 // Metrics provides metrics configuration for the Kiali server.
 type Metrics struct {
 	Enabled      bool               `yaml:"enabled,omitempty"`
-	HealthStatus HealthStatusConfig `yaml:"health_severity,omitempty"`
+	HealthStatus HealthStatusConfig `yaml:"health_status,omitempty"`
 	Port         int                `yaml:"port,omitempty"`
 }
 

@@ -12,9 +12,28 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/util/certtest"
 )
+
+func TestShouldStartMetricsServer(t *testing.T) {
+	c := config.NewConfig()
+	c.Server.Observability.Metrics.Enabled = false
+	c.Server.Observability.Metrics.HealthStatus.Enabled = false
+	require.False(t, shouldStartMetricsServer(c))
+
+	c.Server.Observability.Metrics.Enabled = true
+	require.True(t, shouldStartMetricsServer(c))
+
+	c.Server.Observability.Metrics.Enabled = false
+	c.Server.Observability.Metrics.HealthStatus.Enabled = true
+	require.True(t, shouldStartMetricsServer(c))
+
+	c.Server.Observability.Metrics.Enabled = true
+	require.True(t, shouldStartMetricsServer(c))
+}
 
 // TestMetricsServerHTTP verifies that the metrics server works with plain HTTP
 // when TLS is not configured.
