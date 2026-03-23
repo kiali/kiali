@@ -6,6 +6,7 @@ import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
   env: {
+    rootSelector: '#root',
     timeout: 10000,
     threshold: 100000
   },
