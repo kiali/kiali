@@ -33,7 +33,7 @@ jobs:
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
       with:
-        version: 'v3.18.4'
+        version: "v3.18.4"
 
     - name: Set up Go
       uses: actions/setup-go@v6
