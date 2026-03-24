@@ -22,7 +22,6 @@ const (
 	labelCluster          = "cluster"
 	labelGraphKind        = "graph_kind"
 	labelGraphType        = "graph_type"
-	labelHealthStatus     = "status"
 	labelHealthType       = "health_type"
 	labelModel            = "ai_model"
 	labelName             = "name"

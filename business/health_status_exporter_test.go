@@ -199,6 +199,50 @@ func TestHealthStatusExporter_ReconcileMissingIncrementsStreak(t *testing.T) {
 	require.NotContains(t, e.state, key)
 }
 
+// Last status was non-NA so state was cleared; entity then disappears from refresh maps.
+// Reconcile must still use seriesPresent so the streak advances and the series is removed.
+func TestHealthStatusExporter_ReconcileDroppedEntityAfterLastHealthy(t *testing.T) {
+	cluster := "TestHealthStatusExporter_ReconcileDroppedEntityAfterLastHealthy"
+	ns := "ns"
+	name := "removed"
+	appKey := NewEntityKey(cluster, ns, internalmetrics.HealthTypeApp, name)
+	defer deleteTestHealthStatus(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 2))
+	e.Observe(cluster, ns, internalmetrics.HealthTypeApp, name, "Healthy")
+	_, found := healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+	require.True(t, found)
+	require.NotContains(t, e.state, appKey)
+
+	nsKey := NewEntityKey(cluster, ns, internalmetrics.HealthTypeNamespace, ns)
+	seenKeys := map[entityKey]bool{nsKey: true}
+
+	e.ReconcileNamespace(cluster, ns, seenKeys)
+	require.Contains(t, e.state, appKey)
+	require.Equal(t, 1, e.state[appKey].naStreak)
+	_, found = healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+	require.True(t, found)
+
+	e.ReconcileNamespace(cluster, ns, seenKeys)
+	require.NotContains(t, e.state, appKey)
+	_, found = healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+	require.False(t, found)
+}
+
+func TestHealthStatusExporter_ReconcileDroppedEntityLimitOneDeletesImmediately(t *testing.T) {
+	cluster := "TestHealthStatusExporter_ReconcileDroppedEntityLimitOneDeletesImmediately"
+	ns := "ns"
+	name := "removed"
+	defer deleteTestHealthStatus(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 1))
+	e.Observe(cluster, ns, internalmetrics.HealthTypeApp, name, "Healthy")
+	nsKey := NewEntityKey(cluster, ns, internalmetrics.HealthTypeNamespace, ns)
+	e.ReconcileNamespace(cluster, ns, map[entityKey]bool{nsKey: true})
+	_, found := healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+	require.False(t, found)
+}
+
 func TestHealthStatusExporter_ReconcileSeenKeyDoesNotAdvanceStreak(t *testing.T) {
 	cluster := "TestHealthStatusExporter_ReconcileSeenKeyDoesNotAdvanceStreak"
 	ns := "ns"

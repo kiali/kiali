@@ -115,6 +115,10 @@ func (e *HealthStatusExporter) Observe(cluster, namespace string, healthType int
 // ReconcileNamespace processes entities that were seen in the current refresh cycle
 // and increments the streak for entities that are no longer present (treating them as NA).
 // Call this after processing all entities in a namespace.
+//
+// Keys must be reconciled for both NA streak state and seriesPresent: a non-NA Observe
+// clears state but leaves seriesPresent set, so an entity that drops out of app/service/workload
+// maps would otherwise never be advanced toward deletion.
 func (e *HealthStatusExporter) ReconcileNamespace(cluster, namespace string, seenKeys map[entityKey]bool) {
 	if !e.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		return
@@ -125,15 +129,35 @@ func (e *HealthStatusExporter) ReconcileNamespace(cluster, namespace string, see
 	e.stateMutex.Lock()
 	defer e.stateMutex.Unlock()
 
-	for key, state := range e.state {
+	candidates := make(map[entityKey]struct{})
+	for key := range e.state {
 		if key.cluster == cluster && key.namespace == namespace {
-			if !seenKeys[key] {
-				state.naStreak++
-				if state.naStreak >= limit {
-					e.deleteHealthStatusSeriesIfPresent(key)
-					delete(e.state, key)
-				}
+			candidates[key] = struct{}{}
+		}
+	}
+	for key := range e.seriesPresent {
+		if key.cluster == cluster && key.namespace == namespace {
+			candidates[key] = struct{}{}
+		}
+	}
+
+	for key := range candidates {
+		if seenKeys[key] {
+			continue
+		}
+		state, exists := e.state[key]
+		if !exists {
+			if limit <= 1 {
+				e.deleteHealthStatusSeriesIfPresent(key)
+				continue
 			}
+			e.state[key] = &entityState{naStreak: 1}
+			continue
+		}
+		state.naStreak++
+		if state.naStreak >= limit {
+			e.deleteHealthStatusSeriesIfPresent(key)
+			delete(e.state, key)
 		}
 	}
 }

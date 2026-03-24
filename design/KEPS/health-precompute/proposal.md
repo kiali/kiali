@@ -381,7 +381,7 @@ It is populated during the **Health Monitor** namespace refresh (the same path t
 | `health_type`  | `app`, `service`, `workload`, or `namespace` |
 | `name`         | App, service, or workload name; for `health_type="namespace"` this is the **namespace** name (aggregate across apps/services/workloads in that namespace). |
 
-**NA and series lifecycle:** `NA` is **not** written as a gauge value. For NA or unknown status, the exporter tracks a **per-entity streak** in **consecutive health refresh cycles**. After **`max_consecutive_na`** consecutive cycles where the entity is NA or **missing from the current refresh** (reconcile treats disappearance like NA), the time series is **removed** from the Prometheus client (`GaugeVec.Delete`), so scrapes stop reporting that label set.
+**NA and series lifecycle:** `NA` is **not** written as a gauge value. For NA or unknown status, the exporter tracks a **per-entity streak** in **consecutive health refresh cycles**. After **`max_consecutive_na`** consecutive cycles where the entity is NA or **missing from the current refresh** (reconcile treats disappearance like NA), the time series is **removed** from the Prometheus client (`GaugeVec.Delete`), so scrapes stop reporting that label set. Reconciliation considers every key that still has an exported series **or** an active NA streak, so an app/service/workload that **drops out of the health maps** after a **non-NA** observation is still advanced toward deletion (a non-NA `Observe` clears streak state but the series remains until reconcile runs on the missing entity).
 
 - Default **`max_consecutive_na`** is `3` when unset or `<= 0`.
 - **`max_consecutive_na: 1`**: first NA (or missing) after a series existed deletes immediately.
