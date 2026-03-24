@@ -161,3 +161,78 @@ func (e *HealthStatusExporter) ReconcileNamespace(cluster, namespace string, see
 		}
 	}
 }
+
+// distinctClusters returns every cluster value present in exporter state or seriesPresent.
+func (e *HealthStatusExporter) distinctClusters() []string {
+	e.stateMutex.RLock()
+	defer e.stateMutex.RUnlock()
+	set := make(map[string]struct{})
+	for key := range e.state {
+		set[key.cluster] = struct{}{}
+	}
+	for key := range e.seriesPresent {
+		set[key.cluster] = struct{}{}
+	}
+	out := make([]string, 0, len(set))
+	for cluster := range set {
+		out = append(out, cluster)
+	}
+	return out
+}
+
+// distinctNamespacesForCluster returns every namespace (for the given cluster) present in
+// exporter state or seriesPresent.
+func (e *HealthStatusExporter) distinctNamespacesForCluster(cluster string) []string {
+	e.stateMutex.RLock()
+	defer e.stateMutex.RUnlock()
+	set := make(map[string]struct{})
+	for key := range e.state {
+		if key.cluster == cluster {
+			set[key.namespace] = struct{}{}
+		}
+	}
+	for key := range e.seriesPresent {
+		if key.cluster == cluster {
+			set[key.namespace] = struct{}{}
+		}
+	}
+	out := make([]string, 0, len(set))
+	for ns := range set {
+		out = append(out, ns)
+	}
+	return out
+}
+
+// ReconcileDroppedClusters reconciles health status metrics for every (cluster, namespace)
+// still tracked by this exporter whose cluster is not in knownClusters (typically the set
+// from the current cache GetClusters() result). Call once at the end of a successful full
+// refresh when clusters may have been removed from the cache.
+func (e *HealthStatusExporter) ReconcileDroppedClusters(knownClusters map[string]bool) {
+	if !e.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		return
+	}
+	for _, cluster := range e.distinctClusters() {
+		if knownClusters[cluster] {
+			continue
+		}
+		for _, ns := range e.distinctNamespacesForCluster(cluster) {
+			e.ReconcileNamespace(cluster, ns, nil)
+		}
+	}
+}
+
+// ReconcileDroppedNamespacesForCluster reconciles namespaces that still have exporter state
+// for this cluster but were not returned in the current namespace list (cluster-scoped).
+// Call only after a successful GetClusterNamespaces for this cluster; visitedNamespaces
+// should contain every namespace name from that list.
+func (e *HealthStatusExporter) ReconcileDroppedNamespacesForCluster(cluster string, visitedNamespaces map[string]bool) {
+	if !e.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		return
+	}
+	for _, ns := range e.distinctNamespacesForCluster(cluster) {
+		if visitedNamespaces[ns] {
+			continue
+		}
+		e.ReconcileNamespace(cluster, ns, nil)
+	}
+}

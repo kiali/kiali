@@ -137,6 +137,15 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 		totalErrors += errCount
 	}
 
+	// To avoid accidental wiping of series, we only perform the reconcile after a successful refresh
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		knownClusters := make(map[string]bool, len(clusters))
+		for _, c := range clusters {
+			knownClusters[c.Name] = true
+		}
+		m.healthStatusExp.ReconcileDroppedClusters(knownClusters)
+	}
+
 	m.lastRun = startTime
 	elapsed := time.Since(startTime)
 
@@ -202,16 +211,23 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 		return 0, 1
 	}
 
+	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
 	for _, ns := range namespaces {
 		if ctx.Err() != nil {
 			return len(namespaces), errorCount
 		}
 
+		visitedNamespaces[ns.Name] = true
 		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
 		}
+	}
+
+	// To avoid accidental wiping of series, we only perform the reconcile after a successful refresh
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		m.healthStatusExp.ReconcileDroppedNamespacesForCluster(cluster, visitedNamespaces)
 	}
 
 	return len(namespaces), errorCount

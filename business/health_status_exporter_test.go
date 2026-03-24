@@ -262,3 +262,47 @@ func TestHealthStatusExporter_ReconcileSeenKeyDoesNotAdvanceStreak(t *testing.T)
 	require.Contains(t, e.state, key)
 	require.Equal(t, 1, e.state[key].naStreak)
 }
+
+// Namespace "gone" is no longer in the API list for this cluster; "kept" still is.
+func TestHealthStatusExporter_ReconcileDroppedNamespacesForCluster(t *testing.T) {
+	cluster := "TestHealthStatusExporter_ReconcileDroppedNamespacesForCluster"
+	nsGone := "gone"
+	nsKept := "kept"
+	name := "app1"
+	defer deleteTestHealthStatus(t, cluster, nsGone, internalmetrics.HealthTypeApp, name)
+	defer deleteTestHealthStatus(t, cluster, nsKept, internalmetrics.HealthTypeApp, name)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 1))
+	e.Observe(cluster, nsGone, internalmetrics.HealthTypeApp, name, "Healthy")
+	e.Observe(cluster, nsKept, internalmetrics.HealthTypeApp, name, "Healthy")
+	_, foundGone := healthStatusMetricValue(t, cluster, nsGone, internalmetrics.HealthTypeApp, name)
+	_, foundKept := healthStatusMetricValue(t, cluster, nsKept, internalmetrics.HealthTypeApp, name)
+	require.True(t, foundGone)
+	require.True(t, foundKept)
+
+	e.ReconcileDroppedNamespacesForCluster(cluster, map[string]bool{nsKept: true})
+	_, foundGone = healthStatusMetricValue(t, cluster, nsGone, internalmetrics.HealthTypeApp, name)
+	_, foundKept = healthStatusMetricValue(t, cluster, nsKept, internalmetrics.HealthTypeApp, name)
+	require.False(t, foundGone)
+	require.True(t, foundKept)
+}
+
+// Cluster c2 disappeared from cache; metrics should be reconciled toward removal.
+func TestHealthStatusExporter_ReconcileDroppedClusters(t *testing.T) {
+	c1 := "TestHealthStatusExporter_ReconcileDroppedClusters_c1"
+	c2 := "TestHealthStatusExporter_ReconcileDroppedClusters_c2"
+	ns := "ns"
+	name := "app1"
+	defer deleteTestHealthStatus(t, c1, ns, internalmetrics.HealthTypeApp, name)
+	defer deleteTestHealthStatus(t, c2, ns, internalmetrics.HealthTypeApp, name)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 1))
+	e.Observe(c1, ns, internalmetrics.HealthTypeApp, name, "Healthy")
+	e.Observe(c2, ns, internalmetrics.HealthTypeApp, name, "Healthy")
+
+	e.ReconcileDroppedClusters(map[string]bool{c1: true})
+	_, foundC1 := healthStatusMetricValue(t, c1, ns, internalmetrics.HealthTypeApp, name)
+	_, foundC2 := healthStatusMetricValue(t, c2, ns, internalmetrics.HealthTypeApp, name)
+	require.True(t, foundC1)
+	require.False(t, foundC2)
+}
