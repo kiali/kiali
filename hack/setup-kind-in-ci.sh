@@ -140,6 +140,8 @@ if [ -n "${ISTIO_VERSION}" ]; then
   else
     DOWNLOAD_ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
   fi
+
+  export ISTIO_VERSION
 fi
 
 # The sample apps setup scripts still rely on the istioctl dir to be present
