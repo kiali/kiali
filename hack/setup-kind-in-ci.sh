@@ -104,7 +104,10 @@ KIND_NODE_IMAGE=""
 if [[ "${ISTIO_VERSION}" == 1.18.* ]]; then
   KIND_NODE_IMAGE="kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a56cb574b35af8"
 elif [[ "${ISTIO_VERSION}" == 1.23.* ]]; then
-  KIND_NODE_IMAGE="kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648"
+  # v1.31+ required: Gateway API CRDs use CEL isIP() which is only available from Kubernetes 1.31
+  # note that Istio 1.23 supported only through k8s 1.30, but OSSM, despite being based on 1.23, supports
+  # kubernetes 1.31 which corresponds to OpenShift 4.19.
+  KIND_NODE_IMAGE="kindest/node:v1.31.6@sha256:28b7cbb993dfe093c76641a0c95807637213c9109b761f1d422c2400e22b8e87"
 fi
 
 if [ -z "${HELM_CHARTS_DIR}" ]; then
