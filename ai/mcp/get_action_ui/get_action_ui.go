@@ -26,6 +26,8 @@ type GetActionUIResponse struct {
 	Errors  string   `json:"errors,omitempty"`
 }
 
+var validResourceTypes = []string{"service", "workload", "app", "istio", "graph", "overview", "namespaces"}
+
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	namespaces := mcputil.GetStringArg(args, "namespaces")
 	resourceType := mcputil.GetStringArg(args, "resourceType")
@@ -34,6 +36,13 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	graphType := mcputil.GetStringArg(args, "graphType")
 	tab := mcputil.GetStringArg(args, "tab")
 	clusterName := mcputil.GetStringArg(args, "clusterName", "clusterName")
+
+	if resourceType == "" {
+		return "resourceType is required. Must be one of: service, workload, app, istio, graph, overview, namespaces", http.StatusBadRequest
+	}
+	if !slices.Contains(validResourceTypes, resourceType) {
+		return "invalid resourceType '" + resourceType + "'. Must be one of: service, workload, app, istio, graph, overview, namespaces", http.StatusBadRequest
+	}
 
 	namespacesValue := namespaces
 	if namespaces == "all" || namespaces == "" {

@@ -68,10 +68,15 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}, http.StatusBadRequest
 	}
 
-	// Get domain parameter (optional)
-	domain := ""
+	// Get domain parameter (optional, defaults to "all")
+	domain := "all"
 	if domainStr := mcputil.GetStringArg(args, "domain"); domainStr != "" {
 		domain = strings.ToLower(strings.TrimSpace(domainStr))
+		if domain != "kiali" && domain != "istio" && domain != "all" {
+			return GetCitationsResponse{
+				Errors: "invalid domain '" + domainStr + "'. Must be one of: kiali, istio, all",
+			}, http.StatusBadRequest
+		}
 	}
 
 	// Load documents filtered by domain

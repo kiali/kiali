@@ -300,3 +300,43 @@ func splitRoute(path string) []string {
 	}
 	return strings.Split(trimmed, "/")
 }
+
+func TestExecute_Validation(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient()
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	ki := &mcputil.KialiInterface{
+		Request:       httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil),
+		BusinessLayer: businessLayer,
+		Conf:          conf,
+	}
+
+	t.Run("MissingResourceType", func(t *testing.T) {
+		res, status := Execute(ki, map[string]interface{}{})
+		assert.Equal(t, http.StatusBadRequest, status)
+		assert.Contains(t, res.(string), "resourceType is required")
+	})
+
+	t.Run("EmptyResourceType", func(t *testing.T) {
+		res, status := Execute(ki, map[string]interface{}{"resourceType": ""})
+		assert.Equal(t, http.StatusBadRequest, status)
+		assert.Contains(t, res.(string), "resourceType is required")
+	})
+
+	t.Run("InvalidResourceType", func(t *testing.T) {
+		res, status := Execute(ki, map[string]interface{}{"resourceType": "invalid_type"})
+		assert.Equal(t, http.StatusBadRequest, status)
+		assert.Contains(t, res.(string), "invalid resourceType")
+		assert.Contains(t, res.(string), "invalid_type")
+	})
+
+	t.Run("AllValidResourceTypes", func(t *testing.T) {
+		for _, rt := range validResourceTypes {
+			t.Run(rt, func(t *testing.T) {
+				_, status := Execute(ki, map[string]interface{}{"resourceType": rt})
+				assert.Equal(t, http.StatusOK, status)
+			})
+		}
+	})
+}

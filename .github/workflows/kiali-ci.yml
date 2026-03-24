@@ -66,6 +66,14 @@ jobs:
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  integration_tests_backend_mcp:
+    name: Run backend MCP integration tests
+    uses: ./.github/workflows/integration-tests-backend-mcp.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml

@@ -24,6 +24,7 @@ FRONTEND_MULTI_MESH="frontend-multi-mesh"
 FRONTEND_EXTERNAL_KIALI="frontend-external-kiali"
 FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
+MCP_TOOLS="false"
 OFFLINE="offline"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
@@ -87,6 +88,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     -krm|--keycloak-requests-memory)
       KEYCLOAK_REQUESTS_MEMORY="${2}"
+      shift;shift
+      ;;
+    -mcp|--mcp-tools)
+      MCP_TOOLS="${2}"
+      if [ "${MCP_TOOLS}" != "true" -a "${MCP_TOOLS}" != "false" ]; then
+        echo "--mcp-tools option must be one of 'true' or 'false'"
+        exit 1
+      fi
       shift;shift
       ;;
     -so|--setup-only)
@@ -519,10 +528,17 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     exit 0
   fi
 
-  # Run backend multicluster integration tests
-  cd "${SCRIPT_DIR}"/../tests/integration/tests
-  go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
-  detectRaceConditions
+  if [ "${MCP_TOOLS}" == "true" ]; then
+    echo "Running backend MCP integration tests"
+    ensureBookinfoGraphReady
+    cd "${SCRIPT_DIR}"/../tests/integration/mcp_tools
+    go test -v -failfast 2>&1
+  else
+    # Run backend multicluster integration tests
+    cd "${SCRIPT_DIR}"/../tests/integration/tests
+    go test -v -failfast 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
+    detectRaceConditions
+  fi
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     if [ "${CLUSTER_TYPE}" == "kind" ]; then
