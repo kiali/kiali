@@ -113,6 +113,18 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 
 	// Get clusters from cache
 	clusters := m.cache.GetClusters()
+
+	knownClusters := make(map[string]bool, len(clusters))
+	for _, c := range clusters {
+		knownClusters[c.Name] = true
+	}
+	// Run when RefreshHealth returns for any reason (success, createHealthLayer error, ctx
+	// cancellation, or empty cluster list). An empty knownClusters map reconciles all tracked
+	// clusters (same effect as a nil map when the cache lists no clusters).
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		defer m.healthStatusExp.ReconcileDroppedClusters(knownClusters)
+	}
+
 	if len(clusters) == 0 {
 		m.logger.Warn().Msg("No clusters found, skipping health refresh")
 		return nil
@@ -135,15 +147,6 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 		nsCount, errCount := m.refreshClusterHealth(ctx, layer, cluster.Name, healthDuration)
 		totalNamespaces += nsCount
 		totalErrors += errCount
-	}
-
-	// To avoid accidental wiping of series, we only perform the reconcile after a successful refresh
-	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
-		knownClusters := make(map[string]bool, len(clusters))
-		for _, c := range clusters {
-			knownClusters[c.Name] = true
-		}
-		m.healthStatusExp.ReconcileDroppedClusters(knownClusters)
 	}
 
 	m.lastRun = startTime
@@ -200,6 +203,8 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	// Verify we have access to this cluster
 	if m.clientFactory.GetSAClient(cluster) == nil {
 		log.Error().Msg("No SA client for cluster")
+		// No namespace list: ReconcileDroppedNamespacesForCluster is skipped, so series for
+		// namespaces no longer visible to Kiali may stay until the cluster can be refreshed again.
 		return 0, 1
 	}
 
@@ -208,6 +213,7 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get namespaces for cluster")
+		// Same as missing SA client: dropped-namespace reconciliation is deferred to a later success.
 		return 0, 1
 	}
 
@@ -215,17 +221,22 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	errorCount := 0
 	for _, ns := range namespaces {
 		if ctx.Err() != nil {
+			// Skip ReconcileDroppedNamespacesForCluster: visitedNamespaces is incomplete and would
+			// incorrectly age metrics for namespaces not yet iterated in this loop.
 			return len(namespaces), errorCount
 		}
 
-		visitedNamespaces[ns.Name] = true
 		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
+			continue
 		}
+		// Only namespaces that completed refresh (including partial health + export) count as
+		// visited. Total computation failure skips export/reconcile; leaving the name out lets
+		// ReconcileDroppedNamespacesForCluster age kiali_health_status series for that namespace.
+		visitedNamespaces[ns.Name] = true
 	}
 
-	// To avoid accidental wiping of series, we only perform the reconcile after a successful refresh
 	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		m.healthStatusExp.ReconcileDroppedNamespacesForCluster(cluster, visitedNamespaces)
 	}
@@ -256,7 +267,8 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 	serviceHealth, svcErr := layer.Health.GetNamespaceServiceHealth(ctx, criteria)
 	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealth(ctx, criteria)
 
-	// If all failed, return error
+	// If all failed, return error (no cache write or metrics export; refreshClusterHealth will not
+	// mark this namespace visited so dropped-namespace reconciliation can age stale gauges).
 	if appErr != nil && svcErr != nil && wkErr != nil {
 		return fmt.Errorf("all health computations failed: app=%v, svc=%v, wk=%v", appErr, svcErr, wkErr)
 	}

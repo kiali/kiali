@@ -77,6 +77,33 @@ func TestHealthStatusExporter_SetHealthy(t *testing.T) {
 	require.InDelta(t, 0.0, v, 1e-9)
 }
 
+func TestHealthStatusExporter_SetNotReady(t *testing.T) {
+	cluster := "TestHealthStatusExporter_SetNotReady"
+	ns := "ns"
+	name := "app1"
+	defer deleteTestHealthStatus(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 3))
+	e.Observe(cluster, ns, internalmetrics.HealthTypeApp, name, "Not Ready")
+	v, found := healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeApp, name)
+	require.True(t, found)
+	require.InDelta(t, 1.0, v, 1e-9)
+}
+
+// Namespace aggregate metrics use health_type=namespace and name equal to the namespace string
+// (same as the namespace label), matching exportHealthStatusMetrics.
+func TestHealthStatusExporter_SetNamespaceAggregateHealth(t *testing.T) {
+	cluster := "TestHealthStatusExporter_SetNamespaceAggregateHealth"
+	ns := "bookinfo"
+	defer deleteTestHealthStatus(t, cluster, ns, internalmetrics.HealthTypeNamespace, ns)
+
+	e := NewHealthStatusExporter(testExporterConfig(true, 3))
+	e.Observe(cluster, ns, internalmetrics.HealthTypeNamespace, ns, "Degraded")
+	v, found := healthStatusMetricValue(t, cluster, ns, internalmetrics.HealthTypeNamespace, ns)
+	require.True(t, found)
+	require.InDelta(t, 2.0, v, 1e-9)
+}
+
 func TestHealthStatusExporter_NAWithoutPriorSet_NoSeries(t *testing.T) {
 	cluster := "TestHealthStatusExporter_NAWithoutPriorSet_NoSeries"
 	ns := "ns"

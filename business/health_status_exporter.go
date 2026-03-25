@@ -10,18 +10,18 @@ import (
 // entityKey uniquely identifies a health entity for tracking grace state between refresh cycles.
 type entityKey struct {
 	cluster    string
-	namespace  string
 	healthType internalmetrics.HealthType
 	name       string
+	namespace  string
 }
 
 // NewEntityKey returns the canonical key for a health status metric entity.
 func NewEntityKey(cluster, namespace string, healthType internalmetrics.HealthType, name string) entityKey {
 	return entityKey{
 		cluster:    cluster,
-		namespace:  namespace,
 		healthType: healthType,
 		name:       name,
+		namespace:  namespace,
 	}
 }
 
