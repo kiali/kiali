@@ -159,7 +159,7 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient sleep 5; done;
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient; sleep 5; done;
 NAD
 
 # Create the curl client deployment for ambient namespace
@@ -185,7 +185,7 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar sleep 5; done;
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar; sleep 5; done;
 NAD
 
 # Use waypoint?
