@@ -76,6 +76,10 @@ frontend/.yarn
 frontend/node_modules
 frontend/package-lock.json
 
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
 # IDE
 frontend/.idea
 frontend/.vscode
@@ -92,7 +96,6 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
-frontend/npm-debug.log*
 
 # Logging and logging binaries
 hack/stern/stern

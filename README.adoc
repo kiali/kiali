@@ -41,7 +41,7 @@ Ensure the following tools are available:
 * link:https://docs.docker.com/installation/[Docker] or link:https://podman.io[Podman]
 ** If using `podman`, set the environment variable `DORP=podman`.
 * link:https://nodejs.org[NodeJS] (Node.js >= 20 with the NPM command)
-* link:https://classic.yarnpkg.com/[Yarn]
+** link:https://nodejs.org/api/corepack.html[Corepack] is used to manage the Yarn version. Enable it with `corepack enable`. The exact Yarn version is pinned in `frontend/package.json` via the `packageManager` field.
 * The _GNU make_ (or a compatible alternative)
 
 Once the required developer tools are available, the code can be obtained and built using the following script:
@@ -200,7 +200,7 @@ This is intended to facilitate development. To quickly build a new Kiali contain
 [source,shell]
 ----
 cd $KIALI_SOURCES/kiali/frontend
-yarn && yarn build
+yarn install && yarn build
 
 cd $KIALI_SOURCES/kiali
 make clean build cluster-push-kiali kiali-reload-image
@@ -466,8 +466,10 @@ The Makefile and some Github Actions will check the go version from the go.mod f
 === Procedure to check and update patternfly versions
 
 1. Launch command `npx npm-check-updates -t latest -f '/^@patternfly/'`
-2. Launch `yarn install` to update the yarn.lock
+2. Launch `yarn install` in the `frontend/` directory to update the yarn.lock
 3. Add to the commit package.json and yarn.lock
+
+NOTE: Yarn is managed via link:https://nodejs.org/api/corepack.html[corepack]. Run `corepack enable` once before using `yarn`.
 
 === Running the UI outside the cluster
 
