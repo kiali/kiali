@@ -72,7 +72,13 @@ ansible
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
 # dependencies
+frontend/.yarn
 frontend/node_modules
+frontend/package-lock.json
+
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
 
 # IDE
 frontend/.idea
@@ -90,12 +96,6 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
-
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-
-frontend/package-lock.json
 
 # Logging and logging binaries
 hack/stern/stern
