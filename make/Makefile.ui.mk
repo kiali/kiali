@@ -2,33 +2,37 @@
 # Targets for working with the UI from source
 #
 
-## yarn-start: Run the UI in a local process that is separate from the backend. Set YARN_START_URL to update package.json.
-# If the YARN_START_URL env var is passed, the 'proxy' field will either be created or replaced with the YARN_START_URL.
-# If the YARN_START_URL is empty but the 'proxy' field is set, the existing value will be used. Otherwise this cmd fails.
-yarn-start:
-	@if [ -n "${YARN_START_URL}" ]; then \
-		sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
-	else \
-		if ! (cat ${ROOTDIR}/frontend/package.json | grep -q "\"proxy\":"); then \
-			echo "${ROOTDIR}/frontend/package.json does not have a 'proxy' setting and you did not set YARN_START_URL. Aborting."; \
-			exit 1; \
+## run-frontend: Run the frontend UI in a local development server. Set YARN_START_URL to update package.json.
+# The 'proxy' field will be set to the YARN_START_URL value (or empty if not provided).
+# The proxy field will be automatically cleaned up when yarn start exits.
+run-frontend: .ensure-yarn-version
+	sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json
+	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json || echo 'No proxy configured')"
+	@cleanup() { \
+		if [ "$$cleanup_done" != "true" ]; then \
+			echo "Cleaning up: removing proxy field from package.json"; \
+			sed -i -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
+			cleanup_done=true; \
 		fi; \
-	fi
-	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json)"
-	@cd ${ROOTDIR}/frontend && yarn start
+	}; \
+	trap cleanup EXIT INT TERM; \
+	cd ${ROOTDIR}/frontend && yarn start
 
 ## cypress-run: Runs all the cypress frontend integration tests locally without the GUI (i.e. headless).
-cypress-run:
+cypress-run: .ensure-yarn-version
 	@cd ${ROOTDIR}/frontend && yarn cypress:run --headless --config numTestsKeptInMemory=0,video=false
 
+cypress-selected: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn cypress:run:selected --headless --config numTestsKeptInMemory=0,video=false
+
 ## cypress-gui: Opens the cypress GUI letting you pick which frontend integration tests to run locally.
-cypress-gui:
+cypress-gui: .ensure-yarn-version
 	@cd ${ROOTDIR}/frontend && yarn cypress
 
 ## perf-tests-run: Runs the frontend perf tests locally without the GUI.
-perf-tests-run:
-	@cd ${ROOTDIR}/frontend && ${ROOTDIR}/frontend/node_modules/cypress/bin/cypress run --headless --config numTestsKeptInMemory=0,video=false --config-file cypress-perf.config.ts
+perf-tests-run: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn cypress:run:perf --headless --config numTestsKeptInMemory=0,video=false
 
 ## perf-tests-gui: Runs the frontend perf tests locally with the GUI.
-perf-tests-gui:
-	@cd ${ROOTDIR}/frontend && yarn cypress --config-file cypress-perf.config.ts
+perf-tests-gui: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn cypress:perf

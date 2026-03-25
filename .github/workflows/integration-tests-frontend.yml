@@ -29,6 +29,9 @@ jobs:
         with:
           ref: ${{ inputs.build_branch }}
 
+      - name: Enable corepack
+        run: corepack enable
+
       # This caches the yarn deps but does not touch node_modules so it's still necessary
       # to run 'yarn install' later to link these into node_modules.
       - name: Setup node
@@ -56,7 +59,7 @@ jobs:
       # Need to install frontend dependencies to run cypress tests.
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run frontend integration tests
         run: hack/run-integration-tests.sh --test-suite frontend
