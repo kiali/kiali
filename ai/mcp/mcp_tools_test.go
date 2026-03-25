@@ -95,3 +95,82 @@ func TestToolDef_Call_UnknownTool(t *testing.T) {
 	assert.Nil(t, result, "Unknown tool should return nil")
 	assert.Equal(t, 404, code, "Unknown tool should return 404")
 }
+
+// ========================================================================
+// get_pod_performance Schema Verification Tests
+// ========================================================================
+
+func TestPodPerformanceSchema_ToolDefinitionLoads(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool, ok := DefaultToolHandlers["get_pod_performance"]
+	require.True(t, ok, "get_pod_performance should be registered in DefaultToolHandlers")
+	assert.Equal(t, "get_pod_performance", tool.GetName())
+	assert.NotEmpty(t, tool.GetDescription())
+}
+
+func TestPodPerformanceSchema_RequiredFields(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_pod_performance"]
+	schema := tool.GetDefinition()
+
+	required, ok := schema["required"].([]interface{})
+	require.True(t, ok, "schema should have a 'required' field")
+	assert.Contains(t, required, "namespace", "namespace should be required")
+}
+
+func TestPodPerformanceSchema_AnyOfConstraint(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_pod_performance"]
+	schema := tool.GetDefinition()
+
+	anyOf, ok := schema["anyOf"].([]interface{})
+	require.True(t, ok, "schema should have an 'anyOf' field for podName/workloadName")
+	assert.Len(t, anyOf, 2, "anyOf should have exactly 2 entries (podName, workloadName)")
+
+	var requiredFields []string
+	for _, entry := range anyOf {
+		m, mOk := entry.(map[string]interface{})
+		require.True(t, mOk)
+		req, rOk := m["required"].([]interface{})
+		require.True(t, rOk)
+		for _, r := range req {
+			requiredFields = append(requiredFields, r.(string))
+		}
+	}
+	assert.Contains(t, requiredFields, "podName")
+	assert.Contains(t, requiredFields, "workloadName")
+}
+
+func TestPodPerformanceSchema_PropertiesIncludeExpectedFields(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_pod_performance"]
+	schema := tool.GetDefinition()
+
+	props, ok := schema["properties"].(map[string]interface{})
+	require.True(t, ok, "schema should have a 'properties' field")
+
+	expectedFields := []string{"namespace", "podName", "workloadName", "timeRange", "queryTime", "clusterName"}
+	for _, field := range expectedFields {
+		_, exists := props[field]
+		assert.True(t, exists, "schema should contain property %q", field)
+	}
+}
+
+func TestPodPerformanceSchema_MCPToolsetRegistered(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	_, inMCP := MCPToolHandlers["get_pod_performance"]
+	assert.True(t, inMCP, "get_pod_performance should be in MCPToolHandlers")
+
+	_, inDefault := DefaultToolHandlers["get_pod_performance"]
+	assert.True(t, inDefault, "get_pod_performance should be in DefaultToolHandlers")
+}

@@ -48,6 +48,26 @@ func Execute(
 		return fmt.Sprintf("invalid timeRange %q (expected Prometheus duration like 5m, 1h, 1d): %v", timeRange, err), http.StatusBadRequest
 	}
 
+	// Validate cluster existence so the user gets a clear message for typos.
+	if kialiInterface.ClientFactory != nil {
+		if kialiInterface.ClientFactory.GetSAClient(clusterName) == nil {
+			known := make([]string, 0)
+			for c := range kialiInterface.ClientFactory.GetSAClients() {
+				known = append(known, c)
+			}
+			return fmt.Sprintf("Cluster %q is not known to Kiali. Known clusters: %v. Please verify the cluster name and try again.", clusterName, known), http.StatusOK
+		}
+	}
+
+	// Validate namespace existence early so the user gets a clear message.
+	if kialiInterface.BusinessLayer != nil {
+		if _, nsErr := kialiInterface.BusinessLayer.Namespace.GetClusterNamespace(
+			kialiInterface.Request.Context(), namespace, clusterName,
+		); nsErr != nil {
+			return fmt.Sprintf("Namespace %q does not exist in cluster %q. Please verify the namespace name and try again.", namespace, clusterName), http.StatusOK
+		}
+	}
+
 	resp := PodPerformanceResponse{
 		Cluster:   clusterName,
 		Namespace: namespace,
@@ -58,16 +78,18 @@ func Execute(
 		Errors:    map[string]string{},
 	}
 
-	// If workloadName is provided, try to resolve to a concrete pod.
-	// If the workload doesn't exist, fall back to using workloadName as podName.
-	if workloadName != "" {
+	// When podName is explicitly provided, use it directly — the user wants
+	// that specific pod. Only resolve from the workload when no podName was given.
+	if podName != "" {
+		resp.Resolved = "pod"
+	} else if workloadName != "" {
 		res, err := mcputil.ResolvePodFromWorkloadOrPod(
 			kialiInterface.Request.Context(),
 			kialiInterface.BusinessLayer,
 			clusterName,
 			namespace,
 			workloadName,
-			podName,
+			"",
 			queryTime,
 			mcputil.ResolvePodOptions{
 				PreferRunning:        true,
@@ -78,9 +100,9 @@ func Execute(
 		)
 		if err != nil {
 			if errors.Is(err, mcputil.ErrWorkloadHasNoPods) {
-				return fmt.Sprintf("workload %q in namespace %q exists but has no pods", workloadName, namespace), http.StatusNotFound
+				return fmt.Sprintf("Workload %q in namespace %q exists but currently has no running pods. The workload may be scaled to zero or the pods may be starting up.", workloadName, namespace), http.StatusOK
 			}
-			return err.Error(), http.StatusInternalServerError
+			return fmt.Sprintf("Unable to resolve workload %q in namespace %q: %v", workloadName, namespace, err), http.StatusOK
 		}
 		resp.PodName = res.PodName
 		resp.Resolved = res.ResolvedFrom
@@ -92,9 +114,9 @@ func Execute(
 	pod, podErr := getPod(kialiInterface.Request, kialiInterface.ClientFactory, clusterName, namespace, resp.PodName)
 	if podErr != nil {
 		if k8serrors.IsNotFound(podErr) {
-			return podErr.Error(), http.StatusNotFound
+			return fmt.Sprintf("Pod %q was not found in namespace %q (cluster %q). The pod may have been deleted, not yet created, or the name may be incorrect.", resp.PodName, namespace, clusterName), http.StatusOK
 		}
-		return podErr.Error(), http.StatusInternalServerError
+		return fmt.Sprintf("Unable to retrieve pod %q in namespace %q: %v", resp.PodName, namespace, podErr), http.StatusOK
 	}
 	containerReqLim := extractContainerRequestsLimits(pod)
 	resp.Containers = make([]ContainerPerformance, 0, len(containerReqLim))
@@ -314,9 +336,31 @@ func getPod(r *http.Request, clientFactory kubernetes.ClientFactory, clusterName
 	return k8s.GetPod(namespace, podName)
 }
 
+func isConnectionError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "no such host") ||
+		strings.Contains(msg, "dial tcp") ||
+		strings.Contains(msg, "i/o timeout") ||
+		strings.Contains(msg, "connect:") ||
+		strings.Contains(msg, "service unavailable")
+}
+
+const promUnavailableMsg = "Prometheus is not accessible. Performance metrics are temporarily unavailable — please verify that Prometheus is running and reachable."
+
+func promErrorMessage(err error, fallbackKey string) string {
+	if errors.Is(err, mcputil.ErrNoData) {
+		return "no data returned by Prometheus"
+	}
+	if isConnectionError(err) {
+		return promUnavailableMsg
+	}
+	return fmt.Sprintf("unable to query %s metrics from Prometheus", fallbackKey)
+}
+
 func fillFromPrometheus(r *http.Request, prom prometheus.ClientInterface, namespace, podName, timeRange string, queryTime time.Time, resp *PodPerformanceResponse) {
 	if prom == nil || prom.API() == nil {
-		resp.Errors["prometheus"] = "prometheus client not available"
+		resp.Errors["prometheus"] = "Prometheus is not accessible. Performance metrics are temporarily unavailable — please verify that Prometheus is running and reachable."
 		return
 	}
 
@@ -325,21 +369,21 @@ func fillFromPrometheus(r *http.Request, prom prometheus.ClientInterface, namesp
 	memTotalQuery := fmt.Sprintf(`sum(container_memory_working_set_bytes{namespace=%q,pod=%q,container!="" ,container!="POD"})`, namespace, podName)
 
 	if v, err := mcputil.PromQueryFloat64(r.Context(), prom, cpuTotalQuery, queryTime); err != nil {
-		if errors.Is(err, mcputil.ErrNoData) {
-			resp.Errors["cpu_usage"] = "no data returned by Prometheus"
-		} else {
-			resp.Errors["cpu_usage"] = err.Error()
+		if isConnectionError(err) {
+			resp.Errors["prometheus"] = promUnavailableMsg
+			return
 		}
+		resp.Errors["cpu_usage"] = promErrorMessage(err, "CPU")
 	} else {
 		resp.CPU.Usage = &ScalarValue{Value: v, Unit: "cores"}
 	}
 
 	if v, err := mcputil.PromQueryFloat64(r.Context(), prom, memTotalQuery, queryTime); err != nil {
-		if errors.Is(err, mcputil.ErrNoData) {
-			resp.Errors["memory_usage"] = "no data returned by Prometheus"
-		} else {
-			resp.Errors["memory_usage"] = err.Error()
+		if isConnectionError(err) {
+			resp.Errors["prometheus"] = promUnavailableMsg
+			return
 		}
+		resp.Errors["memory_usage"] = promErrorMessage(err, "memory")
 	} else {
 		resp.Memory.Usage = &ScalarValue{Value: v, Unit: "bytes"}
 	}
@@ -350,19 +394,19 @@ func fillFromPrometheus(r *http.Request, prom prometheus.ClientInterface, namesp
 
 	cpuByContainer, err := mcputil.PromQueryVectorByLabel(r.Context(), prom, cpuByContainerQuery, queryTime, "container")
 	if err != nil {
-		if errors.Is(err, mcputil.ErrNoData) {
-			resp.Errors["cpu_usage_by_container"] = "no data returned by Prometheus"
-		} else {
-			resp.Errors["cpu_usage_by_container"] = err.Error()
+		if isConnectionError(err) {
+			resp.Errors["prometheus"] = promUnavailableMsg
+			return
 		}
+		resp.Errors["cpu_usage_by_container"] = promErrorMessage(err, "per-container CPU")
 	}
 	memByContainer, err := mcputil.PromQueryVectorByLabel(r.Context(), prom, memByContainerQuery, queryTime, "container")
 	if err != nil {
-		if errors.Is(err, mcputil.ErrNoData) {
-			resp.Errors["memory_usage_by_container"] = "no data returned by Prometheus"
-		} else {
-			resp.Errors["memory_usage_by_container"] = err.Error()
+		if isConnectionError(err) {
+			resp.Errors["prometheus"] = promUnavailableMsg
+			return
 		}
+		resp.Errors["memory_usage_by_container"] = promErrorMessage(err, "per-container memory")
 	}
 
 	if len(cpuByContainer) == 0 && len(memByContainer) == 0 {
