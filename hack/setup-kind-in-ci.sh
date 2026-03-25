@@ -454,9 +454,25 @@ setup_kind_singlecluster() {
     return
   fi
 
+  AI_ARGS=()
   if [ "${ENABLE_AI}" == "true" ] && [ -n "${GOOGLE_API_KEY}" ]; then
     infomsg "Creating secret for AI chatbot"
     kubectl -n istio-system create secret generic google-key-secret --from-literal=openai-gemini="${GOOGLE_API_KEY}"
+    AI_ARGS=(
+      --set chat_ai.enabled="true"
+      --set chat_ai.default_provider="openai"
+      --set chat_ai.providers[0].name="openai"
+      --set chat_ai.providers[0].enabled="true"
+      --set chat_ai.providers[0].description="OpenAI API Provider"
+      --set chat_ai.providers[0].type="openai"
+      --set chat_ai.providers[0].config="default"
+      --set chat_ai.providers[0].default_model="gemini-2.5-pro"
+      --set chat_ai.providers[0].key="secret:google-key-secret:openai-gemini"
+      --set chat_ai.providers[0].models[0].name="gemini-2.5-pro"
+      --set chat_ai.providers[0].models[0].enabled="true"
+      --set chat_ai.providers[0].models[0].description="Model provided by Google with OpenAI API Support"
+      --set chat_ai.providers[0].models[0].endpoint="https://generativelanguage.googleapis.com/v1beta/openai"
+    )
   fi
 
   infomsg "Pushing the images into the cluster..."
@@ -476,18 +492,7 @@ setup_kind_singlecluster() {
     --set-string auth.openid.issuer_uri="${ISSUER_URI}" \
     --set auth.openid.insecure_skip_verify_tls="false" \
     --set auth.openid.username_claim="preferred_username" \
-    --set chat_ai.enabled="${ENABLE_AI}" \
-    --set chat_ai.default_provider="openai" \
-    --set chat_ai.providers[0].name="openai" \
-    --set chat_ai.providers[0].description="OpenAI API Provider" \
-    --set chat_ai.providers[0].type="openai" \
-    --set chat_ai.providers[0].config="default" \
-    --set chat_ai.providers[0].default_model="gemini-2.5-pro" \
-    --set chat_ai.providers[0].key="secret:google-key-secret:openai-gemini" \
-    --set chat_ai.providers[0].models[0].name="gemini-2.5-pro" \
-    --set chat_ai.providers[0].models[0].enabled="${ENABLE_AI}" \
-    --set chat_ai.providers[0].models[0].description="Model provided by Google with OpenAI API Support" \
-    --set chat_ai.providers[0].models[0].endpoint="https://generativelanguage.googleapis.com/v1beta/openai" \
+    "${AI_ARGS[@]}" \
     --set deployment.logger.log_level="trace" \
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \
