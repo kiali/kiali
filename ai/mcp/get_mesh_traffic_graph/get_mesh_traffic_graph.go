@@ -12,12 +12,20 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	graphApi "github.com/kiali/kiali/graph/api"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
 	meshApi "github.com/kiali/kiali/mesh/api"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
+
+var validGraphTypes = map[string]bool{
+	graph.GraphTypeApp:          true,
+	graph.GraphTypeService:      true,
+	graph.GraphTypeVersionedApp: true,
+	graph.GraphTypeWorkload:     true,
+}
 
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
@@ -43,6 +51,10 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
+
+	if !validGraphTypes[toolArgs.GraphType] {
+		return fmt.Sprintf("invalid graphType %q: must be one of app, service, versionedApp, workload", toolArgs.GraphType), http.StatusBadRequest
+	}
 
 	// Parse namespaces argument (comma-separated string)
 	namespaces := make([]string, 0)
@@ -72,24 +84,21 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			namespaces = append(namespaces, ns_trimmed)
 		}
 
-		// If all requested namespaces are inaccessible, return 403
 		if len(namespaces) == 0 && len(invalidAccess) > 0 {
-			return fmt.Sprintf("requested namespace(s) not accessible or do not exist: %s", strings.Join(invalidAccess, ", ")), http.StatusForbidden
+			return fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve traffic graph.", strings.Join(invalidAccess, ", ")), http.StatusOK
 		}
+	}
+
+	if len(namespaces) == 0 {
+		return "No namespaces were specified. Please provide at least one namespace to generate the traffic graph.", http.StatusOK
 	}
 
 	resp := GetMeshGraphResponse{
 		Errors: make(map[string]string),
 	}
 
-	// Add warning if some namespaces were skipped
 	if len(invalidAccess) > 0 {
-		resp.Errors["namespaces"] = fmt.Sprintf("requested namespace(s) not accessible or do not exist (skipped): %s", strings.Join(invalidAccess, ", "))
-	}
-
-	// Validate that at least one namespace was provided
-	if len(namespaces) == 0 {
-		return "namespaces parameter is required", http.StatusBadRequest
+		resp.Errors["namespaces"] = fmt.Sprintf("namespace(s) not found or not accessible: %s", strings.Join(invalidAccess, ", "))
 	}
 
 	toolArgs.Namespaces = namespaces
@@ -127,6 +136,25 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	// Graph
 	go func() {
 		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				var msg string
+				switch v := r.(type) {
+				case graph.Response:
+					msg = v.Message
+				case error:
+					msg = v.Error()
+				case string:
+					msg = v
+				default:
+					msg = fmt.Sprintf("%v", v)
+				}
+				log.Errorf("get_mesh_traffic_graph: graph goroutine recovered from panic: %s", msg)
+				mu.Lock()
+				resp.Errors["graph"] = msg
+				mu.Unlock()
+			}
+		}()
 		graphReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "/ai/graph/namespaces", nil)
 		q := graphReq.URL.Query()
 		q.Set("namespaces", strings.Join(toolArgs.Namespaces, ","))
@@ -159,6 +187,25 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	// Mesh status (GraphMesh result)
 	go func() {
 		defer wg.Done()
+		defer func() {
+			if r := recover(); r != nil {
+				var msg string
+				switch v := r.(type) {
+				case graph.Response:
+					msg = v.Message
+				case error:
+					msg = v.Error()
+				case string:
+					msg = v
+				default:
+					msg = fmt.Sprintf("%v", v)
+				}
+				log.Errorf("get_mesh_traffic_graph: mesh status goroutine recovered from panic: %s", msg)
+				mu.Lock()
+				resp.Errors["mesh_status"] = msg
+				mu.Unlock()
+			}
+		}()
 		meshReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "/ai/mesh-graph", nil)
 		mq := meshReq.URL.Query()
 		if toolArgs.RateInterval != "" {

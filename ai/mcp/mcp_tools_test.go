@@ -174,3 +174,81 @@ func TestPodPerformanceSchema_MCPToolsetRegistered(t *testing.T) {
 	_, inDefault := DefaultToolHandlers["get_pod_performance"]
 	assert.True(t, inDefault, "get_pod_performance should be in DefaultToolHandlers")
 }
+
+// ========================================================================
+// get_mesh_traffic_graph Schema Verification Tests
+// ========================================================================
+
+func TestMeshGraphSchema_ToolDefinitionLoads(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool, ok := DefaultToolHandlers["get_mesh_traffic_graph"]
+	require.True(t, ok, "get_mesh_traffic_graph should be registered in DefaultToolHandlers")
+	assert.Equal(t, "get_mesh_traffic_graph", tool.GetName())
+	assert.NotEmpty(t, tool.GetDescription())
+}
+
+func TestMeshGraphSchema_RequiredFields(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_mesh_traffic_graph"]
+	schema := tool.GetDefinition()
+
+	required, ok := schema["required"].([]interface{})
+	require.True(t, ok, "schema should have a 'required' field")
+	assert.Contains(t, required, "namespaces", "namespaces should be required")
+}
+
+func TestMeshGraphSchema_PropertiesIncludeExpectedFields(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_mesh_traffic_graph"]
+	schema := tool.GetDefinition()
+
+	props, ok := schema["properties"].(map[string]interface{})
+	require.True(t, ok, "schema should have a 'properties' field")
+
+	expectedFields := []string{"namespaces", "graphType", "clusterName"}
+	for _, field := range expectedFields {
+		_, exists := props[field]
+		assert.True(t, exists, "schema should contain property %q", field)
+	}
+}
+
+func TestMeshGraphSchema_GraphTypeEnum(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	tool := DefaultToolHandlers["get_mesh_traffic_graph"]
+	schema := tool.GetDefinition()
+
+	props := schema["properties"].(map[string]interface{})
+	graphTypeProp := props["graphType"].(map[string]interface{})
+	enumRaw, ok := graphTypeProp["enum"].([]interface{})
+	require.True(t, ok, "graphType should have an enum constraint")
+
+	enumValues := make([]string, len(enumRaw))
+	for i, v := range enumRaw {
+		enumValues[i] = v.(string)
+	}
+
+	assert.Contains(t, enumValues, "versionedApp")
+	assert.Contains(t, enumValues, "app")
+	assert.Contains(t, enumValues, "service")
+	assert.Contains(t, enumValues, "workload")
+	assert.Len(t, enumValues, 4, "graphType enum should have exactly 4 values")
+}
+
+func TestMeshGraphSchema_MCPToolsetRegistered(t *testing.T) {
+	err := LoadTools()
+	require.NoError(t, err)
+
+	_, inMCP := MCPToolHandlers["get_mesh_traffic_graph"]
+	assert.True(t, inMCP, "get_mesh_traffic_graph should be in MCPToolHandlers")
+
+	_, inDefault := DefaultToolHandlers["get_mesh_traffic_graph"]
+	assert.True(t, inDefault, "get_mesh_traffic_graph should be in DefaultToolHandlers")
+}
