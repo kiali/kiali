@@ -1,46 +1,39 @@
 name: Integration AI Tests
 
 on:
-  # Only triggered by a '/run-ai-tests' comment on a PR that has the 'ai-chatbot' label
-  issue_comment:
-    types: [created]
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+      stern_logs:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
   integration_ai_tests:
     name: Integration AI Tests
-    if: >-
-      github.event.issue.pull_request &&
-      contains(github.event.comment.body, '/run-ai-tests') &&
-      contains(github.event.issue.labels.*.name, 'ai-chatbot')
     runs-on: ubuntu-latest
     env:
       CI: 1
       TERM: xterm
     steps:
-    - name: Get PR info
-      id: pr
-      run: |
-        PR_URL="${{ github.event.issue.pull_request.url }}"
-        PR_DATA=$(gh api "$PR_URL")
-        echo "ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
-        echo "sha=$(echo "$PR_DATA" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-    - name: Set pending status on PR
-      run: |
-        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
-          -f state=pending \
-          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          -f description="AI integration tests running..." \
-          -f context="Integration AI Tests"
-      env:
-        GH_TOKEN: ${{ github.token }}
-
     - name: Check out code
       uses: actions/checkout@v6
       with:
-        ref: ${{ steps.pr.outputs.ref }}
+        ref: ${{ inputs.build_branch }}
 
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
@@ -57,19 +50,14 @@ jobs:
         cache: yarn
         cache-dependency-path: frontend/yarn.lock
 
-    - name: Setup Go
-      uses: actions/setup-go@v5
+    - name: Download go binary
+      uses: actions/download-artifact@v8
       with:
-        go-version-file: go.mod
+        name: kiali
+        path: ~/go/bin/
 
-    - name: Build backend
-      run: make build
-
-    - name: Install built binary
-      run: |
-        mkdir -p ~/go/bin
-        cp _output/kiali ~/go/bin/kiali
-        chmod +x ~/go/bin/kiali
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
 
     - name: Install frontend dependencies
       working-directory: ./frontend
@@ -78,29 +66,7 @@ jobs:
     - name: Run frontend ai integration tests
       env:
         GOOGLE_API_KEY: ${{ secrets.AI_CHATBOT_API_TOKEN }}
-      run: hack/run-integration-tests.sh --test-suite ai-chatbot
-
-    - name: Set success status on PR
-      if: success()
-      run: |
-        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
-          -f state=success \
-          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          -f description="AI integration tests passed" \
-          -f context="Integration AI Tests"
-      env:
-        GH_TOKEN: ${{ github.token }}
-
-    - name: Set failure status on PR
-      if: failure()
-      run: |
-        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
-          -f state=failure \
-          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          -f description="AI integration tests failed" \
-          -f context="Integration AI Tests"
-      env:
-        GH_TOKEN: ${{ github.token }}
+      run: hack/run-integration-tests.sh --test-suite ai-chatbot --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Upload test results
       if: always()
@@ -129,3 +95,10 @@ jobs:
       with:
         name: cypress-screenshots-${{ github.job }}
         path: frontend/cypress/screenshots
+
+    - name: Upload cypress logs from stern
+      uses: actions/upload-artifact@v7
+      if: ${{ inputs.stern_logs == true }}
+      with:
+        name: cypress-logs-${{ github.job }}
+        path: hack/stern
