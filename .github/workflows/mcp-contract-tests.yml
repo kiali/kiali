@@ -64,6 +64,9 @@ jobs:
       with:
         version: 'v3.18.4'
 
+    - name: Enable corepack
+      run: corepack enable
+
     - name: Setup node
       uses: actions/setup-node@v6
       with:
@@ -82,7 +85,7 @@ jobs:
 
     - name: Install frontend dependencies
       working-directory: ./frontend
-      run: yarn install --frozen-lockfile
+      run: yarn install --immutable
 
     - name: Setup KinD cluster with Istio and Kiali
       run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)

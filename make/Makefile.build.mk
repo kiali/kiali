@@ -40,9 +40,21 @@ build: go-check check-ui
 	${GO_BUILD_ENVVARS} ${GO} build \
 		-o ${GO_BUILD_OUTPUT} -ldflags "-X github.com/kiali/kiali/cmd.version=${VERSION} -X github.com/kiali/kiali/cmd.commitHash=${COMMIT_HASH} -X github.com/kiali/kiali/cmd.goVersion=${GO_ACTUAL_VERSION}" ${GO_BUILD_FLAGS}
 
+.ensure-yarn-version:
+	@if ! command -v yarn >/dev/null 2>&1; then \
+		echo "Error: yarn not found in PATH."; \
+		echo "Yarn 4 is managed via corepack. Run 'corepack enable' to activate it."; \
+		exit 1; \
+	fi
+	@cd ${ROOTDIR}/frontend && if ! yarn --version 2>/dev/null | grep -qE '^[4-9]\.'; then \
+		echo "Error: Yarn 4+ is required but found $$(yarn --version 2>/dev/null || echo 'unknown')."; \
+		echo "Run 'corepack enable' to activate the version specified in frontend/package.json."; \
+		exit 1; \
+	fi
+
 ## build-ui: Runs the yarn commands to build the frontend UI
-build-ui:
-	@cd ${ROOTDIR}/frontend && yarn install --frozen-lockfile && yarn run build
+build-ui: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn install --immutable && yarn run build
 
 ## build-ui-test: Runs the yarn commands to build the dev frontend UI and runs the UI tests
 build-ui-test: build-ui
