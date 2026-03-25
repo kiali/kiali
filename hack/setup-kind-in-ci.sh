@@ -455,7 +455,15 @@ setup_kind_singlecluster() {
   fi
 
   AI_ARGS=()
-  if [ "${ENABLE_AI}" == "true" ] && [ -n "${GOOGLE_API_KEY}" ]; then
+  if [ "${ENABLE_AI}" == "true" ]; then
+    if [ -z "${GOOGLE_API_KEY}" ]; then
+      infomsg "WARNING: ENABLE_AI is true but GOOGLE_API_KEY is not set. AI chatbot will not be configured. Set the GOOGLE_API_KEY environment variable with a valid API token."
+      infomsg "We'll use a dummy API key for testing purposes."
+      GOOGLE_API_KEY="dummy-api-key"
+    else
+      infomsg "Using Google API key from environment variable"
+    fi
+
     infomsg "Creating secret for AI chatbot"
     kubectl -n istio-system create secret generic google-key-secret --from-literal=openai-gemini="${GOOGLE_API_KEY}"
     AI_ARGS=(
@@ -473,6 +481,7 @@ setup_kind_singlecluster() {
       --set chat_ai.providers[0].models[0].description="Model provided by Google with OpenAI API Support"
       --set chat_ai.providers[0].models[0].endpoint="https://generativelanguage.googleapis.com/v1beta/openai"
     )
+  
   fi
 
   infomsg "Pushing the images into the cluster..."
