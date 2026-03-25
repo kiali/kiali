@@ -321,6 +321,7 @@ export const ChatBotComponent: React.FC<ChatBotProps> = (props: ChatBotProps) =>
         isRound={true}
         closedToggleIcon={() => <ClosedToggleIcon style={{ height: '2.5rem', width: '2.5rem' }} />}
         style={chatbotToggleStyle}
+        data-test="ai-chatbot-toggle"
       />
       <Chatbot isVisible={chatbotVisible} displayMode={displayMode}>
         <ChatbotConversationHistoryNav

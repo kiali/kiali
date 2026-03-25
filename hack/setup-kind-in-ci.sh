@@ -17,6 +17,9 @@ CLUSTER2_AMBIENT="true"
 
 INSTALL_PERSES="false"
 
+ENABLE_AI="false"
+GOOGLE_API_KEY="${GOOGLE_API_KEY:-}"
+
 ISTIO_VERSION="${ISTIO_VERSION:-}"
 
 infomsg() {
@@ -71,6 +74,9 @@ Options:
 -dorp|--docker-or-podman <docker|podman>
     What to use when building images.
     Default: docker
+-ea|--enable-ai <true|false>
+    Whether to enable AI chatbot integration tests.
+    Default: false
 -hcd|--helm-charts-dir
     Directory where the Kiali helm charts are located.
     If one is not supplied a /tmp dir will be created and used.
@@ -122,6 +128,7 @@ while [[ $# -gt 0 ]]; do
     -c2a|--cluster2-ambient)      CLUSTER2_AMBIENT="$2";      shift;shift; ;;
     -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
+    -ea|--enable-ai)              ENABLE_AI="$2";             shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
@@ -295,6 +302,7 @@ cat <<EOM
 AUTH_STRATEGY=$AUTH_STRATEGY
 DEPLOY_KIALI=$DEPLOY_KIALI
 DORP=$DORP
+ENABLE_AI=$ENABLE_AI
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -446,6 +454,11 @@ setup_kind_singlecluster() {
     return
   fi
 
+  if [ "${ENABLE_AI}" == "true" ] && [ -n "${GOOGLE_API_KEY}" ]; then
+    infomsg "Creating secret for AI chatbot"
+    kubectl -n istio-system create secret generic google-key-secret --from-literal=openai-gemini="${GOOGLE_API_KEY}"
+  fi
+
   infomsg "Pushing the images into the cluster..."
   make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
 
@@ -463,6 +476,18 @@ setup_kind_singlecluster() {
     --set-string auth.openid.issuer_uri="${ISSUER_URI}" \
     --set auth.openid.insecure_skip_verify_tls="false" \
     --set auth.openid.username_claim="preferred_username" \
+    --set chat_ai.enabled="${ENABLE_AI}" \
+    --set chat_ai.default_provider="openai" \
+    --set chat_ai.providers[0].name="openai" \
+    --set chat_ai.providers[0].description="OpenAI API Provider" \
+    --set chat_ai.providers[0].type="openai" \
+    --set chat_ai.providers[0].config="default" \
+    --set chat_ai.providers[0].default_model="gemini-2.5-pro" \
+    --set chat_ai.providers[0].key="secret:google-key-secret:openai-gemini" \
+    --set chat_ai.providers[0].models[0].name="gemini-2.5-pro" \
+    --set chat_ai.providers[0].models[0].enabled="${ENABLE_AI}" \
+    --set chat_ai.providers[0].models[0].description="Model provided by Google with OpenAI API Support" \
+    --set chat_ai.providers[0].models[0].endpoint="https://generativelanguage.googleapis.com/v1beta/openai" \
     --set deployment.logger.log_level="trace" \
     --set deployment.image_name=localhost/kiali/kiali \
     --set deployment.image_version=dev \

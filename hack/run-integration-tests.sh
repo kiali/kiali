@@ -5,6 +5,7 @@ infomsg() {
 }
 
 # Suites
+AI_CHATBOT="ai-chatbot"
 AMBIENT=""
 AUTH_STRATEGY=""
 BACKEND="backend"
@@ -152,8 +153,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_1}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_2}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${LOCAL}" -a "${TEST_SUITE}" != "${OFFLINE}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${LOCAL}' or '${OFFLINE}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_1}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_2}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${AI_CHATBOT}" -a "${TEST_SUITE}" != "${LOCAL}" -a "${TEST_SUITE}" != "${OFFLINE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}' or '${OFFLINE}'"
         exit 1
       fi
       shift;shift
@@ -231,7 +232,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${LOCAL}|${OFFLINE}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -598,6 +599,31 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
   detectRaceConditions
+elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
+  ensureCypressInstalled
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-ai "true"
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  fi
+
+  ensureKialiServerReady
+
+  export CYPRESS_BASE_URL="${KIALI_URL}"
+  export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
+  # Recorded video is unusable due to low resources in CI: https://github.com/cypress-io/cypress/issues/4722
+  export CYPRESS_VIDEO="${WITH_VIDEO}"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  yarn run cypress:run:ai-chatbot
+  detectRaceConditions
+  exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_1}" ]; then
   ensureCypressInstalled
 
