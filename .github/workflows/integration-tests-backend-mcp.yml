@@ -74,19 +74,19 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: junit-rest-report
-        path: tests/integration/junit-rest-report.xml
+        name: junit-rest-report-mcp-tools
+        path: tests/integration/junit-rest-report-mcp-tools.xml
         if-no-files-found: warn
 
     - name: Store test metadata
       if: always()
       run: |
-        mkdir -p test-metadata
-        echo "${{ inputs.istio_version }}" > test-metadata/istio_version.txt
+        mkdir -p test-metadata-mcp-tools
+        echo "${{ inputs.istio_version }}" > test-metadata-mcp-tools/istio_version.txt
 
     - name: Upload test metadata
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: backend-test-metadata
-        path: test-metadata/
+        name: backend-test-metadata-mcp-tools
+        path: test-metadata-mcp-tools/
