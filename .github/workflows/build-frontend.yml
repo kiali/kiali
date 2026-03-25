@@ -20,6 +20,8 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
+    # Corepack must be enabled before setup-node so that setup-node's
+    # cache: yarn correctly detects the Yarn 4 cache directory.
     - name: Enable corepack
       run: corepack enable
 

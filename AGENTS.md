@@ -1126,11 +1126,13 @@ make clean build build-ui test
 # Check for updates
 npx npm-check-updates -t latest -f '/^@patternfly/'
 
-# Update yarn.lock
+# Update yarn.lock (from the frontend/ directory)
 yarn install
 
 # Commit package.json and yarn.lock
 ```
+
+> **Note:** Yarn is managed via [corepack](https://nodejs.org/api/corepack.html). Run `corepack enable` once before using `yarn`. The exact Yarn version is pinned in `frontend/package.json` via the `packageManager` field.
 
 ### Hack Scripts
 
@@ -1432,6 +1434,9 @@ make help
 
 **Build Order:**
 - Always build UI before backend: `make build-ui` then `make build`
+
+**Frontend Tooling:**
+- Yarn is managed via [corepack](https://nodejs.org/api/corepack.html). Run `corepack enable` once before using `yarn`. The pinned version is in `frontend/package.json` (`packageManager` field).
 
 **Environment Variables:**
 - Set `CLUSTER_TYPE` (minikube, kind, or openshift)
