@@ -1,9 +1,9 @@
 name: Integration AI Tests
 
 on:
-  # Trigger when the 'ai-chatbot-test' label is added to a PR
-  pull_request:
-    types: [labeled]
+  # Trigger when a '/run-ai-tests' comment is posted on a PR
+  issue_comment:
+    types: [created]
 
   # Allow reusable workflow calls
   workflow_call:
@@ -30,10 +30,10 @@ env:
 jobs:
   integration_ai_tests:
     name: Integration AI Tests
-    # Run when called as a reusable workflow, or when the 'ai-chatbot-test' label is added
+    # Run when called as a reusable workflow, or when '/run-ai-tests' is commented on a PR
     if: >-
       github.event_name == 'workflow_call' ||
-      (github.event_name == 'pull_request' && github.event.label.name == 'ai-chatbot')
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '/run-ai-tests'))
     runs-on: ubuntu-latest
     env:
       # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
@@ -42,15 +42,28 @@ jobs:
       # avoid warnings like "tput: No value for $TERM and no -T specified"
       TERM: xterm
     steps:
+    - name: Get PR head ref
+      if: github.event_name == 'issue_comment'
+      id: pr
+      run: |
+        PR_URL="${{ github.event.issue.pull_request.url }}"
+        PR_DATA=$(gh api "$PR_URL")
+        echo "ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
     - name: Check out code
       uses: actions/checkout@v6
       with:
-        ref: ${{ inputs.build_branch }}
+        ref: ${{ steps.pr.outputs.ref || inputs.build_branch }}
 
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
       with:
         version: 'v3.18.4'
+
+    - name: Enable corepack
+      run: corepack enable
 
     # This caches the yarn deps but does not touch node_modules so it's still necessary
     # to run 'yarn install' later to link these into node_modules.
