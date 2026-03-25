@@ -1,42 +1,46 @@
 name: Integration AI Tests
 
 on:
-  workflow_call:
-    inputs:
-      target_branch:
-        required: true
-        type: string
-      build_branch:
-        required: true
-        type: string
-      istio_version:
-        required: false
-        type: string
-        default: ""
-      stern_logs:
-        required: false
-        type: boolean
-        default: false
-
-env:
-  TARGET_BRANCH: ${{ inputs.target_branch }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
+  # Only triggered by a '/run-ai-tests' comment on a PR that has the 'ai-chatbot' label
+  issue_comment:
+    types: [created]
 
 jobs:
   integration_ai_tests:
     name: Integration AI Tests
+    if: >-
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '/run-ai-tests') &&
+      contains(github.event.issue.labels.*.name, 'ai-chatbot')
     runs-on: ubuntu-latest
     env:
-      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
-      # prevents extra Cypress installation progress messages
       CI: 1
-      # avoid warnings like "tput: No value for $TERM and no -T specified"
       TERM: xterm
     steps:
+    - name: Get PR info
+      id: pr
+      run: |
+        PR_URL="${{ github.event.issue.pull_request.url }}"
+        PR_DATA=$(gh api "$PR_URL")
+        echo "ref=$(echo "$PR_DATA" | jq -r '.head.ref')" >> "$GITHUB_OUTPUT"
+        echo "sha=$(echo "$PR_DATA" | jq -r '.head.sha')" >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Set pending status on PR
+      run: |
+        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
+          -f state=pending \
+          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          -f description="AI integration tests running..." \
+          -f context="Integration AI Tests"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
     - name: Check out code
       uses: actions/checkout@v6
       with:
-        ref: ${{ inputs.build_branch }}
+        ref: ${{ steps.pr.outputs.ref }}
 
     - name: Install Helm
       uses: Azure/setup-helm@v4.3.1
@@ -46,8 +50,6 @@ jobs:
     - name: Enable corepack
       run: corepack enable
 
-    # This caches the yarn deps but does not touch node_modules so it's still necessary
-    # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
       uses: actions/setup-node@v6
       with:
@@ -55,16 +57,20 @@ jobs:
         cache: yarn
         cache-dependency-path: frontend/yarn.lock
 
-    - name: Download go binary
-      uses: actions/download-artifact@v8
+    - name: Setup Go
+      uses: actions/setup-go@v5
       with:
-        name: kiali
-        path: ~/go/bin/
+        go-version-file: go.mod
 
-    - name: Ensure kiali binary is executable
-      run: chmod +x ~/go/bin/kiali
+    - name: Build backend
+      run: make build
 
-    # Need to install frontend dependencies to run cypress tests.
+    - name: Install built binary
+      run: |
+        mkdir -p ~/go/bin
+        cp _output/kiali ~/go/bin/kiali
+        chmod +x ~/go/bin/kiali
+
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: yarn install --frozen-lockfile
@@ -72,7 +78,29 @@ jobs:
     - name: Run frontend ai integration tests
       env:
         GOOGLE_API_KEY: ${{ secrets.AI_CHATBOT_API_TOKEN }}
-      run: hack/run-integration-tests.sh --test-suite ai-chatbot --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite ai-chatbot
+
+    - name: Set success status on PR
+      if: success()
+      run: |
+        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
+          -f state=success \
+          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          -f description="AI integration tests passed" \
+          -f context="Integration AI Tests"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Set failure status on PR
+      if: failure()
+      run: |
+        gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.sha }}" \
+          -f state=failure \
+          -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          -f description="AI integration tests failed" \
+          -f context="Integration AI Tests"
+      env:
+        GH_TOKEN: ${{ github.token }}
 
     - name: Upload test results
       if: always()
@@ -101,10 +129,3 @@ jobs:
       with:
         name: cypress-screenshots-${{ github.job }}
         path: frontend/cypress/screenshots
-
-    - name: Upload cypress logs from stern
-      uses: actions/upload-artifact@v7
-      if: ${{ inputs.stern_logs == true }}
-      with:
-        name: cypress-logs-${{ github.job }}
-        path: hack/stern

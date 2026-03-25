@@ -82,16 +82,6 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_ai_tests:
-    name: Run AI integration tests
-    if: contains(github.event.pull_request.labels.*.name, 'ai-chatbot')
-    uses: ./.github/workflows/integration-ai-tests.yml
-    needs: [initialize, build_backend]
-    secrets: inherit
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
   integration_tests_frontend_core_1:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-1.yml
