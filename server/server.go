@@ -140,10 +140,14 @@ func (s *Server) Start() {
 		log.Warning(err)
 	}()
 
-	// Start the Metrics Server
-	if s.conf.Server.Observability.Metrics.Enabled {
+	// Start the Metrics Server when general metrics or health-status export is enabled
+	if shouldStartMetricsServer(s.conf) {
 		StartMetricsServer(s.conf)
 	}
+}
+
+func shouldStartMetricsServer(conf *config.Config) bool {
+	return conf.Server.Observability.Metrics.Enabled || conf.Server.Observability.Metrics.HealthStatus.Enabled
 }
 
 // Stop the HTTP server

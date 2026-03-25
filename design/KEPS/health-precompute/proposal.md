@@ -247,6 +247,7 @@ Each refresh cycle:
 2. For each cluster, iterates through all accessible namespaces
 3. Computes health for all apps, services, and workloads in each namespace
 4. Stores the results in the Kiali Cache
+5. Optionally updates **`kiali_health_status`** gauges for that namespace when **`server.observability.metrics.health_status.enabled`** is set (independent of general performance metrics; see [Prometheus Health Metrics](#prometheus-health-metrics))
 
 **Performance Optimization**: Health tolerance patterns (code, protocol, direction regexes) are pre-compiled when the `HealthRateMatcher` is created. The `HealthCalculator` uses these pre-compiled `CompiledTolerance` objects, avoiding repeated regex compilation during health calculations. This is especially important for the background health refresh job processing many namespaces.
 
@@ -311,39 +312,107 @@ If cache is missing (cold start, new entity, cache expiry), health is computed o
 
 ## Prometheus Health Metrics
 
-A key benefit of pre-computing health on the backend is the ability to export health status as Prometheus metrics. This enables external monitoring, alerting, and integration with existing observability infrastructure.
+A key benefit of pre-computing health on the backend is the ability to expose health-related data to Prometheus. This enables external monitoring, alerting, and integration with existing 
+observability infrastructure. **General performance metrics** (cache hit/miss counters and refresh-duration histogram) and **`kiali_health_status`** are controlled **separately**: you can export entity health status while leaving the rest of Kiali’s internal performance metrics disabled.
 
 ### Exported Metrics
 
-The following metrics are exported when health pre-computation is enabled:
+| Metric                                  | Type      | When emitted / purpose |
+| --------------------------------------- | --------- | ---------------------- |
+| `kiali_health_status`                   | Gauge     | When **`health_status.enabled`**: see [Health status gauge](#health-status-gauge-kiali_health_status). One time series per entity when the entity has a non-NA status (or had one before `max_consecutive_na` expires). |
+| `kiali_health_cache_hits_total`         | Counter   | When **`metrics.enabled`**: health cache hits by `health_type` (app / service / workload). |
+| `kiali_health_cache_misses_total`       | Counter   | When **`metrics.enabled`**: health cache misses by `health_type`. |
+| `kiali_health_refresh_duration_seconds` | Histogram | When **`metrics.enabled`**: health refresh duration per `cluster`. |
 
-| Metric                                  | Type      | Description                                                |
-| --------------------------------------- | --------- | ---------------------------------------------------------- |
-| `kiali_health_status`                   | Gauge     | Health status per entity using state cardinality pattern   |
-| `kiali_health_cache_hits_total`         | Counter   | Number of health cache hits by type (app/service/workload) |
-| `kiali_health_cache_misses_total`       | Counter   | Number of health cache misses by type                      |
-| `kiali_health_refresh_duration_seconds` | Histogram | Time required to refresh health data per cluster           |
+### Metrics HTTP endpoint
 
-### Health Status Metric
+The Prometheus scrape listener on **`server.observability.metrics.port`** starts when **either** `server.observability.metrics.enabled` **or** `server.observability.metrics.health_status.enabled` is true, so health-status-only deployments can still scrape `kiali_health_status`.
 
-The `kiali_health_status` metric uses the **state cardinality pattern** for efficient alerting. For each entity, exactly one status is set to 1 while all others are 0:
+### Health status gauge (`kiali_health_status`)
+
+**Enablement:** The gauge is updated only when:
+
+- `server.observability.metrics.health_status.enabled`
+
+This does **not** require `server.observability.metrics.enabled`.
+
+Example: health status only (no cache hit/miss or refresh histogram updates):
+
+```yaml
+server:
+  observability:
+    metrics:
+      enabled: false
+      health_status:
+        enabled: true
+        max_consecutive_na: 3
+```
+
+Example: all internal metrics including health status:
+
+```yaml
+server:
+  observability:
+    metrics:
+      enabled: true
+      health_status:
+        enabled: true
+        max_consecutive_na: 3
+```
+
+It is populated during the **Health Monitor** namespace refresh (the same path that updates the health cache). If the background refresh is not running, values will not update.
+
+**Semantics:** A **single gauge value** per entity (low cardinality labels—no per-status label). Numeric mapping:
+
+| Value | Status    |
+| ----- | --------- |
+| 0     | Healthy   |
+| 1     | Not Ready |
+| 2     | Degraded  |
+| 3     | Failure   |
+
+**Labels:**
+
+| Label          | Description |
+| -------------- | ----------- |
+| `cluster`      | Cluster name |
+| `namespace`    | Namespace   |
+| `health_type`  | `app`, `service`, `workload`, or `namespace` |
+| `name`         | App, service, or workload name; for `health_type="namespace"` this is the **namespace** name (aggregate across apps/services/workloads in that namespace). |
+
+**NA and series lifecycle:** `NA` is **not** written as a gauge value. For NA or unknown status, the exporter tracks a **per-entity streak** in **consecutive health refresh cycles**. After **`max_consecutive_na`** consecutive cycles where the entity is NA or **missing from the current refresh** (reconcile treats disappearance like NA), the time series is **removed** from the Prometheus client (`GaugeVec.Delete`), so scrapes stop reporting that label set. Reconciliation considers every key that still has an exported series **or** an active NA streak, so an app/service/workload that **drops out of the health maps** after a **non-NA** observation is still advanced toward deletion (a non-NA `Observe` clears streak state but the series remains until reconcile runs on the missing entity).
+
+- Default **`max_consecutive_na`** is `3` when unset or `<= 0`.
+- **`max_consecutive_na: 1`**: first NA (or missing) after a series existed deletes immediately.
+- Entities that **never** had a non-NA status **never** get a `Set` on the gauge; the exporter **does not** call `Delete` for those (avoids redundant client work for workloads that are always NA).
+
+**Operational note (HA):** Multiple Kiali replicas each maintain their own metric state; without a single writer or aggregation at query time, the same logical entity is reported by more than one scrape target (extra labels such as `instance` or `pod`). Dashboards and **raw** alert expressions can then show or fire **once per replica** for the same app or namespace.
+
+For **alerting**, aggregate across replicas so each entity appears at most once. A simple approach is to take the **maximum** value per entity label set (higher numeric value = worse health), which matches “fire if any replica sees Failure / Degraded”:
+
+```promql
+max by (cluster, namespace, health_type, name) (kiali_health_status)
+```
+
+Alternatives: scrape only one Kiali pod (dedicated Service / ServiceMonitor), or use recording rules that pre-aggregate the expression above.
+
+Example series (labels only; scrape targets add `job`, `instance`, etc.):
 
 ```promql
 kiali_health_status{
   cluster="cluster1",
   namespace="bookinfo",
-  health_type="app",      # app, service, or workload
-  name="reviews",
-  status="Degraded"       # Healthy, Degraded, Failure, Not Ready, or NA
-} 1
+  health_type="app",
+  name="reviews"
+} 2    # Degraded
 ```
 
-This pattern enables simple alerting rules:
+Example alerting (numeric thresholds; **HA-safe** via `max by`):
 
 ```yaml
 # Alert on any entity in Failure status
 - alert: KialiHealthFailure
-  expr: kiali_health_status{status="Failure"} == 1
+  expr: max by (cluster, namespace, health_type, name) (kiali_health_status) == 3
   for: 5m
   labels:
     severity: critical
@@ -352,7 +421,7 @@ This pattern enables simple alerting rules:
 
 # Alert on degraded entities
 - alert: KialiHealthDegraded
-  expr: kiali_health_status{status="Degraded"} == 1
+  expr: max by (cluster, namespace, health_type, name) (kiali_health_status) == 2
   for: 10m
   labels:
     severity: warning

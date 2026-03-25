@@ -42,25 +42,27 @@ func NewHealthMonitor(
 	prom prometheus.ClientInterface,
 ) *healthMonitor {
 	return &healthMonitor{
-		cache:         cache,
-		clientFactory: clientFactory,
-		conf:          conf,
-		discovery:     discovery,
-		lastRun:       time.Time{},
-		logger:        log.Logger().With().Str("component", "health-monitor").Logger(),
-		prom:          prom,
+		cache:           cache,
+		clientFactory:   clientFactory,
+		conf:            conf,
+		discovery:       discovery,
+		healthStatusExp: NewHealthStatusExporter(conf),
+		lastRun:         time.Time{},
+		logger:          log.Logger().With().Str("component", "health-monitor").Logger(),
+		prom:            prom,
 	}
 }
 
 // healthMonitor pre-computes health for all namespaces and caches the results.
 type healthMonitor struct {
-	cache         cache.KialiCache
-	clientFactory kubernetes.ClientFactory
-	conf          *config.Config
-	discovery     istio.MeshDiscovery
-	lastRun       time.Time
-	logger        zerolog.Logger
-	prom          prometheus.ClientInterface
+	cache           cache.KialiCache
+	clientFactory   kubernetes.ClientFactory
+	conf            *config.Config
+	discovery       istio.MeshDiscovery
+	healthStatusExp *HealthStatusExporter
+	lastRun         time.Time
+	logger          zerolog.Logger
+	prom            prometheus.ClientInterface
 }
 
 // Start starts the background health refresh loop.
@@ -103,6 +105,18 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 
 	// Get clusters from cache
 	clusters := m.cache.GetClusters()
+
+	knownClusters := make(map[string]bool, len(clusters))
+	for _, c := range clusters {
+		knownClusters[c.Name] = true
+	}
+	// Run when RefreshHealth returns for any reason (success, createHealthLayer error, ctx
+	// cancellation, or empty cluster list). An empty knownClusters map reconciles all tracked
+	// clusters (same effect as a nil map when the cache lists no clusters).
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		defer m.healthStatusExp.ReconcileDroppedClusters(knownClusters)
+	}
+
 	if len(clusters) == 0 {
 		m.logger.Warn().Msg("No clusters found, skipping health refresh")
 		return nil
@@ -177,6 +191,8 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	// Verify we have access to this cluster
 	if m.clientFactory.GetSAClient(cluster) == nil {
 		log.Error().Msg("No SA client for cluster")
+		// No namespace list: ReconcileDroppedNamespacesForCluster is skipped, so series for
+		// namespaces no longer visible to Kiali may stay until the cluster can be refreshed again.
 		return 0, 1
 	}
 
@@ -185,19 +201,32 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get namespaces for cluster")
+		// Same as missing SA client: dropped-namespace reconciliation is deferred to a later success.
 		return 0, 1
 	}
 
+	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
 	for _, ns := range namespaces {
 		if ctx.Err() != nil {
+			// Skip ReconcileDroppedNamespacesForCluster: visitedNamespaces is incomplete and would
+			// incorrectly age metrics for namespaces not yet iterated in this loop.
 			return len(namespaces), errorCount
 		}
 
 		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
+			continue
 		}
+		// Only namespaces that completed refresh (including partial health + export) count as
+		// visited. Total computation failure skips export/reconcile; leaving the name out lets
+		// ReconcileDroppedNamespacesForCluster age kiali_health_status series for that namespace.
+		visitedNamespaces[ns.Name] = true
+	}
+
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		m.healthStatusExp.ReconcileDroppedNamespacesForCluster(cluster, visitedNamespaces)
 	}
 
 	return len(namespaces), errorCount
@@ -226,7 +255,8 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 	serviceHealth, svcErr := layer.Health.GetNamespaceServiceHealth(ctx, criteria)
 	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealth(ctx, criteria)
 
-	// If all failed, return error
+	// If all failed, return error (no cache write or metrics export; refreshClusterHealth will not
+	// mark this namespace visited so dropped-namespace reconciliation can age stale gauges).
 	if appErr != nil && svcErr != nil && wkErr != nil {
 		return fmt.Errorf("all health computations failed: app=%v, svc=%v, wk=%v", appErr, svcErr, wkErr)
 	}
@@ -255,43 +285,70 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 
 	m.cache.SetHealth(cluster, namespace, cachedData)
 
-	// Export health status metrics if enabled
-	if m.conf.Server.Observability.Metrics.Enabled {
+	// Export health status metrics if enabled (independent of general performance metrics)
+	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		m.exportHealthStatusMetrics(cluster, namespace, appHealth, serviceHealth, workloadHealth)
 	}
 
 	return nil
 }
 
-// exportHealthStatusMetrics exports health status for each individual item as Prometheus metrics
-// using the state cardinality pattern (one metric per state, exactly one set to 1).
-// Uses the pre-calculated Status field from the health data.
+// exportHealthStatusMetrics exports health status for each individual item as Prometheus metrics.
+// Uses the pre-calculated Status field from the health data. Tracks seen entities for reconciliation.
 func (m *healthMonitor) exportHealthStatusMetrics(
 	cluster, namespace string,
 	appHealth models.NamespaceAppHealth,
 	serviceHealth models.NamespaceServiceHealth,
 	workloadHealth models.NamespaceWorkloadHealth,
 ) {
-	// Export app health metrics using pre-calculated status
+	if !m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
+		return
+	}
+
+	// Track seen entities for reconciliation (to detect entities that disappeared)
+	seenKeys := make(map[entityKey]bool)
+
+	// Export app health severity
 	for appName, health := range appHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeApp, appName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeApp, appName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeApp, appName)] = true
 	}
 
-	// Export service health metrics using pre-calculated status
+	// Export service health severity
 	for svcName, health := range serviceHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeService, svcName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeService, svcName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeService, svcName)] = true
 	}
 
-	// Export workload health metrics using pre-calculated status
+	// Export workload health severity
 	for wkName, health := range workloadHealth {
+		status := "NA"
 		if health.Status != nil {
-			internalmetrics.SetHealthStatusForItem(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName, string(health.Status.Status))
+			status = string(health.Status.Status)
 		}
+		m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName, status)
+		seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeWorkload, wkName)] = true
 	}
+
+	// Export namespace aggregate health (reuse existing aggregation function)
+	namespaceAggregate := models.AggregateNamespaceStatus(&appHealth, &serviceHealth, &workloadHealth)
+	namespaceStatus := "NA"
+	if namespaceAggregate != nil && namespaceAggregate.WorstStatus != "" {
+		namespaceStatus = namespaceAggregate.WorstStatus
+	}
+	m.healthStatusExp.Observe(cluster, namespace, internalmetrics.HealthTypeNamespace, namespace, namespaceStatus)
+	seenKeys[NewEntityKey(cluster, namespace, internalmetrics.HealthTypeNamespace, namespace)] = true
+
+	// Reconcile: handle entities that disappeared (treat as NA; same max_consecutive_na streak as Observe)
+	m.healthStatusExp.ReconcileNamespace(cluster, namespace, seenKeys)
 }
 
 // calculateDuration calculates the health duration based on configuration and elapsed time.
