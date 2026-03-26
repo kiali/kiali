@@ -76,6 +76,10 @@ ai-dev-context
 /.gemini
 /mcpchecker-gemini-eval-out.json
 
+# AI agent local config
+.mcp.json
+.playwright-mcp/
+
 # Ignore ansible if a dev has installed it under kiali for convenience
 ansible
 
