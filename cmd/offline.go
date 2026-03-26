@@ -114,6 +114,7 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 			conf.RunConfig = &manifest
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
 			conf.Server.Observability.Metrics.Enabled = false
+			conf.Server.Observability.Metrics.HealthStatus.Enabled = false
 			conf.KubernetesConfig.ClusterName = manifest.Cluster
 			conf.Deployment.ViewOnlyMode = true
 
