@@ -735,22 +735,6 @@ Then(
   }
 );
 
-After({ tags: '@istio-page and @crd-validation' }, () => {
-  cy.exec('kubectl delete PeerAuthentications,DestinationRules,AuthorizationPolicies,Sidecars --all --all-namespaces', {
-    failOnNonZeroExit: false
-  });
-
-  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n bookinfo', {
-    failOnNonZeroExit: false
-  });
-  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n sleep', {
-    failOnNonZeroExit: false
-  });
-  cy.exec('kubectl delete gateways.networking.istio.io,Gateways,VirtualServices foo foo-route bar -n istio-system', {
-    failOnNonZeroExit: false
-  });
-});
-
 Then('user sees all the Istio Config toggles', () => {
   cy.get('[data-test="toggle-configuration"]').should('be.checked');
   colExists('Configuration', true);

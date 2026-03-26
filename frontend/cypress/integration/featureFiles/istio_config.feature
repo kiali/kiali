@@ -148,6 +148,7 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
+    And there is not a "foo" "AuthorizationPolicy" in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -158,6 +159,8 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
+    And there is not a "foo" "AuthorizationPolicy" in the "bookinfo" namespace
+    And there is not a "enable-mtls" "DestinationRule" in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -168,6 +171,7 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"
+    And there is not a "foo" "AuthorizationPolicy" in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -177,6 +181,7 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "danger"
+    And there is not a "foo" "AuthorizationPolicy" in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -213,6 +218,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "DestinationRule" of the "sleep" namespace should have a "danger"
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
+    And there is not a "foo-route" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -225,6 +231,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "disable-mtls" "DestinationRule" of the "sleep" namespace should have a "danger"
     And there is not a "disable-mtls" "DestinationRule" in the "sleep" namespace
+    And there is not a "default" "PeerAuthentication" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -259,6 +266,7 @@ Feature: Kiali Istio Config page
     Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
     And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
     And there is not a "foo" Gateway in the "sleep" namespace
+    And there is not a "foo" Gateway in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -270,6 +278,7 @@ Feature: Kiali Istio Config page
     Then the "foo" "Gateway" of the "bookinfo" namespace should have a "warning"
     And the "foo" "Gateway" of the "sleep" namespace should have a "warning"
     And there is not a "foo" Gateway in the "sleep" namespace
+    And there is not a "foo" Gateway in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -291,6 +300,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "default" "PeerAuthentication" of the "sleep" namespace should have a "danger"
     And there is not a "enable-mtls" "DestinationRule" in the "sleep" namespace
+    And there is not a "default" "PeerAuthentication" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -313,6 +323,7 @@ Feature: Kiali Istio Config page
     And the Sidecar is applied to workloads with "app=sleep" labels
     When user selects the "sleep" namespace
     Then the "foo" "Sidecar" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "Sidecar" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -322,6 +333,7 @@ Feature: Kiali Istio Config page
     And the Sidecar is applied to workloads with "app=grafana" labels
     When user selects the "istio-system" namespace
     Then the "default" "Sidecar" of the "istio-system" namespace should have a "warning"
+    And there is not a "default" "Sidecar" in the "istio-system" namespace
 
   @crd-validation
   @bookinfo-app
@@ -330,6 +342,7 @@ Feature: Kiali Istio Config page
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "foo"
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -343,6 +356,7 @@ Feature: Kiali Istio Config page
     When the user refreshes the page
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "danger"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -354,6 +368,8 @@ Feature: Kiali Istio Config page
     And the VirtualService references "bookinfo/foo" gateways
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "success"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
+    And there is not a "foo" Gateway in the "bookinfo" namespace
 
   @crd-validation
   @bookinfo-app
@@ -363,6 +379,7 @@ Feature: Kiali Istio Config page
     And the route of the VirtualService has weight 10
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -376,6 +393,7 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
     And there is not a "foo" "DestinationRule" in the "sleep" namespace
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -388,6 +406,8 @@ Feature: Kiali Istio Config page
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
     And the "bar" "VirtualService" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
+    And there is not a "bar" "VirtualService" in the "sleep" namespace
 
   @crd-validation
   @bookinfo-app
@@ -398,6 +418,7 @@ Feature: Kiali Istio Config page
     And there is not a "foo" Gateway in the "sleep" namespace
     When user selects the "sleep" namespace
     Then the "foo" "VirtualService" of the "sleep" namespace should have a "warning"
+    And there is not a "foo" "VirtualService" in the "sleep" namespace
 
   # KIA1501 is tested through GUI in wizard_istio_config.feature
   @crd-validation
@@ -414,6 +435,8 @@ Feature: Kiali Istio Config page
     And user selects the "bookinfo" namespace
     Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     And the "bar" "K8sGateway" of the "bookinfo" namespace should have a "warning"
+    And user deletes k8sgateway named "foo" and the resource is no longer available
+    And user deletes k8sgateway named "bar" and the resource is no longer available
 
   # KIA1503 validation is not tested, as it is not possible to create a K8sGateway with duplicate listeners
 
@@ -426,6 +449,7 @@ Feature: Kiali Istio Config page
     And the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the "foo" "K8sGateway" of the "bookinfo" namespace should have a "danger"
+    And user deletes k8sgateway named "foo" and the resource is no longer available
 
   @crd-validation
   @bookinfo-app
@@ -436,6 +460,7 @@ Feature: Kiali Istio Config page
     And the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the "foo" "K8sReferenceGrant" of the "bookinfo" namespace should have a "danger"
+    And user deletes k8sreferencegrant named "foo" and the resource is no longer available
 
 # TODO: KIA06xx and KIA07xx does not appear in Istio Config list page. They appear in Svc/workload lists.
 #   Thus, these validations do not belong to this feature file.
