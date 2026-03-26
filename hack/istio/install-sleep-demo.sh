@@ -163,7 +163,8 @@ NAD
   fi
   ${CLIENT_EXE} apply -n sleep -f ${ISTIO_DIR}/samples/sleep/sleep.yaml
 
-  sleep 4
+  echo "Waiting for workload: 'sleep' to be ready"
+  ${CLIENT_EXE} rollout status deployment sleep -n sleep --timeout=5m || exit 1
 
   echo "Sleep Demo should be installed and starting up - here are the pods and services"
   $CLIENT_EXE get services -n sleep

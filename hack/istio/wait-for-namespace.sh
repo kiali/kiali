@@ -60,10 +60,10 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
   done
   echo
   echo "Done reconciling"
+  echo "Waiting for Kiali deployment to finish rollout after CR update"
+  ${CLIENT_EXE} rollout status deployment kiali -n "${KIALI_CR_NAMESPACE}" --timeout=5m
 fi
 
 for NAMESPACE in ${NAMESPACES[@]}; do
   ${CLIENT_EXE} wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
 done
-
-sleep 80
