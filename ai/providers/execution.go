@@ -7,7 +7,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/log"
@@ -27,7 +27,7 @@ func ExecuteToolCallsInParallel(
 		go func(index int, call mcp.ToolsProcessor) {
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
-			citations := []get_citations.Citation{}
+			referencedDocs := []types.ReferencedDoc{}
 			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
@@ -81,9 +81,9 @@ func ExecuteToolCallsInParallel(
 						content = "Success. The user's UI has been redirected to the requested view."
 					}
 				}
-				if call.Name == "get_citations" {
-					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
-						citations = append(citations, mcpRes.Citations...)
+				if call.Name == "get_referenced_docs" {
+					if mcpRes, ok := mcpResult.(get_referenced_docs.GetReferencedDocResponse); ok {
+						referencedDocs = append(referencedDocs, mcpRes.ReferencedDocs...)
 						content = "Success. Documentation links have been displayed in the user's UI."
 					}
 				}
@@ -94,9 +94,9 @@ func ExecuteToolCallsInParallel(
 						Param:   nil,
 						Role:    "tool",
 					},
-					Code:      http.StatusOK,
-					Actions:   actions,
-					Citations: citations,
+					Code:           http.StatusOK,
+					Actions:        actions,
+					ReferencedDocs: referencedDocs,
 				}
 				return
 			}
@@ -124,9 +124,9 @@ func ExecuteToolCallsInParallel(
 					Param:   call.Args,
 					Role:    "tool",
 				},
-				Code:      http.StatusOK,
-				Actions:   actions,
-				Citations: citations,
+				Code:           http.StatusOK,
+				Actions:        actions,
+				ReferencedDocs: referencedDocs,
 			}
 		}(i, toolCall)
 	}

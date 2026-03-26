@@ -36,7 +36,7 @@ export const fixedMessage = (content: string): ExtendedMessage => ({
   name: botName,
   avatar: logo,
   timestamp: getTimestamp(),
-  referenced_documents: []
+  referenced_docs: []
 });
 
 const isTimeoutError = (e: any): boolean =>
@@ -166,7 +166,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       name: botName,
       avatar: logo,
       timestamp: getTimestamp(),
-      referenced_documents: typeof response === 'object' ? response.citations : []
+      referenced_docs: typeof response === 'object' ? response.referenced_docs : []
     };
 
     return message;
@@ -196,7 +196,7 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       name: userName,
       avatar: userLogo,
       timestamp: getTimestamp(),
-      referenced_documents: []
+      referenced_docs: []
     };
     addMessage(userMessage);
 
@@ -218,20 +218,13 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
 
       if (resp.status === 200) {
         const chatResponse: ChatResponse = resp.data;
-        const referenced_documents = chatResponse.citations;
+        const referenced_documents = chatResponse.referenced_docs;
 
         const newBotMessage: any = botMessage(chatResponse);
         newBotMessage.referenced_documents = referenced_documents;
         if (chatResponse.actions && chatResponse.actions.length > 0) {
           const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
           const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
-
-          if (navigationActions.length > 0) {
-            newBotMessage.content =
-              alwaysNavigate && navigationActions.length === 1
-                ? `Ok, navigating to the ${navigationActions[0].title}...`
-                : 'Here is the link provided for the ChatBot:';
-          }
 
           if (alwaysNavigate && navigationActions.length === 1) {
             router.navigate(navigationActions[0].payload);

@@ -35,8 +35,8 @@ export type Action = {
 type LLMResponse = {
   actions: Action[];
   answer: string;
-  citations: ReferencedDocument[];
   error?: string;
+  referenced_docs: ReferencedDoc[];
   truncated?: boolean;
   used_models: ModelResponse;
 };
@@ -55,16 +55,15 @@ export type AlertMessage = {
   variant: 'success' | 'danger' | 'warning' | 'info' | 'custom';
 };
 
-export type ReferencedDocument = {
-  body: string;
-  link: string;
-  title: string;
+export type ReferencedDoc = {
+  doc_title: string;
+  doc_url: string;
 };
 
 export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
   actions?: Action[];
   collapse?: boolean;
-  referenced_documents: ReferencedDocument[];
+  referenced_docs: ReferencedDoc[];
   scrollToHere?: boolean;
 };
 

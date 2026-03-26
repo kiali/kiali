@@ -6,8 +6,8 @@ import { Switch } from '@patternfly/react-core';
 import { CHATBOT_CONVERSATION_ALWAYS_NAVIGATE } from 'types/Chatbot';
 
 type ChatBotFooterProps = {
-  setAlertMessage: () => void;
   handleSend: (msg: string | number, context?: any) => void;
+  setAlertMessage: () => void;
 };
 
 const footnoteProps: ChatbotFootnoteProps = {
@@ -26,14 +26,16 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({ setAlertMessage, h
     }
   }, []);
 
-  const handleAlwaysNavigateChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
+  const handleAlwaysNavigateChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean): void => {
     setAlwaysNavigate(checked);
     localStorage.setItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE, String(checked));
+    return;
   };
 
   return (
     <ChatbotFooter>
       <MessageBar
+        data-testid="chatbot-message-bar-input"
         onFocus={() => setAlertMessage()}
         onSendMessage={msg => handleSend(msg)}
         alwayShowSendButton
@@ -48,6 +50,7 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({ setAlertMessage, h
       />
       <Switch
         id={CHATBOT_CONVERSATION_ALWAYS_NAVIGATE}
+        data-testid="chatbot-always-navigate-switch"
         label={'Allow Chatbot to navigate'}
         isChecked={alwaysNavigate}
         onChange={handleAlwaysNavigateChange}

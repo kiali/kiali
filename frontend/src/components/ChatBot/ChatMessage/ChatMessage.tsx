@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChatbotDisplayMode, Message, MessageProps } from '@patternfly/chatbot';
 import { Button, ExpandableSection } from '@patternfly/react-core';
-import { Action, ExtendedMessage, ReferencedDocument } from 'types/Chatbot';
+import { Action, ExtendedMessage, ReferencedDoc } from 'types/Chatbot';
 import { router } from 'app/History';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { FileAttachment } from './FileAttachment';
@@ -17,7 +17,7 @@ type ChatMessageProps = {
   innerRef: React.RefObject<HTMLDivElement>;
   message: MessageProps;
   onSendMessage?: (query: string | number, context?: any, title?: string) => void;
-  referenced_documents: ReferencedDocument[];
+  referenced_docs: ReferencedDoc[];
   scrollToHere?: boolean;
   setAlertMessage?: (alertMessage?: any) => void;
 };
@@ -27,7 +27,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   addBotMessage,
   context,
   displayMode,
-  referenced_documents,
+  referenced_docs,
   collapse,
   message,
   index,
@@ -44,6 +44,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         onClick={() => router.navigate(action.payload)}
         variant="link"
         isInline
+        data-testid={`chatbot-navigation-action-link-${action.title.toLowerCase().replace(/ /g, '-')}`}
       >
         {action.title}
       </Button>
@@ -51,9 +52,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const getMessage = (
-    message: Omit<ExtendedMessage, 'referenced_documents' | 'scrollToHere' | 'collapse' | 'actions'>,
+    message: Omit<ExtendedMessage, 'referenced_docs' | 'scrollToHere' | 'collapse' | 'actions'>,
     index: string,
-    referenced_documents: ReferencedDocument[],
+    referenced_docs: ReferencedDoc[],
     collapse?: boolean,
     actions?: Action[]
   ): React.ReactNode => {
@@ -61,12 +62,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       key: `chatbot_message_${index}`,
       openLinkInNewTab: true,
       sources:
-        referenced_documents && referenced_documents.length > 0
+        referenced_docs && referenced_docs.length > 0
           ? {
-              sources: referenced_documents.map(document => ({
-                link: document.link,
-                title: document.title,
-                body: `${document.body.substring(0, 30)}...`,
+              sources: referenced_docs.map(document => ({
+                link: document.doc_url,
+                title: document.doc_title,
                 isExternal: true
               }))
             }
@@ -114,7 +114,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {actions && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem 5rem' }}>
             {NavigationAction && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}>
+              <div
+                style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}
+                data-testid="chatbot-navigation-action"
+              >
                 {renderAction(actions.filter(action => action.kind === 'navigation'))}
               </div>
             )}
@@ -150,7 +153,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     <div key={`chatbot_message_div_${index}`}>
       {scrollToHere && <div key={`chatbot_message_container_scroll_div_${index}`} ref={innerRef} />}
       <div key={`chatbot_message_container_div_${index}`}>
-        {getMessage(message, index, referenced_documents, collapse, actions)}
+        {getMessage(message, index, referenced_docs, collapse, actions)}
       </div>
     </div>
   );

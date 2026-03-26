@@ -19,11 +19,10 @@ const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model:
         payload: '/overview'
       }
     ],
-    citations: [
+    referenced_docs: [
       {
-        link: 'https://kiali.io',
-        title: 'Kiali Documentation',
-        body: 'Kiali provides observability and management for Istio-based service meshes.'
+        doc_url: 'https://kiali.io',
+        doc_title: 'Kiali Documentation'
       }
     ],
     used_models: {
@@ -43,7 +42,7 @@ const buildChatResponse = (chatRequest: ChatRequest, provider: string, model: st
     ...requestedConversation,
     answer: typeof requestedConversation.answer === 'string' ? requestedConversation.answer : '',
     actions: requestedConversation.actions ?? [],
-    citations: requestedConversation.citations ?? [],
+    referenced_docs: requestedConversation.referenced_docs ?? [],
     used_models: {
       completion_model: requestedConversation.used_models?.completion_model ?? model,
       embedding_model: requestedConversation.used_models?.embedding_model ?? `${provider}-embeddings`

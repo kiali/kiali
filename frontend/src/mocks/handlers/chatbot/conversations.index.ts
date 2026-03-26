@@ -6,8 +6,8 @@ import actionNavigationLogsReviews_v2 from './conversations/actionNavigationLogs
 import actionNavigationMeshGraph from './conversations/actionNavigationMeshGraph.json';
 import actionNavigationMetricsReviews_v2 from './conversations/actionNavigationMetricsReviews-v2.json';
 import analyzeOverview from './conversations/analyzeOverview.json';
-import citationsTrafficShifting from './conversations/citationsTrafficShifting.json';
-import citationsWorkloads from './conversations/citationsWorkloads.json';
+import referencedDocsWorkloads from './conversations/referenced_docs/workloads.json';
+import referencedDocsTrafficShifting from './conversations/referenced_docs/trafficShifting.json';
 import talkCheckMyMesh from './conversations/talkCheckMyMesh.json';
 import talkGraphEmpty from './conversations/talkGraphEmpty.json';
 import talkIstioTrafficShifting from './conversations/talkIstioTrafficShifting.json';
@@ -20,8 +20,8 @@ export const conversationModuleEntries: Array<[string, unknown]> = [
   ['actionNavigationMeshGraph', actionNavigationMeshGraph],
   ['actionNavigationMetricsReviews-v2', actionNavigationMetricsReviews_v2],
   ['analyzeOverview', analyzeOverview],
-  ['citationsTrafficShifting', citationsTrafficShifting],
-  ['citationsWorkloads', citationsWorkloads],
+  ['referencedDocsTrafficShifting', referencedDocsTrafficShifting],
+  ['referencedDocsWorkloads', referencedDocsWorkloads],
   ['talkCheckMyMesh', talkCheckMyMesh],
   ['talkGraphEmpty', talkGraphEmpty],
   ['talkIstioTrafficShifting', talkIstioTrafficShifting]

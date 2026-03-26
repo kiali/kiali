@@ -56,7 +56,7 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 }
 
 func TestConvertToolToGoogle_FromToolDefinition_GetCitations(t *testing.T) {
-	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_citations.yaml"))
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_referenced_docs.yaml"))
 	require.NoError(t, err)
 
 	converted := mapToGenAISchema(tool.GetDefinition())

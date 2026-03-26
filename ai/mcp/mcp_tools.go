@@ -15,12 +15,12 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
 	"github.com/kiali/kiali/ai/mcp/get_logs"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_status"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/get_metrics"
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
+	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcp/get_traces"
 	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
@@ -41,8 +41,8 @@ var (
 )
 
 var ExcludedToolNames = map[string]bool{
-	"get_citations": true,
-	"get_action_ui": true,
+	"get_referenced_docs": true,
+	"get_action_ui":       true,
 }
 
 var (
@@ -158,8 +158,8 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return manage_istio_config_read.Execute(kialiInterface, args)
 	case "get_action_ui":
 		return get_action_ui.Execute(kialiInterface, args)
-	case "get_citations":
-		return get_citations.Execute(kialiInterface, args)
+	case "get_referenced_docs":
+		return get_referenced_docs.Execute(kialiInterface, args)
 	case "get_metrics":
 		return get_metrics.Execute(kialiInterface, args)
 	default:

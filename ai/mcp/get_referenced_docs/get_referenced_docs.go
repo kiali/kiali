@@ -1,4 +1,4 @@
-package get_citations
+package get_referenced_docs
 
 import (
 	"embed"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/log"
 )
 
@@ -16,12 +17,11 @@ var documentsFS embed.FS
 
 // Document represents a single document entry from documents.json
 type Document struct {
-	ID          string   `json:"id"`
-	Keywords    []string `json:"keywords"`
-	URL         string   `json:"url"`
-	Title       string   `json:"title"`
-	Domain      string   `json:"domain,omitempty"` // Domain is added during loading
-	Description string   `json:"description,omitempty"`
+	ID       string   `json:"id"`
+	Keywords []string `json:"keywords"`
+	URL      string   `json:"url"`
+	Title    string   `json:"title"`
+	Domain   string   `json:"domain,omitempty"` // Domain is added during loading
 }
 
 // documentsByDomain represents the structure of documents.json
@@ -30,10 +30,10 @@ type documentsByDomain struct {
 	Istio []Document `json:"istio,omitempty"`
 }
 
-// GetCitationsResponse encapsulates the citations tool response.
-type GetCitationsResponse struct {
-	Citations []Citation `json:"citations,omitempty"`
-	Errors    string     `json:"errors,omitempty"`
+// GetCitationsResponse encapsulates the referenced_docs tool response.
+type GetReferencedDocResponse struct {
+	ReferencedDocs []types.ReferencedDoc `json:"referenced_docs,omitempty"`
+	Errors         string                `json:"errors,omitempty"`
 }
 
 // documentMatch represents a document with its match count
@@ -42,13 +42,17 @@ type documentMatch struct {
 	matchCount int
 }
 
+func referencedDocsResponseWithErrors(errors string) GetReferencedDocResponse {
+	return GetReferencedDocResponse{
+		ReferencedDocs: []types.ReferencedDoc{},
+		Errors:         errors,
+	}
+}
+
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	keywordsStr := mcputil.GetStringArg(args, "keywords")
 	if keywordsStr == "" {
-		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "keywords parameter is required and must be a string",
-		}, http.StatusBadRequest
+		return referencedDocsResponseWithErrors("keywords parameter is required and must be a string"), http.StatusBadRequest
 	}
 
 	// Parse comma-separated keywords
@@ -62,10 +66,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 
 	if len(inputKeywords) == 0 {
-		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "no valid keywords provided",
-		}, http.StatusBadRequest
+		return referencedDocsResponseWithErrors("no valid keywords provided"), http.StatusBadRequest
 	}
 
 	// Get domain parameter (optional, defaults to "all")
@@ -73,9 +74,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	if domainStr := mcputil.GetStringArg(args, "domain"); domainStr != "" {
 		domain = strings.ToLower(strings.TrimSpace(domainStr))
 		if domain != "kiali" && domain != "istio" && domain != "all" {
-			return GetCitationsResponse{
-				Errors: "invalid domain '" + domainStr + "'. Must be one of: kiali, istio, all",
-			}, http.StatusBadRequest
+			return referencedDocsResponseWithErrors("invalid domain '" + domainStr + "'. Must be one of: kiali, istio, all"), http.StatusBadRequest
 		}
 	}
 
@@ -83,28 +82,24 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	documents, err := loadDocuments(domain)
 	if err != nil {
 		log.Errorf("Failed to load documents.json: %v", err)
-		return GetCitationsResponse{
-			Citations: []Citation{},
-			Errors:    "Failed to load documents: " + err.Error(),
-		}, http.StatusInternalServerError
+		return referencedDocsResponseWithErrors("Failed to load documents: " + err.Error()), http.StatusInternalServerError
 	}
 
 	// Find top 3 matches
 	topMatches := findTopMatches(documents, inputKeywords, 3)
 
-	// Convert to citations
-	citations := make([]Citation, len(topMatches))
+	// Convert to referenced_docs
+	referencedDocs := make([]types.ReferencedDoc, len(topMatches))
 	for i, doc := range topMatches {
-		citations[i] = Citation{
-			Link:  doc.URL,
-			Title: doc.Title,
-			Body:  doc.Description, // Body can be empty or populated from the document if needed
+		referencedDocs[i] = types.ReferencedDoc{
+			DocURL:   doc.URL,
+			DocTitle: doc.Title,
 		}
 	}
 
-	resp := GetCitationsResponse{
-		Citations: citations,
-		Errors:    "",
+	resp := GetReferencedDocResponse{
+		ReferencedDocs: referencedDocs,
+		Errors:         "",
 	}
 
 	return resp, http.StatusOK

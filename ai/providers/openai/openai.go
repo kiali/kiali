@@ -96,7 +96,7 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		// Process tool results using standardized logic (accumulate actions/citations).
+		// Process tool results using standardized logic (accumulate actions/referenced_docs).
 		processResult := providers.ProcessToolResults(toolResults, conversation)
 		if processResult.Response.Error != "" {
 			return processResult.Response, http.StatusInternalServerError
@@ -104,8 +104,8 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 		if len(processResult.Response.Actions) > 0 {
 			response.Actions = append(response.Actions, processResult.Response.Actions...)
 		}
-		if len(processResult.Response.Citations) > 0 {
-			response.Citations = append(response.Citations, processResult.Response.Citations...)
+		if len(processResult.Response.ReferencedDocs) > 0 {
+			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
 		}
 
 		// Append tool outputs to the OpenAI conversation (linked by tool_call_id).

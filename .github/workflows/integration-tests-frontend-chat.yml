@@ -1,4 +1,4 @@
-name: Integration AI Tests
+name: Integration Tests Frontend Chat
 
 on:
   workflow_call:
@@ -23,7 +23,7 @@ env:
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
-  integration_ai_tests:
+  integration_tests_frontend_chat:
     name: Integration AI Tests
     runs-on: ubuntu-latest
     env:
@@ -63,16 +63,14 @@ jobs:
       working-directory: ./frontend
       run: yarn install --frozen-lockfile
 
-    - name: Run frontend ai integration tests
-      env:
-        GOOGLE_API_KEY: ${{ secrets.AI_CHATBOT_API_TOKEN }}
+    - name: Run frontend chat integration tests
       run: hack/run-integration-tests.sh --test-suite ai-chatbot --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: junit-frontend-ai-report
+        name: junit-frontend-chat-report
         path: frontend/cypress/results/combined-report.xml
         if-no-files-found: warn
 

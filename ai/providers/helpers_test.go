@@ -164,7 +164,7 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 	store := &fakeStore{enabled: true}
 	conversation := []types.ConversationMessage{
 		{Role: "user", Content: "hello"},
-		{Role: "tool", Name: "get_citations", Content: "citations"},
+		{Role: "tool", Name: "get_referenced_docs", Content: "referenced_docs"},
 		{Role: "tool", Name: "custom_tool", Content: "custom"},
 	}
 	ptr := &types.Conversation{}

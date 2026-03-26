@@ -65,7 +65,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 }
 
 func TestConvertToolToOpenAI_FromToolDefinition_GetCitations(t *testing.T) {
-	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_citations.yaml"))
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_referenced_docs.yaml"))
 	require.NoError(t, err)
 
 	converted := convertToolToOpenAI(tool)
@@ -73,7 +73,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetCitations(t *testing.T) {
 	expected := openai.ChatCompletionToolUnionParam{
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
-				Name:        "get_citations",
+				Name:        "get_referenced_docs",
 				Description: openai.String("Call this tool whenever the user asks a conceptual question, asks 'how to', or needs troubleshooting documentation. This tool automatically surfaces relevant Istio/Kiali documentation links directly in the user's UI chat interface. You do not need to read the output; just call it and proceed to answer their question."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",

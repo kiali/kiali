@@ -146,16 +146,16 @@ func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.C
 			return result
 		}
 
-		// Collect actions and citations
+		// Collect actions and referenced_docs
 		if len(toolResult.Actions) > 0 {
 			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
 		}
-		if len(toolResult.Citations) > 0 {
-			result.Response.Citations = append(result.Response.Citations, toolResult.Citations...)
+		if len(toolResult.ReferencedDocs) > 0 {
+			result.Response.ReferencedDocs = append(result.Response.ReferencedDocs, toolResult.ReferencedDocs...)
 		}
 
-		// Skip adding to conversation if we have actions/citations
-		if len(toolResult.Actions) > 0 || len(toolResult.Citations) > 0 {
+		// Skip adding to conversation if we have actions/referenced_docs
+		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocs) > 0 {
 			continue
 		}
 

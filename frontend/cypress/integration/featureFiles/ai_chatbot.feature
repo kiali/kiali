@@ -27,3 +27,34 @@ Feature: Kiali AI Chatbot
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
     And the AI chatbot should display a welcome message
+
+  Scenario: The AI chatbot responds with sources
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Could you explain what a VirtualService is and point me to the relevant documentation?"
+    Then the AI chatbot should display a sources card
+
+  Scenario: The AI chatbot responds with a single navigation action
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And the always navigate switch should be unchecked
+    And user sends a message with actions "Please show my services in the namespace bookinfo"
+    Then the AI chatbot should display the answer "I'm taking you to the services list for the bookinfo namespace now."
+    And the navigation actions container should be visible with 1 links
+
+  Scenario: The AI chatbot responds with multiple navigation actions
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And the always navigate switch should be unchecked
+    And user sends a message with multiple actions "Please show my services in the namespace bookinfo"
+    Then the AI chatbot should display the answer "I'm taking you to the services list for the bookinfo namespace now."
+    And the navigation actions container should be visible with 2 links
+
+  Scenario: The AI chatbot auto-navigates when always navigate is enabled
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user enables the always navigate switch
+    And user sends a message with auto navigate "Can you navigate to services in bookinfo ?"
+    Then the AI chatbot should display the answer "Sure, I can navigate you to the services in the bookinfo namespace."
+    And the navigation actions container should not be visible
+    And the URL should contain "/services?namespaces=bookinfo"

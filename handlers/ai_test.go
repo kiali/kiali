@@ -118,9 +118,9 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 	statusCodes := make(chan int, numRequests)
 
 	// Alternate between tools and header to exercise concurrent reads from both handler maps:
-	// - get_citations (no header): uses MCPToolHandlers, returns 200
+	// - get_referenced_docs (no header): uses MCPToolHandlers, returns 200
 	// - get_action_ui (no header): uses MCPToolHandlers, returns 200
-	// - get_citations + kiali_chatbot header: uses DefaultToolHandlers, tool not in default → 404
+	// - get_referenced_docs + kiali_chatbot header: uses DefaultToolHandlers, tool not in default → 404
 	for i := 0; i < numRequests; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -131,13 +131,13 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 			withChatbotHeader := false
 			switch i % 3 {
 			case 0:
-				tool = "get_citations"
+				tool = "get_referenced_docs"
 				body = map[string]interface{}{"keywords": "istio,kiali"}
 			case 1:
 				tool = "get_action_ui"
 				body = map[string]interface{}{"resourceType": "graph", "namespaces": "default"}
 			default:
-				tool = "get_citations"
+				tool = "get_referenced_docs"
 				body = map[string]interface{}{"keywords": "istio"}
 				withChatbotHeader = true
 			}
@@ -184,7 +184,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 	}
 
 	// Concurrent access to handler and tool maps: we must see 200s (MCP tools). We may also see 404s
-	// when kiali_chatbot header is set (get_citations not in default), depending on env.
+	// when kiali_chatbot header is set (get_referenced_docs not in default), depending on env.
 	require.Greater(got200, 0, "expected some 200 responses from concurrent MCP tool calls")
 	require.Equal(numRequests, got200+got404, "all responses should be 200 or 404 (no 500/panic)")
 }
@@ -200,11 +200,11 @@ func TestChatMCP_LoadToolsOnFirstRequest(t *testing.T) {
 
 	// Trigger LoadTools() via a tool that needs no K8s/Prometheus (get_mesh_graph would panic with test setup)
 	body := bytes.NewBufferString(`{"keywords": "istio"}`)
-	resp, err := http.Post(ts.URL+"/api/chat/mcp/get_citations", "application/json", body)
+	resp, err := http.Post(ts.URL+"/api/chat/mcp/get_referenced_docs", "application/json", body)
 	require.NoError(err)
 	t.Cleanup(func() { resp.Body.Close() })
 
-	require.Equal(http.StatusOK, resp.StatusCode, "get_citations should succeed")
+	require.Equal(http.StatusOK, resp.StatusCode, "get_referenced_docs should succeed")
 	assert.Greater(t, len(mcp.MCPToolHandlers), 0, "MCP tools should be loaded after first request")
 	assert.Greater(t, len(mcp.DefaultToolHandlers), 0, "Default (chatbot) toolset should be loaded")
 }
@@ -219,9 +219,9 @@ func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	// Tool with toolset: [mcp] only (e.g. get_citations) is in MCPToolHandlers but not in DefaultToolHandlers.
+	// Tool with toolset: [mcp] only (e.g. get_referenced_docs) is in MCPToolHandlers but not in DefaultToolHandlers.
 	// Without header: should be found (MCPToolHandlers). With header kiali_chatbot: should be 404 (DefaultToolHandlers).
-	excludedTool := "get_citations"
+	excludedTool := "get_referenced_docs"
 	if _, inDefault := mcp.DefaultToolHandlers[excludedTool]; inDefault {
 		t.Skipf("%s is in DefaultToolHandlers, cannot test header subset behavior", excludedTool)
 	}

@@ -11,7 +11,7 @@ MCP tools are functions that the AI can call to:
 - Get logs, metrics, traces, and pod performance data
 - Check mesh-wide status (control plane, observability stack, connectivity)
 - Generate navigation actions for the Kiali UI
-- Find relevant documentation citations
+- Find relevant documentation referenced_docs
 
 All tools accept a `*mcputil.KialiInterface` struct and a `map[string]interface{}` of arguments. Tool definitions live in YAML files under `ai/mcp/tools/`.
 
@@ -40,7 +40,7 @@ Generates navigation actions for the Kiali UI. The AI calls this tool whenever t
 
 ---
 
-### 2. `get_citations`
+### 2. `get_referenced_docs`
 
 Surfaces relevant Istio/Kiali documentation links when the user asks conceptual questions or needs troubleshooting help.
 
@@ -308,9 +308,9 @@ Tools are loaded via `mcp.LoadTools()` and exposed to providers as tool definiti
 
 ### ExcludedToolNames
 
-`ExcludedToolNames` defines tools that **return UI actions or citations only**. For these tools, the AI does not interpret the result — the UI consumes the `actions` or `citations` directly. The AI response includes only an acknowledgment so the conversation can continue.
+`ExcludedToolNames` defines tools that **return UI actions or referenced_docs only**. For these tools, the AI does not interpret the result — the UI consumes the `actions` or `referenced_docs` directly. The AI response includes only an acknowledgment so the conversation can continue.
 
-Current excluded tools: `get_action_ui`, `get_citations`.
+Current excluded tools: `get_action_ui`, `get_referenced_docs`.
 
 ## Response Format
 
@@ -324,7 +324,7 @@ Tool responses for `list_or_get_resources` and `get_mesh_traffic_graph` are **co
 
 The AI model calls tools based on user queries:
 - Navigate/show/view → `get_action_ui`
-- Documentation/how-to → `get_citations`
+- Documentation/how-to → `get_referenced_docs`
 - Pod logs → `get_logs`
 - Mesh health/status/versions → `get_mesh_status`
 - Traffic topology/dependencies → `get_mesh_traffic_graph`
@@ -340,6 +340,6 @@ The AI model calls tools based on user queries:
 1. Add a YAML definition in `ai/mcp/tools/<tool_name>.yaml`.
 2. Implement the tool in `ai/mcp/<tool_name>/` with an `Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int)` function.
 3. Add a switch case in `ToolDef.Call` in `mcp_tools.go`.
-4. If the tool only emits UI actions/citations, add the name to `ExcludedToolNames`.
+4. If the tool only emits UI actions/referenced_docs, add the name to `ExcludedToolNames`.
 
 See existing tools for end-to-end examples.

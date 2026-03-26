@@ -91,8 +91,8 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 		if len(processResult.Response.Actions) > 0 {
 			response.Actions = append(response.Actions, processResult.Response.Actions...)
 		}
-		if len(processResult.Response.Citations) > 0 {
-			response.Citations = append(response.Citations, processResult.Response.Citations...)
+		if len(processResult.Response.ReferencedDocs) > 0 {
+			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
 		}
 		conversation = processResult.Conversation
 

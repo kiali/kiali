@@ -27,7 +27,6 @@ jobs:
       # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target-branch: ${{ github.base_ref || github.ref_name }}
       build-branch: ${{ env.branch-master || env.branch-pr }}
-      ai-changed: ${{ steps.filter.outputs.ai }}
     steps:
     # The initialize job gathers variables for later use in jobs.
     # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
@@ -44,14 +43,6 @@ jobs:
         echo "build-branch -> ${{ github.base_ref }}"
       id: branch-pr
       if: ${{ github.base_ref }}
-    - uses: actions/checkout@v6
-    - uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          ai:
-            - 'ai/**'
-            - 'frontend/src/components/ChatBot/**'
 
   test_backend:
     name: Run backend linters and unit tests
@@ -91,12 +82,10 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  integration_ai_tests:
-    name: Run AI integration tests
-    if: needs.initialize.outputs.ai-changed == 'true'
-    uses: ./.github/workflows/integration-ai-tests.yml
+  integration_tests_frontend_chat:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-chat.yml
     needs: [initialize, build_backend]
-    secrets: inherit
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}

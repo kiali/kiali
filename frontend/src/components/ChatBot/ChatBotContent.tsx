@@ -78,32 +78,31 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
             {alertMessage.message}
           </ChatbotAlert>
         )}
-        {messages.map(
-          ({ referenced_documents, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
-            return (
-              <ChatMessage
-                key={`chatbot_message_${index}`}
-                addBotMessage={addBotMessage}
-                index={index.toString()}
-                message={message}
-                referenced_documents={referenced_documents}
-                collapse={collapse}
-                actions={actions || []}
-                scrollToHere={scrollToHere}
-                innerRef={messagesEndRef}
-                displayMode={displayMode}
-                context={context}
-                onSendMessage={handleSend}
-                setAlertMessage={setAlertMessage}
-              />
-            );
-          }
-        )}
+        {messages.map(({ referenced_docs, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
+          return (
+            <ChatMessage
+              key={`chatbot_message_${index}`}
+              addBotMessage={addBotMessage}
+              index={index.toString()}
+              message={message}
+              referenced_docs={referenced_docs}
+              collapse={collapse}
+              actions={actions || []}
+              scrollToHere={scrollToHere}
+              innerRef={messagesEndRef}
+              displayMode={displayMode}
+              context={context}
+              onSendMessage={handleSend}
+              setAlertMessage={setAlertMessage}
+            />
+          );
+        })}
         {messages.at(-1)?.role === 'user' && isLoading ? (
           <Message botWord="Kiali AI" key="bott_message_9999" {...botMessage('...')} isLoading={true} />
         ) : (
           <></>
         )}
+        <div ref={messagesEndRef} />
       </MessageBox>
     </ChatbotContent>
   );

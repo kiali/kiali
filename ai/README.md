@@ -21,7 +21,7 @@ This package provides the Kiali AI Assistant backend. It wires the chat provider
 1. The UI sends a chat request with a model name and context.
 2. `ai.NewAIProvider` selects a model from `chat_ai` configuration.
 3. The provider sends the conversation to the model and exposes MCP tools.
-4. Tool results (actions, citations, data) are combined into the final response.
+4. Tool results (actions, referenced_docs, data) are combined into the final response.
 5. We recommend enabling the AI store to retain context; it can optionally reduce stored conversations with AI (see [AI Store](#ai-store)).
 
 ## Configuration summary
@@ -157,7 +157,7 @@ Then configure `chat_ai` to reference the secret. The Kiali Operator and Helm ch
 The AI uses MCP tools to interact with Kiali and the mesh:
 
 - `get_action_ui`: Builds UI navigation actions (graphs, lists, details).
-- `get_citations`: Finds relevant Istio/Kiali documentation links.
+- `get_referenced_docs`: Finds relevant Istio/Kiali documentation links.
 - `get_logs`: Retrieves Pod/workload logs with severity filtering.
 - `get_mesh_status`: Returns high-level mesh health, control plane, observability stack, and connectivity status.
 - `get_mesh_traffic_graph`: Returns compact service-to-service traffic topology with metrics (throughput, response time, mTLS).
