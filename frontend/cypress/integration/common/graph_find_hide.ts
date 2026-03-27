@@ -15,18 +15,23 @@ Then('user finds unhealthy workloads', () => {
 Then('user sees unhealthy workloads highlighted on the graph', () => {
   const expectedUnhealthyNodes = [
     {
-      app: 'v-server',
-      version: 'v1',
+      app: 'w-server',
+      version: 'v1', // red workload
       namespace: 'alpha'
     },
     {
       app: 'w-server',
-      version: 'v1',
+      version: undefined, // red service
       namespace: 'alpha'
     },
     {
-      app: 'w-server',
-      version: undefined,
+      app: 'y-server',
+      version: 'v1', // yellow workload
+      namespace: 'alpha'
+    },
+    {
+      app: 'y-server',
+      version: undefined, // yellow service
       namespace: 'alpha'
     }
   ];
