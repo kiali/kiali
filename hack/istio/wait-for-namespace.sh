@@ -35,10 +35,10 @@ CLIENT_EXE=${CLIENT_EXE:-kubectl}
 CLIENT_EXE="$(which ${CLIENT_EXE} 2>/dev/null || echo "invalid kubectl: ${CLIENT_EXE}")"
 echo "Using CLIENT_EXE: $CLIENT_EXE"
 
-KIALI_CR_NAMESPACE_NAME="$(${CLIENT_EXE} get kiali --all-namespaces -o jsonpath='{.items[*].metadata.namespace}{":"}{.items[*].metadata.name'})"
-KIALI_CR_NAMESPACE="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f1)"
-KIALI_CR_NAME="$(echo ${KIALI_CR_NAMESPACE_NAME} | cut -d: -f2)"
-ACCESSIBLE_NAMESPACES="$(${CLIENT_EXE} get kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE -o jsonpath='{.spec.deployment.accessible_namespaces}')"
+KIALI_CR_NAMESPACE_NAME="$(${CLIENT_EXE} get kiali --all-namespaces -o jsonpath='{.items[*].metadata.namespace}{":"}{.items[*].metadata.name}')"
+KIALI_CR_NAMESPACE="$(echo "${KIALI_CR_NAMESPACE_NAME}" | cut -d: -f1)"
+KIALI_CR_NAME="$(echo "${KIALI_CR_NAMESPACE_NAME}" | cut -d: -f2)"
+ACCESSIBLE_NAMESPACES="$(${CLIENT_EXE} get kiali "$KIALI_CR_NAME" -n "$KIALI_CR_NAMESPACE" -o jsonpath='{.spec.deployment.accessible_namespaces}')"
 
 # All namespaces are accessible, no need to add namespaces access to Kiali CR
 if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
@@ -60,8 +60,17 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
   done
   echo
   echo "Done reconciling"
-  echo "Waiting for Kiali deployment to finish rollout after CR update"
-  ${CLIENT_EXE} rollout status deployment kiali -n "${KIALI_CR_NAMESPACE}" --timeout=5m
+  # Kiali CR lives in the operator namespace (e.g. kiali-operator); the server Deployment is in spec.deployment.namespace (default istio-system).
+  KIALI_DEPLOY_NS="$(${CLIENT_EXE} get kiali "$KIALI_CR_NAME" -n "$KIALI_CR_NAMESPACE" -o jsonpath='{.spec.deployment.namespace}' 2>/dev/null || true)"
+  if [ -z "${KIALI_DEPLOY_NS}" ]; then
+    KIALI_DEPLOY_NS="istio-system"
+  fi
+  if ${CLIENT_EXE} get deployment kiali -n "${KIALI_DEPLOY_NS}" >/dev/null 2>&1; then
+    echo "Waiting for Kiali deployment rollout in namespace [${KIALI_DEPLOY_NS}] after CR update"
+    ${CLIENT_EXE} rollout status deployment kiali -n "${KIALI_DEPLOY_NS}" --timeout=5m
+  else
+    echo "Skipping Kiali rollout wait: no deployment/kiali in [${KIALI_DEPLOY_NS}] (out-of-cluster or custom install)"
+  fi
 fi
 
 for NAMESPACE in ${NAMESPACES[@]}; do
