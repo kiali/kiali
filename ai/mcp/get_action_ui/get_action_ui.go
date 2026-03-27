@@ -144,7 +144,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 	default:
 		if resourceName != "" && namespaces != "" && namespaces != "all" && !strings.Contains(namespaces, ",") {
-			if errMsg := validateResourceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, cluster, namespaces, resourceType, resourceName); errMsg != "" {
+			if errMsg := validateResourceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, clusterName, namespaces, resourceType, resourceName); errMsg != "" {
 				return GetActionUIResponse{Errors: errMsg}, http.StatusOK
 			}
 		}
