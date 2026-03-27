@@ -218,7 +218,6 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
 
       if (resp.status === 200) {
         const chatResponse: ChatResponse = resp.data;
-        const referenced_documents = chatResponse.referenced_docs;
 
         const newBotMessage: any = botMessage(chatResponse);
         if (chatResponse.actions && chatResponse.actions.length > 0) {
