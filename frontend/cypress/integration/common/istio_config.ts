@@ -1,4 +1,4 @@
-import { After, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { AfterAll, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
 import { ensureKialiFinishedLoading } from './transition';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
@@ -748,3 +748,17 @@ Then(
       .should('exist');
   }
 );
+
+// KIA0104 and similar scenarios delete VirtualService/bookinfo; re-apply sample networking once when
+// istio_config.feature finishes (step defs are global, so gate on basename — not wizard_istio_config.feature).
+AfterAll(() => {
+  const specPath = (Cypress.spec?.relative ?? Cypress.spec?.name ?? '').replace(/\\/g, '/');
+  const specBasename = specPath.split('/').pop() ?? '';
+  if (specBasename !== 'istio_config.feature') {
+    return;
+  }
+  cy.exec(
+    'sh -c \'ISTIO_DIR=$(ls -dt1 ../_output/istio-* 2>/dev/null | head -n1); [ -z "$ISTIO_DIR" ] && exit 0; NET="$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"; [ -f "$NET" ] || exit 0; kubectl apply -n bookinfo -f "$NET"\'',
+    { failOnNonZeroExit: false }
+  );
+});
