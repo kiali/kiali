@@ -43,11 +43,8 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 	}
 
 	if action == "get" {
-		namespace, _ := args["namespace"].(string)
-		cluster, _ := args["cluster"].(string)
-		if cluster == "" {
-			cluster = kialiInterface.Conf.KubernetesConfig.ClusterName
-		}
+		namespace := mcputil.GetStringArg(args, "namespace")
+		cluster := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 		if msg, code := checkNamespaceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, cluster); code != 0 {
 			return msg, http.StatusOK
 		}
