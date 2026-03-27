@@ -105,7 +105,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	graph := mcputil.GetStringArg(args, "graph")
 	graphType := mcputil.GetStringArg(args, "graphType")
 	tab := mcputil.GetStringArg(args, "tab")
-	clusterName := mcputil.GetStringArg(args, "clusterName", "clusterName")
+	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 
 	if resourceType == "" {
 		return "resourceType is required. Must be one of: service, workload, app, istio, graph, overview, namespaces", http.StatusBadRequest
