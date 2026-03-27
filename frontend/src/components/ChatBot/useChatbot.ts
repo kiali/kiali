@@ -221,7 +221,6 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
         const referenced_documents = chatResponse.referenced_docs;
 
         const newBotMessage: any = botMessage(chatResponse);
-        newBotMessage.referenced_documents = referenced_documents;
         if (chatResponse.actions && chatResponse.actions.length > 0) {
           const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
           const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
