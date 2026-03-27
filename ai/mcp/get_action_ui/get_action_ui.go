@@ -116,6 +116,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 
 	namespacesValue := namespaces
 	if namespaces == "all" || namespaces == "" {
+		namespacesValue = ""
 		nsList, nsErr := kialiInterface.BusinessLayer.Namespace.GetClusterNamespaces(kialiInterface.Request.Context(), clusterName)
 		if nsErr != nil {
 			return GetActionUIResponse{
@@ -148,7 +149,11 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 				return GetActionUIResponse{Errors: errMsg}, http.StatusOK
 			}
 		}
-		actions = append(actions, getResourceAction(namespacesValue, resourceType, resourceName, tab))
+		nsForAction := namespacesValue
+		if resourceName == "" && (namespaces == "" || namespaces == "all") {
+			nsForAction = namespaces
+		}
+		actions = append(actions, getResourceAction(nsForAction, resourceType, resourceName, tab))
 	}
 
 	return GetActionUIResponse{
