@@ -238,18 +238,18 @@ func getTabLabel(tab string, resourceType string) string {
 	return tabLabel
 }
 
-func getIstioAction(ctx context.Context, businessLayer *business.Layer, cluster string, namespace string, resourceName string) ([]Action, error) {
+func getIstioAction(ctx context.Context, businessLayer *business.Layer, clusterName string, namespace string, resourceName string) ([]Action, error) {
 	actions := []Action{}
 	if resourceName != "" {
 		var istioConfig *models.IstioConfigList
 		var err error
 		if len(strings.Split(namespace, ",")) > 1 {
 			// This means that we are listing all Istio configs for all namespaces
-			istioConfig, err = businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, business.ParseIstioConfigCriteria("", "", ""))
+			istioConfig, err = businessLayer.IstioConfig.GetIstioConfigList(ctx, clusterName, business.ParseIstioConfigCriteria("", "", ""))
 		} else {
 			// This means that we are listing all Istio configs for a specific namespace
 			istioConfig, err = businessLayer.IstioConfig.GetIstioConfigListForNamespace(
-				ctx, cluster, namespace, business.ParseIstioConfigCriteria("", "", ""))
+				ctx, clusterName, namespace, business.ParseIstioConfigCriteria("", "", ""))
 		}
 
 		if err != nil {
