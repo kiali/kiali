@@ -21,7 +21,7 @@ func TestGetReferencedDocs_EmptyKeywords(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestGetCitations_WithKeywords(t *testing.T) {
+func TestGetReferencedDocs_WithKeywords(t *testing.T) {
 	resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{
 		"keywords": "mtls,security",
 	})
