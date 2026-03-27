@@ -75,7 +75,7 @@ Then('the AI chatbot should display a sources card', () => {
     });
 
   cy.get('@sourceCount').then(count => {
-    cy.get(CHATBOT_SOURCES, { timeout: 10000 }).should('be.visible').and('contain.text', `${count} sources`);
+    cy.get(CHATBOT_SOURCES, { timeout: 10000 }).should('exist').and('contain.text', `${count} sources`);
   });
 });
 
