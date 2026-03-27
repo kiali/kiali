@@ -52,7 +52,7 @@ func TestGetReferencedDocs_ValidDomains(t *testing.T) {
 	}
 }
 
-func TestGetCitations_EmptyDomainDefaultsToAll(t *testing.T) {
+func TestGetReferencedDocs_EmptyDomainDefaultsToAll(t *testing.T) {
 	resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{
 		"keywords": "mtls",
 	})
