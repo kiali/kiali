@@ -15,7 +15,7 @@ func TestGetReferencedDocs_MissingKeywords(t *testing.T) {
 	assert.Contains(t, string(resp.Body), "keywords")
 }
 
-func TestGetCitations_EmptyKeywords(t *testing.T) {
+func TestGetReferencedDocs_EmptyKeywords(t *testing.T) {
 	resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{"keywords": ""})
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
