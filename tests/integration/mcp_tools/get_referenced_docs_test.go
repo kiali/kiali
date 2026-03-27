@@ -29,7 +29,7 @@ func TestGetReferencedDocs_WithKeywords(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func TestGetCitations_InvalidDomain(t *testing.T) {
+func TestGetReferencedDocs_InvalidDomain(t *testing.T) {
 	resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{
 		"keywords": "mtls",
 		"domain":   "invalid_domain",
