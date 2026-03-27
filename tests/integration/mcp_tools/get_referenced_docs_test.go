@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetCitations_MissingKeywords(t *testing.T) {
+func TestGetReferencedDocs_MissingKeywords(t *testing.T) {
 	resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{})
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
