@@ -39,7 +39,7 @@ func TestGetReferencedDocs_InvalidDomain(t *testing.T) {
 	assert.Contains(t, string(resp.Body), "invalid domain")
 }
 
-func TestGetCitations_ValidDomains(t *testing.T) {
+func TestGetReferencedDocs_ValidDomains(t *testing.T) {
 	for _, domain := range []string{"kiali", "istio", "all"} {
 		t.Run(domain, func(t *testing.T) {
 			resp, err := CallMCPTool("get_referenced_docs", map[string]interface{}{
