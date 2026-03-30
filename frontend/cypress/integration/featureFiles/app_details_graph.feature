@@ -13,3 +13,11 @@ Feature: Kiali App Details page
   @core-1
   Scenario: See app minigraph for details app.
     Then user sees a minigraph
+
+  @error-rates-app
+  @core-1
+  Scenario: Application detail URL stays under applications after the mini graph loads
+    Given user is at the details page for the "app" "alpha/a-client" located in the "" cluster
+    Then user sees a minigraph
+    And the browser URL should include "applications/a-client"
+    And the browser URL should not include "/workloads/"

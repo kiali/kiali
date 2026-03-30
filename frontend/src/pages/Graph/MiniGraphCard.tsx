@@ -347,8 +347,9 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     // If we are already on the details page of the tapped node, do nothing.
     const displayedNode = this.props.dataSource.fetchParameters.node!;
 
-    // Minigraph will consider box nodes as app
-    const eNodeType = data.nodeType === 'box' && data.isBox ? data.isBox : data.workload ? 'workload' : data.nodeType;
+    // Box: use inner type (e.g. app). For app nodes, trust nodeType even when workload is set — versioned-app graph
+    // nodes carry workload names for telemetry but are still application nodes (see graph/types.go NewNodeExplicit).
+    const eNodeType = data.nodeType === NodeType.BOX && data.isBox ? data.isBox : data.nodeType;
 
     const isSameResource =
       displayedNode.namespace.name === data.namespace &&

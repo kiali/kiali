@@ -188,6 +188,14 @@ Given(
   }
 );
 
+Then('the browser URL should include {string}', (pathFragment: string) => {
+  cy.url({ timeout: 60000 }).should('include', pathFragment);
+});
+
+Then('the browser URL should not include {string}', (pathFragment: string) => {
+  cy.url().should('not.include', pathFragment);
+});
+
 // A simple function to check whether the DOM (or a subset of DOM has the cluster parameter in its links). This is related to multi-cluster testing.
 // In kiosk mode, KialiLink renders buttons with data-href instead of anchors with href.
 export const clusterParameterExists = (present: boolean): void => {
