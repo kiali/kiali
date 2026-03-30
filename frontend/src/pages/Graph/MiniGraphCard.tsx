@@ -15,7 +15,15 @@ import {
 import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import { DecoratedGraphElements, EdgeMode, SummaryData, GraphLayout, GraphType, NodeType } from '../../types/Graph';
+import {
+  DecoratedGraphElements,
+  EdgeMode,
+  SummaryData,
+  GraphLayout,
+  GraphType,
+  NodeType,
+  UNKNOWN
+} from '../../types/Graph';
 import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
 import { TimeInMilliseconds } from '../../types/Common';
@@ -347,9 +355,14 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     // If we are already on the details page of the tapped node, do nothing.
     const displayedNode = this.props.dataSource.fetchParameters.node!;
 
-    // Box: use inner type (e.g. app). For app nodes, trust nodeType even when workload is set — versioned-app graph
-    // nodes carry workload names for telemetry but are still application nodes (see graph/types.go NewNodeExplicit).
-    const eNodeType = data.nodeType === NodeType.BOX && data.isBox ? data.isBox : data.nodeType;
+    // Box: use inner type (e.g. app). Versioned-app leaf (app + version + workload) opens workload detail; aggregate app
+    // nodes (no concrete version) open application detail even when workload is set on the node (graph/types.go).
+    const useWorkloadTarget =
+      data.nodeType === NodeType.WORKLOAD ||
+      (data.nodeType === NodeType.APP && !!data.workload && !!data.version && data.version !== UNKNOWN);
+
+    const eNodeType =
+      data.nodeType === NodeType.BOX && data.isBox ? data.isBox : useWorkloadTarget ? NodeType.WORKLOAD : data.nodeType;
 
     const isSameResource =
       displayedNode.namespace.name === data.namespace &&

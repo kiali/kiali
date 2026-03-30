@@ -199,6 +199,8 @@ const TopologyContent: React.FC<{
   // "selectedIds", but 1) our code would have to remember to call it, and 2) I have seen situations where the
   // node loses its selected styling and it only comes back on a repeat selection.
   const selectedRef = React.useRef<string>();
+  // Mini graph pre-selects the focus node on load; skip one onNodeTap so that does not trigger client-side navigation.
+  const suppressNextMiniGraphNodeTapRef = React.useRef(false);
   React.useEffect(() => {
     if (selectedIds.length > 0) {
       if (selectedRef.current === selectedIds[0]) {
@@ -221,7 +223,11 @@ const TopologyContent: React.FC<{
           }
           case ModelKind.node: {
             if (onNodeTap) {
-              onNodeTap(elem as Node<NodeModel>);
+              if (suppressNextMiniGraphNodeTapRef.current) {
+                suppressNextMiniGraphNodeTapRef.current = false;
+              } else {
+                onNodeTap(elem as Node<NodeModel>);
+              }
             }
             return;
           }
@@ -584,7 +590,13 @@ const TopologyContent: React.FC<{
 
           const data = target.getData() as NodeData;
           data.isSelected = true;
-          setSelectedIds([target.getId()]);
+          const newSelectionId = target.getId();
+          // Only suppress when selection actually changes; same-id updates skip the selection effect and would
+          // otherwise leave suppress stuck true and swallow the next user click's onNodeTap.
+          if (isMiniGraph && newSelectionId !== selectedRef.current) {
+            suppressNextMiniGraphNodeTapRef.current = true;
+          }
+          setSelectedIds([newSelectionId]);
 
           setObserved(() => target.setData(data));
         }
@@ -603,6 +615,7 @@ const TopologyContent: React.FC<{
     graphData,
     graphSettings,
     highlighter,
+    isMiniGraph,
     layoutName,
     onDeleteTrafficRouting,
     onLaunchWizard,
@@ -624,7 +637,11 @@ const TopologyContent: React.FC<{
         // select node if needed
         if (focusNode.isSelected) {
           data.isSelected = true;
-          setSelectedIds([node.getId()]);
+          const focusSelectionId = node.getId();
+          if (isMiniGraph && focusSelectionId !== selectedRef.current) {
+            suppressNextMiniGraphNodeTapRef.current = true;
+          }
+          setSelectedIds([focusSelectionId]);
           setObserved(() => node.setData({ ...(node.getData() as NodeData) }));
         }
         // flash node
@@ -637,7 +654,7 @@ const TopologyContent: React.FC<{
         }
       }
     }
-  }, [controller, focusNode, setSelectedIds]);
+  }, [controller, focusNode, isMiniGraph, setSelectedIds]);
 
   React.useEffect(() => {
     console.debug(`TG: controller changed`);
