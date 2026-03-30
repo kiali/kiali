@@ -19,7 +19,7 @@ import { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
-import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr, LayoutType } from '../../../types/Graph';
+import { EdgeLabelMode, NodeType, EdgeMode, NodeAttr, EdgeAttr, LayoutType, RankMode } from '../../../types/Graph';
 import { addSuccess } from '../../../utils/AlertUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -42,6 +42,7 @@ type ReduxStateProps = {
   edgeMode: EdgeMode;
   findValue: string;
   hideValue: string;
+  rankBy: RankMode[];
   showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
@@ -53,6 +54,7 @@ type ReduxDispatchProps = {
   setEdgeLabels: (vals: EdgeLabelMode[]) => void;
   setFindValue: (val: string) => void;
   setHideValue: (val: string) => void;
+  setRankBy: (rankBy: RankMode[]) => void;
   toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleGraphVirtualServices: () => void;
@@ -932,8 +934,14 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
         if (!this.props.showRank) {
-          addSuccess('Enabling "Rank" display option for graph find/hide expression');
+          addSuccess(
+            'Enabling "Rank" display option with inbound and outbound edges for graph find/hide expression'
+          );
           this.props.toggleRank();
+          this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
+        } else if (this.props.rankBy.length === 0) {
+          addSuccess('Enabling inbound and outbound edges for Rank display option');
+          this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
         }
 
         const valAsNum = Number(val);
@@ -1230,6 +1238,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   edgeMode: edgeModeSelector(state),
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
+  rankBy: state.graph.toolbarState.rankBy,
   showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
@@ -1242,6 +1251,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     setEdgeLabels: bindActionCreators(GraphToolbarActions.setEdgeLabels, dispatch),
     setFindValue: bindActionCreators(GraphToolbarActions.setFindValue, dispatch),
     setHideValue: bindActionCreators(GraphToolbarActions.setHideValue, dispatch),
+    setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
     toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
