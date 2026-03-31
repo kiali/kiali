@@ -3,6 +3,7 @@ import { shallow } from 'enzyme';
 import { GraphFindComponent } from '../GraphFind';
 import { EdgeLabelMode, EdgeMode, RankMode } from 'types/Graph';
 import { Controller } from '@patternfly/react-topology';
+
 const testHandler = () => undefined;
 const testSetter = _val => undefined;
 
@@ -642,5 +643,145 @@ describe('Parse find value test', () => {
     expect(instance.parseValue('rank = a')).toEqual({ edgeSelector: undefined, nodeSelector: undefined }); // not a number
     // @ts-ignore
     expect(instance.parseValue('rank = 101')).toEqual({ edgeSelector: undefined, nodeSelector: undefined }); // outside acceptable range
+  });
+});
+describe('Rank auto-enable side effects', () => {
+  it('should call toggleRank and setRankBy when showRank is false and rankBy is empty', () => {
+    const mockToggleRank = jest.fn();
+    const mockSetRankBy = jest.fn();
+    const wrapper = shallow(
+      <GraphFindComponent
+        controller={{} as Controller}
+        edgeLabels={[] as EdgeLabelMode[]}
+        edgeMode={EdgeMode.ALL}
+        elementsChanged={true}
+        findValue=""
+        hideValue=""
+        rankBy={[] as RankMode[]}
+        showFindHelp={false}
+        showRank={false}
+        showSecurity={false}
+        showIdleNodes={false}
+        showVirtualServices={true}
+        setEdgeLabels={jest.fn()}
+        setFindValue={jest.fn()}
+        setHideValue={jest.fn()}
+        setRankBy={mockSetRankBy}
+        toggleFindHelp={jest.fn()}
+        toggleGraphSecurity={jest.fn()}
+        toggleGraphVirtualServices={jest.fn()}
+        toggleIdleNodes={jest.fn()}
+        toggleRank={mockToggleRank}
+      />
+    );
+    const instance = wrapper.instance() as GraphFindComponent;
+    // @ts-ignore
+    instance.parseValue('rank = 1', true);
+    expect(mockToggleRank).toHaveBeenCalledTimes(1);
+    expect(mockSetRankBy).toHaveBeenCalledWith([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
+  });
+
+  it('should call setRankBy but not toggleRank when showRank is true and rankBy is empty', () => {
+    const mockToggleRank = jest.fn();
+    const mockSetRankBy = jest.fn();
+    const wrapper = shallow(
+      <GraphFindComponent
+        controller={{} as Controller}
+        edgeLabels={[] as EdgeLabelMode[]}
+        edgeMode={EdgeMode.ALL}
+        elementsChanged={true}
+        findValue=""
+        hideValue=""
+        rankBy={[] as RankMode[]}
+        showFindHelp={false}
+        showRank={true}
+        showSecurity={false}
+        showIdleNodes={false}
+        showVirtualServices={true}
+        setEdgeLabels={jest.fn()}
+        setFindValue={jest.fn()}
+        setHideValue={jest.fn()}
+        setRankBy={mockSetRankBy}
+        toggleFindHelp={jest.fn()}
+        toggleGraphSecurity={jest.fn()}
+        toggleGraphVirtualServices={jest.fn()}
+        toggleIdleNodes={jest.fn()}
+        toggleRank={mockToggleRank}
+      />
+    );
+    const instance = wrapper.instance() as GraphFindComponent;
+    // @ts-ignore
+    instance.parseValue('rank = 1', true);
+    expect(mockToggleRank).not.toHaveBeenCalled();
+    expect(mockSetRankBy).toHaveBeenCalledWith([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
+  });
+
+  it('should not call toggleRank or setRankBy when showRank is true and rankBy is already set', () => {
+    const mockToggleRank = jest.fn();
+    const mockSetRankBy = jest.fn();
+    const wrapper = shallow(
+      <GraphFindComponent
+        controller={{} as Controller}
+        edgeLabels={[] as EdgeLabelMode[]}
+        edgeMode={EdgeMode.ALL}
+        elementsChanged={true}
+        findValue=""
+        hideValue=""
+        rankBy={[RankMode.RANK_BY_INBOUND_EDGES]}
+        showFindHelp={false}
+        showRank={true}
+        showSecurity={false}
+        showIdleNodes={false}
+        showVirtualServices={true}
+        setEdgeLabels={jest.fn()}
+        setFindValue={jest.fn()}
+        setHideValue={jest.fn()}
+        setRankBy={mockSetRankBy}
+        toggleFindHelp={jest.fn()}
+        toggleGraphSecurity={jest.fn()}
+        toggleGraphVirtualServices={jest.fn()}
+        toggleIdleNodes={jest.fn()}
+        toggleRank={mockToggleRank}
+      />
+    );
+    const instance = wrapper.instance() as GraphFindComponent;
+    // @ts-ignore
+    instance.parseValue('rank = 1', true);
+    expect(mockToggleRank).not.toHaveBeenCalled();
+    expect(mockSetRankBy).not.toHaveBeenCalled();
+  });
+
+  it('should call toggleRank exactly once for compound rank expressions', () => {
+    const mockToggleRank = jest.fn();
+    const mockSetRankBy = jest.fn();
+    const wrapper = shallow(
+      <GraphFindComponent
+        controller={{} as Controller}
+        edgeLabels={[] as EdgeLabelMode[]}
+        edgeMode={EdgeMode.ALL}
+        elementsChanged={true}
+        findValue=""
+        hideValue=""
+        rankBy={[] as RankMode[]}
+        showFindHelp={false}
+        showRank={false}
+        showSecurity={false}
+        showIdleNodes={false}
+        showVirtualServices={true}
+        setEdgeLabels={jest.fn()}
+        setFindValue={jest.fn()}
+        setHideValue={jest.fn()}
+        setRankBy={mockSetRankBy}
+        toggleFindHelp={jest.fn()}
+        toggleGraphSecurity={jest.fn()}
+        toggleGraphVirtualServices={jest.fn()}
+        toggleIdleNodes={jest.fn()}
+        toggleRank={mockToggleRank}
+      />
+    );
+    const instance = wrapper.instance() as GraphFindComponent;
+    // @ts-ignore
+    instance.parseValue('rank = 1 OR rank = 2', true);
+    expect(mockToggleRank).toHaveBeenCalledTimes(1);
   });
 });

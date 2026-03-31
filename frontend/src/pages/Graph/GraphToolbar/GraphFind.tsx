@@ -712,6 +712,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     isFind: boolean
   ): { edgeSelector: SelectOr | undefined; nodeSelector: SelectOr | undefined } => {
     let preparedVal = this.prepareValue(val);
+    let rankAutoEnabled = false;
 
     if (!preparedVal) {
       return { nodeSelector: undefined, edgeSelector: undefined };
@@ -933,17 +934,20 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'operation':
         return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
-        if (!this.props.showRank) {
-          addSuccess(
-            'Enabling "Rank" display option with inbound and outbound edges for graph find/hide expression'
-          );
+        if (!this.props.showRank && !rankAutoEnabled) {
+          rankAutoEnabled = true;
           this.props.toggleRank();
-          this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
+          if (this.props.rankBy.length === 0) {
+            addSuccess('Enabling "Rank" display option with inbound and outbound edges for graph find/hide expression');
+            this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
+          } else {
+            addSuccess('Enabling "Rank" display option for graph find/hide expression');
+          }
         } else if (this.props.rankBy.length === 0) {
-          addSuccess('Enabling inbound and outbound edges for Rank display option');
+          addSuccess('Enabling inbound and outbound edges for "Rank" display option for graph find/hide expression');
           this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
         }
-
+  
         const valAsNum = Number(val);
 
         if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
