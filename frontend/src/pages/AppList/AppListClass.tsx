@@ -1,6 +1,6 @@
 import { AppList, AppListItem } from '../../types/AppList';
 import { sortIstioReferences } from './FiltersAndSorts';
-import { AppHealth } from '../../types/Health';
+import { AppHealth, defaultHealthRateIntervalSec } from '../../types/Health';
 import { InstanceType } from 'types/Common';
 
 export const getAppItems = (data: AppList): AppListItem[] => {
@@ -14,7 +14,11 @@ export const getAppItems = (data: AppList): AppListItem[] => {
       isGateway: app.isGateway,
       isWaypoint: app.isWaypoint,
       isZtunnel: app.isZtunnel,
-      health: AppHealth.fromBackendStatus(app.health),
+      health: AppHealth.fromJson(app.namespace, app.name, app.health ?? {}, {
+        rateInterval: defaultHealthRateIntervalSec,
+        hasSidecar: app.istioSidecar,
+        hasAmbient: app.isAmbient
+      }),
       labels: app.labels,
       istioReferences: sortIstioReferences(app.istioReferences, true),
       cluster: app.cluster

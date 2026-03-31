@@ -4,6 +4,8 @@ import { PFColors } from '../Pf/PfColors';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
+import { ToleranceConfig } from 'types/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 interface HealthDetailsProps {
   health: H.Health;
@@ -12,6 +14,41 @@ interface HealthDetailsProps {
 const titleStyle = kialiStyle({
   margin: '1rem 0 0.5rem 0'
 });
+
+/** Text for error-share threshold; 0 matches server logic (any positive error rate counts for that tier). */
+const trafficErrorShareRule = (thresholdPct: number): string =>
+  thresholdPct === 0 ? t('more than 0%') : t('at least {{n}}%', { n: String(thresholdPct) });
+
+const trafficFailureRule = (failurePct: number): string =>
+  failurePct === 0 ? t('not used') : trafficErrorShareRule(failurePct);
+
+const renderTrafficThresholdLegend = (config: ToleranceConfig): React.ReactNode => (
+  <li
+    key="traffic_threshold_legend"
+    style={{
+      borderTop: `1px solid ${PFColors.BorderColor100}`,
+      listStyle: 'none',
+      marginTop: '0.5rem',
+      paddingTop: '0.5rem'
+    }}
+  >
+    <div style={{ color: PFColors.Color200, fontSize: '0.8125rem', marginBottom: '0.35rem' }}>
+      {t('Error-rate limits for traffic health:')}
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.875rem', gap: '0.2rem' }}>
+      <div>
+        <span style={{ marginRight: '0.35rem' }}>{createIcon(H.DEGRADED)}</span>
+        <strong>{t('Degraded')}</strong>
+        {` — ${trafficErrorShareRule(config.degraded)}`}
+      </div>
+      <div>
+        <span style={{ marginRight: '0.35rem' }}>{createIcon(H.FAILURE)}</span>
+        <strong>{t('Failure')}</strong>
+        {` — ${trafficFailureRule(config.failure)}`}
+      </div>
+    </div>
+  </li>
+);
 
 // Used in App/Workload/Service Description
 // It doesn't hide healthy lines as opposed to the HealthDetails
@@ -54,14 +91,7 @@ export const renderTrafficStatus = (health: H.Health): React.ReactNode => {
                 );
               })}
 
-              {config && isValueInConfig && (
-                <li key="degraded_failure_config">
-                  <span style={{ marginRight: '0.5rem' }}>{createIcon(H.DEGRADED)}</span>:{' '}
-                  {config.degraded === 0 ? '>' : '>='}
-                  {config.degraded}% {createIcon(H.FAILURE)}: {config.degraded === 0 ? '>' : '>='}
-                  {config.failure}%
-                </li>
-              )}
+              {config && isValueInConfig && renderTrafficThresholdLegend(config)}
             </ul>
           )}
         </div>
@@ -112,14 +142,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
               );
             })}
 
-            {config && isValueInConfig && (
-              <li key="degraded_failure_config">
-                <span style={{ marginRight: '0.5rem' }}>{createIcon(H.DEGRADED)}</span>:{' '}
-                {config.degraded === 0 ? '>' : '>='}
-                {config.degraded}% {createIcon(H.FAILURE)}: {config.degraded === 0 ? '>' : '>='}
-                {config.failure}%
-              </li>
-            )}
+            {config && isValueInConfig && renderTrafficThresholdLegend(config)}
           </ul>
         )}
       </div>

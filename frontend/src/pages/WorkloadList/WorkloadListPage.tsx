@@ -20,7 +20,7 @@ import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
-import { WorkloadHealth } from '../../types/Health';
+import { WorkloadHealth, defaultHealthRateIntervalSec } from '../../types/Health';
 import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -145,7 +145,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         isWaypoint: deployment.isWaypoint,
         isZtunnel: deployment.isZtunnel,
         additionalDetailSample: deployment.additionalDetailSample,
-        health: WorkloadHealth.fromBackendStatus(deployment.health),
+        health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health ?? {}, {
+          rateInterval: defaultHealthRateIntervalSec,
+          hasSidecar: deployment.istioSidecar,
+          hasAmbient: deployment.isAmbient
+        }),
         labels: deployment.labels,
         istioReferences: sortIstioReferences(deployment.istioReferences, true),
         validations: data.validations['workload']

@@ -22,7 +22,7 @@ import { connect, DispatchProp } from 'react-redux';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
-import { ServiceHealth } from '../../types/Health';
+import { ServiceHealth, defaultHealthRateIntervalSec } from '../../types/Health';
 import { isMultiCluster, serverConfig } from 'config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
@@ -141,7 +141,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
         isZtunnel: service.isZtunnel,
         namespace: service.namespace,
         cluster: service.cluster,
-        health: ServiceHealth.fromBackendStatus(service.health),
+        health: ServiceHealth.fromJson(service.namespace, service.name, service.health ?? {}, {
+          rateInterval: defaultHealthRateIntervalSec,
+          hasSidecar: service.istioSidecar,
+          hasAmbient: service.isAmbient
+        }),
         validation: this.getServiceValidation(service.name, service.namespace, data.validations),
         additionalDetailSample: service.additionalDetailSample,
         labels: service.labels ?? {},
