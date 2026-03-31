@@ -71,6 +71,15 @@ describe('Health', () => {
     expect(result.value).toEqual(50);
     expect(result.violation).toEqual('50.00%>=20%');
   });
+  it('should skip failure tier when failure is 0 (matches server applyThresholds)', () => {
+    const tol: ToleranceConfig = { code: '', degraded: 10, failure: 0 };
+    expect(H.getRequestErrorsStatus(0.15, tol).status).toEqual(H.DEGRADED);
+    expect(H.getRequestErrorsStatus(0.05, tol).status).toEqual(H.HEALTHY);
+  });
+  it('should use degraded tier when failure is 0 and degraded is 0 but there are errors', () => {
+    const tol: ToleranceConfig = { code: '', degraded: 0, failure: 0 };
+    expect(H.getRequestErrorsStatus(0.01, tol).status).toEqual(H.DEGRADED);
+  });
   it('should get comparable error ratio with NA', () => {
     const r1 = H.getRequestErrorsStatus(-1, toleranceDefault);
     const r2 = H.getRequestErrorsStatus(0, toleranceDefault);

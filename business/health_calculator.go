@@ -209,7 +209,7 @@ func (c *HealthCalculator) aggregateMatchingCodes(codes map[string]float64, code
 }
 
 // applyThresholds determines the health status based on error ratio and thresholds
-// This matches frontend behavior where:
+// Matches frontend ascendingThresholdCheck (Health.ts):
 // - Only check thresholds if there are errors (errorRatio > 0)
 // - When degraded=0 (not set), any error > 0% triggers degraded
 // - When failure=0 (not set), skip failure check

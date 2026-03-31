@@ -309,7 +309,8 @@ export const mergeStatus = (s1: Status, s2: Status): Status => {
 
 export const ascendingThresholdCheck = (value: number, thresholds: Thresholds): ThresholdStatus => {
   if (value > 0) {
-    if (value >= thresholds.failure) {
+    // failure === 0 means "unset" / no failure tier (same as business/health_calculator.go applyThresholds).
+    if (thresholds.failure > 0 && value >= thresholds.failure) {
       return {
         value: value,
         status: FAILURE,
