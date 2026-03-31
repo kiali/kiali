@@ -783,5 +783,6 @@ describe('Rank auto-enable side effects', () => {
     // @ts-ignore
     instance.parseValue('rank = 1 OR rank = 2', true);
     expect(mockToggleRank).toHaveBeenCalledTimes(1);
+    expect(mockSetRankBy).toHaveBeenCalledTimes(1);
   });
 });

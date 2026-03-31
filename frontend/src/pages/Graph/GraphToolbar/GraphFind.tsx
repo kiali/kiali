@@ -176,6 +176,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
   private hiddenElements: GraphElement[] | undefined;
   private hideAutoComplete: AutoComplete;
   private hideInputRef;
+  private rankAutoEnabled = false;
 
   constructor(props: GraphFindProps) {
     super(props);
@@ -712,7 +713,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     isFind: boolean
   ): { edgeSelector: SelectOr | undefined; nodeSelector: SelectOr | undefined } => {
     let preparedVal = this.prepareValue(val);
-    let rankAutoEnabled = false;
+    this.rankAutoEnabled = false;
 
     if (!preparedVal) {
       return { nodeSelector: undefined, edgeSelector: undefined };
@@ -934,8 +935,8 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       case 'operation':
         return { target: 'node', selector: { prop: NodeAttr.aggregateValue, op: op, val: val } };
       case 'rank': {
-        if (!this.props.showRank && !rankAutoEnabled) {
-          rankAutoEnabled = true;
+        if (!this.props.showRank && !this.rankAutoEnabled) {
+          this.rankAutoEnabled = true;
           this.props.toggleRank();
           if (this.props.rankBy.length === 0) {
             addSuccess('Enabling "Rank" display option with inbound and outbound edges for graph find/hide expression');
@@ -943,11 +944,11 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           } else {
             addSuccess('Enabling "Rank" display option for graph find/hide expression');
           }
-        } else if (this.props.rankBy.length === 0) {
+        } else if (this.props.rankBy.length === 0 && !this.rankAutoEnabled) {
           addSuccess('Enabling inbound and outbound edges for "Rank" display option for graph find/hide expression');
           this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
         }
-  
+
         const valAsNum = Number(val);
 
         if (Number.isNaN(valAsNum) || valAsNum < 1 || valAsNum > 100) {
