@@ -232,10 +232,10 @@ Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compa
 
 ### 10. `list_or_get_resources`
 
-Unified tool to list or get details for services, workloads, apps, and namespaces. If `resourceName` is omitted, returns a compact list. If provided, returns detailed information for that specific resource.
+Unified tool to list or get details for services, workloads, apps, namespaces, and ArgoCD applications. If `resourceName` is omitted, returns a compact list. If provided, returns detailed information for that specific resource.
 
 **Parameters**:
-- `resourceType` (string, required): `"service"`, `"workload"`, `"app"`, or `"namespace"`.
+- `resourceType` (string, required): `"service"`, `"workload"`, `"app"`, `"namespace"`, or `"application"` (ArgoCD).
 - `namespaces` (string, optional): Comma-separated namespaces. If empty, queries all accessible namespaces.
 - `resourceName` (string, optional): If provided, returns detail view. If empty, returns list view.
 - `clusterName` (string, optional): Cluster name. Defaults to the Kiali configuration cluster.
@@ -336,7 +336,7 @@ Tool definitions are described in YAML files under `ai/mcp/tools/`. Each file de
       resourceType:
         type: "string"
         description: "The type of resource to query."
-        enum: ["service", "workload", "app", "namespace"]
+        enum: ["service", "workload", "app", "namespace", "application"]
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces to query."

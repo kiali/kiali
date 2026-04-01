@@ -310,7 +310,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ListOrGetResources(t *testing.T)
 		Properties: map[string]*genai.Schema{
 			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "The type of resource to query.",
+				Description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'application' for ArgoCD Application CRDs (requires ArgoCD installed). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
 				Enum:        []string{"service", "workload", "app", "namespace", "application"},
 			},
 			"namespaces": {
