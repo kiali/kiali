@@ -945,6 +945,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             addSuccess('Enabling "Rank" display option for graph find/hide expression');
           }
         } else if (this.props.rankBy.length === 0 && !this.rankAutoEnabled) {
+          this.rankAutoEnabled = true;
           addSuccess('Enabling inbound and outbound edges for "Rank" display option for graph find/hide expression');
           this.props.setRankBy([RankMode.RANK_BY_INBOUND_EDGES, RankMode.RANK_BY_OUTBOUND_EDGES]);
         }
