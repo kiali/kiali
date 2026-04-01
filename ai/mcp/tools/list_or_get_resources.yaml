@@ -8,7 +8,7 @@
       resourceType:
         type: "string"
         description: "The type of resource to query."
-        enum: ["service", "workload", "app", "namespace"]
+        enum: ["service", "workload", "app", "namespace", "application"]
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces."

@@ -551,6 +551,204 @@ func serviceWorkloadInfoFromListItem(wl *models.WorkloadListItem) ServiceWorkloa
 	}
 }
 
+// --- ArgoCD Application transforms ---
+func nestedString(obj map[string]interface{}, fields ...string) string {
+	current := obj
+	for i, field := range fields {
+		if i == len(fields)-1 {
+			if val, ok := current[field]; ok {
+				if s, ok := val.(string); ok {
+					return s
+				}
+			}
+			return ""
+		}
+		if next, ok := current[field]; ok {
+			if m, ok := next.(map[string]interface{}); ok {
+				current = m
+			} else {
+				return ""
+			}
+		} else {
+			return ""
+		}
+	}
+	return ""
+}
+
+func nestedMap(obj map[string]interface{}, field string) map[string]interface{} {
+	if val, ok := obj[field]; ok {
+		if m, ok := val.(map[string]interface{}); ok {
+			return m
+		}
+	}
+	return nil
+}
+
+func nestedSlice(obj map[string]interface{}, field string) []interface{} {
+	if val, ok := obj[field]; ok {
+		if s, ok := val.([]interface{}); ok {
+			return s
+		}
+	}
+	return nil
+}
+
+func nestedInt64(obj map[string]interface{}, fields ...string) int64 {
+	current := obj
+	for i, field := range fields {
+		if i == len(fields)-1 {
+			if val, ok := current[field]; ok {
+				switch v := val.(type) {
+				case int64:
+					return v
+				case float64:
+					return int64(v)
+				}
+			}
+			return 0
+		}
+		if next, ok := current[field]; ok {
+			if m, ok := next.(map[string]interface{}); ok {
+				current = m
+			} else {
+				return 0
+			}
+		} else {
+			return 0
+		}
+	}
+	return 0
+}
+
+func transformArgoCDSource(srcMap map[string]interface{}) ArgoCDAppSource {
+	if srcMap == nil {
+		return ArgoCDAppSource{}
+	}
+	return ArgoCDAppSource{
+		Path:           nestedString(srcMap, "path"),
+		RepoURL:        nestedString(srcMap, "repoURL"),
+		TargetRevision: nestedString(srcMap, "targetRevision"),
+	}
+}
+
+func TransformArgoCDAppDetail(obj map[string]interface{}, cluster string) ArgoCDAppDetailResponse {
+	metadata := nestedMap(obj, "metadata")
+	spec := nestedMap(obj, "spec")
+	status := nestedMap(obj, "status")
+
+	name := nestedString(metadata, "name")
+	namespace := nestedString(metadata, "namespace")
+
+	source := transformArgoCDSource(nestedMap(spec, "source"))
+	project := nestedString(spec, "project")
+
+	dest := nestedMap(spec, "destination")
+	destination := ArgoCDAppDestination{
+		Namespace: nestedString(dest, "namespace"),
+		Server:    nestedString(dest, "server"),
+	}
+
+	syncStatus := ArgoCDAppSyncStatus{
+		Revision: nestedString(status, "sync", "revision"),
+		Status:   nestedString(status, "sync", "status"),
+	}
+
+	healthMap := nestedMap(status, "health")
+	health := ArgoCDAppHealthStatus{
+		Message: nestedString(healthMap, "message"),
+		Status:  nestedString(healthMap, "status"),
+	}
+
+	sourceType := nestedString(status, "sourceType")
+
+	var revisionHistory []ArgoCDRevisionHistoryEntry
+	for _, item := range nestedSlice(status, "history") {
+		if entry, ok := item.(map[string]interface{}); ok {
+			revisionHistory = append(revisionHistory, ArgoCDRevisionHistoryEntry{
+				DeployedAt: nestedString(entry, "deployedAt"),
+				ID:         nestedInt64(entry, "id"),
+				Revision:   nestedString(entry, "revision"),
+				Source:     transformArgoCDSource(nestedMap(entry, "source")),
+			})
+		}
+	}
+	if revisionHistory == nil {
+		revisionHistory = []ArgoCDRevisionHistoryEntry{}
+	}
+
+	var resources []ArgoCDManagedResource
+	for _, item := range nestedSlice(status, "resources") {
+		if res, ok := item.(map[string]interface{}); ok {
+			resources = append(resources, ArgoCDManagedResource{
+				Kind:      nestedString(res, "kind"),
+				Name:      nestedString(res, "name"),
+				Namespace: nestedString(res, "namespace"),
+				Status:    nestedString(res, "status"),
+			})
+		}
+	}
+	if resources == nil {
+		resources = []ArgoCDManagedResource{}
+	}
+
+	var operationState *ArgoCDOperationState
+	if opState := nestedMap(status, "operationState"); opState != nil {
+		operationState = &ArgoCDOperationState{
+			FinishedAt: nestedString(opState, "finishedAt"),
+			Message:    nestedString(opState, "message"),
+			Phase:      nestedString(opState, "phase"),
+		}
+	}
+
+	return ArgoCDAppDetailResponse{
+		Cluster:         cluster,
+		Destination:     destination,
+		Health:          health,
+		Name:            name,
+		Namespace:       namespace,
+		OperationState:  operationState,
+		Project:         project,
+		Resources:       resources,
+		RevisionHistory: revisionHistory,
+		Source:          source,
+		SourceType:      sourceType,
+		Sync:            syncStatus,
+	}
+}
+
+func TransformArgoCDAppListFromItems(items []interface{}, cluster string) ArgoCDAppListResponse {
+	var apps []ArgoCDAppListItem
+	for _, item := range items {
+		obj, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		metadata := nestedMap(obj, "metadata")
+		spec := nestedMap(obj, "spec")
+		status := nestedMap(obj, "status")
+
+		healthStatus := nestedString(status, "health", "status")
+		syncStatus := nestedString(status, "sync", "status")
+		repoURL := nestedString(spec, "source", "repoURL")
+
+		apps = append(apps, ArgoCDAppListItem{
+			Health:     healthStatus,
+			Name:       nestedString(metadata, "name"),
+			Namespace:  nestedString(metadata, "namespace"),
+			RepoURL:    repoURL,
+			SyncStatus: syncStatus,
+		})
+	}
+	if apps == nil {
+		apps = []ArgoCDAppListItem{}
+	}
+	return ArgoCDAppListResponse{
+		Applications: apps,
+		Cluster:      cluster,
+	}
+}
+
 func labelsToString(labels map[string]string) string {
 	if len(labels) == 0 {
 		return "None"

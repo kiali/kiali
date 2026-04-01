@@ -435,6 +435,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListOrGetResources(t *testing.T)
 								"workload",
 								"app",
 								"namespace",
+								"application",
 							},
 						},
 						"namespaces": map[string]interface{}{

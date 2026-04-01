@@ -9,7 +9,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -93,7 +95,7 @@ func TestExecute_InvalidResourceType(t *testing.T) {
 func TestExecute_ValidResourceTypes(t *testing.T) {
 	util.Clock = util.RealClock{}
 
-	validTypes := []string{"service", "workload", "app"}
+	validTypes := []string{"service", "workload", "app", "application"}
 
 	for _, rt := range validTypes {
 		t.Run("ResourceType_"+rt, func(t *testing.T) {
@@ -384,4 +386,160 @@ func TestRecoverFromPanic_NoPanic(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, status)
 	assert.Equal(t, "success", res)
+}
+
+// ---------------------------------------------------------------------------
+// 6. ArgoCD Application tests
+// ---------------------------------------------------------------------------
+
+func TestExecute_ApplicationList(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "application",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	// The fake K8s client has no real REST config, so the dynamic client
+	// creation fails gracefully with a friendly error message.
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected string error response from fake client, got %T", resp)
+	assert.Contains(t, respStr, "ArgoCD Application resources could not be queried")
+}
+
+func TestExecute_ApplicationListWithNonExistentNamespace(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "application",
+		"namespaces":    "argocd-wrong",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected string response, got %T", resp)
+	assert.Contains(t, respStr, "argocd-wrong")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+func TestExecute_ApplicationDetailWithoutNamespace(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "application",
+		"resource_name": "guestbook",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, "Namespaces are required when resource name is provided", resp)
+}
+
+func TestExecute_ApplicationDetailInNonExistentNamespace(t *testing.T) {
+	util.Clock = util.RealClock{}
+	ki := setupMocks(t)
+
+	args := map[string]interface{}{
+		"resource_type": "application",
+		"resource_name": "nonexistent-app",
+		"namespaces":    "argocd-wrong",
+	}
+
+	resp, code := Execute(ki, args)
+
+	assert.Equal(t, http.StatusOK, code)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected string response, got %T", resp)
+	assert.Contains(t, respStr, "argocd-wrong")
+	assert.Contains(t, respStr, "not found or not accessible")
+}
+
+func TestValidateNamespacesViaK8s(t *testing.T) {
+	fakeClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "argocd"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "default"}},
+	)
+
+	t.Run("all valid", func(t *testing.T) {
+		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"argocd", "default"})
+		assert.Equal(t, []string{"argocd", "default"}, valid)
+		assert.Empty(t, invalid)
+	})
+
+	t.Run("all invalid", func(t *testing.T) {
+		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"no-such-ns"})
+		assert.Empty(t, valid)
+		assert.Equal(t, []string{"no-such-ns"}, invalid)
+	})
+
+	t.Run("mixed", func(t *testing.T) {
+		valid, invalid := validateNamespacesViaK8s(fakeClient, []string{"argocd", "bogus"})
+		assert.Equal(t, []string{"argocd"}, valid)
+		assert.Equal(t, []string{"bogus"}, invalid)
+	})
+}
+
+func TestParseNamespaceCSV(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{"", nil},
+		{"argocd", []string{"argocd"}},
+		{"ns1,ns2", []string{"ns1", "ns2"}},
+		{"  ns1 , ns2 ", []string{"ns1", "ns2"}},
+		{"ns1,,ns2,", []string{"ns1", "ns2"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := parseNamespaceCSV(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestExecute_ApplicationAlwaysReturns200(t *testing.T) {
+	util.Clock = util.RealClock{}
+
+	scenarios := []struct {
+		name         string
+		args         map[string]interface{}
+		wantContains string
+	}{
+		{
+			name:         "list all namespaces",
+			args:         map[string]interface{}{"resource_type": "application"},
+			wantContains: "could not be queried",
+		},
+		{
+			name:         "list non-existent namespace",
+			args:         map[string]interface{}{"resource_type": "application", "namespaces": "argocd"},
+			wantContains: "not found or not accessible",
+		},
+		{
+			name:         "get from non-existent namespace",
+			args:         map[string]interface{}{"resource_type": "application", "resource_name": "myapp", "namespaces": "does-not-exist"},
+			wantContains: "not found or not accessible",
+		},
+	}
+	for _, sc := range scenarios {
+		t.Run(sc.name, func(t *testing.T) {
+			ki := setupMocks(t)
+			resp, code := Execute(ki, sc.args)
+			assert.Equal(t, http.StatusOK, code, "Application queries must never return non-200 status")
+			if sc.wantContains != "" {
+				respStr, ok := resp.(string)
+				assert.True(t, ok, "Expected string response, got %T", resp)
+				assert.Contains(t, respStr, sc.wantContains)
+			}
+		})
+	}
 }

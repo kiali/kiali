@@ -8,18 +8,151 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util"
 )
 
 const DefaultRateInterval = "10m"
+
+var argoCDApplicationGVR = schema.GroupVersionResource{
+	Group:    "argoproj.io",
+	Resource: "applications",
+	Version:  "v1alpha1",
+}
+
+func newDynamicClient(clientFactory kubernetes.ClientFactory, clusterName string) (dynamic.Interface, error) {
+	saClient := clientFactory.GetSAClient(clusterName)
+	if saClient == nil {
+		return nil, fmt.Errorf("no SA client available for cluster %q", clusterName)
+	}
+	restConfig := saClient.ClusterInfo().ClientConfig
+	if restConfig == nil {
+		return nil, fmt.Errorf("no REST config available for cluster %q", clusterName)
+	}
+	return dynamic.NewForConfig(restConfig)
+}
+
+func getArgoCDAppDetail(ctx context.Context, dynClient dynamic.Interface, name, namespace, cluster string) (interface{}, int) {
+	result, err := dynClient.Resource(argoCDApplicationGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return fmt.Sprintf("ArgoCD Application %q not found in namespace %q.", name, namespace), http.StatusOK
+		}
+		return classifyError(err, "application", name, namespace), http.StatusOK
+	}
+	return TransformArgoCDAppDetail(result.Object, cluster), http.StatusOK
+}
+
+func listArgoCDApps(ctx context.Context, dynClient dynamic.Interface, namespaces []string, cluster string) (interface{}, int) {
+	var allItems []interface{}
+	for _, ns := range namespaces {
+		result, err := dynClient.Resource(argoCDApplicationGVR).Namespace(ns).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			if k8serrors.IsForbidden(err) || k8serrors.IsNotFound(err) {
+				continue
+			}
+			log.Warningf("Error listing ArgoCD Applications in namespace %q: %v", ns, err)
+			continue
+		}
+		for i := range result.Items {
+			allItems = append(allItems, result.Items[i].Object)
+		}
+	}
+	return TransformArgoCDAppListFromItems(allItems, cluster), http.StatusOK
+}
+
+func executeArgoCDApplication(kialiInterface *mcputil.KialiInterface, namespaces, resourceName, clusterName string) (interface{}, int) {
+	nsSlice := parseNamespaceCSV(namespaces)
+
+	if len(nsSlice) > 0 {
+		saClient := kialiInterface.ClientFactory.GetSAClient(clusterName)
+		if saClient != nil {
+			valid, invalid := validateNamespacesViaK8s(saClient, nsSlice)
+			if len(invalid) > 0 && len(valid) == 0 {
+				return fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve application resources.", strings.Join(invalid, ", ")), http.StatusOK
+			}
+			nsSlice = valid
+		}
+	}
+
+	dynClient, dynErr := newDynamicClient(kialiInterface.ClientFactory, clusterName)
+	if dynErr != nil {
+		return "ArgoCD Application resources could not be queried. " +
+			"Please ensure ArgoCD is installed and the Kiali service account has permission to read Application CRDs.", http.StatusOK
+	}
+
+	ctx := kialiInterface.Request.Context()
+
+	if resourceName != "" {
+		if len(nsSlice) != 1 {
+			return "Exactly one namespace is required when getting a specific application by name.", http.StatusOK
+		}
+		resp, _ := getArgoCDAppDetail(ctx, dynClient, resourceName, nsSlice[0], clusterName)
+		return resp, http.StatusOK
+	}
+
+	if len(nsSlice) == 0 {
+		resp, _ := listArgoCDAppsAllNamespaces(ctx, dynClient, clusterName)
+		return resp, http.StatusOK
+	}
+	resp, _ := listArgoCDApps(ctx, dynClient, nsSlice, clusterName)
+	return resp, http.StatusOK
+}
+
+func validateNamespacesViaK8s(k8sClient kubernetes.ClientInterface, namespaces []string) (valid, invalid []string) {
+	for _, ns := range namespaces {
+		_, err := k8sClient.GetNamespace(ns)
+		if err != nil {
+			invalid = append(invalid, ns)
+		} else {
+			valid = append(valid, ns)
+		}
+	}
+	return
+}
+
+func parseNamespaceCSV(namespaces string) []string {
+	if namespaces == "" {
+		return nil
+	}
+	var result []string
+	for _, ns := range strings.Split(namespaces, ",") {
+		ns = strings.TrimSpace(ns)
+		if ns != "" {
+			result = append(result, ns)
+		}
+	}
+	return result
+}
+
+func listArgoCDAppsAllNamespaces(ctx context.Context, dynClient dynamic.Interface, cluster string) (interface{}, int) {
+	result, err := dynClient.Resource(argoCDApplicationGVR).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			return "No ArgoCD Application CRD found on this cluster. ArgoCD may not be installed.", http.StatusOK
+		}
+		if k8serrors.IsForbidden(err) {
+			return "Access denied: the Kiali service account does not have permission to list ArgoCD Applications.", http.StatusOK
+		}
+		log.Warningf("Error listing ArgoCD Applications across all namespaces: %v", err)
+		return "Could not list ArgoCD Applications. Check Kiali server logs for details.", http.StatusOK
+	}
+	var allItems []interface{}
+	for i := range result.Items {
+		allItems = append(allItems, result.Items[i].Object)
+	}
+	return TransformArgoCDAppListFromItems(allItems, cluster), http.StatusOK
+}
 
 // classifyError returns a clear, human-readable message for the chatbot
 // describing why a Kubernetes/Istio API call failed.
@@ -94,6 +227,17 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	if queryTime.IsZero() {
 		queryTime = util.Clock.Now()
 	}
+	if clusterName == "" {
+		clusterName = kialiInterface.Conf.KubernetesConfig.ClusterName
+	}
+
+	// ArgoCD Application CRs often live outside the mesh (e.g. the "argocd"
+	// namespace) so we bypass Kiali's mesh-scoped namespace access check and
+	// let Kubernetes RBAC on the dynamic client handle authorization.
+	if resourceType == "application" {
+		return executeArgoCDApplication(kialiInterface, namespaces, resourceName, clusterName)
+	}
+
 	var namespacesSlice []string
 	if namespaces != "" {
 		invalidNamespaces := []string{}
@@ -134,6 +278,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			namespacesSlice[i] = ns.Name
 		}
 	}
+
 	resourceArgs := ResourceDetailArgs{
 		ResourceType: resourceType,
 		Namespaces:   namespacesSlice,

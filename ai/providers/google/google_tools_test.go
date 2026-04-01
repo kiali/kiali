@@ -311,7 +311,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ListOrGetResources(t *testing.T)
 			"resourceType": {
 				Type:        genai.TypeString,
 				Description: "The type of resource to query.",
-				Enum:        []string{"service", "workload", "app", "namespace"},
+				Enum:        []string{"service", "workload", "app", "namespace", "application"},
 			},
 			"namespaces": {
 				Type:        genai.TypeString,

@@ -525,3 +525,271 @@ func TestTransformWorkloadDetail_NoIstio(t *testing.T) {
 	assert.Equal(t, "", result.Istio.ProxyVersion)
 	assert.Nil(t, result.Istio.SyncStatus)
 }
+
+// ---------------------------------------------------------------------------
+// ArgoCD Application transform tests
+// ---------------------------------------------------------------------------
+
+func TestNestedString(t *testing.T) {
+	obj := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name":      "guestbook",
+			"namespace": "argocd",
+		},
+		"status": map[string]interface{}{
+			"sync": map[string]interface{}{
+				"status":   "Synced",
+				"revision": "abc123",
+			},
+		},
+	}
+
+	assert.Equal(t, "guestbook", nestedString(obj, "metadata", "name"))
+	assert.Equal(t, "argocd", nestedString(obj, "metadata", "namespace"))
+	assert.Equal(t, "Synced", nestedString(obj, "status", "sync", "status"))
+	assert.Equal(t, "abc123", nestedString(obj, "status", "sync", "revision"))
+	assert.Equal(t, "", nestedString(obj, "nonexistent"))
+	assert.Equal(t, "", nestedString(obj, "metadata", "nonexistent"))
+	assert.Equal(t, "", nestedString(obj, "status", "sync", "nonexistent"))
+	assert.Equal(t, "", nestedString(nil))
+}
+
+func TestNestedMap(t *testing.T) {
+	obj := map[string]interface{}{
+		"spec": map[string]interface{}{
+			"source": map[string]interface{}{
+				"repoURL": "https://github.com/example/repo",
+			},
+		},
+	}
+
+	result := nestedMap(obj, "spec")
+	assert.NotNil(t, result)
+	assert.Contains(t, result, "source")
+
+	assert.Nil(t, nestedMap(obj, "nonexistent"))
+	assert.Nil(t, nestedMap(nil, "spec"))
+}
+
+func TestNestedSlice(t *testing.T) {
+	obj := map[string]interface{}{
+		"items": []interface{}{"a", "b", "c"},
+	}
+
+	result := nestedSlice(obj, "items")
+	assert.Len(t, result, 3)
+	assert.Nil(t, nestedSlice(obj, "nonexistent"))
+	assert.Nil(t, nestedSlice(nil, "items"))
+}
+
+func TestNestedInt64(t *testing.T) {
+	obj := map[string]interface{}{
+		"status": map[string]interface{}{
+			"history": map[string]interface{}{
+				"id_int":   int64(42),
+				"id_float": float64(7),
+			},
+		},
+	}
+
+	assert.Equal(t, int64(42), nestedInt64(obj, "status", "history", "id_int"))
+	assert.Equal(t, int64(7), nestedInt64(obj, "status", "history", "id_float"))
+	assert.Equal(t, int64(0), nestedInt64(obj, "nonexistent"))
+	assert.Equal(t, int64(0), nestedInt64(obj, "status", "history", "nonexistent"))
+}
+
+func TestTransformArgoCDAppDetail_FullStatus(t *testing.T) {
+	obj := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name":      "guestbook",
+			"namespace": "argocd",
+		},
+		"spec": map[string]interface{}{
+			"project": "default",
+			"source": map[string]interface{}{
+				"path":           "guestbook",
+				"repoURL":        "https://github.com/argoproj/argocd-example-apps.git",
+				"targetRevision": "HEAD",
+			},
+			"destination": map[string]interface{}{
+				"namespace": "default",
+				"server":    "https://kubernetes.default.svc",
+			},
+		},
+		"status": map[string]interface{}{
+			"sync": map[string]interface{}{
+				"revision": "abc123def",
+				"status":   "Synced",
+			},
+			"health": map[string]interface{}{
+				"status": "Healthy",
+			},
+			"sourceType": "Directory",
+			"history": []interface{}{
+				map[string]interface{}{
+					"deployedAt": "2026-03-01T10:00:00Z",
+					"id":         float64(0),
+					"revision":   "abc123def",
+					"source": map[string]interface{}{
+						"path":           "guestbook",
+						"repoURL":        "https://github.com/argoproj/argocd-example-apps.git",
+						"targetRevision": "HEAD",
+					},
+				},
+			},
+			"resources": []interface{}{
+				map[string]interface{}{
+					"kind":      "Service",
+					"name":      "guestbook-ui",
+					"namespace": "default",
+					"status":    "Synced",
+				},
+				map[string]interface{}{
+					"kind":      "Deployment",
+					"name":      "guestbook-ui",
+					"namespace": "default",
+					"status":    "Synced",
+				},
+			},
+			"operationState": map[string]interface{}{
+				"finishedAt": "2026-03-01T10:00:05Z",
+				"message":    "successfully synced (all tasks run)",
+				"phase":      "Succeeded",
+			},
+		},
+	}
+
+	result := TransformArgoCDAppDetail(obj, "test-cluster")
+
+	assert.Equal(t, "guestbook", result.Name)
+	assert.Equal(t, "argocd", result.Namespace)
+	assert.Equal(t, "test-cluster", result.Cluster)
+	assert.Equal(t, "default", result.Project)
+
+	assert.Equal(t, "https://github.com/argoproj/argocd-example-apps.git", result.Source.RepoURL)
+	assert.Equal(t, "guestbook", result.Source.Path)
+	assert.Equal(t, "HEAD", result.Source.TargetRevision)
+
+	assert.Equal(t, "default", result.Destination.Namespace)
+	assert.Equal(t, "https://kubernetes.default.svc", result.Destination.Server)
+
+	assert.Equal(t, "Synced", result.Sync.Status)
+	assert.Equal(t, "abc123def", result.Sync.Revision)
+
+	assert.Equal(t, "Healthy", result.Health.Status)
+	assert.Equal(t, "", result.Health.Message)
+
+	assert.Equal(t, "Directory", result.SourceType)
+
+	assert.Len(t, result.RevisionHistory, 1)
+	assert.Equal(t, int64(0), result.RevisionHistory[0].ID)
+	assert.Equal(t, "abc123def", result.RevisionHistory[0].Revision)
+	assert.Equal(t, "2026-03-01T10:00:00Z", result.RevisionHistory[0].DeployedAt)
+
+	assert.Len(t, result.Resources, 2)
+	assert.Equal(t, "Service", result.Resources[0].Kind)
+	assert.Equal(t, "guestbook-ui", result.Resources[0].Name)
+	assert.Equal(t, "Deployment", result.Resources[1].Kind)
+
+	assert.NotNil(t, result.OperationState)
+	assert.Equal(t, "Succeeded", result.OperationState.Phase)
+	assert.Equal(t, "successfully synced (all tasks run)", result.OperationState.Message)
+}
+
+func TestTransformArgoCDAppDetail_MinimalStatus(t *testing.T) {
+	obj := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name":      "myapp",
+			"namespace": "argocd",
+		},
+		"spec": map[string]interface{}{
+			"project": "default",
+			"source": map[string]interface{}{
+				"repoURL": "https://github.com/example/repo.git",
+			},
+			"destination": map[string]interface{}{
+				"server": "https://kubernetes.default.svc",
+			},
+		},
+		"status": map[string]interface{}{},
+	}
+
+	result := TransformArgoCDAppDetail(obj, "cluster1")
+
+	assert.Equal(t, "myapp", result.Name)
+	assert.Equal(t, "", result.Sync.Status)
+	assert.Equal(t, "", result.Health.Status)
+	assert.Empty(t, result.RevisionHistory)
+	assert.Empty(t, result.Resources)
+	assert.Nil(t, result.OperationState)
+}
+
+func TestTransformArgoCDAppDetail_NilFields(t *testing.T) {
+	obj := map[string]interface{}{}
+
+	result := TransformArgoCDAppDetail(obj, "cluster1")
+
+	assert.Equal(t, "", result.Name)
+	assert.Equal(t, "cluster1", result.Cluster)
+	assert.Empty(t, result.RevisionHistory)
+	assert.Empty(t, result.Resources)
+}
+
+func TestTransformArgoCDAppListFromItems(t *testing.T) {
+	items := []interface{}{
+		map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "guestbook",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+				},
+			},
+			"status": map[string]interface{}{
+				"sync":   map[string]interface{}{"status": "Synced"},
+				"health": map[string]interface{}{"status": "Healthy"},
+			},
+		},
+		map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "helm-guestbook",
+				"namespace": "argocd",
+			},
+			"spec": map[string]interface{}{
+				"source": map[string]interface{}{
+					"repoURL": "https://github.com/argoproj/argocd-example-apps.git",
+				},
+			},
+			"status": map[string]interface{}{
+				"sync":   map[string]interface{}{"status": "OutOfSync"},
+				"health": map[string]interface{}{"status": "Degraded"},
+			},
+		},
+	}
+
+	result := TransformArgoCDAppListFromItems(items, "test-cluster")
+
+	assert.Equal(t, "test-cluster", result.Cluster)
+	assert.Len(t, result.Applications, 2)
+
+	assert.Equal(t, "guestbook", result.Applications[0].Name)
+	assert.Equal(t, "argocd", result.Applications[0].Namespace)
+	assert.Equal(t, "Synced", result.Applications[0].SyncStatus)
+	assert.Equal(t, "Healthy", result.Applications[0].Health)
+	assert.Equal(t, "https://github.com/argoproj/argocd-example-apps.git", result.Applications[0].RepoURL)
+
+	assert.Equal(t, "helm-guestbook", result.Applications[1].Name)
+	assert.Equal(t, "OutOfSync", result.Applications[1].SyncStatus)
+	assert.Equal(t, "Degraded", result.Applications[1].Health)
+}
+
+func TestTransformArgoCDAppListFromItems_Empty(t *testing.T) {
+	result := TransformArgoCDAppListFromItems(nil, "test-cluster")
+	assert.Equal(t, "test-cluster", result.Cluster)
+	assert.Empty(t, result.Applications)
+
+	result = TransformArgoCDAppListFromItems([]interface{}{}, "test-cluster")
+	assert.Empty(t, result.Applications)
+}
