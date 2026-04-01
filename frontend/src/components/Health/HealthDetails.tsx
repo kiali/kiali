@@ -3,7 +3,7 @@ import * as H from '../../types/Health';
 import { PFColors } from '../Pf/PfColors';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { KialiIcon, createIcon } from 'config/KialiIcon';
+import { createIcon } from 'config/KialiIcon';
 import { ToleranceConfig } from 'types/ServerConfig';
 import { t } from 'utils/I18nUtils';
 
@@ -119,11 +119,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
 
     return showTraffic ? (
       <div key={idx}>
-        <>
-          {`${item.title}${item.text && item.text.length > 0 ? ': ' : ''} `}
-
-          {config && <KialiIcon.Info color={PFColors.Color200} />}
-        </>
+        {`${item.title}${item.text && item.text.length > 0 ? ': ' : ''} `}
 
         {item.text}
 
