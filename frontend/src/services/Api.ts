@@ -81,6 +81,7 @@ import {
 } from '../types/Workload';
 import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
+import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
 import { PersesInfo } from '../types/PersesInfo';
 import { ChatRequest } from 'types/Chatbot';
@@ -861,7 +862,7 @@ export const getClustersWorkloadHealth = async (
 
 export const getClustersHealth = async (
   namespaces: string,
-  duration: DurationInSeconds,
+  duration?: DurationInSeconds,
   cluster?: string,
   queryTime?: TimeInSeconds
 ): Promise<Map<string, NamespaceHealth>> => {
@@ -871,9 +872,11 @@ export const getClustersHealth = async (
     type: ''
   };
 
-  if (duration) {
+  if (duration !== undefined) {
     params.rateInterval = `${String(duration)}s`;
   }
+
+  const rateIntervalForContext = duration !== undefined ? duration : healthComputeDurationValidSeconds();
 
   if (queryTime) {
     params.queryTime = String(queryTime);
@@ -914,7 +917,7 @@ export const getClustersHealth = async (
         Object.keys(namespaceAppHealth[ns]).forEach(k => {
           if (namespaceAppHealth[ns][k]) {
             const ah = AppHealth.fromJson(ns, k, namespaceAppHealth[ns][k], {
-              rateInterval: duration
+              rateInterval: rateIntervalForContext
             });
             appHealth[k] = ah;
           }
@@ -926,7 +929,7 @@ export const getClustersHealth = async (
         Object.keys(namespaceServiceHealth[ns]).forEach(k => {
           if (namespaceServiceHealth[ns][k]) {
             const sh = ServiceHealth.fromJson(ns, k, namespaceServiceHealth[ns][k], {
-              rateInterval: duration
+              rateInterval: rateIntervalForContext
             });
             serviceHealth[k] = sh;
           }
@@ -938,7 +941,7 @@ export const getClustersHealth = async (
         Object.keys(namespaceWorkloadHealth[ns]).forEach(k => {
           if (namespaceWorkloadHealth[ns][k]) {
             const wh = WorkloadHealth.fromJson(ns, k, namespaceWorkloadHealth[ns][k], {
-              rateInterval: duration
+              rateInterval: rateIntervalForContext
             });
             workloadHealth[k] = wh;
           }
@@ -1130,9 +1133,8 @@ export const getServiceDetail = async (
     const info: ServiceDetailsInfo = r.data;
 
     if (info.health) {
-      // Default rate interval in backend = 600s
       info.health = ServiceHealth.fromJson(namespace, service, info.health, {
-        rateInterval: rateInterval ?? 600,
+        rateInterval: rateInterval ?? healthComputeDurationValidSeconds(),
         hasSidecar: info.istioSidecar,
         hasAmbient: info.isAmbient
       });

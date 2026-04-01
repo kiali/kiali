@@ -3,7 +3,7 @@ import { shallow, mount } from 'enzyme';
 import { Provider } from 'react-redux';
 import { NamespacesPageComponent } from '../NamespacesPage';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
-import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { IntervalInMilliseconds } from 'types/Common';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { RefreshIntervalManual } from '../../../config/Config';
@@ -25,6 +25,10 @@ jest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => 
   DefaultSecondaryMasthead: ({ children }: { children?: React.ReactNode }) => (
     <div data-test="DefaultSecondaryMasthead">{children}</div>
   )
+}));
+
+jest.mock('components/Time/HealthComputeDurationMastheadToolbar', () => ({
+  HealthComputeDurationMastheadToolbar: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 
 jest.mock('../../../services/Api', () => ({
@@ -107,7 +111,6 @@ const mockNamespaces: NamespaceInfo[] = [
 
 const defaultReduxProps = {
   columnOrder: [] as string[],
-  duration: 600 as DurationInSeconds,
   externalServices: [],
   hiddenColumnIds: [],
   istioAPIEnabled: true,

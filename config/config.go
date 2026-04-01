@@ -934,6 +934,11 @@ type HealthConfig struct {
 	Rate    []Rate        `yaml:"rate,omitempty" json:"rate,omitempty"`
 }
 
+// DefaultHealthRateInterval is the default Prometheus rate window for health: it matches the default
+// health_config.compute.duration (used by the health cache) and on-demand health APIs when the client
+// omits rateInterval.
+const DefaultHealthRateInterval = "5m"
+
 // Profiler provides settings about the profiler that can be used to debug the Kiali server internals.
 type Profiler struct {
 	Enabled bool `yaml:"enabled,omitempty"`
@@ -1119,7 +1124,7 @@ func NewConfig() (c *Config) {
 		},
 		HealthConfig: HealthConfig{
 			Compute: HealthCompute{
-				Duration:        "5m",
+				Duration:        DurationString(DefaultHealthRateInterval),
 				RefreshInterval: "3m",
 				Timeout:         "10m",
 			},

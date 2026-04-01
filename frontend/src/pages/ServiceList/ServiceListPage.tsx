@@ -18,11 +18,13 @@ import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { connect, DispatchProp } from 'react-redux';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
 import { validationKey } from '../../types/IstioConfigList';
-import { ServiceHealth, defaultHealthRateIntervalSec } from '../../types/Health';
+import { ServiceHealth } from '../../types/Health';
+import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { isMultiCluster, serverConfig } from 'config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
@@ -132,6 +134,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
   getServiceItem(data: ServiceList): ServiceListItem[] {
     if (data.services) {
+      const rateInterval = healthComputeDurationValidSeconds();
       return data.services.map(service => ({
         name: service.name,
         instanceType: InstanceType.Service,
@@ -142,7 +145,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         namespace: service.namespace,
         cluster: service.cluster,
         health: ServiceHealth.fromJson(service.namespace, service.name, service.health ?? {}, {
-          rateInterval: defaultHealthRateIntervalSec,
+          rateInterval,
           hasSidecar: service.istioSidecar,
           hasAmbient: service.isAmbient
         }),
@@ -234,7 +237,11 @@ class ServiceListPageComponent extends FilterComponent.Component<
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={<Refresh id="service-list-refresh" disabled={false} manageURL={true} />}
+          rightToolbar={
+            <HealthComputeDurationMastheadToolbar>
+              <Refresh id="service-list-refresh" disabled={false} manageURL={true} />
+            </HealthComputeDurationMastheadToolbar>
+          }
         />
         <RenderContent>
           <VirtualList

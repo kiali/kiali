@@ -17,11 +17,12 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
 /**
  * Fetches namespace health for a single cluster, chunking namespace lists to avoid long URIs.
  * When cluster is undefined, this fetches health for the "default" cluster (single-cluster mode).
+ * When duration is omitted, the server default rate interval is used (omit `rateInterval` query param).
  */
 export const fetchClusterNamespacesHealth = async (
   namespaces: string[],
-  duration: DurationInSeconds,
-  cluster?: string
+  cluster?: string,
+  duration?: DurationInSeconds
 ): Promise<Map<string, NamespaceHealth>> => {
   if (namespaces.length === 0) {
     return new Map<string, NamespaceHealth>();

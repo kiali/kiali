@@ -4,7 +4,6 @@ import { addDanger } from 'utils/AlertUtils';
 import * as API from 'services/Api';
 import { ApiError } from 'types/Api';
 import { Namespace } from 'types/Namespace';
-import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, statusFromString } from 'types/Health';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { isDataPlaneNamespace } from 'utils/NamespaceUtils';
@@ -40,7 +39,7 @@ const emptyResult: Omit<DataPlanesResult, 'isError' | 'isLoading' | 'refresh'> =
   total: 0
 };
 
-export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSeconds): DataPlanesResult => {
+export const useDataPlanes = (namespaces: Namespace[]): DataPlanesResult => {
   const { t } = useKialiTranslation();
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -89,7 +88,7 @@ export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSecon
 
         const clusterResults = await Promise.all(
           Array.from(namespacesByCluster.entries()).map(async ([cluster, nsNames]) => {
-            const healthMap = await fetchClusterNamespacesHealth(nsNames, duration, cluster);
+            const healthMap = await fetchClusterNamespacesHealth(nsNames, cluster);
             return { cluster, healthMap, nsNames };
           })
         );
@@ -159,7 +158,7 @@ export const useDataPlanes = (namespaces: Namespace[], duration: DurationInSecon
     return () => {
       active = false;
     };
-  }, [duration, namespaces, refreshIndex, t]);
+  }, [namespaces, refreshIndex, t]);
 
   return {
     ...result,

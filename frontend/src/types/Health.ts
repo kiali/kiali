@@ -428,9 +428,6 @@ interface HealthContext {
 
 const emptyRequestHealth = (): RequestHealth => ({ inbound: {}, outbound: {}, healthAnnotations: {} });
 
-/** Seconds; matches server default health when the UI sends no duration (`handlers.defaultHealthRateInterval`, 10m). */
-export const defaultHealthRateIntervalSec = 600;
-
 export class ServiceHealth extends Health {
   public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext): ServiceHealth =>
     new ServiceHealth(ns, srv, json.requests ?? emptyRequestHealth(), ctx, json.status);

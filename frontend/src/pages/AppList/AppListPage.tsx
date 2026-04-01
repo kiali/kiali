@@ -21,6 +21,7 @@ import { addError } from '../../utils/AlertUtils';
 import * as AppListClass from './AppListClass';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { Refresh } from '../../components/Refresh/Refresh';
+import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { isMultiCluster, serverConfig } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -189,7 +190,11 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={<Refresh className={refreshStyle} id="app-list-refresh" disabled={false} manageURL={true} />}
+          rightToolbar={
+            <HealthComputeDurationMastheadToolbar>
+              <Refresh className={refreshStyle} id="app-list-refresh" disabled={false} manageURL={true} />
+            </HealthComputeDurationMastheadToolbar>
+          }
         />
         <RenderContent>
           <VirtualList

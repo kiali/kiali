@@ -32,7 +32,7 @@ describe('NamespaceHealth service', () => {
       return m;
     });
 
-    const result = await fetchClusterNamespacesHealth(namespaces, 60, 'c1');
+    const result = await fetchClusterNamespacesHealth(namespaces, 'c1', 60);
 
     expect(API.getClustersHealth).toHaveBeenCalledTimes(3);
     expect(result.size).toBe(3);

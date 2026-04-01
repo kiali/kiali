@@ -101,7 +101,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       cluster !== this.state.cluster ||
       prevProps.serviceId.namespace !== this.props.serviceId.namespace ||
       prevProps.serviceId.service !== this.props.serviceId.service ||
-      prevProps.lastRefreshAt !== this.props.lastRefreshAt;
+      prevProps.lastRefreshAt !== this.props.lastRefreshAt ||
+      this.props.duration !== prevProps.duration;
     if (mustFetch || currentTab !== this.state.currentTab) {
       if (mustFetch || currentTab === 'info') {
         this.fetchService(cluster).then(() => {

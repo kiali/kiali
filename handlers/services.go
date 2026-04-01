@@ -155,7 +155,7 @@ func ServiceDetails(
 		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
-			rateInterval = defaultHealthRateInterval
+			rateInterval = config.DefaultHealthRateInterval
 		}
 
 		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
@@ -228,7 +228,7 @@ func ServiceUpdate(
 		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
-			rateInterval = defaultHealthRateInterval
+			rateInterval = config.DefaultHealthRateInterval
 		}
 
 		patchType := queryParams.Get("patchType")

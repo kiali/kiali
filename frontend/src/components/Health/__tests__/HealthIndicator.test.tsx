@@ -31,7 +31,7 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { rateInterval: 300, hasSidecar: true, hasAmbient: false },
       { status: 'Healthy' }
     );
 
@@ -50,7 +50,7 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { rateInterval: 300, hasSidecar: true, hasAmbient: false },
       { status: 'Degraded' }
     );
 
@@ -68,7 +68,7 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 2, currentReplicas: 2, desiredReplicas: 2, syncedProxies: 2 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { rateInterval: 300, hasSidecar: true, hasAmbient: false },
       { status: 'Not Ready' }
     );
 
@@ -86,7 +86,7 @@ describe('HealthIndicator', () => {
         { name: 'B', availableReplicas: 0, currentReplicas: 0, desiredReplicas: 0, syncedProxies: 0 }
       ],
       { inbound: {}, outbound: {}, healthAnnotations: {} },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { rateInterval: 300, hasSidecar: true, hasAmbient: false },
       { status: 'Not Ready' }
     );
 
@@ -105,7 +105,7 @@ describe('HealthIndicator', () => {
         outbound: { http: { '500': 0.4, '200': 2 } },
         healthAnnotations: {}
       },
-      { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+      { rateInterval: 300, hasSidecar: true, hasAmbient: false },
       { status: 'Failure' }
     );
 
@@ -129,7 +129,7 @@ describe('HealthIndicator', () => {
           }
         ],
         { inbound: {}, outbound: {}, healthAnnotations: {} },
-        { rateInterval: 600, hasSidecar: true, hasAmbient: false },
+        { rateInterval: 300, hasSidecar: true, hasAmbient: false },
         { status: 'Degraded' }
       );
 

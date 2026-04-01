@@ -19,8 +19,6 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const defaultHealthRateInterval = "10m"
-
 // ResponseHeader for indicating cached health data
 const HealthCachedHeader = "X-Kiali-Health-Cached"
 
@@ -87,7 +85,7 @@ func ClusterHealth(
 		}
 		rateInterval := params.Get("rateInterval")
 		if rateInterval == "" {
-			rateInterval = defaultHealthRateInterval
+			rateInterval = config.DefaultHealthRateInterval
 		}
 		result, healthCachedHeader, err := businessLayer.Health.GetNamespaceHealth(r.Context(), nss, cluster, healthTypes, rateInterval)
 		if err != nil {
@@ -109,7 +107,7 @@ type baseHealthParams struct {
 	// The rate interval used for fetching error rate
 	//
 	// in: query
-	// default: 10m
+	// default: 5m (matches health_config.compute.duration)
 	RateInterval string `json:"rateInterval"`
 	// The time to use for the prometheus query
 	QueryTime time.Time
@@ -117,7 +115,7 @@ type baseHealthParams struct {
 
 func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request) {
 	queryParams := r.URL.Query()
-	p.RateInterval = defaultHealthRateInterval
+	p.RateInterval = config.DefaultHealthRateInterval
 	p.QueryTime = util.Clock.Now()
 	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
 		p.RateInterval = rateInterval

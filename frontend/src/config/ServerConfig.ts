@@ -39,6 +39,13 @@ const durationsTuples: [number, string][] = [
   [2592000, '30d']
 ];
 
+/** Maps duration dropdown / health_config.compute.duration labels (CRD enum) to seconds. */
+export const durationLabelToSeconds = (label: string): number | undefined => {
+  const trimmed = label.trim();
+  const found = durationsTuples.find(([, l]) => l === trimmed);
+  return found ? found[0] : undefined;
+};
+
 const computeValidDurations = (cfg: ComputedServerConfig): void => {
   const tsdbRetention = cfg.prometheus.storageTsdbRetention;
   const scrapeInterval = cfg.prometheus.globalScrapeInterval;

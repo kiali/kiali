@@ -2,28 +2,23 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../store/Store';
 import {
-  durationSelector,
   languageSelector,
   meshWideMTLSStatusSelector,
   minTLSVersionSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { NamespaceInfo } from '../../types/NamespaceInfo';
 import { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { RenderContent } from '../../components/Nav/Page';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from '../../components/Refresh/Refresh';
+import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
-import {
-  isCurrentSortAscending,
-  currentSortField,
-  runFilters,
-  currentDuration
-} from '../../components/FilterList/FilterHelper';
+import { isCurrentSortAscending, currentSortField, runFilters } from '../../components/FilterList/FilterHelper';
 import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
 import { sortFields, sortFunc } from './Sorts';
@@ -57,6 +52,7 @@ import { gvkType, IstioConfigList } from 'types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
+import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { config as virtualListConfig } from '../../components/VirtualList/Config';
 import { ColumnManagementModal, ColumnManagementModalColumn } from '@patternfly/react-component-groups';
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
@@ -95,7 +91,6 @@ type State = {
 
 type ReduxStateProps = {
   columnOrder: string[];
-  duration: DurationInSeconds;
   externalServices: any[];
   hiddenColumnIds: string[];
   istioAPIEnabled: boolean;
@@ -117,7 +112,7 @@ type NamespacesProps = ReduxStateProps &
   };
 
 export class NamespacesPageComponent extends React.Component<NamespacesProps, State> {
-  private sFNamespacesToolbar: StatefulFiltersRef = React.createRef();
+  private sFStatefulFilters: StatefulFiltersRef = React.createRef();
   private promises = new PromisesRegistry();
 
   // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
@@ -127,9 +122,9 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   private kioskNamespacesAction = (
     showType: Show,
     namespace: string,
-    duration: DurationInSeconds,
     refreshInterval: IntervalInMilliseconds
   ): void => {
+    const duration = healthComputeDurationValidSeconds();
     // For GRAPH and ISTIO_CONFIG, use the existing kiosk action
     // Convert Show enum from Namespaces to the one expected by kiosk action
     if (showType === Show.GRAPH || showType === Show.ISTIO_CONFIG) {
@@ -153,7 +148,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       default:
         return;
     }
-    showInParent += `&duration=${duration}&refresh=${refreshInterval}`;
+    showInParent += `&duration=${String(duration)}&refresh=${refreshInterval}`;
 
     // Use the same sendParentMessage logic from KioskActions
     const targetOrigin = store.getState().globalState.kiosk;
@@ -270,14 +265,15 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   componentDidUpdate(prevProps: NamespacesProps): void {
-    if (
+    const refreshChanged =
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
         (prevProps.navCollapse !== this.props.navCollapse ||
           (prevProps.refreshInterval !== this.props.refreshInterval &&
             (this.props.refreshInterval !== RefreshIntervalPause ||
-              prevProps.refreshInterval === RefreshIntervalManual))))
-    ) {
+              prevProps.refreshInterval === RefreshIntervalManual))));
+
+    if (refreshChanged) {
       this.load();
     }
   }
@@ -366,7 +362,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   fetchHealth = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
-    const duration = currentDuration();
     const uniqueClusters = new Set<string>();
 
     this.state.namespaces.forEach(namespace => {
@@ -377,9 +372,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
     uniqueClusters.forEach(cluster => {
       this.promises
-        .registerChained('health', undefined, () =>
-          this.fetchHealthForCluster(this.state.namespaces, cluster, duration)
-        )
+        .registerChained('health', undefined, () => this.fetchHealthForCluster(this.state.namespaces, cluster))
         .then(() => {
           this.setState(prevState => {
             let newNamespaces = prevState.namespaces.slice();
@@ -394,17 +387,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     });
   };
 
-  fetchHealthForCluster = async (
-    namespaces: NamespaceInfo[],
-    cluster: string,
-    duration: DurationInSeconds
-  ): Promise<void> => {
+  fetchHealthForCluster = async (namespaces: NamespaceInfo[], cluster: string): Promise<void> => {
     try {
       // Filter namespaces for this cluster
       const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
       const healthByNamespace = await fetchClusterNamespacesHealth(
         clusterNamespaces.map(ns => ns.name),
-        duration,
         cluster
       );
 
@@ -725,15 +713,13 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
                 isGroup: true,
                 isSeparator: false,
                 title: 'Graph',
-                action: (ns: string) =>
-                  this.kioskNamespacesAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
+                action: (ns: string) => this.kioskNamespacesAction(Show.GRAPH, ns, this.props.refreshInterval)
               },
               {
                 isGroup: true,
                 isSeparator: false,
                 title: 'Istio Config',
-                action: (ns: string) =>
-                  this.kioskNamespacesAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
+                action: (ns: string) => this.kioskNamespacesAction(Show.ISTIO_CONFIG, ns, this.props.refreshInterval)
               }
             ]
           }
@@ -1094,7 +1080,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
     if (destination) {
       if (isParentKiosk(this.props.kiosk)) {
-        this.kioskNamespacesAction(showType, namespace, this.props.duration, this.props.refreshInterval);
+        this.kioskNamespacesAction(showType, namespace, this.props.refreshInterval);
       } else {
         router.navigate(destination);
       }
@@ -1145,12 +1131,17 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     }
     const userHidden = this.props.hiddenColumnIds;
     const allHiddenColumns = hiddenColumns.concat(userHidden);
+    const healthListDuration = healthComputeDurationValidSeconds();
 
     return (
       <>
         <DefaultSecondaryMasthead
           hideNamespaceSelector={true}
-          rightToolbar={<Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />}
+          rightToolbar={
+            <HealthComputeDurationMastheadToolbar>
+              <Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />
+            </HealthComputeDurationMastheadToolbar>
+          }
         />
         <RenderContent>
           <VirtualList
@@ -1159,7 +1150,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             refreshInterval={this.props.refreshInterval}
             rows={filteredNamespaces}
             sort={this.sort}
-            statefulProps={this.sFNamespacesToolbar}
+            statefulProps={this.sFStatefulFilters}
             actions={namespaceActions}
             columnOrder={this.props.columnOrder}
             hiddenColumns={allHiddenColumns}
@@ -1168,7 +1159,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             <StatefulFilters
               initialFilters={availableFilters}
               onFilterChange={this.onChange}
-              ref={this.sFNamespacesToolbar}
+              ref={this.sFStatefulFilters}
               rightToolbar={
                 <Tooltip content={t('Manage columns')}>
                   <Button
@@ -1225,7 +1216,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
               ns => ns.name === this.state.nsTarget && ns.cluster === this.state.clusterTarget
             )[0]
           }
-          duration={this.props.duration}
+          duration={healthListDuration}
           load={this.onChange}
         />
       </>
@@ -1235,7 +1226,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   columnOrder: state.namespacesList.columnOrder,
-  duration: durationSelector(state),
   externalServices: state.statusState.externalServices,
   hiddenColumnIds: state.namespacesList.hiddenColumnIds,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,

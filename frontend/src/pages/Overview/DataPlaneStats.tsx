@@ -17,9 +17,6 @@ import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { useSelector } from 'react-redux';
-import { durationSelector } from 'store/Selectors';
-import { DurationInSeconds } from 'types/Common';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, statusFromString } from 'types/Health';
 import { NamespaceWithHealthStatus, useDataPlanes } from 'hooks/dataPlanes';
 import {
@@ -101,7 +98,6 @@ export const DataPlaneStats: React.FC = () => {
     namespaces,
     refresh: refreshNamespaces
   } = useNamespaces();
-  const duration = useSelector(durationSelector) as DurationInSeconds;
   const {
     ambient,
     healthy,
@@ -114,7 +110,7 @@ export const DataPlaneStats: React.FC = () => {
     refresh,
     sidecar,
     total
-  } = useDataPlanes(namespaces, duration);
+  } = useDataPlanes(namespaces);
 
   const popoverContentFor = (
     list: NamespaceWithHealthStatus[],

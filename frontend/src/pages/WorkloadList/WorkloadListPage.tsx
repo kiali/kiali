@@ -18,9 +18,11 @@ import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
 import { connect, DispatchProp } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
+import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { sortIstioReferences } from '../AppList/FiltersAndSorts';
-import { WorkloadHealth, defaultHealthRateIntervalSec } from '../../types/Health';
+import { WorkloadHealth } from '../../types/Health';
+import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
@@ -131,6 +133,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
   getDeploymentItems(data: ClusterWorkloadsResponse): WorkloadListItem[] {
     if (data.workloads) {
+      const rateInterval = healthComputeDurationValidSeconds();
       return data.workloads.map(deployment => ({
         cluster: deployment.cluster,
         namespace: deployment.namespace,
@@ -146,7 +149,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         isZtunnel: deployment.isZtunnel,
         additionalDetailSample: deployment.additionalDetailSample,
         health: WorkloadHealth.fromJson(deployment.namespace, deployment.name, deployment.health ?? {}, {
-          rateInterval: defaultHealthRateIntervalSec,
+          rateInterval,
           hasSidecar: deployment.istioSidecar,
           hasAmbient: deployment.isAmbient
         }),
@@ -228,7 +231,11 @@ class WorkloadListPageComponent extends FilterComponent.Component<
     return (
       <>
         <DefaultSecondaryMasthead
-          rightToolbar={<Refresh id="workload-list-refresh" disabled={false} manageURL={true} />}
+          rightToolbar={
+            <HealthComputeDurationMastheadToolbar>
+              <Refresh id="workload-list-refresh" disabled={false} manageURL={true} />
+            </HealthComputeDurationMastheadToolbar>
+          }
         />
         <RenderContent>
           <VirtualList

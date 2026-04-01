@@ -42,7 +42,6 @@ jest.mock('app/History', () => ({
 }));
 
 const useNamespacesMock = require('hooks/namespaces').useNamespaces as jest.Mock;
-const useSelectorMock = require('react-redux').useSelector as jest.Mock;
 const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 
 type TestNamespaceHealth = {
@@ -94,7 +93,6 @@ const mountAndFlush = async (): Promise<ReactWrapper> => {
 describe('Overview DataPlaneStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useSelectorMock.mockReturnValue(60);
     useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
   });
 
@@ -122,11 +120,7 @@ describe('Overview DataPlaneStats', () => {
 
     expect(NamespaceHealthService.fetchClusterNamespacesHealth).toHaveBeenCalledTimes(1);
     // Only 'amb', 'sc1', 'sc2' should be requested (no control-plane, no out-of-mesh)
-    expect(NamespaceHealthService.fetchClusterNamespacesHealth).toHaveBeenCalledWith(
-      ['amb', 'sc1', 'sc2'],
-      60,
-      undefined
-    );
+    expect(NamespaceHealthService.fetchClusterNamespacesHealth).toHaveBeenCalledWith(['amb', 'sc1', 'sc2'], undefined);
 
     expect(wrapper.text()).toContain('Data planes (3)');
   });

@@ -1,14 +1,13 @@
 import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { serverConfig } from 'config/ServerConfig';
 import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from 'components/Refresh/Refresh';
+import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { useKialiDispatch } from 'hooks/redux';
 import { useManualRefreshState } from 'hooks/refresh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { setAIContext } from 'helpers/ChatAI';
-import { t } from 'utils/I18nUtils';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
@@ -27,22 +26,9 @@ const gridStyle = kialiStyle({
   overflow: 'auto'
 });
 
-const durationLabelStyle = kialiStyle({
-  fontSize: '0.875rem',
-  fontWeight: 400,
-  color: 'var(--pf-global--Color--200)',
-  whiteSpace: 'nowrap'
-});
-
 const secondRowItemStyle = kialiStyle({
   display: 'flex',
   minHeight: '50vh'
-});
-
-const rightToolbarStyle = kialiStyle({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem'
 });
 
 export const OverviewPage: React.FC = () => {
@@ -53,17 +39,14 @@ export const OverviewPage: React.FC = () => {
     setAIContext(dispatch, 'Overview page');
   }, [dispatch]);
 
-  const durationLabel = serverConfig.healthConfig?.compute?.duration ?? '5m';
-
   return (
     <div className={overviewPageStyle}>
       <DefaultSecondaryMasthead
         hideNamespaceSelector={true}
         rightToolbar={
-          <div className={rightToolbarStyle}>
-            <span className={durationLabelStyle}>{t('Last {{duration}}', { duration: durationLabel })}</span>
+          <HealthComputeDurationMastheadToolbar>
             <Refresh id="namespaces-list-refresh" disabled={false} manageURL={true} />
-          </div>
+          </HealthComputeDurationMastheadToolbar>
         }
       />
 
