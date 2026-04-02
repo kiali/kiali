@@ -76,9 +76,11 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 	kubernetes.SetConfig(t, *conf)
 
 	var objs []runtime.Object
+	managedNs := make([]models.Namespace, 0, len(namespaces))
 	for _, obj := range namespaces {
 		o := obj
 		objs = append(objs, &o)
+		managedNs = append(managedNs, models.Namespace{Name: o.Name, Cluster: conf.KubernetesConfig.ClusterName})
 	}
 	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
 	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
@@ -87,9 +89,11 @@ func testPerfScenario(exStatus string, namespaces []core_v1.Namespace, drs []*ne
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: config.IstioNamespaceDefault,
-				Revision:        "default",
-				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				Cluster:           &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IstiodNamespace:   config.IstioNamespaceDefault,
+				ManagedNamespaces: managedNs,
+				Revision:          "default",
+				RootNamespace:     config.IstioNamespaceDefault,
 				MeshConfig: &models.MeshConfig{
 					MeshConfig: &istiov1alpha1.MeshConfig{
 						EnableAutoMtls: wrapperspb.Bool(autoMtls),

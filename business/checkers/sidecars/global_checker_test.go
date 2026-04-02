@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -17,8 +16,7 @@ func TestSidecarWithoutSelectorOutOfControlPlane(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	vals, valid := NewGlobalChecker(
-		config.DefaultClusterID,
-		&istiotest.FakeDiscovery{},
+		config.IstioNamespaceDefault,
 		data.CreateSidecar("sidecar1", "bookinfo"),
 	).Check()
 
@@ -32,8 +30,7 @@ func TestSidecarWithoutSelectorInControlPlane(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := NewGlobalChecker(
-		config.DefaultClusterID,
-		&istiotest.FakeDiscovery{},
+		config.IstioNamespaceDefault,
 		data.CreateSidecar("sidecar1", config.IstioNamespaceDefault),
 	).Check()
 
@@ -46,8 +43,7 @@ func TestSidecarWithSelectorOutOfControlPlane(t *testing.T) {
 	config.Set(config.NewConfig())
 
 	vals, valid := NewGlobalChecker(
-		config.DefaultClusterID,
-		&istiotest.FakeDiscovery{},
+		config.IstioNamespaceDefault,
 		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", "bookinfo")),
@@ -63,8 +59,7 @@ func TestSidecarWithSelectorInControlPlane(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := NewGlobalChecker(
-		config.DefaultClusterID,
-		&istiotest.FakeDiscovery{},
+		config.IstioNamespaceDefault,
 		data.AddSelectorToSidecar(map[string]string{
 			"app": "reviews",
 		}, data.CreateSidecar("sidecar1", config.IstioNamespaceDefault)),

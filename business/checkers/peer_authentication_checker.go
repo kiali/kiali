@@ -1,14 +1,11 @@
 package checkers
 
 import (
-	"context"
-
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/peerauthentications"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -16,17 +13,18 @@ import (
 type PeerAuthenticationChecker struct {
 	Cluster               string
 	Conf                  *config.Config
-	Discovery             istio.MeshDiscovery
 	MTLSDetails           kubernetes.MTLSDetails
 	PeerAuthentications   []*security_v1.PeerAuthentication
+	RootNamespaces        map[string]string
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
-// NewPeerAuthenticationChecker creates a new PeerAuthenticationChecker with all attributes
+// NewPeerAuthenticationChecker creates a new PeerAuthenticationChecker with all attributes.
+// rootNamespaces maps each namespace to its control plane's root namespace.
 func NewPeerAuthenticationChecker(
 	cluster string,
 	conf *config.Config,
-	discovery istio.MeshDiscovery,
+	rootNamespaces map[string]string,
 	mtlsDetails kubernetes.MTLSDetails,
 	peerAuthentications []*security_v1.PeerAuthentication,
 	workloadsPerNamespace map[string]models.Workloads,
@@ -34,9 +32,9 @@ func NewPeerAuthenticationChecker(
 	return PeerAuthenticationChecker{
 		Cluster:               cluster,
 		Conf:                  conf,
-		Discovery:             discovery,
 		MTLSDetails:           mtlsDetails,
 		PeerAuthentications:   peerAuthentications,
+		RootNamespaces:        rootNamespaces,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 	}
 }
@@ -65,8 +63,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 		matchLabels = peerAuthn.Spec.Selector.MatchLabels
 	}
 	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(kubernetes.PeerAuthentications, matchLabels, m.WorkloadsPerNamespace))
-	rootNamespace := m.Discovery.GetRootNamespace(context.TODO(), m.Cluster, peerAuthn.Namespace)
-	isRootNamespace := rootNamespace == peerAuthn.Namespace
+	isRootNamespace := m.RootNamespaces[peerAuthn.Namespace] == peerAuthn.Namespace
 
 	if isRootNamespace {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})

@@ -79,11 +79,19 @@ func (m *healthMonitor) Start(ctx context.Context) {
 	}
 	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", m.conf.HealthConfig.Compute.RefreshInterval, m.conf.HealthConfig.Compute.Timeout)
 
-	// Prime the cache with an initial refresh (with timeout)
+	// Prime the cache with an initial refresh (with timeout).
+	// Recover from panics so that a failure here does not crash the entire process.
 	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-	if err := m.RefreshHealth(refreshCtx); err != nil {
-		m.logger.Error().Err(err).Msg("Initial health refresh failed")
-	}
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				m.logger.Error().Interface("panic", r).Msg("Panic during initial health refresh")
+			}
+		}()
+		if err := m.RefreshHealth(refreshCtx); err != nil {
+			m.logger.Error().Err(err).Msg("Initial health refresh failed")
+		}
+	}()
 	cancel()
 
 	go func() {
@@ -93,11 +101,18 @@ func (m *healthMonitor) Start(ctx context.Context) {
 				m.logger.Info().Msg("Stopping health monitor")
 				return
 			case <-time.After(interval):
-				refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-				if err := m.RefreshHealth(refreshCtx); err != nil {
-					m.logger.Error().Err(err).Msg("Health refresh failed")
-				}
-				cancel()
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							m.logger.Error().Interface("panic", r).Msg("Panic during health refresh")
+						}
+					}()
+					refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+					defer cancel()
+					if err := m.RefreshHealth(refreshCtx); err != nil {
+						m.logger.Error().Err(err).Msg("Health refresh failed")
+					}
+				}()
 			}
 		}
 	}()

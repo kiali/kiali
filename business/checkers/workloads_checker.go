@@ -7,7 +7,6 @@ import (
 	ambient "github.com/kiali/kiali/business/checkers/ambient"
 	"github.com/kiali/kiali/business/checkers/workloads"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/models"
 )
 
@@ -17,17 +16,18 @@ type WorkloadChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
 	Conf                  *config.Config
-	Discovery             istio.MeshDiscovery
 	Namespaces            models.Namespaces
+	RootNamespaces        map[string]string
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
-// NewWorkloadChecker creates a new WorkloadChecker with all attributes
+// NewWorkloadChecker creates a new WorkloadChecker with all attributes.
+// rootNamespaces maps each namespace to its control plane's root namespace.
 func NewWorkloadChecker(
 	authorizationPolicies []*security_v1.AuthorizationPolicy,
 	cluster string,
 	conf *config.Config,
-	discovery istio.MeshDiscovery,
+	rootNamespaces map[string]string,
 	namespaces models.Namespaces,
 	workloadsPerNamespace map[string]models.Workloads,
 ) WorkloadChecker {
@@ -35,8 +35,8 @@ func NewWorkloadChecker(
 		AuthorizationPolicies: authorizationPolicies,
 		Cluster:               cluster,
 		Conf:                  conf,
-		Discovery:             discovery,
 		Namespaces:            namespaces,
+		RootNamespaces:        rootNamespaces,
 		WorkloadsPerNamespace: workloadsPerNamespace,
 	}
 }
@@ -59,7 +59,7 @@ func (w WorkloadChecker) runChecks(workload *models.Workload, namespace string) 
 	key, rrValidation := EmptyValidValidation(wlName, namespace, schema.GroupVersionKind{Group: "", Version: "", Kind: WorkloadCheckerType}, w.Cluster)
 
 	enabledCheckers := []Checker{
-		workloads.NewUncoveredWorkloadChecker(w.AuthorizationPolicies, w.Discovery, namespace, workload),
+		workloads.NewUncoveredWorkloadChecker(w.AuthorizationPolicies, w.RootNamespaces, namespace, workload),
 		ambient.NewAmbientWorkloadChecker(w.Cluster, w.Conf, workload, namespace, w.Namespaces, w.AuthorizationPolicies),
 	}
 

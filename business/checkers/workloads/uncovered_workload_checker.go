@@ -1,28 +1,26 @@
 package workloads
 
 import (
-	"context"
-
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/models"
 )
 
 type UncoveredWorkloadChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
-	Discovery             istio.MeshDiscovery
 	Namespace             string
+	RootNamespaces        map[string]string
 	Workload              *models.Workload
 }
 
-// NewUncoveredWorkloadChecker creates a new UncoveredWorkloadChecker with all required fields
-func NewUncoveredWorkloadChecker(authorizationPolicies []*security_v1.AuthorizationPolicy, discovery istio.MeshDiscovery, namespace string, workload *models.Workload) UncoveredWorkloadChecker {
+// NewUncoveredWorkloadChecker creates a new UncoveredWorkloadChecker with all required fields.
+// rootNamespaces maps each namespace to its control plane's root namespace.
+func NewUncoveredWorkloadChecker(authorizationPolicies []*security_v1.AuthorizationPolicy, rootNamespaces map[string]string, namespace string, workload *models.Workload) UncoveredWorkloadChecker {
 	return UncoveredWorkloadChecker{
 		AuthorizationPolicies: authorizationPolicies,
-		Discovery:             discovery,
 		Namespace:             namespace,
+		RootNamespaces:        rootNamespaces,
 		Workload:              workload,
 	}
 }
@@ -55,8 +53,7 @@ func (ucw UncoveredWorkloadChecker) hasCoveringAuthPolicy(wlSelector labels.Labe
 		if len(apLabels) > 0 {
 			apSelector = labels.SelectorFromSet(apLabels)
 		}
-		rootNamespace := ucw.Discovery.GetRootNamespace(context.TODO(), ucw.Workload.Cluster, apNamespace)
-		if rootNamespace == apNamespace || apNamespace == ucw.Namespace {
+		if ucw.RootNamespaces[ucw.Namespace] == apNamespace || apNamespace == ucw.Namespace {
 			if apSelector == nil || apSelector.Matches(wlSelector) {
 				return true
 			}
