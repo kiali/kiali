@@ -7,7 +7,6 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -31,7 +30,7 @@ func TestCoveredworkloads(t *testing.T) {
 		// while other auths has diffrenet namespaces than current workload
 		vals, valid = UncoveredWorkloadChecker{
 			AuthorizationPolicies: variedAuthPolicies1(),
-			Discovery:             &istiotest.FakeDiscovery{},
+			RootNamespaces:        testRootNamespaces(),
 			Namespace:             ns2,
 			Workload:              wl,
 		}.Check()
@@ -43,7 +42,7 @@ func TestCoveredworkloads(t *testing.T) {
 		// while  other auths has diffrenet namespaces than current workload
 		vals, valid = UncoveredWorkloadChecker{
 			AuthorizationPolicies: variedAuthPolicies2(),
-			Discovery:             &istiotest.FakeDiscovery{},
+			RootNamespaces:        testRootNamespaces(),
 			Namespace:             ns2,
 			Workload:              wl,
 		}.Check()
@@ -57,7 +56,7 @@ func TestCoveredworkloads(t *testing.T) {
 	workloadsNS1 := workloadsNS1()
 	vals, valid = UncoveredWorkloadChecker{
 		AuthorizationPolicies: authorizationPoliciesNS1(),
-		Discovery:             &istiotest.FakeDiscovery{},
+		RootNamespaces:        testRootNamespaces(),
 		Namespace:             ns1,
 		Workload:              workloadsNS1[1],
 	}.Check()
@@ -94,7 +93,7 @@ func TestUnCoveredWorkloads(t *testing.T) {
 func testFailure(assert *assert.Assertions, ns string, authpolicies []*security_v1.AuthorizationPolicy, workload *models.Workload) {
 	vals, valid := UncoveredWorkloadChecker{
 		AuthorizationPolicies: authpolicies,
-		Discovery:             &istiotest.FakeDiscovery{},
+		RootNamespaces:        testRootNamespaces(),
 		Namespace:             ns,
 		Workload:              workload,
 	}.Check()
@@ -158,4 +157,12 @@ func variedAuthPolicies3() []*security_v1.AuthorizationPolicy {
 	auths = append(auths, authorizationPoliciesNS1()...)
 
 	return auths
+}
+
+func testRootNamespaces() map[string]string {
+	return map[string]string{
+		config.IstioNamespaceDefault: config.IstioNamespaceDefault,
+		ns1:                          config.IstioNamespaceDefault,
+		ns2:                          config.IstioNamespaceDefault,
+	}
 }

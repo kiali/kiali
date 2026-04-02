@@ -6,7 +6,6 @@ import (
 	"github.com/kiali/kiali/business/checkers/common"
 	"github.com/kiali/kiali/business/checkers/sidecars"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -14,19 +13,20 @@ import (
 type SidecarChecker struct {
 	Cluster               string
 	Conf                  *config.Config
-	Discovery             istio.MeshDiscovery
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespaces            models.Namespaces
+	RootNamespaces        map[string]string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Sidecars              []*networking_v1.Sidecar
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
-// NewSidecarChecker creates a new SidecarChecker with all required fields
+// NewSidecarChecker creates a new SidecarChecker with all required fields.
+// rootNamespaces maps each namespace to its control plane's root namespace.
 func NewSidecarChecker(
 	cluster string,
 	conf *config.Config,
-	discovery istio.MeshDiscovery,
+	rootNamespaces map[string]string,
 	namespaces models.Namespaces,
 	kubeServiceHosts kubernetes.KubeServiceHosts,
 	serviceEntries []*networking_v1.ServiceEntry,
@@ -36,9 +36,9 @@ func NewSidecarChecker(
 	return SidecarChecker{
 		Cluster:               cluster,
 		Conf:                  conf,
-		Discovery:             discovery,
 		KubeServiceHosts:      kubeServiceHosts,
 		Namespaces:            namespaces,
+		RootNamespaces:        rootNamespaces,
 		ServiceEntries:        serviceEntries,
 		Sidecars:              sidecars,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -90,7 +90,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, KubeServiceHosts: s.KubeServiceHosts},
-		sidecars.NewGlobalChecker(s.Cluster, s.Discovery, sidecar),
+		sidecars.NewGlobalChecker(s.RootNamespaces[sidecar.Namespace], sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}
 

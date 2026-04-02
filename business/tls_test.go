@@ -414,10 +414,15 @@ func testNamespaceScenario(exStatus string, drs []*networking_v1.DestinationRule
 	discovery := &istiotest.FakeDiscovery{
 		MeshReturn: models.Mesh{
 			ControlPlanes: []models.ControlPlane{{
-				IstiodNamespace: config.IstioNamespaceDefault,
-				Revision:        "default",
 				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
-				MeshConfig:      meshConfig(autoMtls),
+				IstiodNamespace: config.IstioNamespaceDefault,
+				ManagedNamespaces: []models.Namespace{
+					{Name: "bookinfo", Cluster: conf.KubernetesConfig.ClusterName},
+					{Name: "foo", Cluster: conf.KubernetesConfig.ClusterName},
+				},
+				MeshConfig:    meshConfig(autoMtls),
+				Revision:      "default",
+				RootNamespace: config.IstioNamespaceDefault,
 			}},
 		},
 	}

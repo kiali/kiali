@@ -120,6 +120,11 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	)
 	defer end()
 
+	mesh, err := in.discovery.Mesh(ctx)
+	if err != nil {
+		return models.MTLSStatus{}, err
+	}
+
 	allNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		return models.MTLSStatus{}, err
@@ -136,7 +141,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	}
 
 	pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace})
-	rootNamespace := in.discovery.GetRootNamespace(ctx, cluster, namespace)
+	rootNamespace := rootNamespaceFromMesh(mesh, cluster, namespace)
 	if rootNamespace == namespace {
 		pasAll = []*security_v1.PeerAuthentication{}
 	}
@@ -154,7 +159,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 	mtlsStatus := mtls.MtlsStatus{
 		PeerAuthentications: pas,
 		DestinationRules:    drs,
-		AutoMtlsEnabled:     in.hasAutoMTLSEnabled(cluster, ns),
+		AutoMtlsEnabled:     autoMTLSFromMesh(mesh, cluster, namespace),
 		AllowPermissive:     false,
 	}
 
@@ -193,9 +198,11 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 
 	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces)
 
+	mesh, _ := in.discovery.Mesh(ctx)
+
 	for _, namespace := range namespaces {
 		pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace.Name})
-		rootNamespace := in.discovery.GetRootNamespace(ctx, namespace.Cluster, namespace.Name)
+		rootNamespace := rootNamespaceFromMesh(mesh, namespace.Cluster, namespace.Name)
 		if rootNamespace == namespace.Name {
 			pasAll = []*security_v1.PeerAuthentication{}
 		}
@@ -204,7 +211,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		mtlsStatus := mtls.MtlsStatus{
 			PeerAuthentications: pas,
 			DestinationRules:    istioConfigList.DestinationRules,
-			AutoMtlsEnabled:     in.hasAutoMTLSEnabled(cluster, &namespace),
+			AutoMtlsEnabled:     autoMTLSFromMesh(mesh, cluster, namespace.Name),
 			AllowPermissive:     false,
 		}
 
@@ -381,26 +388,26 @@ func (in *TLSService) peerAuthenticationHasValidationErrors(cluster string, peer
 	return false
 }
 
-func (in *TLSService) hasAutoMTLSEnabled(cluster string, namespace *models.Namespace) bool {
-	mesh, err := in.discovery.Mesh(context.TODO())
-	if err != nil {
+func rootNamespaceFromMesh(mesh *models.Mesh, cluster, namespace string) string {
+	if mesh == nil {
+		return ""
+	}
+	cp, err := mesh.ControlPlaneForNamespace(cluster, namespace)
+	if err != nil || cp == nil {
+		return ""
+	}
+	return cp.RootNamespace
+}
+
+// autoMTLSFromMesh returns whether auto mTLS is enabled for the control plane managing the given namespace.
+// Uses ControlPlaneForNamespace to find the correct CP without requiring revision labels.
+func autoMTLSFromMesh(mesh *models.Mesh, cluster, namespace string) bool {
+	if mesh == nil {
 		return true
 	}
-
-	// Find the controlplane that is controlling that namespace.
-	rev := namespace.Labels[config.IstioRevisionLabel]
-	if rev == "" {
-		// Assume that if there is no revision label, it is the default revision.
-		rev = models.DefaultRevisionLabel
-	}
-
-	// Find the controlplane that controls that namespace.
-	idx := slices.IndexFunc(mesh.ControlPlanes, func(controlPlane models.ControlPlane) bool {
-		return controlPlane.Revision == rev && controlPlane.Cluster.Name == cluster
-	})
-	if idx == -1 {
+	cp, err := mesh.ControlPlaneForNamespace(cluster, namespace)
+	if err != nil || cp == nil {
 		return true
 	}
-
-	return mesh.ControlPlanes[idx].MeshConfig.EnableAutoMtls.Value
+	return cp.MeshConfig.EnableAutoMtls.Value
 }
