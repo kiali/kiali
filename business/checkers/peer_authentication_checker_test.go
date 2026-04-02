@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
+	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
 func TestPeerAuthInRootNamespaceUsesMeshWideCheckers(t *testing.T) {
@@ -35,8 +36,19 @@ func TestPeerAuthInRootNamespaceUsesMeshWideCheckers(t *testing.T) {
 		map[string]models.Workloads{},
 	)
 
-	validations := checker.Check()
-	assert.NotNil(validations)
+	vals := checker.Check()
+	key := models.BuildKey(kubernetes.PeerAuthentications, "default", "istio-system", config.DefaultClusterID)
+	assert.NotNil(vals[key])
+
+	foundMeshWide := false
+	for _, check := range vals[key].Checks {
+		if err := validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", check); err == nil {
+			foundMeshWide = true
+		}
+		assert.Error(validations.ConfirmIstioCheckMessage("peerauthentications.mtls.destinationrulemissing", check),
+			"root namespace PA should NOT trigger namespace-wide checker")
+	}
+	assert.True(foundMeshWide, "root namespace PA should trigger mesh-wide checker")
 }
 
 func TestPeerAuthMultiCPCorrectRootResolution(t *testing.T) {
@@ -71,11 +83,34 @@ func TestPeerAuthMultiCPCorrectRootResolution(t *testing.T) {
 		map[string]models.Workloads{},
 	)
 
-	validations := checker.Check()
-	assert.NotNil(validations)
+	vals := checker.Check()
+	assert.Len(vals, 3)
 
-	// All three PAs should produce validation entries
-	assert.Len(validations, 3)
+	// Both root-namespace PAs should trigger mesh-wide checks
+	for _, ns := range []string{"istio-system-1", "istio-system-2"} {
+		key := models.BuildKey(kubernetes.PeerAuthentications, "default", ns, config.DefaultClusterID)
+		assert.NotNil(vals[key])
+		foundMeshWide := false
+		for _, check := range vals[key].Checks {
+			if err := validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", check); err == nil {
+				foundMeshWide = true
+			}
+		}
+		assert.True(foundMeshWide, "PA in root namespace %s should trigger mesh-wide checker", ns)
+	}
+
+	// App namespace PA should trigger namespace-wide checks, not mesh-wide
+	appKey := models.BuildKey(kubernetes.PeerAuthentications, "app-pa", "app-ns", config.DefaultClusterID)
+	assert.NotNil(vals[appKey])
+	foundNsWide := false
+	for _, check := range vals[appKey].Checks {
+		if err := validations.ConfirmIstioCheckMessage("peerauthentications.mtls.destinationrulemissing", check); err == nil {
+			foundNsWide = true
+		}
+		assert.Error(validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", check),
+			"app namespace PA should NOT trigger mesh-wide checker")
+	}
+	assert.True(foundNsWide, "app namespace PA should trigger namespace-wide checker")
 }
 
 func TestPeerAuthUnknownNamespaceNotTreatedAsRoot(t *testing.T) {
@@ -96,9 +131,15 @@ func TestPeerAuthUnknownNamespaceNotTreatedAsRoot(t *testing.T) {
 		map[string]models.Workloads{},
 	)
 
-	validations := checker.Check()
-	assert.NotNil(validations)
+	vals := checker.Check()
+	key := models.BuildKey(kubernetes.PeerAuthentications, "pa", "unknown-ns", config.DefaultClusterID)
+	assert.NotNil(vals[key])
 
-	// Should still produce a validation (namespace-wide path, not mesh-wide)
-	assert.Len(validations, 1)
+	// Unknown namespace should not be treated as root, so no mesh-wide checks
+	for _, check := range vals[key].Checks {
+		assert.Error(validations.ConfirmIstioCheckMessage("peerauthentication.mtls.destinationrulemissing", check),
+			"unknown namespace PA should NOT trigger mesh-wide checker")
+		assert.Error(validations.ConfirmIstioCheckMessage("peerauthentications.mtls.disablemeshdestinationrulemissing", check),
+			"unknown namespace PA should NOT trigger mesh-wide disabled checker")
+	}
 }

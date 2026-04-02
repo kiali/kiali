@@ -109,6 +109,63 @@ func TestNamespaceLabelChangeTriggersValidation(t *testing.T) {
 	assert.True(vInfo.hasBaseChange, "Namespace label change should set hasBaseChange to true")
 }
 
+func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	bookinfo := "bookinfo"
+	orphan := "orphan-ns"
+
+	vsBookinfo := data.AddHttpRoutesToVirtualService(
+		data.CreateHttpRouteDestination("reviews", "v1", -1),
+		data.CreateEmptyVirtualService("reviews-vs", bookinfo, []string{"reviews"}),
+	)
+	vsOrphan := data.AddHttpRoutesToVirtualService(
+		data.CreateHttpRouteDestination("ratings", "v1", -1),
+		data.CreateEmptyVirtualService("ratings-vs", orphan, []string{"ratings"}),
+	)
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace(bookinfo),
+		kubetest.FakeNamespace(orphan),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		vsBookinfo, vsOrphan,
+	}
+
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:         &models.KubeCluster{IsKialiHome: true},
+			IstiodNamespace: "istio-system",
+			MeshConfig:      models.NewMeshConfig(),
+			RootNamespace:   "istio-system",
+			ManagedNamespaces: []models.Namespace{
+				{Name: bookinfo},
+				{Name: "istio-system"},
+			},
+		}},
+	}
+
+	vs := fakeValidationMeshServiceWithMesh(t, *conf, mesh, objects...)
+
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+	require.NoError(err)
+	validationPerformed, validations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.True(validationPerformed)
+
+	// bookinfo is managed: its VS should produce a validation entry
+	bookinfoKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: bookinfo, Name: "reviews-vs"}
+	assert.Contains(validations, bookinfoKey, "managed namespace should have validations")
+
+	// orphan-ns is NOT managed: nothing should appear for it
+	for key := range validations {
+		assert.NotEqual(orphan, key.Namespace, "unmanaged namespace %q should have no validations", orphan)
+	}
+}
+
 func TestGetIstioObjectValidations(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()

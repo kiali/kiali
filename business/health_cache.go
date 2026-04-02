@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -81,18 +82,18 @@ func (m *healthMonitor) Start(ctx context.Context) {
 
 	// Prime the cache with an initial refresh (with timeout).
 	// Recover from panics so that a failure here does not crash the entire process.
-	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
 	func() {
+		refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
 		defer func() {
 			if r := recover(); r != nil {
-				m.logger.Error().Interface("panic", r).Msg("Panic during initial health refresh")
+				m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during initial health refresh")
 			}
 		}()
 		if err := m.RefreshHealth(refreshCtx); err != nil {
 			m.logger.Error().Err(err).Msg("Initial health refresh failed")
 		}
 	}()
-	cancel()
 
 	go func() {
 		for {
@@ -104,7 +105,7 @@ func (m *healthMonitor) Start(ctx context.Context) {
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
-							m.logger.Error().Interface("panic", r).Msg("Panic during health refresh")
+							m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during health refresh")
 						}
 					}()
 					refreshCtx, cancel := context.WithTimeout(ctx, timeout)

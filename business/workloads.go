@@ -159,12 +159,15 @@ func (in *WorkloadService) getWorkloadValidations(ctx context.Context, authpolic
 		return models.IstioValidations{}
 	}
 
+	mesh, err := in.businessLayer.Mesh.discovery.Mesh(ctx)
+	if err != nil || mesh == nil {
+		return models.IstioValidations{}
+	}
+
 	rootNamespaces := make(map[string]string, len(workloadsPerNamespace))
-	if mesh, err := in.businessLayer.Mesh.discovery.Mesh(ctx); err == nil && mesh != nil {
-		for ns := range workloadsPerNamespace {
-			if cp, err := mesh.ControlPlaneForNamespace(cluster, ns); err == nil && cp != nil {
-				rootNamespaces[ns] = cp.RootNamespace
-			}
+	for ns := range workloadsPerNamespace {
+		if cp, err := mesh.ControlPlaneForNamespace(cluster, ns); err == nil && cp != nil {
+			rootNamespaces[ns] = cp.RootNamespace
 		}
 	}
 

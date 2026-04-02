@@ -657,9 +657,13 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	var referenceChecker ReferenceChecker
 	conf := in.conf
 
-	rootNamespace := ""
-	if cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace); err == nil && cp != nil {
-		rootNamespace = cp.RootNamespace
+	rootNamespaces := make(map[string]string, len(nsNames))
+	if vInfo.mesh != nil {
+		for _, ns := range nsNames {
+			if cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, ns); cp != nil && err == nil {
+				rootNamespaces[ns] = cp.RootNamespace
+			}
+		}
 	}
 
 	policyAllowAny, err := in.isPolicyAllowAny(vInfo)
@@ -695,7 +699,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars}
 	case kubernetes.Sidecars:
-		sidecarsChecker := checkers.NewSidecarChecker(cluster, conf, map[string]string{namespace: rootNamespace}, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace)
+		sidecarsChecker := checkers.NewSidecarChecker(cluster, conf, rootNamespaces, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{sidecarsChecker}
 		referenceChecker = references.SidecarReferences{Conf: conf, Sidecars: istioConfigList.Sidecars, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, KubeServiceHosts: kubeServiceHosts, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.AuthorizationPolicies:
@@ -706,15 +710,14 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: policyAllowAny,
 		}
 		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
-		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, map[string]string{namespace: rootNamespace}, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
+		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, cluster, rootNamespaces, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
 	case kubernetes.PeerAuthentications:
 		// Validations on PeerAuthentications
-		rootNamespaces := map[string]string{namespace: rootNamespace}
 		peerAuthnChecker := checkers.NewPeerAuthenticationChecker(cluster, conf, rootNamespaces, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.NewPeerAuthReferences(cluster, conf, rootNamespaces, *mtlsDetails, workloadsPerNamespace)
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
-		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, map[string]string{namespace: rootNamespace}, namespaces, workloadsPerNamespace)
+		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, rootNamespaces, namespaces, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{workloadChecker}
 	case kubernetes.WorkloadEntries:
 		// Validation on WorkloadEntries are not yet in place

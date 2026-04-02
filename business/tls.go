@@ -198,11 +198,31 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 
 	meshStatusByRevision := in.meshStatusByRevisionForNamespaces(ctx, cluster, namespaces)
 
-	mesh, _ := in.discovery.Mesh(ctx)
+	mesh, err := in.discovery.Mesh(ctx)
+	if err != nil {
+		return result, err
+	}
+
+	cpForNamespace := make(map[string]*models.ControlPlane, len(namespaces))
+	for _, ns := range namespaces {
+		if cp, err := mesh.ControlPlaneForNamespace(cluster, ns.Name); err == nil && cp != nil {
+			cpForNamespace[ns.Name] = cp
+		}
+	}
 
 	for _, namespace := range namespaces {
 		pasAll := kubernetes.FilterByNamespaceNames(istioConfigList.PeerAuthentications, []string{namespace.Name})
-		rootNamespace := rootNamespaceFromMesh(mesh, namespace.Cluster, namespace.Name)
+
+		cp := cpForNamespace[namespace.Name]
+		rootNamespace := ""
+		autoMtls := true
+		if cp != nil {
+			rootNamespace = cp.RootNamespace
+			if cp.MeshConfig != nil && cp.MeshConfig.EnableAutoMtls != nil {
+				autoMtls = cp.MeshConfig.EnableAutoMtls.Value
+			}
+		}
+
 		if rootNamespace == namespace.Name {
 			pasAll = []*security_v1.PeerAuthentication{}
 		}
@@ -211,7 +231,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		mtlsStatus := mtls.MtlsStatus{
 			PeerAuthentications: pas,
 			DestinationRules:    istioConfigList.DestinationRules,
-			AutoMtlsEnabled:     autoMTLSFromMesh(mesh, cluster, namespace.Name),
+			AutoMtlsEnabled:     autoMtls,
 			AllowPermissive:     false,
 		}
 
@@ -406,7 +426,7 @@ func autoMTLSFromMesh(mesh *models.Mesh, cluster, namespace string) bool {
 		return true
 	}
 	cp, err := mesh.ControlPlaneForNamespace(cluster, namespace)
-	if err != nil || cp == nil {
+	if err != nil || cp == nil || cp.MeshConfig == nil || cp.MeshConfig.EnableAutoMtls == nil {
 		return true
 	}
 	return cp.MeshConfig.EnableAutoMtls.Value
