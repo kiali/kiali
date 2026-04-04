@@ -13,8 +13,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/util/certtest"
 	"github.com/kiali/kiali/util/polltest"
 )
@@ -48,7 +51,7 @@ func TestTracingBasicAuthFromFiles(t *testing.T) {
 	conf.ExternalServices.Tracing.Auth.Password = config.Credential(passwordFile)
 
 	// Create client - this should succeed without trying to connect
-	client, err := NewClient(context.Background(), conf, "test-token", true)
+	client, err := NewClient(context.Background(), conf, nil, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 	assert.NotNil(t, client.grpcClient, "gRPC client should be created for tempo with UseGRPC=true")
@@ -112,7 +115,7 @@ func TestTracingBearerTokenFromFile(t *testing.T) {
 	conf.ExternalServices.Tracing.Auth.Token = config.Credential(tokenFile)
 
 	// Create client - this should succeed without trying to connect
-	client, err := NewClient(context.Background(), conf, "test-token", true)
+	client, err := NewClient(context.Background(), conf, nil, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
@@ -178,7 +181,7 @@ func TestTracingLiteralCredentials(t *testing.T) {
 	conf.ExternalServices.Tracing.Auth.Password = "literal-password"
 
 	// Create client
-	client, err := NewClient(context.Background(), conf, "test-token", true)
+	client, err := NewClient(context.Background(), conf, nil, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
@@ -204,11 +207,9 @@ func TestTracingUseKialiToken(t *testing.T) {
 	// Leave Auth.Token empty to verify kiali token is used internally
 	conf.ExternalServices.Tracing.Auth.Token = ""
 
-	kialiToken := "kiali-user-token-12345"
-
-	// Create client with the kiali token - this should succeed even though Auth.Token is empty
-	// because UseKialiToken=true causes the passed kialiToken to be used internally
-	client, err := NewClient(context.Background(), conf, kialiToken, true)
+	// Create client with nil - this should succeed even though Auth.Token is empty
+	// because UseKialiToken=true but we're passing nil (test scenario)
+	client, err := NewClient(context.Background(), conf, nil, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
@@ -255,7 +256,7 @@ func TestTracingClientHTTPBearerAuth(t *testing.T) {
 
 	// Create tracing client
 	ctx := context.Background()
-	client, err := NewClient(ctx, conf, "", true)
+	client, err := NewClient(ctx, conf, nil, true)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -327,7 +328,7 @@ func TestTracingClientHTTPBasicAuth(t *testing.T) {
 
 	// Create tracing client
 	ctx := context.Background()
-	client, err := NewClient(ctx, conf, "", true)
+	client, err := NewClient(ctx, conf, nil, true)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -380,19 +381,39 @@ func TestTracingClientUseKialiTokenIntegration(t *testing.T) {
 
 	// Setup config with UseKialiToken enabled
 	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager(nil)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	tokenFile := tmpDir + "/token"
+	kialiToken := "kiali-user-session-token-xyz789"
+	err = os.WriteFile(tokenFile, []byte(kialiToken), 0600)
+	require.NoError(t, err)
+
 	conf.ExternalServices.Tracing.Enabled = true
 	conf.ExternalServices.Tracing.Provider = "jaeger"
 	conf.ExternalServices.Tracing.UseGRPC = false
 	conf.ExternalServices.Tracing.InternalURL = server.URL
 	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
 	conf.ExternalServices.Tracing.Auth.UseKialiToken = true
-	// Auth.Token is intentionally empty - should use kialiToken instead
+	conf.ExternalServices.Tracing.Auth.Token = config.Credential(tokenFile)
 
-	kialiToken := "kiali-user-session-token-xyz789"
+	// Create fake k8s client with token file configured
+	fakeClient := kubetest.NewFakeK8sClient()
+	fakeClient.Token = kialiToken
+	fakeClient.KubeClusterInfo = kubernetes.ClusterInfo{
+		ClientConfig: &rest.Config{
+			BearerToken:     kialiToken,
+			BearerTokenFile: tokenFile,
+		},
+		Name: "test-cluster",
+	}
 
-	// Create tracing client with the kiali token
+	// Create tracing client with the kiali client
 	ctx := context.Background()
-	client, err := NewClient(ctx, conf, kialiToken, true)
+	client, err := NewClient(ctx, conf, fakeClient, true)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -454,7 +475,7 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 
 	// Create tracing client
 	ctx := context.Background()
-	client, err := NewClient(ctx, conf, "", true)
+	client, err := NewClient(ctx, conf, nil, true)
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
@@ -484,7 +505,7 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 
 	// NEGATIVE TEST: Client still has CA1, server now uses CA2 - connection should FAIL
 	// The CA file has NOT been updated yet, so client's CertPool still contains CA1
-	clientWithOldCA, err := NewClient(ctx, conf, "", true)
+	clientWithOldCA, err := NewClient(ctx, conf, nil, true)
 	require.NoError(t, err)
 	_, err = clientWithOldCA.GetServiceStatus(ctx)
 	require.Error(t, err, "Connection should FAIL when client CA (CA1) doesn't match server cert (signed by CA2)")
@@ -498,7 +519,7 @@ func TestTracingClientHTTPSWithCARotation(t *testing.T) {
 	// Wait for fsnotify to detect the CA file change and verify connection succeeds
 	caRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
 		// Create new client with updated config
-		client2, err := NewClient(ctx, conf, "", true)
+		client2, err := NewClient(ctx, conf, nil, true)
 		if err != nil {
 			return false
 		}

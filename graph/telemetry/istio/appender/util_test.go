@@ -24,7 +24,7 @@ func setupMockedWithQueryScope(meshId string) (*prometheus.Client, *prometheuste
 	}
 	config.Set(testConfig)
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient(*config.NewConfig(), "")
+	client, err := prometheus.NewClient(*config.NewConfig(), nil)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/observability"
 	"github.com/kiali/kiali/util/httputil"
@@ -319,8 +320,11 @@ func initPromCache(ctx context.Context) {
 }
 
 // NewClient creates a new client to the Prometheus API.
-// It returns an error on any problem. kialiSAToken is only used if auth.UseKialiToken is true.
-func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
+// It returns an error on any problem. kialiSAClient is only used if auth.UseKialiToken is true.
+// When auth.UseKialiToken is true, the client uses the service account's BearerTokenFile (if available)
+// to enable automatic token rotation, falling back to the static BearerToken if no token file is configured.
+// If auth.UseKialiToken is false, the configured auth.Token is used directly.
+func NewClient(conf config.Config, kialiSAClient kubernetes.ClientInterface) (*Client, error) {
 	cfg := conf.ExternalServices.Prometheus
 	clientConfig := api.Config{Address: cfg.URL}
 
@@ -342,7 +346,16 @@ func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 		// Note: if we are using the 'bearer' authentication method then we want to use the Kiali
 		// service account token and not the user's token. This is because Kiali does filtering based
 		// on the user's token and prevents people who shouldn't have access to particular metrics.
-		auth.Token = config.Credential(kialiSAToken)
+
+		if kialiSAClient != nil {
+			// Prefer BearerTokenFile for automatic rotation support, fallback to static BearerToken
+			tokenSource := kialiSAClient.ClusterInfo().ClientConfig.BearerTokenFile
+			if tokenSource == "" {
+				tokenSource = kialiSAClient.GetToken()
+			}
+			auth.Token = config.Credential(tokenSource)
+		}
+		// If kialiSAClient is nil (e.g., in tests), auth.Token remains empty
 	}
 
 	// make a copy of the prometheus DefaultRoundTripper to avoid race condition (issue #3518)

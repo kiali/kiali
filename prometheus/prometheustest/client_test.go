@@ -18,7 +18,7 @@ func setupMocked() (*prometheus.Client, *PromAPIMock, error) {
 	conf := config.NewConfig()
 	config.Set(conf)
 	api := new(PromAPIMock)
-	client, err := prometheus.NewClient(*conf, "")
+	client, err := prometheus.NewClient(*conf, nil)
 	if err != nil {
 		return nil, nil, err
 	}

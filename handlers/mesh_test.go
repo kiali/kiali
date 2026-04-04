@@ -91,7 +91,7 @@ func TestGetMeshGraph(t *testing.T) {
 	persesSvc := perses.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
 
 	xapi := new(prometheustest.PromAPIMock)
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 	prom.Inject(xapi)
 
@@ -134,7 +134,7 @@ func TestControlPlanes(t *testing.T) {
 		MeshReturn: mesh,
 	}
 	cpm := &business.FakeControlPlaneMonitor{}
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 	traceLoader := func() tracing.ClientInterface { return nil }
 	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
@@ -176,7 +176,7 @@ func TestControlPlanesUnauthorized(t *testing.T) {
 		MeshReturn: mesh,
 	}
 	cpm := &business.FakeControlPlaneMonitor{}
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 	traceLoader := func() tracing.ClientInterface { return nil }
 	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])

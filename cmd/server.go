@@ -85,7 +85,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	cpm := business.NewControlPlaneMonitor(cache, clientFactory, conf, discovery)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	prom, err := prometheus.NewClient(*conf, clientFactory.GetSAHomeClusterClient().GetToken())
+	prom, err := prometheus.NewClient(*conf, clientFactory.GetSAHomeClusterClient())
 	if err != nil {
 		log.Fatalf("Error creating Prometheus client: %s", err)
 	}
@@ -102,7 +102,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 	if conf.ExternalServices.Tracing.Enabled {
 		go func() {
-			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken(), true)
+			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient(), true)
 			if err != nil {
 				log.Fatalf("Error creating tracing client: %s", err)
 				return

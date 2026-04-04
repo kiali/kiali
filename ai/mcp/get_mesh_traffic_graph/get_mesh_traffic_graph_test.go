@@ -135,7 +135,7 @@ func TestExecute_ValidSingleNamespace_ReturnsOKWithResponse(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -174,7 +174,7 @@ func TestExecute_ValidNamespaceList_ReturnsOKWithResponse(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -213,7 +213,7 @@ func TestExecute_ValidAndInvalidNamespaces_ReturnsOKWithSkippedWarning(t *testin
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -256,7 +256,7 @@ func TestExecute_NoNamespacesProvided_ReturnsOKWithMessage(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -289,7 +289,7 @@ func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -329,7 +329,7 @@ func TestExecute_ServiceGraphType_FetchesServiceHealth(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -372,7 +372,7 @@ func TestExecute_DuplicateNamespaces_Deduplicates(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -411,7 +411,7 @@ func TestExecute_NamespacesWithWhitespace_TrimsCorrectly(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -449,7 +449,7 @@ func TestExecute_CustomRateInterval_UsesProvidedValue(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -486,7 +486,7 @@ func TestExecute_DefaultRateInterval_UsesDefault(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -557,7 +557,7 @@ func TestExecute_EmptyGraphType_UsesDefault(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -594,7 +594,7 @@ func TestExecute_AllValidGraphTypes_AcceptedWithoutError(t *testing.T) {
 
 			promAPI := new(prometheustest.PromAPIMock)
 			mockPrometheusForGraph(promAPI)
-			promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+			promClient, err := prometheus.NewClient(*conf, k8s)
 			require.NoError(t, err)
 			promClient.Inject(promAPI)
 
@@ -849,7 +849,7 @@ func TestExecute_NamespaceWithNoTraffic_ReturnsEmptyGraph(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 
@@ -892,7 +892,7 @@ func TestExecute_ResponseStructure_HasExpectedFields(t *testing.T) {
 
 	promAPI := new(prometheustest.PromAPIMock)
 	mockPrometheusForGraph(promAPI)
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 

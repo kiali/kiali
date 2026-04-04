@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -67,9 +68,12 @@ type Client struct {
 }
 
 // NewClient creates a tracing Client. If it fails to create the client for any reason,
-// it will retry indefinitely until the context is cancelled.
-// Unless retry is false
-func NewClient(ctx context.Context, conf *config.Config, token string, retry bool) (*Client, error) {
+// it will retry indefinitely until the context is cancelled, unless retry is false.
+// kialiSAClient is only used if auth.UseKialiToken is true. When auth.UseKialiToken is true,
+// the client uses the service account's BearerTokenFile (if available) to enable automatic
+// token rotation, falling back to the static BearerToken if no token file is configured.
+// If auth.UseKialiToken is false, the configured auth.Token is used directly.
+func NewClient(ctx context.Context, conf *config.Config, kialiSAClient kubernetes.ClientInterface, retry bool) (*Client, error) {
 	var (
 		client *Client
 		err    error
@@ -81,7 +85,7 @@ func NewClient(ctx context.Context, conf *config.Config, token string, retry boo
 	ctx = log.ToContext(ctx, zl)
 
 	retryErr := wait.PollUntilContextCancel(ctx, newClientRetryInterval, true, func(ctx context.Context) (bool, error) {
-		client, err = newClient(ctx, conf, token)
+		client, err = newClient(ctx, conf, kialiSAClient)
 		if err != nil {
 			zl.Error().Msgf("Error creating tracing client: [%v]. Retrying in [%s]", err, newClientRetryInterval)
 			if retry {
@@ -99,7 +103,7 @@ func NewClient(ctx context.Context, conf *config.Config, token string, retry boo
 	return client, nil
 }
 
-func newClient(ctx context.Context, conf *config.Config, token string) (*Client, error) {
+func newClient(ctx context.Context, conf *config.Config, kialiSAClient kubernetes.ClientInterface) (*Client, error) {
 	cfgTracing := conf.ExternalServices.Tracing
 	if !cfgTracing.Enabled {
 		return nil, errors.New("tracing is not enabled")
@@ -110,7 +114,15 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	var httpTracingClient HTTPClientInterface
 	auth := cfgTracing.Auth
 	if auth.UseKialiToken {
-		auth.Token = config.Credential(token)
+		if kialiSAClient != nil {
+			// Prefer BearerTokenFile for automatic rotation support, fallback to static BearerToken
+			tokenSource := kialiSAClient.ClusterInfo().ClientConfig.BearerTokenFile
+			if tokenSource == "" {
+				tokenSource = kialiSAClient.GetToken()
+			}
+			auth.Token = config.Credential(tokenSource)
+		}
+		// If kialiSAClient is nil (e.g., in tests), auth.Token remains empty
 	}
 
 	var u *url.URL

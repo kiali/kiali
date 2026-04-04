@@ -54,7 +54,7 @@ func mockPrometheusWithMetrics(promAPI *prometheustest.PromAPIMock, cpuCores, me
 }
 
 func newPromClient(t *testing.T, conf *config.Config, k8s *kubetest.FakeK8sClient, promAPI *prometheustest.PromAPIMock) prometheus.ClientInterface {
-	promClient, err := prometheus.NewClient(*conf, k8s.GetToken())
+	promClient, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(t, err)
 	promClient.Inject(promAPI)
 	return promClient

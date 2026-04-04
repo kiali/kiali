@@ -167,7 +167,7 @@ func setupMockedExt(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMo
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: extName, Namespace: rootNamespace, Annotations: map[string]string{"extension.kiali.io/ui-url": extUrl}}},
 	)
 	promApi := new(prometheustest.PromAPIMock)
-	promClient, err := prometheus.NewClient(*config.NewConfig(), k8s.GetToken())
+	promClient, err := prometheus.NewClient(*config.NewConfig(), k8s)
 	if err != nil {
 		t.Fatal(err)
 	}

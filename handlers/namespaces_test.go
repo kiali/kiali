@@ -62,7 +62,7 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	k.OpenShift = true
 
 	api := new(prometheustest.PromAPIMock)
-	client, err := prometheus.NewClient(*config.NewConfig(), k.GetToken())
+	client, err := prometheus.NewClient(*config.NewConfig(), k)
 	if err != nil {
 		t.Fatal(err)
 		return nil, nil, nil

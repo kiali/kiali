@@ -406,8 +406,10 @@ func (in *TracingService) ValidateConfiguration(ctx context.Context, conf *confi
 	newConfig := *conf
 	newConfig.ExternalServices.Tracing = *tracingConfig
 
-	// Try to create client
-	client, err := tracing.NewClient(ctx, &newConfig, token, false)
+	// Try to create client for validation purposes
+	// We pass nil for kialiSAClient since this is just validating configuration,
+	// not actually using token rotation for real requests
+	client, err := tracing.NewClient(ctx, &newConfig, nil, false)
 	if client == nil {
 		msg := "ValidateConfiguration: Error creating tracing client"
 		if err != nil {

@@ -136,7 +136,7 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 				return fmt.Errorf("unable to setup port forwarding: %s", err)
 			}
 
-			prom, err := prometheus.NewClient(*conf, cf.GetSAHomeClusterClient().GetToken())
+			prom, err := prometheus.NewClient(*conf, cf.GetSAHomeClusterClient())
 			if err != nil {
 				return fmt.Errorf("unable to setup prometheus client: %s", err)
 			}

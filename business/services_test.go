@@ -180,7 +180,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 			&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "ratings-west-cluster", Namespace: "bookinfo"}},
 		),
 	}
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -308,7 +308,7 @@ func TestGetServiceRouteURL(t *testing.T) {
 	)
 	k8s.OpenShift = true
 
-	prom, err := prometheus.NewClient(*conf, k8s.GetToken())
+	prom, err := prometheus.NewClient(*conf, k8s)
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -386,7 +386,7 @@ func TestGetServiceDetailsValidations(t *testing.T) {
 		),
 	}
 
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -425,7 +425,7 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 		),
 	}
 
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 
 	promMock := new(prometheustest.PromAPIMock)
@@ -874,7 +874,7 @@ func TestGetServiceDetailsSubServicesVersioned(t *testing.T) {
 			mainSvc, subSvcV1, subSvcV2, unrelatedSvc,
 		),
 	}
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
@@ -1065,7 +1065,7 @@ func TestGetServiceDetailsSubServicesFallbackToMainService(t *testing.T) {
 			mainSvc,
 		),
 	}
-	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName])
 	require.NoError(err)
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
