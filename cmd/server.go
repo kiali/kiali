@@ -63,7 +63,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	config.Set(conf)
 	log.Infof("TLS policy source [%s] min_version [%s] max_version [%s] cipher_suites count=[%d]", policy.Source, policy.MinVersionName(), policy.MaxVersionName(), len(policy.CipherSuites))
 
-	mgr, kubeCaches, err := newManager(ctx, conf, logger, clientFactory)
+	mgr, kubeCaches, err := newManager(conf, logger, clientFactory)
 	if err != nil {
 		log.Fatalf("Unable to setup manager: %s", err)
 	}
@@ -237,7 +237,73 @@ func asReaders(caches map[string]ctrlcache.Cache) map[string]client.Reader {
 	return readers
 }
 
-func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory) (manager.Manager, map[string]ctrlcache.Cache, error) {
+// cacheTransforms returns the per-type cache transforms shared across all clusters.
+// These strip cached objects down to only the fields Kiali uses, significantly reducing
+// memory consumption in large meshes.
+func cacheTransforms() map[client.Object]ctrlcache.ByObject {
+	return map[client.Object]ctrlcache.ByObject{
+		&corev1.Pod{}:     {Transform: cache.TransformPod},
+		&corev1.Service{}: {Transform: cache.TransformService},
+	}
+}
+
+// makeWatchErrorHandler returns a DefaultWatchErrorHandler that tears down all informers
+// when a Forbidden watch error is received (e.g. namespace deletion or access revocation).
+func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface) func(context.Context, *toolscache.Reflector, error) {
+	return func(ctx context.Context, r *toolscache.Reflector, watchErr error) {
+		if !apierrors.IsForbidden(watchErr) {
+			return
+		}
+		log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", watchErr)
+		objectsToRemove := []client.Object{
+			&corev1.Pod{},
+			&corev1.Service{},
+			&appsv1.StatefulSet{},
+			&appsv1.DaemonSet{},
+			&corev1.ConfigMap{},
+			&batchv1.CronJob{},
+			&batchv1.Job{},
+			&appsv1.Deployment{},
+			&appsv1.ReplicaSet{},
+			&networkingv1.Gateway{},
+			&networkingv1.DestinationRule{},
+			&networkingv1.Sidecar{},
+			&networkingv1.ServiceEntry{},
+			&networkingv1.VirtualService{},
+			&networkingv1.WorkloadEntry{},
+			&networkingv1.WorkloadGroup{},
+			&extentionsv1alpha1.WasmPlugin{},
+			&networkingv1alpha3.EnvoyFilter{},
+			&securityv1.AuthorizationPolicy{},
+			&securityv1.PeerAuthentication{},
+			&securityv1.RequestAuthentication{},
+			&telemetryv1.Telemetry{},
+		}
+		if k8sClient.IsGatewayAPI() {
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.Gateway{})
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GatewayClass{})
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TLSRoute{})
+		}
+		if k8sClient.IsInferenceAPI() {
+			objectsToRemove = append(objectsToRemove, &k8sinferencev1.InferencePool{})
+		}
+		if k8sClient.IsExpGatewayAPI() {
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
+		}
+		c := getCache()
+		for _, obj := range objectsToRemove {
+			log.Debugf("Removing informer for: %T", obj)
+			if err := c.RemoveInformer(ctx, obj); err != nil {
+				log.Errorf("Unable to remove informer: %s", err)
+			}
+		}
+	}
+}
+
+func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory) (manager.Manager, map[string]ctrlcache.Cache, error) {
 	ctrl.SetLogger(zerologr.New(logger))
 
 	// Combine the istio scheme and the kube scheme.
@@ -257,11 +323,6 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 		}
 	}
 
-	// Check if APIs are available before trying to remove their informers
-	isGatewayAPI := homeClusterClient.IsGatewayAPI()
-	isInferenceAPI := homeClusterClient.IsInferenceAPI()
-	isExpGatewayAPI := homeClusterClient.IsExpGatewayAPI()
-
 	var mgr manager.Manager
 	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
 		// Disabling caching for ConfigMaps, as in large clusters it can take a lot of unnecessary memory.
@@ -272,70 +333,11 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 				},
 			},
 		},
-		// Disable metrics server since Kiali has its own metrics server.
 		Cache: ctrlcache.Options{
-			DefaultNamespaces: defaultNamespaces,
-			DefaultWatchErrorHandler: func(ctx context.Context, r *toolscache.Reflector, err error) {
-				if apierrors.IsForbidden(err) {
-					log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", err)
-					// These are all the standard types that Kiali caches excluding GW API and experimental.
-					objectsToRemove := []client.Object{
-						&corev1.Pod{},
-						&corev1.Service{},
-						&appsv1.StatefulSet{},
-						&appsv1.DaemonSet{},
-						&corev1.ConfigMap{},
-						&batchv1.CronJob{},
-						&batchv1.Job{},
-						&appsv1.Deployment{},
-						&appsv1.ReplicaSet{},
-						&networkingv1.Gateway{},
-						&networkingv1.DestinationRule{},
-						&networkingv1.Sidecar{},
-						&networkingv1.ServiceEntry{},
-						&networkingv1.VirtualService{},
-						&networkingv1.WorkloadEntry{},
-						&networkingv1.WorkloadGroup{},
-						&extentionsv1alpha1.WasmPlugin{},
-						&networkingv1alpha3.EnvoyFilter{},
-						&securityv1.AuthorizationPolicy{},
-						&securityv1.PeerAuthentication{},
-						&securityv1.RequestAuthentication{},
-						&telemetryv1.Telemetry{},
-					}
-					// Include GW API standard types if available
-					if isGatewayAPI {
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.Gateway{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GatewayClass{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TLSRoute{})
-					}
-					// Only include experimental types if their APIs are available
-					if isInferenceAPI {
-						objectsToRemove = append(objectsToRemove, &k8sinferencev1.InferencePool{})
-					}
-					if isExpGatewayAPI {
-						objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
-					}
-					for _, obj := range objectsToRemove {
-						log.Debugf("Removing informer for: %T", obj)
-						if err := mgr.GetCache().RemoveInformer(ctx, obj); err != nil {
-							log.Errorf("Unable to remove informer: %s", err)
-						}
-					}
-				}
-			},
-			DefaultTransform: ctrlcache.TransformStripManagedFields(),
-			ByObject: map[client.Object]ctrlcache.ByObject{
-				&corev1.Pod{}: {
-					Transform: cache.TransformPod,
-				},
-				&corev1.Service{}: {
-					Transform: cache.TransformService,
-				},
-			},
+			DefaultNamespaces:        defaultNamespaces,
+			DefaultWatchErrorHandler: makeWatchErrorHandler(func() ctrlcache.Cache { return mgr.GetCache() }, homeClusterClient),
+			DefaultTransform:         ctrlcache.TransformStripManagedFields(),
+			ByObject:                 cacheTransforms(),
 		},
 		Metrics: metricsserver.Options{BindAddress: "0"},
 		Scheme:  scheme,
@@ -346,20 +348,27 @@ func newManager(ctx context.Context, conf *config.Config, logger *zerolog.Logger
 
 	kubeCaches := map[string]ctrlcache.Cache{}
 	// We want one manager/reconciler for all clusters.
-	for _, client := range clientFactory.GetSAClients() {
-		if client.ClusterInfo().Name == homeClusterInfo.Name {
-			kubeCaches[client.ClusterInfo().Name] = mgr.GetCache()
+	for _, saClient := range clientFactory.GetSAClients() {
+		if saClient.ClusterInfo().Name == homeClusterInfo.Name {
+			kubeCaches[saClient.ClusterInfo().Name] = mgr.GetCache()
 		} else {
-			cluster, err := cluster.New(client.ClusterInfo().ClientConfig, func(o *cluster.Options) {
+			var remoteCluster cluster.Cluster
+			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
 				o.Scheme = scheme
+				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
+				o.Cache.ByObject = cacheTransforms()
+				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
+					func() ctrlcache.Cache { return remoteCluster.GetCache() },
+					saClient,
+				)
 			})
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := mgr.Add(cluster); err != nil {
+			if err := mgr.Add(remoteCluster); err != nil {
 				log.Fatal(err)
 			}
-			kubeCaches[client.ClusterInfo().Name] = cluster.GetCache()
+			kubeCaches[saClient.ClusterInfo().Name] = remoteCluster.GetCache()
 		}
 	}
 
