@@ -1004,6 +1004,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	pods = sliceutil.Filter(podList.Items, func(pod core_v1.Pod) bool {
 		return slices.Contains(namespaces, pod.Namespace)
 	})
+	podList = nil
 
 	depList := &apps_v1.DeploymentList{}
 	if err := kubeCache.List(ctx, depList); err != nil {
@@ -1012,6 +1013,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	dep = sliceutil.Filter(depList.Items, func(dep apps_v1.Deployment) bool {
 		return slices.Contains(namespaces, dep.Namespace)
 	})
+	depList = nil
 
 	repList := &apps_v1.ReplicaSetList{}
 	if err := kubeCache.List(ctx, repList); err != nil {
@@ -1020,6 +1022,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	repset = sliceutil.Filter(repList.Items, func(rs apps_v1.ReplicaSet) bool {
 		return slices.Contains(namespaces, rs.Namespace)
 	})
+	repList = nil
 
 	// ReplicaControllers are fetched only when included
 	wg.Add(1)
@@ -1068,6 +1071,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		fulset = sliceutil.Filter(setList.Items, func(ss apps_v1.StatefulSet) bool {
 			return slices.Contains(namespaces, ss.Namespace)
 		})
+		setList = nil
 	}
 
 	// CronJobs are fetched only when included
@@ -1117,6 +1121,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		daeset = sliceutil.Filter(daeList.Items, func(ds apps_v1.DaemonSet) bool {
 			return slices.Contains(namespaces, ds.Namespace)
 		})
+		daeList = nil
 	}
 
 	// WorkloadGroups are fetched only when included
@@ -1128,6 +1133,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		wgroups = sliceutil.Filter(wgroupList.Items, func(wg *networking_v1.WorkloadGroup) bool {
 			return slices.Contains(namespaces, wg.Namespace)
 		})
+		wgroupList = nil
 	}
 
 	// WorkloadEntries are fetched only when included
@@ -1139,6 +1145,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		wentries = sliceutil.Filter(wentryList.Items, func(we *networking_v1.WorkloadEntry) bool {
 			return slices.Contains(namespaces, we.Namespace)
 		})
+		wentryList = nil
 	}
 
 	// Sidecars are fetched only when included
@@ -1150,6 +1157,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		sidecars = sliceutil.Filter(sidecarList.Items, func(sc *networking_v1.Sidecar) bool {
 			return slices.Contains(namespaces, sc.Namespace)
 		})
+		sidecarList = nil
 	}
 
 	wg.Wait()
