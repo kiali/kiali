@@ -386,7 +386,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 // making it suitable for batch health computation across many namespaces.
 func (in *HealthService) GetNamespaceAppHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceAppHealth, error) {
 	var end observability.EndFunc
-	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
+	_, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
 		observability.Attribute("package", "business"),
 		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),

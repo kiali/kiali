@@ -222,7 +222,6 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 			return nil, err
 		}
 		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
-		workloads = nil
 
 		namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
 		if err != nil {

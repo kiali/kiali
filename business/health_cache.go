@@ -247,8 +247,6 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	for _, w := range allWorkloads {
 		workloadsByNamespace[w.Namespace] = append(workloadsByNamespace[w.Namespace], w)
 	}
-	// Allow GC of the combined slice; only per-namespace slices are needed from here.
-	allWorkloads = nil
 
 	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
