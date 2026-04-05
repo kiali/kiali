@@ -381,6 +381,50 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	return allHealth, nil
 }
 
+// GetNamespaceAppHealthFromWorkloads computes app health from pre-fetched workloads.
+// This avoids the per-namespace full-cluster listing that GetNamespaceAppHealth performs,
+// making it suitable for batch health computation across many namespaces.
+func (in *HealthService) GetNamespaceAppHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceAppHealth, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
+		observability.Attribute("package", "business"),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
+		observability.Attribute("namespace", criteria.Namespace),
+	)
+	defer end()
+
+	appEntities := make(namespaceApps)
+	for _, w := range workloads {
+		if w.IsInfra() {
+			continue
+		}
+		appLabelName, found := in.conf.GetAppLabelName(w.Labels)
+		if !found || appLabelName == "" {
+			continue
+		}
+		appName := w.Labels[appLabelName]
+		if appName == "" {
+			continue
+		}
+		if _, ok := appEntities[appName]; !ok {
+			appEntities[appName] = &appDetails{
+				app:     appName,
+				cluster: criteria.Cluster,
+			}
+		}
+		appEntities[appName].Workloads = append(appEntities[appName].Workloads, w)
+	}
+
+	return in.getNamespaceAppHealth(appEntities, criteria)
+}
+
+// GetNamespaceWorkloadHealthFromWorkloads computes workload health from pre-fetched workloads.
+// This avoids the per-namespace full-cluster listing that GetNamespaceWorkloadHealth performs,
+// making it suitable for batch health computation across many namespaces.
+func (in *HealthService) GetNamespaceWorkloadHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceWorkloadHealth, error) {
+	return in.getNamespaceWorkloadHealth(ctx, workloads, criteria)
+}
+
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)
 func (in *HealthService) GetNamespaceServiceHealth(ctx context.Context, criteria NamespaceHealthCriteria) (models.NamespaceServiceHealth, error) {
 	var end observability.EndFunc

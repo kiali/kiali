@@ -233,6 +233,23 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 		return 0, 1
 	}
 
+	// Pre-fetch ALL workloads for the cluster once to avoid having each namespace's health
+	// computation independently list all cluster-wide resources (pods, deployments,
+	// replicasets, etc.) and filters to its namespace.
+	allWorkloads, err := layer.Workload.GetAllWorkloads(ctx, cluster, "")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to pre-fetch workloads for cluster")
+		return 0, 1
+	}
+
+	// Create a map and then use it to pass down per-namespace workloads.
+	workloadsByNamespace := make(map[string]models.Workloads, len(namespaces))
+	for _, w := range allWorkloads {
+		workloadsByNamespace[w.Namespace] = append(workloadsByNamespace[w.Namespace], w)
+	}
+	// Allow GC of the combined slice; only per-namespace slices are needed from here.
+	allWorkloads = nil
+
 	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
 	for _, ns := range namespaces {
@@ -242,7 +259,7 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 			return len(namespaces), errorCount
 		}
 
-		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
+		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration, workloadsByNamespace[ns.Name]); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
 			continue
@@ -261,7 +278,8 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 }
 
 // refreshNamespaceHealth computes and caches health for a single namespace.
-func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer, cluster, namespace, duration string) error {
+// workloads contains pre-fetched workloads for this namespace (may be nil if none exist).
+func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer, cluster, namespace, duration string, workloads models.Workloads) error {
 	log := m.logger.With().
 		Str("cluster", cluster).
 		Str("namespace", namespace).
@@ -278,10 +296,11 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 		RateInterval:   duration,
 	}
 
-	// Compute health for apps, services, and workloads
-	appHealth, appErr := layer.Health.GetNamespaceAppHealth(ctx, criteria)
+	// Use pre-fetched workloads for app and workload health.
+	// Service health still fetches per-namespace since services are already listed namespace-scoped.
+	appHealth, appErr := layer.Health.GetNamespaceAppHealthFromWorkloads(ctx, criteria, workloads)
 	serviceHealth, svcErr := layer.Health.GetNamespaceServiceHealth(ctx, criteria)
-	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealth(ctx, criteria)
+	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealthFromWorkloads(ctx, criteria, workloads)
 
 	// If all failed, return error (no cache write or metrics export; refreshClusterHealth will not
 	// mark this namespace visited so dropped-namespace reconciliation can age stale gauges).
