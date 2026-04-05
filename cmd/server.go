@@ -294,6 +294,10 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 			objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
 		}
 		c := getCache()
+		if c == nil {
+			log.Warningf("Cache not yet available, cannot remove informers")
+			return
+		}
 		for _, obj := range objectsToRemove {
 			log.Debugf("Removing informer for: %T", obj)
 			if err := c.RemoveInformer(ctx, obj); err != nil {
@@ -334,10 +338,15 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 			},
 		},
 		Cache: ctrlcache.Options{
-			DefaultNamespaces:        defaultNamespaces,
-			DefaultWatchErrorHandler: makeWatchErrorHandler(func() ctrlcache.Cache { return mgr.GetCache() }, homeClusterClient),
-			DefaultTransform:         ctrlcache.TransformStripManagedFields(),
-			ByObject:                 cacheTransforms(),
+			DefaultNamespaces: defaultNamespaces,
+			DefaultWatchErrorHandler: makeWatchErrorHandler(func() ctrlcache.Cache {
+				if mgr == nil {
+					return nil
+				}
+				return mgr.GetCache()
+			}, homeClusterClient),
+			DefaultTransform: ctrlcache.TransformStripManagedFields(),
+			ByObject:         cacheTransforms(),
 		},
 		Metrics: metricsserver.Options{BindAddress: "0"},
 		Scheme:  scheme,
@@ -358,7 +367,12 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
 				o.Cache.ByObject = cacheTransforms()
 				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
-					func() ctrlcache.Cache { return remoteCluster.GetCache() },
+					func() ctrlcache.Cache {
+						if remoteCluster == nil {
+							return nil
+						}
+						return remoteCluster.GetCache()
+					},
 					saClient,
 				)
 			})
