@@ -455,8 +455,13 @@ func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType interna
 	return data, found
 }
 
-// SetHealth stores health data in cache
+// SetHealth stores health data in cache.
+// Acquires healthUpdateMutex so that a concurrent Update*Health call cannot
+// read a stale snapshot and then overwrite this fresh data.
 func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.CachedHealthData) {
+	c.healthUpdateMutex.Lock()
+	defer c.healthUpdateMutex.Unlock()
+
 	key := models.HealthCacheKey(cluster, namespace)
 	c.zl.Trace().
 		Str("cluster", cluster).
