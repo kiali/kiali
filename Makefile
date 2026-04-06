@@ -92,7 +92,7 @@ DORP ?= docker
 CLUSTER_TYPE ?= openshift
 
 # Set this to the URL of the Kiali server that you want to use for local development.
-YARN_START_URL ?= http://localhost:20001
+KIALI_START_URL ?= http://localhost:20001
 
 # Find the client executable (either oc or kubectl). If minikube or kind, only look for kubectl (though we might not need be so strict)
 ifeq ($(CLUSTER_TYPE),minikube)

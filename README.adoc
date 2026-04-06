@@ -306,7 +306,7 @@ link:./hack/istio/install-testing-demos.sh[This script] can be used install all 
 [source,shell]
 ----
 # For frontend development, start the frontend development server, where `<kiali-url>` is the URL to the base Kiali UI location, such as `http://localhost:20001/kiali`:
-make -e YARN_START_URL=http://<kiali-url> yarn-start
+make -e KIALI_START_URL=http://<kiali-url> yarn-start
 
 # Start the cypress tests. The tests will run against the frontend development server by default.
 # Alternatively, a custom URL can be provided using environment variables:
@@ -356,11 +356,11 @@ To use either, some initial steps are required.
 
 First, start the Kiali Server backend, either within a cluster or by using the `run-kiali.sh` script as previously explained. Before proceeding, determine the Kiali URL. For example, when Kiali is run in Minikube with a port-forward set up to expose it, the URL to note will be`http://localhost:20001/kiali`.
 
-Next, run the GUI frontend using the following command: `make -e YARN_START_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL determined in the previous step. Additionally, if needed, pass `-e PORT=3001` to override the default port `3000`, which may conflict with Grafana if the Kiali Server was started using  `run-kiali.sh`. Some examples:
+Next, run the GUI frontend using the following command: `make -e KIALI_START_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL determined in the previous step. Additionally, if needed, pass `-e PORT=3001` to override the default port `3000`, which may conflict with Grafana if the Kiali Server was started using  `run-kiali.sh`. Some examples:
 
-* If the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e YARN_START_URL=http://localhost:20001/kiali yarn-start`.
-* If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e YARN_START_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
-* If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e YARN_START_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
+* If the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e KIALI_START_URL=http://localhost:20001/kiali yarn-start`.
+* If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e KIALI_START_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
+* If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e KIALI_START_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
 
 The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint. Once ready, check the output for the "Local" URL to access it. The output will resemble the following:
 
@@ -473,7 +473,7 @@ NOTE: Yarn is managed via link:https://nodejs.org/api/corepack.html[corepack]. R
 
 === Running the UI outside the cluster
 
-When developing the http://github.com/kiali/kiali/frontend[Kiali UI] running it outside of the cluster can be helpful for easily updating the UI code and viewing changes without needing to re-deploy. The preferred method for this is to use React's _proxy_ feature, as outlined https://github.com/kiali/kiali/blob/master/frontend/README.adoc#developing[here]. Alternatively, the `make -e YARN_START_URL=<url> yarn-start` command can be used, where `<url>` points to the Kiali backend.
+When developing the http://github.com/kiali/kiali/frontend[Kiali UI] running it outside of the cluster can be helpful for easily updating the UI code and viewing changes without needing to re-deploy. The preferred method for this is to use React's _proxy_ feature, as outlined https://github.com/kiali/kiali/blob/master/frontend/README.adoc#developing[here]. Alternatively, the `make -e KIALI_START_URL=<url> yarn-start` command can be used, where `<url>` points to the Kiali backend.
 
 === Disabling SSL
 

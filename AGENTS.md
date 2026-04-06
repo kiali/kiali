@@ -290,7 +290,7 @@ Install demo apps:
 make run-backend
 
 # Start frontend dev server (in terminal 2)
-make -e YARN_START_URL=http://localhost:20001/kiali yarn-start
+make -e KIALI_START_URL=http://localhost:20001/kiali yarn-start
 
 # Run Cypress tests (in terminal 3)
 make cypress-gui

@@ -2,11 +2,11 @@
 # Targets for working with the UI from source
 #
 
-## run-frontend: Run the frontend UI in a local development server. Set YARN_START_URL to update package.json.
-# The 'proxy' field will be set to the YARN_START_URL value (or empty if not provided).
+## run-frontend: Run the frontend UI in a local development server. Set KIALI_START_URL to update package.json.
+# The 'proxy' field will be set to the KIALI_START_URL value (or empty if not provided).
 # The proxy field will be automatically cleaned up when yarn start exits.
 run-frontend: .ensure-yarn-version
-	sed -i -e "2 i \ \ \"proxy\": \"${YARN_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json
+	sed -i -e "2 i \ \ \"proxy\": \"${KIALI_START_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json
 	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json || echo 'No proxy configured')"
 	@cleanup() { \
 		if [ "$$cleanup_done" != "true" ]; then \
