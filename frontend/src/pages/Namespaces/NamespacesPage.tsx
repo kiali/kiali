@@ -188,17 +188,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   }
 
   componentDidUpdate(prevProps: NamespacesProps): void {
-    if (
-      this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
-      (this.props.refreshInterval !== RefreshIntervalManual &&
-        (prevProps.navCollapse !== this.props.navCollapse ||
-          (prevProps.refreshInterval !== this.props.refreshInterval &&
-            (this.props.refreshInterval !== RefreshIntervalPause ||
-              prevProps.refreshInterval === RefreshIntervalManual))))
-    ) {
-      this.load();
-    }
-
     const refreshChanged =
       this.props.lastRefreshAt !== prevProps.lastRefreshAt ||
       (this.props.refreshInterval !== RefreshIntervalManual &&
