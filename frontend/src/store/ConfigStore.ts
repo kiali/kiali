@@ -4,9 +4,6 @@ import { persistStore, persistReducer, Transform } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
 import { createTransform } from 'redux-persist';
 import { rootReducer } from '../reducers';
-import * as reduxThunk from 'redux-thunk';
-
-// defaults to localStorage for web and AsyncStorage for react-native
 import storage from 'redux-persist/lib/storage';
 import { INITIAL_GLOBAL_STATE } from '../reducers/GlobalState';
 import { INITIAL_LOGIN_STATE } from '../reducers/LoginState';
@@ -30,8 +27,9 @@ import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
 
 declare const window;
 
-// Compatible with both redux-thunk v2 (default export) and v3 (named export)
-const thunk = (reduxThunk as any).thunk ?? (reduxThunk as any).default;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const reduxThunkModule = require('redux-thunk');
+const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
 // `webRoot` can be undefined in some unit tests that mock `app/History`. Be defensive to avoid crashing at import-time.
 const safeWebRoot = typeof webRoot === 'string' && webRoot.length > 0 ? webRoot : '/';

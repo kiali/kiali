@@ -1,12 +1,12 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import configureMockStore from 'redux-mock-store';
-import * as reduxThunk from 'redux-thunk';
 import { NamespaceActions } from '../NamespaceAction';
 import { NamespaceThunkActions } from '../NamespaceThunkActions';
 
-// Compatible with both redux-thunk v2 (default export) and v3 (named export)
-const thunk = (reduxThunk as any).thunk ?? (reduxThunk as any).default;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const reduxThunkModule = require('redux-thunk');
+const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
