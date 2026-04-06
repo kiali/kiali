@@ -329,10 +329,10 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 		return nil, err
 	}
 
-	return in.getNamespaceAppHealth(appEntities, criteria)
+	return in.getNamespaceAppHealth(ctx, appEntities, criteria)
 }
 
-func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
+func (in *HealthService) getNamespaceAppHealth(ctx context.Context, appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
@@ -363,7 +363,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(context.Background(), namespace, cluster, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
@@ -386,7 +386,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 // making it suitable for batch health computation across many namespaces.
 func (in *HealthService) GetNamespaceAppHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceAppHealth, error) {
 	var end observability.EndFunc
-	_, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
+	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
 		observability.Attribute("package", "business"),
 		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
 		observability.Attribute("namespace", criteria.Namespace),
@@ -415,7 +415,7 @@ func (in *HealthService) GetNamespaceAppHealthFromWorkloads(ctx context.Context,
 		appEntities[appName].Workloads = append(appEntities[appName].Workloads, w)
 	}
 
-	return in.getNamespaceAppHealth(appEntities, criteria)
+	return in.getNamespaceAppHealth(ctx, appEntities, criteria)
 }
 
 // GetNamespaceWorkloadHealthFromWorkloads computes workload health from pre-fetched workloads.
