@@ -986,6 +986,282 @@ func TestFillWorkloadRequestRates_EmptyLabels(t *testing.T) {
 	assert.Equal(map[string]map[string]float64{}, wkdHealth.Requests.Outbound)
 }
 
+func TestGetNamespaceAppHealthFromWorkloads(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
+	prom.MockAllRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "1m", queryTime, otherRatesIn)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: true,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+			DesiredReplicas:   3,
+			AvailableReplicas: 2,
+		},
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v2",
+				Namespace:    "ns",
+				IstioSidecar: true,
+				Labels:       map[string]string{"app": "reviews", "version": "v2"},
+			},
+			DesiredReplicas:   2,
+			AvailableReplicas: 1,
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      queryTime,
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceAppHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	assert.Nil(err)
+	assert.Len(health, 1)
+	assert.Contains(health, "reviews")
+	assert.Len(health["reviews"].WorkloadStatuses, 2)
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
+}
+
+func TestGetNamespaceAppHealthFromWorkloadsWithoutIstio(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: false,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC),
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceAppHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	require.NoError(err)
+	require.Len(health, 1)
+	require.Contains(health, "reviews")
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
+}
+
+func TestGetNamespaceAppHealthFromWorkloadsFiltersInfra(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: false,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+		},
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:       "waypoint-proxy",
+				Namespace:  "ns",
+				IsWaypoint: true,
+				Labels:     map[string]string{"app": "waypoint-proxy", "gateway.networking.k8s.io/gateway-name": "waypoint"},
+			},
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC),
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceAppHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	require.NoError(err)
+	require.Len(health, 1)
+	require.Contains(health, "reviews")
+	require.NotContains(health, "waypoint-proxy")
+}
+
+func TestGetNamespaceAppHealthFromWorkloadsSkipsNoAppLabel(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:      "unlabeled-workload",
+				Namespace: "ns",
+				Labels:    map[string]string{"version": "v1"},
+			},
+		},
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:      "empty-app-label",
+				Namespace: "ns",
+				Labels:    map[string]string{"app": "", "version": "v1"},
+			},
+		},
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: false,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC),
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceAppHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	require.NoError(err)
+	require.Len(health, 1)
+	require.Contains(health, "reviews")
+}
+
+func TestGetNamespaceWorkloadHealthFromWorkloads(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
+	prom.MockAllRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "1m", queryTime, otherRatesIn)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: true,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+			DesiredReplicas:   3,
+			AvailableReplicas: 2,
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      queryTime,
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceWorkloadHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	assert.Nil(err)
+	assert.Len(health, 1)
+	assert.Contains(health, "reviews-v1")
+	assert.Equal(int32(3), health["reviews-v1"].WorkloadStatus.DesiredReplicas)
+	assert.Equal(int32(2), health["reviews-v1"].WorkloadStatus.AvailableReplicas)
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
+}
+
+func TestGetNamespaceWorkloadHealthFromWorkloadsWithoutIstio(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+	prom := new(prometheustest.PromClientMock)
+
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+
+	workloads := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Name:         "reviews-v1",
+				Namespace:    "ns",
+				IstioSidecar: false,
+				Labels:       map[string]string{"app": "reviews", "version": "v1"},
+			},
+			DesiredReplicas:   2,
+			AvailableReplicas: 2,
+		},
+	}
+
+	criteria := NamespaceHealthCriteria{
+		Cluster:        conf.KubernetesConfig.ClusterName,
+		Namespace:      "ns",
+		RateInterval:   "1m",
+		QueryTime:      time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC),
+		IncludeMetrics: true,
+	}
+	health, err := hs.GetNamespaceWorkloadHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	require.NoError(err)
+	require.Len(health, 1)
+	require.Contains(health, "reviews-v1")
+	require.Equal(emptyResult, health["reviews-v1"].Requests.Inbound)
+	require.Equal(emptyResult, health["reviews-v1"].Requests.Outbound)
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 0)
+}
+
 func fakePodsHealthReview() []core_v1.Pod {
 	return []core_v1.Pod{
 		{

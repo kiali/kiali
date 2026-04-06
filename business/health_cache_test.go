@@ -1,12 +1,17 @@
 package business
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	core_v1 "k8s.io/api/core/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/log"
 )
 
 func TestCalculateDuration_FirstRun(t *testing.T) {
@@ -115,4 +120,37 @@ func parseNumber(s string, result *int) (bool, error) {
 	}
 	*result = n
 	return true, nil
+}
+
+func TestRefreshClusterHealth_GetAllWorkloadsError(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Server.Observability.Metrics.Enabled = false
+	conf.Server.Observability.Metrics.HealthStatus.Enabled = false
+	config.Set(conf)
+
+	cluster := conf.KubernetesConfig.ClusterName
+
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+	)
+
+	layer := NewLayerBuilder(t, conf).WithClient(k8s).Build()
+
+	// Remove the cluster's SA client from the WorkloadService so GetAllWorkloads
+	// fails with "Cluster [...] is not found", while the NamespaceService (which
+	// has its own copy of the SA clients) still succeeds for GetClusterNamespaces.
+	delete(layer.Workload.kialiSAClients, cluster)
+
+	clientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+
+	monitor := &healthMonitor{
+		clientFactory: clientFactory,
+		conf:          conf,
+		logger:        log.Logger().With().Str("component", "health-monitor-test").Logger(),
+	}
+
+	nsCount, errCount := monitor.refreshClusterHealth(context.Background(), layer, cluster, "5m")
+
+	assert.Equal(t, 0, nsCount, "expected 0 namespaces processed when GetAllWorkloads fails")
+	assert.Equal(t, 1, errCount, "expected 1 error when GetAllWorkloads fails")
 }
