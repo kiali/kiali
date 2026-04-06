@@ -267,7 +267,7 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace, cluster, workload, ra
 	if _, okNs := c.cacheWkRequestRates[namespace]; !okNs {
 		c.cacheWkRequestRates[namespace] = make(map[string]map[string]map[string]timeInOutResult)
 	}
-	if _, clusterNs := c.cacheWkRequestRates[namespace][cluster]; !clusterNs {
+	if _, okCluster := c.cacheWkRequestRates[namespace][cluster]; !okCluster {
 		c.cacheWkRequestRates[namespace][cluster] = make(map[string]map[string]timeInOutResult)
 	}
 	if _, okWk := c.cacheWkRequestRates[namespace][cluster][workload]; !okWk {
