@@ -1,8 +1,11 @@
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import { MessageType } from '../../types/NotificationCenter';
-import thunk from 'redux-thunk';
 import configureMockStore from 'redux-mock-store';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const reduxThunkModule = require('redux-thunk');
+const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
