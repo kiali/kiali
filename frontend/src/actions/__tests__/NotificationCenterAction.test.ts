@@ -1,8 +1,11 @@
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import { MessageType } from '../../types/NotificationCenter';
-import thunk from 'redux-thunk';
+import * as reduxThunk from 'redux-thunk';
 import configureMockStore from 'redux-mock-store';
+
+// Compatible with both redux-thunk v2 (default export) and v3 (named export)
+const thunk = (reduxThunk as any).thunk ?? (reduxThunk as any).default;
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
