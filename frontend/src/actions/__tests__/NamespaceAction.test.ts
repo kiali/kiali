@@ -1,10 +1,12 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import configureMockStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
-
 import { NamespaceActions } from '../NamespaceAction';
 import { NamespaceThunkActions } from '../NamespaceThunkActions';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const reduxThunkModule = require('redux-thunk');
+const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
@@ -12,7 +14,7 @@ const mockStore = configureMockStore(middlewares);
 describe('NamespaceActions', () => {
   const RealDate = Date;
 
-  const mockDate = date => {
+  const mockDate = (date: Date): Date => {
     global.Date = jest.fn(() => date) as any;
     return date;
   };
