@@ -126,7 +126,7 @@ func (c *promCacheImpl) GetAppRequestRates(namespace, cluster, app, ratesInterva
 	zl := c.zl
 
 	if nsRates, okNs := c.cacheAppRequestRates[namespace]; okNs {
-		if appInterval, okApp := nsRates[app][cluster]; okApp {
+		if appInterval, okApp := nsRates[cluster][app]; okApp {
 			if rtInterval, okRt := appInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 					zl.Trace().Msgf("GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
