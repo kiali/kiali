@@ -16,6 +16,13 @@ import (
 )
 
 func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
+	if req.ConversationID == "" {
+		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
+	}
+
+	if req.Query == "" {
+		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
+	}
 	ctx := kialiInterface.Request.Context()
 	if p.client == nil {
 		client, err := genai.NewClient(ctx, &p.config)

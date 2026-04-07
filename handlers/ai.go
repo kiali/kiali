@@ -138,7 +138,12 @@ func ChatAI(
 				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 				return
 			}
-			req.Username = authInfo[conf.KubernetesConfig.ClusterName].Username
+			clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
+			if !ok || clusterAuth == nil {
+				RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("AI initialization error: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName))
+				return
+			}
+			req.Username = clusterAuth.Username
 		} else {
 			req.Username = "anonymous"
 		}

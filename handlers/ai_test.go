@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,12 +12,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
+	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
@@ -245,4 +250,326 @@ func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
 	require.NoError(err)
 	t.Cleanup(func() { resp2.Body.Close() })
 	assert.Equal(t, http.StatusNotFound, resp2.StatusCode, "With kiali_chatbot header, tool should not be found (DefaultToolHandlers)")
+}
+
+// ========================================================================
+// ChatAI handler tests
+// ========================================================================
+
+func setupChatAIHandlerForTest(t *testing.T, conf *config.Config) (http.Handler, *config.Config, aiTypes.AIStore) {
+	t.Helper()
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
+	prom := &prometheustest.PromClientMock{}
+	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+
+	cpm := &business.FakeControlPlaneMonitor{}
+	traceLoader := &tracingtest.TracingClientMock{}
+
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := ChatAI(
+		conf,
+		kialiCache,
+		aiStore,
+		cf,
+		prom,
+		cpm,
+		func() tracing.ClientInterface { return traceLoader },
+		grafanaSvc,
+		persesSvc,
+		discovery,
+	)
+
+	return WithFakeAuthInfo(conf, handler), conf, aiStore
+}
+
+func TestChatAI_DisabledReturnsError(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query": "hello", "conversation_id": "c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/openai/gpt-4/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode, "disabled ChatAI should return error")
+}
+
+func TestChatAI_InvalidRequestBody(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{not valid json}`)
+	resp, err := http.Post(ts.URL+"/api/chat/openai/gpt-4/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "invalid JSON body should return 400")
+}
+
+func TestChatAI_ProviderNotFound(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query": "hello", "conversation_id": "c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/nonexistent/model/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode, "nonexistent provider should return error")
+}
+
+// ========================================================================
+// ChatConversations and DeleteChatConversations handler tests
+// ========================================================================
+
+func setupConversationHandlersForTest(t *testing.T) (*mux.Router, aiTypes.AIStore) {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	listHandler := ChatConversations(conf, aiStore)
+	deleteHandler := DeleteChatConversations(conf, aiStore)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := authentication.SetSessionIDContext(r.Context(), "test-session")
+		switch r.Method {
+		case http.MethodGet:
+			listHandler(w, r.WithContext(ctx))
+		case http.MethodDelete:
+			deleteHandler(w, r.WithContext(ctx))
+		}
+	}))
+
+	return mr, aiStore
+}
+
+func TestChatConversations_ListEmpty(t *testing.T) {
+	mr, _ := setupConversationHandlersForTest(t)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/chat/conversations")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var ids []string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&ids))
+	assert.Empty(t, ids)
+}
+
+func TestChatConversations_ListAfterSet(t *testing.T) {
+	mr, aiStore := setupConversationHandlersForTest(t)
+
+	conv := &aiTypes.Conversation{
+		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-1", conv))
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-2", conv))
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/chat/conversations")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var ids []string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&ids))
+	assert.Len(t, ids, 2)
+	assert.ElementsMatch(t, []string{"conv-1", "conv-2"}, ids)
+}
+
+func TestDeleteChatConversations_MissingParam(t *testing.T) {
+	mr, _ := setupConversationHandlersForTest(t)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations", nil)
+	require.NoError(t, err)
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "missing conversationIDs should return 400")
+}
+
+func TestDeleteChatConversations_Success(t *testing.T) {
+	mr, aiStore := setupConversationHandlersForTest(t)
+
+	conv := &aiTypes.Conversation{
+		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-1", conv))
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-2", conv))
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	ids := aiStore.GetConversationIDs("test-session")
+	assert.Equal(t, []string{"conv-2"}, ids, "conv-1 should be deleted")
+}
+
+func TestChatConversations_DisabledReturnsError(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+
+	aiStore := ai.NewAIStore(context.Background(), nil)
+	handler := ChatConversations(conf, aiStore)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/chat/conversations", nil)
+	handler(w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code, "disabled ChatAI should return error")
+}
+
+func TestDeleteChatConversations_DisabledReturnsError(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+
+	aiStore := ai.NewAIStore(context.Background(), nil)
+	handler := DeleteChatConversations(conf, aiStore)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodDelete, "/api/chat/conversations?conversationIDs=c1", nil)
+	handler(w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code, "disabled ChatAI should return error")
+}
+
+func TestDeleteChatConversations_MultipleIDs(t *testing.T) {
+	mr, aiStore := setupConversationHandlersForTest(t)
+
+	for _, id := range []string{"conv-a", "conv-b", "conv-c", "conv-d"} {
+		conv := &aiTypes.Conversation{
+			Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: id}},
+		}
+		require.NoError(t, aiStore.SetConversation("test-session", id, conv))
+	}
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-a,conv-c,conv-d", nil)
+	require.NoError(t, err)
+
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	ids := aiStore.GetConversationIDs("test-session")
+	assert.Equal(t, []string{"conv-b"}, ids, "only conv-b should remain")
+}
+
+func TestChatAI_AuthInfoMissingClusterName(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+	conf.KubernetesConfig.ClusterName = "primary-cluster"
+
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
+	prom := &prometheustest.PromClientMock{}
+	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	cpm := &business.FakeControlPlaneMonitor{}
+	traceLoader := &tracingtest.TracingClientMock{}
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := ChatAI(
+		conf, kialiCache, aiStore, cf, prom, cpm,
+		func() tracing.ClientInterface { return traceLoader },
+		grafanaSvc, persesSvc, discovery,
+	)
+
+	// Inject auth info that does NOT contain the configured cluster name
+	wrongClusterAuth := map[string]*api.AuthInfo{
+		"wrong-cluster": {Token: "test"},
+	}
+	wrappedHandler := WithAuthInfo(wrongClusterAuth, handler)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", wrappedHandler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query": "hello", "conversation_id": "c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/openai/gpt-4/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode,
+		"should return error when auth info doesn't contain the configured cluster name")
+}
+
+func TestChatMCP_EmptyBody(t *testing.T) {
+	require := require.New(t)
+	require.NoError(mcp.LoadTools())
+
+	handler, _ := SetupChatMCPHandlerForTest(t)
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/mcp/{tool_name}", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/chat/mcp/get_referenced_docs", "application/json", nil)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	// The tool may return an error for missing required args,
+	// but the handler must not panic on nil body.
+	assert.NotEqual(t, http.StatusInternalServerError, resp.StatusCode,
+		"empty body should not cause a 500/panic")
 }

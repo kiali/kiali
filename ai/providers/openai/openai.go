@@ -210,6 +210,11 @@ func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []
 		return conversation // Return original if summary fails
 	}
 
+	if len(resp.Choices) == 0 {
+		log.Warningf("[Chat AI] OpenAI returned no choices during conversation reduction")
+		return conversation
+	}
+
 	summary := resp.Choices[0].Message.Content
 
 	var reduced []types.ConversationMessage
