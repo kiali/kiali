@@ -32,7 +32,6 @@ ignore:
   
   # Documentation and designs
   - "design/**"
-  - "docs/**"
   
   # Test utilities, E2E tests, and mock directories
   - "tests/**"
