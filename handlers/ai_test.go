@@ -54,6 +54,46 @@ func SetupChatMCPHandlerForTest(t *testing.T) (http.Handler, *config.Config) {
 	return WithFakeAuthInfo(conf, handler), conf
 }
 
+func TestChatMCP_TraceToolsNotAvailableWhenTracingDisabled(t *testing.T) {
+	require := require.New(t)
+	require.NoError(mcp.LoadTools())
+
+	handler, conf := SetupChatMCPHandlerForTest(t)
+	require.False(conf.ExternalServices.Tracing.Enabled, "default test config should have tracing disabled")
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/mcp/{tool_name}", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	for _, tool := range []string{"list_traces", "get_trace_details"} {
+		body := bytes.NewBufferString(`{}`)
+		resp, err := http.Post(ts.URL+"/api/chat/mcp/"+tool, "application/json", body)
+		require.NoError(err)
+		resp.Body.Close()
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "tool %s should be unavailable when tracing is disabled", tool)
+	}
+}
+
+func TestChatMCP_TraceToolsReachableWhenTracingEnabled(t *testing.T) {
+	require := require.New(t)
+	require.NoError(mcp.LoadTools())
+
+	handler, conf := SetupChatMCPHandlerForTest(t)
+	conf.ExternalServices.Tracing.Enabled = true
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/mcp/{tool_name}", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{}`)
+	resp, err := http.Post(ts.URL+"/api/chat/mcp/list_traces", "application/json", body)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode, "list_traces should be registered when tracing is enabled")
+}
+
 func TestChatMCP_ToolNotFound(t *testing.T) {
 	require := require.New(t)
 

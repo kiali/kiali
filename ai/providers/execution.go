@@ -45,6 +45,14 @@ func ExecuteToolCallsInParallel(
 				return
 			}
 
+			if !kialiInterface.Conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(call.Name) {
+				results[index] = mcp.ToolCallResult{
+					Error: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name),
+					Code:  http.StatusNotFound,
+				}
+				return
+			}
+
 			mcpResult, code := handler.Call(kialiInterface, call.Args)
 			if code != http.StatusOK {
 				results[index] = mcp.ToolCallResult{

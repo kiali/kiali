@@ -46,6 +46,18 @@ var ExcludedToolNames = map[string]bool{
 	"get_action_ui":       true,
 }
 
+// TraceToolNames are MCP tools that call the mesh tracing backend (Jaeger/Tempo).
+// They must not be offered or executed when external_services.tracing.enabled is false.
+var TraceToolNames = map[string]struct{}{
+	"list_traces":       {},
+	"get_trace_details": {},
+}
+
+func IsTraceTool(name string) bool {
+	_, ok := TraceToolNames[name]
+	return ok
+}
+
 var (
 	loadToolsOnce sync.Once
 	loadToolsErr  error

@@ -1,6 +1,9 @@
 package mcp_tools
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/kiali/kiali/ai/mcp"
 )
 
 // TestAllToolsHaveIntegrationTests verifies that every YAML tool definition
@@ -49,9 +54,32 @@ func TestAllToolsHaveIntegrationTests(t *testing.T) {
 	}
 }
 
+// tracingEnabledFromKialiAPI reports whether Kiali has mesh tracing integration enabled
+// (same flag as external_services.tracing.enabled), via GET /api/tracing.
+func tracingEnabledFromKialiAPI(t *testing.T) bool {
+	t.Helper()
+	base := strings.TrimRight(os.Getenv("URL"), "/")
+	req, err := http.NewRequest(http.MethodGet, base+"/api/tracing", nil)
+	require.NoError(t, err)
+	httpResp, err := mcpClient.httpClient.Do(req)
+	require.NoError(t, err)
+	defer httpResp.Body.Close()
+	body, err := io.ReadAll(httpResp.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, httpResp.StatusCode, "GET /api/tracing: %s", string(body))
+	var info struct {
+		Enabled bool `json:"enabled"`
+	}
+	require.NoError(t, json.Unmarshal(body, &info))
+	return info.Enabled
+}
+
 // TestAllMCPEndpointsExist verifies that the /api/chat/mcp/<tool> endpoint
 // returns something other than 404 for every registered tool.
+// Trace MCP tools (list_traces, get_trace_details) return 404 when tracing is disabled in Kiali config.
 func TestAllMCPEndpointsExist(t *testing.T) {
+	tracingOn := tracingEnabledFromKialiAPI(t)
+
 	toolsDir := filepath.Join("..", "..", "..", "ai", "mcp", "tools")
 	entries, err := os.ReadDir(toolsDir)
 	require.NoError(t, err)
@@ -69,6 +97,16 @@ func TestAllMCPEndpointsExist(t *testing.T) {
 		t.Run(toolName, func(t *testing.T) {
 			resp, err := CallMCPToolEmptyBody(toolName)
 			require.NoError(t, err, "Failed to call tool %s", toolName)
+			if mcp.IsTraceTool(toolName) {
+				if tracingOn {
+					assert.NotEqual(t, 404, resp.StatusCode,
+						"Trace tool /api/chat/mcp/%s should be registered when tracing is enabled", toolName)
+				} else {
+					assert.Equal(t, 404, resp.StatusCode,
+						"Trace tool /api/chat/mcp/%s should return 404 when tracing is disabled", toolName)
+				}
+				return
+			}
 			assert.NotEqual(t, 404, resp.StatusCode,
 				"Tool endpoint /api/chat/mcp/%s returned 404 — not registered", toolName)
 		})

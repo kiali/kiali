@@ -188,6 +188,9 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 func (p *GoogleAIProvider) GetToolDefinitions() interface{} {
 	tools := make([]*genai.FunctionDeclaration, 0, len(mcp.DefaultToolHandlers))
 	for _, tool := range mcp.DefaultToolHandlers {
+		if !p.tracingEnabled && mcp.IsTraceTool(tool.Name) {
+			continue
+		}
 		tools = append(tools, &genai.FunctionDeclaration{
 			Name:        tool.GetName(),
 			Description: tool.GetDescription(),

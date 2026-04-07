@@ -82,6 +82,10 @@ func ChatMCP(
 			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' not found", toolName))
 			return
 		}
+		if !conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(toolName) {
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' is not available when tracing is disabled", toolName))
+			return
+		}
 		var args map[string]interface{}
 		if r.Body != nil && r.ContentLength != 0 {
 			if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
