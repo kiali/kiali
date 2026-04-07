@@ -325,7 +325,7 @@ func TestStore_ConcurrentDeleteAndGet(t *testing.T) {
 		}()
 		go func() {
 			defer wg.Done()
-			store.DeleteConversations("s1", []string{"c1"})
+			_ = store.DeleteConversations("s1", []string{"c1"})
 		}()
 	}
 	wg.Wait()
