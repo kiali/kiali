@@ -1,0 +1,75 @@
+name: mcpchecker MCP Evaluation - Report
+
+on:
+  workflow_run:
+    workflows: ["mcpchecker MCP Evaluation"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
+jobs:
+  report:
+    name: Post Evaluation Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'issue_comment'
+    steps:
+    - name: Check if evaluation ran
+      id: check
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        JOB_CONCLUSION=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/jobs" \
+          --jq '.jobs[] | select(.name == "Run MCP Evaluation") | .conclusion')
+
+        if [[ -n "$JOB_CONCLUSION" && "$JOB_CONCLUSION" != "skipped" ]]; then
+          echo "should-report=true" >> $GITHUB_OUTPUT
+        else
+          echo "should-report=false" >> $GITHUB_OUTPUT
+          echo "Evaluation job was skipped, no report needed"
+        fi
+
+    - name: Checkout code
+      if: steps.check.outputs.should-report == 'true'
+      uses: actions/checkout@v6
+      with:
+        ref: master
+
+    - name: Download evaluation context
+      if: steps.check.outputs.should-report == 'true'
+      uses: actions/download-artifact@v8
+      with:
+        name: eval-context
+        path: eval-context/
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download mcpchecker results
+      if: steps.check.outputs.should-report == 'true'
+      uses: actions/download-artifact@v8
+      with:
+        name: mcpchecker-results
+        path: mcpchecker-results/
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Post results comment
+      if: steps.check.outputs.should-report == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        PR_NUMBER=$(jq -r '.pr_number' eval-context/context.json)
+        RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+
+        PR_TOKEN_FILE="mcpchecker-results/ai/mcp/TOKEN_RESULTS.json"
+        BASELINE_FILE="ai/mcp/TOKEN_RESULTS.json"
+
+        COMMENT_BODY=$(hack/mcp/generate-eval-report.sh \
+          "${PR_TOKEN_FILE}" \
+          "${BASELINE_FILE}" \
+          "eval-context/context.json" \
+          "${RUN_URL}")
+
+        gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body "${COMMENT_BODY}"

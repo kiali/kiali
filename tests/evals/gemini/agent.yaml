@@ -1,0 +1,86 @@
+kind: Agent
+metadata:
+  name: "gemini-pro"
+commands:
+  useVirtualHome: false
+  argTemplateMcpServer: "{{ .File }}"
+  runPrompt: |-
+    set -euo pipefail
+
+    if ! command -v jq >/dev/null 2>&1; then
+      echo "jq is required to extract MCP server details" >&2
+      exit 1
+    fi
+
+    MCP_SERVER_FILE="{{ .McpServerFileArgs }}"
+    if [[ ! -f "${MCP_SERVER_FILE}" ]]; then
+      echo "MCP server file not found: ${MCP_SERVER_FILE}" >&2
+      exit 1
+    fi
+
+    MCP_URL="$(jq -r '.mcpServers.kubernetes.url' "${MCP_SERVER_FILE}")"
+    if [[ -z "${MCP_URL}" || "${MCP_URL}" == "null" ]]; then
+      echo "Unable to parse kubernetes MCP URL from ${MCP_SERVER_FILE}" >&2
+      exit 1
+    fi
+
+    PROMPT_FILE="$(mktemp)"
+    printf '%b' {{ printf "%q" .Prompt }} > "${PROMPT_FILE}"
+
+    TMP_HOME="$(mktemp -d)"
+    mkdir -p "${TMP_HOME}/.gemini"
+
+    DEBUG_DIR="${GEVALS_DEBUG_DIR:-}"
+    cleanup() {
+      local exit_status="$1"
+
+      if [[ -n "${DEBUG_DIR}" ]]; then
+        mkdir -p "${DEBUG_DIR}"
+        if [[ -f "${PROMPT_FILE}" ]]; then
+          cp "${PROMPT_FILE}" "${DEBUG_DIR}/prompt.txt" 2>/dev/null || true
+        fi
+        if [[ -d "${TMP_HOME}" ]]; then
+          mkdir -p "${DEBUG_DIR}/gemini-home"
+          cp -R "${TMP_HOME}/." "${DEBUG_DIR}/gemini-home" 2>/dev/null || true
+        fi
+        printf 'exit_status=%s\n' "${exit_status}" >> "${DEBUG_DIR}/debug.log"
+      fi
+
+      rm -rf "${TMP_HOME}"
+      rm -f "${PROMPT_FILE}"
+
+      trap - EXIT
+      exit "${exit_status}"
+    }
+    trap 'cleanup $?' EXIT
+
+    export HOME="${TMP_HOME}"
+    cd "${TMP_HOME}"
+
+    SERVER_NAME="kubernetes"
+
+    cat > "${TMP_HOME}/.gemini/settings.json" <<SETTINGS_EOF
+    {
+      "mcpServers": {
+        "${SERVER_NAME}": {
+          "url": "${MCP_URL}",
+          "transport": "http"
+        }
+      }
+    }
+    SETTINGS_EOF
+
+    PROMPT_CONTENT="$(cat "${PROMPT_FILE}")"
+
+    GEMINI_ARGS=("--approval-mode" "yolo" "--output-format" "stream-json")
+    
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash-lite}"
+    GEMINI_ARGS+=("--model" "${GEMINI_MODEL}")
+
+    if [[ -n "${DEBUG_DIR}" ]]; then
+      GEMINI_ARGS+=(-d)
+      echo "Running gemini with args: ${GEMINI_ARGS[*]}" >> "${DEBUG_DIR}/debug.log"
+      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
+    else
+      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
+    fi

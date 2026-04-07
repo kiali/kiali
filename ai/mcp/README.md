@@ -2,6 +2,29 @@
 
 This directory contains the Model Context Protocol (MCP) tools that enable the Kiali AI Assistant to interact with the service mesh, Kubernetes resources, and Istio configuration. These tools are called by the AI model to gather information, perform actions, and provide navigation capabilities.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Token Consumption](#token-consumption)
+- [Available Tools](#available-tools)
+  - [get_action_ui](#1-get_action_ui)
+  - [get_referenced_docs](#2-get_referenced_docs)
+  - [get_logs](#3-get_logs)
+  - [get_mesh_status](#4-get_mesh_status)
+  - [get_mesh_traffic_graph](#5-get_mesh_traffic_graph)
+  - [get_metrics](#6-get_metrics)
+  - [get_pod_performance](#7-get_pod_performance)
+  - [get_traces](#8-get_traces)
+  - [list_or_get_resources](#9-list_or_get_resources)
+  - [manage_istio_config_read](#10-manage_istio_config_read)
+  - [manage_istio_config](#11-manage_istio_config)
+- [Tool Definitions (YAML)](#tool-definitions-yaml)
+- [Tool Execution Flow](#tool-execution-flow)
+  - [ExcludedToolNames](#excludedtoolnames)
+- [Response Format](#response-format)
+- [Usage in AI Conversations](#usage-in-ai-conversations)
+- [Adding New Tools](#adding-new-tools)
+
 ## Overview
 
 MCP tools are functions that the AI can call to:
@@ -343,3 +366,24 @@ The AI model calls tools based on user queries:
 4. If the tool only emits UI actions/referenced_docs, add the name to `ExcludedToolNames`.
 
 See existing tools for end-to-end examples.
+
+
+# Token Consumption
+<!-- TOKENS-CONSUMPTION-START -->
+
+### Evaluation Summary
+
+| Metric | Value |
+|--------|-------|
+| Tasks Passed | 2/2 (100%) |
+| Assertions Pass Rate | 100% |
+| Total Tokens Estimate | 10029 |
+| MCP Schema Tokens | 3356 |
+
+### Per-Task Breakdown
+
+| Task | Tokens Estimate | MCP Schema Tokens | Passed |
+|------|----------------:|------------------:|--------|
+| get-namespaces | 7195 | 1678 | ✅ |
+| get-service-detail | 2834 | 1678 | ✅ |
+<!-- TOKENS-CONSUMPTION-END -->

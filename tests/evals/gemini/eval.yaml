@@ -1,0 +1,25 @@
+kind: Eval
+metadata:
+  name: "gemini-eval"
+config:
+  agent:
+    type: file
+    path: agent.yaml
+  mcpConfigFile: ../mcp-config.yaml
+  extensions:
+    kubernetes:
+      package: https://github.com/mcpchecker/kubernetes-extension@v0.0.2
+      config:
+        kubeconfig: ~/.kube/config
+  llmJudge:
+    ref:
+      type: builtin.llm-agent
+      model: "gemini:gemini-2.5-flash-lite"
+  taskSets:
+  - glob: ../tasks/*/*.yaml
+    assertions:
+      toolsUsed:
+      - server: kubernetes
+        toolPattern: ".*"
+      minToolCalls: 1
+      maxToolCalls: 20

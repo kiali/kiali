@@ -1,0 +1,41 @@
+{
+  "resultsFile": "mcpchecker-gemini-eval-out.json",
+  "tasks": [
+    {
+      "name": "get-namespaces",
+      "taskPassed": true,
+      "assertionsPassed": true,
+      "tokensEstimated": 3195,
+      "mcpSchemaTokens": 1678,
+      "tokenError": "token estimation not supported for shell runner",
+      "agentInputTokens": 0,
+      "agentOutputTokens": 0,
+      "judgeInputTokens": 14911,
+      "judgeOutputTokens": 350
+    },
+    {
+      "name": "get-service-detail",
+      "taskPassed": true,
+      "assertionsPassed": true,
+      "tokensEstimated": 2834,
+      "mcpSchemaTokens": 1678,
+      "tokenError": "token estimation not supported for shell runner",
+      "agentInputTokens": 0,
+      "agentOutputTokens": 0,
+      "judgeInputTokens": 5777,
+      "judgeOutputTokens": 74
+    }
+  ],
+  "tasksTotal": 2,
+  "tasksPassed": 2,
+  "taskPassRate": 1,
+  "assertionsTotal": 6,
+  "assertionsPassed": 6,
+  "assertionPassRate": 1,
+  "totalTokensEstimate": 10029,
+  "totalMcpSchemaTokens": 3356,
+  "agentTotalInputTokens": 0,
+  "agentTotalOutputTokens": 0,
+  "judgeTotalInputTokens": 20688,
+  "judgeTotalOutputTokens": 424
+}

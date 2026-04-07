@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  name: "get-namespaces"
+  difficulty: easy
+  labels:
+    suite: kiali
+    demo: sample
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "bookinfo"
+  prompt:
+    inline: Check namespaces in my mesh.
