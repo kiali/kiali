@@ -626,6 +626,11 @@ func EnvVarIsTrue(key string, env core_v1.EnvVar) bool {
 	return env.Name == key && env.Value == "true"
 }
 
+// CacheWaitTimeout is how long the WaitForObject*InCache helpers poll before
+// giving up. Tests can lower this to avoid a 5-second per-call penalty when
+// the fake kubeCache never reflects writes from a separate fake clientset.
+var CacheWaitTimeout = 5 * time.Second
+
 // WaitForObjectUpdateInCache waits for the update to propagate to the cached object. Modifies obj passed
 // so don't use it afterward.
 func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
@@ -635,7 +640,7 @@ func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, ob
 		return fmt.Errorf("unable to convert currentResourceVersion for obj: %s/%s", obj.GetName(), obj.GetNamespace())
 	}
 
-	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, CacheWaitTimeout, true, func(ctx context.Context) (bool, error) {
 		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
 			return false, err
 		}
@@ -665,7 +670,7 @@ func WaitForObjectUpdateInCache(ctx context.Context, kubeCache client.Reader, ob
 // WaitForObjectDeleteInCache waits for the object to be deleted from the cache.
 func WaitForObjectDeleteInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
 	currentUID := obj.GetUID()
-	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, CacheWaitTimeout, true, func(ctx context.Context) (bool, error) {
 		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
 			if errors.IsNotFound(err) {
 				return true, nil
@@ -684,7 +689,7 @@ func WaitForObjectDeleteInCache(ctx context.Context, kubeCache client.Reader, ob
 // This probably isn't 100% reliable since something could delete the object
 // after it is created and before we have a chance to see it.
 func WaitForObjectCreateInCache(ctx context.Context, kubeCache client.Reader, obj client.Object) error {
-	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, time.Second*5, true, func(ctx context.Context) (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, 100*time.Millisecond, CacheWaitTimeout, true, func(ctx context.Context) (bool, error) {
 		if err := kubeCache.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
 			if errors.IsNotFound(err) {
 				return false, nil

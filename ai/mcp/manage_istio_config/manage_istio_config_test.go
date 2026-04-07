@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,8 +22,17 @@ import (
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
+
+func TestMain(m *testing.M) {
+	// The fake Istio clientset and the fake kubeCache are separate stores,
+	// so the cache-wait polls always time out (5s each, 9 tests = 45s).
+	// Shortcutting the timeout keeps the tests fast.
+	kubernetes.CacheWaitTimeout = 1 * time.Millisecond
+	os.Exit(m.Run())
+}
 
 // ---------------------------------------------------------------------------
 // helpers
