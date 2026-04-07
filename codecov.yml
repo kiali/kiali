@@ -1,0 +1,40 @@
+codecov:
+  notify:
+    require_ci_to_pass: no
+
+comment:
+  behavior: default
+  require_changes: false
+
+coverage:
+  status:
+    project:
+      default:
+        # 'auto' means it will use the current coverage of the base branch as the target
+        target: auto
+        informational: false
+    patch:
+      default:
+        # Ensures that new code in a PR has at least 80% coverage
+        target: 80%
+        threshold: 0%
+        informational: false
+
+ignore:
+  # Exclude frontend UI code (since this is for the backend)
+  - "frontend/**"
+  
+  # Build, development, and deployment tools
+  - "hack/**"
+  - "make/**"
+  - "tools/**"
+  - "deploy/**"
+  
+  # Documentation and designs
+  - "design/**"
+  - "docs/**"
+  
+  # Test utilities, E2E tests, and mock directories
+  - "tests/**"
+  - "**/test/**"
+  - "**/*_test.go"
