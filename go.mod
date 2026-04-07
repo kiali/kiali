@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/go-jose/go-jose/v3 v3.0.4
+	github.com/go-jose/go-jose/v3 v3.0.5
 	github.com/go-logr/zerologr v1.2.3
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4
