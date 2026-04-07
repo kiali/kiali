@@ -22,6 +22,15 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
+// saTokenCredential prefers the SA token file path over a static token snapshot
+// so that the CredentialManager can watch the file and pick up rotated tokens.
+func saTokenCredential(client kubernetes.ClientInterface) string {
+	if cfg := client.ClusterInfo().ClientConfig; cfg != nil && cfg.BearerTokenFile != "" {
+		return cfg.BearerTokenFile
+	}
+	return client.GetToken()
+}
+
 // Service provides discovery and info about Perses.
 type Service struct {
 	conf                *config.Config
@@ -214,8 +223,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 		newAuth.Type = config.AuthTypeBearer
 
 		if auth.UseKialiToken {
-			// Use the Kiali service account token for authentication
-			newAuth.Token = config.Credential(s.homeClusterSAClient.GetToken())
+			newAuth.Token = config.Credential(saTokenCredential(s.homeClusterSAClient))
 		} else {
 			// Use the configured token
 			newAuth.Token = auth.Token
