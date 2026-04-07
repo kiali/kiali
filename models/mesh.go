@@ -10,8 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kiali/kiali/log"
 )
 
 const (
@@ -65,9 +63,7 @@ func (m *Mesh) ControlPlaneForNamespace(cluster, namespace string) (*ControlPlan
 			}
 		}
 	}
-	err := fmt.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s", cluster, namespace)
-	log.Debug(err)
-	return nil, err
+	return nil, fmt.Errorf("ControlPlaneForNamespace: no control plane found for cluster=%s namespace=%s", cluster, namespace)
 }
 
 // BuildNamespaceToMeshConfig precomputes namespace -> MeshConfig for unique namespaces using the
