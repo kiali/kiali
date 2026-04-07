@@ -1,5 +1,4 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading } from './transition';
 import { Visualization } from '@patternfly/react-topology';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
