@@ -23,6 +23,7 @@ import (
 // This is an interface for testing purposes.
 type HealthMonitor interface {
 	// Start starts the background health refresh job.
+	// The initial refresh and all subsequent refreshes run in a background goroutine
 	Start(ctx context.Context)
 	// RefreshHealth performs a single refresh of the health cache.
 	RefreshHealth(ctx context.Context) error
