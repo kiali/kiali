@@ -100,12 +100,15 @@ func (m *healthMonitor) Start(ctx context.Context) {
 			}
 		}()
 
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
 				m.logger.Info().Msg("Stopping health monitor")
 				return
-			case <-time.After(interval):
+			case <-ticker.C:
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
