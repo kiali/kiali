@@ -358,7 +358,8 @@ if [ "${CONFIG_PROFILE}" == "ambient" ]; then
   if [ -n "${CLUSTER_NAME}" ]; then
     ISTIO_YAML=$(echo "$ISTIO_YAML" | yq eval '
         .spec.values.global.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |
-        .spec.values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK = "true"
+        .spec.values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK = "true" |
+        .spec.values.pilot.env.AMBIENT_ENABLE_BAGGAGE = "true"
     ' -)
     ztunnelYAML=$(echo "$ztunnelYAML" | yq eval '
        .spec.values.ztunnel.multiCluster.clusterName = "'"${CLUSTER_NAME}"'" |

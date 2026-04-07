@@ -69,7 +69,8 @@ install_ambient_on_cluster() {
       --cluster-name "${cluster_name}" \
       --network "${network}" \
       --addons "prometheus grafana jaeger" \
-      --set "values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK=true"
+      --set "values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK=true" \
+      --set "values.pilot.env.AMBIENT_ENABLE_BAGGAGE=true"
 
     if [ "$?" != "0" ]; then
       echo "Failed to install Istio with ambient profile using istioctl"
