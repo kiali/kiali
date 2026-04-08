@@ -5,11 +5,13 @@ import (
 	"sync"
 	"testing"
 
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
 // --- NewAIStore tests ---
@@ -329,6 +331,103 @@ func TestStore_ConcurrentDeleteAndGet(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// --- Token logging accuracy: Prometheus metrics tests ---
+
+func getGaugeValue(g interface{ Write(*dto.Metric) error }) float64 {
+	m := &dto.Metric{}
+	if err := g.Write(m); err != nil {
+		return 0
+	}
+	return m.Gauge.GetValue()
+}
+
+func getCounterValue(c interface{ Write(*dto.Metric) error }) float64 {
+	m := &dto.Metric{}
+	if err := c.Write(m); err != nil {
+		return 0
+	}
+	return m.Counter.GetValue()
+}
+
+func TestStore_MetricsConversationsTotalUpdatedOnSet(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+
+	before := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, store.SetConversation("s1", "c1", conv))
+
+	after := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+	assert.Greater(t, after, before, "kiali_ai_store_conversations_total should increase after SetConversation")
+}
+
+func TestStore_MetricsConversationsTotalUpdatedOnDelete(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, store.SetConversation("s1", "c1", conv))
+	require.NoError(t, store.SetConversation("s1", "c2", conv))
+
+	afterSet := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+
+	require.NoError(t, store.DeleteConversations("s1", []string{"c1"}))
+
+	afterDelete := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+	assert.Less(t, afterDelete, afterSet, "kiali_ai_store_conversations_total should decrease after DeleteConversations")
+}
+
+func TestStore_MetricsEvictionsTotalIncrementedOnEviction(t *testing.T) {
+	cfg := &AiStoreConfig{
+		Enabled:          true,
+		MaxCacheMemoryMB: 1,
+		ReduceWithAI:     false,
+		ReduceThreshold:  15,
+	}
+	store := NewAIStore(context.Background(), cfg)
+
+	before := getCounterValue(internalmetrics.GetAIStoreEvictionsTotalMetric())
+
+	largeContent := makeTestString(600 * 1024) // ~0.6 MB
+	conv1 := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: largeContent}},
+	}
+	require.NoError(t, store.SetConversation("s1", "c1", conv1))
+
+	conv2 := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: largeContent}},
+	}
+	require.NoError(t, store.SetConversation("s2", "c2", conv2))
+
+	after := getCounterValue(internalmetrics.GetAIStoreEvictionsTotalMetric())
+	assert.Greater(t, after, before, "kiali_ai_store_evictions_total should increase when conversations are evicted")
+}
+
+func TestStore_MetricsConversationsTotalAccurateAcrossOperations(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+
+	require.NoError(t, store.SetConversation("s1", "c1", conv))
+	require.NoError(t, store.SetConversation("s1", "c2", conv))
+	require.NoError(t, store.SetConversation("s2", "c3", conv))
+
+	afterThreeAdds := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+
+	require.NoError(t, store.DeleteConversations("s1", []string{"c1", "c2"}))
+
+	afterTwoDeletes := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
+
+	delta := afterThreeAdds - afterTwoDeletes
+	assert.InDelta(t, 2.0, delta, 0.01,
+		"deleting 2 of 3 conversations should reduce the gauge by 2")
 }
 
 func makeTestString(n int) string {

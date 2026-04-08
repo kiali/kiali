@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -25,6 +26,7 @@ import (
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/tracing/tracingtest"
@@ -572,4 +574,92 @@ func TestChatMCP_EmptyBody(t *testing.T) {
 	// but the handler must not panic on nil body.
 	assert.NotEqual(t, http.StatusInternalServerError, resp.StatusCode,
 		"empty body should not cause a 500/panic")
+}
+
+// ========================================================================
+// Token logging accuracy: AI Prometheus metrics tests
+// ========================================================================
+
+func aiRequestsCounterValue(provider, model string) float64 {
+	m := &dto.Metric{}
+	counter := internalmetrics.GetAIRequestsTotalMetric(provider, model)
+	if err := counter.Write(m); err != nil {
+		return 0
+	}
+	return m.Counter.GetValue()
+}
+
+func TestChatAI_MetricsNotIncrementedOnProviderFailure(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	before := aiRequestsCounterValue("nonexistent", "model")
+
+	body := bytes.NewBufferString(`{"query": "hello", "conversation_id": "c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/nonexistent/model/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+
+	after := aiRequestsCounterValue("nonexistent", "model")
+	assert.Equal(t, before, after,
+		"kiali_ai_requests_total should NOT be incremented when provider initialization fails")
+}
+
+func TestChatAI_MetricsNotIncrementedOnDisabled(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	before := aiRequestsCounterValue("openai", "gpt-4")
+
+	body := bytes.NewBufferString(`{"query": "hello", "conversation_id": "c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/openai/gpt-4/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	after := aiRequestsCounterValue("openai", "gpt-4")
+	assert.Equal(t, before, after,
+		"kiali_ai_requests_total should NOT be incremented when ChatAI is disabled")
+}
+
+func TestChatAI_MetricsNotIncrementedOnBadRequest(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	before := aiRequestsCounterValue("openai", "gpt-4")
+
+	body := bytes.NewBufferString(`{invalid json}`)
+	resp, err := http.Post(ts.URL+"/api/chat/openai/gpt-4/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	after := aiRequestsCounterValue("openai", "gpt-4")
+	assert.Equal(t, before, after,
+		"kiali_ai_requests_total should NOT be incremented on invalid request body")
 }
