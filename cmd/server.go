@@ -88,13 +88,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// CredentialManager can watch the file and pick up rotated tokens automatically
 	// (e.g. projected service-account tokens rotated by the kubelet).
 	homeClient := clientFactory.GetSAHomeClusterClient()
-	kialiToken := ""
-	if clientConfig := homeClient.ClusterInfo().ClientConfig; clientConfig != nil {
-		kialiToken = clientConfig.BearerTokenFile
-	}
-	if kialiToken == "" {
-		kialiToken = homeClient.GetToken()
-	}
+	kialiToken := kubernetes.GetServiceAccountTokenCredential(homeClient)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
 	prom, err := prometheus.NewClient(*conf, kialiToken)
