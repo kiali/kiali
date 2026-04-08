@@ -406,6 +406,68 @@ func TestTracingClientUseKialiTokenIntegration(t *testing.T) {
 		"Kiali token should be sent in Authorization header when UseKialiToken=true")
 }
 
+// TestTracingClientUseKialiTokenFileRotation tests that when UseKialiToken is set
+// and the token is a file path (as happens when BearerTokenFile is set in the SA
+// client's rest.Config), subsequent requests pick up rotated tokens automatically.
+// This is the scenario fixed by passing BearerTokenFile instead of GetToken() in
+// cmd/server.go.
+func TestTracingClientUseKialiTokenFileRotation(t *testing.T) {
+	var capturedAuth atomic.Value
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedAuth.Store(r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	}))
+	defer server.Close()
+
+	conf := config.NewConfig()
+	var err error
+	conf.Credentials, err = config.NewCredentialManager(nil)
+	require.NoError(t, err)
+	t.Cleanup(conf.Close)
+
+	tmpDir := t.TempDir()
+	tokenFile := tmpDir + "/sa-token"
+	initialToken := "initial-sa-token-abc123"
+	err = os.WriteFile(tokenFile, []byte(initialToken), 0600)
+	require.NoError(t, err)
+
+	conf.ExternalServices.Tracing.Enabled = true
+	conf.ExternalServices.Tracing.Provider = "jaeger"
+	conf.ExternalServices.Tracing.UseGRPC = false
+	conf.ExternalServices.Tracing.InternalURL = server.URL
+	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeBearer
+	conf.ExternalServices.Tracing.Auth.UseKialiToken = true
+
+	// Pass the file path as the token, simulating what cmd/server.go now does
+	// when BearerTokenFile is available on the SA client's rest.Config.
+	ctx := context.Background()
+	client, err := NewClient(ctx, conf, tokenFile, true)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+
+	_, err = client.GetServiceStatus(ctx)
+	require.NoError(t, err)
+
+	auth := capturedAuth.Load()
+	require.NotNil(t, auth, "Authorization header should be captured")
+	assert.Equal(t, "Bearer "+initialToken, auth.(string))
+
+	// Rotate the SA token on disk (simulates kubelet PSAT rotation)
+	rotatedToken := "rotated-sa-token-xyz789"
+	err = os.WriteFile(tokenFile, []byte(rotatedToken), 0600)
+	require.NoError(t, err)
+
+	tokenRotated := polltest.PollForCondition(t, 2*time.Second, func() bool {
+		_, _ = client.GetServiceStatus(ctx)
+		auth = capturedAuth.Load()
+		return auth != nil && auth.(string) == "Bearer "+rotatedToken
+	})
+
+	assert.True(t, tokenRotated, "Rotated SA token should be sent after file rotation when UseKialiToken=true")
+}
+
 // TestTracingClientHTTPSWithCARotation tests that the tracing client correctly uses
 // custom CA bundles for TLS verification, and that CA rotation is reflected in
 // subsequent HTTPS connections.

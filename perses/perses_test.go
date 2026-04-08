@@ -8,8 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
 )
@@ -196,6 +198,62 @@ func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
 	assert.Equal(t, "/system/perses/", info.ExternalLinks[0].URL)
+}
+
+func TestGetAuthUseKialiTokenPrefersTokenFile(t *testing.T) {
+	tokenFile := "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	fakeClient := &kubetest.FakeK8sClient{
+		Token: "static-snapshot-token",
+		KubeClusterInfo: kubernetes.ClusterInfo{
+			ClientConfig: &rest.Config{BearerTokenFile: tokenFile},
+		},
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
+	conf.ExternalServices.Perses.Auth.UseKialiToken = true
+
+	svc := perses.NewService(conf, fakeClient)
+	auth := svc.GetAuth(context.Background())
+
+	assert.Equal(t, config.Credential(tokenFile), auth.Token,
+		"Should prefer BearerTokenFile over static GetToken()")
+}
+
+func TestGetAuthUseKialiTokenFallsBackToStaticToken(t *testing.T) {
+	fakeClient := &kubetest.FakeK8sClient{
+		Token: "static-snapshot-token",
+		KubeClusterInfo: kubernetes.ClusterInfo{
+			ClientConfig: &rest.Config{},
+		},
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
+	conf.ExternalServices.Perses.Auth.UseKialiToken = true
+
+	svc := perses.NewService(conf, fakeClient)
+	auth := svc.GetAuth(context.Background())
+
+	assert.Equal(t, config.Credential("static-snapshot-token"), auth.Token,
+		"Should fall back to GetToken() when BearerTokenFile is empty")
+}
+
+func TestGetAuthUseKialiTokenNilClientConfig(t *testing.T) {
+	fakeClient := &kubetest.FakeK8sClient{
+		Token:           "static-snapshot-token",
+		KubeClusterInfo: kubernetes.ClusterInfo{},
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
+	conf.ExternalServices.Perses.Auth.UseKialiToken = true
+
+	svc := perses.NewService(conf, fakeClient)
+	auth := svc.GetAuth(context.Background())
+
+	assert.Equal(t, config.Credential("static-snapshot-token"), auth.Token,
+		"Should fall back to GetToken() when ClientConfig is nil")
 }
 
 func buildDashboardSupplier(jsonData interface{}, code int, expectURL string, t *testing.T) perses.DashboardSupplierFunc {

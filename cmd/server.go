@@ -84,8 +84,14 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	discovery := istio.NewDiscovery(clientFactory.GetSAClients(), cache, conf)
 	cpm := business.NewControlPlaneMonitor(cache, clientFactory, conf, discovery)
 
+	// Prefer the SA token file path over a static token snapshot so that the
+	// CredentialManager can watch the file and pick up rotated tokens automatically
+	// (e.g. projected service-account tokens rotated by the kubelet).
+	homeClient := clientFactory.GetSAHomeClusterClient()
+	kialiToken := kubernetes.GetServiceAccountTokenCredential(homeClient)
+
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	prom, err := prometheus.NewClient(*conf, clientFactory.GetSAHomeClusterClient().GetToken())
+	prom, err := prometheus.NewClient(*conf, kialiToken)
 	if err != nil {
 		log.Fatalf("Error creating Prometheus client: %s", err)
 	}
@@ -102,7 +108,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 	if conf.ExternalServices.Tracing.Enabled {
 		go func() {
-			client, err := tracing.NewClient(ctx, conf, clientFactory.GetSAHomeClusterClient().GetToken(), true)
+			client, err := tracing.NewClient(ctx, conf, kialiToken, true)
 			if err != nil {
 				log.Fatalf("Error creating tracing client: %s", err)
 				return

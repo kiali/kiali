@@ -214,8 +214,7 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 		newAuth.Type = config.AuthTypeBearer
 
 		if auth.UseKialiToken {
-			// Use the Kiali service account token for authentication
-			newAuth.Token = config.Credential(s.homeClusterSAClient.GetToken())
+			newAuth.Token = config.Credential(kubernetes.GetServiceAccountTokenCredential(s.homeClusterSAClient))
 		} else {
 			// Use the configured token
 			newAuth.Token = auth.Token
