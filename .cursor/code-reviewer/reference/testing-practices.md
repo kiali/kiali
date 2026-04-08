@@ -1,0 +1,138 @@
+---
+format_version: 1
+---
+
+# Testing Practices — Kiali
+
+## Go Testing
+
+### Framework: testify
+
+All Go tests use the `testify` library. Use `require` for assertions where failure should stop the test immediately (setup steps, preconditions), and `assert` for non-fatal checks where the test can continue.
+
+```go
+// Correct: require for setup, assert for checks
+client, err := newClient(cfg)
+require.NoError(t, err)           // Fatal — no point continuing without a client
+assert.Equal(t, expected, result) // Non-fatal — report and continue
+
+// Wrong: assert for setup (test continues with broken state)
+client, err := newClient(cfg)
+assert.NoError(t, err)
+```
+
+Flag: `assert.NoError()` or `assert.NotNil()` used on values that subsequent test code depends on — these should be `require`.
+
+### Table-Driven Tests
+
+When a test has 3 or more similar cases, use the table-driven pattern with `map[string]struct{}`:
+
+```go
+tests := map[string]struct {
+    input    string
+    expected string
+    wantErr  bool
+}{
+    "valid input":   {input: "foo", expected: "bar"},
+    "empty input":   {input: "", wantErr: true},
+    "special chars": {input: "foo/bar", expected: "foo-bar"},
+}
+
+for name, tc := range tests {
+    t.Run(name, func(t *testing.T) {
+        result, err := myFunc(tc.input)
+        if tc.wantErr {
+            require.Error(t, err)
+            return
+        }
+        require.NoError(t, err)
+        assert.Equal(t, tc.expected, result)
+    })
+}
+```
+
+Flag: 3 or more nearly identical test functions that could be collapsed into a table. Do not flag when cases have meaningfully different setup or assertions that don't fit a table.
+
+### Fake Kubernetes Clients
+
+Unit tests must not make real Kubernetes API calls. Use the fake client helpers from `kubernetes/kubetest`:
+
+```go
+// Correct
+k8s := kubetest.FakeK8sClient(objects...)
+ns := kubetest.FakeNamespace("my-namespace")
+
+// Wrong — hits real cluster
+k8s, err := kubernetes.NewClientFromConfig(cfg)
+```
+
+Flag: unit tests that create real Kubernetes clients, or that require a running cluster to pass.
+
+### Setup Helpers
+
+When multiple test functions in a file share the same initialization logic, extract it into a named setup helper rather than duplicating the code.
+
+```go
+// Correct — shared helper
+func setupDashboardService(t *testing.T) *DashboardsService {
+    t.Helper()
+    conf := config.NewConfig()
+    return NewDashboardsService(conf, fakeProm, fakeGrafana)
+}
+
+func TestGetDashboard(t *testing.T) {
+    svc := setupDashboardService(t)
+    // ...
+}
+
+// Wrong — duplicated setup
+func TestGetDashboard(t *testing.T) {
+    conf := config.NewConfig()
+    svc := NewDashboardsService(conf, fakeProm, fakeGrafana)
+    // ...
+}
+func TestListDashboards(t *testing.T) {
+    conf := config.NewConfig()
+    svc := NewDashboardsService(conf, fakeProm, fakeGrafana)
+    // ...
+}
+```
+
+Flag: the same multi-step initialization block copy-pasted across 3 or more test functions in the same file.
+
+## TypeScript Testing
+
+### Framework and Structure
+
+TypeScript unit tests use Jest with `describe`/`it` blocks. Test files live in `__tests__/` subdirectories alongside the source they test.
+
+```
+frontend/src/actions/
+├── ClusterAction.ts
+└── __tests__/
+    └── ClusterAction.test.ts
+```
+
+```typescript
+describe('ClusterActions', () => {
+  it('should set active clusters', () => {
+    const clusters: MeshCluster[] = [{ name: 'test', ... }];
+    const action = ClusterActions.setActiveClusters(clusters);
+    expect(action.payload).toEqual(clusters);
+  });
+});
+```
+
+Flag: test files not in an `__tests__/` subdirectory, or tests using patterns other than `describe`/`it`.
+
+### Cypress for E2E Only
+
+Cypress is for integration and end-to-end tests only. Unit and component tests belong in Jest. Do not use Cypress to test logic that can be tested with Jest.
+
+Flag: Cypress tests covering logic that has no UI interaction requirement (pure functions, Redux actions, utility functions).
+
+## Changelog
+
+| Date | Change | Trigger |
+|------|--------|---------|
+| 2026-04-08 | Initial generation | /code-reviewer:setup |
