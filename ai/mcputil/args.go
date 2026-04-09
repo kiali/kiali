@@ -78,6 +78,16 @@ func AsBool(v interface{}) bool {
 	}
 }
 
+// AsBoolFromArgs returns the boolean value for the first present key in args (JSON Schema camelCase vs snake_case).
+func AsBoolFromArgs(args map[string]interface{}, keys ...string) bool {
+	for _, key := range keys {
+		if val, ok := args[key]; ok {
+			return AsBool(val)
+		}
+	}
+	return false
+}
+
 func AsInt(v interface{}) int {
 	switch t := v.(type) {
 	case int:

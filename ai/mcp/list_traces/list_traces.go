@@ -21,7 +21,7 @@ func Execute(
 	parsed := parseArgs(args, kialiInterface.Conf)
 
 	if parsed.Namespace == "" || parsed.ServiceName == "" {
-		return "namespace and service_name are required", http.StatusBadRequest
+		return "namespace and serviceName are required", http.StatusBadRequest
 	}
 
 	ctx := kialiInterface.Request.Context()
@@ -135,7 +135,7 @@ func parseArgs(args map[string]interface{}, conf *config.Config) GetTracesArgs {
 	out.Namespace = mcputil.GetStringArg(args, "namespace")
 	out.ServiceName = mcputil.GetStringArg(args, "service_name", "serviceName")
 	out.ClusterName = mcputil.GetStringOrDefault(args, conf.KubernetesConfig.ClusterName, "cluster_name", "clusterName")
-	out.ErrorOnly = mcputil.AsBool(args["errorOnly"])
+	out.ErrorOnly = mcputil.AsBoolFromArgs(args, "errorOnly", "error_only")
 
 	out.Limit = mcputil.AsIntOrDefault(args, mcputil.DefaultTracesLimit, "limit")
 	out.LookbackSeconds = mcputil.AsIntOrDefault(args, mcputil.DefaultLookbackSeconds, "lookback_seconds", "lookbackSeconds")

@@ -23,6 +23,14 @@ func TestParseArgs_Defaults(t *testing.T) {
 	}
 }
 
+func TestParseArgs_ErrorOnlySnakeCase(t *testing.T) {
+	conf := config.NewConfig()
+	parsed := parseArgs(map[string]interface{}{"error_only": true}, conf)
+	if !parsed.ErrorOnly {
+		t.Error("expected ErrorOnly true when error_only is set")
+	}
+}
+
 func TestExecute_Validation(t *testing.T) {
 	conf := config.NewConfig()
 	req1, _ := http.NewRequest("GET", "/", nil)
@@ -33,7 +41,7 @@ func TestExecute_Validation(t *testing.T) {
 	if code1 != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, code1)
 	}
-	if res1 != "namespace and service_name are required" {
+	if res1 != "namespace and serviceName are required" {
 		t.Errorf("expected validation error message, got %v", res1)
 	}
 

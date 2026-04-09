@@ -12,12 +12,13 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
   - [get_logs](#3-get_logs)
   - [get_mesh_status](#4-get_mesh_status)
   - [get_mesh_traffic_graph](#5-get_mesh_traffic_graph)
-  - [get_metrics](#6-get_metrics)
-  - [get_pod_performance](#7-get_pod_performance)
-  - [get_traces](#8-get_traces)
-  - [list_or_get_resources](#9-list_or_get_resources)
-  - [manage_istio_config_read](#10-manage_istio_config_read)
-  - [manage_istio_config](#11-manage_istio_config)
+  - [list_traces](#6-list_traces)
+  - [get_trace_details](#7-get_trace_details)
+  - [get_metrics](#8-get_metrics)
+  - [get_pod_performance](#9-get_pod_performance)
+  - [list_or_get_resources](#10-list_or_get_resources)
+  - [manage_istio_config_read](#11-manage_istio_config_read)
+  - [manage_istio_config](#12-manage_istio_config)
 - [Tool Definitions (YAML)](#tool-definitions-yaml)
 - [Tool Execution Flow](#tool-execution-flow)
   - [ExcludedToolNames](#excludedtoolnames)
@@ -148,12 +149,13 @@ Returns a compact service-to-service traffic topology with network metrics (thro
 
 Lists distributed traces for a service from the configured tracing backend (Jaeger/Tempo). Returns a **summary** (namespace, service, total_found, avg_duration_ms) and a **traces** list with id, duration_ms, spans_count, root_op, slowest_service, has_errors. Use **get_trace_details** with a trace id to get the full call hierarchy.
 
-**Parameters**:
+**Parameters** (JSON Schema uses camelCase; snake_case aliases are accepted where noted):
 - `namespace` (string, required): Namespace of the service.
-- `service_name` (string, required): Service name to search traces for.
-- `error_only` (boolean, optional): If true, only consider error traces.
-- `lookback_seconds` (integer, optional): Search window. Default 600.
+- `serviceName` (string, required): Service name to search traces for. Alias: `service_name`.
+- `errorOnly` (boolean, optional): If true, only consider error traces. Alias: `error_only`.
+- `lookbackSeconds` (integer, optional): Search window. Default 600. Aliases: `lookback_seconds`.
 - `limit` (integer, optional): Max traces to return. Default 10.
+- `clusterName` (string, optional): Cluster name. Alias: `cluster_name`.
 
 **Returns**: `GetTracesListResponse` with `summary` and `traces` (list of lightweight items).
 
@@ -161,15 +163,31 @@ Lists distributed traces for a service from the configured tracing backend (Jaeg
 ```json
 {
   "namespace": "bookinfo",
-  "service_name": "reviews",
-  "error_only": true,
-  "lookback_seconds": 900
+  "serviceName": "reviews",
+  "errorOnly": true,
+  "lookbackSeconds": 900
 }
 ```
 
 ---
 
-### 7. `get_metrics`
+### 7. `get_trace_details`
+
+Fetches one distributed trace by id and returns a **call hierarchy** (service tree with duration, status, nested calls). Call this **after** `list_traces` using a trace `id` from the list.
+
+**Parameters**:
+- `traceId` (string, required): Trace id from the tracing backend. Alias: `trace_id`.
+
+**Returns**: `GetTraceDetailResponse` with `traceId`, `totalMs`, and `hierarchy`.
+
+**Example**:
+```json
+{"traceId": "1a2b3c4d5e6f7890"}
+```
+
+---
+
+### 8. `get_metrics`
 
 Returns Istio/Envoy metrics for a specific resource.
 
@@ -193,7 +211,7 @@ Returns Istio/Envoy metrics for a specific resource.
 
 ---
 
-### 8. `get_pod_performance`
+### 9. `get_pod_performance`
 
 Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits.
 
@@ -212,7 +230,7 @@ Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compa
 
 ---
 
-### 9. `list_or_get_resources`
+### 10. `list_or_get_resources`
 
 Unified tool to list or get details for services, workloads, apps, and namespaces. If `resourceName` is omitted, returns a compact list. If provided, returns detailed information for that specific resource.
 
@@ -244,7 +262,7 @@ Unified tool to list or get details for services, workloads, apps, and namespace
 
 ---
 
-### 10. `manage_istio_config_read`
+### 11. `manage_istio_config_read`
 
 Read-only: list or get Istio configuration objects.
 
@@ -264,7 +282,7 @@ Read-only: list or get Istio configuration objects.
 
 ---
 
-### 11. `manage_istio_config`
+### 12. `manage_istio_config`
 
 Create, patch, or delete Istio configuration. Always use `confirmed: false` first for a preview, then `confirmed: true` after user confirmation.
 
@@ -352,7 +370,7 @@ The AI model calls tools based on user queries:
 - Traffic topology/dependencies → `get_mesh_traffic_graph`
 - Resource metrics → `get_metrics`
 - CPU/memory analysis → `get_pod_performance`
-- Distributed traces → `get_traces`
+- Distributed traces (list) → `list_traces`; drill-down by id → `get_trace_details`
 - List/detail resources → `list_or_get_resources`
 - List/get Istio config → `manage_istio_config_read`
 - Create/patch/delete Istio config → `manage_istio_config`
