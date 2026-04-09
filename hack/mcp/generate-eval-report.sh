@@ -87,49 +87,104 @@ TABLE
     echo ""
   fi
 
-  cat <<TASK_HEADER
+  # Classify tasks: common (in both), new (PR only), removed (baseline only)
+  PR_TASK_NAMES=$(jq -r '.tasks[].name' "${PR_RESULTS}")
+  BASE_TASK_NAMES=$(jq -r '.tasks[].name' "${BASELINE}")
+
+  COMMON_TASKS=()
+  NEW_TASKS=()
+  REMOVED_TASKS=()
+
+  while IFS= read -r name; do
+    if echo "${BASE_TASK_NAMES}" | grep -qxF "${name}"; then
+      COMMON_TASKS+=("${name}")
+    else
+      NEW_TASKS+=("${name}")
+    fi
+  done <<< "${PR_TASK_NAMES}"
+
+  while IFS= read -r name; do
+    if ! echo "${PR_TASK_NAMES}" | grep -qxF "${name}"; then
+      REMOVED_TASKS+=("${name}")
+    fi
+  done <<< "${BASE_TASK_NAMES}"
+
+  # Common tasks: show diff table
+  if [[ ${#COMMON_TASKS[@]} -gt 0 ]]; then
+    cat <<TASK_HEADER
 ### Per-Task Results
 
 | Task | Status | Tokens (Master) | Tokens (PR) | Diff | Schema (Master) | Schema (PR) | Diff |
 |------|--------|----------------:|------------:|-----:|----------------:|------------:|-----:|
 TASK_HEADER
 
-  PR_TASK_COUNT=$(jq '.tasks | length' "${PR_RESULTS}")
-  for i in $(seq 0 $((PR_TASK_COUNT - 1))); do
-    NAME=$(jq -r ".tasks[${i}].name" "${PR_RESULTS}")
-    PR_T=$(jq -r ".tasks[${i}].tokensEstimated // 0" "${PR_RESULTS}")
-    PR_S=$(jq -r ".tasks[${i}].mcpSchemaTokens // 0" "${PR_RESULTS}")
-    PR_PASS=$(jq -r ".tasks[${i}].taskPassed" "${PR_RESULTS}")
+    for NAME in "${COMMON_TASKS[@]}"; do
+      PR_T=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .tokensEstimated // 0" "${PR_RESULTS}")
+      PR_S=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .mcpSchemaTokens // 0" "${PR_RESULTS}")
+      PR_PASS=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .taskPassed" "${PR_RESULTS}")
+      BASE_T=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .tokensEstimated // 0" "${BASELINE}")
+      BASE_S=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .mcpSchemaTokens // 0" "${BASELINE}")
 
-    BASE_T=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .tokensEstimated // 0" "${BASELINE}" 2>/dev/null || echo "—")
-    BASE_S=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .mcpSchemaTokens // 0" "${BASELINE}" 2>/dev/null || echo "—")
+      if [[ "${PR_PASS}" == "true" ]]; then
+        STATUS="✅"
+      else
+        STATUS="❌"
+      fi
 
-    if [[ "${PR_PASS}" == "true" ]]; then
-      STATUS="✅"
-    else
-      STATUS="❌"
-    fi
-
-    if [[ "${BASE_T}" != "—" && "${BASE_T}" != "" ]]; then
       DIFF_T=$((PR_T - BASE_T))
-      DIFF_T_FMT=$(format_diff ${DIFF_T})
-    else
-      BASE_T="—"
-      DIFF_T_FMT="new"
-    fi
-
-    if [[ "${BASE_S}" != "—" && "${BASE_S}" != "" ]]; then
       DIFF_S=$((PR_S - BASE_S))
-      DIFF_S_FMT=$(format_diff ${DIFF_S})
-    else
-      BASE_S="—"
-      DIFF_S_FMT="new"
-    fi
 
-    echo "| ${NAME} | ${STATUS} | ${BASE_T} | ${PR_T} | ${DIFF_T_FMT} | ${BASE_S} | ${PR_S} | ${DIFF_S_FMT} |"
-  done
+      echo "| ${NAME} | ${STATUS} | ${BASE_T} | ${PR_T} | $(format_diff ${DIFF_T}) | ${BASE_S} | ${PR_S} | $(format_diff ${DIFF_S}) |"
+    done
 
-  echo ""
+    echo ""
+  fi
+
+  # New tasks (PR only)
+  if [[ ${#NEW_TASKS[@]} -gt 0 ]]; then
+    cat <<NEW_HEADER
+### New Tasks
+
+| Task | Status | Tokens Estimate | MCP Schema Tokens |
+|------|--------|----------------:|------------------:|
+NEW_HEADER
+
+    for NAME in "${NEW_TASKS[@]}"; do
+      PR_T=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .tokensEstimated // 0" "${PR_RESULTS}")
+      PR_S=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .mcpSchemaTokens // 0" "${PR_RESULTS}")
+      PR_PASS=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .taskPassed" "${PR_RESULTS}")
+
+      if [[ "${PR_PASS}" == "true" ]]; then
+        STATUS="✅"
+      else
+        STATUS="❌"
+      fi
+
+      echo "| ${NAME} | ${STATUS} | ${PR_T} | ${PR_S} |"
+    done
+
+    echo ""
+  fi
+
+  # Removed tasks (baseline only)
+  if [[ ${#REMOVED_TASKS[@]} -gt 0 ]]; then
+    cat <<REMOVED_HEADER
+### Removed Tasks
+
+| Task | Tokens Estimate | MCP Schema Tokens |
+|------|----------------:|------------------:|
+REMOVED_HEADER
+
+    for NAME in "${REMOVED_TASKS[@]}"; do
+      BASE_T=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .tokensEstimated // 0" "${BASELINE}")
+      BASE_S=$(jq -r ".tasks[] | select(.name == \"${NAME}\") | .mcpSchemaTokens // 0" "${BASELINE}")
+
+      echo "| ${NAME} | ${BASE_T} | ${BASE_S} |"
+    done
+
+    echo ""
+  fi
+
 else
   cat <<NO_BASELINE
 ### Task Results
