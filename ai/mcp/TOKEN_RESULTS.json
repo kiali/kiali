@@ -5,25 +5,25 @@
       "name": "get-namespaces",
       "taskPassed": true,
       "assertionsPassed": true,
-      "tokensEstimated": 3195,
+      "tokensEstimated": 6997,
       "mcpSchemaTokens": 1678,
       "tokenError": "token estimation not supported for shell runner",
       "agentInputTokens": 0,
       "agentOutputTokens": 0,
-      "judgeInputTokens": 14911,
-      "judgeOutputTokens": 350
+      "judgeInputTokens": 14981,
+      "judgeOutputTokens": 344
     },
     {
       "name": "get-service-detail",
       "taskPassed": true,
       "assertionsPassed": true,
-      "tokensEstimated": 2834,
+      "tokensEstimated": 2824,
       "mcpSchemaTokens": 1678,
       "tokenError": "token estimation not supported for shell runner",
       "agentInputTokens": 0,
       "agentOutputTokens": 0,
-      "judgeInputTokens": 5777,
-      "judgeOutputTokens": 74
+      "judgeInputTokens": 5831,
+      "judgeOutputTokens": 108
     }
   ],
   "tasksTotal": 2,
@@ -32,10 +32,10 @@
   "assertionsTotal": 6,
   "assertionsPassed": 6,
   "assertionPassRate": 1,
-  "totalTokensEstimate": 10029,
+  "totalTokensEstimate": 9821,
   "totalMcpSchemaTokens": 3356,
   "agentTotalInputTokens": 0,
   "agentTotalOutputTokens": 0,
-  "judgeTotalInputTokens": 20688,
-  "judgeTotalOutputTokens": 424
+  "judgeTotalInputTokens": 20812,
+  "judgeTotalOutputTokens": 452
 }
