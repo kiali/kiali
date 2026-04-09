@@ -27,7 +27,7 @@ ISTIOCTL=
 ISTIO_DIR=
 ISTIO_EGRESSGATEWAY_ENABLED="true"
 ISTIO_INGRESSGATEWAY_ENABLED="true"
-K8S_GATEWAY_API_ENABLED="false"
+K8S_GATEWAY_API_ENABLED="true"
 K8S_GATEWAY_API_VERSION=""
 K8S_GATEWAY_API_IE_VERSION=""
 ISTIO_VERSION=""
@@ -279,10 +279,10 @@ Valid command line arguments:
        The Istio revision to set while installing, "istio.io/rev=<revision>".
        Default: empty
   -gae|--k8s-gateway-api-enabled (true|false)
-       When set to true, K8s Gateway API will be installed.
-       Default: false
+       When set to true, K8s Gateway API CRDs are installed (and the Gateway API Inference Extension CRDs if missing).
+       Default: true
   -gav|--k8s-gateway-api-version <version>:
-       The K8s Gateway API version to install. This is considered when --k8s-gateway-api-enabled is specified as "true".
+       The K8s Gateway API version to install. Used when K8s Gateway API CRD installation runs (enabled by default; use --k8s-gateway-api-enabled false to skip).
   -ih|--image-hub <hub id>
        The hub where the Istio images will be pulled from.
        You can set this to "default" in order to use the default hub that the Istio charts use but
