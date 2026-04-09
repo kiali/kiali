@@ -533,11 +533,11 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     echo "Running backend MCP integration tests"
     ensureBookinfoGraphReady
     cd "${SCRIPT_DIR}"/../tests/integration/mcp_tools | tee >(go-junit-report > ../junit-rest-report-mcp-tools.xml) ../int-test-mcp-tools.log
-    go test -tags exclude_frontend -v -failfast -coverprofile=coverage-integration.out 2>&1
+    go test -tags exclude_frontend -v -failfast -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-integration.out 2>&1
   else
     # Run backend multicluster integration tests
     cd "${SCRIPT_DIR}"/../tests/integration/tests
-    go test -v -failfast -coverprofile=coverage-integration.out 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
+    go test -v -failfast -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-integration.out 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
     detectRaceConditions
   fi
 elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
@@ -573,7 +573,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
 
   # Run backend multicluster integration tests
   cd "${SCRIPT_DIR}"/../tests/integration/multicluster/
-  go test -v -failfast -coverprofile=coverage-integration.out 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
+  go test -v -failfast -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-integration.out 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressInstalled
