@@ -387,3 +387,30 @@ See existing tools for end-to-end examples.
 | get-namespaces | 7195 | 1678 | ✅ |
 | get-service-detail | 2834 | 1678 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
+
+## MCP evaluation (CI)
+
+The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in GitHub Actions against a Kind cluster with Istio and Kiali (`hack/run-integration-tests.sh` setup, MCP tools enabled). This is separate from unit/integration tests: it uses an LLM agent and costs API usage.
+
+### How to trigger the workflow
+
+1. **On a pull request** — Comment `/run-mcpchecker` on the PR. Only collaborators with **write** or **admin** permission on the repository can trigger it. When the run completes, the **mcpchecker MCP Evaluation - Report** workflow posts a results comment on the same PR.
+
+2. **Manually** — In GitHub: **Actions** → workflow **mcpchecker MCP Evaluation** → **Run workflow**. Pick the branch and optionally enable **verbose** output.
+
+### Requirements
+
+- Configure the **`GEMINI_API_KEY`** repository secret. Eval configuration lives under `tests/evals/` (for example `tests/evals/gemini/eval.yaml`).
+
+### Where it is defined
+
+| Piece | Location |
+|-------|----------|
+| Main workflow | `.github/workflows/mcpchecker.yml` |
+| PR results comment | `.github/workflows/mcpchecker-report.yml` |
+| Make targets (install, run eval, token summary) | `make/Makefile.mcp.mk` |
+
+### Token baseline
+
+Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed token baseline via the **Update Token Baseline** job: it refreshes `ai/mcp/TOKEN_RESULTS.json` and the [Token Consumption](#token-consumption) section below (through `hack/mcp/update-token-readme.sh`) and may open an automated PR.
+
