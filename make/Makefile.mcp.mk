@@ -12,25 +12,27 @@ KIALI_URL ?= $(shell kubectl get svc kiali -n istio-system -o=jsonpath='http://{
 ## mcp-install-mcpchecker: Download and install the latest mcpchecker binary
 mcp-install-mcpchecker:
 	@echo "Installing mcpchecker..."
+	@mkdir -p "${GOPATH}/bin"
 	@MCPCHECKER_URL=$$(curl -sL https://api.github.com/repos/mcpchecker/mcpchecker/releases/latest \
 		| jq -r '.assets[] | select(.name == "mcpchecker-linux-amd64.zip") | .browser_download_url'); \
 	echo "Downloading mcpchecker from: $${MCPCHECKER_URL}"; \
 	curl -sL "$${MCPCHECKER_URL}" -o /tmp/mcpchecker.zip; \
 	unzip -o /tmp/mcpchecker.zip -d /tmp/mcpchecker; \
 	chmod +x /tmp/mcpchecker/mcpchecker; \
-	sudo mv /tmp/mcpchecker/mcpchecker /usr/local/bin/; \
+	mv /tmp/mcpchecker/mcpchecker "${GOPATH}/bin/"; \
 	rm -rf /tmp/mcpchecker.zip /tmp/mcpchecker; \
-	echo "mcpchecker installed: $$(mcpchecker --version 2>/dev/null || echo 'ok')"
+	echo "mcpchecker installed to ${GOPATH}/bin/"
 
 ## mcp-install-server: Download and install the latest kubernetes-mcp-server binary
 mcp-install-server:
 	@echo "Installing kubernetes-mcp-server..."
+	@mkdir -p "${GOPATH}/bin"
 	@RELEASE_URL=$$(curl -sL https://api.github.com/repos/containers/kubernetes-mcp-server/releases/latest \
 		| jq -r '.assets[] | select(.name | test("linux.*amd64")) | .browser_download_url'); \
 	echo "Downloading kubernetes-mcp-server from: $${RELEASE_URL}"; \
-	curl -sL "$${RELEASE_URL}" -o /usr/local/bin/kubernetes-mcp-server; \
-	chmod +x /usr/local/bin/kubernetes-mcp-server; \
-	echo "kubernetes-mcp-server installed"
+	curl -sL "$${RELEASE_URL}" -o "${GOPATH}/bin/kubernetes-mcp-server"; \
+	chmod +x "${GOPATH}/bin/kubernetes-mcp-server"; \
+	echo "kubernetes-mcp-server installed to ${GOPATH}/bin/"
 
 ## mcp-install-gemini-cli: Install the Gemini CLI via npm
 mcp-install-gemini-cli:
@@ -51,7 +53,7 @@ mcp-start-server: mcp-resolve-kiali-url
 	@echo "Starting kubernetes-mcp-server on port ${MCP_SERVER_PORT}..."
 	@cat > ${MCP_SERVER_CONFIG} <<< $$'toolsets = ["kiali"]\nlog_level = 0\nport = "${MCP_SERVER_PORT}"\n[toolset_configs.kiali]\nurl = "${KIALI_URL}"\ninsecure = true'
 	@echo "MCP server config:"; cat ${MCP_SERVER_CONFIG}
-	@kubernetes-mcp-server --config ${MCP_SERVER_CONFIG} & \
+	@${GOPATH}/bin/kubernetes-mcp-server --config ${MCP_SERVER_CONFIG} & \
 	MCP_PID=$$!; \
 	echo "$$MCP_PID" > /tmp/mcp-server.pid; \
 	echo "Waiting for kubernetes-mcp-server (pid $$MCP_PID) to be ready..."; \
@@ -77,7 +79,7 @@ mcp-stop-server:
 ## mcp-run-eval: Run the mcpchecker evaluation
 mcp-run-eval:
 	@echo "Running mcpchecker evaluation..."
-	mcpchecker check ${MCP_EVAL_CONFIG} ${MCP_EVAL_ARGS}
+	${GOPATH}/bin/mcpchecker check ${MCP_EVAL_CONFIG} ${MCP_EVAL_ARGS}
 
 ## mcp-eval-summary: Show a pretty summary of the evaluation results
 mcp-eval-summary:
@@ -85,7 +87,7 @@ mcp-eval-summary:
 		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@mcpchecker summary ${MCP_EVAL_RESULTS} --github-output
+	@${GOPATH}/bin/mcpchecker summary ${MCP_EVAL_RESULTS} --github-output
 
 ## mcp-eval-save-tokens: Generate and save the token results JSON baseline
 mcp-eval-save-tokens:
@@ -94,7 +96,7 @@ mcp-eval-save-tokens:
 		exit 1; \
 	fi
 	@echo "Saving token results to ${MCP_TOKEN_RESULTS}..."
-	@mcpchecker summary ${MCP_EVAL_RESULTS} --output json > ${MCP_TOKEN_RESULTS}
+	@${GOPATH}/bin/mcpchecker summary ${MCP_EVAL_RESULTS} --output json > ${MCP_TOKEN_RESULTS}
 	@echo "Token baseline saved:"
 	@cat ${MCP_TOKEN_RESULTS}
 

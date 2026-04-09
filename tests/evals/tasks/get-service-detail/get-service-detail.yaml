@@ -9,15 +9,8 @@ spec:
   requires:
   - extension: kubernetes
     as: k8s
-  setup:
-  # No setup needed
-
   verify:
   - llmJudge:
       contains: "service: details"
-
-  cleanup:
-  # No cleanup needed
-
   prompt:
     inline: Give me information about my service details in the namespace bookinfo.

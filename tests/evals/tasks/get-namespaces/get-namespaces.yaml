@@ -5,7 +5,6 @@ metadata:
   difficulty: easy
   labels:
     suite: kiali
-    demo: sample
 spec:
   requires:
   - extension: kubernetes
