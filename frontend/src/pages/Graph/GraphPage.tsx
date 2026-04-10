@@ -867,7 +867,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setLayout: bindActionCreators(GraphActions.setLayout, dispatch),
   setNode: bindActionCreators(GraphActions.setNode, dispatch),
   setRankResult: bindActionCreators(GraphActions.setRankResult, dispatch),
-  setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId(traceId)),
+  setTraceId: (traceId?: string) => dispatch(TracingThunkActions.setTraceId(undefined, traceId)),
   setUpdateTime: (val: TimeInMilliseconds) => dispatch(GraphActions.setUpdateTime(val)),
   startTour: bindActionCreators(TourActions.startTour, dispatch),
   toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),

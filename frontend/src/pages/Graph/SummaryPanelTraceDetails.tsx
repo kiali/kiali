@@ -142,7 +142,12 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
           <span className={closeBoxStyle}>
             <Tooltip content="Close and clear trace selection">
-              <Button icon={<KialiIcon.Close />} id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close} />
+              <Button
+                icon={<KialiIcon.Close />}
+                id="close-trace"
+                variant={ButtonVariant.plain}
+                onClick={this.props.close}
+              />
             </Tooltip>
           </span>
         </div>
@@ -422,7 +427,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
-  close: () => dispatch(TracingThunkActions.setTraceId('', undefined)),
+  close: () => dispatch(TracingThunkActions.setTraceId(undefined, undefined)),
   setNode: bindActionCreators(GraphActions.setNode, dispatch)
 });
 

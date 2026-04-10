@@ -201,7 +201,16 @@ const TopologyContent: React.FC<{
   const selectedRef = React.useRef<string>();
   // Mini graph pre-selects the focus node on load; skip one onNodeTap so that does not trigger client-side navigation.
   const suppressNextMiniGraphNodeTapRef = React.useRef(false);
+  const prevGraphSelectionIdRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
+    if (!isMiniGraph && controller.hasGraph()) {
+      const newSelId = selectedIds.length > 0 ? selectedIds[0] : undefined;
+      if (prevGraphSelectionIdRef.current !== undefined && prevGraphSelectionIdRef.current !== newSelId) {
+        hideTrace(controller);
+      }
+      prevGraphSelectionIdRef.current = newSelId;
+    }
+
     if (selectedIds.length > 0) {
       if (selectedRef.current === selectedIds[0]) {
         return;
@@ -274,14 +283,13 @@ const TopologyContent: React.FC<{
     }
 
     if (!!trace) {
-      const ambient = graphData.fetchParams.trafficRates.some(rate => rate === 'ambient');
-      showTrace(controller, graphData.fetchParams.graphType, ambient, trace);
+      showTrace(controller, graphData.fetchParams.graphType, trace);
     }
 
     return () => {
       hideTrace(controller);
     };
-  }, [controller, graphData.fetchParams.graphType, graphData.fetchParams.trafficRates, trace]);
+  }, [controller, graphData.fetchParams.graphType, trace]);
 
   //
   // Layout and resize handling

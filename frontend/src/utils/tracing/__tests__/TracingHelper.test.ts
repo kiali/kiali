@@ -1,4 +1,4 @@
-import { findChildren, findParent, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
+import { findChildren, findParent, getAppFromSpan, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
 import { Span, KeyValuePair, SpanData } from 'types/TracingInfo';
 import { transformTraceData } from '../TraceTransform';
 
@@ -76,7 +76,7 @@ describe('TracingHelper', () => {
   });
 
   it('tests more regex', () => {
-    const test = (podName: string, expectedWkd: string, expectedNs: string) => {
+    const test = (podName: string, expectedWkd: string, expectedNs: string): void => {
       const span = { tags: [{ key: 'node_id', value: `any~any~${podName}~any` }] } as Span;
       const wkdNs = getWorkloadFromSpan(span);
       expect(wkdNs).toBeDefined();
@@ -108,6 +108,69 @@ describe('TracingHelper', () => {
     expect(wkdNs).toBeDefined();
     expect(wkdNs!.namespace).toEqual('default');
     expect(wkdNs!.workload).toEqual('ai-locals');
+  });
+
+  it('ambient server span resolves destination workload', () => {
+    const span = ({
+      tags: [
+        {
+          key: 'node_id',
+          value: 'waypoint~10.244.0.23~my-wp-5b7cb7b55d-sdc4t.bookinfo~bookinfo.svc.cluster.local'
+        },
+        { key: 'span.kind', value: 'server' },
+        { key: 'istio.source_workload', value: 'productpage-v1' },
+        { key: 'istio.source_namespace', value: 'bookinfo' },
+        { key: 'istio.destination_workload', value: 'reviews-v1' },
+        { key: 'istio.destination_namespace', value: 'bookinfo' },
+        { key: 'istio.destination_instance_name', value: 'reviews-v1-598b896c9d-6nfcb' }
+      ],
+      process: { serviceName: 'waypoint.bookinfo', tags: [] }
+    } as unknown) as Span;
+    const wkdNs = getWorkloadFromSpan(span);
+    expect(wkdNs).toBeDefined();
+    expect(wkdNs!.workload).toEqual('reviews-v1');
+    expect(wkdNs!.namespace).toEqual('bookinfo');
+    expect(wkdNs!.pod).toEqual('reviews-v1-598b896c9d-6nfcb');
+  });
+
+  it('ambient client span resolves source workload', () => {
+    const span = ({
+      tags: [
+        {
+          key: 'node_id',
+          value: 'waypoint~10.244.0.23~my-wp-5b7cb7b55d-sdc4t.bookinfo~bookinfo.svc.cluster.local'
+        },
+        { key: 'span.kind', value: 'client' },
+        { key: 'istio.source_workload', value: 'productpage-v1' },
+        { key: 'istio.source_namespace', value: 'bookinfo' },
+        { key: 'istio.destination_workload', value: 'reviews-v1' },
+        { key: 'istio.destination_namespace', value: 'bookinfo' }
+      ],
+      process: { serviceName: 'waypoint.bookinfo', tags: [] }
+    } as unknown) as Span;
+    const wkdNs = getWorkloadFromSpan(span);
+    expect(wkdNs).toBeDefined();
+    expect(wkdNs!.workload).toEqual('productpage-v1');
+    expect(wkdNs!.namespace).toEqual('bookinfo');
+  });
+
+  it('getAppFromSpan uses istio tags for waypoint proxy spans', () => {
+    const span = ({
+      tags: [
+        {
+          key: 'node_id',
+          value: 'waypoint~10.244.0.23~my-wp-5b7cb7b55d-sdc4t.bookinfo~bookinfo.svc.cluster.local'
+        },
+        { key: 'span.kind', value: 'server' },
+        { key: 'istio.destination_canonical_service', value: 'reviews' },
+        { key: 'istio.destination_namespace', value: 'bookinfo' }
+      ],
+      process: { serviceName: 'waypoint.bookinfo', tags: [] }
+    } as unknown) as Span;
+    const appNs = getAppFromSpan(span);
+    expect(appNs).toBeDefined();
+    expect(appNs!.app).toEqual('reviews');
+    expect(appNs!.namespace).toEqual('bookinfo');
   });
 
   it('should not find parent workload', () => {

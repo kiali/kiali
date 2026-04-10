@@ -15,9 +15,10 @@ import { spansSort } from './TraceTransform';
 
 export const defaultTracingDuration: DurationInSeconds = 600;
 
-export const isErrorTag = ({ key, value }: KeyValuePair) => key === 'error' && (value === true || value === 'true');
+export const isErrorTag = ({ key, value }: KeyValuePair): boolean =>
+  key === 'error' && (value === true || value === 'true');
 
-export const getTimeRangeMicros = () => {
+export const getTimeRangeMicros = (): { from: number; to: number | undefined } => {
   const range = retrieveTimeRange();
   // Convert any time range (like duration) to bounded from/to
   const boundsMillis = guardTimeRange(range, durationToBounds, b => b);
@@ -31,16 +32,73 @@ export const getTimeRangeMicros = () => {
 };
 
 type WorkloadAndNamespace = {
+  namespace: string;
   pod: string;
   workload: string;
-  namespace: string;
 };
+
+const tagValue = (span: Span, key: string): string | undefined => {
+  const t = span.tags.find(tag => tag.key === key);
+  const v = t?.value;
+  if (v === undefined || v === null || String(v).trim() === '') {
+    return undefined;
+  }
+  return String(v);
+};
+
+/**
+ * Istio Ambient waypoint spans use node_id "waypoint~{ip}~{pod.namespace}~{domain}";
+ * the first segment is the proxy role, not the Kubernetes workload name (e.g. my-wp-…).
+ */
+export const isWaypointProxySpan = (span: Span): boolean => {
+  const nodeKV = span.tags.find(tag => tag.key === 'node_id');
+  const v = nodeKV?.value;
+  return typeof v === 'string' && v.startsWith('waypoint~');
+};
+
+/** Istio Ambient waypoint spans: source_* is the caller, destination_* is the workload handling the request. */
+const ambientWorkloadFromTags = (span: Span, end: 'source' | 'destination'): WorkloadAndNamespace | undefined => {
+  const prefix = end === 'source' ? 'istio.source' : 'istio.destination';
+  const pod = tagValue(span, `${prefix}_instance_name`);
+  const workload = tagValue(span, `${prefix}_workload`);
+  const ns = tagValue(span, `${prefix}_namespace`);
+  if (pod !== undefined || workload !== undefined || ns !== undefined) {
+    return {
+      namespace: ns || '',
+      pod: pod || '',
+      workload: workload || ''
+    };
+  }
+  return undefined;
+};
+
+const ambientWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
+  const kind = tagValue(span, 'span.kind');
+  if (kind === 'server' || kind === 'consumer') {
+    return ambientWorkloadFromTags(span, 'destination');
+  }
+  if (kind === 'client' || kind === 'producer') {
+    return ambientWorkloadFromTags(span, 'source');
+  }
+  if (tagValue(span, 'istio.destination_workload')) {
+    return ambientWorkloadFromTags(span, 'destination');
+  }
+  return ambientWorkloadFromTags(span, 'source');
+};
+
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
+  if (isWaypointProxySpan(span)) {
+    const fromTags = ambientWorkloadFromSpan(span);
+    if (fromTags) {
+      return fromTags;
+    }
+    return undefined;
+  }
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
   if (nodeKV) {
     // Example of node value:
     // sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local
-    const parts = nodeKV.value.split('~');
+    const parts = String(nodeKV.value).split('~');
     if (parts.length < 3) {
       return undefined;
     }
@@ -65,9 +123,9 @@ const extractWorkloadFromPod = (pod: string, ns: string): WorkloadAndNamespace |
   const result = replicasetFromPodRegex.exec(pod);
   if (result && result.length === 2) {
     return {
+      namespace: ns,
       pod: pod,
-      workload: adjustWorkloadNameFromReplicaset(result[1]),
-      namespace: ns
+      workload: adjustWorkloadNameFromReplicaset(result[1])
     };
   }
   return undefined;
@@ -117,7 +175,35 @@ export const searchParentWorkload = (span: Span): WorkloadAndNamespace | undefin
 };
 
 type AppAndNamespace = { app: string; namespace: string };
+
 export const getAppFromSpan = (span: Span): AppAndNamespace | undefined => {
+  if (isWaypointProxySpan(span)) {
+    const kind = tagValue(span, 'span.kind');
+    if (kind === 'server' || kind === 'consumer') {
+      const app = tagValue(span, 'istio.destination_canonical_service');
+      const ns = tagValue(span, 'istio.destination_namespace');
+      if (app !== undefined || ns !== undefined) {
+        return { app: app || '', namespace: ns || '' };
+      }
+    } else if (kind === 'client' || kind === 'producer') {
+      const app = tagValue(span, 'istio.source_canonical_service');
+      const ns = tagValue(span, 'istio.source_namespace');
+      if (app !== undefined || ns !== undefined) {
+        return { app: app || '', namespace: ns || '' };
+      }
+    } else {
+      const destApp = tagValue(span, 'istio.destination_canonical_service');
+      const destNs = tagValue(span, 'istio.destination_namespace');
+      if (destApp !== undefined || destNs !== undefined) {
+        return { app: destApp || '', namespace: destNs || '' };
+      }
+      const srcApp = tagValue(span, 'istio.source_canonical_service');
+      const srcNs = tagValue(span, 'istio.source_namespace');
+      if (srcApp !== undefined || srcNs !== undefined) {
+        return { app: srcApp || '', namespace: srcNs || '' };
+      }
+    }
+  }
   const split = span.process.serviceName.split('.');
   return { app: split[0], namespace: split.length > 1 ? split[1] : '' };
 };
@@ -236,7 +322,12 @@ export const extractEnvoySpanInfo = (span: Span): EnvoySpanInfo => {
   return info;
 };
 
-export const extractSpanInfo = (span: Span) => {
+export const extractSpanInfo = (
+  span: Span
+): {
+  info: OpenTracingBaseInfo | OpenTracingHTTPInfo | OpenTracingTCPInfo | EnvoySpanInfo;
+  type: ReturnType<typeof getSpanType>;
+} => {
   const type = getSpanType(span);
   const info =
     type === 'envoy'
@@ -246,7 +337,7 @@ export const extractSpanInfo = (span: Span) => {
       : type === 'tcp'
       ? extractOpenTracingTCPInfo(span)
       : extractOpenTracingBaseInfo(span);
-  return { type: type, info: info };
+  return { info, type };
 };
 
 export const sameSpans = (a: Span[], b: Span[]): boolean => {
@@ -266,7 +357,7 @@ export function formatDuration(micros: number): string {
 const TODAY = 'Today';
 const YESTERDAY = 'Yesterday';
 
-export function formatRelativeDate(value: any, fullMonthName: boolean = false) {
+export function formatRelativeDate(value: any, fullMonthName = false): string {
   const m = moment.isMoment(value) ? value : moment(value);
   const monthFormat = fullMonthName ? 'MMMM' : 'MMM';
   const dt = new Date();

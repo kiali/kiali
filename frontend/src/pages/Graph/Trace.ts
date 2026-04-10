@@ -4,29 +4,25 @@ import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,
   getWorkloadFromSpan,
+  isWaypointProxySpan,
   searchParentApp,
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
 import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
 
-export const showTrace = (
-  controller: Controller,
-  graphType: GraphType,
-  isAmbient: boolean,
-  trace: JaegerTrace
-): void => {
+export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
   if (!controller.hasGraph()) {
     return;
   }
 
   hideTrace(controller);
-  trace.spans.forEach(span => showSpanSubtrace(controller, graphType, isAmbient, span));
+  trace.spans.forEach(span => showSpanSubtrace(controller, graphType, span));
 };
 
-const showSpanSubtrace = (controller: Controller, graphType: GraphType, isAmbient: boolean, span: Span): void => {
+const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span): void => {
   let split: string[];
-  if (isAmbient) {
-    // For Ambient, the service Name will always be the waypoint or the gateway
+  if (isWaypointProxySpan(span)) {
+    // Waypoint proxy: logical service is in operationName (e.g. reviews.bookinfo), not process.serviceName
     split = span.operationName.split('.');
   } else {
     split = span.process.serviceName.split('.');
@@ -113,11 +109,11 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, isAmbien
       lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
     }
   } else {
-    // Main workload
+    // Main workload (graph nodes store deployment name on `workload`, not `app`)
     const destWlNs = getWorkloadFromSpan(span);
-    if (destWlNs) {
+    if (destWlNs && destWlNs.workload) {
       const selector: SelectAnd = [
-        { prop: NodeAttr.app, val: destWlNs.workload },
+        { prop: NodeAttr.workload, val: destWlNs.workload },
         { prop: NodeAttr.namespace, val: destWlNs.namespace }
       ];
       lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);

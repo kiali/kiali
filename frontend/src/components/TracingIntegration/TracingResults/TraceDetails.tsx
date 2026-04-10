@@ -141,7 +141,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
             <Button
               style={{ paddingLeft: 0, paddingRight: '0.25rem', fontSize: '0.75rem' }}
               variant={ButtonVariant.link}
-              onClick={() => this.props.setTraceId(t.traceID)}
+              onClick={() => this.props.setTraceId(this.props.cluster, t.traceID)}
             >
               {info.shortID()}
             </Button>
