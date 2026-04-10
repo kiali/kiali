@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "cypress-debugger": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--cdp-endpoint",
+        "http://127.0.0.1:9222"
+      ]
+    }
+  }
+}

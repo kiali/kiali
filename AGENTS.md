@@ -428,31 +428,37 @@ AI agents can connect to the actual Cypress-controlled Chrome browser via the Ch
 
 **Setup: `.mcp.json`**
 
-The project includes a `cypress-debugger` MCP server that connects to the Cypress Chrome browser on port 9222:
+The project includes a `.mcp.json` at the repo root with a `cypress-debugger` MCP server that connects to the Cypress Chrome browser on port 9222:
 
 ```json
 {
   "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["@anthropic-ai/claude-code-mcp", "@playwright/mcp@latest"]
-    },
     "cypress-debugger": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@anthropic-ai/claude-code-mcp", "@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"]
+      "args": ["@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"]
     }
   }
 }
 ```
 
-**Step 1: Set up the cluster and start Kiali**
+This is already checked into the repository — no manual setup is needed. The `cypress-debugger` MCP tools (e.g., `mcp__cypress-debugger__browser_snapshot`, `mcp__cypress-debugger__browser_click`) become available automatically when Claude Code loads the project.
 
+**Prerequisites:**
+
+Before using the debug browser, ensure:
+1. **Chrome is installed** — `--browser chrome` requires a Chrome/Chromium binary on the system
+2. **A cluster with Istio and demo apps is running** — check with `kind get clusters` (look for `ci`)
+3. **Kiali is running locally** — check with `curl -s http://localhost:20001/kiali/api`
+
+If the cluster doesn't exist yet, set it up:
 ```bash
 make build-ui build
 hack/run-integration-tests.sh --test-suite local --setup-only true
+```
 
+If Kiali isn't running, start it:
+```bash
 $(go env GOPATH)/bin/kiali \
   -c hack/ci-yaml/ci-test-config-no-cache.yaml run \
   --cluster-name-overrides kind-ci=cluster-default \
@@ -460,7 +466,7 @@ $(go env GOPATH)/bin/kiali \
   --port-forward-prom --port-forward-grafana --no-browser
 ```
 
-**Step 2: Run Cypress with Chrome on a fixed CDP port**
+**Step 1: Run Cypress with Chrome on a fixed CDP port**
 
 ```bash
 cd frontend
@@ -477,19 +483,71 @@ npx cypress run \
 ```
 
 Key flags:
-- `CYPRESS_REMOTE_DEBUGGING_PORT=9222` — exposes the Chrome browser on a fixed CDP port
+- `CYPRESS_REMOTE_DEBUGGING_PORT=9222` — exposes the Chrome browser on a fixed CDP port so the `cypress-debugger` MCP can connect
 - `--browser chrome` — uses Chrome instead of Electron (required for CDP)
 - `--headed` — shows the browser window
 - `--no-exit` — keeps the browser open after tests finish so you can inspect the state
 
-**Step 3: Use the `cypress-debugger` MCP to inspect the browser**
+**Step 2: Use the `cypress-debugger` MCP to inspect the browser**
 
 Once Cypress is running with the Chrome browser on port 9222, the `cypress-debugger` MCP tools (`mcp__cypress-debugger__browser_snapshot`, `mcp__cypress-debugger__browser_click`, etc.) connect directly to the Cypress Chrome instance. This lets AI agents:
 
 - **Inspect the Cypress test runner** — see test results, passed/failed steps, and error messages
 - **Inspect the app under test** — the Kiali UI is rendered inside the Cypress runner; snapshots show the actual DOM state
 - **Debug failing assertions** — read the Cypress step definition (in `frontend/cypress/integration/common/*.ts`), understand what DOM selector it uses (e.g., `td[data-label="Details"]`, `data-test="namespace-dropdown"`), and use `browser_evaluate` to run the same query against the live page
+- **Re-run tests** — press `Ctrl+R` via `browser_press_key` to re-run the current spec (see below)
 - **Verify the CDP endpoint** is reachable: `curl -s http://127.0.0.1:9222/json/list`
+
+**Re-running tests from MCP:**
+
+To re-run a Cypress spec via the MCP tools, press `Ctrl+R`:
+
+```
+browser_press_key({ key: "Control+r" })
+```
+
+This reloads the Cypress runner page which triggers a full re-run of the current spec. To verify a re-run occurred, take a `browser_snapshot` and check that iframe element ref prefixes changed (e.g., `f1e*` → `f3e*`) and timestamps in the Kiali UI updated to the current time.
+
+> **Note:** Pressing just `r` via `browser_press_key` does not work because focus isn't on the Cypress runner. Clicking the spec file link and using `browser_navigate` to the same URL also do not trigger re-runs. Use `Ctrl+R` or `browser_evaluate` with `window.location.reload()`.
+
+> **Important: `Ctrl+R` does NOT pick up code changes.** Cypress caches compiled step definitions and feature files. If you modify a `.ts` step definition or `.feature` file, you **must kill the Cypress process and restart it** for the changes to take effect. `Ctrl+R` only re-runs the previously compiled spec. To restart cleanly:
+> 1. Kill all Cypress and associated Chrome processes: `pkill -9 -f cypress; pkill -9 -f "chrome.*9222"`
+> 2. Wait 2-3 seconds for ports to be released
+> 3. Verify port 9222 is free: `curl -s http://127.0.0.1:9222/json/list` should fail
+> 4. Re-launch Cypress with the same command
+> 5. After the new browser opens, use `browser_close` then `browser_navigate` to reconnect the MCP to the new browser instance (the MCP caches its connection to the old browser)
+
+**Snapshot depth tips:**
+
+The `browser_snapshot` tool accepts an optional `depth` parameter to control output size:
+- `depth: 3-4` — quick overview of page structure and test runner controls
+- `depth: 5-6` — detailed view including the Kiali app inside the iframe
+- No depth limit (default) — full DOM tree; can be very large (50KB+), useful for detailed inspection
+
+**Understanding the snapshot structure:**
+
+The Cypress runner page has two main areas:
+- **Test runner panel** (left side) — element refs like `e13`, `e17`, etc. Contains the spec name, pass/fail stats, test steps, and timing
+- **App under test iframe** (right side) — element refs like `f1e3`, `f1e7`, etc. (prefixed with `f<N>e`). Contains the actual Kiali UI being tested. Use these refs to interact with the Kiali app directly
+
+**Reading test runner state via `browser_evaluate`:**
+
+Snapshots can be noisy. Use `browser_evaluate` for quick, targeted checks:
+
+```javascript
+// Check pass/fail/pending counts
+() => { const stats = document.querySelectorAll('[aria-label="Stats"] li'); return Array.from(stats).map(s => s.textContent?.trim()); }
+// → ["Passed:1", "Failed:--", "Pending:--"]
+
+// Check last N Cypress command log entries (most useful for debugging)
+() => { const items = document.querySelectorAll('.command-wrapper'); return Array.from(items).slice(-10).map(el => el.textContent?.trim()).join('\n'); }
+
+// Check for error messages
+() => { const el = document.querySelector('.runnable-err-message'); return el ? el.textContent : 'no error'; }
+
+// Inspect the Kiali app DOM inside the iframe
+() => { const iframe = document.querySelector('iframe'); if (!iframe?.contentDocument) return 'no iframe'; return iframe.contentDocument.querySelector('#target-panel-control-plane')?.textContent?.substring(0, 200); }
+```
 
 **Understanding Cypress test structure:**
 
@@ -568,10 +626,17 @@ git checkout <branch-name>
 # Build
 make build-ui build
 
-# Setup cluster for the correct suite
+# Setup cluster for the correct suite (if not already running)
 hack/run-integration-tests.sh --test-suite <suite> --setup-only true
 
-# Run just the failing test
+# Start Kiali (if not already running)
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-no-cache.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-tracing --enable-tracing \
+  --port-forward-prom --port-forward-grafana --no-browser &
+
+# Run just the failing test with debug browser
 cd frontend
 CYPRESS_BASE_URL=http://localhost:20001 \
 CYPRESS_REMOTE_DEBUGGING_PORT=9222 \
@@ -581,7 +646,7 @@ npx cypress run --browser chrome --headed --no-exit \
 
 **Step 6: Debug with Playwright MCP**
 
-With the Cypress browser on port 9222 and `--no-exit` keeping it open, use `cypress-debugger` MCP tools to inspect the Cypress Chrome browser, examine the DOM state, and understand why the assertion failed.
+With the Cypress browser on port 9222 and `--no-exit` keeping it open, use `cypress-debugger` MCP tools to inspect the Cypress Chrome browser, examine the DOM state, and understand why the assertion failed. Use `Ctrl+R` to re-run the test after making fixes. See [Debugging Cypress Tests with Playwright MCP](#debugging-cypress-tests-with-playwright-mcp) for full details.
 
 #### Writing New E2E Tests
 
@@ -652,37 +717,43 @@ Step definitions are **global** — any `.ts` file in `cypress/integration/` is 
 
 **Running your new test:**
 
+Ensure the cluster and Kiali are running (see [Prerequisites](#debugging-cypress-tests-with-playwright-mcp) in the MCP debugging section above).
+
 ```bash
-# 1. Setup cluster (if not already running)
+# 1. Setup cluster (if not already running — check with `kind get clusters`)
 hack/run-integration-tests.sh --test-suite local --setup-only true
 
-# 2. Start Kiali
+# 2. Start Kiali (if not already running — check with `curl -s http://localhost:20001/kiali/api`)
 $(go env GOPATH)/bin/kiali \
   -c hack/ci-yaml/ci-test-config-no-cache.yaml run \
   --cluster-name-overrides kind-ci=cluster-default \
   --port-forward-tracing --enable-tracing \
   --port-forward-prom --port-forward-grafana --no-browser &
 
-# 3. Run just your test (use @selected tag for fast iteration)
+# 3. Run just your test with debug browser (use @selected tag for fast iteration)
 cd frontend
 CYPRESS_BASE_URL=http://localhost:20001 \
+CYPRESS_REMOTE_DEBUGGING_PORT=9222 \
 npx cypress run --browser chrome --headed --no-exit \
   -e TAGS="@selected" \
   --spec "cypress/integration/featureFiles/<your-feature>.feature"
 
-# Or run headless for quick pass/fail
+# Or run headless for quick pass/fail (no debug browser)
 CYPRESS_BASE_URL=http://localhost:20001 \
 npx cypress run -e TAGS="@selected"
 ```
 
+With `CYPRESS_REMOTE_DEBUGGING_PORT=9222` and `--no-exit`, the `cypress-debugger` MCP tools can connect to inspect the browser, debug failures, and re-run the test with `Ctrl+R`. See the [Debugging Cypress Tests with Playwright MCP](#debugging-cypress-tests-with-playwright-mcp) section for details.
+
 **Iteration loop:**
 
 1. Write or modify the test
-2. Run it — if it fails, examine the error message
-3. Determine if the failure is a **test issue** (wrong selector, wrong assertion) or a **code issue** (feature not working)
-4. Fix the test or the code accordingly
-5. Re-run (`--tests-only true` or `npx cypress run -e TAGS="@selected"`)
-6. Remove the `@selected` tag and verify the test passes with its real suite tag
+2. Run it with the debug browser flags above — if it fails, examine the error message
+3. Use `cypress-debugger` MCP tools to inspect the browser state if the error isn't clear
+4. Determine if the failure is a **test issue** (wrong selector, wrong assertion) or a **code issue** (feature not working)
+5. Fix the test or the code accordingly
+6. Re-run with `Ctrl+R` via `browser_press_key` if the debug browser is still open, or re-launch the cypress command
+7. Remove the `@selected` tag and verify the test passes with its real suite tag
 
 **Before committing:**
 
