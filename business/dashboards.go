@@ -17,6 +17,17 @@ import (
 
 const defaultNamespaceLabel = "namespace"
 
+var (
+	customDashboardsPromOnce   sync.Once
+	customDashboardsPromClient prometheus.ClientInterface
+)
+
+// newPromClient is the factory used to create a Prometheus client for the
+// custom dashboards endpoint. Tests can replace this to inject a mock.
+var newPromClient = func(conf config.Config, promCfg config.PrometheusConfig) (prometheus.ClientInterface, error) {
+	return prometheus.NewClientFromPrometheusConfig(conf, promCfg, "")
+}
+
 // DashboardsService deals with fetching dashboards from config
 type DashboardsService struct {
 	conf            *config.Config
@@ -36,6 +47,21 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promCli
 	prom := conf.ExternalServices.Prometheus
 	if customEnabled && conf.ExternalServices.CustomDashboards.Prometheus.URL != "" {
 		prom = conf.ExternalServices.CustomDashboards.Prometheus
+
+		// Use a dedicated Prometheus client for custom dashboards when a
+		// separate URL is configured. The client is created once and cached
+		// for the lifetime of the process.
+		customDashboardsPromOnce.Do(func() {
+			client, err := newPromClient(*conf, prom)
+			if err != nil {
+				log.Errorf("Failed to create custom dashboards Prometheus client for [%s]: %v. Falling back to main Prometheus client.", prom.URL, err)
+			} else {
+				customDashboardsPromClient = client
+			}
+		})
+		if customDashboardsPromClient != nil {
+			promClient = customDashboardsPromClient
+		}
 	}
 	nsLabel := conf.ExternalServices.CustomDashboards.NamespaceLabel
 	if nsLabel == "" {

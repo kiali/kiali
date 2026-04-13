@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/prometheus"
 	pmock "github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -331,4 +333,69 @@ func fakeMetrics() models.MetricsMap {
 		"tcp_opened":              fakeCounter(31),
 		"tcp_closed":              fakeCounter(32),
 	}
+}
+
+// resetCustomDashboardsPromClient resets the package-level cached custom
+// dashboards Prometheus client so that each test starts with a clean state.
+func resetCustomDashboardsPromClient() {
+	customDashboardsPromOnce = sync.Once{}
+	customDashboardsPromClient = nil
+}
+
+// TestGetDashboardUsesCustomDashboardsPromClient verifies that when
+// custom_dashboards.prometheus.url is configured, metric queries for custom
+// dashboards are sent to a separate Prometheus client rather than the main one.
+func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
+	assert := assert.New(t)
+
+	resetCustomDashboardsPromClient()
+	origFactory := newPromClient
+	t.Cleanup(func() {
+		newPromClient = origFactory
+		resetCustomDashboardsPromClient()
+	})
+
+	customProm := new(pmock.PromClientMock)
+	newPromClient = func(_ config.Config, _ config.PrometheusConfig) (prometheus.ClientInterface, error) {
+		return customProm, nil
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = true
+	conf.ExternalServices.Prometheus.URL = "http://prometheus-main:9090"
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = "http://prometheus-custom:9090"
+
+	conf.CustomDashboards = append(conf.CustomDashboards, *fakeDashboard("1"))
+
+	mainProm := new(pmock.PromClientMock)
+
+	ns := models.Namespace{Name: "my-namespace"}
+	grafanaSvc := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
+
+	expectedLabels := `{namespace="my-namespace",APP="my-app"}`
+	query := models.DashboardQuery{
+		Namespace: "my-namespace",
+		LabelsFilters: map[string]string{
+			"APP": "my-app",
+		},
+	}
+	query.FillDefaults()
+
+	customProm.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	customProm.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
+
+	assert.Nil(err)
+	assert.Equal("Dashboard 1", dashboard.Title)
+	assert.Len(dashboard.Charts, 2)
+
+	// The custom prom client should have been called for metric fetching.
+	customProm.AssertNumberOfCalls(t, "FetchRateRange", 1)
+	customProm.AssertNumberOfCalls(t, "FetchHistogramRange", 1)
+
+	// The main prom client should NOT have been called at all.
+	mainProm.AssertNumberOfCalls(t, "FetchRateRange", 0)
+	mainProm.AssertNumberOfCalls(t, "FetchHistogramRange", 0)
 }
