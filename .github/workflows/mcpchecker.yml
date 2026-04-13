@@ -183,7 +183,8 @@ jobs:
           echo "**Commit:** \`${PR_SHA:0:7}\` — [View full workflow run](${RUN_URL})"
           echo ""
           if [[ -n "${BASE_TMP}" && -s "${BASE_TMP}" && -f "${PR_RAW}" ]]; then
-            "${MCPCHECKER}" diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown
+            "${MCPCHECKER}" diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown || \
+               echo "⚠ Diff comparison not available. See [workflow run](${RUN_URL}) for evaluation results."
           else
             echo "⚠️ Could not compare runs: baseline on master or PR results is missing."
           fi
