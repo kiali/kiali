@@ -71,6 +71,6 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         files: tests/integration/multicluster/coverage-integration.out
-        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: integration-tests
         slug: kiali/kiali
-        flag: integration-tests
+        token: ${{ secrets.CODECOV_TOKEN }}
