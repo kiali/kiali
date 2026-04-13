@@ -84,8 +84,9 @@ func ChatMCP(
 			args = map[string]interface{}{}
 		}
 		handlers := mcp.MCPToolHandlers
+		args["mcp_mode"] = true
 		if r.Header.Get("Kiali-UI") != "" {
-			args["mcp_mode"] = true
+			args["mcp_mode"] = false
 			handlers = mcp.DefaultToolHandlers
 		}
 		tool, ok := handlers[toolName]
