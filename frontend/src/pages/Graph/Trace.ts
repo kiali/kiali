@@ -3,12 +3,50 @@ import { JaegerTrace, Span } from 'types/TracingInfo';
 import { NodeType, GraphType, SEInfo, NodeAttr } from 'types/Graph';
 import {
   getAppFromSpan,
+  getSourceWorkloadFromWaypointSpan,
   getWorkloadFromSpan,
   isWaypointProxySpan,
   searchParentApp,
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
 import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
+
+/**
+ * Extracts service name and namespace from span operationName or serviceName.
+ * Handles different formats:
+ * - "service.namespace.svc.cluster.local:port/path" (waypoint/gateway)
+ * - "router outbound|port||service.namespace.svc.cluster.local; egress" (envoy client)
+ * - "service.namespace" (standard)
+ * @returns [serviceName, namespace]
+ */
+const extractServiceAndNsFromSpan = (span: Span): [string, string] => {
+  const op = span.operationName;
+
+  // Handle envoy router format: "router outbound|9080||productpage.bookinfo.svc.cluster.local; egress"
+  if (op.includes('outbound|') && op.includes('||')) {
+    const parts = op.split('||');
+    if (parts.length >= 2) {
+      // Extract "productpage.bookinfo.svc.cluster.local" part
+      const serviceFqdn = parts[1].split(';')[0].trim();
+      const fqdnParts = serviceFqdn.split('.');
+      if (fqdnParts.length >= 2) {
+        return [fqdnParts[0], fqdnParts[1]];
+      }
+    }
+  }
+
+  // Handle standard service FQDN format: "service.namespace.svc.cluster.local:port/path"
+  if (op.includes('.svc.cluster.local') || (op.includes('.') && op.includes(':'))) {
+    const parts = op.split('.');
+    if (parts.length >= 2) {
+      return [parts[0], parts[1]];
+    }
+  }
+
+  // Fallback to process.serviceName
+  const parts = span.process.serviceName.split('.');
+  return [parts[0], parts.length > 1 ? parts[1] : ''];
+};
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
   if (!controller.hasGraph()) {
@@ -20,14 +58,23 @@ export const showTrace = (controller: Controller, graphType: GraphType, trace: J
 };
 
 const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Span): void => {
-  let split: string[];
-  if (isWaypointProxySpan(span)) {
-    // Waypoint proxy: logical service is in operationName (e.g. reviews.bookinfo), not process.serviceName
-    split = span.operationName.split('.');
+  // For proxy spans (waypoint, gateway, router), the operationName contains the destination service.
+  const operationHasServiceInfo =
+    span.operationName.includes('.svc.cluster.local') ||
+    span.operationName.includes('outbound|') ||
+    isWaypointProxySpan(span);
+
+  let app: string;
+  let namespace: string;
+
+  if (operationHasServiceInfo) {
+    // Extract service and namespace from operationName for proxies (waypoint, gateway, router)
+    [app, namespace] = extractServiceAndNsFromSpan(span);
   } else {
-    split = span.process.serviceName.split('.');
+    const split = span.process.serviceName.split('.');
+    app = split[0];
+    namespace = split.length > 1 ? split[1] : '';
   }
-  const app = split[0];
   // From upstream to downstream: Parent app or workload, Inbound Service Entry, Service, App or Workload, Outbound Service Entry
   let lastSelection: Node[] | undefined = undefined;
 
@@ -43,8 +90,10 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
         { prop: NodeAttr.namespace, val: sourceAppNs.namespace }
       ]);
       if (parent.length === 0) {
-        // Try workload
-        const sourceWlNs = searchParentWorkload(span);
+        // Try workload: for waypoint spans, source is in own tags; for others, search parent
+        const sourceWlNs = isWaypointProxySpan(span)
+          ? getSourceWorkloadFromWaypointSpan(span)
+          : searchParentWorkload(span);
         if (sourceWlNs) {
           parent = selectAnd(nodes, [
             { prop: NodeAttr.workload, val: sourceWlNs.workload },
@@ -70,8 +119,8 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
       }
     }
   } else {
-    // Parent workload
-    const sourceWlNs = searchParentWorkload(span);
+    // Parent workload: for waypoint spans, source is in own tags; for others, search parent
+    const sourceWlNs = isWaypointProxySpan(span) ? getSourceWorkloadFromWaypointSpan(span) : searchParentWorkload(span);
     if (sourceWlNs) {
       const parent = selectAnd(nodes, [
         { prop: NodeAttr.workload, val: sourceWlNs.workload },
@@ -92,8 +141,8 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     { prop: NodeAttr.nodeType, val: NodeType.SERVICE },
     { prop: NodeAttr.app, val: app }
   ];
-  if (split.length > 1) {
-    selector.push({ prop: NodeAttr.namespace, val: split[1] });
+  if (namespace) {
+    selector.push({ prop: NodeAttr.namespace, val: namespace });
   }
   lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
 

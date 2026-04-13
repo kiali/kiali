@@ -203,6 +203,8 @@ const TopologyContent: React.FC<{
   const suppressNextMiniGraphNodeTapRef = React.useRef(false);
   const prevGraphSelectionIdRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
+    // Clear trace overlay when switching between nodes. When a user selects a different node,
+    // the trace highlights from the previous node are no longer relevant and should be hidden.
     if (!isMiniGraph && controller.hasGraph()) {
       const newSelId = selectedIds.length > 0 ? selectedIds[0] : undefined;
       if (prevGraphSelectionIdRef.current !== undefined && prevGraphSelectionIdRef.current !== newSelId) {

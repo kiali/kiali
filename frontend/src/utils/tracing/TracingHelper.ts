@@ -47,8 +47,13 @@ const tagValue = (span: Span, key: string): string | undefined => {
 };
 
 /**
- * Istio Ambient waypoint spans use node_id "waypoint~{ip}~{pod.namespace}~{domain}";
- * the first segment is the proxy role, not the Kubernetes workload name (e.g. my-wp-…).
+ * Checks if a span originates from an Istio Ambient waypoint proxy.
+ *
+ * Istio Ambient waypoint spans use node_id format: "waypoint~{ip}~{pod.namespace}~{domain}"
+ * where the first segment is the proxy role, not the Kubernetes workload name.
+ *
+ * @param span - The span to check
+ * @returns true if the span is from a waypoint proxy, false otherwise
  */
 export const isWaypointProxySpan = (span: Span): boolean => {
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
@@ -56,17 +61,28 @@ export const isWaypointProxySpan = (span: Span): boolean => {
   return typeof v === 'string' && v.startsWith('waypoint~');
 };
 
-/** Istio Ambient waypoint spans: source_* is the caller, destination_* is the workload handling the request. */
+/**
+ * Extracts workload information from Istio Ambient waypoint span tags.
+ *
+ * For waypoint spans:
+ * - source_* tags represent the caller workload
+ * - destination_* tags represent the workload handling the request
+ *
+ * @param span - The waypoint span
+ * @param end - Which end of the connection to extract ('source' or 'destination')
+ * @returns Workload info with namespace, workload name, and pod name, or undefined if insufficient data
+ */
 const ambientWorkloadFromTags = (span: Span, end: 'source' | 'destination'): WorkloadAndNamespace | undefined => {
   const prefix = end === 'source' ? 'istio.source' : 'istio.destination';
   const pod = tagValue(span, `${prefix}_instance_name`);
   const workload = tagValue(span, `${prefix}_workload`);
   const ns = tagValue(span, `${prefix}_namespace`);
-  if (pod !== undefined || workload !== undefined || ns !== undefined) {
+  // Only return if we have at least workload and namespace (minimum useful info)
+  if (workload && ns) {
     return {
-      namespace: ns || '',
+      namespace: ns,
       pod: pod || '',
-      workload: workload || ''
+      workload: workload
     };
   }
   return undefined;
@@ -80,10 +96,16 @@ const ambientWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined =
   if (kind === 'client' || kind === 'producer') {
     return ambientWorkloadFromTags(span, 'source');
   }
+  // No span.kind or unrecognized kind: try destination first, then source
   if (tagValue(span, 'istio.destination_workload')) {
     return ambientWorkloadFromTags(span, 'destination');
   }
-  return ambientWorkloadFromTags(span, 'source');
+  const sourceResult = ambientWorkloadFromTags(span, 'source');
+  if (sourceResult) {
+    return sourceResult;
+  }
+  // Try destination as final fallback
+  return ambientWorkloadFromTags(span, 'destination');
 };
 
 export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefined => {
@@ -116,6 +138,21 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
     return extractWorkloadFromPod(hostnameKV.value, svcNs.length > 1 ? svcNs[1] : '');
   }
   return undefined;
+};
+
+/**
+ * Gets the SOURCE workload from a waypoint span.
+ * For waypoint server spans, this is the caller workload (from istio.source_* tags).
+ * This is different from getWorkloadFromSpan which returns destination for server spans.
+ *
+ * @param span - The waypoint span
+ * @returns Source workload info or undefined
+ */
+export const getSourceWorkloadFromWaypointSpan = (span: Span): WorkloadAndNamespace | undefined => {
+  if (!isWaypointProxySpan(span)) {
+    return undefined;
+  }
+  return ambientWorkloadFromTags(span, 'source');
 };
 
 const replicasetFromPodRegex = /^([a-z0-9-.]+)-[a-z0-9]+$/;
