@@ -2,10 +2,11 @@ package business
 
 import (
 	"context"
-	"sync"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/dashboards"
@@ -338,7 +339,6 @@ func fakeMetrics() models.MetricsMap {
 // resetCustomDashboardsPromClient resets the package-level cached custom
 // dashboards Prometheus client so that each test starts with a clean state.
 func resetCustomDashboardsPromClient() {
-	customDashboardsPromOnce = sync.Once{}
 	customDashboardsPromClient = nil
 }
 
@@ -356,7 +356,7 @@ func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
 	})
 
 	customProm := new(pmock.PromClientMock)
-	newPromClient = func(_ config.Config, _ config.PrometheusConfig) (prometheus.ClientInterface, error) {
+	newPromClient = func(_ config.Config, _ config.PrometheusConfig, _ string) (prometheus.ClientInterface, error) {
 		return customProm, nil
 	}
 
@@ -387,7 +387,7 @@ func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
 
 	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
 
-	assert.Nil(err)
+	require.NoError(t, err)
 	assert.Equal("Dashboard 1", dashboard.Title)
 	assert.Len(dashboard.Charts, 2)
 
@@ -398,4 +398,135 @@ func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
 	// The main prom client should NOT have been called at all.
 	mainProm.AssertNumberOfCalls(t, "FetchRateRange", 0)
 	mainProm.AssertNumberOfCalls(t, "FetchHistogramRange", 0)
+}
+
+// TestCustomDashboardsPromClientFallbackOnFactoryError verifies that when
+// the factory fails to create the custom Prometheus client, the service
+// falls back to the caller-supplied main client.
+func TestCustomDashboardsPromClientFallbackOnFactoryError(t *testing.T) {
+	assert := assert.New(t)
+
+	resetCustomDashboardsPromClient()
+	origFactory := newPromClient
+	t.Cleanup(func() {
+		newPromClient = origFactory
+		resetCustomDashboardsPromClient()
+	})
+
+	newPromClient = func(_ config.Config, _ config.PrometheusConfig, _ string) (prometheus.ClientInterface, error) {
+		return nil, fmt.Errorf("simulated TLS failure")
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = true
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = "http://prometheus-custom:9090"
+	conf.CustomDashboards = append(conf.CustomDashboards, *fakeDashboard("1"))
+
+	mainProm := new(pmock.PromClientMock)
+
+	ns := models.Namespace{Name: "my-namespace"}
+	grafanaSvc := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
+
+	expectedLabels := `{namespace="my-namespace",APP="my-app"}`
+	query := models.DashboardQuery{
+		Namespace: "my-namespace",
+		LabelsFilters: map[string]string{
+			"APP": "my-app",
+		},
+	}
+	query.FillDefaults()
+	mainProm.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	mainProm.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
+
+	require.NoError(t, err)
+	assert.Equal("Dashboard 1", dashboard.Title)
+
+	// Factory failed, so the main prom client should have been used.
+	mainProm.AssertNumberOfCalls(t, "FetchRateRange", 1)
+	mainProm.AssertNumberOfCalls(t, "FetchHistogramRange", 1)
+}
+
+// TestCustomDashboardsPromClientRetryAfterTransientError verifies that
+// after a transient factory failure, the next call retries (mutex-based
+// approach, unlike sync.Once which would lock in the failure permanently).
+func TestCustomDashboardsPromClientRetryAfterTransientError(t *testing.T) {
+	resetCustomDashboardsPromClient()
+	origFactory := newPromClient
+	t.Cleanup(func() {
+		newPromClient = origFactory
+		resetCustomDashboardsPromClient()
+	})
+
+	callCount := 0
+	customProm := new(pmock.PromClientMock)
+	newPromClient = func(_ config.Config, _ config.PrometheusConfig, _ string) (prometheus.ClientInterface, error) {
+		callCount++
+		if callCount == 1 {
+			return nil, fmt.Errorf("transient failure")
+		}
+		return customProm, nil
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = true
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = "http://prometheus-custom:9090"
+
+	ns := models.Namespace{Name: "ns"}
+
+	// First call: factory fails, falls back to main.
+	mainProm := new(pmock.PromClientMock)
+	svc1 := NewDashboardsService(conf, nil, mainProm, &ns, nil)
+	if svc1.promClient != mainProm {
+		t.Fatal("expected fallback to main prom after factory error")
+	}
+
+	// Second call: factory succeeds, custom client is used.
+	svc2 := NewDashboardsService(conf, nil, mainProm, &ns, nil)
+	if svc2.promClient != customProm {
+		t.Fatal("expected custom prom client after successful retry")
+	}
+
+	if callCount != 2 {
+		t.Fatalf("expected factory to be called twice (retry after failure), got %d", callCount)
+	}
+}
+
+// TestCustomDashboardsPromClientFactoryCalledOnce verifies that the factory
+// is called exactly once across multiple NewDashboardsService calls — the
+// successful result is cached and reused.
+func TestCustomDashboardsPromClientFactoryCalledOnce(t *testing.T) {
+	resetCustomDashboardsPromClient()
+	origFactory := newPromClient
+	t.Cleanup(func() {
+		newPromClient = origFactory
+		resetCustomDashboardsPromClient()
+	})
+
+	callCount := 0
+	customProm := new(pmock.PromClientMock)
+	newPromClient = func(_ config.Config, _ config.PrometheusConfig, _ string) (prometheus.ClientInterface, error) {
+		callCount++
+		return customProm, nil
+	}
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = true
+	conf.ExternalServices.CustomDashboards.Prometheus.URL = "http://prometheus-custom:9090"
+
+	ns := models.Namespace{Name: "ns"}
+	mainProm := new(pmock.PromClientMock)
+
+	for i := 0; i < 5; i++ {
+		svc := NewDashboardsService(conf, nil, mainProm, &ns, nil)
+		if svc.promClient != customProm {
+			t.Fatalf("call %d: expected custom prom client", i)
+		}
+	}
+
+	if callCount != 1 {
+		t.Fatalf("expected factory to be called exactly once, got %d", callCount)
+	}
 }

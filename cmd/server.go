@@ -89,6 +89,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// (e.g. projected service-account tokens rotated by the kubelet).
 	homeClient := clientFactory.GetSAHomeClusterClient()
 	kialiToken := kubernetes.GetServiceAccountTokenCredential(homeClient)
+	business.SetKialiSAToken(kialiToken)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
 	prom, err := prometheus.NewClient(*conf, kialiToken)

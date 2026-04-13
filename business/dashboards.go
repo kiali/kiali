@@ -18,14 +18,24 @@ import (
 const defaultNamespaceLabel = "namespace"
 
 var (
-	customDashboardsPromOnce   sync.Once
+	customDashboardsPromMu     sync.Mutex
 	customDashboardsPromClient prometheus.ClientInterface
+	// kialiSAToken is set once at startup via SetKialiSAToken so the
+	// custom dashboards Prometheus client can authenticate with the
+	// Kiali service-account token when auth.use_kiali_token is true.
+	kialiSAToken string
 )
+
+// SetKialiSAToken stores the Kiali service-account token for use when
+// creating the custom dashboards Prometheus client. Call once at startup.
+func SetKialiSAToken(token string) {
+	kialiSAToken = token
+}
 
 // newPromClient is the factory used to create a Prometheus client for the
 // custom dashboards endpoint. Tests can replace this to inject a mock.
-var newPromClient = func(conf config.Config, promCfg config.PrometheusConfig) (prometheus.ClientInterface, error) {
-	return prometheus.NewClientFromPrometheusConfig(conf, promCfg, "")
+var newPromClient = func(conf config.Config, promCfg config.PrometheusConfig, saToken string) (prometheus.ClientInterface, error) {
+	return prometheus.NewClientFromPrometheusConfig(conf, promCfg, saToken)
 }
 
 // DashboardsService deals with fetching dashboards from config
@@ -48,20 +58,24 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promCli
 	if customEnabled && conf.ExternalServices.CustomDashboards.Prometheus.URL != "" {
 		prom = conf.ExternalServices.CustomDashboards.Prometheus
 
-		// Use a dedicated Prometheus client for custom dashboards when a
-		// separate URL is configured. The client is created once and cached
-		// for the lifetime of the process.
-		customDashboardsPromOnce.Do(func() {
-			client, err := newPromClient(*conf, prom)
-			if err != nil {
-				log.Errorf("Failed to create custom dashboards Prometheus client for [%s]: %v. Falling back to main Prometheus client.", prom.URL, err)
-			} else {
-				customDashboardsPromClient = client
+		// Lazily create a dedicated Prometheus client for custom dashboard
+		// queries. A mutex (rather than sync.Once) allows retry on transient
+		// errors such as TLS cert files not yet mounted at first request.
+		func() {
+			customDashboardsPromMu.Lock()
+			defer customDashboardsPromMu.Unlock()
+			if customDashboardsPromClient == nil {
+				client, err := newPromClient(*conf, prom, kialiSAToken)
+				if err != nil {
+					log.Errorf("Failed to create custom dashboards Prometheus client for [%s]: %v. Falling back to main Prometheus client.", prom.URL, err)
+				} else {
+					customDashboardsPromClient = client
+				}
 			}
-		})
-		if customDashboardsPromClient != nil {
-			promClient = customDashboardsPromClient
-		}
+			if customDashboardsPromClient != nil {
+				promClient = customDashboardsPromClient
+			}
+		}()
 	}
 	nsLabel := conf.ExternalServices.CustomDashboards.NamespaceLabel
 	if nsLabel == "" {

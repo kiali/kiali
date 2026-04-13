@@ -318,18 +318,25 @@ func initPromCache(ctx context.Context) {
 	}
 }
 
-// NewClient creates a new client to the Prometheus API using the main
-// Prometheus configuration (conf.ExternalServices.Prometheus).
+// NewClient creates a new client to the Prometheus API. It delegates to
+// NewClientFromPrometheusConfig with the main Prometheus configuration so
+// existing callers don't need to specify a PrometheusConfig explicitly.
 func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 	return NewClientFromPrometheusConfig(conf, conf.ExternalServices.Prometheus, kialiSAToken)
 }
 
-// NewClientFromPrometheusConfig creates a new client to the Prometheus API
-// targeting the given PrometheusConfig rather than the main one in conf.
+// NewClientFromPrometheusConfig creates a new Prometheus API client from
+// an arbitrary PrometheusConfig. This was extracted from NewClient to allow
+// non-default Prometheus endpoints (e.g. custom dashboards) to reuse the
+// same transport-layer initialization (TLS, auth, round-trippers).
 func NewClientFromPrometheusConfig(conf config.Config, promCfg config.PrometheusConfig, kialiSAToken string) (*Client, error) {
 	clientConfig := api.Config{Address: promCfg.URL}
 
-	// Prom Cache will be initialized once at first use of Prometheus Client
+	// Prom Cache will be initialized once at first use of Prometheus Client.
+	// The cache configuration is read from config.Get() (the main Prometheus
+	// config), so callers should ensure the main client is created before any
+	// non-default client to avoid binding the cache to the wrong settings.
+	// In production cmd/server.go guarantees this ordering.
 	once.Do(func() {
 		// create the cache with its own context/logger
 		zl := log.WithGroup(log.PromCacheLogName)
