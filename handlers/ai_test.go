@@ -165,9 +165,9 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 	statusCodes := make(chan int, numRequests)
 
 	// Alternate between tools and header to exercise concurrent reads from both handler maps:
-	// - get_referenced_docs (no header): uses MCPToolHandlers, returns 200
-	// - get_action_ui (no header): uses MCPToolHandlers, returns 200
-	// - get_referenced_docs + kiali_chatbot header: uses DefaultToolHandlers, tool not in default → 404
+	// - get_referenced_docs (no header): MCPToolHandlers
+	// - get_action_ui (no header): MCPToolHandlers
+	// - get_referenced_docs + HeaderKialiUI: DefaultToolHandlers (200 if the tool is also in default)
 	for i := 0; i < numRequests; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -175,7 +175,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 
 			var tool string
 			var body map[string]interface{}
-			withChatbotHeader := false
+			withKialiUIHeader := false
 			switch i % 3 {
 			case 0:
 				tool = "get_referenced_docs"
@@ -186,7 +186,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 			default:
 				tool = "get_referenced_docs"
 				body = map[string]interface{}{"keywords": "istio"}
-				withChatbotHeader = true
+				withKialiUIHeader = true
 			}
 
 			bodyBytes, err := json.Marshal(body)
@@ -200,8 +200,8 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 				return
 			}
 			req.Header.Set("Content-Type", "application/json")
-			if withChatbotHeader {
-				req.Header.Set("kiali_chatbot", "true")
+			if withKialiUIHeader {
+				req.Header.Set(mcp.HeaderKialiUI, "true")
 			}
 
 			resp, err := ts.Client().Do(req)
@@ -231,7 +231,7 @@ func TestChatMCP_ConcurrentRequests(t *testing.T) {
 	}
 
 	// Concurrent access to handler and tool maps: we must see 200s (MCP tools). We may also see 404s
-	// when kiali_chatbot header is set (get_referenced_docs not in default), depending on env.
+	// when HeaderKialiUI is set but the tool is not registered in DefaultToolHandlers.
 	require.Greater(got200, 0, "expected some 200 responses from concurrent MCP tool calls")
 	require.Equal(numRequests, got200+got404, "all responses should be 200 or 404 (no 500/panic)")
 }
@@ -256,7 +256,7 @@ func TestChatMCP_LoadToolsOnFirstRequest(t *testing.T) {
 	assert.Greater(t, len(mcp.DefaultToolHandlers), 0, "Default (chatbot) toolset should be loaded")
 }
 
-func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
+func TestChatMCP_UsesDefaultHandlersWhenKialiUIHeaderSet(t *testing.T) {
 	require := require.New(t)
 	require.NoError(mcp.LoadTools())
 
@@ -266,8 +266,8 @@ func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	t.Cleanup(ts.Close)
 
-	// Tool with toolset: [mcp] only (e.g. get_referenced_docs) is in MCPToolHandlers but not in DefaultToolHandlers.
-	// Without header: should be found (MCPToolHandlers). With header kiali_chatbot: should be 404 (DefaultToolHandlers).
+	// Tool with toolset: [mcp] only is in MCPToolHandlers but not in DefaultToolHandlers.
+	// Without header: found via MCPToolHandlers. With HeaderKialiUI: 404 via DefaultToolHandlers.
 	excludedTool := "get_referenced_docs"
 	if _, inDefault := mcp.DefaultToolHandlers[excludedTool]; inDefault {
 		t.Skipf("%s is in DefaultToolHandlers, cannot test header subset behavior", excludedTool)
@@ -281,17 +281,17 @@ func TestChatMCP_UsesDefaultHandlersWhenKialiChatbotHeaderSet(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.NoError(err)
 	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "Without kiali_chatbot header, tool should be found (MCPToolHandlers)")
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "Without HeaderKialiUI, tool should be found (MCPToolHandlers)")
 
 	body2 := bytes.NewBufferString(`{}`)
 	req2, err := http.NewRequest(http.MethodPost, ts.URL+"/api/chat/mcp/"+excludedTool, body2)
 	require.NoError(err)
 	req2.Header.Set("Content-Type", "application/json")
-	req2.Header.Set("kiali_chatbot", "true")
+	req2.Header.Set(mcp.HeaderKialiUI, "true")
 	resp2, err := ts.Client().Do(req2)
 	require.NoError(err)
 	t.Cleanup(func() { resp2.Body.Close() })
-	assert.Equal(t, http.StatusNotFound, resp2.StatusCode, "With kiali_chatbot header, tool should not be found (DefaultToolHandlers)")
+	assert.Equal(t, http.StatusNotFound, resp2.StatusCode, "With HeaderKialiUI, tool should not be found when absent from DefaultToolHandlers")
 }
 
 // ========================================================================

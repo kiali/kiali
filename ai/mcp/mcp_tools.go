@@ -36,7 +36,7 @@ var toolsFS embed.FS
 var (
 	// MCPToolHandlers contains tools with toolset including "mcp" (full MCP).
 	MCPToolHandlers = map[string]ToolDef{}
-	// DefaultToolHandlers contains tools with toolset including "default" (chatbot UI when header kiali_chatbot is set).
+	// DefaultToolHandlers contains tools with toolset including "default" (chatbot UI; also used for POST /api/chat/mcp when HeaderKialiUI is set).
 	// The two sets are independent; a tool can be in one or both via the toolset field in its YAML.
 	DefaultToolHandlers = map[string]ToolDef{}
 )
