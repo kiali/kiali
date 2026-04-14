@@ -63,8 +63,8 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	resourceType := mcputil.GetStringArg(args, "resource_type", "resourceType")
 	namespaces := mcputil.GetStringArg(args, "namespaces")
 	resourceName := mcputil.GetStringArg(args, "resource_name", "resourceName")
-	clusterName := mcputil.GetStringArg(args, "cluster_name", "clusterName")
-	rateInterval := mcputil.GetStringArg(args, "rate_interval", "rateInterval")
+	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
+	rateInterval := mcputil.GetStringOrDefault(args, DefaultRateInterval, "rateInterval")
 	queryTime := mcputil.GetTimeArg(args, "query_time", "queryTime")
 	errors := map[string]string{}
 	// Validate parameters
@@ -78,14 +78,8 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	if resourceName != "" && namespaces == "" {
 		return "Namespaces are required when resource name is provided", http.StatusOK
 	}
-	if rateInterval == "" {
-		rateInterval = DefaultRateInterval
-	}
 	if queryTime.IsZero() {
 		queryTime = util.Clock.Now()
-	}
-	if clusterName == "" {
-		clusterName = kialiInterface.Conf.KubernetesConfig.ClusterName
 	}
 	var namespacesSlice []string
 	if namespaces != "" {
