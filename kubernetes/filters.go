@@ -298,6 +298,17 @@ func FilterPodsBySelector(selector labels.Selector, allPods []core_v1.Pod) []cor
 	return pods
 }
 
+// FilterPodsBySelectorAndNamespace returns pods matching selector in the given namespace.
+func FilterPodsBySelectorAndNamespace(selector labels.Selector, namespace string, allPods []core_v1.Pod) []core_v1.Pod {
+	var pods []core_v1.Pod
+	for _, pod := range allPods {
+		if pod.Namespace == namespace && selector.Matches(labels.Set(pod.Labels)) {
+			pods = append(pods, pod)
+		}
+	}
+	return pods
+}
+
 func FilterWorkloadEntriesBySelector(selector labels.Selector, allEntries []*networking_v1.WorkloadEntry) []*networking_v1.WorkloadEntry {
 	var entries []*networking_v1.WorkloadEntry
 	// WorkloadGroup.Metadata.Labels is nullable

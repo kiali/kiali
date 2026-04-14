@@ -9,6 +9,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -147,6 +148,33 @@ func TestFilterPodsByController(t *testing.T) {
 			assert.Equal(tc.expectedLen, len(pods))
 		})
 	}
+}
+
+func TestFilterPodsBySelectorAndNamespace(t *testing.T) {
+	assert := assert.New(t)
+
+	selector := map[string]string{"app": "shared-app"}
+	pods := []core_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "pod-ns-a-1",
+				Namespace: "ns-a",
+				Labels:    selector,
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "pod-ns-b-1",
+				Namespace: "ns-b",
+				Labels:    selector,
+			},
+		},
+	}
+
+	filtered := FilterPodsBySelectorAndNamespace(labels.Set(selector).AsSelector(), "ns-a", pods)
+	assert.Len(filtered, 1)
+	assert.Equal("pod-ns-a-1", filtered[0].Name)
+	assert.Equal("ns-a", filtered[0].Namespace)
 }
 
 func TestFilterByNamespaces(t *testing.T) {

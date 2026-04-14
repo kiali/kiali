@@ -421,6 +421,12 @@ Feature: Kiali Waypoint related features
     Then 4 edges appear in the graph
     Then user "closes" traffic menu
 
+  Scenario: [Workload details] Sidecar and Ambient workloads with same name have no config issues
+    Given user is at the details page for the "workload" "test-sidecar/curl-client" located in the "" cluster
+    Then the workload description card has no config issues
+    And user is at the details page for the "workload" "test-ambient/curl-client" located in the "" cluster
+    Then the workload description card has no config issues
+
   # TODO: Remove skip-ossmc tag once the namespace page is created in OSSMC
   @skip-ossmc
   Scenario: [Namespaces] Add to Ambient in the test-sidecar namespace
