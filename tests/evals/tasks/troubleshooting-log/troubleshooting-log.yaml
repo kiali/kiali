@@ -1,0 +1,50 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Get log productpage due 500"
+  category: "Troubleshooting & Debugging"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - k8s.create:
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: productpage-fault
+        namespace: bookinfo
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        hosts:
+        - "productpage"
+        - "productpage.bookinfo.svc.cluster.local"
+        - "productpage-bookinfo.apps-crc.testing"
+        http:
+        - fault:
+            abort:
+              httpStatus: 500
+              percentage:
+                value: 100
+            route:
+            - destination:
+                host: productpage
+  verify:
+  - llmJudge:
+      contains: "fault injection"
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1alpha3
+      kind: VirtualService
+      metadata:
+        name: productpage-fault
+        namespace: bookinfo
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      ignoreNotFound: true
+  prompt:
+    inline: Why is the productpage service returning 500 errors?

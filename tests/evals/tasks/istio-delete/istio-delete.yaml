@@ -1,0 +1,70 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Remove fault Injection"
+  category: "Istio Configuration & Management"
+  difficulty: medium
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        host: ratings.bookinfo.svc.cluster.local
+        subsets:
+        - name: v1
+          labels:
+            version: v1
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        hosts:
+        - ratings.bookinfo.svc.cluster.local
+        http:
+        - route:
+          - destination:
+              host: ratings.bookinfo.svc.cluster.local
+              subset: v1
+            weight: 100
+        fault:
+          abort:
+            percentage:
+              value: 100
+            httpStatus: 503
+  verify:
+  - script:
+      file: ./verify.sh
+      timeout: 10s
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  prompt:
+    inline: Fix my namespace bookinfo to remove the fault injection.

@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Show topology bookinfo"
+  category: "High-Level Observability & Health"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "bookinfo"
+  prompt:
+    inline: Show me the traffic graph of the bookinfo namespace.

@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Get latency workload traces"
+  category: "Troubleshooting & Debugging"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "30 minutes"
+  prompt:
+    inline: Analyze the latency for the reviews workload over the last 30 minutes?

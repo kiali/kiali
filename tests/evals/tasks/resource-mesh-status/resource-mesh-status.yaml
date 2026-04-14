@@ -1,0 +1,81 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Status of my mesh"
+  category: "Resource Inspection"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        host: ratings.bookinfo.svc.cluster.local
+        subsets:
+        - name: v1
+          labels:
+            version: v1
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        hosts:
+        - ratings.bookinfo.svc.cluster.local
+        http:
+        - route:
+          - destination:
+              host: ratings.bookinfo.svc.cluster.local
+              subset: v1
+            weight: 100
+          fault:
+            abort:
+              percentage:
+                value: 100
+              httpStatus: 503
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 60
+  verify:
+  - llmJudge:
+      contains: "bookinfo"
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        name: ratings
+        namespace: bookinfo
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      ignoreNotFound: true
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        name: ratings
+        namespace: bookinfo
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      ignoreNotFound: true
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 60
+  prompt:
+    inline: Check my mesh.

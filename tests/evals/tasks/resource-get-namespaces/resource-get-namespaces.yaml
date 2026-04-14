@@ -1,16 +1,17 @@
 kind: Task
 apiVersion: mcpchecker/v1alpha2
 metadata:
-  name: "get-service-detail"
-  difficulty: easy
   labels:
     suite: kiali
+  name: "Get mesh namespaces"
+  category: "Resource Inspection"
+  difficulty: easy
 spec:
   requires:
   - extension: kubernetes
     as: k8s
   verify:
   - llmJudge:
-      contains: "service: details"
+      contains: "namespaces in your mesh"
   prompt:
-    inline: Give me information about my service details in the namespace bookinfo.
+    inline: Check namespaces in my mesh.

@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Metrics for workload (latency)"
+  category: "Resource Inspection"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "reviews"
+  prompt:
+    inline: What are the latency metrics (p50, p95, p99) for the reviews workload in the bookinfo namespace? Use a 5-minute rate interval.

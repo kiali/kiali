@@ -1,0 +1,75 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Check traces for a service"
+  category: "Troubleshooting & Debugging"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        host: ratings.bookinfo.svc.cluster.local
+        subsets:
+        - name: v1
+          labels:
+            version: v1
+        trafficPolicy: ~
+  - k8s.create:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        namespace: bookinfo
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+      spec:
+        http:
+        - route:
+          - destination:
+              host: ratings.bookinfo.svc.cluster.local
+              subset: v1
+          weight: 100
+          fault:
+            delay:
+              percentage:
+                value: 100
+              fixedDelay: 5s
+        hosts:
+        - ratings.bookinfo.svc.cluster.local
+        gateways: ~
+  verify:
+  - llmJudge:
+      contains: "ratings"
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        namespace: bookinfo
+      ignoreNotFound: true
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        name: ratings
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        namespace: bookinfo
+      ignoreNotFound: true
+  prompt:
+    inline: I see a spike in duration for ratings in namespace bookinfo.Show me the traces of service ratins in namespace bookinfo anda analyze them.

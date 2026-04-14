@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Get workload detail"
+  category: "Resource Inspection"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "reviews-v1"
+  prompt:
+    inline: Get the full details and health status for the reviews-v1 workload in the bookinfo namespace.

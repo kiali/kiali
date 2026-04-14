@@ -1,0 +1,26 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Patch my traffic"
+  category: "Istio Configuration & Management"
+  difficulty: medium
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - script:
+      file: ./setup.sh
+      timeout: 120s
+  verify:
+  - script:
+      file: ./verify.sh
+      timeout: 60s
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 120s
+  prompt:
+    inline: I need to shift 50% of traffic to v2 of the reviews service. Apply a patch to the VirtualService with name reviews. Not confirm the patch, just apply it.

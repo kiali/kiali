@@ -1,0 +1,25 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "List all VS in bookinfo namespace"
+  category: "Istio Configuration & Management"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - script:
+      file: ./setup.sh
+      timeout: 120s
+  verify:
+  - llmJudge:
+      contains: "productpage-forced-failure"
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 120s
+  prompt:
+    inline: List all VirtualServices in the bookinfo namespace and check if they have any validation errors

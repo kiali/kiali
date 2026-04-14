@@ -1,0 +1,26 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Unhealthy Namespaces"
+  category: "High-Level Observability & Health"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - script:
+      file: ./setup.sh
+      timeout: 120s
+  verify:
+  - llmJudge:
+      contains: "degraded"
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 120s
+  prompt:
+    inline: Are there any degraded namespaces in my mesh right now?
+

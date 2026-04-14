@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Show traffic graph for multiple namespaces"
+  category: "High-Level Observability & Health"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "topology"
+  prompt:
+    inline: Show me the traffic graph for the bookinfo and istio-system namespaces together.

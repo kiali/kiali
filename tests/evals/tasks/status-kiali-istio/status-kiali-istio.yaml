@@ -1,0 +1,17 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Status Kiali and Istio"
+  category: "High-Level Observability & Health"
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "Istio Version"
+  prompt:
+    inline: Give me a status report on the interaction between Kiali and Istio components

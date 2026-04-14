@@ -1,10 +1,11 @@
 kind: Task
 apiVersion: mcpchecker/v1alpha2
 metadata:
-  name: "get-namespaces"
-  difficulty: easy
   labels:
     suite: kiali
+  name: "Show workload-level topology"
+  category: "High-Level Observability & Health"
+  difficulty: easy
 spec:
   requires:
   - extension: kubernetes
@@ -13,4 +14,4 @@ spec:
   - llmJudge:
       contains: "bookinfo"
   prompt:
-    inline: Check namespaces in my mesh.
+    inline: Show me the workload traffic graph for the bookinfo namespace.
