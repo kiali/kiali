@@ -168,25 +168,18 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 
 	// Note that cluster-wide-access mode requires cluster role permission to list all namespaces.
 	if in.conf.Deployment.ClusterWideAccess {
-
-		nss, err := in.userClients[cluster].GetNamespaces("")
+		// get the intersection of KialiSA and user namespaces
+		nss, err := in.getNamespacesUsingKialiSA(cluster, "")
 		if err != nil {
-			// Fallback to using the Kiali service account, if needed
-			if errors.IsForbidden(err) {
-				if nss, err = in.getNamespacesUsingKialiSA(cluster, "", err); err != nil {
-					return nil, err
-				}
-			} else {
-				return nil, err
-			}
+			return nil, err
 		}
 
 		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
-		// We do not have cluster wide access, so we do not have permission to list namespaces.
-		// Therefore, we assume we can extract the list of accessible namespaces from the discovery selectors configuration.
-		// That list of accessible namespaces will be used as our base list which we then filter with discovery selectors down below.
-		// Note if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// We do not have cluster wide access, so we do not have permission to list namespaces. Therefore, we assume we can
+		// extract the list of accessible namespaces from the discovery selectors configuration. That list of accessible
+		// namespaces will be used as our base list which we then filter with discovery selectors down below.
+		// Note, if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
 		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
 		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
 		k8sNamespaces := make([]core_v1.Namespace, 0)
@@ -434,33 +427,49 @@ func (in *NamespaceService) waitForCacheUpdate(ctx context.Context, cluster stri
 	}
 }
 
-func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string, forwardedError error) ([]core_v1.Namespace, error) {
-	// Check if we already are using the Kiali ServiceAccount token. If we are, no need to do further processing, since
-	// this would just circle back to the same results.
-	kialiToken := in.kialiSAClients[cluster].GetToken()
-	if in.userClients[cluster].GetToken() == kialiToken {
-		return nil, forwardedError
-	}
-
-	// Let's get the namespaces list using the Kiali Service Account
+// getNamespacesUsingKialiSA returns the intersection of namespaces Listed for KialiSA, narrowed by labelSelector, and those the
+// user can access (via List or Get, depending on the config)
+func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelector string) ([]core_v1.Namespace, error) {
 	nss, err := in.kialiSAClients[cluster].GetNamespaces(labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
-	// Only take namespaces where the user has privileges
-	var namespaces []core_v1.Namespace
-	for _, item := range nss {
-		if _, getNsErr := in.userClients[cluster].GetNamespace(item.Name); getNsErr == nil {
-			// Namespace is accessible
-			namespaces = append(namespaces, item)
-		} else if !errors.IsForbidden(getNsErr) {
-			// Since the returned error is NOT "forbidden", something bad happened
-			return nil, getNsErr
+	// When not in strict-get mode, try the user's own list; if it succeeds,
+	// intersect it with the SA list so we never return namespaces that Kiali
+	// itself cannot access.
+	if !in.conf.Deployment.StrictGet {
+		userNss, userErr := in.userClients[cluster].GetNamespaces(labelSelector)
+		if userErr == nil {
+			saSet := make(map[string]struct{}, len(nss))
+			for _, ns := range nss {
+				saSet[ns.Name] = struct{}{}
+			}
+			var intersection []core_v1.Namespace
+			for i := range userNss {
+				if _, ok := saSet[userNss[i].Name]; ok {
+					intersection = append(intersection, userNss[i])
+				}
+			}
+			return intersection, nil
+		}
+		if !errors.IsForbidden(userErr) {
+			return nil, userErr
 		}
 	}
 
-	// Return the list of namespaces where the user has the 'get namespace' read privilege.
+	return in.filterToNamespacesUserCanGet(cluster, nss)
+}
+
+func (in *NamespaceService) filterToNamespacesUserCanGet(cluster string, candidates []core_v1.Namespace) ([]core_v1.Namespace, error) {
+	var namespaces []core_v1.Namespace
+	for _, item := range candidates {
+		if _, getNsErr := in.userClients[cluster].GetNamespace(item.Name); getNsErr == nil {
+			namespaces = append(namespaces, item)
+		} else if !errors.IsForbidden(getNsErr) {
+			return nil, getNsErr
+		}
+	}
 	return namespaces, nil
 }
 

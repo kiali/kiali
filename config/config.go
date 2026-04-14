@@ -614,7 +614,8 @@ type DeploymentConfig struct {
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
-	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
+	Namespace            string                   `yaml:"namespace,omitempty"`  // Kiali deployment namespace
+	StrictGet            bool                     `yaml:"strict_get,omitempty"` // Namespace access requires GET perm (LIST alone is insufficient).
 	TLSConfig            DeploymentTLSConfig      `yaml:"tls_config,omitempty" json:"tlsConfig,omitempty"`
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
 }
@@ -1028,6 +1029,7 @@ func NewConfig() (c *Config) {
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
 			Namespace:          IstioNamespaceDefault,
+			StrictGet:          false,
 			TLSConfig: DeploymentTLSConfig{
 				Source: TLSConfigSourceConfig,
 			},

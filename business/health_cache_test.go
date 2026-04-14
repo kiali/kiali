@@ -10,6 +10,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/log"
 )
@@ -136,9 +137,15 @@ func TestRefreshClusterHealth_GetAllWorkloadsError(t *testing.T) {
 
 	layer := NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
-	// Remove the cluster's SA client from the WorkloadService so GetAllWorkloads
-	// fails with "Cluster [...] is not found", while the NamespaceService (which
-	// has its own copy of the SA clients) still succeeds for GetClusterNamespaces.
+	// Give WorkloadService its own copy of the SA clients map, then remove the
+	// cluster entry so GetAllWorkloads fails with "Cluster [...] is not found".
+	// The NamespaceService keeps the original map and still succeeds for
+	// GetClusterNamespaces.
+	wlSAClients := make(map[string]kubernetes.ClientInterface, len(layer.Workload.kialiSAClients))
+	for k, v := range layer.Workload.kialiSAClients {
+		wlSAClients[k] = v
+	}
+	layer.Workload.kialiSAClients = wlSAClients
 	delete(layer.Workload.kialiSAClients, cluster)
 
 	clientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)

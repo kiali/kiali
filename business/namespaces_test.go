@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientsetfake "k8s.io/client-go/kubernetes/fake"
 	kubeclienttesting "k8s.io/client-go/testing"
 
 	"github.com/kiali/kiali/cache"
@@ -105,6 +106,156 @@ func TestGetNamespaces(t *testing.T) {
 	assert.NotNil(t, ns)
 	assert.Equal(t, len(ns), 5)
 	assert.Equal(t, ns[0].Name, "alpha")
+}
+
+// forbidGetNamespace returns a reactor that rejects Get for the named namespace with a Forbidden error.
+func forbidGetNamespace(name string) func(kubeclienttesting.Action) (bool, runtime.Object, error) {
+	return func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		if ga, ok := action.(kubeclienttesting.GetAction); ok && ga.GetName() == name {
+			return true, nil, errors.NewForbidden(core_v1.Resource("namespaces"), name, fmt.Errorf("forbidden"))
+		}
+		return false, nil, nil
+	}
+}
+
+// forbidListNamespaces returns a reactor that rejects List for namespaces with a Forbidden error.
+func forbidListNamespaces() func(kubeclienttesting.Action) (bool, runtime.Object, error) {
+	return func(_ kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.NewForbidden(core_v1.Resource("namespaces"), "", fmt.Errorf("forbidden"))
+	}
+}
+
+// nsNames extracts the sorted list of namespace names from a namespace slice.
+func nsNames(nss []models.Namespace) []string {
+	names := make([]string, len(nss))
+	for i, n := range nss {
+		names[i] = n.Name
+	}
+	return names
+}
+
+// With deployment.strict_get and cluster-wide access, namespaces returned from list are kept only when the user may get each Namespace object.
+func TestGetNamespacesStrictGetFiltersToGetPermission(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.StrictGet = true
+
+	k8s := setupNamespaceServiceWithNs()
+	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	cs.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
+
+	nsservice := setupNamespaceService(t, k8s, conf)
+	ns, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"alpha", "bookinfo", "test", "test2"}, nsNames(ns))
+}
+
+// When strict_get is false, a successful namespace list is not filtered by per-namespace get (legacy behavior).
+func TestGetNamespacesStrictGetDisabledTrustsList(t *testing.T) {
+	conf := config.NewConfig()
+	require.False(t, conf.Deployment.StrictGet)
+
+	k8s := setupNamespaceServiceWithNs()
+	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	cs.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
+
+	nsservice := setupNamespaceService(t, k8s, conf)
+	ns, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"alpha", "beta", "bookinfo", "test", "test2"}, nsNames(ns))
+}
+
+// When strict_get is false and user List succeeds, namespaces the user can
+// see but the Kiali SA cannot must be excluded (intersection with SA list).
+func TestGetNamespacesNonStrictIntersectsWithSAList(t *testing.T) {
+	conf := config.NewConfig()
+	require.False(t, conf.Deployment.StrictGet)
+
+	// SA can see bookinfo and alpha only.
+	saClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+	)
+	saClient.Token = "sa-token"
+
+	// User can see bookinfo, alpha, and extra (SA does not have extra).
+	userClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("extra"),
+	)
+	userClient.Token = "user-token"
+
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: saClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	ns, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"alpha", "bookinfo"}, nsNames(ns))
+}
+
+// When strict_get is false and user List returns Forbidden, the code falls
+// through to filterToNamespacesUserCanGet which keeps only namespaces the
+// user can individually Get.
+func TestGetNamespacesNonStrictForbiddenListFallsBackToGet(t *testing.T) {
+	conf := config.NewConfig()
+	require.False(t, conf.Deployment.StrictGet)
+
+	// SA client can list all three namespaces.
+	saClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("beta"),
+	)
+	saClient.Token = "sa-token"
+
+	// User client: list is forbidden, individual get succeeds except for beta.
+	userClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("alpha"),
+		kubetest.FakeNamespace("beta"),
+	)
+	userClient.Token = "user-token"
+	userCS := userClient.KubeClientset.(*clientsetfake.Clientset)
+	userCS.PrependReactor("list", "namespaces", forbidListNamespaces())
+	userCS.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
+
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: saClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	ns, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"alpha", "bookinfo"}, nsNames(ns))
+}
+
+// A non-forbidden Get error (e.g. InternalError) in filterToNamespacesUserCanGet
+// must propagate up and fail the entire GetNamespaces call.
+func TestGetNamespacesGetInternalErrorPropagates(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.StrictGet = true
+
+	k8s := setupNamespaceServiceWithNs()
+	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	cs.PrependReactor("get", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		getAction, ok := action.(kubeclienttesting.GetAction)
+		if !ok {
+			return false, nil, nil
+		}
+		if getAction.GetName() == "beta" {
+			return true, nil, errors.NewInternalError(fmt.Errorf("apiserver down"))
+		}
+		return false, nil, nil
+	})
+
+	nsservice := setupNamespaceService(t, k8s, conf)
+	_, err := nsservice.GetNamespaces(context.TODO())
+	require.Error(t, err)
+	assert.True(t, errors.IsInternalError(err))
 }
 
 // Get namespace
