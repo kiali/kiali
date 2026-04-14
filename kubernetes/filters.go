@@ -250,9 +250,12 @@ func FilterK8sInferencePoolsBySelector(workloadSelector string, inferencePools [
 	return filtered
 }
 
-func FilterPodsByController(controllerName string, controllerGVK schema.GroupVersionKind, allPods []core_v1.Pod) []core_v1.Pod {
+func FilterPodsByControllerAndNamespace(controllerName string, controllerGVK schema.GroupVersionKind, namespace string, allPods []core_v1.Pod) []core_v1.Pod {
 	var pods []core_v1.Pod
 	for _, pod := range allPods {
+		if namespace != "" && pod.Namespace != namespace {
+			continue
+		}
 		for _, ref := range pod.OwnerReferences {
 			refGV, err := schema.ParseGroupVersion(ref.APIVersion)
 			if err != nil {

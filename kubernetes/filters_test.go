@@ -86,7 +86,7 @@ func ownerRefFrom(t *testing.T, owner runtime.Object) meta_v1.OwnerReference {
 	return *meta_v1.NewControllerRef(m, gvk)
 }
 
-func TestFilterPodsByController(t *testing.T) {
+func TestFilterPodsByControllerAndNamespaceEmptyNamespace(t *testing.T) {
 	rs := &apps_v1.ReplicaSet{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name: "Testing-RS",
@@ -144,10 +144,46 @@ func TestFilterPodsByController(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			pods := FilterPodsByController(tc.controllerName, tc.controllerGVK, tc.pods)
+			pods := FilterPodsByControllerAndNamespace(tc.controllerName, tc.controllerGVK, "", tc.pods)
 			assert.Equal(tc.expectedLen, len(pods))
 		})
 	}
+}
+
+func TestFilterPodsByControllerAndNamespace(t *testing.T) {
+	rs := &apps_v1.ReplicaSet{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "Testing-RS",
+			Namespace: "ns-a",
+			UID:       types.UID("e07b722f-c922-4046-8d98-7aa8487d41c1"),
+		},
+		TypeMeta: meta_v1.TypeMeta{
+			Kind:       ReplicaSets.Kind,
+			APIVersion: ReplicaSets.GroupVersion().String(),
+		},
+	}
+
+	pods := []core_v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:            "rs-pod-ns-a",
+				Namespace:       "ns-a",
+				OwnerReferences: []meta_v1.OwnerReference{ownerRefFrom(t, rs)},
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:            "rs-pod-ns-b",
+				Namespace:       "ns-b",
+				OwnerReferences: []meta_v1.OwnerReference{ownerRefFrom(t, rs)},
+			},
+		},
+	}
+
+	filtered := FilterPodsByControllerAndNamespace(rs.Name, ReplicaSets, "ns-a", pods)
+	assert.Len(t, filtered, 1)
+	assert.Equal(t, "rs-pod-ns-a", filtered[0].Name)
+	assert.Equal(t, "ns-a", filtered[0].Namespace)
 }
 
 func TestFilterPodsBySelectorAndNamespace(t *testing.T) {

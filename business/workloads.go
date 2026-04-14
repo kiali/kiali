@@ -1598,7 +1598,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			var cPods []core_v1.Pod
 			for _, rs := range repset {
 				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-				if rsOwnerRef != nil && rsOwnerRef.Name == controllerName && rsOwnerRef.Kind == controllerGVK.Kind {
+				if rsOwnerRef != nil && rs.Namespace == controllerNamespace && rsOwnerRef.Name == controllerName && rsOwnerRef.Kind == controllerGVK.Kind {
 					w.ParseReplicaSetParent(&rs, controllerName, controllerGVK, in.conf)
 					for _, pod := range pods {
 						if meta_v1.IsControlledBy(&pod, &rs) {
@@ -1609,9 +1609,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				}
 			}
 			if len(cPods) == 0 {
-				// If no pods we're found for a ReplicaSet type, it's possible the controller
+				// If no pods were found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
-				cPods = kubernetes.FilterPodsByController(controllerName, controllerGVK, pods)
+				cPods = kubernetes.FilterPodsByControllerAndNamespace(controllerName, controllerGVK, controllerNamespace, pods)
 				if len(cPods) > 0 {
 					w.ParsePods(controllerName, controllerGVK, cPods, in.conf)
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", controllerName, controllerGVK.Kind)
@@ -2289,7 +2289,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			var cPods []core_v1.Pod
 			for _, rs := range repset {
 				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-				if rsOwnerRef != nil && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
+				if rsOwnerRef != nil && rs.Namespace == criteria.Namespace && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
 					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK, in.conf)
 					for _, pod := range pods {
 						if meta_v1.IsControlledBy(&pod, &rs) {
@@ -2301,7 +2301,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			}
 
 			if len(cPods) == 0 {
-				cPods = kubernetes.FilterPodsByController(criteria.WorkloadName, discoveredControllerGVK, pods)
+				cPods = kubernetes.FilterPodsByControllerAndNamespace(criteria.WorkloadName, discoveredControllerGVK, criteria.Namespace, pods)
 				if len(cPods) > 0 {
 					w.ParsePods(criteria.WorkloadName, discoveredControllerGVK, cPods, in.conf)
 					log.Debugf("Workload %s of type %s has not a ReplicaSet as a child controller, it may need a revisit", criteria.WorkloadName, discoveredControllerGVK.Kind)
