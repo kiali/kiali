@@ -261,7 +261,10 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 	for _, gw := range l.Gateways {
 		selector := labels.Set(gw.Spec.Selector).AsSelector()
 		wk, err := globalInfo.Business.Workload.GetAllWorkloads(ctx, cluster, selector.String())
-		graph.CheckError(err)
+		if err != nil {
+			log.FromContext(ctx).Warn().Msgf("Skipping gateway [%s]/[%s] with selector [%s]: %v", gw.Namespace, gw.Name, selector.String(), err)
+			continue
+		}
 		var hostnames []string
 		for _, gwServer := range gw.Spec.Servers {
 			gwHosts := gwServer.Hosts
