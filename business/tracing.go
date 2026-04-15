@@ -132,14 +132,6 @@ func spanMatchesAmbientWorkload(span *jaegerModels.Span, workload, namespace str
 		spanTagMatches(span, "istio.source_workload", "istio.source_namespace", workload, namespace)
 }
 
-func spanHasAmbientWorkloadTags(span *jaegerModels.Span) bool {
-	_, hasDestWorkload := spanTagValue(span, "istio.destination_workload")
-	_, hasDestNamespace := spanTagValue(span, "istio.destination_namespace")
-	_, hasSourceWorkload := spanTagValue(span, "istio.source_workload")
-	_, hasSourceNamespace := spanTagValue(span, "istio.source_namespace")
-	return (hasDestWorkload && hasDestNamespace) || (hasSourceWorkload && hasSourceNamespace)
-}
-
 func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload string, query models.TracingQuery) ([]model.TracingSpan, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
