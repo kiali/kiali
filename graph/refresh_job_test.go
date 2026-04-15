@@ -270,6 +270,51 @@ func TestRefreshJob_GeneratorError(t *testing.T) {
 	assert.Equal(t, len(trafficMap), len(retrieved.TrafficMap))
 }
 
+func TestRefreshJob_GeneratorPanic(t *testing.T) {
+	ctx := context.Background()
+	config := &GraphCacheConfig{
+		Enabled:           true,
+		InactivityTimeout: 5 * time.Minute,
+		MaxCacheMemoryMB:  50,
+		RefreshInterval:   1 * time.Hour,
+	}
+	cache := NewGraphCache(ctx, config).(*GraphCacheImpl)
+
+	generator := func(ctx context.Context, options Options) (TrafficMap, error) {
+		panic("boom")
+	}
+	cache.SetGraphGenerator(generator)
+
+	options := Options{
+		TelemetryOptions: TelemetryOptions{
+			CommonOptions: CommonOptions{
+				Duration: 120 * time.Second,
+			},
+		},
+	}
+
+	// Set initial cached graph
+	trafficMap := createTestTrafficMap(5)
+	cached := &CachedGraph{
+		LastAccessed:    time.Now(),
+		Options:         options,
+		RefreshInterval: 30 * time.Second,
+		Timestamp:       time.Now(),
+		TrafficMap:      trafficMap,
+	}
+	err := cache.SetSessionGraph("test-session", cached)
+	require.NoError(t, err)
+
+	job := NewRefreshJob(ctx, "test-session", options, cache, generator, 30*time.Second)
+
+	// refresh should recover from panic and not crash the test
+	job.refresh()
+
+	assert.True(t, job.stopped)
+	_, found := cache.GetSessionGraph("test-session")
+	assert.False(t, found)
+}
+
 func TestRefreshJob_StartAndStop(t *testing.T) {
 	ctx := context.Background()
 	config := &GraphCacheConfig{
