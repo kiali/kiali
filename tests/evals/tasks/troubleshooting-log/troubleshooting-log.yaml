@@ -47,4 +47,4 @@ spec:
           gevals.kiali.io/test: gevals-testing
       ignoreNotFound: true
   prompt:
-    inline: Why is the productpage service returning 500 errors?
+    inline: Why is the productpage service in bookinfo namespacereturning 500 errors?
