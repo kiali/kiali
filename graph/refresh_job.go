@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -234,6 +235,15 @@ func (j *RefreshJob) cleanup() {
 // 4. Generates a fresh graph
 // 5. Updates the cache
 func (j *RefreshJob) refresh() {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			log.Errorf("Panic while refreshing graph cache for session [%s]: %v\n%s", j.sessionID, recovered, string(debug.Stack()))
+			// A panic indicates a broken refresh cycle. Evict the stale graph and stop the job.
+			j.cache.Evict(j.sessionID)
+			j.Stop()
+		}
+	}()
+
 	// Check if session's graph still exists (use internal method to not update LastAccessed)
 	cached, found := j.cache.getSessionGraphInternal(j.sessionID)
 	if !found {
