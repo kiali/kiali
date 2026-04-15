@@ -200,7 +200,7 @@ func TestQuery(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, rawQuery, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	// Verify it contains all the selects
-	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, resource.hostname, name)")
+	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, .istio.destination_workload, .istio.destination_namespace, .istio.destination_instance_name, .istio.destination_canonical_service, .istio.source_workload, .istio.source_namespace, .istio.source_instance_name, .istio.source_canonical_service, resource.hostname, name)")
 	// Verify it doesn't contain the cluster tag
 	assert.NotContains(t, rawQuery, models.IstioClusterTag)
 	// Verify it contains spans limit

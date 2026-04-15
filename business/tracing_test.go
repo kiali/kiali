@@ -138,6 +138,35 @@ var waypointTrace = jaegerModels.Trace{
 	},
 }
 
+var ambientTagTrace = jaegerModels.Trace{
+	Spans: []jaegerModels.Span{{
+		ProcessID:     "at_process_1",
+		OperationName: "waypoint-proxy-operation",
+		Tags: []jaegerModels.KeyValue{{
+			Key:   "istio.destination_workload",
+			Value: "reviews-v1",
+		}, {
+			Key:   "istio.destination_namespace",
+			Value: "default",
+		}, {
+			Key:   "istio.destination_canonical_service",
+			Value: "reviews",
+		}, {
+			Key:   "istio.source_workload",
+			Value: "productpage-v1",
+		}, {
+			Key:   "istio.source_namespace",
+			Value: "default",
+		}},
+	}},
+	Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+		"at_process_1": {
+			ServiceName: "waypoint.default",
+			Tags:        []jaegerModels.KeyValue{},
+		},
+	},
+}
+
 func TestMatchingWorkload(t *testing.T) {
 	assert := assert.New(t)
 	tracingName := models.TracingName{App: "some-workload", Workload: "some-workload", Lookup: "some-workload"}
@@ -230,6 +259,61 @@ func TestTracesToSpanWaypointWithWorkloadFilter(t *testing.T) {
 	spans := tracesToSpans(context.Background(), tracingName, &r, wkdSpanFilter(context.Background(), "default", tracingName), config.NewConfig())
 	assert.Len(spans, 1)
 	// Process is empty here, because the span we are looking for is the service and the process is the waypoint
+}
+
+func TestTracesToSpanWaypointWithAmbientTagWorkloadFilter(t *testing.T) {
+	assert := assert.New(t)
+
+	r := model.TracingResponse{
+		Data:               []jaegerModels.Trace{ambientTagTrace},
+		TracingServiceName: "waypoint.default",
+	}
+	tracingName := models.TracingName{App: "reviews", Workload: "reviews-v1", Lookup: "waypoint", WaypointName: "waypoint"}
+	spans := tracesToSpans(context.Background(), tracingName, &r, wkdSpanFilter(context.Background(), "default", tracingName), config.NewConfig())
+	assert.Len(spans, 1)
+}
+
+func TestOperationSpanFilterMatchesAmbientCanonicalService(t *testing.T) {
+	assert := assert.New(t)
+
+	filter := operationSpanFilter(context.Background(), "default", "reviews")
+	span := jaegerModels.Span{
+		OperationName: "does-not-have-service-prefix",
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.destination_canonical_service", Value: "reviews"},
+			{Key: "istio.destination_namespace", Value: "default"},
+		},
+	}
+	assert.True(filter(&span))
+}
+
+func TestTracesToSpanWaypointWithAmbientTagsDoNotFallbackToAppPrefix(t *testing.T) {
+	assert := assert.New(t)
+
+	trace := jaegerModels.Trace{
+		Spans: []jaegerModels.Span{{
+			ProcessID:     "at_process_1",
+			OperationName: "reviews.default.svc.cluster.local:9080/*",
+			Tags: []jaegerModels.KeyValue{
+				{Key: "istio.destination_workload", Value: "reviews-v1"},
+				{Key: "istio.destination_namespace", Value: "default"},
+			},
+		}},
+		Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+			"at_process_1": {
+				ServiceName: "waypoint.default",
+				Tags:        []jaegerModels.KeyValue{},
+			},
+		},
+	}
+
+	r := model.TracingResponse{
+		Data:               []jaegerModels.Trace{trace},
+		TracingServiceName: "waypoint.default",
+	}
+	tracingName := models.TracingName{App: "reviews", Workload: "reviews-v2", Lookup: "waypoint", WaypointName: "waypoint"}
+	spans := tracesToSpans(context.Background(), tracingName, &r, wkdSpanFilter(context.Background(), "default", tracingName), config.NewConfig())
+	assert.Len(spans, 0)
 }
 
 func TestValidateConfiguration(t *testing.T) {

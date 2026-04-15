@@ -297,7 +297,25 @@ func (oc *OtelHTTPClient) prepareTraceQL(ctx context.Context, u *url.URL, tracin
 		}
 	}
 
-	selects := []string{"status", ".service_name", ".node_id", ".component", ".upstream_cluster", ".http.method", ".response_flags", "resource.hostname", "name"}
+	selects := []string{
+		"status",
+		".service_name",
+		".node_id",
+		".component",
+		".upstream_cluster",
+		".http.method",
+		".response_flags",
+		".istio.destination_workload",
+		".istio.destination_namespace",
+		".istio.destination_instance_name",
+		".istio.destination_canonical_service",
+		".istio.source_workload",
+		".istio.source_namespace",
+		".istio.source_instance_name",
+		".istio.source_canonical_service",
+		"resource.hostname",
+		"name",
+	}
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
