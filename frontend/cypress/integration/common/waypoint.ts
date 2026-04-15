@@ -380,6 +380,10 @@ Then("the user doesn't see a L7 link", () => {
   cy.get('[data-test=workload-description-card]').should('not.contain', 'L7');
 });
 
+Then('the workload description card has no config issues', () => {
+  cy.get('[data-test=workload-description-card]').should('be.visible').and('not.contain', 'Config Issues');
+});
+
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-description-card]').should('contain', 'L7');
   cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');

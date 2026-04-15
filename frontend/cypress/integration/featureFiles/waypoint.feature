@@ -435,3 +435,9 @@ Feature: Kiali Waypoint related features
     And user opens the menu
     And the user clicks on "enable sidecar" for "test-sidecar" namespace
     Then "default" badge "exist"
+
+ Scenario: [Workload details] Sidecar and Ambient workloads with same name have no config issues
+    Given user is at the details page for the "workload" "test-sidecar/curl-client" located in the "" cluster
+    Then the workload description card has no config issues
+    And user is at the details page for the "workload" "test-ambient/curl-client" located in the "" cluster
+    Then the workload description card has no config issues
