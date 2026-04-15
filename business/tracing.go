@@ -132,6 +132,14 @@ func spanMatchesAmbientWorkload(span *jaegerModels.Span, workload, namespace str
 		spanTagMatches(span, "istio.source_workload", "istio.source_namespace", workload, namespace)
 }
 
+func spanHasAmbientWorkloadTags(span *jaegerModels.Span) bool {
+	_, hasDestWorkload := spanTagValue(span, "istio.destination_workload")
+	_, hasDestNamespace := spanTagValue(span, "istio.destination_namespace")
+	_, hasSourceWorkload := spanTagValue(span, "istio.source_workload")
+	_, hasSourceNamespace := spanTagValue(span, "istio.source_namespace")
+	return (hasDestWorkload && hasDestNamespace) || (hasSourceWorkload && hasSourceNamespace)
+}
+
 func (in *TracingService) GetWorkloadSpans(ctx context.Context, ns, workload string, query models.TracingQuery) ([]model.TracingSpan, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetWorkloadSpans",
@@ -310,8 +318,15 @@ func spanMatchesWorkload(ctx context.Context, span *jaegerModels.Span, namespace
 	// If the workload has a waypoint, the span won't match, but the operation name can
 	// When the workload has a waypoint, the operation name is filtered by the service
 	if tracingName.WaypointName != "" {
-		zl.Info().Msgf("spanMatchesWorkload workload: [%s] span: [%+v]", tracingName.Workload, span.Tags)
-		return spanMatchesAmbientWorkload(span, tracingName.Workload, namespace)
+		if spanHasAmbientWorkloadTags(span) {
+			matched := spanMatchesAmbientWorkload(span, tracingName.Workload, namespace)
+			zl.Trace().Msgf("spanMatchesWorkload ambient tags match=[%t] workload=[%s] tags=[%+v]", matched, tracingName.Workload, span.Tags)
+			return matched
+		}
+		// Fallback for older Istio traces that don't include ambient workload tags.
+		op := fmt.Sprintf("%s.%s", tracingName.App, namespace)
+		zl.Trace().Msgf("spanMatchesWorkload fallback operationName=[%s] prefix=[%s] (waypoint legacy)", span.OperationName, op)
+		return strings.HasPrefix(span.OperationName, op)
 	}
 	// For envoy traces, with a workload named "ai-locals", node_id is like:
 	// sidecar~172.17.0.20~ai-locals-6d8996bff-ztg6z.default~default.svc.cluster.local

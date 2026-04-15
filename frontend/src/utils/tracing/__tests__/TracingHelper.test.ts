@@ -154,6 +154,23 @@ describe('TracingHelper', () => {
     expect(wkdNs!.namespace).toEqual('bookinfo');
   });
 
+  it('ambient span without workload tags falls back to node_id parsing', () => {
+    const span = ({
+      tags: [
+        {
+          key: 'node_id',
+          value: 'waypoint~10.244.0.23~waypoint-5b7cb7b55d-sdc4t.bookinfo~bookinfo.svc.cluster.local'
+        },
+        { key: 'span.kind', value: 'server' }
+      ],
+      process: { serviceName: 'waypoint.bookinfo', tags: [] }
+    } as unknown) as Span;
+    const wkdNs = getWorkloadFromSpan(span);
+    expect(wkdNs).toBeDefined();
+    expect(wkdNs!.workload).toEqual('waypoint');
+    expect(wkdNs!.namespace).toEqual('bookinfo');
+  });
+
   it('getAppFromSpan uses istio tags for waypoint proxy spans', () => {
     const span = ({
       tags: [

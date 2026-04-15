@@ -114,7 +114,8 @@ export const getWorkloadFromSpan = (span: Span): WorkloadAndNamespace | undefine
     if (fromTags) {
       return fromTags;
     }
-    return undefined;
+    // Older Istio waypoint traces may not include istio.source_/destination_ workload tags.
+    // Fall back to legacy node_id/hostname parsing to avoid returning "unknown".
   }
   const nodeKV = span.tags.find(tag => tag.key === 'node_id');
   if (nodeKV) {
