@@ -379,7 +379,8 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io').",
+				Description: "API group of the Istio object.",
+				Enum:        []string{"networking.istio.io", "security.istio.io"},
 			},
 			"version": {
 				Type:        genai.TypeString,
@@ -388,6 +389,11 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 			"kind": {
 				Type:        genai.TypeString,
 				Description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule').",
+				Enum: []string{
+					"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
+					"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
+					"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+				},
 			},
 			"object": {
 				Type:        genai.TypeString,
@@ -433,7 +439,8 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
+				Description: "API group of the Istio object. Required for 'get' action.",
+				Enum:        []string{"networking.istio.io", "security.istio.io"},
 			},
 			"version": {
 				Type:        genai.TypeString,
@@ -441,7 +448,12 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"kind": {
 				Type:        genai.TypeString,
-				Description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for 'get' action.",
+				Description: "Kind of the Istio object. Required for 'get' action.",
+				Enum: []string{
+					"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
+					"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
+					"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+				},
 			},
 			"object": {
 				Type:        genai.TypeString,

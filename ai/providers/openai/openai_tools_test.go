@@ -536,7 +536,11 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 						},
 						"group": map[string]interface{}{
 							"type":        "string",
-							"description": "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io').",
+							"description": "API group of the Istio object.",
+							"enum": []interface{}{
+								"networking.istio.io",
+								"security.istio.io",
+							},
 						},
 						"version": map[string]interface{}{
 							"type":        "string",
@@ -545,6 +549,19 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 						"kind": map[string]interface{}{
 							"type":        "string",
 							"description": "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule').",
+							"enum": []interface{}{
+								"VirtualService",
+								"DestinationRule",
+								"Gateway",
+								"ServiceEntry",
+								"Sidecar",
+								"WorkloadEntry",
+								"WorkloadGroup",
+								"EnvoyFilter",
+								"AuthorizationPolicy",
+								"PeerAuthentication",
+								"RequestAuthentication",
+							},
 						},
 						"object": map[string]interface{}{
 							"type":        "string",
@@ -608,7 +625,11 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 						},
 						"group": map[string]interface{}{
 							"type":        "string",
-							"description": "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
+							"description": "API group of the Istio object. Required for 'get' action.",
+							"enum": []interface{}{
+								"networking.istio.io",
+								"security.istio.io",
+							},
 						},
 						"version": map[string]interface{}{
 							"type":        "string",
@@ -616,7 +637,20 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 						},
 						"kind": map[string]interface{}{
 							"type":        "string",
-							"description": "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for 'get' action.",
+							"description": "Kind of the Istio object. Required for 'get' action.",
+							"enum": []interface{}{
+								"VirtualService",
+								"DestinationRule",
+								"Gateway",
+								"ServiceEntry",
+								"Sidecar",
+								"WorkloadEntry",
+								"WorkloadGroup",
+								"EnvoyFilter",
+								"AuthorizationPolicy",
+								"PeerAuthentication",
+								"RequestAuthentication",
+							},
 						},
 						"object": map[string]interface{}{
 							"type":        "string",
