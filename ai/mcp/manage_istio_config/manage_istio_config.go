@@ -464,6 +464,58 @@ func buildResourceTemplate(gvk schema.GroupVersionKind, name, namespace string) 
 	return base
 }
 
+// allowedNetworkingIstioKinds are the Istio networking API kinds supported by manage_istio_config.
+var allowedNetworkingIstioKinds = map[string]struct{}{
+	"VirtualService":  {},
+	"DestinationRule": {},
+	"Gateway":         {},
+	"ServiceEntry":    {},
+	"Sidecar":         {},
+	"WorkloadEntry":   {},
+	"WorkloadGroup":   {},
+	"EnvoyFilter":     {},
+}
+
+// allowedSecurityIstioKinds are the Istio security API kinds supported by manage_istio_config.
+var allowedSecurityIstioKinds = map[string]struct{}{
+	"AuthorizationPolicy":   {},
+	"PeerAuthentication":    {},
+	"RequestAuthentication": {},
+}
+
+// validateManagedIstioGroupAndKind ensures group is networking.istio.io or security.istio.io
+// and kind is allowed for that API group.
+func validateManagedIstioGroupAndKind(group, kind string) error {
+	g := strings.TrimSpace(group)
+	k := strings.TrimSpace(kind)
+	if g == "" {
+		return fmt.Errorf(`group is required and must be "networking.istio.io" or "security.istio.io"`)
+	}
+	if k == "" {
+		return fmt.Errorf("kind is required for group %q", g)
+	}
+	switch g {
+	case "networking.istio.io":
+		if _, ok := allowedNetworkingIstioKinds[k]; !ok {
+			return fmt.Errorf(
+				"invalid kind %q for group %q: must be one of VirtualService, DestinationRule, Gateway, ServiceEntry, Sidecar, WorkloadEntry, WorkloadGroup, EnvoyFilter",
+				k, g,
+			)
+		}
+		return nil
+	case "security.istio.io":
+		if _, ok := allowedSecurityIstioKinds[k]; !ok {
+			return fmt.Errorf(
+				"invalid kind %q for group %q: must be one of AuthorizationPolicy, PeerAuthentication, RequestAuthentication",
+				k, g,
+			)
+		}
+		return nil
+	default:
+		return fmt.Errorf(`invalid group %q: must be "networking.istio.io" or "security.istio.io"`, g)
+	}
+}
+
 // validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
 func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 	action := mcputil.GetStringArg(args, "action")
@@ -474,6 +526,9 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 	object := mcputil.GetStringArg(args, "object")
 	switch action {
 	case "list":
+		if strings.TrimSpace(group) != "" || strings.TrimSpace(kind) != "" {
+			return validateManagedIstioGroupAndKind(group, kind)
+		}
 		return nil
 	case "get":
 		if namespace == "" {
@@ -491,7 +546,7 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 		if object == "" {
 			return fmt.Errorf("name is required for action %q", action)
 		}
-		return nil
+		return validateManagedIstioGroupAndKind(group, kind)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of list, get", action)
 	}
@@ -547,10 +602,10 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 				return fmt.Errorf("object (resource name) is required for action %q — set the 'object' parameter", action)
 			}
 		}
+		return validateManagedIstioGroupAndKind(group, kind)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action)
 	}
-	return nil
 }
 
 func normalizeToYAML(jsonOrYAML string) (string, error) {

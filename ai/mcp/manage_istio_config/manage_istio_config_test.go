@@ -179,6 +179,16 @@ func TestValidateIstioConfigInput(t *testing.T) {
 			name: "valid delete",
 			args: map[string]interface{}{"action": "delete", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "object": "x"},
 		},
+		{
+			name:    "create invalid kind for networking",
+			args:    map[string]interface{}{"action": "create", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "WasmPlugin", "object": "x", "data": "{}"},
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "patch invalid kind for security",
+			args:    map[string]interface{}{"action": "patch", "namespace": "bookinfo", "group": "security.istio.io", "version": "v1", "kind": "VirtualService", "object": "x", "data": "{}"},
+			wantErr: "invalid kind",
+		},
 	}
 
 	for _, tt := range tests {
@@ -238,11 +248,137 @@ func TestValidateReadOnlyIstioConfigInput(t *testing.T) {
 			name: "valid get",
 			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "object": "x"},
 		},
+		{
+			name:    "get invalid kind for networking",
+			args:    map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "WasmPlugin", "object": "x"},
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "list filter kind without group",
+			args:    map[string]interface{}{"action": "list", "kind": "VirtualService"},
+			wantErr: "group is required",
+		},
+		{
+			name:    "list filter group without kind",
+			args:    map[string]interface{}{"action": "list", "group": "networking.istio.io"},
+			wantErr: "kind is required",
+		},
+		{
+			name:    "list filter invalid group",
+			args:    map[string]interface{}{"action": "list", "group": "gateway.networking.k8s.io", "kind": "Gateway"},
+			wantErr: "invalid group",
+		},
+		{
+			name:    "list filter invalid kind for networking",
+			args:    map[string]interface{}{"action": "list", "group": "networking.istio.io", "kind": "WasmPlugin"},
+			wantErr: "invalid kind",
+		},
+		{
+			name: "list filter valid networking",
+			args: map[string]interface{}{"action": "list", "group": "networking.istio.io", "kind": "Sidecar"},
+		},
+		{
+			name: "list filter valid security",
+			args: map[string]interface{}{"action": "list", "group": "security.istio.io", "kind": "PeerAuthentication"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateReadOnlyIstioConfigInput(tt.args)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateManagedIstioGroupAndKind(t *testing.T) {
+	networkingAllowed := []string{
+		"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
+		"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
+	}
+	securityAllowed := []string{"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication"}
+
+	tests := []struct {
+		name    string
+		group   string
+		kind    string
+		wantErr string
+	}{
+		{
+			name:    "empty group",
+			group:   "",
+			kind:    "VirtualService",
+			wantErr: "group is required",
+		},
+		{
+			name:    "empty kind",
+			group:   "networking.istio.io",
+			kind:    "",
+			wantErr: "kind is required",
+		},
+		{
+			name:    "unknown group",
+			group:   "telemetry.istio.io",
+			kind:    "Telemetry",
+			wantErr: "invalid group",
+		},
+		{
+			name:    "networking disallowed kind",
+			group:   "networking.istio.io",
+			kind:    "WasmPlugin",
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "security kind used with networking group",
+			group:   "networking.istio.io",
+			kind:    "AuthorizationPolicy",
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "networking kind used with security group",
+			group:   "security.istio.io",
+			kind:    "VirtualService",
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "security disallowed kind",
+			group:   "security.istio.io",
+			kind:    "WasmPlugin",
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "whitespace trimmed networking Gateway",
+			group:   "  networking.istio.io  ",
+			kind:    " Gateway ",
+			wantErr: "",
+		},
+	}
+
+	for _, k := range networkingAllowed {
+		tests = append(tests, struct {
+			name    string
+			group   string
+			kind    string
+			wantErr string
+		}{name: "networking allowed " + k, group: "networking.istio.io", kind: k})
+	}
+	for _, k := range securityAllowed {
+		tests = append(tests, struct {
+			name    string
+			group   string
+			kind    string
+			wantErr string
+		}{name: "security allowed " + k, group: "security.istio.io", kind: k})
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateManagedIstioGroupAndKind(tt.group, tt.kind)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -536,7 +672,7 @@ func TestExecute_UnmanagedGVK(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "Object type not managed")
+	assert.Contains(t, resStr, "invalid group")
 }
 
 func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
@@ -556,9 +692,11 @@ func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "Object type not managed")
+	assert.Contains(t, resStr, "invalid group")
 }
 
+// manage_istio_config only allows networking.istio.io and security.istio.io; Gateway API
+// groups are rejected before GetIstioAPI (no v1beta1 hint path for this tool).
 func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	businessLayer, conf := setupTest(t)
 	r := reqWithAuth()
@@ -576,7 +714,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status, "read-only errors must return 200 so the LLM sees the message")
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "try version 'v1'")
+	assert.Contains(t, resStr, "invalid group")
 }
 
 func TestExecute_DeleteNonExistentResource(t *testing.T) {

@@ -17,13 +17,15 @@
         description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required."
       group:
         type: "string"
-        description: "API group of the Istio object (e.g., 'networking.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action."
+        description: "API group of the Istio object. Required for 'get' action."
+        enum: ["networking.istio.io", "security.istio.io"]
       version:
         type: "string"
         description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action."
       kind:
         type: "string"
-        description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule'). Required for 'get' action."
+        description: "Kind of the Istio object. Required for 'get' action."
+        enum: ["VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar", "WorkloadEntry", "WorkloadGroup", "EnvoyFilter", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication"]
       object:
         type: "string"
         description: "Name of the Istio object. Required for 'get' action."
