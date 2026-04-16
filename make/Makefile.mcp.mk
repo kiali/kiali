@@ -115,7 +115,7 @@ mcp-eval-summary:
 		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@${GOPATH}/bin/mcpchecker summary ${MCP_EVAL_RESULTS} --output text
+	@${GOPATH}/bin/mcpchecker result summary ${MCP_EVAL_RESULTS} --output text
 
 ## mcp-eval-summary-json: Print summary JSON to stdout (same as: mcpchecker summary <eval.json> -o json)
 mcp-eval-summary-json:
