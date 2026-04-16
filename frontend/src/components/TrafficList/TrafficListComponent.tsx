@@ -98,7 +98,7 @@ const LockIcon = (props: { mTLS?: number }): React.ReactElement => {
 const containerStyle = kialiStyle({ padding: '1.25rem' });
 const lockIconStyle = kialiStyle({ marginLeft: '0.25rem' });
 
-class TrafficList extends FilterComponent.Component<
+class TrafficListComponent extends FilterComponent.Component<
   TrafficListComponentProps,
   TrafficListComponentState,
   TrafficListItem
@@ -404,4 +404,4 @@ class TrafficList extends FilterComponent.Component<
   };
 }
 
-export const TrafficListComponent = TrafficList;
+export { TrafficListComponent };

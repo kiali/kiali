@@ -88,12 +88,12 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -221,12 +221,12 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -430,12 +430,12 @@ exports[`When both core and addon component have problems any component is in no
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -588,12 +588,12 @@ exports[`When both core and addon component have problems any component is in no
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -772,12 +772,12 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -905,12 +905,12 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -1089,12 +1089,12 @@ exports[`When there are multiple clusters cluster with failing components shows 
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -1222,12 +1222,12 @@ exports[`When there are multiple clusters cluster with failing components shows 
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -1412,12 +1412,12 @@ exports[`When there are multiple clusters clusters without failing components do
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -1551,12 +1551,12 @@ exports[`When there are multiple clusters clusters without failing components do
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -1741,12 +1741,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -1880,12 +1880,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -2101,12 +2101,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -2271,12 +2271,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -2461,12 +2461,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -2600,12 +2600,12 @@ exports[`When there are not-ready components mixed with other not healthy compon
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -2784,12 +2784,12 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -2917,12 +2917,12 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>
@@ -3101,12 +3101,12 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
           <span>
             More info at
           </span>
-          <Link
+          <KialiLink
             onClick={[Function]}
             to="/mesh"
           >
             Mesh page
-          </Link>
+          </KialiLink>
         </div>
       </Content>
     }
@@ -3234,12 +3234,12 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
                 <span>
                   More info at
                 </span>
-                <Link
+                <KialiLink
                   onClick={[Function]}
                   to="/mesh"
                 >
                   Mesh page
-                </Link>
+                </KialiLink>
               </div>
             </Content>
           </TooltipContent>

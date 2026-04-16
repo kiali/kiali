@@ -6,11 +6,6 @@ export const kioskContextMenuAction = (href: string): void => {
   sendParentMessage(showInParent);
 };
 
-export const kioskIstioConfigAction = (namespace: string): void => {
-  const showInParent = `/istio?namespaces=${namespace}`;
-  sendParentMessage(showInParent);
-};
-
 export const kioskOverviewAction = (
   showType: Show,
   namespace: string,
