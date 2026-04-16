@@ -3,10 +3,20 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "List all VS in bookinfo namespace"
-  category: "Istio Configuration & Management"
+  name: "List and Validate VirtualServices"
+  category: "Configuration Management"
+  description: "Lists all VirtualServices in a namespace and checks for configuration validation issues."
   difficulty: easy
 spec:
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 120s
+  prompt:
+    inline: |
+      Retrieve a list of all VirtualService resources in the 'bookinfo' namespace (do not treat Gateways or other kinds as VirtualServices).
+      Summarize the VirtualService names you found and call out the VirtualService named productpage-forced-failure if it appears.
+      Note any Istio configuration validation issues reported for those VirtualServices.
   requires:
   - extension: kubernetes
     as: k8s
@@ -17,9 +27,3 @@ spec:
   verify:
   - llmJudge:
       contains: "productpage-forced-failure"
-  cleanup:
-  - script:
-      file: ./cleanup.sh
-      timeout: 120s
-  prompt:
-    inline: List all VirtualServices in the bookinfo namespace and check if they have any validation errors

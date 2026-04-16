@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Get workload detail"
+  name: "Inspect Workload Details"
   category: "Resource Inspection"
+  description: "Retrieves detailed status and health information for a specific workload within the mesh."
   difficulty: easy
 spec:
   requires:
@@ -14,4 +15,4 @@ spec:
   - llmJudge:
       contains: "reviews-v1"
   prompt:
-    inline: Get the full details and health status for the reviews-v1 workload in the bookinfo namespace.
+    inline: "Inspect the 'reviews-v1' workload in the 'bookinfo' namespace and provide its detailed status and health information."

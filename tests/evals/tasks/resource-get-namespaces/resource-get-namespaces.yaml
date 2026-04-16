@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Get mesh namespaces"
+  name: "List Mesh-Enabled Namespaces"
   category: "Resource Inspection"
+  description: "Retrieves a list of all namespaces currently managed or observed by the Istio service mesh."
   difficulty: easy
 spec:
   requires:
@@ -14,4 +15,4 @@ spec:
   - llmJudge:
       contains: "namespaces in your mesh"
   prompt:
-    inline: Check namespaces in my mesh.
+    inline: "Provide a list of all namespaces currently included in my Istio service mesh."

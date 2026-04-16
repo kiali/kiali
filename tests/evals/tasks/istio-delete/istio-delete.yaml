@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Remove fault Injection"
-  category: "Istio Configuration & Management"
+  name: "Remove Fault Injection"
+  category: "Configuration Management"
+  description: "Identifies and removes fault injection configurations (aborts/delays) from a VirtualService."
   difficulty: medium
 spec:
   requires:
@@ -67,4 +68,4 @@ spec:
         namespace: bookinfo
       ignoreNotFound: true
   prompt:
-    inline: Fix my namespace bookinfo to remove the fault injection.
+    inline: "The 'bookinfo' namespace seems to have some fault injection configured that's causing issues. Please identify and remove any fault injection from the 'ratings' VirtualService."

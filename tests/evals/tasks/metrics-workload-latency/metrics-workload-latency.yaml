@@ -3,15 +3,20 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Metrics for workload (latency)"
-  category: "Resource Inspection"
+  name: "Analyze Workload Response Times"
+  category: "Performance Analysis"
+  description: "Retrieves p50, p95, and p99 latency quantiles for a specific workload to identify performance bottlenecks."
   difficulty: easy
 spec:
+  prompt:
+    inline: |
+      What are the p50, p95, and p99 latency metrics for the reviews workload in the bookinfo namespace?
+      Use a 5-minute rate interval when calling get_metrics.
+      For workload request duration, query with direction inbound (incoming requests to the workload). The default outbound direction often returns empty latency series for this question.
+      If the metrics summary still has no latency quantiles, say so explicitly and mention reviews, bookinfo, and the 5-minute window; otherwise report the quantiles you get.
   requires:
   - extension: kubernetes
     as: k8s
   verify:
   - llmJudge:
       contains: "reviews"
-  prompt:
-    inline: What are the latency metrics (p50, p95, p99) for the reviews workload in the bookinfo namespace? Use a 5-minute rate interval.

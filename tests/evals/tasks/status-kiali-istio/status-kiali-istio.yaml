@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Status Kiali and Istio"
-  category: "High-Level Observability & Health"
+  name: "Audit Control Plane Connectivity"
+  category: "Mesh Health & Status"
+  description: "Verifies the connectivity and status of Kiali's interaction with Istio control plane components."
   difficulty: easy
 spec:
   requires:
@@ -12,6 +13,6 @@ spec:
     as: k8s
   verify:
   - llmJudge:
-      contains: "Istio Version"
+      contains: "kiali"
   prompt:
-    inline: Give me a status report on the interaction between Kiali and Istio components
+    inline: "Report on the current status and connectivity between Kiali and the Istio control plane components."

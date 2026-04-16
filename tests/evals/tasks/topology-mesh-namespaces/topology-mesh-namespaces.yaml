@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Show traffic graph for multiple namespaces"
-  category: "High-Level Observability & Health"
+  name: "Visualize Cross-Namespace Traffic"
+  category: "Traffic Observability"
+  description: "Generates a multi-namespace traffic graph to visualize dependencies across namespace boundaries."
   difficulty: easy
 spec:
   requires:
@@ -12,6 +13,9 @@ spec:
     as: k8s
   verify:
   - llmJudge:
-      contains: "topology"
+      contains: "traffic graph"
   prompt:
-    inline: Show me the traffic graph for the bookinfo and istio-system namespaces together.
+    inline: |
+      Use Kiali's mesh traffic graph for namespaces bookinfo and istio-system.
+      Summarize what the graph shows about traffic between those namespaces (for example ingress into bookinfo and any edges involving istio-system).
+      Start your answer with a short sentence that includes the exact words traffic graph and both namespace names bookinfo and istio-system as plain text (keep istio-system as one hyphenated name).

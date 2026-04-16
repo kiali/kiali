@@ -73,8 +73,8 @@ commands:
     PROMPT_CONTENT="$(cat "${PROMPT_FILE}")"
 
     GEMINI_ARGS=("--approval-mode" "yolo" "--output-format" "stream-json")
-    
-    GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash-lite}"
+
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-pro-preview}"
     GEMINI_ARGS+=("--model" "${GEMINI_MODEL}")
 
     if [[ -n "${DEBUG_DIR}" ]]; then

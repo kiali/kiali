@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "List DestinationRules in namespace"
-  category: "Istio Configuration & Management"
+  name: "List and Validate DestinationRules"
+  category: "Configuration Management"
+  description: "Lists all DestinationRules in a namespace and reports any Istio validation errors."
   difficulty: easy
 spec:
   requires:
@@ -29,4 +30,4 @@ spec:
   - llmJudge:
       contains: "DestinationRule"
   prompt:
-    inline: List all DestinationRules in the bookinfo namespace and report any validation errors.
+    inline: "List all DestinationRules in the 'bookinfo' namespace and report if any of them have validation errors."

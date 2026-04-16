@@ -3,10 +3,39 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Status of my mesh"
-  category: "Resource Inspection"
+  name: "Comprehensive Mesh Health Audit"
+  category: "Mesh Health & Status"
+  description: "Performs a high-level audit of the mesh health, including control plane and data plane status."
   difficulty: easy
 spec:
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 60
+  prompt:
+    inline: |
+      Perform a comprehensive check of my service mesh status, including both control plane and data plane health.
+      Summarize what the tools report for overall mesh health and for the bookinfo namespace specifically (healthy, unhealthy, degraded, or unknown).
+      Report namespaces or components whose status is UNHEALTHY or degraded as returned by the tools (do not assume the whole mesh is unhealthy if only part of the data plane is).
   requires:
   - extension: kubernetes
     as: k8s
@@ -15,10 +44,10 @@ spec:
       apiVersion: networking.istio.io/v1
       kind: DestinationRule
       metadata:
-        namespace: bookinfo
-        name: ratings
         labels:
           gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
       spec:
         host: ratings.bookinfo.svc.cluster.local
         subsets:
@@ -29,10 +58,10 @@ spec:
       apiVersion: networking.istio.io/v1
       kind: VirtualService
       metadata:
-        namespace: bookinfo
-        name: ratings
         labels:
           gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
       spec:
         hosts:
         - ratings.bookinfo.svc.cluster.local
@@ -54,28 +83,3 @@ spec:
   verify:
   - llmJudge:
       contains: "bookinfo"
-  cleanup:
-  - k8s.delete:
-      apiVersion: networking.istio.io/v1
-      kind: VirtualService
-      metadata:
-        name: ratings
-        namespace: bookinfo
-        labels:
-          gevals.kiali.io/test: gevals-testing
-      ignoreNotFound: true
-  - k8s.delete:
-      apiVersion: networking.istio.io/v1
-      kind: DestinationRule
-      metadata:
-        name: ratings
-        namespace: bookinfo
-        labels:
-          gevals.kiali.io/test: gevals-testing
-      ignoreNotFound: true
-  - script:
-      inline: |
-        #!/usr/bin/env bash
-        sleep 60
-  prompt:
-    inline: Check my mesh.

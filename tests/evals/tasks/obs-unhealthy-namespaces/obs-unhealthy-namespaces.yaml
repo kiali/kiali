@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Unhealthy Namespaces"
-  category: "High-Level Observability & Health"
+  name: "Identify Degraded Namespaces"
+  category: "Mesh Health & Status"
+  description: "Scans the entire mesh to identify namespaces with health issues or degraded performance."
   difficulty: easy
 spec:
   requires:
@@ -16,11 +17,11 @@ spec:
       timeout: 120s
   verify:
   - llmJudge:
-      contains: "degraded"
+      contains: "unhealthy"
   cleanup:
   - script:
       file: ./cleanup.sh
       timeout: 120s
   prompt:
-    inline: Are there any degraded namespaces in my mesh right now?
+    inline: "Check the health of my mesh and let me know if there are any unhealthy namespaces right now."
 

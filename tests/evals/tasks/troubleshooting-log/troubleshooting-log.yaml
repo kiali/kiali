@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Get log productpage due 500"
-  category: "Troubleshooting & Debugging"
+  name: "Debug Service Errors via Logs"
+  category: "Troubleshooting & Diagnostics"
+  description: "Investigates HTTP 500 errors using workload logs and Istio VirtualService rules (e.g. fault injection)."
   difficulty: easy
 spec:
   requires:
@@ -12,7 +13,7 @@ spec:
     as: k8s
   setup:
   - k8s.create:
-      apiVersion: networking.istio.io/v1alpha3
+      apiVersion: networking.istio.io/v1
       kind: VirtualService
       metadata:
         name: productpage-fault
@@ -25,20 +26,25 @@ spec:
         - "productpage.bookinfo.svc.cluster.local"
         - "productpage-bookinfo.apps-crc.testing"
         http:
-        - fault:
+        # route must be a sibling of fault, not nested under fault (Istio validation).
+        - route:
+          - destination:
+              host: productpage
+          fault:
             abort:
               httpStatus: 500
               percentage:
                 value: 100
-            route:
-            - destination:
-                host: productpage
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 50
   verify:
   - llmJudge:
       contains: "fault injection"
   cleanup:
   - k8s.delete:
-      apiVersion: networking.istio.io/v1alpha3
+      apiVersion: networking.istio.io/v1
       kind: VirtualService
       metadata:
         name: productpage-fault
@@ -46,5 +52,13 @@ spec:
         labels:
           gevals.kiali.io/test: gevals-testing
       ignoreNotFound: true
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 50
   prompt:
-    inline: Why is the productpage service in bookinfo namespacereturning 500 errors?
+    inline: |
+      The 'productpage' service in the 'bookinfo' namespace is returning HTTP 500 errors.
+      Investigate using workload or pod logs (Bookinfo often uses a versioned workload name such as productpage-v1 rather than the bare service name).
+      If logs alone do not explain the errors, inspect Istio VirtualServices in that namespace for faults, abort rules, or other traffic policy that could return HTTP 500 responses.
+      Summarize the most likely root cause.

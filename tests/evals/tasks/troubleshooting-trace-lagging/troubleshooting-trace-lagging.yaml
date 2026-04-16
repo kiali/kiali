@@ -3,10 +3,37 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Check traces for a service"
-  category: "Troubleshooting & Debugging"
+  name: "Analyze Latency with Distributed Tracing"
+  category: "Troubleshooting & Diagnostics"
+  description: "Uses distributed tracing plus Istio config (VirtualService/DestinationRule) review to find latency causes."
   difficulty: easy
 spec:
+  cleanup:
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  - k8s.delete:
+      apiVersion: networking.istio.io/v1
+      kind: DestinationRule
+      metadata:
+        labels:
+          gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
+      ignoreNotFound: true
+  prompt:
+    inline: |
+      I've noticed a latency spike for the 'productpage' service in the 'bookinfo' namespace.
+      First, use distributed traces to see where time is spent in the request path.
+      Then list and inspect Istio VirtualServices and DestinationRules in the 'bookinfo' namespace that apply to services on that path (for example those affecting reviews or ratings traffic), and relate any mesh configuration (faults, subsets, traffic rules) to the delay you see in the traces.
+      Summarize the most likely root cause.
+      Your answer must include the word ratings at least once when discussing Istio config or the request path.
   requires:
   - extension: kubernetes
     as: k8s
@@ -15,61 +42,41 @@ spec:
       apiVersion: networking.istio.io/v1
       kind: DestinationRule
       metadata:
-        namespace: bookinfo
-        name: ratings
         labels:
           gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
       spec:
         host: ratings.bookinfo.svc.cluster.local
         subsets:
-        - name: v1
-          labels:
+        - labels:
             version: v1
-        trafficPolicy: ~
+          name: v1
   - k8s.create:
       apiVersion: networking.istio.io/v1
       kind: VirtualService
       metadata:
-        namespace: bookinfo
-        name: ratings
         labels:
           gevals.kiali.io/test: gevals-testing
+        name: ratings
+        namespace: bookinfo
       spec:
+        hosts:
+        - ratings.bookinfo.svc.cluster.local
         http:
-        - route:
+        - fault:
+            delay:
+              fixedDelay: 25s
+              percentage:
+                value: 100
+          route:
           - destination:
               host: ratings.bookinfo.svc.cluster.local
               subset: v1
-          weight: 100
-          fault:
-            delay:
-              percentage:
-                value: 100
-              fixedDelay: 5s
-        hosts:
-        - ratings.bookinfo.svc.cluster.local
-        gateways: ~
+  - script:
+      inline: |
+        #!/usr/bin/env bash
+        sleep 50
   verify:
   - llmJudge:
-      contains: "ratings"
-  cleanup:
-  - k8s.delete:
-      apiVersion: networking.istio.io/v1
-      kind: VirtualService
-      metadata:
-        name: ratings
-        labels:
-          gevals.kiali.io/test: gevals-testing
-        namespace: bookinfo
-      ignoreNotFound: true
-  - k8s.delete:
-      apiVersion: networking.istio.io/v1
-      kind: DestinationRule
-      metadata:
-        name: ratings
-        labels:
-          gevals.kiali.io/test: gevals-testing
-        namespace: bookinfo
-      ignoreNotFound: true
-  prompt:
-    inline: I see a spike in duration for ratings in namespace bookinfo.Show me the traces of service ratins in namespace bookinfo anda analyze them.
+      contains: "bookinfo"

@@ -3,15 +3,26 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Metrics for service (request rate)"
-  category: "Resource Inspection"
+  name: "Analyze Service Traffic Volume"
+  category: "Performance Analysis"
+  description: "Retrieves and analyzes request and error rate metrics for a specific service over a time window."
   difficulty: easy
 spec:
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 60s
+  prompt:
+    inline: |
+      Show me the request rate and error rate metrics for the 'productpage' service in the 'bookinfo' namespace for the last 10 minutes.
+      When querying service metrics, use direction inbound (incoming requests to the service) so request and error series are not empty.
   requires:
   - extension: kubernetes
     as: k8s
+  setup:
+  - script:
+      file: ./setup.sh
+      timeout: 180s
   verify:
   - llmJudge:
       contains: "productpage"
-  prompt:
-    inline: Show me the request rate and error rate metrics for the productpage service in the bookinfo namespace over the last 10 minutes.

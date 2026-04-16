@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "Patch my traffic"
-  category: "Istio Configuration & Management"
+  name: "Update Traffic Shifting"
+  category: "Configuration Management"
+  description: "Applies a patch to a VirtualService to implement weight-based traffic shifting between versions."
   difficulty: medium
 spec:
   requires:
@@ -23,4 +24,4 @@ spec:
       file: ./cleanup.sh
       timeout: 120s
   prompt:
-    inline: I need to shift 50% of traffic to v2 of the reviews service. Apply a patch to the VirtualService with name reviews. Not confirm the patch, just apply it.
+    inline: "I need to implement a 50/50 traffic split between versions for the 'reviews' service in the 'bookinfo' namespace. Apply the necessary patch to the 'reviews' VirtualService without asking for confirmation."

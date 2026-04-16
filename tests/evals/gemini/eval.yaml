@@ -14,7 +14,7 @@ config:
   llmJudge:
     ref:
       type: builtin.llm-agent
-      model: "gemini:gemini-2.5-flash-lite"
+      model: "gemini:gemini-3.1-flash-lite-preview"
   taskSets:
   - glob: ../tasks/*/*.yaml
     assertions:

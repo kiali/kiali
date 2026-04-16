@@ -3,8 +3,9 @@ apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
     suite: kiali
-  name: "List services in namespace"
+  name: "Inventory Namespace Services"
   category: "Resource Inspection"
+  description: "Lists all services within a specific namespace to provide an inventory of available resources."
   difficulty: easy
 spec:
   requires:
@@ -14,4 +15,4 @@ spec:
   - llmJudge:
       contains: "reviews"
   prompt:
-    inline: List all services in the bookinfo namespace.
+    inline: "List all services available in the 'bookinfo' namespace."
