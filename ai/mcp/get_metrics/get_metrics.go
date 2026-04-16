@@ -43,5 +43,6 @@ func Execute(
 	if err != nil {
 		return err.Error(), http.StatusInternalServerError
 	}
-	return metrics, http.StatusOK
+	summary := SummarizeMetricsForLLM(metrics, resourceType, namespace, resourceName, &params)
+	return summary, http.StatusOK
 }

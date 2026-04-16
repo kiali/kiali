@@ -1,5 +1,5 @@
 - name: "get_metrics"
-  description: "Returns metrics for the given resource type, namespaces and resource name."
+  description: "Returns a compact JSON summary of Istio metrics (latency quantiles, traffic trends, throughput, payload sizes) for the given resource."
   toolset: [default, mcp]
   input_schema:
     type: "object"
