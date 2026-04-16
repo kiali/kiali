@@ -1,7 +1,7 @@
 import { store } from '../../store/ConfigStore';
 import { DurationInSeconds, IntervalInMilliseconds, Show, TimeRange } from '../../types/Common';
 
-export const kioskContextMenuAction = (href: string): void => {
+export const kioskNavigateAction = (href: string): void => {
   const showInParent = href;
   sendParentMessage(showInParent);
 };

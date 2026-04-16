@@ -70,7 +70,7 @@ import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/Dropdown/NamespaceDropdown';
 import { Labels } from '../../components/Label/Labels';
 import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { GroupVersionKind } from '../../types/IstioObjects';
@@ -387,7 +387,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
     // Back to list page
     const backUrl = `/${Paths.ISTIO}?namespaces=${props.activeNamespaces.map(n => n.name).join(',')}`;
     if (isParentKiosk(props.kiosk)) {
-      kioskContextMenuAction(backUrl);
+      kioskNavigateAction(backUrl);
     } else {
       router.navigate(backUrl);
     }

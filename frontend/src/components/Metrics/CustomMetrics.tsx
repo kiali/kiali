@@ -35,7 +35,7 @@ import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
 
@@ -225,7 +225,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       const traceUrl = `/namespaces/${this.props.namespace}/applications/${this.props.app}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`;
 
       if (isParentKiosk(this.props.kiosk)) {
-        kioskContextMenuAction(traceUrl);
+        kioskNavigateAction(traceUrl);
       } else {
         router.navigate(traceUrl);
       }

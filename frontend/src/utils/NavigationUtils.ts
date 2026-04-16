@@ -1,6 +1,6 @@
 import { location, router } from '../app/History';
 import { store } from '../store/ConfigStore';
-import { isParentKiosk, kioskContextMenuAction } from '../components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from '../components/Kiosk/KioskActions';
 
 const OSSM_CONSOLE = 'ossmconsole';
 
@@ -24,7 +24,7 @@ export const kialiNavigate = (url: string, options?: NavigateOptions): void => {
   const kiosk = store.getState().globalState.kiosk;
 
   if (isParentKiosk(kiosk)) {
-    kioskContextMenuAction(url);
+    kioskNavigateAction(url);
   } else {
     router.navigate(url, options);
   }

@@ -31,7 +31,7 @@ import { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { KialiAppState } from '../../store/Store';
 import { Graph } from './Graph';
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { isKiosk, isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isKiosk, isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
@@ -387,7 +387,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
 
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(href);
+      kioskNavigateAction(href);
     } else {
       router.navigate(href);
     }
@@ -411,7 +411,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&${focusSelector}`;
 
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(graphUrl);
+      kioskNavigateAction(graphUrl);
     } else {
       router.navigate(graphUrl);
     }
@@ -453,7 +453,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     // To ensure updated components get the updated URL, update the URL first and then the state
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(makeNodeGraphUrlFromParams(urlParams));
+      kioskNavigateAction(makeNodeGraphUrlFromParams(urlParams));
     } else {
       router.navigate(makeNodeGraphUrlFromParams(urlParams));
     }

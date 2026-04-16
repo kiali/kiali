@@ -36,7 +36,7 @@ import { GraphSecondaryMasthead } from './GraphSecondaryMasthead';
 import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFind } from './GraphFind';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { GraphElement } from '@patternfly/react-topology';
 
 type ReduxStateProps = {
@@ -253,7 +253,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
       const returnUrl = `/${route}/namespaces`;
 
       if (isParentKiosk(this.props.kiosk)) {
-        kioskContextMenuAction(returnUrl);
+        kioskNavigateAction(returnUrl);
       } else {
         router.navigate(returnUrl);
       }
@@ -269,7 +269,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
     const returnUrl = `/${route}/namespaces?${URLParam.FOCUS_SELECTOR}=${encodeURI(selector)}`;
 
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(returnUrl);
+      kioskNavigateAction(returnUrl);
     } else {
       router.navigate(returnUrl);
     }

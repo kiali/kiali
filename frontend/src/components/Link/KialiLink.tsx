@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from '../Kiosk/KioskActions';
 import { useKialiSelector } from '../../hooks/redux';
 
 type KialiLinkProps = {
@@ -20,7 +20,7 @@ export const KialiLink: React.FC<KialiLinkProps> = (props: KialiLinkProps) => {
   const handleClick = (): void => {
     props.onClick?.();
     if (isParentKiosk(kiosk)) {
-      kioskContextMenuAction(props.to);
+      kioskNavigateAction(props.to);
     }
   };
 

@@ -15,7 +15,7 @@ import { TraceListItem } from 'components/TracingIntegration/TraceListItem';
 import { summaryFont } from './SummaryPanelCommon';
 import { DecoratedGraphNodeData } from 'types/Graph';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
-import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from '../../components/Kiosk/KioskActions';
 import { KialiDispatch } from '../../types/Redux';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
@@ -150,7 +150,7 @@ class SummaryPanelNodeTracesComponent extends React.Component<Props, State> {
           data-test="show-traces"
           onClick={() => {
             if (isParentKiosk(this.props.kiosk)) {
-              kioskContextMenuAction(tracesDetailsURL);
+              kioskNavigateAction(tracesDetailsURL);
             } else {
               router.navigate(tracesDetailsURL);
             }

@@ -11,7 +11,7 @@ import {
   MenuToggleElement
 } from '@patternfly/react-core';
 import { useKialiSelector } from 'hooks/redux';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { GroupVersionKind } from '../../types/IstioObjects';
@@ -41,7 +41,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
     const newUrl = `/istio/new/${gvk.Group}/${gvk.Version}/${gvk.Kind}`;
 
     if (isParentKiosk(kiosk)) {
-      kioskContextMenuAction(newUrl);
+      kioskNavigateAction(newUrl);
     } else {
       navigate(newUrl);
     }

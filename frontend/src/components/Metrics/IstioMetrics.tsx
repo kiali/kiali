@@ -30,7 +30,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { ApiResponse } from 'types/Api';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaLinks } from './GrafanaLinks';
 import { PersesInfo } from '../../types/PersesInfo';
@@ -38,8 +38,8 @@ import { PersesLinks } from './PersesLinks';
 import { ExternalServiceInfo } from '../../types/StatusState';
 
 type MetricsState = {
-  disabledFeatures?: KialiDisabledFeatures;
   dashboard?: DashboardModel;
+  disabledFeatures?: KialiDisabledFeatures;
   grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
@@ -317,7 +317,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       const traceUrl = `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`;
 
       if (isParentKiosk(this.props.kiosk)) {
-        kioskContextMenuAction(traceUrl);
+        kioskNavigateAction(traceUrl);
       } else {
         router.navigate(traceUrl);
       }

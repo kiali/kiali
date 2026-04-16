@@ -45,7 +45,7 @@ import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
-import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from '../../components/Kiosk/KioskActions';
 import { KialiAppState } from '../../store/Store';
 import { connect, DispatchProp } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -266,7 +266,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const backUrl = `/${Paths.ISTIO}?namespaces=${this.props.istioConfigId.namespace}`;
 
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(backUrl);
+      kioskNavigateAction(backUrl);
     } else {
       router.navigate(backUrl);
     }

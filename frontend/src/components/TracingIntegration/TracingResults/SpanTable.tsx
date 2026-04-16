@@ -18,7 +18,7 @@ import { KialiLink } from '../../Link/KialiLink';
 import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { router } from 'app/History';
-import { isParentKiosk, kioskContextMenuAction, kioskTracingAction } from '../../Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction, kioskTracingAction } from '../../Kiosk/KioskActions';
 import { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
@@ -254,7 +254,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=in_metrics`;
           if (parentKiosk) {
-            kioskContextMenuAction(href);
+            kioskNavigateAction(href);
           } else {
             router.navigate(href);
           }
@@ -265,7 +265,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=out_metrics`;
           if (parentKiosk) {
-            kioskContextMenuAction(href);
+            kioskNavigateAction(href);
           } else {
             router.navigate(href);
           }
@@ -286,7 +286,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           onClick: () => {
             const href = `${item.linkToWorkload}?tab=logs`;
             if (parentKiosk) {
-              kioskContextMenuAction(href);
+              kioskNavigateAction(href);
             } else {
               router.navigate(href);
             }
@@ -297,7 +297,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=in_metrics`;
             if (parentKiosk) {
-              kioskContextMenuAction(href);
+              kioskNavigateAction(href);
             } else {
               router.navigate(href);
             }
@@ -308,7 +308,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=out_metrics`;
             if (parentKiosk) {
-              kioskContextMenuAction(href);
+              kioskNavigateAction(href);
             } else {
               router.navigate(href);
             }

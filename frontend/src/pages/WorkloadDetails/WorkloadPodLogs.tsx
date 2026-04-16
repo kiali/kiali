@@ -65,7 +65,7 @@ import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
 import { serverConfig } from '../../config';
 import { ApiResponse } from 'types/Api';
-import { isParentKiosk, kioskContextMenuAction } from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
 import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
@@ -1163,7 +1163,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
       `?tab=traces&${URLParam.TRACING_TRACE_ID}=${span.traceID}&${URLParam.TRACING_SPAN_ID}=${span.spanID}`;
 
     if (isParentKiosk(this.props.kiosk)) {
-      kioskContextMenuAction(link);
+      kioskNavigateAction(link);
     } else {
       router.navigate(link);
     }

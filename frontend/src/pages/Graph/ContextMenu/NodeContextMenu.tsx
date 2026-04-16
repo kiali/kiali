@@ -2,7 +2,7 @@ import { router } from 'app/History';
 import { BoxByType, DecoratedGraphNodeData, NodeType } from 'types/Graph';
 import { TracingInfo } from 'types/TracingInfo';
 import { isMultiCluster, Paths } from 'config';
-import { isParentKiosk, kioskContextMenuAction } from '../../../components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction } from '../../../components/Kiosk/KioskActions';
 import { GraphElement } from '@patternfly/react-topology';
 type LinkParams = { cluster?: string; name: string; namespace: string; type: string };
 
@@ -61,7 +61,7 @@ export const clickHandler = (o: ContextMenuOption, kiosk: string): void => {
     window.open(o.url, o.target);
   } else {
     if (isParentKiosk(kiosk)) {
-      kioskContextMenuAction(o.url);
+      kioskNavigateAction(o.url);
     } else {
       router.navigate(o.url);
     }
