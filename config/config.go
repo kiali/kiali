@@ -614,8 +614,7 @@ type DeploymentConfig struct {
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
-	Namespace            string                   `yaml:"namespace,omitempty"`  // Kiali deployment namespace
-	StrictGet            bool                     `yaml:"strict_get,omitempty"` // Namespace access requires GET perm (LIST alone is insufficient).
+	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	TLSConfig            DeploymentTLSConfig      `yaml:"tls_config,omitempty" json:"tlsConfig,omitempty"`
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
 }
@@ -868,8 +867,14 @@ type HealthCacheConfig struct {
 	Enabled bool `yaml:"enabled" json:"enabled"` // Default: true
 }
 
+// FeatureFlagAuthz controls authorization-related feature flags.
+type FeatureFlagAuthz struct {
+	RequireNamespaceGet bool `yaml:"require_namespace_get,omitempty" json:"requireNamespaceGet,omitempty"`
+}
+
 // KialiFeatureFlags available from the CR
 type KialiFeatureFlags struct {
+	Authz                 FeatureFlagAuthz          `yaml:"authz,omitempty" json:"authz,omitempty"`
 	Clustering            FeatureFlagClustering     `yaml:"clustering,omitempty" json:"clustering,omitempty"`
 	CustomWorkloadTypes   []metav1.GroupVersionKind `yaml:"custom_workload_types,omitempty" json:"customWorkloadTypes,omitempty"`
 	DisabledFeatures      []string                  `yaml:"disabled_features,omitempty" json:"disabledFeatures,omitempty"`
@@ -1029,7 +1034,6 @@ func NewConfig() (c *Config) {
 			DiscoverySelectors: DiscoverySelectorsConfig{Default: nil, Overrides: nil},
 			InstanceName:       "kiali",
 			Namespace:          IstioNamespaceDefault,
-			StrictGet:          false,
 			TLSConfig: DeploymentTLSConfig{
 				Source: TLSConfigSourceConfig,
 			},
@@ -1144,6 +1148,9 @@ func NewConfig() (c *Config) {
 			VersionLabelName:            "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
+			Authz: FeatureFlagAuthz{
+				RequireNamespaceGet: false,
+			},
 			Clustering: FeatureFlagClustering{
 				EnableExecProvider: false,
 			},

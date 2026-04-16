@@ -134,10 +134,10 @@ func nsNames(nss []models.Namespace) []string {
 	return names
 }
 
-// With deployment.strict_get and cluster-wide access, namespaces returned from list are kept only when the user may get each Namespace object.
-func TestGetNamespacesStrictGetFiltersToGetPermission(t *testing.T) {
+// With require_namespace_get and cluster-wide access, namespaces returned from list are kept only when the user may get each Namespace object.
+func TestGetNamespacesRequireNamespaceGetFiltersToGetPermission(t *testing.T) {
 	conf := config.NewConfig()
-	conf.Deployment.StrictGet = true
+	conf.KialiFeatureFlags.Authz.RequireNamespaceGet = true
 
 	saClient := setupNamespaceServiceWithNs()
 	saClient.Token = "sa-token"
@@ -158,10 +158,10 @@ func TestGetNamespacesStrictGetFiltersToGetPermission(t *testing.T) {
 	require.ElementsMatch(t, []string{"alpha", "bookinfo", "test", "test2"}, nsNames(ns))
 }
 
-// When strict_get is false, a successful namespace list is not filtered by per-namespace get (legacy behavior).
-func TestGetNamespacesStrictGetDisabledTrustsList(t *testing.T) {
+// When require_namespace_get is false, a successful namespace list is not filtered by per-namespace get (legacy behavior).
+func TestGetNamespacesRequireNamespaceGetDisabledTrustsList(t *testing.T) {
 	conf := config.NewConfig()
-	require.False(t, conf.Deployment.StrictGet)
+	require.False(t, conf.KialiFeatureFlags.Authz.RequireNamespaceGet)
 
 	saClient := setupNamespaceServiceWithNs()
 	saClient.Token = "sa-token"
@@ -182,11 +182,11 @@ func TestGetNamespacesStrictGetDisabledTrustsList(t *testing.T) {
 	require.ElementsMatch(t, []string{"alpha", "beta", "bookinfo", "test", "test2"}, nsNames(ns))
 }
 
-// When strict_get is false and user List succeeds, namespaces the user can
+// When require_namespace_get is false and user List succeeds, namespaces the user can
 // see but the Kiali SA cannot must be excluded (intersection with SA list).
 func TestGetNamespacesNonStrictIntersectsWithSAList(t *testing.T) {
 	conf := config.NewConfig()
-	require.False(t, conf.Deployment.StrictGet)
+	require.False(t, conf.KialiFeatureFlags.Authz.RequireNamespaceGet)
 
 	// SA can see bookinfo and alpha only.
 	saClient := kubetest.NewFakeK8sClient(
@@ -214,12 +214,12 @@ func TestGetNamespacesNonStrictIntersectsWithSAList(t *testing.T) {
 	require.ElementsMatch(t, []string{"alpha", "bookinfo"}, nsNames(ns))
 }
 
-// When strict_get is false and user List returns Forbidden, the code falls
+// When require_namespace_get is false and user List returns Forbidden, the code falls
 // through to filterToNamespacesUserCanGet which keeps only namespaces the
 // user can individually Get.
 func TestGetNamespacesNonStrictForbiddenListFallsBackToGet(t *testing.T) {
 	conf := config.NewConfig()
-	require.False(t, conf.Deployment.StrictGet)
+	require.False(t, conf.KialiFeatureFlags.Authz.RequireNamespaceGet)
 
 	// SA client can list all three namespaces.
 	saClient := kubetest.NewFakeK8sClient(
@@ -255,7 +255,7 @@ func TestGetNamespacesNonStrictForbiddenListFallsBackToGet(t *testing.T) {
 // must propagate up and fail the entire GetNamespaces call.
 func TestGetNamespacesGetInternalErrorPropagates(t *testing.T) {
 	conf := config.NewConfig()
-	conf.Deployment.StrictGet = true
+	conf.KialiFeatureFlags.Authz.RequireNamespaceGet = true
 
 	saClient := setupNamespaceServiceWithNs()
 	saClient.Token = "sa-token"

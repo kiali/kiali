@@ -446,7 +446,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 	// When not in strict-get mode, try the user's own list; if it succeeds,
 	// intersect it with the SA list so we never return namespaces that Kiali
 	// itself cannot access.
-	if !in.conf.Deployment.StrictGet {
+	if !in.conf.KialiFeatureFlags.Authz.RequireNamespaceGet {
 		userNss, userErr := in.userClients[cluster].GetNamespaces(labelSelector)
 		if userErr == nil {
 			saSet := make(map[string]struct{}, len(nss))
