@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -435,6 +436,13 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 		return nil, err
 	}
 
+	// When the user token is the same as the SA token (e.g. anonymous auth)
+	// the SA list is already the correct answer — skip the redundant user
+	// LIST and intersection/filter.
+	if in.userClients[cluster].GetToken() == in.kialiSAClients[cluster].GetToken() {
+		return nss, nil
+	}
+
 	// When not in strict-get mode, try the user's own list; if it succeeds,
 	// intersect it with the SA list so we never return namespaces that Kiali
 	// itself cannot access.
@@ -462,6 +470,7 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 }
 
 func (in *NamespaceService) filterToNamespacesUserCanGet(cluster string, candidates []core_v1.Namespace) ([]core_v1.Namespace, error) {
+	start := time.Now()
 	var namespaces []core_v1.Namespace
 	for _, item := range candidates {
 		if _, getNsErr := in.userClients[cluster].GetNamespace(item.Name); getNsErr == nil {
@@ -470,6 +479,7 @@ func (in *NamespaceService) filterToNamespacesUserCanGet(cluster string, candida
 			return nil, getNsErr
 		}
 	}
+	log.Debugf("filterToNamespacesUserCanGet for cluster [%s]: checked %d candidates, kept %d namespaces in %s", cluster, len(candidates), len(namespaces), time.Since(start))
 	return namespaces, nil
 }
 

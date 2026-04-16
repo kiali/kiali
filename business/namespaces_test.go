@@ -139,11 +139,20 @@ func TestGetNamespacesStrictGetFiltersToGetPermission(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Deployment.StrictGet = true
 
-	k8s := setupNamespaceServiceWithNs()
-	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	saClient := setupNamespaceServiceWithNs()
+	saClient.Token = "sa-token"
+
+	userClient := setupNamespaceServiceWithNs()
+	userClient.Token = "user-token"
+	cs := userClient.KubeClientset.(*clientsetfake.Clientset)
 	cs.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
 
-	nsservice := setupNamespaceService(t, k8s, conf)
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: saClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
 	ns, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"alpha", "bookinfo", "test", "test2"}, nsNames(ns))
@@ -154,11 +163,20 @@ func TestGetNamespacesStrictGetDisabledTrustsList(t *testing.T) {
 	conf := config.NewConfig()
 	require.False(t, conf.Deployment.StrictGet)
 
-	k8s := setupNamespaceServiceWithNs()
-	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	saClient := setupNamespaceServiceWithNs()
+	saClient.Token = "sa-token"
+
+	userClient := setupNamespaceServiceWithNs()
+	userClient.Token = "user-token"
+	cs := userClient.KubeClientset.(*clientsetfake.Clientset)
 	cs.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
 
-	nsservice := setupNamespaceService(t, k8s, conf)
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: saClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
 	ns, err := nsservice.GetNamespaces(context.TODO())
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"alpha", "beta", "bookinfo", "test", "test2"}, nsNames(ns))
@@ -239,20 +257,25 @@ func TestGetNamespacesGetInternalErrorPropagates(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Deployment.StrictGet = true
 
-	k8s := setupNamespaceServiceWithNs()
-	cs := k8s.KubeClientset.(*clientsetfake.Clientset)
+	saClient := setupNamespaceServiceWithNs()
+	saClient.Token = "sa-token"
+
+	userClient := setupNamespaceServiceWithNs()
+	userClient.Token = "user-token"
+	cs := userClient.KubeClientset.(*clientsetfake.Clientset)
 	cs.PrependReactor("get", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
-		getAction, ok := action.(kubeclienttesting.GetAction)
-		if !ok {
-			return false, nil, nil
-		}
-		if getAction.GetName() == "beta" {
+		if ga, ok := action.(kubeclienttesting.GetAction); ok && ga.GetName() == "beta" {
 			return true, nil, errors.NewInternalError(fmt.Errorf("apiserver down"))
 		}
 		return false, nil, nil
 	})
 
-	nsservice := setupNamespaceService(t, k8s, conf)
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: saClient}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: userClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
 	_, err := nsservice.GetNamespaces(context.TODO())
 	require.Error(t, err)
 	assert.True(t, errors.IsInternalError(err))
