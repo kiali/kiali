@@ -1,6 +1,7 @@
 package openai_provider
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,26 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 )
+
+// TestAllMCPToolYAMLsConvertToOpenAI ensures every file in ai/mcp/tools converts without
+// requiring each tool to be listed in a separate golden test (those catch schema drift).
+func TestAllMCPToolYAMLsConvertToOpenAI(t *testing.T) {
+	toolsDir := filepath.Join("..", "..", "mcp", "tools")
+	entries, err := os.ReadDir(toolsDir)
+	require.NoError(t, err)
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".yaml" {
+			continue
+		}
+		name := e.Name()
+		t.Run(name, func(t *testing.T) {
+			tool, err := mcp.LoadToolDefinition(filepath.Join(toolsDir, name))
+			require.NoError(t, err)
+			converted := convertToolToOpenAI(tool)
+			require.NotNil(t, converted.OfFunction, "expected OpenAI function tool for %s", name)
+		})
+	}
+}
 
 func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_action_ui.yaml"))
@@ -249,7 +270,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMetrics(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_metrics",
-				Description: openai.String("Returns metrics for the given resource type, namespaces and resource name."),
+				Description: openai.String("Returns a compact JSON summary of Istio metrics (latency quantiles, traffic trends, throughput, payload sizes) for the given resource."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"properties": map[string]interface{}{
@@ -480,6 +501,37 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListTraces(t *testing.T) {
 							"type":        "integer",
 							"description": "Maximum number of traces to return. Default 10.",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	require.NotNil(t, converted.OfFunction)
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToOpenAI_FromToolDefinition_GetTraceDetails(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_trace_details.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToOpenAI(tool)
+
+	expected := openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        "get_trace_details",
+				Description: openai.String("Fetches a single distributed trace by trace_id and returns its call hierarchy (service tree with duration, status, and nested calls). Use this after list_traces to drill into a specific trace."),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"traceId": map[string]interface{}{
+							"type":        "string",
+							"description": "Trace ID to fetch (required). Obtain from list_traces list response.",
+						},
+					},
+					"required": []interface{}{
+						"traceId",
 					},
 				},
 			},

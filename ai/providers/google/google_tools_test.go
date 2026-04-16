@@ -1,6 +1,7 @@
 package google_provider
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,6 +11,26 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 )
+
+// TestAllMCPToolYAMLsConvertToGoogleGenAISchema ensures every file in ai/mcp/tools maps to a valid schema.
+func TestAllMCPToolYAMLsConvertToGoogleGenAISchema(t *testing.T) {
+	toolsDir := filepath.Join("..", "..", "mcp", "tools")
+	entries, err := os.ReadDir(toolsDir)
+	require.NoError(t, err)
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".yaml" {
+			continue
+		}
+		name := e.Name()
+		t.Run(name, func(t *testing.T) {
+			tool, err := mcp.LoadToolDefinition(filepath.Join(toolsDir, name))
+			require.NoError(t, err)
+			converted := mapToGenAISchema(tool.GetDefinition())
+			require.NotNil(t, converted, name)
+			assert.Equal(t, genai.TypeObject, converted.Type)
+		})
+	}
+}
 
 func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_action_ui.yaml"))
@@ -346,6 +367,26 @@ func TestConvertToolToGoogle_FromToolDefinition_ListTraces(t *testing.T) {
 			},
 		},
 		Required: []string{"namespace", "serviceName"},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToGoogle_FromToolDefinition_GetTraceDetails(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_trace_details.yaml"))
+	require.NoError(t, err)
+
+	converted := mapToGenAISchema(tool.GetDefinition())
+
+	expected := &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"traceId": {
+				Type:        genai.TypeString,
+				Description: "Trace ID to fetch (required). Obtain from list_traces list response.",
+			},
+		},
+		Required: []string{"traceId"},
 	}
 
 	assert.Equal(t, expected, converted)
