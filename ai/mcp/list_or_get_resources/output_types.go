@@ -2,14 +2,25 @@ package list_or_get_resources
 
 // --- List response types ---
 
+// ResourceListIstioFlags mirrors Istio dataplane flags for list rows (workloads, services).
+type ResourceListIstioFlags struct {
+	IstioInjectionAnnotation *bool `json:"istio_injection_annotation,omitempty"`
+	IstioSidecar             bool  `json:"istio_sidecar"`
+	IsAmbient                bool  `json:"is_ambient"`
+	IsGateway                bool  `json:"is_gateway"`
+	IsWaypoint               bool  `json:"is_waypoint"`
+	IsZtunnel                bool  `json:"is_ztunnel"`
+}
+
 type ResourceListItem struct {
-	Configuration string `json:"configuration"`
-	Details       string `json:"details"`
-	Health        string `json:"health"`
-	Labels        string `json:"labels"`
-	Name          string `json:"name"`
-	Namespace     string `json:"namespace"`
-	Type          string `json:"type,omitempty"`
+	Configuration string                  `json:"configuration"`
+	Details       string                  `json:"details"`
+	Health        string                  `json:"health"`
+	Istio         *ResourceListIstioFlags `json:"istio,omitempty"`
+	Labels        string                  `json:"labels"`
+	Name          string                  `json:"name"`
+	Namespace     string                  `json:"namespace"`
+	Type          string                  `json:"type,omitempty"`
 }
 
 type AppIstioStatus struct {
@@ -64,11 +75,17 @@ type ServiceIstioConfig struct {
 }
 
 type ServiceWorkloadInfo struct {
-	Kind           string            `json:"kind"`
-	Labels         map[string]string `json:"labels"`
-	Name           string            `json:"name"`
-	PodCount       int               `json:"pod_count"`
-	ServiceAccount string            `json:"service_account"`
+	IstioInjectionAnnotation *bool             `json:"istio_injection_annotation,omitempty"`
+	IstioSidecar             bool              `json:"istio_sidecar"`
+	IsAmbient                bool              `json:"is_ambient"`
+	IsGateway                bool              `json:"is_gateway"`
+	IsWaypoint               bool              `json:"is_waypoint"`
+	IsZtunnel                bool              `json:"is_ztunnel"`
+	Kind                     string            `json:"kind"`
+	Labels                   map[string]string `json:"labels"`
+	Name                     string            `json:"name"`
+	PodCount                 int               `json:"pod_count"`
+	ServiceAccount           string            `json:"service_account"`
 }
 
 type EndpointInfo struct {
@@ -119,10 +136,16 @@ type SyncStatus struct {
 }
 
 type WorkloadIstioInfo struct {
-	Mode         string      `json:"mode"`
-	ProxyVersion string      `json:"proxy_version"`
-	SyncStatus   *SyncStatus `json:"sync_status,omitempty"`
-	Validations  []string    `json:"validations"`
+	IstioInjectionAnnotation *bool       `json:"istio_injection_annotation,omitempty"`
+	IstioSidecar             bool        `json:"istio_sidecar"`
+	IsAmbient                bool        `json:"is_ambient"`
+	IsGateway                bool        `json:"is_gateway"`
+	IsWaypoint               bool        `json:"is_waypoint"`
+	IsZtunnel                bool        `json:"is_ztunnel"`
+	Mode                     string      `json:"mode"`
+	ProxyVersion             string      `json:"proxy_version"`
+	SyncStatus               *SyncStatus `json:"sync_status,omitempty"`
+	Validations              []string    `json:"validations"`
 }
 
 type PodInfo struct {
@@ -143,6 +166,7 @@ type WorkloadDetailResponse struct {
 
 type AppWorkloadInfo struct {
 	IstioSidecar   bool   `json:"istioSidecar"`
+	IsAmbient      bool   `json:"isAmbient"`
 	Kind           string `json:"kind"`
 	Name           string `json:"name"`
 	Replicas       string `json:"replicas"`

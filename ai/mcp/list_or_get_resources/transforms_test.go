@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/models"
@@ -62,6 +63,8 @@ func TestTransformServiceList_WithServices(t *testing.T) {
 	assert.Equal(t, "details", items[1].Name)
 	assert.Equal(t, "NA", items[1].Health)
 	assert.Equal(t, "", items[1].Type)
+	require.NotNil(t, items[0].Istio)
+	require.NotNil(t, items[1].Istio)
 }
 
 func TestTransformWorkloadList_WithWorkloads(t *testing.T) {
@@ -90,6 +93,8 @@ func TestTransformWorkloadList_WithWorkloads(t *testing.T) {
 	assert.Equal(t, "Deployment", items[0].Type)
 	assert.Equal(t, "Healthy", items[0].Health)
 	assert.Equal(t, "app=details, version=v1", items[0].Labels)
+	require.NotNil(t, items[0].Istio)
+	assert.False(t, items[0].Istio.IstioSidecar)
 }
 
 func TestTransformWorkloadList_WithValidationChecks(t *testing.T) {
@@ -226,6 +231,36 @@ func TestTransformServiceDetail(t *testing.T) {
 	assert.Len(t, result.Workloads, 1)
 	assert.Equal(t, "productpage-v1", result.Workloads[0].Name)
 	assert.Equal(t, "Deployment", result.Workloads[0].Kind)
+	assert.False(t, result.Workloads[0].IstioSidecar)
+}
+
+func TestTransformWorkloadDetail_InjectionDisabled(t *testing.T) {
+	injectFalse := false
+	wl := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			IstioInjectionAnnotation: &injectFalse,
+			IstioSidecar:             false,
+			IsAmbient:                false,
+			IsGateway:                false,
+			IsWaypoint:               false,
+			IsZtunnel:                false,
+		},
+		DesiredReplicas:   1,
+		CurrentReplicas:   1,
+		AvailableReplicas: 1,
+		Pods:              models.Pods{{Name: "p1", Status: "Running"}},
+		Health: models.WorkloadHealth{
+			Status: &models.CalculatedHealthStatus{Status: "Healthy"},
+		},
+	}
+	wl.Name = "details-v1"
+	wl.Namespace = "bookinfo"
+	wl.WorkloadGVK = schema.GroupVersionKind{Kind: "Deployment"}
+
+	result := TransformWorkloadDetail(wl)
+	require.NotNil(t, result.Istio.IstioInjectionAnnotation)
+	assert.False(t, *result.Istio.IstioInjectionAnnotation)
+	assert.False(t, result.Istio.IstioSidecar)
 }
 
 func TestTransformWorkloadDetail(t *testing.T) {
@@ -285,6 +320,9 @@ func TestTransformWorkloadDetail(t *testing.T) {
 	assert.NotNil(t, result.Istio.SyncStatus)
 	assert.Equal(t, "Synced", result.Istio.SyncStatus.CDS)
 	assert.Contains(t, result.Istio.Validations, "bookinfo-gw")
+	assert.True(t, result.Istio.IstioSidecar)
+	assert.False(t, result.Istio.IsAmbient)
+	assert.False(t, result.Istio.IsGateway)
 	assert.Equal(t, []string{"details"}, result.AssociatedServices)
 	assert.Len(t, result.Pods, 1)
 	assert.Equal(t, "Running", result.Pods[0].Status)
@@ -329,6 +367,7 @@ func TestTransformAppDetail(t *testing.T) {
 	assert.Equal(t, "v1", result.Workloads[0].Version)
 	assert.Equal(t, "bookinfo-productpage", result.Workloads[0].ServiceAccount)
 	assert.True(t, result.Workloads[0].IstioSidecar)
+	assert.False(t, result.Workloads[0].IsAmbient)
 }
 
 func TestTransformNamespaceDetail(t *testing.T) {

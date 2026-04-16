@@ -23,6 +23,7 @@ func TransformServiceList(cluster *models.ClusterServices) map[string][]Resource
 			Configuration: validStr,
 			Details:       details,
 			Health:        healthStr,
+			Istio:         resourceListIstioFromServiceOverview(svc),
 			Labels:        labelsToString(svc.Labels),
 			Name:          svc.Name,
 			Namespace:     svc.Namespace,
@@ -46,6 +47,7 @@ func TransformWorkloadList(cluster *models.ClusterWorkloads) map[string][]Resour
 			Configuration: validStr,
 			Details:       details,
 			Health:        healthStr,
+			Istio:         resourceListIstioFromWorkloadListItem(wl),
 			Labels:        labelsToString(wl.Labels),
 			Name:          wl.Name,
 			Namespace:     wl.Namespace,
@@ -218,17 +220,7 @@ func TransformServiceDetail(sd *models.ServiceDetails) ServiceDetailResponse {
 
 	var workloads []ServiceWorkloadInfo
 	for _, wl := range sd.Workloads {
-		sa := ""
-		if len(wl.ServiceAccountNames) > 0 {
-			sa = wl.ServiceAccountNames[0]
-		}
-		workloads = append(workloads, ServiceWorkloadInfo{
-			Kind:           wl.WorkloadGVK.Kind,
-			Labels:         wl.Labels,
-			Name:           wl.Name,
-			PodCount:       wl.PodCount,
-			ServiceAccount: sa,
-		})
+		workloads = append(workloads, serviceWorkloadInfoFromListItem(wl))
 	}
 	if workloads == nil {
 		workloads = []ServiceWorkloadInfo{}
@@ -376,10 +368,16 @@ func TransformWorkloadDetail(wl *models.Workload) WorkloadDetailResponse {
 	return WorkloadDetailResponse{
 		AssociatedServices: svcNames,
 		Istio: WorkloadIstioInfo{
-			Mode:         istioMode,
-			ProxyVersion: proxyVersion,
-			SyncStatus:   syncStatus,
-			Validations:  valNames,
+			IstioInjectionAnnotation: wl.IstioInjectionAnnotation,
+			IstioSidecar:             wl.IstioSidecar,
+			IsAmbient:                wl.IsAmbient,
+			IsGateway:                wl.WorkloadListItem.IsGateway,
+			IsWaypoint:               wl.WorkloadListItem.IsWaypoint,
+			IsZtunnel:                wl.WorkloadListItem.IsZtunnel,
+			Mode:                     istioMode,
+			ProxyVersion:             proxyVersion,
+			SyncStatus:               syncStatus,
+			Validations:              valNames,
 		},
 		Pods: pods,
 		Status: WorkloadStatus{
@@ -425,6 +423,7 @@ func TransformAppDetail(app *models.App) AppDetailResponse {
 		}
 		workloads = append(workloads, AppWorkloadInfo{
 			IstioSidecar:   wl.IstioSidecar,
+			IsAmbient:      wl.IsAmbient,
 			Kind:           wl.WorkloadGVK.Kind,
 			Name:           wl.WorkloadName,
 			ServiceAccount: sa,
@@ -512,6 +511,44 @@ func getIstioInjection(labels map[string]string) string {
 		return "enabled"
 	}
 	return "disabled"
+}
+
+func resourceListIstioFromServiceOverview(svc models.ServiceOverview) *ResourceListIstioFlags {
+	return &ResourceListIstioFlags{
+		IstioSidecar: svc.IstioSidecar,
+		IsAmbient:    svc.IsAmbient,
+	}
+}
+
+func resourceListIstioFromWorkloadListItem(wl models.WorkloadListItem) *ResourceListIstioFlags {
+	return &ResourceListIstioFlags{
+		IstioInjectionAnnotation: wl.IstioInjectionAnnotation,
+		IstioSidecar:             wl.IstioSidecar,
+		IsAmbient:                wl.IsAmbient,
+		IsGateway:                wl.IsGateway,
+		IsWaypoint:               wl.IsWaypoint,
+		IsZtunnel:                wl.IsZtunnel,
+	}
+}
+
+func serviceWorkloadInfoFromListItem(wl *models.WorkloadListItem) ServiceWorkloadInfo {
+	sa := ""
+	if len(wl.ServiceAccountNames) > 0 {
+		sa = wl.ServiceAccountNames[0]
+	}
+	return ServiceWorkloadInfo{
+		IstioInjectionAnnotation: wl.IstioInjectionAnnotation,
+		IstioSidecar:             wl.IstioSidecar,
+		IsAmbient:                wl.IsAmbient,
+		IsGateway:                wl.IsGateway,
+		IsWaypoint:               wl.IsWaypoint,
+		IsZtunnel:                wl.IsZtunnel,
+		Kind:                     wl.WorkloadGVK.Kind,
+		Labels:                   wl.Labels,
+		Name:                     wl.Name,
+		PodCount:                 wl.PodCount,
+		ServiceAccount:           sa,
+	}
 }
 
 func labelsToString(labels map[string]string) string {
