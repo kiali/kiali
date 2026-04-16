@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom-v5-compat';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
@@ -18,7 +17,7 @@ import { NodeParamsType, GraphType, SummaryData, NodeAttr, FocusNode } from 'typ
 import { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
-import { isParentKiosk, kioskContextMenuAction } from '../../components/Kiosk/KioskActions';
+import { KialiLink } from '../../components/Link/KialiLink';
 import { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { ExternalServiceInfo } from '../../types/StatusState';
@@ -28,7 +27,6 @@ import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
-  kiosk: string;
   provider?: string;
 };
 
@@ -142,7 +140,12 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
           <span className={closeBoxStyle}>
             <Tooltip content="Close and clear trace selection">
-              <Button icon={<KialiIcon.Close />} id="close-trace" variant={ButtonVariant.plain} onClick={this.props.close} />
+              <Button
+                icon={<KialiIcon.Close />}
+                id="close-trace"
+                variant={ButtonVariant.plain}
+                onClick={this.props.close}
+              />
             </Tooltip>
           </span>
         </div>
@@ -150,16 +153,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
         <div>
           {tracesDetailsURL ? (
             <Tooltip content={`View trace details for: ${info.name()}`}>
-              <Link
-                to={tracesDetailsURL}
-                onClick={() => {
-                  if (isParentKiosk(this.props.kiosk)) {
-                    kioskContextMenuAction(tracesDetailsURL);
-                  }
-                }}
-              >
-                {title}
-              </Link>
+              <KialiLink to={tracesDetailsURL}>{title}</KialiLink>
             </Tooltip>
           ) : (
             <Tooltip content={`${info.name()}`}>{title}</Tooltip>
@@ -270,16 +264,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
         {spanURL && (
           <div>
-            <Link
-              to={spanURL}
-              onClick={() => {
-                if (isParentKiosk(this.props.kiosk)) {
-                  kioskContextMenuAction(spanURL);
-                }
-              }}
-            >
-              Show span
-            </Link>
+            <KialiLink to={spanURL}>Show span</KialiLink>
           </div>
         )}
       </>
@@ -417,7 +402,6 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   externalServices: state.statusState.externalServices,
-  kiosk: state.globalState.kiosk,
   provider: state.tracingState.info?.provider
 });
 

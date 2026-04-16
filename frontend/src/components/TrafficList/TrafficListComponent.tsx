@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { IRow, SortByDirection } from '@patternfly/react-table';
-import { Link } from 'react-router-dom-v5-compat';
 import { TrafficItem, TrafficNode, TrafficDirection } from './TrafficDetails';
 import * as FilterComponent from '../FilterList/FilterComponent';
 import { ThresholdStatus, NA, statusFromString, HEALTHY } from 'types/Health';
@@ -12,12 +11,10 @@ import { sortFields } from './FiltersAndSorts';
 import { SortField } from 'types/SortFilters';
 import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { createIcon, createTooltipIcon, KialiIcon } from 'config/KialiIcon';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
+import { KialiLink } from '../Link/KialiLink';
 
 export interface TrafficListItem {
   badge: PFBadgeType;
@@ -31,14 +28,9 @@ export interface TrafficListItem {
   trafficRate: string;
 }
 
-type ReduxProps = {
-  kiosk: string;
+type TrafficListComponentProps = FilterComponent.Props<TrafficListItem> & {
+  trafficItems: TrafficItem[];
 };
-
-type TrafficListComponentProps = ReduxProps &
-  FilterComponent.Props<TrafficListItem> & {
-    trafficItems: TrafficItem[];
-  };
 
 type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 
@@ -285,8 +277,6 @@ class TrafficList extends FilterComponent.Component<
 
   // Helper used to build the table content.
   rows = (direction: TrafficDirection): IRow[] => {
-    const parentKiosk = isParentKiosk(this.props.kiosk);
-
     return this.state.listItems
       .filter(i => i.direction === direction)
       .map((item, i) => {
@@ -305,21 +295,9 @@ class TrafficList extends FilterComponent.Component<
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
-                parentKiosk ? (
-                  <Link
-                    key={`link_d_${item.badge}_${name}`}
-                    to=""
-                    onClick={() => {
-                      kioskContextMenuAction(links.detail);
-                    }}
-                  >
-                    {name}
-                  </Link>
-                ) : (
-                  <Link key={`link_d_${item.badge}_${name}`} to={links.detail}>
-                    {name}
-                  </Link>
-                )
+                <KialiLink key={`link_d_${item.badge}_${name}`} to={links.detail}>
+                  {name}
+                </KialiLink>
               ) : (
                 name
               )}
@@ -331,22 +309,11 @@ class TrafficList extends FilterComponent.Component<
               <LockIcon mTLS={item.mTLS}></LockIcon>
             </>,
             <>
-              {!!links.metrics &&
-                (parentKiosk ? (
-                  <Link
-                    key={`link_m_${item.badge}_${name}`}
-                    to=""
-                    onClick={() => {
-                      kioskContextMenuAction(links.metrics);
-                    }}
-                  >
-                    View metrics
-                  </Link>
-                ) : (
-                  <Link key={`link_m_${item.badge}_${name}`} to={links.metrics}>
-                    View metrics
-                  </Link>
-                ))}
+              {!!links.metrics && (
+                <KialiLink key={`link_m_${item.badge}_${name}`} to={links.metrics}>
+                  View metrics
+                </KialiLink>
+              )}
             </>
           ]
         };
@@ -437,10 +404,4 @@ class TrafficList extends FilterComponent.Component<
   };
 }
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
-  return {
-    kiosk: state.globalState.kiosk
-  };
-};
-
-export const TrafficListComponent = connect(mapStateToProps)(TrafficList);
+export const TrafficListComponent = TrafficList;

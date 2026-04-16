@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom-v5-compat';
+import { KialiLink } from '../Link/KialiLink';
 import { Label as PFLabel, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { getFiltersFromURL } from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
@@ -247,9 +247,9 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={serviceBadge} position={TooltipPosition.top} />
-      <Link key={key} to={getLink(item, config)}>
+      <KialiLink key={key} to={getLink(item, config)}>
         {item.name}
-      </Link>
+      </KialiLink>
     </Td>
   );
 };
@@ -429,13 +429,13 @@ export const istioConfiguration: Renderer<IstioConfigItem> = (item: IstioConfigI
       style={{ verticalAlign: 'middle' }}
     >
       {validation ? (
-        <Link to={`${getLink(item, config, linkQuery)}`}>
+        <KialiLink to={`${getLink(item, config, linkQuery)}`}>
           <ValidationObjectSummary
             id={`${item.name}-config-validation`}
             validations={[validation]}
             reconciledCondition={reconciledCondition}
           />
-        </Link>
+        </KialiLink>
       ) : (
         <>N/A</>
       )}
@@ -455,9 +455,9 @@ export const serviceConfiguration: Renderer<ServiceListItem> = (item: ServiceLis
       style={{ verticalAlign: 'middle' }}
     >
       {validation ? (
-        <Link to={`${getLink(item, config, linkQuery)}`}>
+        <KialiLink to={`${getLink(item, config, linkQuery)}`}>
           <ValidationServiceSummary id={`${item.name}-service-validation`} validations={[validation]} />
-        </Link>
+        </KialiLink>
       ) : (
         <>N/A</>
       )}

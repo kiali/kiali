@@ -1,28 +1,21 @@
 import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
-import { Link } from 'react-router-dom-v5-compat';
 import { GVKToBadge } from '../VirtualList/Config';
 import { PFBadge } from 'components/Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { KialiAppState } from '../../store/Store';
-import { connect } from 'react-redux';
-import { isParentKiosk, kioskContextMenuAction } from '../Kiosk/KioskActions';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { getGVKTypeString, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
+import { KialiLink } from './KialiLink';
 
 const objectInfoStyle = kialiStyle({
   marginBottom: '-0.125rem',
   marginRight: '0',
   marginTop: '0'
 });
-
-type ReduxProps = {
-  kiosk: string;
-};
 
 type ReferenceIstioObjectProps = {
   cluster?: string;
@@ -33,10 +26,9 @@ type ReferenceIstioObjectProps = {
   subType?: string;
 };
 
-type IstioObjectProps = ReduxProps &
-  ReferenceIstioObjectProps & {
-    children: React.ReactNode;
-  };
+type IstioObjectProps = ReferenceIstioObjectProps & {
+  children: React.ReactNode;
+};
 
 export const GetIstioObjectUrl = (
   name: string,
@@ -101,29 +93,14 @@ export const ReferenceIstioObjectLink: React.FC<ReferenceIstioObjectProps> = (pr
   );
 };
 
-const IstioObjectLinkComponent: React.FC<IstioObjectProps> = (props: IstioObjectProps) => {
+export const IstioObjectLink: React.FC<IstioObjectProps> = (props: IstioObjectProps) => {
   const { name, namespace, objectGVK, cluster, query } = props;
   const href = GetIstioObjectUrl(name, namespace, objectGVK, cluster, query);
 
-  return isParentKiosk(props.kiosk) ? (
-    <Link
-      to=""
-      onClick={() => {
-        kioskContextMenuAction(href);
-      }}
-    >
-      {props.children}
-    </Link>
-  ) : (
+  return (
     // @TODO put cluster in link when all objects have multicluster support
-    <Link to={href} data-test={`${kindToStringIncludeK8s(objectGVK.Group, objectGVK.Kind)}-${namespace}-${name}`}>
+    <KialiLink to={href} dataTest={`${kindToStringIncludeK8s(objectGVK.Group, objectGVK.Kind)}-${namespace}-${name}`}>
       {props.children}
-    </Link>
+    </KialiLink>
   );
 };
-
-const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk
-});
-
-export const IstioObjectLink = connect(mapStateToProps)(IstioObjectLinkComponent);

@@ -8,7 +8,9 @@ type KialiLinkProps = {
   children: React.ReactNode;
   className?: string;
   dataTest?: string;
+  id?: string;
   onClick?: () => void;
+  style?: React.CSSProperties;
   to: string;
 };
 
@@ -23,11 +25,26 @@ export const KialiLink: React.FC<KialiLinkProps> = (props: KialiLinkProps) => {
   };
 
   return isParentKiosk(kiosk) ? (
-    <Button variant="link" isInline onClick={handleClick} data-test={props.dataTest} data-href={props.to}>
+    <Button
+      variant="link"
+      isInline
+      onClick={handleClick}
+      data-test={props.dataTest}
+      data-href={props.to}
+      id={props.id}
+      style={props.style}
+    >
       <span className={props.className}>{props.children}</span>
     </Button>
   ) : (
-    <Link to={props.to} className={props.className} data-test={props.dataTest} onClick={props.onClick}>
+    <Link
+      to={props.to}
+      className={props.className}
+      data-test={props.dataTest}
+      id={props.id}
+      onClick={props.onClick}
+      style={props.style}
+    >
       {props.children}
     </Link>
   );

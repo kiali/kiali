@@ -10,25 +10,22 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { isParentKiosk } from '../../Kiosk/KioskActions';
 import { SortableTh } from 'components/Table/SimpleTable';
 import { dicTypeToGVK, gvkType } from '../../../types/IstioConfigList';
 
 export class RouteTable implements SummaryTable {
-  kiosk: string;
   namespace: string;
   namespaces: Namespace[];
   sortingDirection: 'asc' | 'desc';
   sortingIndex: number;
   summaries: RouteSummary[];
 
-  constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
+  constructor(summaries: RouteSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string) {
     this.summaries = summaries;
     this.sortingIndex = sortBy.index ?? 0;
     this.sortingDirection = sortBy.direction ?? 'asc';
     this.namespaces = namespaces;
     this.namespace = namespace;
-    this.kiosk = kiosk;
   }
 
   availableFilters = (): FilterType[] => {
@@ -168,7 +165,6 @@ export class RouteTable implements SummaryTable {
   };
 
   rows(): IRow[] {
-    const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: RouteSummary) => {
         return defaultFilter(value, this.filterMethods());
@@ -185,7 +181,7 @@ export class RouteTable implements SummaryTable {
           return {
             cells: [
               summary.name,
-              serviceLink(summary.domains, this.namespaces, this.namespace, true, parentKiosk),
+              serviceLink(summary.domains, this.namespaces, this.namespace, true),
               summary.match,
               istioConfigLink(summary.virtual_service, dicTypeToGVK[gvkType.VirtualService])
             ]

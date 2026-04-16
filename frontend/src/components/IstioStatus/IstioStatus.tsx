@@ -20,7 +20,8 @@ import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { Link, useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router-dom-v5-compat';
+import { KialiLink } from '../Link/KialiLink';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
@@ -369,7 +370,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         {!pathname.endsWith('/mesh') && isControlPlaneAccessible() && (
           <div className={meshLinkStyle}>
             <span>{t('More info at')}</span>
-            <Link
+            <KialiLink
               to="/mesh"
               onClick={() => {
                 // Force tooltip to close by remounting with a new key
@@ -377,7 +378,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
               }}
             >
               {t('Mesh page')}
-            </Link>
+            </KialiLink>
           </div>
         )}
       </Content>

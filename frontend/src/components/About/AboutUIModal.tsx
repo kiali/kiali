@@ -6,7 +6,7 @@ import { config, kialiIconDark, kialiIconLight } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
-import { Link } from 'react-router-dom-v5-compat';
+import { KialiLink } from '../Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { useKialiTheme } from 'utils/ThemeUtils';
@@ -67,10 +67,10 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
   const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {
       return (
-        <Link id="mesh" to={config.about.mesh.url} onClick={props.onClose}>
+        <KialiLink id="mesh" to={config.about.mesh.url} onClick={props.onClose}>
           <IstioLogo className={iconStyle} />
           {config.about.mesh.linkText}
-        </Link>
+        </KialiLink>
       );
     }
 

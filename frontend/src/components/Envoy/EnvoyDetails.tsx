@@ -57,7 +57,6 @@ const defaultTab = 'clusters';
 export type ResourceSorts = { [resource: string]: ISortBy };
 
 type ReduxProps = {
-  kiosk: string;
   namespaces: Namespace[];
   theme: string;
 };
@@ -277,7 +276,6 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       this.props.namespaces,
       this.props.namespace,
       this.onRouteLinkClick,
-      this.props.kiosk,
       this.props.workload.name
     );
 
@@ -388,7 +386,6 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  kiosk: state.globalState.kiosk,
   namespaces: namespaceItemsSelector(state)!,
   theme: state.globalState.theme
 });

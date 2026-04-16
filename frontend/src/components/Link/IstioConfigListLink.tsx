@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Paths } from '../../config';
 import { FilterSelected } from '../Filters/StatefulFilters';
-import { Link } from 'react-router-dom-v5-compat';
+import { KialiLink } from './KialiLink';
 import { pluralize } from '@patternfly/react-core';
 
 interface Props {
@@ -61,9 +61,9 @@ export const IstioConfigListLink: React.FC<Props> = (props: Props) => {
   return (
     <>
       {props.children}
-      <Link to={`/${Paths.ISTIO}?${params}`} onClick={cleanFilters}>
+      <KialiLink to={`/${Paths.ISTIO}?${params}`} onClick={cleanFilters}>
         {props.issues && <> {pluralize(props.issues, 'issue')}</>}
-      </Link>
+      </KialiLink>
     </>
   );
 };

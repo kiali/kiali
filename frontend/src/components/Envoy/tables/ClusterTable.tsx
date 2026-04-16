@@ -10,26 +10,23 @@ import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { isParentKiosk } from '../../Kiosk/KioskActions';
 import { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../../types/IstioConfigList';
 
 export class ClusterTable implements SummaryTable {
-  kiosk: string;
   namespace: string;
   namespaces: Namespace[] | undefined;
   sortingDirection: 'asc' | 'desc';
   sortingIndex: number;
   summaries: ClusterSummary[];
 
-  constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string, kiosk: string) {
+  constructor(summaries: ClusterSummary[], sortBy: ISortBy, namespaces: Namespace[], namespace: string) {
     this.summaries = summaries;
     this.sortingIndex = sortBy.index ?? 0;
     this.sortingDirection = sortBy.direction ?? SortByDirection.asc;
     this.namespaces = namespaces;
     this.namespace = namespace;
-    this.kiosk = kiosk;
   }
 
   availableFilters = (): FilterType[] => {
@@ -250,7 +247,6 @@ export class ClusterTable implements SummaryTable {
   };
 
   rows(): IRow[] {
-    const parentKiosk = isParentKiosk(this.kiosk);
     return this.summaries
       .filter((value: ClusterSummary): boolean => {
         return defaultFilter(value, this.filterMethods());
@@ -266,7 +262,7 @@ export class ClusterTable implements SummaryTable {
         (value: ClusterSummary): IRow => {
           return {
             cells: [
-              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false, parentKiosk),
+              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false),
               value.port,
               value.subset,
               value.direction,
