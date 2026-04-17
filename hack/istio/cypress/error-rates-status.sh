@@ -25,7 +25,7 @@ alpha_input=$(kubectl get pods -n alpha -o=custom-columns=NAME:.metadata.name,St
 kubectl wait pods -n beta --for condition=Ready --timeout=60s --all
 beta_input=$(kubectl get pods -n beta -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
-for pod in ${!apps[@]}; do
+for pod in "${!apps[@]}"; do
   count=$(echo "$alpha_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
   status=$(echo "$alpha_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
   if [ $count -ne 1 ] || [ $status != "Running" ]
@@ -35,7 +35,7 @@ for pod in ${!apps[@]}; do
   fi
 done
 
-for pod in ${!apps[@]}; do
+for pod in "${!apps[@]}"; do
   count=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
   status=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
   if [ $count -ne 1 ] || [ $status != "Running" ]

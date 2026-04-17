@@ -346,7 +346,7 @@ output_junit_xml_results() {
   <testsuite id="0" name="kiali molecule tests" tests="${junit_total_tests}" failures="${junit_total_failures}" time="${junit_total_time}">
 EOM
 
-    for i in ${!junit_name[@]};
+    for i in "${!junit_name[@]}";
     do
       echo -n "    <testcase id=\"${junit_name[$i]}\" name=\"${junit_name[$i]}\" classname=\"${junit_name[$i]}\" time=\"${junit_duration[$i]}\">" >> "${JUNIT_XML_FILE}"
       if [ "${junit_failure[$i]}" != "0" ]; then

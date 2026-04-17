@@ -47,7 +47,7 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
     ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=merge -p '{"spec": {"deployment": {"accessible_namespaces": []}}}'
   fi
 
-  for NAMESPACE in ${NAMESPACES[@]}; do
+  for NAMESPACE in "${NAMESPACES[@]}"; do
     ${CLIENT_EXE} patch kiali $KIALI_CR_NAME -n $KIALI_CR_NAMESPACE --type=json '-p=[{"op": "add", "path": "/spec/deployment/accessible_namespaces/-", "value":"'$NAMESPACE'"}]'
   done
 
@@ -73,6 +73,6 @@ if [ "${ACCESSIBLE_NAMESPACES}" != "**" ]; then
   fi
 fi
 
-for NAMESPACE in ${NAMESPACES[@]}; do
+for NAMESPACE in "${NAMESPACES[@]}"; do
   ${CLIENT_EXE} wait --for=condition=Ready pods --all -n "$NAMESPACE" --timeout 60s || true
 done

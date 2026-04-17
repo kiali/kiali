@@ -263,7 +263,7 @@ deploy_kiali() {
         )
   fi
 
-  echo "helm_args: ${helm_args[@]}"
+  printf 'helm_args: %s\n' "${helm_args[*]}"
 
   helm upgrade --install \
     "${helm_args[@]}" \

@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # This creates/deletes a mesh-enabled namespace/project
 

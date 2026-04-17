@@ -24,6 +24,19 @@ if ! which goimports &> /dev/null; then
   go install golang.org/x/tools/cmd/goimports@latest
 fi
 
+shellcheck_cmd=(shellcheck)
+if ! which shellcheck &> /dev/null; then
+  if which npx &> /dev/null; then
+    echo "shellcheck not found in PATH - using npx shellcheck."
+    shellcheck_cmd=(npx --yes shellcheck)
+  else
+    echo "You do not have shellcheck in your PATH."
+    echo "shellcheck is not installed with 'go install'."
+    echo "Install shellcheck manually or ensure 'npx' is available, then retry."
+    exit 1
+  fi
+fi
+
 #### GO Formatting ####
 go_files=$(git diff --cached --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
 
@@ -77,8 +90,19 @@ if [ -n "$yaml_unformatted" ]; then
   yamlfmt $yaml_unformatted
 fi
 
+#### Shell script checks ####
+mapfile -d '' -t hack_shell_scripts < <(git ls-files -z -- 'hack/*.sh' 'hack/**/*.sh')
+
+if [ "${#hack_shell_scripts[@]}" -gt 0 ]; then
+  echo "Running shellcheck for hack scripts..."
+  if ! "${shellcheck_cmd[@]}" -S warning -x "${hack_shell_scripts[@]}"; then
+    echo "shellcheck reported issues in hack scripts - the git commit is aborted."
+    exit 1
+  fi
+fi
+
 #### I18N missing statements ####
-cd frontend
+cd frontend || exit 1
 
 yarn i18n
 

@@ -40,10 +40,10 @@ base64_decode()
 	remainder=$((${#input} % 4));
 	if [ $remainder -eq 1 ];
 	then
-		>2& echo "fatal error. base64 string is unexepcted length"
+		>&2 echo "fatal error. base64 string is unexepcted length"
 	elif [[ $remainder -eq 2 || $remainder -eq 3 ]];
 	then
-		input="${input}$(for i in `seq $((4 - $remainder))`; do printf =; done)"
+		input="${input}$(for i in $(seq "$((4 - remainder))"); do printf '='; done)"
 	fi
 	printf '%s' "${input}" | base64 --decode
 }

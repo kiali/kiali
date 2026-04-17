@@ -485,7 +485,7 @@ install_olm() {
 
   # force the install.sh script to go through minikube kubectl when it executes kubectl commands
   kubectl() {
-    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- $@
+    ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- "$@"
   }
   export MINIKUBE_EXEC_WITH_PROFILE
   export -f kubectl

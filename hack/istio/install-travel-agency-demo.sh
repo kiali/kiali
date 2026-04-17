@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 function value_in_array {
     local value="$1"

@@ -541,7 +541,7 @@ setup_kind_singlecluster() {
         --kiali-create-remote-cluster-secrets "false" \
         --cluster1-name "ci" \
         --manage-kind true \
-        ${auth_flags[@]} \
+        "${auth_flags[@]}" \
         -dorp docker \
         -kas "${AUTH_STRATEGY}" \
         -kudi true \
@@ -843,7 +843,7 @@ setup_kind_multicluster() {
     --cluster2-name ${cluster2_name} \
     --ignore-home-cluster ${ignore_home_cluster} \
     --manage-kind true \
-    ${auth_flags[@]} \
+    "${auth_flags[@]}" \
     -dorp docker \
     -kas "${AUTH_STRATEGY}" \
     -kudi true \

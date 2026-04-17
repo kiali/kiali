@@ -19,7 +19,7 @@ apps=("details-v1"
 kubectl wait pods -n bookinfo --for condition=Ready --timeout=60s --all
 input=$(kubectl get pods -n bookinfo -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
-for pod in ${!apps[@]}; do
+for pod in "${!apps[@]}"; do
   count=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
   status=$(echo "$input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
   if [ $count -ne 1 ] || [ $status != "Running" ]
