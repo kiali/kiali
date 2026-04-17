@@ -11,8 +11,9 @@ import {
   withSelection
 } from '@patternfly/react-topology';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { clickHandler, ContextMenuOption, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
+import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
 import * as React from 'react';
+import { clickHandler, ContextMenuOption, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import { StyleEdge } from '../styles/styleEdge';
 import { StyleGroup } from '../styles/styleGroup';
 import { StyleNode } from '../styles/styleNode';
@@ -31,7 +32,6 @@ import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/Servi
 import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
-import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
 

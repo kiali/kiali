@@ -126,7 +126,7 @@ const tableHeaderStyle = kialiStyle({
   borderBottom: 'none',
   color: 'var(--pf-t--global--text--color--primary--default)',
   fontSize: '0.875rem',
-  padding: '0.75rem 0.5rem',
+  padding: '0.5rem 0.5rem',
   textAlign: 'left'
 });
 

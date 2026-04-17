@@ -1,4 +1,4 @@
-import type { FunctionComponent } from 'react';
+import * as React from 'react';
 import type { ModalProps } from '@patternfly/react-core';
 import { useEffect, useState } from 'react';
 import {
@@ -43,7 +43,7 @@ export interface ListColumnManagementModalProps extends Omit<ModalProps, 'childr
  * Reusable column management modal for list pages, based on PatternFly's ColumnManagementModal
  * with an optional {@link onResetToDefault} hook for URL/Redux-backed column state.
  */
-export const ListColumnManagementModal: FunctionComponent<ListColumnManagementModalProps> = ({
+export const ListColumnManagementModal: React.FC<ListColumnManagementModalProps> = ({
   title = 'Manage columns',
   description = 'Selected categories will be displayed in the table.',
   isOpen = false,
