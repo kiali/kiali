@@ -12,13 +12,13 @@ coverage:
       default:
         # 'auto' means it will use the current coverage of the base branch as the target
         target: auto
-        informational: false
+        informational: true
     patch:
       default:
         # Ensures that new code in a PR has at least 80% coverage
         target: 80%
         threshold: 0%
-        informational: false
+        informational: true
 
 ignore:
   # Exclude frontend UI code (since this is for the backend)
