@@ -521,7 +521,7 @@ func TestExecute_RejectsListAction(t *testing.T) {
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
-	assert.Contains(t, res.(error).Error(), "manage_istio_config_read")
+	assert.Contains(t, res.(string), "manage_istio_config_read")
 }
 
 func TestExecute_RejectsGetAction(t *testing.T) {
@@ -535,7 +535,7 @@ func TestExecute_RejectsGetAction(t *testing.T) {
 
 	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
 	assert.Equal(t, http.StatusBadRequest, status)
-	assert.Contains(t, res.(error).Error(), "manage_istio_config_read")
+	assert.Contains(t, res.(string), "manage_istio_config_read")
 }
 
 // ---------------------------------------------------------------------------

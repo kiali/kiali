@@ -66,7 +66,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	mcpMode := mcputil.AsBoolOrDefault(args, false, "mcp_mode")
 
 	if action == "list" || action == "get" {
-		return fmt.Errorf("for list and get actions use the manage_istio_config_read tool"), http.StatusBadRequest
+		return "for list and get actions use the manage_istio_config_read tool", http.StatusBadRequest
 	}
 	if err := validateIstioConfigInput(args); err != nil {
 		return err.Error(), http.StatusBadRequest
@@ -167,7 +167,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 		return res, http.StatusOK
 	default:
-		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action), http.StatusBadRequest
+		return fmt.Sprintf("invalid action %q: must be one of create, patch, delete", action), http.StatusBadRequest
 	}
 }
 
