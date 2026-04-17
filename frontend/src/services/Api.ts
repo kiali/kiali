@@ -126,22 +126,20 @@ const loginHeaders = config.login.headers;
 /**  Helpers to Requests */
 
 const getHeaders = (method: HTTP_VERBS, urlEncoded: boolean): Partial<AxiosHeaders> => {
-  if (apiProxy) {
-    // apiProxy is used by OSSMC, which doesn't need Kiali login headers (and can cause CORS issues)
-    // Header name must match mcp.HeaderKialiUI (handlers/ChatMCP).
-    const headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'Kiali-UI': 'true' };
+  const headers: Record<string, string | undefined> = {
+    'Content-Type': urlEncoded ? 'application/x-www-form-urlencoded' : 'application/json',
+    'Kiali-UI': 'true',
+    ...loginHeaders
+  };
 
-    // X-CSRFToken is used only for non-GET requests
-    if (method !== HTTP_VERBS.GET) {
-      headers['X-CSRFToken'] = getCSRFToken();
+  if (method !== HTTP_VERBS.GET) {
+    const csrf = getCSRFToken();
+    if (csrf) {
+      headers['X-CSRFToken'] = csrf;
     }
-
-    return headers;
-  } else if (urlEncoded) {
-    return { 'Content-Type': 'application/x-www-form-urlencoded', ...loginHeaders };
-  } else {
-    return { 'Content-Type': 'application/json', ...loginHeaders };
   }
+
+  return headers;
 };
 
 const basicAuth = (username: UserName, password: Password): BasicAuth => {

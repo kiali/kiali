@@ -1,6 +1,81 @@
+import axios from 'axios';
+import axiosMockAdapter from 'axios-mock-adapter';
+
 import * as API from '../Api';
+import * as Auth from '../../types/Auth';
 import { IstioMetricsOptions } from '../../types/MetricsOptions';
 import { ServiceListQuery } from '../../types/ServiceList';
+
+describe('#getHeaders via public API calls', () => {
+  let mock: axiosMockAdapter;
+
+  beforeEach(() => {
+    mock = new axiosMockAdapter(axios);
+    mock.onAny().reply(200, {});
+  });
+
+  afterEach(() => {
+    mock.restore();
+    jest.restoreAllMocks();
+  });
+
+  it('should include Kiali-UI and Content-Type on GET requests', async () => {
+    await API.getStatus();
+
+    expect(mock.history.get).toHaveLength(1);
+    const headers = mock.history.get[0].headers!;
+    expect(headers['Kiali-UI']).toBe('true');
+    expect(headers['Content-Type']).toBe('application/json');
+    expect(headers['X-Auth-Type-Kiali-UI']).toBe('1');
+  });
+
+  it('should not include X-CSRFToken on GET requests', async () => {
+    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
+
+    await API.getStatus();
+
+    const headers = mock.history.get[0].headers!;
+    expect(headers['X-CSRFToken']).toBeUndefined();
+  });
+
+  it('should include X-CSRFToken on non-GET requests when token exists', async () => {
+    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
+
+    await API.createIstioConfigDetail(
+      'test-ns',
+      { Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' },
+      '{}'
+    );
+
+    expect(mock.history.post).toHaveLength(1);
+    const headers = mock.history.post[0].headers!;
+    expect(headers['X-CSRFToken']).toBe('test-csrf-token');
+  });
+
+  it('should not include X-CSRFToken on non-GET requests when token is undefined', async () => {
+    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue(undefined);
+
+    await API.createIstioConfigDetail(
+      'test-ns',
+      { Group: 'networking.istio.io', Version: 'v1', Kind: 'VirtualService' },
+      '{}'
+    );
+
+    const headers = mock.history.post[0].headers!;
+    expect(headers['X-CSRFToken']).toBeUndefined();
+  });
+
+  it('should use url-encoded Content-Type for login', async () => {
+    mock.onPost().reply(200, {});
+
+    await API.login({ username: 'admin', password: 'admin', token: '' });
+
+    expect(mock.history.post).toHaveLength(1);
+    const headers = mock.history.post[0].headers!;
+    expect(headers['Content-Type']).toBe('application/x-www-form-urlencoded');
+    expect(headers['Kiali-UI']).toBe('true');
+  });
+});
 
 describe('#GetErrorString', () => {
   it('should return an error message with status', () => {
