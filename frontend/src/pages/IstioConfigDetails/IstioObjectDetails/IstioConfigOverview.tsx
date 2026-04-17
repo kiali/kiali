@@ -35,7 +35,6 @@ import { CLUSTER_DEFAULT } from 'types/Graph';
 import { infoStyle } from 'styles/IconStyle';
 
 interface IstioConfigOverviewProps {
-  cluster?: string;
   helpMessages?: HelpMessage[];
   istioObjectDetails: IstioConfigDetails;
   istioValidations?: ObjectValidation;
@@ -73,6 +72,8 @@ const linkStyle = kialiStyle({
 });
 
 export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: IstioConfigOverviewProps) => {
+  const cluster = props.istioObjectDetails.cluster || props.istioObjectDetails.namespace.cluster;
+
   const configurationHasWarnings = (): boolean | undefined => {
     return props.istioValidations?.checks.some(check => {
       return check.severity === ValidationTypes.Warning;
@@ -112,7 +113,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
   let urlInKiali = '';
 
   if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
-    const clusterInfo = serverConfig.clusters[props.cluster ?? homeCluster?.name ?? CLUSTER_DEFAULT];
+    const clusterInfo = serverConfig.clusters[cluster ?? homeCluster?.name ?? CLUSTER_DEFAULT];
     const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
 
     // Set the kiali url from kialiInstance info (here a "/console" is required as external link is used)
@@ -123,7 +124,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
         istioObject.metadata.name,
         istioObject.metadata.namespace,
         getIstioObjectGVK(istioObject.apiVersion, istioObject.kind),
-        props.cluster
+        cluster
       );
   }
 
@@ -138,7 +139,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
       <StackItem>
         {isMultiCluster && (
           <div key="cluster-icon">
-            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {props.cluster}
+            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {cluster}
           </div>
         )}
 
@@ -190,10 +191,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
       {props.istioValidations?.references && (
         <StackItem>
-          <IstioConfigValidationReferences
-            objectReferences={props.istioValidations.references}
-            cluster={props.cluster}
-          />
+          <IstioConfigValidationReferences objectReferences={props.istioValidations.references} cluster={cluster} />
         </StackItem>
       )}
 
@@ -205,7 +203,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
             serviceReferences={props.serviceReferences}
             workloadReferences={props.workloadReferences}
             isValid={!props.istioValidations || props.istioValidations?.valid}
-            cluster={props.cluster}
+            cluster={cluster}
           />
         </StackItem>
       )}

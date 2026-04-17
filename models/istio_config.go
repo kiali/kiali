@@ -345,25 +345,27 @@ func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
 		resource = i.K8sTLSRoute
 	}
 
-	jsonMap["resource"] = resource
-	jsonMap["namespace"] = i.Namespace
+	jsonMap["cluster"] = i.Namespace.Cluster
 	jsonMap["gvk"] = i.ObjectGVK
-	jsonMap["permissions"] = i.Permissions
-	jsonMap["validation"] = i.IstioValidation
-	jsonMap["references"] = i.IstioReferences
 	jsonMap["help"] = i.IstioConfigHelpFields
+	jsonMap["namespace"] = i.Namespace
+	jsonMap["permissions"] = i.Permissions
+	jsonMap["references"] = i.IstioReferences
+	jsonMap["resource"] = resource
+	jsonMap["validation"] = i.IstioValidation
 
 	return json.Marshal(jsonMap)
 }
 
 func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 	var temp struct {
+		Cluster               string                  `json:"cluster"`
+		IstioConfigHelpFields []IstioConfigHelp       `json:"help"`
+		IstioReferences       *IstioReferences        `json:"references"`
+		IstioValidation       *IstioValidation        `json:"validation"`
 		Namespace             Namespace               `json:"namespace"`
 		ObjectGVK             schema.GroupVersionKind `json:"gvk"`
 		Permissions           ResourcePermissions     `json:"permissions"`
-		IstioValidation       *IstioValidation        `json:"validation"`
-		IstioReferences       *IstioReferences        `json:"references"`
-		IstioConfigHelpFields []IstioConfigHelp       `json:"help"`
 		Resource              json.RawMessage         `json:"resource"`
 	}
 
@@ -372,6 +374,9 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 	}
 
 	icd.Namespace = temp.Namespace
+	if icd.Namespace.Cluster == "" && temp.Cluster != "" {
+		icd.Namespace.Cluster = temp.Cluster
+	}
 	icd.ObjectGVK = temp.ObjectGVK
 	icd.Permissions = temp.Permissions
 	icd.IstioValidation = temp.IstioValidation

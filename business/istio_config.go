@@ -593,7 +593,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 	var err error
 
 	istioConfigDetail := models.IstioConfigDetails{}
-	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
 	istioConfigDetail.ObjectGVK = objectGVK
 
 	if _, ok := in.userClients[cluster]; !ok {
@@ -900,7 +900,7 @@ func (in *IstioConfigService) waitForCacheCreate(ctx context.Context, cluster st
 
 func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, cluster, namespace string, resourceType schema.GroupVersionKind, name, jsonPatch string) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
-	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
 	istioConfigDetail.ObjectGVK = resourceType
 
 	patchOpts := meta_v1.PatchOptions{}
@@ -1018,7 +1018,7 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 
 func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, cluster, namespace string, resourceType schema.GroupVersionKind, body []byte) (models.IstioConfigDetails, error) {
 	istioConfigDetail := models.IstioConfigDetails{}
-	istioConfigDetail.Namespace = models.Namespace{Name: namespace}
+	istioConfigDetail.Namespace = models.Namespace{Cluster: cluster, Name: namespace}
 	istioConfigDetail.ObjectGVK = resourceType
 
 	createOpts := meta_v1.CreateOptions{}

@@ -172,6 +172,7 @@ func TestGetIstioConfigDetails(t *testing.T) {
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
+	assert.Equal(conf.KubernetesConfig.ClusterName, istioConfigDetails.Namespace.Cluster)
 	assert.Nil(err)
 
 	istioConfigDetails, err = configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews")
@@ -202,12 +203,14 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 	assert.Equal("gw-1", istioConfigDetails.Gateway.Name)
 	assert.True(istioConfigDetails.Permissions.Update)
 	assert.False(istioConfigDetails.Permissions.Delete)
+	assert.Equal(config.Get().KubernetesConfig.ClusterName, istioConfigDetails.Namespace.Cluster)
 	assert.Nil(err)
 
 	istioConfigDetailsRemote, err := configService.GetIstioConfigDetails(context.TODO(), "east", "test", kubernetes.Gateways, "gw-1")
 	assert.Equal("gw-1", istioConfigDetailsRemote.Gateway.Name)
 	assert.True(istioConfigDetailsRemote.Permissions.Update)
 	assert.False(istioConfigDetailsRemote.Permissions.Delete)
+	assert.Equal("east", istioConfigDetailsRemote.Namespace.Cluster)
 	assert.Nil(err)
 }
 
@@ -523,6 +526,7 @@ func TestUpdateIstioConfigDetails(t *testing.T) {
 	updatedVirtualService, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, "reviews-to-update", "{}")
 	require.NoError(err)
 	assert.Equal("test", updatedVirtualService.Namespace.Name)
+	assert.Equal(conf.KubernetesConfig.ClusterName, updatedVirtualService.Namespace.Cluster)
 	assert.Equal(kubernetes.VirtualServices.String(), updatedVirtualService.ObjectGVK.String())
 	assert.Equal("reviews-to-update", updatedVirtualService.VirtualService.Name)
 }
@@ -538,6 +542,7 @@ func TestCreateIstioConfigDetails(t *testing.T) {
 
 	createVirtualService, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.VirtualServices, []byte("{}"))
 	assert.Equal("test", createVirtualService.Namespace.Name)
+	assert.Equal(conf.KubernetesConfig.ClusterName, createVirtualService.Namespace.Cluster)
 	assert.Equal(kubernetes.VirtualServices.String(), createVirtualService.ObjectGVK.String())
 	// Name is now encoded in the payload of the virtualservice so, it modifies this test
 	// assert.Equal("reviews-to-update", createVirtualService.VirtualService.Name)
@@ -603,7 +608,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	// in it so the list should return empty.
 	k8s.Token = "test"
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
-	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Name: "nottest", Cluster: "Kubernetes"}})
+	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,

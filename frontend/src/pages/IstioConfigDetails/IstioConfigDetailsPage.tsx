@@ -163,7 +163,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       .then(resultConfigDetails => {
         this.setState(
           {
-            cluster: this.state.cluster,
+            cluster:
+              resultConfigDetails.data.cluster || resultConfigDetails.data.namespace.cluster || this.state.cluster,
             istioObjectDetails: resultConfigDetails.data,
             originalIstioObjectDetails: resultConfigDetails.data,
             istioValidations: resultConfigDetails.data.validation,
@@ -528,7 +529,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
                     istioObjectDetails={this.state.istioObjectDetails}
                     istioValidations={this.state.istioValidations}
                     namespace={this.state.istioObjectDetails.namespace.name}
-                    cluster={this.state.cluster}
                     statusMessages={istioStatusMsgs}
                     objectReferences={objectReferences}
                     serviceReferences={serviceReferences}
