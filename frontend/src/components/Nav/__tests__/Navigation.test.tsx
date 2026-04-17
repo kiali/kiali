@@ -8,6 +8,11 @@ import { Provider } from 'react-redux';
 import { LoginActions } from 'actions/LoginActions';
 import { Theme } from 'types/Common';
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: () => ({ pathname: '/overview', search: '', hash: '', state: null })
+}));
+
 const session = {
   expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
   username: 'admin'

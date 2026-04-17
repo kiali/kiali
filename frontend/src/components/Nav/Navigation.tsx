@@ -49,8 +49,8 @@ type NavigationProps = ReduxStateProps & ReduxDispatchProps;
 
 const flexBoxColumnStyle = kialiStyle({
   display: 'flex',
-  flexDirection: 'column',
   flex: 1,
+  flexDirection: 'column',
   minHeight: 0
 });
 
@@ -149,13 +149,13 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  chatbotEnabled: state.chatAi.enabled,
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
   showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
-  chatbotEnabled: state.chatAi.enabled
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

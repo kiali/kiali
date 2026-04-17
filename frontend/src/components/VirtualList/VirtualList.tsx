@@ -31,8 +31,6 @@ import { sortFields } from '../../pages/Namespaces/Sorts';
 import { FilterSelected, StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
-import { isKiosk } from 'components/Kiosk/KioskActions';
-import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { t } from 'utils/I18nUtils';
@@ -43,20 +41,13 @@ const emptyStyle = kialiStyle({
   borderBottom: 0
 });
 
-// TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 269;
-
-// EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
-// 42px is the height of the first tab menu
-const EMBEDDED_PADDING = 42 + 100;
-
-/**
- * By default, Kiali hides the global scrollbar and fixes the height for some pages to force the scrollbar to appear
- * Hiding global scrollbar is not possible when Kiali is embedded in other application (like Openshift Console)
- * In these cases height is not fixed to avoid multiple scrollbars (https://github.com/kiali/kiali/issues/6601)
- * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
- */
-const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
+const outerContainerStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0,
+  width: '100%'
+});
 
 const innerScrollContainerStyle = kialiStyle({
   flex: 1,
@@ -98,7 +89,6 @@ type VirtualListProps<R> = ReduxProps & {
 type VirtualListState<R extends RenderResource> = {
   columns: ResourceType<R>[];
   conf: Resource;
-  scrollStyle: string;
   sortBy: {
     direction: Direction;
     index: number;
@@ -106,6 +96,8 @@ type VirtualListState<R extends RenderResource> = {
 };
 
 class VirtualListComponent<R extends RenderResource> extends React.Component<VirtualListProps<R>, VirtualListState<R>> {
+  private outerDivRef = React.createRef<HTMLDivElement>();
+  private resizeObserver: ResizeObserver | undefined;
   private statefulFilters: StatefulFiltersRef = React.createRef();
 
   constructor(props: VirtualListProps<R>) {
@@ -124,7 +116,6 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         index,
         direction: HistoryManager.getParam(URLParam.DIRECTION) as Direction
       },
-      scrollStyle: kialiStyle({}),
       columns,
       conf
     };
@@ -147,12 +138,18 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   };
 
   componentDidMount(): void {
-    this.updateWindowDimensions();
-    window.addEventListener('resize', this.updateWindowDimensions);
+    this.notifyResize();
+    if (this.outerDivRef.current && typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.notifyResize());
+      this.resizeObserver.observe(this.outerDivRef.current);
+    } else {
+      window.addEventListener('resize', this.notifyResize);
+    }
   }
 
   componentWillUnmount(): void {
-    window.removeEventListener('resize', this.updateWindowDimensions);
+    this.resizeObserver?.disconnect();
+    window.removeEventListener('resize', this.notifyResize);
   }
 
   componentDidUpdate(): void {
@@ -166,33 +163,10 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     }
   }
 
-  getScrollStyle = (height: number): string => {
-    if (globalScrollbar === 'false') {
-      return kialiStyle({
-        display: 'flex',
-        flexDirection: 'column',
-        height: height,
-        overflow: 'hidden',
-        width: '100%'
-      });
+  private notifyResize = (): void => {
+    if (this.props.onResize && this.outerDivRef.current) {
+      this.props.onResize(this.outerDivRef.current.clientHeight);
     }
-    return kialiStyle({});
-  };
-
-  updateWindowDimensions = (): void => {
-    const isStandalone = !isKiosk(store.getState().globalState.kiosk);
-    const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
-
-    this.setState(
-      {
-        scrollStyle: this.getScrollStyle(window.innerHeight - topPadding)
-      },
-      () => {
-        if (this.props.onResize) {
-          this.props.onResize(window.innerHeight - topPadding);
-        }
-      }
-    );
   };
 
   private static getColumnId(column: { id?: string; name: string }): string {
@@ -294,7 +268,6 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
   };
 
   render(): React.ReactNode {
-    // If there is no global scrollbar, height is fixed to force the scrollbar to appear in the component
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
@@ -360,7 +333,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const isManualRefresh = this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded;
 
     return (
-      <div className={classes(this.state.scrollStyle, this.props.className)}>
+      <div ref={this.outerDivRef} className={classes(outerContainerStyle, this.props.className)}>
         {childrenWithProps}
         {isManualRefresh ? (
           <ManualRefreshEmptyState />
