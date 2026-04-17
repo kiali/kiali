@@ -3,9 +3,10 @@ name: Test Istio Version
 on:
   schedule:
   # These are in UTC time.
-  # If you change any of these, you must also change the case statment in the determine-istio-version-to-use task.
+  # If you change any of these, you must also change the case statement in the determine-* tasks below.
   - cron: "0 2 * * *"
   - cron: "0 4 * * *"
+  - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       istio_version:
@@ -23,6 +24,11 @@ on:
         required: true
         default: "master"
         type: string
+      sail_operator_git_ref:
+        description: "sail_operator_git_ref: Optional Sail operator git ref (for example 'master'). If set, it overrides schedule defaults."
+        required: false
+        default: ""
+        type: string
 
 jobs:
   initialize:
@@ -32,6 +38,7 @@ jobs:
       target-branch: ${{ inputs.branch_to_test }}
       build-branch: ${{ inputs.branch_to_test }}
       istio-version: ${{ steps.determine-istio-version-to-use.outputs.istio-version }}
+      sail-operator-git-ref: ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}
     steps:
     # The initialize job gathers variables for later use in jobs.
     - name: Determine Istio Version to use
@@ -44,6 +51,7 @@ jobs:
             OFFSET=$(( OFFSET < 0 ? -OFFSET : OFFSET ))
           else
             case "${{ github.event.schedule }}" in
+              "0 6 * * *") OFFSET=0 ;;
               "0 2 * * *") OFFSET=1 ;;
               "0 4 * * *") OFFSET=2 ;;
               *) echo "Invalid schedule or unknown trigger! Cannot determine Istio version." && exit 1 ;;
@@ -104,8 +112,21 @@ jobs:
           ISTIO_VERSION="${{ github.event.inputs.istio_version }}"
         fi
         echo "istio-version=${ISTIO_VERSION}" | tee -a "$GITHUB_OUTPUT"
+    - name: Determine Sail Operator git ref to use
+      id: determine-sail-operator-git-ref-to-use
+      run: |
+        if [ -n "${{ github.event.inputs.sail_operator_git_ref }}" ]; then
+          SAIL_OPERATOR_GIT_REF="${{ github.event.inputs.sail_operator_git_ref }}"
+        else
+          case "${{ github.event.schedule }}" in
+            "0 6 * * *") SAIL_OPERATOR_GIT_REF="master" ;;
+            *) SAIL_OPERATOR_GIT_REF="" ;;
+          esac
+        fi
+        echo "sail-operator-git-ref=${SAIL_OPERATOR_GIT_REF}" | tee -a "$GITHUB_OUTPUT"
     - run: echo "target-branch -> ${{ inputs.branch_to_test }}"
     - run: echo "build-branch -> ${{ inputs.branch_to_test }}"
+    - run: echo "sail-operator-git-ref -> ${{ steps.determine-sail-operator-git-ref-to-use.outputs.sail-operator-git-ref }}"
 
   test_backend:
     name: Run backend linters and unit tests
@@ -137,6 +158,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
@@ -146,6 +168,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend:
     name: Run frontend integration tests
@@ -155,6 +178,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
@@ -164,6 +188,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
@@ -173,6 +198,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
@@ -183,6 +209,7 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
 
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
@@ -192,3 +219,4 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
+      sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}

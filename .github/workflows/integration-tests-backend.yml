@@ -13,6 +13,10 @@ on:
         required: false
         type: string
         default: ""
+      sail_operator_git_ref:
+        required: false
+        type: string
+        default: ""
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
@@ -55,7 +59,7 @@ jobs:
 
     - name: Run backend integration tests
       id: intTests
-      run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail_operator_git_ref }}" ]; then echo "--sail-operator-git-ref ${{ inputs.sail_operator_git_ref }}"; fi)
 
     - name: Run backend controller integration tests
       run: make $(if [ -n "${ISTIO_VERSION:-${{ inputs.istio_version }}}" ]; then echo "ISTIO_VERSION=${ISTIO_VERSION:-${{ inputs.istio_version }}}"; fi) test-integration-controller
