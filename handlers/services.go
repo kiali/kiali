@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io"
 	"net/http"
 	"slices"
 	"strconv"
@@ -252,9 +251,10 @@ func ServiceUpdate(
 			return
 		}
 
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+			return
 		}
 		jsonPatch := string(body)
 		istioConfigValidations := models.IstioValidations{}

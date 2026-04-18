@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -110,9 +109,9 @@ func NamespaceValidationSummary(
 		if errValidations != nil {
 			log.FromRequest(r).Error().Msg(errValidations.Error())
 			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
-		} else {
-			validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
+			return
 		}
+		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
 
 		RespondWithJSON(w, http.StatusOK, validationSummary)
 	}
@@ -123,7 +122,7 @@ func NamespaceUpdate(conf *config.Config, kialiCache cache.KialiCache, clientFac
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		namespace := params["namespace"]
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
 			return

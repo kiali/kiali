@@ -2,8 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 )
+
+const maxRequestBodyBytes int64 = 10 * 1024 * 1024 // 10 MB
+
+// boundedReadAll reads the full request body up to maxRequestBodyBytes.
+// Returns an error if the body exceeds the limit.
+func boundedReadAll(r *http.Request) ([]byte, error) {
+	r.Body = http.MaxBytesReader(nil, r.Body, maxRequestBodyBytes)
+	return io.ReadAll(r.Body)
+}
 
 type responseError struct {
 	Error  string `json:"error,omitempty"`

@@ -176,15 +176,16 @@ func (c *tokenAuthController) TerminateSession(r *http.Request, w http.ResponseW
 // If the token is not a JWT, or if it does not have a "sub" claim, a generic "token" string
 // is returned.
 func extractSubjectFromK8sToken(token string) string {
-	subject := "token" // Set a default value
+	subject := "token"
 
-	// Decode the Kubernetes token (it is a JWT token) without validating its signature
-	var claims map[string]interface{} // generic map to store parsed token
+	var claims map[string]any
 	parsedJWSToken, err := jwt.ParseSigned(token)
 	if err == nil {
 		err = parsedJWSToken.UnsafeClaimsWithoutVerification(&claims)
 		if err == nil {
-			subject = strings.TrimPrefix(claims["sub"].(string), "system:serviceaccount:") // Shorten the subject displayed in UI.
+			if sub, ok := claims["sub"].(string); ok {
+				subject = strings.TrimPrefix(sub, "system:serviceaccount:")
+			}
 		}
 	}
 

@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -21,6 +21,8 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
+
+var validTraceIDRe = regexp.MustCompile(`^[a-fA-F0-9]{1,32}$`)
 
 // Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(conf *config.Config) http.HandlerFunc {
@@ -209,6 +211,10 @@ func TraceDetails(
 		}
 		params := mux.Vars(r)
 		traceID := params["traceID"]
+		if !validTraceIDRe.MatchString(traceID) {
+			RespondWithError(w, http.StatusBadRequest, "Invalid trace ID format")
+			return
+		}
 		trace, err := business.Tracing.GetTraceDetail(r.Context(), traceID)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -358,6 +364,13 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 	}
 	if strLimit := values.Get("limit"); strLimit != "" {
 		if num, err := strconv.Atoi(strLimit); err == nil {
+			if num <= 0 {
+				return models.TracingQuery{}, fmt.Errorf("parameter 'limit' must be positive")
+			}
+			const maxTracingLimit = 10000
+			if num > maxTracingLimit {
+				num = maxTracingLimit
+			}
 			q.Limit = num
 		} else {
 			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'limit': %s", err.Error())
@@ -439,9 +452,10 @@ func TracingConfigurationCheck(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+			return
 		}
 		testConfig := string(body)
 		var tracingConfig config.TracingConfig

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -303,9 +302,10 @@ func IstioConfigUpdate(
 			return
 		}
 
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+			return
 		}
 		jsonPatch := string(body)
 		updatedConfigDetails, err := business.IstioConfig.UpdateIstioConfigDetail(r.Context(), cluster, namespace, gvk, object, jsonPatch)
@@ -358,9 +358,10 @@ func IstioConfigCreate(
 			return
 		}
 
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Create request could not be read: "+err.Error())
+			return
 		}
 
 		createdConfigDetails, err := business.IstioConfig.CreateIstioConfigDetail(r.Context(), cluster, namespace, gvk, body)

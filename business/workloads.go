@@ -3026,19 +3026,41 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		pods := in.cache.GetZtunnelPods(cluster)
 		// This is needed for the K8S client
 		opts.Container = models.IstioProxy
-		wkDstPattern := fmt.Sprintf(`dst\.workload=("?%s"?)`, name)
-		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
-		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
-		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
-		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, service, namespace)
+		escapedName := regexp.QuoteMeta(name)
+		escapedNamespace := regexp.QuoteMeta(namespace)
+		escapedService := regexp.QuoteMeta(service)
+		wkDstPattern := fmt.Sprintf(`dst\.workload=("?%s"?)`, escapedName)
+		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, escapedNamespace)
+		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, escapedName)
+		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, escapedNamespace)
+		svcPattern := fmt.Sprintf(`dst\.service=("?%s\.%s\.?)`, escapedService, escapedNamespace)
 
-		// The ztunnel line should include the pod and the namespace
+		destWk, err := regexp.Compile(wkDstPattern)
+		if err != nil {
+			return fmt.Errorf("invalid workload name for log filter: %w", err)
+		}
+		destNs, err := regexp.Compile(nsDstPattern)
+		if err != nil {
+			return fmt.Errorf("invalid namespace for log filter: %w", err)
+		}
+		srcWk, err := regexp.Compile(wkSrcPattern)
+		if err != nil {
+			return fmt.Errorf("invalid workload name for log filter: %w", err)
+		}
+		srcNs, err := regexp.Compile(nsSrcPattern)
+		if err != nil {
+			return fmt.Errorf("invalid namespace for log filter: %w", err)
+		}
+		destSvc, err := regexp.Compile(svcPattern)
+		if err != nil {
+			return fmt.Errorf("invalid service name for log filter: %w", err)
+		}
 		fs := filterOpts{
-			destWk:  *regexp.MustCompile(wkDstPattern),
-			destNs:  *regexp.MustCompile(nsDstPattern),
-			srcWk:   *regexp.MustCompile(wkSrcPattern),
-			srcNs:   *regexp.MustCompile(nsSrcPattern),
-			destSvc: *regexp.MustCompile(svcPattern),
+			destWk:  *destWk,
+			destNs:  *destNs,
+			srcWk:   *srcWk,
+			srcNs:   *srcNs,
+			destSvc: *destSvc,
 		}
 		opts.filter = fs
 		for _, pod := range pods {
@@ -3055,9 +3077,12 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 			log.Errorf("Error when getting workload info: %s", err.Error())
 		} else {
 			if len(wk.WaypointWorkloads) > 0 {
-				// Waypoint filter by the app name
+				appRe, err := regexp.Compile(regexp.QuoteMeta(service))
+				if err != nil {
+					return fmt.Errorf("invalid service name for waypoint log filter: %w", err)
+				}
 				fs := filterOpts{
-					app: *regexp.MustCompile(service),
+					app: *appRe,
 				}
 				opts.filter = fs
 				waypoint := wk.WaypointWorkloads[0]

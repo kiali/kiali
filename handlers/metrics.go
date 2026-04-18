@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,8 @@ import (
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/util"
 )
+
+var validPromLabelRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
@@ -338,13 +341,14 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Unable to get user clients from auth info: "+err.Error())
+			return
 		}
 
 		namespace := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
 		loadedNamespaces, err := namespace.GetClusterNamespaces(r.Context(), cluster)
 		if err != nil {
-			// Check specifically for forbidden?
 			RespondWithError(w, http.StatusInternalServerError, "Unable to get cluster namespaces: "+err.Error())
+			return
 		}
 
 		var nss []models.Namespace
@@ -477,6 +481,11 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		}
 	}
 	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
+		for _, lbl := range lbls {
+			if !isValidPromLabel(lbl) {
+				return fmt.Errorf("bad request, invalid label name in 'byLabels': %q", lbl)
+			}
+		}
 		q.ByLabels = lbls
 	}
 
@@ -577,4 +586,10 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 		validQueries = append(validQueries, q)
 	}
 	return validQueries, errors.OrNil()
+}
+
+// isValidPromLabel checks that a label name conforms to the Prometheus data model:
+// [a-zA-Z_][a-zA-Z0-9_]* — prevents PromQL injection through byLabels[] parameters.
+func isValidPromLabel(label string) bool {
+	return validPromLabelRe.MatchString(label)
 }

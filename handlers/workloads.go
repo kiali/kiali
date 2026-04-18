@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io"
 	"net/http"
 	"slices"
 	"strconv"
@@ -250,6 +249,7 @@ func WorkloadUpdate(
 		workloadGVK, errGVK := util.StringToGVK(query.Get("gvk"))
 		if errGVK != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad workloadGVK param: "+errGVK.Error())
+			return
 		}
 
 		cluster := clusterNameFromQuery(conf, query)
@@ -259,9 +259,10 @@ func WorkloadUpdate(
 			includeValidations = false
 		}
 
-		body, err := io.ReadAll(r.Body)
+		body, err := boundedReadAll(r)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, "Update request with bad update patch: "+err.Error())
+			return
 		}
 		jsonPatch := string(body)
 
