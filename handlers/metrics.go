@@ -30,6 +30,14 @@ import (
 
 var validPromLabelRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
+// validPromDurationRe matches a valid Prometheus duration string (e.g. "5m", "30s", "1h").
+// Prevents injection into PromQL range selectors via the rateInterval query parameter.
+var validPromDurationRe = regexp.MustCompile(`^[0-9]+(ms|s|m|h|d|w|y)$`)
+
+// validK8sNameRe matches valid Kubernetes resource names (DNS label subset).
+// Used to validate URL path parameters before interpolating into PromQL queries.
+var validK8sNameRe = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?$`)
+
 // AppMetrics is the API handler to fetch metrics to be displayed, related to an app-label grouping
 func AppMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -260,6 +268,10 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
+		if !validK8sNameRe.MatchString(app) {
+			RespondWithError(w, http.StatusBadRequest, "Invalid app name")
+			return
+		}
 		conf := config.Get()
 		cluster := clusterNameFromQuery(conf, r.URL.Query())
 
@@ -430,6 +442,9 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 
 func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQuery, namespaceInfo *models.Namespace) error {
 	if ri := queryParams.Get("rateInterval"); ri != "" {
+		if !validPromDurationRe.MatchString(ri) {
+			return fmt.Errorf("bad request, invalid 'rateInterval' value: %q", ri)
+		}
 		q.RateInterval = ri
 	}
 	if rf := queryParams.Get("rateFunc"); rf != "" {

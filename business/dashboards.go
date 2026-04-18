@@ -402,14 +402,22 @@ func (in *DashboardsService) buildLabelsQueryString(namespace string, labelsFilt
 	}
 	labels := fmt.Sprintf(`{%s="%s"`, namespaceLabel, namespace)
 	for k, v := range labelsFilters {
-		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(k), v)
+		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(k), escapePromLabelValue(v))
 	}
 	for labelName, labelValue := range in.promConfig.QueryScope {
-		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(labelName), labelValue)
+		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue))
 	}
 
 	labels += "}"
 	return labels
+}
+
+// escapePromLabelValue escapes backslashes and double-quotes in a PromQL label value
+// so that user-supplied strings cannot break out of the surrounding "..." literal.
+func escapePromLabelValue(v string) string {
+	v = strings.ReplaceAll(v, `\`, `\\`)
+	v = strings.ReplaceAll(v, `"`, `\"`)
+	return v
 }
 
 type istioChart struct {

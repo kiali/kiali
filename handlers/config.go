@@ -315,12 +315,14 @@ func DisabledFeaturesHandler(conf *config.Config, client prometheus.ClientInterf
 		if !checkErr(err, "", logger) {
 			log.Error(err)
 			RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
+			return
 		}
 
 		// if we have all of the metrics then nothing is disabled, just return
 		// if we have no metrics then we have no requests (note that we check for istio_request_totals), nothing is known to be disabled
 		if len(existingMetrics) == len(requiredMetrics) || len(existingMetrics) == 0 {
 			RespondWithJSONIndent(w, http.StatusOK, disabledFeatures)
+			return
 		}
 
 		exists := make(map[string]bool, len(existingMetrics))
