@@ -9,7 +9,7 @@ import { LoginActions } from 'actions/LoginActions';
 import { Theme } from 'types/Common';
 
 jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
+  ...(jest as any).requireActual('react-router-dom-v5-compat'),
   useLocation: () => ({ pathname: '/overview', search: '', hash: '', state: null })
 }));
 
