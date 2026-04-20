@@ -397,6 +397,13 @@ if [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]
   echo "Mapping Istio version ${REQUESTED_VERSION} to ${SAIL_VERSION} (Sail CRD only allows specific versions per minor; using -latest)"
 fi
 
+FINAL_VERSION="$(yq '.spec.version // ""' <<< "$ISTIO_YAML")"
+if [ -n "${FINAL_VERSION}" ]; then
+  echo "Sail Istio CR version to apply: ${FINAL_VERSION} (requested: ${REQUESTED_VERSION:-<unset>})"
+else
+  echo "WARNING: Sail Istio CR spec.version is empty before apply."
+fi
+
 ISTIO_NAME=$(yq '.metadata.name' <<< "$ISTIO_YAML")
 ISTIO_NAMESPACE=$(yq '.spec.namespace' <<< "$ISTIO_YAML")
 
