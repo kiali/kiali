@@ -75,7 +75,6 @@ const istioConfiguration: ResourceType<NamespaceInfo> = {
   param: 'ic',
   title: 'Istio config',
   sortable: true,
-  width: 10,
   renderer: Renderers.istioConfig
 };
 
@@ -86,7 +85,7 @@ const item: ResourceType<TResource> = {
   param: 'wn',
   title: 'Name',
   sortable: true,
-  width: 30,
+  width: 25,
   renderer: Renderers.item
 };
 
@@ -96,7 +95,7 @@ const serviceItem: ResourceType<ServiceListItem> = {
   param: 'sn',
   title: 'Name',
   sortable: true,
-  width: 30,
+  width: 20,
   renderer: Renderers.item
 };
 
@@ -106,6 +105,7 @@ const istioItem: ResourceType<IstioConfigItem> = {
   param: 'in',
   title: 'Name',
   sortable: true,
+  width: 25,
   renderer: Renderers.item
 };
 
@@ -115,7 +115,6 @@ const cluster: ResourceType<TResource> = {
   param: 'cl',
   title: 'Cluster',
   sortable: true,
-  width: 15,
   renderer: Renderers.cluster
 };
 
@@ -125,7 +124,6 @@ const namespace: ResourceType<TResource> = {
   param: 'ns',
   title: 'Namespace',
   sortable: true,
-  width: 20,
   renderer: Renderers.namespace
 };
 
@@ -135,7 +133,7 @@ const labels: ResourceType<RenderResource> = {
   param: 'lb',
   title: 'Labels',
   sortable: false,
-  width: 20,
+  width: 10,
   renderer: Renderers.labels
 };
 
@@ -145,7 +143,7 @@ const health: ResourceType<TResource> = {
   param: 'he',
   title: 'Health',
   sortable: true,
-  width: 15,
+  width: 10,
   renderer: Renderers.health
 };
 
@@ -155,7 +153,6 @@ const details: ResourceType<AppListItem | WorkloadListItem | ServiceListItem> = 
   param: 'is',
   title: 'Details',
   sortable: true,
-  width: 15,
   renderer: Renderers.details
 };
 
@@ -165,7 +162,6 @@ const serviceConfiguration: ResourceType<ServiceListItem> = {
   param: 'cv',
   title: 'Configuration',
   sortable: true,
-  width: 20,
   renderer: Renderers.serviceConfiguration
 };
 
@@ -175,7 +171,6 @@ const istioObjectConfiguration: ResourceType<IstioConfigItem> = {
   param: 'cv',
   title: 'Configuration',
   sortable: true,
-  width: 20,
   renderer: Renderers.istioConfiguration
 };
 
@@ -224,7 +219,7 @@ const namespacesHealth: ResourceType<NamespaceInfo> = {
   renderer: Renderers.nsHealth,
   sortable: true,
   title: 'Health',
-  width: 20
+  width: 10
 };
 
 const typeNamespaces: ResourceType<NamespaceInfo> = {
@@ -240,8 +235,7 @@ const typeNamespaces: ResourceType<NamespaceInfo> = {
   param: 'type',
   renderer: Renderers.nsType,
   sortable: true,
-  title: 'Type',
-  width: 10
+  title: 'Type'
 };
 
 const modeNamespaces: ResourceType<NamespaceInfo> = {
@@ -250,8 +244,7 @@ const modeNamespaces: ResourceType<NamespaceInfo> = {
   param: 'mode',
   renderer: Renderers.nsMode,
   sortable: true,
-  title: 'Mode',
-  width: 10
+  title: 'Mode'
 };
 
 const revisionNamespaces: ResourceType<NamespaceInfo> = {
@@ -260,8 +253,7 @@ const revisionNamespaces: ResourceType<NamespaceInfo> = {
   param: 'rev',
   renderer: Renderers.nsRevision,
   sortable: true,
-  title: 'Revision',
-  width: 10
+  title: 'Revision'
 };
 
 const nsItemNamespaces: ResourceType<NamespaceInfo> = {
@@ -271,7 +263,7 @@ const nsItemNamespaces: ResourceType<NamespaceInfo> = {
   renderer: Renderers.nsItem,
   sortable: true,
   title: 'Namespace',
-  width: 20
+  width: 15
 };
 
 const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
@@ -280,8 +272,7 @@ const tlsStatusNamespaces: ResourceType<NamespaceInfo> = {
   param: 'm',
   renderer: Renderers.nsTls,
   sortable: true,
-  title: 'mTLS',
-  width: 10
+  title: 'mTLS'
 };
 
 const namespacesList: Resource = {
