@@ -2,7 +2,7 @@ name: Release
 
 on:
   schedule:
-  # Every Monday at 07:14 (UTC)
+  # Every Monday at 07:14 (UTC), intentionally offset from potential peak of 7:00
   - cron: "14 7 * * MON"
   workflow_dispatch:
     inputs:
