@@ -386,10 +386,12 @@ if [ -n "${CUSTOM_INSTALL_SETTINGS}" ]; then
   ISTIO_YAML=$(printf "%s" "$ISTIO_YAML" | yq "$CUSTOM_INSTALL_SETTINGS")
 fi
 
-# Sail operator CRDs only allow specific version strings per minor (e.g. v1.26.0-v1.26.3 and v1.26-latest).
-# Map any requested z-stream (vX.Y.Z) to the -latest variant for that minor so the CR validates on all branches.
 REQUESTED_VERSION=$(yq '.spec.version // ""' <<< "$ISTIO_YAML")
-if [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+if [ "${SAIL_OPERATOR_GIT_REF}" == "main" ]; then
+  # When testing Sail main, let Sail choose its default supported version.
+  ISTIO_YAML=$(echo "$ISTIO_YAML" | yq 'del(.spec.version)' -)
+  echo "Sail operator git ref is 'main'; ignoring requested Istio version (${REQUESTED_VERSION:-<unset>}) and letting Sail select the default version."
+elif [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   MINOR="${REQUESTED_VERSION#v}"
   MINOR="${MINOR%.*}"
   SAIL_VERSION="v${MINOR}-latest"
@@ -401,7 +403,7 @@ FINAL_VERSION="$(yq '.spec.version // ""' <<< "$ISTIO_YAML")"
 if [ -n "${FINAL_VERSION}" ]; then
   echo "Sail Istio CR version to apply: ${FINAL_VERSION} (requested: ${REQUESTED_VERSION:-<unset>})"
 else
-  echo "WARNING: Sail Istio CR spec.version is empty before apply."
+  echo "Sail Istio CR spec.version is not set; Sail operator default version will be used."
 fi
 
 ISTIO_NAME=$(yq '.metadata.name' <<< "$ISTIO_YAML")
