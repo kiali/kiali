@@ -58,7 +58,7 @@ export type ContextMenuOption = {
 
 export const clickHandler = (o: ContextMenuOption, kiosk: string): void => {
   if (o.external) {
-    window.open(o.url, o.target);
+    window.open(o.url, o.target, 'noopener,noreferrer');
   } else {
     if (isParentKiosk(kiosk)) {
       kioskNavigateAction(o.url);

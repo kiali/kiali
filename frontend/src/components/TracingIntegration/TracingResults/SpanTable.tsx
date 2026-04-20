@@ -337,7 +337,7 @@ class SpanTableComponent extends React.Component<Props, State> {
               e.preventDefault();
               kioskTracingAction(spanLink, this.props.traceID);
             } else {
-              window.open(spanLink, '_blank');
+              window.open(spanLink, '_blank', 'noopener,noreferrer');
             }
           }
         }

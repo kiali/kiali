@@ -60,7 +60,7 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
             e.preventDefault();
             kioskTracingAction(props.externalURL ? props.externalURL : '', props.traceId);
           } else {
-            window.open(props.externalURL, '_blank');
+            window.open(props.externalURL, '_blank', 'noopener,noreferrer');
           }
         }}
       >
@@ -71,7 +71,10 @@ const TracingTraceTitleComponent: React.FC<Props> = (props: Props) => {
 
   if (props.comparisonURL && !isParentKiosk(props.kiosk)) {
     links.push(
-      <DropdownItem key="compare_with_similar_traces" onClick={() => window.open(props.comparisonURL, '_blank')}>
+      <DropdownItem
+        key="compare_with_similar_traces"
+        onClick={() => window.open(props.comparisonURL, '_blank', 'noopener,noreferrer')}
+      >
         {t('Compare with similar traces')} <ExternalLinkAltIcon />
       </DropdownItem>
     );

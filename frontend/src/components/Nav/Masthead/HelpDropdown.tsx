@@ -46,7 +46,10 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
   const items: React.ReactNode[] = [];
 
   items.push(
-    <DropdownItem key={'view_documentation'} onClick={() => window.open(buildDocumentationLink(), '_blank')}>
+    <DropdownItem
+      key={'view_documentation'}
+      onClick={() => window.open(buildDocumentationLink(), '_blank', 'noopener,noreferrer')}
+    >
       Documentation
     </DropdownItem>
   );

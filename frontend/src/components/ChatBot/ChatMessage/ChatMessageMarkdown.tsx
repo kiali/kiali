@@ -180,5 +180,9 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({
     a: (props: any) => <LinkMessage openLinkInNewTab={openLinkInNewTab} {...props} />
   };
 
-  return <Markdown components={components}>{content}</Markdown>;
+  return (
+    <Markdown components={components} skipHtml>
+      {content}
+    </Markdown>
+  );
 };

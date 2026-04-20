@@ -41,7 +41,17 @@ const decrementLoadingCounter = (): void => {
 
 const openshift_token: string | null = (function () {
   const urlParams = new URLSearchParams(document.location.search);
-  return urlParams.get('oauth_token');
+  const token = urlParams.get('oauth_token');
+
+  // Prevent token leakage via browser history, Referer headers, and proxy logs
+  if (token) {
+    urlParams.delete('oauth_token');
+    const cleanSearch = urlParams.toString();
+    const newUrl = window.location.pathname + (cleanSearch ? `?${cleanSearch}` : '') + window.location.hash;
+    window.history.replaceState(window.history.state, '', newUrl);
+  }
+
+  return token;
 })();
 
 // intercept all Axios requests and dispatch the INCREMENT_LOADING_COUNTER Action

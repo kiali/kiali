@@ -17,6 +17,14 @@ type Props = {
 const buildPersesLinks = (props: Props): [string, string][] => {
   const links: [string, string][] = [];
   props.links.forEach(d => {
+    try {
+      const parsed = new URL(d.url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return;
+      }
+    } catch {
+      return;
+    }
     if (MetricsObjectTypes.ZTUNNEL !== props.objectType || d.name !== ISTIO_ZTUNNEL_DASHBOARD) {
       // Check if this is OpenShift format
       const isOpenShiftFormat = d.url.includes('/monitoring/v2/dashboards');

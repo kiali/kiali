@@ -21,7 +21,14 @@ export class OpenShiftUrlProvider implements TracingUrlProvider {
   }
 
   private buildBaseUrl(): string {
-    // Ensure the URL ends with a slash for proper path joining
+    try {
+      const parsed = new URL(this.service.url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return '';
+      }
+    } catch {
+      return '';
+    }
     const baseUrl = this.service.url.endsWith('/') ? this.service.url : `${this.service.url}/`;
     return `${baseUrl}observe/traces`;
   }

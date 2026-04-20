@@ -253,11 +253,13 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           const service = this.props.tracingInfo.namespaceSelector
             ? `${this.props.appId.app}.${this.props.appId.namespace}`
             : this.props.appId.app;
+          // Encode service name and use rel="noopener noreferrer" to prevent URL injection and reverse tabnabbing.
           tabsArray.push(
             <Tab
               eventKey={4}
-              href={`${this.props.tracingInfo.url}/search?service=${service}`}
+              href={`${this.props.tracingInfo.url}/search?service=${encodeURIComponent(service)}`}
               target="_blank"
+              rel="noopener noreferrer"
               title={
                 <>
                   Traces <ExternalLinkAltIcon />

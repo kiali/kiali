@@ -12,11 +12,17 @@ import {
 import _ from 'lodash';
 import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
 
+// Guard against prototype pollution via crafted keys in deep-merged objects.
+const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 export const mergeJsonPatch = (objectModified: object, object?: object): object => {
   if (!object) {
     return objectModified;
   }
-  const customizer = (objValue, srcValue): object | null => {
+  const customizer = (objValue: any, srcValue: any, key: string): object | null => {
+    if (POLLUTION_KEYS.has(key)) {
+      return objValue;
+    }
     if (!objValue) {
       return null;
     }
@@ -257,7 +263,6 @@ export function isGVKSupported(gvk?: GroupVersionKind): boolean {
     return false;
   }
 
-
   // WorkloadGroup is not supported
   if (gvk.Kind === gvkType.WorkloadGroup) {
     return false;
@@ -271,7 +276,5 @@ export function isGVKSupported(gvk?: GroupVersionKind): boolean {
 
   // Check custom (user-configured) workload types.
   const custom = serverConfig.kialiFeatureFlags?.customWorkloadTypes ?? [];
-  return custom.some(
-    c => c.group === gvk.Group && c.version === gvk.Version && c.kind === gvk.Kind
-  );
+  return custom.some(c => c.group === gvk.Group && c.version === gvk.Version && c.kind === gvk.Kind);
 }

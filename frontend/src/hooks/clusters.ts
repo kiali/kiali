@@ -30,8 +30,13 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
   const { lastRefreshAt } = useRefreshInterval();
   const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [refreshIndex, setRefreshIndex] = React.useState(0);
 
   const hasNamespaces = options?.hasNamespaces ?? true;
+
+  const refresh = React.useCallback((): void => {
+    setRefreshIndex(i => i + 1);
+  }, []);
 
   // Use ref to avoid recreating callback when onRefresh changes
   const onRefreshRef = React.useRef(options?.onRefresh);
@@ -39,13 +44,18 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
     onRefreshRef.current = options?.onRefresh;
   }, [options?.onRefresh]);
 
-  // Fetch and update Redux on mount and refresh
-  const fetchStatus = React.useCallback((): void => {
+  React.useEffect(() => {
+    let active = true;
+
     setIsLoading(true);
     setIsError(false);
 
     API.getIstioStatus()
       .then(response => {
+        if (!active) {
+          return;
+        }
+
         const statusMap: ClusterStatusMap = {};
 
         response.data.forEach(status => {
@@ -55,7 +65,6 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
           statusMap[status.cluster].push(status);
         });
 
-        // Update Redux so IstioStatus component can use it
         dispatch(IstioStatusActions.setinfo(statusMap));
 
         if (onRefreshRef.current) {
@@ -63,8 +72,11 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
         }
       })
       .catch(error => {
+        if (!active) {
+          return;
+        }
+
         setIsError(true);
-        // User without namespaces can't have access to mTLS information. Reduce severity to info.
         const informative = !hasNamespaces;
 
         if (informative) {
@@ -74,19 +86,21 @@ export const useClusterStatus = (options?: UseClusterStatusOptions): ClusterStat
         }
       })
       .finally(() => {
-        setIsLoading(false);
-      });
-  }, [dispatch, hasNamespaces, t]);
+        if (active) {
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {});
 
-  React.useEffect(() => {
-    // Fetch on mount and when refresh interval triggers
-    fetchStatus();
-  }, [lastRefreshAt, fetchStatus]);
+    return () => {
+      active = false;
+    };
+  }, [dispatch, hasNamespaces, lastRefreshAt, refreshIndex, t]);
 
   return {
     isError,
     isLoading,
-    refresh: fetchStatus,
+    refresh,
     statusMap: statusMapFromRedux
   };
 };

@@ -204,25 +204,27 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
   }
 
   componentDidMount(): void {
-    getDisabledFeatures().then(response => {
-      const disabledFeatures = response.data;
-      this.setState({ disabledFeatures: response.data });
+    getDisabledFeatures()
+      .then(response => {
+        const disabledFeatures = response.data;
+        this.setState({ disabledFeatures: response.data });
 
-      // strip away any invalid edge options from the url
-      if (
-        (disabledFeatures.responseTime || disabledFeatures.responseTimePercentiles) &&
-        this.props.edgeLabels.some(l => isResponseTimeMode(l))
-      ) {
-        this.props.setEdgeLabels(this.props.edgeLabels.filter(l => !isResponseTimeMode(l)));
-      }
+        // strip away any invalid edge options from the url
+        if (
+          (disabledFeatures.responseTime || disabledFeatures.responseTimePercentiles) &&
+          this.props.edgeLabels.some(l => isResponseTimeMode(l))
+        ) {
+          this.props.setEdgeLabels(this.props.edgeLabels.filter(l => !isResponseTimeMode(l)));
+        }
 
-      if (
-        (disabledFeatures.requestSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_REQUEST)) ||
-        (disabledFeatures.responseSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_RESPONSE))
-      ) {
-        this.props.setEdgeLabels(this.props.edgeLabels.filter(l => !isThroughputMode(l)));
-      }
-    });
+        if (
+          (disabledFeatures.requestSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_REQUEST)) ||
+          (disabledFeatures.responseSize && this.props.edgeLabels.includes(EdgeLabelMode.THROUGHPUT_RESPONSE))
+        ) {
+          this.props.setEdgeLabels(this.props.edgeLabels.filter(l => !isThroughputMode(l)));
+        }
+      })
+      .catch(() => {});
   }
 
   componentDidUpdate(prev: GraphSettingsProps): void {

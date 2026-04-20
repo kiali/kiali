@@ -40,8 +40,11 @@ export const kioskRefreshAction = (refreshInterval: IntervalInMilliseconds): voi
   sendParentMessage(showInParent);
 };
 
+// Encode parameters to prevent query-string injection in parent message parsing.
 export const kioskTracingAction = (url?: string, traceID?: string): void => {
-  const showInParent = `/tracing/namespaces?trace=${traceID}&url=${url}`;
+  const showInParent = `/tracing/namespaces?trace=${encodeURIComponent(traceID ?? '')}&url=${encodeURIComponent(
+    url ?? ''
+  )}`;
   sendParentMessage(showInParent);
 };
 
@@ -56,9 +59,12 @@ export const isParentKiosk = (kiosk: string): boolean => {
 // Message has no format, parent should parse it for its needs
 const sendParentMessage = (msg: string): void => {
   // Kiosk parameter will send the parent target when kiosk !== "true"
-  // this will enable parent communication
+  // this will enable parent communication.
+  // Guard: only send if actually embedded in a parent frame. Without this check,
+  // a direct visit with ?kiosk=https://attacker.com would attempt postMessage to
+  // window.top (which equals window itself), allowing origin confusion.
   const targetOrigin = store.getState().globalState.kiosk;
-  if (isParentKiosk(targetOrigin)) {
+  if (isParentKiosk(targetOrigin) && window.top !== window.self) {
     window.top?.postMessage(msg, targetOrigin);
   }
 };

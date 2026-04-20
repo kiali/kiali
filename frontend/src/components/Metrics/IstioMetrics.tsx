@@ -138,9 +138,11 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   componentDidMount(): void {
-    API.getDisabledFeatures().then(response => {
-      this.setState({ disabledFeatures: response.data });
-    });
+    API.getDisabledFeatures()
+      .then(response => {
+        this.setState({ disabledFeatures: response.data });
+      })
+      .catch(() => {});
 
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();

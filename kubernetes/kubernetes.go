@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"bytes"
 	"context"
 	goerrors "errors"
 	"fmt"
@@ -423,8 +422,6 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 		return in.getPodPortForwarderFunc(namespace, name, portMap)
 	}
 
-	writer := new(bytes.Buffer)
-
 	// First try whether the pod exist or not
 	pod, err := in.GetPod(namespace, name)
 	if err != nil {
@@ -439,8 +436,10 @@ func (in *K8SClient) getPodPortForwarder(namespace, name, portMap string) (httpu
 
 	// Create a Port Forwarder
 	restInterface := in.k8s.CoreV1().RESTClient()
+	// io.Discard avoids a data race: client-go's portforward library writes to the
+	// output writer from multiple goroutines without synchronization.
 	return httputil.NewPortForwarder(restInterface, in.restConfig,
-		namespace, name, "localhost", portMap, writer)
+		namespace, name, "localhost", portMap, io.Discard)
 }
 
 // GetPod returns the pod definitions for a given pod name.

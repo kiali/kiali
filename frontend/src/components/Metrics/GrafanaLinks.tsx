@@ -18,6 +18,14 @@ export class GrafanaLinks extends React.PureComponent<Props, {}> {
   static buildGrafanaLinks(props: Props): [string, string][] {
     const links: [string, string][] = [];
     props.links.forEach(d => {
+      try {
+        const parsed = new URL(d.url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return;
+        }
+      } catch {
+        return;
+      }
       if (MetricsObjectTypes.ZTUNNEL !== props.objectType || d.name !== ISTIO_ZTUNNEL_DASHBOARD) {
         const first = d.url.includes('?') ? '&' : '?';
         const nsvar = d.variables.namespace ? `&${d.variables.namespace}=${props.namespace}` : '';

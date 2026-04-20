@@ -335,7 +335,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                               e.preventDefault();
                               kioskTracingAction(tracingURL);
                             } else {
-                              window.open(tracingURL, '_blank');
+                              window.open(tracingURL, '_blank', 'noopener,noreferrer');
                             }
                           }}
                         >

@@ -959,14 +959,26 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   # Set the local Kiali URL
   KIALI_URL="http://localhost:20001"
 
-  # Give Kiali a few seconds to be healthy.
-  sleep 5
-
-  # Check to ensure the process is still running.
-  if ! ps -p ${KIALI_PID} > /dev/null; then
-    echo "Kiali process is not running. An error must have occurred. Check the logs above."
-    exit 1
-  fi
+  # Wait for the Kiali server to become ready by polling its health endpoint.
+  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 60))
+  while true; do
+    if ! ps -p ${KIALI_PID} > /dev/null; then
+      echo "Kiali process is not running. An error must have occurred. Check the logs above."
+      exit 1
+    fi
+    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Kiali server is healthy"
 
   export CYPRESS_BASE_URL="${KIALI_URL}"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
@@ -1031,17 +1043,31 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   # Trap to ensure we clean up the Kiali process on exit
   trap "kill ${KIALI_PID} 2>/dev/null || true" EXIT
 
-  # Wait a moment for kiali to start up
-  sleep 5
-
-  # Check to ensure the process is still running.
-  if ! ps -p ${KIALI_PID} > /dev/null; then
-    echo "Kiali process is not running. An error must have occurred. Check the logs above."
-    exit 1
-  fi
+  # Wait for the Kiali server to become ready by polling its health endpoint.
+  # Offline mode can take a while to parse all must-gather data before the HTTP server starts.
+  KIALI_OFFLINE_URL="http://localhost:20001"
+  infomsg "Waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}"
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 120))
+  while true; do
+    if ! ps -p ${KIALI_PID} > /dev/null; then
+      echo "Kiali process is not running. An error must have occurred. Check the logs above."
+      exit 1
+    fi
+    if curl -s --fail "${KIALI_OFFLINE_URL}/healthz" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}/healthz"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Kiali offline server is healthy"
 
   # Set up cypress environment variables
-  export CYPRESS_BASE_URL="http://localhost:20001"
+  export CYPRESS_BASE_URL="${KIALI_OFFLINE_URL}"
   export CYPRESS_RUN_MODE="offline"
   export CYPRESS_NUM_TESTS_KEPT_IN_MEMORY=0
   export CYPRESS_VIDEO="${WITH_VIDEO}"

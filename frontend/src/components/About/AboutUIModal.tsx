@@ -77,10 +77,18 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
     return null;
   };
 
+  // External links use rel="noopener noreferrer" to prevent reverse tabnabbing.
   const renderProjectLink = (): React.ReactNode => {
     if (config?.about?.project) {
       return (
-        <Button component="a" href={config.about.project.url} variant={ButtonVariant.link} target="_blank" isInline>
+        <Button
+          component="a"
+          href={config.about.project.url}
+          variant={ButtonVariant.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          isInline
+        >
           <KialiIcon.Github className={iconStyle} />
           {config.about.project.linkText}
         </Button>
@@ -99,6 +107,7 @@ export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalPro
           href={config.about.website.url}
           variant={ButtonVariant.link}
           target="_blank"
+          rel="noopener noreferrer"
           isInline
         >
           <KialiIcon.Website className={iconStyle} />

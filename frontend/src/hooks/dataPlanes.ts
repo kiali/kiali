@@ -143,8 +143,8 @@ export const useDataPlanes = (namespaces: Namespace[]): DataPlanesResult => {
 
     fetchDataPlanes()
       .catch(err => {
-        addDanger(t('Could not fetch health'), API.getErrorString(err as ApiError));
         if (active) {
+          addDanger(t('Could not fetch health'), API.getErrorString(err as ApiError));
           setIsError(true);
           setResult(emptyResult);
         }
@@ -153,7 +153,8 @@ export const useDataPlanes = (namespaces: Namespace[]): DataPlanesResult => {
         if (active) {
           setIsLoading(false);
         }
-      });
+      })
+      .catch(() => {});
 
     return () => {
       active = false;

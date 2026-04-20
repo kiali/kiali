@@ -1017,7 +1017,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             isExternal: true,
             title: link.name,
             action: (_ns: string) => {
-              window.open(link.url, '_blank');
+              window.open(link.url, '_blank', 'noopener,noreferrer');
               this.onChange();
             }
           };
@@ -1039,7 +1039,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             isExternal: true,
             title: link.name,
             action: (_ns: string) => {
-              window.open(link.url, '_blank');
+              window.open(link.url, '_blank', 'noopener,noreferrer');
               this.onChange();
             }
           };

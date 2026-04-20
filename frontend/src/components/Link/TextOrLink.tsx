@@ -5,8 +5,17 @@ type TextOrLinkProps = {
   urlTruncate?: number;
 };
 
+const isSafeHttpUrl = (text: string): boolean => {
+  try {
+    const url = new URL(text);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export const TextOrLink: React.FC<TextOrLinkProps> = (props: TextOrLinkProps) => {
-  if (props.text.startsWith('http://') || props.text.startsWith('https://')) {
+  if (isSafeHttpUrl(props.text)) {
     let truncated = props.text;
 
     if (props.urlTruncate && props.text.length > props.urlTruncate) {
