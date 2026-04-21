@@ -761,4 +761,10 @@ AfterAll(() => {
     'sh -c \'ISTIO_DIR=$(ls -dt1 ../_output/istio-* 2>/dev/null | head -n1); [ -z "$ISTIO_DIR" ] && exit 0; NET="$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"; [ -f "$NET" ] || exit 0; kubectl apply -n bookinfo -f "$NET"\'',
     { failOnNonZeroExit: false }
   );
+  cy.exec('kubectl -n istio-system get PeerAuthentication default --ignore-not-found -o name').then(result => {
+    expect(result.stdout.trim(), 'No leftover PeerAuthentication default in istio-system').to.eq('');
+  });
+  cy.exec('kubectl -n istio-system get Sidecar default --ignore-not-found -o name').then(result => {
+    expect(result.stdout.trim(), 'No leftover Sidecar default in istio-system').to.eq('');
+  });
 });

@@ -180,6 +180,12 @@ After({ tags: '@sleep-app-scaleup-after' }, () => {
 After({ tags: '@clean-istio-namespace-resources-after' }, () => {
   cy.exec('kubectl -n istio-system delete PeerAuthentication default', { failOnNonZeroExit: false });
   cy.exec('kubectl -n istio-system delete Sidecar default', { failOnNonZeroExit: false });
+  cy.exec('kubectl -n istio-system get PeerAuthentication default --ignore-not-found -o name').then(result => {
+    expect(result.stdout.trim(), 'PeerAuthentication default should be deleted').to.eq('');
+  });
+  cy.exec('kubectl -n istio-system get Sidecar default --ignore-not-found -o name').then(result => {
+    expect(result.stdout.trim(), 'Sidecar default should be deleted').to.eq('');
+  });
 });
 
 const istioSharedMeshConfigMap = `
