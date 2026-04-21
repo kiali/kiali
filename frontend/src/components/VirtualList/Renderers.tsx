@@ -50,7 +50,8 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
-import { getNamespaceModeInfo, isDataPlaneNamespace, isRevisionAvailable } from 'utils/NamespaceUtils';
+import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { isRevisionAvailable } from '../../pages/Namespaces/NamespaceRevisionUtils';
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'

@@ -60,7 +60,7 @@ import {
 } from '../../components/Filters/ListColumnManagementModal';
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
-import { setControlPlaneRevisions } from '../../utils/NamespaceUtils';
+import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
