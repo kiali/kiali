@@ -100,8 +100,8 @@ fetch_releases_with_retry() {
 
   for retry in $(seq 1 "${RETRIES}"); do
     echo "Attempt ${retry}/${RETRIES}: Fetching ${label} release data..." >&2
-    curl_result="$(curl -s "${url}")"
-    if [ $? -eq 0 ] && [ -n "${curl_result}" ] && echo "${curl_result}" | jq -e '.[].tag_name' >/dev/null 2>&1; then
+    curl_result="$(curl -s "${url}" || true)"
+    if [ -n "${curl_result}" ] && echo "${curl_result}" | jq -e '.[].tag_name' >/dev/null 2>&1; then
       echo "Successfully fetched ${label} release data." >&2
       printf "%s" "${curl_result}"
       return 0
@@ -147,7 +147,7 @@ determine_from_istio_releases() {
       # Historical behavior for Istio-based flow in this workflow.
       for (m in minor_ga) { split(minor_ga[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
       for (m in minor_rc) { split(minor_rc[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
-    }' | sort -Vr | grep -v '^$'
+    }' | sort -Vr | sed '/^$/d'
 }
 
 determine_from_sail_releases() {
@@ -165,7 +165,7 @@ determine_from_sail_releases() {
     }
     END {
       for (m in best) { print best[m] }
-    }' | sort -Vr | grep -v '^$'
+    }' | sort -Vr | sed '/^$/d'
 }
 
 if [ "${SOURCE}" = "sail" ]; then
