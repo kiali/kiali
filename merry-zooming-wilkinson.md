@@ -12,7 +12,7 @@ Addresses [GitHub issue #9258](https://github.com/kiali/kiali/issues/9258) - val
 1. Validates Gherkin syntax
 2. Enforces consistent formatting/style (AI-generated scenarios need strict enforcement)
 3. Prevents wrong code in .feature files
-4. Runs in pre-commit hooks (issue author preference)
+4. **Pre-commit hook** runs on **every** `.feature` under `cypress/integration/featureFiles/` (small set; the whole tree must stay valid)
 5. Optional: Pre-Cypress validation
 
 **AI Context:** User generates Gherkin scenarios with AI agents. Requires strict style enforcement: consistent formatting, proper indentation, naming conventions, best practices.
@@ -20,8 +20,8 @@ Addresses [GitHub issue #9258](https://github.com/kiali/kiali/issues/9258) - val
 ## Solution Approach
 
 **Defense-in-depth:** Two layers:
-1. Pre-commit validation - catches before commit
-2. Pre-Cypress validation - catches bypasses, runs before every Cypress suite (local + CI)
+1. **Pre-commit** — `lint:gherkin` over **all** feature files on every commit (intentional: few files, low cost, no partial/staged subset)
+2. **Pre-Cypress** — same full check before every Cypress suite (local + CI), catches `--no-verify` bypasses
 
 **Key Decision:** Use `gherkin-lint` - industry-standard Gherkin linter.
 - Comprehensive style rules (indentation, spacing, naming)
@@ -90,22 +90,22 @@ Enforces:
 - Newline at EOF
 - No empty files/backgrounds
 
-### Step 3: Add npm Scripts
+### Step 3: Add npm Scripts (lint naming, same family as ESLint)
 
 **File:** `frontend/package.json`
 
 Add to `scripts`:
 ```json
-"validate:gherkin": "gherkin-lint cypress/integration/featureFiles/*.feature",
-"validate:gherkin:staged": "git diff --cached --name-only --diff-filter=AM | grep -E '\\.feature$' | xargs -r gherkin-lint"
+"lint:gherkin": "gherkin-lint cypress/integration/featureFiles"
 ```
 
-- `validate:gherkin` - all .feature files (manual + CI)
-- `validate:gherkin:staged` - staged files only (pre-commit)
+- `lint:gherkin` — passes the **`featureFiles` directory** (cwd `frontend/`). `gherkin-lint` treats a directory argument as “all `.feature` files under here,” expanding to `**/*.feature` inside the tool (Node `glob`), so **nested** files are included and you do **not** depend on the shell interpreting `**`. Naming parallels `lint` for TypeScript; unlike `lint:precommit`, there is **no** staged-only variant: the feature set is small and **every** file must remain valid.
 
-### Step 4: Update Pre-commit Hook
+### Step 4: Update Pre-commit Hook (all `.feature` files)
 
 **File:** `frontend/package.json` (line 88, modify existing `pre-commit`)
+
+Keep the existing pre-commit hook; add a step that runs **`npm run lint:gherkin`** so the hook still runs **Pretty-quick + ESLint on staged TS + full Gherkin lint on the whole feature tree + format check**.
 
 **Current:**
 ```json
@@ -114,10 +114,10 @@ Add to `scripts`:
 
 **Updated:**
 ```json
-"pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run validate:gherkin:staged && npm run format:precommit"
+"pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run lint:gherkin && npm run format:precommit"
 ```
 
-Add Gherkin validation between TS linting + format check.
+`lint:gherkin` lints that whole tree (recursive), so **any** invalid or mis-styled `.feature` on disk under `cypress/integration/featureFiles/` fails the commit—even if that file is not in the current commit—until the tree is clean. That is **by design** so the repo never carries a broken feature file alongside passing Cypress specs.
 
 ### Step 5: Add Pre-Cypress Validation to Integration Test Runner
 
@@ -146,7 +146,7 @@ ensureCypressReady() {
     exit 1
   fi
   infomsg "Validating Gherkin feature files..."
-  yarn validate:gherkin
+  yarn lint:gherkin
   cd -
 }
 ```
@@ -159,7 +159,7 @@ Rename all 14 call sites from `ensureCypressInstalled` to `ensureCypressReady`.
 - Single insertion point, no separate workflow file
 - Still catches `--no-verify` bypasses (CI test suites go through function)
 
-### Step 6: Optional - Exclude .feature from Prettier
+### Step 6: Exclude .feature from Prettier
 
 **File:** `frontend/.prettierignore` (modify if needed)
 
@@ -184,13 +184,13 @@ Modified/created:
 
 1. **All existing .feature files pass:**
    ```bash
-   cd frontend && yarn validate:gherkin
+   cd frontend && yarn lint:gherkin
    ```
 
 2. **Detects invalid Gherkin syntax:**
    ```bash
    echo "Feature Test Feature" > frontend/cypress/integration/featureFiles/test-syntax-error.feature
-   cd frontend && yarn validate:gherkin
+   cd frontend && yarn lint:gherkin
    rm frontend/cypress/integration/featureFiles/test-syntax-error.feature
    ```
 
@@ -201,11 +201,11 @@ Feature: Test Feature
 Scenario: Bad indentation
 Given I have bad indentation
 EOF
-   cd frontend && yarn validate:gherkin
+   cd frontend && yarn lint:gherkin
    rm frontend/cypress/integration/featureFiles/test-style-error.feature
    ```
 
-4. **Pre-commit hook blocks invalid files:**
+4. **Pre-commit hook blocks when any `.feature` in the tree is invalid** (full `lint:gherkin`, not staged-only):
    ```bash
    echo "Feature Test" > frontend/cypress/integration/featureFiles/test-invalid.feature
    git add frontend/cypress/integration/featureFiles/test-invalid.feature
@@ -240,10 +240,10 @@ EOF
 - ✅ gherkin-lint validates all 53 existing .feature files
 - ✅ Detects invalid Gherkin syntax
 - ✅ Enforces consistent style (indentation, spacing, naming)
-- ✅ Pre-commit prevents committing invalid files
+- ✅ Pre-commit runs on **all** `.feature` files and prevents commits while **any** file in the tree is invalid
 - ✅ Pre-Cypress validation runs before every suite (local + CI), blocks on invalid
 - ✅ Performance <500ms for 53 files
-- ✅ `yarn validate:gherkin` works for manual checks
+- ✅ `yarn lint:gherkin` works for manual checks
 - ✅ AI-generated scenarios validated for formatting/style
 - ✅ PR #9151 bug prevented (gherkin-lint fails on TypeScript in .feature)
 
@@ -253,8 +253,8 @@ EOF
 - **Backward compatible**: verify all existing .feature files pass (may need minor formatting fixes)
 - **Fast**: validation milliseconds, minimal workflow impact
 - **Clear errors**: line numbers + rule names
-- **Two-layer**: pre-commit early catch, pre-Cypress safety net
-- **Manual option**: `yarn validate:gherkin`
+- **Two-layer**: pre-commit (full feature tree) + pre-Cypress safety net
+- **Manual option**: `yarn lint:gherkin` (same as hook / Cypress gate)
 - **AI-ready**: strict style ensures consistent AI-generated quality
 
 ## Alternative Approaches Considered
