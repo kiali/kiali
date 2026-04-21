@@ -186,6 +186,11 @@ After({ tags: '@clean-istio-namespace-resources-after' }, () => {
   cy.exec('kubectl -n istio-system get Sidecar default --ignore-not-found -o name').then(result => {
     expect(result.stdout.trim(), 'Sidecar default should be deleted').to.eq('');
   });
+  // Restart alpha and beta deployments to force Envoy config reload
+  cy.exec('kubectl rollout restart deployment -n alpha', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout restart deployment -n beta', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout status deployment -n alpha --timeout=60s', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout status deployment -n beta --timeout=60s', { failOnNonZeroExit: false });
 });
 
 const istioSharedMeshConfigMap = `

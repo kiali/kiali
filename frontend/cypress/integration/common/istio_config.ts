@@ -767,4 +767,9 @@ AfterAll(() => {
   cy.exec('kubectl -n istio-system get Sidecar default --ignore-not-found -o name').then(result => {
     expect(result.stdout.trim(), 'No leftover Sidecar default in istio-system').to.eq('');
   });
+  // Restart alpha and beta deployments to ensure clean state for subsequent tests
+  cy.exec('kubectl rollout restart deployment -n alpha', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout restart deployment -n beta', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout status deployment -n alpha --timeout=60s', { failOnNonZeroExit: false });
+  cy.exec('kubectl rollout status deployment -n beta --timeout=60s', { failOnNonZeroExit: false });
 });
