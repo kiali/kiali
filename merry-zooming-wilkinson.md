@@ -2,40 +2,32 @@
 
 ## Context
 
-This implementation addresses [GitHub issue #9258](https://github.com/kiali/kiali/issues/9258) - validation of *.feature files.
+Addresses [GitHub issue #9258](https://github.com/kiali/kiali/issues/9258) - validation of *.feature files.
 
-**The Problem:**
-In PR #9151, during a complex merge of the "New Overview and Namespaces pages" feature, the file `frontend/cypress/integration/featureFiles/overview.feature` was accidentally overwritten with TypeScript step definition code instead of proper Gherkin syntax. This error went undetected until runtime, requiring three separate commits (583e6c51f, c85e6035b, 627235b9b) to fix it a week later.
+**Problem:** PR #9151 accidentally overwrote `frontend/cypress/integration/featureFiles/overview.feature` with TypeScript code instead of Gherkin. Error only caught at runtime, required three commits (583e6c51f, c85e6035b, 627235b9b) to fix.
 
-**Why This Matters:**
-- The Kiali repository contains 53 .feature files with ~5,356 lines of Gherkin test specifications
-- These files are critical BDD test definitions that describe expected system behavior
-- Currently, there is NO validation to ensure .feature files contain valid Gherkin syntax
-- There is NO protection against accidentally overwriting .feature files with code during merges
-- Errors are only caught at test runtime, which is too late in the development cycle
+**Why:** Kiali has 53 .feature files with ~5,356 lines Gherkin specs. Critical BDD test definitions. Zero validation for Gherkin syntax. No protection against accidental overwrites. Errors caught only at runtime.
 
-**Desired Outcome:**
-Add automated validation that:
-1. Validates Gherkin syntax is correct
-2. Enforces consistent formatting and style (critical for AI-generated scenarios)
-3. Prevents different code from being committed in .feature files
-4. Runs in pre-commit hooks (preferred by issue author)
-5. Redundant validation could be executed before cypress execution
+**Desired Outcome:** Automated validation:
+1. Validates Gherkin syntax
+2. Enforces consistent formatting/style (AI-generated scenarios need strict enforcement)
+3. Prevents wrong code in .feature files
+4. Runs in pre-commit hooks (issue author preference)
+5. Optional: Pre-Cypress validation
 
-**AI Scenario Generation Context:**
-The user plans to use AI agents to generate Gherkin scenarios. This requires **strict style enforcement** to ensure AI-generated content follows consistent formatting, proper indentation, naming conventions, and Gherkin best practices.
+**AI Context:** User generates Gherkin scenarios with AI agents. Requires strict style enforcement: consistent formatting, proper indentation, naming conventions, best practices.
 
 ## Solution Approach
 
-Implement a **defense-in-depth validation strategy** with two layers:
-1. **Pre-commit validation** - catches issues before they're committed
-2. **Pre-Cypress validation** - catches issues that bypass hooks, runs automatically before every Cypress test suite (both locally and in CI)
+**Defense-in-depth:** Two layers:
+1. Pre-commit validation - catches before commit
+2. Pre-Cypress validation - catches bypasses, runs before every Cypress suite (local + CI)
 
-**Key Decision:** Use `gherkin-lint` - the industry-standard dedicated linter for Gherkin files. This provides:
+**Key Decision:** Use `gherkin-lint` - industry-standard Gherkin linter.
 - Comprehensive style rules (indentation, spacing, naming)
-- Configurable validation for best practices
+- Configurable validation
 - Better error messages than basic syntax validation
-- Essential for validating AI-generated scenarios with strict formatting requirements
+- Essential for validating AI-generated scenarios
 
 ## Implementation Steps
 
@@ -43,20 +35,18 @@ Implement a **defense-in-depth validation strategy** with two layers:
 
 **File:** `frontend/package.json`
 
-Add `gherkin-lint` to `devDependencies`:
-
+Add to `devDependencies`:
 ```json
 "gherkin-lint": "^4.2.4"
 ```
 
-Run `yarn install` after adding the dependency.
+Run `yarn install`.
 
 ### Step 2: Create gherkin-lint Configuration
 
-**File:** `frontend/.gherkin-lintrc` (new file)
+**File:** `frontend/.gherkin-lintrc` (new)
 
-Create a strict configuration file optimized for AI-generated scenarios:
-
+Strict config for AI-generated scenarios:
 ```json
 {
   "no-files-without-scenarios": "on",
@@ -92,31 +82,30 @@ Create a strict configuration file optimized for AI-generated scenarios:
 }
 ```
 
-These rules enforce:
-- Consistent 2-space indentation for scenarios, 4-space for steps
+Enforces:
+- 2-space indentation for scenarios, 4-space for steps
 - No trailing spaces or excessive empty lines
 - Proper naming (no unnamed features/scenarios)
 - No duplicate names
-- Required newline at end of file
-- No empty files or backgrounds
+- Newline at EOF
+- No empty files/backgrounds
 
 ### Step 3: Add npm Scripts
 
 **File:** `frontend/package.json`
 
-Add two new scripts to the `scripts` section:
-
+Add to `scripts`:
 ```json
 "validate:gherkin": "gherkin-lint cypress/integration/featureFiles/*.feature",
 "validate:gherkin:staged": "git diff --cached --name-only --diff-filter=AM | grep -E '\\.feature$' | xargs -r gherkin-lint"
 ```
 
-- `validate:gherkin` - validates all .feature files (for manual use and CI)
-- `validate:gherkin:staged` - validates only staged .feature files (for pre-commit hook)
+- `validate:gherkin` - all .feature files (manual + CI)
+- `validate:gherkin:staged` - staged files only (pre-commit)
 
 ### Step 4: Update Pre-commit Hook
 
-**File:** `frontend/package.json` (modify existing `pre-commit` script at line 88)
+**File:** `frontend/package.json` (line 88, modify existing `pre-commit`)
 
 **Current:**
 ```json
@@ -128,13 +117,13 @@ Add two new scripts to the `scripts` section:
 "pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run validate:gherkin:staged && npm run format:precommit"
 ```
 
-This adds Gherkin validation between TypeScript linting and the format check.
+Add Gherkin validation between TS linting + format check.
 
 ### Step 5: Add Pre-Cypress Validation to Integration Test Runner
 
 **File:** `hack/run-integration-tests.sh`
 
-Rename `ensureCypressInstalled()` to `ensureCypressReady()` and add Gherkin validation to it. This function is called by all 14 frontend test suites, so a single change covers every Cypress execution path -- both locally and in CI.
+Rename `ensureCypressInstalled()` to `ensureCypressReady()`, add Gherkin validation. Function called by all 14 frontend test suites - single change covers every Cypress path (local + CI).
 
 **Current:**
 ```bash
@@ -162,159 +151,135 @@ ensureCypressReady() {
 }
 ```
 
-Also rename all 14 call sites from `ensureCypressInstalled` to `ensureCypressReady`.
+Rename all 14 call sites from `ensureCypressInstalled` to `ensureCypressReady`.
 
-**Why this is better than a separate CI workflow step:**
-- Runs everywhere Cypress runs -- locally via `hack/run-integration-tests.sh` and in every CI suite
-- Acts as a natural gate: if `.feature` files are broken, don't waste time starting Cypress
-- Single insertion point, no separate workflow file to maintain
-- Still catches `--no-verify` bypasses because CI test suites all go through this function
+**Why better than separate CI workflow:**
+- Runs everywhere Cypress runs (local + every CI suite)
+- Natural gate: broken .feature files block Cypress, don't waste time
+- Single insertion point, no separate workflow file
+- Still catches `--no-verify` bypasses (CI test suites go through function)
 
 ### Step 6: Optional - Exclude .feature from Prettier
 
 **File:** `frontend/.prettierignore` (modify if needed)
 
-If Prettier starts attempting to format .feature files (it shouldn't currently), add:
+Add:
 ```
 *.feature
 ```
 
-This is defensive - Prettier's current pattern `**/*.{ts,tsx,scss,json}` already excludes .feature files. Since `gherkin-lint` now handles .feature file formatting, we want to ensure Prettier doesn't interfere.
+Defensive measure - Prettier pattern `**/*.{ts,tsx,scss,json}` already excludes .feature. Since gherkin-lint handles .feature formatting, ensure Prettier doesn't interfere.
 
 ## Critical Files
 
-The following files will be modified or created:
-
-1. **NEW**: `frontend/.gherkin-lintrc` - gherkin-lint configuration with strict style rules
-2. **MODIFY**: `frontend/package.json` - Add gherkin-lint dependency, add scripts, and update pre-commit hook
-3. **MODIFY**: `hack/run-integration-tests.sh` - Rename `ensureCypressInstalled` → `ensureCypressReady`, add Gherkin validation
-4. **OPTIONAL**: `frontend/.prettierignore` - Exclude .feature if needed
+Modified/created:
+1. **NEW**: `frontend/.gherkin-lintrc` - configuration
+2. **MODIFY**: `frontend/package.json` - dependency, scripts, pre-commit
+3. **MODIFY**: `hack/run-integration-tests.sh` - rename function, add validation
+4. **OPTIONAL**: `frontend/.prettierignore` - exclude .feature
 
 ## Verification Plan
 
 ### Manual Testing
 
-1. **Test that all existing .feature files pass validation:**
+1. **All existing .feature files pass:**
    ```bash
-   # Run validation on all existing files - should PASS
    cd frontend && yarn validate:gherkin
    ```
 
-2. **Test validation detects invalid Gherkin syntax:**
+2. **Detects invalid Gherkin syntax:**
    ```bash
-   # Create a file with invalid Gherkin (e.g., missing colon after Feature)
    echo "Feature Test Feature" > frontend/cypress/integration/featureFiles/test-syntax-error.feature
-   
-   # Run validation - should FAIL with syntax error
    cd frontend && yarn validate:gherkin
-   
-   # Clean up
    rm frontend/cypress/integration/featureFiles/test-syntax-error.feature
    ```
 
-3. **Test validation detects style violations:**
+3. **Detects style violations:**
    ```bash
-   # Create a file with incorrect indentation
    cat > frontend/cypress/integration/featureFiles/test-style-error.feature << 'EOF'
 Feature: Test Feature
 Scenario: Bad indentation
 Given I have bad indentation
 EOF
-   
-   # Run validation - should FAIL with indentation error
    cd frontend && yarn validate:gherkin
-   
-   # Clean up
    rm frontend/cypress/integration/featureFiles/test-style-error.feature
    ```
 
-4. **Test pre-commit hook blocks invalid files:**
+4. **Pre-commit hook blocks invalid files:**
    ```bash
-   # Create an invalid file
    echo "Feature Test" > frontend/cypress/integration/featureFiles/test-invalid.feature
-   
-   # Try to commit - should be BLOCKED by pre-commit hook
    git add frontend/cypress/integration/featureFiles/test-invalid.feature
    git commit -m "test: should fail"
-   
-   # Clean up
    git reset HEAD frontend/cypress/integration/featureFiles/test-invalid.feature
    rm frontend/cypress/integration/featureFiles/test-invalid.feature
    ```
 
 ### Pre-Cypress Validation Testing
 
-1. **Test that validation runs before Cypress:**
+1. **Validation runs before Cypress:**
    ```bash
-   # Introduce an invalid .feature file and run integration tests
    echo "Feature Test" > frontend/cypress/integration/featureFiles/test-invalid.feature
-   
-   # Run any test suite - should FAIL at the validation step before Cypress starts
    hack/run-integration-tests.sh --test-suite local --tests-only true
-   
-   # Clean up
    rm frontend/cypress/integration/featureFiles/test-invalid.feature
    ```
 
-2. **Verify the rename didn't break anything:**
+2. **Rename didn't break anything:**
    ```bash
-   # Grep for any remaining references to the old function name
    grep -r "ensureCypressInstalled" hack/run-integration-tests.sh
-   # Should return nothing
    ```
 
 ### End-to-End Testing
 
-1. Developer modifies a .feature file with valid Gherkin → commit succeeds
-2. Developer accidentally overwrites a .feature file with TypeScript code → pre-commit hook blocks commit
-3. Developer bypasses pre-commit hook (using `--no-verify`) → pre-Cypress validation catches the error before tests run
-4. All existing Cypress tests continue to run successfully
+1. Valid Gherkin .feature → commit succeeds
+2. TypeScript code in .feature → pre-commit blocks
+3. Pre-commit bypassed (`--no-verify`) → pre-Cypress catches before tests
+4. Existing Cypress tests run successfully
 
 ## Success Criteria
 
-- ✅ gherkin-lint successfully validates all 53 existing .feature files
-- ✅ Validation detects invalid Gherkin syntax
-- ✅ Validation enforces consistent style (indentation, spacing, naming)
-- ✅ Pre-commit hook prevents committing invalid .feature files
-- ✅ Pre-Cypress validation runs before every test suite (locally and in CI), blocking execution on invalid files
-- ✅ Performance is acceptable (<500ms for all 53 files)
-- ✅ Developers can manually run validation with `yarn validate:gherkin`
-- ✅ AI-generated scenarios are validated for proper formatting and style
-- ✅ The specific bug from PR #9151 (TypeScript code in .feature file) would be prevented (gherkin-lint will fail on invalid Gherkin syntax)
+- ✅ gherkin-lint validates all 53 existing .feature files
+- ✅ Detects invalid Gherkin syntax
+- ✅ Enforces consistent style (indentation, spacing, naming)
+- ✅ Pre-commit prevents committing invalid files
+- ✅ Pre-Cypress validation runs before every suite (local + CI), blocks on invalid
+- ✅ Performance <500ms for 53 files
+- ✅ `yarn validate:gherkin` works for manual checks
+- ✅ AI-generated scenarios validated for formatting/style
+- ✅ PR #9151 bug prevented (gherkin-lint fails on TypeScript in .feature)
 
 ## Rollout Considerations
 
-- **Single new devDependency** - adds `gherkin-lint` (industry-standard tool, ~100KB)
-- **Backward compatible** - need to verify all existing .feature files pass strict validation (may require minor formatting fixes)
-- **Fast execution** - validation runs in milliseconds, minimal impact on developer workflow
-- **Clear error messages** - gherkin-lint provides detailed error messages with line numbers and rule names
-- **Two-layer protection** - pre-commit catches issues early, pre-Cypress validation is the safety net
-- **Manual validation** - developers can run `yarn validate:gherkin` to check files before committing
-- **AI-ready** - strict style rules ensure AI-generated scenarios maintain consistent quality
+- **Single devDependency**: `gherkin-lint` (industry-standard, ~100KB)
+- **Backward compatible**: verify all existing .feature files pass (may need minor formatting fixes)
+- **Fast**: validation milliseconds, minimal workflow impact
+- **Clear errors**: line numbers + rule names
+- **Two-layer**: pre-commit early catch, pre-Cypress safety net
+- **Manual option**: `yarn validate:gherkin`
+- **AI-ready**: strict style ensures consistent AI-generated quality
 
 ## Alternative Approaches Considered
 
-**Alternative 1: Custom validation script using @cucumber/gherkin**
-- Pros: No new dependencies, lightweight
-- Cons: Only validates syntax, no style enforcement, no formatting rules
-- Decision: Rejected - insufficient for AI-generated scenarios which need strict style validation
+**Alternative 1: Custom script using @cucumber/gherkin**
+- Pros: no new dependencies
+- Cons: only syntax validation, no style enforcement, insufficient for AI scenarios
+- Rejected
 
 **Alternative 2: Validate in Cypress preprocessor only**
-- Pros: Catches errors at test runtime
-- Cons: Too late in the development cycle, doesn't prevent commits
-- Decision: Rejected - validation should happen earlier (pre-commit/CI)
+- Pros: at-test-runtime validation
+- Cons: too late, doesn't prevent commits
+- Rejected
 
-**Alternative 3: Separate CI workflow step in build-frontend.yml**
-- Pros: Runs independently of test execution
-- Cons: Separate file to maintain, doesn't gate Cypress execution, runs even when no .feature files changed
-- Decision: Rejected - pre-Cypress validation in `hack/run-integration-tests.sh` is more targeted and covers all execution paths with a single change
+**Alternative 3: Separate CI workflow (build-frontend.yml)**
+- Pros: independent from tests
+- Cons: separate file to maintain, doesn't gate Cypress, runs unnecessarily
+- Rejected - pre-Cypress in `hack/run-integration-tests.sh` is more targeted
 
 **Alternative 4: GitHub Actions only (no pre-commit)**
-- Pros: Simpler, no pre-commit overhead
-- Cons: Catches errors much later in workflow, wastes developer and CI time
-- Decision: Rejected - pre-commit validation provides better developer experience
+- Pros: simpler
+- Cons: much later in workflow, wastes time
+- Rejected
 
-**Alternative 5: Use cucumber-lint instead of gherkin-lint**
-- Pros: Similar functionality
-- Cons: gherkin-lint is more actively maintained and widely used
-- Decision: Rejected - gherkin-lint is the current industry standard
+**Alternative 5: cucumber-lint instead of gherkin-lint**
+- Pros: similar functionality
+- Cons: gherkin-lint more actively maintained
+- Rejected
