@@ -9,7 +9,7 @@ import {
   searchParentApp,
   searchParentWorkload
 } from 'utils/tracing/TracingHelper';
-import { edgesOut, elems, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
+import { edgesOut, elems, nodesIn, nodesOut, select, SelectAnd, selectAnd, setObserved } from 'helpers/GraphHelpers';
 
 /**
  * Extracts service name and namespace from span operationName or serviceName.
@@ -46,6 +46,66 @@ const extractServiceAndNsFromSpan = (span: Span): [string, string] => {
   // Fallback to process.serviceName
   const parts = span.process.serviceName.split('.');
   return [parts[0], parts.length > 1 ? parts[1] : ''];
+};
+
+const resolveDestinationWorkload = (
+  nodes: Node[],
+  span: Span,
+  app: string,
+  namespace: string,
+  lastSelection: Node[] | undefined
+): Node[] => {
+  const spanKind = String(span.tags.find(tag => tag.key === 'span.kind')?.value || '');
+  const canUseDirectWorkload = spanKind === 'server' || spanKind === 'consumer' || isWaypointProxySpan(span);
+
+  // Direct workload extraction is reliable for server/consumer spans (or waypoint spans).
+  // For envoy client/producer spans, node_id usually points to source proxy/workload.
+  if (canUseDirectWorkload) {
+    const destWlNs = getWorkloadFromSpan(span);
+    if (destWlNs?.workload) {
+      const selector: SelectAnd = [
+        { prop: NodeAttr.workload, val: destWlNs.workload },
+        { prop: NodeAttr.namespace, val: destWlNs.namespace }
+      ];
+      const selected = selectAnd(nodes, selector) as Node[];
+      const selectedByApp = selected.filter(n => {
+        const data = n.getData();
+        return data[NodeAttr.app] === app && (namespace === '' || data[NodeAttr.namespace] === namespace);
+      });
+      if (selectedByApp.length > 0) {
+        return selectedByApp;
+      }
+    }
+  }
+
+  // Gateway/waypoint spans may not include destination workload tags.
+  // In that case infer the destination workload from the selected service outgoing edges.
+  if (lastSelection && lastSelection.length > 0) {
+    const adjacentCandidates = [...nodesOut(lastSelection), ...nodesIn(lastSelection)];
+    const adjacentWorkloads = adjacentCandidates.filter(n => {
+      const data = n.getData();
+      return (
+        !!data[NodeAttr.workload] &&
+        data[NodeAttr.app] === app &&
+        (namespace === '' || data[NodeAttr.namespace] === namespace)
+      );
+    });
+    // Avoid false positives on sidecar/non-ambient traces where a service fan-outs to multiple versions.
+    // In that case the client span does not tell us the exact destination workload.
+    if (adjacentWorkloads.length === 1) {
+      return adjacentWorkloads;
+    }
+  }
+
+  const fallbackSelector: SelectAnd = [
+    { prop: NodeAttr.workload, op: 'truthy' },
+    { prop: NodeAttr.app, val: app }
+  ];
+  if (namespace) {
+    fallbackSelector.push({ prop: NodeAttr.namespace, val: namespace });
+  }
+  const fallback = selectAnd(nodes, fallbackSelector) as Node[];
+  return fallback.length === 1 ? fallback : [];
 };
 
 export const showTrace = (controller: Controller, graphType: GraphType, trace: JaegerTrace): void => {
@@ -120,7 +180,15 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     }
   } else {
     // Parent workload: for waypoint spans, source is in own tags; for others, search parent
-    const sourceWlNs = isWaypointProxySpan(span) ? getSourceWorkloadFromWaypointSpan(span) : searchParentWorkload(span);
+    let sourceWlNs = isWaypointProxySpan(span) ? getSourceWorkloadFromWaypointSpan(span) : searchParentWorkload(span);
+    if (!sourceWlNs) {
+      const spanKind = String(span.tags.find(tag => tag.key === 'span.kind')?.value || '');
+      if (spanKind === 'client' || spanKind === 'producer') {
+        // Root client spans (like ingress gateway -> service) have no parent span.
+        // In that case, node_id/process data points to the source workload itself.
+        sourceWlNs = getWorkloadFromSpan(span);
+      }
+    }
     if (sourceWlNs) {
       const parent = selectAnd(nodes, [
         { prop: NodeAttr.workload, val: sourceWlNs.workload },
@@ -159,13 +227,9 @@ const showSpanSubtrace = (controller: Controller, graphType: GraphType, span: Sp
     }
   } else {
     // Main workload (graph nodes store deployment name on `workload`, not `app`)
-    const destWlNs = getWorkloadFromSpan(span);
-    if (destWlNs && destWlNs.workload) {
-      const selector: SelectAnd = [
-        { prop: NodeAttr.workload, val: destWlNs.workload },
-        { prop: NodeAttr.namespace, val: destWlNs.namespace }
-      ];
-      lastSelection = nextHop(span, selectAnd(nodes, selector) as Node[], lastSelection);
+    const workloadSelection = resolveDestinationWorkload(nodes, span, app, namespace, lastSelection);
+    if (workloadSelection.length > 0) {
+      lastSelection = nextHop(span, workloadSelection, lastSelection);
     }
   }
 
@@ -179,6 +243,35 @@ const singleEdge = (edges: Edge[]): Edge | undefined => {
     console.debug(`Expected singleton, found [${edges.length}] edges. Using first.`);
   }
   return edges.length > 0 ? edges[0] : undefined;
+};
+
+const edgeProtocol = (edge: Edge): string | undefined => {
+  const protocol = edge.getData()?.traffic?.protocol;
+  return typeof protocol === 'string' ? protocol.toLowerCase() : undefined;
+};
+
+const spanProtocol = (span: Span): string | undefined => {
+  if (span.tags.some(tag => tag.key.startsWith('http.'))) {
+    return 'http';
+  }
+  if (span.tags.some(tag => tag.key.startsWith('peer.'))) {
+    return 'tcp';
+  }
+  return undefined;
+};
+
+const pickEdgeForSpan = (edges: Edge[], span: Span): Edge | undefined => {
+  if (edges.length === 0) {
+    return undefined;
+  }
+  const protocol = spanProtocol(span);
+  if (protocol) {
+    const matching = edges.filter(e => edgeProtocol(e) === protocol);
+    if (matching.length > 0) {
+      return singleEdge(matching);
+    }
+  }
+  return singleEdge(edges);
 };
 
 const singleNode = (nodes: Node[]): Node | undefined => {
@@ -267,7 +360,7 @@ const nextHop = (span: Span, next: Node[] | undefined, last: Node[] | undefined)
       if (!edge || edge.length === 0) {
         edge = edgesOut(next, last);
       }
-      addSpan(singleEdge(edge), span);
+      addSpan(pickEdgeForSpan(edge, span), span);
     }
     return next;
   }
