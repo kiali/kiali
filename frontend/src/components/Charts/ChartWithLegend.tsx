@@ -400,7 +400,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               <span
                 key={`legend-${idx}`}
                 className={htmlLegendItemStyle}
-                onClick={() => this.onToggleSeries(this.props.data[idx]?.legendItem.name)}
+                onClick={() => this.handleToggleSeries(item.name)}
               >
                 <svg width="10" height="10" viewBox="0 0 10 10">
                   {this.renderLegendSymbol(item.symbol)}
@@ -606,7 +606,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
   };
 
-  private onToggleSeries = (name?: string): void => {
+  private handleToggleSeries = (name?: string): void => {
     if (name === undefined) {
       return;
     }

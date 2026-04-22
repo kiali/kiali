@@ -47,7 +47,7 @@ export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
             item.onClick!(props);
             return null;
           }
-        } as EventMutation
+        }
       ];
     }
     if (item.onMouseOver) {
