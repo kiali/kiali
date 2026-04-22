@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { IRow, ThProps } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
-import { Card, CardBody, Grid, GridItem, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
+import { Card, CardBody, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
+import { classes } from 'typestyle';
 import { activeTab } from '../../components/Tab/Tabs';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
 import { location, router } from '../../app/History';
 import {
   tabName as workloadTabName,
@@ -26,8 +27,8 @@ type WaypointConfigProps = {
   workload: Workload;
 };
 
-const fullHeightStyle = kialiStyle({
-  height: '100%'
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 export const isWaypointFor = (wk: Workload): string => {
@@ -125,9 +126,9 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   if (waypointFor === WaypointType.Service || waypointFor === WaypointType.All) {
     const servicesTab = (
       <Tab title={t('Services')} eventKey={0} key={waypointFor}>
-        <Card className={fullHeightStyle}>
+        <Card className={classes(flexCardStyle, cardStyle)}>
           <CardBody>
-            <div className={fullHeightStyle}>
+            <div>
               <div style={{ marginBottom: '1.25rem' }}>
                 <WaypointWorkloadsTable
                   workloads={props.workload.waypointServices ? props.workload.waypointServices : []}
@@ -145,9 +146,9 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   if (waypointFor === WaypointType.Workload || waypointFor === WaypointType.All) {
     const workloadsTab = (
       <Tab title={t('Workloads')} eventKey={1} key={waypointFor}>
-        <Card className={fullHeightStyle}>
+        <Card className={classes(flexCardStyle, cardStyle)}>
           <CardBody>
-            <div className={fullHeightStyle}>
+            <div>
               <div style={{ marginBottom: '1.25rem' }}>
                 <WaypointWorkloadsTable
                   workloads={props.workload.waypointWorkloads ? props.workload.waypointWorkloads : []}
@@ -164,9 +165,9 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
 
   const infoTab = (
     <Tab title={t('Info')} eventKey={2} key="information">
-      <Card className={fullHeightStyle}>
+      <Card className={classes(flexCardStyle, cardStyle)}>
         <CardBody>
-          <div className={fullHeightStyle}>
+          <div>
             <div style={{ marginBottom: '1.25rem' }}>
               <Title
                 headingLevel="h5"
@@ -186,22 +187,18 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   tabs.push(infoTab);
 
   return (
-    <div className={flexFillStyle}>
-      <Grid>
-        <GridItem span={12}>
-          <div className={subTabStyle}>
-            <Tabs
-              id="waypoint-details"
-              activeKey={activeKey}
-              onSelect={waypointHandleTabClick}
-              mountOnEnter={true}
-              unmountOnExit={true}
-            >
-              {tabs}
-            </Tabs>
-          </div>
-        </GridItem>
-      </Grid>
+    <div className={classes(flexFillStyle, constrainedScrollStyle)}>
+      <div className={subTabStyle}>
+        <Tabs
+          id="waypoint-details"
+          activeKey={activeKey}
+          onSelect={waypointHandleTabClick}
+          mountOnEnter={true}
+          unmountOnExit={true}
+        >
+          {tabs}
+        </Tabs>
+      </div>
     </div>
   );
 };

@@ -307,6 +307,45 @@ const generateMeshGraphData = (): Record<string, unknown> => {
         infraData: dataPlaneNamespaces
       }
     });
+
+    if (scenarioConfig.ambientEnabled) {
+      nodes.push({
+        data: {
+          id: `ztunnel-${cluster.name}`,
+          nodeType: 'infra',
+          cluster: cluster.name,
+          namespace: 'istio-system',
+          infraName: 'ztunnel',
+          infraType: 'ztunnel',
+          isExternal: false,
+          healthData: 'Healthy',
+          parent: istioSystemBoxId,
+          infraData: {
+            type: 'DaemonSet',
+            podCount: 3
+          }
+        }
+      });
+
+      nodes.push({
+        data: {
+          id: `waypoint-${cluster.name}`,
+          nodeType: 'infra',
+          cluster: cluster.name,
+          namespace: 'istio-system',
+          infraName: 'waypoint',
+          infraType: 'waypoint',
+          isExternal: false,
+          healthData: 'Healthy',
+          parent: istioSystemBoxId,
+          infraData: {
+            namespace: 'istio-system',
+            name: 'waypoint',
+            cluster: cluster.name
+          }
+        }
+      });
+    }
   });
 
   // Generate edges
@@ -348,6 +387,41 @@ const generateMeshGraphData = (): Record<string, unknown> => {
           target: `prometheus-${cluster.name}`
         }
       });
+
+      // Ambient: ztunnel and waypoint edges
+      if (scenarioConfig.ambientEnabled) {
+        edges.push({
+          data: {
+            id: `edge-istiod-ztunnel-${cluster.name}`,
+            source: `istiod-${cluster.name}`,
+            target: `ztunnel-${cluster.name}`
+          }
+        });
+
+        edges.push({
+          data: {
+            id: `edge-istiod-waypoint-${cluster.name}`,
+            source: `istiod-${cluster.name}`,
+            target: `waypoint-${cluster.name}`
+          }
+        });
+
+        edges.push({
+          data: {
+            id: `edge-ztunnel-dataplane-${cluster.name}`,
+            source: `ztunnel-${cluster.name}`,
+            target: `dataplane-${cluster.name}`
+          }
+        });
+
+        edges.push({
+          data: {
+            id: `edge-waypoint-dataplane-${cluster.name}`,
+            source: `waypoint-${cluster.name}`,
+            target: `dataplane-${cluster.name}`
+          }
+        });
+      }
 
       // Kiali -> remote istiods (multicluster)
       if (isMultiCluster()) {

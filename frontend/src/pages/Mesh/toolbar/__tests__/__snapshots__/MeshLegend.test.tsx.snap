@@ -76,7 +76,7 @@ exports[`GraphLegend test should render correctly 1`] = `
           className="kiali_fzoxfwf"
         >
           <img
-            alt="Gateway/Waypoint"
+            alt="Gateway / Waypoint"
             className=""
             src="node-gateway.svg"
           />
@@ -84,7 +84,7 @@ exports[`GraphLegend test should render correctly 1`] = `
         <span
           className="kiali_f7pgfh0"
         >
-          Gateway/Waypoint
+          Gateway / Waypoint
         </span>
       </div>
     </div>

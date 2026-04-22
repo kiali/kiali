@@ -416,21 +416,27 @@ const createMockWorkloadListItem = (
   const isNotReady = healthStatus === 'notready';
   const isUnhealthy = healthStatus === 'unhealthy';
 
+  const ambientEnabled = getScenarioConfig().ambientEnabled;
+  const isZtunnel = ambientEnabled && name === 'ztunnel';
+  const isWaypoint = ambientEnabled && name === 'waypoint';
+
   return {
     name,
     namespace,
     cluster,
-    gvk: deploymentGVK,
+    gvk: isZtunnel ? { Group: 'apps', Kind: 'DaemonSet', Version: 'v1' } : deploymentGVK,
     instanceType: InstanceType.Workload,
-    istioSidecar: true,
-    isAmbient: false,
+    istioSidecar: !isZtunnel,
+    isAmbient: ambientEnabled && !namespace.includes('istio-system'),
     isGateway: false,
-    isWaypoint: false,
-    isZtunnel: false,
+    isWaypoint,
+    isZtunnel,
     istioReferences: [],
     labels: {
       app,
-      version
+      version,
+      ...(isWaypoint ? { 'istio.io/waypoint-for': 'all' } : {}),
+      ...(isZtunnel ? { 'sidecar.istio.io/inject': 'false' } : {})
     },
     appLabel: true,
     versionLabel: true,
@@ -602,7 +608,9 @@ const workloadDefinitions: Record<string, Array<{ app: string; name: string; ver
   ],
   'istio-system': [
     { name: 'istiod', app: 'istiod', version: 'default' },
-    { name: 'istio-ingressgateway', app: 'istio-ingressgateway', version: 'default' }
+    { name: 'istio-ingressgateway', app: 'istio-ingressgateway', version: 'default' },
+    { name: 'ztunnel', app: 'ztunnel', version: 'default' },
+    { name: 'waypoint', app: 'waypoint', version: 'default' }
   ],
   'travel-agency': [
     { name: 'travels-v1', app: 'travels', version: 'v1' },
@@ -897,13 +905,21 @@ export const workloadHandlers = [
         }
       };
 
+      const istioContainers = found.isZtunnel ? [] : [{ name: 'istio-proxy', image: 'docker.io/istio/proxyv2:1.20.0' }];
+      const istioInitContainers = found.isZtunnel
+        ? []
+        : [{ name: 'istio-init', image: 'docker.io/istio/proxyv2:1.20.0' }];
+      const runtimes = found.isZtunnel
+        ? []
+        : [{ name: 'envoy', dashboardRefs: [{ template: 'envoy', title: 'Envoy Metrics' }] }];
+
       return HttpResponse.json({
         ...found,
         createdAt: new Date().toISOString(),
         resourceVersion: '12345',
-        type: 'Deployment',
-        istioInjectionAnnotation: true,
-        podCount: 1,
+        type: found.isZtunnel ? 'DaemonSet' : 'Deployment',
+        istioInjectionAnnotation: !found.isZtunnel,
+        podCount: found.isZtunnel ? 3 : 1,
         annotations: {},
         healthAnnotations: {},
         additionalDetails: [],
@@ -913,9 +929,9 @@ export const workloadHandlers = [
             name: `${workload}-abc123`,
             labels: found.labels,
             createdAt: new Date().toISOString(),
-            createdBy: [{ name: workload as string, kind: 'Deployment' }],
-            istioContainers: [{ name: 'istio-proxy', image: 'docker.io/istio/proxyv2:1.20.0' }],
-            istioInitContainers: [{ name: 'istio-init', image: 'docker.io/istio/proxyv2:1.20.0' }],
+            createdBy: [{ name: workload as string, kind: found.isZtunnel ? 'DaemonSet' : 'Deployment' }],
+            istioContainers,
+            istioInitContainers,
             status: 'Running',
             statusMessage: '',
             statusReason: '',
@@ -926,14 +942,23 @@ export const workloadHandlers = [
           }
         ],
         services: [createMockServiceListItem(found.labels.app, namespace as string)],
-        runtimes: [
-          {
-            name: 'envoy',
-            dashboardRefs: [{ template: 'envoy', title: 'Envoy Metrics' }]
-          }
-        ],
+        runtimes,
         validations: workloadValidations,
-        waypointWorkloads: []
+        waypointServices: found.isWaypoint
+          ? [
+              { name: 'productpage', namespace: 'bookinfo' },
+              { name: 'reviews', namespace: 'bookinfo' },
+              { name: 'ratings', namespace: 'bookinfo' },
+              { name: 'details', namespace: 'bookinfo' }
+            ]
+          : [],
+        waypointWorkloads: found.isWaypoint
+          ? [
+              { name: 'reviews-v1', namespace: 'bookinfo' },
+              { name: 'ratings-v1', namespace: 'bookinfo' },
+              { name: 'productpage-v1', namespace: 'bookinfo' }
+            ]
+          : []
       });
     }
 
@@ -1184,6 +1209,13 @@ export const workloadHandlers = [
     return HttpResponse.json(generateMockDashboard(String(template), direction));
   }),
 
+  // Ztunnel dashboard (ambient mesh metrics)
+  http.get('*/api/namespaces/:namespace/ztunnel/:controlPlane/dashboard', ({ request }) => {
+    const url = new URL(request.url);
+    const direction = url.searchParams.get('direction') || 'inbound';
+    return HttpResponse.json(generateMockDashboard('Ztunnel', direction));
+  }),
+
   // Clusters metrics
   http.get('*/api/clusters/metrics', () => {
     return HttpResponse.json(generateMockMetrics('inbound'));
@@ -1373,6 +1405,139 @@ export const workloadHandlers = [
 
     // Default empty response for other resources
     return HttpResponse.json({});
+  }),
+
+  // Pod ztunnel config dump
+  http.get('*/api/namespaces/:namespace/pods/:pod/config_dump_ztunnel', () => {
+    return HttpResponse.json({
+      services: [
+        {
+          name: 'productpage',
+          namespace: 'bookinfo',
+          hostname: 'productpage.bookinfo.svc.cluster.local',
+          vips: ['10.96.10.1'],
+          ports: { http: 9080 },
+          endpoints: {
+            'uid-productpage-v1': { workloadUid: 'uid-productpage-v1', status: 'Healthy', port: { http: 9080 } }
+          },
+          subjectAltNames: ['spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage'],
+          ipFamilies: 'IPv4',
+          waypoint: { destination: '', hboneMtlsPort: 0 }
+        },
+        {
+          name: 'reviews',
+          namespace: 'bookinfo',
+          hostname: 'reviews.bookinfo.svc.cluster.local',
+          vips: ['10.96.10.2'],
+          ports: { http: 9080 },
+          endpoints: {
+            'uid-reviews-v1': { workloadUid: 'uid-reviews-v1', status: 'Healthy', port: { http: 9080 } },
+            'uid-reviews-v2': { workloadUid: 'uid-reviews-v2', status: 'Healthy', port: { http: 9080 } },
+            'uid-reviews-v3': { workloadUid: 'uid-reviews-v3', status: 'Healthy', port: { http: 9080 } }
+          },
+          subjectAltNames: ['spiffe://cluster.local/ns/bookinfo/sa/bookinfo-reviews'],
+          ipFamilies: 'IPv4',
+          waypoint: { destination: 'waypoint.istio-system.svc.cluster.local', hboneMtlsPort: 15008 }
+        },
+        {
+          name: 'ratings',
+          namespace: 'bookinfo',
+          hostname: 'ratings.bookinfo.svc.cluster.local',
+          vips: ['10.96.10.3'],
+          ports: { http: 9080 },
+          endpoints: {
+            'uid-ratings-v1': { workloadUid: 'uid-ratings-v1', status: 'Healthy', port: { http: 9080 } }
+          },
+          subjectAltNames: ['spiffe://cluster.local/ns/bookinfo/sa/bookinfo-ratings'],
+          ipFamilies: 'IPv4',
+          waypoint: { destination: '', hboneMtlsPort: 0 }
+        },
+        {
+          name: 'details',
+          namespace: 'bookinfo',
+          hostname: 'details.bookinfo.svc.cluster.local',
+          vips: ['10.96.10.4'],
+          ports: { http: 9080 },
+          endpoints: {
+            'uid-details-v1': { workloadUid: 'uid-details-v1', status: 'Healthy', port: { http: 9080 } }
+          },
+          subjectAltNames: ['spiffe://cluster.local/ns/bookinfo/sa/bookinfo-details'],
+          ipFamilies: 'IPv4',
+          waypoint: { destination: '', hboneMtlsPort: 0 }
+        }
+      ],
+      workloads: [
+        {
+          name: 'productpage-v1-abc123',
+          namespace: 'bookinfo',
+          workloadName: 'productpage-v1',
+          workloadType: 'deployment',
+          canonicalName: 'productpage',
+          canonicalRevision: 'v1',
+          node: 'node-1',
+          status: 'Healthy',
+          protocol: 'HBONE',
+          networkMode: 'ztunnel',
+          clusterId: 'Kubernetes',
+          trustDomain: 'cluster.local',
+          serviceAccount: 'bookinfo-productpage',
+          uid: 'uid-productpage-v1',
+          workloadIps: ['10.244.0.10'],
+          services: ['bookinfo/productpage']
+        },
+        {
+          name: 'reviews-v1-def456',
+          namespace: 'bookinfo',
+          workloadName: 'reviews-v1',
+          workloadType: 'deployment',
+          canonicalName: 'reviews',
+          canonicalRevision: 'v1',
+          node: 'node-1',
+          status: 'Healthy',
+          protocol: 'HBONE',
+          networkMode: 'ztunnel',
+          clusterId: 'Kubernetes',
+          trustDomain: 'cluster.local',
+          serviceAccount: 'bookinfo-reviews',
+          uid: 'uid-reviews-v1',
+          workloadIps: ['10.244.0.11'],
+          services: ['bookinfo/reviews']
+        },
+        {
+          name: 'ratings-v1-ghi789',
+          namespace: 'bookinfo',
+          workloadName: 'ratings-v1',
+          workloadType: 'deployment',
+          canonicalName: 'ratings',
+          canonicalRevision: 'v1',
+          node: 'node-2',
+          status: 'Healthy',
+          protocol: 'HBONE',
+          networkMode: 'ztunnel',
+          clusterId: 'Kubernetes',
+          trustDomain: 'cluster.local',
+          serviceAccount: 'bookinfo-ratings',
+          uid: 'uid-ratings-v1',
+          workloadIps: ['10.244.1.10'],
+          services: ['bookinfo/ratings']
+        }
+      ],
+      policies: [],
+      certificates: [
+        {
+          identity: 'spiffe://cluster.local/ns/bookinfo/sa/bookinfo-productpage',
+          state: 'Available',
+          certChain: [
+            {
+              validFrom: new Date(Date.now() - 86400000).toISOString(),
+              expirationTime: new Date(Date.now() + 86400000 * 30).toISOString(),
+              serialNumber: 'a1b2c3d4e5f6',
+              pem: '-----BEGIN CERTIFICATE-----\nMIIC...(truncated)\n-----END CERTIFICATE-----'
+            }
+          ]
+        }
+      ]
+    });
   }),
 
   // Pod logging endpoint

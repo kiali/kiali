@@ -42,7 +42,7 @@ export const legendData: MeshLegendItem[] = [
     data: [
       { label: t('Infra node'), icon: infraNodeImage },
       { label: t('Data Plane'), icon: dataPlaneImage },
-      { label: t('Gateway/Waypoint'), icon: gatewayImage }
+      { label: t('Gateway / Waypoint'), icon: gatewayImage }
     ]
   },
   {

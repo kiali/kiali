@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Card, CardBody, Grid, GridItem, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { Card, CardBody, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
+import { classes } from 'typestyle';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import {
@@ -11,7 +12,7 @@ import {
   ProtocolTraffic,
   SEInfo
 } from '../../types/Graph';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
@@ -25,7 +26,7 @@ import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
-const gridStyle = kialiStyle({
+const cardMarginStyle = kialiStyle({
   marginTop: '1rem'
 });
 
@@ -126,29 +127,25 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
   render(): React.ReactNode {
     return (
       <>
-        <div className={flexFillStyle}>
-          <Grid className={gridStyle}>
-            <GridItem span={12}>
-              <Card>
-                <CardBody>
-                  <Toolbar style={{ padding: 0, width: '100%' }}>
-                    <ToolbarGroup>
-                      <KioskElement>
-                        <ToolbarItem style={{ marginLeft: 'auto' }}>
-                          <TimeDurationIndicator isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
-                        </ToolbarItem>
-                      </KioskElement>
-                    </ToolbarGroup>
-                  </Toolbar>
-                  <TrafficListComponent
-                    currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
-                    isSortAscending={FilterHelper.isCurrentSortAscending()}
-                    trafficItems={this.state.traffic}
-                  />
-                </CardBody>
-              </Card>
-            </GridItem>
-          </Grid>
+        <div className={classes(flexFillStyle, constrainedScrollStyle)}>
+          <Card className={classes(flexCardStyle, cardMarginStyle)}>
+            <CardBody>
+              <Toolbar style={{ padding: 0, width: '100%' }}>
+                <ToolbarGroup>
+                  <KioskElement>
+                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                      <TimeDurationIndicator isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
+                    </ToolbarItem>
+                  </KioskElement>
+                </ToolbarGroup>
+              </Toolbar>
+              <TrafficListComponent
+                currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
+                isSortAscending={FilterHelper.isCurrentSortAscending()}
+                trafficItems={this.state.traffic}
+              />
+            </CardBody>
+          </Card>
         </div>
         <TimeDurationModal
           customDuration={false}

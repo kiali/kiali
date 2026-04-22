@@ -57,6 +57,10 @@ const toolbarClass = kialiStyle({
   paddingTop: '0'
 });
 
+const cardStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
 export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
@@ -174,7 +178,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const servicesTab = (
     <Tab title={t('Services')} eventKey={0} key="services">
-      <Card>
+      <Card className={classes(flexCardStyle, cardStyle)}>
         <CardBody>
           <div>
             <div className={toolbarStyle}>
@@ -214,7 +218,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const workloadsTab = (
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
-      <Card>
+      <Card className={classes(flexCardStyle, cardStyle)}>
         <CardBody>
           <div>
             <div className={toolbarStyle}>
@@ -254,7 +258,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const metricsTab = (
     <Tab title={t('Metrics')} eventKey={2} key="metrics">
-      <Card className={flexCardStyle}>
+      <Card className={classes(flexCardStyle, cardStyle)}>
         <CardBody>
           <ZtunnelMetrics
             rangeDuration={props.rangeDuration}
