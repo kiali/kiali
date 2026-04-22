@@ -1,42 +1,10 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
+import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
-
-const waitForResourceDeletion = (
-  namespace: string,
-  kind: string,
-  name: string,
-  timeoutMs = 120000,
-  pollIntervalMs = 3000
-): Cypress.Chainable<unknown> => {
-  const startTime = Date.now();
-  const command = `kubectl -n ${namespace} get ${kind} ${name} --ignore-not-found -o name`;
-
-  const waitUntilDeleted = (): Cypress.Chainable<unknown> => {
-    return cy.exec(command, { failOnNonZeroExit: false }).then(result => {
-      const resourceName = result.stdout.trim();
-      if (resourceName === '') {
-        cy.log(`${kind}/${name} was deleted from namespace ${namespace}`);
-        return cy.wrap(null);
-      }
-
-      if (Date.now() - startTime >= timeoutMs) {
-        throw new Error(
-          `Timed out after ${timeoutMs}ms waiting for ${kind}/${name} to be deleted from namespace ${namespace}`
-        );
-      }
-
-      cy.log(`${kind}/${name} still exists in namespace ${namespace}; waiting ${pollIntervalMs}ms before retry`);
-      cy.wait(pollIntervalMs);
-      return waitUntilDeleted();
-    });
-  };
-
-  return waitUntilDeleted();
-};
 
 const install_demoapp = (demoapp: string): void => {
   if (IN_OFFLINE_MODE) {
