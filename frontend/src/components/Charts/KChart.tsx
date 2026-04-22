@@ -37,10 +37,10 @@ const emptyStyle = kialiStyle({
 });
 
 const kchartStyle = kialiStyle({
-  paddingBottom: '0.75rem',
-  paddingLeft: '1.5rem',
-  paddingRight: '1.5rem',
-  paddingTop: '0.75rem'
+  marginBottom: '0.5rem',
+  marginLeft: '1.5rem',
+  marginRight: '1.5rem',
+  marginTop: '0.5rem'
 });
 
 // 24px (title + toolbar) + 20px (margin) + 15px (padding) + 15px (padding)
