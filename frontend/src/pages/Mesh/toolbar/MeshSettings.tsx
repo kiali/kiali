@@ -1,12 +1,4 @@
-import {
-  Checkbox,
-  Dropdown,
-  DropdownList,
-  MenuToggleElement,
-  MenuToggle,
-  Popover,
-  PopoverPosition
-} from '@patternfly/react-core';
+import { Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -16,19 +8,10 @@ import {
   BoundingClientAwareComponent,
   PropertyType
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
-import { KialiIcon } from 'config/KialiIcon';
-import {
-  containerStyle,
-  displayMenuRowContentStyle,
-  displayMenuRowIconStyle,
-  displayMenuRowStyle,
-  itemStyleWithoutInfo,
-  menuStyle,
-  titleStyle
-} from 'styles/DropdownStyles';
+import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
+import { containerStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { KialiDispatch } from 'types/Redux';
 import { serverConfig } from '../../../config';
-import { helpIconStyle } from 'styles/IconStyle';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -61,88 +44,21 @@ interface DisplayOptionType {
 }
 
 const marginBottom = 20;
-const HOVER_DELAY_MS = 200;
 
 const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsProps) => {
-  const [hoveredRowId, setHoveredRowId] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-  const [popoverOpenRowId, setPopoverOpenRowId] = React.useState<string | null>(null);
-  const hoverDelayTimer = React.useRef<number | null>(null);
   const { t } = useKialiTranslation();
-
-  // Cleanup timer on unmount
-  React.useEffect(() => {
-    return () => {
-      if (hoverDelayTimer.current !== null) {
-        window.clearTimeout(hoverDelayTimer.current);
-      }
-    };
-  }, []);
-
-  const handleRowMouseEnter = (rowId: string): void => {
-    hoverDelayTimer.current = window.setTimeout(() => {
-      setHoveredRowId(rowId);
-      hoverDelayTimer.current = null;
-    }, HOVER_DELAY_MS);
-  };
-
-  const handleRowMouseLeave = (): void => {
-    if (hoverDelayTimer.current !== null) {
-      window.clearTimeout(hoverDelayTimer.current);
-      hoverDelayTimer.current = null;
-    }
-
-    // Don't hide the icon if a popover is currently open
-    if (popoverOpenRowId === null) {
-      setHoveredRowId(null);
-    }
-  };
 
   const renderDisplayMenuRow = (
     rowId: string,
     content: React.ReactNode,
     tooltipContent?: React.ReactNode,
-    headerTitle?: string
+    headerTitle?: React.ReactNode
   ): React.ReactNode => {
-    // Show icon if hovering OR if the popover is open for this row
-    const showIcon = tooltipContent && (hoveredRowId === rowId || popoverOpenRowId === rowId);
-
-    if (!tooltipContent) {
-      return <div className={displayMenuRowStyle}>{content}</div>;
-    }
     return (
-      <div
-        className={displayMenuRowStyle}
-        onMouseEnter={() => handleRowMouseEnter(rowId)}
-        onMouseLeave={handleRowMouseLeave}
-      >
-        <div className={displayMenuRowContentStyle}>{content}</div>
-        <div
-          className={displayMenuRowIconStyle}
-          style={{
-            opacity: showIcon ? 1 : 0,
-            pointerEvents: showIcon ? 'auto' : 'none'
-          }}
-        >
-          <Popover
-            position={PopoverPosition.right}
-            triggerAction="click"
-            headerContent={headerTitle}
-            bodyContent={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}
-            showClose={true}
-            onShown={() => setPopoverOpenRowId(rowId)}
-            onHidden={() => setPopoverOpenRowId(null)}
-            onHide={() => {
-              // Only clear hoveredRowId if we're closing the popover for the same row
-              if (hoveredRowId === rowId) {
-                setHoveredRowId(null);
-              }
-            }}
-          >
-            <KialiIcon.Help className={helpIconStyle} />
-          </Popover>
-        </div>
-      </div>
+      <ToolbarDropdownHelpRow key={rowId} helpBody={tooltipContent} helpTitle={headerTitle}>
+        {content}
+      </ToolbarDropdownHelpRow>
     );
   };
 

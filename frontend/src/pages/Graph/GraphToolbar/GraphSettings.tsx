@@ -1,13 +1,4 @@
-import {
-  Radio,
-  Checkbox,
-  Dropdown,
-  DropdownList,
-  MenuToggleElement,
-  MenuToggle,
-  Popover,
-  PopoverPosition
-} from '@patternfly/react-core';
+import { Radio, Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -21,25 +12,14 @@ import {
   BoundingClientAwareComponent,
   PropertyType
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
-import { KialiIcon } from 'config/KialiIcon';
-import {
-  containerStyle,
-  displayMenuRowIconStyle,
-  displayMenuRowContentStyle,
-  displayMenuRowStyle,
-  displayMenuRowStyleNoHover,
-  itemStyleWithoutInfo,
-  menuStyle,
-  titleStyle
-} from 'styles/DropdownStyles';
+import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
+import { containerStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
 import { KialiDispatch } from 'types/Redux';
 import { KialiDisabledFeatures } from 'types/ServerConfig';
 import { getDisabledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
-import { helpIconStyle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
-import { PFColors } from 'components/Pf/PfColors';
 
 type ReduxStateProps = {
   boxByCluster: boolean;
@@ -83,9 +63,7 @@ type GraphSettingsProps = ReduxStateProps &
 
 type GraphSettingsState = {
   disabledFeatures?: KialiDisabledFeatures;
-  hoveredRowId: string | null;
   isOpen: boolean;
-  popoverOpenRowId: string | null;
 };
 
 interface DisplayOptionType {
@@ -101,21 +79,13 @@ interface DisplayOptionType {
 
 const marginBottom = 20;
 
-// Consistent width for all Display menu help popovers
-const DISPLAY_MENU_POPOVER_WIDTH = '20rem';
-
 class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, GraphSettingsState> {
-  private hoverDelayTimer: number | null = null;
-
   constructor(props: GraphSettingsProps) {
     super(props);
 
     this.state = {
-      hoveredRowId: null,
-      isOpen: false,
-      popoverOpenRowId: null
+      isOpen: false
     };
-    this.hoverDelayTimer = null;
 
     // Let URL override current redux state at construction time. Update URL as needed.
     this.handleURLBool(
@@ -363,35 +333,8 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
-  componentWillUnmount(): void {
-    if (this.hoverDelayTimer !== null) {
-      window.clearTimeout(this.hoverDelayTimer);
-    }
-  }
-
   private onToggle = (isOpen: boolean): void => {
     this.setState({ isOpen });
-  };
-
-  private readonly HOVER_DELAY_MS = 200;
-
-  private handleRowMouseEnter = (rowId: string): void => {
-    this.hoverDelayTimer = window.setTimeout(() => {
-      this.setState({ hoveredRowId: rowId });
-      this.hoverDelayTimer = null;
-    }, this.HOVER_DELAY_MS);
-  };
-
-  private handleRowMouseLeave = (): void => {
-    if (this.hoverDelayTimer !== null) {
-      window.clearTimeout(this.hoverDelayTimer);
-      this.hoverDelayTimer = null;
-    }
-
-    // Don't hide the icon if a popover is currently open
-    if (this.state.popoverOpenRowId === null) {
-      this.setState({ hoveredRowId: null });
-    }
   };
 
   private renderDisplayMenuRow = (
@@ -401,51 +344,15 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     popoverTitle?: React.ReactNode,
     options?: { alwaysShowHelpIcon?: boolean }
   ): React.ReactNode => {
-    const { hoveredRowId, popoverOpenRowId } = this.state;
-    const alwaysShow = options?.alwaysShowHelpIcon === true;
-    const showIcon = popoverContent && (alwaysShow || hoveredRowId === rowId || popoverOpenRowId === rowId);
-
-    if (!popoverContent) {
-      return <div className={displayMenuRowStyle}>{content}</div>;
-    }
-
-    const rowStyle = alwaysShow ? displayMenuRowStyleNoHover : displayMenuRowStyle;
-
     return (
-      <div
-        className={rowStyle}
-        onMouseEnter={() => this.handleRowMouseEnter(rowId)}
-        onMouseLeave={this.handleRowMouseLeave}
+      <ToolbarDropdownHelpRow
+        key={rowId}
+        helpBody={popoverContent}
+        helpTitle={popoverTitle}
+        alwaysShowHelpIcon={options?.alwaysShowHelpIcon === true}
       >
-        <div className={displayMenuRowContentStyle}>{content}</div>
-        <div
-          className={displayMenuRowIconStyle}
-          style={{
-            opacity: showIcon ? 1 : 0,
-            pointerEvents: showIcon ? 'auto' : 'none'
-          }}
-        >
-          <Popover
-            position={PopoverPosition.right}
-            triggerAction="click"
-            headerContent={popoverTitle ?? t('Help')}
-            bodyContent={<div style={{ textAlign: 'left' }}>{popoverContent}</div>}
-            minWidth={DISPLAY_MENU_POPOVER_WIDTH}
-            maxWidth={DISPLAY_MENU_POPOVER_WIDTH}
-            showClose={true}
-            onShown={() => this.setState({ popoverOpenRowId: rowId })}
-            onHidden={() => this.setState({ popoverOpenRowId: null })}
-            onHide={() => {
-              // Only clear hoveredRowId if we're closing the popover for the same row
-              if (this.state.hoveredRowId === rowId) {
-                this.setState({ hoveredRowId: null });
-              }
-            }}
-          >
-            <KialiIcon.Help className={helpIconStyle} color={alwaysShow ? PFColors.Black500 : undefined} />
-          </Popover>
-        </div>
-      </div>
+        {content}
+      </ToolbarDropdownHelpRow>
     );
   };
 

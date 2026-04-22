@@ -1,13 +1,4 @@
-import {
-  Radio,
-  Checkbox,
-  Tooltip,
-  TooltipPosition,
-  Dropdown,
-  DropdownList,
-  MenuToggleElement,
-  MenuToggle
-} from '@patternfly/react-core';
+import { Radio, Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
@@ -21,16 +12,9 @@ import {
   BoundingClientAwareComponent,
   PropertyType
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
-import { KialiIcon } from 'config/KialiIcon';
-import {
-  containerStyle,
-  itemStyleWithInfo,
-  itemStyleWithoutInfo,
-  menuStyle,
-  menuEntryStyle
-} from 'styles/DropdownStyles';
+import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
+import { containerStyle, itemStyleWithoutInfo, menuStyle } from 'styles/DropdownStyles';
 import { serverConfig } from 'config';
-import { infoStyle } from 'styles/IconStyle';
 
 type ReduxDispatchProps = {
   setTrafficRates: (trafficRates: TrafficRate[]) => void;
@@ -221,7 +205,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
         labelText: 'Total Bytes',
         isChecked: trafficRates.includes(TrafficRate.TCP_TOTAL),
         tooltip: (
-          <div style={{ textAlign: 'left' }}>Combined (Sent + Received) byte rate in bytes-per-second (mps).</div>
+          <div style={{ textAlign: 'left' }}>Combined (Sent + Received) byte rate in bytes-per-second (bps).</div>
         )
       }
     ];
@@ -235,41 +219,30 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
           {trafficRateOptions
             .filter((trafficRateOption: TrafficRateOptionType) => !trafficRateOption.isHidden)
             .map((trafficRateOption: TrafficRateOptionType) => (
-              <div key={trafficRateOption.id} className={menuEntryStyle}>
-                <label
-                  key={trafficRateOption.id}
-                  className={trafficRateOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                >
-                  <Checkbox
-                    id={trafficRateOption.id}
-                    name="trafficRateOptions"
-                    isChecked={trafficRateOption.isChecked}
-                    isDisabled={props.disabled}
-                    label={trafficRateOption.labelText}
-                    onChange={(event, _) => toggleTrafficRate(_, event)}
-                    value={trafficRateOption.id}
-                  />
-                </label>
-
-                {trafficRateOption.tooltip && (
-                  <Tooltip
-                    key={`tooltip_${trafficRateOption.id}`}
-                    position={TooltipPosition.right}
-                    content={trafficRateOption.tooltip}
-                  >
-                    <KialiIcon.Info className={infoStyle} />
-                  </Tooltip>
-                )}
+              <React.Fragment key={trafficRateOption.id}>
+                <ToolbarDropdownHelpRow helpBody={trafficRateOption.tooltip} helpTitle={trafficRateOption.labelText}>
+                  <label className={itemStyleWithoutInfo}>
+                    <Checkbox
+                      id={trafficRateOption.id}
+                      name="trafficRateOptions"
+                      isChecked={trafficRateOption.isChecked}
+                      isDisabled={props.disabled}
+                      label={trafficRateOption.labelText}
+                      onChange={(event, _) => toggleTrafficRate(_, event)}
+                      value={trafficRateOption.id}
+                    />
+                  </label>
+                </ToolbarDropdownHelpRow>
 
                 {trafficRateOption.id === TrafficRate.AMBIENT_GROUP && ambientOptions.some(o => o.isChecked) && (
                   <div>
                     {ambientOptions.map((ambientOption: TrafficRateOptionType) => (
-                      <div key={ambientOption.id} className={menuEntryStyle}>
-                        <label
-                          key={ambientOption.id}
-                          className={ambientOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                          style={{ paddingLeft: '2rem' }}
-                        >
+                      <ToolbarDropdownHelpRow
+                        key={ambientOption.id}
+                        helpBody={ambientOption.tooltip}
+                        helpTitle={ambientOption.labelText}
+                      >
+                        <label className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                           <Radio
                             id={ambientOption.id}
                             style={{ paddingLeft: '0.25rem' }}
@@ -281,16 +254,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             value={ambientOption.id}
                           />
                         </label>
-                        {ambientOption.tooltip && (
-                          <Tooltip
-                            key={`tooltip_${ambientOption.id}`}
-                            position={TooltipPosition.right}
-                            content={ambientOption.tooltip}
-                          >
-                            <KialiIcon.Info className={infoStyle} />
-                          </Tooltip>
-                        )}
-                      </div>
+                      </ToolbarDropdownHelpRow>
                     ))}
                   </div>
                 )}
@@ -298,12 +262,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                 {trafficRateOption.id === TrafficRate.GRPC_GROUP && grpcOptions.some(o => o.isChecked) && (
                   <div>
                     {grpcOptions.map((grpcOption: TrafficRateOptionType) => (
-                      <div key={grpcOption.id} className={menuEntryStyle}>
-                        <label
-                          key={grpcOption.id}
-                          className={grpcOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                          style={{ paddingLeft: '2rem' }}
-                        >
+                      <ToolbarDropdownHelpRow
+                        key={grpcOption.id}
+                        helpBody={grpcOption.tooltip}
+                        helpTitle={grpcOption.labelText}
+                      >
+                        <label className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                           <Radio
                             id={grpcOption.id}
                             style={{ paddingLeft: '0.25rem' }}
@@ -315,16 +279,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             value={grpcOption.id}
                           />
                         </label>
-                        {grpcOption.tooltip && (
-                          <Tooltip
-                            key={`tooltip_${grpcOption.id}`}
-                            position={TooltipPosition.right}
-                            content={grpcOption.tooltip}
-                          >
-                            <KialiIcon.Info className={infoStyle} />
-                          </Tooltip>
-                        )}
-                      </div>
+                      </ToolbarDropdownHelpRow>
                     ))}
                   </div>
                 )}
@@ -332,12 +287,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                 {trafficRateOption.id === TrafficRate.HTTP_GROUP && httpOptions.some(o => o.isChecked) && (
                   <div>
                     {httpOptions.map((httpOption: TrafficRateOptionType) => (
-                      <div key={httpOption.id} className={menuEntryStyle}>
-                        <label
-                          key={httpOption.id}
-                          className={httpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                          style={{ paddingLeft: '2rem' }}
-                        >
+                      <ToolbarDropdownHelpRow
+                        key={httpOption.id}
+                        helpBody={httpOption.tooltip}
+                        helpTitle={httpOption.labelText}
+                      >
+                        <label className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                           <Radio
                             id={httpOption.id}
                             style={{ paddingLeft: '0.25rem' }}
@@ -349,17 +304,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             value={httpOption.id}
                           />
                         </label>
-
-                        {httpOption.tooltip && (
-                          <Tooltip
-                            key={`tooltip_${httpOption.id}`}
-                            position={TooltipPosition.right}
-                            content={httpOption.tooltip}
-                          >
-                            <KialiIcon.Info className={infoStyle} />
-                          </Tooltip>
-                        )}
-                      </div>
+                      </ToolbarDropdownHelpRow>
                     ))}
                   </div>
                 )}
@@ -367,12 +312,12 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                 {trafficRateOption.id === TrafficRate.TCP_GROUP && tcpOptions.some(o => o.isChecked) && (
                   <div>
                     {tcpOptions.map((tcpOption: TrafficRateOptionType) => (
-                      <div key={tcpOption.id} className={menuEntryStyle}>
-                        <label
-                          key={tcpOption.id}
-                          className={tcpOption.tooltip ? itemStyleWithInfo : itemStyleWithoutInfo}
-                          style={{ paddingLeft: '2rem' }}
-                        >
+                      <ToolbarDropdownHelpRow
+                        key={tcpOption.id}
+                        helpBody={tcpOption.tooltip}
+                        helpTitle={tcpOption.labelText}
+                      >
+                        <label className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
                           <Radio
                             id={tcpOption.id}
                             style={{ paddingLeft: '0.25rem' }}
@@ -384,20 +329,11 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
                             value={tcpOption.id}
                           />
                         </label>
-                        {tcpOption.tooltip && (
-                          <Tooltip
-                            key={`tooltip_${tcpOption.id}`}
-                            position={TooltipPosition.right}
-                            content={tcpOption.tooltip}
-                          >
-                            <KialiIcon.Info className={infoStyle} />
-                          </Tooltip>
-                        )}
-                      </div>
+                      </ToolbarDropdownHelpRow>
                     ))}
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             ))}
         </div>
       </BoundingClientAwareComponent>
