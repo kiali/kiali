@@ -2,7 +2,7 @@
 
 # This deploys the fraud-detection demo
 
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
 : ${AUTO_INJECTION:=true}

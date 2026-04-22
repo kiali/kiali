@@ -205,8 +205,6 @@ ROLE_YAML=$(helm template kiali-server kiali/kiali-server --version "$KIALI_VERS
 # Build the resource list by processing each rule individually, respecting apiGroup scoping.
 # When a rule has resources: ["*"], we only expand to resources that belong to the apiGroups
 # listed in that specific rule — not all resources on the cluster.
-declare -a RESOURCES_FINAL=()
-
 rule_count=$(echo "$ROLE_YAML" | yq eval-all '. | select(.kind == "ClusterRole") | .rules | length' -)
 
 # Build a map of "resource -> set of verbs" by processing each rule individually,
@@ -253,8 +251,7 @@ if [[ ${#RESOURCE_VERBS[@]} -eq 0 ]]; then
 fi
 
 # Collect sorted resource list for display
-IFS=$'\n' RESOURCES=($(printf '%s\n' "${!RESOURCE_VERBS[@]}" | sort -u))
-unset IFS
+mapfile -t RESOURCES < <(printf '%s\n' "${!RESOURCE_VERBS[@]}" | sort -u)
 
 echo
 echo "Resources to check (with their required verbs):"

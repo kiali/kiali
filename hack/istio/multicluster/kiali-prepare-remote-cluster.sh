@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 set -e
 set -u
@@ -101,12 +102,6 @@ create_resources_in_remote_cluster() {
     ${CLIENT_EXE_REMOTE_CLUSTER} create ${DRY_RUN_ARG} namespace "${REMOTE_CLUSTER_NAMESPACE}"
 
   info "Create the remote cluster resources with the appropriate permissions for Kiali (view_only=${VIEW_ONLY})"
-  if [ "${VIEW_ONLY}" == "true" ]; then
-    local role_template_name="role-viewer"
-  else
-    local role_template_name="role"
-  fi
-
   if [ "${KIALI_VERSION}" != "latest" ]; then
     local helm_version_arg="--version ${KIALI_VERSION}"
   fi
@@ -185,7 +180,7 @@ get_remote_cluster_token() {
     #fi
     local token_secret="${KIALI_RESOURCE_NAME}"
 
-    for i in 1 2 3 4 5 6; do
+    for _ in 1 2 3 4 5 6; do
       local encoded_token="$(${CLIENT_EXE_REMOTE_CLUSTER} get secrets -n ${REMOTE_CLUSTER_NAMESPACE} ${token_secret} -o jsonpath='{.data.token}' 2>/dev/null)" \
         && [ "${encoded_token}" != "" ] \
         && break \
@@ -345,7 +340,7 @@ while [ $# -gt 0 ]; do
   key="$1"
   case $key in
     -astv|--allow-skip-tls-verify)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--allow-skip-tls-verify must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--allow-skip-tls-verify must be 'true' or 'false'"
       ALLOW_SKIP_TLS_VERIFY="$2"
       shift;shift
       ;;
@@ -354,12 +349,12 @@ while [ $# -gt 0 ]; do
       shift;shift
       ;;
     -d|--delete)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--delete must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--delete must be 'true' or 'false'"
       DELETE="$2"
       shift;shift
       ;;
     -dr|--dry-run)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--dry-run must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--dry-run must be 'true' or 'false'"
       DRY_RUN="$2"
       if [ "${DRY_RUN}" == "true" ]; then
         DRY_RUN_ARG="--dry-run=client"
@@ -393,12 +388,12 @@ while [ $# -gt 0 ]; do
       shift;shift
       ;;
     -pks|--process-kiali-secret)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--process-kiali-secret must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--process-kiali-secret must be 'true' or 'false'"
       PROCESS_KIALI_SECRET="$2"
       shift;shift
       ;;
     -prr|--process-remote-resources)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--process-remote-resources must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--process-remote-resources must be 'true' or 'false'"
       PROCESS_REMOTE_RESOURCES="$2"
       shift;shift
       ;;
@@ -419,7 +414,7 @@ while [ $# -gt 0 ]; do
       shift;shift
       ;;
     -vo|--view-only)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && error "--view-only must be 'true' or 'false'"
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--view-only must be 'true' or 'false'"
       VIEW_ONLY="$2"
       shift;shift
       ;;

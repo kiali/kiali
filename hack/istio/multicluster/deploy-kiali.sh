@@ -7,8 +7,8 @@
 #
 ##############################################################################
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 source ${SCRIPT_DIR}/../version-utils.sh
 
 KIALI_REPO_ROOT="${SCRIPT_DIR}/../../../"
@@ -139,7 +139,8 @@ deploy_kiali() {
       )
     else
       local image_to_tag="quay.io/kiali/kiali:dev"
-      local image_to_push="$(minikube -p ${cluster_name} ip):5000/kiali/kiali:dev"
+      local image_to_push
+      image_to_push="$(minikube -p ${cluster_name} ip):5000/kiali/kiali:dev"
       echo "Tagging the dev image [${image_to_tag}] -> [${image_to_push}]..."
       ${DORP} tag ${image_to_tag} ${image_to_push}
       echo "Pushing the dev image [${image_to_push}] to the cluster [${cluster_name}]..."

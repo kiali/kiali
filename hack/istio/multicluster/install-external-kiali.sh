@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##############################################################################
 # install-external-kiali.sh
@@ -13,8 +14,8 @@ infomsg() {
   echo "[INFO] ${1}"
 }
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 # The names of each cluster
 if [ "${CLUSTER1_NAME}" == "east" ]; then
@@ -33,8 +34,6 @@ else
 fi
 
 # Only install Kiali on cluster-1
-IGNORE_HOME_CLUSTER="true"
-SINGLE_KIALI="true"
 
 create_crossnetwork_gateway() {
   local clustername="${1}"
@@ -42,7 +41,7 @@ create_crossnetwork_gateway() {
 
   # create the gateway
   local image_hub_arg="--set hub=gcr.io/istio-release"
-  if [ ! -z "${ISTIO_HUB}" -a "${ISTIO_HUB}" != "default" ]; then
+  if [ -n "${ISTIO_HUB}" ] && [ "${ISTIO_HUB}" != "default" ]; then
     image_hub_arg="--set hub=${ISTIO_HUB}"
   fi
   if [ ! -z "${ISTIO_TAG}" ]; then

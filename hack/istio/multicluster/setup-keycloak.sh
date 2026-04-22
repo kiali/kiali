@@ -7,8 +7,8 @@
 #
 ##############################################################################
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 # backdoor delete functionality - set "DELETE_KEYCLOAK" to "true" to have this script delete things rather than install them
 if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
@@ -18,7 +18,7 @@ if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
   kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config secret openid-client-secret
   kubectl --context "${CLUSTER1_CONTEXT}" delete --ignore-not-found=true -n openshift-config cm keycloak-oidc-client-ca-cert
   OPENID_PROVIDER_INDEX=$(kubectl --context "${CLUSTER1_CONTEXT}" get oauth cluster -o json  | jq '.spec.identityProviders | map(.name == "openid") | index(true)')
-  if [ "${OPENID_PROVIDER_INDEX}" != "null" -a "${OPENID_PROVIDER_INDEX}" != "" ]; then
+  if [ "${OPENID_PROVIDER_INDEX}" != "null" ] && [ "${OPENID_PROVIDER_INDEX}" != "" ]; then
     kubectl --context "${CLUSTER1_CONTEXT}" patch oauth cluster --type=json -p '[{"op": "remove", "path": "/spec/identityProviders/'${OPENID_PROVIDER_INDEX}'"}]'
     echo "Identity Provider removed from cluster 1"
   else
@@ -29,7 +29,7 @@ if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
   kubectl --context "${CLUSTER2_CONTEXT}" delete --ignore-not-found=true -n openshift-config secret openid-client-secret
   kubectl --context "${CLUSTER2_CONTEXT}" delete --ignore-not-found=true -n openshift-config cm keycloak-oidc-client-ca-cert
   OPENID_PROVIDER_INDEX=$(kubectl --context "${CLUSTER2_CONTEXT}" get oauth cluster -o json  | jq '.spec.identityProviders | map(.name == "openid") | index(true)')
-  if [ "${OPENID_PROVIDER_INDEX}" != "null" -a "${OPENID_PROVIDER_INDEX}" != "" ]; then
+  if [ "${OPENID_PROVIDER_INDEX}" != "null" ] && [ "${OPENID_PROVIDER_INDEX}" != "" ]; then
     kubectl --context "${CLUSTER2_CONTEXT}" patch oauth cluster --type=json -p '[{"op": "remove", "path": "/spec/identityProviders/'${OPENID_PROVIDER_INDEX}'"}]'
     echo "Identity Provider removed from cluster 2"
   else

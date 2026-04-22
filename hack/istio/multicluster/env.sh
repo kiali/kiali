@@ -20,7 +20,7 @@ fi
 
 set -u
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../functions.sh"
 
 switch_cluster() {
@@ -84,8 +84,7 @@ setup_istio_environment() {
   local output_dir="${OUTPUT_DIR:-${script_dir}/../../../_output}"
   
   if [ "${ISTIO_VERSION}" == "" ]; then
-    ALL_ISTIOS=$(ls -dt1 ${output_dir}/istio-*)
-    if [ "$?" != "0" ]; then
+    if ! ls -dt1 ${output_dir}/istio-* >/dev/null 2>&1; then
       ${script_dir}/download-istio.sh
       if [ "$?" != "0" ]; then
         echo "ERROR: You do not have Istio installed and it cannot be downloaded."
@@ -110,14 +109,15 @@ create_crossnetwork_gateway() {
 
   # create the gateway
   local image_hub_arg="--set hub=gcr.io/istio-release"
-  if [ ! -z "${ISTIO_HUB}" -a "${ISTIO_HUB}" != "default" ]; then
+  if [ -n "${ISTIO_HUB}" ] && [ "${ISTIO_HUB}" != "default" ]; then
     image_hub_arg="--set hub=${ISTIO_HUB}"
   fi
   if [ ! -z "${ISTIO_TAG}" ]; then
     local image_tag_arg="--set tag=${ISTIO_TAG}"
   fi
 
-  local gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
+  local gateway_yaml
+  gateway_yaml="$("${GEN_GATEWAY_SCRIPT}" --mesh "${MESH_ID}" --cluster "${clustername}" --network "${network}")"
 
   if [ "${AMBIENT}" == "true" ]; then
     echo "Using Ambient to generate gateway yaml"
@@ -312,7 +312,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -be|--bookinfo-enabled)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--bookinfo-enabled must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--bookinfo-enabled must be 'true' or 'false'" && exit 1
       BOOKINFO_ENABLED="$2"
       shift;shift
       ;;
@@ -365,7 +365,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -dorp|--docker-or-podman)
-      [ "${2:-}" != "docker" -a "${2:-}" != "podman" ] && echo "-dorp must be 'docker' or 'podman'" && exit 1
+      [ "${2:-}" != "docker" ] && [ "${2:-}" != "podman" ] && echo "-dorp must be 'docker' or 'podman'" && exit 1
       DORP="$2"
       shift;shift
       ;;
@@ -374,7 +374,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -gr|--gateway-required)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--gateway-required must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--gateway-required must be 'true' or 'false'" && exit 1
       CROSSNETWORK_GATEWAY_REQUIRED="$2"
       shift;shift
       ;;
@@ -383,7 +383,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -ihc|--ignore-home-cluster)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--ignore-home-cluster must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--ignore-home-cluster must be 'true' or 'false'" && exit 1
       IGNORE_HOME_CLUSTER="$2"
       shift;shift
       ;;
@@ -408,22 +408,22 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -kas|--kiali-auth-strategy)
-      [ "${2:-}" != "anonymous" -a "${2:-}" != "openid" -a "${2:-}" != "openshift" ] && echo "--kiali-auth-strategy must be 'anonymous', 'openid', or 'openshift'" && exit 1
+      [ "${2:-}" != "anonymous" ] && [ "${2:-}" != "openid" ] && [ "${2:-}" != "openshift" ] && echo "--kiali-auth-strategy must be 'anonymous', 'openid', or 'openshift'" && exit 1
       KIALI_AUTH_STRATEGY="$2"
       shift;shift
       ;;
     -kbdi|--kiali-build-dev-image)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-build-dev-image must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--kiali-build-dev-image must be 'true' or 'false'" && exit 1
       KIALI_BUILD_DEV_IMAGE="$2"
       shift;shift
       ;;
     -kcrcs|--kiali-create-remote-cluster-secrets)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-create-remote-cluster-secrets must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--kiali-create-remote-cluster-secrets must be 'true' or 'false'" && exit 1
       KIALI_CREATE_REMOTE_CLUSTER_SECRETS="$2"
       shift;shift
       ;;
     -ke|--kiali-enabled)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--kiali-enabled must be 'true' or 'false'" && exit 1
       KIALI_ENABLED="$2"
       shift;shift
       ;;
@@ -444,7 +444,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -kudi|--kiali-use-dev-image)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--kiali-use-dev-image must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--kiali-use-dev-image must be 'true' or 'false'" && exit 1
       KIALI_USE_DEV_IMAGE="$2"
       shift;shift
       ;;
@@ -505,13 +505,13 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -mk|--manage-kind)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--manage-kind must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--manage-kind must be 'true' or 'false'" && exit 1
       MANAGE_KIND="$2"
       [ "${MANAGE_KIND}" == "true" ] && MANAGE_MINIKUBE="false" # cannot manage minikube if managing kind
       shift;shift
       ;;
     -mm|--manage-minikube)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--manage-minikube must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--manage-minikube must be 'true' or 'false'" && exit 1
       MANAGE_MINIKUBE="$2"
       [ "${MANAGE_MINIKUBE}" == "true" ] && MANAGE_KIND="false" # cannot manage kind if managing minikube
       shift;shift
@@ -521,7 +521,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -mnc|--manual-network-config)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--manual-network-config must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--manual-network-config must be 'true' or 'false'" && exit 1
       MANUAL_MESH_NETWORK_CONFIG="$2"
       shift;shift
       ;;
@@ -533,7 +533,7 @@ while [[ $# -gt 0 ]]; do
       NETWORK2_ID="$2"
       shift;shift
       ;;
-    -sk|--single-cluster)
+    -sc|--single-cluster)
       SINGLE_CLUSTER="$2"
       shift;shift
       ;;
@@ -542,7 +542,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     --sail)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--sail must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--sail must be 'true' or 'false'" && exit 1
       SAIL="$2"
       shift;shift
       ;;
@@ -551,7 +551,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -w|--waypoint)
-      [ "${2:-}" != "true" -a "${2:-}" != "false" ] && echo "--waypoint must be 'true' or 'false'" && exit 1
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--waypoint must be 'true' or 'false'" && exit 1
       WAYPOINT="$2"
       shift;shift
       ;;
@@ -645,10 +645,9 @@ KEYCLOAK_CERTS_DIR=${CERTS_DIR}/keycloak
 
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
-  SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/../../../_output}"
-  ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-  if [ "$?" != "0" ]; then
+  if ! ls -dt1 ${OUTPUT_DIR}/istio-* >/dev/null 2>&1; then
     ${OUTPUT_DIR}/../hack/istio/download-istio.sh
     if [ "$?" != "0" ]; then
       echo "ERROR: You do not have Istio installed and it cannot be downloaded"
@@ -723,7 +722,7 @@ if [ "${IS_OPENSHIFT}" == "true" ]; then
     MANUAL_MESH_NETWORK_CONFIG="true"
   fi
 else
-  if [ "${MANAGE_MINIKUBE}" == "true" -a "${MANAGE_KIND}" == "true" ]; then
+  if [ "${MANAGE_MINIKUBE}" == "true" ] && [ "${MANAGE_KIND}" == "true" ]; then
     echo "ERROR! Cannot manage both minikube and kind - pick one"
     exit 1
   fi

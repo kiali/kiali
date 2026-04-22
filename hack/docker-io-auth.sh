@@ -39,7 +39,7 @@ DEFAULT_SECRET_NAME="docker"
 DEFAULT_SERVICE_ACCOUNTS="prometheus grafana default"
 
 # Change to the directory where this script is and set our env
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -115,7 +115,7 @@ echo "PRINT_IMAGES=$PRINT_IMAGES"
 echo "SERVICE_ACCOUNTS=$SERVICE_ACCOUNTS"
 echo "SECRET_NAME=$SECRET_NAME"
 
-[ "$PRINT_IMAGES" != "true" -a "$PRINT_IMAGES" != "false" ] && echo "--print-images must be 'true' or 'false'" && exit 1
+[ "$PRINT_IMAGES" != "true" ] && [ "$PRINT_IMAGES" != "false" ] && echo "--print-images must be 'true' or 'false'" && exit 1
 
 if [ "${PRINT_IMAGES}" == "true" ]; then
   all_ns="$(${CLIENT} get pods --all-namespaces -o jsonpath="{.items[*].spec.containers[*].image}" | tr -s '[[:space:]]' '\n') | sort | uniq"

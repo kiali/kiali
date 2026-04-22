@@ -91,7 +91,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default values
 MGMT_CONTEXT="mgmt"
@@ -314,7 +314,7 @@ oc create route edge prometheus \
 # Wait for the route to be created and get its hostname
 info "Waiting for Prometheus route to be created..."
 MESH_PROM_ADDRESS=""
-for i in {1..30}; do
+for _ in {1..30}; do
   MESH_PROM_ADDRESS=$(oc -n ${ISTIO_NAMESPACE} get route prometheus -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
   if [ -n "${MESH_PROM_ADDRESS}" ]; then
     info "Prometheus route found: ${MESH_PROM_ADDRESS}"
@@ -433,7 +433,7 @@ EOF
 
 # Wait for token to be generated
 info "Waiting for service account token to be generated..."
-for i in {1..30}; do
+for _ in {1..30}; do
   TOKEN=$(oc --context=${MESH_CONTEXT} get secret kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.data.token}' 2>/dev/null || echo "")
   if [ -n "${TOKEN}" ]; then
     info "Service account token generated"
@@ -507,7 +507,7 @@ oc wait --for=condition=available --timeout=300s deployment/kiali-operator -n ${
   info "Kiali operator may still be initializing"
 
 info "Waiting for Kiali CR to be ready..."
-for i in {1..60}; do
+for _ in {1..60}; do
   KIALI_STATUS=$(oc get kiali kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.status.conditions[?(@.type=="Successful")].status}' 2>/dev/null || echo "")
   if [ "${KIALI_STATUS}" == "True" ]; then
     info "Kiali CR is ready"
@@ -521,7 +521,7 @@ info "=== Step 11: Verifying Kiali installation ==="
 
 # Wait for Kiali route to be created by the operator
 info "Waiting for Kiali route to be created..."
-for i in {1..30}; do
+for _ in {1..30}; do
   MGMT_ROUTE=$(oc --context=${MGMT_CONTEXT} get route kiali -n ${KIALI_NAMESPACE} -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
   if [ -n "${MGMT_ROUTE}" ]; then
     info "Kiali route created: ${MGMT_ROUTE}"

@@ -1,6 +1,6 @@
 #!/bin/bash
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 set -e
 
@@ -120,7 +120,8 @@ EOF
 
 kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/istio-ingressgateway --context="${CTX_EXTERNAL_CLUSTER}"
 
-export EXTERNAL_ISTIOD_ADDR=$(kubectl -n istio-system --context="${CTX_EXTERNAL_CLUSTER}" get svc istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+EXTERNAL_ISTIOD_ADDR=$(kubectl -n istio-system --context="${CTX_EXTERNAL_CLUSTER}" get svc istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export EXTERNAL_ISTIOD_ADDR
 
 REMOTE_ISTIO_YAML=$(mktemp)
 cat <<EOF > "$REMOTE_ISTIO_YAML"

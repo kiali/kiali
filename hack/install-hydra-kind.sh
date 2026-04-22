@@ -115,7 +115,7 @@ if [ -n "${CERTS_DIR}" ]; then
   CERTS_PATH="${CERTS_DIR}"
 
   # Extract the IP from the certificate directory path (e.g., ssl_172-19-0-2.nip.io -> 172.19.0.2)
-  CERT_DIR_BASENAME=$(basename $(dirname "${CERTS_DIR}"))
+  CERT_DIR_BASENAME=$(basename "$(dirname "${CERTS_DIR}")")
   KIND_CLUSTER_IP_DASHED=$(echo "${CERT_DIR_BASENAME}" | sed 's/ssl_\(.*\)\.nip\.io/\1/')
   KIND_CLUSTER_IP=$(echo "${KIND_CLUSTER_IP_DASHED}" | sed 's/-/./g')
   KUBE_HOSTNAME="${KIND_CLUSTER_IP_DASHED}.nip.io"

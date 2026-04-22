@@ -10,8 +10,8 @@
 set -u
 
 # Change to the directory where this script is
-SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
-cd ${SCRIPT_ROOT}
+SCRIPT_ROOT="$( cd "$(dirname "$0")" || exit ; pwd -P )"
+cd ${SCRIPT_ROOT} || exit
 
 # get function definitions
 source ${SCRIPT_ROOT}/func-sm.sh
@@ -166,17 +166,17 @@ fi
 if [[ "${OC}" = *"oc" ]]; then
   # if we are using 'oc' (as opposed to 'kubectl') we therefore assume we are installing in an OpenShift cluster
   IS_OPENSHIFT="true"
-  OLM_OPERATORS_NAMESPACE="openshift-operators"
+  export OLM_OPERATORS_NAMESPACE="openshift-operators"
   if ! ${OC} whoami >& /dev/null; then
     errormsg "You are not logged into the OpenShift cluster. Use '${OC} login' to log into a cluster and then retry."
     exit 1
   fi
 else
   IS_OPENSHIFT="false"
-  OLM_OPERATORS_NAMESPACE="operators"
+  export OLM_OPERATORS_NAMESPACE="operators"
 fi
 
-if [ "${IS_OPENSHIFT}" == "true" -a "${CATALOG_SOURCE}" != "redhat" -a "${CATALOG_SOURCE}" != "community" ]; then
+if [ "${IS_OPENSHIFT}" == "true" ] && [ "${CATALOG_SOURCE}" != "redhat" ] && [ "${CATALOG_SOURCE}" != "community" ]; then
   errormsg "The OpenShift catalog source must be one of 'redhat' or 'community' but was [${CATALOG_SOURCE}]"
   exit 1
 fi

@@ -45,7 +45,7 @@ HELP
 # Determine where this script is. We assume it is in the hack/ directory - make the cwd the parent directory.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-cd ${SCRIPT_DIR}/..
+cd ${SCRIPT_DIR}/.. || exit
 
 # process command line arguments
 while [[ $# -gt 0 ]]; do
@@ -235,15 +235,11 @@ setup_minikube_multicluster() {
   "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
   local script_dir
-  script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local output_dir
   output_dir="${script_dir}/../_output"
   # use the Istio release that was last downloaded (that's the -t option to ls)
-  local istio_dir
-  istio_dir=$(ls -dt1 ${output_dir}/istio-* | head -n1)
-  if [[ "${ISTIO_VERSION}" == *-dev ]]; then
-    local hub_arg="--istio-hub default"
-  fi
+  ls -dt1 ${output_dir}/istio-* | head -n1 > /dev/null
 
   local cluster1_context
   local cluster2_context

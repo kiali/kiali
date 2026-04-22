@@ -2,8 +2,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 # This script combines traces from the west cluster into the east cluster by sending traces through the istio-ingressgateway.
 # It deploys an otel collector into the west cluster which gathers all traces and exports them to the east cluster.

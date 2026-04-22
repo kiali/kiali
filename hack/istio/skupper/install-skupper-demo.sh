@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##############################################################################
 # install-skupper-demo.sh
@@ -52,7 +53,7 @@ NAMESPACE_EAST="east"
 
 # Some defaults
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="${SCRIPT_DIR}/../../.."
 OUTPUT_DIR="${ROOT_DIR}/_output"
 
@@ -365,7 +366,8 @@ openshift_install_basic_demo() {
   ${CLIENT_EXE} delete pod -n bookinfo -l app=kiali-traffic-generator
 
   infomsg "Logging into the image registry..."
-  eval $(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  registry_login_cmd="$(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
+  eval "${registry_login_cmd}"
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."
@@ -611,7 +613,7 @@ confirm_cluster_is_up() {
 openshift_login() {
   local cluster_name="${1}"
   case ${cluster_name} in
-    ${CLUSTER1_ISTIO})
+    "${CLUSTER1_ISTIO}")
       if [ -z "${OPENSHIFT1_TOKEN}" ]; then
         if ! ${CLIENT_EXE} login --server "${OPENSHIFT1_API}" -u "${OPENSHIFT1_USERNAME}" -p "${OPENSHIFT1_PASSWORD}" &> /dev/null ; then
           errormsg "Cannot log into OpenShift cluster #1 [${OPENSHIFT1_API}]. Make sure the credentials for user [${OPENSHIFT1_USERNAME}] is correct."
@@ -628,7 +630,7 @@ openshift_login() {
         exit 1
       fi
       ;;
-    ${CLUSTER2_DB})
+    "${CLUSTER2_DB}")
       if [ -z "${OPENSHIFT2_TOKEN}" ]; then
         if ! ${CLIENT_EXE} login --server "${OPENSHIFT2_API}" -u "${OPENSHIFT2_USERNAME}" -p "${OPENSHIFT2_PASSWORD}" &> /dev/null ; then
           errormsg "Cannot log into OpenShift cluster #2 [${OPENSHIFT2_API}]. Make sure the credentials for user [${OPENSHIFT2_USERNAME}] is correct."
@@ -661,7 +663,7 @@ open_browser() {
 # Make sure we have what we need
 
 [ "${SCRIPT_DIR}" == "" ] && errormsg "Cannot determine the directory where this script is found" && exit 1
-[ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" ] && errormsg "[${CLUSTER_TYPE}] is an invalid cluster type. --cluster-type must be one of: minikube, openshift " && exit 1
+[ "${CLUSTER_TYPE}" != "openshift" ] && [ "${CLUSTER_TYPE}" != "minikube" ] && errormsg "[${CLUSTER_TYPE}] is an invalid cluster type. --cluster-type must be one of: minikube, openshift " && exit 1
 
 if [ "${VALIDATE_ENVIRONMENT}" == "true" ]; then
   if ! which "${CLIENT_EXE}" &> /dev/null ; then
@@ -670,7 +672,7 @@ if [ "${VALIDATE_ENVIRONMENT}" == "true" ]; then
   fi
   infomsg "Client executable: ${CLIENT_EXE}"
 
-  if [ "${OPENSHIFT1_API}" != "" -o "${OPENSHIFT2_API}" != "" ]; then
+  if [ "${OPENSHIFT1_API}" != "" ] || [ "${OPENSHIFT2_API}" != "" ]; then
     [ "${OPENSHIFT1_API}" == "" ] && errormsg "You specified the OpenShift cluster #2 but not #1. Check the command line arguments you passed in." && exit 1
     [ "${OPENSHIFT2_API}" == "" ] && errormsg "You specified the OpenShift cluster #1 but not #2. Check the command line arguments you passed in." && exit 1
     if [ "${CLUSTER_TYPE}" != "openshift" ]; then
@@ -683,7 +685,7 @@ if [ "${VALIDATE_ENVIRONMENT}" == "true" ]; then
   fi
 
   if [ "${CLUSTER_TYPE}" == "openshift" ]; then
-    if [ "${OPENSHIFT1_API}" == "" -o "${OPENSHIFT2_API}" == "" ]; then
+    if [ "${OPENSHIFT1_API}" == "" ] || [ "${OPENSHIFT2_API}" == "" ]; then
       errormsg "You did not provide the OpenShift API URL for both cluster #1 [${OPENSHIFT1_API}] and cluster #2 [${OPENSHIFT2_API}]".
       exit 1
     fi
@@ -696,8 +698,9 @@ if [ "${VALIDATE_ENVIRONMENT}" == "true" ]; then
   if [ ! -x "${SKUPPER_EXE}" ]; then
     infomsg "Downloading the Skupper binary..."
     curl https://skupper.io/install.sh | TEST_INSTALL_PREFIX="${SCRIPT_DIR}" sh
-    mv $(find ${SCRIPT_DIR} -name skupper | tail -n1) ${SKUPPER_EXE}
-    rm -rf ${SCRIPT_DIR}/home
+    skupper_bin="$(find ${SCRIPT_DIR} -name skupper | tail -n1)"
+    mv "${skupper_bin}" ${SKUPPER_EXE}
+    rm -rf "${SCRIPT_DIR:?}/home"
   fi
   infomsg "Skupper binary installed at location: ${SKUPPER_EXE}"
   infomsg "Skupper version information:"
@@ -818,8 +821,8 @@ elif [ "$_CMD" == "iprom" ]; then
   infomsg "Opening browser tab to the Istio Prometheus UI"
 
   case ${CLUSTER_TYPE} in
-    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system get svc prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090 ;;
-    openshift) open_browser http://$(${CLIENT_EXE} -n istio-system get route prometheus -ojsonpath='{.spec.host}') ;;
+    minikube) open_browser "http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system get svc prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090" ;;
+    openshift) open_browser "http://$(${CLIENT_EXE} -n istio-system get route prometheus -ojsonpath='{.spec.host}')" ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -829,8 +832,8 @@ elif [ "$_CMD" == "kui" ]; then
   infomsg "Opening browser tab to the Kiali UI"
 
   case ${CLUSTER_TYPE} in
-    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system get svc kiali -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):20001 ;;
-    openshift) open_browser http://$(${CLIENT_EXE} -n istio-system get route kiali -ojsonpath='{.spec.host}') ;;
+    minikube) open_browser "http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n istio-system get svc kiali -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):20001" ;;
+    openshift) open_browser "http://$(${CLIENT_EXE} -n istio-system get route kiali -ojsonpath='{.spec.host}')" ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -840,12 +843,12 @@ elif [ "$_CMD" == "bui" ]; then
   infomsg "Opening browser tab to the Bookinfo UI"
 
   case ${CLUSTER_TYPE} in
-    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo get svc productpage -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9080 ;;
-    openshift) open_browser http://$(${CLIENT_EXE} -n bookinfo get route productpage -ojsonpath='{.spec.host}') ;;
+    minikube) open_browser "http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n bookinfo get svc productpage -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9080" ;;
+    openshift) open_browser "http://$(${CLIENT_EXE} -n bookinfo get route productpage -ojsonpath='{.spec.host}')" ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
-elif [ "$_CMD" == "smetricsmongo" -o "$_CMD" == "smetricsmysql" ]; then
+elif [ "$_CMD" == "smetricsmongo" ] || [ "$_CMD" == "smetricsmysql" ]; then
 
   case "${_CMD}" in
     smetricsmongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
@@ -861,7 +864,7 @@ elif [ "$_CMD" == "smetricsmongo" -o "$_CMD" == "smetricsmysql" ]; then
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
-elif [ "$_CMD" == "sprommongo" -o "$_CMD" == "sprommysql" ]; then
+elif [ "$_CMD" == "sprommongo" ] || [ "$_CMD" == "sprommysql" ]; then
 
   case "${_CMD}" in
     sprommongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
@@ -872,8 +875,8 @@ elif [ "$_CMD" == "sprommongo" -o "$_CMD" == "sprommysql" ]; then
   infomsg "Opening browser tab to the Skupper Prometheus UI found in namespace [${_skupper_ns}]"
 
   case ${CLUSTER_TYPE} in
-    minikube) open_browser http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090 ;;
-    openshift) open_browser http://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper-prometheus -ojsonpath='{.spec.host}') ;;
+    minikube) open_browser "http://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090" ;;
+    openshift) open_browser "http://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper-prometheus -ojsonpath='{.spec.host}')" ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 
@@ -918,17 +921,17 @@ elif [ "$_CMD" == "sstatus" ]; then
   case ${CLUSTER_TYPE} in
     minikube)
       if ${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get service/frontend &>/dev/null; then
-        east_west_demo_app_ip="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get service/frontend -o jsonpath={.status.loadBalancer.ingress[0].ip} 2>/dev/null)"
+        east_west_demo_app_ip="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get service/frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)"
         east_west_demo_pui="http://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get svc skupper-prometheus -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):9090"
-        east_west_demo_spass="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+        east_west_demo_spass="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath='{.data.'"${skupper_ui_username}"'}' | base64 -d)"
         east_west_demo_sui="https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${NAMESPACE_WEST} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010"
       fi
     ;;
     openshift)
       if ${CLIENT_EXE} -n ${NAMESPACE_WEST} get service/frontend &>/dev/null; then
-        east_west_demo_app_ip="$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route frontend -o jsonpath={.spec.host} 2>/dev/null)"
+        east_west_demo_app_ip="$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route frontend -o jsonpath='{.spec.host}' 2>/dev/null)"
         east_west_demo_pui="http://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route skupper-prometheus -ojsonpath='{.spec.host}')"
-        east_west_demo_spass="$(${CLIENT_EXE} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
+        east_west_demo_spass="$(${CLIENT_EXE} get secret -n ${NAMESPACE_WEST} skupper-console-users -ojsonpath='{.data.'"${skupper_ui_username}"'}' | base64 -d)"
         east_west_demo_sui="https://$(${CLIENT_EXE} -n ${NAMESPACE_WEST} get route skupper -ojsonpath='{.spec.host}')"
       fi
     ;;
@@ -943,7 +946,7 @@ elif [ "$_CMD" == "sstatus" ]; then
     infomsg "East-West Demo Skupper UI URL (USERNAME=[${skupper_ui_username}], PASSWORD=[${east_west_demo_spass}]): ${east_west_demo_sui}"
   fi
 
-elif [ "$_CMD" == "suimongo" -o "$_CMD" == "suimysql" ]; then
+elif [ "$_CMD" == "suimongo" ] || [ "$_CMD" == "suimysql" ]; then
 
   case "${_CMD}" in
     suimongo) _skupper_ns="${MONGOSKUPPERNS}" ;;
@@ -955,11 +958,11 @@ elif [ "$_CMD" == "suimongo" -o "$_CMD" == "suimysql" ]; then
 
   case ${CLUSTER_TYPE} in
     minikube)
-      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
-      open_browser https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010 ;;
+      PASSWORD="$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath='{.data.'"${skupper_ui_username}"'}' | base64 -d)"
+      open_browser "https://$(${CLIENT_EXE} --context ${CLUSTER1_ISTIO} -n ${_skupper_ns} get svc skupper -ojsonpath='{.status.loadBalancer.ingress[0].ip}'):8010" ;;
     openshift)
-      PASSWORD="$(${CLIENT_EXE} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath={.data.${skupper_ui_username}} | base64 -d)"
-      open_browser https://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper -ojsonpath='{.spec.host}') ;;
+      PASSWORD="$(${CLIENT_EXE} get secret -n ${_skupper_ns} skupper-console-users -ojsonpath='{.data.'"${skupper_ui_username}"'}' | base64 -d)"
+      open_browser "https://$(${CLIENT_EXE} -n ${_skupper_ns} get route skupper -ojsonpath='{.spec.host}')" ;;
     *) errormsg "Invalid cluster type" && exit 1 ;;
   esac
 

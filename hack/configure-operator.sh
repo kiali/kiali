@@ -18,7 +18,7 @@ DEFAULT_OPERATOR_NAMESPACE=""
 DEFAULT_PROFILER=""
 
 # Change to the directory where this script is and set our env
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -111,16 +111,21 @@ echo "OPERATOR_NAMESPACE=$OPERATOR_NAMESPACE"
 echo "PROFILER=$PROFILER"
 
 if [ -z "${PROFILER}" ]; then
-  ANSIBLE_CONFIG=""
+  export ANSIBLE_CONFIG=""
 else
   if [ "${PROFILER}" == "true" ]; then
-    ANSIBLE_CONFIG="/opt/ansible/ansible-profiler.cfg"
+    export ANSIBLE_CONFIG="/opt/ansible/ansible-profiler.cfg"
   else
-    ANSIBLE_CONFIG="/etc/ansible/ansible.cfg"
+    export ANSIBLE_CONFIG="/etc/ansible/ansible.cfg"
   fi
 fi
 
 echo "Setting new environment in the operator deployment"
+
+if [ "${IS_OLM}" == "true" ]; then
+  csv_name="$(${CLIENT} -n ${OPERATOR_NAMESPACE} get csv -o name | grep kiali)"
+  csv_env_names="$(${CLIENT} -n ${OPERATOR_NAMESPACE} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
+fi
 
 for e in \
   ANSIBLE_DEBUG_LOGS \
@@ -137,7 +142,11 @@ do
     if [ "${IS_OLM}" == "false" ]; then
       ${CLIENT} -n ${OPERATOR_NAMESPACE} set env deploy/kiali-operator "${ENV_NAME}=${ENV_VALUE}"
     else
-      ${CLIENT} -n ${OPERATOR_NAMESPACE} patch $(${CLIENT} -n ${OPERATOR_NAMESPACE} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT} -n ${OPERATOR_NAMESPACE} get $(${CLIENT} -n ${OPERATOR_NAMESPACE} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${ENV_NAME} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"${ENV_VALUE}\""}]"
+      env_index="$(echo "${csv_env_names}" | tr ' ' '\n' | nl -ba | awk -v name="${ENV_NAME}" '$2 == name {print $1; exit}')"
+      if [ -n "${env_index}" ]; then
+        env_index=$((env_index - 1))
+        ${CLIENT} -n ${OPERATOR_NAMESPACE} patch "${csv_name}" --type=json -p "[{\"op\":\"replace\",\"path\":\"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/${env_index}/value\",\"value\":\"${ENV_VALUE}\"}]"
+      fi
     fi
   fi
 done

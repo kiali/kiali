@@ -155,13 +155,13 @@ done
 # Where the Kiali github source is located on the local machine.
 # - The operator/molecule test directory should exist here.
 # - The helm-charts directory should exist here (look at physical peer directory next to operator)
-SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
+SCRIPT_ROOT="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 KIALI_SRC_HOME="${KIALI_SRC_HOME:-${SCRIPT_ROOT}/..}"
 if [ ! -d "${KIALI_SRC_HOME}" ]; then echo "Kiali source home directory is invalid: ${KIALI_SRC_HOME}"; exit 1; fi
 if [ ! -d "${KIALI_SRC_HOME}/operator/molecule" ]; then echo "Kiali source home directory is missing the operator molecule tests: ${KIALI_SRC_HOME}"; exit 1; fi
-KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}"; pwd -P)"
+KIALI_SRC_HOME="$(cd "${KIALI_SRC_HOME}" || exit; pwd -P)"
 if [ -z "${HELM_CHARTS_REPO:-}" ]; then
-  if [ -L "${KIALI_SRC_HOME}/operator" -a -d "${KIALI_SRC_HOME}/operator" ]; then
+  if [ -L "${KIALI_SRC_HOME}/operator" ] && [ -d "${KIALI_SRC_HOME}/operator" ]; then
     HELM_CHARTS_REPO="$(cd "$(cd "${KIALI_SRC_HOME}/operator" && pwd -P)/.." && pwd -P)/helm-charts"
   else
     HELM_CHARTS_REPO="$(cd "${KIALI_SRC_HOME}" && pwd -P)/helm-charts"
@@ -171,11 +171,11 @@ if [ ! -f "${HELM_CHARTS_REPO}/kiali-operator/Chart.yaml" ]; then echo "Kiali he
 
 # Set this to "minikube" if you want to test on minikube; "openshift" if testing on OpenShift.
 export CLUSTER_TYPE="${CLUSTER_TYPE:-openshift}"
-if [ "${CLUSTER_TYPE}" != "openshift" -a "${CLUSTER_TYPE}" != "minikube" -a "${CLUSTER_TYPE}" != "kind" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
+if [ "${CLUSTER_TYPE}" != "openshift" ] && [ "${CLUSTER_TYPE}" != "minikube" ] && [ "${CLUSTER_TYPE}" != "kind" ]; then echo "Cluster type is invalid: ${CLUSTER_TYPE}"; exit 1; fi
 
 # A list of all the tests.
 # This list, minus the tests to be skipped (see SKIP_TESTS), are the tests that this script will run.
-ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule"; ls -d *-test)}
+ALL_TESTS=${ALL_TESTS:-$(cd "${KIALI_SRC_HOME}/operator/molecule" || exit; ls -d *-test)}
 
 # Put the names of any tests in here if you do not want to run them (space separated).
 if [ "${CLUSTER_TYPE}" == "openshift" ]; then
@@ -226,7 +226,7 @@ COLOR=${COLOR:-true}
 # If -jxf is explicitly specified as empty string, leave it as empty string (it means the user doesn't want to dump the xml file)
 JUNIT_XML_FILE="${JUNIT_XML_FILE-${TEST_LOGS_DIR}/results.xml}"
 
-if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" -a "${MOLECULE_USE_DEFAULT_IMAGES}" == "true" ]; then
+if [ "${MOLECULE_USE_DEV_IMAGES}" == "true" ] && [ "${MOLECULE_USE_DEFAULT_IMAGES}" == "true" ]; then
   echo "You set --use-dev-images to true, but you also set --use-default-images to true. These are mutually exclusive."
   echo "If you want to test the default images then you cannot tell the tests to use dev images at the same time."
   echo "Set one or the other to false and try again."
@@ -290,7 +290,7 @@ green() {
 }
 
 # Go to the main Kiali source directory
-cd "${KIALI_SRC_HOME}"
+cd "${KIALI_SRC_HOME}" || exit
 
 # There might be some things we have to do to prepare for the tests, do those things now.
 # We also will need to clean up these things when the tests are finished.
@@ -299,7 +299,7 @@ prepare_test() {
   case $1 in
     # if using dev images on openshift, we have to grant an additional priviledge for this test
     default-namespace-test)
-      if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
+      if [ "${CLUSTER_TYPE}" == "openshift" ] && [ "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
         ${TEST_CLIENT_EXE:-oc} policy add-role-to-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;
@@ -320,7 +320,7 @@ unprepare_test() {
   case $1 in
     # remove that additional priviledge that was granted
     default-namespace-test)
-      if [ "${CLUSTER_TYPE}" == "openshift" -a "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
+      if [ "${CLUSTER_TYPE}" == "openshift" ] && [ "${MOLECULE_USE_DEV_IMAGES}" == "true" ]; then
         ${TEST_CLIENT_EXE:-oc} policy remove-role-from-user system:image-puller system:serviceaccount:anothernamespace:kiali-service-account --namespace=kiali >> ${TEST_LOGS_DIR}/${1}.log 2>&1
       fi
       ;;

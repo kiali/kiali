@@ -114,7 +114,7 @@ HELP
 # Determine where this script is. We assume it is in the hack/ directory - make the cwd the parent directory.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-cd ${SCRIPT_DIR}/..
+cd ${SCRIPT_DIR}/.. || exit
 
 source "${SCRIPT_DIR}/istio/version-utils.sh"
 
@@ -137,7 +137,7 @@ while [[ $# -gt 0 ]]; do
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
       MULTICLUSTER="${2}"
-      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" -a "${MULTICLUSTER}" != "${MULTI_PRIMARY}" -a "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" -a "${MULTICLUSTER}" != "${EXTERNAL_KIALI}" ]; then
+      if [ "${MULTICLUSTER}" != "${PRIMARY_REMOTE}" ] && [ "${MULTICLUSTER}" != "${MULTI_PRIMARY}" ] && [ "${MULTICLUSTER}" != "${EXTERNAL_CONTROLPLANE}" ] && [ "${MULTICLUSTER}" != "${EXTERNAL_KIALI}" ]; then
         echo "--multicluster option must be one of '${PRIMARY_REMOTE}' or '${MULTI_PRIMARY}' or '${EXTERNAL_CONTROLPLANE}' or '${EXTERNAL_KIALI}'"
         exit 1
       fi
@@ -145,7 +145,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -s|--sail)
       SAIL="$2"
-      if [ "${SAIL}" != "true" -a "${SAIL}" != "false" ]; then
+      if [ "${SAIL}" != "true" ] && [ "${SAIL}" != "false" ]; then
         echo "--sail option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -652,7 +652,7 @@ setup_kind_multicluster() {
   "${SCRIPT_DIR}"/istio/download-istio.sh ${DOWNLOAD_ISTIO_VERSION_ARG}
 
   local script_dir
-  script_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local output_dir
   output_dir="${script_dir}/../_output"
   # use the Istio release that was last downloaded (that's the -t option to ls)
@@ -682,15 +682,13 @@ setup_kind_multicluster() {
     kind_node_image=(--kind-node-image "${KIND_NODE_IMAGE}")
   fi
 
+  local MEMORY_LIMIT_ARG=()
+  local MEMORY_REQUEST_ARG=()
   if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
-    MEMORY_LIMIT_ARG="-kml $KEYCLOAK_LIMIT_MEMORY"
-  else
-    MEMORY_LIMIT_ARG=""
+    MEMORY_LIMIT_ARG=(-kml "$KEYCLOAK_LIMIT_MEMORY")
   fi
   if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
-    MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
-  else
-    MEMORY_REQUEST_ARG=""
+    MEMORY_REQUEST_ARG=(-krm "$KEYCLOAK_REQUESTS_MEMORY")
   fi
   # Build ambient argument properly for array expansion
   if [ -n "$AMBIENT" ]; then
@@ -728,9 +726,6 @@ setup_kind_multicluster() {
   if [ -n "${ISTIO_VERSION}" ]; then
     istio_version_arg=(--istio-version "${ISTIO_VERSION}")
   fi
-  # Always pass --certs-dir with a temporary directory to avoid permission issues with the default /tmp/istio-multicluster-certs
-  local certs_dir_arg="--certs-dir ${certs_dir}"
-
   # Pass auth strategy to install-multi-primary.sh so it knows whether to set up Keycloak
   # For multicluster, 'token' auth strategy maps to 'anonymous' (multicluster scripts only support anonymous, openid, or openshift)
   local kiali_auth_strategy="${AUTH_STRATEGY}"
@@ -755,13 +750,11 @@ setup_kind_multicluster() {
       --istio-dir "${istio_dir}"
       -kas "${kiali_auth_strategy}"
     )
-    if [ -n "${MEMORY_REQUEST_ARG}" ]; then
-      # MEMORY_REQUEST_ARG contains multiple words (e.g., "-krm 1Gi")
-      install_args+=(${MEMORY_REQUEST_ARG})
+    if [ ${#MEMORY_REQUEST_ARG[@]} -gt 0 ]; then
+      install_args+=("${MEMORY_REQUEST_ARG[@]}")
     fi
-    if [ -n "${MEMORY_LIMIT_ARG}" ]; then
-      # MEMORY_LIMIT_ARG contains multiple words (e.g., "-kml 1Gi")
-      install_args+=(${MEMORY_LIMIT_ARG})
+    if [ ${#MEMORY_LIMIT_ARG[@]} -gt 0 ]; then
+      install_args+=("${MEMORY_LIMIT_ARG[@]}")
     fi
     if [ ${#AMBIENT_ARG[@]} -gt 0 ]; then
       install_args+=("${AMBIENT_ARG[@]}")

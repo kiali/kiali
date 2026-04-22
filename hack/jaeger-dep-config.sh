@@ -13,7 +13,7 @@
 # protoc query.proto -I. -I${GOPATH}/src/github.com/googleapis/googleapis/ --go_out=plugins=grpc:model
 
 # Using all protoc binaries and dependencies from a docker image:
-docker run --rm -u $(id -u) -v${KIALI_SRC}:${KIALI_SRC} -w${KIALI_SRC} jaegertracing/protobuf:latest \
+docker run --rm -u "$(id -u)" -v${KIALI_SRC}:${KIALI_SRC} -w${KIALI_SRC} jaegertracing/protobuf:latest \
   --proto_path=${KIALI_SRC}/jaeger --go_out=${KIALI_SRC}/jaeger/model ${KIALI_SRC}/jaeger/model.proto
-docker run --rm -u $(id -u) -v${KIALI_SRC}:${KIALI_SRC} -w${KIALI_SRC} jaegertracing/protobuf:latest \
+docker run --rm -u "$(id -u)" -v${KIALI_SRC}:${KIALI_SRC} -w${KIALI_SRC} jaegertracing/protobuf:latest \
   --proto_path=${KIALI_SRC}/jaeger --go_out=plugins=grpc:${KIALI_SRC}/jaeger/model ${KIALI_SRC}/jaeger/query.proto

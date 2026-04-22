@@ -154,7 +154,8 @@ get_olm_version_we_want() {
     fi
 
     # Try to extract the OLM version
-    local OLM_VERSION_TEMP="$(echo "$curl_output" | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
+    local OLM_VERSION_TEMP
+    OLM_VERSION_TEMP="$(echo "$curl_output" | grep "tag_name" | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | grep -v "snapshot" | sort -t "." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)"
 
     # Check if version extraction succeeded
     if [ -z "${OLM_VERSION_TEMP}" ]; then

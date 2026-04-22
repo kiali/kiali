@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-cd ${SCRIPT_DIR}/..
+cd ${SCRIPT_DIR}/.. || exit
 
 # Not exposed as a flag yet but could be.
 KEYCLOAK_VERSION="26.3.4"

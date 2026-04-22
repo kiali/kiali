@@ -25,7 +25,7 @@ install_ambient_on_cluster() {
     echo "Using Sail to install Istio"
 
     # Use the existing install-istio-via-sail.sh script with ambient profile and multicluster configuration
-    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     ISTIO_INSTALL_SCRIPT="${HACK_SCRIPT_DIR}/../install-istio-via-sail.sh"
 
     if [ ! -x "${ISTIO_INSTALL_SCRIPT}" ]; then
@@ -51,7 +51,7 @@ install_ambient_on_cluster() {
     echo "Using istioctl to install Istio"
 
     # Use the existing install-istio-via-istioctl.sh script with ambient profile and multicluster configuration
-    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     ISTIO_INSTALL_SCRIPT="${HACK_SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 
     if [ ! -x "${ISTIO_INSTALL_SCRIPT}" ]; then
@@ -81,13 +81,11 @@ install_ambient_on_cluster() {
 }
 
 install_ambient_multicluster() {
-
-  CLIENT_EXE="kubectl"
   local SAIL="${1:-true}"
   # Setup Istio environment (for access to ISTIO_DIR/istioctl and sample manifests).
   # Do this lazily only if not already set by the caller.
   if [ -z "${ISTIO_DIR:-}" ]; then
-    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     setup_istio_environment "${HACK_SCRIPT_DIR}"
   fi
 
@@ -144,8 +142,6 @@ deploy_curl_tool() {
 }
 
 install_helloworld_demo() {
-  CLIENT_EXE="kubectl"
-
   # Optional parameter: if CLUSTER2_AMBIENT is set to "false", cluster 2 will not be set up as ambient
   local cluster2_ambient="${CLUSTER2_AMBIENT:-true}"
 

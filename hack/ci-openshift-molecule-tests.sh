@@ -355,7 +355,7 @@ which $DORP > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
 infomsg "Clone github repos in [$SRC] to make sure we have the latest tests and scripts"
 
-cd ${SRC}
+cd ${SRC} || exit
 
 infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
 git clone --single-branch --branch ${LOGS_BRANCH} ${LOGS_GITHUB_GITCLONE}
@@ -370,7 +370,7 @@ infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}/kiali-operator:${KIALI_O
 git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GITHUB_GITCLONE}
 
 ln -s ${SRC}/kiali-operator kiali/operator
-cd kiali
+cd kiali || exit
 
 infomsg "Log into the cluster [${OPENSHIFT_API}] as kubeadmin user named [${KUBEADMIN_USER}]"
 $OC login -u ${KUBEADMIN_USER} -p ${KUBEADMIN_PW} ${OPENSHIFT_API}
@@ -383,7 +383,8 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
   make -e OC="${OC}" -e DORP="${DORP}" -e GOPATH="${GOPATH}" clean build-ui build test
 
   infomsg "Logging into the image registry..."
-  eval $(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  registry_login_cmd="$(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
+  eval "${registry_login_cmd}"
 
   infomsg "Pushing the images into the cluster..."
   make -e OC="${OC}" -e DORP="${DORP}" -e GOPATH="${GOPATH}" cluster-push
@@ -421,17 +422,33 @@ make -e FORCE_MOLECULE_BUILD="true" -e DORP="${DORP}" molecule-build
 
 mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
 infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
-eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --use-default-images "${USE_DEFAULT_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$OC" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --operator-installer "${OPERATOR_INSTALLER:-helm}" > "${LOGS_LOCAL_RESULTS}"
+molecule_cmd=(hack/run-molecule-tests.sh
+  --use-dev-images "${USE_DEV_IMAGES}"
+  --use-default-images "${USE_DEFAULT_IMAGES}"
+  --spec-version "${SPEC_VERSION}"
+  --helm-charts-repo "${SRC}/helm-charts"
+  --client-exe "$OC"
+  --color false
+  --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}"
+  -dorp "${DORP}"
+  --operator-installer "${OPERATOR_INSTALLER:-helm}"
+)
+if [ -n "${ALL_TESTS}" ]; then
+  molecule_cmd+=(--all-tests "${ALL_TESTS}")
+fi
+if [ -n "${SKIP_TESTS}" ]; then
+  molecule_cmd+=(--skip-tests "${SKIP_TESTS}")
+fi
+"${molecule_cmd[@]}" > "${LOGS_LOCAL_RESULTS}"
 
-cd ${LOGS_LOCAL_SUBDIR_ABS}
+cd ${LOGS_LOCAL_SUBDIR_ABS} || exit
 
 # compress large log files
 MAX_LOG_FILE_SIZE="50M"
-for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
-do
-  infomsg "This file is large and needs to be compressed: $(basename ${bigfile})"
-  tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
-done
+while IFS= read -r -d '' bigfile; do
+  infomsg "This file is large and needs to be compressed: $(basename "${bigfile}")"
+  tar -czf "${bigfile}.tgz" -C "${LOGS_LOCAL_SUBDIR_ABS}" --remove-files "$(basename "${bigfile}")"
+done < <(find "${LOGS_LOCAL_SUBDIR_ABS}" -maxdepth 1 -type f -size +"${MAX_LOG_FILE_SIZE}" -print0)
 
 if [ "${UPLOAD_LOGS}" == "true" ]; then
   infomsg "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"

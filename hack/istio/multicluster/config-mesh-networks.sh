@@ -12,8 +12,8 @@
 #
 ##############################################################################
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 if [ "${MANUAL_MESH_NETWORK_CONFIG}" != "true" ]; then
   echo "Will not manually configure the mesh network"
@@ -23,7 +23,8 @@ else
 fi
 
 get_gateway_load_balancer_ip() {
-  local ip="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+  local ip
+  ip="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   if [ "${ip}" == "" ]; then
     return 1
   fi
@@ -31,7 +32,8 @@ get_gateway_load_balancer_ip() {
 }
 
 get_gateway_load_balancer_port() {
-  local port="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.spec.ports[?(@.name=="tls")].port}')"
+  local port
+  port="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.spec.ports[?(@.name=="tls")].port}')"
   if [ "${port}" == "" ]; then
     return 1
   fi
@@ -39,8 +41,10 @@ get_gateway_load_balancer_port() {
 }
 
 get_gateway_node_ip() {
-  local selector="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway --output=json | jq -j '.spec.selector | to_entries | .[] | "\(.key)=\(.value),"' | sed -E 's/(.*),\\?/\1/')"
-  local hostip="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} pod -o jsonpath='{.items[0].status.hostIP}' -l "${selector}")"
+  local selector
+  local hostip
+  selector="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway --output=json | jq -j '.spec.selector | to_entries | .[] | "\(.key)=\(.value),"' | sed -E 's/(.*),\\?/\1/')"
+  hostip="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} pod -o jsonpath='{.items[0].status.hostIP}' -l "${selector}")"
   if [ "${hostip}" == "" ]; then
     return 1
   fi
@@ -48,7 +52,8 @@ get_gateway_node_ip() {
 }
 
 get_gateway_node_port() {
-  local nodeport="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.spec.ports[?(@.name=="tls")].nodePort}')"
+  local nodeport
+  nodeport="$(${CLIENT_EXE} get -n ${ISTIO_NAMESPACE} service istio-eastwestgateway -o jsonpath='{.spec.ports[?(@.name=="tls")].nodePort}')"
   if [ "${nodeport}" == "" ]; then
     return 1
   fi

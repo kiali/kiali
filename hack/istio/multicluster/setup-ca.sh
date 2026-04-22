@@ -10,8 +10,8 @@
 #
 ##############################################################################
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 create_secret() {
   local clustername="${1}"
@@ -41,11 +41,11 @@ if [ ! -d "${CERTS_DIR}" ]; then
   echo "Cannot create certs directory - ${CERTS_DIR}"
   exit 1
 fi
-pushd "${CERTS_DIR}"
+pushd "${CERTS_DIR}" || exit
 make -f ${CERT_MAKEFILE} root-ca
 make -f ${CERT_MAKEFILE} ${CLUSTER1_NAME}-cacerts
 make -f ${CERT_MAKEFILE} ${CLUSTER2_NAME}-cacerts
-popd
+popd || exit
 
 echo "==== CREATE CERTS FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"

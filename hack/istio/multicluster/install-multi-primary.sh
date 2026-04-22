@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##############################################################################
 # install-multi-primary.sh
@@ -15,9 +16,9 @@ infomsg() {
   echo "[INFO] ${1}"
 }
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
-source ${SCRIPT_DIR}/install-ambient-multicluster.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
+source ${SCRIPT_DIR}/install-ambient-multicluster.sh "$@"
 
 create_remote_secret() {
   local clustername="${1}"
@@ -182,7 +183,7 @@ if [ "${AMBIENT}" == "true" ]; then
     echo "==== Installing Istio Ambient on cluster 1 (east) and regular Istio on cluster 2 (west)"
 
     # Setup Istio environment (needed for install_ambient_on_cluster)
-    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     setup_istio_environment "${HACK_SCRIPT_DIR}"
 
     # Install ambient on cluster 1 (east)

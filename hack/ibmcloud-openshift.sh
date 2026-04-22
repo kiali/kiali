@@ -22,10 +22,12 @@ infomsg() {
 
 # FUNCTION: is_cluster_deployed - returns 'true' if the cluster is in the state of "deployed and ingress is healthy"
 is_cluster_deployed() {
-  local state="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.lifecycle.masterState')"
+  local state
+  state="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.lifecycle.masterState')"
   if [ "${state}" == "deployed" ]; then
     # Only try to get the ingress status after the cluster is online.
-    local ingress_state="$(ibmcloud ks ingress status --cluster ${CLUSTER_NAME} --output json | jq -r '.status')"
+    local ingress_state
+    ingress_state="$(ibmcloud ks ingress status --cluster ${CLUSTER_NAME} --output json | jq -r '.status')"
     if [ "${ingress_state}" == "healthy" ]; then
       echo "true"
       return
@@ -44,7 +46,8 @@ create() {
   if ! (ibmcloud is vpc ${VPC_NAME} &> /dev/null || ibmcloud is vpc-create ${VPC_NAME}) ; then
     errormsg "Failed to create the VPC [${VPC_NAME}]."
   else
-    local vpc_id="$(ibmcloud is vpc ${VPC_NAME} --output json | jq -r '.id')"
+    local vpc_id
+    vpc_id="$(ibmcloud is vpc ${VPC_NAME} --output json | jq -r '.id')"
     infomsg "VPC: name=[${VPC_NAME}] id=[${vpc_id}]"
   fi
 
@@ -52,7 +55,8 @@ create() {
   if ! (ibmcloud is public-gateway ${GATEWAY_NAME} &> /dev/null || ibmcloud is public-gateway-create ${GATEWAY_NAME} ${VPC_NAME} ${ZONE_NAME}) ; then
     errormsg "Failed to create public gateway [${GATEWAY_NAME}] in vpc/zone [${VPC_NAME}/${ZONE_NAME}]."
   else
-    local gw_id="$(ibmcloud is public-gateway ${GATEWAY_NAME} --output json | jq -r '.id')"
+    local gw_id
+    gw_id="$(ibmcloud is public-gateway ${GATEWAY_NAME} --output json | jq -r '.id')"
     infomsg "Public Gateway: name=[${GATEWAY_NAME}] id=[${gw_id}]"
   fi
 
@@ -60,7 +64,8 @@ create() {
   if ! (ibmcloud is subnet ${SUBNET_NAME} &> /dev/null || ibmcloud is subnet-create ${SUBNET_NAME} ${VPC_NAME} --zone ${ZONE_NAME} --ipv4-address-count 256 --pgw ${GATEWAY_NAME}) ; then
     errormsg "Failed to create subnet [${SUBNET_NAME}] in vpc/zone [${VPC_NAME}/${ZONE_NAME}] on gateway [${GATEWAY_NAME}]."
   else
-    local sn_id="$(ibmcloud is subnet ${SUBNET_NAME} --output json | jq -r '.id')"
+    local sn_id
+    sn_id="$(ibmcloud is subnet ${SUBNET_NAME} --output json | jq -r '.id')"
     infomsg "Subnet: name=[${SUBNET_NAME}] id=[${sn_id}]"
   fi
 
@@ -68,7 +73,8 @@ create() {
   if ! (ibmcloud resource service-instance ${CLOUD_OBJECT_STORAGE_NAME} &> /dev/null || ibmcloud resource service-instance-create ${CLOUD_OBJECT_STORAGE_NAME} cloud-object-storage standard global -g Default) ; then
     errormsg "Failed to create cloud object storage resource [${CLOUD_OBJECT_STORAGE_NAME}]."
   else
-    local cos_id="$(ibmcloud resource service-instance ${CLOUD_OBJECT_STORAGE_NAME} --output json | jq -r '.[0].id')"
+    local cos_id
+    cos_id="$(ibmcloud resource service-instance ${CLOUD_OBJECT_STORAGE_NAME} --output json | jq -r '.[0].id')"
     infomsg "Cloud Object Storage: name=[${CLOUD_OBJECT_STORAGE_NAME}] id=[${cos_id}]"
   fi
 
@@ -77,7 +83,8 @@ create() {
   if ! ibmcloud oc cluster create vpc-gen2 --name ${CLUSTER_NAME} --zone ${ZONE_NAME} --version ${OPENSHIFT_VERSION} --flavor ${WORKER_FLAVOR} --workers ${WORKER_NODES} --vpc-id ${vpc_id} --subnet-id ${sn_id} --cos-instance ${cos_id} ; then
     errormsg "Failed to create OpenShift [${OPENSHIFT_VERSION}] cluster [${CLUSTER_NAME}] in zone [${ZONE_NAME}]."
   else
-    local cluster_id="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.id')"
+    local cluster_id
+    cluster_id="$(ibmcloud oc cluster get --cluster ${CLUSTER_NAME} --output json | jq -r '.id')"
     infomsg "Cluster: name=[${CLUSTER_NAME}] id=[${cluster_id}]"
   fi
 
@@ -148,7 +155,8 @@ finish() {
 
 # FUNCTION: create_apikey - Creates an API key and stores it in the file ./apikey.txt.
 create_apikey() {
-  local results="$(ibmcloud iam api-key-create -d "created by ibmcloud-openshift.sh script" ${APIKEY_NAME} --output json)"
+  local results
+  results="$(ibmcloud iam api-key-create -d "created by ibmcloud-openshift.sh script" ${APIKEY_NAME} --output json)"
   if [ "$?" != "0" ]; then
     errormsg "Failed to create the API Key"
   fi
@@ -157,7 +165,8 @@ create_apikey() {
   echo "${results}" | jq -r '.apikey' > ${outputfile}
   infomsg "API Key is stored in ${outputfile}. Protect that file. You can manage it further here: https://cloud.ibm.com/iam/apikeys"
 
-  local masterurl="$(ibmcloud oc cluster get -c ${CLUSTER_NAME} --output json | jq -r '.masterURL')"
+  local masterurl
+  masterurl="$(ibmcloud oc cluster get -c ${CLUSTER_NAME} --output json | jq -r '.masterURL')"
   infomsg "To use this key to log into OpenShift, run: oc login -u apikey -p \$(cat ${outputfile}) --server ${masterurl}"
 }
 

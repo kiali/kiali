@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##############################################################################
 # k8s-minikube.sh
@@ -59,8 +60,7 @@ get_gateway_url() {
   if [ "$1" == "" ] ; then
     INGRESS_PORT="<port>"
   else
-    jsonpath="{.spec.ports[?(@.name==\"$1\")].nodePort}"
-    INGRESS_PORT=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath=${jsonpath})
+    INGRESS_PORT=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath="{.spec.ports[?(@.name==\"$1\")].nodePort}")
   fi
 
   INGRESS_HOST=$(${MINIKUBE_EXEC_WITH_PROFILE} ip)
@@ -69,7 +69,7 @@ get_gateway_url() {
 
 print_all_gateway_urls() {
   echo "Gateway URLs for all known ports are:"
-  allnames=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath={.spec.ports['*'].name})
+  allnames=$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[*].name}')
   for n in ${allnames}
   do
     get_gateway_url ${n}
@@ -139,7 +139,7 @@ install_hydra() {
   local tmp_known_hosts="${OUTPUT_PATH}/minikube-known-hosts"
   rm -f ${tmp_known_hosts}
   ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- mkdir -p hydra_certs
-  scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=${tmp_known_hosts} -i $(${MINIKUBE_EXEC_WITH_PROFILE} ssh-key) ${CERTS_PATH}/ssl/* docker@$(${MINIKUBE_EXEC_WITH_PROFILE} ip):hydra_certs/
+  scp -o StrictHostKeyChecking=no -o UserKnownHostsFile="${tmp_known_hosts}" -i "$(${MINIKUBE_EXEC_WITH_PROFILE} ssh-key)" ${CERTS_PATH}/ssl/* "docker@$(${MINIKUBE_EXEC_WITH_PROFILE} ip):hydra_certs/"
   ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo mkdir -p /var/lib/minikube/certs/
   ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo cp /home/docker/hydra_certs/* /var/lib/minikube/certs/
 
@@ -173,7 +173,7 @@ install_hydra() {
     --disk-size=${K8S_DISK} \
     --driver=${K8S_DRIVER} \
     --kubernetes-version=${K8S_VERSION} \
-    --extra-config=apiserver.oidc-issuer-url=https://$(echo ${MINIKUBE_IP} | sed 's/\./-/g').nip.io:30967 \
+    --extra-config=apiserver.oidc-issuer-url="https://$(echo "${MINIKUBE_IP}" | sed 's/\./-/g').nip.io:30967" \
     --extra-config=apiserver.oidc-username-claim=email \
     --extra-config=apiserver.oidc-ca-file=/var/lib/minikube/certs/hydra-ca.pem \
     --extra-config=apiserver.oidc-client-id=kiali-app \
@@ -509,7 +509,7 @@ determine_full_lb_range() {
 }
 
 # Change to the directory where this script is and set our env
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit
 
 _CMD=""
 while [[ $# -gt 0 ]]; do
@@ -830,7 +830,8 @@ elif [ "$_CMD" = "port-forward" ]; then
   ensure_minikube_is_running
   echo 'Forwarding port 20001 to the Kiali server. This runs in foreground, press Control-C to kill it.'
   echo 'To access Kiali, point your browser to http://localhost:20001/kiali/console'
-  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward $(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
+  kiali_pod="$(${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system get pod -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}')"
+  ${MINIKUBE_EXEC_WITH_PROFILE} kubectl -- -n istio-system port-forward "${kiali_pod}" 20001:20001
 
 elif [ "$_CMD" = "ingress" ]; then
   ensure_minikube_is_running
@@ -881,7 +882,7 @@ elif [ "$_CMD" = "podman" ]; then
 elif [ "$_CMD" = "resetclock" ]; then
   ensure_minikube_is_running
   echo "Resetting the clock in the minikube VM"
-  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo date -u $(date -u +%m%d%H%M%Y.%S)
+  ${MINIKUBE_EXEC_WITH_PROFILE} ssh -- sudo date -u "$(date -u +%m%d%H%M%Y.%S)"
 
 elif [ "$_CMD" = "olm" ]; then
   ensure_minikube_is_running

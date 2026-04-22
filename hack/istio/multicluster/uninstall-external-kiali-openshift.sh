@@ -30,8 +30,6 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-
 # Default values
 MGMT_CONTEXT="mgmt"
 MESH_CONTEXT="mesh"

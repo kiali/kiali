@@ -66,7 +66,7 @@ questionchar() {
 # Determine where this script is and make it the cwd
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-cd ${SCRIPT_DIR}
+cd ${SCRIPT_DIR} || exit
 
 # Some defaults
 
@@ -371,15 +371,15 @@ PORT_FORWARD_DEPLOYMENT_PROMETHEUS=""
 if [ -z "${PROMETHEUS_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     prom_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.host}')"
-    if [ "$?" != "0" -o -z "${prom_host}" ]; then
+    if [ "$?" != "0" ] || [ -z "${prom_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_PROMETHEUS="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} prometheus -o name)"
-      if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" ]; then
+      if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" ]; then
         errormsg "Cannot auto-discover Prometheus on OpenShift. You must specify the Prometheus URL via --prometheus-url"
         exit 1
       else
         warnmsg "Cannot auto-discover Prometheus on OpenShift. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
         prom_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.ports[0].targetPort}')"
-        if [ "$?" != "0" -o -z "${prom_remote_port}" ]; then
+        if [ "$?" != "0" ] || [ -z "${prom_remote_port}" ]; then
           warnmsg "Cannot auto-discover Prometheus port on OpenShift. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
         else
           prom_local_port="$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
@@ -393,13 +393,13 @@ if [ -z "${PROMETHEUS_URL:-}" ]; then
     fi
   else
     PORT_FORWARD_DEPLOYMENT_PROMETHEUS="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} prometheus -o name)"
-    if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" ]; then
+    if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_PROMETHEUS}" ]; then
       errormsg "Cannot auto-discover Prometheus on Kubernetes. You must specify the Prometheus URL via --prometheus-url"
       exit 1
     else
       warnmsg "Cannot auto-discover Prometheus on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
       prom_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} prometheus -o jsonpath='{.spec.ports[0].targetPort}')"
-      if [ "$?" != "0" -o -z "${prom_remote_port}" ]; then
+      if [ "$?" != "0" ] || [ -z "${prom_remote_port}" ]; then
         warnmsg "Failed to port forward. Cannot auto-discover Prometheus port on Kubernetes. If you exposed it, you can specify the Prometheus URL via --prometheus-url. For now, this session will attempt to port-forward to it."
       else
         prom_local_port="$(echo ${LOCAL_REMOTE_PORTS_PROMETHEUS} | cut -d ':' -f 1)"
@@ -420,15 +420,15 @@ if [ "${ENABLE_GRAFANA}" == "false" ]; then
 elif [ -z "${GRAFANA_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     graf_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.host}')"
-    if [ "$?" != "0" -o -z "${graf_host}" ]; then
+    if [ "$?" != "0" ] || [ -z "${graf_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_GRAFANA="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} grafana -o name)"
-      if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" ]; then
+      if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" ]; then
         errormsg "Cannot auto-discover Grafana on OpenShift. You must specify the Grafana URL via --grafana-url"
         exit 1
       else
         warnmsg "Cannot auto-discover Grafana on OpenShift. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
         graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.ports[0].targetPort}')"
-        if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+        if [ "$?" != "0" ] || [ -z "${graf_remote_port}" ]; then
           warnmsg "Cannot auto-discover Grafana port on OpenShift. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
         else
           graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
@@ -442,13 +442,13 @@ elif [ -z "${GRAFANA_URL:-}" ]; then
     fi
   else
     PORT_FORWARD_DEPLOYMENT_GRAFANA="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} grafana -o name)"
-    if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" ]; then
+    if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_GRAFANA}" ]; then
       errormsg "Cannot auto-discover Grafana on Kubernetes. You must specify the Grafana URL via --grafana-url"
       exit 1
     else
       warnmsg "Cannot auto-discover Grafana on Kubernetes. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
       graf_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} grafana -o jsonpath='{.spec.ports[0].targetPort}')"
-      if [ "$?" != "0" -o -z "${graf_remote_port}" ]; then
+      if [ "$?" != "0" ] || [ -z "${graf_remote_port}" ]; then
         warnmsg "Cannot auto-discover Grafana port on Kubernetes. If you exposed it, you can specify the Grafana URL via --grafana-url. For now, this session will attempt to port-forward to it."
       else
         graf_local_port="$(echo ${LOCAL_REMOTE_PORTS_GRAFANA} | cut -d ':' -f 1)"
@@ -468,14 +468,14 @@ PORT_FORWARD_DEPLOYMENT_PERSES=""
 if [ -z "${PERSES_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     pers_host="$(${CLIENT_EXE} get route -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.host}')"
-    if [ "$?" != "0" -o -z "${pers_host}" ]; then
+    if [ "$?" != "0" ] || [ -z "${pers_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
-      if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
+      if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
         errormsg "Cannot auto-discover Perses on OpenShift. You must specify the Perses URL via --perses-url. Skipping"
       else
         warnmsg "Cannot auto-discover Perses on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
         pers_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
-        if [ "$?" != "0" -o -z "${pers_remote_port}" ]; then
+        if [ "$?" != "0" ] || [ -z "${pers_remote_port}" ]; then
           warnmsg "Cannot auto-discover Perses port on OpenShift. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
         else
           pers_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
@@ -489,12 +489,12 @@ if [ -z "${PERSES_URL:-}" ]; then
     fi
   else
     PORT_FORWARD_DEPLOYMENT_PERSES="$(${CLIENT_EXE} get deployment -n ${ISTIO_NAMESPACE} perses -o name)"
-    if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
+    if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_PERSES}" ]; then
       errormsg "Cannot auto-discover Perses on Kubernetes. You must specify the Perses URL via --perses-url. Skipping"
     else
       warnmsg "Cannot auto-discover Perses on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
       pers_remote_port="$(${CLIENT_EXE} get service -n ${ISTIO_NAMESPACE} perses -o jsonpath='{.spec.ports[0].targetPort}')"
-      if [ "$?" != "0" -o -z "${pers_remote_port}" ]; then
+      if [ "$?" != "0" ] || [ -z "${pers_remote_port}" ]; then
         warnmsg "Cannot auto-discover Perses port on Kubernetes. If you exposed it, you can specify the Perses URL via --perses-url. For now, this session will attempt to port-forward to it."
       else
         pers_local_port="$(echo ${LOCAL_REMOTE_PORTS_PERSES} | cut -d ':' -f 1)"
@@ -515,18 +515,18 @@ if [ "${ENABLE_TRACING}" == "false" ]; then
 elif [ -z "${TRACING_URL:-}" ]; then
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.host}')"
-    if [ "$?" != "0" -o -z "${trac_host}" ]; then
+    if [ "$?" != "0" ] || [ -z "${trac_host}" ]; then
       trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_APP} -o jsonpath='{.spec.host}')"
     fi
-    if [ "$?" != "0" -o -z "${trac_host}" ]; then
+    if [ "$?" != "0" ] || [ -z "${trac_host}" ]; then
       PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
-      if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
+      if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
         errormsg "Cannot auto-discover Tracing on OpenShift. You must specify the Tracing URL via --tracing-url"
         exit 1
       else
         warnmsg "Cannot auto-discover Tracing on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
         trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
-        if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
+        if [ "$?" != "0" ] || [ -z "${trac_remote_port}" ]; then
           warnmsg "Cannot auto-discover Tracing port on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
         else
           trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
@@ -541,7 +541,7 @@ elif [ -z "${TRACING_URL:-}" ]; then
     fi
   else
     PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
-    if [ "$?" != "0" -o -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
+    if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
       errormsg "Cannot auto-discover Tracing on Kubernetes. You must specify the Tracing URL via --tracing-url"
       exit 1
     else
@@ -551,7 +551,7 @@ elif [ -z "${TRACING_URL:-}" ]; then
       else
         trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
       fi
-      if [ "$?" != "0" -o -z "${trac_remote_port}" ]; then
+      if [ "$?" != "0" ] || [ -z "${trac_remote_port}" ]; then
         warnmsg "Cannot auto-discover Tracing port on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
       else
         trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
@@ -568,7 +568,7 @@ fi
 
 # If the user didn't tell us what the k8s master api endpoint is, try to auto-discover it
 
-if [ -z "${KUBERNETES_API_HOST:-}" -o -z "${KUBERNETES_API_PORT:-}" ]; then
+if [ -z "${KUBERNETES_API_HOST:-}" ] || [ -z "${KUBERNETES_API_PORT:-}" ]; then
   infomsg "Attempting to auto-discover the Kubernetes API Endpoint..."
 
   # Get the api server endpoint in the form "host:port" - assumes it is always https and always has a port
@@ -634,13 +634,13 @@ if ! echo "${LOCAL_REMOTE_PORTS_PERSES}" | grep -qiE "^[0-9]+:[0-9]+$"; then err
 if ! echo "${LOCAL_REMOTE_PORTS_PROMETHEUS}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Prometheus local-remote ports specifer: ${LOCAL_REMOTE_PORTS_PROMETHEUS}"; exit 1; fi
 if ! echo "${LOCAL_REMOTE_PORTS_TRACING}" | grep -qiE "^[0-9]+:[0-9]+$"; then errormsg "Invalid Tracing local-remote ports specifer: ${LOCAL_REMOTE_PORTS_TRACING}"; exit 1; fi
 if ! echo "${LOG_LEVEL}" | grep -qiE "^(trace|debug|info|warn|error|fatal)$"; then errormsg "Invalid log level: ${LOG_LEVEL}"; exit 1; fi
-[ "${REBOOTABLE}" != "true" -a "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
-[ "${ENABLE_SERVER}" != "true" -a "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
-[ "${ENABLE_SERVER}" == "false" -a "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
-[ "${ENABLE_GRAFANA}" != "true" -a "${ENABLE_GRAFANA}" != "false" ] && errormsg "--enable-grafana must be 'true' or 'false'" && exit 1
-[ "${ENABLE_TRACING}" != "true" -a "${ENABLE_TRACING}" != "false" ] && errormsg "--enable-tracing must be 'true' or 'false'" && exit 1
-[ "${IGNORE_HOME_CLUSTER}" != "true" -a "${IGNORE_HOME_CLUSTER}" != "false" ] && errormsg "--ignore-home-cluster must be 'true' or 'false'" && exit 1
-[ "${COPY_CLUSTER_SECRETS}" != "true" -a "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
+[ "${REBOOTABLE}" != "true" ] && [ "${REBOOTABLE}" != "false" ] && errormsg "--rebootable must be 'true' or 'false'" && exit 1
+[ "${ENABLE_SERVER}" != "true" ] && [ "${ENABLE_SERVER}" != "false" ] && errormsg "--enable-server must be 'true' or 'false'" && exit 1
+[ "${ENABLE_SERVER}" == "false" ] && [ "${REBOOTABLE}" == "true" ] && infomsg "--enable-server was set to false - turning off rebootable flag for you" && REBOOTABLE="false"
+[ "${ENABLE_GRAFANA}" != "true" ] && [ "${ENABLE_GRAFANA}" != "false" ] && errormsg "--enable-grafana must be 'true' or 'false'" && exit 1
+[ "${ENABLE_TRACING}" != "true" ] && [ "${ENABLE_TRACING}" != "false" ] && errormsg "--enable-tracing must be 'true' or 'false'" && exit 1
+[ "${IGNORE_HOME_CLUSTER}" != "true" ] && [ "${IGNORE_HOME_CLUSTER}" != "false" ] && errormsg "--ignore-home-cluster must be 'true' or 'false'" && exit 1
+[ "${COPY_CLUSTER_SECRETS}" != "true" ] && [ "${COPY_CLUSTER_SECRETS}" != "false" ] && errormsg "--copy-cluster-secrets must be 'true' or 'false'" && exit 1
 
 # Build the config file from the template
 
@@ -669,7 +669,7 @@ fi
 
 # Kiali wants the UI Console in a directory called "console" under its cwd
 
-cd ${TMP_DIR}
+cd ${TMP_DIR} || exit
 
 # If we are told to copy the remote cluster secrets, prepare the local directory
 # and pull the files down from the Kiali pod. If there is no Kiali pod deployed,
@@ -685,7 +685,7 @@ if [ ! -d ${REMOTE_CLUSTER_SECRETS_DIR} ]; then
   errormsg "You first must prepare the remote cluster secrets directory: sudo mkdir -p ${REMOTE_CLUSTER_SECRETS_DIR}; sudo chmod ugo+w ${REMOTE_CLUSTER_SECRETS_DIR}"
   exit 1
 fi
-rm -rf ${REMOTE_CLUSTER_SECRETS_DIR}/*
+rm -rf "${REMOTE_CLUSTER_SECRETS_DIR:?}"/*
 
 # remote clusters
 if [ "${COPY_CLUSTER_SECRETS}" == "true" ]; then
@@ -734,7 +734,7 @@ if [ "${HOME_KUBE_CONTEXT}" != "current" ] && ! ${CLIENT_EXE} config get-context
   CA_FILE="${TMP_DIR}/ca.crt"
 
   infomsg "Attempting to obtain the service account token and certificates..."
-  SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app.kubernetes.io/name=kiali -o jsonpath={.items[0].metadata.name})"
+  SERVICE_ACCOUNT_NAME="$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get sa -l app.kubernetes.io/name=kiali -o jsonpath='{.items[0].metadata.name}')"
   if [ -z "${SERVICE_ACCOUNT_NAME}" ]; then
     errormsg "Cannot get the service account name. Kiali must be deployed in [${ISTIO_NAMESPACE}]. If you do not want to deploy Kiali in the cluster, use '--kube-context current'"
     exit 1
@@ -753,12 +753,12 @@ type: kubernetes.io/service-account-token
 EOM
 
   wait_for_secret=1
-  until [ $wait_for_secret -eq 5 ] || [ "$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" 2> /dev/null)" != "" ] ; do
+  until [ $wait_for_secret -eq 5 ] || [ "$(${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath='{.data.token}' 2> /dev/null)" != "" ] ; do
     sleep $(( wait_for_secret++ ))
   done
 
-  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data.token}" | base64 --decode > "${TOKEN_FILE}"
-  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > "${CA_FILE}"
+  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath='{.data.token}' | base64 --decode > "${TOKEN_FILE}"
+  ${CLIENT_EXE} -n ${ISTIO_NAMESPACE} get secret ${SERVICE_ACCOUNT_SECRET_NAME} -o jsonpath='{.data["ca\.crt"]}' | base64 --decode > "${CA_FILE}"
   if [ ! -s "${TOKEN_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account token"; exit 1; fi
   if [ ! -s "${CA_FILE}"  ]; then errormsg "Cannot obtain the Kiali service account ca.crt"; exit 1; fi
   chmod 'u=r,go=' "${TOKEN_FILE}" "${CA_FILE}"
@@ -810,7 +810,8 @@ start_port_forward_component() {
   local CMDLINE_OPT="${6}"               # e.g. "--prometheus-url"
 
   if [ ! -z "${PORT_FORWARD_DEPLOYMENT}" ]; then
-    local localport="$(echo ${LOCAL_REMOTE_PORTS} | cut -d ':' -f 1)"
+    local localport
+    localport="$(echo ${LOCAL_REMOTE_PORTS} | cut -d ':' -f 1)"
     if lsof -Pi :${localport} -sTCP:LISTEN -t > /dev/null 2>&1; then
       warnmsg "There is something listening on port [${localport}] - will assume it is a port-forward already set up, so no port-forward will be started"
       printf -v "${PORT_FORWARD_JOB_VARNAME}" ""

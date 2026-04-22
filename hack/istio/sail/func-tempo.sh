@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##########################################################
 #
@@ -92,14 +93,11 @@ install_tempo() {
   # Obtained this list of CRDs by "oc get crds -oname | grep tempo". We can't actually do that here programatically
   # because the CRDs may not even be created yet. That's why there is a while loop in here - to wait for them to be created.
   infomsg "Waiting for CRDs to be established."
-  for crd in \
-     tempostacks.tempo.grafana.com
-  do
-    infomsg "Expecting CRD [${crd}] to be established"
-    echo -n "Waiting."
-    while ! ${OC} get crd ${crd} >& /dev/null ; do echo -n '.'; sleep 1; done
-    ${OC} wait --for condition=established crd/${crd}
-  done
+  local crd="tempostacks.tempo.grafana.com"
+  infomsg "Expecting CRD [${crd}] to be established"
+  echo -n "Waiting."
+  while ! ${OC} get crd ${crd} >& /dev/null ; do echo -n '.'; sleep 1; done
+  ${OC} wait --for condition=established crd/${crd}
 
   infomsg "Expecting Tempo operator deployment to be created"
   echo -n "Waiting."
@@ -113,7 +111,7 @@ install_tempo() {
     infomsg "Expecting [${op}] to be ready"
     echo -n "Waiting."
     local readyReplicas="0"
-    while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+    while [ "$?" != "0" ] || [ "$readyReplicas" == "0" ]
     do
       sleep 1
       echo -n '.'
@@ -123,7 +121,9 @@ install_tempo() {
   done
 
   infomsg "Wait for the tempo operator to be Ready."
-  ${OC} wait --for condition=Ready $(${OC} get pod --namespace ${TEMPO_OPERATOR_NAMESPACE} -o name | grep tempo) --timeout 300s --namespace ${TEMPO_OPERATOR_NAMESPACE}
+  while IFS= read -r tempo_pod; do
+    ${OC} wait --for condition=Ready "${tempo_pod}" --timeout 300s --namespace ${TEMPO_OPERATOR_NAMESPACE}
+  done < <(${OC} get pod --namespace ${TEMPO_OPERATOR_NAMESPACE} -o name | grep tempo)
   infomsg "done."
 
   infomsg "Wait for the tempo validating webhook to be created."
@@ -204,13 +204,17 @@ delete_tempo_operator() {
   infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'tempo')
   do
-    ${OC} delete --ignore-not-found=true csv --namespace $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
+    local csv_ns="${csv%%:*}"
+    local csv_name="${csv#*:}"
+    ${OC} delete --ignore-not-found=true csv --namespace "${csv_ns}" "${csv_name}"
   done
 
   infomsg "Deleting Tempo OperatorGroup"
   for og in $(${OC} get OperatorGroup --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'tempo')
   do
-    ${OC} delete --ignore-not-found=true OperatorGroup --namespace $(echo -n $og | cut -d: -f1) $(echo -n $og | cut -d: -f2)
+    local og_ns="${og%%:*}"
+    local og_name="${og#*:}"
+    ${OC} delete --ignore-not-found=true OperatorGroup --namespace "${og_ns}" "${og_name}"
   done
 
   infomsg "Deleting Tempo Operator Namespace"

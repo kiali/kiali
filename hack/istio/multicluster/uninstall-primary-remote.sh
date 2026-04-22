@@ -8,16 +8,14 @@
 #
 ##############################################################################
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
-source ${SCRIPT_DIR}/env.sh $*
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source ${SCRIPT_DIR}/env.sh "$@"
 
 # Find the hack scripts to do the uninstalls
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 INSTALL_BOOKINFO_SCRIPT="${SCRIPT_DIR}/../install-bookinfo-demo.sh"
 PURGE_KIALI_SCRIPT="${SCRIPT_DIR}/../../purge-kiali-from-cluster.sh"
 K8S_MINIKUBE_SCRIPT="${SCRIPT_DIR}/../../k8s-minikube.sh"
-KIND_EXE="$(which kind)"
-
 if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
   echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
 else

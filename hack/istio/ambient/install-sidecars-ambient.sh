@@ -13,7 +13,7 @@
 AMBIENT_NS="test-ambient"
 : ${ARCH:=amd64}
 CLIENT_EXE="oc"
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/../functions.sh
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 SIDECAR_NS="test-sidecar"

@@ -173,7 +173,7 @@ if [ ! -z "${url:-}" ]; then
   echo "NONCE:   ${nonce}"
   echo "SID:     ${sid}"
   echo "=================FULL JWT JSON:"
-  echo -n ${jwt_token} | $(cd "$(dirname "$0")" ; pwd -P)/jwt-decode.sh -k "${secret}"
+  echo -n ${jwt_token} | "$(cd "$(dirname "$0")" || exit ; pwd -P)/jwt-decode.sh" -k "${secret}"
   echo "=================RESULTS:"
   if [ ! -z "${nonce}" ]; then nonce_cookie_arg="; ${ncookie}=${nonce}"; fi
   curl -v -k --cookie "${cookie}=${jwt_token}${nonce_cookie_arg:-}" ${url}

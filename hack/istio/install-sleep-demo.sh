@@ -9,10 +9,10 @@
 #
 ##############################################################################
 
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ISTIO_DIR is where the Istio download is installed and thus where the sleep demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"

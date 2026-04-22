@@ -62,10 +62,10 @@ HELPMSG
 done
 
 # Go to the main output directory
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
 mkdir -p "$OUTPUT_DIR"
-cd "$OUTPUT_DIR"
+cd "$OUTPUT_DIR" || exit
 OUTPUT_DIR="$(pwd)" # remove the .. references
 echo "Output Directory: ${OUTPUT_DIR}"
 
@@ -284,7 +284,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
   fi
 fi
 
-cd "./istio-${VERSION_WE_WANT}/"
+cd "./istio-${VERSION_WE_WANT}/" || exit
 ISTIO_DIR="$(pwd)"
 echo "Istio is found here: ${ISTIO_DIR}"
 if [ -x "${ISTIO_DIR}/bin/istioctl" ]; then

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ###############################################
 #
@@ -109,7 +109,7 @@ HELP
 
 # Process command line arguments
 
-while [[ $# -gt 0 ]]; do
+while [ "$#" -gt 0 ]; do
   key="$1"
   case $key in
     -ce|--client-exe)             CLIENT_EXE="$2";            shift;shift; ;;
@@ -179,7 +179,7 @@ if ${CLIENT_EXE} api-versions | grep --quiet "route.openshift.io"; then
   OLM_BUNDLE_PACKAGE="kiali-ossm"
 else
   IS_OPENSHIFT="false"
-  echo -n "You are connecting to a (non-OpenShift) Kubernetes cluster; cluster type is "
+  printf "You are connecting to a (non-OpenShift) Kubernetes cluster; cluster type is "
   if [ -n "${MINIKUBE_PROFILE}" ]; then
     echo "[minikube]"
     CLUSTER_TYPE="minikube"
@@ -213,7 +213,7 @@ test -d ${SRC_DIR}/kiali-operator && rm -rf ${SRC_DIR}/kiali-operator
 mkdir -p ${SRC_DIR}
 
 echo "Change to the directory where all source code will be pulled"
-cd ${SRC_DIR}
+cd ${SRC_DIR} || exit
 
 # Download the source code from the desired forks and branches
 
@@ -225,16 +225,17 @@ git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GIT
 ln -s ${SRC_DIR}/kiali-operator kiali/operator
 
 echo "Change to kiali directory where the main make targets are"
-cd kiali
+cd kiali || exit
 
 # Build and push the images to the cluster
 
 echo "Building backend server and frontend UI using GOPATH=${GOPATH}..."
 make clean build-ui build test
 
-if [ "${IS_OPENSHIFT}" == "true" ]; then
+if [ "${IS_OPENSHIFT}" = "true" ]; then
   echo "Logging into the image registry..."
-  eval $(make cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')
+  registry_login_cmd="$(make cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
+  eval "${registry_login_cmd}"
 fi
 
 echo "Pushing the images into the cluster..."

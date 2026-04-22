@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##########################################################
 #
@@ -95,7 +96,7 @@ install_istio() {
     infomsg "Expecting [${op}] to be ready"
     echo -n "Waiting."
     local readyReplicas="0"
-    while [ "$?" != "0" -o "$readyReplicas" == "0" ]
+    while [ "$?" != "0" ] || [ "$readyReplicas" == "0" ]
     do
       sleep 1
       echo -n '.'
@@ -105,7 +106,9 @@ install_istio() {
   done
 
   infomsg "Wait for the servicemesh operator to be Ready."
-  ${OC} wait --for condition=Ready $(${OC} get pod -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio') --timeout 300s -n ${OLM_OPERATORS_NAMESPACE}
+  while IFS= read -r op_pod; do
+    ${OC} wait --for condition=Ready "${op_pod}" --timeout 300s -n ${OLM_OPERATORS_NAMESPACE}
+  done < <(${OC} get pod -n ${OLM_OPERATORS_NAMESPACE} -o name | grep -E 'sail|servicemesh|istio')
   infomsg "done."
 
   # TODO: Sail has no webhooks (yet)
@@ -121,7 +124,7 @@ install_istio() {
   # We try to determine the latest version of Istio supported by examining the CRD.
   if [ "${istio_version}" == "latest" ]; then
     istio_version="$(${OC} get crd istios.sailoperator.io -o json | jq -r '.spec.versions | sort_by(.name) | .[-1].schema.openAPIV3Schema.properties.spec.properties.version.default')"
-    if [ -z "${istio_version}" -o "${istio_version}" == "null" ]; then
+    if [ -z "${istio_version}" ] || [ "${istio_version}" == "null" ]; then
       errormsg "Cannot determine the latest supported version of Istio. You must provide an explicit vX.Y.Z version to install via the --istio-version option"
       exit 1
     fi
@@ -234,7 +237,9 @@ delete_servicemesh_operators() {
   infomsg "Deleting OLM CSVs which uninstalls the operators and their related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep -E 'sail|servicemesh|istio')
   do
-    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
+    local csv_ns="${csv%%:*}"
+    local csv_name="${csv#*:}"
+    ${OC} delete csv -n "${csv_ns}" "${csv_name}"
   done
 
   infomsg "Deleting any cluster-scoped resources that are getting left behind"

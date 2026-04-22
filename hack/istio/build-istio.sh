@@ -63,10 +63,10 @@ done
 BRANCH="${BRANCH:-master}"
 
 # Go to the main output directory - this will be the main GOPATH
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output/gopath-istio-build}"
 mkdir -p "$OUTPUT_DIR"
-cd "$OUTPUT_DIR"
+cd "$OUTPUT_DIR" || exit
 OUTPUT_DIR="$(pwd)" # remove the .. references
 
 # Set some variables required by the Istio build scripts
@@ -78,7 +78,7 @@ echo "Git clone of Istio will be here: ${ISTIO}/istio"
 
 # Git clone Istio
 mkdir -p "$ISTIO"
-cd "$ISTIO"
+cd "$ISTIO" || exit
 
 if [ -d "istio" ]; then
   echo "Looks like there is already a git clone of Istio at ${ISTIO}/istio"
@@ -87,7 +87,7 @@ else
 fi
 
 # Switch to the branch we want to build and make sure it is up to date
-cd istio
+cd istio || exit
 git checkout ${BRANCH}
 git pull
 

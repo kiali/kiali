@@ -70,8 +70,10 @@ check_crc_running() {
 
 # get_console_url sets the env var CONSOLE_URL
 get_console_url() {
+  local rc
   CONSOLE_URL="$(${CRC_OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
-  if [ "$?" != "0" -o "$CONSOLE_URL" == "" ]; then
+  rc="$?"
+  if [ "${rc}" != "0" ] || [ -z "${CONSOLE_URL}" ]; then
     CONSOLE_URL="console-not-available"
   fi
 }
@@ -144,7 +146,7 @@ get_status() {
       echo "Status from oc command [${CRC_OC}]"
       ${CRC_OC} status
       echo "====================================================================="
-      echo "Number of CPUs: $(${CRC_OC} get $(${CRC_OC} get nodes -o name) -o jsonpath={.status.capacity.cpu})"
+      echo "Number of CPUs: $(${CRC_OC} get "$(${CRC_OC} get nodes -o name)" -o jsonpath='{.status.capacity.cpu}')"
       echo "====================================================================="
       echo "Age of cluster: $(${CRC_OC} get namespace kube-system --no-headers | tr -s ' ' | cut -d ' ' -f3)"
       echo "====================================================================="
@@ -158,12 +160,12 @@ get_status() {
       echo "OAuth Host:  ${OPENSHIFT_OAUTH_HOST}"
     fi
     echo "====================================================================="
-    echo "kubeadmin password: $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})"
+    echo "kubeadmin password: $(cat "${CRC_KUBEADMIN_PASSWORD_FILE}")"
     echo "$(${CRC_COMMAND} console --credentials | sed 's/crc.testing/'${OPENSHIFT_BASE_DOMAIN_NAME}'/')"
     echo "====================================================================="
     echo "To push images to the image repo you need to log in."
     echo "You can use docker or podman, and you can use kubeadmin or kiali user."
-    echo "  oc login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server ${OPENSHIFT_API_SERVER_URL:-<api url>}"
+    echo "  oc login -u kubeadmin -p $(cat "${CRC_KUBEADMIN_PASSWORD_FILE}") --server ${OPENSHIFT_API_SERVER_URL:-<api url>}"
     echo '  docker login -u kubeadmin -p $(oc whoami -t)' ${EXTERNAL_IMAGE_REGISTRY:-<image registry>}
     echo "or"
     echo "  oc login -u kiali -p kiali --server ${OPENSHIFT_API_SERVER_URL:-<api url>}"
@@ -188,14 +190,18 @@ get_registry_names() {
 
 get_route_url() {
   # takes as input "routeName:routeNamespace"
-  local routename=$(echo ${1} | cut -d: -f1)
-  local routenamespace=$(echo ${1} | cut -d: -f2)
+  local routename
+  local routenamespace
   local protocol="https"
-  local termination=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=T:spec.tls.termination --no-headers)
+  local termination
+  local host
+  routename="$(echo ${1} | cut -d: -f1)"
+  routenamespace="$(echo ${1} | cut -d: -f2)"
+  termination=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=T:spec.tls.termination --no-headers)
   if [ "${termination}" == "<none>" ]; then
     protocol="http"
   fi
-  local host=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=H:spec.host --no-headers)
+  host=$(${CRC_OC} get route ${routename} -n ${routenamespace} -o custom-columns=H:spec.host --no-headers)
 
   ROUTE_URL="${protocol}://${host}"
 }
@@ -211,14 +217,22 @@ print_all_route_urls() {
 
 get_service_endpoint() {
   # takes as input "serviceName:serviceNamespace"
-  local servicename=$(echo ${1} | cut -d: -f1)
-  local servicenamespace=$(echo ${1} | cut -d: -f2)
-  local data="$(${CRC_OC} get service ${servicename} -n ${servicenamespace} -o custom-columns=I:spec.clusterIP,T:spec.type,NP:spec.ports[*].nodePort,P:spec.ports[*].port --no-headers | sed ${SEDOPTIONS} 's/  */:/g')"
-  local clusterIP=$(echo ${data} | cut -d: -f1)
-  local servicetype=$(echo ${data} | cut -d: -f2)
-  local nodeports=$(echo ${data} | cut -d: -f3)
-  local ports=$(echo ${data} | cut -d: -f4)
-  local host="$(${CRC_COMMAND} ip)"
+  local servicename
+  local servicenamespace
+  local data
+  local clusterIP
+  local servicetype
+  local nodeports
+  local ports
+  local host
+  servicename="$(echo ${1} | cut -d: -f1)"
+  servicenamespace="$(echo ${1} | cut -d: -f2)"
+  data="$(${CRC_OC} get service ${servicename} -n ${servicenamespace} -o custom-columns=I:spec.clusterIP,T:spec.type,NP:spec.ports[*].nodePort,P:spec.ports[*].port --no-headers | sed ${SEDOPTIONS} 's/  */:/g')"
+  clusterIP="$(echo ${data} | cut -d: -f1)"
+  servicetype="$(echo ${data} | cut -d: -f2)"
+  nodeports="$(echo ${data} | cut -d: -f3)"
+  ports="$(echo ${data} | cut -d: -f4)"
+  host="$(${CRC_COMMAND} ip)"
   # really only NodePort services are exposed outside of the CRC VM, so we just report those
   if [ ${servicetype} == "NodePort" ]; then
     SERVICE_ENDPOINT="${host}:${nodeports}"
@@ -248,7 +262,7 @@ exec_ssh() {
   if ${CRC_COMMAND} config get network-mode | grep -Eq " user$|'user'"; then
     port=2222
   fi
-  ssh -y -p ${port} -i ${CRC_ROOT_DIR}/machines/crc/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null core@$(${CRC_COMMAND} ip) ${sshcmd}
+  ssh -y -p ${port} -i ${CRC_ROOT_DIR}/machines/crc/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "core@$(${CRC_COMMAND} ip)" ${sshcmd}
 }
 
 expose_cluster() {
@@ -258,19 +272,22 @@ expose_cluster() {
     exit 1
   fi
 
-  local virt_interface="crc"
-  local crc_ip="$(${CRC_COMMAND} ip 2>/dev/null)"
-  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+  local crc_ip
+  local sudo
 
   # make sure the platform has all the requirements needed to do this
-  local ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
+  local ip_fwd
+  local existing_fwds
+  crc_ip="$(${CRC_COMMAND} ip 2>/dev/null)"
+  sudo="$(test "$(whoami)" = "root" && echo "" || echo "sudo")"
+  ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
   if [ "$ip_fwd" != "1" ]; then infomsg "ERROR: IP forwarding not enabled. /proc/sys/net/ipv4/ip_forward=$ip_fwd"; exit 1; fi
   if ! which firewall-cmd >& /dev/null; then infomsg "ERROR: You do not have firewall-cmd in your PATH"; exit 1; fi
   if ! systemctl -q is-active firewalld; then infomsg "ERROR: firewalld is not running"; exit 1; fi
   if [ -z "${crc_ip}" ]; then infomsg "ERROR: The CRC cluster is not running"; exit 1; fi
 
   # If we already have existing port forwards, abort
-  local existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
+  existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
   if [ -n "$existing_fwds" ]; then
     infomsg "ERROR: Existing port forwarding rules were found which are conflicting and must be deleted:"
     for x in ${existing_fwds}; do
@@ -298,22 +315,26 @@ expose_cluster() {
     get_base_domain_name
     get_registry_names
     get_oauth_host
-    local console_host="$(${CRC_OC} get route console -n openshift-console -o jsonpath='{.spec.host}')"
+    local console_host
+    console_host="$(${CRC_OC} get route console -n openshift-console -o jsonpath='{.spec.host}')"
     infomsg "For basic api/console access, something like the following in an /etc/hosts entry should work:"
     infomsg "${MACHINE_IP:-<IP-of-this-host>} api.${OPENSHIFT_BASE_DOMAIN_NAME:-} ${console_host:-} ${EXTERNAL_IMAGE_REGISTRY} ${OPENSHIFT_OAUTH_HOST:-}"
   fi
 }
 
 unexpose_cluster() {
-  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+  local sudo
+  local ip_fwd
+  local existing_fwds
+  sudo="$(test "$(whoami)" = "root" && echo "" || echo "sudo")"
 
   # make sure the platform has all the requirements needed to do this
-  local ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
+  ip_fwd=$(cat /proc/sys/net/ipv4/ip_forward)
   if [ "$ip_fwd" != "1" ]; then infomsg "ERROR: IP forwarding not enabled. /proc/sys/net/ipv4/ip_forward=$ip_fwd"; exit 1; fi
   if ! which firewall-cmd >& /dev/null; then infomsg "ERROR: You do not have firewall-cmd in your PATH"; exit 1; fi
   if ! systemctl -q is-active firewalld; then infomsg "ERROR: firewalld is not running"; exit 1; fi
 
-  local existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
+  existing_fwds=$($sudo firewall-cmd --list-forward-ports | grep "^port=80:proto=tcp:\|^port=443:proto=tcp:\|^port=6443:proto=tcp:")
   if [ -n "${existing_fwds}" ]; then
     for x in ${existing_fwds}; do
       echo -n "EXECUTING: $sudo firewall-cmd --remove-forward-port=\"$x\" ... "
@@ -350,7 +371,7 @@ wait_for_cluster_operators() {
     # if there are any operators DEGRADED, exit code will be 0.
     echo "$co_status" | awk '{print $5}' | grep True &>/dev/null
     local degraded_operators=$?
-    if [ "$available_operators" != "0" -a "$progressing_operators" != "0" -a "$degraded_operators" != "0" ]; then
+    if [ "$available_operators" != "0" ] && [ "$progressing_operators" != "0" ] && [ "$degraded_operators" != "0" ]; then
       infomsg "All cluster operators appear to be ready."
       break
     fi
@@ -382,8 +403,10 @@ install_hydra_openshift() {
   # Wait for all Hydra pods to be ready (exclude Completed jobs from count)
   infomsg "Waiting for Hydra pods to be ready..."
   for i in {1..60}; do
-    local ready_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "1/1.*Running" || echo "0")
-    local total_running_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "Running" || echo "0")
+    local ready_pods
+    local total_running_pods
+    ready_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "1/1.*Running" || echo "0")
+    total_running_pods=$(${CRC_OC} get pods -n ory --no-headers 2>/dev/null | grep -c "Running" || echo "0")
     if [ "${ready_pods}" -ge 3 ] && [ "${ready_pods}" -eq "${total_running_pods}" ]; then
       infomsg "All Hydra pods are ready (${ready_pods}/${total_running_pods})"
       break
@@ -394,7 +417,8 @@ install_hydra_openshift() {
 
   # Verify Routes are accessible
   infomsg "Verifying Hydra Routes are accessible..."
-  local hydra_public_route=$(${CRC_OC} get route hydra-public -n ory -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+  local hydra_public_route
+  hydra_public_route=$(${CRC_OC} get route hydra-public -n ory -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
   if [ -n "${hydra_public_route}" ]; then
     for i in {1..30}; do
       if curl -k -s "https://${hydra_public_route}/.well-known/openid-configuration" > /dev/null 2>&1; then
@@ -437,7 +461,9 @@ change_crc_domain_name() {
     exit 1
   fi
 
-  local sudo=$(test "$(whoami)" = "root" && echo "" || echo "sudo")
+  local sudo
+  local crc_ip
+  sudo="$(test "$(whoami)" = "root" && echo "" || echo "sudo")"
 
   # firewall screws things up. Have never been able to figure it out. Disable it.
   if systemctl -q is-active firewalld; then
@@ -445,7 +471,7 @@ change_crc_domain_name() {
     $sudo systemctl stop firewalld
   fi
 
-  local crc_ip="$(${CRC_COMMAND} ip)"
+  crc_ip="$(${CRC_COMMAND} ip)"
 
   infomsg "Setting up HAProxy"
   cat << EOF > /tmp/haproxy.cfg.crc
@@ -549,11 +575,11 @@ EOF
   infomsg "The API server URL has changed. Logging out of the obsolete session"
   ${CRC_OC} logout
   infomsg "Using the CRC oc client to login as kubeadmin"
-  ${CRC_OC} login --insecure-skip-tls-verify=true -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
+  ${CRC_OC} login --insecure-skip-tls-verify=true -u kubeadmin -p "$(cat "${CRC_KUBEADMIN_PASSWORD_FILE}")" --server https://api.${BASE_DOMAIN}:6443
 
   if which oc &> /dev/null; then
     infomsg "Using the 'oc' client found in PATH to login as kubeadmin"
-    oc login --insecure-skip-tls-verify=true -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE}) --server https://api.${BASE_DOMAIN}:6443
+    oc login --insecure-skip-tls-verify=true -u kubeadmin -p "$(cat "${CRC_KUBEADMIN_PASSWORD_FILE}")" --server https://api.${BASE_DOMAIN}:6443
   else
     infomsg "You need to log back into the cluster via your 'oc' client."
   fi
@@ -561,8 +587,8 @@ EOF
 }
 
 # Change to the directory where this script is and set our environment
-SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
-cd ${SCRIPT_ROOT}
+SCRIPT_ROOT="$( cd "$(dirname "$0")" || exit ; pwd -P )"
+cd ${SCRIPT_ROOT} || exit
 
 # The default version of the crc tool to be downloaded
 DEFAULT_CRC_DOWNLOAD_VERSION="2.57.0"
@@ -817,7 +843,7 @@ OPENSHIFT_BIN_PATH="${OPENSHIFT_BIN_PATH:=${HOME}/bin}"
 # The platform is either "linux" or "darwin".
 DEFAULT_OS_PLATFORM=linux
 DETECTED_OS_PLATFORM=`uname | tr '[:upper:]' '[:lower:]'`
-if [ "${DETECTED_OS_PLATFORM}" = "linux" -o "${DETECTED_OS_PLATFORM}" = "darwin" ] ; then
+if [ "${DETECTED_OS_PLATFORM}" = "linux" ] || [ "${DETECTED_OS_PLATFORM}" = "darwin" ] ; then
   DEFAULT_OS_PLATFORM=${DETECTED_OS_PLATFORM}
   debug "The operating system has been detected as ${DEFAULT_OS_PLATFORM}"
 fi
@@ -908,7 +934,7 @@ fi
 if [ -f "${CRC_EXE_PATH}" ]; then
   _existingVersion=$(${CRC_EXE_PATH} version 2>/dev/null | head -n 1 | sed ${SEDOPTIONS} "s/^C.*: \([A-Za-z0-9.]*\)[A-Za-z0-9.-]*+[a-z0-9]*$/\1/")
   _crc_major_minor_patch_version="$(echo -n ${CRC_DOWNLOAD_VERSION} | sed -E 's/([0-9]+.[0-9]+.[0-9]+).*/\1/')"
-  if [ "${_existingVersion}" != "${CRC_DOWNLOAD_VERSION}" -a "${_existingVersion}" != "${_crc_major_minor_patch_version}" ]; then
+  if [ "${_existingVersion}" != "${CRC_DOWNLOAD_VERSION}" ] && [ "${_existingVersion}" != "${_crc_major_minor_patch_version}" ]; then
     infomsg "===== WARNING ====="
     infomsg "You already have the crc tool but it does not match the version you want."
     infomsg "Either delete your existing binary and let this script download another one,"
@@ -971,7 +997,7 @@ else
   infomsg "Was asked to not download the crc libvirt bundle"
 fi
 
-cd ${OPENSHIFT_BIN_PATH}
+cd ${OPENSHIFT_BIN_PATH} || exit
 
 if [ "$_CMD" = "start" ]; then
 
@@ -987,7 +1013,7 @@ if [ "$_CMD" = "start" ]; then
   ${CRC_COMMAND} config set disk-size ${CRC_VIRTUAL_DISK_SIZE}
   ${CRC_COMMAND} config set enable-cluster-monitoring ${ENABLE_CLUSTER_MONITORING}
   ${CRC_COMMAND} config set kubeadmin-password kiali
-  ${CRC_COMMAND} config set memory $(expr ${CRC_MEMORY} '*' 1024)
+  ${CRC_COMMAND} config set memory "$(expr ${CRC_MEMORY} '*' 1024)"
   if [ ! -z "${PULL_SECRET_FILE}" ]; then
     ${CRC_COMMAND} config set pull-secret-file ${PULL_SECRET_FILE}
   else
@@ -1022,14 +1048,16 @@ if [ "$_CMD" = "start" ]; then
     exit 1
   fi
 
-  ${CRC_OC} login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})
+  ${CRC_OC} login -u kubeadmin -p "$(cat "${CRC_KUBEADMIN_PASSWORD_FILE}")"
 
   # see https://docs.openshift.com/container-platform/4.8/authentication/identity_providers/configuring-htpasswd-identity-provider.html
   # we need to be admin in order to create the htpasswd oauth and users
   if which htpasswd; then
     infomsg "Creating user 'kiali'"
-    ${CRC_OC} get secret -n openshift-config htpass-secret -o jsonpath={.data.htpasswd} | base64 -d | sed -e '$a\' > /tmp/crc.htpasswd.kiali && htpasswd -b /tmp/crc.htpasswd.kiali kiali kiali
-    ${CRC_OC} patch secret -n openshift-config htpass-secret --patch '{"data": {"htpasswd": "'$(cat /tmp/crc.htpasswd.kiali | base64 -w 0)'" }}'
+    ${CRC_OC} get secret -n openshift-config htpass-secret -o jsonpath='{.data.htpasswd}' | base64 -d | sed -e '$a\' > /tmp/crc.htpasswd.kiali && htpasswd -b /tmp/crc.htpasswd.kiali kiali kiali
+    htpasswd_b64=""
+    htpasswd_b64="$(base64 -w 0 /tmp/crc.htpasswd.kiali)"
+    ${CRC_OC} patch secret -n openshift-config htpass-secret --patch '{"data": {"htpasswd": "'"${htpasswd_b64}"'" }}'
     rm /tmp/crc.htpasswd.kiali
 
     # Add cluster role to the kiali user once it that user is available
@@ -1039,7 +1067,7 @@ if [ "$_CMD" = "start" ]; then
       sleep 10
       if ${CRC_OC} login -u kiali -p kiali &>/dev/null; then
         infomsg "Will assign the cluster-admin role to the kiali user."
-        ${CRC_OC} login -u kubeadmin -p $(cat ${CRC_KUBEADMIN_PASSWORD_FILE})
+        ${CRC_OC} login -u kubeadmin -p "$(cat "${CRC_KUBEADMIN_PASSWORD_FILE}")"
         ${CRC_OC} adm policy add-cluster-role-to-user cluster-admin kiali
         break
       fi
@@ -1094,7 +1122,7 @@ elif [ "$_CMD" = "ssh" ]; then
 elif [ "$_CMD" = "sshoc" ]; then
 
   infomsg "Logging into the CRC VM via oc debug..."
-  ${CRC_OC} debug $(${CRC_OC} get nodes -o name)
+  ${CRC_OC} debug "$(${CRC_OC} get nodes -o name)"
 
 elif [ "$_CMD" = "routes" ]; then
 

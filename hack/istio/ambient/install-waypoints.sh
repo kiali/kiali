@@ -7,7 +7,7 @@
 #
 ##############################################################################
 
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/../functions.sh
 
 CLIENT_EXE="oc"
@@ -72,7 +72,7 @@ SCC
 }
 
 # Go to the main output directory and try to find an Istio there.
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
 
 CLIENT_EXE=`which ${CLIENT_EXE}`

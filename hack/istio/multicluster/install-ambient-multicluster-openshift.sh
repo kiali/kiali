@@ -548,7 +548,7 @@ wait_for_kiali_route_host() {
   # IMPORTANT: this function is used inside command substitution ($( ... )).
   # It must print ONLY the route host to stdout. Any logs must go to stderr.
   echo "[INFO] Waiting for route [${route_name}] in namespace [${ns}] on context [${context}]" >&2
-  for i in {1..60}; do
+  for _ in {1..60}; do
     host="$(oc --context "${context}" -n "${ns}" get route "${route_name}" -o jsonpath='{.spec.host}' 2>/dev/null || true)"
     if [[ -n "${host}" ]]; then
       echo -n "${host}"
@@ -630,7 +630,7 @@ EOF
 )"
 
   info "Waiting for token data to be populated in secret [${ISTIO_NAMESPACE}/${KIALI_SERVICE_ACCOUNT}] on cluster2"
-  for i in {1..150}; do
+  for _ in {1..150}; do
     local token
     token="$(oc --context "${context}" -n "${ISTIO_NAMESPACE}" get secret "${KIALI_SERVICE_ACCOUNT}" -o jsonpath='{.data.token}' 2>/dev/null || true)"
     if [[ -n "${token}" ]]; then

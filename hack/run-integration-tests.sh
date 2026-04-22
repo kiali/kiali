@@ -42,6 +42,13 @@ TEST_SUITE="${BACKEND}"
 TESTS_ONLY="false"
 WAYPOINT="false"
 WITH_VIDEO="false"
+KIALI_PID=""
+
+cleanup_kiali() {
+  if [ -n "${KIALI_PID}" ]; then
+    kill "${KIALI_PID}" 2>/dev/null || true
+  fi
+}
 
 # process command line args
 while [[ $# -gt 0 ]]; do
@@ -61,7 +68,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ct|--cluster-type)
       CLUSTER_TYPE="${2}"
-      if [ "${CLUSTER_TYPE}" != "kind" -a "${CLUSTER_TYPE}" != "minikube" ]; then
+      if [ "${CLUSTER_TYPE}" != "kind" ] && [ "${CLUSTER_TYPE}" != "minikube" ]; then
         echo "--cluster-type option must be one of 'kind' or 'minikube'"
         exit 1
       fi
@@ -69,7 +76,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -c2a|--cluster2-ambient)
       CLUSTER2_AMBIENT="${2}"
-      if [ "${CLUSTER2_AMBIENT}" != "true" -a "${CLUSTER2_AMBIENT}" != "false" ]; then
+      if [ "${CLUSTER2_AMBIENT}" != "true" ] && [ "${CLUSTER2_AMBIENT}" != "false" ]; then
         echo "--cluster2-ambient option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -93,7 +100,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -mcp|--mcp-tools)
       MCP_TOOLS="${2}"
-      if [ "${MCP_TOOLS}" != "true" -a "${MCP_TOOLS}" != "false" ]; then
+      if [ "${MCP_TOOLS}" != "true" ] && [ "${MCP_TOOLS}" != "false" ]; then
         echo "--mcp-tools option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -101,7 +108,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -so|--setup-only)
       SETUP_ONLY="${2}"
-      if [ "${SETUP_ONLY}" != "true" -a "${SETUP_ONLY}" != "false" ]; then
+      if [ "${SETUP_ONLY}" != "true" ] && [ "${SETUP_ONLY}" != "false" ]; then
         echo "--setup-only option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -109,7 +116,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -s|--sail)
       SAIL="${2}"
-      if [ "${SAIL}" != "true" -a "${SAIL}" != "false" ]; then
+      if [ "${SAIL}" != "true" ] && [ "${SAIL}" != "false" ]; then
         echo "--sail option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -117,7 +124,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -st|--stern)
       STERN="${2}"
-      if [ "${STERN}" != "true" -a "${STERN}" != "false" ]; then
+      if [ "${STERN}" != "true" ] && [ "${STERN}" != "false" ]; then
         echo "--stern option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -145,7 +152,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -to|--tests-only)
       TESTS_ONLY="${2}"
-      if [ "${TESTS_ONLY}" != "true" -a "${TESTS_ONLY}" != "false" ]; then
+      if [ "${TESTS_ONLY}" != "true" ] && [ "${TESTS_ONLY}" != "false" ]; then
         echo "--tests-only option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -153,7 +160,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" -a "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" -a "${TEST_SUITE}" != "${FRONTEND}" -a "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_1}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_2}" -a "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" -a "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" -a "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" -a "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" -a "${TEST_SUITE}" != "${FRONTEND_TEMPO}" -a "${TEST_SUITE}" != "${AI_CHATBOT}" -a "${TEST_SUITE}" != "${LOCAL}" -a "${TEST_SUITE}" != "${OFFLINE}" ]; then
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ]; then
         echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}' or '${OFFLINE}'"
         exit 1
       fi
@@ -161,7 +168,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -w|--waypoint)
       WAYPOINT="${2}"
-      if [ "${WAYPOINT}" != "true" -a "${WAYPOINT}" != "false" ]; then
+      if [ "${WAYPOINT}" != "true" ] && [ "${WAYPOINT}" != "false" ]; then
         echo "--waypoint option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -169,7 +176,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -wv|--with-video)
       WITH_VIDEO="${2}"
-      if [ "${WITH_VIDEO}" != "true" -a "${WITH_VIDEO}" != "false" ]; then
+      if [ "${WITH_VIDEO}" != "true" ] && [ "${WITH_VIDEO}" != "false" ]; then
         echo "--with-video option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -260,7 +267,7 @@ HELPMSG
   esac
 done
 
-if [ "${SETUP_ONLY}" == "true" -a "${TESTS_ONLY}" == "true" ]; then
+if [ "${SETUP_ONLY}" == "true" ] && [ "${TESTS_ONLY}" == "true" ]; then
   echo "ERROR: --setup-only and --tests-only cannot both be true. Aborting."
   exit 1
 fi
@@ -342,7 +349,8 @@ KIALI_URL=""
 # Generate the kiali url. Will wait for kiali service's ingress to have an ip so this can timeout.
 setKialiURL() {
   kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
-  local ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
+  local ingress_ip
+  ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   KIALI_URL="http://${ingress_ip}/kiali"
 }
 
@@ -382,13 +390,16 @@ ensureKialiServerReady() {
   # and wire up the endpoints.
   setKialiURL
   infomsg "Waiting for Kiali server to respond externally to health checks at ${KIALI_URL}"
-  local start_time=$(date +%s)
-  local end_time=$((start_time + 30))
+  local start_time
+  local end_time
+  start_time=$(date +%s)
+  end_time=$((start_time + 30))
   while true; do
     if curl -k -s --fail "${KIALI_URL}/healthz"; then
       break
     fi
-    local now=$(date +%s)
+    local now
+    now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
       infomsg "Timed out waiting for Kiali server to respond to health checks"
       kubectl logs -l app=kiali -n istio-system
@@ -401,12 +412,15 @@ ensureKialiServerReady() {
 
 ensureKialiTracesReady() {
   infomsg "Waiting for Kiali to have traces"
-  local start_time=$(date +%s)
-  local end_time=$((start_time + 120))
+  local start_time
+  local end_time
   local multicluster=$1
+  local traces_date
+  start_time=$(date +%s)
+  end_time=$((start_time + 120))
 
   # Get traces from the last 5m
-  local traces_date=$((($(date +%s) - 300) * 1000))
+  traces_date=$((($(date +%s) - 300) * 1000))
   local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
   if [ "$multicluster" == "true" ]; then
     echo "Multicluster request"
@@ -420,7 +434,8 @@ ensureKialiTracesReady() {
         -H 'Content-Type: application/json' | jq -r '.data')
 
     if [ -z "$result" ] || [ "$result" == "[]" ]; then
-      local now=$(date +%s)
+      local now
+      now=$(date +%s)
       if [ "${now}" -gt "${end_time}" ]; then
         echo "Timed out waiting for Kiali to get any trace. Examine open telemetry collector logs below:"
         kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=-1 --context kind-west -n istio-system
@@ -438,16 +453,19 @@ ensureKialiTracesReady() {
 
 ensureBookinfoGraphReady() {
   infomsg "Waiting for Kiali to have graph data"
-  local start_time=$(date +%s)
-  local end_time=$((start_time + 120))
+  local start_time
+  local end_time
+  local kiali_token
+  start_time=$(date +%s)
+  end_time=$((start_time + 120))
 
   # Authenticate first
-  local kiali_token=$(kubectl -n istio-system create token kiali)
-  auth=$(curl --cookie-jar cookies.txt "${KIALI_URL}/api/authenticate" \
-          -H 'Accept: application/json, text/plain, */*' \
-          -H 'Content-Type: application/x-www-form-urlencoded' \
-          --request POST \
-          --data-raw "token=${kiali_token}")
+  kiali_token=$(kubectl -n istio-system create token kiali)
+  curl --cookie-jar cookies.txt "${KIALI_URL}/api/authenticate" \
+      -H 'Accept: application/json, text/plain, */*' \
+      -H 'Content-Type: application/x-www-form-urlencoded' \
+      --request POST \
+      --data-raw "token=${kiali_token}" >/dev/null
 
   local graph_url="${KIALI_URL}/api/namespaces/graph?duration=120s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo"
   infomsg "Graph url: ${graph_url}"
@@ -457,7 +475,8 @@ ensureBookinfoGraphReady() {
         -H 'Content-Type: application/json' -b cookies.txt | jq -r '.elements.nodes')
 
     if [ "$result" == "[]" ]; then
-      local now=$(date +%s)
+      local now
+      now=$(date +%s)
       if [ "${now}" -gt "${end_time}" ]; then
         echo "Timed out waiting for Kiali to get any graph data"
         break
@@ -472,13 +491,16 @@ ensureBookinfoGraphReady() {
 }
 
 ensureMulticlusterApplicationsAreHealthy() {
-  local start_time=$(date +%s)
+  local start_time
   local timeout=300
   local url="${KIALI_URL}/api/clusters/apps?namespaces=bookinfo&clusterName=west&health=true&istioResources=true&rateInterval=60s"
+  start_time=$(date +%s)
 
   while true; do
-    local current_time=$(date +%s)
-    local elapsed=$((current_time - start_time))
+    local current_time
+    local elapsed
+    current_time=$(date +%s)
+    elapsed=$((current_time - start_time))
 
     if [ "$elapsed" -ge "$timeout" ]; then
       infomsg "Timeout reached without meeting the condition."
@@ -551,8 +573,6 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
       export CLUSTER2_CONTEXT=dataplane
       "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
     fi
-
-    ISTIO_INGRESS_IP="$(kubectl get svc istio-ingressgateway -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' --context="${CLUSTER1_CONTEXT}")"
 
     # Switch to the dataplane cluster before installing the demo apps because
     # that's where all the workloads should be in the external controlplane deployment.
@@ -986,7 +1006,7 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   export CYPRESS_VIDEO="${WITH_VIDEO}"
 
   # Trap to ensure we clean up the Kiali process on exit
-  trap "kill ${KIALI_PID} 2>/dev/null || true" EXIT
+  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:smoke
@@ -1041,7 +1061,7 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   KIALI_PID=$!
   
   # Trap to ensure we clean up the Kiali process on exit
-  trap "kill ${KIALI_PID} 2>/dev/null || true" EXIT
+  trap cleanup_kiali EXIT
 
   # Wait for the Kiali server to become ready by polling its health endpoint.
   # Offline mode can take a while to parse all must-gather data before the HTTP server starts.

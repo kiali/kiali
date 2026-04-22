@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##########################################################
 #
@@ -192,7 +193,9 @@ delete_kiali_operator() {
   infomsg "Deleting OLM CSVs which uninstalled the Kiali Operator and its related resources"
   for csv in $(${OC} get csv --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,N:.metadata.name | sed 's/  */:/g' | grep kiali-operator)
   do
-    ${OC} delete csv -n $(echo -n $csv | cut -d: -f1) $(echo -n $csv | cut -d: -f2)
+    local csv_ns="${csv%%:*}"
+    local csv_name="${csv#*:}"
+    ${OC} delete csv -n "${csv_ns}" "${csv_name}"
   done
 
   infomsg "Delete Kiali CRDs"

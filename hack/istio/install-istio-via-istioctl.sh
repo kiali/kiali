@@ -47,7 +47,7 @@ SPIRE_TRUST_DOMAIN="example.org"
 SPIRE_NAMESPACE="spire"
 
 # Script directory
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/functions.sh
 
 # process command line args
@@ -137,7 +137,7 @@ while [[ $# -gt 0 ]]; do
       shift;shift
       ;;
     -gav|--k8s-gateway-api-version)
-      K8S_GATEWAY_API_VERSION="$2"
+      export K8S_GATEWAY_API_VERSION="$2"
       shift;shift
       ;;
     -gaiev|--k8s-gateway-api-ie-version)
@@ -375,11 +375,10 @@ fi
 
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
-  HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
   if [ "${ISTIO_VERSION}" == "" ]; then
-    ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-    if [ "$?" != "0" ]; then
+    if ! ls -dt1 ${OUTPUT_DIR}/istio-* >/dev/null 2>&1; then
       ${HACK_SCRIPT_DIR}/download-istio.sh
       if [ "$?" != "0" ]; then
         echo "ERROR: You do not have Istio installed and it cannot be downloaded."
@@ -602,7 +601,7 @@ if [ "${DELETE_ISTIO}" == "true" ]; then
   echo DELETING ISTIO!
 
   echo Deleting Addons
-  for addon in $(ls -1 ${ISTIO_DIR}/samples/addons/*.yaml); do
+  for addon in "${ISTIO_DIR}"/samples/addons/*.yaml; do
     echo "Deleting addon [${addon}]"
     cat ${addon} | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} delete --ignore-not-found=true -n ${NAMESPACE} -f -
   done

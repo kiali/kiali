@@ -256,7 +256,7 @@ install_kiali() {
     operator_image_repo="${cluster_repo}/kiali/kiali-operator"
     kiali_image_name_field="image_name: ${cluster_repo}/kiali/kiali"
     kiali_image_version_field="image_version: ${KIALI_VERSION}"
-    helm_chart=${HELM_CHARTS_REPO}/_output/charts/kiali-operator-*-SNAPSHOT.tgz
+    helm_chart="$(compgen -G "${HELM_CHARTS_REPO}/_output/charts/kiali-operator-*-SNAPSHOT.tgz" | head -n1)"
   else
     additional_set=""
     helm repo add kiali https://kiali.org/helm-charts

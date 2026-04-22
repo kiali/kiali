@@ -10,7 +10,7 @@
 set -u
 
 # Where this script is - all our hack files are assumed to be in here
-script_root="$( cd "$(dirname "$0")" ; pwd -P )"
+script_root="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 hack_dir="$script_root"
 
 helpmsg() {
@@ -127,11 +127,11 @@ IRC_ROOM="${IRC_ROOM-kiali-molecule-tests}"
 # Only if this is set to "true" will the logs be committed and pushed to the git repo
 UPLOAD_LOGS="${UPLOAD_LOGS:-false}"
 if [ "${UPLOAD_LOGS}" == "true" ]; then
-  if [ -z "${LOGS_DIR:-}" -o ! -d "${LOGS_DIR:-}" ]; then
+  if [ -z "${LOGS_DIR:-}" ] || [ ! -d "${LOGS_DIR:-}" ]; then
     echo "Specify a valid directory via --logs-directory - this must be where the logs project is git cloned. [${LOGS_DIR:-}]"
     exit 1
   fi
-  if [ "${LOGS_PROJECT_NAME}" == "" -o "${LOGS_FORK}" == "" -o "${LOGS_BRANCH}" == "" ]; then
+  if [ -z "${LOGS_PROJECT_NAME}" ] || [ -z "${LOGS_FORK}" ] || [ -z "${LOGS_BRANCH}" ]; then
     echo "Invalid logs settings."
     exit 1
   fi
@@ -193,19 +193,25 @@ if ! ${minikube_sh} status; then
 
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces and security context override."
     operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1)"
+    csv_name="$(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali)"
+    csv_env_names="$(${CLIENT_EXE} -n ${operator_namespace} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
     for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_AD_HOC_CONTAINERS ALLOW_SECURITY_CONTEXT_OVERRIDE; do
-      ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
+      env_index="$(echo "${csv_env_names}" | tr ' ' '\n' | nl -ba | awk -v name="${env_name}" '$2 == name {print $1; exit}')"
+      if [ -n "${env_index}" ]; then
+        env_index=$((env_index - 1))
+        ${CLIENT_EXE} -n ${operator_namespace} patch "${csv_name}" --type=json -p "[{\"op\":\"replace\",\"path\":\"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/${env_index}/value\",\"value\":\"true\"}]"
+      fi
     done
 
     echo "Waiting for the Kiali Operator to be ready."
-    ${CLIENT_EXE} wait -n ${operator_namespace} --for=condition=ready --timeout=300s $(${CLIENT_EXE} get pod -n ${operator_namespace} -l app.kubernetes.io/name=kiali-operator -o name)
+    ${CLIENT_EXE} wait -n ${operator_namespace} --for=condition=ready --timeout=300s "$(${CLIENT_EXE} get pod -n ${operator_namespace} -l app.kubernetes.io/name=kiali-operator -o name)"
   fi
 else
   ${minikube_sh} resetclock
 fi
 
 if [ "${UPLOAD_LOGS}" == "true" ]; then
-  cd "${LOGS_LOCAL_DIRNAME_ABS}"
+  cd "${LOGS_LOCAL_DIRNAME_ABS}" || exit
   if ! git checkout ${LOGS_BRANCH}; then echo "Cannot checkout logs branch [${LOGS_BRANCH}]"; exit 1; fi
   if ! git pull; then echo "Cannot pull logs branch [${LOGS_BRANCH}]"; exit 1; fi
   mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
@@ -222,18 +228,17 @@ ${hack_dir}/run-molecule-tests.sh --cluster-type minikube --minikube-profile ${m
 
 # Upload the logs if requested
 if [ "${UPLOAD_LOGS}" == "true" ]; then
-  cd ${LOGS_LOCAL_SUBDIR_ABS}
+  cd ${LOGS_LOCAL_SUBDIR_ABS} || exit
 
   # compress large log files
   MAX_LOG_FILE_SIZE="50M"
-  for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
-  do
-    echo "This file is large and needs to be compressed: $(basename ${bigfile})"
-    tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
-  done
+  while IFS= read -r -d '' bigfile; do
+    echo "This file is large and needs to be compressed: $(basename "${bigfile}")"
+    tar -czf "${bigfile}.tgz" -C "${LOGS_LOCAL_SUBDIR_ABS}" --remove-files "$(basename "${bigfile}")"
+  done < <(find "${LOGS_LOCAL_SUBDIR_ABS}" -maxdepth 1 -type f -size +"${MAX_LOG_FILE_SIZE}" -print0)
 
   echo "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"
-  cd "${LOGS_LOCAL_SUBDIR_ABS}"
+  cd "${LOGS_LOCAL_SUBDIR_ABS}" || exit
   git add -A
   git commit -m "Test results for ${LOGS_LOCAL_SUBDIR}"
   git push

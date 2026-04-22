@@ -11,7 +11,7 @@
 #
 ##############################################################################
 
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
@@ -159,10 +159,9 @@ done
 
 if [ "${ISTIO_DIR}" == "" ]; then
   # Go to the main output directory and try to find an Istio there.
-  HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+  HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-  ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-  if [ "$?" != "0" ]; then
+  if ! ls -dt1 ${OUTPUT_DIR}/istio-* >/dev/null 2>&1; then
     ${HACK_SCRIPT_DIR}/download-istio.sh
     if [ "$?" != "0" ]; then
       echo "ERROR: You do not have Istio installed and it cannot be downloaded"
@@ -208,7 +207,7 @@ fi
 
 # If no sidecars are to be injected, then see if Ambient is enabled.
 # Look everywhere for a "ztunnel" daemonset (in case it is in a kube internal namespace and not just istio-system)
-if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+if [ "${AUTO_INJECTION}" == "false" ] && [ "${MANUAL_INJECTION}" == "false" ]; then
   for n in $(${CLIENT_EXE} get daemonset --all-namespaces -o jsonpath='{.items[*].metadata.name}')
   do
     if [ "${n}" == "ztunnel" ]; then
@@ -438,7 +437,7 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
     fi
   fi
 else
-  if [ "${AUTO_INJECTION}" == "false" -a "${MANUAL_INJECTION}" == "false" ]; then
+  if [ "${AUTO_INJECTION}" == "false" ] && [ "${MANUAL_INJECTION}" == "false" ]; then
     echo "WARNING! Sidecar injection was not performed and there is no Ambient support. This demo may not work until sidecars are injected."
   fi
 fi
@@ -487,7 +486,7 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
 
         echo "Wait for productpage to come up to see if it is accessible via minikube ingress"
         $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=5m
-        if [ -n "${INGRESS_PORT}" -a -n "${INGRESS_HOST}" ] && curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
+        if [ -n "${INGRESS_PORT}" ] && [ -n "${INGRESS_HOST}" ] && curl --fail http://${INGRESS_ROUTE}/productpage &> /dev/null; then
           echo "Traffic Generator will use the Kubernetes (minikube) ingress route of: ${INGRESS_ROUTE}"
         else
           INGRESS_HOST="productpage.${NAMESPACE}"

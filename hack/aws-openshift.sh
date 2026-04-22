@@ -85,8 +85,10 @@ oc_login() {
 }
 
 get_console_url() {
+  local _rc
   CONSOLE_URL="$(${OC} get console cluster -o jsonpath='{.status.consoleURL}' 2>/dev/null)"
-  if [ "$?" != "0" -o "$CONSOLE_URL" == "" ]; then
+  _rc="$?"
+  if [ "${_rc}" != "0" ] || [ -z "${CONSOLE_URL}" ]; then
     CONSOLE_URL="console-not-available"
   fi
 }
@@ -96,8 +98,9 @@ get_api_server_url() {
 }
 
 check_aws_config() {
-  if [ -f "${HOME}/.aws/config" -a -f "${HOME}/.aws/credentials" ]; then
-    export AWS_PROFILE="$(cat ${HOME}/.aws/credentials | head -n 1 | sed ${SEDOPTIONS} -E 's/\[(.*)\]/\1/')"
+  if [ -f "${HOME}/.aws/config" ] && [ -f "${HOME}/.aws/credentials" ]; then
+    AWS_PROFILE="$(head -n 1 "${HOME}/.aws/credentials" | sed ${SEDOPTIONS} -E 's/\[(.*)\]/\1/')"
+    export AWS_PROFILE
   else
     if ! which aws > /dev/null 2>&1 ; then
       infomsg "You need the AWS CLI - installing the awscli package"
@@ -168,8 +171,10 @@ get_status() {
 }
 
 get_registry_names() {
-  local ext=$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
-  local int=$(${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
+  local ext
+  local int
+  ext=$(${OC} get image.config.openshift.io/cluster -o custom-columns=EXT:.status.externalRegistryHostnames[0] --no-headers 2>/dev/null)
+  int=$(${OC} get image.config.openshift.io/cluster -o custom-columns=INT:.status.internalRegistryHostname --no-headers 2>/dev/null)
   EXTERNAL_IMAGE_REGISTRY=${ext:-<unknown>}
   INTERNAL_IMAGE_REGISTRY=${int:-<unknown>}
 }
@@ -196,14 +201,18 @@ check_insecure_registry() {
 
 get_route_url() {
   # takes as input "routeName:routeNamespace"
-  local routename=$(echo ${1} | cut -d: -f1)
-  local routenamespace=$(echo ${1} | cut -d: -f2)
+  local routename
+  local routenamespace
   local protocol="https"
-  local termination=$(${OC} get route ${routename} -n ${routenamespace} -o custom-columns=T:spec.tls.termination --no-headers)
+  local termination
+  local host
+  routename="$(echo ${1} | cut -d: -f1)"
+  routenamespace="$(echo ${1} | cut -d: -f2)"
+  termination=$(${OC} get route ${routename} -n ${routenamespace} -o custom-columns=T:spec.tls.termination --no-headers)
   if [ "${termination}" == "<none>" ]; then
     protocol="http"
   fi
-  local host=$(${OC} get route ${routename} -n ${routenamespace} -o custom-columns=H:spec.host --no-headers)
+  host=$(${OC} get route ${routename} -n ${routenamespace} -o custom-columns=H:spec.host --no-headers)
 
   ROUTE_URL="${protocol}://${host}"
 }
@@ -220,14 +229,21 @@ print_all_route_urls() {
 get_service_endpoint() {
   # TODO this needs to be fixed - the host is not right
   # takes as input "serviceName:serviceNamespace"
-  local servicename=$(echo ${1} | cut -d: -f1)
-  local servicenamespace=$(echo ${1} | cut -d: -f2)
-  local data="$(${OC} get service ${servicename} -n ${servicenamespace} -o custom-columns=I:spec.clusterIP,T:spec.type,NP:spec.ports[*].nodePort,P:spec.ports[*].port --no-headers | sed ${SEDOPTIONS} 's/  */:/g')"
-  local clusterIP=$(echo ${data} | cut -d: -f1)
-  local servicetype=$(echo ${data} | cut -d: -f2)
-  local nodeports=$(echo ${data} | cut -d: -f3)
-  local ports=$(echo ${data} | cut -d: -f4)
+  local servicename
+  local servicenamespace
+  local data
+  local clusterIP
+  local servicetype
+  local nodeports
+  local ports
   local host="${AWS_CLUSTER_NAME}.${AWS_BASE_DOMAIN}"
+  servicename="$(echo ${1} | cut -d: -f1)"
+  servicenamespace="$(echo ${1} | cut -d: -f2)"
+  data="$(${OC} get service ${servicename} -n ${servicenamespace} -o custom-columns=I:spec.clusterIP,T:spec.type,NP:spec.ports[*].nodePort,P:spec.ports[*].port --no-headers | sed ${SEDOPTIONS} 's/  */:/g')"
+  clusterIP="$(echo ${data} | cut -d: -f1)"
+  servicetype="$(echo ${data} | cut -d: -f2)"
+  nodeports="$(echo ${data} | cut -d: -f3)"
+  ports="$(echo ${data} | cut -d: -f4)"
   # only NodePort services are exposed outside so we just show those
   if [ ${servicetype} == "NodePort" ]; then
     SERVICE_ENDPOINT="${host}:${nodeports}"
@@ -265,19 +281,23 @@ scale_worker_nodes() {
   if [ "${OPENSHIFT_WORKER_NODE_COUNT}" -ge "${desired_worker_nodes}" ]; then
     infomsg "Cluster has [${OPENSHIFT_WORKER_NODE_COUNT}] worker nodes which is enough to satify the requested [${desired_worker_nodes}] worker nodes. No new nodes will be created."
   else
-    local additional_worker_nodes_needed=$(expr ${desired_worker_nodes} - ${OPENSHIFT_WORKER_NODE_COUNT})
+    local additional_worker_nodes_needed
+    local machineset
+    local current_replicas
+    local additional_replicas_needed
+    additional_worker_nodes_needed=$(expr ${desired_worker_nodes} - ${OPENSHIFT_WORKER_NODE_COUNT})
     infomsg "Cluster has [${OPENSHIFT_WORKER_NODE_COUNT}] worker nodes but [${desired_worker_nodes}] worker nodes are desired. [${additional_worker_nodes_needed}] new nodes will be created."
     if [ "${additional_worker_nodes_needed}" -gt "9" ]; then
       infomsg "WARNING: This hack script will not request more than 9 additional new nodes. You must do so manually."
       return
     fi
-    local machineset=$(${OC} get machinesets -n openshift-machine-api -o name 2>/dev/null | head -n 1)
+    machineset=$(${OC} get machinesets -n openshift-machine-api -o name 2>/dev/null | head -n 1)
     if [ -z "${machineset}" ]; then
       infomsg "WARNING: Cannot determine a valid machine set - cannot create new nodes"
       return
     fi
-    local current_replicas=$(${OC} get ${machineset} -n openshift-machine-api -o jsonpath='{.spec.replicas}')
-    local additional_replicas_needed=$(expr ${current_replicas} + ${additional_worker_nodes_needed})
+    current_replicas=$(${OC} get ${machineset} -n openshift-machine-api -o jsonpath='{.spec.replicas}')
+    additional_replicas_needed=$(expr ${current_replicas} + ${additional_worker_nodes_needed})
     debug "Will scale the machine set [${machineset}] from [${current_replicas}] to [${additional_replicas_needed}] replicas"
     if [ -z "${additional_replicas_needed}" ]; then
       infomsg "WARNING: Cannot determine how many additional replicas are needed - cannot create new nodes"
@@ -291,8 +311,8 @@ scale_worker_nodes() {
 ########################################
 
 # Change to the directory where this script is and set our environment
-SCRIPT_ROOT="$( cd "$(dirname "$0")" ; pwd -P )"
-cd ${SCRIPT_ROOT}
+SCRIPT_ROOT="$( cd "$(dirname "$0")" || exit ; pwd -P )"
+cd ${SCRIPT_ROOT} || exit
 
 # The default version of OpenShift to be downloaded
 DEFAULT_OPENSHIFT_DOWNLOAD_VERSION="4.8.11"
@@ -674,7 +694,7 @@ fi
 debug "OpenShift oc client that will be used: ${OC}"
 debug "$(${OC} version --client)"
 
-cd ${OPENSHIFT_DOWNLOAD_PATH}
+cd ${OPENSHIFT_DOWNLOAD_PATH} || exit
 export KUBECONFIG="${AWS_KUBECONFIG}"
 
 if [ "$_CMD" = "create" ]; then

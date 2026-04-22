@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -d|--dry-run)
       DRY_RUN="${2}"
-      if [ "${DRY_RUN}" != "true" -a "${DRY_RUN}" != "false" ]; then
+      if [ "${DRY_RUN}" != "true" ] && [ "${DRY_RUN}" != "false" ]; then
         echo "--dry-run option must be 'true' or 'false'"
         exit 1
       fi
@@ -68,9 +68,12 @@ delete_namespace_resources() {
   msg "Deleting namespace-scoped resources with selector [${selector_expression}]..."
   for r in $(${CLIENT_EXE} get --ignore-not-found=true all,secrets,sa,configmaps,deployments,roles,rolebindings,ingresses,horizontalpodautoscalers,networkpolicies --selector="${selector_expression}" --all-namespaces -o custom-columns=NS:.metadata.namespace,K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
   do
-    local res_namespace=$(echo $r | cut -d: -f1)
-    local res_kind=$(echo $r | cut -d: -f2)
-    local res_name=$(echo $r | cut -d: -f3)
+    local res_namespace
+    local res_kind
+    local res_name
+    res_namespace=$(echo $r | cut -d: -f1)
+    res_kind=$(echo $r | cut -d: -f2)
+    res_name=$(echo $r | cut -d: -f3)
     msg "Namespaced resource [${res_name}] of kind [${res_kind}]"
     if [ "${DRY_RUN}" == "false" ]; then
       ${CLIENT_EXE} delete --ignore-not-found=true ${res_kind} ${res_name} -n ${res_namespace}
@@ -89,8 +92,10 @@ delete_cluster_resources() {
 
   for r in $(${CLIENT_EXE} get --ignore-not-found=true clusterroles,clusterrolebindings,customresourcedefinitions${openshift_resources} --selector="${selector_expression}" --all-namespaces -o custom-columns=K:.kind,N:.metadata.name --no-headers | sed 's/  */:/g')
   do
-    local res_kind=$(echo $r | cut -d: -f1)
-    local res_name=$(echo $r | cut -d: -f2)
+    local res_kind
+    local res_name
+    res_kind=$(echo $r | cut -d: -f1)
+    res_name=$(echo $r | cut -d: -f2)
     msg "Cluster resource [${res_name}] of kind [${res_kind}]"
     if [ "${DRY_RUN}" == "false" ]; then
       ${CLIENT_EXE} delete --ignore-not-found=true ${res_kind} ${res_name}

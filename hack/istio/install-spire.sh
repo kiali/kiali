@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 ##############################################################################
 # install-spire.sh
@@ -20,9 +21,6 @@
 ##############################################################################
 
 set -e
-
-# Script directory for sourcing other scripts
-SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 TRUST_DOMAIN="${TRUST_DOMAIN:-example.org}"

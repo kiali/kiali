@@ -16,7 +16,7 @@ function value_in_array {
 
 # This deploys the travel agency demo
 
-HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
 : ${AUTO_INJECTION:=true}
@@ -263,10 +263,9 @@ if [ "${WAYPOINT}" == "true" ]; then
 
   if [ "${ISTIO_DIR}" == "" ]; then
     # Go to the main output directory and try to find an Istio there.
-    HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
+    HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
-    ALL_ISTIOS=$(ls -dt1 ${OUTPUT_DIR}/istio-*)
-    if [ "$?" != "0" ]; then
+    if ! ls -dt1 ${OUTPUT_DIR}/istio-* >/dev/null 2>&1; then
       ${HACK_SCRIPT_DIR}/download-istio.sh
       if [ "$?" != "0" ]; then
         echo "ERROR: You do not have Istio installed and it cannot be downloaded"

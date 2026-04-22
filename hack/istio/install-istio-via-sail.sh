@@ -6,7 +6,8 @@ is_in_array() {
   local value1="$1"
   local value2="$2"
   shift 2
-  local array=($@)
+  local array
+  read -r -a array <<< "$*"
 
   local found1=false
   local found2=false
@@ -173,7 +174,7 @@ if [ -n "${SAIL_OPERATOR_GIT_REF}" ]; then
   # Method 1: Install from git ref
   echo "Installing Sail operator from git ref: ${SAIL_OPERATOR_GIT_REF} (${SAIL_OPERATOR_GIT_REPO})"
   TEMP_DIR=$(mktemp -d)
-  trap "rm -rf ${TEMP_DIR}" EXIT
+  trap 'rm -rf "${TEMP_DIR}"' EXIT
 
   git clone --depth 1 --branch "${SAIL_OPERATOR_GIT_REF}" "${SAIL_OPERATOR_GIT_REPO}" "${TEMP_DIR}"
 

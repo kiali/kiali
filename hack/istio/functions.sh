@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 # This file contains useful functions which are used in other hack scripts in this dirrectory.
 
@@ -42,8 +43,8 @@ is_istio_version_eq_greater_than() {
 
   istio_expected_version=$(echo "$expected_version" | cut -d'-' -f1)
 
-  IFS='.' read -r major minor patch <<< "$istio_parsed_version"
-  IFS='.' read -r major_expected minor_expected patch_expected <<< "$istio_expected_version"
+  IFS='.' read -r major minor _patch <<< "$istio_parsed_version"
+  IFS='.' read -r major_expected minor_expected _patch_expected <<< "$istio_expected_version"
   IFS=' '
   if [ "${major}" -lt "${major_expected}" ]; then
     return 1

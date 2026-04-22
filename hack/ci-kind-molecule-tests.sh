@@ -234,7 +234,7 @@ KIND_EXE="$(which ${KIND_EXE} 2>/dev/null || echo "invalid kind: ${KIND_EXE}")"
 KIND_NAME="${KIND_NAME:-ci}"
 CI="${CI:-false}"
 
-if [ "${OLM_ENABLED}" == "true" -a "${OPERATOR_INSTALLER}" != "skip" ]; then
+if [ "${OLM_ENABLED}" == "true" ] && [ "${OPERATOR_INSTALLER}" != "skip" ]; then
   infomsg "OLM is enabled; forcing --operator-installer to 'skip' so the operator installed via OLM is used."
   OPERATOR_INSTALLER="skip"
 fi
@@ -421,7 +421,7 @@ which $DORP > /dev/null || (infomsg "[$DORP] is not in the PATH"; exit 1)
 
 infomsg "Clone github repos in [$SRC] to make sure we have the latest tests and scripts"
 
-cd ${SRC}
+cd ${SRC} || exit
 
 if [ "$CI" != "true" ]; then
   infomsg "Cloning logs repo [${LOGS_FORK}/${LOGS_PROJECT_NAME}:${LOGS_BRANCH}] from [${LOGS_GITHUB_GITCLONE}]..."
@@ -438,7 +438,7 @@ infomsg "Cloning kiali-operator [${KIALI_OPERATOR_FORK}:${KIALI_OPERATOR_BRANCH}
 git clone --single-branch --branch ${KIALI_OPERATOR_BRANCH} ${KIALI_OPERATOR_GITHUB_GITCLONE} kiali-operator
 
 ln -s ${SRC}/kiali-operator kiali/operator
-cd kiali
+cd kiali || exit
 
 # TODO kind doesn't work with podman
 #if [ "${DORP}" == "podman" ]; then
@@ -736,8 +736,14 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   infomsg "Configuring the Kiali operator to allow ad hoc images, ad hoc namespaces, and changes to security context."
   operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
   infomsg "Kiali operator namespace: [${operator_namespace}]"
+  csv_name="$(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali)"
+  csv_env_names="$(${CLIENT_EXE} -n ${operator_namespace} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
   for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_AD_HOC_CONTAINERS ALLOW_SECURITY_CONTEXT_OVERRIDE; do
-    ${CLIENT_EXE} -n ${operator_namespace} patch $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) --type=json -p "[{'op':'replace','path':"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/$(${CLIENT_EXE} -n ${operator_namespace} get $(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali) -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}' | tr ' ' '\n' | cat --number | grep ${env_name} | cut -f 1 | xargs echo -n | cat - <(echo "-1") | bc)/value",'value':"\"true\""}]"
+    env_index="$(echo "${csv_env_names}" | tr ' ' '\n' | nl -ba | awk -v name="${env_name}" '$2 == name {print $1; exit}')"
+    if [ -n "${env_index}" ]; then
+      env_index=$((env_index - 1))
+      ${CLIENT_EXE} -n ${operator_namespace} patch "${csv_name}" --type=json -p "[{\"op\":\"replace\",\"path\":\"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/${env_index}/value\",\"value\":\"true\"}]"
+    fi
   done
   sleep 5
 
@@ -779,21 +785,42 @@ if [ "${RUN_TESTS}" == "true" ]; then
 
   mkdir -p "${LOGS_LOCAL_SUBDIR_ABS}"
   infomsg "Running the tests - logs are going here: ${LOGS_LOCAL_SUBDIR_ABS}"
+  molecule_cmd=(hack/run-molecule-tests.sh
+    --use-dev-images "${USE_DEV_IMAGES}"
+    --spec-version "${SPEC_VERSION}"
+    --helm-charts-repo "${SRC}/helm-charts"
+    --client-exe "$CLIENT_EXE"
+    --color false
+    --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}"
+    -dorp "${DORP}"
+    --cluster-type "kind"
+    --operator-installer "${OPERATOR_INSTALLER:-helm}"
+    --kind-name "${KIND_NAME}"
+    --kind-exe "${KIND_EXE}"
+  )
+  if [ -n "${ALL_TESTS}" ]; then
+    molecule_cmd+=(--all-tests "${ALL_TESTS}")
+  fi
+  if [ -n "${SKIP_TESTS}" ]; then
+    molecule_cmd+=(--skip-tests "${SKIP_TESTS}")
+  fi
+
   if [ "${CI}" == "true" ]; then
-    eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci true --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}"
+    molecule_cmd+=(-ci true)
+    "${molecule_cmd[@]}"
   else
-    eval hack/run-molecule-tests.sh $(test ! -z "$ALL_TESTS" && echo "--all-tests \"$ALL_TESTS\"") $(test ! -z "$SKIP_TESTS" && echo "--skip-tests \"$SKIP_TESTS\"") --use-dev-images "${USE_DEV_IMAGES}" --spec-version "${SPEC_VERSION}" --helm-charts-repo "${SRC}/helm-charts" --client-exe "$CLIENT_EXE" --color false --test-logs-dir "${LOGS_LOCAL_SUBDIR_ABS}" -dorp "${DORP}" --cluster-type "kind" --operator-installer "${OPERATOR_INSTALLER:-helm}" -ci false --kind-name "${KIND_NAME}" --kind-exe "${KIND_EXE}" > "${LOGS_LOCAL_RESULTS}"
+    molecule_cmd+=(-ci false)
+    "${molecule_cmd[@]}" > "${LOGS_LOCAL_RESULTS}"
   fi
 
   cd ${LOGS_LOCAL_SUBDIR_ABS}
 
   # compress large log files
   MAX_LOG_FILE_SIZE="50M"
-  for bigfile in $(find ${LOGS_LOCAL_SUBDIR_ABS} -maxdepth 1 -type f -size +${MAX_LOG_FILE_SIZE})
-  do
-    infomsg "This file is large and needs to be compressed: $(basename ${bigfile})"
-    tar -czf ${bigfile}.tgz -C ${LOGS_LOCAL_SUBDIR_ABS} --remove-files $(basename ${bigfile})
-  done
+  while IFS= read -r -d '' bigfile; do
+    infomsg "This file is large and needs to be compressed: $(basename "${bigfile}")"
+    tar -czf "${bigfile}.tgz" -C "${LOGS_LOCAL_SUBDIR_ABS}" --remove-files "$(basename "${bigfile}")"
+  done < <(find "${LOGS_LOCAL_SUBDIR_ABS}" -maxdepth 1 -type f -size +"${MAX_LOG_FILE_SIZE}" -print0)
 
   if [ "${UPLOAD_LOGS}" == "true" ]; then
     infomsg "Committing the logs to github: ${LOGS_GITHUB_HTTPS_SUBDIR}"

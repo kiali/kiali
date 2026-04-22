@@ -109,7 +109,7 @@ install_service_spawner_demo() {
         echo "Waypoint proxy created successfully"
         echo "Waiting for waypoint to be ready..."
         sleep 5
-        for i in {1..30}; do
+        for _ in {1..30}; do
           WAYPOINT_POD=$(${CLIENT_EXE} get pods -n ${NAMESPACE} -l gateway.istio.io/managed=istio.io-waypoint -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
           if [ -n "${WAYPOINT_POD}" ]; then
             echo "Waypoint pod found: ${WAYPOINT_POD}"
@@ -144,7 +144,7 @@ while [ $# -gt 0 ]; do
       ;;
     -m|--mode)
       MODE="$2"
-      if [ "${MODE}" != "sidecar" -a "${MODE}" != "ambient" ]; then
+      if [ "${MODE}" != "sidecar" ] && [ "${MODE}" != "ambient" ]; then
         echo "ERROR: --mode must be either 'sidecar' or 'ambient'"
         exit 1
       fi

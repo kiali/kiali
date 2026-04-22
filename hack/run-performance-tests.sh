@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -so|--setup-only)
       SETUP_ONLY="${2}"
-      if [ "${SETUP_ONLY}" != "true" -a "${SETUP_ONLY}" != "false" ]; then
+      if [ "${SETUP_ONLY}" != "true" ] && [ "${SETUP_ONLY}" != "false" ]; then
         echo "--setup-only option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -to|--tests-only)
       TESTS_ONLY="${2}"
-      if [ "${TESTS_ONLY}" != "true" -a "${TESTS_ONLY}" != "false" ]; then
+      if [ "${TESTS_ONLY}" != "true" ] && [ "${TESTS_ONLY}" != "false" ]; then
         echo "--tests-only option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -31,7 +31,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -do|--delete-only)
       DELETE_ONLY="${2}"
-      if [ "${DELETE_ONLY}" != "true" -a "${DELETE_ONLY}" != "false" ]; then
+      if [ "${DELETE_ONLY}" != "true" ] && [ "${DELETE_ONLY}" != "false" ]; then
         echo "--delete-only option must be one of 'true' or 'false'"
         exit 1
       fi
@@ -73,7 +73,7 @@ HELPMSG
   esac
 done
 
-if [ "${SETUP_ONLY}" == "true" -a "${TESTS_ONLY}" == "true" -a "${DELETE_ONLY}" == "true" ]; then
+if [ "${SETUP_ONLY}" == "true" ] && [ "${TESTS_ONLY}" == "true" ] && [ "${DELETE_ONLY}" == "true" ]; then
   echo "ERROR: --setup-only --tests-only and --delete-only cannot all be true. Aborting."
   exit 1
 fi
@@ -129,7 +129,7 @@ deleteNamespaces() {
   jq '.allNamespaces = .namespaces' "$COMMON_PARAMS" > "$COMMON_PARAMS.tmp" && mv "$COMMON_PARAMS.tmp" "$COMMON_PARAMS"
 }
 
-if [ "${TESTS_ONLY}" != "true" -a "${DELETE_ONLY}" != "true" ]; then
+if [ "${TESTS_ONLY}" != "true" ] && [ "${DELETE_ONLY}" != "true" ]; then
   infomsg "Install test namespaces"
   createNamespaces
 fi
@@ -150,7 +150,7 @@ fi
 
 ensureCypressInstalled
 
-cd "${SCRIPT_DIR}"/../frontend
+cd "${SCRIPT_DIR}"/../frontend || exit
 infomsg "Running cypress performance tests"
 mkdir "$OUTPUT_DIR"
 echo "[Running cypress performance tests for $TEST_NAMESPACES namespaces]" > $OUTPUT_FILE
