@@ -17,6 +17,13 @@ window.SVGPathElement = () => {};
 window.customElements = () => {};
 window.customElements.define = () => {};
 
+// jsdom does not implement ResizeObserver
+global.ResizeObserver = class {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+};
+
 const tFunction = (key: string, parameters: { [key: string]: string }): string => {
   const params = JSON.stringify(parameters) ?? '{}';
 
