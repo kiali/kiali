@@ -82,9 +82,6 @@ const axisStyle = {
 export const MIN_HEIGHT = 20;
 export const MIN_HEIGHT_YAXIS = 70;
 export const MIN_WIDTH = 275;
-// Total height reserved for the HTML legend area below the chart SVG.
-// Separate from the SVG padding.bottom which controls the gap between
-// the plot area and the bottom edge of the SVG.
 export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 const CHART_BOTTOM_PADDING = 15;
@@ -114,11 +111,11 @@ const htmlLegendItemStyle = kialiStyle({
 
 const overlayLegendStyle = kialiStyle({
   display: 'flex',
-  flexWrap: 'wrap',
   flexDirection: 'column',
-  position: 'relative',
+  flexWrap: 'wrap',
   opacity: 0.7,
-  overflow: 'auto'
+  overflow: 'auto',
+  position: 'relative'
 });
 
 const fullLegendStyle = kialiStyle({
@@ -430,8 +427,8 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
           <div
             style={{
               width: this.state.width,
-              height: chartHeight,
-              top: -(chartHeight + LEGEND_HEIGHT)
+              height: svgHeight,
+              top: -(svgHeight + LEGEND_HEIGHT)
             }}
             className={overlayLegendStyle}
           >
