@@ -3,7 +3,7 @@ import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { AppDescription } from './AppDescription';
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
-import { RenderComponentScroll } from '../../components/Nav/Page';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
@@ -17,21 +17,15 @@ type AppInfoProps = {
   isSupported?: boolean;
 };
 
-type AppInfoState = {
-  tabHeight?: number;
-};
-
 const gridStyle = kialiStyle({
-  marginTop: '1rem'
+  alignItems: 'stretch',
+  flex: 1,
+  marginTop: '1rem',
+  minHeight: 0
 });
 
-export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
+export class AppInfo extends React.Component<AppInfoProps> {
   private graphDataSource = new GraphDataSource();
-
-  constructor(props: AppInfoProps) {
-    super(props);
-    this.state = {};
-  }
 
   componentDidMount(): void {
     this.fetchBackend();
@@ -57,14 +51,11 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
   };
 
   render(): React.ReactNode {
-    // RenderComponentScroll handles height to provide an inner scroll combined with tabs
-    // This height needs to be propagated to minigraph to proper resize in height
-    // Graph resizes correctly on width
     const miniGraphSpan = 8;
-    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1rem)` : '100%';
+
     return (
-      <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
-        <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+      <div className={flexFillStyle}>
+        <Grid hasGutter={true} className={gridStyle}>
           <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
             <Stack hasGutter={true}>
               <StackItem>
@@ -86,7 +77,7 @@ export class AppInfo extends React.Component<AppInfoProps, AppInfoState> {
             <MiniGraphCard dataSource={this.graphDataSource} />
           </GridItem>
         </Grid>
-      </RenderComponentScroll>
+      </div>
     );
   }
 }

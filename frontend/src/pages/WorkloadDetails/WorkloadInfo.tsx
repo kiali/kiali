@@ -8,7 +8,7 @@ import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { RenderComponentScroll } from '../../components/Nav/Page';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
@@ -30,13 +30,14 @@ type WorkloadInfoProps = {
 
 type WorkloadInfoState = {
   currentTab: string;
-  tabHeight?: number;
   validations?: Validations;
   workloadIstioConfig?: IstioConfigList;
 };
 
 const gridStyle = kialiStyle({
-  height: '100%',
+  alignItems: 'stretch',
+  flex: 1,
+  minHeight: 0,
   paddingTop: '1rem'
 });
 
@@ -260,16 +261,12 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       this.props.workload?.labels[serverConfig.istioLabels.ambientWaypointGatewayLabel]
     );
 
-    // RenderComponentScroll handles height to provide an inner scroll combined with tabs
-    // This height needs to be propagated to minigraph to proper resize in height
-    // Graph resizes correctly on width
     const miniGraphSpan = 8;
-    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1rem)` : '100%';
 
     return (
       <>
-        <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
-          <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+        <div className={flexFillStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
               <Stack hasGutter={true}>
                 <StackItem>
@@ -321,7 +318,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               />
             </GridItem>
           </Grid>
-        </RenderComponentScroll>
+        </div>
       </>
     );
   }

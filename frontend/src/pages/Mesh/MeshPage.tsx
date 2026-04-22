@@ -17,7 +17,7 @@ import {
 import { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
-import { isKioskMode } from 'utils/SearchParamUtils';
+
 import { Label } from '@patternfly/react-core';
 import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
 import { KialiDispatch } from 'types/Redux';
@@ -105,16 +105,7 @@ type MeshPageState = {
   meshRefs?: MeshRefs;
 };
 
-const containerStyle = kialiStyle({
-  minHeight: '350px',
-  // TODO: try flexbox to remove this calc
-  height: 'calc(100vh - 136px)' // View height minus top bar height minus secondary masthead
-});
-
-const kioskContainerStyle = kialiStyle({
-  minHeight: '350px',
-  height: 'calc(100vh - 65px)' // View height minus top bar height
-});
+const containerMinHeight = '350px';
 
 const meshChip = kialiStyle({
   position: 'absolute',
@@ -229,14 +220,13 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
   }
 
   render(): React.ReactNode {
-    const conStyle = isKioskMode() ? kioskContainerStyle : containerStyle;
     const isEmpty = !(this.state.meshData.elements.nodes && Object.keys(this.state.meshData.elements.nodes).length > 0);
     const isReady = !(isEmpty || this.state.meshData.isError);
     const refreshInterval = HistoryManager.getRefresh() ?? this.props.refreshInterval;
 
     return (
       <>
-        <FlexView className={conStyle} column={true}>
+        <FlexView column={true} grow={true} style={{ minHeight: containerMinHeight }}>
           <MeshToolbar
             controller={this.state.meshRefs?.getController()}
             disabled={this.state.meshData.isLoading}

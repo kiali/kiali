@@ -4,18 +4,8 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { serverConfig } from '../../config';
 import { ComputedServerConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
-import {
-	Alert,
-	AlertActionCloseButton,
-	AlertVariant,
-	Button,
-	ButtonVariant,
-	Tab
-} from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { Alert, AlertActionCloseButton, AlertVariant, Button, ButtonVariant, Tab } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
 import AceEditor from 'react-ace';
 import { ParameterizedTabs } from '../Tab/Tabs';
@@ -89,6 +79,7 @@ const modalStyle = kialiStyle({
   overflowY: 'hidden',
   $nest: {
     '& .pf-v6-c-tab-content': {
+      flex: '0 0 auto',
       height: '530px',
       overflowY: 'auto'
     }

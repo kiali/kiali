@@ -16,7 +16,7 @@ import {
   PeerAuthentication,
   Validations
 } from '../../types/IstioObjects';
-import { RenderComponentScroll } from '../../components/Nav/Page';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -63,13 +63,15 @@ type ServiceInfoState = {
   showConfirmDeleteTrafficRouting: boolean;
   // Wizards related
   showWizard: boolean;
-  tabHeight?: number;
   updateMode: boolean;
   wizardType: string;
 };
 
 const gridStyle = kialiStyle({
-  marginTop: '1rem'
+  alignItems: 'stretch',
+  flex: 1,
+  marginTop: '1rem',
+  minHeight: 0
 });
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
@@ -79,7 +81,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      tabHeight: 300,
       showWizard: false,
       wizardType: '',
       updateMode: false,
@@ -240,16 +241,12 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       )
     );
 
-    // RenderComponentScroll handles height to provide an inner scroll combined with tabs
-    // This height needs to be propagated to minigraph to proper resize in height
-    // Graph resizes correctly on width
     const miniGraphSpan = 8;
-    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1rem)` : '100%';
 
     return (
       <>
-        <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
-          <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+        <div className={flexFillStyle}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
               <Stack hasGutter={true}>
                 <StackItem>
@@ -290,7 +287,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
               />
             </GridItem>
           </Grid>
-        </RenderComponentScroll>
+        </div>
 
         <ServiceWizard
           show={this.state.showWizard}

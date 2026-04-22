@@ -11,7 +11,7 @@ import {
   ProtocolTraffic,
   SEInfo
 } from '../../types/Graph';
-import { RenderComponentScroll } from '../Nav/Page';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
@@ -126,7 +126,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
   render(): React.ReactNode {
     return (
       <>
-        <RenderComponentScroll>
+        <div className={flexFillStyle}>
           <Grid className={gridStyle}>
             <GridItem span={12}>
               <Card>
@@ -149,7 +149,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
               </Card>
             </GridItem>
           </Grid>
-        </RenderComponentScroll>
+        </div>
         <TimeDurationModal
           customDuration={false}
           isOpen={this.state.isTimeOptionsOpen}

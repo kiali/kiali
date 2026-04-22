@@ -95,7 +95,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
             </li>
 
             {ips.map((ip, i) => (
-              <li>
+              <li key={`ip_${i}`}>
                 <span>
                   {service.type !== 'ExternalName'
                     ? `Service ${service.ipFamilies ? service.ipFamilies[i] : 'IP'}`

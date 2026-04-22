@@ -26,6 +26,17 @@ const tabStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
+// Flex wrapper so PF Tabs' sibling elements (tab list + tab content
+// sections) participate in the page flex chain. Without this, the
+// transparent React context provider returned by PF Tabs would leave
+// them as direct children of the route page, breaking flex propagation.
+const flexTabWrapperStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0
+});
+
 type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
 
 type TabMap = { [key: number]: string };
@@ -82,7 +93,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     return this.tabLinks[index] != null;
   };
 
-  tabSelectHandler = (tabKey: string): void => {
+  handleTabSelect = (tabKey: string): void => {
     const urlParams = new URLSearchParams(location.getSearch());
 
     if (!!this.props.tabName) {
@@ -99,30 +110,31 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
     });
   };
 
-  tabTransitionHandler = (tabKey: number): void => {
+  handleTabTransition = (tabKey: number): void => {
     const tabName = this.tabNameOf(tabKey);
-    this.tabSelectHandler(tabName);
+    this.handleTabSelect(tabName);
     this.props.onSelect(tabName);
   };
 
   render(): React.ReactNode {
     return (
-      <Tabs
-        id={this.props.id}
-        className={classes(this.props.className, tabStyle)}
-        activeKey={this.activeIndex()}
-        onSelect={(_, ek) => {
-          if (!this.isLinkTab(ek as number)) {
-            this.tabTransitionHandler(ek as number);
-          }
-        }}
-        mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
-        unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
-      >
-        {!Array.isArray(this.props.children)
-          ? (this.props.children as TabElement)
-          : this.props.children.map(child => child)}
-      </Tabs>
+      <div className={classes(flexTabWrapperStyle, this.props.className, tabStyle)}>
+        <Tabs
+          id={this.props.id}
+          activeKey={this.activeIndex()}
+          onSelect={(_, ek) => {
+            if (!this.isLinkTab(ek as number)) {
+              this.handleTabTransition(ek as number);
+            }
+          }}
+          mountOnEnter={this.props.mountOnEnter === undefined ? true : this.props.mountOnEnter}
+          unmountOnExit={this.props.unmountOnExit === undefined ? true : this.props.unmountOnExit}
+        >
+          {!Array.isArray(this.props.children)
+            ? (this.props.children as TabElement)
+            : this.props.children.map(child => child)}
+        </Tabs>
+      </div>
     );
   }
 }

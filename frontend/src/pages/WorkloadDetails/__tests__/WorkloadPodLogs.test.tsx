@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { mount, shallow } from 'enzyme';
-import screenfull, { Screenfull } from 'screenfull';
 import { WorkloadPodLogsComponent, WorkloadPodLogsProps } from '../WorkloadPodLogs';
 import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
@@ -43,12 +42,6 @@ describe('WorkloadPodLogsComponent', () => {
 
   afterAll(() => {
     axiosMock.restore();
-  });
-
-  beforeEach(() => {
-    jest.mock('screenfull');
-
-    (screenfull as Screenfull).onchange = jest.fn();
   });
 
   afterEach(() => {

@@ -60,7 +60,6 @@ export class RateChart extends React.Component<Props, State> {
     });
 
     const fontSize = cssVariables.kialiFontSize;
-    const fontSizePx = cssVariables.kialiFontSizePx;
 
     const horizontalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 3 } };
     const verticalAxisStyle = { tickLabels: { fontSize: fontSize, padding: 2 } };
@@ -111,7 +110,7 @@ export class RateChart extends React.Component<Props, State> {
           tickValues={[0, 25, 50, 75, 100]}
         />
         <ChartLegend
-          style={{ labels: { fontSize: Number(fontSizePx) } }}
+          style={{ labels: { fontSize: parseInt(fontSize) } }}
           name={`${this.props.baseName}-legend`}
           data={this.props.series.map((s, idx) => {
             if (this.state.hiddenSeries.has(idx)) {

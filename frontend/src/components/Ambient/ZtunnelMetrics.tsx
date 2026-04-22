@@ -17,14 +17,22 @@ import { MessageType } from '../../types/NotificationCenter';
 import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from '../Metrics/PersesLinks';
 import { store } from '../../store/ConfigStore';
+import { kialiStyle } from 'styles/StyleUtils';
+import { noShrinkStyle } from 'styles/FlexStyles';
 
 type ZtunnelMetricsProps = {
   cluster: string;
-  dashboardHeight: number;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   rangeDuration: TimeRange;
 };
+
+const metricsContainerStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0
+});
 
 export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetricsProps) => {
   const urlParams = new URLSearchParams(location.getSearch());
@@ -104,7 +112,7 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   }, []);
 
   const settings = MetricsHelper.retrieveMetricsSettings(200);
-  const expandHandler = (expandedChart?: string): void => {
+  const handleExpand = (expandedChart?: string): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 
@@ -116,9 +124,9 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
   };
 
   return (
-    <div>
+    <div className={metricsContainerStyle}>
       {(grafanaInfo || persesInfo) && (
-        <div ref={toolbarRef}>
+        <div ref={toolbarRef} className={noShrinkStyle}>
           <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
             <ToolbarGroup>
               <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
@@ -151,10 +159,9 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
           dashboard={metrics}
           labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
           maximizedChart={expandedChart}
-          expandHandler={expandHandler}
+          onExpand={handleExpand}
           labelPrettifier={MetricsHelper.prettyLabelValues}
           showSpans={false}
-          dashboardHeight={props.dashboardHeight}
         />
       )}
     </div>

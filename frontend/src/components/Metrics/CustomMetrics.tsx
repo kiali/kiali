@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { classes } from 'typestyle';
 import { connect } from 'react-redux';
 import {
   Toolbar,
@@ -10,12 +11,12 @@ import {
   EmptyStateVariant
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
 import { addError } from '../../utils/AlertUtils';
-import { RenderComponentScroll } from '../../components/Nav/Page';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
@@ -47,7 +48,6 @@ type MetricsState = {
   labelsSettings: LabelsSettings;
   showSpans: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
-  tabHeight: number;
   traceLimit: number;
 };
 
@@ -55,7 +55,6 @@ type CustomMetricsProps = {
   app: string;
   appLabelName?: string;
   embedded?: boolean;
-  height?: number;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   template: string;
@@ -80,32 +79,29 @@ type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
 
-const cardStyle = kialiStyle({
+const cardMarginStyle = kialiStyle({
   marginTop: '1rem'
 });
 
 const emptyStyle = kialiStyle({
-  display: 'flex',
-  justifyContent: 'center',
   alignItems: 'center',
+  display: 'flex',
+  flex: 1,
+  justifyContent: 'center',
+  minHeight: '200px',
   overflow: 'hidden',
-  // fix height + padding
-  height: '350px',
   textAlign: 'center'
 });
 
 class CustomMetricsComponent extends React.Component<Props, MetricsState> {
-  toolbarRef: React.RefObject<HTMLDivElement>;
   options: DashboardQuery;
   spanOverlay: SpanOverlay;
 
   constructor(props: Props) {
     super(props);
-    this.toolbarRef = React.createRef<HTMLDivElement>();
     const settings = MetricsHelper.retrieveMetricsSettings(traceLimitDefault);
     this.options = this.initOptions(settings);
 
-    // Initialize active filters from URL
     const cluster = HistoryManager.getClusterName();
     this.state = {
       cluster: cluster,
@@ -115,7 +111,6 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       isTimeOptionsOpen: false,
       labelsSettings: settings.labelsSettings,
       showSpans: settings.showSpans,
-      tabHeight: 300,
       traceLimit: settings.spanLimit
     };
 
@@ -255,11 +250,6 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const urlParams = new URLSearchParams(location.getSearch());
     const expandedChart = urlParams.get('expand') || undefined;
 
-    // 20px (card margin) + 24px (card padding) + 51px (toolbar) + 15px (toolbar padding) + 24px (card padding) + 20px (card margin)
-    const toolbarHeight = this.toolbarRef.current ? this.toolbarRef.current.clientHeight : 51;
-    const toolbarSpace = 20 + 24 + toolbarHeight + 15 + 24 + 20;
-    const dashboardHeight = (this.props.height ? this.props.height : this.state.tabHeight) - toolbarSpace;
-
     const dashboard = this.state.dashboard && (
       <Dashboard
         dashboard={this.state.dashboard}
@@ -267,10 +257,9 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         template={this.props.template}
         labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
         maximizedChart={expandedChart}
-        expandHandler={this.expandHandler}
+        onExpand={this.handleExpand}
         onClick={this.onClickDataPoint}
         showSpans={this.state.showSpans}
-        dashboardHeight={dashboardHeight}
         overlay={this.state.spanOverlay}
         timeWindow={evalTimeRange(this.props.timeRange)}
         brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
@@ -289,11 +278,11 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         {this.props.embedded ? (
           <>{content}</>
         ) : (
-          <RenderComponentScroll onResize={height => this.setState({ tabHeight: height })}>
-            <Card className={cardStyle}>
+          <div className={classes(flexFillStyle, constrainedScrollStyle)}>
+            <Card className={classes(flexCardStyle, cardMarginStyle)}>
               <CardBody>{content}</CardBody>
             </Card>
-          </RenderComponentScroll>
+          </div>
         )}
 
         <TimeDurationModal
@@ -325,7 +314,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const hasLabels = this.state.labelsSettings.size > 0;
 
     return (
-      <div ref={this.toolbarRef}>
+      <div className={noShrinkStyle}>
         <Toolbar style={{ paddingBottom: 15 }}>
           <ToolbarGroup>
             {(hasHistograms || hasLabels) && (
@@ -379,7 +368,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     );
   };
 
-  private expandHandler = (expandedChart?: string): void => {
+  private handleExpand = (expandedChart?: string): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.delete('expand');
 

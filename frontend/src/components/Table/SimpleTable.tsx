@@ -1,42 +1,35 @@
 import * as React from 'react';
 import {
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  IRow,
-  TableVariant,
-  IAction,
   ActionsColumn,
+  IAction,
+  InnerScrollContainer,
+  IRow,
   IRowData,
   ISortBy,
   OnSort,
+  Table,
+  TableVariant,
+  Tbody,
+  Td,
+  Th,
+  Thead,
   ThProps,
-  InnerScrollContainer
+  Tr
 } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
-import { isKiosk } from 'components/Kiosk/KioskActions';
-import { store } from 'store/ConfigStore';
 
-// TOP_PADDING constant is used to adjust the height of the main div to allow scrolling in the inner container layer.
-const TOP_PADDING = 462;
-
-// EMBEDDED_PADDING constant is a magic number used to adjust the height of the main div to allow scrolling in the inner container layer.
-// 42px is the height of the first tab menu
-const EMBEDDED_PADDING = 42 + 200;
-
-/**
- * By default, Kiali hides the global scrollbar and fixes the height for some pages to force the scrollbar to appear
- * Hiding global scrollbar is not possible when Kiali is embedded in other application (like Openshift Console)
- * In these cases height is not fixed to avoid multiple scrollbars (https://github.com/kiali/kiali/issues/6601)
- * GLOBAL_SCROLLBAR environment variable is not defined in standalone Kiali application (value is always false)
- */
-const globalScrollbar = process.env.GLOBAL_SCROLLBAR ?? 'false';
+const stickyWrapperStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0,
+  overflow: 'hidden',
+  width: '100%'
+});
 
 const innerScrollContainerStyle = kialiStyle({
-  maxHeight: '95%',
+  flex: 1,
+  minHeight: 0,
   paddingRight: '0.5rem'
 });
 
@@ -62,35 +55,9 @@ interface SimpleTableProps {
 }
 
 export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps) => {
-  const [scrollStyle, setScrollStyle] = React.useState('');
-
   const tdStyle = kialiStyle({
     verticalAlign: props.verticalAlign ?? 'baseline'
   });
-
-  const updateWindowDimensions = (): void => {
-    const isStandalone = !isKiosk(store.getState().globalState.kiosk);
-    const topPadding = isStandalone ? TOP_PADDING : EMBEDDED_PADDING;
-    setScrollStyle(getScrollStyle(window.innerHeight - topPadding));
-  };
-
-  React.useEffect(() => {
-    updateWindowDimensions();
-    window.addEventListener('resize', updateWindowDimensions);
-    return () => {
-      window.removeEventListener('resize', updateWindowDimensions);
-    };
-  });
-
-  const getScrollStyle = (height: number): string => {
-    if (globalScrollbar === 'false') {
-      return kialiStyle({
-        height: height,
-        width: '100%'
-      });
-    }
-    return kialiStyle({});
-  };
 
   const getSortParams = (column: SortableTh | ThProps, index: number): ThProps['sort'] | undefined => {
     let thSort: ThProps['sort'] | undefined;
@@ -177,7 +144,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
   return !props.isStickyHeader ? (
     table
   ) : (
-    <div className={scrollStyle}>
+    <div className={stickyWrapperStyle}>
       <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
     </div>
   );

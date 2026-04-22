@@ -47,7 +47,7 @@ import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
-import { isKioskMode, getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
+import { getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
 import { Label, Badge } from '@patternfly/react-core';
 
 import { toRangeString } from 'components/Time/Utils';
@@ -192,16 +192,7 @@ type GraphPageState = {
 
 const NUMBER_OF_DATAPOINTS = 30;
 
-const containerStyle = kialiStyle({
-  minHeight: '350px',
-  // TODO: try flexbox to remove this calc
-  height: 'calc(100vh - 136px)' // View height minus top bar height minus secondary masthead
-});
-
-const kioskContainerStyle = kialiStyle({
-  minHeight: '350px',
-  height: 'calc(100vh - 75px)' // View height minus top bar height
-});
+const containerMinHeight = '350px';
 
 const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
 const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
@@ -480,10 +471,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   }
 
   render(): React.ReactNode {
-    let conStyle = containerStyle;
-    if (isKioskMode()) {
-      conStyle = kioskContainerStyle;
-    }
     const isEmpty = !(
       this.state.graphData.elements.nodes && Object.keys(this.state.graphData.elements.nodes).length > 0
     );
@@ -493,7 +480,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     return (
       <>
-        <FlexView className={conStyle} column={true}>
+        <FlexView column={true} grow={true} style={{ minHeight: containerMinHeight }}>
           <div>
             <GraphToolbar
               controller={this.state.graphRefs?.getController()}

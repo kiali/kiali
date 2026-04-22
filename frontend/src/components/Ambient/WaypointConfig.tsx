@@ -3,7 +3,7 @@ import { IRow, ThProps } from '@patternfly/react-table';
 import { Workload } from 'types/Workload';
 import { Card, CardBody, Grid, GridItem, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { RenderComponentScroll } from 'components/Nav/Page';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { location, router } from '../../app/History';
 import {
   tabName as workloadTabName,
@@ -11,7 +11,7 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { subTabStyle } from 'styles/TabStyles';
 import { kialiStyle } from '../../styles/StyleUtils';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 import { WaypointForLabel, WaypointType } from '../../types/Ambient';
@@ -186,21 +186,22 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
   tabs.push(infoTab);
 
   return (
-    <RenderComponentScroll>
+    <div className={flexFillStyle}>
       <Grid>
         <GridItem span={12}>
-          <Tabs
-            id="waypoint-details"
-            className={subTabStyle}
-            activeKey={activeKey}
-            onSelect={waypointHandleTabClick}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            {tabs}
-          </Tabs>
+          <div className={subTabStyle}>
+            <Tabs
+              id="waypoint-details"
+              activeKey={activeKey}
+              onSelect={waypointHandleTabClick}
+              mountOnEnter={true}
+              unmountOnExit={true}
+            >
+              {tabs}
+            </Tabs>
+          </div>
         </GridItem>
       </Grid>
-    </RenderComponentScroll>
+    </div>
   );
 };

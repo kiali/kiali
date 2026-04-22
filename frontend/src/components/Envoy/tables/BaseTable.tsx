@@ -29,6 +29,13 @@ const iconStyle = kialiStyle({
   alignSelf: 'center'
 });
 
+const tableContainerStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0
+});
+
 export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Component {
   interface SummaryTableProps<T> {
     onSort: (resource: string, columnIndex: number, sortByDirection: SortByDirection) => void;
@@ -57,7 +64,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
 
     render(): React.ReactNode {
       return (
-        <>
+        <div className={tableContainerStyle}>
           <StatefulFilters
             initialFilters={this.props.writer.availableFilters()}
             onFilterChange={this.onFilterApplied}
@@ -91,7 +98,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
             onSort={this.onSort}
             isStickyHeader
           />
-        </>
+        </div>
       );
     }
   };
