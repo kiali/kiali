@@ -241,7 +241,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 // for the given cluster, preferring mesh trust domain when available.
 // Exported because the graph appender calls it via globalInfo.Business.Svc.
 func (in *SvcService) ResolveIdentityDomain(ctx context.Context, cluster string) string {
-	return resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+	return resolveIdentityDomainWithLayer(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 }
 
 func getVSKialiScenario(vs []*networking_v1.VirtualService) string {

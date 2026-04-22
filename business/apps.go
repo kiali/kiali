@@ -140,7 +140,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		cachedHealth, _ = in.kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeApp)
 	}
 
-	identityDomain := resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+	identityDomain := resolveIdentityDomainWithLayer(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 	for keyApp, valueApp := range allApps {
 		appItem := &models.AppListItem{
 			Name:   keyApp,
@@ -326,7 +326,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		var clusterIdentityDomain string
 		for keyApp, valueApp := range clusterApps {
 			if clusterIdentityDomain == "" {
-				clusterIdentityDomain = resolveIdentityDomain(ctx, in.businessLayer, valueApp.cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				clusterIdentityDomain = resolveIdentityDomainWithLayer(ctx, in.businessLayer, valueApp.cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 			}
 			appItem := &models.AppListItem{
 				Name:         keyApp,
@@ -602,7 +602,7 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 				tracingName.WaypointNamespace = wk.WaypointWorkloads[0].Namespace
 				tracingName.Lookup = tracingName.WaypointName
 			} else if len(appDetails.ServiceNames) > 0 {
-				identityDomain := resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				identityDomain := resolveIdentityDomainWithLayer(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 				lookupName := ""
 				if in.conf.ExternalServices.Tracing.NamespaceSelector {
 					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0], namespace, identityDomain)

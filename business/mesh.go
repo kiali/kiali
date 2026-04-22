@@ -66,10 +66,10 @@ func (in *MeshService) Clusters() []models.KubeCluster {
 	return in.discovery.Clusters()
 }
 
-// resolveIdentityDomain fetches the mesh from the given layer's discovery
+// resolveIdentityDomainWithLayer fetches the mesh from the given layer's discovery
 // and resolves the effective identity domain for the given cluster.
 // layer may be nil (e.g. in unit tests); discovery is extracted safely.
-func resolveIdentityDomain(ctx context.Context, layer *Layer, cluster, configured string) string {
+func resolveIdentityDomainWithLayer(ctx context.Context, layer *Layer, cluster, configured string) string {
 	var disc istio.MeshDiscovery
 	if layer != nil {
 		disc = layer.Mesh.discovery
