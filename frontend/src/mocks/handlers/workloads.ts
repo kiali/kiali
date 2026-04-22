@@ -926,7 +926,12 @@ export const workloadHandlers = [
           }
         ],
         services: [createMockServiceListItem(found.labels.app, namespace as string)],
-        runtimes: [],
+        runtimes: [
+          {
+            name: 'envoy',
+            dashboardRefs: [{ template: 'envoy', title: 'Envoy Metrics' }]
+          }
+        ],
         validations: workloadValidations,
         waypointWorkloads: []
       });
@@ -1171,6 +1176,14 @@ export const workloadHandlers = [
     return HttpResponse.json(generateMockDashboard('App', direction));
   }),
 
+  // Custom dashboard (used by Envoy metrics sub-tab with template=envoy, and any workload with custom dashboards)
+  http.get('*/api/namespaces/:namespace/customdashboard/:template', ({ params, request }) => {
+    const { template } = params;
+    const url = new URL(request.url);
+    const direction = url.searchParams.get('direction') || 'inbound';
+    return HttpResponse.json(generateMockDashboard(String(template), direction));
+  }),
+
   // Clusters metrics
   http.get('*/api/clusters/metrics', () => {
     return HttpResponse.json(generateMockMetrics('inbound'));
@@ -1374,21 +1387,125 @@ export const workloadHandlers = [
   }),
 
   // Pod logs endpoint
-  http.get('*/api/namespaces/:namespace/pods/:pod/logs', () => {
-    return HttpResponse.json({
-      entries: [
-        {
-          message: '[2024-01-20T12:00:00.000Z] Mock log entry 1',
-          severity: 'INFO',
-          timestamp: '2024-01-20T12:00:00.000Z'
-        },
-        {
-          message: '[2024-01-20T12:00:01.000Z] Mock log entry 2',
-          severity: 'INFO',
-          timestamp: '2024-01-20T12:00:01.000Z'
-        }
-      ]
-    });
+  http.get('*/api/namespaces/:namespace/pods/:pod/logs', ({ request }) => {
+    const url = new URL(request.url);
+    const logType = url.searchParams.get('logType') || 'app';
+    const baseTime = Math.floor(Date.now() / 1000) - 300;
+
+    const appMessages = [
+      'Starting application server on port 9080',
+      'Connected to database cluster at mongodb:27017',
+      'Health check endpoint /health registered',
+      'Loading product catalog from cache',
+      'Received request for /api/v1/products',
+      'Cache miss for key product:42, fetching from DB',
+      'Successfully retrieved 15 products in 23ms',
+      'Received request for /api/v1/reviews?product=42',
+      'Upstream service ratings:9080 responded in 12ms',
+      'Received request for /api/v1/details?isbn=0123456789',
+      'Connection pool stats: active=3 idle=7 max=10',
+      'Slow query detected: SELECT * FROM reviews WHERE product_id=42 took 250ms',
+      'Retry attempt 1/3 for upstream service ratings',
+      'Circuit breaker OPEN for service ratings after 5 consecutive failures',
+      'Request /api/v1/products completed in 145ms',
+      'GC pause: 12ms (young generation)',
+      'Received SIGTERM, starting graceful shutdown',
+      'Draining connections, 3 active requests remaining',
+      'All connections drained, shutting down',
+      'Application server stopped'
+    ];
+
+    const severities = [
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'WARN',
+      'WARN',
+      'ERROR',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO',
+      'INFO'
+    ];
+
+    const proxyAccessLog = {
+      authority: 'productpage:9080',
+      bytes_received: '0',
+      bytes_sent: '5765',
+      downstream_local: '10.244.0.15:9080',
+      downstream_remote: '10.244.0.1:47832',
+      duration: '23',
+      forwarded_for: '-',
+      method: 'GET',
+      protocol: 'HTTP/1.1',
+      request_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      requested_server: '-',
+      response_flags: '-',
+      route_name: 'default',
+      status_code: '200',
+      tcp_service_time: '-',
+      timestamp: new Date((baseTime + 120) * 1000).toISOString(),
+      upstream_cluster: 'inbound|9080||',
+      upstream_failure_reason: '-',
+      upstream_local: '127.0.0.6:46543',
+      upstream_service: '10.244.0.15:9080',
+      upstream_service_time: '22',
+      uri_param: '-',
+      uri_path: '/api/v1/products',
+      user_agent: 'Mozilla/5.0 (compatible; istio-probe/1.0)'
+    };
+
+    const proxyAccessLog503 = {
+      ...proxyAccessLog,
+      status_code: '503',
+      duration: '5001',
+      response_flags: 'UF',
+      upstream_failure_reason: 'connection_termination',
+      bytes_sent: '91',
+      uri_path: '/api/v1/ratings',
+      request_id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901'
+    };
+
+    const entries =
+      logType === 'proxy'
+        ? [
+            ...[
+              'GET /api/v1/products HTTP/1.1 200 5765 23ms',
+              'GET /api/v1/reviews?product=42 HTTP/1.1 200 1234 12ms',
+              'GET /healthz/ready HTTP/1.1 200 0 1ms',
+              'GET /api/v1/details?isbn=0123456789 HTTP/1.1 200 890 8ms',
+              'GET /api/v1/ratings HTTP/1.1 503 91 5001ms',
+              'GET /api/v1/products HTTP/1.1 200 5780 19ms',
+              'GET /healthz/ready HTTP/1.1 200 0 0ms',
+              'POST /api/v1/reviews HTTP/1.1 201 234 45ms',
+              'GET /api/v1/products?page=2 HTTP/1.1 200 5102 21ms',
+              'GET /stats/prometheus HTTP/1.1 200 12456 3ms'
+            ].map((msg, i) => ({
+              message: `[${new Date((baseTime + i * 15) * 1000).toISOString()}] "${msg}"`,
+              severity: msg.includes('503') ? 'ERROR' : 'INFO',
+              timestamp: new Date((baseTime + i * 15) * 1000).toISOString(),
+              timestampUnix: baseTime + i * 15,
+              accessLog: i === 0 ? proxyAccessLog : i === 4 ? proxyAccessLog503 : undefined
+            }))
+          ]
+        : appMessages.map((msg, i) => ({
+            message: `[${new Date((baseTime + i * 15) * 1000).toISOString()}] ${msg}`,
+            severity: severities[i],
+            timestamp: new Date((baseTime + i * 15) * 1000).toISOString(),
+            timestampUnix: baseTime + i * 15
+          }));
+
+    return HttpResponse.json({ entries, linesTruncated: false });
   }),
 
   http.get('*/api/grafana', () => {
