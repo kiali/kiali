@@ -31,7 +31,7 @@ func prepareTestForPeerAuth(pa *security_v1.PeerAuthentication, drs []*networkin
 		config.IstioNamespaceDefault: config.IstioNamespaceDefault,
 		"bookinfo":                   config.IstioNamespaceDefault,
 	}
-	drReferences := NewPeerAuthReferences(config.DefaultClusterID, config.Get(), rootNamespaces, mtlsDetails, workloadsPerNamespace)
+	drReferences := NewPeerAuthReferences(config.DefaultClusterID, config.Get(), config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""), rootNamespaces, mtlsDetails, workloadsPerNamespace)
 	return *drReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.PeerAuthentications, Namespace: pa.Namespace, Name: pa.Name}]
 }
 

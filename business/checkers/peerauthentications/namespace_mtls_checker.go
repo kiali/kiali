@@ -9,9 +9,10 @@ import (
 )
 
 type NamespaceMtlsChecker struct {
-	Conf        *config.Config
-	MTLSDetails kubernetes.MTLSDetails
-	PeerAuthn   *security_v1.PeerAuthentication
+	Conf           *config.Config
+	IdentityDomain string
+	MTLSDetails    kubernetes.MTLSDetails
+	PeerAuthn      *security_v1.PeerAuthentication
 }
 
 // Checks if a PeerAuthn enabling namespace-wide has a Destination Rule enabling mTLS too
@@ -31,7 +32,7 @@ func (t NamespaceMtlsChecker) Check() ([]*models.IstioCheck, bool) {
 	// otherwise, check among Destination Rules for a rule enabling mTLS namespace-wide or mesh-wide.
 	for _, dr := range t.MTLSDetails.DestinationRules {
 		// Check if there is a Destination Rule enabling ns-wide mTLS
-		if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(t.PeerAuthn.Namespace, dr, t.Conf); enabled {
+		if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(t.PeerAuthn.Namespace, dr, t.IdentityDomain); enabled {
 			return validations, true
 		}
 

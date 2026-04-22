@@ -257,7 +257,6 @@
             "enabled" : true
           },
           "istioApiEnabled" : true,
-          "istioIdentityDomain" : "svc.cluster.local",
           "istiodPollingIntervalSeconds" : 20,
           "validationChangeDetectionEnabled" : true,
           "validationReconcileInterval" : 60000000000

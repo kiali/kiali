@@ -140,6 +140,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		cachedHealth, _ = in.kialiCache.GetHealth(cluster, namespace, internalmetrics.HealthTypeApp)
 	}
 
+	identityDomain := resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 	for keyApp, valueApp := range allApps {
 		appItem := &models.AppListItem{
 			Name:   keyApp,
@@ -150,12 +151,12 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 		for _, srv := range valueApp.Services {
 			joinMap(applabels, srv.Labels)
 			if criteria.IncludeIstioResources {
-				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, in.conf)
+				vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, identityDomain)
 				for _, v := range vsFiltered {
 					ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
 				}
-				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, in.conf)
+				drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, identityDomain)
 				for _, d := range drFiltered {
 					ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, cluster)
 					svcReferences = append(svcReferences, &ref)
@@ -322,7 +323,11 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 	}
 
 	for _, clusterApps := range allApps {
+		var clusterIdentityDomain string
 		for keyApp, valueApp := range clusterApps {
+			if clusterIdentityDomain == "" {
+				clusterIdentityDomain = resolveIdentityDomain(ctx, in.businessLayer, valueApp.cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+			}
 			appItem := &models.AppListItem{
 				Name:         keyApp,
 				IstioSidecar: true,
@@ -337,12 +342,12 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, srv := range valueApp.Services {
 				joinMap(applabels, srv.Labels)
 				if criteria.IncludeIstioResources {
-					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, in.conf)
+					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, clusterIdentityDomain)
 					for _, v := range vsFiltered {
 						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
-					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, in.conf)
+					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, clusterIdentityDomain)
 					for _, d := range drFiltered {
 						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, criteria.Cluster)
 						svcReferences = append(svcReferences, &ref)
@@ -597,11 +602,12 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 				tracingName.WaypointNamespace = wk.WaypointWorkloads[0].Namespace
 				tracingName.Lookup = tracingName.WaypointName
 			} else if len(appDetails.ServiceNames) > 0 {
+				identityDomain := resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 				lookupName := ""
 				if in.conf.ExternalServices.Tracing.NamespaceSelector {
-					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0], namespace, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0], namespace, identityDomain)
 				} else {
-					lookupName = fmt.Sprintf("%s.%s", appDetails.ServiceNames[0], in.conf.ExternalServices.Istio.IstioIdentityDomain)
+					lookupName = fmt.Sprintf("%s.%s", appDetails.ServiceNames[0], identityDomain)
 				}
 				tracingName.Lookup = lookupName
 				tracingName.WaypointName = lookupName

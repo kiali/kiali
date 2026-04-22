@@ -244,7 +244,7 @@ func testValidationAdded(t *testing.T, destinationRules []*networking_v1.Destina
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		Cluster:          config.DefaultClusterID,
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,
@@ -270,7 +270,7 @@ func testValidationsNotAdded(t *testing.T, destinationRules []*networking_v1.Des
 	assert := assert.New(t)
 
 	vals := TrafficPolicyChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		Cluster:          config.DefaultClusterID,
 		DestinationRules: destinationRules,
 		MTLSDetails:      mTLSDetails,

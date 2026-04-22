@@ -14,6 +14,7 @@ type VirtualServiceReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
 	DestinationRules      []*networking_v1.DestinationRule
+	IdentityDomain        string
 	Namespace             string
 	Namespaces            []string
 	VirtualServices       []*networking_v1.VirtualService
@@ -47,7 +48,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.Virtual
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.IdentityDomain)
 					if !fqdn.IsWildcard() {
 						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
@@ -64,7 +65,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.Virtual
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.IdentityDomain)
 					if !fqdn.IsWildcard() {
 						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
@@ -81,7 +82,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.Virtual
 					if host == "" {
 						continue
 					}
-					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.Conf)
+					fqdn := kubernetes.GetHost(host, namespace, n.Namespaces, n.IdentityDomain)
 					if !fqdn.IsWildcard() {
 						allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 					}
@@ -103,7 +104,7 @@ func (n VirtualServiceReferences) getServiceReferences(vs *networking_v1.Virtual
 func (n VirtualServiceReferences) getConfigReferences(vs *networking_v1.VirtualService) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
-	allGateways := getAllGateways(vs, n.Conf)
+	allGateways := getAllGateways(vs, n.IdentityDomain)
 	// filter unique references
 	for _, gw := range allGateways {
 		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectGVK)
@@ -147,9 +148,9 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService *network
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.Conf)
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.Conf)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
+						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.IdentityDomain)
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.IdentityDomain)
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.IdentityDomain) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 						}
 					}
@@ -168,9 +169,9 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService *network
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.Conf)
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.Conf)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
+						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.IdentityDomain)
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.IdentityDomain)
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.IdentityDomain) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 						}
 					}
@@ -189,9 +190,9 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService *network
 							continue
 						}
 						host := dest.Destination.Host
-						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.Conf)
-						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.Conf)
-						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.Conf) {
+						drHost := kubernetes.GetHost(host, dr.Namespace, n.Namespaces, n.IdentityDomain)
+						vsHost := kubernetes.GetHost(dr.Spec.Host, virtualService.Namespace, n.Namespaces, n.IdentityDomain)
+						if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, n.IdentityDomain) {
 							allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 						}
 					}
@@ -202,18 +203,18 @@ func (n VirtualServiceReferences) getAllDestinationRules(virtualService *network
 	return allDRs
 }
 
-func getAllGateways(vs *networking_v1.VirtualService, conf *config.Config) []models.IstioReference {
+func getAllGateways(vs *networking_v1.VirtualService, identityDomain string) []models.IstioReference {
 	allGateways := make([]models.IstioReference, 0)
 	namespace := vs.Namespace
 	if len(vs.Spec.Gateways) > 0 {
-		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace, conf)...)
+		allGateways = append(allGateways, getGatewayReferences(vs.Spec.Gateways, namespace, identityDomain)...)
 	}
 	if len(vs.Spec.Http) > 0 {
 		for _, httpRoute := range vs.Spec.Http {
 			if httpRoute != nil {
 				for _, match := range httpRoute.Match {
 					if match != nil && match.Gateways != nil {
-						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, conf)...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, identityDomain)...)
 					}
 				}
 			}
@@ -225,7 +226,7 @@ func getAllGateways(vs *networking_v1.VirtualService, conf *config.Config) []mod
 			if tlsRoute != nil {
 				for _, match := range tlsRoute.Match {
 					if match != nil {
-						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, conf)...)
+						allGateways = append(allGateways, getGatewayReferences(match.Gateways, namespace, identityDomain)...)
 					}
 				}
 			}
@@ -234,10 +235,10 @@ func getAllGateways(vs *networking_v1.VirtualService, conf *config.Config) []mod
 	return allGateways
 }
 
-func getGatewayReferences(gateways []string, namespace string, conf *config.Config) []models.IstioReference {
+func getGatewayReferences(gateways []string, namespace string, identityDomain string) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, gate := range gateways {
-		gw := kubernetes.ParseGatewayAsHost(gate, namespace, conf)
+		gw := kubernetes.ParseGatewayAsHost(gate, namespace, identityDomain)
 		if !gw.IsWildcard() {
 			if gate == "mesh" {
 				result = append(result, models.IstioReference{Name: gw.Service, ObjectGVK: kubernetes.Gateways})
@@ -263,12 +264,12 @@ func (n VirtualServiceReferences) getAuthPolicies(vs *networking_v1.VirtualServi
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.IdentityDomain)
 						if !fqdn.IsWildcard() {
 							for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 								vHost := vs.Spec.Hosts[hostIdx]
 
-								hostS := kubernetes.ParseHost(vHost, vs.Namespace, n.Conf)
+								hostS := kubernetes.ParseHost(vHost, vs.Namespace, n.IdentityDomain)
 								if hostS.String() == fqdn.String() {
 									result = append(result, models.IstioReference{Name: ap.Name, Namespace: ap.Namespace, ObjectGVK: kubernetes.AuthorizationPolicies})
 									continue

@@ -13,6 +13,7 @@ import (
 
 type RouteChecker struct {
 	Conf           *config.Config
+	IdentityDomain string
 	Namespaces     []string
 	VirtualService *networking_v1.VirtualService
 }
@@ -147,7 +148,7 @@ func (route RouteChecker) trackHttpSubset(routeIdx int, kind string, destination
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.Conf)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.IdentityDomain)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]
@@ -170,7 +171,7 @@ func (route RouteChecker) trackTcpTlsSubset(routeIdx int, kind string, destinati
 		if destinationWeight.Destination == nil {
 			return
 		}
-		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.Conf)
+		fqdn := kubernetes.GetHost(destinationWeight.Destination.Host, route.VirtualService.Namespace, route.Namespaces, route.IdentityDomain)
 		subset := destinationWeight.Destination.Subset
 		key := fmt.Sprintf("%s%s", fqdn.String(), subset)
 		collisions := subsetCollitions[key]

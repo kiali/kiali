@@ -13,6 +13,7 @@ import (
 type SubsetPresenceChecker struct {
 	Conf           *config.Config
 	DRSubsets      models.DestinationRuleSubsets
+	IdentityDomain string
 	Namespaces     []string
 	VirtualService *networking_v1.VirtualService
 }
@@ -97,11 +98,11 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) bool {
-	vsHost := kubernetes.GetHost(host, checker.VirtualService.Namespace, checker.Namespaces, checker.Conf)
+	vsHost := kubernetes.GetHost(host, checker.VirtualService.Namespace, checker.Namespaces, checker.IdentityDomain)
 
 	if subsets, exists := checker.DRSubsets[vsHost.String()]; exists {
 		if drHost, hostExists := subsets[subset]; hostExists {
-			if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.Conf) {
+			if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.IdentityDomain) {
 				return true
 			}
 		}

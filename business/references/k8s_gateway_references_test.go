@@ -25,10 +25,11 @@ func TestK8sGatewayReferences(t *testing.T) {
 	r4 := data.CreateEmptyGRPCRoute("grpcbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
-		Conf:          config.Get(),
-		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
-		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r1, r2},
-		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r3, r4},
+		Conf:           config.Get(),
+		IdentityDomain: config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""),
+		K8sGateways:    []*k8s_networking_v1.Gateway{gw},
+		K8sHTTPRoutes:  []*k8s_networking_v1.HTTPRoute{r1, r2},
+		K8sGRPCRoutes:  []*k8s_networking_v1.GRPCRoute{r3, r4},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("bookinfo", "bookinfo", map[string]string{conf.IstioLabels.AmbientWaypointGatewayLabel: "bookinfo"}),
@@ -63,10 +64,11 @@ func TestK8sGatewayNoReferences(t *testing.T) {
 	r2 := data.CreateEmptyGRPCRoute("grpcbin", "default", []string{})
 
 	gatewayReferences := K8sGatewayReferences{
-		Conf:          config.Get(),
-		K8sGateways:   []*k8s_networking_v1.Gateway{gw},
-		K8sHTTPRoutes: []*k8s_networking_v1.HTTPRoute{r},
-		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{r2},
+		Conf:           config.Get(),
+		IdentityDomain: config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""),
+		K8sGateways:    []*k8s_networking_v1.Gateway{gw},
+		K8sHTTPRoutes:  []*k8s_networking_v1.HTTPRoute{r},
+		K8sGRPCRoutes:  []*k8s_networking_v1.GRPCRoute{r2},
 	}
 
 	references := gatewayReferences.References()

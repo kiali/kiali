@@ -13,8 +13,10 @@ import (
 )
 
 type AuthorizationPolicyChecker struct {
+	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	MtlsDetails           kubernetes.MTLSDetails
 	Namespaces            []string
@@ -22,7 +24,6 @@ type AuthorizationPolicyChecker struct {
 	ServiceAccounts       map[string][]string
 	ServiceEntries        []*networking_v1.ServiceEntry
 	Services              []core_v1.Service
-	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	VirtualServices       []*networking_v1.VirtualService
 	WorkloadsPerNamespace map[string]models.Workloads
 }
@@ -39,7 +40,7 @@ func (a AuthorizationPolicyChecker) Check() models.IstioValidations {
 	validations.MergeValidations(authorization.MtlsEnabledChecker{
 		AuthorizationPolicies: a.AuthorizationPolicies,
 		Cluster:               a.Cluster,
-		Conf:                  a.Conf,
+		IdentityDomain:        a.IdentityDomain,
 		MtlsDetails:           a.MtlsDetails,
 		Services:              a.Services,
 	}.Check())
@@ -60,8 +61,8 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.Authorizat
 	enabledCheckers := []Checker{
 		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies, matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces},
-		authorization.NoHostChecker{Conf: a.Conf, AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces,
-			ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices, KubeServiceHosts: a.KubeServiceHosts, PolicyAllowAny: a.PolicyAllowAny},
+		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, IdentityDomain: a.IdentityDomain, KubeServiceHosts: a.KubeServiceHosts,
+			Namespaces: a.Namespaces, PolicyAllowAny: a.PolicyAllowAny, ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices},
 		authorization.PrincipalsChecker{Cluster: a.Cluster, AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccounts},
 	}
 

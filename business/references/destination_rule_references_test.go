@@ -16,9 +16,9 @@ func prepareTestForDestinationRule(dr *networking_v1.DestinationRule, vs *networ
 	conf := config.Get()
 	services := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	drReferences := DestinationRuleReferences{
-		Conf:             conf,
 		DestinationRules: []*networking_v1.DestinationRule{dr},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(services, conf),
+		IdentityDomain:   config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(services, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		Namespace:        "bookinfo",
 		Namespaces:       []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		ServiceEntries:   []*networking_v1.ServiceEntry{fakeServiceEntry()},

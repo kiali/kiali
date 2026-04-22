@@ -163,7 +163,7 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		AllowPermissive:     false,
 	}
 
-	status := in.namespaceMTLSOverallStatus(cluster, namespace, pas, mtlsStatus)
+	status := in.namespaceMTLSOverallStatus(ctx, cluster, namespace, pas, mtlsStatus)
 	if status == MTLSUnset {
 		status = in.resolveUnsetNamespaceStatus(ctx, cluster, namespace, rootNamespace, ns)
 	}
@@ -235,7 +235,7 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 			AllowPermissive:     false,
 		}
 
-		status := in.namespaceMTLSOverallStatus(cluster, namespace.Name, pas, mtlsStatus)
+		status := in.namespaceMTLSOverallStatus(ctx, cluster, namespace.Name, pas, mtlsStatus)
 		if status == MTLSUnset {
 			revision := namespace.Revision
 			if revision == "" && namespace.Labels != nil {
@@ -322,7 +322,7 @@ func (in *TLSService) resolveUnsetStatusWithMeshStatus(meshStatus, cluster, name
 	return MTLSUnset
 }
 
-func (in *TLSService) namespaceMTLSOverallStatus(cluster, namespace string, peerAuthentications []*security_v1.PeerAuthentication, mtlsStatus mtls.MtlsStatus) string {
+func (in *TLSService) namespaceMTLSOverallStatus(ctx context.Context, cluster, namespace string, peerAuthentications []*security_v1.PeerAuthentication, mtlsStatus mtls.MtlsStatus) string {
 	// If there are validation errors on any PeerAuthentication in the namespace, surface that as a distinct status.
 	// This has priority over UNSET.
 	if in.peerAuthenticationHasValidationErrors(cluster, peerAuthentications) {
@@ -337,7 +337,7 @@ func (in *TLSService) namespaceMTLSOverallStatus(cluster, namespace string, peer
 		return MTLSUnset
 	}
 
-	return mtlsStatus.NamespaceMtlsStatus(namespace, in.conf).OverallStatus
+	return mtlsStatus.NamespaceMtlsStatus(namespace, resolveIdentityDomainWithDiscovery(ctx, in.discovery, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)).OverallStatus
 }
 
 func (in *TLSService) hasNamespaceWideMTLSPolicy(peerAuthentications []*security_v1.PeerAuthentication) bool {

@@ -10,6 +10,7 @@ import (
 
 type K8sGatewayReferences struct {
 	Conf                  *config.Config
+	IdentityDomain        string
 	K8sGateways           []*k8s_networking_v1.Gateway
 	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
 	K8sGRPCRoutes         []*k8s_networking_v1.GRPCRoute

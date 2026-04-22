@@ -2,16 +2,20 @@ package workloadgroups
 
 import (
 	"fmt"
+	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
 
 type ServiceAccountsChecker struct {
-	WorkloadGroup   *networking_v1.WorkloadGroup
 	Cluster         string
+	Conf            *config.Config
+	IdentityDomain  string
 	ServiceAccounts map[string][]string
+	WorkloadGroup   *networking_v1.WorkloadGroup
 }
 
 func (sac ServiceAccountsChecker) Check() ([]*models.IstioCheck, bool) {
@@ -28,7 +32,8 @@ func (sac ServiceAccountsChecker) Check() ([]*models.IstioCheck, bool) {
 }
 
 func (sac ServiceAccountsChecker) hasMatchingServiceAccount(serviceAccounts []string, namespace, serviceAccount string) bool {
-	targetSA := fmt.Sprintf("cluster.local/ns/%s/sa/%s", namespace, serviceAccount)
+	istioDomain := strings.TrimPrefix(sac.IdentityDomain, "svc.")
+	targetSA := fmt.Sprintf("%s/ns/%s/sa/%s", istioDomain, namespace, serviceAccount)
 	for _, sa := range serviceAccounts {
 		if sa == targetSA {
 			return true

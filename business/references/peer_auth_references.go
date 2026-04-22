@@ -13,6 +13,7 @@ import (
 type PeerAuthReferences struct {
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	MTLSDetails           kubernetes.MTLSDetails
 	RootNamespaces        map[string]string
 	WorkloadsPerNamespace map[string]models.Workloads
@@ -23,6 +24,7 @@ type PeerAuthReferences struct {
 func NewPeerAuthReferences(
 	cluster string,
 	conf *config.Config,
+	identityDomain string,
 	rootNamespaces map[string]string,
 	mtlsDetails kubernetes.MTLSDetails,
 	workloadsPerNamespace map[string]models.Workloads,
@@ -30,6 +32,7 @@ func NewPeerAuthReferences(
 	return PeerAuthReferences{
 		Cluster:               cluster,
 		Conf:                  conf,
+		IdentityDomain:        identityDomain,
 		MTLSDetails:           mtlsDetails,
 		RootNamespaces:        rootNamespaces,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -66,7 +69,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 		// References only for PeerAuthn disabling mTLS
 		if _, mode := kubernetes.PeerAuthnHasMTLSEnabled(peerAuthn); mode == "DISABLE" {
 			for _, dr := range n.MTLSDetails.DestinationRules {
-				if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr, n.Conf); mode == "DISABLE" {
+				if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr, n.IdentityDomain); mode == "DISABLE" {
 					allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 				}
 				if _, mode := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); mode == "DISABLE" {
@@ -92,7 +95,7 @@ func (n PeerAuthReferences) getConfigReferences(peerAuthn *security_v1.PeerAuthe
 			if strictMode := kubernetes.PeerAuthnHasStrictMTLS(peerAuthn); strictMode {
 				for _, dr := range n.MTLSDetails.DestinationRules {
 					// Check if there is a Destination Rule enabling ns-wide mTLS
-					if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr, n.Conf); enabled {
+					if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(peerAuthn.Namespace, dr, n.IdentityDomain); enabled {
 						allDRs = append(allDRs, models.IstioReference{Name: dr.Name, Namespace: dr.Namespace, ObjectGVK: kubernetes.DestinationRules})
 					}
 					// Check if there is a Destination Rule enabling mesh-wide mTLS in second position

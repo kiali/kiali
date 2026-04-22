@@ -23,7 +23,6 @@ func TestValidRefHost(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -43,7 +42,6 @@ func TestMissingGrant(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:         config.Get(),
 		Services:     fakeServices,
 		K8sGRPCRoute: data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -69,7 +67,6 @@ func TestWrongGrant(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -96,7 +93,6 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "", data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}))),
@@ -116,7 +112,6 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews", "", data.AddBackendRefToGRPCRoute("reviews", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -143,7 +138,6 @@ func TestNoValidRefHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.AddBackendRefToGRPCRoute("reviews", "bookinfo", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"})))),
@@ -174,7 +168,6 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrantByKind("grant", "bookinfo", "bookinfo2", k8s_networking_v1beta1.Kind(kubernetes.K8sGRPCRoutes.Kind))},
 		K8sGRPCRoute:       data.AddServiceParentRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.AddBackendRefToGRPCRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateGRPCRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),

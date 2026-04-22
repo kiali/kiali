@@ -12,6 +12,7 @@ import (
 
 type K8sGRPCRouteReferences struct {
 	Conf               *config.Config
+	IdentityDomain     string
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
 	Namespaces         []string
@@ -45,7 +46,7 @@ func (n K8sGRPCRouteReferences) getServiceReferences(rt *k8s_networking_v1.GRPCR
 			if ref.Namespace != nil && string(*ref.Namespace) != "" {
 				namespace = string(*ref.Namespace)
 			}
-			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces, n.Conf)
+			fqdn := kubernetes.GetHost(string(ref.Name), namespace, n.Namespaces, n.IdentityDomain)
 			if !fqdn.IsWildcard() {
 				allServices = append(allServices, models.ServiceReference{Name: fqdn.Service, Namespace: fqdn.Namespace})
 			}
@@ -66,7 +67,7 @@ func (n K8sGRPCRouteReferences) getServiceReferences(rt *k8s_networking_v1.GRPCR
 func (n K8sGRPCRouteReferences) getConfigReferences(rt *k8s_networking_v1.GRPCRoute) []models.IstioReference {
 	keys := make(map[string]bool)
 	result := make([]models.IstioReference, 0)
-	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace, n.Conf)
+	allGateways := getAllK8sGateways(rt.Spec.ParentRefs, rt.Namespace, n.IdentityDomain)
 	// filter unique references
 	for _, gw := range allGateways {
 		key := util.BuildNameNSTypeKey(gw.Name, gw.Namespace, gw.ObjectGVK)

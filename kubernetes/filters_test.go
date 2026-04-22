@@ -238,11 +238,12 @@ func TestFilterK8sHTTPRoutesByService(t *testing.T) {
 	rt2 := createHTTPRoute("testroute2", "wrong", "details", "bookinfo")
 	rt3 := createHTTPRoute("testroute3", "default", "wrong", "bookinfo")
 	rt4 := createHTTPRoute("testroute4", "default", "details", "wrong")
-	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details", config.Get())
+	id := config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, "")
+	filtered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "bookinfo", "details", id)
 	expected := []*k8s_networking_v1.HTTPRoute{rt1}
 	assert.EqualValues(expected, filtered)
 
-	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong", config.Get())
+	emptyFiltered := FilterK8sHTTPRoutesByService([]*k8s_networking_v1.HTTPRoute{rt1, rt2, rt3, rt4}, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("grant1", "bookinfo", "default")}, "wrong", "wrong", id)
 	assert.Empty(emptyFiltered)
 }
 

@@ -72,12 +72,13 @@ func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *Gl
 		})
 		graph.CheckError(err)
 
-		applyCircuitBreakers(trafficMap, istioConfig.DestinationRules)
-		applyVirtualServices(trafficMap, istioConfig.VirtualServices, globalInfo.Conf)
+		identityDomain := globalInfo.Business.Svc.ResolveIdentityDomain(ctx, cluster.Name)
+		applyCircuitBreakers(trafficMap, istioConfig.DestinationRules, identityDomain)
+		applyVirtualServices(trafficMap, istioConfig.VirtualServices, identityDomain)
 	}
 }
 
-func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule) {
+func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule, identityDomain string) {
 NODES:
 	for _, n := range trafficMap {
 		// Skip nodes that are outside the requested namespaces.
@@ -91,7 +92,7 @@ NODES:
 		switch {
 		case n.NodeType == graph.NodeTypeService:
 			for _, destinationRule := range destinationRules {
-				if models.HasDRCircuitBreaker(destinationRule, n.Namespace, n.Service, "") {
+				if models.HasDRCircuitBreaker(destinationRule, n.Namespace, n.Service, "", identityDomain) {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -100,7 +101,7 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range destinationRules {
-						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, "") {
+						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, "", identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -111,7 +112,7 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					for _, destinationRule := range destinationRules {
-						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, n.Version) {
+						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, n.Version, identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -124,7 +125,7 @@ NODES:
 	}
 }
 
-func applyVirtualServices(trafficMap graph.TrafficMap, virtualServices []*networkingv1.VirtualService, conf *config.Config) {
+func applyVirtualServices(trafficMap graph.TrafficMap, virtualServices []*networkingv1.VirtualService, identityDomain string) {
 NODES:
 	for _, n := range trafficMap {
 		var isOutsider bool
@@ -137,7 +138,7 @@ NODES:
 		}
 
 		for _, virtualService := range virtualServices {
-			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, conf) {
+			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, identityDomain) {
 				var vsMetadata graph.VirtualServicesMetadata
 				var vsOk bool
 				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {

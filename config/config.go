@@ -1069,7 +1069,6 @@ func NewConfig() (c *Config) {
 					Components: []ComponentStatus{},
 				},
 				IstioAPIEnabled:                  true,
-				IstioIdentityDomain:              "svc.cluster.local",
 				IstiodPollingIntervalSeconds:     20,
 				ValidationChangeDetectionEnabled: true,
 				ValidationReconcileInterval:      util.AsPtr(time.Minute),
@@ -2305,6 +2304,21 @@ func (c *Config) GetCredential(value Credential) (string, error) {
 		return "", fmt.Errorf("failed to read credential from [%s]: %w", value, err)
 	}
 	return strings.TrimSpace(string(content)), nil
+}
+
+// ResolveIdentityDomain returns the effective Istio identity domain (the DNS
+// suffix used in service FQDNs such as "svc.cluster.local"). When the user has
+// explicitly configured a value it is returned as-is. Otherwise the domain is
+// derived from the Istio mesh trustDomain ("svc." + trustDomain). If neither
+// is available the Istio/Kubernetes default "svc.cluster.local" is used.
+func ResolveIdentityDomain(configured, trustDomain string) string {
+	if configured != "" {
+		return configured
+	}
+	if trustDomain != "" {
+		return "svc." + trustDomain
+	}
+	return "svc.cluster.local"
 }
 
 // LoadConfig loads config file if specified, otherwise, relies on environment variables to configure.

@@ -14,6 +14,7 @@ import (
 
 type EgressHostChecker struct {
 	Conf             *config.Config
+	IdentityDomain   string
 	KubeServiceHosts kubernetes.KubeServiceHosts
 	ServiceEntries   map[string][]string
 	Sidecar          *networking_v1.Sidecar
@@ -76,7 +77,7 @@ func (elc EgressHostChecker) validateHost(host string, egrIdx, hostIdx int) ([]*
 		return checks, true
 	}
 
-	fqdn := kubernetes.ParseHost(dnsName, sns, elc.Conf)
+	fqdn := kubernetes.ParseHost(dnsName, sns, elc.IdentityDomain)
 
 	// Lookup for matching services
 	if !elc.HasMatchingService(fqdn, sns) {

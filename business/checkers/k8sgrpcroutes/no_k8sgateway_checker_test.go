@@ -19,9 +19,9 @@ func TestMissingK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf:         config.Get(),
-		K8sGRPCRoute: data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}),
-		GatewayNames: make(map[string]k8s_networking_v1.Gateway),
+		IdentityDomain: "svc.cluster.local",
+		K8sGRPCRoute:   data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}),
+		GatewayNames:   make(map[string]k8s_networking_v1.Gateway),
 	}
 
 	vals, valid := checker.Check()
@@ -37,7 +37,7 @@ func TestMissingK8sGateways(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("gateway2", "bookinfo2",
 			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: make(map[string]k8s_networking_v1.Gateway),
@@ -59,12 +59,12 @@ func TestValidAndMissingK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("correctgw", "bookinfo2",
 			data.CreateGRPCRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.CreateEmptyK8sGateway("correctgw", "bookinfo"),
-		}, conf),
+		}, "svc.cluster.local"),
 	}
 
 	vals, valid := checker.Check()
@@ -80,11 +80,11 @@ func TestFoundK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf:         config.Get(),
-		K8sGRPCRoute: data.CreateGRPCRoute("route", "bookinfo", "my-gateway", []string{"bookinfo"}),
+		IdentityDomain: "svc.cluster.local",
+		K8sGRPCRoute:   data.CreateGRPCRoute("route", "bookinfo", "my-gateway", []string{"bookinfo"}),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.CreateEmptyK8sGateway("my-gateway", "bookinfo"),
-		}, conf),
+		}, "svc.cluster.local"),
 	}
 
 	vals, valid := checker.Check()
@@ -98,13 +98,13 @@ func TestFoundSharedK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
 			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
 				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
-		}, conf),
+		}, "svc.cluster.local"),
 		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
 	}
 
@@ -119,13 +119,13 @@ func TestFoundSharedToAllK8sGateway(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
 			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.AddListenerToK8sGateway(data.CreateSharedToAllListener("test", "host.com", 80, "http"),
 				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
-		}, conf),
+		}, "svc.cluster.local"),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
 	}
 
@@ -140,13 +140,13 @@ func TestWrongNSSharedK8sGatewayError(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwnswrong",
 			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
 				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
-		}, conf),
+		}, "svc.cluster.local"),
 		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
 	}
 
@@ -163,13 +163,13 @@ func TestSharedK8sGatewayWrongNSError(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
 			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
 				data.CreateEmptyK8sGateway("sharedgw", "gwnswrong")),
-		}, conf),
+		}, "svc.cluster.local"),
 		Namespaces: models.Namespaces{data.CreateSharedNamespace("bookinfo")},
 	}
 
@@ -186,13 +186,13 @@ func TestNotSharedNSK8sGatewayError(t *testing.T) {
 	config.Set(conf)
 
 	checker := NoK8sGatewayChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
 			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
 		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
 			data.AddListenerToK8sGateway(data.CreateSharedListener("test", "host.com", 80, "http"),
 				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
-		}, conf),
+		}, "svc.cluster.local"),
 		Namespaces: models.Namespaces{models.Namespace{Name: "bookinfo"}},
 	}
 

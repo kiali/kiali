@@ -18,13 +18,14 @@ func TestGatewayAsHost(t *testing.T) {
 
 	conf := config.NewConfig()
 	config.Set(conf)
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
 
-	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway", "bookinfo", conf).String())
-	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("bookinfo/mygateway", "bookinfo", conf).String())
-	assert.Equal("mygateway.istio-system.svc.cluster.local", ParseGatewayAsHost("istio-system/mygateway", "bookinfo", conf).String())
-	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo", "bookinfo", conf).String())
-	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo", "bookinfo", conf).String())
-	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo.svc.cluster.local", "bookinfo", conf).String())
+	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway", "bookinfo", id).String())
+	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("bookinfo/mygateway", "bookinfo", id).String())
+	assert.Equal("mygateway.istio-system.svc.cluster.local", ParseGatewayAsHost("istio-system/mygateway", "bookinfo", id).String())
+	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo", "bookinfo", id).String())
+	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo", "bookinfo", id).String())
+	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo.svc.cluster.local", "bookinfo", id).String())
 }
 
 func TestHasMatchingVirtualServices(t *testing.T) {
@@ -32,31 +33,32 @@ func TestHasMatchingVirtualServices(t *testing.T) {
 
 	conf := config.NewConfig()
 	config.Set(conf)
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
 
 	// Short name service
-	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews"})}, conf))
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews"})}, conf))
+	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews"})}, id))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews"})}, id))
 
 	// Half-FQDN
-	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews.bookinfo"})}, conf))
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews.bogus"})}, conf))
+	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews.bookinfo"})}, id))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews.bogus"})}, id))
 
 	// FQDN
-	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews.bookinfo.svc.cluster.local"})}, conf))
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews.bogus.svc.cluster.local"})}, conf))
+	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"reviews.bookinfo.svc.cluster.local"})}, id))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"reviews.bogus.svc.cluster.local"})}, id))
 
 	// Wildcard
-	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.bookinfo.svc.cluster.local"})}, conf))
-	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*"})}, conf))
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"*.bogus.svc.cluster.local"})}, conf))
+	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.bookinfo.svc.cluster.local"})}, id))
+	assert.True(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*"})}, id))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bogus", []string{"*.bogus.svc.cluster.local"})}, id))
 
 	// External host
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"foo.example.com"})}, conf))
-	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.foo.example.com"})}, conf))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"foo.example.com"})}, id))
+	assert.False(HasMatchingVirtualServices(Host{Service: "reviews", Namespace: "bookinfo", Cluster: "svc.cluster.local"}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.foo.example.com"})}, id))
 
-	assert.True(HasMatchingVirtualServices(Host{Service: "foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"foo.example.com"})}, conf))
-	assert.True(HasMatchingVirtualServices(Host{Service: "new.foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.foo.example.com"})}, conf))
-	assert.True(HasMatchingVirtualServices(Host{Service: "foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*"})}, conf))
+	assert.True(HasMatchingVirtualServices(Host{Service: "foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"foo.example.com"})}, id))
+	assert.True(HasMatchingVirtualServices(Host{Service: "new.foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*.foo.example.com"})}, id))
+	assert.True(HasMatchingVirtualServices(Host{Service: "foo.example.com", Namespace: "", Cluster: ""}, []*networking_v1.VirtualService{createVirtualService("bookinfo", []string{"*"})}, id))
 }
 
 func TestHasMatchingReferenceGrant(t *testing.T) {

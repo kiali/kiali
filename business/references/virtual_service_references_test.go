@@ -17,12 +17,12 @@ import (
 
 func prepareTestForVirtualService(vs *networking_v1.VirtualService, dr *networking_v1.DestinationRule, ap *security_v1.AuthorizationPolicy) models.IstioReferences {
 	virtualServiceReferences := VirtualServiceReferences{
-		Conf:                  config.Get(),
+		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap, data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
+		DestinationRules:      []*networking_v1.DestinationRule{dr},
+		IdentityDomain:        config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""),
 		Namespace:             "bookinfo",
 		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		VirtualServices:       []*networking_v1.VirtualService{vs},
-		DestinationRules:      []*networking_v1.DestinationRule{dr},
-		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap, data.CreateEmptyAuthorizationPolicy("test", "bookinfo")},
 	}
 	return *virtualServiceReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.VirtualServices, Namespace: vs.Namespace, Name: vs.Name}]
 }

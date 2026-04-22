@@ -33,9 +33,9 @@ func TestPeerAuthnmTLSEnabled(t *testing.T) {
 	}
 
 	vals, valid := NamespaceMtlsChecker{
-		Conf:        config.Get(),
-		PeerAuthn:   policy,
-		MTLSDetails: mTLSDetails,
+		IdentityDomain: "svc.cluster.local",
+		PeerAuthn:      policy,
+		MTLSDetails:    mTLSDetails,
 	}.Check()
 
 	assert.NotEmpty(vals)
@@ -101,9 +101,9 @@ func assertNoValidations(t *testing.T, peerAuth *security_v1.PeerAuthentication,
 	config.Set(conf)
 
 	vals, valid := NamespaceMtlsChecker{
-		Conf:        config.Get(),
-		PeerAuthn:   peerAuth,
-		MTLSDetails: mTLSDetails,
+		IdentityDomain: "svc.cluster.local",
+		PeerAuthn:      peerAuth,
+		MTLSDetails:    mTLSDetails,
 	}.Check()
 
 	assert.Empty(vals)

@@ -25,13 +25,14 @@ func prepareTestForAuthPolicy(ap *security_v1.AuthorizationPolicy, vs *networkin
 	drReferences := NewAuthorizationPolicyReferences(
 		[]*security_v1.AuthorizationPolicy{ap},
 		conf,
+		config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		config.DefaultClusterID,
 		rootNamespaces,
 		"bookinfo",
 		[]string{"bookinfo", "bookinfo2", "bookinfo3"},
 		[]*networking_v1.ServiceEntry{se},
 		[]*networking_v1.VirtualService{vs},
-		kubernetes.KubeServiceFQDNs(services, conf),
+		kubernetes.KubeServiceFQDNs(services, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		map[string]models.Workloads{
 			"istio-system": {
 				data.CreateWorkload("istio-system", "istiod", map[string]string{"app": "istio-ingressgateway"}),
@@ -116,13 +117,14 @@ func TestAuthPolicyWorkloadReferencesMultiCP(t *testing.T) {
 	refs := NewAuthorizationPolicyReferences(
 		[]*security_v1.AuthorizationPolicy{ap},
 		conf,
+		config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		config.DefaultClusterID,
 		rootNamespaces,
 		"app-ns-1",
 		[]string{"app-ns-1", "app-ns-2"},
 		[]*networking_v1.ServiceEntry{},
 		[]*networking_v1.VirtualService{},
-		kubernetes.KubeServiceFQDNs(nil, conf),
+		kubernetes.KubeServiceFQDNs(nil, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		map[string]models.Workloads{
 			"app-ns-1": {
 				data.CreateWorkload("app-ns-1", "wl-1", map[string]string{"app": "reviews"}),

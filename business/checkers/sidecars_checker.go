@@ -13,6 +13,7 @@ import (
 type SidecarChecker struct {
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespaces            models.Namespaces
 	RootNamespaces        map[string]string
@@ -26,6 +27,7 @@ type SidecarChecker struct {
 func NewSidecarChecker(
 	cluster string,
 	conf *config.Config,
+	identityDomain string,
 	rootNamespaces map[string]string,
 	namespaces models.Namespaces,
 	kubeServiceHosts kubernetes.KubeServiceHosts,
@@ -36,6 +38,7 @@ func NewSidecarChecker(
 	return SidecarChecker{
 		Cluster:               cluster,
 		Conf:                  conf,
+		IdentityDomain:        identityDomain,
 		KubeServiceHosts:      kubeServiceHosts,
 		Namespaces:            namespaces,
 		RootNamespaces:        rootNamespaces,
@@ -89,7 +92,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 
 	enabledCheckers := []Checker{
 		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
-		sidecars.EgressHostChecker{Conf: s.Conf, Sidecar: sidecar, ServiceEntries: serviceHosts, KubeServiceHosts: s.KubeServiceHosts},
+		sidecars.EgressHostChecker{IdentityDomain: s.IdentityDomain, KubeServiceHosts: s.KubeServiceHosts, ServiceEntries: serviceHosts, Sidecar: sidecar},
 		sidecars.NewGlobalChecker(s.RootNamespaces[sidecar.Namespace], sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},
 	}

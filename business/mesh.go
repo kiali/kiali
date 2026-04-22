@@ -6,6 +6,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -63,4 +64,47 @@ func (in *MeshService) GetMesh(ctx context.Context) (*models.Mesh, error) {
 
 func (in *MeshService) Clusters() []models.KubeCluster {
 	return in.discovery.Clusters()
+}
+
+// resolveIdentityDomain fetches the mesh from the given layer's discovery
+// and resolves the effective identity domain for the given cluster.
+// layer may be nil (e.g. in unit tests); discovery is extracted safely.
+func resolveIdentityDomain(ctx context.Context, layer *Layer, cluster, configured string) string {
+	var disc istio.MeshDiscovery
+	if layer != nil {
+		disc = layer.Mesh.discovery
+	}
+	return resolveIdentityDomainWithDiscovery(ctx, disc, cluster, configured)
+}
+
+// resolveIdentityDomainWithDiscovery is the low-level variant that accepts
+// a MeshDiscovery directly, for services that hold their own discovery
+// reference (TLSService, ProxyStatusService).
+func resolveIdentityDomainWithDiscovery(ctx context.Context, discovery istio.MeshDiscovery, cluster, configured string) string {
+	var mesh *models.Mesh
+	if discovery != nil {
+		var err error
+		mesh, err = discovery.Mesh(ctx)
+		if err != nil {
+			log.Debugf("Failed to fetch mesh for identity domain resolution on cluster [%s]: %v", cluster, err)
+		}
+	}
+	return ResolveClusterIdentityDomain(mesh, cluster, configured)
+}
+
+// ResolveClusterIdentityDomain extracts the trust domain for a specific cluster
+// from the mesh and returns the effective identity domain. This is the single
+// implementation of the control-plane lookup that all business services share.
+func ResolveClusterIdentityDomain(mesh *models.Mesh, cluster, configured string) string {
+	var trustDomain string
+	if mesh != nil {
+		for i := range mesh.ControlPlanes {
+			cp := &mesh.ControlPlanes[i]
+			if cp.Cluster != nil && cp.Cluster.Name == cluster && cp.MeshConfig != nil {
+				trustDomain = cp.MeshConfig.TrustDomain
+				break
+			}
+		}
+	}
+	return config.ResolveIdentityDomain(configured, trustDomain)
 }

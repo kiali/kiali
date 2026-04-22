@@ -12,11 +12,12 @@ import (
 )
 
 type NoK8sGatewayChecker struct {
-	Cluster      string
-	Conf         *config.Config
-	GatewayNames map[string]k8s_networking_v1.Gateway
-	K8sGRPCRoute *k8s_networking_v1.GRPCRoute
-	Namespaces   models.Namespaces
+	Cluster        string
+	Conf           *config.Config
+	GatewayNames   map[string]k8s_networking_v1.Gateway
+	IdentityDomain string
+	K8sGRPCRoute   *k8s_networking_v1.GRPCRoute
+	Namespaces     models.Namespaces
 }
 
 // Check validates that the GRPCRoute is pointing to an existing Gateway
@@ -41,7 +42,7 @@ func (s NoK8sGatewayChecker) ValidateGRPCRouteGateways(validations *[]*models.Is
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					namespace = string(*parentRef.Namespace)
 				}
-				valid = k8shttproutes.CheckGateway(string(parentRef.Name), namespace, s.K8sGRPCRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name)), s.Conf) && valid
+				valid = k8shttproutes.CheckGateway(string(parentRef.Name), namespace, s.K8sGRPCRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name)), s.IdentityDomain) && valid
 			}
 		}
 	}

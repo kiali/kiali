@@ -14,6 +14,7 @@ import (
 
 type SidecarReferences struct {
 	Conf                  *config.Config
+	IdentityDomain        string
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            models.Namespaces
@@ -39,7 +40,7 @@ func (n SidecarReferences) References() models.IstioReferencesMap {
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.Conf)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.IdentityDomain)
 
 					configRef := n.getConfigReferences(fqdn, hostNs)
 					references.ObjectReferences = append(references.ObjectReferences, configRef...)

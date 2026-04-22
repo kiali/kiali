@@ -22,8 +22,9 @@ func TestNoCrashOnEmpty(t *testing.T) {
 
 	typeValidations := NoServiceChecker{
 		Conf:             conf,
+		IdentityDomain:   "svc.cluster.local",
 		IstioConfigList:  emptyIstioConfigList(),
-		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, conf, nil),
+		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, "cluster.local", nil),
 		Services:         []core_v1.Service{},
 	}.Check()
 
@@ -41,7 +42,8 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")...)
 
 	vals := NoServiceChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("test", "reviewsv1", appVersionLabel("reviews", "v1")),
@@ -53,9 +55,9 @@ func TestAllIstioObjectWithServices(t *testing.T) {
 				data.CreateWorkload("test", "customerv1", appVersionLabel("customer", "v1")),
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
-		IstioConfigList:      fakeIstioConfigList(),
 		AuthorizationDetails: &kubernetes.RBACDetails{},
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		IstioConfigList:      fakeIstioConfigList(),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:             fakeServices,
 	}.Check()
 
@@ -78,6 +80,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 
 	vals := NoServiceChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		IstioConfigList: fakeIstioConfigList(),
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
@@ -89,7 +92,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "productv2", appVersionLabel("product", "v2")),
 			}},
 		AuthorizationDetails: &kubernetes.RBACDetails{},
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:             fakeServices,
 	}.Check()
 
@@ -104,7 +107,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	fakeServices2 := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "details.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
 
 	vals = NoServiceChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("test", "reviewsv1", appVersionLabel("reviews", "v1")),
@@ -115,7 +119,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices2, conf),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices2, "svc.cluster.local"),
 		Services:             fakeServices2,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -133,7 +137,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	fakeServices3 := data.CreateFakeMultiServices([]string{"reviews.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
 
 	vals = NoServiceChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("test", "reviewsv1", appVersionLabel("reviews", "v1")),
@@ -144,7 +149,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices3, conf),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices3, "svc.cluster.local"),
 		Services:             fakeServices3,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -155,7 +160,8 @@ func TestDetectObjectWithoutService(t *testing.T) {
 	fakeServices4 := data.CreateFakeMultiServices([]string{"details.test.svc.cluster.local", "product.test.svc.cluster.local", "customer.test.svc.cluster.local"}, "test")
 
 	vals = NoServiceChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test": {
 				data.CreateWorkload("test", "productv1", appVersionLabel("product", "v1")),
@@ -166,7 +172,7 @@ func TestDetectObjectWithoutService(t *testing.T) {
 				data.CreateWorkload("test", "customerv2", appVersionLabel("customer", "v2")),
 			}},
 		IstioConfigList:      fakeIstioConfigList(),
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices4, conf),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices4, "svc.cluster.local"),
 		Services:             fakeServices4,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()
@@ -190,8 +196,9 @@ func TestObjectWithoutGateway(t *testing.T) {
 
 	vals := NoServiceChecker{
 		Conf:                 config.Get(),
+		IdentityDomain:       "svc.cluster.local",
 		IstioConfigList:      istioDetails,
-		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts:     kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:             fakeServices,
 		AuthorizationDetails: &kubernetes.RBACDetails{},
 	}.Check()

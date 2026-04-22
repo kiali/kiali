@@ -14,6 +14,7 @@ import (
 type K8sGRPCRouteChecker struct {
 	Cluster            string
 	Conf               *config.Config
+	IdentityDomain     string
 	K8sGateways        []*k8s_networking_v1.Gateway
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant
@@ -34,7 +35,7 @@ func (in K8sGRPCRouteChecker) Check() models.IstioValidations {
 func (in K8sGRPCRouteChecker) runIndividualChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	gatewayNames := kubernetes.K8sGatewayNames(in.K8sGateways, in.Conf)
+	gatewayNames := kubernetes.K8sGatewayNames(in.K8sGateways, in.IdentityDomain)
 
 	for _, rt := range in.K8sGRPCRoutes {
 		validations.MergeValidations(in.runChecks(rt, gatewayNames))
@@ -48,17 +49,17 @@ func (in K8sGRPCRouteChecker) runChecks(rt *k8s_networking_v1.GRPCRoute, gateway
 
 	enabledCheckers := []Checker{
 		k8sgrpcroutes.NoK8sGatewayChecker{
-			Cluster:      in.Cluster,
-			Conf:         in.Conf,
-			K8sGRPCRoute: rt,
-			GatewayNames: gatewayNames,
-			Namespaces:   in.Namespaces,
+			Cluster:        in.Cluster,
+			GatewayNames:   gatewayNames,
+			IdentityDomain: in.IdentityDomain,
+			K8sGRPCRoute:   rt,
+			Namespaces:     in.Namespaces,
 		},
 		k8sgrpcroutes.NoHostChecker{
 			Conf:               in.Conf,
-			Namespaces:         in.Namespaces.GetNames(),
 			K8sGRPCRoute:       rt,
 			K8sReferenceGrants: in.K8sReferenceGrants,
+			Namespaces:         in.Namespaces.GetNames(),
 			Services:           in.Services,
 		},
 	}

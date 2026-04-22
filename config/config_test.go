@@ -1393,3 +1393,24 @@ auth:
 	assert.Equal(t, "https://override.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
 	assert.Equal(t, "https://override.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 }
+
+func TestResolveIdentityDomain(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.Equal("custom.domain", ResolveIdentityDomain("custom.domain", "cluster.local"),
+		"explicit config wins over trust domain")
+	assert.Equal("custom.domain", ResolveIdentityDomain("custom.domain", ""),
+		"explicit config wins when trust domain is empty")
+	assert.Equal("svc.cluster.local", ResolveIdentityDomain("", "cluster.local"),
+		"auto-detect from trust domain")
+	assert.Equal("svc.example.org", ResolveIdentityDomain("", "example.org"),
+		"auto-detect from custom trust domain")
+	assert.Equal("svc.cluster.local", ResolveIdentityDomain("", ""),
+		"fallback to default when both are empty")
+}
+
+func TestDefaultIdentityDomainIsEmpty(t *testing.T) {
+	conf := NewConfig()
+	assert.Empty(t, conf.ExternalServices.Istio.IstioIdentityDomain,
+		"default should be empty to enable auto-detection")
+}

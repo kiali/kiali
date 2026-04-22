@@ -13,6 +13,7 @@ import (
 type PeerAuthenticationChecker struct {
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	MTLSDetails           kubernetes.MTLSDetails
 	PeerAuthentications   []*security_v1.PeerAuthentication
 	RootNamespaces        map[string]string
@@ -24,6 +25,7 @@ type PeerAuthenticationChecker struct {
 func NewPeerAuthenticationChecker(
 	cluster string,
 	conf *config.Config,
+	identityDomain string,
 	rootNamespaces map[string]string,
 	mtlsDetails kubernetes.MTLSDetails,
 	peerAuthentications []*security_v1.PeerAuthentication,
@@ -32,6 +34,7 @@ func NewPeerAuthenticationChecker(
 	return PeerAuthenticationChecker{
 		Cluster:               cluster,
 		Conf:                  conf,
+		IdentityDomain:        identityDomain,
 		MTLSDetails:           mtlsDetails,
 		PeerAuthentications:   peerAuthentications,
 		RootNamespaces:        rootNamespaces,
@@ -68,7 +71,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 	if isRootNamespace {
 		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledMeshWideChecker{PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
 	} else {
-		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{Conf: m.Conf, PeerAuthn: peerAuthn, DestinationRules: m.MTLSDetails.DestinationRules})
+		enabledCheckers = append(enabledCheckers, peerauthentications.DisabledNamespaceWideChecker{DestinationRules: m.MTLSDetails.DestinationRules, IdentityDomain: m.IdentityDomain, PeerAuthn: peerAuthn})
 	}
 
 	// PeerAuthentications into  the root namespace namespace are considered Mesh-wide objects
@@ -77,7 +80,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 			peerauthentications.MeshMtlsChecker{MeshPolicy: peerAuthn, MTLSDetails: m.MTLSDetails, IsServiceMesh: false})
 	} else {
 		enabledCheckers = append(enabledCheckers,
-			peerauthentications.NamespaceMtlsChecker{Conf: m.Conf, PeerAuthn: peerAuthn, MTLSDetails: m.MTLSDetails})
+			peerauthentications.NamespaceMtlsChecker{IdentityDomain: m.IdentityDomain, MTLSDetails: m.MTLSDetails, PeerAuthn: peerAuthn})
 	}
 
 	for _, checker := range enabledCheckers {

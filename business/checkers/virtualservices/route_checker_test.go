@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -18,7 +17,7 @@ func TestServiceWellVirtualServiceValidation(t *testing.T) {
 
 	// Setup mocks
 	vals, valid := RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeValidVirtualService(),
 	}.Check()
@@ -33,7 +32,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneRouteUnder100(),
 	}.Check()
@@ -47,7 +46,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Equal(vals[0].Path, "spec/http[0]/route[0]/weight")
 
 	vals, valid = RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneTcpRouteUnder100(),
 	}.Check()
@@ -61,7 +60,7 @@ func TestServiceMultipleChecks(t *testing.T) {
 	assert.Equal(vals[0].Path, "spec/tcp[0]/route[0]/weight")
 
 	vals, valid = RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneTlsRouteUnder100(),
 	}.Check()
@@ -80,7 +79,7 @@ func TestServiceEmptyWeight(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneRouteNoWeight(),
 	}.Check()
@@ -89,7 +88,7 @@ func TestServiceEmptyWeight(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneTcpRouteNoWeight(),
 	}.Check()
@@ -98,7 +97,7 @@ func TestServiceEmptyWeight(t *testing.T) {
 	assert.Empty(vals)
 
 	vals, valid = RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeOneTlsRouteNoWeight(),
 	}.Check()
@@ -111,7 +110,7 @@ func TestVSWithRepeatingSubsets(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeRepeatedSubset(),
 	}.Check()
@@ -130,7 +129,7 @@ func TestVSWithRepeatingHostsNoSubsets(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := RouteChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     []string{"test"},
 		VirtualService: fakeRepeatedHosts(),
 	}.Check()

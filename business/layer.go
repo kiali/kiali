@@ -53,7 +53,7 @@ func newLayer(
 	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload, &temporaryLayer.Health)
 	temporaryLayer.Namespace = NewNamespaceService(cache, conf, discovery, kialiSAClients, userClients)
 	temporaryLayer.Mesh = NewMeshService(conf, discovery, kialiSAClients)
-	temporaryLayer.ProxyStatus = NewProxyStatusService(conf, cache, kialiSAClients, &temporaryLayer.Namespace)
+	temporaryLayer.ProxyStatus = NewProxyStatusService(conf, cache, discovery, kialiSAClients, &temporaryLayer.Namespace)
 	// Out of order because it relies on ProxyStatus
 	temporaryLayer.ProxyLogging = ProxyLoggingService{conf: conf, userClients: userClients, proxyStatus: &temporaryLayer.ProxyStatus}
 	temporaryLayer.Svc = SvcService{conf: conf, kialiCache: cache, businessLayer: temporaryLayer, prom: prom, userClients: userClients}

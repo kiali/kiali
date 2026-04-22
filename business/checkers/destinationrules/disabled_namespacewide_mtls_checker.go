@@ -11,6 +11,7 @@ import (
 type DisabledNamespaceWideMTLSChecker struct {
 	Conf            *config.Config
 	DestinationRule *networking_v1.DestinationRule
+	IdentityDomain  string
 	MTLSDetails     kubernetes.MTLSDetails
 }
 
@@ -19,7 +20,7 @@ func (m DisabledNamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	// Stop validation if DestinationRule doesn't explicitly disables mTLS
-	if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(m.DestinationRule.Namespace, m.DestinationRule, m.Conf); mode != "DISABLE" {
+	if _, mode := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(m.DestinationRule.Namespace, m.DestinationRule, m.IdentityDomain); mode != "DISABLE" {
 		return validations, true
 	}
 

@@ -16,11 +16,11 @@ import (
 
 func prepareTestForK8sHTTPRoute(route *k8s_networking_v1.HTTPRoute, inferencePools []*k8s_inference_v1.InferencePool) models.IstioReferences {
 	routeReferences := K8sHTTPRouteReferences{
-		Conf:               config.Get(),
-		Namespaces:         []string{"bookinfo", "bookinfo2", "bookinfo3"},
+		IdentityDomain:     config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""),
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{route},
 		K8sInferencePools:  inferencePools,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("rg", route.Namespace, "bookinfo")},
+		Namespaces:         []string{"bookinfo", "bookinfo2", "bookinfo3"},
 	}
 	return *routeReferences.References()[models.IstioReferenceKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: route.Namespace, Name: route.Name}]
 }

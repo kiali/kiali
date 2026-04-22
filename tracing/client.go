@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"google.golang.org/grpc"
@@ -22,7 +21,6 @@ import (
 	"github.com/kiali/kiali/tracing/jaeger"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/tempo"
-	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/grpcutil"
 	"github.com/kiali/kiali/util/httputil"
 )
@@ -230,7 +228,7 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 func (in *Client) GetAppTraces(ctx context.Context, namespace, app string, q models.TracingQuery) (*model.TracingResponse, error) {
 	ctx = in.prepareContextForClient(ctx)
 
-	serviceName := BuildTracingServiceName(namespace, app)
+	serviceName := app
 
 	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
 	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("AppTraces")
@@ -314,15 +312,6 @@ func (in *Client) GetServices(ctx context.Context) ([]string, error) {
 	}
 
 	return in.grpcClient.GetServicesList(ctx)
-}
-
-// BuildTracingServiceName
-func BuildTracingServiceName(namespace, app string) string {
-	conf := config.Get()
-	if conf.ExternalServices.Tracing.NamespaceSelector && !strings.Contains(app, conf.ExternalServices.Istio.IstioIdentityDomain) {
-		return util.BuildNameNSKey(app, namespace)
-	}
-	return app
 }
 
 // prepareContextForClient puts things in the given context that will be needed by the client to do its job.

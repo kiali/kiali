@@ -15,11 +15,12 @@ import (
 type NoHostChecker struct {
 	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Conf                *config.Config
+	IdentityDomain      string
 	KubeServiceHosts    kubernetes.KubeServiceHosts
 	Namespaces          []string
+	PolicyAllowAny      bool
 	ServiceEntries      map[string][]string
 	VirtualServices     []*networking_v1.VirtualService
-	PolicyAllowAny      bool
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -67,7 +68,7 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) 
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
-			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
+			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.IdentityDomain)
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
 				validation := models.Build("authorizationpolicy.nodest.matchingregistry", path)
@@ -98,7 +99,7 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 	}
 
 	// Check VirtualServices
-	if kubernetes.HasMatchingVirtualServices(host, n.VirtualServices, n.Conf) {
+	if kubernetes.HasMatchingVirtualServices(host, n.VirtualServices, n.IdentityDomain) {
 		return true
 	}
 

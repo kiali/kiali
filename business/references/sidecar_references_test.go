@@ -16,8 +16,8 @@ func prepareTestForSidecar(sc *networking_v1.Sidecar, se *networking_v1.ServiceE
 	conf := config.Get()
 	services := data.CreateFakeServicesWithSelector("foo-service", "istio-system")
 	drReferences := SidecarReferences{
-		Conf:             conf,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(services, conf),
+		IdentityDomain:   config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(services, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		Namespace:        "istio-system",
 		Namespaces:       models.Namespaces{{Name: "istio-system"}},
 		ServiceEntries:   []*networking_v1.ServiceEntry{se},

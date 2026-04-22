@@ -2831,11 +2831,12 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 			tracingName.Lookup = wkd.WaypointWorkloads[0].Name
 			tracingName.WaypointNamespace = wkd.WaypointWorkloads[0].Namespace
 		} else if app != "" {
+			identityDomain := resolveIdentityDomain(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 			lookupName := ""
 			if in.conf.ExternalServices.Tracing.NamespaceSelector {
-				lookupName = fmt.Sprintf("%s.%s.%s", app, namespace, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				lookupName = fmt.Sprintf("%s.%s.%s", app, namespace, identityDomain)
 			} else {
-				lookupName = fmt.Sprintf("%s.%s", app, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+				lookupName = fmt.Sprintf("%s.%s", app, identityDomain)
 			}
 			tracingName.Lookup = lookupName
 			tracingName.WaypointName = lookupName

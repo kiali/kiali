@@ -16,9 +16,9 @@ type (
 	DestinationRuleSubsets map[string]map[string]kubernetes.Host
 )
 
-func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceName, version string) bool {
+func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceName, version, identityDomain string) bool {
 	conf := config.Get()
-	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace, conf) {
+	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace, identityDomain) {
 		if isCB(dr.Spec.TrafficPolicy) {
 			return true
 		}

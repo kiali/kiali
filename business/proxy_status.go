@@ -6,13 +6,15 @@ import (
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
-func NewProxyStatusService(conf *config.Config, cache cache.KialiCache, kialiSAClients map[string]kubernetes.ClientInterface, namespace *NamespaceService) ProxyStatusService {
+func NewProxyStatusService(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDiscovery, kialiSAClients map[string]kubernetes.ClientInterface, namespace *NamespaceService) ProxyStatusService {
 	return ProxyStatusService{
 		conf:           conf,
+		discovery:      discovery,
 		kialiCache:     cache,
 		kialiSAClients: kialiSAClients,
 		namespace:      namespace,
@@ -21,6 +23,7 @@ func NewProxyStatusService(conf *config.Config, cache cache.KialiCache, kialiSAC
 
 type ProxyStatusService struct {
 	conf           *config.Config
+	discovery      istio.MeshDiscovery
 	kialiCache     cache.KialiCache
 	kialiSAClients map[string]kubernetes.ClientInterface
 	namespace      *NamespaceService
@@ -90,14 +93,15 @@ func (in *ProxyStatusService) GetConfigDumpResourceEntries(ctx context.Context, 
 		return nil, err
 	}
 
-	return buildDump(dump, resource, namespaces, in.conf)
+	identityDomain := resolveIdentityDomainWithDiscovery(ctx, in.discovery, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+	return buildDump(dump, resource, namespaces, identityDomain)
 }
 
-func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace, conf *config.Config) (*models.EnvoyProxyDump, error) {
+func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models.Namespace, identityDomain string) (*models.EnvoyProxyDump, error) {
 	response := &models.EnvoyProxyDump{}
 	var err error
 
-	nss := make([]string, len(namespaces))
+	nss := make([]string, 0, len(namespaces))
 	for _, ns := range namespaces {
 		nss = append(nss, ns.Name)
 	}
@@ -105,11 +109,11 @@ func buildDump(dump *kubernetes.ConfigDump, resource string, namespaces []models
 	switch resource {
 	case "clusters":
 		summary := &models.Clusters{}
-		err = summary.Parse(dump, conf)
+		err = summary.Parse(dump, identityDomain)
 		response.Clusters = summary
 	case "routes":
 		summary := &models.Routes{}
-		err = summary.Parse(dump, nss, conf)
+		err = summary.Parse(dump, nss, identityDomain)
 		response.Routes = summary
 	case "bootstrap":
 		summary := &models.Bootstrap{}

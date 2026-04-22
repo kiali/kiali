@@ -23,9 +23,9 @@ type Host struct {
 	CompleteInput bool `json:"complete_input"`
 }
 
-// ParseHost takes as an input a hostname (simple or full FQDN), namespace and clusterName and returns a parsed Host struct
-func ParseHost(hostName, namespace string, conf *config.Config) Host {
-	cluster := conf.ExternalServices.Istio.IstioIdentityDomain
+// ParseHost takes as an input a hostname (simple or full FQDN), namespace and identityDomain and returns a parsed Host struct
+func ParseHost(hostName, namespace, identityDomain string) Host {
+	cluster := identityDomain
 
 	domainParts := strings.Split(hostName, ".")
 	host := Host{
@@ -59,8 +59,8 @@ func ParseHost(hostName, namespace string, conf *config.Config) Host {
 
 // GetHost parses hostName and returns a Host struct. It considers Namespaces in the cluster to be more accurate
 // when deciding if the hostName is a ServiceEntry or a service.namespace host definition.
-func GetHost(hostName, namespace string, clusterNamespaces []string, conf *config.Config) Host {
-	cluster := conf.ExternalServices.Istio.IstioIdentityDomain
+func GetHost(hostName, namespace string, clusterNamespaces []string, identityDomain string) Host {
+	cluster := identityDomain
 
 	hParts := strings.Split(hostName, ".")
 	// It might be a service entry or a 2-format host specification
@@ -87,7 +87,7 @@ func GetHost(hostName, namespace string, clusterNamespaces []string, conf *confi
 		}
 	}
 
-	return ParseHost(hostName, namespace, conf)
+	return ParseHost(hostName, namespace, identityDomain)
 }
 
 func includes(nss []string, namespace string) bool {
@@ -170,10 +170,10 @@ func HasMatchingServiceEntries(service string, serviceEntries map[string][]strin
 	return false
 }
 
-func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.VirtualService, conf *config.Config) bool {
+func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.VirtualService, identityDomain string) bool {
 	vHostTwoParts := fmt.Sprintf("%s.%s", host.Service, host.Namespace)
-	vHostFqdnNoWild := fmt.Sprintf("%s.%s.%s", host.Service, host.Namespace, conf.ExternalServices.Istio.IstioIdentityDomain)
-	vHostFqdnWild := fmt.Sprintf("*.%s.%s", host.Namespace, conf.ExternalServices.Istio.IstioIdentityDomain)
+	vHostFqdnNoWild := fmt.Sprintf("%s.%s.%s", host.Service, host.Namespace, identityDomain)
+	vHostFqdnWild := fmt.Sprintf("*.%s.%s", host.Namespace, identityDomain)
 	for _, vs := range virtualServices {
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
@@ -204,7 +204,7 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.Virt
 			}
 
 			// Non-internal service name
-			hostS := ParseHost(vHost, vs.Namespace, conf)
+			hostS := ParseHost(vHost, vs.Namespace, identityDomain)
 			if hostS.Service == host.Service && hostS.CompleteInput == host.CompleteInput && !hostS.CompleteInput {
 				return true
 			}
@@ -241,8 +241,8 @@ func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
 	return len(wildcardDomain) > 2 && strings.HasSuffix(subdomain, wildcardDomain[2:])
 }
 
-func ParseGatewayAsHost(gateway, currentNamespace string, conf *config.Config) Host {
-	currentCluster := conf.ExternalServices.Istio.IstioIdentityDomain
+func ParseGatewayAsHost(gateway, currentNamespace, identityDomain string) Host {
+	currentCluster := identityDomain
 
 	host := Host{
 		Service:       gateway,

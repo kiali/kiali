@@ -184,7 +184,8 @@ func ErrorTraces(
 			RespondWithError(w, http.StatusBadRequest, "cannot parse parameter 'duration': "+err.Error())
 			return
 		}
-		traces, err := business.Tracing.GetErrorTraces(r.Context(), namespace, app, time.Second*time.Duration(conv))
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		traces, err := business.Tracing.GetErrorTraces(r.Context(), cluster, namespace, app, time.Second*time.Duration(conv))
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return

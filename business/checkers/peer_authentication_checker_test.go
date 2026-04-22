@@ -30,6 +30,7 @@ func TestPeerAuthInRootNamespaceUsesMeshWideCheckers(t *testing.T) {
 	checker := NewPeerAuthenticationChecker(
 		config.DefaultClusterID,
 		conf,
+		"cluster.local",
 		rootNamespaces,
 		kubernetes.MTLSDetails{PeerAuthentications: []*security_v1.PeerAuthentication{pa}},
 		[]*security_v1.PeerAuthentication{pa},
@@ -77,6 +78,7 @@ func TestPeerAuthMultiCPCorrectRootResolution(t *testing.T) {
 	checker := NewPeerAuthenticationChecker(
 		config.DefaultClusterID,
 		conf,
+		"cluster.local",
 		rootNamespaces,
 		kubernetes.MTLSDetails{PeerAuthentications: allPAs},
 		allPAs,
@@ -125,6 +127,7 @@ func TestPeerAuthUnknownNamespaceNotTreatedAsRoot(t *testing.T) {
 	checker := NewPeerAuthenticationChecker(
 		config.DefaultClusterID,
 		conf,
+		"cluster.local",
 		map[string]string{"istio-system": "istio-system"},
 		kubernetes.MTLSDetails{PeerAuthentications: []*security_v1.PeerAuthentication{pa}},
 		[]*security_v1.PeerAuthentication{pa},

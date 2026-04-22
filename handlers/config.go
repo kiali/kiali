@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	"gopkg.in/yaml.v2"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
@@ -89,6 +90,17 @@ type PublicConfig struct {
 	RunMode               config.RunMode                `json:"runMode,omitempty"`
 }
 
+// resolvePublicIdentityDomain returns the identity domain to expose to the
+// frontend. If the user configured it explicitly it is returned as-is.
+// Otherwise it is derived from the home cluster control plane's trust domain.
+func resolvePublicIdentityDomain(ctx context.Context, conf *config.Config, discovery istio.MeshDiscovery) string {
+	var mesh *models.Mesh
+	if m, err := discovery.Mesh(ctx); err == nil {
+		mesh = m
+	}
+	return business.ResolveClusterIdentityDomain(mesh, conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
+}
+
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
 func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDiscovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +134,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			HealthConfig:        conf.HealthConfig,
 			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-			IstioIdentityDomain: conf.ExternalServices.Istio.IstioIdentityDomain,
+			IstioIdentityDomain: resolvePublicIdentityDomain(r.Context(), conf, discovery),
 			IstioLabels:         conf.IstioLabels,
 			KialiFeatureFlags:   conf.KialiFeatureFlags,
 			LogLevel:            log.GetLogLevel(),

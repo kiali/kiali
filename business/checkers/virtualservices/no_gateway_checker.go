@@ -14,6 +14,7 @@ import (
 type NoGatewayChecker struct {
 	Conf           *config.Config
 	GatewayNames   map[string]struct{}
+	IdentityDomain string
 	VirtualService *networking_v1.VirtualService
 }
 
@@ -59,10 +60,10 @@ GatewaySearch:
 		// Gateways should be using <namespace>/<gateway>
 		checkNomenclature(gate, index, validations)
 
-		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, s.Conf)
+		hostname := kubernetes.ParseGatewayAsHost(gate, namespace, s.IdentityDomain)
 		for gw := range s.GatewayNames {
-			gwHostname := kubernetes.ParseHost(gw, namespace, s.Conf)
-			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace, s.Conf); found {
+			gwHostname := kubernetes.ParseHost(gw, namespace, s.IdentityDomain)
+			if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace, s.IdentityDomain); found {
 				continue GatewaySearch
 			}
 		}

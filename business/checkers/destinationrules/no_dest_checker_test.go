@@ -30,13 +30,14 @@ func TestValidHost(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
@@ -52,13 +53,14 @@ func TestValidWildcardHost(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule: data.CreateTestDestinationRule("test-namespace",
 			"name", "*.test-namespace.svc.cluster.local"),
@@ -76,13 +78,14 @@ func TestValidMeshWideHost(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "*.local"),
 	}.Check()
@@ -99,13 +102,14 @@ func TestValidShortSvcHost(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace.svc"),
 	}.Check()
@@ -122,13 +126,14 @@ func TestValidServiceNamespace(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace"),
 	}.Check()
@@ -145,14 +150,15 @@ func TestValidServiceNamespaceInvalid(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"test-namespace", "outside-ns"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"test-namespace", "outside-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.not-a-namespace"),
 	}.Check()
@@ -174,8 +180,9 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 		data.CreateFakeServicesWithSelector("reviews", "outside-ns"),
 		data.CreateFakeServicesWithSelector("reviews", "test-namespace")...)
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"test-namespace", "outside-ns"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"test-namespace", "outside-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"outside-ns": {
 				data.CreateWorkload("outside-ns", "reviewsv1", appVersionLabel("reviews", "v1")),
@@ -183,7 +190,7 @@ func TestValidServiceNamespaceCrossNamespace(t *testing.T) {
 		},
 		// using outside-ns namespace in host where the workloads are created. this should not fail
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.outside-ns.svc.cluster.local"),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 	}.Check()
 
@@ -199,13 +206,14 @@ func TestNoValidHost(t *testing.T) {
 
 	// reviews is not part of services
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "detailsv1", appVersionLabel("details", "v1")),
 				data.CreateWorkload("test-namespace", "otherv1", appVersionLabel("other", "v1"))},
 		},
-		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, config.Get(), nil),
+		KubeServiceHosts: kubernetes.NewKubeServiceHosts(nil, "cluster.local", nil),
 		Services:         []core_v1.Service{},
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
@@ -231,13 +239,14 @@ func TestNoValidShortSvcHost(t *testing.T) {
 	// reviews.test-namespace.svc.cluster
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "detailsv1", appVersionLabel("details", "v1")),
 				data.CreateWorkload("test-namespace", "otherv1", appVersionLabel("other", "v1"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.test-namespace.svc.cluster"),
 	}.Check()
@@ -258,12 +267,13 @@ func TestNoMatchingSubset(t *testing.T) {
 	// reviews does not have v2 in known services
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviews", appVersionLabel("reviews", "v1"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews"),
 		VirtualServices: []*networking_v1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v1", 55),
@@ -304,13 +314,14 @@ func TestNoMatchingSubsetWithMoreLabels(t *testing.T) {
 
 	fakeServices := data.CreateFakeServicesWithSelector("reviews", "test-namespace")
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 		DestinationRule:  dr,
 		VirtualServices: []*networking_v1.VirtualService{data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "reviewsv1", 55),
@@ -341,14 +352,15 @@ func TestSubsetNotReferenced(t *testing.T) {
 	dr := loader.FindDestinationRule("testrule", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"bookinfo2", "bookinfo"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{},
@@ -380,14 +392,15 @@ func TestSubsetReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"bookinfo2", "bookinfo"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{vs},
@@ -420,14 +433,15 @@ func TestSubsetPresentMatchingNotReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"bookinfo"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{vs},
@@ -453,14 +467,15 @@ func TestWronglyReferenced(t *testing.T) {
 	vs := loader.FindVirtualService("testvs", "bookinfo")
 
 	vals, valid := NoDestinationChecker{
-		Conf:       config.Get(),
-		Namespaces: []string{"bookinfo2", "bookinfo"},
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
+		Namespaces:     []string{"bookinfo2", "bookinfo"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"bookinfo": {
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("bookinfo", "reviews", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "bookinfo"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "bookinfo"),
 		DestinationRule:  dr,
 		VirtualServices:  []*networking_v1.VirtualService{vs},
@@ -484,7 +499,8 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 		data.CreateFakeServicesWithSelector("reviews", "different-ns")...)
 
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
@@ -492,7 +508,7 @@ func TestFailCrossNamespaceHost(t *testing.T) {
 		},
 		// Intentionally using the same serviceName, but different NS. This SHOULD fail to match the above workloads which are created in test-namespace
 		DestinationRule:  data.CreateTestDestinationRule("test-namespace", "name", "reviews.different-ns.svc.cluster.local"),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		Services:         fakeServices,
 	}.Check()
 
@@ -520,6 +536,7 @@ func TestSNIProxyExample(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -540,6 +557,7 @@ func TestWildcardServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -559,6 +577,7 @@ func TestExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -578,6 +597,7 @@ func TestWildcardExportedInternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -597,6 +617,7 @@ func TestExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -619,6 +640,7 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -641,6 +663,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -655,6 +678,7 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -677,6 +701,7 @@ func TestExportedExternalServiceEntry(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -696,6 +721,7 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 		PolicyAllowAny:  true,
@@ -714,13 +740,14 @@ func TestNoLabelsInSubset(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "test-namespace"),
 		DestinationRule:  data.CreateNoLabelsDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
@@ -738,13 +765,14 @@ func TestSubsetWithoutLabels(t *testing.T) {
 	config.Set(conf)
 
 	vals, valid := NoDestinationChecker{
-		Conf: config.Get(),
+		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			"test-namespace": {
 				data.CreateWorkload("test-namespace", "reviewsv1", appVersionLabel("reviews", "v1")),
 				data.CreateWorkload("test-namespace", "reviewsv2", appVersionLabel("reviews", "v2"))},
 		},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(data.CreateFakeServicesWithSelector("reviews", "test-namespace"), "svc.cluster.local"),
 		Services:         data.CreateFakeServicesWithSelector("reviews", "test-namespace"),
 		DestinationRule:  data.CreateNoSubsetLabelsDestinationRule("test-namespace", "name", "reviews"),
 	}.Check()
@@ -768,6 +796,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	dr := data.CreateEmptyDestinationRule("test", "test-exported", "ratings.mesh2-bookinfo.svc.mesh1-imports.local")
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		DestinationRule: dr,
 	}.Check()
 
@@ -776,13 +805,15 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.mesh1-imports.local"
 	config.Set(conf)
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
 
 	fakeServices := data.CreateFakeMultiServices([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}, "mesh2-bookinfo")
 
 	vals, valid = NoDestinationChecker{
 		Conf:             config.Get(),
+		IdentityDomain:   id,
 		DestinationRule:  dr,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, id),
 		Services:         fakeServices,
 	}.Check()
 
@@ -793,8 +824,9 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Conf:             config.Get(),
+		IdentityDomain:   id,
 		DestinationRule:  dr,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, id),
 		Services:         fakeServices2,
 	}.Check()
 
@@ -808,8 +840,9 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		DestinationRule:  dr,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices3, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices3, "svc.cluster.local"),
 		Services:         fakeServices3,
 	}.Check()
 
@@ -820,8 +853,9 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	vals, valid = NoDestinationChecker{
 		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		DestinationRule:  dr,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices4, config.Get()),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices4, "svc.cluster.local"),
 		Services:         fakeServices4,
 	}.Check()
 
@@ -840,6 +874,7 @@ func TestServiceEntryLabelsMatchSubsets(t *testing.T) {
 
 	vals, valid := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()
@@ -859,6 +894,7 @@ func TestServiceEntryLabelsNoMatchingSubsets(t *testing.T) {
 
 	vals, _ := NoDestinationChecker{
 		Conf:            config.Get(),
+		IdentityDomain:  "svc.cluster.local",
 		ServiceEntries:  []*networking_v1.ServiceEntry{se},
 		DestinationRule: dr,
 	}.Check()

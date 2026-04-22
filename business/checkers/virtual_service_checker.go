@@ -14,6 +14,7 @@ type VirtualServiceChecker struct {
 	Cluster          string
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
+	IdentityDomain   string
 	Namespaces       models.Namespaces
 	VirtualServices  []*networking_v1.VirtualService
 }
@@ -49,7 +50,7 @@ func (in VirtualServiceChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
 	enabledCheckers := []GroupChecker{
-		virtualservices.SingleHostChecker{Conf: in.Conf, Namespaces: in.Namespaces.GetNames(), VirtualServices: in.VirtualServices, Cluster: in.Cluster},
+		virtualservices.SingleHostChecker{Cluster: in.Cluster, IdentityDomain: in.IdentityDomain, Namespaces: in.Namespaces.GetNames(), VirtualServices: in.VirtualServices},
 	}
 
 	for _, checker := range enabledCheckers {
@@ -65,8 +66,8 @@ func (in VirtualServiceChecker) runChecks(virtualService *networking_v1.VirtualS
 	key, rrValidation := EmptyValidValidation(virtualServiceName, virtualService.Namespace, kubernetes.VirtualServices, in.Cluster)
 
 	enabledCheckers := []Checker{
-		virtualservices.RouteChecker{Conf: in.Conf, VirtualService: virtualService, Namespaces: nsNames},
-		virtualservices.SubsetPresenceChecker{Conf: in.Conf, Namespaces: nsNames, VirtualService: virtualService, DRSubsets: drSubsets},
+		virtualservices.RouteChecker{IdentityDomain: in.IdentityDomain, VirtualService: virtualService, Namespaces: nsNames},
+		virtualservices.SubsetPresenceChecker{DRSubsets: drSubsets, IdentityDomain: in.IdentityDomain, Namespaces: nsNames, VirtualService: virtualService},
 	}
 	if !in.Namespaces.IsNamespaceAmbient(virtualService.Namespace, in.Cluster) {
 		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: virtualService.Spec.ExportTo, Namespaces: nsNames})
@@ -86,7 +87,7 @@ func (in VirtualServiceChecker) prepareSubsetMap(namespaces []string) models.Des
 
 	for _, dr := range in.DestinationRules {
 		host := dr.Spec.Host
-		drHost := kubernetes.GetHost(host, dr.Namespace, namespaces, in.Conf)
+		drHost := kubernetes.GetHost(host, dr.Namespace, namespaces, in.IdentityDomain)
 
 		if _, exists := subsetMap[drHost.String()]; !exists {
 			subsetMap[drHost.String()] = make(map[string]kubernetes.Host)

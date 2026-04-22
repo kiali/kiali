@@ -87,9 +87,9 @@ func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCh
 	nsNames := namespaceNames(loader.GetNamespaces())
 
 	vals, valid := SubsetPresenceChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		Namespaces:     nsNames,
-		DRSubsets:      prepareSubsetMap(append(loader.FindDestinationRuleIn("bookinfo"), loader.FindDestinationRuleNotIn("bookinfo")...), nsNames, conf),
+		DRSubsets:      prepareSubsetMap(append(loader.FindDestinationRuleIn("bookinfo"), loader.FindDestinationRuleNotIn("bookinfo")...), nsNames, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		VirtualService: loader.GetResources().VirtualServices[0],
 	}.Check()
 
@@ -152,7 +152,7 @@ func TestNilDestinationWeight(t *testing.T) {
 
 	assert.NotPanics(func() {
 		vals, valid := SubsetPresenceChecker{
-			Conf:           conf,
+			IdentityDomain: "svc.cluster.local",
 			Namespaces:     []string{"bookinfo"},
 			DRSubsets:      make(models.DestinationRuleSubsets),
 			VirtualService: vs,
@@ -163,12 +163,12 @@ func TestNilDestinationWeight(t *testing.T) {
 	})
 }
 
-func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, conf *config.Config) models.DestinationRuleSubsets {
+func prepareSubsetMap(destinationRules []*networking_v1.DestinationRule, namespaces []string, identityDomain string) models.DestinationRuleSubsets {
 	subsetMap := make(models.DestinationRuleSubsets)
 
 	for _, dr := range destinationRules {
 		host := dr.Spec.Host
-		drHost := kubernetes.GetHost(host, dr.Namespace, namespaces, conf)
+		drHost := kubernetes.GetHost(host, dr.Namespace, namespaces, identityDomain)
 
 		if _, exists := subsetMap[drHost.String()]; !exists {
 			subsetMap[drHost.String()] = make(map[string]kubernetes.Host)

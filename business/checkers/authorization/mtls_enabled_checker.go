@@ -18,6 +18,7 @@ type MtlsEnabledChecker struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	MtlsDetails           kubernetes.MTLSDetails
 	Services              []core_v1.Service
 }
@@ -133,7 +134,7 @@ func (c MtlsEnabledChecker) IsMtlsEnabledFor(labels labels.Set, namespace string
 		MatchingLabels:      labels,
 		PeerAuthentications: c.MtlsDetails.PeerAuthentications,
 		Services:            c.Services,
-	}.WorkloadMtlsStatus(namespace, c.Conf)
+	}.WorkloadMtlsStatus(namespace, c.IdentityDomain)
 
 	switch workloadmTlsStatus {
 	case mtls.MTLSEnabled:
@@ -182,5 +183,5 @@ func (c MtlsEnabledChecker) namespaceMtlsStatus(namespace string) mtls.TlsStatus
 		AllowPermissive:     true,
 	}
 
-	return mtlsStatus.NamespaceMtlsStatus(namespace, c.Conf)
+	return mtlsStatus.NamespaceMtlsStatus(namespace, c.IdentityDomain)
 }

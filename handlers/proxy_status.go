@@ -33,7 +33,7 @@ func ConfigDump(conf *config.Config, kialiCache cache.KialiCache, clientFactory 
 			return
 		}
 
-		proxyStatus := business.NewProxyStatusService(conf, kialiCache, clientFactory.GetSAClients(), &namespaceService)
+		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), &namespaceService)
 		dump, err := proxyStatus.GetConfigDump(cluster, namespace, pod)
 		if err != nil {
 			handleErrorResponse(w, err)
@@ -66,7 +66,7 @@ func ConfigDumpResourceEntries(conf *config.Config, kialiCache cache.KialiCache,
 			return
 		}
 
-		proxyStatus := business.NewProxyStatusService(conf, kialiCache, clientFactory.GetSAClients(), &namespaceService)
+		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), &namespaceService)
 		dump, err := proxyStatus.GetConfigDumpResourceEntries(r.Context(), cluster, namespace, pod, resource)
 		if err != nil {
 			handleErrorResponse(w, err)

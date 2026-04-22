@@ -17,8 +17,8 @@ import (
 func prepareTestForServiceEntry(ap *security_v1.AuthorizationPolicy, dr *networking_v1.DestinationRule, se *networking_v1.ServiceEntry, sc *networking_v1.Sidecar) models.IstioReferences {
 	drReferences := ServiceEntryReferences{
 		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
-		Conf:                  config.Get(),
 		DestinationRules:      []*networking_v1.DestinationRule{dr},
+		IdentityDomain:        config.ResolveIdentityDomain(config.Get().ExternalServices.Istio.IstioIdentityDomain, ""),
 		Namespace:             "bookinfo",
 		Namespaces:            []string{"bookinfo", "bookinfo2", "bookinfo3"},
 		ServiceEntries:        []*networking_v1.ServiceEntry{se},
@@ -84,7 +84,7 @@ func TestServiceEntryReferencesExportToNone(t *testing.T) {
 	se.Spec.ExportTo = []string{"~"}
 
 	refs := ServiceEntryReferences{
-		Conf:           conf,
+		IdentityDomain: config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		Namespace:      "team-a",
 		Namespaces:     []string{"team-a"},
 		ServiceEntries: []*networking_v1.ServiceEntry{se},
@@ -106,7 +106,7 @@ func TestServiceEntryReferencesExportToOtherNamespace(t *testing.T) {
 	se.Spec.ExportTo = []string{"consumer-ns"}
 
 	refs := ServiceEntryReferences{
-		Conf:           conf,
+		IdentityDomain: config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		Namespace:      "infra",
 		Namespaces:     []string{"infra", "consumer-ns"},
 		ServiceEntries: []*networking_v1.ServiceEntry{se},
@@ -125,7 +125,7 @@ func TestServiceEntryReferencesKubeServiceNotVisible(t *testing.T) {
 	svc.Annotations = map[string]string{
 		kubernetes.ExportToAnnotation: "bookinfo",
 	}
-	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""))
 
 	se := &networking_v1.ServiceEntry{}
 	se.Name = "override-reviews"
@@ -133,7 +133,7 @@ func TestServiceEntryReferencesKubeServiceNotVisible(t *testing.T) {
 	se.Spec.Hosts = []string{"reviews.bookinfo.svc.cluster.local"}
 
 	refs := ServiceEntryReferences{
-		Conf:             conf,
+		IdentityDomain:   config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		KubeServiceHosts: kubeHosts,
 		Namespace:        "other-ns",
 		Namespaces:       []string{"other-ns", "bookinfo"},
@@ -150,7 +150,7 @@ func TestServiceEntryReferencesKubeServiceVisible(t *testing.T) {
 	config.Set(conf)
 
 	svc := fakeService("reviews", "bookinfo")
-	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""))
 
 	se := &networking_v1.ServiceEntry{}
 	se.Name = "override-reviews"
@@ -158,7 +158,7 @@ func TestServiceEntryReferencesKubeServiceVisible(t *testing.T) {
 	se.Spec.Hosts = []string{"reviews.bookinfo.svc.cluster.local"}
 
 	refs := ServiceEntryReferences{
-		Conf:             conf,
+		IdentityDomain:   config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		KubeServiceHosts: kubeHosts,
 		Namespace:        "bookinfo",
 		Namespaces:       []string{"bookinfo"},
@@ -179,7 +179,7 @@ func TestServiceEntryReferencesMixed(t *testing.T) {
 	svc.Annotations = map[string]string{
 		kubernetes.ExportToAnnotation: "bookinfo",
 	}
-	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, conf)
+	kubeHosts := kubernetes.KubeServiceFQDNs([]core_v1.Service{svc}, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""))
 
 	se := &networking_v1.ServiceEntry{}
 	se.Name = "mixed-se"
@@ -191,7 +191,7 @@ func TestServiceEntryReferencesMixed(t *testing.T) {
 	se.Spec.ExportTo = []string{"*"}
 
 	refs := ServiceEntryReferences{
-		Conf:             conf,
+		IdentityDomain:   config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		KubeServiceHosts: kubeHosts,
 		Namespace:        "other-ns",
 		Namespaces:       []string{"other-ns", "bookinfo"},

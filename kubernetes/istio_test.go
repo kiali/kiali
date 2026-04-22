@@ -14,6 +14,10 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
+func testIdentityForKubeHosts(conf *config.Config) string {
+	return config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+}
+
 func TestKubeServiceHostsSingleService(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -29,7 +33,7 @@ func TestKubeServiceHostsSingleService(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.HasHost("reviews.bookinfo.svc.cluster.local"))
 	assert.True(hosts.HasHost("reviews.bookinfo.svc"))
@@ -65,7 +69,7 @@ func TestKubeServiceHostsMultipleServices(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.HasHost("reviews.bookinfo.svc.cluster.local"))
 	assert.True(hosts.HasHost("ratings.bookinfo.svc.cluster.local"))
@@ -77,7 +81,7 @@ func TestKubeServiceHostsEmptyInput(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 
-	hosts := kubernetes.NewKubeServiceHosts([]core_v1.Service{}, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts([]core_v1.Service{}, testIdentityForKubeHosts(conf), nil)
 
 	assert.False(hosts.HasHost("anything"))
 }
@@ -93,7 +97,7 @@ func TestKubeServiceHostsNoPorts(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.HasHost("headless.bookinfo.svc.cluster.local"))
 }
@@ -112,7 +116,7 @@ func TestKubeServiceHostsCustomClusterDomain(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.HasHost("reviews.bookinfo.svc.my-custom.domain"))
 	assert.True(hosts.HasHost("reviews.bookinfo.svc"))
@@ -133,7 +137,7 @@ func TestKubeServiceHostsNoExportToVisibleEverywhere(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -157,7 +161,7 @@ func TestKubeServiceHostsExportToStar(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -180,7 +184,7 @@ func TestKubeServiceHostsExportToDot(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.False(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -207,7 +211,7 @@ func TestKubeServiceHostsExportToTilde(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.HasHost("reviews.bookinfo.svc.cluster.local"))
 	assert.False(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
@@ -231,7 +235,7 @@ func TestKubeServiceHostsExportToSpecificNamespaces(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "istio-system"))
@@ -255,7 +259,7 @@ func TestKubeServiceHostsExportToDotAndNamespace(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "istio-system"))
@@ -266,7 +270,7 @@ func TestKubeServiceHostsExportToNonexistentHost(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
 
-	hosts := kubernetes.NewKubeServiceHosts([]core_v1.Service{}, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts([]core_v1.Service{}, testIdentityForKubeHosts(conf), nil)
 
 	assert.False(hosts.IsValidForNamespace("nonexistent.bookinfo.svc.cluster.local", "bookinfo"))
 }
@@ -288,7 +292,7 @@ func TestKubeServiceHostsExportToWhitespaceHandling(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "istio-system"))
@@ -308,7 +312,7 @@ func TestKubeServiceHostsMeshDefaultDotRestrictsToOwnNamespace(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, []string{"."})
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), []string{"."})
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.False(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -328,7 +332,7 @@ func TestKubeServiceHostsMeshDefaultStarVisibleEverywhere(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, []string{"*"})
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), []string{"*"})
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -351,7 +355,7 @@ func TestKubeServiceHostsAnnotationOverridesMeshDefault(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, []string{"."})
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), []string{"."})
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -370,7 +374,7 @@ func TestKubeServiceHostsNilMeshDefaultVisibleEverywhere(t *testing.T) {
 		},
 	}
 
-	hosts := kubernetes.NewKubeServiceHosts(services, conf, nil)
+	hosts := kubernetes.NewKubeServiceHosts(services, testIdentityForKubeHosts(conf), nil)
 
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 	assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
@@ -397,7 +401,7 @@ func TestKubeServiceHostsWithNamespaceDefaults(t *testing.T) {
 	}
 
 	t.Run("nil map same as NewKubeServiceHosts with nil default", func(t *testing.T) {
-		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, conf, nil)
+		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, testIdentityForKubeHosts(conf), nil)
 		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))
 		assert.True(hosts.IsValidForNamespace("ratings.bookinfo2.svc.cluster.local", "bookinfo"))
@@ -408,7 +412,7 @@ func TestKubeServiceHostsWithNamespaceDefaults(t *testing.T) {
 			"bookinfo":  {"."},
 			"bookinfo2": {"*"},
 		}
-		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, conf, namespaceToExportTo)
+		hosts := kubernetes.NewKubeServiceHostsWithNamespaceDefaults(services, testIdentityForKubeHosts(conf), namespaceToExportTo)
 		// bookinfo uses "." - visible only in bookinfo
 		assert.True(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "bookinfo"))
 		assert.False(hosts.IsValidForNamespace("reviews.bookinfo.svc.cluster.local", "other-ns"))

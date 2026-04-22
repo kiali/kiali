@@ -28,8 +28,8 @@ func TestValidHost(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:             conf,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		IdentityDomain:   "svc.cluster.local",
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		VirtualService:   virtualService,
 	}.Check()
 
@@ -54,9 +54,9 @@ func TestValidHostWithTwoPartName(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"reviews.bookinfo.svc.cluster.local"}, "bookinfo")...)
 
 	vals, valid := NoHostChecker{
-		Conf:             conf,
+		IdentityDomain:   "svc.cluster.local",
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.True(valid)
@@ -74,8 +74,8 @@ func TestNoValidHost(t *testing.T) {
 	virtualService := data.CreateVirtualService()
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		IdentityDomain:   "svc.cluster.local",
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		VirtualService:   virtualService,
 	}.Check()
 
@@ -91,8 +91,8 @@ func TestNoValidHost(t *testing.T) {
 	virtualService.Spec.Http = nil
 
 	vals, valid = NoHostChecker{
-		Conf:             config.Get(),
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		IdentityDomain:   "svc.cluster.local",
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		VirtualService:   virtualService,
 	}.Check()
 
@@ -120,9 +120,9 @@ func TestNoValidHostWrongNamespace(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -141,9 +141,9 @@ func TestNoValidHostWrongNamespace(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "details.bookinfo.svc.cluster.local"}, "bookinfo")...)
 
 	vals, valid = NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -166,9 +166,9 @@ func TestInvalidServiceNamespaceFormatHost(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		Namespaces:       []string{"test", "outside-namespace"},
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 		VirtualService:   virtualService,
 		PolicyAllowAny:   true,
 	}.Check()
@@ -195,10 +195,10 @@ func TestInvalidServiceNamespaceFormatCrossNamespace(t *testing.T) {
 	)
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		Namespaces:       []string{"test", "outside-namespace"},
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -216,10 +216,10 @@ func TestInvalidServiceNamespaceFormatCrossNamespace(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "details.bookinfo.svc.cluster.local"}, "bookinfo")...)
 
 	vals, valid = NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		Namespaces:       []string{"bookinfo", "bookinfo2"},
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -240,9 +240,9 @@ func TestValidServiceEntryHost(t *testing.T) {
 	virtualService := data.CreateVirtualServiceWithServiceEntryTarget()
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -252,10 +252,10 @@ func TestValidServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateExternalServiceEntry()
 
 	vals, valid = NoHostChecker{
-		Conf:              config.Get(),
+		IdentityDomain:    "svc.cluster.local",
 		VirtualService:    virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
-		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.True(valid)
@@ -274,9 +274,9 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 		data.CreateEmptyVirtualService("googleIt", "google", []string{"www.google.com"}))
 
 	vals, valid := NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   "svc.cluster.local",
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
@@ -286,10 +286,10 @@ func TestValidWildcardServiceEntryHost(t *testing.T) {
 	serviceEntry := data.CreateEmptyMeshExternalServiceEntry("googlecard", "google", []string{"*.google.com"})
 
 	vals, valid = NoHostChecker{
-		Conf:              config.Get(),
+		IdentityDomain:    "svc.cluster.local",
 		VirtualService:    virtualService,
 		ServiceEntryHosts: kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
-		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(fakeServices, conf),
+		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
 	assert.True(valid)
@@ -300,6 +300,7 @@ func TestValidServiceRegistry(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.mesh1-imports.local"
 	config.Set(conf)
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
 
 	assert := assert.New(t)
 
@@ -308,7 +309,7 @@ func TestValidServiceRegistry(t *testing.T) {
 		data.CreateEmptyVirtualService("federation-vs", "bookinfo", []string{"*"}))
 
 	vals, valid := NoHostChecker{
-		Conf:           config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		VirtualService: virtualService,
 	}.Check()
 
@@ -318,9 +319,9 @@ func TestValidServiceRegistry(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}, "mesh2-bookinfo")
 
 	vals, valid = NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   id,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, id),
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices, conf),
 	}.Check()
 
 	assert.True(valid)
@@ -329,9 +330,9 @@ func TestValidServiceRegistry(t *testing.T) {
 	fakeServices2 := data.CreateFakeMultiServices([]string{"ratings2.mesh2-bookinfo.svc.mesh1-imports.local"}, "mesh2-bookinfo")
 
 	vals, valid = NoHostChecker{
-		Conf:             config.Get(),
+		IdentityDomain:   id,
+		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, id),
 		VirtualService:   virtualService,
-		KubeServiceHosts: kubernetes.KubeServiceFQDNs(fakeServices2, conf),
 	}.Check()
 
 	assert.False(valid)

@@ -12,11 +12,12 @@ import (
 )
 
 type NoK8sGatewayChecker struct {
-	Cluster      string
-	Conf         *config.Config
-	GatewayNames map[string]k8s_networking_v1.Gateway
-	K8sHTTPRoute *k8s_networking_v1.HTTPRoute
-	Namespaces   models.Namespaces
+	Cluster        string
+	Conf           *config.Config
+	GatewayNames   map[string]k8s_networking_v1.Gateway
+	IdentityDomain string
+	K8sHTTPRoute   *k8s_networking_v1.HTTPRoute
+	Namespaces     models.Namespaces
 }
 
 // Check validates that the HTTPRoute is pointing to an existing Gateway
@@ -41,18 +42,18 @@ func (s NoK8sGatewayChecker) ValidateHTTPRouteGateways(validations *[]*models.Is
 				if parentRef.Namespace != nil && string(*parentRef.Namespace) != "" {
 					gwNs = string(*parentRef.Namespace)
 				}
-				valid = CheckGateway(string(parentRef.Name), gwNs, s.K8sHTTPRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name)), s.Conf) && valid
+				valid = CheckGateway(string(parentRef.Name), gwNs, s.K8sHTTPRoute.Namespace, s.Cluster, s.GatewayNames, s.Namespaces, validations, fmt.Sprintf("spec/parentRefs[%d]/name/%s", index, string(parentRef.Name)), s.IdentityDomain) && valid
 			}
 		}
 	}
 	return valid
 }
 
-func CheckGateway(gwName, gwNs, routeNs, cluster string, gatewayNames map[string]k8s_networking_v1.Gateway, nss models.Namespaces, validations *[]*models.IstioCheck, location string, conf *config.Config) bool {
-	hostname := kubernetes.ParseGatewayAsHost(gwName, gwNs, conf)
+func CheckGateway(gwName, gwNs, routeNs, cluster string, gatewayNames map[string]k8s_networking_v1.Gateway, nss models.Namespaces, validations *[]*models.IstioCheck, location string, identityDomain string) bool {
+	hostname := kubernetes.ParseGatewayAsHost(gwName, gwNs, identityDomain)
 	for gw := range gatewayNames {
-		gwHostname := kubernetes.ParseHost(gw, gwNs, conf)
-		if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace, conf); found {
+		gwHostname := kubernetes.ParseHost(gw, gwNs, identityDomain)
+		if found := kubernetes.FilterByHost(hostname.String(), hostname.Namespace, gw, gwHostname.Namespace, identityDomain); found {
 			if gwHostname.Namespace == routeNs {
 				return true
 			} else if IsGatewaySharedWithNS(routeNs, cluster, gatewayNames[gw], nss) {

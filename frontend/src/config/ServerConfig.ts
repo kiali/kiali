@@ -91,7 +91,7 @@ const defaultServerConfig: ComputedServerConfig = {
   },
   istioAPIInstalled: false,
   istioGatewayInstalled: false,
-  istioIdentityDomain: 'svc.cluster.local',
+  istioIdentityDomain: '',
   istioLabels: {
     ambientNamespaceLabel: 'istio.io/dataplane-mode',
     ambientNamespaceLabelValue: 'ambient',

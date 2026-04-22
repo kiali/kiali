@@ -15,6 +15,7 @@ import (
 
 type K8sInferencePoolReferences struct {
 	Conf                  *config.Config
+	IdentityDomain        string
 	K8sHTTPRoutes         []*k8s_networking_v1.HTTPRoute
 	K8sInferencePools     []*k8s_inference_v1.InferencePool
 	KubeServiceHosts      kubernetes.KubeServiceHosts
@@ -68,7 +69,7 @@ func (r K8sInferencePoolReferences) getWorkloadReferences(pool *k8s_inference_v1
 func (r K8sInferencePoolReferences) getServiceReferences(pool *k8s_inference_v1.InferencePool) []models.ServiceReference {
 	result := make([]models.ServiceReference, 0)
 
-	fqdn := kubernetes.GetHost(string(pool.Spec.EndpointPickerRef.Name), pool.Namespace, r.Namespaces, r.Conf)
+	fqdn := kubernetes.GetHost(string(pool.Spec.EndpointPickerRef.Name), pool.Namespace, r.Namespaces, r.IdentityDomain)
 	if r.KubeServiceHosts.IsValidForNamespace(fqdn.String(), pool.Namespace) {
 		result = append(result, models.ServiceReference{Name: string(pool.Spec.EndpointPickerRef.Name), Namespace: pool.Namespace})
 	}

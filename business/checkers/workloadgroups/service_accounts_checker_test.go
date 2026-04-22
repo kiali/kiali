@@ -11,87 +11,86 @@ import (
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-func TestPresentServiceAccount(t *testing.T) {
-	conf := config.NewConfig()
-	config.Set(conf)
+func TestServiceAccountsChecker(t *testing.T) {
+	defaultSAs := map[string][]string{config.DefaultClusterID: {"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}}
+	nonDefaultSAs := map[string][]string{config.DefaultClusterID: {"example.org/ns/bookinfo/sa/default", "example.org/ns/bookinfo/sa/test"}}
+	diffNsSAs := map[string][]string{config.DefaultClusterID: {"cluster.local/ns/default/sa/default", "cluster.local/ns/bookinfo/sa/test"}}
 
-	assert := assert.New(t)
+	cases := map[string]struct {
+		identityDomain  string
+		serviceAccounts map[string][]string
+		saName          string
+		expectValid     bool
+		expectMessage   string
+	}{
+		"present SA": {
+			identityDomain:  "svc.cluster.local",
+			serviceAccounts: defaultSAs,
+			saName:          "default",
+			expectValid:     true,
+		},
+		"empty SA name is valid": {
+			identityDomain:  "svc.cluster.local",
+			serviceAccounts: defaultSAs,
+			saName:          "",
+			expectValid:     true,
+		},
+		"missing SA": {
+			identityDomain:  "svc.cluster.local",
+			serviceAccounts: defaultSAs,
+			saName:          "wrong",
+			expectValid:     false,
+			expectMessage:   "workloadgroup.template.serviceaccount.notfound",
+		},
+		"different namespace SA": {
+			identityDomain:  "svc.cluster.local",
+			serviceAccounts: diffNsSAs,
+			saName:          "default",
+			expectValid:     false,
+			expectMessage:   "workloadgroup.template.serviceaccount.notfound",
+		},
+		"present SA with non-default trust domain": {
+			identityDomain:  "svc.example.org",
+			serviceAccounts: nonDefaultSAs,
+			saName:          "default",
+			expectValid:     true,
+		},
+		"missing SA with non-default trust domain": {
+			identityDomain:  "svc.example.org",
+			serviceAccounts: nonDefaultSAs,
+			saName:          "wrong",
+			expectValid:     false,
+			expectMessage:   "workloadgroup.template.serviceaccount.notfound",
+		},
+		"empty service accounts map": {
+			identityDomain:  "svc.cluster.local",
+			serviceAccounts: map[string][]string{},
+			saName:          "wrong",
+			expectValid:     false,
+			expectMessage:   "workloadgroup.template.serviceaccount.notfound",
+		},
+	}
 
-	validations, valid := ServiceAccountsChecker{
-		Cluster:         config.DefaultClusterID,
-		ServiceAccounts: map[string][]string{config.DefaultClusterID: {"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}},
-		WorkloadGroup:   data.CreateWorkloadGroupWithSA("default"),
-	}.Check()
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
 
-	// Well configured object
-	assert.True(valid)
-	assert.Empty(validations)
-}
+			vals, valid := ServiceAccountsChecker{
+				Cluster:         config.DefaultClusterID,
+				IdentityDomain:  tc.identityDomain,
+				ServiceAccounts: tc.serviceAccounts,
+				WorkloadGroup:   data.CreateWorkloadGroupWithSA(tc.saName),
+			}.Check()
 
-func TestEmptyServiceAccount(t *testing.T) {
-	assert := assert.New(t)
-
-	validations, valid := ServiceAccountsChecker{
-		Cluster:         config.DefaultClusterID,
-		ServiceAccounts: map[string][]string{config.DefaultClusterID: {"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}},
-		WorkloadGroup:   data.CreateWorkloadGroupWithSA(""),
-	}.Check()
-
-	// Well configured object
-	assert.True(valid)
-	assert.Empty(validations)
-}
-
-func TestNotPresentServiceAccount(t *testing.T) {
-	assert := assert.New(t)
-
-	vals, valid := ServiceAccountsChecker{
-		Cluster:         config.DefaultClusterID,
-		ServiceAccounts: map[string][]string{config.DefaultClusterID: {"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}},
-		WorkloadGroup:   data.CreateWorkloadGroupWithSA("wrong"),
-	}.Check()
-
-	// Wrong SA is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.WarningSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("workloadgroup.template.serviceaccount.notfound", vals[0]))
-	assert.Equal("spec/template/serviceAccount", vals[0].Path)
-}
-
-func TestDifferentNameapaceServiceAccount(t *testing.T) {
-	assert := assert.New(t)
-
-	vals, valid := ServiceAccountsChecker{
-		Cluster:         config.DefaultClusterID,
-		ServiceAccounts: map[string][]string{config.DefaultClusterID: {"cluster.local/ns/default/sa/default", "cluster.local/ns/bookinfo/sa/test"}},
-		WorkloadGroup:   data.CreateWorkloadGroupWithSA("default"),
-	}.Check()
-
-	// Wrong SA is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.WarningSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("workloadgroup.template.serviceaccount.notfound", vals[0]))
-	assert.Equal("spec/template/serviceAccount", vals[0].Path)
-}
-
-func TestEmptyServiceAccounts(t *testing.T) {
-	assert := assert.New(t)
-
-	vals, valid := ServiceAccountsChecker{
-		Cluster:         config.DefaultClusterID,
-		ServiceAccounts: map[string][]string{},
-		WorkloadGroup:   data.CreateWorkloadGroupWithSA("wrong"),
-	}.Check()
-
-	// Wrong SA is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.WarningSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("workloadgroup.template.serviceaccount.notfound", vals[0]))
-	assert.Equal("spec/template/serviceAccount", vals[0].Path)
+			assert.Equal(tc.expectValid, valid)
+			if tc.expectValid {
+				assert.Empty(vals)
+			} else {
+				assert.Len(vals, 1)
+				assert.Equal(models.WarningSeverity, vals[0].Severity)
+				assert.NoError(validations.ConfirmIstioCheckMessage(tc.expectMessage, vals[0]))
+				assert.Equal("spec/template/serviceAccount", vals[0].Path)
+			}
+		})
+	}
 }

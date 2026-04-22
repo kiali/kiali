@@ -22,10 +22,10 @@ func prepareTestForK8sInferencePool(pool *k8s_inference_v1.InferencePool, worklo
 	}
 
 	references := K8sInferencePoolReferences{
-		Conf:              conf,
+		IdentityDomain:    config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, ""),
 		K8sHTTPRoutes:     httpRoutes,
 		K8sInferencePools: []*k8s_inference_v1.InferencePool{pool},
-		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(services, conf),
+		KubeServiceHosts:  kubernetes.KubeServiceFQDNs(services, config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")),
 		Namespaces:        []string{pool.Namespace, "different-ns"},
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			pool.Namespace: workloads,

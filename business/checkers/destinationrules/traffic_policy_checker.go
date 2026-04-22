@@ -14,6 +14,7 @@ type TrafficPolicyChecker struct {
 	Cluster          string
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
+	IdentityDomain   string
 	MTLSDetails      kubernetes.MTLSDetails
 }
 
@@ -24,7 +25,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 
 	// Check whether DRs override mTLS.
 	for _, dr := range t.DestinationRules {
-		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.DestinationRules, t.Conf)
+		drSameHosts := sameHostDestinationRules(dr, refdMtls, t.DestinationRules, t.IdentityDomain)
 
 		// Continue if there aren't DestinationRules enabling mTLS non-locally
 		// and pointing to same host as dr.
@@ -56,7 +57,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1.DestinationRule {
 	mtlsDrs := make([]*networking_v1.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, t.Conf)
+		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, t.IdentityDomain)
 		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
 			mtlsDrs = append(mtlsDrs, dr)
 		}
@@ -64,12 +65,12 @@ func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1.Dest
 	return mtlsDrs
 }
 
-func sameHostDestinationRules(dr *networking_v1.DestinationRule, mdrs []*networking_v1.DestinationRule, edrs []*networking_v1.DestinationRule, conf *config.Config) []*networking_v1.DestinationRule {
+func sameHostDestinationRules(dr *networking_v1.DestinationRule, mdrs []*networking_v1.DestinationRule, edrs []*networking_v1.DestinationRule, identityDomain string) []*networking_v1.DestinationRule {
 	shdrs := make([]*networking_v1.DestinationRule, 0, len(mdrs)+len(edrs))
-	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, conf)
+	drHost := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, identityDomain)
 
 	for _, mdr := range mdrs {
-		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, conf)
+		mdrHost := kubernetes.ParseHost(mdr.Spec.Host, dr.Namespace, identityDomain)
 		if mdrHost.Service == "*.local" ||
 			(mdrHost.Cluster == drHost.Cluster && mdrHost.Namespace == drHost.Namespace) {
 			shdrs = append(shdrs, mdr)

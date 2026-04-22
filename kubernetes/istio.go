@@ -201,7 +201,7 @@ type KubeServiceHosts struct {
 // it is applied when a service has no networking.istio.io/exportTo annotation.
 // Pass nil when the mesh config is unavailable (e.g. in unit tests) to treat
 // unannotated services as visible to all namespaces.
-func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaultExportTo []string) KubeServiceHosts {
+func NewKubeServiceHosts(services []core_v1.Service, identityDomain string, defaultExportTo []string) KubeServiceHosts {
 	var nsMap map[string][]string
 	if defaultExportTo != nil {
 		nsMap = make(map[string][]string)
@@ -211,16 +211,16 @@ func NewKubeServiceHosts(services []core_v1.Service, conf *config.Config, defaul
 			}
 		}
 	}
-	return NewKubeServiceHostsWithNamespaceDefaults(services, conf, nsMap)
+	return NewKubeServiceHostsWithNamespaceDefaults(services, identityDomain, nsMap)
 }
 
 // NewKubeServiceHostsWithNamespaceDefaults builds KubeServiceHosts using a precomputed map of
 // namespace -> DefaultServiceExportTo. Use this for multi-primary support: build the map once
 // for unique namespaces (O(namespaces)) instead of resolving per service (O(services)).
 // Pass nil for namespaceToExportTo to treat unannotated services as visible to all namespaces.
-func NewKubeServiceHostsWithNamespaceDefaults(services []core_v1.Service, conf *config.Config, namespaceToExportTo map[string][]string) KubeServiceHosts {
+func NewKubeServiceHostsWithNamespaceDefaults(services []core_v1.Service, identityDomain string, namespaceToExportTo map[string][]string) KubeServiceHosts {
 	entries := make(map[string]*kubeServiceEntry, len(services)*3)
-	clusterDomain := conf.ExternalServices.Istio.IstioIdentityDomain
+	clusterDomain := identityDomain
 
 	for _, svc := range services {
 		entry := &kubeServiceEntry{
@@ -249,8 +249,8 @@ func NewKubeServiceHostsWithNamespaceDefaults(services []core_v1.Service, conf *
 // KubeServiceFQDNs builds a KubeServiceHosts without mesh-config defaults.
 // Use this only in unit tests where the mesh config is not available;
 // production code should call NewKubeServiceHosts with the mesh default.
-func KubeServiceFQDNs(services []core_v1.Service, conf *config.Config) KubeServiceHosts {
-	return NewKubeServiceHosts(services, conf, nil)
+func KubeServiceFQDNs(services []core_v1.Service, identityDomain string) KubeServiceHosts {
+	return NewKubeServiceHosts(services, identityDomain, nil)
 }
 
 func parseExportToAnnotation(annotation string) []string {
@@ -394,20 +394,20 @@ func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 }
 
 // GatewayNames extracts the gateway names for easier matching
-func GatewayNames(gateways []*networking_v1.Gateway, conf *config.Config) map[string]struct{} {
+func GatewayNames(gateways []*networking_v1.Gateway, identityDomain string) map[string]struct{} {
 	var empty struct{}
 	names := make(map[string]struct{})
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace, conf).String()] = empty
+		names[ParseHost(gw.Name, gw.Namespace, identityDomain).String()] = empty
 	}
 	return names
 }
 
 // K8sGatewayNames extracts the gateway names for easier matching
-func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway, conf *config.Config) map[string]k8s_networking_v1.Gateway {
+func K8sGatewayNames(gateways []*k8s_networking_v1.Gateway, identityDomain string) map[string]k8s_networking_v1.Gateway {
 	names := make(map[string]k8s_networking_v1.Gateway)
 	for _, gw := range gateways {
-		names[ParseHost(gw.Name, gw.Namespace, conf).String()] = *gw
+		names[ParseHost(gw.Name, gw.Namespace, identityDomain).String()] = *gw
 	}
 	return names
 }
@@ -440,10 +440,10 @@ func DestinationRuleHasMeshWideMTLSEnabled(destinationRule *networking_v1.Destin
 	return DestinationRuleHasMTLSEnabledForHost("*.local", destinationRule)
 }
 
-func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1.DestinationRule, conf *config.Config) (bool, string) {
+func DestinationRuleHasNamespaceWideMTLSEnabled(namespace string, destinationRule *networking_v1.DestinationRule, identityDomain string) (bool, string) {
 	// Following the suggested procedure to enable namespace-wide mTLS, host might be '*.namespace.svc.cluster.local'
 	// https://istio.io/docs/tasks/security/authn-policy/#namespace-wide-policy
-	nsHost := fmt.Sprintf("*.%s.%s", namespace, conf.ExternalServices.Istio.IstioIdentityDomain)
+	nsHost := fmt.Sprintf("*.%s.%s", namespace, identityDomain)
 	return DestinationRuleHasMTLSEnabledForHost(nsHost, destinationRule)
 }
 

@@ -14,6 +14,7 @@ type AuthorizationPolicyReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Cluster               string
 	Conf                  *config.Config
+	IdentityDomain        string
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            []string
@@ -28,6 +29,7 @@ type AuthorizationPolicyReferences struct {
 func NewAuthorizationPolicyReferences(
 	authorizationPolicies []*security_v1.AuthorizationPolicy,
 	conf *config.Config,
+	identityDomain string,
 	cluster string,
 	rootNamespaces map[string]string,
 	namespace string,
@@ -41,6 +43,7 @@ func NewAuthorizationPolicyReferences(
 		AuthorizationPolicies: authorizationPolicies,
 		Cluster:               cluster,
 		Conf:                  conf,
+		IdentityDomain:        identityDomain,
 		KubeServiceHosts:      kubeServiceHosts,
 		Namespace:             namespace,
 		Namespaces:            namespaces,
@@ -68,7 +71,7 @@ func (n AuthorizationPolicyReferences) References() models.IstioReferencesMap {
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.IdentityDomain)
 						if !fqdn.IsWildcard() {
 							configRef := n.getConfigReferences(fqdn)
 							references.ObjectReferences = append(references.ObjectReferences, configRef...)
@@ -110,7 +113,7 @@ func (n AuthorizationPolicyReferences) getConfigReferences(host kubernetes.Host)
 		for hostIdx := 0; hostIdx < len(vs.Spec.Hosts); hostIdx++ {
 			vHost := vs.Spec.Hosts[hostIdx]
 
-			hostS := kubernetes.ParseHost(vHost, vs.Namespace, n.Conf)
+			hostS := kubernetes.ParseHost(vHost, vs.Namespace, n.IdentityDomain)
 			if hostS.String() == host.String() {
 				result = append(result, models.IstioReference{Name: vs.Name, Namespace: vs.Namespace, ObjectGVK: kubernetes.VirtualServices})
 				continue

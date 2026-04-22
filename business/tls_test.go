@@ -28,6 +28,13 @@ func meshConfig(automTLS bool) *models.MeshConfig {
 	return mesh
 }
 
+func nonDefaultTrustDomainMeshConfig() *models.MeshConfig {
+	mesh := models.NewMeshConfig()
+	mesh.TrustDomain = "example.org"
+	mesh.EnableAutoMtls = wrapperspb.Bool(false)
+	return mesh
+}
+
 var (
 	injectionEnabledLabel          = map[string]string{IstioInjectionLabel: "enabled"}
 	meshConfigWithAutomTLSDisabled = meshConfig(false)
@@ -352,6 +359,49 @@ func TestNamespaceHasPeerAuthnDisabledMtlsDestRule(t *testing.T) {
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, false, t)
 	testNamespaceScenario(MTLSPartiallyEnabled, drs, ps, true, t)
 	testNamespaceScenario(MTLSDisabled, []*networking_v1.DestinationRule{}, ps, true, t)
+}
+
+func TestNamespaceHasMTLSEnabledWithNonDefaultTrustDomain(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = true
+	kubernetes.SetConfig(t, *conf)
+
+	ps := fakeStrictPeerAuthn("default", "bookinfo")
+	drs := []*networking_v1.DestinationRule{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateEmptyDestinationRule("bookinfo", "allow-mtls", "*.bookinfo.svc.example.org")),
+	}
+
+	objs := []runtime.Object{}
+	objs = append(objs, kubernetes.ToRuntimeObjects(ps)...)
+	objs = append(objs, kubernetes.ToRuntimeObjects(drs)...)
+	objs = append(objs, kubernetes.ToRuntimeObjects(fakeTestNamespaces())...)
+	k8s := kubetest.NewFakeK8sClient(objs...)
+	k8s.OpenShift = true
+
+	k8sclients := make(map[string]kubernetes.UserClientInterface)
+	k8sclients[conf.KubernetesConfig.ClusterName] = k8s
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IstiodNamespace: config.IstioNamespaceDefault,
+				ManagedNamespaces: []models.Namespace{
+					{Name: "bookinfo", Cluster: conf.KubernetesConfig.ClusterName},
+					{Name: "foo", Cluster: conf.KubernetesConfig.ClusterName},
+				},
+				MeshConfig:    nonDefaultTrustDomainMeshConfig(),
+				Revision:      "default",
+				RootNamespace: config.IstioNamespaceDefault,
+			}},
+		},
+	}
+
+	tlsService := NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).Build().TLS
+	status, err := tlsService.NamespaceWidemTLSStatus(context.TODO(), "bookinfo", conf.KubernetesConfig.ClusterName)
+	assert.NoError(err)
+	assert.Equal(MTLSEnabled, status.Status)
 }
 
 func TestNamespaceHasDestinationRuleEnabledDifferentNs(t *testing.T) {

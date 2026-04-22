@@ -21,11 +21,11 @@ func TestNoCrashOnEmptyRouteGRPC(t *testing.T) {
 	config.Set(conf)
 
 	typeValidations := K8sGRPCRouteChecker{
-		Conf:          conf,
-		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{},
-		K8sGateways:   []*k8s_networking_v1.Gateway{},
-		Services:      []core_v1.Service{},
-		Namespaces:    models.Namespaces{},
+		IdentityDomain: "svc.cluster.local",
+		K8sGRPCRoutes:  []*k8s_networking_v1.GRPCRoute{},
+		K8sGateways:    []*k8s_networking_v1.Gateway{},
+		Services:       []core_v1.Service{},
+		Namespaces:     models.Namespaces{},
 	}.Check()
 
 	assert.Empty(typeValidations)
@@ -37,7 +37,7 @@ func TestWithoutK8sGatewayGRPC(t *testing.T) {
 	assert := assert.New(t)
 
 	vals := K8sGRPCRouteChecker{
-		Conf: config.Get(),
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.CreateGRPCRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"}),
 			data.CreateGRPCRoute("route2", "bookinfo", "gatewayapi2", []string{"bookinfo"})},
@@ -64,7 +64,7 @@ func TestWithoutServiceGRPC(t *testing.T) {
 		data.CreateFakeMultiServices([]string{"details.bookinfo2.svc.cluster.local"}, "bookinfo2")...)
 
 	vals := K8sGRPCRouteChecker{
-		Conf: conf,
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route1", "bookinfo", "gatewayapi", []string{"bookinfo"})),
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo2", data.CreateGRPCRoute("route2", "bookinfo2", "gatewayapi2", []string{"bookinfo2"}))},
@@ -91,7 +91,7 @@ func TestWithoutReferenceGrantGRPC(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals := K8sGRPCRouteChecker{
-		Conf: conf,
+		IdentityDomain: "svc.cluster.local",
 		K8sGRPCRoutes: []*k8s_networking_v1.GRPCRoute{
 			data.AddBackendRefToGRPCRoute("ratings", "bookinfo", data.CreateGRPCRoute("route1", "bookinfo2", "gatewayapi", []string{"bookinfo2"}))},
 		K8sGateways: []*k8s_networking_v1.Gateway{data.CreateEmptyK8sGateway("gatewayapi", "bookinfo2")},

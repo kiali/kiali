@@ -14,6 +14,7 @@ type ServiceEntryReferences struct {
 	AuthorizationPolicies []*security_v1.AuthorizationPolicy
 	Conf                  *config.Config
 	DestinationRules      []*networking_v1.DestinationRule
+	IdentityDomain        string
 	KubeServiceHosts      kubernetes.KubeServiceHosts
 	Namespace             string
 	Namespaces            []string
@@ -38,7 +39,7 @@ func (n ServiceEntryReferences) References() models.IstioReferencesMap {
 func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEntry) []models.IstioReference {
 	result := make([]models.IstioReference, 0)
 	for _, dr := range n.DestinationRules {
-		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces, n.Conf)
+		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, n.Namespaces, n.IdentityDomain)
 		if !fqdn.IsWildcard() {
 			for _, seHost := range se.Spec.Hosts {
 				if seHost == fqdn.String() {
@@ -59,7 +60,7 @@ func (n ServiceEntryReferences) getConfigReferences(se *networking_v1.ServiceEnt
 					if hostNs == "*" || hostNs == "~" || hostNs == "." || dnsName == "*" {
 						continue
 					}
-					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.Conf)
+					fqdn := kubernetes.ParseHost(dnsName, hostNs, n.IdentityDomain)
 
 					if se.Namespace != hostNs {
 						continue
@@ -92,7 +93,7 @@ func (n ServiceEntryReferences) getAuthPoliciesReferences(se *networking_v1.Serv
 						continue
 					}
 					for _, h := range t.Operation.Hosts {
-						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.Conf)
+						fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.IdentityDomain)
 						if !fqdn.IsWildcard() {
 							for _, seHost := range se.Spec.Hosts {
 								if seHost == fqdn.String() {

@@ -38,6 +38,26 @@ func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svc
 	}
 }
 
+// buildTracingServiceName returns the service name to query the tracing
+// backend. When NamespaceSelector is enabled and the name does not already
+// contain the identity domain suffix, the name is formatted as "app|namespace".
+func (in *TracingService) buildTracingServiceName(ctx context.Context, cluster, namespace, app string) string {
+	identityDomain := in.svc.ResolveIdentityDomain(ctx, cluster)
+	return tracingServiceName(in.conf.ExternalServices.Tracing.NamespaceSelector, identityDomain, namespace, app)
+}
+
+// tracingServiceName contains the pure logic for building a tracing service
+// name so it can be unit-tested without requiring a full SvcService setup.
+// Note: identityDomain is never empty in production (ResolveIdentityDomain
+// always falls back to "svc.cluster.local"), but the empty-string guard
+// keeps the function safe if called from tests or future callers.
+func tracingServiceName(namespaceSelector bool, identityDomain, namespace, app string) string {
+	if namespaceSelector && (identityDomain == "" || !strings.Contains(app, identityDomain)) {
+		return util.BuildNameNSKey(app, namespace)
+	}
+	return app
+}
+
 func (in *TracingService) client() (tracing.ClientInterface, error) {
 	if !in.conf.ExternalServices.Tracing.Enabled {
 		return nil, fmt.Errorf("tracing is not enabled")
@@ -172,7 +192,8 @@ func (in *TracingService) GetAppTraces(ctx context.Context, ns, tracingName, app
 	if err != nil {
 		return nil, err
 	}
-	r, err := client.GetAppTraces(ctx, ns, tracingName, query)
+	serviceName := in.buildTracingServiceName(ctx, query.Cluster, ns, tracingName)
+	r, err := client.GetAppTraces(ctx, ns, serviceName, query)
 	if tracingName != app && r != nil {
 		// Filter by app
 		filter := operationSpanFilter(ctx, ns, app)
@@ -282,12 +303,13 @@ func (in *TracingService) GetTraceDetail(ctx context.Context, traceID string) (t
 	return client.GetTraceDetail(ctx, traceID)
 }
 
-func (in *TracingService) GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (errorTraces int, err error) {
+func (in *TracingService) GetErrorTraces(ctx context.Context, cluster, ns, app string, duration time.Duration) (errorTraces int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return 0, err
 	}
-	return client.GetErrorTraces(ctx, ns, app, duration)
+	serviceName := in.buildTracingServiceName(ctx, cluster, ns, app)
+	return client.GetErrorTraces(ctx, ns, serviceName, duration)
 }
 
 func (in *TracingService) GetStatus(ctx context.Context) (accessible bool, err error) {

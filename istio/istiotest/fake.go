@@ -17,6 +17,8 @@ type FakeDiscovery struct {
 	GetRootNamespaceReturn string
 	// IsControlPlaneReturn is the return value of IsControlPlane().
 	IsControlPlaneReturn bool
+	// MeshErr is the error returned by Mesh(). If non-nil, Mesh() returns (nil, MeshErr).
+	MeshErr error
 	// MeshReturn is the return value of Mesh().
 	MeshReturn models.Mesh
 }
@@ -44,5 +46,8 @@ func (fmd *FakeDiscovery) IsControlPlane(ctx context.Context, cluster, namespace
 }
 
 func (fmd *FakeDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	if fmd.MeshErr != nil {
+		return nil, fmd.MeshErr
+	}
 	return &fmd.MeshReturn, nil
 }

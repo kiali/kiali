@@ -18,7 +18,6 @@ import (
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
@@ -50,7 +49,7 @@ func FilterAuthorizationPoliciesBySelector(workloadSelector string, authorizatio
 // the host argument takes the simplistic form of only "host", you need to provide
 // the hostNamespace argument, which should be set to the namespace of the involved Istio Resource.
 // For the other cases, it is safe to omit it. The other arguments are always mandatory.
-func FilterByHost(host, hostNamespace, serviceName, svcNamespace string, conf *config.Config) bool {
+func FilterByHost(host, hostNamespace, serviceName, svcNamespace, identityDomain string) bool {
 	// Check single name
 	if host == serviceName && hostNamespace == svcNamespace {
 		return true
@@ -65,7 +64,7 @@ func FilterByHost(host, hostNamespace, serviceName, svcNamespace string, conf *c
 	}
 
 	// Check the FQDN. <service>.<namespace>.svc.<zone>
-	if host == fmt.Sprintf("%s.%s.%s", serviceName, svcNamespace, conf.ExternalServices.Istio.IstioIdentityDomain) {
+	if host == fmt.Sprintf("%s.%s.%s", serviceName, svcNamespace, identityDomain) {
 		return true
 	}
 
@@ -89,11 +88,11 @@ func FilterDestinationRulesByHostname(allDr []*networking_v1.DestinationRule, ho
 	return destinationRules
 }
 
-func FilterDestinationRulesByService(allDr []*networking_v1.DestinationRule, namespace string, serviceName string, conf *config.Config) []*networking_v1.DestinationRule {
+func FilterDestinationRulesByService(allDr []*networking_v1.DestinationRule, namespace string, serviceName string, identityDomain string) []*networking_v1.DestinationRule {
 	destinationRules := []*networking_v1.DestinationRule{}
 	for _, destinationRule := range allDr {
 		appendDestinationRule := serviceName == ""
-		if FilterByHost(destinationRule.Spec.Host, destinationRule.Namespace, serviceName, namespace, conf) {
+		if FilterByHost(destinationRule.Spec.Host, destinationRule.Namespace, serviceName, namespace, identityDomain) {
 			appendDestinationRule = true
 		}
 		if appendDestinationRule {
@@ -463,7 +462,7 @@ func FilterVirtualServicesByHostname(allVs []*networking_v1.VirtualService, host
 	return filtered
 }
 
-func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, namespace string, serviceName string, conf *config.Config) []*networking_v1.VirtualService {
+func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, namespace string, serviceName string, identityDomain string) []*networking_v1.VirtualService {
 	filtered := []*networking_v1.VirtualService{}
 	for _, vs := range allVs {
 		appendVirtualService := serviceName == ""
@@ -471,7 +470,7 @@ func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, names
 			for _, httpRoute := range vs.Spec.Http {
 				if httpRoute != nil {
 					for _, dest := range httpRoute.Route {
-						if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, conf) {
+						if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, identityDomain) {
 							appendVirtualService = true
 						}
 					}
@@ -481,7 +480,7 @@ func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, names
 				for _, tcpRoute := range vs.Spec.Tcp {
 					if tcpRoute != nil {
 						for _, dest := range tcpRoute.Route {
-							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, conf) {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, identityDomain) {
 								appendVirtualService = true
 							}
 						}
@@ -492,7 +491,7 @@ func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, names
 				for _, tlsRoute := range vs.Spec.Tls {
 					if tlsRoute != nil {
 						for _, dest := range tlsRoute.Route {
-							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, conf) {
+							if dest.Destination != nil && FilterByHost(dest.Destination.Host, vs.Namespace, serviceName, namespace, identityDomain) {
 								appendVirtualService = true
 							}
 						}
@@ -507,7 +506,7 @@ func FilterVirtualServicesByService(allVs []*networking_v1.VirtualService, names
 	return filtered
 }
 
-func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant, namespace string, serviceName string, conf *config.Config) []*k8s_networking_v1.HTTPRoute {
+func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant, namespace string, serviceName string, identityDomain string) []*k8s_networking_v1.HTTPRoute {
 	filtered := []*k8s_networking_v1.HTTPRoute{}
 	for _, route := range allRoutes {
 		appendRoute := serviceName == ""
@@ -518,7 +517,7 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 					if backendRef.Namespace != nil {
 						backendRefNamespace = string(*backendRef.Namespace)
 					}
-					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace, conf) &&
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace, identityDomain) &&
 						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
 						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sHTTPRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
@@ -528,7 +527,7 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 		}
 		if !appendRoute {
 			for _, hostname := range route.Spec.Hostnames {
-				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace, conf) {
+				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace, identityDomain) {
 					appendRoute = true
 				}
 			}
@@ -540,7 +539,7 @@ func FilterK8sHTTPRoutesByService(allRoutes []*k8s_networking_v1.HTTPRoute, refe
 	return filtered
 }
 
-func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant, namespace string, serviceName string, conf *config.Config) []*k8s_networking_v1.GRPCRoute {
+func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant, namespace string, serviceName string, identityDomain string) []*k8s_networking_v1.GRPCRoute {
 	filtered := []*k8s_networking_v1.GRPCRoute{}
 	for _, route := range allRoutes {
 		appendRoute := serviceName == ""
@@ -551,7 +550,7 @@ func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, refe
 					if backendRef.Namespace != nil {
 						backendRefNamespace = string(*backendRef.Namespace)
 					}
-					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace, conf) &&
+					if string(backendRef.Name) != "" && FilterByHost(string(backendRef.Name), backendRefNamespace, serviceName, namespace, identityDomain) &&
 						// a reference grant should exist to reference service namespace to route namespace, or they are in the same namespace
 						(HasMatchingReferenceGrant(route.Namespace, namespace, K8sGRPCRouteType, ServiceType, referenceGrants) || route.Namespace == namespace) {
 						appendRoute = true
@@ -561,7 +560,7 @@ func FilterK8sGRPCRoutesByService(allRoutes []*k8s_networking_v1.GRPCRoute, refe
 		}
 		if !appendRoute {
 			for _, hostname := range route.Spec.Hostnames {
-				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace, conf) {
+				if FilterByHost(string(hostname), route.Namespace, serviceName, namespace, identityDomain) {
 					appendRoute = true
 				}
 			}
@@ -583,7 +582,7 @@ func FilterK8sInferencePoolByService(allObjects []*k8s_inference_v1.InferencePoo
 	return filtered
 }
 
-func FilterVirtualServiceByRoute(vs *networking_v1.VirtualService, service string, namespace string, conf *config.Config) bool {
+func FilterVirtualServiceByRoute(vs *networking_v1.VirtualService, service string, namespace string, identityDomain string) bool {
 	if vs == nil {
 		return false
 	}
@@ -610,7 +609,7 @@ func FilterVirtualServiceByRoute(vs *networking_v1.VirtualService, service strin
 		}
 	}
 	for _, h := range hosts {
-		if FilterByHost(h, vs.Namespace, service, namespace, conf) {
+		if FilterByHost(h, vs.Namespace, service, namespace, identityDomain) {
 			return true
 		}
 	}

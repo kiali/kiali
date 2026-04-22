@@ -316,6 +316,58 @@ func TestTracesToSpanWaypointWithAmbientTagsDoNotFallbackToAppPrefix(t *testing.
 	assert.Len(spans, 0)
 }
 
+func TestTracingServiceNameNonDefaultDomain(t *testing.T) {
+	cases := map[string]struct {
+		namespaceSelector bool
+		identityDomain    string
+		namespace         string
+		app               string
+		expected          string
+	}{
+		"ns selector off returns app as-is": {
+			namespaceSelector: false,
+			identityDomain:    "svc.example.org",
+			namespace:         "bookinfo",
+			app:               "reviews",
+			expected:          "reviews",
+		},
+		"ns selector on, app lacks domain, returns app.ns": {
+			namespaceSelector: true,
+			identityDomain:    "svc.example.org",
+			namespace:         "bookinfo",
+			app:               "reviews",
+			expected:          "reviews.bookinfo",
+		},
+		"ns selector on, app contains domain, returns app as-is": {
+			namespaceSelector: true,
+			identityDomain:    "svc.example.org",
+			namespace:         "bookinfo",
+			app:               "reviews.bookinfo.svc.example.org",
+			expected:          "reviews.bookinfo.svc.example.org",
+		},
+		"default domain, ns selector on, app lacks domain": {
+			namespaceSelector: true,
+			identityDomain:    "svc.cluster.local",
+			namespace:         "default",
+			app:               "httpbin",
+			expected:          "httpbin.default",
+		},
+		"default domain, ns selector on, app contains domain": {
+			namespaceSelector: true,
+			identityDomain:    "svc.cluster.local",
+			namespace:         "default",
+			app:               "httpbin.default.svc.cluster.local",
+			expected:          "httpbin.default.svc.cluster.local",
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := tracingServiceName(tc.namespaceSelector, tc.identityDomain, tc.namespace, tc.app)
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+}
+
 func TestValidateConfiguration(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()

@@ -22,7 +22,6 @@ func TestValidRefHost(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -42,7 +41,6 @@ func TestMissingGrant(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:         config.Get(),
 		Services:     fakeServices,
 		K8sHTTPRoute: data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
@@ -69,7 +67,6 @@ func TestWrongGrant(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -96,7 +93,6 @@ func TestValidRefHostDefaultNs(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "", data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo", "gatewayapi", []string{"bookinfo"}))),
@@ -116,7 +112,6 @@ func TestInvalidRefHostDefaultNs(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "", data.AddBackendRefToHTTPRoute("reviews", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
@@ -143,7 +138,6 @@ func TestNoValidRefHost(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("ratings", "bookinfo", data.AddBackendRefToHTTPRoute("ratings", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo2"})))),
@@ -176,7 +170,6 @@ func TestInvalidRefHostFQDN(t *testing.T) {
 	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
 
 	vals, valid := NoHostChecker{
-		Conf:               config.Get(),
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews.bookinfo.svc.cluster.local", "", data.AddBackendRefToHTTPRoute("reviews.bookinfo.svc.cluster.local", "", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),

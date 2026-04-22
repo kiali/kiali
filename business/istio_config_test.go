@@ -444,9 +444,10 @@ func TestIsValidHost(t *testing.T) {
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v2", 50), vs)
 	vs = data.AddHttpRoutesToVirtualService(data.CreateHttpRouteDestination("reviews", "v3", 50), vs)
 
-	assert.False(t, models.IsVSValidHost(vs, "test", "", conf))
-	assert.False(t, models.IsVSValidHost(vs, "test", "ratings", conf))
-	assert.True(t, models.IsVSValidHost(vs, "test", "reviews", conf))
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	assert.False(t, models.IsVSValidHost(vs, "test", "", id))
+	assert.False(t, models.IsVSValidHost(vs, "test", "ratings", id))
+	assert.True(t, models.IsVSValidHost(vs, "test", "reviews", id))
 }
 
 func TestHasCircuitBreaker(t *testing.T) {
@@ -468,13 +469,14 @@ func TestHasCircuitBreaker(t *testing.T) {
 	dRule1 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule1)
 	dRule1 = data.AddSubsetToDestinationRule(data.CreateSubset("v2", "v2"), dRule1)
 
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "", ""))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", ""))
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", ""))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v1"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v2"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v3"))
-	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", "v2"))
+	id := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "", "", id))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "", id))
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", "", id))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v1", id))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v2", id))
+	assert.True(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews", "v3", id))
+	assert.False(t, models.HasDRCircuitBreaker(dRule1, "test", "reviews-bad", "v2", id))
 
 	dRule2 := data.CreateEmptyDestinationRule("test", "reviews", "reviews")
 	dRule2 = data.AddSubsetToDestinationRule(data.CreateSubset("v1", "v1"), dRule2)
@@ -490,10 +492,10 @@ func TestHasCircuitBreaker(t *testing.T) {
 		},
 	}
 
-	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", ""))
-	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v1"))
-	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v2"))
-	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews-bad", "v2"))
+	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "", id))
+	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v1", id))
+	assert.True(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews", "v2", id))
+	assert.False(t, models.HasDRCircuitBreaker(dRule2, "test", "reviews-bad", "v2", id))
 }
 
 func TestDeleteIstioConfigDetails(t *testing.T) {
