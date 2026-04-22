@@ -96,11 +96,13 @@ export class SparklineChart extends React.Component<Props, State> {
           idx: idx,
           serieID: [`${this.props.name}-area-${idx}`],
           onClick: () => {
-            if (!this.state.hiddenSeries.delete(idx)) {
-              // Was not already hidden => add to set
-              this.state.hiddenSeries.add(idx);
-            }
-            this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
+            this.setState(prevState => {
+              const next = new Set(prevState.hiddenSeries);
+              if (!next.delete(idx)) {
+                next.add(idx);
+              }
+              return { hiddenSeries: next };
+            });
             return null;
           },
           onMouseOver: props => {

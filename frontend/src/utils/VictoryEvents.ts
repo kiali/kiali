@@ -1,85 +1,82 @@
 import { RawOrBucket, LineInfo } from '../types/VictoryChartInfo';
 
 interface EventItem {
-  legendName: string;
   idx: number;
-  serieID: string[];
+  legendName: string;
   onClick?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
-  onMouseOver?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   onMouseOut?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
+  onMouseOver?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
+  serieID: string[];
 }
 
 export type VCEvent = {
   childName?: string[];
-  target: string;
-  eventKey?: string;
   eventHandlers: EventHandlers;
+  eventKey?: number | string;
+  target: string;
 };
 
 type EventHandlers = {
   onClick?: (event: MouseEvent) => EventMutation[];
-  onMouseOver?: (event: MouseEvent) => EventMutation[];
   onMouseOut?: (event: MouseEvent) => EventMutation[];
+  onMouseOver?: (event: MouseEvent) => EventMutation[];
 };
 
 type EventMutation = {
-  childName: string[];
-  target: string;
+  childName?: string[];
+  eventKey?: string;
   mutation: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
+  target: string;
 };
 
 export const addLegendEvent = (events: VCEvent[], item: EventItem): void => {
-  const eventHandlers: EventHandlers = {};
-  if (item.onClick) {
-    eventHandlers.onClick = e => {
-      e.stopPropagation();
-      return [
+  // Generate separate events for 'data' (symbol) and 'labels' (text) targets,
+  // matching the pattern from PF's getInteractiveLegendEvents utility.
+  const targets: string[] = ['data', 'labels'];
+  for (const target of targets) {
+    const eventHandlers: EventHandlers = {};
+    if (item.onClick) {
+      // Follow the PF interactive-legend pattern: return a single mutation
+      // without childName so it targets the legend item itself, not a sibling
+      // data series. This avoids Victory accumulating cross-component mutation
+      // state that breaks subsequent clicks.
+      eventHandlers.onClick = () => [
         {
-          childName: [item.serieID[0]],
           target: 'data',
-          mutation: props => item.onClick!(props)
-        },
-        {
-          childName: [item.serieID[0]],
-          target: 'data',
-          eventKey: 'all',
-          mutation: () => null
-        }
+          mutation: (props: RawOrBucket<LineInfo>) => {
+            item.onClick!(props);
+            return null;
+          }
+        } as EventMutation
       ];
-    };
+    }
+    if (item.onMouseOver) {
+      eventHandlers.onMouseOver = () => {
+        return [
+          {
+            childName: item.serieID,
+            target: 'data',
+            eventKey: 'all',
+            mutation: (props: RawOrBucket<LineInfo>) => item.onMouseOver!(props)
+          }
+        ];
+      };
+      eventHandlers.onMouseOut = () => {
+        return [
+          {
+            childName: item.serieID,
+            target: 'data',
+            eventKey: 'all',
+            mutation: (props: RawOrBucket<LineInfo>) => (item.onMouseOut ? item.onMouseOut(props) : null)
+          }
+        ];
+      };
+    }
+    events.push({
+      childName: [item.legendName],
+      eventKey: String(item.idx),
+      eventHandlers,
+      target
+    });
   }
-  if (item.onMouseOver) {
-    eventHandlers.onMouseOver = () => {
-      return [
-        {
-          childName: item.serieID,
-          target: 'data',
-          eventKey: 'all',
-          mutation: props => item.onMouseOver!(props)
-        }
-      ];
-    };
-    eventHandlers.onMouseOut = () => {
-      return [
-        {
-          childName: item.serieID,
-          target: 'data',
-          eventKey: 'all',
-          mutation: props => (item.onMouseOut ? item.onMouseOut(props) : null)
-        }
-      ];
-    };
-  }
-  events.push({
-    childName: [item.legendName],
-    target: 'data',
-    eventKey: String(item.idx),
-    eventHandlers: eventHandlers
-  });
-  events.push({
-    childName: [item.legendName],
-    target: 'labels',
-    eventKey: String(item.idx),
-    eventHandlers: eventHandlers
-  });
 };

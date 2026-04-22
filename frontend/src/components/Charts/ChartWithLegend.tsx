@@ -8,7 +8,9 @@ import {
   ChartLabel,
   ChartLegend,
   ChartLine,
-  createContainer
+  createContainer,
+  getInteractiveLegendEvents,
+  getInteractiveLegendItemStyles
 } from '@patternfly/react-charts/victory';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
@@ -201,9 +203,48 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       });
     }
 
-    this.props.data.forEach((s, idx) =>
-      this.registerEvents(events, idx, [`serie-${idx}`, `serie-reg-${idx}`], s.legendItem.name)
-    );
+    const chartNames = (this.props.data.map((_, idx) => [`serie-${idx}`, `serie-reg-${idx}`]) as unknown) as [
+      string | string[]
+    ];
+    const legendEvents = getInteractiveLegendEvents({
+      chartNames,
+      isHidden: (index: number) => this.state.hiddenSeries.has(this.props.data[index]?.legendItem.name),
+      legendName: 'serie-legend',
+      onLegendClick: (props: { index: number }) => {
+        const name = this.props.data[props.index]?.legendItem.name;
+        if (name !== undefined) {
+          this.setState(prevState => {
+            const next = new Set(prevState.hiddenSeries);
+            if (!next.delete(name)) {
+              next.add(name);
+            }
+            return { hiddenSeries: next };
+          });
+        }
+      }
+    });
+    events.push(...((legendEvents as unknown) as VCEvent[]));
+
+    if (this.props.overlay) {
+      addLegendEvent(events, {
+        idx: overlayIdx,
+        legendName: 'serie-legend',
+        serieID: [overlayName],
+        onMouseOver: props => ({
+          style: { ...(props as any).style, strokeWidth: 4, fillOpacity: 0.5 }
+        }),
+        onClick: () => {
+          this.setState(prevState => {
+            const next = new Set(prevState.hiddenSeries);
+            if (!next.delete(overlayName)) {
+              next.add(overlayName);
+            }
+            return { hiddenSeries: next };
+          });
+          return null;
+        }
+      });
+    }
 
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
@@ -212,7 +253,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
 
     if (this.props.overlay) {
-      this.registerEvents(events, overlayIdx, [overlayName], overlayName);
       // Normalization for y-axis display to match y-axis domain of the main data
       // (see https://formidable.com/open-source/victory/gallery/multiple-dependent-axes/)
       const overlayMax = Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y));
@@ -583,14 +623,16 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
   };
 
   private buildFullLegendData = (): LegendItem[] => {
-    return this.props.data.map(s => {
+    return this.props.data.map((s, index) => {
       const name = s.legendItem.name;
+      const hidden = this.state.hiddenSeries.has(name);
 
-      if (this.state.hiddenSeries.has(s.legendItem.name)) {
-        return { name, symbol: { ...s.legendItem.symbol, fill: PFColors.Color200 } };
-      }
-
-      return { ...s.legendItem, name };
+      return {
+        childName: `serie-${index}`,
+        ...s.legendItem,
+        name,
+        ...getInteractiveLegendItemStyles(hidden)
+      };
     });
   };
 
@@ -616,23 +658,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
 
     return filtered;
-  };
-
-  private registerEvents = (events: VCEvent[], idx: number, serieID: string[], serieName: string): void => {
-    addLegendEvent(events, {
-      legendName: 'serie-legend',
-      idx: idx,
-      serieID: serieID,
-      onClick: () => {
-        if (!this.state.hiddenSeries.delete(serieName)) {
-          // Was not already hidden => add to set
-          this.state.hiddenSeries.add(serieName);
-        }
-
-        this.setState({ hiddenSeries: new Set(this.state.hiddenSeries) });
-        return null;
-      }
-    });
   };
 
   private scaledAxisInfo = (data: VCLines<VCDataPoint & T>): ScaleInfo => {
