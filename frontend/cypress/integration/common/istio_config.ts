@@ -6,6 +6,39 @@ import { getGVKTypeString } from 'utils/IstioConfigUtils';
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
+const waitForResourceDeletion = (
+  namespace: string,
+  kind: string,
+  name: string,
+  timeoutMs = 120000,
+  pollIntervalMs = 3000
+): Cypress.Chainable<unknown> => {
+  const startTime = Date.now();
+  const command = `kubectl -n ${namespace} get ${kind} ${name} --ignore-not-found -o name`;
+
+  const waitUntilDeleted = (): Cypress.Chainable<unknown> => {
+    return cy.exec(command, { failOnNonZeroExit: false }).then(result => {
+      const resourceName = result.stdout.trim();
+      if (resourceName === '') {
+        cy.log(`${kind}/${name} was deleted from namespace ${namespace}`);
+        return cy.wrap(null);
+      }
+
+      if (Date.now() - startTime >= timeoutMs) {
+        throw new Error(
+          `Timed out after ${timeoutMs}ms waiting for ${kind}/${name} to be deleted from namespace ${namespace}`
+        );
+      }
+
+      cy.log(`${kind}/${name} still exists in namespace ${namespace}; waiting ${pollIntervalMs}ms before retry`);
+      cy.wait(pollIntervalMs);
+      return waitUntilDeleted();
+    });
+  };
+
+  return waitUntilDeleted();
+};
+
 const labelsStringToJson = (labelsString: string): string => {
   let labelsJson = '';
 
@@ -761,12 +794,8 @@ AfterAll(() => {
     'sh -c \'ISTIO_DIR=$(ls -dt1 ../_output/istio-* 2>/dev/null | head -n1); [ -z "$ISTIO_DIR" ] && exit 0; NET="$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"; [ -f "$NET" ] || exit 0; kubectl apply -n bookinfo -f "$NET"\'',
     { failOnNonZeroExit: false }
   );
-  cy.exec('kubectl -n istio-system get PeerAuthentication default --ignore-not-found -o name').then(result => {
-    expect(result.stdout.trim(), 'No leftover PeerAuthentication default in istio-system').to.eq('');
-  });
-  cy.exec('kubectl -n istio-system get Sidecar default --ignore-not-found -o name').then(result => {
-    expect(result.stdout.trim(), 'No leftover Sidecar default in istio-system').to.eq('');
-  });
+  waitForResourceDeletion('istio-system', 'PeerAuthentication', 'default');
+  waitForResourceDeletion('istio-system', 'Sidecar', 'default');
   // Restart alpha and beta deployments to ensure clean state for subsequent tests
   cy.exec('kubectl rollout restart deployment -n alpha', { failOnNonZeroExit: false });
   cy.exec('kubectl rollout restart deployment -n beta', { failOnNonZeroExit: false });
