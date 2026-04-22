@@ -50,7 +50,6 @@ export class RateChart extends React.Component<Props, State> {
             }
             return { hiddenSeries: next };
           });
-          return null;
         },
         onMouseOver: props => {
           return {

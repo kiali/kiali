@@ -82,8 +82,12 @@ const axisStyle = {
 export const MIN_HEIGHT = 20;
 export const MIN_HEIGHT_YAXIS = 70;
 export const MIN_WIDTH = 275;
+// Total height reserved for the HTML legend area below the chart SVG.
+// Separate from the SVG padding.bottom which controls the gap between
+// the plot area and the bottom edge of the SVG.
 export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
+const CHART_BOTTOM_PADDING = 15;
 
 const moreLegendStyle = kialiStyle({
   display: 'flex',
@@ -96,7 +100,6 @@ const htmlLegendStyle = kialiStyle({
   flexWrap: 'wrap',
   gap: '0 1rem',
   height: `${LEGEND_HEIGHT}px`,
-  marginBottom: '-0.5rem',
   overflow: 'hidden'
 });
 
@@ -105,7 +108,7 @@ const htmlLegendItemStyle = kialiStyle({
   cursor: 'pointer',
   display: 'inline-flex',
   fontSize: `${FONT_SIZE_LEGEND}px`,
-  gap: '4px',
+  gap: '0.25rem',
   userSelect: 'none'
 });
 
@@ -197,7 +200,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
       top: 0,
-      bottom: showLegend ? 15 : 0,
+      bottom: showLegend ? CHART_BOTTOM_PADDING : 0,
       left: 0,
       right: 10 + overlayRightPadding
     };
@@ -393,14 +396,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
         {showLegend && (
           <div className={htmlLegendStyle}>
-            {fullLegendData.map((item, idx) => (
+            {filteredLegendData.map((item, idx) => (
               <span
                 key={`legend-${idx}`}
                 className={htmlLegendItemStyle}
                 onClick={() => this.onToggleSeries(this.props.data[idx]?.legendItem.name)}
               >
-                <svg width="10" height="10">
-                  <rect width="10" height="10" fill={item.symbol.fill} />
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  {this.renderLegendSymbol(item.symbol)}
                 </svg>
                 <span style={{ color: this.state.hiddenSeries.has(item.name) ? PFColors.Color200 : undefined }}>
                   {item.name}
@@ -583,6 +586,23 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
   private handleResize = (): void => {
     if (this.containerRef && this.containerRef.current) {
       this.setState({ width: this.containerRef.current.clientWidth });
+    }
+  };
+
+  private renderLegendSymbol = (symbol: { fill: string; type?: string }): React.ReactNode => {
+    switch (symbol.type) {
+      case 'circle':
+        return <circle cx="5" cy="5" r="5" fill={symbol.fill} />;
+      case 'diamond':
+        return <polygon points="5,0 10,5 5,10 0,5" fill={symbol.fill} />;
+      case 'star':
+        return <polygon points="5,0 6.5,3.5 10,4 7.5,6.5 8,10 5,8 2,10 2.5,6.5 0,4 3.5,3.5" fill={symbol.fill} />;
+      case 'triangleUp':
+        return <polygon points="5,0 10,10 0,10" fill={symbol.fill} />;
+      case 'triangleDown':
+        return <polygon points="0,0 10,0 5,10" fill={symbol.fill} />;
+      default:
+        return <rect width="10" height="10" fill={symbol.fill} />;
     }
   };
 

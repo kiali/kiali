@@ -3,7 +3,7 @@ import { RawOrBucket, LineInfo } from '../types/VictoryChartInfo';
 interface EventItem {
   idx: number;
   legendName: string;
-  onClick?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
+  onClick?: (props: RawOrBucket<LineInfo>) => void;
   onMouseOut?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   onMouseOver?: (props: RawOrBucket<LineInfo>) => Partial<RawOrBucket<LineInfo>> | null;
   serieID: string[];

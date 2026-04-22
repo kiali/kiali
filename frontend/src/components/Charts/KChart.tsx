@@ -32,8 +32,8 @@ export const maximizeButtonStyle: React.CSSProperties = {
 };
 
 const emptyStyle = kialiStyle({
-  padding: '0 0 0 0',
-  margin: '0 0 0 0'
+  padding: '0',
+  margin: '0'
 });
 
 const kchartStyle = kialiStyle({
