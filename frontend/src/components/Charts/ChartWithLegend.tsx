@@ -17,7 +17,7 @@ import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint 
 import { Overlay } from 'types/Overlay';
 import { BrushHandlers, getVoronoiContainerProps } from './Container';
 import { toBuckets } from 'utils/VictoryChartsUtils';
-import { VCEvent } from 'utils/VictoryEvents';
+
 import { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
 import { INTERPOLATION_STRATEGY } from './SparklineChart';
@@ -181,6 +181,12 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
   };
 
+  private handleChartClick = (): void => {
+    if (this.hoveredItem && this.props.onClick) {
+      this.props.onClick(this.hoveredItem as RawOrBucket<O>);
+    }
+  };
+
   private handleToggleLegendExpanded = (): void => {
     this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
   };
@@ -199,22 +205,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       right: 10 + overlayRightPadding,
       top: 0
     };
-
-    const events: VCEvent[] = [];
-
-    if (this.props.onClick) {
-      events.push({
-        target: 'parent',
-        eventHandlers: {
-          onClick: () => {
-            if (this.hoveredItem) {
-              this.props.onClick!(this.hoveredItem as RawOrBucket<O>);
-            }
-            return [];
-          }
-        }
-      });
-    }
 
     let useSecondAxis = showOverlay;
     let normalizedOverlay: RawOrBucket<O>[] = [];
@@ -286,11 +276,10 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const svgHeight = showLegend ? chartHeight - LEGEND_HEIGHT : chartHeight;
     const chart = (
-      <div ref={this.containerRef} style={{ marginTop: 0 }}>
+      <div ref={this.containerRef} style={{ marginTop: 0 }} onClick={this.handleChartClick}>
         <Chart
           width={this.state.width}
           padding={padding}
-          events={events as any[]}
           height={svgHeight}
           containerComponent={containerComponent}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time', y: 'linear' }}
