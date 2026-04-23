@@ -59,6 +59,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
 type State = {
   hiddenSeries: Set<string>;
   legendExpanded: boolean;
+  legendOverflows: boolean;
   width: number;
 };
 
@@ -116,8 +117,8 @@ const legendToggleStyle = kialiStyle({
 export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
-  legendOverflows = false;
   legendRef: HTMLDivElement | null = null;
+  private mountTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(props: Props<T, O>) {
     super(props);
@@ -125,12 +126,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     this.state = {
       hiddenSeries: new Set([overlayName]),
       legendExpanded: false,
+      legendOverflows: false,
       width: 0
     };
   }
 
   componentDidMount(): void {
-    setTimeout(() => {
+    this.mountTimer = setTimeout(() => {
+      this.mountTimer = undefined;
       this.handleResize();
       this.checkLegendOverflow();
       window.addEventListener('resize', this.handleResize);
@@ -142,6 +145,9 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
   }
 
   componentWillUnmount(): void {
+    if (this.mountTimer !== undefined) {
+      clearTimeout(this.mountTimer);
+    }
     window.removeEventListener('resize', this.handleResize);
   }
 
@@ -149,9 +155,8 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     if (this.legendRef && !this.state.legendExpanded) {
       const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
 
-      if (overflows !== this.legendOverflows) {
-        this.legendOverflows = overflows;
-        this.forceUpdate();
+      if (overflows !== this.state.legendOverflows) {
+        this.setState({ legendOverflows: overflows });
       }
     }
   };
@@ -393,9 +398,10 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               className={this.state.legendExpanded ? legendExpandedStyle : legendCollapsedStyle}
               style={{ flex: 1 }}
             >
-              {fullLegendData.map((item, idx) => (
+              {fullLegendData.map(item => (
                 <span
-                  key={`legend-${idx}`}
+                  key={item.name}
+                  aria-pressed={this.state.hiddenSeries.has(item.name)}
                   className={htmlLegendItemStyle}
                   onClick={() => this.handleToggleSeries(item.name)}
                   onKeyDown={e => {
@@ -417,7 +423,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               ))}
             </div>
 
-            {(this.legendOverflows || this.state.legendExpanded) && (
+            {(this.state.legendOverflows || this.state.legendExpanded) && (
               <Tooltip
                 position={TooltipPosition.left}
                 content={
@@ -447,7 +453,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       <div>
         <Tooltip
           position={TooltipPosition.right}
-          content={<div style={{ textAlign: 'left' }}>Increase height of the chart</div>}
+          content={<div style={{ textAlign: 'left' }}>{t('Increase height of the chart')}</div>}
         >
           <Button variant={ButtonVariant.link} isInline>
             <KialiIcon.MoreLegend />
@@ -535,7 +541,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
   private renderCategories = (): React.ReactNode => {
     let domainX = 1;
-    const nbSeries = this.props.data.length - this.state.hiddenSeries.size;
+    const nbSeries = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name)).length;
     const size = ((this.props.sizeRatio ?? 1) * this.state.width) / Math.max(nbSeries, 1);
 
     return this.props.data.map((serie, idx) => {

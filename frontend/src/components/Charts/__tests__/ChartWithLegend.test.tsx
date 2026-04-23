@@ -183,4 +183,78 @@ describe('ChartWithLegend', () => {
     expect(svgs.at(4).find('polygon')).toHaveLength(1);
     expect(svgs.at(5).find('rect')).toHaveLength(1);
   });
+
+  it('sets aria-pressed on legend items reflecting hidden state', () => {
+    const data = makeSeries(['Series A', 'Series B']);
+    const wrapper = mount(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    expect(wrapper.find('[role="button"]').at(0).prop('aria-pressed')).toBe(false);
+
+    wrapper.find('[role="button"]').at(0).simulate('click');
+    wrapper.update();
+
+    expect(wrapper.find('[role="button"]').at(0).prop('aria-pressed')).toBe(true);
+  });
+
+  it('shows toggle button when legendOverflows is true', () => {
+    const data = makeSeries(['Series A', 'Series B']);
+    const wrapper = shallow(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    expect(wrapper.find('Button')).toHaveLength(0);
+
+    wrapper.setState({ legendOverflows: true });
+
+    expect(wrapper.find('Button')).toHaveLength(1);
+  });
+
+  it('does not show toggle button when legend fits in one row', () => {
+    const data = makeSeries(['Series A']);
+    const wrapper = shallow(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    wrapper.setState({ legendOverflows: false });
+    expect(wrapper.find('Button')).toHaveLength(0);
+  });
+
+  it('checkLegendOverflow sets legendOverflows state based on DOM measurement', () => {
+    const data = makeSeries(['Series A', 'Series B']);
+    const wrapper = shallow(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    const instance = wrapper.instance() as any;
+    instance.legendRef = { scrollHeight: 50, clientHeight: 25 };
+    instance.checkLegendOverflow();
+
+    expect(wrapper.state('legendOverflows')).toBe(true);
+
+    instance.legendRef = { scrollHeight: 25, clientHeight: 25 };
+    instance.checkLegendOverflow();
+
+    expect(wrapper.state('legendOverflows')).toBe(false);
+  });
+
+  it('toggles legendExpanded state when toggle button is clicked', () => {
+    const data = makeSeries(['Series A', 'Series B']);
+    const wrapper = shallow(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    wrapper.setState({ legendOverflows: true });
+
+    expect(wrapper.state('legendExpanded')).toBe(false);
+
+    wrapper.find('Button').simulate('click');
+
+    expect(wrapper.state('legendExpanded')).toBe(true);
+
+    wrapper.find('Button').simulate('click');
+
+    expect(wrapper.state('legendExpanded')).toBe(false);
+  });
 });
