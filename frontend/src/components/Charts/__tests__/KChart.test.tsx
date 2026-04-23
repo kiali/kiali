@@ -69,11 +69,12 @@ jest.mock('regression', () => ({
 import { KChart } from '../KChart';
 
 const makeChart = (overrides: Partial<ChartModel> = {}): ChartModel => ({
-  name: 'Test Chart',
-  unit: 'ops',
-  spans: 6,
   chartType: 'line',
   metrics: [],
+  name: 'Test Chart',
+  spans: 6,
+  startCollapsed: false,
+  unit: 'ops',
   xAxis: 'time',
   ...overrides
 });
