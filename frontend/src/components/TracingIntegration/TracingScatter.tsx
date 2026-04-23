@@ -1,10 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import {
-	ChartScatter
-} from '@patternfly/react-charts/victory';
-import { EmptyState, EmptyStateVariant, EmptyStateBody,  } from '@patternfly/react-core';
+import { ChartScatter } from '@patternfly/react-charts/victory';
+import { EmptyState, EmptyStateVariant, EmptyStateBody } from '@patternfly/react-core';
 import { TracingError, JaegerTrace } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import { DurationInSeconds, evalTimeRange } from 'types/Common';
@@ -54,10 +52,10 @@ export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
 const tracingChartStyle = kialiStyle({
-  paddingTop: 15,
-  paddingLeft: 25,
-  paddingRight: 25,
-  paddingBottom: 15
+  paddingBottom: '0.9375rem',
+  paddingLeft: '1.5625rem',
+  paddingRight: '1.5625rem',
+  paddingTop: '0.9375rem'
 });
 
 const emptyStyle = kialiStyle({
@@ -65,7 +63,6 @@ const emptyStyle = kialiStyle({
   justifyContent: 'center',
   alignItems: 'center',
   overflow: 'hidden',
-  // fix height + padding
   height: '350px',
   textAlign: 'center'
 });
@@ -86,7 +83,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
   renderFetchEmpty = (title, msg): JSX.Element => {
     return (
       <div className={emptyStyle}>
-        <EmptyState  headingLevel="h5"   titleText={<>{title}</>} variant={EmptyStateVariant.sm} data-test="empty-traces">
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm} data-test="empty-traces">
           <EmptyStateBody>{msg}</EmptyStateBody>
         </EmptyState>
       </div>
@@ -164,7 +161,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
       this.renderFetchEmpty('Error fetching traces', this.props.errorFetchTraces![0].msg)
     ) : this.props.traces.length > 0 ? (
       <div data-test="tracing-scatterplot" className={tracingChartStyle}>
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: '1.25rem' }}>
           <ChartWithLegend<Datapoint, JaegerLineInfo>
             data={[successTraces, errorTraces]}
             fill={true}
