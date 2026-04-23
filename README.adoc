@@ -317,6 +317,27 @@ make cypress-gui
 
 Note that `make cypress-gui` runs the Cypress GUI, enabling the selection of individual tests to run. To execute the entire test suite in headless mode, use the `cypress-run` target instead.
 
+=== AI-Assisted Development Tooling
+
+The link:https://github.com/kiali/ai-tools[kiali/ai-tools] repository contains shared Cursor rules and AI configuration used across Kiali repositories. To use them, clone the repo alongside the other Kiali repositories and create a symlink, similar to how the operator repo is linked:
+
+[source,shell]
+----
+cd $KIALI_SOURCES
+git clone https://github.com/kiali/ai-tools.git
+ln -s $KIALI_SOURCES/ai-tools/cursor/.cursor/rules kiali/.cursor/rules
+----
+
+This makes the shared Cursor rules (`.mdc` files) available in the Kiali workspace. The symlink is gitignored — each developer sets it up locally.
+
+==== Code Reviewer Plugin
+
+The project includes configuration for an AI-powered code review pipeline under `.cursor/code-reviewer/` and `.claude/code-reviewer/`. The pipeline runs three parallel review phases — adversarial (bugs, security, architecture), style (convention enforcement against the project's style guide), and testing (coverage gaps, test quality) — then consolidates findings into a single report with structured IDs and a verdict.
+
+For Cursor users, the review pipeline is activated by typing `/code-reviewer:review` once the `ai-tools` symlink above is in place.
+
+For Claude Code users, the code-reviewer plugin must be installed separately from link:https://github.com/openshift-service-mesh/ci-utils/tree/main/plugins/code-reviewer[openshift-service-mesh/ci-utils]. Once installed, run `/code-reviewer:review` to review your branch changes.
+
 === Debugging Server Backend
 
 ==== VisualStudio Code
