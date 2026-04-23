@@ -17,7 +17,7 @@ import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint 
 import { Overlay } from 'types/Overlay';
 import { BrushHandlers, getVoronoiContainerProps } from './Container';
 import { toBuckets } from 'utils/VictoryChartsUtils';
-
+import { VCEvent } from 'utils/VictoryEvents';
 import { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
 import { INTERPOLATION_STRATEGY } from './SparklineChart';
@@ -181,12 +181,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
   };
 
-  private handleChartClick = (): void => {
-    if (this.hoveredItem && this.props.onClick) {
-      this.props.onClick(this.hoveredItem as RawOrBucket<O>);
-    }
-  };
-
   private handleToggleLegendExpanded = (): void => {
     this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
   };
@@ -251,6 +245,30 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
 
+    const events: VCEvent[] = [];
+
+    if (this.props.onClick) {
+      // Register click events directly on data series so Victory provides the
+      // clicked datum synchronously, avoiding the race where hoveredItem is set
+      // asynchronously through the tooltip mount lifecycle.
+      const serieNames = filteredData.map((_, idx) => `serie-${idx}`);
+      const onClick = this.props.onClick;
+
+      // Victory data-level handlers receive (event, victoryProps) but the VCEvent
+      // type only declares (event).  We cast to any to bridge the mismatch.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dataClickHandler: any = (_evt: MouseEvent, victoryProps: { datum: RawOrBucket<O> }) => {
+        onClick(victoryProps.datum);
+        return [];
+      };
+
+      events.push({
+        childName: serieNames,
+        target: 'data',
+        eventHandlers: { onClick: dataClickHandler }
+      });
+    }
+
     const voronoiProps = getVoronoiContainerProps(labelComponent, () => false);
 
     let containerComponent: React.ReactElement;
@@ -276,10 +294,11 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const svgHeight = showLegend ? chartHeight - LEGEND_HEIGHT : chartHeight;
     const chart = (
-      <div ref={this.containerRef} style={{ marginTop: 0 }} onClick={this.handleChartClick}>
+      <div ref={this.containerRef} style={{ marginTop: 0 }}>
         <Chart
           width={this.state.width}
           padding={padding}
+          events={events as any[]}
           height={svgHeight}
           containerComponent={containerComponent}
           scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time', y: 'linear' }}
