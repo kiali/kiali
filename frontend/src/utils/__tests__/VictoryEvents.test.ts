@@ -30,7 +30,7 @@ describe('addLegendEvent', () => {
     }
   });
 
-  it('should invoke onClick callback exactly once per click', () => {
+  it('should invoke onClick callback exactly once per click on both data and labels targets', () => {
     const clickSpy = jest.fn();
     const events: VCEvent[] = [];
     addLegendEvent(events, {
@@ -43,10 +43,19 @@ describe('addLegendEvent', () => {
     const fakeMouseEvent = {} as MouseEvent;
     const fakeProps = {} as any;
 
-    const mutations = events[0].eventHandlers.onClick!(fakeMouseEvent);
-    expect(mutations).toHaveLength(1);
+    // Verify data target (events[0])
+    const dataMutations = events[0].eventHandlers.onClick!(fakeMouseEvent);
+    expect(dataMutations).toHaveLength(1);
+    dataMutations[0].mutation(fakeProps);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledWith(fakeProps);
 
-    mutations[0].mutation(fakeProps);
+    clickSpy.mockClear();
+
+    // Verify labels target (events[1]) behaves identically
+    const labelsMutations = events[1].eventHandlers.onClick!(fakeMouseEvent);
+    expect(labelsMutations).toHaveLength(1);
+    labelsMutations[0].mutation(fakeProps);
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledWith(fakeProps);
   });
@@ -101,6 +110,20 @@ describe('addLegendEvent', () => {
     expect(overMutations).toHaveLength(1);
     expect(overMutations[0].childName).toEqual(['serie-1', 'serie-reg-1']);
     expect(overMutations[0].eventKey).toBe('all');
+  });
+
+  it('should return null from onMouseOut mutation when onMouseOut callback is not provided', () => {
+    const events: VCEvent[] = [];
+    addLegendEvent(events, {
+      idx: 0,
+      legendName: 'legend',
+      serieID: ['serie-0'],
+      onMouseOver: () => ({ style: { fill: 'red' } })
+    });
+
+    const outMutations = events[0].eventHandlers.onMouseOut!({} as MouseEvent);
+    expect(outMutations).toHaveLength(1);
+    expect(outMutations[0].mutation({} as any)).toBeNull();
   });
 
   it('should not register click handler when onClick is not provided', () => {

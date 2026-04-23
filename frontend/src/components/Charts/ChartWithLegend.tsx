@@ -26,6 +26,7 @@ import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/rea
 import regression from 'regression';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { t } from 'utils/I18nUtils';
 import { VictoryVoronoiContainer } from 'victory-voronoi-container';
 
 type Props<T extends RichDataPoint, O extends LineInfo> = {
@@ -118,7 +119,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
   hoveredItem?: VCDataPoint;
   legendOverflows = false;
   legendRef: HTMLDivElement | null = null;
-  mouseOnLegend = false;
 
   constructor(props: Props<T, O>) {
     super(props);
@@ -177,7 +177,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
   };
 
-  private onToggleLegendExpanded = (): void => {
+  private handleToggleLegendExpanded = (): void => {
     this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
   };
 
@@ -190,10 +190,10 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
-      top: 0,
       bottom: showLegend ? CHART_BOTTOM_PADDING : 0,
       left: 0,
-      right: 10 + overlayRightPadding
+      right: 10 + overlayRightPadding,
+      top: 0
     };
 
     const events: VCEvent[] = [];
@@ -257,7 +257,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
     const filteredData = this.props.data.filter(s => !this.state.hiddenSeries.has(s.legendItem.name));
 
-    const voronoiProps = getVoronoiContainerProps(labelComponent, () => this.mouseOnLegend);
+    const voronoiProps = getVoronoiContainerProps(labelComponent, () => false);
 
     let containerComponent: React.ReactElement;
 
@@ -399,6 +399,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                   key={`legend-${idx}`}
                   className={htmlLegendItemStyle}
                   onClick={() => this.handleToggleSeries(item.name)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      this.handleToggleSeries(item.name);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10">
                     {this.renderLegendSymbol(item.symbol)}
@@ -415,7 +423,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                 position={TooltipPosition.left}
                 content={
                   <div style={{ textAlign: 'left' }}>
-                    {this.state.legendExpanded ? 'Collapse legend' : 'Show full legend'}
+                    {this.state.legendExpanded ? t('Collapse legend') : t('Show full legend')}
                   </div>
                 }
               >
@@ -423,7 +431,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                   variant={ButtonVariant.link}
                   className={legendToggleStyle}
                   isInline
-                  onClick={this.onToggleLegendExpanded}
+                  onClick={this.handleToggleLegendExpanded}
                 >
                   <KialiIcon.MoreLegend />
                 </Button>

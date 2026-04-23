@@ -43,8 +43,8 @@ const kchartStyle = kialiStyle({
   marginTop: '0.5rem'
 });
 
-// 24px (title + toolbar) + 20px (margin) + 15px (padding) + 15px (padding)
-const titlePadding = 64;
+// ~8px (kchartStyle top margin) + ~24px (title + toolbar) + 20px (chart container margin)
+const titlePadding = 52;
 
 type State = {
   collapsed: boolean;

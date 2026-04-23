@@ -141,7 +141,8 @@ const generateRandomSeries = (
   extraLabels?: Record<string, string>,
   stat?: string
 ): Array<Record<string, unknown>> => {
-  const count = 1 + Math.floor(Math.random() * 4);
+  const hash = metricName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const count = 1 + (hash % 4);
 
   return workloadNames.slice(0, count).map((wl, i) => ({
     datapoints: generateDatapoints(baseValue * (1 + i * 0.15), variance),
