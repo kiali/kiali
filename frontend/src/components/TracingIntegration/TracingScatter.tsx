@@ -52,10 +52,10 @@ export type JaegerLineInfo = LineInfo & { trace: JaegerTrace };
 type Datapoint = VCDataPoint & JaegerLineInfo;
 
 const tracingChartStyle = kialiStyle({
-  paddingBottom: '0.9375rem',
-  paddingLeft: '1.5625rem',
-  paddingRight: '1.5625rem',
-  paddingTop: '0.9375rem'
+  paddingBottom: '1rem',
+  paddingLeft: '1.5rem',
+  paddingRight: '1.5rem',
+  paddingTop: '1rem'
 });
 
 const emptyStyle = kialiStyle({

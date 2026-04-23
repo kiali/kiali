@@ -84,7 +84,6 @@ export const MIN_HEIGHT = 20;
 export const MIN_HEIGHT_YAXIS = 70;
 export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
-const FONT_SIZE_LEGEND = '0.875rem';
 const CHART_BOTTOM_PADDING = 15;
 
 const legendCollapsedStyle = kialiStyle({
@@ -105,7 +104,7 @@ const htmlLegendItemStyle = kialiStyle({
   alignItems: 'center',
   cursor: 'pointer',
   display: 'inline-flex',
-  fontSize: FONT_SIZE_LEGEND,
+  fontSize: '0.875rem',
   gap: '0.25rem',
   userSelect: 'none'
 });
