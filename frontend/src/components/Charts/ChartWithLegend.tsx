@@ -57,7 +57,7 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
 
 type State = {
   hiddenSeries: Set<string>;
-  showMoreLegend: boolean;
+  legendExpanded: boolean;
   width: number;
 };
 
@@ -86,18 +86,18 @@ export const LEGEND_HEIGHT = 25;
 const FONT_SIZE_LEGEND = 14;
 const CHART_BOTTOM_PADDING = 15;
 
-const moreLegendStyle = kialiStyle({
-  display: 'flex',
-  marginTop: '0.25rem',
-  marginLeft: 'auto'
-});
-
-const htmlLegendStyle = kialiStyle({
+const legendCollapsedStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '0 1rem',
   height: `${LEGEND_HEIGHT}px`,
   overflow: 'hidden'
+});
+
+const legendExpandedStyle = kialiStyle({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '0 1rem'
 });
 
 const htmlLegendItemStyle = kialiStyle({
@@ -109,53 +109,53 @@ const htmlLegendItemStyle = kialiStyle({
   userSelect: 'none'
 });
 
-const overlayLegendStyle = kialiStyle({
-  display: 'flex',
-  flexDirection: 'column',
-  flexWrap: 'wrap',
-  opacity: 0.7,
-  overflow: 'auto',
-  position: 'relative'
-});
-
-const fullLegendStyle = kialiStyle({
-  color: PFColors.White,
-  margin: 'auto',
-  $nest: {
-    '& > div': {
-      display: 'inline-block',
-      marginRight: '0.25rem',
-      width: '0.5rem',
-      height: '0.5rem'
-    }
-  }
+const legendToggleStyle = kialiStyle({
+  marginLeft: 'auto'
 });
 
 export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
+  legendOverflows = false;
+  legendRef: HTMLDivElement | null = null;
   mouseOnLegend = false;
 
   constructor(props: Props<T, O>) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
     this.state = {
-      width: 0,
       hiddenSeries: new Set([overlayName]),
-      showMoreLegend: false
+      legendExpanded: false,
+      width: 0
     };
   }
 
   componentDidMount(): void {
     setTimeout(() => {
       this.handleResize();
+      this.checkLegendOverflow();
       window.addEventListener('resize', this.handleResize);
     });
+  }
+
+  componentDidUpdate(): void {
+    this.checkLegendOverflow();
   }
 
   componentWillUnmount(): void {
     window.removeEventListener('resize', this.handleResize);
   }
+
+  private checkLegendOverflow = (): void => {
+    if (this.legendRef && !this.state.legendExpanded) {
+      const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
+
+      if (overflows !== this.legendOverflows) {
+        this.legendOverflows = overflows;
+        this.forceUpdate();
+      }
+    }
+  };
 
   private onTooltipClose = (): void => {
     if (this.props.onTooltipClose) {
@@ -177,19 +177,13 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     }
   };
 
-  private onShowMoreLegend = (): void => {
-    this.setState(prevState => {
-      return {
-        showMoreLegend: !prevState.showMoreLegend
-      };
-    });
+  private onToggleLegendExpanded = (): void => {
+    this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
   };
 
   render(): React.ReactNode {
     const scaleInfo = this.scaledAxisInfo(this.props.data);
     const fullLegendData = this.buildFullLegendData();
-    const filteredLegendData = this.buildFilteredLegendData(fullLegendData);
-    const showMoreLegend = fullLegendData.length > filteredLegendData.length;
     const chartHeight = this.props.chartHeight ?? 300;
     const showOverlay = (this.props.overlay && this.props.showSpans) ?? false;
     const overlayRightPadding = showOverlay ? 15 : 0;
@@ -392,52 +386,49 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
         </Chart>
 
         {showLegend && (
-          <div className={htmlLegendStyle}>
-            {filteredLegendData.map((item, idx) => (
-              <span
-                key={`legend-${idx}`}
-                className={htmlLegendItemStyle}
-                onClick={() => this.handleToggleSeries(item.name)}
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10">
-                  {this.renderLegendSymbol(item.symbol)}
-                </svg>
-                <span style={{ color: this.state.hiddenSeries.has(item.name) ? PFColors.Color200 : undefined }}>
-                  {item.name}
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {showMoreLegend && showLegend && (
-          <Tooltip position={TooltipPosition.left} content={<div style={{ textAlign: 'left' }}>Show full legend</div>}>
-            <Button
-              variant={ButtonVariant.link}
-              className={moreLegendStyle}
-              isInline
-              onClick={() => this.onShowMoreLegend()}
+          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+            <div
+              ref={ref => {
+                this.legendRef = ref;
+              }}
+              className={this.state.legendExpanded ? legendExpandedStyle : legendCollapsedStyle}
+              style={{ flex: 1 }}
             >
-              <KialiIcon.MoreLegend />
-            </Button>
-          </Tooltip>
-        )}
+              {fullLegendData.map((item, idx) => (
+                <span
+                  key={`legend-${idx}`}
+                  className={htmlLegendItemStyle}
+                  onClick={() => this.handleToggleSeries(item.name)}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10">
+                    {this.renderLegendSymbol(item.symbol)}
+                  </svg>
+                  <span style={{ color: this.state.hiddenSeries.has(item.name) ? PFColors.Color200 : undefined }}>
+                    {item.name}
+                  </span>
+                </span>
+              ))}
+            </div>
 
-        {this.state.showMoreLegend && (
-          <div
-            style={{
-              width: this.state.width,
-              height: svgHeight,
-              top: -(svgHeight + LEGEND_HEIGHT)
-            }}
-            className={overlayLegendStyle}
-          >
-            {fullLegendData.map((ld: LegendItem, idx: number) => (
-              <div key={`full_legend_${idx}`} className={fullLegendStyle}>
-                <div style={{ backgroundColor: ld.symbol.fill }}></div>
-                {ld.name}
-              </div>
-            ))}
+            {(this.legendOverflows || this.state.legendExpanded) && (
+              <Tooltip
+                position={TooltipPosition.left}
+                content={
+                  <div style={{ textAlign: 'left' }}>
+                    {this.state.legendExpanded ? 'Collapse legend' : 'Show full legend'}
+                  </div>
+                }
+              >
+                <Button
+                  variant={ButtonVariant.link}
+                  className={legendToggleStyle}
+                  isInline
+                  onClick={this.onToggleLegendExpanded}
+                >
+                  <KialiIcon.MoreLegend />
+                </Button>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
@@ -626,30 +617,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
       return { ...s.legendItem, name };
     });
-  };
-
-  private buildFilteredLegendData = (fullLegendData: LegendItem[]): LegendItem[] => {
-    // 30px == "more legend" left button width
-    // 10px == "more legend" left padding
-    const maxWidth = this.state.width - 30 - 10;
-    const filtered: LegendItem[] = [];
-    let currentWidth = 0;
-
-    for (let i = 0; i < fullLegendData.length; i++) {
-      const item = fullLegendData[i];
-      // 12px == legend icon + space
-      // 7px == char size
-      // 15px == right padding
-      currentWidth += 12 + item.name.length * 7 + 15;
-
-      if (currentWidth >= maxWidth) {
-        break;
-      }
-
-      filtered.push(item);
-    }
-
-    return filtered;
   };
 
   private scaledAxisInfo = (data: VCLines<VCDataPoint & T>): ScaleInfo => {
