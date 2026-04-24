@@ -79,4 +79,5 @@ Flag: string literals in source code that resemble tokens, passwords, API keys, 
 
 | Date | Change | Trigger |
 |------|--------|---------|
+| 2026-04-24 | Refresh: verify auth/RBAC patterns current, no changes needed | /code-reviewer:setup (refresh) |
 | 2026-04-08 | Initial generation | /code-reviewer:setup |

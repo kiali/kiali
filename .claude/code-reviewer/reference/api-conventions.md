@@ -126,4 +126,5 @@ Flag:
 
 | Date | Change | Trigger |
 |------|--------|---------|
+| 2026-04-24 | Refresh: verify patterns current, no changes needed | /code-reviewer:setup (refresh) |
 | 2026-04-08 | Initial generation | /code-reviewer:setup |

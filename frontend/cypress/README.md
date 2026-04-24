@@ -123,6 +123,20 @@ cypress/
     * We want to refactor broken code and if its heavily used, move it into a custom command file (cypress/support/commands.ts) - i.e. `cy.login()`, `cy.kiali_apply_config()` lives there
 5) Test case execution should be all green, you are ready to commit your test case. You might want verify whole regression run locally - so you did not introduce any breaking changes in your PR
 
+## Gherkin Linting
+
+Feature files are linted using `gherkin-lint`. Run before committing:
+
+```bash
+yarn lint:gherkin
+```
+
+Configuration is in `frontend/.gherkin-lintrc`. Key enforced rules:
+- No files without scenarios
+- No unnamed features or scenarios  
+- No scenario outlines without examples
+- No empty backgrounds or files
+
 ## Performance Tests
 
 These tests coarsely measure metrics such as page load time. They are meant to give a general baseline of performance but are not useful for benchmarking.  This is roughly how to use the tests:
