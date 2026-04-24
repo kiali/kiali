@@ -56,15 +56,14 @@ export const isParentKiosk = (kiosk: string): boolean => {
   return kiosk.length > 0 && kiosk !== 'true';
 };
 
-// Send a message to the parent context so it can handle navigation.
-// In an iframe the target is window.top; otherwise (e.g. OSSMC dynamic plugin
-// running in the same window) the target is window itself.
-// This is safe even if kiosk holds an attacker-supplied origin: the browser's
-// postMessage origin check will reject delivery when targetOrigin doesn't match
-// the recipient window's actual origin.
+// Some embedders can run in the same window (e.g., OSSMC plugin) rather than
+// in an iframe, so we must target window itself there instead of window.top.
+// Security: the browser's postMessage rejects delivery when a specific
+// targetOrigin doesn't match the recipient's actual origin, so an
+// attacker-supplied ?kiosk=https://evil.com is harmless.
 const sendParentMessage = (msg: string): void => {
   const targetOrigin = store.getState().globalState.kiosk;
-  if (!isParentKiosk(targetOrigin)) {
+  if (!isParentKiosk(targetOrigin) || targetOrigin === '*') {
     return;
   }
 
