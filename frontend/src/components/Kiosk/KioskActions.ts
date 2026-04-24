@@ -63,6 +63,7 @@ export const isParentKiosk = (kiosk: string): boolean => {
 // attacker-supplied ?kiosk=https://evil.com is harmless.
 const sendParentMessage = (msg: string): void => {
   const targetOrigin = store.getState().globalState.kiosk;
+
   if (!isParentKiosk(targetOrigin) || targetOrigin === '*') {
     return;
   }
