@@ -36,8 +36,11 @@ import { Show } from 'types/Common';
 import { ApiError } from 'types/Api';
 import { router } from '../../app/History';
 import { Paths } from '../../config';
-import { isParentKiosk, kioskOverviewAction as kioskAction } from '../../components/Kiosk/KioskActions';
-import { store } from '../../store/ConfigStore';
+import {
+  isParentKiosk,
+  kioskNavigateAction,
+  kioskOverviewAction as kioskAction
+} from '../../components/Kiosk/KioskActions';
 import { setAIContext } from 'helpers/ChatAI';
 import { KialiDispatch } from 'types/Redux';
 import { t } from 'utils/I18nUtils';
@@ -154,11 +157,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
     }
     showInParent += `&duration=${String(duration)}&refresh=${refreshInterval}`;
 
-    // Use the same sendParentMessage logic from KioskActions
-    const targetOrigin = store.getState().globalState.kiosk;
-    if (isParentKiosk(targetOrigin)) {
-      window.top?.postMessage(showInParent, targetOrigin);
-    }
+    kioskNavigateAction(showInParent);
   };
 
   constructor(props: NamespacesProps) {
