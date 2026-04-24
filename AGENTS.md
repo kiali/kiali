@@ -202,6 +202,18 @@ title = t('Traffic Graph');
 
 For components that don't re-render on language change, add language to Redux props.
 
+#### Components
+
+- **Functional components**: New components must use functional components with hooks. Do not introduce class components (`React.Component`); they are legacy. Existing class components can be refactored to functional components when making significant changes to them.
+- **`data-test` attributes**: Add `data-test` attributes to interactive or identifiable elements for Cypress testability (e.g., `<Button data-test="confirm-delete">`). Tests use `cy.getBySel('name')` to select these.
+
+#### Styling
+
+- **`kialiStyle`** (`styles/StyleUtils.ts`) is the standard way to define component styles. Use it to generate class names applied via `className`. SCSS Modules are only for global CSS variable definitions or large third-party CSS.
+- **`className` over `style`**: Always prefer `className` (via `kialiStyle`) over the React inline `style` prop.
+- **PatternFly design token enums**: Use `PFSpacer` (`styles/PfSpacer.ts`) for spacing, `PFFontSize`/`PFFontWeight` (`styles/PfTypography.ts`) for typography, and `PFColors` (`components/Pf/PfColors.tsx`) for colors. Prefer these over raw `var(--pf-...)` strings or hardcoded values.
+- **`rem` over `px`**: When no PF token fits, use `rem` for margin, padding, gap, and font sizes. Use `px` only for large fixed layout dimensions (e.g., `height: 300px`).
+
 ---
 
 ## Building and Testing

@@ -362,23 +362,9 @@ labelsInfo = t('{{count}} label', {
 
 Integration testing is done with cypress. More information can be found link:./cypress/README.md[here].
 
-=== Styling
-https://www.patternfly.org/[PatternFly] is the main UI components framework. It defines style based on SASS preprocessor.
-All Patternfly build assets are imported from patternfly library.
-
-Kiali uses two ways to add custom styles to any React component:
-
-1. https://typestyle.github.io/[Typestyle]: Define dynamic styling with Typescript in a declarative, conflict-free and reusable way
-
-2. https://github.com/css-modules/css-modules[CSS Modules]: CSS file in which all class names and animation names are scoped locally.
-
-All styles defined by these two approaches are scoped to their respective component, providing encapsulation without affecting any styling defined outside of the component.
-
-Recommended option in Kiali is Typestyle since it provides more flexibility and utilities than CSS modules. In case of big CSS styles (e.g. slider component) or definition of CSS variables (not supported by Typestyle), then CSS modules is the preferred method.
-
 === Style Code Guide
 
-See the link:https://github.com/kiali/kiali/blob/master/STYLE_GUIDE.adoc#frontend-typescript[STYLE CODE GUIDE file].
+For component conventions, styling rules, and coding patterns, see the link:https://github.com/kiali/kiali/blob/master/STYLE_GUIDE.adoc#frontend-typescript[STYLE CODE GUIDE].
 
 === Testing
 To run the tests, the standard command `yarn test` is valid,
