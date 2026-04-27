@@ -17,9 +17,13 @@ func Execute(
 	namespace := mcputil.GetStringArg(args, "namespace")
 	resourceName := mcputil.GetStringArg(args, "resourceName")
 
-	namespaceInfo, err := mcputil.CheckNamespaceAccess(kialiInterface.Request, kialiInterface.Conf, kialiInterface.KialiCache, kialiInterface.Discovery, kialiInterface.ClientFactory, namespace, clusterName)
+	if nsErrMsg, nsCode := mcputil.ValidateNamespaceAccess(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, namespace, clusterName); nsErrMsg != "" {
+		return nsErrMsg, nsCode
+	}
+
+	namespaceInfo, err := kialiInterface.BusinessLayer.Namespace.GetClusterNamespace(kialiInterface.Request.Context(), namespace, clusterName)
 	if err != nil {
-		return err.Error(), http.StatusForbidden
+		return err.Error(), http.StatusInternalServerError
 	}
 	params := models.IstioMetricsQuery{Cluster: clusterName, Namespace: namespace}
 

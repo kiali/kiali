@@ -42,7 +42,7 @@ func mockPrometheusForGraph(promAPI *prometheustest.PromAPIMock) {
 	promAPI.On("Buildinfo", mock.Anything).Return(prom_v1.BuildinfoResult{}, nil)
 }
 
-// reqWithAuth sets auth info on the request context so CheckNamespaceAccess can resolve user clients.
+// reqWithAuth sets auth info on the request context so ValidateNamespaceAccess can resolve user clients.
 func reqWithAuth(req *http.Request, conf *config.Config, token string) *http.Request {
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: token}}
 	ctx := authentication.SetAuthInfoContext(req.Context(), authInfo)

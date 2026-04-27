@@ -13,11 +13,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
@@ -34,25 +30,6 @@ func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
 	} else {
 		return nil, errors.New("authInfo missing from the request context")
 	}
-}
-
-func CheckNamespaceAccess(r *http.Request, conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, namespace string, cluster string) (*models.Namespace, error) {
-	authInfos, err := getAuthInfo(r)
-	if err != nil {
-		return nil, err
-	}
-
-	userClients, err := clientFactory.GetClients(authInfos)
-	if err != nil {
-		return nil, errors.New("an error occurred while attempting to use your session token, check your session token and the Kiali server logs")
-	}
-
-	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
-	ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
-	if err != nil {
-		return nil, errors.New("cannot access namespace data: " + err.Error())
-	}
-	return ns, nil
 }
 
 func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
