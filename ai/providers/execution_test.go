@@ -14,8 +14,10 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func newTestKialiInterface(t *testing.T) *mcputil.KialiInterface {
@@ -92,6 +94,39 @@ func TestExecuteToolCallsInParallel_ExcludedToolGetReferencedDocs(t *testing.T) 
 	assert.Equal(t, "get_referenced_docs", results[0].Message.Name)
 	assert.Greater(t, len(results[0].ReferencedDocs), 0, "get_referenced_docs should produce referenced docs")
 	assert.Contains(t, results[0].Message.Content, "Documentation links")
+}
+
+func TestExecuteToolCallsInParallel_ExcludedToolGetActionUIErrorIsSurfaced(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient()).Build()
+	ki := &mcputil.KialiInterface{
+		Request:       httptest.NewRequest(http.MethodPost, "/", nil),
+		Conf:          conf,
+		BusinessLayer: businessLayer,
+	}
+	toolCalls := []mcp.ToolsProcessor{
+		{
+			Name: "get_action_ui",
+			Args: map[string]any{
+				"resourceType": "workload",
+				"namespaces":   "does-not-exist",
+			},
+			ToolCallID: "tc-1",
+		},
+	}
+
+	results := ExecuteToolCallsInParallel(ki, toolCalls)
+
+	require.Len(t, results, 1)
+	require.NoError(t, results[0].Error)
+	assert.Equal(t, http.StatusOK, results[0].Code)
+	assert.Empty(t, results[0].Actions)
+	assert.Contains(t, results[0].Message.Content, "does-not-exist")
+	assert.Contains(t, results[0].Message.Content, "Cannot generate UI actions")
 }
 
 func TestExecuteToolCallsInParallel_MultipleToolsInParallel(t *testing.T) {

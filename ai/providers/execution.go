@@ -86,7 +86,14 @@ func ExecuteToolCallsInParallel(
 				if call.Name == "get_action_ui" {
 					if mcpRes, ok := mcpResult.(get_action_ui.GetActionUIResponse); ok {
 						actions = append(actions, mcpRes.Actions...)
-						content = "Success. The user's UI has been redirected to the requested view."
+						switch {
+						case len(actions) > 0:
+							content = "Success. The user's UI has been redirected to the requested view."
+						case mcpRes.Errors != "":
+							// Surface get_action_ui validation failures to the model instead of
+							// silently reporting success when no UI action was produced.
+							content = mcpRes.Errors
+						}
 					}
 				}
 				if call.Name == "get_referenced_docs" {
