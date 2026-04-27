@@ -503,7 +503,6 @@ export class GraphDataSource {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
     params.graphType = GraphType.VERSIONED_APP;
     params.showSecurity = true;
-    params.showWaypoints = false;
     if (cluster) {
       params.namespaces = [{ name: namespace, cluster }];
       params.node!.cluster = cluster;

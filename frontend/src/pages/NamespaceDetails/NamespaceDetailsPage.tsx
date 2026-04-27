@@ -524,7 +524,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             unmountOnExit={true}
           >
             <Tab eventKey={0} title="Overview" key="Overview">
-              <NamespaceDetailsOverview namespace={this.props.namespace} nsInfo={ns} />
+              <NamespaceDetailsOverview duration={this.props.duration} namespace={this.props.namespace} nsInfo={ns} />
             </Tab>
           </ParameterizedTabs>
         )}
