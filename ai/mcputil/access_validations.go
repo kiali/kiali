@@ -10,27 +10,12 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/util"
 )
-
-func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
-	authInfoContext := authentication.GetAuthInfoContext(r.Context())
-	if authInfoContext != nil {
-		if authInfo, ok := authInfoContext.(map[string]*api.AuthInfo); ok {
-			return authInfo, nil
-		} else {
-			return nil, errors.New("authInfo is not of type map[string]*api.AuthInfo")
-		}
-	} else {
-		return nil, errors.New("authInfo missing from the request context")
-	}
-}
 
 func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
 	q.FillDefaults()
