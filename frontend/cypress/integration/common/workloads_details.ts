@@ -1,25 +1,12 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
-import { clusterParameterExists } from './navigation';
+import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
 import { openTab } from './transition';
 
 const WAYPOINT_FALLBACK = 'waypoint';
 
 const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('exist').contains(tab).click();
-};
-
-const clickSpanFilterOptionWithFallback = (expectedOption: string): void => {
-  cy.get('body').then($body => {
-    const expectedSelector = `li[label="${expectedOption}"]`;
-    if ($body.find(expectedSelector).length > 0) {
-      cy.get(expectedSelector).should('be.visible').find('button').click();
-      return;
-    }
-
-    const waypointSelector = `li[label="${WAYPOINT_FALLBACK}"]`;
-    cy.get(waypointSelector).should('be.visible').find('button').click();
-  });
 };
 
 Then('user sees details information for workload', () => {

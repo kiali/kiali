@@ -1,24 +1,11 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
-import { clusterParameterExists } from './navigation';
+import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
 const WAYPOINT_FALLBACK = 'waypoint';
-
-const clickSpanFilterOptionWithFallback = (expectedOption: string): void => {
-  cy.get('body').then($body => {
-    const expectedSelector = `li[label="${expectedOption}"]`;
-    if ($body.find(expectedSelector).length > 0) {
-      cy.get(expectedSelector).should('be.visible').find('button').click();
-      return;
-    }
-
-    const waypointSelector = `li[label="${WAYPOINT_FALLBACK}"]`;
-    cy.get(waypointSelector).should('be.visible').find('button').click();
-  });
-};
 
 Then('user sees details information for the {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
