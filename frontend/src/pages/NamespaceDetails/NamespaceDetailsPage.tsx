@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
+import { Tab, TabTitleText, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from 'store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from 'services/Api';
-import { addError, addSuccess } from 'utils/AlertUtils';
+import { addError } from 'utils/AlertUtils';
 import { ParameterizedTabs, activeTab } from 'components/Tab/Tabs';
 import { RenderHeader } from 'components/Nav/Page/RenderHeader';
 import { ErrorSection } from 'components/ErrorSection/ErrorSection';
@@ -16,6 +16,7 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { setAIContext } from 'helpers/ChatAI';
+import { t } from 'utils/I18nUtils';
 import { Namespace } from 'types/Namespace';
 import { MTLSStatuses, TLSStatus } from 'types/TLSStatus';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -23,8 +24,12 @@ import { IstioConfigList } from 'types/IstioConfigList';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { NamespaceDetailsOverview } from './NamespaceDetailsOverview';
 import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
+import { Paths } from 'config';
+import { location, router } from 'app/History';
+import { Show } from 'types/Common';
+import { isParentKiosk, kioskNavigateAction, kioskOverviewAction as kioskAction } from 'components/Kiosk/KioskActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
-import { buildNamespaceRowActions } from './namespaceDetailActions';
+import { buildNamespaceRowActions } from 'pages/Namespaces/namespaceRowActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
 import { ControlPlane } from 'types/Mesh';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
@@ -33,18 +38,19 @@ import { PersesInfo } from 'types/PersesInfo';
 import { MessageType } from 'types/NotificationCenter';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { TimeControl } from 'components/Time/TimeControl';
+import { NA } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
+import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
-import { serverConfig } from 'config/ServerConfig';
-import { t } from 'utils/I18nUtils';
 
 const titleRowStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
   flexWrap: 'nowrap',
   gap: 'var(--pf-t--global--spacer--md)',
-  marginTop: '0.5rem',
+  marginTop: '16px',
   minWidth: 0,
   width: '100%'
 });
@@ -54,7 +60,7 @@ const titleMainStyle = kialiStyle({
   display: 'flex',
   flex: '1 1 auto',
   flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--sm)',
+  gap: 'var(--pf-t--global--spacer--md)',
   minWidth: 0
 });
 
@@ -62,6 +68,7 @@ type ReduxProps = {
   duration: DurationInSeconds;
   externalServices: { name: string }[];
   istioAPIEnabled: boolean;
+  kiosk: string;
   meshStatus: string;
   refreshInterval: IntervalInMilliseconds;
 };
@@ -89,24 +96,26 @@ type State = {
 
 const tabName = 'tab';
 const defaultTab = 'info';
-
 const tabIndex: { [tab: string]: number } = {
   info: 0
 };
 
+const isKnownNamespaceTab = (tab: string): boolean => Object.prototype.hasOwnProperty.call(tabIndex, tab);
+
 export class NamespaceDetailsPageComponent extends React.Component<NamespaceDetailsPageProps, State> {
   private promises = new PromisesRegistry();
-  private _isMounted = false;
 
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
   static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
 
   constructor(props: NamespaceDetailsPageProps) {
     super(props);
+    const tabFromUrl = activeTab(tabName, defaultTab);
+    const currentTab = isKnownNamespaceTab(tabFromUrl) ? tabFromUrl : defaultTab;
     this.state = {
       cluster: HistoryManager.getClusterName(),
       clusterTarget: '',
-      currentTab: activeTab(tabName, defaultTab),
+      currentTab,
       grafanaLinks: [],
       kind: '',
       nsTarget: '',
@@ -117,7 +126,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   }
 
   componentDidMount(): void {
-    this._isMounted = true;
+    this.replaceUrlTabIfInvalid();
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();
     this.fetchControlPlanes();
@@ -126,7 +135,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   componentDidUpdate(prevProps: NamespaceDetailsPageProps): void {
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
-    const currentTab = activeTab(tabName, defaultTab);
+    const rawTab = activeTab(tabName, defaultTab);
+    const currentTab = isKnownNamespaceTab(rawTab) ? rawTab : defaultTab;
+    if (rawTab !== currentTab) {
+      this.replaceUrlTabIfInvalid();
+    }
     const mustFetch =
       cluster !== this.state.cluster ||
       prevProps.namespace !== this.props.namespace ||
@@ -149,9 +162,22 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   }
 
   componentWillUnmount(): void {
-    this._isMounted = false;
     this.promises.cancelAll();
   }
+
+  /** Stale ?tab= values from other pages break PF Tabs (no active tab / empty labels). */
+  private replaceUrlTabIfInvalid = (): void => {
+    const raw = activeTab(tabName, defaultTab);
+    if (isKnownNamespaceTab(raw)) {
+      return;
+    }
+    const params = new URLSearchParams(location.getSearch());
+    params.set(tabName, defaultTab);
+    router.navigate(`${location.getPathname()}?${params.toString()}`, { replace: true });
+    if (this.state.currentTab !== defaultTab) {
+      this.setState({ currentTab: defaultTab });
+    }
+  };
 
   private fetchGrafanaInfo = (): void => {
     if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
@@ -166,9 +192,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
       NamespaceDetailsPageComponent.grafanaInfoPromise
         .then(grafanaInfo => {
-          if (!this._isMounted) {
-            return;
-          }
           if (grafanaInfo) {
             this.setState({
               grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
@@ -178,7 +201,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           }
         })
         .catch(err => {
-          addError(t('Could not fetch Grafana info. Turning off links to Grafana.'), err, false, MessageType.INFO);
+          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
         });
     }
   };
@@ -196,9 +219,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
       NamespaceDetailsPageComponent.persesInfoPromise
         .then(persesInfo => {
-          if (!this._isMounted) {
-            return;
-          }
           if (persesInfo) {
             this.setState({
               persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
@@ -208,7 +228,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           }
         })
         .catch(err => {
-          addError(t('Could not fetch Perses info. Turning off links to Perses.'), err, false, MessageType.INFO);
+          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
         });
     }
   };
@@ -221,11 +241,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         this.setState({ controlPlanes });
       })
       .catch(err => {
-        addError(t('Error fetching control planes.'), err);
+        addError('Error fetching control planes.', err);
       });
   };
 
-  private handleHideTrafficManagement = (): void => {
+  private hideTrafficManagement = (): void => {
     this.setState({
       showTrafficPoliciesModal: false,
       nsTarget: '',
@@ -235,7 +255,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     });
   };
 
-  private handleChangeAfterPolicy = (): void => {
+  private onChangeAfterPolicy = (): void => {
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -304,7 +324,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       fetchClusterNamespacesHealth([name], cluster, this.props.duration).catch(() => new Map()),
       API.getClustersTls(name, cluster).catch(() => ({ data: [] as TLSStatus[] })),
       API.getConfigValidations(name, cluster).catch(() => ({ data: [] as ValidationStatus[] })),
-      API.getIstioConfig(name, [], false, '', '', cluster).catch(() => ({
+      API.getAllIstioConfigs([], false, '', '', cluster).catch(() => ({
         data: { permissions: {}, resources: {}, validations: {} } as IstioConfigList
       }))
     ]);
@@ -368,16 +388,71 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         })
       )
       .catch(error => {
-        addError(t('Could not fetch Namespace.'), error);
+        addError('Could not fetch Namespace.', error);
         this.setState({
           error: {
-            title: t('Namespace not found'),
-            description: t('{{namespace}} is not available or could not be loaded', { namespace: this.props.namespace })
+            title: 'Namespace not found',
+            description: `${this.props.namespace} is not available or could not be loaded`
           },
           nsInfo: undefined
         });
         return Promise.reject(error);
       });
+  };
+
+  private kioskNamespacesAction = (showType: Show, ns: string, refreshInterval: IntervalInMilliseconds): void => {
+    const duration = healthComputeDurationValidSeconds();
+    if (showType === Show.GRAPH || showType === Show.ISTIO_CONFIG) {
+      kioskAction(showType as never, ns, duration, refreshInterval);
+      return;
+    }
+    let showInParent = '';
+    switch (showType) {
+      case Show.APPLICATIONS:
+        showInParent = `/${Paths.APPLICATIONS}?namespaces=${ns}`;
+        break;
+      case Show.WORKLOADS:
+        showInParent = `/${Paths.WORKLOADS}?namespaces=${ns}`;
+        break;
+      case Show.SERVICES:
+        showInParent = `/${Paths.SERVICES}?namespaces=${ns}`;
+        break;
+      default:
+        return;
+    }
+    showInParent += `&duration=${String(duration)}&refresh=${String(refreshInterval)}`;
+    kioskNavigateAction(showInParent);
+  };
+
+  private show = (showType: Show, ns: string): void => {
+    if (isParentKiosk(this.props.kiosk)) {
+      this.kioskNamespacesAction(showType, ns, this.props.refreshInterval);
+      return;
+    }
+
+    let destination = '';
+    switch (showType) {
+      case Show.GRAPH:
+        destination = `/graph/namespaces?namespaces=${ns}`;
+        break;
+      case Show.APPLICATIONS:
+        destination = `/${Paths.APPLICATIONS}?namespaces=${ns}`;
+        break;
+      case Show.WORKLOADS:
+        destination = `/${Paths.WORKLOADS}?namespaces=${ns}`;
+        break;
+      case Show.SERVICES:
+        destination = `/${Paths.SERVICES}?namespaces=${ns}`;
+        break;
+      case Show.ISTIO_CONFIG:
+        destination = `/${Paths.ISTIO}?namespaces=${ns}`;
+        break;
+      default:
+        break;
+    }
+    if (destination) {
+      router.navigate(destination);
+    }
   };
 
   private getNamespaceActions = (): ReturnType<typeof buildNamespaceRowActions> => {
@@ -388,7 +463,9 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       controlPlanes: this.state.controlPlanes,
       grafanaLinks: this.state.grafanaLinks,
       istioAPIEnabled: this.props.istioAPIEnabled,
+      kiosk: this.props.kiosk,
       nsInfo: this.state.nsInfo,
+      onKioskShow: this.kioskNamespacesAction,
       onOpenTrafficPoliciesModal: p =>
         this.setState({
           showTrafficPoliciesModal: true,
@@ -397,60 +474,21 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           opTarget: p.opTarget,
           kind: p.kind
         }),
-      onRefreshAfterExternalLink: this.handleChangeAfterPolicy,
-      persesLinks: this.state.persesLinks
+      onRefreshAfterExternalLink: this.onChangeAfterPolicy,
+      onShow: this.show,
+      persesLinks: this.state.persesLinks,
+      refreshInterval: this.props.refreshInterval
     });
-  };
-
-  private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
-    const original = (field === 'labels' ? this.state.nsInfo?.labels : this.state.nsInfo?.annotations) ?? {};
-    const patch: Record<string, string | null> = { ...updated };
-    Object.keys(original).forEach(key => {
-      if (!(key in updated)) {
-        patch[key] = null;
-      }
-    });
-    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
-
-    API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
-      .then(() => {
-        addSuccess(t('Namespace {{namespace}} {{field}} updated', { namespace: this.props.namespace, field }));
-        this.load();
-      })
-      .catch(error => {
-        addError(
-          t('Could not update namespace {{namespace}} {{field}}', { namespace: this.props.namespace, field }),
-          error
-        );
-      });
-  };
-
-  private handleSaveLabels = (labels: Record<string, string>): void => {
-    this.handleSaveMetadata('labels', labels);
-  };
-
-  private handleSaveAnnotations = (annotations: Record<string, string>): void => {
-    this.handleSaveMetadata('annotations', annotations);
   };
 
   render(): React.ReactNode {
     const ns = this.state.nsInfo;
+    const worstStatus = ns?.worstStatus ?? NA.id;
     const healthListDuration = healthComputeDurationValidSeconds();
-
-    const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
-    const hasActions = namespaceActions.some(a => !a.isSeparator);
-
-    const actionsToolbar = hasActions ? (
-      <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
-    ) : undefined;
 
     return (
       <>
-        <RenderHeader
-          actionsToolbar={actionsToolbar}
-          actionsToolbarTop="11.1rem"
-          rightToolbar={<TimeControl customDuration={false} />}
-        >
+        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
           {!this.state.error && ns && (
             <div className={titleRowStyle} data-test="namespace-detail-title-row">
               <div className={titleMainStyle}>
@@ -458,6 +496,29 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                 <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
                   {this.props.namespace}
                 </Title>
+                {ns.cluster && isMultiCluster && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                    <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
+                    <span style={{ marginLeft: '0.25rem' }}>{ns.cluster}</span>
+                  </span>
+                )}
+                <span style={{ minWidth: 0 }}>
+                  <NamespaceHealthStatus
+                    inlineIssueCount
+                    name={this.props.namespace}
+                    statusApp={ns.statusApp}
+                    statusService={ns.statusService}
+                    statusWorkload={ns.statusWorkload}
+                    worstStatus={worstStatus}
+                  />
+                </span>
+              </div>
+              <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
+                <NamespaceActions
+                  namespace={this.props.namespace}
+                  actions={this.getNamespaceActions()}
+                  toggleVariant="actionsText"
+                />
               </div>
             </div>
           )}
@@ -467,7 +528,8 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
         {!this.state.error && ns && (
           <ParameterizedTabs
-            id="basic-tabs"
+            key={`namespace-detail-tabs-${this.props.namespace}`}
+            id="namespace-detail-tabs"
             className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
@@ -479,16 +541,8 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             mountOnEnter={true}
             unmountOnExit={true}
           >
-            <Tab eventKey={0} title={t('Overview')} key="Overview">
-              <NamespaceDetailsOverview
-                canEdit={!serverConfig.deployment.viewOnlyMode}
-                duration={this.props.duration}
-                namespace={this.props.namespace}
-                namespaceActions={namespaceActions}
-                nsInfo={ns}
-                onSaveAnnotations={this.handleSaveAnnotations}
-                onSaveLabels={this.handleSaveLabels}
-              />
+            <Tab title={<TabTitleText>{t('Overview')}</TabTitleText>} eventKey={0} key="namespace-overview-tab">
+              <NamespaceDetailsOverview namespace={this.props.namespace} nsInfo={ns} />
             </Tab>
           </ParameterizedTabs>
         )}
@@ -501,11 +555,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
               cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
             )}
             kind={this.state.kind}
-            hideConfirmModal={this.handleHideTrafficManagement}
+            hideConfirmModal={this.hideTrafficManagement}
             nsTarget={this.state.nsTarget}
             nsInfo={this.state.nsInfo}
             duration={healthListDuration}
-            load={this.handleChangeAfterPolicy}
+            load={this.onChangeAfterPolicy}
           />
         )}
       </>
@@ -517,6 +571,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   externalServices: state.statusState.externalServices,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
+  kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });

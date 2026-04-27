@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { BreadcrumbView } from '../BreadcrumbView';
+import { Link } from 'react-router-dom-v5-compat';
 
 jest.mock('../../Filters/StatefulFilters', () => ({
   FilterSelected: { resetFilters: jest.fn() }
@@ -15,26 +16,26 @@ jest.mock('../../../app/History', () => ({
 
 describe('BreadcrumbView', () => {
   it('renders Namespaces list and namespace for namespace detail URL', () => {
-    const { container } = render(
+    const wrapper = mount(
       <MemoryRouter initialEntries={['/namespaces/bookinfo']}>
         <BreadcrumbView />
       </MemoryRouter>
     );
 
-    const links = container.querySelectorAll('a');
+    const links = wrapper.find(Link);
     expect(links.length).toBeGreaterThanOrEqual(1);
-    expect(links[0].getAttribute('href')).toContain('/namespaces');
-    expect(container.textContent).toContain('bookinfo');
+    expect(links.at(0).prop('to')).toContain('/namespaces');
+    expect(wrapper.text()).toContain('bookinfo');
   });
 
   it('renders workload breadcrumbs for entity detail URL', () => {
-    const { container } = render(
+    const wrapper = mount(
       <MemoryRouter initialEntries={['/namespaces/bookinfo/workloads/reviews-v1']}>
         <BreadcrumbView />
       </MemoryRouter>
     );
 
-    expect(container.textContent).toContain('bookinfo');
-    expect(container.textContent).toContain('reviews-v1');
+    expect(wrapper.text()).toContain('bookinfo');
+    expect(wrapper.text()).toContain('reviews-v1');
   });
 });

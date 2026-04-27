@@ -82,7 +82,12 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
   }
 
   activeIndex = (): number => {
-    return this.tabIndexOf(this.props.activeTab);
+    const idx = this.tabIndexOf(this.props.activeTab);
+    if (idx !== undefined) {
+      return idx;
+    }
+    const fallback = this.tabIndexOf(this.props.defaultTab);
+    return fallback !== undefined ? fallback : 0;
   };
 
   isLinkTab = (index: number): boolean => {

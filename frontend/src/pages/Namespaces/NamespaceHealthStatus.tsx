@@ -201,7 +201,7 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'nowrap',
-        gap: '0.25rem',
+        gap: '0.35rem',
         marginBottom: 0,
         textAlign: 'left'
       }
