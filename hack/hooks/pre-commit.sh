@@ -91,7 +91,7 @@ if [ -n "$yaml_unformatted" ]; then
 fi
 
 #### Shell script checks ####
-mapfile -d '' -t hack_shell_scripts < <(git ls-files -z -- 'hack/*.sh' 'hack/**/*.sh')
+mapfile -d '' -t hack_shell_scripts < <(git diff --cached --name-only -z --diff-filter=ACMR -- 'hack/*.sh' 'hack/**/*.sh')
 
 if [ "${#hack_shell_scripts[@]}" -gt 0 ]; then
   echo "Running shellcheck for hack scripts..."
