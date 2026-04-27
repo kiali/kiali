@@ -45,6 +45,10 @@ import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { TimeControl } from 'components/Time/TimeControl';
 import { NA } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
+<<<<<<< HEAD
+=======
+import { SCROLL_TOP_PADDING } from 'components/Nav/Page/RenderComponentScroll';
+>>>>>>> 6ff0b05b2 (reduce wasted space at the bottom of several pages, especially below the minigraphs.)
 import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
 
