@@ -9,12 +9,19 @@ import {
   Divider,
   Flex,
   FlexItem,
+  Grid,
+  GridItem,
   Label as PFLabel,
+  Stack,
+  StackItem,
   Title,
   TitleSizes,
   Tooltip
 } from '@patternfly/react-core';
 import { RenderComponentScroll } from 'components/Nav/Page';
+import { GraphDataSource } from 'services/GraphDataSource';
+import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
+import { DurationInSeconds } from 'types/Common';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { ControlPlaneBadge } from 'components/Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from 'components/Badge/DataPlaneBadge';
@@ -36,9 +43,25 @@ import { infoStyle } from 'styles/IconStyle';
 import { Label } from 'components/Label/Label';
 
 type Props = {
+  duration: DurationInSeconds;
   namespace: string;
   nsInfo: NamespaceInfo;
 };
+
+type State = {
+  tabHeight?: number;
+};
+
+const gridStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
+/** Same as Service/App info: one scrollbar for the whole left column, not inside CardBody. */
+const overviewLeftColumnStyle = kialiStyle({
+  minHeight: 0,
+  overflowY: 'auto',
+  paddingRight: '0.5rem'
+});
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
@@ -95,138 +118,185 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
   );
 };
 
-export const NamespaceDetailsOverview: React.FC<Props> = ({ namespace, nsInfo }) => {
-  const cluster = nsInfo.cluster;
-  const isDataPlane = isDataPlaneNamespace(nsInfo);
-  const modeInfo = getNamespaceModeInfo(nsInfo);
-  const revisions = getNamespaceRevisions(nsInfo);
-  let validations = nsInfo.validations;
-  if (!validations) {
-    validations = { namespace: nsInfo.name, objectCount: 0, errors: 0, warnings: 0 };
+export class NamespaceDetailsOverview extends React.Component<Props, State> {
+  private graphDataSource = new GraphDataSource();
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {};
   }
 
-  const graphLink = `/graph/namespaces?namespaces=${encodeURIComponent(namespace)}`;
-  const appsLink = buildListLink(`/${Paths.APPLICATIONS}`, namespace, cluster);
-  const workloadsLink = buildListLink(`/${Paths.WORKLOADS}`, namespace, cluster);
-  const servicesLink = buildListLink(`/${Paths.SERVICES}`, namespace, cluster);
-  const istioLink = buildListLink(`/${Paths.ISTIO}`, namespace, cluster);
+  componentDidMount(): void {
+    this.fetchGraph();
+  }
 
-  return (
-    <RenderComponentScroll>
-      <div data-test={`namespace-detail-overview-${namespace}`}>
-        <Card>
-          <CardBody>
-            <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
-              <FlexItem>
-                <DescriptionList>
+  componentDidUpdate(prev: Props): void {
+    if (
+      prev.duration !== this.props.duration ||
+      prev.namespace !== this.props.namespace ||
+      prev.nsInfo.cluster !== this.props.nsInfo.cluster
+    ) {
+      this.fetchGraph();
+    }
+  }
+
+  private fetchGraph = (): void => {
+    this.graphDataSource.fetchForNamespace(this.props.duration, this.props.namespace, this.props.nsInfo.cluster);
+  };
+
+  private renderLeftCard(): React.ReactNode {
+    const { namespace, nsInfo } = this.props;
+    const cluster = nsInfo.cluster;
+    const isDataPlane = isDataPlaneNamespace(nsInfo);
+    const modeInfo = getNamespaceModeInfo(nsInfo);
+    const revisions = getNamespaceRevisions(nsInfo);
+    let validations = nsInfo.validations;
+    if (!validations) {
+      validations = { namespace: nsInfo.name, objectCount: 0, errors: 0, warnings: 0 };
+    }
+
+    const graphLink = `/graph/namespaces?namespaces=${encodeURIComponent(namespace)}`;
+    const appsLink = buildListLink(`/${Paths.APPLICATIONS}`, namespace, cluster);
+    const workloadsLink = buildListLink(`/${Paths.WORKLOADS}`, namespace, cluster);
+    const servicesLink = buildListLink(`/${Paths.SERVICES}`, namespace, cluster);
+    const istioLink = buildListLink(`/${Paths.ISTIO}`, namespace, cluster);
+
+    return (
+      <Card>
+        <CardBody>
+          <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
+            <FlexItem>
+              <DescriptionList>
+                <DescriptionListGroup>
+                  <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    {nsInfo.isControlPlane ? (
+                      <ControlPlaneBadge />
+                    ) : isDataPlane ? (
+                      <DataPlaneBadge />
+                    ) : (
+                      <NotPartOfMeshBadge />
+                    )}
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+                <DescriptionListGroup>
+                  <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <PFLabel variant="outline" color={modeInfo.color} isCompact>
+                      {t(modeInfo.displayText)}
+                    </PFLabel>
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+                {(revisions.length > 0 || !nsInfo.isControlPlane) && (
                   <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                    <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
                     <DescriptionListDescription>
-                      {nsInfo.isControlPlane ? (
-                        <ControlPlaneBadge />
-                      ) : isDataPlane ? (
-                        <DataPlaneBadge />
-                      ) : (
-                        <NotPartOfMeshBadge />
-                      )}
+                      <NamespaceRevisionLabels ns={nsInfo} />
                     </DescriptionListDescription>
                   </DescriptionListGroup>
+                )}
+                {nsInfo.tlsStatus && (
                   <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                    <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
                     <DescriptionListDescription>
-                      <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                        {t(modeInfo.displayText)}
-                      </PFLabel>
+                      <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
                     </DescriptionListDescription>
                   </DescriptionListGroup>
-                  {(revisions.length > 0 || !nsInfo.isControlPlane) && (
-                    <DescriptionListGroup>
-                      <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <NamespaceRevisionLabels ns={nsInfo} />
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                  )}
-                  {nsInfo.tlsStatus && (
-                    <DescriptionListGroup>
-                      <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                  )}
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Istio config')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      <ValidationSummaryLink
-                        namespace={namespace}
-                        objectCount={validations.objectCount}
+                )}
+                <DescriptionListGroup>
+                  <DescriptionListTerm>{t('Istio config')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <ValidationSummaryLink
+                      namespace={namespace}
+                      objectCount={validations.objectCount}
+                      errors={validations.errors}
+                      warnings={validations.warnings}
+                    >
+                      <ValidationSummary
+                        id={`ns-detail-val-${namespace}`}
                         errors={validations.errors}
                         warnings={validations.warnings}
-                      >
-                        <ValidationSummary
-                          id={`ns-detail-val-${namespace}`}
-                          errors={validations.errors}
-                          warnings={validations.warnings}
-                          objectCount={validations.objectCount}
-                          type="istio"
-                        />
-                      </ValidationSummaryLink>
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                </DescriptionList>
-              </FlexItem>
+                        objectCount={validations.objectCount}
+                        type="istio"
+                      />
+                    </ValidationSummaryLink>
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              </DescriptionList>
+            </FlexItem>
 
+            <FlexItem>
+              <Title headingLevel="h4" size={TitleSizes.md}>
+                {t('Navigate')}
+              </Title>
+              <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
+                <KialiLink to={graphLink}>{t('Traffic graph')}</KialiLink>
+                <span aria-hidden="true">·</span>
+                <KialiLink to={appsLink}>{t('Applications')}</KialiLink>
+                <span aria-hidden="true">·</span>
+                <KialiLink to={workloadsLink}>{t('Workloads')}</KialiLink>
+                <span aria-hidden="true">·</span>
+                <KialiLink to={servicesLink}>{t('Services')}</KialiLink>
+                <span aria-hidden="true">·</span>
+                <KialiLink to={istioLink}>{t('Istio config')}</KialiLink>
+              </Flex>
+            </FlexItem>
+
+            {nsInfo.labels && Object.keys(nsInfo.labels).length > 0 && (
               <FlexItem>
                 <Title headingLevel="h4" size={TitleSizes.md}>
-                  {t('Navigate')}
+                  {t('Labels')}
                 </Title>
                 <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
-                  <KialiLink to={graphLink}>{t('Traffic graph')}</KialiLink>
-                  <span aria-hidden="true">·</span>
-                  <KialiLink to={appsLink}>{t('Applications')}</KialiLink>
-                  <span aria-hidden="true">·</span>
-                  <KialiLink to={workloadsLink}>{t('Workloads')}</KialiLink>
-                  <span aria-hidden="true">·</span>
-                  <KialiLink to={servicesLink}>{t('Services')}</KialiLink>
-                  <span aria-hidden="true">·</span>
-                  <KialiLink to={istioLink}>{t('Istio config')}</KialiLink>
+                  {Object.entries(nsInfo.labels).map(([key, value]) => (
+                    <Label key={`${key}=${value}`} name={key} value={value} />
+                  ))}
                 </Flex>
               </FlexItem>
+            )}
 
-              {nsInfo.labels && Object.keys(nsInfo.labels).length > 0 && (
-                <FlexItem>
-                  <Title headingLevel="h4" size={TitleSizes.md}>
-                    {t('Labels')}
-                  </Title>
-                  <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
-                    {Object.entries(nsInfo.labels).map(([key, value]) => (
-                      <Label key={`${key}=${value}`} name={key} value={value} />
-                    ))}
-                  </Flex>
-                </FlexItem>
-              )}
+            {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
+              <FlexItem>
+                <Divider />
+                <Title headingLevel="h4" size={TitleSizes.md} style={{ marginTop: '1rem' }}>
+                  {t('Annotations')}
+                </Title>
+                <DescriptionList>
+                  {Object.entries(nsInfo.annotations).map(([key, value]) => (
+                    <DescriptionListGroup key={key}>
+                      <DescriptionListTerm>{key}</DescriptionListTerm>
+                      <DescriptionListDescription>{value}</DescriptionListDescription>
+                    </DescriptionListGroup>
+                  ))}
+                </DescriptionList>
+              </FlexItem>
+            )}
+          </Flex>
+        </CardBody>
+      </Card>
+    );
+  }
 
-              {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
-                <FlexItem>
-                  <Divider />
-                  <Title headingLevel="h4" size={TitleSizes.md} style={{ marginTop: '1rem' }}>
-                    {t('Annotations')}
-                  </Title>
-                  <DescriptionList>
-                    {Object.entries(nsInfo.annotations).map(([key, value]) => (
-                      <DescriptionListGroup key={key}>
-                        <DescriptionListTerm>{key}</DescriptionListTerm>
-                        <DescriptionListDescription>{value}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                    ))}
-                  </DescriptionList>
-                </FlexItem>
-              )}
-            </Flex>
-          </CardBody>
-        </Card>
-      </div>
-    </RenderComponentScroll>
-  );
-};
+  render(): React.ReactNode {
+    const { namespace } = this.props;
+    const miniGraphSpan = 8;
+    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1.5rem)` : '100%';
+
+    return (
+      <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
+        <div data-test={`namespace-detail-overview-${namespace}`}>
+          <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+            <GridItem span={4} className={overviewLeftColumnStyle}>
+              <Stack hasGutter={true}>
+                <StackItem>{this.renderLeftCard()}</StackItem>
+              </Stack>
+            </GridItem>
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCard dataSource={this.graphDataSource} />
+            </GridItem>
+          </Grid>
+        </div>
+      </RenderComponentScroll>
+    );
+  }
+}
