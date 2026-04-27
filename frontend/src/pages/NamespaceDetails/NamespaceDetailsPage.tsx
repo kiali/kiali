@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { Tab, TabTitleText, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
+import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from 'store/Selectors';
 import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
@@ -16,7 +16,6 @@ import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
 import { setAIContext } from 'helpers/ChatAI';
-import { t } from 'utils/I18nUtils';
 import { Namespace } from 'types/Namespace';
 import { MTLSStatuses, TLSStatus } from 'types/TLSStatus';
 import { ValidationStatus } from 'types/IstioObjects';
@@ -25,7 +24,7 @@ import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { NamespaceDetailsOverview } from './NamespaceDetailsOverview';
 import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
 import { Paths } from 'config';
-import { location, router } from 'app/History';
+import { router } from 'app/History';
 import { Show } from 'types/Common';
 import { isParentKiosk, kioskNavigateAction, kioskOverviewAction as kioskAction } from 'components/Kiosk/KioskActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
@@ -50,7 +49,7 @@ const titleRowStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'nowrap',
   gap: 'var(--pf-t--global--spacer--md)',
-  marginTop: '16px',
+  marginTop: '0.5rem',
   minWidth: 0,
   width: '100%'
 });
@@ -96,11 +95,10 @@ type State = {
 
 const tabName = 'tab';
 const defaultTab = 'info';
+
 const tabIndex: { [tab: string]: number } = {
   info: 0
 };
-
-const isKnownNamespaceTab = (tab: string): boolean => Object.prototype.hasOwnProperty.call(tabIndex, tab);
 
 export class NamespaceDetailsPageComponent extends React.Component<NamespaceDetailsPageProps, State> {
   private promises = new PromisesRegistry();
@@ -110,12 +108,10 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   constructor(props: NamespaceDetailsPageProps) {
     super(props);
-    const tabFromUrl = activeTab(tabName, defaultTab);
-    const currentTab = isKnownNamespaceTab(tabFromUrl) ? tabFromUrl : defaultTab;
     this.state = {
       cluster: HistoryManager.getClusterName(),
       clusterTarget: '',
-      currentTab,
+      currentTab: activeTab(tabName, defaultTab),
       grafanaLinks: [],
       kind: '',
       nsTarget: '',
@@ -126,7 +122,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   }
 
   componentDidMount(): void {
-    this.replaceUrlTabIfInvalid();
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();
     this.fetchControlPlanes();
@@ -135,11 +130,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   componentDidUpdate(prevProps: NamespaceDetailsPageProps): void {
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
-    const rawTab = activeTab(tabName, defaultTab);
-    const currentTab = isKnownNamespaceTab(rawTab) ? rawTab : defaultTab;
-    if (rawTab !== currentTab) {
-      this.replaceUrlTabIfInvalid();
-    }
+    const currentTab = activeTab(tabName, defaultTab);
     const mustFetch =
       cluster !== this.state.cluster ||
       prevProps.namespace !== this.props.namespace ||
@@ -164,20 +155,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
-
-  /** Stale ?tab= values from other pages break PF Tabs (no active tab / empty labels). */
-  private replaceUrlTabIfInvalid = (): void => {
-    const raw = activeTab(tabName, defaultTab);
-    if (isKnownNamespaceTab(raw)) {
-      return;
-    }
-    const params = new URLSearchParams(location.getSearch());
-    params.set(tabName, defaultTab);
-    router.navigate(`${location.getPathname()}?${params.toString()}`, { replace: true });
-    if (this.state.currentTab !== defaultTab) {
-      this.setState({ currentTab: defaultTab });
-    }
-  };
 
   private fetchGrafanaInfo = (): void => {
     if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
@@ -486,9 +463,22 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     const worstStatus = ns?.worstStatus ?? NA.id;
     const healthListDuration = healthComputeDurationValidSeconds();
 
+    const actionsToolbar =
+      !this.state.error && ns ? (
+        <NamespaceActions
+          namespace={this.props.namespace}
+          actions={this.getNamespaceActions()}
+          toggleVariant="actionsText"
+        />
+      ) : undefined;
+
     return (
-      <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
+      <div>
+        <RenderHeader
+          actionsToolbar={actionsToolbar}
+          actionsToolbarTop="11.1rem"
+          rightToolbar={<TimeControl customDuration={false} />}
+        >
           {!this.state.error && ns && (
             <div className={titleRowStyle} data-test="namespace-detail-title-row">
               <div className={titleMainStyle}>
@@ -513,13 +503,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                   />
                 </span>
               </div>
-              <div style={{ flexShrink: 0, marginLeft: 'auto' }}>
-                <NamespaceActions
-                  namespace={this.props.namespace}
-                  actions={this.getNamespaceActions()}
-                  toggleVariant="actionsText"
-                />
-              </div>
             </div>
           )}
         </RenderHeader>
@@ -528,8 +511,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
         {!this.state.error && ns && (
           <ParameterizedTabs
-            key={`namespace-detail-tabs-${this.props.namespace}`}
-            id="namespace-detail-tabs"
+            id="basic-tabs"
             className={basicTabStyle}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
@@ -541,7 +523,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             mountOnEnter={true}
             unmountOnExit={true}
           >
-            <Tab title={<TabTitleText>{t('Overview')}</TabTitleText>} eventKey={0} key="namespace-overview-tab">
+            <Tab eventKey={0} title="Overview" key="Overview">
               <NamespaceDetailsOverview namespace={this.props.namespace} nsInfo={ns} />
             </Tab>
           </ParameterizedTabs>
@@ -562,7 +544,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             load={this.onChangeAfterPolicy}
           />
         )}
-      </>
+      </div>
     );
   }
 }
