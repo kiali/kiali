@@ -70,9 +70,6 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     this.heightObserver = null;
   }
 
-  // The container has flex:1 + minHeight:0 so its height is set by the
-  // parent flex layout, not by its content. Observing it is stable —
-  // changing chart content won't resize the container.
   private startObserving(): void {
     const el = this.containerRef.current;
     if (!el) {
