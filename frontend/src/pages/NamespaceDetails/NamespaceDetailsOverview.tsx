@@ -18,7 +18,6 @@ import {
   TitleSizes,
   Tooltip
 } from '@patternfly/react-core';
-import { RenderComponentScroll } from 'components/Nav/Page';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { DurationInSeconds } from 'types/Common';
@@ -41,6 +40,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
 import { Label } from 'components/Label/Label';
+import { flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
   duration: DurationInSeconds;
@@ -48,12 +48,11 @@ type Props = {
   nsInfo: NamespaceInfo;
 };
 
-type State = {
-  tabHeight?: number;
-};
-
 const gridStyle = kialiStyle({
-  marginTop: '1rem'
+  alignItems: 'stretch',
+  flex: 1,
+  marginTop: '1rem',
+  minHeight: 0
 });
 
 /** Same as Service/App info: one scrollbar for the whole left column, not inside CardBody. */
@@ -118,12 +117,11 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
   );
 };
 
-export class NamespaceDetailsOverview extends React.Component<Props, State> {
+export class NamespaceDetailsOverview extends React.Component<Props> {
   private graphDataSource = new GraphDataSource();
 
   constructor(props: Props) {
     super(props);
-    this.state = {};
   }
 
   componentDidMount(): void {
@@ -280,12 +278,11 @@ export class NamespaceDetailsOverview extends React.Component<Props, State> {
   render(): React.ReactNode {
     const { namespace } = this.props;
     const miniGraphSpan = 8;
-    const height = this.state.tabHeight ? `calc(${this.state.tabHeight}px - 1.5rem)` : '100%';
 
     return (
-      <RenderComponentScroll onResize={tabHeight => this.setState({ tabHeight })}>
+      <div className={flexFillStyle}>
         <div data-test={`namespace-detail-overview-${namespace}`}>
-          <Grid hasGutter={true} className={gridStyle} style={{ height, alignItems: 'stretch' }}>
+          <Grid hasGutter={true} className={gridStyle} style={{ alignItems: 'stretch' }}>
             <GridItem span={4} className={overviewLeftColumnStyle}>
               <Stack hasGutter={true}>
                 <StackItem>{this.renderLeftCard()}</StackItem>
@@ -296,7 +293,7 @@ export class NamespaceDetailsOverview extends React.Component<Props, State> {
             </GridItem>
           </Grid>
         </div>
-      </RenderComponentScroll>
+      </div>
     );
   }
 }

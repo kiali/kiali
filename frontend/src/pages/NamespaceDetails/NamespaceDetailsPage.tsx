@@ -26,7 +26,11 @@ import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
 import { Paths } from 'config';
 import { router } from 'app/History';
 import { Show } from 'types/Common';
-import { isParentKiosk, kioskNavigateAction, kioskOverviewAction as kioskAction } from 'components/Kiosk/KioskActions';
+import {
+  isParentKiosk,
+  kioskNavigateAction,
+  kioskOverviewAction as kioskAction
+} from 'components/Kiosk/KioskActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { buildNamespaceRowActions } from 'pages/Namespaces/namespaceRowActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
@@ -524,7 +528,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             unmountOnExit={true}
           >
             <Tab eventKey={0} title="Overview" key="Overview">
-              <NamespaceDetailsOverview duration={this.props.duration} namespace={this.props.namespace} nsInfo={ns} />
+              <NamespaceDetailsOverview
+                duration={this.props.duration}
+                namespace={this.props.namespace}
+                nsInfo={ns}
+              />
             </Tab>
           </ParameterizedTabs>
         )}
