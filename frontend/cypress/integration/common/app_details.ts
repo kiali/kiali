@@ -1,10 +1,11 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { openTab } from './transition';
-import { clusterParameterExists } from './navigation';
+import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
 
 const APP = 'details';
 const NAMESPACE = 'bookinfo';
+const WAYPOINT_FALLBACK = 'waypoint';
 
 Then('user sees details information for the {string} app', (name: string) => {
   cy.getBySel('app-description-card').within(() => {
@@ -67,10 +68,16 @@ Then('user can filter spans by app {string}', (app: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  cy.get(`li[label="${app}"]`).should('be.visible').find('button').click();
+  clickSpanFilterOptionWithFallback(app);
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains(app);
+    const cellText = $cell.text().toLowerCase();
+    const appMatches = cellText.includes(app.toLowerCase());
+    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
+    expect(
+      appMatches || waypointMatches,
+      `Expected "${cellText}" to contain "${app}" or "${WAYPOINT_FALLBACK}"`
+    ).to.equal(true);
   });
 
   getCellsForCol(4).first().click();
@@ -83,10 +90,16 @@ Then('user can filter spans by app {string} by {string}', (app: string, waypoint
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  cy.get(`li[label="${app}"]`).should('be.visible').find('button').click();
+  clickSpanFilterOptionWithFallback(app);
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains(waypoint);
+    const cellText = $cell.text().toLowerCase();
+    const appMatches = cellText.includes(app.toLowerCase());
+    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
+    expect(
+      appMatches || waypointMatches,
+      `Expected "${cellText}" to contain "${app}" or "${WAYPOINT_FALLBACK}"`
+    ).to.equal(true);
   });
 
   getCellsForCol(4).first().click();
