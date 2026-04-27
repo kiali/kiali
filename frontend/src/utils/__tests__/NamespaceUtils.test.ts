@@ -1,4 +1,5 @@
 jest.mock('config', () => ({
+  isMultiCluster: false,
   serverConfig: {
     istioLabels: {
       injectionLabelName: 'istio-injection',
@@ -7,7 +8,7 @@ jest.mock('config', () => ({
   }
 }));
 
-const { isDataPlaneNamespace } = require('../NamespaceUtils');
+const { getNamespaceDetailUrl, isDataPlaneNamespace } = require('../NamespaceUtils');
 
 describe('NamespaceUtils', () => {
   describe('isDataPlaneNamespace', () => {
@@ -29,6 +30,16 @@ describe('NamespaceUtils', () => {
 
     it('returns false for namespaces without ambient/injection/revision', () => {
       expect(isDataPlaneNamespace({ isControlPlane: false, labels: {} })).toBe(false);
+    });
+  });
+
+  describe('getNamespaceDetailUrl', () => {
+    it('returns /namespaces/:name when single-cluster', () => {
+      expect(getNamespaceDetailUrl({ name: 'bookinfo' })).toBe('/namespaces/bookinfo');
+    });
+
+    it('omits cluster query when multi-cluster flag is off even if row has cluster', () => {
+      expect(getNamespaceDetailUrl({ name: 'bookinfo', cluster: 'east' })).toBe('/namespaces/bookinfo');
     });
   });
 });

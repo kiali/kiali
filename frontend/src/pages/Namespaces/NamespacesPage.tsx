@@ -51,8 +51,7 @@ import { ExternalLink } from '../../types/Dashboards';
 import { PersesInfo } from '../../types/PersesInfo';
 import { addError } from '../../utils/AlertUtils';
 import { MessageType } from '../../types/NotificationCenter';
-import { gvkType, IstioConfigList } from 'types/IstioConfigList';
-import { getGVKTypeString } from '../../utils/IstioConfigUtils';
+import { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
@@ -64,6 +63,7 @@ import {
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
+import { buildNamespaceRowActions } from './namespaceRowActions';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -709,346 +709,26 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   };
 
   getNamespaceActions = (nsInfo: NamespaceInfo): NamespaceAction[] => {
-    // Today actions are fixed, but soon actions may depend of the state of a namespace
-    // So we keep this wrapped in a showActions function.
-    const namespaceActions: NamespaceAction[] = isParentKiosk(this.props.kiosk)
-      ? [
-          {
-            isGroup: true,
-            isSeparator: false,
-            isDisabled: false,
-            title: 'Show',
-            children: [
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Graph',
-                action: (ns: string) => this.kioskNamespacesAction(Show.GRAPH, ns, this.props.refreshInterval)
-              },
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Istio Config',
-                action: (ns: string) => this.kioskNamespacesAction(Show.ISTIO_CONFIG, ns, this.props.refreshInterval)
-              }
-            ]
-          }
-        ]
-      : [
-          {
-            isGroup: true,
-            isSeparator: false,
-            isDisabled: false,
-            title: 'Show',
-            children: [
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Graph',
-                action: (ns: string) => this.show(Show.GRAPH, ns)
-              },
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Applications',
-                action: (ns: string) => this.show(Show.APPLICATIONS, ns)
-              },
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Workloads',
-                action: (ns: string) => this.show(Show.WORKLOADS, ns)
-              },
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Services',
-                action: (ns: string) => this.show(Show.SERVICES, ns)
-              },
-              {
-                isGroup: true,
-                isSeparator: false,
-                title: 'Istio Config',
-                action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns)
-              }
-            ]
-          }
-        ];
-    // We are going to assume that if the user can create/update Istio AuthorizationPolicies in a namespace
-    // then it can use the Istio Injection Actions.
-    // RBAC allow more fine granularity but Kiali won't check that in detail.
-
-    if (!nsInfo.isControlPlane) {
-      if (
-        !(
-          serverConfig.ambientEnabled &&
-          nsInfo.labels &&
-          nsInfo.labels[serverConfig.istioLabels.ambientNamespaceLabel] ===
-            serverConfig.istioLabels.ambientNamespaceLabelValue
-        ) &&
-        serverConfig.kialiFeatureFlags.istioInjectionAction &&
-        !serverConfig.kialiFeatureFlags.istioUpgradeAction
-      ) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        const enableAction = {
-          'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: t('Enable Auto Injection'),
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'enable',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        const disableAction = {
-          'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: t('Disable Auto Injection'),
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'disable',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        const removeAction = {
-          'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
-          isGroup: false,
-          isSeparator: false,
-          title: t('Remove Auto Injection'),
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'remove',
-              kind: 'injection',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        if (
-          nsInfo.labels &&
-          ((nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled') ||
-            nsInfo.labels[serverConfig.istioLabels.injectionLabelRev])
-        ) {
-          namespaceActions.push(disableAction);
-          namespaceActions.push(removeAction);
-        } else if (
-          nsInfo.labels &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-          nsInfo.labels[serverConfig.istioLabels.injectionLabelName] === 'disabled'
-        ) {
-          namespaceActions.push(enableAction);
-          namespaceActions.push(removeAction);
-        } else {
-          namespaceActions.push(enableAction);
-        }
-      }
-
-      // Ambient actions
-      if (serverConfig.ambientEnabled) {
-        const addAmbientAction = {
-          'data-test': `add-${nsInfo.name}-namespace-ambient`,
-          isGroup: false,
-          isSeparator: false,
-          title: t('Add to Ambient'),
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'enable',
-              kind: 'ambient',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        const disableAmbientAction = {
-          'data-test': `disable-${nsInfo.name}-namespace-ambient`,
-          isGroup: false,
-          isSeparator: false,
-          title: 'Disable Ambient',
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'disable',
-              kind: 'ambient',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        const removeAmbientAction = {
-          'data-test': `remove-${nsInfo.name}-namespace-ambient`,
-          isGroup: false,
-          isSeparator: false,
-          title: 'Remove Ambient',
-          action: (ns: string) =>
-            this.setState({
-              showTrafficPoliciesModal: true,
-              nsTarget: ns,
-              opTarget: 'remove',
-              kind: 'ambient',
-              clusterTarget: nsInfo.cluster
-            })
-        };
-
-        if (
-          nsInfo.labels &&
-          !nsInfo.labels[serverConfig.istioLabels.injectionLabelName] &&
-          !nsInfo.labels[serverConfig.istioLabels.injectionLabelRev]
-        ) {
-          if (nsInfo.isAmbient) {
-            namespaceActions.push({
-              isGroup: false,
-              isSeparator: true
-            });
-            namespaceActions.push(disableAmbientAction);
-            namespaceActions.push(removeAmbientAction);
-          } else {
-            namespaceActions.push(addAmbientAction);
-          }
-        }
-      }
-
-      if (serverConfig.kialiFeatureFlags.istioUpgradeAction && this.hasCanaryUpgradeConfigured()) {
-        const revisionActions = this.state.controlPlanes
-          ?.filter(
-            controlplane =>
-              nsInfo.revision &&
-              controlplane.managedClusters?.some(managedCluster => managedCluster.name === nsInfo.cluster) &&
-              controlplane.revision !== nsInfo.revision
-          )
-          .map(controlPlane => ({
-            isGroup: false,
-            isSeparator: false,
-            title: `Switch to ${controlPlane.revision} revision`,
-            action: (ns: string) =>
-              this.setState({
-                opTarget: controlPlane.revision,
-                kind: 'canary',
-                nsTarget: ns,
-                showTrafficPoliciesModal: true,
-                clusterTarget: nsInfo.cluster
-              })
-          }));
-
-        if (revisionActions && revisionActions.length > 0) {
-          namespaceActions.push({
-            isGroup: false,
-            isSeparator: true
-          });
-        }
-
-        revisionActions?.forEach(action => {
-          namespaceActions.push(action);
-        });
-      }
-
-      const aps = nsInfo.istioConfig?.resources[getGVKTypeString(gvkType.AuthorizationPolicy)] ?? [];
-
-      const addAuthorizationAction = {
-        isGroup: false,
-        isSeparator: false,
-        title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
-        action: (ns: string) => {
-          this.setState({
-            opTarget: aps.length === 0 ? 'create' : 'update',
-            nsTarget: ns,
-            clusterTarget: nsInfo.cluster,
-            showTrafficPoliciesModal: true,
-            kind: 'policy'
-          });
-        }
-      };
-
-      const removeAuthorizationAction = {
-        isGroup: false,
-        isSeparator: false,
-        title: 'Delete Traffic Policies',
-        action: (ns: string) =>
-          this.setState({
-            opTarget: 'delete',
-            nsTarget: ns,
-            showTrafficPoliciesModal: true,
-            kind: 'policy',
-            clusterTarget: nsInfo.cluster
-          })
-      };
-
-      if (this.props.istioAPIEnabled) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        namespaceActions.push(addAuthorizationAction);
-
-        if (aps.length > 0) {
-          namespaceActions.push(removeAuthorizationAction);
-        }
-      }
-    } else {
-      if (this.state.grafanaLinks.length > 0) {
-        // Istio namespace will render external Grafana dashboards
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        this.state.grafanaLinks.forEach(link => {
-          const grafanaDashboard = {
-            isGroup: false,
-            isSeparator: false,
-            isExternal: true,
-            title: link.name,
-            action: (_ns: string) => {
-              window.open(link.url, '_blank', 'noopener,noreferrer');
-              this.onChange();
-            }
-          };
-
-          namespaceActions.push(grafanaDashboard);
-        });
-      }
-      if (this.state.persesLinks.length > 0) {
-        // Istio namespace will render external Perses dashboards
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
-
-        this.state.persesLinks.forEach(link => {
-          const persesDashboard = {
-            isGroup: false,
-            isSeparator: false,
-            isExternal: true,
-            title: link.name,
-            action: (_ns: string) => {
-              window.open(link.url, '_blank', 'noopener,noreferrer');
-              this.onChange();
-            }
-          };
-
-          namespaceActions.push(persesDashboard);
-        });
-      }
-    }
-
-    return namespaceActions;
+    return buildNamespaceRowActions({
+      controlPlanes: this.state.controlPlanes,
+      grafanaLinks: this.state.grafanaLinks,
+      istioAPIEnabled: this.props.istioAPIEnabled,
+      kiosk: this.props.kiosk,
+      nsInfo,
+      onKioskShow: this.kioskNamespacesAction,
+      onOpenTrafficPoliciesModal: p =>
+        this.setState({
+          showTrafficPoliciesModal: true,
+          nsTarget: p.nsTarget,
+          clusterTarget: p.clusterTarget ?? '',
+          opTarget: p.opTarget,
+          kind: p.kind
+        }),
+      onRefreshAfterExternalLink: this.onChange,
+      onShow: this.show,
+      persesLinks: this.state.persesLinks,
+      refreshInterval: this.props.refreshInterval
+    });
   };
 
   hideTrafficManagement = (): void => {
@@ -1059,10 +739,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       opTarget: '',
       kind: ''
     });
-  };
-
-  hasCanaryUpgradeConfigured = (): boolean => {
-    return this.state.controlPlanes !== undefined;
   };
 
   show = (showType: Show, namespace: string): void => {

@@ -18,6 +18,7 @@ import { GraphPage } from 'pages/Graph/GraphPage';
 import { t } from 'utils/I18nUtils';
 import { RouteObject } from 'react-router-dom-v5-compat';
 import { WildcardRoute } from 'routes/WildcardRoute';
+import { NamespaceDetailsRoute } from 'routes/NamespaceDetailsRoute';
 
 /**
  * Return array of objects that describe vertical menu
@@ -46,7 +47,7 @@ const navMenuItems: MenuItem[] = [
     id: 'namespaces',
     title: t('Namespaces'),
     to: `/${Paths.NAMESPACES}`,
-    pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`)]
+    pathsActive: [new RegExp(`^/${Paths.NAMESPACES}(?:\\?.*)?$`), new RegExp(`^/namespaces/[^/]+(?:\\?.*)?$`)]
   },
   {
     id: 'applications',
@@ -140,6 +141,10 @@ const pathRoutes: RouteObject[] = [
   {
     path: `/namespaces/:namespace/${Paths.WORKLOADS}/:workload`,
     element: <WorkloadDetailsRoute />
+  },
+  {
+    path: '/namespaces/:namespace',
+    element: <NamespaceDetailsRoute />
   },
   {
     path: `/${Paths.ISTIO}/new/:objectGroup/:objectVersion/:objectKind`,
