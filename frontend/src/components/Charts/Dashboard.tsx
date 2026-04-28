@@ -13,20 +13,16 @@ import { isArray } from 'lodash';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 
-const dashboardGridStyle = kialiStyle({
-  display: 'flex',
-  flexDirection: 'column'
-});
-
-const dashboardMaximizedStyle = kialiStyle({
+const dashboardContainerStyle = kialiStyle({
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
   minHeight: 0
 });
 
-const CHART_HEIGHT = 200;
+const MIN_CHART_HEIGHT = 130;
 const CHART_MARGIN = 8;
+const GRID_ROW_GAP = 16;
 
 export type Props<T extends LineInfo> = {
   brushHandlers?: BrushHandlers;
@@ -63,21 +59,12 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
   }
 
   componentDidMount(): void {
-    if (this.state.maximizedChart) {
-      this.startObserving();
-    }
-  }
-
-  componentDidUpdate(_prevProps: Props<T>, prevState: State): void {
-    if (this.state.maximizedChart && !prevState.maximizedChart) {
-      this.startObserving();
-    } else if (!this.state.maximizedChart && prevState.maximizedChart) {
-      this.stopObserving();
-    }
+    this.startObserving();
   }
 
   componentWillUnmount(): void {
-    this.stopObserving();
+    this.heightObserver?.disconnect();
+    this.heightObserver = null;
   }
 
   // The container has flex:1 + minHeight:0 so its height is set by the
@@ -92,11 +79,6 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
       this.heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
     }
     this.heightObserver.observe(el);
-  }
-
-  private stopObserving(): void {
-    this.heightObserver?.disconnect();
-    this.heightObserver = null;
   }
 
   render(): React.ReactNode {
@@ -125,17 +107,25 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     }
 
     return (
-      <div ref={this.containerRef} className={this.state.maximizedChart ? dashboardMaximizedStyle : dashboardGridStyle}>
+      <div ref={this.containerRef} className={dashboardContainerStyle}>
         {content}
       </div>
     );
   }
 
   private getChartHeight = (): number => {
-    if (this.state.maximizedChart) {
-      return Math.max(this.state.measuredHeight - CHART_MARGIN, CHART_HEIGHT);
+    if (this.state.measuredHeight === 0) {
+      return MIN_CHART_HEIGHT;
     }
-    return CHART_HEIGHT;
+
+    if (this.state.maximizedChart) {
+      return Math.max(this.state.measuredHeight - CHART_MARGIN, MIN_CHART_HEIGHT);
+    }
+
+    const rows = this.props.dashboard.rows > 0 ? this.props.dashboard.rows : 2;
+    const totalGapHeight = (rows - 1) * GRID_ROW_GAP;
+    const availableForCharts = this.state.measuredHeight - totalGapHeight;
+    return Math.max(Math.floor(availableForCharts / rows) - CHART_MARGIN, MIN_CHART_HEIGHT);
   };
 
   private renderChart(chart: ChartModel): React.ReactNode {
