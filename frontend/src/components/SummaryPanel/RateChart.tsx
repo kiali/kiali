@@ -110,7 +110,7 @@ export class RateChart extends React.Component<Props, State> {
           tickValues={[0, 25, 50, 75, 100]}
         />
         <ChartLegend
-          style={{ labels: { fontSize: parseInt(fontSize) } }}
+          style={{ labels: { fontSize: parseInt(fontSize, 10) } }}
           name={`${this.props.baseName}-legend`}
           data={this.props.series.map((s, idx) => {
             if (this.state.hiddenSeries.has(idx)) {

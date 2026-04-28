@@ -2883,7 +2883,6 @@ __metadata:
     regression: "npm:^2.0.1"
     reselect: "npm:4.0.0"
     sass: "npm:^1.63.6"
-    screenfull: "npm:5.0.2"
     seedrandom: "npm:^3.0.5"
     typesafe-actions: "npm:^4.2.1"
     typescript: "npm:^5.9.0"
@@ -17993,13 +17992,6 @@ __metadata:
     ajv-formats: "npm:^2.1.1"
     ajv-keywords: "npm:^5.1.0"
   checksum: 10c0/1c8d2c480a026d7c02ab2ecbe5919133a096d6a721a3f201fa50663e4f30f6d6ba020dfddd93cb828b66b922e76b342e103edd19a62c95c8f60e9079cc403202
-  languageName: node
-  linkType: hard
-
-"screenfull@npm:5.0.2":
-  version: 5.0.2
-  resolution: "screenfull@npm:5.0.2"
-  checksum: 10c0/cb18798c89e7134aea358edf828a402e0f728e4ef6724e9c8950325a384dde5eb75c6b6767cbd3c76e6e8e028eefe880eecf5c4e1009201e344da1c5f51432de
   languageName: node
   linkType: hard
 

@@ -55,6 +55,7 @@ import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { setAIContext } from 'helpers/ChatAI';
+import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 
 const editorDrawer = kialiStyle({
   display: 'flex',
@@ -113,9 +114,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   aceEditorRef: React.RefObject<AceEditor>;
   drawerRef: React.RefObject<IstioConfigDetails>;
   private editorContainerRef = React.createRef<HTMLDivElement>();
-  private lastEditorHeight = 0;
+  private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }));
   promptTo: string;
-  private resizeObserver: ResizeObserver | null = null;
   timerId: number;
 
   constructor(props: IstioConfigDetailsProps) {
@@ -221,14 +221,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   componentDidMount(): void {
     this.fetchIstioObjectDetails();
     if (this.editorContainerRef.current) {
-      this.resizeObserver = new ResizeObserver(entries => {
-        const height = entries[0]?.contentRect.height ?? 0;
-        if (Math.abs(height - this.lastEditorHeight) >= 2) {
-          this.lastEditorHeight = height;
-          this.setState({ editorHeight: height });
-        }
-      });
-      this.resizeObserver.observe(this.editorContainerRef.current);
+      this.heightObserver.observe(this.editorContainerRef.current);
     }
   }
 
@@ -286,7 +279,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     // Reset ask confirmation flag
     window.onbeforeunload = null;
     window.clearInterval(this.timerId);
-    this.resizeObserver?.disconnect();
+    this.heightObserver.disconnect();
   }
 
   backToList = (): void => {

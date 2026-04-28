@@ -1,4 +1,5 @@
 {
+  "proxy": "http://localhost:20001",
   "name": "@kiali/kiali-ui",
   "version": "2.26.0",
   "description": "React UI for [Kiali](https://github.com/kiali/kiali).",
@@ -139,7 +140,6 @@
     "refractor": "^5.0.0",
     "regression": "^2.0.1",
     "reselect": "4.0.0",
-    "screenfull": "5.0.2",
     "typesafe-actions": "^4.2.1",
     "typestyle": "^2.4.0",
     "victory": "^37.3.6",

@@ -29,6 +29,7 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
@@ -97,10 +98,8 @@ const editorWrapperStyle = kialiStyle({
 
 class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDetailsState> {
   aceEditorRef: React.RefObject<AceEditor>;
-  editorObserver: ResizeObserver | null = null;
   editorWrapperRef: React.RefObject<HTMLDivElement>;
-  private lastEditorHeight = 0;
-  private observedElement: HTMLElement | null = null;
+  private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }), 2, 1);
 
   constructor(props: EnvoyDetailsProps) {
     super(props);
@@ -134,32 +133,13 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   componentDidMount(): void {
     this.fetchContent();
-    this.observeEditorWrapper();
+    if (this.editorWrapperRef.current) {
+      this.heightObserver.observe(this.editorWrapperRef.current);
+    }
   }
 
   componentWillUnmount(): void {
-    this.editorObserver?.disconnect();
-  }
-
-  observeEditorWrapper(): void {
-    const el = this.editorWrapperRef.current;
-    if (!el || el === this.observedElement) {
-      return;
-    }
-
-    if (!this.editorObserver) {
-      this.editorObserver = new ResizeObserver(entries => {
-        const h = entries[0]?.contentRect.height ?? 0;
-
-        if (h > 0 && Math.abs(h - this.lastEditorHeight) >= 2) {
-          this.lastEditorHeight = h;
-          this.setState({ editorHeight: h });
-        }
-      });
-    }
-
-    this.editorObserver.observe(el);
-    this.observedElement = el;
+    this.heightObserver.disconnect();
   }
 
   componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
@@ -174,7 +154,9 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     }
 
     if (this.showEditor() && this.editorWrapperRef.current) {
-      this.observeEditorWrapper();
+      this.heightObserver.observe(this.editorWrapperRef.current);
+    } else if (!this.showEditor()) {
+      this.heightObserver.unobserve();
     }
   }
 

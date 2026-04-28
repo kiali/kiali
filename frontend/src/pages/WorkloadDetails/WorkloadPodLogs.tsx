@@ -46,7 +46,6 @@ import {
 } from '../../types/Common';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
-import screenfull, { Screenfull } from 'screenfull';
 import { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
@@ -957,7 +956,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
               <Tooltip key="fullscreen_logs" position="top" content="Expand logs full screen">
                 <Button
                   variant={ButtonVariant.link}
-                  onClick={this.toggleFullscreen}
+                  onClick={this.handleToggleFullscreen}
                   isDisabled={!this.hasEntries(this.state.entries)}
                   isInline
                 >
@@ -1326,19 +1325,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     });
   };
 
-  private toggleFullscreen = (): void => {
-    const screenFullAlias = screenfull as Screenfull; // this casting was necessary
-
-    if (screenFullAlias.isFullscreen) {
-      screenFullAlias.exit();
+  private handleToggleFullscreen = (): void => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
     } else {
-      const element = document.getElementById('logs');
-
-      if (screenFullAlias.isEnabled) {
-        if (element) {
-          screenFullAlias.request(element);
-        }
-      }
+      document.getElementById('logs')?.requestFullscreen();
     }
   };
 

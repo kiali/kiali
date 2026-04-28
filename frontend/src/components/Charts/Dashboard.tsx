@@ -11,6 +11,7 @@ import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
 import { BrushHandlers } from './Container';
 import { isArray } from 'lodash';
 import { kialiStyle } from 'styles/StyleUtils';
+import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 
 const dashboardContainerStyle = kialiStyle({
   display: 'flex',
@@ -18,6 +19,10 @@ const dashboardContainerStyle = kialiStyle({
   flexDirection: 'column',
   minHeight: 0
 });
+
+// Vertical margin each KChart row adds outside the chart height
+// (kchartStyle: marginTop 0.5rem + marginBottom 0.5rem = 1rem ≈ 16px).
+const CHART_ROW_MARGIN_PX = 16;
 
 export type Props<T extends LineInfo> = {
   brushHandlers?: BrushHandlers;
@@ -44,8 +49,7 @@ type State = {
 
 export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, State> {
   private containerRef = React.createRef<HTMLDivElement>();
-  private lastMeasuredHeight = 0;
-  private observer: ResizeObserver | null = null;
+  private heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
 
   constructor(props: Props<T>) {
     super(props);
@@ -57,21 +61,12 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
 
   componentDidMount(): void {
     if (this.containerRef.current) {
-      this.observer = new ResizeObserver(entries => {
-        const height = entries[0]?.contentRect.height ?? 0;
-
-        if (Math.abs(this.lastMeasuredHeight - height) >= 2) {
-          this.lastMeasuredHeight = height;
-          this.setState({ measuredHeight: height });
-        }
-      });
-
-      this.observer.observe(this.containerRef.current);
+      this.heightObserver.observe(this.containerRef.current);
     }
   }
 
   componentWillUnmount(): void {
-    this.observer?.disconnect();
+    this.heightObserver.disconnect();
   }
 
   render(): React.ReactNode {
@@ -122,7 +117,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     }
 
     const rows = this.props.dashboard.rows > 0 ? this.props.dashboard.rows : 2;
-    return height / rows;
+    return Math.max(100, (height - rows * CHART_ROW_MARGIN_PX) / rows);
   };
 
   private renderChart(chart: ChartModel): React.ReactNode {
@@ -147,7 +142,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
         showSpans={this.props.showSpans}
         showTrendline={this.props.showTrendlines}
         data={dataSupplier()}
-        onToggleMaximized={() => this.onToggleMaximized(chart.name)}
+        onToggleMaximized={() => this.handleToggleMaximized(chart.name)}
         isMaximized={this.state.maximizedChart !== undefined}
         overlay={chart.xAxis === 'series' ? undefined : this.props.overlay}
         onClick={onClick}
@@ -157,7 +152,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     );
   }
 
-  private onToggleMaximized = (chartKey: string): void => {
+  private handleToggleMaximized = (chartKey: string): void => {
     const maximized = this.state.maximizedChart ? undefined : chartKey;
     this.setState({ maximizedChart: maximized });
     this.props.onExpand(maximized);
