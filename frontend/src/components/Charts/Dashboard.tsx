@@ -13,7 +13,12 @@ import { isArray } from 'lodash';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 
-const dashboardContainerStyle = kialiStyle({
+const dashboardGridStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column'
+});
+
+const dashboardMaximizedStyle = kialiStyle({
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
@@ -120,7 +125,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     }
 
     return (
-      <div ref={this.containerRef} className={dashboardContainerStyle}>
+      <div ref={this.containerRef} className={this.state.maximizedChart ? dashboardMaximizedStyle : dashboardGridStyle}>
         {content}
       </div>
     );
