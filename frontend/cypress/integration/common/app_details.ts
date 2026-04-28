@@ -51,7 +51,7 @@ Then('user sees outbound metrics information', () => {
 Then('user can filter spans by app {string}', (app: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
-  cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
+  cy.get('input[placeholder="Filter by App"]').click();
   clickSpanFilterOptionWithFallback(app);
 
   getCellsForCol('App / Workload').each($cell => {
@@ -73,18 +73,17 @@ Then('user can filter spans by app {string}', (app: string) => {
 Then('user can filter spans by app {string} by {string}', (app: string, waypoint: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
-  cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  cy.get('body').then($body => {
-    const appOption = `li[label="${app}"]`;
-    const waypointOption = `li[label="${waypoint}"]`;
+  cy.get('input[placeholder="Filter by App"]').click();
 
-    if ($body.find(appOption).length > 0) {
-      cy.get(appOption).should('be.visible').find('button').click();
-    } else {
-      cy.get('input[placeholder="Filter by App"]').clear().type(`${waypoint}{enter}`);
-      cy.get(waypointOption).should('be.visible').find('button').click();
-    }
-  });
+  cy.get('ul[role="listbox"]')
+    .should('be.visible')
+    .then($list => {
+      if ($list.find(`li[label="${app}"]`).length > 0) {
+        cy.get(`li[label="${app}"]`).find('button').click();
+      } else {
+        cy.get(`li[label="${waypoint}"]`).find('button').click();
+      }
+    });
 
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();

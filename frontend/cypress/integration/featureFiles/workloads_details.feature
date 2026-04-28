@@ -62,6 +62,7 @@ Feature: Kiali Workload Details page
 
   @waypoint-tracing
   # TODO: offline - ambient.
+  @selected
   Scenario: See workload span info after selecting a span
     And user sees trace information
     When user selects a trace with at least 4 spans

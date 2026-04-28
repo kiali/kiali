@@ -70,19 +70,18 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
 When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
-  cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
+  cy.get('input[placeholder="Filter by Workload"]').click();
 
-  cy.get('body').then($body => {
-    const workloadOption = `li[label="${workload}"]`;
-    const waypointOption = `li[label="${WAYPOINT_FALLBACK}"]`;
-
-    if ($body.find(workloadOption).length > 0) {
-      cy.get(workloadOption).should('be.visible').find('button').click();
-    } else {
-      cy.get('input[placeholder="Filter by Workload"]').clear().type(`${WAYPOINT_FALLBACK}{enter}`);
-      cy.get(waypointOption).should('be.visible').find('button').click();
-    }
-  });
+  // Wait for the dropdown to render before checking which options exist.
+  cy.get('ul[role="listbox"]')
+    .should('be.visible')
+    .then($list => {
+      if ($list.find(`li[label="${workload}"]`).length > 0) {
+        cy.get(`li[label="${workload}"]`).find('button').click();
+      } else {
+        cy.get(`li[label="${WAYPOINT_FALLBACK}"]`).find('button').click();
+      }
+    });
 
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();

@@ -1,6 +1,12 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
-import { waitForResourceDeletion } from './transition';
+import {
+  enableKialiFeature,
+  restoreKialiFeature,
+  GRAPH_CACHE_CONFIG,
+  HEALTH_CACHE_CONFIG,
+  USE_WAYPOINT_NAME_CONFIG
+} from './kiali-config';
+import { waitForResourceDeletion, waitForKialiApiReady } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -289,4 +295,47 @@ After({ tags: '@graph-cache-metrics' }, () => {
 
 After({ tags: '@health-cache-metrics' }, () => {
   restoreKialiFeature(HEALTH_CACHE_CONFIG);
+});
+
+// In ambient mesh with some Istio versions, traces are reported under the waypoint
+// service name rather than the workload name. Enable use_waypoint_name so Kiali can
+// find them. Only runs once per spec (skips if already checked).
+Before({ tags: '@waypoint-tracing' }, () => {
+  if (Cypress.env('WAYPOINT_TRACING_CHECKED')) {
+    return;
+  }
+  Cypress.env('WAYPOINT_TRACING_CHECKED', true);
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/ratings-v1/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    const traces = response.body?.data;
+    if (!Array.isArray(traces) || traces.length === 0) {
+      Cypress.log({
+        name: 'waypoint-tracing-hook',
+        message: 'No traces for ratings-v1, enabling use_waypoint_name'
+      });
+      enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
+      waitForKialiApiReady();
+    }
+  });
+});
+
+After({ tags: '@waypoint-tracing' }, () => {
+  if (Cypress.env('WAYPOINT_TRACING_RESTORED')) {
+    return;
+  }
+  Cypress.env('WAYPOINT_TRACING_RESTORED', true);
+  restoreKialiFeature(USE_WAYPOINT_NAME_CONFIG);
 });
