@@ -80,15 +80,17 @@ Then('user can filter spans by app {string} by {string}', (app: string, waypoint
 
     if ($body.find(appOption).length > 0) {
       cy.get(appOption).should('be.visible').find('button').click();
-      return;
+    } else {
+      cy.get('input[placeholder="Filter by App"]').clear().type(`${waypoint}{enter}`);
+      cy.get(waypointOption).should('be.visible').find('button').click();
     }
-
-    cy.get('input[placeholder="Filter by App"]').clear().type(`${waypoint}{enter}`);
-    cy.get(waypointOption).should('be.visible').find('button').click();
   });
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains(waypoint);
+    const cellText = $cell.text().toLowerCase();
+    const appMatches = cellText.includes(app.toLowerCase());
+    const waypointMatches = cellText.includes(waypoint.toLowerCase());
+    expect(appMatches || waypointMatches, `Expected "${cellText}" to contain "${app}" or "${waypoint}"`).to.equal(true);
   });
 
   getCellsForCol(4).first().click();

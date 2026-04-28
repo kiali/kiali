@@ -71,9 +71,19 @@ When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
   cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
-  clickSpanFilterOptionWithFallback(workload);
 
-  // waypoint is a fallback for istio < 1.29
+  cy.get('body').then($body => {
+    const workloadOption = `li[label="${workload}"]`;
+    const waypointOption = `li[label="${WAYPOINT_FALLBACK}"]`;
+
+    if ($body.find(workloadOption).length > 0) {
+      cy.get(workloadOption).should('be.visible').find('button').click();
+    } else {
+      cy.get('input[placeholder="Filter by Workload"]').clear().type(`${WAYPOINT_FALLBACK}{enter}`);
+      cy.get(waypointOption).should('be.visible').find('button').click();
+    }
+  });
+
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();
     const workloadMatches = cellText.includes(workload.toLowerCase());

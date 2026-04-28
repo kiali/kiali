@@ -66,7 +66,7 @@ Feature: Kiali Workload Details page
     And user sees trace information
     When user selects a trace with at least 4 spans
     And user sees span details
-    And user can filter spans by workload "waypoint"
+    And user can filter spans by workload "details-v1"
 
   @bookinfo-app
   @tracing
