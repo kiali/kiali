@@ -38,13 +38,15 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
-import { Label } from 'components/Label/Label';
+import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
+  canEdit: boolean;
   duration: DurationInSeconds;
   namespace: string;
   nsInfo: NamespaceInfo;
+  onSaveLabels: (labels: Record<string, string>) => void;
 };
 
 const gridStyle = kialiStyle({
@@ -275,22 +277,14 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           </Card>
         </StackItem>
 
-        {nsInfo.labels && Object.keys(nsInfo.labels).length > 0 && (
-          <StackItem>
-            <Card>
-              <CardBody>
-                <Title headingLevel="h4" size={TitleSizes.md}>
-                  {t('Labels')}
-                </Title>
-                <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
-                  {Object.entries(nsInfo.labels).map(([key, value]) => (
-                    <Label key={`${key}=${value}`} name={key} value={value} />
-                  ))}
-                </Flex>
-              </CardBody>
-            </Card>
-          </StackItem>
-        )}
+        <StackItem>
+          <EditableLabelsCard
+            canEdit={this.props.canEdit}
+            labels={nsInfo.labels ?? {}}
+            onSave={this.props.onSaveLabels}
+            title={t('Labels')}
+          />
+        </StackItem>
 
         {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
           <StackItem>
