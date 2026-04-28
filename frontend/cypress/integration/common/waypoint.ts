@@ -1,7 +1,8 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading, openTab } from './transition';
+import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
+import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -368,6 +369,33 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
   waitForWorkloadTracesInApi(namespace, workload);
+});
+
+Then('use_waypoint_name is enabled if {string} has no traces in {string}', (workload: string, namespace: string) => {
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    const traces = response.body?.data;
+    if (!Array.isArray(traces) || traces.length === 0) {
+      Cypress.log({
+        name: 'use_waypoint_name',
+        message: `No traces found for ${workload} in ${namespace}, enabling use_waypoint_name`
+      });
+      enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
+      waitForKialiApiReady();
+    }
+  });
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {

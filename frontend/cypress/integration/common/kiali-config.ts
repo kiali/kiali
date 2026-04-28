@@ -182,9 +182,10 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
           Cypress.env(featureConfig.envKeyPrev, prev);
         });
 
-        // Build the patch JSON dynamically
+        // Build the patch JSON dynamically using the last path segment as the key
         const pathParts = featureConfig.crSpecPath.split('.');
-        let patchObj: Record<string, unknown> = { enabled: true };
+        const leafKey = pathParts[pathParts.length - 1];
+        let patchObj: Record<string, unknown> = { [leafKey]: true };
         for (let i = pathParts.length - 2; i >= 0; i--) {
           patchObj = { [pathParts[i]]: patchObj };
         }
@@ -247,9 +248,10 @@ export const restoreKialiFeature = (featureConfig: KialiFeatureConfig): void => 
     const crNamespace = parts[0];
     const crName = parts[1];
 
-    // Build the patch JSON dynamically
+    // Build the patch JSON dynamically using the last path segment as the key
     const pathParts = featureConfig.crSpecPath.split('.');
-    let patchObj: Record<string, unknown> = { enabled: prevBool };
+    const leafKey = pathParts[pathParts.length - 1];
+    let patchObj: Record<string, unknown> = { [leafKey]: prevBool };
     for (let i = pathParts.length - 2; i >= 0; i--) {
       patchObj = { [pathParts[i]]: patchObj };
     }
@@ -292,4 +294,10 @@ export const HEALTH_CACHE_CONFIG: KialiFeatureConfig = {
   configPath: '.kiali_internal.health_cache.enabled',
   crSpecPath: 'kiali_internal.health_cache.enabled',
   envKeyPrev: 'HEALTH_CACHE_PREV'
+};
+
+export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
+  configPath: '.external_services.tracing.use_waypoint_name',
+  crSpecPath: 'external_services.tracing.use_waypoint_name',
+  envKeyPrev: 'USE_WAYPOINT_NAME_PREV'
 };
