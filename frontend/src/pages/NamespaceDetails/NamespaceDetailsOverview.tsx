@@ -6,7 +6,6 @@ import {
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
-  Divider,
   Flex,
   FlexItem,
   Grid,
@@ -153,95 +152,133 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
       validations = { namespace: nsInfo.name, objectCount: 0, errors: 0, warnings: 0 };
     }
 
-    const graphLink = `/graph/namespaces?namespaces=${encodeURIComponent(namespace)}`;
     const appsLink = buildListLink(`/${Paths.APPLICATIONS}`, namespace, cluster);
     const workloadsLink = buildListLink(`/${Paths.WORKLOADS}`, namespace, cluster);
     const servicesLink = buildListLink(`/${Paths.SERVICES}`, namespace, cluster);
     const istioLink = buildListLink(`/${Paths.ISTIO}`, namespace, cluster);
 
+    const statusCount = (s?: {
+      inError: string[];
+      inNotReady: string[];
+      inSuccess: string[];
+      inWarning: string[];
+      notAvailable: string[];
+    }): number | undefined =>
+      s
+        ? s.inError.length + s.inNotReady.length + s.inSuccess.length + s.inWarning.length + s.notAvailable.length
+        : undefined;
+    const appCount = statusCount(nsInfo.statusApp);
+    const serviceCount = statusCount(nsInfo.statusService);
+    const workloadCount = statusCount(nsInfo.statusWorkload);
+    const istioCount = validations.objectCount && validations.objectCount > 0 ? validations.objectCount : undefined;
+
     return (
-      <Card>
-        <CardBody>
-          <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
-            <FlexItem>
-              <DescriptionList>
-                <DescriptionListGroup>
-                  <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    {nsInfo.isControlPlane ? (
-                      <ControlPlaneBadge />
-                    ) : isDataPlane ? (
-                      <DataPlaneBadge />
-                    ) : (
-                      <NotPartOfMeshBadge />
+      <>
+        <StackItem>
+          <Card>
+            <CardBody>
+              <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
+                <FlexItem>
+                  <DescriptionList columnModifier={{ default: '2Col' }}>
+                    {cluster && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                        <DescriptionListDescription>{cluster}</DescriptionListDescription>
+                      </DescriptionListGroup>
                     )}
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-                <DescriptionListGroup>
-                  <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                      {t(modeInfo.displayText)}
-                    </PFLabel>
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-                {(revisions.length > 0 || !nsInfo.isControlPlane) && (
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      <NamespaceRevisionLabels ns={nsInfo} />
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                )}
-                {nsInfo.tlsStatus && (
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                )}
-                <DescriptionListGroup>
-                  <DescriptionListTerm>{t('Istio config')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    <ValidationSummaryLink
-                      namespace={namespace}
-                      objectCount={validations.objectCount}
-                      errors={validations.errors}
-                      warnings={validations.warnings}
-                    >
-                      <ValidationSummary
-                        id={`ns-detail-val-${namespace}`}
-                        errors={validations.errors}
-                        warnings={validations.warnings}
-                        objectCount={validations.objectCount}
-                        type="istio"
-                      />
-                    </ValidationSummaryLink>
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-              </DescriptionList>
-            </FlexItem>
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        {nsInfo.isControlPlane ? (
+                          <ControlPlaneBadge />
+                        ) : isDataPlane ? (
+                          <DataPlaneBadge />
+                        ) : (
+                          <NotPartOfMeshBadge />
+                        )}
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        <PFLabel variant="outline" color={modeInfo.color} isCompact>
+                          {t(modeInfo.displayText)}
+                        </PFLabel>
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                    {(revisions.length > 0 || !nsInfo.isControlPlane) && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <NamespaceRevisionLabels ns={nsInfo} />
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {nsInfo.tlsStatus && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Istio config')}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        <ValidationSummaryLink
+                          namespace={namespace}
+                          objectCount={validations.objectCount}
+                          errors={validations.errors}
+                          warnings={validations.warnings}
+                        >
+                          <ValidationSummary
+                            id={`ns-detail-val-${namespace}`}
+                            errors={validations.errors}
+                            warnings={validations.warnings}
+                            objectCount={validations.objectCount}
+                            type="istio"
+                          />
+                        </ValidationSummaryLink>
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                  </DescriptionList>
+                </FlexItem>
 
-            <FlexItem>
-              <Title headingLevel="h4" size={TitleSizes.md}>
-                {t('Navigate')}
-              </Title>
-              <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
-                <KialiLink to={graphLink}>{t('Traffic graph')}</KialiLink>
-                <span aria-hidden="true">·</span>
-                <KialiLink to={appsLink}>{t('Applications')}</KialiLink>
-                <span aria-hidden="true">·</span>
-                <KialiLink to={workloadsLink}>{t('Workloads')}</KialiLink>
-                <span aria-hidden="true">·</span>
-                <KialiLink to={servicesLink}>{t('Services')}</KialiLink>
-                <span aria-hidden="true">·</span>
-                <KialiLink to={istioLink}>{t('Istio config')}</KialiLink>
+                <FlexItem>
+                  <Title headingLevel="h4" size={TitleSizes.md}>
+                    {t('Navigate')}
+                  </Title>
+                  <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
+                    <KialiLink to={appsLink}>
+                      {t('Applications')}
+                      {appCount !== undefined && ` (${appCount})`}
+                    </KialiLink>
+                    <span aria-hidden="true">·</span>
+                    <KialiLink to={servicesLink}>
+                      {t('Services')}
+                      {serviceCount !== undefined && ` (${serviceCount})`}
+                    </KialiLink>
+                    <span aria-hidden="true">·</span>
+                    <KialiLink to={workloadsLink}>
+                      {t('Workloads')}
+                      {workloadCount !== undefined && ` (${workloadCount})`}
+                    </KialiLink>
+                    <span aria-hidden="true">·</span>
+                    <KialiLink to={istioLink}>
+                      {t('Istio config')}
+                      {istioCount !== undefined && ` (${istioCount})`}
+                    </KialiLink>
+                  </Flex>
+                </FlexItem>
               </Flex>
-            </FlexItem>
+            </CardBody>
+          </Card>
+        </StackItem>
 
-            {nsInfo.labels && Object.keys(nsInfo.labels).length > 0 && (
-              <FlexItem>
+        {nsInfo.labels && Object.keys(nsInfo.labels).length > 0 && (
+          <StackItem>
+            <Card>
+              <CardBody>
                 <Title headingLevel="h4" size={TitleSizes.md}>
                   {t('Labels')}
                 </Title>
@@ -250,13 +287,16 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                     <Label key={`${key}=${value}`} name={key} value={value} />
                   ))}
                 </Flex>
-              </FlexItem>
-            )}
+              </CardBody>
+            </Card>
+          </StackItem>
+        )}
 
-            {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
-              <FlexItem>
-                <Divider />
-                <Title headingLevel="h4" size={TitleSizes.md} style={{ marginTop: '1rem' }}>
+        {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
+          <StackItem>
+            <Card>
+              <CardBody>
+                <Title headingLevel="h4" size={TitleSizes.md}>
                   {t('Annotations')}
                 </Title>
                 <DescriptionList>
@@ -267,11 +307,11 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                     </DescriptionListGroup>
                   ))}
                 </DescriptionList>
-              </FlexItem>
-            )}
-          </Flex>
-        </CardBody>
-      </Card>
+              </CardBody>
+            </Card>
+          </StackItem>
+        )}
+      </>
     );
   }
 
@@ -284,9 +324,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         <div data-test={`namespace-detail-overview-${namespace}`}>
           <Grid hasGutter={true} className={gridStyle} style={{ alignItems: 'stretch' }}>
             <GridItem span={4} className={overviewLeftColumnStyle}>
-              <Stack hasGutter={true}>
-                <StackItem>{this.renderLeftCard()}</StackItem>
-              </Stack>
+              <Stack hasGutter={true}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard dataSource={this.graphDataSource} />
