@@ -1,13 +1,46 @@
 package get_trace_details
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing"
+	tracingModel "github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
+
+type fakeTracingClient struct {
+	traceDetail *tracingModel.TracingSingleTrace
+	detailErr   error
+}
+
+func (f *fakeTracingClient) GetAppTraces(_ context.Context, _, _ string, _ models.TracingQuery) (*tracingModel.TracingResponse, error) {
+	return nil, nil
+}
+
+func (f *fakeTracingClient) GetTraceDetail(_ context.Context, _ string) (*tracingModel.TracingSingleTrace, error) {
+	return f.traceDetail, f.detailErr
+}
+
+func (f *fakeTracingClient) GetErrorTraces(_ context.Context, _, _ string, _ time.Duration) (int, error) {
+	return 0, nil
+}
+
+func (f *fakeTracingClient) GetServiceStatus(_ context.Context) (bool, error) {
+	return true, nil
+}
+
+func (f *fakeTracingClient) GetServices(_ context.Context) ([]string, error) {
+	return nil, nil
+}
 
 func TestExecute_Validation(t *testing.T) {
 	conf := config.NewConfig()
@@ -269,5 +302,153 @@ func TestGetParentSpanID(t *testing.T) {
 	s3 := &jaegerModels.Span{}
 	if getParentSpanID(s3) != "" {
 		t.Errorf("expected empty parent, got %s", getParentSpanID(s3))
+	}
+}
+
+func TestExecute_InvalidTraceIDFormat(t *testing.T) {
+	conf := config.NewConfig()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	cases := []struct {
+		name    string
+		traceID string
+	}{
+		{"non-hex characters", "xyz-not-hex!"},
+		{"too long", "aabbccddaabbccddaabbccddaabbccdda"},
+		{"spaces", "abc def"},
+		{"special characters", "'; DROP TABLE--"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := map[string]interface{}{"traceId": tc.traceID}
+			res, code := Execute(&mcputil.KialiInterface{Request: req, Conf: conf}, args)
+			if code != http.StatusBadRequest {
+				t.Errorf("expected 400 for traceId=%q, got %d", tc.traceID, code)
+			}
+			if s, ok := res.(string); !ok || s == "" {
+				t.Errorf("expected error message string, got %v", res)
+			}
+		})
+	}
+}
+
+func TestExecute_ValidTraceIDFormats(t *testing.T) {
+	cases := []string{
+		"a",
+		"abcdef0123456789",
+		"ABCDEF0123456789abcdef0123456789",
+	}
+	for _, id := range cases {
+		if !validTraceIDRe.MatchString(id) {
+			t.Errorf("expected valid trace ID %q to pass regex", id)
+		}
+	}
+}
+
+func newTestKialiInterface(t *testing.T, conf *config.Config, fake tracing.ClientInterface) *mcputil.KialiInterface {
+	t.Helper()
+	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	layer := business.NewLayerBuilder(t, conf).
+		WithClient(k8s).
+		WithTraceLoader(func() tracing.ClientInterface { return fake }).
+		Build()
+	req, _ := http.NewRequest("GET", "/", nil)
+	return &mcputil.KialiInterface{
+		Request:       req,
+		BusinessLayer: layer,
+		Conf:          conf,
+	}
+}
+
+func TestExecute_BackendError_Returns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{detailErr: errors.New("tempo unavailable")}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503, got %d: %v", code, res)
+	}
+}
+
+func TestExecute_TraceNotFound_Returns404(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{traceDetail: nil, detailErr: nil}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d: %v", code, res)
+	}
+}
+
+func TestExecute_EmptySpansWithErrors_Returns404(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{
+		traceDetail: &tracingModel.TracingSingleTrace{
+			Data:   jaegerModels.Trace{Spans: []jaegerModels.Span{}},
+			Errors: []tracingModel.StructuredError{{Msg: "partial failure"}},
+		},
+	}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusNotFound {
+		t.Errorf("expected 404 for empty spans with errors, got %d: %v", code, res)
+	}
+}
+
+func TestExecute_ValidTrace_Returns200WithHierarchy(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{
+		traceDetail: &tracingModel.TracingSingleTrace{
+			Data: jaegerModels.Trace{
+				Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+					"p1": {ServiceName: "productpage"},
+				},
+				Spans: []jaegerModels.Span{
+					{
+						SpanID:        "s1",
+						OperationName: "GET /",
+						ProcessID:     "p1",
+						StartTime:     1000,
+						Duration:      5000,
+						Tags:          []jaegerModels.KeyValue{{Key: "http.status_code", Type: "string", Value: "200"}},
+					},
+				},
+			},
+		},
+	}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %v", code, res)
+	}
+	resp, ok := res.(GetTraceDetailResponse)
+	if !ok {
+		t.Fatalf("expected GetTraceDetailResponse, got %T", res)
+	}
+	if resp.TraceID != "abcdef1234567890" {
+		t.Errorf("expected trace_id=abcdef1234567890, got %s", resp.TraceID)
+	}
+	if resp.Hierarchy == nil {
+		t.Fatal("expected non-nil hierarchy")
+	}
+	if resp.Hierarchy.Service != "productpage" {
+		t.Errorf("expected root service=productpage, got %s", resp.Hierarchy.Service)
 	}
 }

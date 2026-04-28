@@ -1,13 +1,72 @@
 package list_traces
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing"
+	tracingModel "github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/util"
 )
+
+type fakeTracingClient struct {
+	appTraces   *tracingModel.TracingResponse
+	appErr      error
+	traceDetail *tracingModel.TracingSingleTrace
+	detailErr   error
+}
+
+func (f *fakeTracingClient) GetAppTraces(_ context.Context, _, _ string, _ models.TracingQuery) (*tracingModel.TracingResponse, error) {
+	return f.appTraces, f.appErr
+}
+
+func (f *fakeTracingClient) GetTraceDetail(_ context.Context, _ string) (*tracingModel.TracingSingleTrace, error) {
+	return f.traceDetail, f.detailErr
+}
+
+func (f *fakeTracingClient) GetErrorTraces(_ context.Context, _, _ string, _ time.Duration) (int, error) {
+	return 0, nil
+}
+
+func (f *fakeTracingClient) GetServiceStatus(_ context.Context) (bool, error) {
+	return true, nil
+}
+
+func (f *fakeTracingClient) GetServices(_ context.Context) ([]string, error) {
+	return nil, nil
+}
+
+func newTestKialiInterface(t *testing.T, conf *config.Config, fake tracing.ClientInterface, extraObjs ...runtime.Object) *mcputil.KialiInterface {
+	t.Helper()
+	util.Clock = util.RealClock{}
+	config.Set(conf)
+
+	objs := []runtime.Object{kubetest.FakeNamespace("bookinfo")}
+	objs = append(objs, extraObjs...)
+	k8s := kubetest.NewFakeK8sClient(objs...)
+
+	layer := business.NewLayerBuilder(t, conf).
+		WithClient(k8s).
+		WithTraceLoader(func() tracing.ClientInterface { return fake }).
+		Build()
+	req, _ := http.NewRequest("GET", "/", nil)
+	return &mcputil.KialiInterface{
+		Request:       req,
+		BusinessLayer: layer,
+		Conf:          conf,
+	}
+}
 
 func TestParseArgs_Defaults(t *testing.T) {
 	conf := config.NewConfig()
@@ -239,5 +298,139 @@ func TestTraceSummaryToListItem_EmptyNamespace(t *testing.T) {
 	// When namespace is empty we format as "service (Xms)" without ".namespace"
 	if item.SlowestService != "reviews (3.5ms)" {
 		t.Errorf("expected slowest_service without namespace suffix when namespace empty, got %q", item.SlowestService)
+	}
+}
+
+func TestParseArgs_LimitCap(t *testing.T) {
+	conf := config.NewConfig()
+	args := map[string]interface{}{"limit": 999999}
+	parsed := parseArgs(args, conf)
+	if parsed.Limit != mcputil.MaxTracesLimit {
+		t.Errorf("expected limit capped at %d, got %d", mcputil.MaxTracesLimit, parsed.Limit)
+	}
+}
+
+func TestParseArgs_LimitBelowCap(t *testing.T) {
+	conf := config.NewConfig()
+	args := map[string]interface{}{"limit": 50}
+	parsed := parseArgs(args, conf)
+	if parsed.Limit != 50 {
+		t.Errorf("expected limit 50, got %d", parsed.Limit)
+	}
+}
+
+func TestExecute_BackendError_Returns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{appErr: errors.New("connection refused")}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{
+		"namespace":   "bookinfo",
+		"serviceName": "ratings",
+	}
+	res, code := Execute(ki, args)
+	if code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503, got %d: %v", code, res)
+	}
+}
+
+func TestExecute_EmptyTraces_Returns200WithZero(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	fake := &fakeTracingClient{
+		appTraces: &tracingModel.TracingResponse{Data: nil},
+	}
+	svc := kubetest.FakeService("bookinfo", "ratings")
+	ki := newTestKialiInterface(t, conf, fake, &svc)
+
+	args := map[string]interface{}{
+		"namespace":   "bookinfo",
+		"serviceName": "ratings",
+	}
+	res, code := Execute(ki, args)
+	if code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %v", code, res)
+	}
+	resp, ok := res.(GetTracesListResponse)
+	if !ok {
+		t.Fatalf("expected GetTracesListResponse, got %T", res)
+	}
+	if resp.Summary == nil || resp.Summary.TotalFound != 0 {
+		t.Errorf("expected total_found=0, got %+v", resp.Summary)
+	}
+}
+
+func TestExecute_WithTraces_Returns200WithSummary(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+
+	sampleTrace := jaegerModels.Trace{
+		TraceID: "aabb",
+		Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+			"p1": {ServiceName: "ratings"},
+		},
+		Spans: []jaegerModels.Span{
+			{
+				SpanID:        "s1",
+				OperationName: "GET /ratings",
+				ProcessID:     "p1",
+				StartTime:     1000,
+				Duration:      5000,
+				Tags:          []jaegerModels.KeyValue{{Key: "http.status_code", Type: "string", Value: "200"}},
+			},
+		},
+	}
+
+	fake := &fakeTracingClient{
+		appTraces: &tracingModel.TracingResponse{
+			Data: []jaegerModels.Trace{sampleTrace},
+		},
+		traceDetail: &tracingModel.TracingSingleTrace{
+			Data: sampleTrace,
+		},
+	}
+	svc := kubetest.FakeService("bookinfo", "ratings")
+	ki := newTestKialiInterface(t, conf, fake, &svc)
+
+	args := map[string]interface{}{
+		"namespace":   "bookinfo",
+		"serviceName": "ratings",
+	}
+	res, code := Execute(ki, args)
+	if code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %v", code, res)
+	}
+	resp, ok := res.(GetTracesListResponse)
+	if !ok {
+		t.Fatalf("expected GetTracesListResponse, got %T", res)
+	}
+	if resp.Summary == nil || resp.Summary.TotalFound != 1 {
+		t.Errorf("expected total_found=1, got %+v", resp.Summary)
+	}
+	if len(resp.Traces) != 1 {
+		t.Fatalf("expected 1 trace, got %d", len(resp.Traces))
+	}
+	if resp.Traces[0].SpansCount != 1 {
+		t.Errorf("expected spans_count=1, got %d", resp.Traces[0].SpansCount)
+	}
+}
+
+func TestExecute_TracingDisabled_Returns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = false
+
+	fake := &fakeTracingClient{}
+	ki := newTestKialiInterface(t, conf, fake)
+
+	args := map[string]interface{}{
+		"namespace":   "bookinfo",
+		"serviceName": "ratings",
+	}
+	_, code := Execute(ki, args)
+	if code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 when tracing disabled, got %d", code)
 	}
 }
