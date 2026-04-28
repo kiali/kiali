@@ -7,7 +7,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from 'services/Api';
-import { addError } from 'utils/AlertUtils';
+import { addError, addSuccess } from 'utils/AlertUtils';
 import { ParameterizedTabs, activeTab } from 'components/Tab/Tabs';
 import { RenderHeader } from 'components/Nav/Page/RenderHeader';
 import { ErrorSection } from 'components/ErrorSection/ErrorSection';
@@ -47,6 +47,7 @@ import { NA } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
+import { serverConfig } from 'config/ServerConfig';
 
 const titleRowStyle = kialiStyle({
   alignItems: 'center',
@@ -462,6 +463,26 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     });
   };
 
+  private handleSaveLabels = (labels: Record<string, string>): void => {
+    const originalLabels = this.state.nsInfo?.labels ?? {};
+    const patchLabels: Record<string, string | null> = { ...labels };
+    Object.keys(originalLabels).forEach(key => {
+      if (!(key in labels)) {
+        patchLabels[key] = null;
+      }
+    });
+    const jsonPatch = JSON.stringify({ metadata: { labels: patchLabels } });
+
+    API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
+      .then(() => {
+        addSuccess(`Namespace ${this.props.namespace} labels updated`);
+        this.load();
+      })
+      .catch(error => {
+        addError(`Could not update namespace ${this.props.namespace} labels`, error);
+      });
+  };
+
   render(): React.ReactNode {
     const ns = this.state.nsInfo;
     const worstStatus = ns?.worstStatus ?? NA.id;
@@ -529,9 +550,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           >
             <Tab eventKey={0} title="Overview" key="Overview">
               <NamespaceDetailsOverview
+                canEdit={!serverConfig.deployment.viewOnlyMode}
                 duration={this.props.duration}
                 namespace={this.props.namespace}
                 nsInfo={ns}
+                onSaveLabels={this.handleSaveLabels}
               />
             </Tab>
           </ParameterizedTabs>

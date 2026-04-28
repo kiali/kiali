@@ -22,7 +22,6 @@ type EditableLabelsCardProps = {
   isVertical?: boolean;
   labels: Record<string, string>;
   numLabels?: number;
-  onLabelClick?: (key: string, value: string) => void;
   onSave: (labels: Record<string, string>) => void;
   title: string;
 };
@@ -74,8 +73,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   isCompact = false,
   isVertical = true,
   labels,
-  numLabels = 5,
-  onLabelClick,
+  numLabels = 10,
   onSave,
   title
 }) => {
@@ -83,13 +81,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   const [editLabels, setEditLabels] = React.useState<LabelEntry[]>([]);
   const [validationError, setValidationError] = React.useState<string | undefined>();
 
-  const handleStartEditing = (): void => {
+  const startEditing = (): void => {
     setEditLabels(Object.entries(labels ?? {}).map(([key, value]) => ({ key, value })));
     setValidationError(undefined);
     setEditing(true);
   };
 
-  const handleCancelEditing = (): void => {
+  const cancelEditing = (): void => {
     setEditing(false);
     setValidationError(undefined);
   };
@@ -152,19 +150,19 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
             <Button variant="plain" size="sm" onClick={handleSave} icon={<KialiIcon.Check />} />
           </Tooltip>
           <Tooltip content={t('Cancel')}>
-            <Button variant="plain" size="sm" onClick={handleCancelEditing} icon={<KialiIcon.Close />} />
+            <Button variant="plain" size="sm" onClick={cancelEditing} icon={<KialiIcon.Close />} />
           </Tooltip>
         </>
       ) : (
         <Tooltip content={t('Edit labels')}>
-          <Button variant="plain" size="sm" onClick={handleStartEditing} icon={<KialiIcon.PencilAlt />} />
+          <Button variant="plain" size="sm" onClick={startEditing} icon={<KialiIcon.PencilAlt />} />
         </Tooltip>
       )}
     </div>
   ) : undefined;
 
   return (
-    <Card isCompact>
+    <Card>
       <CardHeader actions={headerActions ? { actions: headerActions, hasNoOffset: true } : undefined}>
         <Title headingLevel="h4" size={TitleSizes.md}>
           {title}
@@ -205,13 +203,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         ) : hasLabels ? (
           <LabelGroup isVertical={isVertical} numLabels={numLabels}>
             {labelEntries.map(([key, value]) => (
-              <Label
-                key={`${key}=${value}`}
-                isCompact={isCompact}
-                textMaxWidth="500px"
-                tooltipPosition="top"
-                onClick={onLabelClick ? () => onLabelClick(key, value) : undefined}
-              >
+              <Label key={`${key}=${value}`} isCompact={isCompact} textMaxWidth="500px" tooltipPosition="top">
                 {formatLabel(key, value)}
               </Label>
             ))}
