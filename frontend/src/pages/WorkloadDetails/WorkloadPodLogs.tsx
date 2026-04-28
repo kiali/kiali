@@ -1327,9 +1327,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
   private handleToggleFullscreen = (): void => {
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(() => {});
     } else {
-      document.getElementById('logs')?.requestFullscreen();
+      document
+        .getElementById('logs')
+        ?.requestFullscreen()
+        .catch(() => {});
     }
   };
 
