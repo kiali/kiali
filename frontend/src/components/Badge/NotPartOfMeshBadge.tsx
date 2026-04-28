@@ -8,7 +8,7 @@ export const NotPartOfMeshBadge: React.FC = () => {
   return (
     <Tooltip content={<span>{t('Not part of the mesh')}</span>}>
       <Label
-        style={{ marginLeft: '0.5rem', minWidth: '2rem', textAlign: 'center' }}
+        style={{ minWidth: '2rem', textAlign: 'center' }}
         color="grey"
         isCompact
         data-test="not-part-of-mesh-badge"

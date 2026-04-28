@@ -7,7 +7,7 @@ export const DataPlaneBadge: React.FC = () => {
 
   return (
     <Tooltip content={<span>{t('Data plane')}</span>}>
-      <Label style={{ marginLeft: '0.5rem' }} color="blue" isCompact data-test="data-plane-badge">
+      <Label color="blue" isCompact data-test="data-plane-badge">
         {t('DP')}
       </Label>
     </Tooltip>

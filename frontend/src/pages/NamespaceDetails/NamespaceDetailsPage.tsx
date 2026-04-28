@@ -64,7 +64,6 @@ const titleMainStyle = kialiStyle({
   display: 'flex',
   flex: '1 1 auto',
   flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--md)',
   minWidth: 0
 });
 
@@ -483,6 +482,26 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       });
   };
 
+  private handleSaveAnnotations = (annotations: Record<string, string>): void => {
+    const originalAnnotations = this.state.nsInfo?.annotations ?? {};
+    const patchAnnotations: Record<string, string | null> = { ...annotations };
+    Object.keys(originalAnnotations).forEach(key => {
+      if (!(key in annotations)) {
+        patchAnnotations[key] = null;
+      }
+    });
+    const jsonPatch = JSON.stringify({ metadata: { annotations: patchAnnotations } });
+
+    API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
+      .then(() => {
+        addSuccess(`Namespace ${this.props.namespace} annotations updated`);
+        this.load();
+      })
+      .catch(error => {
+        addError(`Could not update namespace ${this.props.namespace} annotations`, error);
+      });
+  };
+
   render(): React.ReactNode {
     const ns = this.state.nsInfo;
     const worstStatus = ns?.worstStatus ?? NA.id;
@@ -512,12 +531,12 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                   {this.props.namespace}
                 </Title>
                 {ns.cluster && isMultiCluster && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: '1rem' }}>
                     <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
                     <span style={{ marginLeft: '0.25rem' }}>{ns.cluster}</span>
                   </span>
                 )}
-                <span style={{ minWidth: 0 }}>
+                <span style={{ minWidth: 0, marginLeft: '0.5rem', marginTop: '0.125rem' }}>
                   <NamespaceHealthStatus
                     inlineIssueCount
                     name={this.props.namespace}
@@ -554,6 +573,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                 duration={this.props.duration}
                 namespace={this.props.namespace}
                 nsInfo={ns}
+                onSaveAnnotations={this.handleSaveAnnotations}
                 onSaveLabels={this.handleSaveLabels}
               />
             </Tab>

@@ -164,12 +164,19 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
       workloadCounts.failure + workloadCounts.degraded + workloadCounts.notReady) > 0;
 
   const iconClassName = classes(statusIconStyle, isNA ? namespaceNaIconStyle : '');
-  const icon = <span className={iconClassName}>{createIcon(worstStatus)}</span>;
+  const inlineIconStyle: React.CSSProperties | undefined = props.inlineIssueCount
+    ? { marginRight: 0, display: 'inline-flex', alignItems: 'center' }
+    : undefined;
+  const icon = (
+    <span className={iconClassName} style={inlineIconStyle}>
+      {createIcon(worstStatus)}
+    </span>
+  );
   const iconWithPopoverTrigger = (
     <span
       className={iconClassName}
       data-test="namespace-health-details-trigger"
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', ...inlineIconStyle }}
       aria-label={t('Show unhealthy resources')}
     >
       {createIcon(worstStatus)}
@@ -194,7 +201,7 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
         alignItems: 'center',
         display: 'flex',
         flexWrap: 'nowrap',
-        gap: '0.35rem',
+        gap: '0.25rem',
         marginBottom: 0,
         textAlign: 'left'
       }
