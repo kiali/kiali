@@ -13,6 +13,7 @@ export class ResizeHeightObserver {
     }
 
     this.unobserve();
+    this.lastHeight = 0;
 
     if (!this.observer) {
       this.observer = new ResizeObserver(entries => {

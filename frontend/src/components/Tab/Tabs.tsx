@@ -11,8 +11,8 @@ type TabsProps = {
   defaultTab: string;
   id: string;
   mountOnEnter?: boolean;
+  onPostSelect?: (tabName: string) => void;
   onSelect: (tabName: string) => void;
-  postHandler?: (tabName: string) => void;
   tabMap: { [key: string]: number };
   tabName?: string;
   unmountOnExit?: boolean;
@@ -97,13 +97,9 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
       router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
     }
 
-    if (this.props.postHandler) {
-      this.props.postHandler(tabKey);
+    if (this.props.onPostSelect) {
+      this.props.onPostSelect(tabKey);
     }
-
-    this.setState({
-      currentTab: tabKey
-    });
   };
 
   handleTabTransition = (tabKey: number): void => {

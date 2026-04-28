@@ -17,7 +17,10 @@ window.SVGPathElement = () => {};
 window.customElements = () => {};
 window.customElements.define = () => {};
 
-// jsdom does not implement ResizeObserver
+// jsdom does not implement ResizeObserver. This stub prevents crashes but
+// never fires callbacks, so any test relying on measured heights (e.g.
+// ResizeHeightObserver consumers) must provide its own mock that triggers
+// the callback with synthetic entries.
 global.ResizeObserver = class {
   observe(): void {}
   unobserve(): void {}

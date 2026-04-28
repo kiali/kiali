@@ -362,9 +362,9 @@ const tabStyle = kialiStyle({
 });
 
 export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsProps, WorkloadPodLogsState> {
-  private promises: PromisesRegistry = new PromisesRegistry();
-  private podOptions: string[] = [];
   private readonly logsRef: React.RefObject<any>;
+  private podOptions: string[] = [];
+  private promises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -579,7 +579,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                                 inputClassName={colorCheck(spanColor)}
                                 label="Spans"
                                 labelClassName={spansLabelStyle}
-                                onChange={this.onTraceSpansChange}
+                                onChange={this.handleTraceSpansChange}
                                 showSpans={this.state.showSpans}
                                 traceLimit={this.state.showSpansLimit}
                               />
@@ -600,7 +600,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 
                           <KioskElement>
                             <ToolbarItem style={{ alignSelf: 'center' }}>
-                              <TimeDurationIndicator id="time_duration" onClick={this.toggleTimeOptionsVisibility} />
+                              <TimeDurationIndicator id="time_duration" onClick={this.handleToggleTimeOptions} />
                             </ToolbarItem>
                           </KioskElement>
                         </ToolbarGroup>
@@ -620,14 +620,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         <TimeDurationModal
           customDuration={true}
           isOpen={this.state.isTimeOptionsOpen}
-          onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility}
+          onConfirm={this.handleToggleTimeOptions}
+          onCancel={this.handleToggleTimeOptions}
         />
       </>
     );
   }
 
-  private onTraceSpansChange = (checked: boolean, limit: number): void => {
+  private handleTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
     if (checked) {
@@ -669,7 +669,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                       {c.displayName}
                     </span>
                   }
-                  onChange={() => this.toggleSelected(c)}
+                  onChange={() => this.handleToggleSelected(c)}
                 />
                 {c.isAmbient && i + 1 === this.state.containerOptions?.length && (
                   <>
@@ -689,7 +689,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           ztunnel
                         </span>
                       }
-                      onChange={() => this.toggleZtunnel()}
+                      onChange={() => this.handleToggleZtunnel()}
                     />
                     <Tooltip
                       key={`al-tt-tl`}
@@ -717,7 +717,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               waypoint
                             </span>
                           }
-                          onChange={() => this.toggleWaypoint()}
+                          onChange={() => this.handleToggleWaypoint()}
                         />
                         <Tooltip
                           key={`al-tt-tl`}
@@ -745,12 +745,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
   };
 
-  private toggleSelected = (c: ContainerOption): void => {
+  private handleToggleSelected = (c: ContainerOption): void => {
     c.isSelected = !c.isSelected;
     this.setState({ containerOptions: [...this.state.containerOptions!] });
   };
 
-  private toggleZtunnel = (): void => {
+  private handleToggleZtunnel = (): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_ZTUNNEL, String(!this.state.showZtunnel));
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
@@ -758,7 +758,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState({ showZtunnel: !this.state.showZtunnel });
   };
 
-  private toggleWaypoint = (): void => {
+  private handleToggleWaypoint = (): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_WAYPOINT, String(!this.state.showWaypoint));
     router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
@@ -766,7 +766,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState({ showWaypoint: !this.state.showWaypoint });
   };
 
-  private toggleTimeOptionsVisibility = (): void => {
+  private handleToggleTimeOptions = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
 
@@ -913,15 +913,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     );
 
     const kebabActions = [
-      <DropdownItem key="toggleToolbar" onClick={this.toggleToolbar}>
+      <DropdownItem key="toggleToolbar" onClick={this.handleToggleToolbar}>
         {`${this.state.showToolbar ? 'Collapse' : 'Expand'} Toolbar`}
       </DropdownItem>,
 
-      <DropdownItem key="toggleRegex" onClick={this.toggleUseRegex}>
+      <DropdownItem key="toggleRegex" onClick={this.handleToggleUseRegex}>
         {`Match via ${this.state.useRegex ? 'Substring' : 'Regex'}`}
       </DropdownItem>,
 
-      <DropdownItem key="toggleTimestamps" onClick={this.toggleShowTimestamps}>
+      <DropdownItem key="toggleTimestamps" onClick={this.handleToggleTimestamps}>
         {`${this.state.showTimestamps ? 'Remove' : 'Show'} Timestamps`}
       </DropdownItem>,
 
@@ -1185,15 +1185,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     this.setState({ accessLogModals: accessLogModals });
   };
 
-  private toggleShowTimestamps = (): void => {
+  private handleToggleTimestamps = (): void => {
     this.setState({ showTimestamps: !this.state.showTimestamps, kebabOpen: false });
   };
 
-  private toggleToolbar = (): void => {
+  private handleToggleToolbar = (): void => {
     this.setState({ showToolbar: !this.state.showToolbar, kebabOpen: false });
   };
 
-  private toggleUseRegex = (): void => {
+  private handleToggleUseRegex = (): void => {
     this.setState({ useRegex: !this.state.useRegex, kebabOpen: false });
   };
 

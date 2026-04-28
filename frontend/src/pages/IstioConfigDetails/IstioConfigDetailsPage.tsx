@@ -115,6 +115,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   drawerRef: React.RefObject<IstioConfigDetails>;
   private editorContainerRef = React.createRef<HTMLDivElement>();
   private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }));
+  private isObserving = false;
   promptTo: string;
   timerId: number;
 
@@ -220,16 +221,14 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
   componentDidMount(): void {
     this.fetchIstioObjectDetails();
-    if (this.editorContainerRef.current) {
-      this.heightObserver.observe(this.editorContainerRef.current);
-    }
+    this.tryStartObserving();
   }
 
   componentDidUpdate(prevProps: IstioConfigDetailsProps, prevState: IstioConfigDetailsState): void {
     // Start observing once the editor container mounts (may happen after
     // componentDidMount if data was still loading on first render).
-    if (this.editorContainerRef.current && this.state.editorHeight === 0) {
-      this.heightObserver.observe(this.editorContainerRef.current);
+    if (!this.isObserving) {
+      this.tryStartObserving();
     }
 
     // This will ask confirmation if we want to leave page on pending changes without save
@@ -282,10 +281,16 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   }
 
   componentWillUnmount(): void {
-    // Reset ask confirmation flag
     window.onbeforeunload = null;
     window.clearInterval(this.timerId);
     this.heightObserver.disconnect();
+  }
+
+  private tryStartObserving(): void {
+    if (this.editorContainerRef.current) {
+      this.heightObserver.observe(this.editorContainerRef.current);
+      this.isObserving = true;
+    }
   }
 
   backToList = (): void => {

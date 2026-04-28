@@ -130,7 +130,6 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     if (this.state.maximizedChart) {
       return Math.max(this.state.measuredHeight - CHART_MARGIN, CHART_HEIGHT);
     }
-
     return CHART_HEIGHT;
   };
 
