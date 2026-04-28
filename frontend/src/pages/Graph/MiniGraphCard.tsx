@@ -423,7 +423,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   private onViewFullGraph = (): void => {
-    const namespace = this.props.dataSource.fetchParameters.namespaces[0];
+    const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
     const graphType: GraphType = this.props.dataSource.fetchParameters.graphType;
 
     const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
