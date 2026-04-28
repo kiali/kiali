@@ -108,7 +108,7 @@
     "@patternfly/react-icons": "^6.4.0",
     "@patternfly/react-table": "^6.4.0",
     "@patternfly/react-topology": "^6.4.0",
-    "axios": "^1.15.0",
+    "axios": "^1.15.1",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
     "eventemitter3": "4.0.7",
