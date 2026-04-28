@@ -70,14 +70,25 @@ Then('user can filter spans by app {string}', (app: string) => {
   cy.get('ul[role="menu"]').should('be.visible');
 });
 
-Then('user can filter spans by app {string} for waypoint traces', (app: string) => {
+Then('user can filter spans by app {string} by {string}', (app: string, waypoint: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').type(`${app}{enter}`);
-  cy.get(`li[label="${app}"]`).should('be.visible').find('button').click();
+  cy.get('body').then($body => {
+    const appOption = `li[label="${app}"]`;
+    const waypointOption = `li[label="${waypoint}"]`;
+
+    if ($body.find(appOption).length > 0) {
+      cy.get(appOption).should('be.visible').find('button').click();
+      return;
+    }
+
+    cy.get('input[placeholder="Filter by App"]').clear().type(`${waypoint}{enter}`);
+    cy.get(waypointOption).should('be.visible').find('button').click();
+  });
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains(app);
+    cy.wrap($cell).contains(waypoint);
   });
 
   getCellsForCol(4).first().click();
