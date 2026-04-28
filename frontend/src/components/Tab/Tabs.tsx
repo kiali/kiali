@@ -26,10 +26,6 @@ const tabStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
-// Flex wrapper so PF Tabs' sibling elements (tab list + tab content
-// sections) participate in the page flex chain. Without this, the
-// transparent React context provider returned by PF Tabs would leave
-// them as direct children of the route page, breaking flex propagation.
 const flexTabWrapperStyle = kialiStyle({
   display: 'flex',
   flex: 1,

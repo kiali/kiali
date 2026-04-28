@@ -23,9 +23,7 @@ const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto'
 });
 
-// Absolute positioning lets the actions toolbar float at the same vertical
-// level as the tab strip without participating in the flex column layout,
-// avoiding extra vertical space between the header and the tab content.
+// Absolute position so it floats at tab-strip level without adding vertical space.
 const actionsToolbarStyle = kialiStyle({
   position: 'absolute',
   right: '3rem',
@@ -44,8 +42,6 @@ type RenderHeaderProps = ReduxProps & {
 };
 
 const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderProps) => {
-  // Kiosk consumers embed Kiali inside iframes and rely on their own chrome,
-  // so the breadcrumb/header would be redundant and waste vertical space.
   return isKiosk(props.kiosk) ? null : (
     <>
       <div className={containerStyle}>
