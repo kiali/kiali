@@ -226,6 +226,12 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   }
 
   componentDidUpdate(prevProps: IstioConfigDetailsProps, prevState: IstioConfigDetailsState): void {
+    // Start observing once the editor container mounts (may happen after
+    // componentDidMount if data was still loading on first render).
+    if (this.editorContainerRef.current && this.state.editorHeight === 0) {
+      this.heightObserver.observe(this.editorContainerRef.current);
+    }
+
     // This will ask confirmation if we want to leave page on pending changes without save
     if (this.state.isModified) {
       window.onbeforeunload = () => true;

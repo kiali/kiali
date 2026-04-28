@@ -159,10 +159,12 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       }
     }
 
-    if (this.showEditor() && this.editorWrapperRef.current) {
-      this.heightObserver.observe(this.editorWrapperRef.current);
-    } else if (!this.showEditor()) {
-      this.heightObserver.unobserve();
+    if (this.state.activeKey !== prevState.activeKey) {
+      if (this.showEditor() && this.editorWrapperRef.current) {
+        this.heightObserver.observe(this.editorWrapperRef.current);
+      } else if (!this.showEditor()) {
+        this.heightObserver.unobserve();
+      }
     }
   }
 

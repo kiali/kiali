@@ -28,7 +28,6 @@ export type Props<T extends LineInfo> = {
   colors?: string[];
   customMetric?: boolean;
   dashboard: DashboardModel;
-  dashboardHeight?: number;
   labelPrettifier?: (key: string, value: string) => string;
   labelValues: AllPromLabelsValues;
   maximizedChart?: string;
@@ -76,27 +75,18 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     this.stopObserving();
   }
 
+  // The container has flex:1 + minHeight:0 so its height is set by the
+  // parent flex layout, not by its content. Observing it is stable —
+  // changing chart content won't resize the container.
   private startObserving(): void {
-    // Observe the parent (scrollable div) rather than the container itself.
-    // The parent has a flex-constrained height, while the container is a
-    // block-level child whose height follows its content — observing it
-    // would create a feedback loop where chart → container → observer → chart.
-    const container = this.containerRef.current;
-    const parent = container?.parentElement;
-    if (!container || !parent) {
+    const el = this.containerRef.current;
+    if (!el) {
       return;
     }
     if (!this.heightObserver) {
-      this.heightObserver = new ResizeHeightObserver(() => {
-        const parentInnerTop = parent.getBoundingClientRect().top + parent.clientTop;
-        const containerTop = container.getBoundingClientRect().top;
-        const available = parent.clientHeight - (containerTop - parentInnerTop);
-        if (available > 0) {
-          this.setState({ measuredHeight: available });
-        }
-      });
+      this.heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
     }
-    this.heightObserver.observe(parent);
+    this.heightObserver.observe(el);
   }
 
   private stopObserving(): void {
@@ -138,8 +128,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
 
   private getChartHeight = (): number => {
     if (this.state.maximizedChart) {
-      const height = (this.props.dashboardHeight ?? this.state.measuredHeight) - CHART_MARGIN;
-      return height > 0 ? height : CHART_HEIGHT;
+      return Math.max(this.state.measuredHeight - CHART_MARGIN, CHART_HEIGHT);
     }
 
     return CHART_HEIGHT;

@@ -75,6 +75,9 @@ const tabIndex: { [tab: string]: number } = {
   perfData: 2
 };
 
+// Override basicTabStyle's flex:1 on tab content because this modal has a
+// fixed viewport — tabs should scroll internally at a fixed height rather
+// than stretching to fill the page.
 const modalStyle = kialiStyle({
   overflowY: 'hidden',
   $nest: {

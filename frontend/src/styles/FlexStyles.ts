@@ -38,8 +38,12 @@ export const noShrinkStyle = kialiStyle({
 });
 
 // Scrollable flex child for use inside a CardBody or similar container.
+// Must be a flex container itself so children with flex:1 are constrained
+// to the available height rather than growing with their content.
 export const scrollableContentStyle = kialiStyle({
+  display: 'flex',
   flex: 1,
+  flexDirection: 'column',
   minHeight: 0,
   overflowY: 'auto'
 });
