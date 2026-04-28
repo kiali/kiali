@@ -442,6 +442,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     }
     return buildNamespaceRowActions({
       controlPlanes: this.state.controlPlanes,
+      excludeShowActions: true,
       grafanaLinks: this.state.grafanaLinks,
       istioAPIEnabled: this.props.istioAPIEnabled,
       kiosk: this.props.kiosk,

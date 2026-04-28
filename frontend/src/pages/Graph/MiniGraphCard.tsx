@@ -125,14 +125,23 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   render(): React.ReactNode {
+    const hasNode =
+      this.props.dataSource.fetchParameters.node &&
+      this.props.dataSource.fetchParameters.node.nodeType !== NodeType.UNKNOWN;
+
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
-      </DropdownItem>,
-      <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-        Show node graph
       </DropdownItem>
     ];
+
+    if (hasNode) {
+      graphCardActions.push(
+        <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
+          Show node graph
+        </DropdownItem>
+      );
+    }
 
     if (isKiosk(this.props.kiosk)) {
       if (this.props.workload && this.props.namespace) {
@@ -401,7 +410,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   private onViewFullGraph = (): void => {
     const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let graphType: GraphType = GraphType.APP;
+    const graphType: GraphType = this.props.dataSource.fetchParameters.graphType;
 
     const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
       { prop: 'isSelected', op: 'truthy' }

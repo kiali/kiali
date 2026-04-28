@@ -501,7 +501,7 @@ export class GraphDataSource {
 
   public fetchForNamespaceParams = (duration: DurationInSeconds, namespace: string, cluster?: string): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
-    params.graphType = GraphType.WORKLOAD;
+    params.graphType = GraphType.VERSIONED_APP;
     params.showSecurity = true;
     if (cluster) {
       params.namespaces = [{ name: namespace, cluster }];

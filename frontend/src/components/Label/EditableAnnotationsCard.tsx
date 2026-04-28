@@ -82,9 +82,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
                   <DescriptionListGroup key={key}>
                     <DescriptionListTerm>{key}</DescriptionListTerm>
                     {value && (
-                      <DescriptionListDescription className={annotationValueStyle}>
-                        {value}
-                      </DescriptionListDescription>
+                      <DescriptionListDescription className={annotationValueStyle}>{value}</DescriptionListDescription>
                     )}
                   </DescriptionListGroup>
                 ))}
