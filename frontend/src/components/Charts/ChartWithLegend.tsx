@@ -195,7 +195,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
       bottom: showLegend ? CHART_BOTTOM_PADDING : 0,
-      left: 0,
+      left: 10,
       right: 10 + overlayRightPadding,
       top: 0
     };
@@ -342,7 +342,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
             tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
             tickFormat={getFormatter(d3Format, this.props.unit)}
             label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={<ChartLabel y={-10} x={-15} angle={0} renderInPortal={true} />}
+            axisLabelComponent={<ChartLabel y={-10} x={0} angle={0} renderInPortal={true} />}
             style={axisStyle}
           />
 
