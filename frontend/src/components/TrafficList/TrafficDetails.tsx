@@ -12,7 +12,7 @@ import {
   ProtocolTraffic,
   SEInfo
 } from '../../types/Graph';
-import { constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
+import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { DurationInSeconds, TimeInMilliseconds } from 'types/Common';
@@ -28,6 +28,12 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 
 const cardMarginStyle = kialiStyle({
   marginTop: '1rem'
+});
+
+const scrollableContentStyle = kialiStyle({
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto'
 });
 
 export interface AppNode {
@@ -130,20 +136,25 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
         <div className={classes(flexFillStyle, constrainedScrollStyle)}>
           <Card className={classes(flexCardStyle, cardMarginStyle)}>
             <CardBody>
-              <Toolbar style={{ padding: 0, width: '100%' }}>
-                <ToolbarGroup>
-                  <KioskElement>
-                    <ToolbarItem style={{ marginLeft: 'auto' }}>
-                      <TimeDurationIndicator isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
-                    </ToolbarItem>
-                  </KioskElement>
-                </ToolbarGroup>
-              </Toolbar>
-              <TrafficListComponent
-                currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
-                isSortAscending={FilterHelper.isCurrentSortAscending()}
-                trafficItems={this.state.traffic}
-              />
+              <div className={noShrinkStyle}>
+                <Toolbar style={{ padding: 0, width: '100%' }}>
+                  <ToolbarGroup>
+                    <KioskElement>
+                      <ToolbarItem style={{ marginLeft: 'auto' }}>
+                        <TimeDurationIndicator isDuration={true} onClick={this.toggleTimeOptionsVisibility} />
+                      </ToolbarItem>
+                    </KioskElement>
+                  </ToolbarGroup>
+                </Toolbar>
+              </div>
+
+              <div className={scrollableContentStyle}>
+                <TrafficListComponent
+                  currentSortField={FilterHelper.currentSortField(TrafficListFilters.sortFields)}
+                  isSortAscending={FilterHelper.isCurrentSortAscending()}
+                  trafficItems={this.state.traffic}
+                />
+              </div>
             </CardBody>
           </Card>
         </div>

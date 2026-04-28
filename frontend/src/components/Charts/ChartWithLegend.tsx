@@ -59,7 +59,6 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
 type State = {
   hiddenSeries: Set<string>;
   legendExpanded: boolean;
-  legendHeight: number;
   legendOverflows: boolean;
   width: number;
 };
@@ -127,7 +126,6 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     this.state = {
       hiddenSeries: new Set([overlayName]),
       legendExpanded: false,
-      legendHeight: LEGEND_HEIGHT,
       legendOverflows: false,
       width: 0
     };
@@ -154,26 +152,12 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
   }
 
   private checkLegendOverflow = (): void => {
-    if (!this.legendRef) {
-      return;
-    }
-
-    const updates: Partial<State> = {};
-
-    if (!this.state.legendExpanded) {
+    if (this.legendRef && !this.state.legendExpanded) {
       const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
+
       if (overflows !== this.state.legendOverflows) {
-        updates.legendOverflows = overflows;
+        this.setState({ legendOverflows: overflows });
       }
-    }
-
-    const measuredHeight = this.legendRef.parentElement?.offsetHeight ?? LEGEND_HEIGHT;
-    if (measuredHeight !== this.state.legendHeight) {
-      updates.legendHeight = measuredHeight;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      this.setState(updates as State);
     }
   };
 
@@ -308,7 +292,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       containerComponent = <VictoryVoronoiContainer {...voronoiProps} />;
     }
 
-    const svgHeight = showLegend ? Math.max(MIN_HEIGHT, chartHeight - this.state.legendHeight) : chartHeight;
+    const svgHeight = showLegend ? chartHeight - LEGEND_HEIGHT : chartHeight;
     const chart = (
       <div ref={this.containerRef} style={{ marginTop: 0 }}>
         <Chart

@@ -131,7 +131,16 @@ const generateMockMetrics = (direction: string): Record<string, unknown> => {
 };
 
 // Generate mock DashboardModel
-const workloadNames = ['productpage-v1', 'reviews-v2', 'ratings-v1', 'details-v1', 'reviews-v3', 'gateway-istio'];
+const workloadNames = [
+  'productpage-v1',
+  'reviews-v2',
+  'ratings-v1',
+  'details-v1',
+  'reviews-v3',
+  'gateway-istio',
+  'sleep',
+  'httpbin'
+];
 
 const generateRandomSeries = (
   metricName: string,
@@ -139,11 +148,10 @@ const generateRandomSeries = (
   variance: number,
   reporter: string,
   extraLabels?: Record<string, string>,
-  stat?: string,
-  forceCount?: number
+  stat?: string
 ): Array<Record<string, unknown>> => {
   const hash = metricName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const count = forceCount ?? 1 + (hash % workloadNames.length);
+  const count = 1 + (hash % workloadNames.length);
 
   return workloadNames.slice(0, count).map((wl, i) => ({
     datapoints: generateDatapoints(baseValue * (1 + i * 0.15), variance),
@@ -164,18 +172,10 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'Request volume',
         unit: 'ops',
         spans: 3,
-        metrics: generateRandomSeries(
-          'request_count',
-          10,
-          5,
-          reporter,
-          {
-            request_protocol: 'http',
-            response_code: '200'
-          },
-          undefined,
-          5
-        ),
+        metrics: generateRandomSeries('request_count', 10, 5, reporter, {
+          request_protocol: 'http',
+          response_code: '200'
+        }),
         chartType: 'area',
         xAxis: 'time'
       },
@@ -199,7 +199,7 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'Response size',
         unit: 'B',
         spans: 3,
-        metrics: generateRandomSeries('response_size', 190, 10, reporter, {}, 'avg', 6),
+        metrics: generateRandomSeries('response_size', 190, 10, reporter, {}, 'avg'),
         chartType: 'area',
         xAxis: 'time'
       },
@@ -215,7 +215,7 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'Response throughput',
         unit: 'bit/s',
         spans: 3,
-        metrics: generateRandomSeries('response_throughput', 450, 150, reporter, undefined, undefined, 5),
+        metrics: generateRandomSeries('response_throughput', 450, 150, reporter),
         chartType: 'area',
         xAxis: 'time'
       },
@@ -223,7 +223,7 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'gRPC received',
         unit: 'msg/s',
         spans: 3,
-        metrics: generateRandomSeries('grpc_received', 5, 2, reporter, undefined, undefined, 4),
+        metrics: generateRandomSeries('grpc_received', 5, 2, reporter),
         chartType: 'area',
         xAxis: 'time'
       },
@@ -247,7 +247,7 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'TCP closed',
         unit: 'conn/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_closed', 0.3, 0.15, reporter, undefined, undefined, 5),
+        metrics: generateRandomSeries('tcp_closed', 0.3, 0.15, reporter),
         chartType: 'area',
         xAxis: 'time'
       },
@@ -255,7 +255,7 @@ const generateMockDashboard = (entityType: string, direction: string): Record<st
         name: 'TCP received',
         unit: 'bit/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_received', 80, 30, reporter, undefined, undefined, 6),
+        metrics: generateRandomSeries('tcp_received', 80, 30, reporter),
         chartType: 'area',
         xAxis: 'time'
       },

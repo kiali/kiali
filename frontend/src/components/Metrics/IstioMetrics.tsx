@@ -5,7 +5,13 @@ import { KialiDispatch } from 'types/Redux';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
-import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import {
+  constrainedScrollStyle,
+  flexCardStyle,
+  flexFillStyle,
+  noShrinkStyle,
+  scrollableContentStyle
+} from 'styles/FlexStyles';
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
@@ -342,23 +348,25 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         <div className={classes(flexFillStyle, constrainedScrollStyle)}>
           <Card className={classes(flexCardStyle, cardMarginStyle)}>
             <CardBody>
-              {this.renderOptionsBar()}
+              <div className={scrollableContentStyle}>
+                {this.renderOptionsBar()}
 
-              {this.state.dashboard && (
-                <Dashboard
-                  dashboard={this.state.dashboard}
-                  labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                  maximizedChart={expandedChart}
-                  onExpand={this.handleExpand}
-                  onClick={this.onClickDataPoint}
-                  labelPrettifier={MetricsHelper.prettyLabelValues}
-                  overlay={this.state.spanOverlay}
-                  showSpans={this.state.showSpans}
-                  showTrendlines={this.state.showTrendlines}
-                  timeWindow={evalTimeRange(this.props.timeRange)}
-                  brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                />
-              )}
+                {this.state.dashboard && (
+                  <Dashboard
+                    dashboard={this.state.dashboard}
+                    labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                    maximizedChart={expandedChart}
+                    onExpand={this.handleExpand}
+                    onClick={this.onClickDataPoint}
+                    labelPrettifier={MetricsHelper.prettyLabelValues}
+                    overlay={this.state.spanOverlay}
+                    showSpans={this.state.showSpans}
+                    showTrendlines={this.state.showTrendlines}
+                    timeWindow={evalTimeRange(this.props.timeRange)}
+                    brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                  />
+                )}
+              </div>
             </CardBody>
           </Card>
         </div>

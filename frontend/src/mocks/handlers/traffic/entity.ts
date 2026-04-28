@@ -193,7 +193,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
     graphType: 'workload',
     elements: {
       nodes: [
-        // The main workload node
         {
           data: {
             id: 'wl-main',
@@ -220,7 +219,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
             }
           }
         },
-        // Inbound: istio-ingressgateway
         {
           data: {
             id: 'wl-inbound-gateway',
@@ -230,13 +228,10 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
             workload: 'istio-ingressgateway',
             app: 'istio-ingressgateway',
             isRoot: true,
-            isGateway: {
-              ingressInfo: { hostnames: ['*'] }
-            },
+            isGateway: { ingressInfo: { hostnames: ['*'] } },
             traffic: [{ protocol: 'http', rates: { httpOut: '10.00' } }]
           }
         },
-        // Outbound: details service
         {
           data: {
             id: 'wl-outbound-details',
@@ -247,7 +242,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
             traffic: [{ protocol: 'http', rates: { httpIn: '3.00' } }]
           }
         },
-        // Outbound: reviews service
         {
           data: {
             id: 'wl-outbound-reviews',
@@ -260,7 +254,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
         }
       ],
       edges: [
-        // Inbound edge from gateway
         {
           data: {
             id: 'e-inbound-gateway',
@@ -275,7 +268,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
             }
           }
         },
-        // Outbound edge to details
         {
           data: {
             id: 'e-outbound-details',
@@ -290,7 +282,6 @@ export const generateWorkloadGraph = (clusterName: string, namespace: string, wo
             }
           }
         },
-        // Outbound edge to reviews
         {
           data: {
             id: 'e-outbound-reviews',

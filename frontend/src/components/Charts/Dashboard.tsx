@@ -20,9 +20,7 @@ const dashboardContainerStyle = kialiStyle({
   minHeight: 0
 });
 
-// Vertical margin each KChart row adds outside the chart height
-// (kchartStyle: marginTop 0.5rem + marginBottom 0.5rem = 1rem ≈ 16px).
-const CHART_ROW_MARGIN_PX = 16;
+const CHART_HEIGHT = 200;
 
 export type Props<T extends LineInfo> = {
   brushHandlers?: BrushHandlers;
@@ -49,7 +47,7 @@ type State = {
 
 export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, State> {
   private containerRef = React.createRef<HTMLDivElement>();
-  private heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
+  private heightObserver: ResizeHeightObserver | null = null;
 
   constructor(props: Props<T>) {
     super(props);
@@ -60,13 +58,35 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
   }
 
   componentDidMount(): void {
+    if (this.state.maximizedChart) {
+      this.startObserving();
+    }
+  }
+
+  componentDidUpdate(_prevProps: Props<T>, prevState: State): void {
+    if (this.state.maximizedChart && !prevState.maximizedChart) {
+      this.startObserving();
+    } else if (!this.state.maximizedChart && prevState.maximizedChart) {
+      this.stopObserving();
+    }
+  }
+
+  componentWillUnmount(): void {
+    this.stopObserving();
+  }
+
+  private startObserving(): void {
+    if (!this.heightObserver) {
+      this.heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
+    }
     if (this.containerRef.current) {
       this.heightObserver.observe(this.containerRef.current);
     }
   }
 
-  componentWillUnmount(): void {
-    this.heightObserver.disconnect();
+  private stopObserving(): void {
+    this.heightObserver?.disconnect();
+    this.heightObserver = null;
   }
 
   render(): React.ReactNode {
@@ -101,23 +121,13 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     );
   }
 
-  private getEffectiveHeight = (): number => {
-    return this.props.dashboardHeight ?? this.state.measuredHeight;
-  };
-
   private getChartHeight = (): number => {
-    const height = this.getEffectiveHeight();
-
-    if (height <= 0) {
-      return 300;
-    }
-
     if (this.state.maximizedChart) {
-      return height;
+      const height = this.props.dashboardHeight ?? this.state.measuredHeight;
+      return height > 0 ? height : 300;
     }
 
-    const rows = this.props.dashboard.rows > 0 ? this.props.dashboard.rows : 2;
-    return Math.max(100, (height - rows * CHART_ROW_MARGIN_PX) / rows);
+    return CHART_HEIGHT;
   };
 
   private renderChart(chart: ChartModel): React.ReactNode {

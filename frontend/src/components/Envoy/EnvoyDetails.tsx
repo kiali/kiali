@@ -28,7 +28,13 @@ import {
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
-import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import {
+  constrainedScrollStyle,
+  flexCardStyle,
+  flexFillStyle,
+  noShrinkStyle,
+  scrollableContentStyle
+} from 'styles/FlexStyles';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { Theme, TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
@@ -372,17 +378,19 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
           ) : this.showMetrics() && envoyMetricsDashboardRef ? (
             <Card className={classes(flexCardStyle, cardMarginStyle)}>
               <CardBody>
-                <CustomMetrics
-                  app={app}
-                  appLabelName={appLabelName}
-                  data-test="envoy-metrics-component"
-                  embedded={true}
-                  lastRefreshAt={this.props.lastRefreshAt}
-                  namespace={this.props.namespace}
-                  template={envoyMetricsDashboardRef.template}
-                  version={version}
-                  workload={this.props.workload!.name}
-                />
+                <div className={scrollableContentStyle}>
+                  <CustomMetrics
+                    app={app}
+                    appLabelName={appLabelName}
+                    data-test="envoy-metrics-component"
+                    embedded={true}
+                    lastRefreshAt={this.props.lastRefreshAt}
+                    namespace={this.props.namespace}
+                    template={envoyMetricsDashboardRef.template}
+                    version={version}
+                    workload={this.props.workload!.name}
+                  />
+                </div>
               </CardBody>
             </Card>
           ) : (

@@ -11,7 +11,13 @@ import {
   EmptyStateVariant
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import {
+  constrainedScrollStyle,
+  flexCardStyle,
+  flexFillStyle,
+  noShrinkStyle,
+  scrollableContentStyle
+} from 'styles/FlexStyles';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import { KialiAppState } from '../../store/Store';
@@ -280,7 +286,9 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         ) : (
           <div className={classes(flexFillStyle, constrainedScrollStyle)}>
             <Card className={classes(flexCardStyle, cardMarginStyle)}>
-              <CardBody>{content}</CardBody>
+              <CardBody>
+                <div className={scrollableContentStyle}>{content}</div>
+              </CardBody>
             </Card>
           </div>
         )}

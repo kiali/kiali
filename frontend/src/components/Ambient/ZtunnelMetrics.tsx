@@ -18,7 +18,7 @@ import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from '../Metrics/PersesLinks';
 import { store } from '../../store/ConfigStore';
 import { kialiStyle } from 'styles/StyleUtils';
-import { noShrinkStyle } from 'styles/FlexStyles';
+import { noShrinkStyle, scrollableContentStyle } from 'styles/FlexStyles';
 
 type ZtunnelMetricsProps = {
   cluster: string;
@@ -125,45 +125,47 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
 
   return (
     <div className={metricsContainerStyle}>
-      {(grafanaInfo || persesInfo) && (
-        <div ref={toolbarRef} className={noShrinkStyle}>
-          <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
-            <ToolbarGroup>
-              <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
-                {grafanaInfo && (
-                  <GrafanaLinks
-                    links={grafanaInfo.externalLinks}
-                    namespace={props.namespace}
-                    object="ztunnel"
-                    objectType={MetricsObjectTypes.ZTUNNEL}
-                    datasourceUID={grafanaInfo.datasourceUID}
-                  />
-                )}
+      <div className={scrollableContentStyle}>
+        {(grafanaInfo || persesInfo) && (
+          <div ref={toolbarRef} className={noShrinkStyle}>
+            <Toolbar style={{ padding: 0, marginBottom: '1.25rem' }}>
+              <ToolbarGroup>
+                <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '1.25rem' }}>
+                  {grafanaInfo && (
+                    <GrafanaLinks
+                      links={grafanaInfo.externalLinks}
+                      namespace={props.namespace}
+                      object="ztunnel"
+                      objectType={MetricsObjectTypes.ZTUNNEL}
+                      datasourceUID={grafanaInfo.datasourceUID}
+                    />
+                  )}
 
-                {persesInfo && (
-                  <PersesLinks
-                    links={persesInfo.externalLinks}
-                    namespace={props.namespace}
-                    object="ztunnel"
-                    objectType={MetricsObjectTypes.ZTUNNEL}
-                    project={persesInfo.project}
-                  />
-                )}
-              </ToolbarItem>
-            </ToolbarGroup>
-          </Toolbar>
-        </div>
-      )}
-      {metrics && (
-        <Dashboard
-          dashboard={metrics}
-          labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
-          maximizedChart={expandedChart}
-          onExpand={handleExpand}
-          labelPrettifier={MetricsHelper.prettyLabelValues}
-          showSpans={false}
-        />
-      )}
+                  {persesInfo && (
+                    <PersesLinks
+                      links={persesInfo.externalLinks}
+                      namespace={props.namespace}
+                      object="ztunnel"
+                      objectType={MetricsObjectTypes.ZTUNNEL}
+                      project={persesInfo.project}
+                    />
+                  )}
+                </ToolbarItem>
+              </ToolbarGroup>
+            </Toolbar>
+          </div>
+        )}
+        {metrics && (
+          <Dashboard
+            dashboard={metrics}
+            labelValues={MetricsHelper.convertAsPromLabels(settings.labelsSettings)}
+            maximizedChart={expandedChart}
+            onExpand={handleExpand}
+            labelPrettifier={MetricsHelper.prettyLabelValues}
+            showSpans={false}
+          />
+        )}
+      </div>
     </div>
   );
 };
