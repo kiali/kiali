@@ -5,7 +5,8 @@ import { kialiStyle } from './StyleUtils';
 export const flexFillStyle = kialiStyle({
   display: 'flex',
   flex: 1,
-  flexDirection: 'column'
+  flexDirection: 'column',
+  minHeight: 0
 });
 
 // Propagates the flex chain through a PF Card and its CardBody so child
