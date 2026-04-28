@@ -1571,16 +1571,16 @@ export const workloadHandlers = [
       'Connected to database cluster at mongodb:27017',
       'Health check endpoint /health registered',
       'Loading product catalog from cache',
-      'Received request for /api/v1/products',
+      '{"level":"info","ts":1719500000.123,"caller":"server/main.go:42","msg":"Received request","method":"GET","path":"/api/v1/products","remote_addr":"10.244.0.1:47832","latency_ms":23,"status":200}',
       'Cache miss for key product:42, fetching from DB',
       'Successfully retrieved 15 products in 23ms',
-      'Received request for /api/v1/reviews?product=42',
+      '{"level":"warn","ts":1719500015.456,"caller":"db/query.go:118","msg":"Slow query detected","query":"SELECT * FROM reviews WHERE product_id=42","duration_ms":250,"rows_scanned":15000,"rows_returned":3}',
       'Upstream service ratings:9080 responded in 12ms',
       'Received request for /api/v1/details?isbn=0123456789',
       'Connection pool stats: active=3 idle=7 max=10',
       'Slow query detected: SELECT * FROM reviews WHERE product_id=42 took 250ms',
       'Retry attempt 1/3 for upstream service ratings',
-      'Circuit breaker OPEN for service ratings after 5 consecutive failures',
+      '{"level":"error","ts":1719500045.789,"caller":"circuit/breaker.go:67","msg":"Circuit breaker tripped","service":"ratings","consecutive_failures":5,"state":"OPEN","half_open_after":"30s","last_error":"connection refused"}',
       'Request /api/v1/products completed in 145ms',
       'GC pause: 12ms (young generation)',
       'Received SIGTERM, starting graceful shutdown',
@@ -1597,7 +1597,7 @@ export const workloadHandlers = [
       'INFO',
       'INFO',
       'INFO',
-      'INFO',
+      'WARN',
       'INFO',
       'INFO',
       'INFO',
@@ -1669,15 +1669,18 @@ export const workloadHandlers = [
               severity: msg.includes('503') ? 'ERROR' : 'INFO',
               timestamp: new Date((baseTime + i * 15) * 1000).toISOString(),
               timestampUnix: baseTime + i * 15,
-              accessLog: i === 0 ? proxyAccessLog : i === 4 ? proxyAccessLog503 : undefined
+              accessLog: i === 4 ? proxyAccessLog503 : i % 3 === 0 ? proxyAccessLog : undefined
             }))
           ]
-        : appMessages.map((msg, i) => ({
-            message: `[${new Date((baseTime + i * 15) * 1000).toISOString()}] ${msg}`,
-            severity: severities[i],
-            timestamp: new Date((baseTime + i * 15) * 1000).toISOString(),
-            timestampUnix: baseTime + i * 15
-          }));
+        : appMessages.map((msg, i) => {
+            const isJsonMsg = msg.startsWith('{');
+            return {
+              message: isJsonMsg ? msg : `[${new Date((baseTime + i * 15) * 1000).toISOString()}] ${msg}`,
+              severity: severities[i],
+              timestamp: new Date((baseTime + i * 15) * 1000).toISOString(),
+              timestampUnix: baseTime + i * 15
+            };
+          });
 
     return HttpResponse.json({ entries, linesTruncated: false });
   }),
