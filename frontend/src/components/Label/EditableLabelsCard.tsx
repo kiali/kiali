@@ -73,7 +73,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   isCompact = false,
   isVertical = true,
   labels,
-  numLabels = 10,
+  numLabels = 5,
   onSave,
   title
 }) => {

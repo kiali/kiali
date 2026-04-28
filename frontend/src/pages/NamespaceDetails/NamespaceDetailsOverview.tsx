@@ -38,6 +38,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
+import { EditableAnnotationsCard } from 'components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { flexFillStyle } from 'styles/FlexStyles';
 
@@ -46,6 +47,7 @@ type Props = {
   duration: DurationInSeconds;
   namespace: string;
   nsInfo: NamespaceInfo;
+  onSaveAnnotations: (annotations: Record<string, string>) => void;
   onSaveLabels: (labels: Record<string, string>) => void;
 };
 
@@ -286,25 +288,14 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           />
         </StackItem>
 
-        {nsInfo.annotations && Object.keys(nsInfo.annotations).length > 0 && (
-          <StackItem>
-            <Card>
-              <CardBody>
-                <Title headingLevel="h4" size={TitleSizes.md}>
-                  {t('Annotations')}
-                </Title>
-                <DescriptionList>
-                  {Object.entries(nsInfo.annotations).map(([key, value]) => (
-                    <DescriptionListGroup key={key}>
-                      <DescriptionListTerm>{key}</DescriptionListTerm>
-                      <DescriptionListDescription>{value}</DescriptionListDescription>
-                    </DescriptionListGroup>
-                  ))}
-                </DescriptionList>
-              </CardBody>
-            </Card>
-          </StackItem>
-        )}
+        <StackItem>
+          <EditableAnnotationsCard
+            annotations={nsInfo.annotations ?? {}}
+            canEdit={this.props.canEdit}
+            onSave={this.props.onSaveAnnotations}
+            title={t('Annotations')}
+          />
+        </StackItem>
       </>
     );
   }

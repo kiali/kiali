@@ -58,23 +58,18 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
   const annotationEntries = Object.entries(annotations ?? {});
   const hasAnnotations = annotationEntries.length > 0;
 
-  const headerActions = (
+  const headerActions = canEdit ? (
     <div className={headerActionsStyle}>
-      <Tooltip content={canEdit ? t('Edit annotations') : t('View annotations')}>
-        <Button
-          variant="plain"
-          size="sm"
-          onClick={() => setShowEditor(true)}
-          icon={canEdit ? <KialiIcon.PencilAlt /> : <KialiIcon.ExpandArrows />}
-        />
+      <Tooltip content={t('Edit annotations')}>
+        <Button variant="plain" size="sm" onClick={() => setShowEditor(true)} icon={<KialiIcon.PencilAlt />} />
       </Tooltip>
     </div>
-  );
+  ) : undefined;
 
   return (
     <>
-      <Card isCompact>
-        <CardHeader actions={{ actions: headerActions, hasNoOffset: true }}>
+      <Card>
+        <CardHeader actions={headerActions ? { actions: headerActions, hasNoOffset: true } : undefined}>
           <Title headingLevel="h4" size={TitleSizes.md}>
             {title}
           </Title>
@@ -87,7 +82,9 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
                   <DescriptionListGroup key={key}>
                     <DescriptionListTerm>{key}</DescriptionListTerm>
                     {value && (
-                      <DescriptionListDescription className={annotationValueStyle}>{value}</DescriptionListDescription>
+                      <DescriptionListDescription className={annotationValueStyle}>
+                        {value}
+                      </DescriptionListDescription>
                     )}
                   </DescriptionListGroup>
                 ))}
