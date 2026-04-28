@@ -1,6 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
-import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
+import { clusterParameterExists } from './navigation';
 import { openTab } from './transition';
 
 const WAYPOINT_FALLBACK = 'waypoint';
