@@ -52,7 +52,12 @@ const outerContainerStyle = kialiStyle({
 const innerScrollContainerStyle = kialiStyle({
   flex: 1,
   overflow: 'auto',
-  paddingRight: '0.5rem'
+  paddingRight: '0.5rem',
+  $nest: {
+    '& td, & th': {
+      whiteSpace: 'nowrap'
+    }
+  }
 });
 
 // ******************************

@@ -26,6 +26,23 @@ export const flexCardStyle = kialiStyle({
   }
 });
 
+// Left panel column in detail pages (App/Service/Workload/Namespace info).
+// Scrolls vertically for the whole column and ensures each card body
+// scrolls horizontally when its content overflows.
+export const detailLeftColumnStyle = kialiStyle({
+  minHeight: 0,
+  overflowY: 'auto',
+  paddingRight: '0.5rem',
+  $nest: {
+    '& .pf-v6-c-card__body': {
+      overflowX: 'auto'
+    },
+    '& .pf-v6-c-card__body td, & .pf-v6-c-card__body th': {
+      whiteSpace: 'nowrap'
+    }
+  }
+});
+
 // Overrides the default min-height:auto on flex items so the element
 // constrains its children instead of growing to fit.
 export const constrainedScrollStyle = kialiStyle({

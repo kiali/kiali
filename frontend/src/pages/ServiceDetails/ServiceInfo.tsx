@@ -16,7 +16,7 @@ import {
   PeerAuthentication,
   Validations
 } from '../../types/IstioObjects';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -247,7 +247,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       <>
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={gridStyle}>
-            <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+            <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>
                 <StackItem>
                   <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />

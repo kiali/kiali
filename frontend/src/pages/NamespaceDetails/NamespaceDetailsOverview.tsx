@@ -20,7 +20,8 @@ import {
 import { GraphDataSource } from 'services/GraphDataSource';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { DurationInSeconds } from 'types/Common';
-import { NamespaceInfo } from 'types/NamespaceInfo';
+import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, Status } from 'types/Health';
 import { ControlPlaneBadge } from 'components/Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from 'components/Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
@@ -34,13 +35,14 @@ import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils
 import { t } from 'utils/I18nUtils';
 import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
 import { isRevisionAvailable } from 'pages/Namespaces/NamespaceRevisionUtils';
-import { KialiIcon } from 'config/KialiIcon';
+import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
 import { EditableAnnotationsCard } from 'components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { FilterSelected } from 'components/Filters/StatefulFilters';
+import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
   canEdit: boolean;
@@ -58,24 +60,136 @@ const gridStyle = kialiStyle({
   minHeight: 0
 });
 
-/** Same as Service/App info: one scrollbar for the whole left column, not inside CardBody. */
-const overviewLeftColumnStyle = kialiStyle({
-  minHeight: 0,
-  overflowY: 'auto',
-  paddingRight: '0.5rem'
-});
-
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
 });
 
-const buildListLink = (path: string, ns: string, cluster?: string): string => {
+const buildListLink = (path: string, ns: string, cluster?: string, healthFilter?: string): string => {
   const params = new URLSearchParams();
   params.set(URLParam.NAMESPACES, ns);
   if (cluster && isMultiCluster) {
     params.set(URLParam.CLUSTERNAME, cluster);
   }
+  if (healthFilter) {
+    params.set('health', healthFilter);
+  }
   return `${path}?${params.toString()}`;
+};
+
+const navigateGridStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  columnGap: '1rem',
+  rowGap: '0.35rem',
+  alignItems: 'center',
+  whiteSpace: 'nowrap'
+});
+
+const healthBreakdownStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  fontSize: '0.85rem',
+  whiteSpace: 'nowrap'
+});
+
+const healthItemStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.25rem',
+  whiteSpace: 'nowrap'
+});
+
+const renderHealthBreakdown = (
+  path: string,
+  ns: string,
+  cluster: string | undefined,
+  status?: NamespaceStatus
+): React.ReactNode => {
+  if (!status) {
+    return null;
+  }
+
+  const items: { count: number; status: Status }[] = [
+    { count: status.inError.length, status: FAILURE },
+    { count: status.inWarning.length, status: DEGRADED },
+    { count: status.inNotReady.length, status: NOT_READY },
+    { count: status.inSuccess.length, status: HEALTHY },
+    { count: status.notAvailable.length, status: NA }
+  ].filter(item => item.count > 0);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={healthBreakdownStyle}>
+      {items.map((item, idx) => (
+        <React.Fragment key={item.status.id}>
+          {idx > 0 && (
+            <span style={{ borderLeft: '1px solid var(--pf-t--global--border--color--default)', height: '1rem' }} />
+          )}
+          <KialiLink
+            to={buildListLink(path, ns, cluster, item.status.name)}
+            onClick={() => FilterSelected.resetFilters()}
+            className={healthItemStyle}
+          >
+            {createIcon(item.status)} {item.count} {item.status.name}
+          </KialiLink>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+const buildIstioFilteredLink = (ns: string, cluster: string | undefined, configFilter: string): string => {
+  const params = new URLSearchParams();
+  params.set(URLParam.NAMESPACES, ns);
+  if (cluster && isMultiCluster) {
+    params.set(URLParam.CLUSTERNAME, cluster);
+  }
+  params.set('config', configFilter);
+  return `/${Paths.ISTIO}?${params.toString()}`;
+};
+
+const renderValidationBreakdown = (
+  ns: string,
+  cluster: string | undefined,
+  validations?: { errors: number; objectCount?: number; warnings: number }
+): React.ReactNode => {
+  if (!validations || !validations.objectCount || validations.objectCount === 0) {
+    return null;
+  }
+
+  const valid = validations.objectCount - validations.errors - validations.warnings;
+  const items: { configFilter: string; count: number; status: Status }[] = [
+    { count: validations.errors, status: FAILURE, configFilter: 'Not Valid' },
+    { count: validations.warnings, status: DEGRADED, configFilter: 'Warning' },
+    { count: valid, status: HEALTHY, configFilter: 'Valid' }
+  ].filter(item => item.count > 0);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={healthBreakdownStyle}>
+      {items.map((item, idx) => (
+        <React.Fragment key={item.status.id}>
+          {idx > 0 && (
+            <span style={{ borderLeft: '1px solid var(--pf-t--global--border--color--default)', height: '1rem' }} />
+          )}
+          <KialiLink
+            to={buildIstioFilteredLink(ns, cluster, item.configFilter)}
+            onClick={() => FilterSelected.resetFilters()}
+            className={healthItemStyle}
+          >
+            {createIcon(item.status)} {item.count} {item.status.name}
+          </KialiLink>
+        </React.Fragment>
+      ))}
+    </div>
+  );
 };
 
 const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
@@ -247,34 +361,42 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                     </DescriptionListGroup>
                   </DescriptionList>
                 </FlexItem>
-
-                <FlexItem>
-                  <Title headingLevel="h4" size={TitleSizes.md}>
-                    {t('Navigate')}
-                  </Title>
-                  <Flex gap={{ default: 'gapSm' }} flexWrap={{ default: 'wrap' }}>
-                    <KialiLink to={appsLink}>
-                      {t('Applications')}
-                      {appCount !== undefined && ` (${appCount})`}
-                    </KialiLink>
-                    <span aria-hidden="true">·</span>
-                    <KialiLink to={servicesLink}>
-                      {t('Services')}
-                      {serviceCount !== undefined && ` (${serviceCount})`}
-                    </KialiLink>
-                    <span aria-hidden="true">·</span>
-                    <KialiLink to={workloadsLink}>
-                      {t('Workloads')}
-                      {workloadCount !== undefined && ` (${workloadCount})`}
-                    </KialiLink>
-                    <span aria-hidden="true">·</span>
-                    <KialiLink to={istioLink}>
-                      {t('Istio config')}
-                      {istioCount !== undefined && ` (${istioCount})`}
-                    </KialiLink>
-                  </Flex>
-                </FlexItem>
               </Flex>
+            </CardBody>
+          </Card>
+        </StackItem>
+
+        <StackItem>
+          <Card>
+            <CardBody>
+              <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+                {t('Navigate')}
+              </Title>
+              <div className={navigateGridStyle}>
+                <KialiLink to={appsLink}>
+                  {t('Applications')}
+                  {appCount !== undefined && ` (${appCount})`}
+                </KialiLink>
+                <div>{renderHealthBreakdown(`/${Paths.APPLICATIONS}`, namespace, cluster, nsInfo.statusApp)}</div>
+
+                <KialiLink to={servicesLink}>
+                  {t('Services')}
+                  {serviceCount !== undefined && ` (${serviceCount})`}
+                </KialiLink>
+                <div>{renderHealthBreakdown(`/${Paths.SERVICES}`, namespace, cluster, nsInfo.statusService)}</div>
+
+                <KialiLink to={workloadsLink}>
+                  {t('Workloads')}
+                  {workloadCount !== undefined && ` (${workloadCount})`}
+                </KialiLink>
+                <div>{renderHealthBreakdown(`/${Paths.WORKLOADS}`, namespace, cluster, nsInfo.statusWorkload)}</div>
+
+                <KialiLink to={istioLink}>
+                  {t('Istio config')}
+                  {istioCount !== undefined && ` (${istioCount})`}
+                </KialiLink>
+                <div>{renderValidationBreakdown(namespace, cluster, validations)}</div>
+              </div>
             </CardBody>
           </Card>
         </StackItem>
@@ -308,7 +430,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
       <>
         <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
           <Grid hasGutter={true} className={gridStyle}>
-            <GridItem span={4} className={overviewLeftColumnStyle}>
+            <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
