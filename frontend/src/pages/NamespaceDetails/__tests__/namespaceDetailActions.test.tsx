@@ -1,13 +1,8 @@
 import { buildNamespaceRowActions, NamespaceRowActionsParams } from '../namespaceDetailActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
-import { serverConfig } from 'config';
 
 jest.mock('utils/I18nUtils', () => ({
-  t: (key: string) => key,
-  tMap: (m: Record<string, string>) => m,
-  useKialiTranslation: () => ({
-    t: (key: string) => key
-  })
+  t: jest.fn(key => key)
 }));
 
 const baseNsInfo: NamespaceInfo = {
@@ -50,12 +45,12 @@ describe('buildNamespaceRowActions', () => {
   describe('non-control-plane namespace', () => {
     it('includes traffic policy actions when istioAPI is enabled', () => {
       const titles = actionTitles(baseParams(baseNsInfo));
-      expect(titles).toContain('Create Traffic Policies');
+      expect(titles).toContain('Create  Traffic Policies');
     });
 
     it('omits traffic policy actions when istioAPI is disabled', () => {
       const titles = actionTitles(baseParams(baseNsInfo, { istioAPIEnabled: false }));
-      expect(titles).not.toContain('Create Traffic Policies');
+      expect(titles).not.toContain('Create  Traffic Policies');
     });
 
     it('calls onOpenTrafficPoliciesModal when a policy action is invoked', () => {
@@ -112,38 +107,6 @@ describe('buildNamespaceRowActions', () => {
           clusterTarget: 'test-cluster'
         });
       }
-    });
-  });
-
-  describe('view-only mode', () => {
-    const origViewOnly = serverConfig.deployment.viewOnlyMode;
-
-    afterEach(() => {
-      serverConfig.deployment.viewOnlyMode = origViewOnly;
-    });
-
-    it('disables all mutating actions when viewOnlyMode is true', () => {
-      serverConfig.deployment.viewOnlyMode = true;
-
-      const actions = buildNamespaceRowActions(baseParams(baseNsInfo));
-      const mutatingActions = actions.filter(a => !a.isSeparator && a.title);
-
-      expect(mutatingActions.length).toBeGreaterThan(0);
-      mutatingActions.forEach(a => {
-        expect(a.isDisabled).toBe(true);
-      });
-    });
-
-    it('does not disable actions when viewOnlyMode is false', () => {
-      serverConfig.deployment.viewOnlyMode = false;
-
-      const actions = buildNamespaceRowActions(baseParams(baseNsInfo));
-      const mutatingActions = actions.filter(a => !a.isSeparator && a.title);
-
-      expect(mutatingActions.length).toBeGreaterThan(0);
-      mutatingActions.forEach(a => {
-        expect(a.isDisabled).toBeFalsy();
-      });
     });
   });
 });

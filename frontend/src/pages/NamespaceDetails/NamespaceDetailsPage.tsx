@@ -23,12 +23,8 @@ import { IstioConfigList } from 'types/IstioConfigList';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { NamespaceDetailsOverview } from './NamespaceDetailsOverview';
 import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
-import { Paths } from 'config';
-import { router } from 'app/History';
-import { Show } from 'types/Common';
-import { isParentKiosk, kioskNavigateAction, kioskOverviewAction as kioskAction } from 'components/Kiosk/KioskActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
-import { buildNamespaceRowActions } from 'pages/Namespaces/namespaceRowActions';
+import { buildNamespaceRowActions } from './namespaceDetailActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
 import { ControlPlane } from 'types/Mesh';
 import { GrafanaInfo, ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
@@ -68,7 +64,6 @@ type ReduxProps = {
   duration: DurationInSeconds;
   externalServices: { name: string }[];
   istioAPIEnabled: boolean;
-  kiosk: string;
   meshStatus: string;
   refreshInterval: IntervalInMilliseconds;
 };
@@ -378,73 +373,15 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       });
   };
 
-  private kioskNamespacesAction = (showType: Show, ns: string, refreshInterval: IntervalInMilliseconds): void => {
-    const duration = healthComputeDurationValidSeconds();
-    if (showType === Show.GRAPH || showType === Show.ISTIO_CONFIG) {
-      kioskAction(showType as never, ns, duration, refreshInterval);
-      return;
-    }
-    let showInParent = '';
-    switch (showType) {
-      case Show.APPLICATIONS:
-        showInParent = `/${Paths.APPLICATIONS}?namespaces=${ns}`;
-        break;
-      case Show.WORKLOADS:
-        showInParent = `/${Paths.WORKLOADS}?namespaces=${ns}`;
-        break;
-      case Show.SERVICES:
-        showInParent = `/${Paths.SERVICES}?namespaces=${ns}`;
-        break;
-      default:
-        return;
-    }
-    showInParent += `&duration=${String(duration)}&refresh=${String(refreshInterval)}`;
-    kioskNavigateAction(showInParent);
-  };
-
-  private show = (showType: Show, ns: string): void => {
-    if (isParentKiosk(this.props.kiosk)) {
-      this.kioskNamespacesAction(showType, ns, this.props.refreshInterval);
-      return;
-    }
-
-    let destination = '';
-    switch (showType) {
-      case Show.GRAPH:
-        destination = `/graph/namespaces?namespaces=${ns}`;
-        break;
-      case Show.APPLICATIONS:
-        destination = `/${Paths.APPLICATIONS}?namespaces=${ns}`;
-        break;
-      case Show.WORKLOADS:
-        destination = `/${Paths.WORKLOADS}?namespaces=${ns}`;
-        break;
-      case Show.SERVICES:
-        destination = `/${Paths.SERVICES}?namespaces=${ns}`;
-        break;
-      case Show.ISTIO_CONFIG:
-        destination = `/${Paths.ISTIO}?namespaces=${ns}`;
-        break;
-      default:
-        break;
-    }
-    if (destination) {
-      router.navigate(destination);
-    }
-  };
-
   private getNamespaceActions = (): ReturnType<typeof buildNamespaceRowActions> => {
     if (!this.state.nsInfo) {
       return [];
     }
     return buildNamespaceRowActions({
       controlPlanes: this.state.controlPlanes,
-      excludeShowActions: true,
       grafanaLinks: this.state.grafanaLinks,
       istioAPIEnabled: this.props.istioAPIEnabled,
-      kiosk: this.props.kiosk,
       nsInfo: this.state.nsInfo,
-      onKioskShow: this.kioskNamespacesAction,
       onOpenTrafficPoliciesModal: p =>
         this.setState({
           showTrafficPoliciesModal: true,
@@ -454,9 +391,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           kind: p.kind
         }),
       onRefreshAfterExternalLink: this.onChangeAfterPolicy,
-      onShow: this.show,
-      persesLinks: this.state.persesLinks,
-      refreshInterval: this.props.refreshInterval
+      persesLinks: this.state.persesLinks
     });
   };
 
@@ -590,7 +525,6 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
   externalServices: state.statusState.externalServices,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
-  kiosk: state.globalState.kiosk,
   meshStatus: meshWideMTLSStatusSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });

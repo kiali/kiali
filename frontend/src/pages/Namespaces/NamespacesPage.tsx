@@ -37,7 +37,6 @@ import { KialiDispatch } from 'types/Redux';
 import { t } from 'utils/I18nUtils';
 import { ControlPlane } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
-import { MessageType } from '../../types/NotificationCenter';
 import { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
@@ -49,7 +48,6 @@ import {
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
-import { buildNamespaceRowActions } from './namespaceRowActions';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -578,71 +576,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         namespaces: sortFunc(prevState.namespaces, sortField, isAscending)
       };
     });
-  };
-
-  getNamespaceActions = (nsInfo: NamespaceInfo): NamespaceAction[] => {
-    return buildNamespaceRowActions({
-      controlPlanes: this.state.controlPlanes,
-      grafanaLinks: this.state.grafanaLinks,
-      istioAPIEnabled: this.props.istioAPIEnabled,
-      kiosk: this.props.kiosk,
-      nsInfo,
-      onKioskShow: this.kioskNamespacesAction,
-      onOpenTrafficPoliciesModal: p =>
-        this.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: p.nsTarget,
-          clusterTarget: p.clusterTarget ?? '',
-          opTarget: p.opTarget,
-          kind: p.kind
-        }),
-      onRefreshAfterExternalLink: this.onChange,
-      onShow: this.show,
-      persesLinks: this.state.persesLinks,
-      refreshInterval: this.props.refreshInterval
-    });
-  };
-
-  hideTrafficManagement = (): void => {
-    this.setState({
-      showTrafficPoliciesModal: false,
-      nsTarget: '',
-      clusterTarget: '',
-      opTarget: '',
-      kind: ''
-    });
-  };
-
-  show = (showType: Show, namespace: string): void => {
-    let destination = '';
-
-    switch (showType) {
-      case Show.GRAPH:
-        destination = `/graph/namespaces?namespaces=${namespace}`;
-        break;
-      case Show.APPLICATIONS:
-        destination = `/${Paths.APPLICATIONS}?namespaces=${namespace}`;
-        break;
-      case Show.WORKLOADS:
-        destination = `/${Paths.WORKLOADS}?namespaces=${namespace}`;
-        break;
-      case Show.SERVICES:
-        destination = `/${Paths.SERVICES}?namespaces=${namespace}`;
-        break;
-      case Show.ISTIO_CONFIG:
-        destination = `/${Paths.ISTIO}?namespaces=${namespace}`;
-        break;
-      default:
-      // Nothing to do on default case
-    }
-
-    if (destination) {
-      if (isParentKiosk(this.props.kiosk)) {
-        this.kioskNamespacesAction(showType, namespace, this.props.refreshInterval);
-      } else {
-        router.navigate(destination);
-      }
-    }
   };
 
   getEmptyState = (): React.ReactNode => {

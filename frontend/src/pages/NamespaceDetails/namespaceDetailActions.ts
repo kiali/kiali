@@ -20,16 +20,9 @@ export type NamespaceRowActionsParams = {
 /**
  * Actions menu entries for the namespace detail page.
  */
-const pushSeparator = (actions: NamespaceAction[]): void => {
-  if (actions.some(a => !a.isSeparator)) {
-    actions.push({ isGroup: false, isSeparator: true });
-  }
-};
-
 export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): NamespaceAction[] => {
   const { nsInfo } = p;
   const namespaceActions: NamespaceAction[] = [];
-  const viewOnly = serverConfig.deployment.viewOnlyMode;
 
   if (!nsInfo.isControlPlane) {
     if (
@@ -42,11 +35,13 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       serverConfig.kialiFeatureFlags.istioInjectionAction &&
       !serverConfig.kialiFeatureFlags.istioUpgradeAction
     ) {
-      pushSeparator(namespaceActions);
+      namespaceActions.push({
+        isGroup: false,
+        isSeparator: true
+      });
 
       const enableAction = {
         'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Enable Auto Injection'),
@@ -61,7 +56,6 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const disableAction = {
         'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Disable Auto Injection'),
@@ -76,7 +70,6 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const removeAction = {
         'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Remove Auto Injection'),
@@ -112,7 +105,6 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     if (serverConfig.ambientEnabled) {
       const addAmbientAction = {
         'data-test': `add-${nsInfo.name}-namespace-ambient`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Add to Ambient'),
@@ -127,10 +119,9 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const disableAmbientAction = {
         'data-test': `disable-${nsInfo.name}-namespace-ambient`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
-        title: t('Disable Ambient'),
+        title: 'Disable Ambient',
         action: (ns: string) =>
           p.onOpenTrafficPoliciesModal({
             nsTarget: ns,
@@ -142,10 +133,9 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const removeAmbientAction = {
         'data-test': `remove-${nsInfo.name}-namespace-ambient`,
-        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
-        title: t('Remove Ambient'),
+        title: 'Remove Ambient',
         action: (ns: string) =>
           p.onOpenTrafficPoliciesModal({
             nsTarget: ns,
@@ -161,7 +151,10 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         !nsInfo.labels[serverConfig.istioLabels.injectionLabelRev]
       ) {
         if (nsInfo.isAmbient) {
-          pushSeparator(namespaceActions);
+          namespaceActions.push({
+            isGroup: false,
+            isSeparator: true
+          });
           namespaceActions.push(disableAmbientAction);
           namespaceActions.push(removeAmbientAction);
         } else {
@@ -181,10 +174,9 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
             controlplane.revision !== nsInfo.revision
         )
         .map(controlPlane => ({
-          isDisabled: viewOnly,
           isGroup: false,
           isSeparator: false,
-          title: t('Switch to {{revision}} revision', { revision: controlPlane.revision }),
+          title: `Switch to ${controlPlane.revision} revision`,
           action: (ns: string) =>
             p.onOpenTrafficPoliciesModal({
               opTarget: controlPlane.revision,
@@ -195,7 +187,10 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         }));
 
       if (revisionActions && revisionActions.length > 0) {
-        pushSeparator(namespaceActions);
+        namespaceActions.push({
+          isGroup: false,
+          isSeparator: true
+        });
       }
 
       revisionActions?.forEach(action => {
@@ -206,10 +201,9 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     const aps = nsInfo.istioConfig?.resources[getGVKTypeString(gvkType.AuthorizationPolicy)] ?? [];
 
     const addAuthorizationAction = {
-      isDisabled: viewOnly,
       isGroup: false,
       isSeparator: false,
-      title: aps.length === 0 ? t('Create Traffic Policies') : t('Update Traffic Policies'),
+      title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
       action: (ns: string) => {
         p.onOpenTrafficPoliciesModal({
           opTarget: aps.length === 0 ? 'create' : 'update',
@@ -221,10 +215,9 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     };
 
     const removeAuthorizationAction = {
-      isDisabled: viewOnly,
       isGroup: false,
       isSeparator: false,
-      title: t('Delete Traffic Policies'),
+      title: 'Delete Traffic Policies',
       action: (ns: string) =>
         p.onOpenTrafficPoliciesModal({
           opTarget: 'delete',
@@ -235,7 +228,10 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     };
 
     if (p.istioAPIEnabled) {
-      pushSeparator(namespaceActions);
+      namespaceActions.push({
+        isGroup: false,
+        isSeparator: true
+      });
 
       namespaceActions.push(addAuthorizationAction);
 
@@ -245,7 +241,10 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     }
   } else {
     if (p.grafanaLinks.length > 0) {
-      pushSeparator(namespaceActions);
+      namespaceActions.push({
+        isGroup: false,
+        isSeparator: true
+      });
 
       p.grafanaLinks.forEach(link => {
         const grafanaDashboard = {
@@ -263,7 +262,10 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       });
     }
     if (p.persesLinks.length > 0) {
-      pushSeparator(namespaceActions);
+      namespaceActions.push({
+        isGroup: false,
+        isSeparator: true
+      });
 
       p.persesLinks.forEach(link => {
         const persesDashboard = {
