@@ -29,6 +29,7 @@ import {
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
 import { istioAceEditorStyle } from 'styles/AceEditorStyle';
 import {
+  tabCardStyle,
   constrainedScrollStyle,
   flexCardStyle,
   flexFillStyle,
@@ -90,10 +91,6 @@ const editorColumnStyle = kialiStyle({
   flex: 1,
   flexDirection: 'column',
   minHeight: 0
-});
-
-const cardMarginStyle = kialiStyle({
-  marginTop: '1rem'
 });
 
 const editorWrapperStyle = kialiStyle({
@@ -333,7 +330,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
           {this.showEditor() ? (
-            <Card className={classes(flexCardStyle, cardMarginStyle)}>
+            <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <div className={editorColumnStyle}>
                   <div className={noShrinkStyle} style={{ marginBottom: '1.25rem' }}>
@@ -378,7 +375,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
               </CardBody>
             </Card>
           ) : this.showMetrics() && envoyMetricsDashboardRef ? (
-            <Card className={classes(flexCardStyle, cardMarginStyle)}>
+            <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <div className={scrollableContentStyle}>
                   <CustomMetrics
@@ -396,7 +393,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
               </CardBody>
             </Card>
           ) : (
-            <Card className={classes(flexCardStyle, cardMarginStyle)}>
+            <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <SummaryWriterComp
                   writer={summaryWriter}

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Card, CardBody, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { kialiStyle } from '../../styles/StyleUtils';
 import { addDanger } from '../../utils/AlertUtils';
 import {
   GraphDefinition,
@@ -13,6 +12,7 @@ import {
   SEInfo
 } from '../../types/Graph';
 import {
+  tabCardStyle,
   constrainedScrollStyle,
   flexCardStyle,
   flexFillStyle,
@@ -31,10 +31,6 @@ import { TrafficListComponent } from 'components/TrafficList/TrafficListComponen
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
-
-const cardMarginStyle = kialiStyle({
-  marginTop: '1rem'
-});
 
 export interface AppNode {
   cluster?: string;
@@ -134,7 +130,7 @@ class TrafficDetailsComponent extends React.Component<TrafficDetailsProps, Traff
     return (
       <>
         <div className={classes(flexFillStyle, constrainedScrollStyle)}>
-          <Card className={classes(flexCardStyle, cardMarginStyle)}>
+          <Card className={classes(flexCardStyle, tabCardStyle)}>
             <CardBody>
               <div className={noShrinkStyle}>
                 <Toolbar style={{ padding: 0, width: '100%' }}>

@@ -4,6 +4,7 @@ import { KialiDispatch } from 'types/Redux';
 import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { tabCardStyle } from 'styles/FlexStyles';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
 import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { TracingTraceTitle } from './TracingTraceTitle';
@@ -57,10 +58,6 @@ interface State {}
 
 const gridStyle = kialiStyle({
   paddingTop: '1rem'
-});
-
-const cardStyle = kialiStyle({
-  marginTop: '1rem'
 });
 
 class TraceDetailsComponent extends React.Component<Props, State> {
@@ -201,7 +198,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
         : undefined;
 
     return (
-      <Card isCompact className={cardStyle}>
+      <Card isCompact className={tabCardStyle}>
         <TracingTraceTitle
           formattedTrace={formattedTrace}
           externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}

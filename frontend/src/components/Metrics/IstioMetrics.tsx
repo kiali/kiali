@@ -4,8 +4,8 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { kialiStyle } from 'styles/StyleUtils';
 import {
+  tabCardStyle,
   constrainedScrollStyle,
   flexCardStyle,
   flexFillStyle,
@@ -87,10 +87,6 @@ type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
-
-const cardMarginStyle = kialiStyle({
-  marginTop: '1rem'
-});
 
 class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   options: IstioMetricsOptions;
@@ -346,7 +342,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     return (
       <>
         <div className={classes(flexFillStyle, constrainedScrollStyle)}>
-          <Card className={classes(flexCardStyle, cardMarginStyle)}>
+          <Card className={classes(flexCardStyle, tabCardStyle)}>
             <CardBody>
               <div className={scrollableContentStyle}>
                 {this.renderOptionsBar()}

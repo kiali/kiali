@@ -16,7 +16,7 @@ import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { classes } from 'typestyle';
-import { constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
+import { tabCardStyle, constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
 import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'utils/I18nUtils';
@@ -55,10 +55,6 @@ const toolbarStyle = kialiStyle({
 const toolbarClass = kialiStyle({
   display: 'flex',
   paddingTop: '0'
-});
-
-const cardStyle = kialiStyle({
-  marginTop: '1rem'
 });
 
 export interface SortableCompareTh<T> extends SortableTh {
@@ -178,7 +174,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const servicesTab = (
     <Tab title={t('Services')} eventKey={0} key="services">
-      <Card className={classes(flexCardStyle, cardStyle)}>
+      <Card className={classes(flexCardStyle, tabCardStyle)}>
         <CardBody>
           <div>
             <div className={toolbarStyle}>
@@ -218,7 +214,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const workloadsTab = (
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
-      <Card className={classes(flexCardStyle, cardStyle)}>
+      <Card className={classes(flexCardStyle, tabCardStyle)}>
         <CardBody>
           <div>
             <div className={toolbarStyle}>
@@ -258,7 +254,7 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
 
   const metricsTab = (
     <Tab title={t('Metrics')} eventKey={2} key="metrics">
-      <Card className={classes(flexCardStyle, cardStyle)}>
+      <Card className={classes(flexCardStyle, tabCardStyle)}>
         <CardBody>
           <ZtunnelMetrics
             rangeDuration={props.rangeDuration}

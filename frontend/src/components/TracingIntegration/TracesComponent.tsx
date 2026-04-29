@@ -46,7 +46,7 @@ import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
 import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { tabCardStyle, flexFillStyle } from 'styles/FlexStyles';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -85,10 +85,6 @@ interface TracesState {
 
 const traceDetailsTab = 0;
 const spansDetailsTab = 1;
-
-const cardStyle = kialiStyle({
-  marginTop: '1rem'
-});
 
 const containerStyle = kialiStyle({
   paddingRight: '0.5rem'
@@ -292,7 +288,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     return (
       <>
         <div className={classes(flexFillStyle, containerStyle)}>
-          <Card className={cardStyle}>
+          <Card className={tabCardStyle}>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
                 {this.state.infoMessage && this.state.visibleAlert && (

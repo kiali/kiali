@@ -20,8 +20,11 @@ const dashboardContainerStyle = kialiStyle({
   minHeight: 0
 });
 
-const MIN_CHART_HEIGHT = 130;
-const CHART_MARGIN = 8;
+const chartsGridStyle = kialiStyle({
+  rowGap: '1rem'
+});
+
+const MIN_CHART_HEIGHT = 150;
 const GRID_ROW_GAP = 16;
 
 export type Props<T extends LineInfo> = {
@@ -94,7 +97,7 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
 
     if (!content) {
       content = (
-        <Grid>
+        <Grid className={chartsGridStyle}>
           {this.props.dashboard.charts.map(c => {
             return (
               <GridItem span={c.spans} key={c.name}>
@@ -119,13 +122,12 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     }
 
     if (this.state.maximizedChart) {
-      return Math.max(this.state.measuredHeight - CHART_MARGIN, MIN_CHART_HEIGHT);
+      return Math.max(this.state.measuredHeight, MIN_CHART_HEIGHT);
     }
 
     const rows = this.props.dashboard.rows > 0 ? this.props.dashboard.rows : 2;
     const totalGapHeight = (rows - 1) * GRID_ROW_GAP;
-    const availableForCharts = this.state.measuredHeight - totalGapHeight;
-    return Math.max(Math.floor(availableForCharts / rows) - CHART_MARGIN, MIN_CHART_HEIGHT);
+    return Math.max(Math.floor((this.state.measuredHeight - totalGapHeight) / rows), MIN_CHART_HEIGHT);
   };
 
   private renderChart(chart: ChartModel): React.ReactNode {

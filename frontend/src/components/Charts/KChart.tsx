@@ -37,13 +37,6 @@ const emptyStyle = kialiStyle({
 });
 
 const kchartStyle = kialiStyle({
-  marginBottom: '0.5rem',
-  marginLeft: '1.5rem',
-  marginRight: '1.5rem',
-  marginTop: '0.5rem'
-});
-
-const kchartMaximizedStyle = kialiStyle({
   marginLeft: '1.5rem',
   marginRight: '1.5rem'
 });
@@ -137,7 +130,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
 
   render(): React.ReactNode {
     return (
-      <div className={this.props.isMaximized ? kchartMaximizedStyle : kchartStyle}>
+      <div className={kchartStyle}>
         <div
           ref={this.titleRef}
           style={{

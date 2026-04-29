@@ -85,7 +85,8 @@ export const MIN_HEIGHT = 20;
 export const MIN_HEIGHT_YAXIS = 70;
 export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
-const CHART_BOTTOM_PADDING = 15;
+const CHART_LEGEND_GAP = 4;
+const CHART_BOTTOM_PADDING = 16;
 
 const legendCollapsedStyle = kialiStyle({
   display: 'flex',
@@ -292,110 +293,112 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       containerComponent = <VictoryVoronoiContainer {...voronoiProps} />;
     }
 
-    const svgHeight = showLegend ? chartHeight - LEGEND_HEIGHT : chartHeight;
+    const svgHeight = showLegend ? chartHeight - LEGEND_HEIGHT - CHART_LEGEND_GAP : chartHeight;
     const chart = (
       <div ref={this.containerRef} style={{ marginTop: 0 }}>
-        <Chart
-          width={this.state.width}
-          padding={padding}
-          events={events as any[]}
-          height={svgHeight}
-          containerComponent={containerComponent}
-          scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time', y: 'linear' }}
-          // Hack: Need at least 1 pxl on Y domain padding to prevent harsh clipping (https://github.com/kiali/kiali/issues/2069)
-          // Hack: Chart points on the very edges are not clickable due to extra padding and the chart
-          // not resizing correctly for some reason. The additional domain padding squeezes the elements
-          // into the chart so that they are no longer on the edges (https://github.com/kiali/kiali/issues/5222).
-          domainPadding={{ y: 10, x: this.props.xAxis === 'series' ? 50 : 15 }}
-          {...this.props.moreChartProps}
-        >
-          {
-            // Use width to change style of the x series supporting narrow scenarios
-            this.props.xAxis === 'series' ? (
-              <ChartAxis
-                domain={[0, filteredData.length + 1]}
-                style={axisStyle}
-                tickValues={filteredData.map(s => s.legendItem.name)}
-                tickFormat={() => ''}
-              />
-            ) : this.state.width <= MIN_WIDTH ? (
-              <ChartAxis
-                tickCount={scaleInfo.count}
-                style={axisStyle}
-                domain={this.props.timeWindow}
-                tickFormat={t => {
-                  return `:${t.getMinutes()}`;
-                }}
-              />
-            ) : (
-              <ChartAxis tickCount={scaleInfo.count} style={axisStyle} domain={this.props.timeWindow} />
-            )
-          }
-
-          <ChartAxis
-            tickLabelComponent={
-              <VictoryPortal>
-                <ChartLabel />
-              </VictoryPortal>
-            }
-            dependentAxis={true}
-            tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
-            tickFormat={getFormatter(d3Format, this.props.unit)}
-            label={getUnit(d3Format, this.props.unit, mainMax)}
-            axisLabelComponent={<ChartLabel y={-10} x={0} angle={0} renderInPortal={true} />}
-            style={axisStyle}
-          />
-
-          {useSecondAxis && this.props.overlay && (
-            <ChartAxis
-              dependentAxis={true}
-              offsetX={this.state.width - overlayRightPadding}
-              style={axisStyle}
-              tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
-              tickFormat={t => getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit ?? '')(t / overlayFactor)}
-              tickLabelComponent={<ChartLabel dx={15} textAnchor="start" />}
-              label={getUnit(
-                d3Format,
-                this.props.overlay?.info.lineInfo.unit ?? '',
-                Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
-              )}
-              axisLabelComponent={
-                <ChartLabel
-                  y={-10}
-                  x={this.state.width}
-                  angle={0}
-                  renderInPortal={true}
-                  style={{ fill: PFColors.Color100 }}
+        <div style={{ lineHeight: 0, marginBottom: CHART_LEGEND_GAP }}>
+          <Chart
+            width={this.state.width}
+            padding={padding}
+            events={events as any[]}
+            height={svgHeight}
+            containerComponent={containerComponent}
+            scale={{ x: this.props.xAxis === 'series' ? 'linear' : 'time', y: 'linear' }}
+            // Prevents data at min/max from being clipped at the SVG boundary,
+            // and keeps points away from edges where they'd be hard to click.
+            domainPadding={{ y: 10, x: this.props.xAxis === 'series' ? 50 : 15 }}
+            {...this.props.moreChartProps}
+          >
+            {
+              // Use width to change style of the x series supporting narrow scenarios
+              this.props.xAxis === 'series' ? (
+                <ChartAxis
+                  domain={[0, filteredData.length + 1]}
+                  style={axisStyle}
+                  tickValues={filteredData.map(s => s.legendItem.name)}
+                  tickFormat={() => ''}
                 />
+              ) : this.state.width <= MIN_WIDTH ? (
+                <ChartAxis
+                  tickCount={scaleInfo.count}
+                  style={axisStyle}
+                  domain={this.props.timeWindow}
+                  tickFormat={t => {
+                    return `:${t.getMinutes()}`;
+                  }}
+                />
+              ) : (
+                <ChartAxis tickCount={scaleInfo.count} style={axisStyle} domain={this.props.timeWindow} />
+              )
+            }
+
+            <ChartAxis
+              tickLabelComponent={
+                <VictoryPortal>
+                  <ChartLabel />
+                </VictoryPortal>
               }
+              dependentAxis={true}
+              tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
+              tickFormat={getFormatter(d3Format, this.props.unit)}
+              label={getUnit(d3Format, this.props.unit, mainMax)}
+              axisLabelComponent={<ChartLabel y={-10} x={0} angle={0} renderInPortal={true} />}
+              style={axisStyle}
             />
-          )}
 
-          {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries(svgHeight)}
+            {useSecondAxis && this.props.overlay && (
+              <ChartAxis
+                dependentAxis={true}
+                offsetX={this.state.width - overlayRightPadding}
+                style={axisStyle}
+                tickCount={chartHeight <= MIN_HEIGHT_YAXIS ? 1 : undefined}
+                tickFormat={t =>
+                  getFormatter(d3Format, this.props.overlay?.info.lineInfo.unit ?? '')(t / overlayFactor)
+                }
+                tickLabelComponent={<ChartLabel dx={15} textAnchor="start" />}
+                label={getUnit(
+                  d3Format,
+                  this.props.overlay?.info.lineInfo.unit ?? '',
+                  Math.max(...this.props.overlay.vcLine.datapoints.map(d => d.y))
+                )}
+                axisLabelComponent={
+                  <ChartLabel
+                    y={-10}
+                    x={this.state.width}
+                    angle={0}
+                    renderInPortal={true}
+                    style={{ fill: PFColors.Color100 }}
+                  />
+                }
+              />
+            )}
 
-          {showOverlay &&
-            (this.props.overlay!.info.buckets ? (
-              <VictoryBoxPlot
-                key="overlay"
-                name={overlayName}
-                data={normalizedOverlay}
-                style={{
-                  min: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
-                  max: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
-                  q1: { fill: this.props.overlay!.info.lineInfo.color },
-                  q3: { fill: this.props.overlay!.info.lineInfo.color },
-                  median: { stroke: 'white', strokeWidth: 2 }
-                }}
-              />
-            ) : (
-              <ChartScatter
-                key="overlay"
-                name={overlayName}
-                data={normalizedOverlay}
-                style={{ data: this.props.overlay!.info.dataStyle }}
-              />
-            ))}
-        </Chart>
+            {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries(svgHeight)}
+
+            {showOverlay &&
+              (this.props.overlay!.info.buckets ? (
+                <VictoryBoxPlot
+                  key="overlay"
+                  name={overlayName}
+                  data={normalizedOverlay}
+                  style={{
+                    min: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
+                    max: { stroke: this.props.overlay!.info.lineInfo.color, strokeWidth: 2 },
+                    q1: { fill: this.props.overlay!.info.lineInfo.color },
+                    q3: { fill: this.props.overlay!.info.lineInfo.color },
+                    median: { stroke: 'white', strokeWidth: 2 }
+                  }}
+                />
+              ) : (
+                <ChartScatter
+                  key="overlay"
+                  name={overlayName}
+                  data={normalizedOverlay}
+                  style={{ data: this.props.overlay!.info.dataStyle }}
+                />
+              ))}
+          </Chart>
+        </div>
 
         {showLegend && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>

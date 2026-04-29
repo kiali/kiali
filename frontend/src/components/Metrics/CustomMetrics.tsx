@@ -12,6 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import {
+  tabCardStyle,
   constrainedScrollStyle,
   flexCardStyle,
   flexFillStyle,
@@ -84,10 +85,6 @@ type Props = ReduxStateProps & ReduxDispatchProps & CustomMetricsProps;
 
 // lower that the standard default, we apply it to several small charts
 const traceLimitDefault = 20;
-
-const cardMarginStyle = kialiStyle({
-  marginTop: '1rem'
-});
 
 const emptyStyle = kialiStyle({
   alignItems: 'center',
@@ -285,7 +282,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
           <>{content}</>
         ) : (
           <div className={classes(flexFillStyle, constrainedScrollStyle)}>
-            <Card className={classes(flexCardStyle, cardMarginStyle)}>
+            <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <div className={scrollableContentStyle}>{content}</div>
               </CardBody>

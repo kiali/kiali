@@ -38,6 +38,11 @@ export const noShrinkStyle = kialiStyle({
   flexShrink: 0
 });
 
+// Top margin for Cards rendered inside tab content areas.
+export const tabCardStyle = kialiStyle({
+  marginTop: '1rem'
+});
+
 // Scrollable flex child for use inside a CardBody or similar container.
 // Must be a flex container itself so children with flex:1 are constrained
 // to the available height rather than growing with their content.
