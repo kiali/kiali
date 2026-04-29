@@ -34,6 +34,8 @@ else
 fi
 
 # Only install Kiali on cluster-1
+# shellcheck disable=SC2034
+IGNORE_HOME_CLUSTER="true"
 
 create_crossnetwork_gateway() {
   local clustername="${1}"

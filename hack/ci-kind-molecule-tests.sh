@@ -737,6 +737,10 @@ if [ "${OLM_ENABLED}" == "true" ]; then
   operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces  | grep kiali-operator | cut -d ' ' -f 1)"
   infomsg "Kiali operator namespace: [${operator_namespace}]"
   csv_name="$(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali)"
+  if [ -z "${csv_name}" ]; then
+    infomsg "ERROR: Kiali CSV not found in namespace [${operator_namespace}]"
+    exit 1
+  fi
   csv_env_names="$(${CLIENT_EXE} -n ${operator_namespace} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
   for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_AD_HOC_CONTAINERS ALLOW_SECURITY_CONTEXT_OVERRIDE; do
     env_index="$(echo "${csv_env_names}" | tr ' ' '\n' | nl -ba | awk -v name="${env_name}" '$2 == name {print $1; exit}')"
@@ -813,7 +817,7 @@ if [ "${RUN_TESTS}" == "true" ]; then
     "${molecule_cmd[@]}" > "${LOGS_LOCAL_RESULTS}"
   fi
 
-  cd ${LOGS_LOCAL_SUBDIR_ABS}
+  cd ${LOGS_LOCAL_SUBDIR_ABS} || exit
 
   # compress large log files
   MAX_LOG_FILE_SIZE="50M"

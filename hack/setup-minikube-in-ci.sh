@@ -239,7 +239,8 @@ setup_minikube_multicluster() {
   local output_dir
   output_dir="${script_dir}/../_output"
   # use the Istio release that was last downloaded (that's the -t option to ls)
-  ls -dt1 ${output_dir}/istio-* | head -n1 > /dev/null
+  local istio_dir
+  istio_dir="$(ls -dt1 ${output_dir}/istio-* | head -n1)"
 
   local cluster1_context
   local cluster2_context
@@ -247,7 +248,7 @@ setup_minikube_multicluster() {
   local cluster2_name
   local istio_version_arg=${ISTIO_VERSION:+--istio-version ${ISTIO_VERSION}}
   if [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh ${istio_version_arg}
+    "${SCRIPT_DIR}"/istio/multicluster/setup-minikube-external-controlplane.sh --istio-dir "${istio_dir}" ${istio_version_arg}
     cluster1_context="controlplane"
     cluster2_context="dataplane"
     cluster1_name="controlplane"

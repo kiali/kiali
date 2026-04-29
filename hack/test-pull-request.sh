@@ -235,7 +235,8 @@ make clean build-ui build test
 if [ "${IS_OPENSHIFT}" = "true" ]; then
   echo "Logging into the image registry..."
   registry_login_cmd="$(make cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
-  eval "${registry_login_cmd}"
+  read -ra registry_login_arr <<< "${registry_login_cmd}"
+  "${registry_login_arr[@]}"
 fi
 
 echo "Pushing the images into the cluster..."

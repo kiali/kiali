@@ -367,7 +367,8 @@ openshift_install_basic_demo() {
 
   infomsg "Logging into the image registry..."
   registry_login_cmd="$(make --directory "${ROOT_DIR}" -e OC="$(which ${CLIENT_EXE})" CLUSTER_TYPE=openshift cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
-  eval "${registry_login_cmd}"
+  read -ra registry_login_arr <<< "${registry_login_cmd}"
+  "${registry_login_arr[@]}"
 
   if [ "${KIALI_VERSION}" == "dev" ]; then
     infomsg "Installing Kiali ..."

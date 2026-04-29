@@ -384,7 +384,8 @@ if [ "${USE_DEV_IMAGES}" == "true" ]; then
 
   infomsg "Logging into the image registry..."
   registry_login_cmd="$(make -e OC="${OC}" -e DORP="${DORP}" cluster-status | grep "Image Registry login:" | sed 's/Image Registry login: \(.*\)$/\1/')"
-  eval "${registry_login_cmd}"
+  read -ra registry_login_arr <<< "${registry_login_cmd}"
+  "${registry_login_arr[@]}"
 
   infomsg "Pushing the images into the cluster..."
   make -e OC="${OC}" -e DORP="${DORP}" -e GOPATH="${GOPATH}" cluster-push

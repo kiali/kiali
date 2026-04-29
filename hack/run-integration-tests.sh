@@ -1010,8 +1010,6 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:smoke
-
-  kill ${KIALI_PID} 2>/dev/null || true
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   ensureCypressInstalled
   

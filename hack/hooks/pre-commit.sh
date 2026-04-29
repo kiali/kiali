@@ -24,28 +24,18 @@ if ! which goimports &> /dev/null; then
   go install golang.org/x/tools/cmd/goimports@latest
 fi
 
-shellcheck_cmd=(shellcheck)
-if ! which shellcheck &> /dev/null; then
-  if which npx &> /dev/null; then
-    echo "shellcheck not found in PATH - using npx shellcheck."
-    shellcheck_cmd=(npx --yes shellcheck)
-  else
-    echo "You do not have shellcheck in your PATH."
-    echo "shellcheck is not installed with 'go install'."
-    echo "Install shellcheck manually or ensure 'npx' is available, then retry."
-    exit 1
-  fi
-fi
-
 #### GO Formatting ####
-go_files=$(git diff --cached --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
+go_files=()
+while IFS= read -r f; do
+  go_files+=("$f")
+done < <(git diff --cached --name-only --diff-filter=AM | grep '\.go$' | grep -v '^vendor')
 
-if [ -n "$go_files" ]; then
+if [ "${#go_files[@]}" -gt 0 ]; then
   echo "Formatting staged GO files with gofmt..."
-  gofmt -w $go_files
+  gofmt -w "${go_files[@]}"
 
   echo "Fixing imports with goimports..."
-  for gofile in $go_files; do
+  for gofile in "${go_files[@]}"; do
     # Remove empty lines in import blocks (same logic as fix_imports.sh)
     awk -i inplace '
     {
@@ -66,32 +56,54 @@ if [ -n "$go_files" ]; then
         print $0
       }
     }
-    ' $gofile
-    goimports -w -local "github.com/kiali/kiali" $gofile
+    ' "$gofile"
+    goimports -w -local "github.com/kiali/kiali" "$gofile"
   done
 
   # Check if formatting changed any files
-  go_unformatted=$(git diff --name-only $go_files)
+  go_unformatted=$(git diff --name-only "${go_files[@]}")
 fi
 
 #### YAML Formatting ####
-yaml_files=$(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
+yaml_files=()
+while IFS= read -r f; do
+  yaml_files+=("$f")
+done < <(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
 
-if [ -n "$yaml_files" ]; then
-  yaml_unformatted=$(yamlfmt -dry -quiet $yaml_files 2>&1 | sed 's/^.*://')
+if [ "${#yaml_files[@]}" -gt 0 ]; then
+  yaml_unformatted=()
+  while IFS= read -r f; do
+    yaml_unformatted+=("$f")
+  done < <(yamlfmt -dry -quiet "${yaml_files[@]}" 2>&1 | sed 's/^.*://')
 fi
 
-if [ -n "$yaml_unformatted" ]; then
+if [ "${#yaml_unformatted[@]}" -gt 0 ]; then
   echo "Formatting staged YAML files:"
-  echo $yaml_unformatted | tr " " "\n"
+  printf '%s\n' "${yaml_unformatted[@]}"
 
   # Remove trailing whitespaces to avoid yaml formatter bug (https://github.com/google/yamlfmt/issues/153)
-  sed -i 's/[ \t]*$//' $yaml_unformatted
-  yamlfmt $yaml_unformatted
+  sed -i 's/[ \t]*$//' "${yaml_unformatted[@]}"
+  yamlfmt "${yaml_unformatted[@]}"
 fi
 
 #### Shell script checks ####
-mapfile -d '' -t hack_shell_scripts < <(git diff --cached --name-only -z --diff-filter=ACMR -- 'hack/*.sh' 'hack/**/*.sh')
+shellcheck_cmd=(shellcheck)
+if ! which shellcheck &> /dev/null; then
+  if which npx &> /dev/null; then
+    echo "shellcheck not found in PATH - using npx shellcheck@0.10.0."
+    shellcheck_cmd=(npx --yes shellcheck@0.10.0)
+  else
+    echo "You do not have shellcheck in your PATH."
+    echo "Install it via your package manager (e.g. 'brew install shellcheck', 'apt install shellcheck', 'dnf install ShellCheck')"
+    echo "or ensure 'npx' is available as a fallback, then retry."
+    exit 1
+  fi
+fi
+
+hack_shell_scripts=()
+while IFS= read -r -d '' f; do
+  hack_shell_scripts+=("$f")
+done < <(git diff --cached --name-only -z --diff-filter=ACMR -- 'hack/*.sh' 'hack/**/*.sh')
 
 if [ "${#hack_shell_scripts[@]}" -gt 0 ]; then
   echo "Running shellcheck for hack scripts..."
@@ -109,7 +121,7 @@ yarn i18n
 i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation.json')
 
 #### Git commit check ####
-if [ -n "$yaml_unformatted" ] || [ -n "$go_unformatted" ]; then
+if [ "${#yaml_unformatted[@]}" -gt 0 ] || [ -n "$go_unformatted" ]; then
   echo "Some files have been formatted - the git commit is aborted."
   echo "Please stage the formatted files and commit again."
   exit 1

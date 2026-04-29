@@ -124,6 +124,10 @@ echo "Setting new environment in the operator deployment"
 
 if [ "${IS_OLM}" == "true" ]; then
   csv_name="$(${CLIENT} -n ${OPERATOR_NAMESPACE} get csv -o name | grep kiali)"
+  if [ -z "${csv_name}" ]; then
+    echo "ERROR: Kiali CSV not found in namespace [${OPERATOR_NAMESPACE}]"
+    exit 1
+  fi
   csv_env_names="$(${CLIENT} -n ${OPERATOR_NAMESPACE} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
 fi
 

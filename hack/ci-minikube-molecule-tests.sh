@@ -194,6 +194,10 @@ if ! ${minikube_sh} status; then
     echo "Configuring the Kiali operator to allow ad hoc images and ad hoc namespaces and security context override."
     operator_namespace="$(${CLIENT_EXE} get deployments --all-namespaces | grep kiali-operator | cut -d ' ' -f 1)"
     csv_name="$(${CLIENT_EXE} -n ${operator_namespace} get csv -o name | grep kiali)"
+    if [ -z "${csv_name}" ]; then
+      echo "ERROR: Kiali CSV not found in namespace [${operator_namespace}]"
+      exit 1
+    fi
     csv_env_names="$(${CLIENT_EXE} -n ${operator_namespace} get ${csv_name} -o jsonpath='{.spec.install.spec.deployments[0].spec.template.spec.containers[0].env[*].name}')"
     for env_name in ALLOW_AD_HOC_KIALI_NAMESPACE ALLOW_AD_HOC_KIALI_IMAGE ALLOW_AD_HOC_CONTAINERS ALLOW_SECURITY_CONTEXT_OVERRIDE; do
       env_index="$(echo "${csv_env_names}" | tr ' ' '\n' | nl -ba | awk -v name="${env_name}" '$2 == name {print $1; exit}')"
