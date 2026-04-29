@@ -85,7 +85,7 @@ export const MIN_HEIGHT = 20;
 export const MIN_HEIGHT_YAXIS = 70;
 export const MIN_WIDTH = 275;
 export const LEGEND_HEIGHT = 25;
-const CHART_LEGEND_GAP = 4;
+export const CHART_LEGEND_GAP = 4;
 const CHART_BOTTOM_PADDING = 16;
 
 const legendCollapsedStyle = kialiStyle({

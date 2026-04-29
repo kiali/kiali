@@ -68,7 +68,7 @@ jest.mock('regression', () => ({
 }));
 
 // eslint-disable-next-line import/first -- must import after jest.mock calls
-import { ChartWithLegend, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
+import { ChartWithLegend, CHART_LEGEND_GAP, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
 
 const makeSeries = (names: string[]): VCLines<RichDataPoint> =>
   names.map((name, idx) => ({
@@ -160,7 +160,7 @@ describe('ChartWithLegend', () => {
     );
 
     const chart = wrapper.find('Chart');
-    expect(chart.prop('height')).toBe(chartHeight - LEGEND_HEIGHT);
+    expect(chart.prop('height')).toBe(chartHeight - LEGEND_HEIGHT - CHART_LEGEND_GAP);
   });
 
   it('renderLegendSymbol produces correct SVG elements for each symbol type', () => {
