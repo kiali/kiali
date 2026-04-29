@@ -38,5 +38,15 @@ jobs:
     - name: Verify code linting
       run: make lint
 
-    - name: Run backend unit tests
-      run: make -e GO_TEST_FLAGS="-race" test
+    - name: Run backend unit tests with coverage
+      run: |
+        make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
+
+    - name: Verify coverage profile
+      run: wc -l coverage-unit.out
+
+    - name: Upload unit coverage artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-unit
+        path: coverage-unit.out

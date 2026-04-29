@@ -91,11 +91,4 @@ jobs:
         name: backend-test-metadata-mcp-tools
         path: test-metadata-mcp-tools/
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v6
-      with:
-        files: out/coverage-integration.out
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: kiali/kiali
-        flag: integration-tests
 

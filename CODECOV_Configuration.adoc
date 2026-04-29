@@ -1,0 +1,26 @@
+= Codecov configuration for Kiali
+
+This repository uploads merged Go coverage from GitHub Actions to Codecov (see `.github/workflows/kiali-ci.yml`, job `codecov_merge_upload`).
+
+
+== What CI uploads
+
+Coverage is merged from three artifacts produced elsewhere in the same workflow run:
+
+* `coverage-unit` — unit tests (`.github/workflows/test-lint-backend.yml`)
+* `coverage-backend` — backend integration (`.github/workflows/integration-tests-backend.yml`)
+* `coverage-multicluster` — external control plane integration (`.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml`)
+
+Behavior is configured in `codecov.yml` (paths, ignores, patch/project gates).
+
+== How to verify that is working
+
+. Open a pull request that runs **Kiali CI** to completion.
+. In Codecov, open the `kiali/kiali` project and confirm a new upload appears for the commit.
+. If uploads fail, check the `codecov_merge_upload` job log and https://docs.codecov.com/docs/quick-start[Codecov troubleshooting].
+
+== References
+
+* https://docs.codecov.com/docs/quick-start[Codecov quick start]
+* https://github.com/codecov/codecov-action[`codecov/codecov-action` (OIDC)]
+* https://docs.codecov.com/docs/codecov-yaml[Codecov YAML reference]

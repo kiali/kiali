@@ -71,10 +71,8 @@ jobs:
         name: debug-info-${{ github.job }}
         path: debug-output
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v6
+    - name: Upload multicluster coverage artifact
+      uses: actions/upload-artifact@v4
       with:
-        files: out/coverage-integration.out
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: kiali/kiali
-        flag: integration-tests
+        name: coverage-multicluster
+        path: tests/integration/multicluster/coverage-multicluster.out

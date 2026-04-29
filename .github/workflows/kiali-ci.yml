@@ -226,3 +226,62 @@ jobs:
         name: pr-metadata
         path: pr-metadata/
         retention-days: 1
+
+  codecov_merge_upload:
+    if: ${{ success() }}
+    name: Merge & Upload Coverage to Codecov
+    needs:
+      - integration_tests_backend
+      - integration_tests_backend_multicluster_external_controlplane
+      - test_backend
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # -------------------------------
+      # Download artifacts
+      # -------------------------------
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-backend
+          path: coverage
+
+      - name: Download multicluster coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-multicluster
+          path: coverage
+      
+      - name: Download unit coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-unit
+          path: coverage
+
+      # -------------------------------
+      # Merge coverage (no gocovmerge)
+      # -------------------------------
+      - name: Merge coverage files
+        run: |
+          echo "mode: set" > coverage.out
+          grep -h -v "^mode:" coverage/coverage-unit.out >> coverage.out
+          grep -h -v "^mode:" coverage/coverage-backend.out >> coverage.out
+          grep -h -v "^mode:" coverage/coverage-multicluster.out >> coverage.out
+
+      # -------------------------------
+      # Upload to Codecov
+      # -------------------------------
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          fail_ci_if_error: false
+          files: coverage.out
+          flags: integration
+          slug: kiali/kiali
+          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true

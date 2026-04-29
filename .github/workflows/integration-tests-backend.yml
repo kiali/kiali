@@ -57,7 +57,7 @@ jobs:
     - name: Ensure kiali binary is executable
       run: chmod +x ~/go/bin/kiali
 
-    - name: Run backend integration tests
+    - name: Run Backend Integration Tests
       id: intTests
       run: hack/run-integration-tests.sh --test-suite backend $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail_operator_git_ref }}" ]; then echo "--sail-operator-git-ref ${{ inputs.sail_operator_git_ref }}"; fi)
 
@@ -98,10 +98,8 @@ jobs:
         name: backend-test-metadata
         path: test-metadata/
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v6
+    - name: Upload backend coverage artifact
+      uses: actions/upload-artifact@v4
       with:
-        files: out/coverage-integration.out
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: kiali/kiali
-        flag: integration-tests
+        name: coverage-backend
+        path: tests/integration/tests/coverage-backend.out

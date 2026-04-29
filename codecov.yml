@@ -20,6 +20,10 @@ coverage:
         threshold: 0%
         informational: true
 
+fixes:
+  - "github.com/kiali/kiali/::"
+  - "/home/runner/work/kiali/kiali/::"
+
 ignore:
   # Exclude frontend UI code (since this is for the backend)
   - "frontend/**"
@@ -34,6 +38,5 @@ ignore:
   - "design/**"
   
   # Test utilities, E2E tests, and mock directories
-  - "tests/**"
   - "**/test/**"
   - "**/*_test.go"
