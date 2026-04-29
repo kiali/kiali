@@ -71,15 +71,27 @@ jest.mock('regression', () => ({
 // eslint-disable-next-line import/first -- must import after jest.mock calls
 import { ChartWithLegend, CHART_LEGEND_GAP, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
 
-const makeSeries = (names: string[]): VCLines<RichDataPoint> =>
-  names.map((name, idx) => ({
-    color: ['#06c', '#c00', '#0a0', '#f80'][idx % 4],
-    datapoints: [{ name, x: new Date('2025-01-01T00:00:00Z'), y: idx + 1, color: '#06c' }],
-    legendItem: {
-      name,
-      symbol: { fill: ['#06c', '#c00', '#0a0', '#f80'][idx % 4], type: 'circle' }
-    }
-  }));
+const COLORS = ['#06c', '#c00', '#0a0', '#f80'];
+
+const makeSeries = (names: string[], pointCount = 5): VCLines<RichDataPoint> =>
+  names.map((name, idx) => {
+    const color = COLORS[idx % COLORS.length];
+    const base = new Date('2025-01-01T00:00:00Z').getTime();
+    const step = 60_000; // 1 minute between points
+    return {
+      color,
+      datapoints: Array.from({ length: pointCount }, (_, i) => ({
+        name,
+        x: new Date(base + i * step),
+        y: 10 * (idx + 1) + Math.sin(i) * 5,
+        color
+      })),
+      legendItem: {
+        name,
+        symbol: { fill: color, type: 'circle' }
+      }
+    };
+  });
 
 describe('ChartWithLegend', () => {
   it('renders legend items for each series', () => {
