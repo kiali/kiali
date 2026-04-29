@@ -67,10 +67,11 @@ const emptyStyle = kialiStyle({
   textAlign: 'center'
 });
 
-class TracingScatterComponent extends React.Component<TracingScatterProps> {
+export class TracingScatterComponent extends React.Component<TracingScatterProps> {
   isLoading = false;
   nextToLoad?: JaegerTrace = undefined;
   seletedTraceMatched: number | undefined;
+  hoverTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
   constructor(props: TracingScatterProps) {
     super(props);
@@ -80,7 +81,7 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     }
   }
 
-  renderFetchEmpty = (title, msg): JSX.Element => {
+  renderFetchEmpty = (title: string, msg: string): JSX.Element => {
     return (
       <div className={emptyStyle}>
         <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm} data-test="empty-traces">
@@ -180,7 +181,12 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     );
   }
 
+  componentWillUnmount(): void {
+    clearTimeout(this.hoverTimer);
+  }
+
   private onTooltipClose = (trace?: JaegerTrace): void => {
+    clearTimeout(this.hoverTimer);
     // cancel loading the stats if we've moused out of the trace before we started loading
     if (trace === this.nextToLoad) {
       this.nextToLoad = undefined;
@@ -215,12 +221,15 @@ class TracingScatterComponent extends React.Component<TracingScatterProps> {
     if (!trace) {
       return;
     }
-    if (this.isLoading) {
-      // replace any pending load with a load for the currently hovered trace
-      this.nextToLoad = trace;
-    } else {
-      this.loadTraceTooltipMetrics(trace);
-    }
+    clearTimeout(this.hoverTimer);
+    this.hoverTimer = setTimeout(() => {
+      if (this.isLoading) {
+        // replace any pending load with a load for the currently hovered trace
+        this.nextToLoad = trace;
+      } else {
+        this.loadTraceTooltipMetrics(trace);
+      }
+    }, 400);
   };
 }
 
