@@ -1,9 +1,6 @@
-import { isParentKiosk } from 'components/Kiosk/KioskActions';
 import { serverConfig } from 'config';
 import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
-import { Show } from 'types/Common';
-import { IntervalInMilliseconds } from 'types/Common';
 import { ControlPlane } from 'types/Mesh';
 import { ExternalLink } from 'types/Dashboards';
 import { gvkType } from 'types/IstioConfigList';
@@ -12,89 +9,20 @@ import { t } from 'utils/I18nUtils';
 
 export type NamespaceRowActionsParams = {
   controlPlanes: ControlPlane[] | undefined;
-  excludeShowActions?: boolean;
   grafanaLinks: ExternalLink[];
   istioAPIEnabled: boolean;
-  kiosk: string;
   nsInfo: NamespaceInfo;
-  onKioskShow: (showType: Show, namespace: string, refreshInterval: IntervalInMilliseconds) => void;
   onOpenTrafficPoliciesModal: (p: { clusterTarget?: string; kind: string; nsTarget: string; opTarget: string }) => void;
   onRefreshAfterExternalLink?: () => void;
-  onShow: (showType: Show, namespace: string) => void;
   persesLinks: ExternalLink[];
-  refreshInterval: IntervalInMilliseconds;
 };
 
 /**
- * Kebab / Actions menu entries for a namespace row — shared by Namespaces list and Namespace detail.
+ * Actions menu entries for the namespace detail page.
  */
 export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): NamespaceAction[] => {
   const { nsInfo } = p;
   const namespaceActions: NamespaceAction[] = [];
-
-  if (!p.excludeShowActions) {
-    if (isParentKiosk(p.kiosk)) {
-      namespaceActions.push({
-        isGroup: true,
-        isSeparator: false,
-        isDisabled: false,
-        title: 'Show',
-        children: [
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Graph',
-            action: (ns: string) => p.onKioskShow(Show.GRAPH, ns, p.refreshInterval)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Istio Config',
-            action: (ns: string) => p.onKioskShow(Show.ISTIO_CONFIG, ns, p.refreshInterval)
-          }
-        ]
-      });
-    } else {
-      namespaceActions.push({
-        isGroup: true,
-        isSeparator: false,
-        isDisabled: false,
-        title: 'Show',
-        children: [
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Graph',
-            action: (ns: string) => p.onShow(Show.GRAPH, ns)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Applications',
-            action: (ns: string) => p.onShow(Show.APPLICATIONS, ns)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Workloads',
-            action: (ns: string) => p.onShow(Show.WORKLOADS, ns)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Services',
-            action: (ns: string) => p.onShow(Show.SERVICES, ns)
-          },
-          {
-            isGroup: true,
-            isSeparator: false,
-            title: 'Istio Config',
-            action: (ns: string) => p.onShow(Show.ISTIO_CONFIG, ns)
-          }
-        ]
-      });
-    }
-  }
 
   if (!nsInfo.isControlPlane) {
     if (

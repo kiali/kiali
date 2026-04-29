@@ -16,7 +16,6 @@ import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasth
 import { Refresh } from '../../components/Refresh/Refresh';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
-import { NamespaceAction, NamespaceActions } from './NamespaceActions';
 import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 import { isCurrentSortAscending, currentSortField, runFilters } from '../../components/FilterList/FilterHelper';
 import { HistoryManager, URLParam } from '../../app/History';
@@ -32,29 +31,15 @@ import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
 import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { Show } from 'types/Common';
 import { ApiError } from 'types/Api';
-import { router } from '../../app/History';
-import { Paths } from '../../config';
-import {
-  isParentKiosk,
-  kioskNavigateAction,
-  kioskOverviewAction as kioskAction
-} from '../../components/Kiosk/KioskActions';
 import { setAIContext } from 'helpers/ChatAI';
 import { KialiDispatch } from 'types/Redux';
 import { t } from 'utils/I18nUtils';
-import { NamespaceTrafficPolicies } from './NamespaceTrafficPolicies';
 import { ControlPlane } from '../../types/Mesh';
-import { GrafanaInfo, ISTIO_DASHBOARDS } from '../../types/GrafanaInfo';
-import { ExternalLink } from '../../types/Dashboards';
-import { PersesInfo } from '../../types/PersesInfo';
 import { addError } from '../../utils/AlertUtils';
-import { MessageType } from '../../types/NotificationCenter';
 import { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
-import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { config as virtualListConfig } from '../../components/VirtualList/Config';
 import {
   ColumnManagementModalColumn,
@@ -63,7 +48,6 @@ import {
 import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
-import { buildNamespaceRowActions } from './namespaceRowActions';
 
 // Maximum number of namespaces to include in a single backend API call
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -83,24 +67,15 @@ const chunkArray = <T,>(array: T[], size: number): T[][] => {
 };
 
 type State = {
-  clusterTarget?: string;
   controlPlanes?: ControlPlane[];
-  grafanaLinks: ExternalLink[];
-  kind: string;
   loaded: boolean;
   namespaces: NamespaceInfo[];
-  nsTarget: string;
-  opTarget: string;
-  persesLinks: ExternalLink[];
   showColumnManagement: boolean;
-  showTrafficPoliciesModal: boolean;
 };
 
 type ReduxStateProps = {
   columnOrder: string[];
-  externalServices: any[];
   hiddenColumnIds: string[];
-  istioAPIEnabled: boolean;
   kiosk: string;
   language: string;
   meshStatus: string;
@@ -122,66 +97,19 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   private sFStatefulFilters: StatefulFiltersRef = React.createRef();
   private promises = new PromisesRegistry();
 
-  // Grafana promise is only invoked by componentDidMount() no need to repeat it on componentDidUpdate()
-  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
-  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
-
-  private kioskNamespacesAction = (
-    showType: Show,
-    namespace: string,
-    refreshInterval: IntervalInMilliseconds
-  ): void => {
-    const duration = healthComputeDurationValidSeconds();
-    // For GRAPH and ISTIO_CONFIG, use the existing kiosk action
-    // Convert Show enum from Namespaces to the one expected by kiosk action
-    if (showType === Show.GRAPH || showType === Show.ISTIO_CONFIG) {
-      // kiosk action expects a different Show enum type, but enum values are the same
-      kioskAction(showType as any, namespace, duration, refreshInterval);
-      return;
-    }
-
-    // For other types, handle them directly
-    let showInParent = '';
-    switch (showType) {
-      case Show.APPLICATIONS:
-        showInParent = `/${Paths.APPLICATIONS}?namespaces=${namespace}`;
-        break;
-      case Show.WORKLOADS:
-        showInParent = `/${Paths.WORKLOADS}?namespaces=${namespace}`;
-        break;
-      case Show.SERVICES:
-        showInParent = `/${Paths.SERVICES}?namespaces=${namespace}`;
-        break;
-      default:
-        return;
-    }
-    showInParent += `&duration=${String(duration)}&refresh=${refreshInterval}`;
-
-    kioskNavigateAction(showInParent);
-  };
-
   constructor(props: NamespacesProps) {
     super(props);
 
     this.state = {
-      clusterTarget: '',
       controlPlanes: undefined,
-      grafanaLinks: [],
-      kind: '',
       loaded: false,
       namespaces: [],
-      nsTarget: '',
-      opTarget: '',
-      persesLinks: [],
-      showColumnManagement: false,
-      showTrafficPoliciesModal: false
+      showColumnManagement: false
     };
   }
 
   componentDidMount(): void {
     this.syncColumnsFromURL();
-    this.fetchGrafanaInfo();
-    this.fetchPersesInfo();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -626,64 +554,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       .catch(err => this.handleApiError('Could not fetch validations status', err));
   };
 
-  fetchGrafanaInfo = (): void => {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
-      if (!NamespacesPageComponent.grafanaInfoPromise) {
-        NamespacesPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-
-          return response.data;
-        });
-      }
-
-      NamespacesPageComponent.grafanaInfoPromise
-        .then(grafanaInfo => {
-          if (grafanaInfo) {
-            // For Namespaces Page only Performance and Wasm Extension dashboard are interesting
-            this.setState({
-              grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-            });
-          } else {
-            this.setState({ grafanaLinks: [] });
-          }
-        })
-        .catch(err => {
-          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
-        });
-    }
-  };
-
-  fetchPersesInfo = (): void => {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
-      if (!NamespacesPageComponent.persesInfoPromise) {
-        NamespacesPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-
-          return response.data;
-        });
-      }
-
-      NamespacesPageComponent.persesInfoPromise
-        .then(persesInfo => {
-          if (persesInfo) {
-            // For Namespaces Page only Performance and Wasm Extension dashboard are interesting
-            this.setState({
-              persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-            });
-          } else {
-            this.setState({ persesLinks: [] });
-          }
-        })
-        .catch(err => {
-          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
-        });
-    }
-  };
-
   private fetchControlPlanes = async (): Promise<void> => {
     return API.getControlPlanes()
       .then(response => {
@@ -706,71 +576,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         namespaces: sortFunc(prevState.namespaces, sortField, isAscending)
       };
     });
-  };
-
-  getNamespaceActions = (nsInfo: NamespaceInfo): NamespaceAction[] => {
-    return buildNamespaceRowActions({
-      controlPlanes: this.state.controlPlanes,
-      grafanaLinks: this.state.grafanaLinks,
-      istioAPIEnabled: this.props.istioAPIEnabled,
-      kiosk: this.props.kiosk,
-      nsInfo,
-      onKioskShow: this.kioskNamespacesAction,
-      onOpenTrafficPoliciesModal: p =>
-        this.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: p.nsTarget,
-          clusterTarget: p.clusterTarget ?? '',
-          opTarget: p.opTarget,
-          kind: p.kind
-        }),
-      onRefreshAfterExternalLink: this.onChange,
-      onShow: this.show,
-      persesLinks: this.state.persesLinks,
-      refreshInterval: this.props.refreshInterval
-    });
-  };
-
-  hideTrafficManagement = (): void => {
-    this.setState({
-      showTrafficPoliciesModal: false,
-      nsTarget: '',
-      clusterTarget: '',
-      opTarget: '',
-      kind: ''
-    });
-  };
-
-  show = (showType: Show, namespace: string): void => {
-    let destination = '';
-
-    switch (showType) {
-      case Show.GRAPH:
-        destination = `/graph/namespaces?namespaces=${namespace}`;
-        break;
-      case Show.APPLICATIONS:
-        destination = `/${Paths.APPLICATIONS}?namespaces=${namespace}`;
-        break;
-      case Show.WORKLOADS:
-        destination = `/${Paths.WORKLOADS}?namespaces=${namespace}`;
-        break;
-      case Show.SERVICES:
-        destination = `/${Paths.SERVICES}?namespaces=${namespace}`;
-        break;
-      case Show.ISTIO_CONFIG:
-        destination = `/${Paths.ISTIO}?namespaces=${namespace}`;
-        break;
-      default:
-      // Nothing to do on default case
-    }
-
-    if (destination) {
-      if (isParentKiosk(this.props.kiosk)) {
-        this.kioskNamespacesAction(showType, namespace, this.props.refreshInterval);
-      } else {
-        router.navigate(destination);
-      }
-    }
   };
 
   getEmptyState = (): React.ReactNode => {
@@ -806,18 +611,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   render(): React.ReactNode {
     const filteredNamespaces = runFilters(this.state.namespaces, availableFilters, FilterSelected.getSelected());
 
-    const namespaceActions = filteredNamespaces.map((ns, i) => {
-      const actions = this.getNamespaceActions(ns);
-      return <NamespaceActions key={`namespaceAction_${i}`} namespace={ns.name} actions={actions} />;
-    });
-
     const hiddenColumns = isMultiCluster ? [] : ['cluster'];
     if (!serverConfig.kialiFeatureFlags.istioUpgradeAction) {
       hiddenColumns.push('revision');
     }
     const userHidden = this.props.hiddenColumnIds;
     const allHiddenColumns = hiddenColumns.concat(userHidden);
-    const healthListDuration = healthComputeDurationValidSeconds();
 
     return (
       <>
@@ -837,7 +636,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             rows={filteredNamespaces}
             sort={this.sort}
             statefulProps={this.sFStatefulFilters}
-            actions={namespaceActions}
             columnOrder={this.props.columnOrder}
             hiddenColumns={allHiddenColumns}
             type="namespaces"
@@ -881,24 +679,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           onResetToDefault={this.resetNamespaceColumnsToDefault}
           title={t('Manage columns')}
         />
-
-        <NamespaceTrafficPolicies
-          opTarget={this.state.opTarget}
-          isOpen={this.state.showTrafficPoliciesModal}
-          controlPlanes={this.state.controlPlanes?.filter(cp =>
-            cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
-          )}
-          kind={this.state.kind}
-          hideConfirmModal={this.hideTrafficManagement}
-          nsTarget={this.state.nsTarget}
-          nsInfo={
-            this.state.namespaces.filter(
-              ns => ns.name === this.state.nsTarget && ns.cluster === this.state.clusterTarget
-            )[0]
-          }
-          duration={healthListDuration}
-          load={this.onChange}
-        />
       </>
     );
   }
@@ -906,9 +686,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   columnOrder: state.namespacesList.columnOrder,
-  externalServices: state.statusState.externalServices,
   hiddenColumnIds: state.namespacesList.hiddenColumnIds,
-  istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   kiosk: state.globalState.kiosk,
   language: languageSelector(state),
   meshStatus: meshWideMTLSStatusSelector(state),

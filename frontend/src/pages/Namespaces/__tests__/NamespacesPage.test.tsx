@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { NamespacesPageComponent } from '../NamespacesPage';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
@@ -8,11 +8,6 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { RefreshIntervalManual } from '../../../config/Config';
 import { HistoryManager } from '../../../app/History';
-import { Show } from '../../../types/Common';
-
-jest.mock('../NamespaceTrafficPolicies', () => ({
-  NamespaceTrafficPolicies: (props: any) => <div data-test="NamespaceTrafficPolicies" {...props} />
-}));
 
 jest.mock('components/Badge/ControlPlaneBadge', () => ({
   ControlPlaneBadge: () => <span data-test="ControlPlaneBadge" />
@@ -34,9 +29,7 @@ jest.mock('../../../services/Api', () => ({
   getClustersTls: jest.fn(),
   getConfigValidations: jest.fn(),
   getAllIstioConfigs: jest.fn(),
-  getGrafanaInfo: jest.fn(() => Promise.resolve({ data: {} })),
   getErrorString: jest.fn(() => ''),
-  getPersesInfo: jest.fn(() => Promise.resolve({ data: {} })),
   getControlPlanes: jest.fn(() => Promise.resolve({ data: [] }))
 }));
 
@@ -108,9 +101,7 @@ const mockNamespaces: NamespaceInfo[] = [
 
 const defaultReduxProps = {
   columnOrder: [] as string[],
-  externalServices: [],
   hiddenColumnIds: [],
-  istioAPIEnabled: true,
   kiosk: '',
   language: 'en',
   meshStatus: 'MTLS_ENABLED',
@@ -131,8 +122,6 @@ describe('NamespacesPageComponent', () => {
     (HistoryManager.getParam as jest.Mock).mockReturnValue(undefined);
     (HistoryManager.getRefresh as jest.Mock).mockReturnValue(RefreshIntervalManual);
     (API.getControlPlanes as jest.Mock).mockResolvedValue({ data: [] });
-    (API.getGrafanaInfo as jest.Mock).mockResolvedValue({ data: {} });
-    (API.getPersesInfo as jest.Mock).mockResolvedValue({ data: {} });
   });
 
   describe('Component initialization', () => {
@@ -155,10 +144,7 @@ describe('NamespacesPageComponent', () => {
 
       expect(ref.current!.state.loaded).toBe(false);
       expect(ref.current!.state.namespaces).toEqual([]);
-      expect(ref.current!.state.nsTarget).toBe('');
-      expect(ref.current!.state.opTarget).toBe('');
-      expect(ref.current!.state.kind).toBe('');
-      expect(ref.current!.state.showTrafficPoliciesModal).toBe(false);
+      expect(ref.current!.state.showColumnManagement).toBe(false);
     });
   });
 
@@ -438,82 +424,6 @@ describe('NamespacesPageComponent', () => {
     });
   });
 
-  describe('getNamespaceActions', () => {
-    it('returns actions for non-control-plane namespace', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      const actions = ref.current!.getNamespaceActions(mockNamespaces[0]);
-
-      expect(actions.length).toBeGreaterThan(0);
-      expect(actions.some(a => a.title === 'Show')).toBeTruthy();
-    });
-
-    it('returns actions for control-plane namespace', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({ grafanaLinks: [{ name: 'Performance', url: 'http://grafana', variables: {} }] });
-      });
-      const actions = ref.current!.getNamespaceActions(mockNamespaces[1]);
-
-      expect(actions.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('hideTrafficManagement', () => {
-    it('resets traffic management state', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: 'test-namespace',
-          opTarget: 'create',
-          kind: 'policy',
-          clusterTarget: 'test-cluster'
-        });
-      });
-
-      ref.current!.hideTrafficManagement();
-
-      expect(ref.current!.state.showTrafficPoliciesModal).toBe(false);
-      expect(ref.current!.state.nsTarget).toBe('');
-      expect(ref.current!.state.opTarget).toBe('');
-      expect(ref.current!.state.kind).toBe('');
-      expect(ref.current!.state.clusterTarget).toBe('');
-    });
-  });
-
-  describe('show method', () => {
-    it('navigates to graph page', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      ref.current!.show(Show.GRAPH, 'default');
-
-      expect(() => ref.current!.show(0, 'default')).not.toThrow();
-    });
-  });
-
   describe('sort method', () => {
     it('sorts namespaces correctly', () => {
       const ref = React.createRef<NamespacesPageComponent>();
@@ -590,27 +500,6 @@ describe('NamespacesPageComponent', () => {
       });
 
       expect(container.querySelector('table') || container.querySelector('[role="grid"]')).toBeInTheDocument();
-    });
-
-    it('renders NamespaceTrafficPolicies when modal is open', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: 'test-namespace',
-          opTarget: 'create',
-          kind: 'policy',
-          namespaces: mockNamespaces
-        });
-      });
-
-      expect(screen.getByTestId('NamespaceTrafficPolicies')).toBeInTheDocument();
     });
   });
 });
