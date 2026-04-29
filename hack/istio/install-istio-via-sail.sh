@@ -6,7 +6,8 @@ is_in_array() {
   local value1="$1"
   local value2="$2"
   shift 2
-  local array=("$@")
+  local array
+  read -r -a array <<< "$*"
 
   local found1=false
   local found2=false
