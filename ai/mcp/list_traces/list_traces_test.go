@@ -305,8 +305,8 @@ func TestParseArgs_LimitCap(t *testing.T) {
 	conf := config.NewConfig()
 	args := map[string]interface{}{"limit": 999999}
 	parsed := parseArgs(args, conf)
-	if parsed.Limit != mcputil.MaxTracesLimit {
-		t.Errorf("expected limit capped at %d, got %d", mcputil.MaxTracesLimit, parsed.Limit)
+	if parsed.Limit != models.MaxTracingLimit {
+		t.Errorf("expected limit capped at %d, got %d", models.MaxTracingLimit, parsed.Limit)
 	}
 }
 

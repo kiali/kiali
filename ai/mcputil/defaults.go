@@ -33,5 +33,4 @@ const (
 	DefaultLookbackSeconds = 600 // 10m
 	DefaultMaxSpans        = 7
 	DefaultTracesLimit     = 10
-	MaxTracesLimit         = 10000
 )

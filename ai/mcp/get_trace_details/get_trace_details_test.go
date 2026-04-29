@@ -339,7 +339,7 @@ func TestExecute_ValidTraceIDFormats(t *testing.T) {
 		"ABCDEF0123456789abcdef0123456789",
 	}
 	for _, id := range cases {
-		if !validTraceIDRe.MatchString(id) {
+		if !models.ValidTraceIDRe.MatchString(id) {
 			t.Errorf("expected valid trace ID %q to pass regex", id)
 		}
 	}

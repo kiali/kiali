@@ -2,15 +2,13 @@ package get_trace_details
 
 import (
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/models"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
 )
-
-var validTraceIDRe = regexp.MustCompile(`^[a-fA-F0-9]{1,32}$`)
 
 func Execute(
 	kialiInterface *mcputil.KialiInterface,
@@ -20,7 +18,7 @@ func Execute(
 	if traceID == "" {
 		return "trace_id is required", http.StatusBadRequest
 	}
-	if !validTraceIDRe.MatchString(traceID) {
+	if !models.ValidTraceIDRe.MatchString(traceID) {
 		return "Invalid trace_id format: must be 1-32 hex characters", http.StatusBadRequest
 	}
 

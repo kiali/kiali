@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -21,8 +20,6 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
-
-var validTraceIDRe = regexp.MustCompile(`^[a-fA-F0-9]{1,32}$`)
 
 // Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(conf *config.Config) http.HandlerFunc {
@@ -211,7 +208,7 @@ func TraceDetails(
 		}
 		params := mux.Vars(r)
 		traceID := params["traceID"]
-		if !validTraceIDRe.MatchString(traceID) {
+		if !models.ValidTraceIDRe.MatchString(traceID) {
 			RespondWithError(w, http.StatusBadRequest, "Invalid trace ID format")
 			return
 		}
@@ -367,9 +364,8 @@ func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, err
 			if num <= 0 {
 				return models.TracingQuery{}, fmt.Errorf("parameter 'limit' must be positive")
 			}
-			const maxTracingLimit = 10000
-			if num > maxTracingLimit {
-				num = maxTracingLimit
+			if num > models.MaxTracingLimit {
+				num = models.MaxTracingLimit
 			}
 			q.Limit = num
 		} else {
