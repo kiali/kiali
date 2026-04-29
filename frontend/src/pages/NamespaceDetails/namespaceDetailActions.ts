@@ -121,7 +121,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         'data-test': `disable-${nsInfo.name}-namespace-ambient`,
         isGroup: false,
         isSeparator: false,
-        title: 'Disable Ambient',
+        title: t('Disable Ambient'),
         action: (ns: string) =>
           p.onOpenTrafficPoliciesModal({
             nsTarget: ns,
@@ -135,7 +135,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         'data-test': `remove-${nsInfo.name}-namespace-ambient`,
         isGroup: false,
         isSeparator: false,
-        title: 'Remove Ambient',
+        title: t('Remove Ambient'),
         action: (ns: string) =>
           p.onOpenTrafficPoliciesModal({
             nsTarget: ns,
@@ -176,7 +176,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         .map(controlPlane => ({
           isGroup: false,
           isSeparator: false,
-          title: `Switch to ${controlPlane.revision} revision`,
+          title: t('Switch to {{revision}} revision', { revision: controlPlane.revision }),
           action: (ns: string) =>
             p.onOpenTrafficPoliciesModal({
               opTarget: controlPlane.revision,
@@ -203,7 +203,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     const addAuthorizationAction = {
       isGroup: false,
       isSeparator: false,
-      title: `${aps.length === 0 ? 'Create ' : 'Update'} Traffic Policies`,
+      title: aps.length === 0 ? t('Create Traffic Policies') : t('Update Traffic Policies'),
       action: (ns: string) => {
         p.onOpenTrafficPoliciesModal({
           opTarget: aps.length === 0 ? 'create' : 'update',
@@ -217,7 +217,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     const removeAuthorizationAction = {
       isGroup: false,
       isSeparator: false,
-      title: 'Delete Traffic Policies',
+      title: t('Delete Traffic Policies'),
       action: (ns: string) =>
         p.onOpenTrafficPoliciesModal({
           opTarget: 'delete',

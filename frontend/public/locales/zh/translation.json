@@ -631,6 +631,7 @@
   "Unselected Namespace": "Unselected Namespace",
   "Update": "更新",
   "Update Traffic Policies": "Update Traffic Policies",
+  "User does not have enough permission for this action.": "User does not have enough permission for this action.",
   "User does not have permission": "用户没有权限",
   "User does not have permission on this Workload": "User does not have permission on this Workload",
   "User does not have permission to create Istio Config on namespace: {{namespace}}": "User does not have permission to create Istio Config on namespace: {{namespace}}",
