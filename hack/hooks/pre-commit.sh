@@ -90,8 +90,8 @@ fi
 shellcheck_cmd=(shellcheck)
 if ! which shellcheck &> /dev/null; then
   if which npx &> /dev/null; then
-    echo "shellcheck not found in PATH - using npx shellcheck@0.10.0."
-    shellcheck_cmd=(npx --yes shellcheck@0.10.0)
+    echo "shellcheck not found in PATH - using npx shellcheck@4.1.0."
+    shellcheck_cmd=(npx --yes shellcheck@4.1.0)
   else
     echo "You do not have shellcheck in your PATH."
     echo "Install it via your package manager (e.g. 'brew install shellcheck', 'apt install shellcheck', 'dnf install ShellCheck')"
