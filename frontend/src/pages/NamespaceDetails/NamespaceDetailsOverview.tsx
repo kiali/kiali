@@ -26,8 +26,6 @@ import { ControlPlaneBadge } from 'components/Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from 'components/Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
-import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { KialiLink } from 'components/Link/KialiLink';
 import { Paths, isMultiCluster } from 'config';
 import { URLParam } from 'app/History';
@@ -198,7 +196,7 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
 
   if (revisions.length === 0) {
     return !ns.isControlPlane ? (
-      <PFLabel variant="outline" color="grey">
+      <PFLabel variant="outline" color="grey" isCompact>
         {t('Not applicable')}
       </PFLabel>
     ) : null;
@@ -220,6 +218,7 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
           <PFLabel
             variant="outline"
             color={!revAvailable ? 'red' : 'orange'}
+            isCompact
             data-test={idx === 0 ? 'data-plane-revision-badge' : undefined}
             style={idx > 0 ? { marginLeft: '0.25rem' } : undefined}
             icon={
@@ -340,25 +339,6 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     )}
-                    <DescriptionListGroup>
-                      <DescriptionListTerm>{t('Istio config')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <ValidationSummaryLink
-                          namespace={namespace}
-                          objectCount={validations.objectCount}
-                          errors={validations.errors}
-                          warnings={validations.warnings}
-                        >
-                          <ValidationSummary
-                            id={`ns-detail-val-${namespace}`}
-                            errors={validations.errors}
-                            warnings={validations.warnings}
-                            objectCount={validations.objectCount}
-                            type="istio"
-                          />
-                        </ValidationSummaryLink>
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
                   </DescriptionList>
                 </FlexItem>
               </Flex>
