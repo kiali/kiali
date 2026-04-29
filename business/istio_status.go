@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
@@ -446,7 +444,16 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
-		appLabel := labels.Set(workload.Labels).Get(config.IstioAppLabel)
+		// Resolve which label key identifies the app on this workload. Falls back through
+		// the canonical preference list ("service.istio.io/canonical-name", "app.kubernetes.io/name", "app"),
+		// or honors a custom IstioLabels.AppLabelName if configured. This lets component_status
+		// match workloads that use the modern "app.kubernetes.io/name" convention without
+		// requiring a legacy "app" label.
+		appLabelName, hasAppLabel := iss.conf.GetAppLabelName(workload.Labels)
+		if !hasAppLabel {
+			continue
+		}
+		appLabel := workload.Labels[appLabelName]
 		if appLabel == "" {
 			continue
 		}
