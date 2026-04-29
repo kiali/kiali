@@ -78,7 +78,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       messageProps.loadingWord = 'Thinking...';
     }
 
-    const NavigationAction = actions && actions.filter(action => action.kind === 'navigation').length > 0;
+    const hasNavigationActions = actions != null && actions.some(action => action.kind === 'navigation');
     const FileAction = actions && actions.filter(action => action.kind === 'file').length > 0;
 
     const safeContent =
@@ -87,6 +87,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       <ChatMessageMarkdown
         content={safeContent}
         codeBlockProps={message.codeBlockProps}
+        hasNavigationActions={hasNavigationActions}
         openLinkInNewTab={messageProps.openLinkInNewTab}
       />
     ) : null;
@@ -113,7 +114,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         <Message {...safeMessage} {...messageProps} />
         {actions && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem 5rem' }}>
-            {NavigationAction && (
+            {hasNavigationActions && (
               <div
                 style={{ display: 'flex', flexDirection: 'column', gap: '10px', margin: '0 0 1rem' }}
                 data-testid="chatbot-navigation-action"

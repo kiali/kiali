@@ -23,6 +23,7 @@ import { MessageProps } from '@patternfly/chatbot';
 type ChatMessageMarkdownProps = {
   codeBlockProps?: MessageProps['codeBlockProps'];
   content: string;
+  hasNavigationActions?: boolean;
   openLinkInNewTab?: boolean;
 };
 
@@ -154,6 +155,7 @@ const LinkMessage: React.FC<
 export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({
   content,
   codeBlockProps,
+  hasNavigationActions = false,
   openLinkInNewTab = true
 }) => {
   if (!content) {
@@ -177,7 +179,9 @@ export const ChatMessageMarkdown: React.FC<ChatMessageMarkdownProps> = ({
     ul: (props: any) => <UnorderedListMessage {...props} />,
     ol: (props: any) => <OrderedListMessage {...props} />,
     li: (props: any) => <ListItemMessage {...props} />,
-    a: (props: any) => <LinkMessage openLinkInNewTab={openLinkInNewTab} {...props} />
+    a: hasNavigationActions
+      ? (props: any) => <span>{props.children}</span>
+      : (props: any) => <LinkMessage openLinkInNewTab={openLinkInNewTab} {...props} />
   };
 
   return (
