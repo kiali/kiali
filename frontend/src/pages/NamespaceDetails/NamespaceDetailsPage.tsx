@@ -26,11 +26,7 @@ import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
 import { Paths } from 'config';
 import { router } from 'app/History';
 import { Show } from 'types/Common';
-import {
-  isParentKiosk,
-  kioskNavigateAction,
-  kioskOverviewAction as kioskAction
-} from 'components/Kiosk/KioskActions';
+import { isParentKiosk, kioskNavigateAction, kioskOverviewAction as kioskAction } from 'components/Kiosk/KioskActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { buildNamespaceRowActions } from 'pages/Namespaces/namespaceRowActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
@@ -64,6 +60,7 @@ const titleMainStyle = kialiStyle({
   display: 'flex',
   flex: '1 1 auto',
   flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--sm)',
   minWidth: 0
 });
 
@@ -463,44 +460,32 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     });
   };
 
-  private handleSaveLabels = (labels: Record<string, string>): void => {
-    const originalLabels = this.state.nsInfo?.labels ?? {};
-    const patchLabels: Record<string, string | null> = { ...labels };
-    Object.keys(originalLabels).forEach(key => {
-      if (!(key in labels)) {
-        patchLabels[key] = null;
+  private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
+    const original = (field === 'labels' ? this.state.nsInfo?.labels : this.state.nsInfo?.annotations) ?? {};
+    const patch: Record<string, string | null> = { ...updated };
+    Object.keys(original).forEach(key => {
+      if (!(key in updated)) {
+        patch[key] = null;
       }
     });
-    const jsonPatch = JSON.stringify({ metadata: { labels: patchLabels } });
+    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
 
     API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
       .then(() => {
-        addSuccess(`Namespace ${this.props.namespace} labels updated`);
+        addSuccess(`Namespace ${this.props.namespace} ${field} updated`);
         this.load();
       })
       .catch(error => {
-        addError(`Could not update namespace ${this.props.namespace} labels`, error);
+        addError(`Could not update namespace ${this.props.namespace} ${field}`, error);
       });
   };
 
-  private handleSaveAnnotations = (annotations: Record<string, string>): void => {
-    const originalAnnotations = this.state.nsInfo?.annotations ?? {};
-    const patchAnnotations: Record<string, string | null> = { ...annotations };
-    Object.keys(originalAnnotations).forEach(key => {
-      if (!(key in annotations)) {
-        patchAnnotations[key] = null;
-      }
-    });
-    const jsonPatch = JSON.stringify({ metadata: { annotations: patchAnnotations } });
+  private handleSaveLabels = (labels: Record<string, string>): void => {
+    this.handleSaveMetadata('labels', labels);
+  };
 
-    API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
-      .then(() => {
-        addSuccess(`Namespace ${this.props.namespace} annotations updated`);
-        this.load();
-      })
-      .catch(error => {
-        addError(`Could not update namespace ${this.props.namespace} annotations`, error);
-      });
+  private handleSaveAnnotations = (annotations: Record<string, string>): void => {
+    this.handleSaveMetadata('annotations', annotations);
   };
 
   render(): React.ReactNode {
@@ -518,7 +503,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       ) : undefined;
 
     return (
-      <div>
+      <>
         <RenderHeader
           actionsToolbar={actionsToolbar}
           actionsToolbarTop="11.1rem"
@@ -532,12 +517,12 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                   {this.props.namespace}
                 </Title>
                 {ns.cluster && isMultiCluster && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: '1rem' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
                     <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
                     <span style={{ marginLeft: '0.25rem' }}>{ns.cluster}</span>
                   </span>
                 )}
-                <span style={{ minWidth: 0, marginLeft: '0.5rem', marginTop: '0.125rem' }}>
+                <span style={{ minWidth: 0 }}>
                   <NamespaceHealthStatus
                     inlineIssueCount
                     name={this.props.namespace}
@@ -596,7 +581,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             load={this.onChangeAfterPolicy}
           />
         )}
-      </div>
+      </>
     );
   }
 }
