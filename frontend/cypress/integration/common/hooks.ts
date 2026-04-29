@@ -6,7 +6,7 @@ import {
   HEALTH_CACHE_CONFIG,
   USE_WAYPOINT_NAME_CONFIG
 } from './kiali-config';
-import { waitForResourceDeletion, waitForKialiApiReady } from './transition';
+import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -300,34 +300,24 @@ After({ tags: '@health-cache-metrics' }, () => {
 // In ambient mesh with some Istio versions, traces are reported under the waypoint
 // service name rather than the workload name. Enable use_waypoint_name so Kiali can
 // find them. Only runs once per spec (skips if already checked).
+// Uses kubectl instead of the Kiali API because Before hooks run before authentication.
 Before({ tags: '@waypoint-tracing' }, () => {
   if (Cypress.env('WAYPOINT_TRACING_CHECKED')) {
     return;
   }
   Cypress.env('WAYPOINT_TRACING_CHECKED', true);
 
-  const nowMicros = Date.now() * 1000;
-  const qs: Record<string, any> = {
-    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
-    endMicros: nowMicros,
-    tags: '{}',
-    limit: 100
-  };
-
-  cy.request({
-    method: 'GET',
-    url: `${Cypress.config('baseUrl')}/api/namespaces/bookinfo/workloads/ratings-v1/traces`,
-    qs,
-    failOnStatusCode: false
-  }).then(response => {
-    const traces = response.body?.data;
-    if (!Array.isArray(traces) || traces.length === 0) {
+  cy.exec(
+    'kubectl get cm kiali -n istio-system -o jsonpath="{.data.config\\.yaml}" 2>/dev/null | yq ".external_services.tracing.use_waypoint_name"',
+    { failOnNonZeroExit: false }
+  ).then(result => {
+    const currentValue = result.stdout.trim();
+    if (currentValue !== 'true') {
       Cypress.log({
         name: 'waypoint-tracing-hook',
-        message: 'No traces for ratings-v1, enabling use_waypoint_name'
+        message: `use_waypoint_name=${currentValue}, enabling it`
       });
       enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
-      waitForKialiApiReady();
     }
   });
 });
