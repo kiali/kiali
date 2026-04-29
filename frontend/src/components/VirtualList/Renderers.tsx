@@ -283,7 +283,9 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-      {item.namespace}
+      <KialiLink to={getNamespaceDetailUrl({ name: item.namespace, cluster: item.cluster })}>
+        {item.namespace}
+      </KialiLink>
     </Td>
   );
 };

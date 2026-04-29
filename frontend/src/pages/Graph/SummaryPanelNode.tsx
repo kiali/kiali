@@ -41,8 +41,10 @@ import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelSty
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
 import { Node } from '@patternfly/react-topology';
+import { KialiLink } from 'components/Link/KialiLink';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { KioskData, KioskMode } from 'types/Common';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -176,6 +178,12 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       }
     }
 
+    const nsLink = (
+      <KialiLink to={getNamespaceDetailUrl({ name: nodeData.namespace, cluster: nodeData.cluster })}>
+        {nodeData.namespace}
+      </KialiLink>
+    );
+
     const firstBadge = isMultiCluster ? (
       <>
         <PFBadge badge={PFBadges.Cluster} size="sm" />
@@ -184,14 +192,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     ) : (
       <>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
-        {nodeData.namespace}
+        {nsLink}
       </>
     );
 
     const secondBadge = isMultiCluster ? (
       <div>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
-        {nodeData.namespace}
+        {nsLink}
       </div>
     ) : (
       <></>
