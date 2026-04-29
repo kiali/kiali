@@ -1,11 +1,5 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-import {
-  enableKialiFeature,
-  restoreKialiFeature,
-  GRAPH_CACHE_CONFIG,
-  HEALTH_CACHE_CONFIG,
-  USE_WAYPOINT_NAME_CONFIG
-} from './kiali-config';
+import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
 import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
@@ -295,37 +289,4 @@ After({ tags: '@graph-cache-metrics' }, () => {
 
 After({ tags: '@health-cache-metrics' }, () => {
   restoreKialiFeature(HEALTH_CACHE_CONFIG);
-});
-
-// In ambient mesh with some Istio versions, traces are reported under the waypoint
-// service name rather than the workload name. Enable use_waypoint_name so Kiali can
-// find them. Only runs once per spec (skips if already checked).
-// Uses kubectl instead of the Kiali API because Before hooks run before authentication.
-Before({ tags: '@waypoint-tracing' }, () => {
-  if (Cypress.env('WAYPOINT_TRACING_CHECKED')) {
-    return;
-  }
-  Cypress.env('WAYPOINT_TRACING_CHECKED', true);
-
-  cy.exec(
-    'kubectl get cm kiali -n istio-system -o jsonpath="{.data.config\\.yaml}" 2>/dev/null | yq ".external_services.tracing.use_waypoint_name"',
-    { failOnNonZeroExit: false }
-  ).then(result => {
-    const currentValue = result.stdout.trim();
-    if (currentValue !== 'true') {
-      Cypress.log({
-        name: 'waypoint-tracing-hook',
-        message: `use_waypoint_name=${currentValue}, enabling it`
-      });
-      enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
-    }
-  });
-});
-
-After({ tags: '@waypoint-tracing' }, () => {
-  if (Cypress.env('WAYPOINT_TRACING_RESTORED')) {
-    return;
-  }
-  Cypress.env('WAYPOINT_TRACING_RESTORED', true);
-  restoreKialiFeature(USE_WAYPOINT_NAME_CONFIG);
 });

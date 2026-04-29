@@ -371,27 +371,86 @@ Then('the {string} tracing data is ready in the {string} namespace', (workload: 
   waitForWorkloadTracesInApi(namespace, workload);
 });
 
-Then('use_waypoint_name is enabled if {string} has no traces in {string}', (workload: string, namespace: string) => {
+const waitForWaypointNodeInGraph = (namespace: string, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Waypoint node not found in graph after ${maxRetries} retries (namespace=${namespace})`);
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '300s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: true,
+      ambientTraffic: 'total',
+      appenders: 'deadNode,serviceEntry,meshCheck,workloadEntry,health,istio,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: namespace
+    }
+  }).then(response => {
+    const nodes = response.body?.elements?.nodes ?? [];
+    const waypointNode = nodes.find(
+      (n: { data: Record<string, string> }) => n.data.workload === 'waypoint' && n.data.namespace === namespace
+    );
+
+    if (waypointNode) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `Waypoint node found in graph after ${retryCount} retries`
+      });
+      return;
+    }
+
+    if (retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `retry=${retryCount}/${maxRetries} waiting for waypoint node in graph`
+      });
+    }
+
+    cy.wait(10000).then(() => waitForWaypointNodeInGraph(namespace, maxRetries, retryCount + 1));
+  });
+};
+
+Then('use_waypoint_name is enabled if tracing services contain waypoint in {string}', (namespace: string) => {
+  waitForWaypointNodeInGraph(namespace);
+
   const nowMicros = Date.now() * 1000;
   const qs: Record<string, any> = {
     startMicros: nowMicros - 10 * 60 * 1000 * 1000,
     endMicros: nowMicros,
     tags: '{}',
-    limit: 100
+    limit: 20
   };
 
   cy.request({
     method: 'GET',
-    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${workload}/traces`,
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/bookinfo-gateway-istio/traces`,
     qs,
     failOnStatusCode: false
   }).then(response => {
-    const traces = response.body?.data;
-    if (!Array.isArray(traces) || traces.length === 0) {
-      Cypress.log({
-        name: 'use_waypoint_name',
-        message: `No traces found for ${workload} in ${namespace}, enabling use_waypoint_name`
-      });
+    const traces = response.body?.data ?? [];
+    const serviceNames = new Set<string>();
+    for (const trace of traces) {
+      for (const proc of Object.values(trace.processes ?? {})) {
+        serviceNames.add((proc as { serviceName: string }).serviceName);
+      }
+    }
+
+    const hasWaypoint = [...serviceNames].some(name => name.startsWith('waypoint.'));
+
+    Cypress.log({
+      name: 'use_waypoint_name',
+      message: `Tracing services: [${[...serviceNames].join(', ')}] hasWaypoint=${hasWaypoint}`
+    });
+
+    if (hasWaypoint) {
       enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
       waitForKialiApiReady();
     }
