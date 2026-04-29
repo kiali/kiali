@@ -40,6 +40,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 const titleRowStyle = kialiStyle({
   alignItems: 'center',
@@ -364,8 +365,8 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         addError('Could not fetch Namespace.', error);
         this.setState({
           error: {
-            title: 'Namespace not found',
-            description: `${this.props.namespace} is not available or could not be loaded`
+            title: t('Namespace not found'),
+            description: t('{{namespace}} is not available or could not be loaded', { namespace: this.props.namespace })
           },
           nsInfo: undefined
         });
@@ -488,7 +489,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             mountOnEnter={true}
             unmountOnExit={true}
           >
-            <Tab eventKey={0} title="Overview" key="Overview">
+            <Tab eventKey={0} title={t('Overview')} key="Overview">
               <NamespaceDetailsOverview
                 canEdit={!serverConfig.deployment.viewOnlyMode}
                 duration={this.props.duration}
