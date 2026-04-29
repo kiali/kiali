@@ -305,9 +305,9 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     const miniGraphSpan = 8;
 
     return (
-      <div className={flexFillStyle}>
-        <div data-test={`namespace-detail-overview-${namespace}`}>
-          <Grid hasGutter={true} className={gridStyle} style={{ alignItems: 'stretch' }}>
+      <>
+        <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
+          <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4} className={overviewLeftColumnStyle}>
               <Stack hasGutter={true}>{this.renderLeftCard()}</Stack>
             </GridItem>
@@ -316,7 +316,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
             </GridItem>
           </Grid>
         </div>
-      </div>
+      </>
     );
   }
 }
