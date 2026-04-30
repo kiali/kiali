@@ -3,9 +3,13 @@ import { MeshCluster } from 'types/Mesh';
 /**
  * In OSSMC kiosk mode, KialiLink renders <button data-href> instead of <a href>.
  * This selector matches both so tests work in standalone Kiali and OSSMC.
+ * When called without arguments, returns a selector matching any link-like element.
  * Assumes hrefPattern contains only safe test paths (no user input).
  */
-export const linkSelector = (hrefPattern: string, match: 'contains' | 'endsWith' = 'contains'): string => {
+export const linkSelector = (hrefPattern?: string, match: 'contains' | 'endsWith' = 'contains'): string => {
+  if (!hrefPattern) {
+    return 'a, button[data-href]';
+  }
   const op = match === 'endsWith' ? '$' : '*';
   return `a[href${op}="${hrefPattern}"], button[data-href${op}="${hrefPattern}"]`;
 };

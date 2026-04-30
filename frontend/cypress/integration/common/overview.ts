@@ -1,4 +1,5 @@
 import { After, Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { linkSelector } from './utils';
 
 const APP_RATES_API_PATHNAME = '**/api/overview/metrics/apps/rates';
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
@@ -195,11 +196,11 @@ When('user opens the Control planes issues popover', () => {
 });
 
 When('user clicks the {string} control plane link in the popover', (istiodName: string) => {
-  cy.contains('a', istiodName).should('be.visible').click();
+  cy.contains(linkSelector('/mesh'), istiodName).should('be.visible').click();
 });
 
 Then('user is redirected to Mesh page with cluster filter {string}', (clusterName: string) => {
-  cy.location('pathname').should('match', /\/console\/mesh$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/mesh$/);
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
     expect(params.get('meshHide')).to.eq(`cluster!=${clusterName}`);
@@ -217,7 +218,7 @@ When('user clicks the {string} popover action', (label: string) => {
 });
 
 Then('user is redirected to Istio config list with all namespaces and warning filters', () => {
-  cy.location('pathname').should('match', /\/console\/istio$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/istio$/);
 
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
@@ -250,7 +251,7 @@ When('user clicks View Data planes in Data planes card', () => {
 });
 
 Then('user is redirected to Namespaces page with data-plane type filter', () => {
-  cy.location('pathname').should('match', /\/console\/namespaces$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/namespaces$/);
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
     expect(params.get('type')).to.eq('Data plane');
@@ -343,13 +344,13 @@ Then('Clusters card shows cluster count and footer link', () => {
     cy.getBySel('clusters-card-title').should('contain', 'Clusters');
 
     // Footer link should be visible when data loaded successfully
-    cy.contains('a', 'View Mesh').should('be.visible');
+    cy.contains('View Mesh').should('be.visible');
   });
 });
 
 When('user clicks View Mesh link in Clusters card', () => {
   getClustersCard().within(() => {
-    cy.contains('a', 'View Mesh').click();
+    cy.get(linkSelector('/mesh')).click();
   });
 });
 

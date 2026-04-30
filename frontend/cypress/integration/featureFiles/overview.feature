@@ -112,6 +112,7 @@ Feature: New Overview - Overview cards
     Then Service insights card shows data tables and footer link
 
   @core-2
+  @skip-ossmc
   Scenario: Service insights footer link navigates to Services list with all namespaces and sort
     Given Service insights APIs are observed
     And user is at the "overview" page

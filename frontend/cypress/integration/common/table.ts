@@ -72,7 +72,7 @@ Then(
 );
 
 When('user clicks in {string} column on the {string} text', (column: string, rowText: string) => {
-  getColWithRowText(rowText, column).find('a').click();
+  getColWithRowText(rowText, column).find(linkSelector()).first().click();
 });
 
 Then('user sees {string} in the table', (service: string) => {
