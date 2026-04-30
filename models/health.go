@@ -8,9 +8,10 @@ import (
 
 // ClustersNamespaceHealth is a map NamespaceHealth for namespaces of given clusters
 type ClustersNamespaceHealth struct {
-	AppHealth      map[string]*NamespaceAppHealth      `json:"namespaceAppHealth,omitempty"`
-	ServiceHealth  map[string]*NamespaceServiceHealth  `json:"namespaceServiceHealth,omitempty"`
-	WorkloadHealth map[string]*NamespaceWorkloadHealth `json:"namespaceWorkloadHealth,omitempty"`
+	AppHealth       map[string]*NamespaceAppHealth       `json:"namespaceAppHealth,omitempty"`
+	NamespaceHealth map[string]*NamespaceHealthAggregate `json:"namespaceHealth,omitempty"`
+	ServiceHealth   map[string]*NamespaceServiceHealth   `json:"namespaceServiceHealth,omitempty"`
+	WorkloadHealth  map[string]*NamespaceWorkloadHealth  `json:"namespaceWorkloadHealth,omitempty"`
 }
 
 // NamespaceHealthBucket buckets entity names by health status (matches frontend NamespaceStatus)

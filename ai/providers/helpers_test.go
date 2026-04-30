@@ -11,18 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/ai/mcp"
-	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers/authentication"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 type fakeStore struct {
@@ -98,32 +90,8 @@ func (f *fakeProvider) ProviderToConversation(_ interface{}) types.ConversationM
 	return types.ConversationMessage{}
 }
 
-func (f *fakeProvider) SendChat(_ *http.Request, _ types.AIRequest, _ *business.Layer, _ prometheus.ClientInterface, _ kubernetes.ClientFactory, _ cache.KialiCache, _ types.AIStore, _ *config.Config, _ *grafana.Service, _ *perses.Service, _ *istio.Discovery) (*types.AIResponse, int) {
+func (f *fakeProvider) SendChat(_ *mcputil.KialiInterface, _ types.AIRequest, _ types.AIStore) (*types.AIResponse, int) {
 	return nil, 0
-}
-
-func TestShouldGenerateAnswer(t *testing.T) {
-	response := &types.AIResponse{}
-
-	shouldGenerate, message := ShouldGenerateAnswer(response, []string{"custom_tool"})
-	assert.True(t, shouldGenerate)
-	assert.Equal(t, "", message)
-
-	response.Actions = []get_action_ui.Action{{Title: "action", Kind: get_action_ui.ActionKindNavigation, Payload: "/"}}
-	shouldGenerate, message = ShouldGenerateAnswer(response, []string{"get_action_ui"})
-	assert.False(t, shouldGenerate)
-	assert.Equal(t, "I have found the following actions: ", message)
-
-	response.Actions = nil
-	response.Citations = []get_citations.Citation{{Title: "title"}}
-	shouldGenerate, message = ShouldGenerateAnswer(response, []string{"get_citations"})
-	assert.False(t, shouldGenerate)
-	assert.Equal(t, "I have found the following citations: ", message)
-
-	response.Citations = nil
-	shouldGenerate, message = ShouldGenerateAnswer(response, []string{"get_action_ui"})
-	assert.True(t, shouldGenerate)
-	assert.Equal(t, "", message)
 }
 
 func TestParseMarkdownResponse(t *testing.T) {
@@ -196,7 +164,7 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 	store := &fakeStore{enabled: true}
 	conversation := []types.ConversationMessage{
 		{Role: "user", Content: "hello"},
-		{Role: "tool", Name: "get_citations", Content: "citations"},
+		{Role: "tool", Name: "get_referenced_docs", Content: "referenced_docs"},
 		{Role: "tool", Name: "custom_tool", Content: "custom"},
 	}
 	ptr := &types.Conversation{}

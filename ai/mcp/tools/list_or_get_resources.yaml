@@ -1,0 +1,20 @@
+- name: "list_or_get_resources"
+  description: "Fetches a list of resources OR retrieves detailed data for a specific resource. If 'resourceName' is omitted, it returns a list. If 'resourceName' is provided, it returns details for that specific resource."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    required: ["resourceType"]
+    properties:
+      resourceType:
+        type: "string"
+        description: "The type of resource to query."
+        enum: ["service", "workload", "app", "namespace"]
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces."
+      resourceName:
+        type: "string"
+        description: "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource."
+      clusterName:
+        type: "string"
+        description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig."

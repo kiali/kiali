@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/kiali/kiali/ai/mcp"
@@ -15,30 +16,20 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-func ShouldGenerateAnswer(response *types.AIResponse, toolNames []string) (bool, string) {
-	shouldGenerate := false
-	for _, toolName := range toolNames {
-		if !mcp.ExcludedToolNames[toolName] {
-			shouldGenerate = true
-			break
-		}
-	}
-	if shouldGenerate {
-		return true, ""
-	}
-
-	if len(response.Actions) > 0 {
-		return false, "I have found the following actions: "
-	}
-	if len(response.Citations) > 0 {
-		return false, "I have found the following citations: "
-	}
-	return true, ""
-}
+var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
 func ParseMarkdownResponse(content string) string {
 	// Fix code blocks: replace ``` with ~~~ (AI sometimes uses wrong delimiter)
-	return strings.ReplaceAll(content, "```", "~~~")
+	content = strings.ReplaceAll(content, "```", "~~~")
+
+	// Defensive sanitization: sometimes models emit pseudo-tool tags like <execute_browse>...</execute_browse>.
+	// These are not supported by Kiali and can leak to the UI as raw text.
+	content = strings.ReplaceAll(content, `\u003c`, "<")
+	content = strings.ReplaceAll(content, `\u003e`, ">")
+	content = strings.ReplaceAll(content, "<execute_browse>", "")
+	content = strings.ReplaceAll(content, "</execute_browse>", "")
+
+	return content
 }
 
 func NewContextCanceledResponse(err error) (*types.AIResponse, int) {
@@ -56,6 +47,25 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		// Remove tool messages where the tool name is in the exclusion list
 		if msg.Role == "tool" && mcp.ExcludedToolNames[msg.Name] {
 			log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
+			continue
+		}
+		// Avoid persisting tool log dumps in conversation history; they can contaminate later answers.
+		// This can happen both when the tool name is preserved (OpenAI path) and when it isn't (Google path).
+		if msg.Role == "tool" {
+			if msg.Name == "get_logs" {
+				log.Debugf("Removing get_logs tool message from conversation history")
+				continue
+			}
+			// Heuristic for unnamed tool messages that look like logs.
+			if strings.HasPrefix(msg.Content, "~~~\n") && strings.HasSuffix(msg.Content, "~~~\n") && len(msg.Content) > 1500 && dateLikeRegexp.MatchString(msg.Content) {
+				log.Debugf("Removing log-like tool message from conversation history")
+				continue
+			}
+		}
+		// Avoid persisting large log dumps in conversation history; they can contaminate later answers.
+		// Heuristic: codeblock fences + date-like timestamps + large payload.
+		if msg.Role == "assistant" && strings.HasPrefix(msg.Content, "~~~\n") && strings.HasSuffix(msg.Content, "~~~\n") && len(msg.Content) > 4000 && dateLikeRegexp.MatchString(msg.Content) {
+			log.Debugf("Removing large log-like assistant message from conversation history")
 			continue
 		}
 		cleaned = append(cleaned, msg)
@@ -111,6 +121,82 @@ func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types
 			log.Errorf("[Chat AI] Failed to set conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 		}
 	}
+}
+
+// ToolResultProcessingResult contains the processed tool results and metadata
+type ToolResultProcessingResult struct {
+	Response          *types.AIResponse
+	Conversation      []types.ConversationMessage
+	ShouldReturnEarly bool
+}
+
+// ProcessToolResults processes tool execution results in a standardized way
+// and builds the response and conversation accordingly
+func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
+	result := ToolResultProcessingResult{
+		Response:     &types.AIResponse{},
+		Conversation: conversation,
+	}
+
+	for _, toolResult := range toolResults {
+		// Handle errors
+		if toolResult.Error != nil {
+			result.Response.Error = toolResult.Error.Error()
+			result.ShouldReturnEarly = true
+			return result
+		}
+
+		// Collect actions and referenced_docs
+		if len(toolResult.Actions) > 0 {
+			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
+		}
+		if len(toolResult.ReferencedDocs) > 0 {
+			result.Response.ReferencedDocs = append(result.Response.ReferencedDocs, toolResult.ReferencedDocs...)
+		}
+
+		// Skip adding to conversation if we have actions/referenced_docs
+		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocs) > 0 {
+			continue
+		}
+
+		// Default: append tool message to conversation
+		if toolResult.Message.Content != "" {
+			result.Conversation = append(result.Conversation, toolResult.Message)
+		}
+	}
+
+	return result
+}
+
+// AddContextToConversation creates a temporary copy of the conversation with context added
+// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
+func AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
+	if len(conversation) == 0 {
+		return conversation
+	}
+
+	// Create a copy to avoid modifying the original
+	result := make([]types.ConversationMessage, 0, len(conversation)+1)
+
+	// Add system instruction (should be first)
+	result = append(result, conversation[0])
+
+	// Add context as second message (after system instruction, before user messages)
+	contextBytes, _ := json.Marshal(req.Context)
+	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
+	result = append(result, types.ConversationMessage{
+		Content: contextContent,
+		Name:    "",
+		Param:   nil,
+		Role:    "system",
+	})
+
+	// Add the rest of the conversation
+	if len(conversation) > 1 {
+		result = append(result, conversation[1:]...)
+	}
+
+	return result
 }
 
 func FormatToolContent(result interface{}) (string, error) {

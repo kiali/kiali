@@ -91,7 +91,7 @@ var DicTypeToGVK = map[string]GroupVersionKind{
 	K8sInferencePool:  {Group: "inference.networking.k8s.io", Version: "v1", Kind: "InferencePool"},
 	K8sReferenceGrant: {Group: "gateway.networking.k8s.io", Version: "v1beta1", Kind: "ReferenceGrant"},
 	K8sTCPRoute:       {Group: "gateway.networking.k8s.io", Version: "v1alpha2", Kind: "TCPRoute"},
-	K8sTLSRoute:       {Group: "gateway.networking.k8s.io", Version: "v1alpha2", Kind: "TLSRoute"},
+	K8sTLSRoute:       {Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute"},
 
 	// K8s Workloads
 	CronJob:               {Group: "batch", Version: "v1", Kind: "CronJob"},

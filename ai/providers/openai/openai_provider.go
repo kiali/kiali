@@ -15,8 +15,9 @@ import (
 
 // OpenAIProvider implements AIProvider using openai-go.
 type OpenAIProvider struct {
-	client openai.Client
-	model  string
+	client         openai.Client
+	model          string
+	tracingEnabled bool
 }
 
 type BaseURL string
@@ -34,8 +35,9 @@ func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, mod
 	}
 
 	return &OpenAIProvider{
-		client: openai.NewClient(opts...),
-		model:  model.Model,
+		client:         openai.NewClient(opts...),
+		model:          model.Model,
+		tracingEnabled: conf.ExternalServices.Tracing.Enabled,
 	}, nil
 }
 
@@ -90,6 +92,9 @@ func convertToolToOpenAI(tool mcp.ToolDef) openai.ChatCompletionToolUnionParam {
 func (p *OpenAIProvider) GetToolDefinitions() interface{} {
 	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
 	for _, handler := range mcp.DefaultToolHandlers {
+		if !p.tracingEnabled && mcp.IsTraceTool(handler.Name) {
+			continue
+		}
 		tools = append(tools, convertToolToOpenAI(handler))
 	}
 	return tools

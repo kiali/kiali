@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -15,12 +16,12 @@ import (
 
 func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
 	// Extract parameters
-	cluster, _ := args["cluster"].(string)
-	namespace, _ := args["namespace"].(string)
-	group, _ := args["group"].(string)
-	version, _ := args["version"].(string)
-	kind, _ := args["kind"].(string)
-	object, _ := args["object"].(string)
+	cluster := mcputil.GetStringArg(args, "clusterName")
+	namespace := mcputil.GetStringArg(args, "namespace")
+	group := mcputil.GetStringArg(args, "group")
+	version := mcputil.GetStringArg(args, "version")
+	kind := mcputil.GetStringArg(args, "kind")
+	object := mcputil.GetStringArg(args, "object")
 
 	if cluster == "" {
 		cluster = conf.KubernetesConfig.ClusterName
@@ -33,12 +34,13 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	}
 
 	if !business.GetIstioAPI(gvk) {
-		return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
+		return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusOK
 	}
 
 	istioConfigDetails, err := businessLayer.IstioConfig.GetIstioConfigDetails(ctx, cluster, namespace, gvk, object)
 	if err != nil {
-		return err.Error(), http.StatusInternalServerError
+		msg, _ := classifyError(err, kind, object, namespace)
+		return msg, http.StatusOK
 	}
 
 	validationsResult := make(chan error)
@@ -76,7 +78,7 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	istioConfigDetails.IstioConfigHelpFields = models.IstioConfigHelpMessages[gvk.String()]
 	err = <-validationsResult
 	if err != nil {
-		return err.Error(), http.StatusInternalServerError
+		return fmt.Sprintf("Error validating %s %q in namespace %q: %s", kind, object, namespace, err.Error()), http.StatusOK
 	}
 
 	if validation, found := istioConfigValidations[models.IstioValidationKey{ObjectGVK: gvk, Namespace: namespace, Name: object, Cluster: cluster}]; found {

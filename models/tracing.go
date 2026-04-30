@@ -1,6 +1,7 @@
 package models
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/kiali/kiali/config"
@@ -8,7 +9,13 @@ import (
 
 const (
 	IstioClusterTag string = "istio.cluster_id"
+
+	// MaxTracingLimit is the upper bound for trace query limit parameters.
+	MaxTracingLimit = 10000
 )
+
+// ValidTraceIDRe validates trace IDs: 1-32 hexadecimal characters (Jaeger/Tempo compatible).
+var ValidTraceIDRe = regexp.MustCompile(`^[a-fA-F0-9]{1,32}$`)
 
 type TracingInfo struct {
 	Enabled              bool               `json:"enabled"`

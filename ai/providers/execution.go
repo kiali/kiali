@@ -1,39 +1,22 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
+	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 // ExecuteToolCallsInParallel executes all tool calls in parallel and returns results in order
 func ExecuteToolCallsInParallel(
-	ctx context.Context,
-	r *http.Request,
+	kialiInterface *mcputil.KialiInterface,
 	toolCalls []mcp.ToolsProcessor,
-	business *business.Layer,
-	prom prometheus.ClientInterface,
-	clientFactory kubernetes.ClientFactory,
-	kialiCache cache.KialiCache,
-	conf *config.Config,
-	grafana *grafana.Service,
-	perses *perses.Service,
-	discovery *istio.Discovery,
 ) []mcp.ToolCallResult {
 	results := make([]mcp.ToolCallResult, len(toolCalls))
 	var wg sync.WaitGroup
@@ -44,8 +27,8 @@ func ExecuteToolCallsInParallel(
 		go func(index int, call mcp.ToolsProcessor) {
 			defer wg.Done()
 			actions := []get_action_ui.Action{}
-			citations := []get_citations.Citation{}
-			if err := ctx.Err(); err != nil {
+			referencedDocs := []types.ReferencedDoc{}
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
@@ -62,7 +45,15 @@ func ExecuteToolCallsInParallel(
 				return
 			}
 
-			mcpResult, code := handler.Call(r, call.Args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+			if !kialiInterface.Conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(call.Name) {
+				results[index] = mcp.ToolCallResult{
+					Error: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name),
+					Code:  http.StatusNotFound,
+				}
+				return
+			}
+
+			mcpResult, code := handler.Call(kialiInterface, call.Args)
 			if code != http.StatusOK {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult),
@@ -70,7 +61,7 @@ func ExecuteToolCallsInParallel(
 				}
 				return
 			}
-			if err := ctx.Err(); err != nil {
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
@@ -91,26 +82,36 @@ func ExecuteToolCallsInParallel(
 			}
 
 			if mcp.ExcludedToolNames[call.Name] {
+				content := ""
 				if call.Name == "get_action_ui" {
 					if mcpRes, ok := mcpResult.(get_action_ui.GetActionUIResponse); ok {
 						actions = append(actions, mcpRes.Actions...)
+						switch {
+						case len(actions) > 0:
+							content = "Success. The user's UI has been redirected to the requested view."
+						case mcpRes.Errors != "":
+							// Surface get_action_ui validation failures to the model instead of
+							// silently reporting success when no UI action was produced.
+							content = mcpRes.Errors
+						}
 					}
 				}
-				if call.Name == "get_citations" {
-					if mcpRes, ok := mcpResult.(get_citations.GetCitationsResponse); ok {
-						citations = append(citations, mcpRes.Citations...)
+				if call.Name == "get_referenced_docs" {
+					if mcpRes, ok := mcpResult.(get_referenced_docs.GetReferencedDocResponse); ok {
+						referencedDocs = append(referencedDocs, mcpRes.ReferencedDocs...)
+						content = "Success. Documentation links have been displayed in the user's UI."
 					}
 				}
 				results[index] = mcp.ToolCallResult{
 					Message: types.ConversationMessage{
-						Content: "",
+						Content: content,
 						Name:    call.Name,
 						Param:   nil,
 						Role:    "tool",
 					},
-					Code:      http.StatusOK,
-					Actions:   actions,
-					Citations: citations,
+					Code:           http.StatusOK,
+					Actions:        actions,
+					ReferencedDocs: referencedDocs,
 				}
 				return
 			}
@@ -123,7 +124,7 @@ func ExecuteToolCallsInParallel(
 				}
 				return
 			}
-			if err := ctx.Err(); err != nil {
+			if err := kialiInterface.Request.Context().Err(); err != nil {
 				results[index] = mcp.ToolCallResult{
 					Error: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err),
 					Code:  http.StatusRequestTimeout,
@@ -135,12 +136,12 @@ func ExecuteToolCallsInParallel(
 				Message: types.ConversationMessage{
 					Content: toolContent,
 					Name:    call.Name,
-					Param:   nil,
+					Param:   call.Args,
 					Role:    "tool",
 				},
-				Code:      http.StatusOK,
-				Actions:   actions,
-				Citations: citations,
+				Code:           http.StatusOK,
+				Actions:        actions,
+				ReferencedDocs: referencedDocs,
 			}
 		}(i, toolCall)
 	}

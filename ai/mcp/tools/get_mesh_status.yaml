@@ -1,0 +1,5 @@
+- name: "get_mesh_status"
+  description: "Retrieves the high-level health, topology, and environment details of the Istio service mesh. Returns multi-cluster control plane status (istiod), data plane namespace health (including ambient mesh status), observability stack health (Prometheus, Grafana...), and component connectivity. Use this tool as the first step to diagnose mesh-wide issues, verify Istio/Kiali versions, or check overall health before drilling into specific workloads."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
