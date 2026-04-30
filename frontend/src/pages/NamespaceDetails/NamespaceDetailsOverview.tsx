@@ -28,7 +28,7 @@ import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { KialiLink } from 'components/Link/KialiLink';
 import { Paths, isMultiCluster } from 'config';
-import { URLParam } from 'app/History';
+import { router, URLParam } from 'app/History';
 import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
@@ -385,6 +385,12 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           <EditableLabelsCard
             canEdit={this.props.canEdit}
             labels={nsInfo.labels ?? {}}
+            onLabelClick={(key, value) => {
+              FilterSelected.resetFilters();
+              const params = new URLSearchParams();
+              params.set('namespaceLabel', `${key}=${value}`);
+              router.navigate(`/${Paths.NAMESPACES}?${params.toString()}`);
+            }}
             onSave={this.props.onSaveLabels}
             title={t('Labels')}
           />

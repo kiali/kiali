@@ -22,6 +22,7 @@ type EditableLabelsCardProps = {
   isVertical?: boolean;
   labels: Record<string, string>;
   numLabels?: number;
+  onLabelClick?: (key: string, value: string) => void;
   onSave: (labels: Record<string, string>) => void;
   title: string;
 };
@@ -74,6 +75,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   isVertical = true,
   labels,
   numLabels = 5,
+  onLabelClick,
   onSave,
   title
 }) => {
@@ -203,7 +205,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         ) : hasLabels ? (
           <LabelGroup isVertical={isVertical} numLabels={numLabels}>
             {labelEntries.map(([key, value]) => (
-              <Label key={`${key}=${value}`} isCompact={isCompact} textMaxWidth="500px" tooltipPosition="top">
+              <Label
+                key={`${key}=${value}`}
+                isCompact={isCompact}
+                textMaxWidth="500px"
+                tooltipPosition="top"
+                onClick={onLabelClick ? () => onLabelClick(key, value) : undefined}
+              >
                 {formatLabel(key, value)}
               </Label>
             ))}
