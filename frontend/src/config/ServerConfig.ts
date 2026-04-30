@@ -141,6 +141,7 @@ const defaultServerConfig: ComputedServerConfig = {
     }
   },
   prometheus: {
+    enabled: true,
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
   },

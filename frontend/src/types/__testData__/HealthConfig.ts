@@ -7,7 +7,7 @@ export const healthConfig = {
   chatAI: {
     enabled: false,
     providers: [],
-    defaultProvider: '',
+    defaultProvider: ''
   },
   clusters: {},
   clusterWideAccess: true,
@@ -107,6 +107,7 @@ export const healthConfig = {
     versionLabelName: 'version'
   },
   prometheus: {
+    enabled: true,
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
   },

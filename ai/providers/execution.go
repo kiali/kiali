@@ -53,6 +53,15 @@ func ExecuteToolCallsInParallel(
 				return
 			}
 
+			// 404 mirrors the tracing gate convention above
+			if !kialiInterface.Conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(call.Name) {
+				results[index] = mcp.ToolCallResult{
+					Error: fmt.Errorf("metrics are unavailable because Prometheus is disabled"),
+					Code:  http.StatusNotFound,
+				}
+				return
+			}
+
 			mcpResult, code := handler.Call(kialiInterface, call.Args)
 			if code != http.StatusOK {
 				results[index] = mcp.ToolCallResult{

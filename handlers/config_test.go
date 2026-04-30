@@ -67,6 +67,42 @@ func TestConfigHandler(t *testing.T) {
 
 	var confResp handlers.PublicConfig
 	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.True(confResp.Prometheus.Enabled, "Prometheus should be enabled by default")
+}
+
+func TestConfigHandlerPrometheusDisabled(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.Enabled = false
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, cache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.False(confResp.Prometheus.Enabled, "Prometheus should be disabled")
 }
 
 func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {

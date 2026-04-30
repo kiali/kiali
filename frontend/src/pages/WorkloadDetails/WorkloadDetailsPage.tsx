@@ -182,19 +182,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     tabsArray.push(overTab);
 
     if (this.state.workload && isGVKSupported(this.state.workload.gvk)) {
-      const trafficTab = (
-        <Tab title="Traffic" eventKey={1} key="Traffic">
-          <TrafficDetails
-            itemName={this.props.workloadId.workload}
-            itemType={MetricsObjectTypes.WORKLOAD}
-            lastRefreshAt={this.props.lastRefreshAt}
-            namespace={this.props.workloadId.namespace}
-            cluster={this.state.cluster}
-          />
-        </Tab>
-      );
-      tabsArray.push(trafficTab);
-
       if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
         const logTab = (
           <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
@@ -222,37 +209,43 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         tabsArray.push(logTab);
       }
 
-      const inTab = (
-        <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
-          <IstioMetrics
-            data-test="inbound-metrics-component"
-            direction="inbound"
-            includeAmbient={!!this.state.workload?.isAmbient}
-            lastRefreshAt={this.props.lastRefreshAt}
-            namespace={this.props.workloadId.namespace}
-            object={this.props.workloadId.workload}
-            cluster={this.state.cluster}
-            objectType={MetricsObjectTypes.WORKLOAD}
-          />
-        </Tab>
-      );
-      tabsArray.push(inTab);
-
-      const outTab = (
-        <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
-          <IstioMetrics
-            data-test="outbound-metrics-component"
-            direction="outbound"
-            includeAmbient={!!this.state.workload?.isAmbient}
-            lastRefreshAt={this.props.lastRefreshAt}
-            namespace={this.props.workloadId.namespace}
-            object={this.props.workloadId.workload}
-            cluster={this.state.cluster}
-            objectType={MetricsObjectTypes.WORKLOAD}
-          />
-        </Tab>
-      );
-      tabsArray.push(outTab);
+      if (serverConfig.prometheus.enabled) {
+        tabsArray.push(
+          <Tab title="Traffic" eventKey={1} key="Traffic">
+            <TrafficDetails
+              itemName={this.props.workloadId.workload}
+              itemType={MetricsObjectTypes.WORKLOAD}
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.workloadId.namespace}
+              cluster={this.state.cluster}
+            />
+          </Tab>,
+          <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
+            <IstioMetrics
+              data-test="inbound-metrics-component"
+              direction="inbound"
+              includeAmbient={!!this.state.workload?.isAmbient}
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.workloadId.namespace}
+              object={this.props.workloadId.workload}
+              cluster={this.state.cluster}
+              objectType={MetricsObjectTypes.WORKLOAD}
+            />
+          </Tab>,
+          <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
+            <IstioMetrics
+              data-test="outbound-metrics-component"
+              direction="outbound"
+              includeAmbient={!!this.state.workload?.isAmbient}
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.workloadId.namespace}
+              object={this.props.workloadId.workload}
+              cluster={this.state.cluster}
+              objectType={MetricsObjectTypes.WORKLOAD}
+            />
+          </Tab>
+        );
+      }
 
       if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
         const fromWaypoint =

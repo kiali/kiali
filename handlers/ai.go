@@ -100,6 +100,11 @@ func ChatMCP(
 			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' is not available when tracing is disabled", toolName))
 			return
 		}
+		// 404 mirrors the tracing gate convention above
+		if !conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(toolName) {
+			RespondWithError(w, http.StatusNotFound, "metrics are unavailable because Prometheus is disabled")
+			return
+		}
 		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())

@@ -188,6 +188,7 @@ export interface ServerConfig {
   kialiFeatureFlags: KialiFeatureFlags;
   logLevel: string;
   prometheus: {
+    enabled: boolean;
     globalScrapeInterval?: DurationInSeconds;
     storageTsdbRetention?: DurationInSeconds;
   };

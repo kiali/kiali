@@ -525,17 +525,27 @@ func addKialiExternalServices(ctx context.Context, kiali *mesh.Node, isKialiLoca
 	persesHealthKey := componentHealthKey{Name: "perses", Namespace: "", Cluster: gi.Conf.KubernetesConfig.ClusterName}.String()
 
 	// metrics/prometheus
-	cluster, namespace, isExternal := discoverInfraService(es.Prometheus.URL, ctx, gi)
-	var node *mesh.Node
-	name := "Prometheus"
-	isExternal = isExternal || isKialiLocal
-	node, _, err := addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[promHealthKey])
-	if err != nil {
-		return false, err
-	}
+	var (
+		cluster    string
+		namespace  string
+		isExternal bool
+		name       string
+		node       *mesh.Node
+		err        error
+	)
 
-	kiali.AddEdge(node)
-	hasExternalServices = hasExternalServices || isExternal
+	if conf.ExternalServices.Prometheus.Enabled {
+		cluster, namespace, isExternal = discoverInfraService(es.Prometheus.URL, ctx, gi)
+		name = "Prometheus"
+		isExternal = isExternal || isKialiLocal
+		node, _, err = addInfra(meshMap, mesh.InfraTypeMetricStore, cluster, namespace, name, es.Prometheus, esVersions[name], isExternal, healthData[promHealthKey])
+		if err != nil {
+			return false, err
+		}
+
+		kiali.AddEdge(node)
+		hasExternalServices = hasExternalServices || isExternal
+	}
 
 	if conf.ExternalServices.Tracing.Enabled {
 		cluster, namespace, isExternal = discoverInfraService(es.Tracing.InternalURL, ctx, gi)

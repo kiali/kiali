@@ -85,6 +85,24 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   }
 
   render(): React.ReactNode {
+    if (!serverConfig.prometheus.enabled) {
+      return (
+        <EmptyState
+          headingLevel="h5"
+          titleText={t('Metrics are disabled')}
+          id="empty-graph-prometheus-disabled"
+          variant={EmptyStateVariant.lg}
+          className={emptyStateStyle}
+        >
+          <EmptyStateBody>
+            {t(
+              'Graph requires a metrics store (Prometheus) to be enabled. Enable Prometheus in the Kiali configuration to use this feature.'
+            )}
+          </EmptyStateBody>
+        </EmptyState>
+      );
+    }
+
     if (this.props.isError) {
       return (
         <EmptyState

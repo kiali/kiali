@@ -186,6 +186,7 @@ export const serverRateConfig = {
     versionLabelName: 'version'
   },
   prometheus: {
+    enabled: true,
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
   },

@@ -339,6 +339,7 @@ type PrometheusConfig struct {
 	CacheEnabled    bool              `yaml:"cache_enabled,omitempty" json:"cacheEnabled,omitempty"`       // Enable cache for Prometheus queries
 	CacheExpiration int               `yaml:"cache_expiration,omitempty" json:"cacheExpiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
+	Enabled         bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
 	HealthCheckUrl  string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
 	IsCore          bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
 	QueryScope      map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
@@ -1092,6 +1093,7 @@ func NewConfig() (c *Config) {
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
 				CustomHeaders:   map[string]string{},
+				Enabled:         true,
 				QueryScope:      map[string]string{},
 				ThanosProxy: ThanosProxy{
 					Enabled:         false,

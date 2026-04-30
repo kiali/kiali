@@ -101,6 +101,27 @@ func TestChatMCP_TraceToolsReachableWhenTracingEnabled(t *testing.T) {
 	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode, "list_traces should be registered when tracing is enabled")
 }
 
+func TestChatMCP_MetricToolsNotAvailableWhenPrometheusDisabled(t *testing.T) {
+	require := require.New(t)
+	require.NoError(mcp.LoadTools())
+
+	handler, conf := SetupChatMCPHandlerForTest(t)
+	conf.ExternalServices.Prometheus.Enabled = false
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/mcp/{tool_name}", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	for _, tool := range []string{"get_mesh_traffic_graph", "get_metrics", "get_pod_performance"} {
+		body := bytes.NewBufferString(`{}`)
+		resp, err := http.Post(ts.URL+"/api/chat/mcp/"+tool, "application/json", body)
+		require.NoError(err)
+		resp.Body.Close()
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode, "tool %s should be unavailable when Prometheus is disabled", tool)
+	}
+}
+
 func TestChatMCP_ToolNotFound(t *testing.T) {
 	require := require.New(t)
 

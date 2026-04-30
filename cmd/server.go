@@ -92,9 +92,16 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	business.SetKialiSAToken(kialiToken)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	prom, err := prometheus.NewClient(*conf, kialiToken)
-	if err != nil {
-		log.Fatalf("Error creating Prometheus client: %s", err)
+	var prom prometheus.ClientInterface
+	if conf.ExternalServices.Prometheus.Enabled {
+		var err error
+		prom, err = prometheus.NewClient(*conf, kialiToken)
+		if err != nil {
+			log.Fatalf("Error creating Prometheus client: %s", err)
+		}
+	} else {
+		log.Info("Prometheus is disabled")
+		prom = prometheus.NewNoopClient()
 	}
 
 	// Create shared tracing client shared by all tracing requests in the business layer.

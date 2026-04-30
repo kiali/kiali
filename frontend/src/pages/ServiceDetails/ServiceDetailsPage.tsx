@@ -232,7 +232,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       </Tab>
     );
 
-    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab];
+    const tabsArray: React.ReactNode[] = serverConfig.prometheus.enabled ? [overTab, trafficTab, inTab] : [overTab];
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       const fromWaypoint =

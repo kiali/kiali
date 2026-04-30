@@ -226,7 +226,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     // Default tabs
     const tabsArray: React.ReactNode[] = [overTab];
     if (this.state.isSupported) {
-      tabsArray.push(trafficTab, inTab, outTab);
+      if (serverConfig.prometheus.enabled) {
+        tabsArray.push(trafficTab, inTab, outTab);
+      }
       // Conditional Traces tab
       if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
         if (this.props.tracingInfo.integration) {

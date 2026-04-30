@@ -66,7 +66,9 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
   };
 
   React.useEffect(() => {
-    fetchMetrics();
+    if (serverConfig.prometheus.enabled) {
+      fetchMetrics();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.duration, props.target.elem]);
 
@@ -82,12 +84,17 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
       <div className={targetBodyStyle}>
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
         {targetPanelHR}
-        <TargetPanelControlPlaneMetrics
-          key={data.namespace}
-          istiodContainerMemory={metrics?.memory_usage}
-          istiodContainerCpu={metrics?.cpu_usage}
-          type={data.infraName}
-        />
+        {!serverConfig.prometheus.enabled && (
+          <span>{t('Metrics are unavailable because the Prometheus metrics store is disabled.')}</span>
+        )}
+        {serverConfig.prometheus.enabled && (
+          <TargetPanelControlPlaneMetrics
+            key={data.namespace}
+            istiodContainerMemory={metrics?.memory_usage}
+            istiodContainerCpu={metrics?.cpu_usage}
+            type={data.infraName}
+          />
+        )}
         {targetPanelHR}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
