@@ -175,7 +175,12 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			actions = append(actions, action...)
 		}
 	default:
-		if resourceName != "" && namespaces != "" && namespaces != "all" && !strings.Contains(namespaces, ",") {
+		if resourceName != "" {
+			if namespaces == "" || namespaces == "all" || strings.Contains(namespaces, ",") {
+				return GetActionUIResponse{
+					Errors: fmt.Sprintf("A single namespace is required to view %s %q details. Please specify the exact namespace.", resourceType, resourceName),
+				}, http.StatusOK
+			}
 			if errMsg := validateResourceExists(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, clusterName, namespaces, resourceType, resourceName); errMsg != "" {
 				return GetActionUIResponse{Errors: errMsg}, http.StatusOK
 			}
