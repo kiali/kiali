@@ -344,6 +344,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               key={`label_${i}`}
               name={key}
               value={value}
+              color={labelAct ? 'yellow' : undefined}
               style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
               onClick={(): void => {
                 if (statefulFilter?.current) {
