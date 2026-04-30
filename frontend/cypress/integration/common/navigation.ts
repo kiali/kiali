@@ -54,9 +54,7 @@ Given('autorefresh is enabled', () => {
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
-    cy.url().then(currentURL => {
-      const isOSSMC = currentURL.includes('/ossmconsole/') || Cypress.env('OSSMC');
-
+    cy.url().then(() => {
       const detailPage = getPageDetail(detail);
       const qs = {
         // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing

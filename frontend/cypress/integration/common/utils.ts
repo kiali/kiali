@@ -3,13 +3,14 @@ import { MeshCluster } from 'types/Mesh';
 /**
  * In OSSMC kiosk mode, KialiLink renders <button data-href> instead of <a href>.
  * This selector matches both so tests work in standalone Kiali and OSSMC.
+ * Assumes hrefPattern contains only safe test paths (no user input).
  */
 export const linkSelector = (hrefPattern: string, match: 'contains' | 'endsWith' = 'contains'): string => {
   const op = match === 'endsWith' ? '$' : '*';
   return `a[href${op}="${hrefPattern}"], button[data-href${op}="${hrefPattern}"]`;
 };
 
-// Check if the element has at least one of the expected CSS classes.
+// Used with `.should('satisfy', hasAtLeastOneClass([...]))` to assert health icons, status badges, etc.
 export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElement[]) => boolean) => {
   return ($el: HTMLElement[]) => {
     const classList = Array.from($el[0].classList);

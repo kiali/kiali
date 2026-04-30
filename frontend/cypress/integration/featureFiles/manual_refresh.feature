@@ -32,12 +32,14 @@ Feature: Manual Refresh option
     When user is at the "applications" page with manual refresh
     Then user "sees" manual refresh messaging
 
+  # Services and Workloads list pages do not exist in OSSMC
   @core-2
   @skip-ossmc
   Scenario: Services page shows manual
     When user is at the "services" page with manual refresh
     Then user "sees" manual refresh messaging
 
+  # Services and Workloads list pages do not exist in OSSMC
   @core-2
   @skip-ossmc
   Scenario: Workloads page shows manual
