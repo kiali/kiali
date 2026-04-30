@@ -75,15 +75,7 @@ Then('user can filter spans by app {string} by {string}', (app: string, waypoint
   cy.contains('div#filter_select_type button', 'App').click();
   cy.get('input[placeholder="Filter by App"]').click();
 
-  cy.get('ul[role="listbox"]')
-    .should('be.visible')
-    .then($list => {
-      if ($list.find(`li[label="${app}"]`).length > 0) {
-        cy.get(`li[label="${app}"]`).find('button').click();
-      } else {
-        cy.get(`li[label="${waypoint}"]`).find('button').click();
-      }
-    });
+  clickSpanFilterOptionWithFallback(app, waypoint);
 
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();

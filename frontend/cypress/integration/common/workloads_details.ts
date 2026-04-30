@@ -1,6 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
-import { clusterParameterExists } from './navigation';
+import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
 import { openTab } from './transition';
 
 const WAYPOINT_FALLBACK = 'waypoint';
@@ -72,16 +72,7 @@ When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#Workload').click();
   cy.get('input[placeholder="Filter by Workload"]').click();
 
-  // Wait for the dropdown to render before checking which options exist.
-  cy.get('ul[role="listbox"]')
-    .should('be.visible')
-    .then($list => {
-      if ($list.find(`li[label="${workload}"]`).length > 0) {
-        cy.get(`li[label="${workload}"]`).find('button').click();
-      } else {
-        cy.get(`li[label="${WAYPOINT_FALLBACK}"]`).find('button').click();
-      }
-    });
+  clickSpanFilterOptionWithFallback(workload, WAYPOINT_FALLBACK);
 
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();
