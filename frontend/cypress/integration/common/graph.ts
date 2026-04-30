@@ -83,11 +83,11 @@ Then(
 Then('user sees a link to the {string} cluster workload details page in the summary panel', (cluster: string) => {
   cy.get('#graph-side-panel').within(() => {
     if (cluster === 'east') {
-      // Should not include any links since the "east" cluster doesn't include the clusterName in the links.
-      cy.get(`a[href*="clusterName=${cluster}"]`).should('have.length', 0);
+      // Should only include namespace link since the "east" cluster doesn't include the clusterName in the links.
+      cy.get(`a[href*="clusterName=${cluster}"]`).should('have.length', 1);
     } else {
-      // Should include three links: app, service, workload.
-      cy.get(`a[href*="clusterName=${cluster}"]`).should('have.length', 3);
+      // Should include three links: namespace, app, service, workload.
+      cy.get(`a[href*="clusterName=${cluster}"]`).should('have.length', 4);
     }
   });
 });

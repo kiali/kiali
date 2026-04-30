@@ -39,23 +39,20 @@ When('user deletes a Traffic Policy and the resource is no longer available in a
   });
 });
 
-When(
-  'user decides to {string} a Traffic Policy in the {string} {string}',
-  (action: string, cluster: string, ns: string) => {
-    ensureKialiFinishedLoading();
-    cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`)
-      .find('button[aria-label="Actions"]')
-      .should('be.visible')
-      .click();
-    cy.get('button')
-      .contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`)
-      .should('be.visible');
-    cy.get('button')
-      .contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`)
-      .click();
-    ensureKialiFinishedLoading();
-  }
-);
+When('user navigates to the namespace detail page for {string} in cluster {string}', (ns: string, cluster: string) => {
+  cy.visit({ url: `/console/namespaces/${ns}?clusterName=${cluster}&refresh=0` });
+  ensureKialiFinishedLoading();
+});
+
+When('user decides to {string} a Traffic Policy', (action: string) => {
+  ensureKialiFinishedLoading();
+  cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+  cy.get('button')
+    .contains(`${action[0].toUpperCase() + action.slice(1)} Traffic Policies`)
+    .should('be.visible')
+    .click();
+  ensureKialiFinishedLoading();
+});
 
 When('user confirms to {string} the Traffic Policy', (action: string) => {
   if (action === 'create' || action === 'update') {
