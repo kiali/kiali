@@ -312,7 +312,7 @@ Given('health cache is enabled', () => {
 });
 
 Given('health cache metrics are recorded', () => {
-  cy.request('api/test/metrics/health/cache').then(resp => {
+  cy.request({ url: 'api/test/metrics/health/cache' }).then(resp => {
     expect(resp.status).to.eq(200);
     const before = resp.body as HealthCacheMetrics;
     cy.wrap(before, { log: false }).as('healthCacheMetricsBefore');
@@ -335,7 +335,7 @@ Then('health cache metrics should show at least {int} hit', (minHits: number) =>
   cy.get('@healthCacheMetricsBefore').then(beforeObj => {
     const before = (beforeObj as unknown) as HealthCacheMetrics;
 
-    cy.request('api/test/metrics/health/cache').then(resp => {
+    cy.request({ url: 'api/test/metrics/health/cache' }).then(resp => {
       expect(resp.status).to.eq(200);
       const after = resp.body as HealthCacheMetrics;
 

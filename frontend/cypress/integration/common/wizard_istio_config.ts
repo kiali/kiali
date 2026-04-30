@@ -1,5 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { linkSelector } from './utils';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
   cy.get('button[data-test="istio-actions-toggle"]')
@@ -18,7 +19,7 @@ When('user clicks in the {string} Istio config actions', (action: string) => {
 
 When('viewing the detail for {string}', (object: string) => {
   ensureKialiFinishedLoading();
-  cy.get('a').contains(object).should('be.visible').click();
+  cy.get(linkSelector()).contains(object).should('be.visible').click();
 });
 
 When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {

@@ -497,7 +497,7 @@ Given('graph cache is enabled', () => {
 });
 
 Given('graph cache metrics are recorded', () => {
-  cy.request('api/test/metrics/graph/cache').then(resp => {
+  cy.request({ url: 'api/test/metrics/graph/cache' }).then(resp => {
     expect(resp.status).to.eq(200);
     const before = resp.body as GraphCacheMetrics;
     cy.wrap(before, { log: false }).as('graphCacheMetricsBefore');
@@ -571,7 +571,7 @@ Then('graph cache metrics should show at least {int} miss and {int} hits', (minM
   cy.get('@graphCacheMetricsBefore').then(beforeObj => {
     const before = (beforeObj as unknown) as GraphCacheMetrics;
 
-    cy.request('api/test/metrics/graph/cache').then(resp => {
+    cy.request({ url: 'api/test/metrics/graph/cache' }).then(resp => {
       expect(resp.status).to.eq(200);
       const after = resp.body as GraphCacheMetrics;
 

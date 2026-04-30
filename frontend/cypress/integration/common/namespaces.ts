@@ -29,14 +29,12 @@ const normalizeColumn = (column: string): string => {
 Then('the {string} column on the {string} row is not empty', (column: string, rowText: string) => {
   const normalized = normalizeColumn(column);
 
-  getColWithRowText(rowText, normalized).then($cell => {
-    // Some columns can be icon-only (ex: Istio config validation status).
-    if (normalized === 'Config') {
-      cy.wrap($cell).find('[data-test$="-validation"]').should('exist');
-      return;
-    }
-    expect($cell.text().trim()).to.not.equal('');
-  });
+  // Some columns can be icon-only (ex: Istio config validation status)
+  if (normalized === 'Config') {
+    getColWithRowText(rowText, normalized).find('[data-test$="-validation"]').should('exist');
+    return;
+  }
+  getColWithRowText(rowText, normalized).invoke('text').should('not.be.empty');
 });
 
 When('user filters for type {string}', (type: string) => {

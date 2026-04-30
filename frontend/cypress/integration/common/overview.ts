@@ -237,7 +237,7 @@ Then('user is redirected to Istio config list with all namespaces and warning fi
       )
     ).sort();
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
@@ -686,7 +686,7 @@ Then('user is redirected to Services list with all namespaces and service insigh
 
     expect(urlNamespaces.length, 'namespaces query param should be present').to.be.greaterThan(0);
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
@@ -964,7 +964,7 @@ Then('user is redirected to Applications list with all namespaces', () => {
 
     expect(urlNamespaces.length, 'namespaces query param should be present').to.be.greaterThan(0);
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
