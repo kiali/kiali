@@ -376,16 +376,16 @@ When('I remove override configuration for sidecar injection in the workload', fu
 Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (
   enabled: string
 ) {
-  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}` }).then(response => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
     expect(response.status).to.equal(200);
-    expect(response.body.metadata.labels['istio-injection']).to.equal(enabled);
+    expect(response.body.labels['istio-injection']).to.equal(enabled);
   });
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
-  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}` }).then(response => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
     expect(response.status).to.equal(200);
-    expect(response.body.metadata.labels).to.not.have.property('istio-injection');
+    expect(response.body.labels).to.not.have.property('istio-injection');
   });
 });
 
