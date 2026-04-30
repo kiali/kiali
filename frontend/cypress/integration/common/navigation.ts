@@ -1,6 +1,5 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { constants } from 'node:buffer';
 
 enum detailType {
   App = 'app',

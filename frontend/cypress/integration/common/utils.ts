@@ -9,6 +9,7 @@ export const linkSelector = (hrefPattern: string, match: 'contains' | 'endsWith'
   return `a[href${op}="${hrefPattern}"], button[data-href${op}="${hrefPattern}"]`;
 };
 
+// Check if the element has at least one of the expected CSS classes.
 export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElement[]) => boolean) => {
   return ($el: HTMLElement[]) => {
     const classList = Array.from($el[0].classList);
@@ -16,6 +17,10 @@ export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElemen
   };
 };
 
+/**
+ * Fetches /api/config, asserts exactly one cluster exists, and yields
+ * its name. Intended for single-cluster test environments.
+ */
 export const getClusterForSingleCluster = (): Cypress.Chainable<string> => {
   return cy.request({ url: '/api/config' }).then(response => {
     cy.wrap(response.isOkStatusCode).should('be.true');
