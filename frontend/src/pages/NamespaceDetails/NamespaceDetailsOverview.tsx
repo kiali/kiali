@@ -236,10 +236,6 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
 export class NamespaceDetailsOverview extends React.Component<Props> {
   private graphDataSource = new GraphDataSource();
 
-  constructor(props: Props) {
-    super(props);
-  }
-
   componentDidMount(): void {
     this.fetchGraph();
   }

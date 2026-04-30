@@ -2,7 +2,11 @@ import { buildNamespaceRowActions, NamespaceRowActionsParams } from '../namespac
 import { NamespaceInfo } from 'types/NamespaceInfo';
 
 jest.mock('utils/I18nUtils', () => ({
-  t: jest.fn(key => key)
+  t: (key: string) => key,
+  tMap: (m: Record<string, string>) => m,
+  useKialiTranslation: () => ({
+    t: (key: string) => key
+  })
 }));
 
 const baseNsInfo: NamespaceInfo = {
@@ -45,12 +49,12 @@ describe('buildNamespaceRowActions', () => {
   describe('non-control-plane namespace', () => {
     it('includes traffic policy actions when istioAPI is enabled', () => {
       const titles = actionTitles(baseParams(baseNsInfo));
-      expect(titles).toContain('Create  Traffic Policies');
+      expect(titles).toContain('Create Traffic Policies');
     });
 
     it('omits traffic policy actions when istioAPI is disabled', () => {
       const titles = actionTitles(baseParams(baseNsInfo, { istioAPIEnabled: false }));
-      expect(titles).not.toContain('Create  Traffic Policies');
+      expect(titles).not.toContain('Create Traffic Policies');
     });
 
     it('calls onOpenTrafficPoliciesModal when a policy action is invoked', () => {
