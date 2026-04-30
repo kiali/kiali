@@ -243,6 +243,174 @@ func TestExecute(t *testing.T) {
 		assert.Empty(t, resp.Actions)
 		assert.Contains(t, resp.Errors, `Application "no-such-app" not found in namespace "bookinfo"`)
 	})
+
+	t.Run("Resource Detail With Empty Namespace Returns Error", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "service",
+			"resourceName": "productpage",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		assert.Empty(t, resp.Actions)
+		assert.Contains(t, resp.Errors, "A single namespace is required")
+		assert.Contains(t, resp.Errors, `"productpage"`)
+	})
+
+	t.Run("Resource Detail With All Namespaces Returns Error", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "workload",
+			"namespaces":   "all",
+			"resourceName": "details-v1",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		assert.Empty(t, resp.Actions)
+		assert.Contains(t, resp.Errors, "A single namespace is required")
+		assert.Contains(t, resp.Errors, `"details-v1"`)
+	})
+
+	t.Run("Resource Detail With Multiple Namespaces Returns Error", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "app",
+			"namespaces":   "bookinfo,istio-system",
+			"resourceName": "ratings",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		assert.Empty(t, resp.Actions)
+		assert.Contains(t, resp.Errors, "A single namespace is required")
+		assert.Contains(t, resp.Errors, `"ratings"`)
+	})
+
+	t.Run("Service List Action", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "service",
+			"namespaces":   "bookinfo",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View services List", resp.Actions[0].Title)
+		assert.Equal(t, "/services?namespaces=bookinfo", resp.Actions[0].Payload)
+	})
+
+	t.Run("App List Action", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "app",
+			"namespaces":   "bookinfo",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View applications List", resp.Actions[0].Title)
+		assert.Equal(t, "/applications?namespaces=bookinfo", resp.Actions[0].Payload)
+	})
+
+	t.Run("Service Details Default Tab", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "service",
+			"namespaces":   "bookinfo",
+			"resourceName": "productpage",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View service Details", resp.Actions[0].Title)
+		assert.Equal(t, "/namespaces/bookinfo/services/productpage?tab=info", resp.Actions[0].Payload)
+	})
+
+	t.Run("Namespaces Action", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "namespaces",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View Namespaces", resp.Actions[0].Title)
+		assert.Equal(t, "/namespaces", resp.Actions[0].Payload)
+	})
+
+	t.Run("Graph Action With Custom GraphType", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "graph",
+			"namespaces":   "bookinfo",
+			"graphType":    "app",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Contains(t, resp.Actions[0].Payload, "graphType=app")
+	})
+
+	t.Run("Graph Action With All Namespaces", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "graph",
+			"namespaces":   "all",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Contains(t, resp.Actions[0].Payload, "/graph/namespaces?namespaces=")
+		assert.Contains(t, resp.Actions[0].Title, "View Traffic Graph for :")
+	})
+
+	t.Run("Service List With All Namespaces", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "service",
+			"namespaces":   "all",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View services List", resp.Actions[0].Title)
+		assert.Equal(t, "/services", resp.Actions[0].Payload)
+	})
+
+	t.Run("Service List With Empty Namespace", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "service",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		require.Len(t, resp.Actions, 1)
+		assert.Equal(t, "View services List", resp.Actions[0].Title)
+		assert.Equal(t, "/services", resp.Actions[0].Payload)
+	})
+
+	t.Run("Invalid Namespace In Multi-Namespace List Returns Error", func(t *testing.T) {
+		args := map[string]interface{}{
+			"resourceType": "workload",
+			"namespaces":   "bookinfo,does-not-exist",
+		}
+		req := httptest.NewRequest("GET", "http://kiali/api/ai/mcp/get_action_ui", nil)
+		res, status := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Conf: conf}, args)
+		assert.Equal(t, http.StatusOK, status)
+		resp := res.(GetActionUIResponse)
+		assert.Empty(t, resp.Actions)
+		assert.Contains(t, resp.Errors, "does-not-exist")
+	})
 }
 
 func TestGetTabLabel(t *testing.T) {
