@@ -10,7 +10,7 @@ export const linkSelector = (hrefPattern: string, match: 'contains' | 'endsWith'
   return `a[href${op}="${hrefPattern}"], button[data-href${op}="${hrefPattern}"]`;
 };
 
-// Used with `.should('satisfy', hasAtLeastOneClass([...]))` to assert health icons, status badges, etc.
+// Check if the element has at least one of the expected CSS classes.
 export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElement[]) => boolean) => {
   return ($el: HTMLElement[]) => {
     const classList = Array.from($el[0].classList);
