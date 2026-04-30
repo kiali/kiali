@@ -1,5 +1,6 @@
 import { AfterAll, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
+import { linkSelector } from './utils';
 import { ensureKialiFinishedLoading, waitForResourceDeletion } from './transition';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
 
@@ -522,7 +523,7 @@ Then('user sees Name information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Name').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
+    cy.get(linkSelector(`/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}`)).should('be.visible');
   });
 });
 
@@ -543,7 +544,7 @@ Then('user sees Configuration information for Istio objects', () => {
 
   // There should be a table with a heading for each piece of information.
   getColWithRowText(object, 'Configuration').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}"]`).should('be.visible');
+    cy.get(linkSelector(`/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}`)).should('be.visible');
   });
 });
 

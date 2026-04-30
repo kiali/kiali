@@ -1,5 +1,6 @@
 import { Then, When, TableDefinition } from '@badeball/cypress-cucumber-preprocessor';
-import { colExists, getClusterForSingleCluster, getColWithRowText } from './table';
+import { colExists, getColWithRowText } from './table';
+import { getClusterForSingleCluster } from './utils';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);

@@ -1,17 +1,17 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { constants } from 'node:buffer';
 
 enum detailType {
   App = 'app',
   Istio = 'istio',
-  Pods = 'pods',
   Service = 'service',
   Workload = 'workload'
 }
 
 Given('user is at the {string} list page', (page: string) => {
   // enable toggles on the list pages so that they can be tested
-  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+  cy.intercept(`**/api/config`, request => {
     request.reply(response => {
       response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
       return response;
@@ -19,7 +19,7 @@ Given('user is at the {string} list page', (page: string) => {
   }).as('config');
 
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
   cy.wait('@config');
 });
 
@@ -56,17 +56,9 @@ Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: detailType, namespacedNamed: string, cluster: string) => {
     cy.url().then(currentURL => {
-      let detailPage = '';
-      // ossmc requires deployment as the pod name is different than the deployment name. Ex for waypoints, can be waypoint-fdsfdsfs
-      if (detail === detailType.Pods) {
-        if (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/')) {
-          detailPage = detailType.Pods;
-        } else {
-          detailPage = 'workloads';
-        }
-      } else {
-        detailPage = getPageDetail(detail);
-      }
+      const isOSSMC = currentURL.includes('/ossmconsole/') || Cypress.env('OSSMC');
+
+      const detailPage = getPageDetail(detail);
       const qs = {
         // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
         refresh: '0'

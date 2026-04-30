@@ -10,9 +10,9 @@ import {
   checkHealthStatusInTable,
   colExists,
   ensureObjectsInTable,
-  getColWithRowText,
-  hasAtLeastOneClass
+  getColWithRowText
 } from './table';
+import { hasAtLeastOneClass, linkSelector } from './utils';
 import { openTab, waitForKialiApiReady } from './transition';
 import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
 
@@ -204,7 +204,7 @@ Then('user sees all the Apps in the bookinfo namespace', () => {
 Then('user sees Name information for Apps', () => {
   // There should be a table with a heading for each piece of information.
   getColWithRowText(APP, 'Name').within(() => {
-    cy.get(`a[href*="/namespaces/bookinfo/applications/${APP}"]`).should('be.visible');
+    cy.get(linkSelector(`/namespaces/bookinfo/applications/${APP}`)).should('be.visible');
   });
 });
 
@@ -222,7 +222,7 @@ Then('user sees Details information for Apps', () => {
   getColWithRowText(APP, 'Details').within(() => {
     cy.contains('bookinfo-gateway');
 
-    cy.get(`a[href*="/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/bookinfo-gateway"]`).should(
+    cy.get(linkSelector('/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/bookinfo-gateway')).should(
       'be.visible'
     );
   });

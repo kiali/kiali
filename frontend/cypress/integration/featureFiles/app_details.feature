@@ -43,7 +43,6 @@ Feature: Kiali App Details page
   @bookinfo-app
   @tracing
   @waypoint-tracing
-  @skip-ossmc
   Scenario: See tracing info after selecting a trace
     And user sees trace information
     When user selects a trace
@@ -58,7 +57,6 @@ Feature: Kiali App Details page
     And user can filter spans by app "productpage"
 
   @waypoint-tracing
-  @skip-ossmc
   Scenario: See span info after selecting app span
     And user sees trace information
     When user selects a trace with at least 4 spans

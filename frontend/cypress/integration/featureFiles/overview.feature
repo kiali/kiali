@@ -1,4 +1,5 @@
 @overview
+@ossmc
 Feature: New Overview - Overview cards
 
   Background:

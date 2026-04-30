@@ -2,6 +2,8 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
 import { ensureKialiFinishedLoading } from './transition';
+import { getClusterForSingleCluster, linkSelector } from './utils';
+export { linkSelector } from './utils';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -23,7 +25,7 @@ Then(
   (column: string, rowText: string, link: string) => {
     getColWithRowText(rowText, column).within(() => {
       // $= is endswith since console link can change depending on the deployment.
-      cy.get(`a[href$="${link}"]`).should('be.visible');
+      cy.get(linkSelector(link, 'endsWith')).should('be.visible');
     });
   }
 );
@@ -143,16 +145,7 @@ export const colExists = (colName: string, exists: boolean): Cypress.Chainable =
   return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
 };
 
-// hasAtLeastOneClass will check if the element has that class/classes.
-// This func makes a couple assumptions:
-//
-// 1. The classes expected
-export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElement[]) => boolean) => {
-  return ($el: HTMLElement[]) => {
-    const classList = Array.from($el[0].classList);
-    return expectedClasses.some((expectedClass: string) => classList.includes(expectedClass));
-  };
-};
+export { hasAtLeastOneClass } from './utils';
 
 // getColWithRowText will find the column matching the unique row text and column header name.
 // This func makes a couple assumptions:
@@ -241,19 +234,7 @@ export const ensureObjectsInTable = (...names: string[]): void => {
   });
 };
 
-// Fetch the cluster info from /api/config
-export const getClusterForSingleCluster = (): Cypress.Chainable<string> => {
-  return cy.request({ url: '/api/config' }).then(response => {
-    cy.wrap(response.isOkStatusCode).should('be.true');
-
-    const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-    const clusterNames = Object.keys(clusters);
-    cy.wrap(clusterNames).should('have.length', 1);
-    const cluster = clusterNames[0];
-
-    return cy.wrap(cluster);
-  });
-};
+export { getClusterForSingleCluster } from './utils';
 
 // Only works for a single cluster.
 // Retries by clicking the Refresh button if the expected health indicator
