@@ -16,6 +16,7 @@ Feature: Kiali Waypoint related features
     Then "bookinfo" namespace is labeled with the waypoint label
     And the graph page has enough data
     And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
+    And use_waypoint_name is enabled if tracing services contain waypoint in "bookinfo"
 
   @skip-ossmc
   Scenario: [Workload list] See the workload list of bookinfo with the correct info

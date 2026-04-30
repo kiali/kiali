@@ -86,10 +86,10 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
 When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
-  cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
-  clickSpanFilterOptionWithFallback(workload);
+  cy.get('input[placeholder="Filter by Workload"]').click();
 
-  // waypoint is a fallback for istio < 1.29
+  clickSpanFilterOptionWithFallback(workload, WAYPOINT_FALLBACK);
+
   getCellsForCol('App / Workload').each($cell => {
     const cellText = $cell.text().toLowerCase();
     const workloadMatches = cellText.includes(workload.toLowerCase());

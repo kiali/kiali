@@ -1,7 +1,8 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { openTab } from './transition';
+import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
+import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -368,6 +369,92 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
   waitForWorkloadTracesInApi(namespace, workload);
+});
+
+const waitForWaypointNodeInGraph = (namespace: string, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Waypoint node not found in graph after ${maxRetries} retries (namespace=${namespace})`);
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '300s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: true,
+      ambientTraffic: 'total',
+      appenders: 'deadNode,serviceEntry,meshCheck,workloadEntry,health,istio,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: namespace
+    }
+  }).then(response => {
+    const nodes = response.body?.elements?.nodes ?? [];
+    const waypointNode = nodes.find(
+      (n: { data: Record<string, string> }) => n.data.workload === 'waypoint' && n.data.namespace === namespace
+    );
+
+    if (waypointNode) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `Waypoint node found in graph after ${retryCount} retries`
+      });
+      return;
+    }
+
+    if (retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `retry=${retryCount}/${maxRetries} waiting for waypoint node in graph`
+      });
+    }
+
+    cy.wait(10000).then(() => waitForWaypointNodeInGraph(namespace, maxRetries, retryCount + 1));
+  });
+};
+
+Then('use_waypoint_name is enabled if tracing services contain waypoint in {string}', (namespace: string) => {
+  waitForWaypointNodeInGraph(namespace);
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 20
+  };
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/bookinfo-gateway-istio/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    const traces = response.body?.data ?? [];
+    const serviceNames = new Set<string>();
+    for (const trace of traces) {
+      for (const proc of Object.values(trace.processes ?? {})) {
+        serviceNames.add((proc as { serviceName: string }).serviceName);
+      }
+    }
+
+    const hasWaypoint = [...serviceNames].some(name => name.startsWith('waypoint.'));
+
+    Cypress.log({
+      name: 'use_waypoint_name',
+      message: `Tracing services: [${[...serviceNames].join(', ')}] hasWaypoint=${hasWaypoint}`
+    });
+
+    if (hasWaypoint) {
+      enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
+      waitForKialiApiReady();
+    }
+  });
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
