@@ -63,7 +63,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.Authorizat
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, IdentityDomain: a.IdentityDomain, KubeServiceHosts: a.KubeServiceHosts,
 			Namespaces: a.Namespaces, PolicyAllowAny: a.PolicyAllowAny, ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices},
-		authorization.PrincipalsChecker{Cluster: a.Cluster, AuthorizationPolicy: authPolicy, ServiceAccounts: a.ServiceAccounts},
+		authorization.PrincipalsChecker{AuthorizationPolicy: authPolicy, Cluster: a.Cluster, ServiceAccounts: a.ServiceAccounts},
 	}
 
 	for _, checker := range enabledCheckers {

@@ -97,6 +97,8 @@ func resolvePublicIdentityDomain(ctx context.Context, conf *config.Config, disco
 	var mesh *models.Mesh
 	if m, err := discovery.Mesh(ctx); err == nil {
 		mesh = m
+	} else {
+		log.FromContext(ctx).Debug().Err(err).Msgf("Failed to fetch mesh for identity domain resolution on cluster [%s]", conf.KubernetesConfig.ClusterName)
 	}
 	return business.ResolveClusterIdentityDomain(mesh, conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
 }
