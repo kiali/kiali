@@ -124,10 +124,17 @@ func setupPortForwarding(ctx context.Context, cf kubernetes.ClientFactory, conf 
 		config.Set(conf)
 	}
 
-	// Need a separate "port-forward to prom option" because you can specify an external prometheus URL
-	// in the config file and that should not be overridden by the port-forwarding.
-	// TODO: Add an option to enable/disable prom.
-	if opts.portForwardToPromFlag {
+	// Override Prometheus configuration if disablePrometheus flag is set
+	if opts.disablePrometheus {
+		conf.ExternalServices.Prometheus.Enabled = false
+		config.Set(conf)
+	}
+
+	// Port forward to Prometheus if enabled and flag is set.
+	// Note: we use a separate port-forward flag (rather than implicitly port-forwarding when enabled)
+	// because you can specify an external Prometheus URL in the config file and that should not be
+	// overridden by port-forwarding.
+	if conf.ExternalServices.Prometheus.Enabled && opts.portForwardToPromFlag {
 		if err := portForwardToProm(ctx, cf.GetSAHomeClusterClient(), conf, opts.metricsPort, opts.metricsSelector); err != nil {
 			return fmt.Errorf("Unable to setup port forwarding to metrics store pods: %s", err)
 		}

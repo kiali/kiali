@@ -63,6 +63,7 @@ func outputFlags(cmd *cobra.Command) {
 type portForwardingOptions struct {
 	dashboardSelector        Selector
 	dashboardsPort           string
+	disablePrometheus        bool
 	enableDashboards         bool
 	enableTracing            bool
 	metricsPort              string
@@ -79,6 +80,7 @@ func newPortForwardingOptions() *portForwardingOptions {
 	return &portForwardingOptions{
 		dashboardSelector:        Selector("app.kubernetes.io/name=grafana"),
 		dashboardsPort:           "3000",
+		disablePrometheus:        false,
 		enableDashboards:         false,
 		enableTracing:            false,
 		metricsPort:              "9090",
@@ -101,6 +103,7 @@ func (opts *portForwardingOptions) addFlags(cmd *cobra.Command) {
 		"Enables port-forwarding to the Jaeger pod in the home cluster. Use this when your tracing service is not accessible from the outside of the cluster. Otherwise set the URL in the config file.")
 	cmd.Flags().BoolVar(&opts.enableTracing, "enable-tracing", opts.enableTracing, "Enable tracing.")
 	cmd.Flags().BoolVar(&opts.enableDashboards, "enable-dashboards", opts.enableDashboards, "Enable dashboards.")
+	cmd.Flags().BoolVar(&opts.disablePrometheus, "disable-prometheus", opts.disablePrometheus, "Disable Prometheus metrics store. Graph, metrics, and request-rate health will be unavailable.")
 	cmd.Flags().StringVar(&opts.tracingPort, "tracing-port", opts.tracingPort, "Port number to use for tracing port forwarding.")
 	cmd.Flags().StringVar(&opts.metricsPort, "metrics-port", opts.metricsPort, "Port number to use for metrics port forwarding.")
 	cmd.Flags().StringVar(&opts.dashboardsPort, "dashboards-port", opts.dashboardsPort, "Port number to use for dashboards port forwarding.")
