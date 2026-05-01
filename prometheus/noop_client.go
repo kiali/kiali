@@ -15,8 +15,12 @@ var ErrPrometheusDisabled = errors.New("prometheus is disabled")
 var _ ClientInterface = (*NoopClient)(nil)
 var _ prom_v1.API = (*noopAPI)(nil)
 
-// NoopClient implements ClientInterface but returns empty results for all methods.
-// Used when Prometheus is disabled in the Kiali configuration.
+// NoopClient implements ClientInterface returning empty/zero values for all data methods.
+// Used when Prometheus is disabled in the Kiali configuration, allowing callers to
+// proceed without errors and naturally produce empty results (empty graphs, no health
+// data, etc.) rather than crashing or returning errors that would surface as UI toasts.
+// Introspection methods (GetBuildInfo, GetConfiguration, GetRuntimeinfo) return
+// ErrPrometheusDisabled so callers that check connectivity can detect the disabled state.
 type NoopClient struct {
 	api noopAPI
 }
@@ -89,8 +93,16 @@ func (n *NoopClient) GetWorkloadRequestRates(_ context.Context, _, _, _, _ strin
 	return model.Vector{}, model.Vector{}, nil
 }
 
-// noopAPI implements prom_v1.API with empty/error results.
-// Prevents nil pointer panics when callers use client.API() directly.
+// noopAPI implements prom_v1.API and is returned by NoopClient.API().
+// Prevents nil pointer panics when callers invoke client.API() directly.
+//
+// Data-read methods (Query, QueryRange, QueryExemplars, Series, LabelNames, LabelValues)
+// return empty results with nil error so callers degrade gracefully without surfacing errors.
+//
+// Admin/introspection methods (Alerts, Config, Flags, Buildinfo, Runtimeinfo,
+// CleanTombstones, DeleteSeries, Snapshot, Rules, Targets, etc.) return ErrPrometheusDisabled
+// because these are either mutating operations that must not silently no-op, or
+// introspection endpoints used to detect whether Prometheus is reachable.
 type noopAPI struct{}
 
 func (n *noopAPI) Alerts(_ context.Context) (prom_v1.AlertsResult, error) {
@@ -118,23 +130,23 @@ func (n *noopAPI) Flags(_ context.Context) (prom_v1.FlagsResult, error) {
 }
 
 func (n *noopAPI) LabelNames(_ context.Context, _ []string, _, _ time.Time, _ ...prom_v1.Option) ([]string, prom_v1.Warnings, error) {
-	return []string{}, nil, ErrPrometheusDisabled
+	return []string{}, nil, nil
 }
 
 func (n *noopAPI) LabelValues(_ context.Context, _ string, _ []string, _, _ time.Time, _ ...prom_v1.Option) (model.LabelValues, prom_v1.Warnings, error) {
-	return model.LabelValues{}, nil, ErrPrometheusDisabled
+	return model.LabelValues{}, nil, nil
 }
 
 func (n *noopAPI) Query(_ context.Context, _ string, _ time.Time, _ ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
-	return model.Vector{}, nil, ErrPrometheusDisabled
+	return model.Vector{}, nil, nil
 }
 
 func (n *noopAPI) QueryRange(_ context.Context, _ string, _ prom_v1.Range, _ ...prom_v1.Option) (model.Value, prom_v1.Warnings, error) {
-	return model.Matrix{}, nil, ErrPrometheusDisabled
+	return model.Matrix{}, nil, nil
 }
 
 func (n *noopAPI) QueryExemplars(_ context.Context, _ string, _, _ time.Time) ([]prom_v1.ExemplarQueryResult, error) {
-	return []prom_v1.ExemplarQueryResult{}, ErrPrometheusDisabled
+	return []prom_v1.ExemplarQueryResult{}, nil
 }
 
 func (n *noopAPI) Buildinfo(_ context.Context) (prom_v1.BuildinfoResult, error) {
@@ -146,7 +158,7 @@ func (n *noopAPI) Runtimeinfo(_ context.Context) (prom_v1.RuntimeinfoResult, err
 }
 
 func (n *noopAPI) Series(_ context.Context, _ []string, _, _ time.Time, _ ...prom_v1.Option) ([]model.LabelSet, prom_v1.Warnings, error) {
-	return []model.LabelSet{}, nil, ErrPrometheusDisabled
+	return []model.LabelSet{}, nil, nil
 }
 
 func (n *noopAPI) Snapshot(_ context.Context, _ bool) (prom_v1.SnapshotResult, error) {

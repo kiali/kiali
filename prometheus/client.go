@@ -270,7 +270,9 @@ func (oc *OfflineClient) GetRuntimeinfo(ctx context.Context) (prom_v1.Runtimeinf
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 
-// ClientInterface for mocks (only mocked function are necessary here)
+// ClientInterface defines the Prometheus client contract used throughout Kiali.
+// Implementations include the real Prometheus client (Client), a no-op client
+// (NoopClient) used when Prometheus is disabled, and mock clients for testing.
 type ClientInterface interface {
 	API() prom_v1.API
 	FetchDelta(ctx context.Context, metricName, labels, grouping string, queryTime time.Time, duration time.Duration) Metric

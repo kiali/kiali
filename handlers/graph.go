@@ -66,11 +66,6 @@ func GraphNamespaces(
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(r.Context(), w)
 
-		if !conf.ExternalServices.Prometheus.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "graph is unavailable because Prometheus is disabled")
-			return
-		}
-
 		// TODO: getLayer and its downstream call chain has our logger in the request context now; it just needs to extract and use it (which it does not today)
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)
@@ -96,11 +91,6 @@ func GraphNode(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer handlePanic(r.Context(), w)
-
-		if !conf.ExternalServices.Prometheus.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "graph is unavailable because Prometheus is disabled")
-			return
-		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		graph.CheckError(err)

@@ -100,11 +100,35 @@ func TestNoopClientAPIReturnsNoopAPI(t *testing.T) {
 	require.NotNil(t, api, "API() must not return nil")
 
 	ctx := context.Background()
-	_, _, err := api.Query(ctx, "up", time.Now())
-	require.Error(t, err)
-	assert.True(t, errors.Is(err, ErrPrometheusDisabled))
+	now := time.Now()
 
-	_, _, err = api.QueryRange(ctx, "up", prom_v1.Range{})
+	// Data-read methods return empty results with nil error (no toast, graceful degradation)
+	v, _, err := api.Query(ctx, "up", now)
+	assert.NoError(t, err)
+	assert.Empty(t, v)
+
+	v, _, err = api.QueryRange(ctx, "up", prom_v1.Range{})
+	assert.NoError(t, err)
+	assert.Empty(t, v)
+
+	exemplars, err := api.QueryExemplars(ctx, "up", now, now)
+	assert.NoError(t, err)
+	assert.Empty(t, exemplars)
+
+	series, _, err := api.Series(ctx, nil, now, now)
+	assert.NoError(t, err)
+	assert.Empty(t, series)
+
+	names, _, err := api.LabelNames(ctx, nil, now, now)
+	assert.NoError(t, err)
+	assert.Empty(t, names)
+
+	values, _, err := api.LabelValues(ctx, "__name__", nil, now, now)
+	assert.NoError(t, err)
+	assert.Empty(t, values)
+
+	// Admin/introspection methods still return ErrPrometheusDisabled
+	_, err = api.Buildinfo(ctx)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrPrometheusDisabled))
 }
