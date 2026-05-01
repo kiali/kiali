@@ -339,12 +339,18 @@ type PrometheusConfig struct {
 	CacheEnabled    bool              `yaml:"cache_enabled,omitempty" json:"cacheEnabled,omitempty"`       // Enable cache for Prometheus queries
 	CacheExpiration int               `yaml:"cache_expiration,omitempty" json:"cacheExpiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
-	Enabled         bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
-	HealthCheckUrl  string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
-	IsCore          bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	QueryScope      map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
-	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
-	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`
+	// DisabledReason is set at startup when Kiali auto-disables Prometheus due to an error (empty URL, transport
+	// failure, or unreachable endpoint). It is never serialized to config files or returned as part of the
+	// Prometheus config YAML -- it is an in-memory-only signal for the handlers layer to surface to the UI.
+	// When Enabled is false and DisabledReason is empty, the user explicitly disabled Prometheus in config.
+	// When Enabled is false and DisabledReason is non-empty, Kiali auto-disabled it and should warn the user.
+	DisabledReason string            `yaml:"-" json:"-"`             // in-memory only; never serialized to config files or API responses
+	Enabled        bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
+	HealthCheckUrl string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	QueryScope     map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
+	ThanosProxy    ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
+	URL            string            `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards

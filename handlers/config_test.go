@@ -103,6 +103,44 @@ func TestConfigHandlerPrometheusDisabled(t *testing.T) {
 	require.NoError(json.Unmarshal(actual, &confResp))
 
 	require.False(confResp.Prometheus.Enabled, "Prometheus should be disabled")
+	require.Empty(confResp.Prometheus.DisabledReason, "DisabledReason should be empty when user explicitly disabled Prometheus")
+}
+
+func TestConfigHandlerPrometheusAutoDisabled(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.Enabled = false
+	conf.ExternalServices.Prometheus.DisabledReason = "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0]). Falling back to disabled mode"
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, cache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.False(confResp.Prometheus.Enabled, "Prometheus should be disabled")
+	require.NotEmpty(confResp.Prometheus.DisabledReason, "DisabledReason should be set when Kiali auto-disabled Prometheus")
+	require.Equal(conf.ExternalServices.Prometheus.DisabledReason, confResp.Prometheus.DisabledReason)
 }
 
 func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {
