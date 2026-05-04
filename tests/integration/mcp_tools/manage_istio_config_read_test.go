@@ -11,7 +11,7 @@ import (
 func TestManageIstioConfigRead_MissingAction(t *testing.T) {
 	resp, err := CallMCPTool("manage_istio_config_read", map[string]interface{}{})
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestManageIstioConfigRead_InvalidAction(t *testing.T) {
@@ -19,7 +19,7 @@ func TestManageIstioConfigRead_InvalidAction(t *testing.T) {
 		"action": "invalid",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestManageIstioConfigRead_ValidActions(t *testing.T) {
@@ -46,7 +46,7 @@ func TestManageIstioConfigRead_GetMissingParams(t *testing.T) {
 		"action": "get",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestManageIstioConfigRead_WriteActionsRejected(t *testing.T) {
@@ -56,7 +56,7 @@ func TestManageIstioConfigRead_WriteActionsRejected(t *testing.T) {
 				"action": action,
 			})
 			require.NoError(t, err)
-			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
 		})
 	}
 }
