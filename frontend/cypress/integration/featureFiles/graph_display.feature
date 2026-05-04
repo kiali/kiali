@@ -425,6 +425,6 @@ Feature: Kiali Graph page - Display menu
   @smoke
   @prometheus-disabled
   Scenario: Graph shows empty state when Prometheus is disabled
-    Given prometheus is disabled
+    Given prometheus is reported as disabled in the config
     When user is at the "graph" page
     Then user sees the prometheus disabled empty graph

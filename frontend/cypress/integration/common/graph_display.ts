@@ -2,7 +2,7 @@ import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading, waitForKialiApiReady } from './transition';
 import { assertGraphReady, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
-import { enableKialiFeature, GRAPH_CACHE_CONFIG, PROMETHEUS_DISABLED_CONFIG } from './kiali-config';
+import { enableKialiFeature, GRAPH_CACHE_CONFIG } from './kiali-config';
 
 When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
@@ -564,9 +564,20 @@ Then('graph cache metrics should show at least {int} miss and {int} hits', (minM
   });
 });
 
-Given('prometheus is disabled', () => {
-  enableKialiFeature(PROMETHEUS_DISABLED_CONFIG, false);
-  waitForKialiApiReady();
+Given('prometheus is reported as disabled in the config', () => {
+  // Use cy.intercept to simulate prometheus.enabled=false in the browser.
+  // This works in any suite (local binary, operator, Helm) without requiring
+  // a server restart or CR/ConfigMap patch.
+  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+    request.reply(response => {
+      response.body['prometheus'] = {
+        ...response.body['prometheus'],
+        enabled: false,
+        disabledReason: ''
+      };
+      return response;
+    });
+  }).as('configWithPrometheusDisabled');
 });
 
 Then('user sees the prometheus disabled empty graph', () => {
