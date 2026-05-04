@@ -481,6 +481,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                 canEdit={!serverConfig.deployment.viewOnlyMode}
                 duration={this.props.duration}
                 namespace={this.props.namespace}
+                namespaceActions={this.getNamespaceActions()}
                 nsInfo={ns}
                 onSaveAnnotations={this.handleSaveAnnotations}
                 onSaveLabels={this.handleSaveLabels}

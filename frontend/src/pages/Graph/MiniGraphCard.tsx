@@ -46,6 +46,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
 import { Workload } from 'types/Workload';
+import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
+import { NamespaceActionsDropdownGroup } from 'pages/Namespaces/NamespaceActionsDropdownGroup';
 import { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -82,6 +84,7 @@ type ReduxProps = ReduxDispatchProps & {
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   namespace?: string;
+  namespaceActions?: NamespaceAction[];
   onDeleteTrafficRouting?: (key: string) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
   refreshWorkload?: () => void;
@@ -163,6 +166,14 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
+          />
+        );
+      } else if (this.props.namespaceActions && this.props.namespaceActions.length > 0) {
+        graphCardActions.push(
+          <NamespaceActionsDropdownGroup
+            actions={this.props.namespaceActions}
+            namespace={this.props.dataSource.fetchParameters.namespaces[0]?.name ?? ''}
+            onAction={() => this.onGraphActionsToggle(false)}
           />
         );
       }
