@@ -1,0 +1,17 @@
+- name: "get_mesh_traffic_graph"
+  description: "Returns service-to-service traffic topology, dependencies, and network metrics (throughput, response time, mTLS) for the specified namespaces. Use this to diagnose routing issues, latency, or find upstream/downstream dependencies."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    required: ["namespaces"]
+    properties:
+      namespaces:
+        type: "string"
+        description: "Comma-separated list of namespaces to map"
+      graphType:
+        type: "string"
+        description: "Granularity of the graph. 'app' aggregates by app name, 'versionedApp' separates by versions, 'workload' maps specific pods/deployments. Default: versionedApp."
+        enum: ["versionedApp", "app", "service", "workload"]
+      clusterName:
+        type: "string"
+        description: "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig)."

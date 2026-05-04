@@ -1,0 +1,365 @@
+{
+  "kiali": [
+    {
+      "id": "graph-empty",
+      "keywords": [
+        "graph empty",
+        "no traffic",
+        "missing nodes",
+        "namespaces",
+        "idle nodes",
+        "display options",
+        "troubleshooting"
+      ],
+      "url": "https://kiali.io/docs/faq/graph/#my-graph-is-empty",
+      "title": "Troubleshooting Empty Kiali Graph"
+    },
+    {
+      "id": "health-config",
+      "keywords": [
+        "health",
+        "status",
+        "error rates",
+        "latency thresholds",
+        "custom health",
+        "traffic health",
+        "KPI"
+      ],
+      "url": "https://kiali.io/docs/configuration/health/",
+      "title": "Kiali Health Configuration Guide"
+    },
+    {
+      "id": "distributed-tracing",
+      "keywords": [
+        "tracing",
+        "jaeger",
+        "tempo",
+        "spans",
+        "missing traces",
+        "correlation",
+        "observability",
+        "opentelemetry"
+      ],
+      "url": "https://kiali.io/docs/features/tracing/",
+      "title": "Kiali Distributed Tracing Integration"
+    },
+    {
+      "id": "validation-errors",
+      "keywords": [
+        "validation",
+        "config error",
+        "yaml check",
+        "istio config",
+        "semantic validation",
+        "kia0001",
+        "kia0002"
+      ],
+      "url": "https://kiali.io/docs/features/validations/",
+      "title": "Kiali Configuration Validations"
+    },
+    {
+      "id": "installation-guide",
+      "keywords": [
+        "installation",
+        "helm",
+        "operator",
+        "deployment",
+        "setup",
+        "kiali server",
+        "kiali operator",
+        "prerequisites"
+      ],
+      "url": "https://kiali.io/docs/installation/installation-guide/",
+      "title": "Kiali Installation Guide"
+    },
+    {
+      "id": "auth-strategies",
+      "keywords": [
+        "authentication",
+        "login",
+        "openid",
+        "ldap",
+        "token",
+        "openshift",
+        "strategy",
+        "security",
+        "rbac"
+      ],
+      "url": "https://kiali.io/docs/configuration/authentication/",
+      "title": "Kiali Authentication Strategies"
+    },
+    {
+      "id": "istio-wizards",
+      "keywords": [
+        "wizards",
+        "actions",
+        "routing wizard",
+        "fault injection",
+        "suspend traffic",
+        "request routing",
+        "ui actions",
+        "code generation"
+      ],
+      "url": "https://kiali.io/docs/features/wizards/",
+      "title": "Kiali Istio Wizards"
+    },
+    {
+      "id": "multi-cluster",
+      "keywords": [
+        "multi-cluster",
+        "mesh federation",
+        "primary-remote",
+        "unified",
+        "deployment",
+        "cross-cluster"
+      ],
+      "url": "https://kiali.io/docs/configuration/multi-cluster/",
+      "title": "Kiali Multi-Cluster Configuration"
+    },
+    {
+      "id": "kiali-debugging",
+      "keywords": [
+        "debugging",
+        "logs",
+        "log level",
+        "verbose",
+        "profiling",
+        "troubleshooting kiali",
+        "operator logs"
+      ],
+      "url": "https://kiali.io/docs/configuration/debugging-kiali/",
+      "title": "Debugging Kiali Server"
+    },
+    {
+      "id": "prometheus-tuning",
+      "keywords": [
+        "prometheus",
+        "metrics",
+        "tsdb",
+        "caching",
+        "performance",
+        "tuning",
+        "scrape interval"
+      ],
+      "url": "https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/",
+      "title": "Kiali Prometheus Configuration"
+    }
+  ],
+  "istio": [
+    {
+      "id": "mtls-status",
+      "keywords": [
+        "mtls",
+        "lock icon",
+        "security",
+        "encryption",
+        "peerauthentication",
+        "strict",
+        "permissive",
+        "tls"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/",
+      "title": "Istio Mutual TLS Migration"
+    },
+    {
+      "id": "traffic-shifting",
+      "keywords": [
+        "canary",
+        "weight",
+        "traffic split",
+        "blue-green",
+        "virtualservice",
+        "subset",
+        "routing",
+        "deployment"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/traffic-shifting/",
+      "title": "Istio Traffic Shifting (Canary Rollouts)"
+    },
+    {
+      "id": "circuit-breaking",
+      "keywords": [
+        "circuit breaker",
+        "outlier detection",
+        "resilience",
+        "connection pool",
+        "max connections",
+        "ejection",
+        "failure recovery"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/",
+      "title": "Istio Circuit Breaking Fundamentals"
+    },
+    {
+      "id": "authorization-policy",
+      "keywords": [
+        "rbac",
+        "allow",
+        "deny",
+        "access control",
+        "authz",
+        "jwt",
+        "ns-level policy",
+        "security"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/security/authorization/authz-http/",
+      "title": "Istio Authorization Policies"
+    },
+    {
+      "id": "ingress-gateway",
+      "keywords": [
+        "ingress",
+        "gateway",
+        "load balancer",
+        "external traffic",
+        "hosts",
+        "tls termination",
+        "cert-manager"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/",
+      "title": "Istio Ingress Gateway Setup"
+    },
+    {
+      "id": "virtual-service-ref",
+      "keywords": [
+        "virtual service",
+        "routing rules",
+        "match conditions",
+        "retries",
+        "timeouts",
+        "redirects",
+        "networking",
+        "crd"
+      ],
+      "url": "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "title": "Istio VirtualService Reference"
+    },
+    {
+      "id": "destination-rule-ref",
+      "keywords": [
+        "destination rule",
+        "subsets",
+        "load balancer",
+        "traffic policy",
+        "sticky sessions",
+        "connection pool",
+        "crd"
+      ],
+      "url": "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "title": "Istio DestinationRule Reference"
+    },
+    {
+      "id": "sidecar-injection",
+      "keywords": [
+        "sidecar",
+        "injection",
+        "envoy",
+        "proxy",
+        "automatic injection",
+        "namespace label",
+        "manual injection",
+        "pod spec"
+      ],
+      "url": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "title": "Istio Sidecar Injection"
+    },
+    {
+      "id": "istioctl-analyze",
+      "keywords": [
+        "debugging",
+        "troubleshooting",
+        "analyze",
+        "cli",
+        "validation",
+        "configuration check",
+        "status",
+        "ops"
+      ],
+      "url": "https://istio.io/latest/docs/ops/diagnostic-tools/istioctl-analyze/",
+      "title": "Diagnose Configuration with Istioctl Analyze"
+    },
+    {
+      "id": "request-timeouts",
+      "keywords": [
+        "timeout",
+        "latency",
+        "delay",
+        "network failure",
+        "virtualservice",
+        "resilience",
+        "http request"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/request-timeouts/",
+      "title": "Configuring Request Timeouts"
+    },
+    {
+      "id": "fault-injection",
+      "keywords": [
+        "chaos testing",
+        "fault injection",
+        "abort",
+        "delay",
+        "testing",
+        "resilience",
+        "http fault"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/fault-injection/",
+      "title": "Istio Fault Injection"
+    },
+    {
+      "id": "gateway-api",
+      "keywords": [
+        "gateway api",
+        "kubernetes gateway",
+        "httproute",
+        "modern ingress",
+        "standard",
+        "api"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/",
+      "title": "Istio Kubernetes Gateway API"
+    },
+    {
+      "id": "traffic-mirroring",
+      "keywords": [
+        "mirroring",
+        "shadow traffic",
+        "duplication",
+        "testing",
+        "production traffic",
+        "compare",
+        "observability"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/traffic-management/mirroring/",
+      "title": "Istio Traffic Mirroring"
+    },
+    {
+      "id": "jwt-auth",
+      "keywords": [
+        "jwt",
+        "authentication",
+        "token",
+        "request principal",
+        "security",
+        "identity",
+        "oauth2",
+        "openid"
+      ],
+      "url": "https://istio.io/latest/docs/tasks/security/authorization/authz-jwt/",
+      "title": "JWT Access Control"
+    },
+    {
+      "id": "workload-entry",
+      "keywords": [
+        "vm",
+        "virtual machine",
+        "bare metal",
+        "workload entry",
+        "external service",
+        "mesh expansion"
+      ],
+      "url": "https://istio.io/latest/docs/reference/config/networking/workload-entry/",
+      "title": "Istio WorkloadEntry Reference"
+    }
+  ]
+}

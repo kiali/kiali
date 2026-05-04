@@ -1,0 +1,11 @@
+- name: "get_trace_details"
+  description: "Fetches a single distributed trace by trace_id and returns its call hierarchy (service tree with duration, status, and nested calls). Use this after list_traces to drill into a specific trace."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      traceId:
+        type: "string"
+        description: "Trace ID to fetch (required). Obtain from list_traces list response."
+    required:
+    - traceId

@@ -10,37 +10,70 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
-	"github.com/kiali/kiali/ai/mcp/get_citations"
-	"github.com/kiali/kiali/ai/mcp/get_mesh_graph"
-	"github.com/kiali/kiali/ai/mcp/get_resource_detail"
-	"github.com/kiali/kiali/ai/mcp/get_traces"
+	"github.com/kiali/kiali/ai/mcp/get_logs"
+	"github.com/kiali/kiali/ai/mcp/get_mesh_status"
+	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
+	"github.com/kiali/kiali/ai/mcp/get_metrics"
+	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
+	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
+	"github.com/kiali/kiali/ai/mcp/get_trace_details"
+	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
+	"github.com/kiali/kiali/ai/mcp/list_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
-	"github.com/kiali/kiali/business"
-	"github.com/kiali/kiali/cache"
-	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/istio"
-	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/ai/mcp/manage_istio_config_read"
+	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/log"
-	"github.com/kiali/kiali/perses"
-	"github.com/kiali/kiali/prometheus"
 )
 
 //go:embed tools
 var toolsFS embed.FS
 
-var DefaultToolHandlers = map[string]ToolDef{}
+var (
+	// MCPToolHandlers contains tools with toolset including "mcp" (full MCP).
+	MCPToolHandlers = map[string]ToolDef{}
+	// DefaultToolHandlers contains tools with toolset including "default" (chatbot UI; also used for POST /api/chat/mcp when HeaderKialiUI is set).
+	// The two sets are independent; a tool can be in one or both via the toolset field in its YAML.
+	DefaultToolHandlers = map[string]ToolDef{}
+)
 
 var ExcludedToolNames = map[string]bool{
-	"get_citations": true,
-	"get_action_ui": true,
+	"get_referenced_docs": true,
+	"get_action_ui":       true,
 }
 
+// TraceToolNames are MCP tools that call the mesh tracing backend (Jaeger/Tempo).
+// They must not be offered or executed when external_services.tracing.enabled is false.
+var TraceToolNames = map[string]struct{}{
+	"list_traces":       {},
+	"get_trace_details": {},
+}
+
+func IsTraceTool(name string) bool {
+	_, ok := TraceToolNames[name]
+	return ok
+}
+
+var (
+	loadToolsOnce sync.Once
+	loadToolsErr  error
+)
+
 func LoadTools() error {
+	loadToolsOnce.Do(func() {
+		loadToolsErr = loadToolsImpl()
+	})
+	return loadToolsErr
+}
+
+func loadToolsImpl() error {
+	if len(MCPToolHandlers) > 0 || len(DefaultToolHandlers) > 0 {
+		return nil
+	}
 	entries, err := fs.ReadDir(toolsFS, "tools")
 	if err != nil {
 		return fmt.Errorf("read tools directory: %w", err)
@@ -61,11 +94,21 @@ func LoadTools() error {
 		if err != nil {
 			return fmt.Errorf("load tool definition %s: %w", name, err)
 		}
-		DefaultToolHandlers[definition.Name] = definition
+		for _, set := range definition.Toolset {
+			switch set {
+			case "mcp":
+				MCPToolHandlers[definition.Name] = definition
+			case "default":
+				DefaultToolHandlers[definition.Name] = definition
+			}
+		}
 	}
-	names := slices.Collect(maps.Keys(DefaultToolHandlers))
-	slices.Sort(names)
-	log.Infof("[AI]Loaded %d tools: %s", len(names), strings.Join(names, ", "))
+	mcpNames := slices.Collect(maps.Keys(MCPToolHandlers))
+	slices.Sort(mcpNames)
+	log.Infof("[AI]Loaded %d MCP tools: %s", len(mcpNames), strings.Join(mcpNames, ", "))
+	defaultNames := slices.Collect(maps.Keys(DefaultToolHandlers))
+	slices.Sort(defaultNames)
+	log.Infof("[AI]Default (chatbot) toolset: %d tools: %s", len(defaultNames), strings.Join(defaultNames, ", "))
 
 	return nil
 }
@@ -108,20 +151,32 @@ func (t ToolDef) GetDefinition() map[string]interface{} {
 	return t.InputSchema
 }
 
-func (t ToolDef) Call(r *http.Request, args map[string]interface{}, business *business.Layer, prom prometheus.ClientInterface, clientFactory kubernetes.ClientFactory, kialiCache cache.KialiCache, conf *config.Config, grafana *grafana.Service, perses *perses.Service, discovery *istio.Discovery) (interface{}, int) {
+func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	switch t.Name {
-	case "get_mesh_graph":
-		return get_mesh_graph.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
-	case "get_resource_detail":
-		return get_resource_detail.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
-	case "get_traces":
-		return get_traces.Execute(r, args, business, prom, clientFactory, kialiCache, conf, grafana, perses, discovery)
+	case "get_mesh_traffic_graph":
+		return get_mesh_traffic_graph.Execute(kialiInterface, args)
+	case "list_or_get_resources":
+		return list_or_get_resources.Execute(kialiInterface, args)
+	case "get_mesh_status":
+		return get_mesh_status.Execute(kialiInterface, args)
+	case "list_traces":
+		return list_traces.Execute(kialiInterface, args)
+	case "get_trace_details":
+		return get_trace_details.Execute(kialiInterface, args)
+	case "get_logs":
+		return get_logs.Execute(kialiInterface, args)
+	case "get_pod_performance":
+		return get_pod_performance.Execute(kialiInterface, args)
 	case "manage_istio_config":
-		return manage_istio_config.Execute(r, args, business, conf)
+		return manage_istio_config.Execute(kialiInterface, args)
+	case "manage_istio_config_read":
+		return manage_istio_config_read.Execute(kialiInterface, args)
 	case "get_action_ui":
-		return get_action_ui.Execute(r, args, business, conf)
-	case "get_citations":
-		return get_citations.Execute(r, args, business, conf)
+		return get_action_ui.Execute(kialiInterface, args)
+	case "get_referenced_docs":
+		return get_referenced_docs.Execute(kialiInterface, args)
+	case "get_metrics":
+		return get_metrics.Execute(kialiInterface, args)
 	default:
 		return nil, http.StatusNotFound
 	}
