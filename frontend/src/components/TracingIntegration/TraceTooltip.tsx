@@ -12,26 +12,45 @@ import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 
-const flyoutWidth = 280;
-const flyoutHeight = 130;
+const flyoutWidth = 300;
+const flyoutHeight = 160;
 const flyoutMargin = 10;
 const innerWidth = flyoutWidth - 2 * flyoutMargin;
 const innerHeight = flyoutHeight - 2 * flyoutMargin;
 
 const tooltipStyle = kialiStyle({
   color: PFColors.ColorLight100,
+  backgroundColor: PFColors.Color100,
+  borderRadius: '4px',
+  padding: '10px',
   width: innerWidth,
-  height: innerHeight
+  height: innerHeight,
+  fontSize: '12px',
+  lineHeight: '1.4'
 });
 
 const titleStyle = kialiStyle({
   whiteSpace: 'nowrap',
   overflow: 'hidden',
-  textOverflow: 'ellipsis'
+  textOverflow: 'ellipsis',
+  fontWeight: 'bold',
+  marginBottom: '8px'
 });
 
-const contentStyle = kialiStyle({ width: '100%', height: '100%' });
-const leftStyle = kialiStyle({ width: '35%', height: '100%', float: 'left' });
+const contentStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center'
+});
+
+const leftStyle = kialiStyle({
+  width: '80px',
+  marginRight: '12px',
+  flexShrink: 0
+});
+
+const rightStyle = kialiStyle({
+  lineHeight: '1.6'
+});
 
 type LabelProps = ChartLabelProps & {
   isStatsMatrixComplete: boolean;
@@ -51,7 +70,6 @@ export class TraceLabel extends React.Component<LabelProps> {
       <foreignObject width={innerWidth} height={innerHeight} x={left} y={top}>
         <div className={tooltipStyle}>
           <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
-          <br />
           <div className={contentStyle}>
             <div className={leftStyle}>
               {hasStats ? (
@@ -62,12 +80,13 @@ export class TraceLabel extends React.Component<LabelProps> {
                 <Spinner size="sm" />
               )}
             </div>
-            <div>
-              {formatDuration(this.props.trace.duration)}
-              <br />
-              {`${pluralize(this.props.trace.spans.length, 'span')}, avg=${
-                avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'
-              }`}
+            <div className={rightStyle}>
+              <div>{formatDuration(this.props.trace.duration)}</div>
+              <div>
+                {`${pluralize(this.props.trace.spans.length, 'span')}, avg=${
+                  avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'
+                }`}
+              </div>
             </div>
           </div>
         </div>
@@ -98,7 +117,7 @@ export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineI
           {...this.props}
           flyoutWidth={flyoutWidth}
           flyoutHeight={flyoutHeight}
-          flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6 }} />}
+          flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.9 }} />}
           labelComponent={<TraceLabelContainer trace={trace} />}
         />
       );
