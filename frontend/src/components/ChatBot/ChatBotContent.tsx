@@ -16,7 +16,6 @@ type ChatBotContentProps = {
   addBotMessage: (content: string) => void;
   alertMessage?: AlertMessage;
   botMessage: (response: ChatResponse | string) => ExtendedMessage;
-  context: any;
   displayMode: ChatbotDisplayMode;
   handleSend: (query: string | number, context: any, title?: string) => void;
   isLoading: boolean;
@@ -34,8 +33,7 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
   isLoading,
   displayMode,
   messages,
-  botMessage,
-  context
+  botMessage
 }) => {
   const { pathname } = useLocation();
   const category = pathname.split('/')[1];
@@ -48,10 +46,10 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
       (DataPrompts[category] || []).map(prompt => ({
         title: prompt.title,
         message: prompt.message,
-        onClick: () => handleSend(prompt.query, context, prompt.title)
+        onClick: () => handleSend(prompt.query, prompt.title)
       }))
     );
-  }, [category, context, handleSend]);
+  }, [category, handleSend]);
 
   useEffect(() => {
     scrollToBottom();
@@ -91,7 +89,6 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
               scrollToHere={scrollToHere}
               innerRef={messagesEndRef}
               displayMode={displayMode}
-              context={context}
               onSendMessage={handleSend}
               setAlertMessage={setAlertMessage}
             />

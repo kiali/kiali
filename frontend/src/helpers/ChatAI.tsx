@@ -4,7 +4,7 @@ import { KialiDispatch } from 'types/Redux';
 
 export const setAIContext = (dispatch: KialiDispatch, pageDescription: string) => {
   const state = store.getState();
-  if (!state.chatAi.enabled) {
+  if (!state.aiChat.enabled) {
     return;
   }
 

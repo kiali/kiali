@@ -10,8 +10,8 @@ import (
 
 // AIProvider exposes a minimal interface to send chat requests.
 type AIProvider interface {
-	InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest)
-	ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage
+	InitializeConversation(ptr *types.Conversation, query string)
+	ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int)
 	GetToolDefinitions() interface{}
 	TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}

@@ -26,10 +26,9 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 	}
 
 	ctx := kialiInterface.Request.Context()
-	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
-	p.InitializeConversation(&conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
 
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
+	conversationWithContext := providers.AddContextToConversation(ptr.Conversation, req)
 	modelConversation := p.ConversationToProvider(conversationWithContext).(anthropicConversation)
 	toolDefs := p.GetToolDefinitions().([]anthropic.ToolUnionParam)
 	response := &types.AIResponse{}
@@ -104,7 +103,7 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		processResult := providers.ProcessToolResults(toolResults, conversation)
+		processResult := providers.ProcessToolResults(toolResults, ptr.Conversation)
 		if processResult.Response.Error != "" {
 			return processResult.Response, http.StatusInternalServerError
 		}
@@ -114,7 +113,6 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 		if len(processResult.Response.ReferencedDocs) > 0 {
 			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
 		}
-		conversation = processResult.Conversation
 
 		toolResultBlocks := make([]anthropic.ContentBlockParamUnion, 0, len(toolResults))
 		for i, toolResult := range toolResults {
@@ -143,15 +141,17 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 	}
 
 	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
+		ptr.Mu.Lock()
+		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: response.Answer,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",
 		})
+		ptr.Mu.Unlock()
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 
 	return response, http.StatusOK
@@ -186,13 +186,14 @@ func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]m
 	return tools, toolNames, nil
 }
 
-func (p *AnthropicProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
-	if conversation == nil {
+func (p *AnthropicProvider) InitializeConversation(ptr *types.Conversation, query string) {
+	if ptr == nil {
 		return
 	}
+	isNewConversation := len(ptr.Conversation) == 0
 
-	if len(*conversation) == 0 {
-		*conversation = []types.ConversationMessage{{
+	if isNewConversation {
+		ptr.Conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
 			Name:    "",
 			Param:   nil,
@@ -200,8 +201,8 @@ func (p *AnthropicProvider) InitializeConversation(conversation *[]types.Convers
 		}}
 	}
 
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: req.Query,
+	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+		Content: query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",
@@ -254,13 +255,13 @@ func (p *AnthropicProvider) ProviderToConversation(providerMessage interface{}) 
 	}
 }
 
-func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	if len(conversation) < reduceThreshold {
-		return conversation
+func (p *AnthropicProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
+	if len(ptr.Conversation) < reduceThreshold {
+		return
 	}
 
 	anchorIndex := 0
-	for i, msg := range conversation {
+	for i, msg := range ptr.Conversation {
 		if i < 2 && msg.Role == "system" {
 			anchorIndex = i
 		} else {
@@ -269,14 +270,14 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 	}
 
 	keepCount := 4
-	if len(conversation)-anchorIndex <= keepCount {
-		return conversation
+	if len(ptr.Conversation)-anchorIndex <= keepCount {
+		return
 	}
 
-	splitPoint := len(conversation) - keepCount
-	instructions := conversation[:anchorIndex+1]
-	toSummarize := conversation[anchorIndex+1 : splitPoint]
-	recentMessages := conversation[splitPoint:]
+	splitPoint := len(ptr.Conversation) - keepCount
+	instructions := ptr.Conversation[:anchorIndex+1]
+	toSummarize := ptr.Conversation[anchorIndex+1 : splitPoint]
+	recentMessages := ptr.Conversation[splitPoint:]
 
 	resp, err := p.client.Messages.New(ctx, anthropic.MessageNewParams{
 		MaxTokens: reduceConversationMaxTokens,
@@ -290,12 +291,12 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 	})
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to reduce conversation: %v", err)
-		return conversation
+		return
 	}
 
 	summary := anthropicTextContent(resp.Content)
 	if summary == "" {
-		return conversation
+		return
 	}
 
 	reduced := append([]types.ConversationMessage{}, instructions...)
@@ -306,7 +307,9 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 		Role:    "system",
 	})
 	reduced = append(reduced, recentMessages...)
-	return reduced
+	ptr.Mu.Lock()
+	ptr.Conversation = reduced
+	ptr.Mu.Unlock()
 }
 
 func anthropicHasToolUse(content []anthropic.ContentBlockUnion) bool {

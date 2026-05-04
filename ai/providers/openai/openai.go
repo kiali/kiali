@@ -15,20 +15,15 @@ import (
 )
 
 func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
-	if req.ConversationID == "" {
-		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
-	}
-
 	if req.Query == "" {
 		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
 	ctx := kialiInterface.Request.Context()
-	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
-	p.InitializeConversation(&conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
 
 	// Create a temporary conversation with context for the API call
 	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
+	conversationWithContext := providers.AddContextToConversation(ptr.Conversation, req)
 
 	log.Debugf("[Chat AI] Conversation sent to OpenAI (len=%d):", len(conversationWithContext))
 	for i, msg := range conversationWithContext {
@@ -45,6 +40,7 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 	toolDefs := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
 
 	response := &types.AIResponse{}
+	response.ConversationID = req.ConversationID
 
 	const maxToolIterations = 5
 	for iter := 0; iter < maxToolIterations; iter++ {
@@ -100,7 +96,7 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 		}
 
 		// Process tool results using standardized logic (accumulate actions/referenced_docs).
-		processResult := providers.ProcessToolResults(toolResults, conversation)
+		processResult := providers.ProcessToolResults(toolResults, ptr.Conversation)
 		if processResult.Response.Error != "" {
 			return processResult.Response, http.StatusInternalServerError
 		}
@@ -135,27 +131,29 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
 	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
+		ptr.Mu.Lock()
+		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: response.Answer,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",
 		})
+		ptr.Mu.Unlock()
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 	return response, http.StatusOK
 }
 
-func (p *OpenAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
-	if conversation == nil {
+func (p *OpenAIProvider) InitializeConversation(ptr *types.Conversation, query string) {
+	if ptr == nil {
 		return
 	}
-	isNewConversation := len(*conversation) == 0
+	isNewConversation := len(ptr.Conversation) == 0
 	if isNewConversation {
 		// Initialize base system instruction when empty.
-		*conversation = []types.ConversationMessage{{
+		ptr.Conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
 			Name:    "",
 			Param:   openai.SystemMessage(types.SystemInstruction).GetContent().AsAny(),
@@ -164,18 +162,18 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 		}
 	}
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: req.Query,
+	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+		Content: query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",
 	})
 }
 
-func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(conversation, reduceThreshold, 4)
+func (p *OpenAIProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
+	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(ptr.Conversation, reduceThreshold, 4)
 	if !ok {
-		return conversation
+		return
 	}
 
 	resp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
@@ -187,12 +185,12 @@ func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []
 	})
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to reduce conversation: %v", err)
-		return conversation // Return original if summary fails
+		return // Return original if summary fails
 	}
 
 	if len(resp.Choices) == 0 {
 		log.Warningf("[Chat AI] OpenAI returned no choices during conversation reduction")
-		return conversation
+		return
 	}
 
 	summary := resp.Choices[0].Message.Content
@@ -207,7 +205,9 @@ func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []
 		Role:    "system",
 	})
 	reduced = append(reduced, recentMessages...)
-	return reduced
+	ptr.Mu.Lock()
+	ptr.Conversation = reduced
+	ptr.Mu.Unlock()
 }
 
 func (p *OpenAIProvider) ProviderToConversation(providerMessage interface{}) types.ConversationMessage {

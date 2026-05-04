@@ -9,6 +9,7 @@ const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model:
   const query = chatRequest.query.trim();
 
   return {
+    conversation_id: '1234567890',
     answer: query
       ? `Mock response for "${query}". Ask me about namespaces, workloads, or traffic.`
       : 'Mock response ready. Ask me about namespaces, workloads, or traffic.',
@@ -39,6 +40,7 @@ const buildChatResponse = (chatRequest: ChatRequest, provider: string, model: st
   }
 
   return {
+    conversation_id: '1234567890',
     ...requestedConversation,
     answer: typeof requestedConversation.answer === 'string' ? requestedConversation.answer : '',
     actions: requestedConversation.actions ?? [],

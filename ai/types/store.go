@@ -5,6 +5,7 @@ type AIStore interface {
 	Enabled() bool
 	ReduceWithAI() bool
 	ReduceThreshold() int
+	GenerateConversationID() string
 	GetConversation(sessionID string, conversationID string) (*Conversation, bool)
 	SetConversation(sessionID string, conversationID string, conversation *Conversation) error
 	GetConversationIDs(sessionID string) []string

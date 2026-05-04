@@ -25,6 +25,7 @@ type AIRequest struct {
 
 // AIResponse represents the provider reply (shape aligns with frontend expectations).
 type AIResponse struct {
+	ConversationID string                 `json:"conversation_id,omitempty"`
 	Actions        []get_action_ui.Action `json:"actions,omitempty"`
 	Answer         string                 `json:"answer"`
 	ReferencedDocs []ReferencedDoc        `json:"referenced_docs,omitempty"`

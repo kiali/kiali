@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/types"
@@ -39,11 +40,14 @@ func NewContextCanceledResponse(err error) (*types.AIResponse, int) {
 	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
 }
 
-func CleanConversation(conversation *[]types.ConversationMessage) {
+func CleanConversation(ptr *types.Conversation) {
+	if ptr == nil {
+		return
+	}
 	// List of tool names that are not useful to store in conversation history
 
-	cleaned := make([]types.ConversationMessage, 0, len(*conversation))
-	for _, msg := range *conversation {
+	cleaned := make([]types.ConversationMessage, 0, len(ptr.Conversation))
+	for _, msg := range ptr.Conversation {
 		// Remove tool messages where the tool name is in the exclusion list
 		if msg.Role == "tool" && mcp.ExcludedToolNames[msg.Name] {
 			log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
@@ -70,52 +74,64 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		}
 		cleaned = append(cleaned, msg)
 	}
-	*conversation = cleaned
+	ptr.Mu.Lock()
+	ptr.LastAccessed = time.Now()
+	ptr.Conversation = cleaned
+	ptr.Mu.Unlock()
 }
 
-func GetStoreConversation(r *http.Request, req types.AIRequest, aiStore types.AIStore) (*types.Conversation, string, []types.ConversationMessage) {
-	var conversation []types.ConversationMessage
-	var ptr *types.Conversation
+func GetStoreConversation(
+	r *http.Request,
+	req *types.AIRequest,
+	aiStore types.AIStore,
+	initializeConversation func(*types.Conversation, string),
+) (*types.Conversation, string) {
+	ptr := &types.Conversation{}
 	sessionID := authentication.GetSessionIDContext(r.Context())
+	if req.ConversationID == "" {
+		req.ConversationID = aiStore.GenerateConversationID()
+	}
 	if aiStore.Enabled() {
 		log.Debugf("Getting conversation for session ID: %s", sessionID)
 		var found bool
-		ptr, found = aiStore.GetConversation(sessionID, req.ConversationID)
-		if found && ptr != nil {
+		storedConversation, found := aiStore.GetConversation(sessionID, req.ConversationID)
+		if found && storedConversation != nil {
 			log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
-			conversation = ptr.Conversation
+			// Work on a copy to avoid mutating store-backed slice before persistence.
+			ptr.Conversation = append([]types.ConversationMessage(nil), storedConversation.Conversation...)
+			ptr.LastAccessed = storedConversation.LastAccessed
+			ptr.EstimatedMB = storedConversation.EstimatedMB
 		} else {
 			log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
-			// Create a new Conversation struct for storage later
-			ptr = &types.Conversation{}
+		}
+		if initializeConversation != nil {
+			initializeConversation(ptr, req.Query)
 		}
 	}
-	return ptr, sessionID, conversation
+
+	return ptr, sessionID
 }
 
-func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest, conversation []types.ConversationMessage) {
+func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest) {
 	if aiStore.Enabled() {
 		if err := ctx.Err(); err != nil {
 			log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 			return
 		}
 		// Clean conversation by removing tool messages that are not useful for storage
-		CleanConversation(&conversation)
+		CleanConversation(ptr)
 		if aiStore.ReduceWithAI() {
 			if err := ctx.Err(); err != nil {
 				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 				return
 			}
 			// Reduce the conversation with AI
-			conversation = aiProvider.ReduceConversation(ctx, conversation, aiStore.ReduceThreshold())
+			aiProvider.ReduceConversation(ctx, ptr, aiStore.ReduceThreshold())
 			if err := ctx.Err(); err != nil {
 				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 				return
 			}
 		}
-		ptr.Mu.Lock()
-		ptr.Conversation = conversation
-		ptr.Mu.Unlock()
 		err := aiStore.SetConversation(sessionID, req.ConversationID, ptr)
 		if err != nil {
 			log.Errorf("[Chat AI] Failed to set conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)

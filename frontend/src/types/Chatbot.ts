@@ -33,6 +33,7 @@ export type Action = {
 };
 
 type LLMResponse = {
+  conversation_id: string;
   actions: Action[];
   answer: string;
   error?: string;

@@ -481,7 +481,7 @@ func TestGetStoreConversation_DisabledStore(t *testing.T) {
 	store := &fakeStore{enabled: false}
 	req := types.AIRequest{ConversationID: "c1", Query: "hello"}
 
-	ptr, sessionID, conversation := GetStoreConversation(r, req, store)
+	ptr, sessionID, conversation := GetStoreConversation(r, &req, store, nil)
 	assert.Nil(t, ptr, "ptr should be nil when store is disabled")
 	assert.Equal(t, "test-session", sessionID)
 	assert.Nil(t, conversation, "conversation should be nil when store is disabled")
@@ -495,7 +495,7 @@ func TestGetStoreConversation_EnabledStoreNewConversation(t *testing.T) {
 	store := &fakeStore{enabled: true, conversations: map[string]*types.Conversation{}}
 	req := types.AIRequest{ConversationID: "new-conv", Query: "hello"}
 
-	ptr, sessionID, conversation := GetStoreConversation(r, req, store)
+	ptr, sessionID, conversation := GetStoreConversation(r, &req, store, nil)
 	assert.NotNil(t, ptr, "ptr should be created for new conversation")
 	assert.Equal(t, "test-session", sessionID)
 	assert.Nil(t, conversation, "conversation should be empty for new conversation")

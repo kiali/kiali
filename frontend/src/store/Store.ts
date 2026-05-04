@@ -182,6 +182,7 @@ export interface TourState {
 
 export interface ChatAIState {
   context: any;
+  conversationID: string;
   defaultProvider: string;
   enabled: boolean;
   providers: ProviderAI[];
@@ -190,10 +191,10 @@ export interface ChatAIState {
 export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
-  /** Page Settings */
-  authentication: LoginState;
   /** Chatbot Settings */
-  chatAi: ChatAIState;
+  aiChat: ChatAIState;
+  /** Page Settings */
+  authentication: LoginState;  
   clusters: ClusterState;
   globalState: GlobalState;
   graph: GraphState;

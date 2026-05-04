@@ -16,10 +16,6 @@ import (
 )
 
 func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
-	if req.ConversationID == "" {
-		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
-	}
-
 	if req.Query == "" {
 		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
 	}
@@ -31,14 +27,12 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 		}
 		p.client = client
 	}
-	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
+	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
 	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
-
-	p.InitializeConversation(&conversation, req)
 
 	// Create a temporary conversation with context for the API call
 	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
+	conversationWithContext := providers.AddContextToConversation(ptr.Conversation, req)
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
@@ -94,7 +88,7 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 			return providers.NewContextCanceledResponse(err)
 		}
 
-		processResult := providers.ProcessToolResults(toolResults, conversation)
+		processResult := providers.ProcessToolResults(toolResults, ptr.Conversation)
 		if processResult.Response.Error != "" {
 			return processResult.Response, http.StatusInternalServerError
 		}
@@ -104,7 +98,6 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 		if len(processResult.Response.ReferencedDocs) > 0 {
 			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
 		}
-		conversation = processResult.Conversation
 
 		// Send function responses back to the chat (all tool calls in a single turn).
 		parts := make([]genai.Part, 0, len(toolResults))
@@ -140,15 +133,17 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 	// Add the final assistant response to conversation (without tool call metadata)
 	// This keeps conversational context without confusing future tool selections
 	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
+		ptr.Mu.Lock()
+		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: response.Answer,
 			Name:    "",
 			Param:   nil,
 			Role:    "assistant",
 		})
+		ptr.Mu.Unlock()
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
 
 	return response, http.StatusOK
@@ -172,14 +167,14 @@ func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mc
 	return tools, toolNames, nil
 }
 
-func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
-	if conversation == nil {
+func (p *GoogleAIProvider) InitializeConversation(ptr *types.Conversation, query string) {
+	if ptr == nil {
 		return
 	}
-	isNewConversation := len(*conversation) == 0
+	isNewConversation := len(ptr.Conversation) == 0
 	if isNewConversation {
 		// Initialize base system instruction when empty.
-		*conversation = []types.ConversationMessage{{
+		ptr.Conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
 			Name:    "",
 			Role:    "system",
@@ -187,8 +182,8 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 		}
 	}
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: req.Query,
+	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+		Content: query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",
@@ -249,16 +244,16 @@ func (p *GoogleAIProvider) ProviderToConversation(providerMessage interface{}) t
 	}
 }
 
-func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(conversation, reduceThreshold, 4)
+func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
+	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(ptr.Conversation, reduceThreshold, 4)
 	if !ok {
-		return conversation
+		return
 	}
 
 	chat, err := p.client.Chats.Create(ctx, p.model, &genai.GenerateContentConfig{}, nil)
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to create chat in reduce conversation: %v", err)
-		return conversation // Return original if chat creation fails
+		return // Return original if chat creation fails
 	}
 	resp, err := chat.SendMessage(ctx,
 		genai.Part{Text: "You are a technical assistant for Kiali (Istio Service Mesh). Summarize the preceding troubleshooting steps, tool outputs, and user intents into a concise technical summary. Preserve key findings like pod names, error codes, or metrics."},
@@ -266,7 +261,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 	)
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to send message in reduce conversation: %v", err)
-		return conversation // Return original if message sending fails
+		return // Return original if message sending fails
 	}
 
 	summary := resp.Text()
@@ -281,5 +276,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 		Role:    "system",
 	})
 	reduced = append(reduced, recentMessages...)
-	return reduced
+	ptr.Mu.Lock()
+	ptr.Conversation = reduced
+	ptr.Mu.Unlock()
 }

@@ -38,6 +38,10 @@ func (f *fakeStore) ReduceThreshold() int {
 	return f.reduceThresh
 }
 
+func (f *fakeStore) GenerateConversationID() string {
+	return "generated-conv-id"
+}
+
 func (f *fakeStore) GetConversation(sessionID string, conversationID string) (*types.Conversation, bool) {
 	f.getCalls++
 	key := fmt.Sprintf("%s:%s", sessionID, conversationID)
@@ -67,11 +71,20 @@ type fakeProvider struct {
 	reduceCalled bool
 }
 
-func (f *fakeProvider) InitializeConversation(_ *[]types.ConversationMessage, _ types.AIRequest) {}
+func (f *fakeProvider) InitializeConversation(_ *types.Conversation, _ string) {}
 
-func (f *fakeProvider) ReduceConversation(_ context.Context, _ []types.ConversationMessage, _ int) []types.ConversationMessage {
+func (f *fakeProvider) ReduceConversation(_ context.Context, ptr *types.Conversation, reduceThreshold int) {
 	f.reduceCalled = true
-	return []types.ConversationMessage{{Content: "reduced", Role: "system"}}
+	if ptr == nil {
+		return
+	}
+	_, _, _, ok := SplitConversationForReduction(ptr.Conversation, reduceThreshold, 4)
+	if !ok {
+		return
+	}
+	ptr.Mu.Lock()
+	ptr.Conversation = []types.ConversationMessage{{Content: "reduced", Role: "system"}}
+	ptr.Mu.Unlock()
 }
 
 func (f *fakeProvider) GetToolDefinitions() interface{} {
@@ -192,12 +205,13 @@ func TestGetStoreConversation(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
 	req = req.WithContext(authentication.SetSessionIDContext(req.Context(), sessionID))
-	ptr, gotSessionID, conversation := GetStoreConversation(req, types.AIRequest{ConversationID: conversationID}, store)
+	aiReq := types.AIRequest{ConversationID: conversationID}
+	ptr, gotSessionID := GetStoreConversation(req, &aiReq, store, nil)
 
 	require.NotNil(t, ptr)
 	assert.Equal(t, sessionID, gotSessionID)
-	require.Len(t, conversation, 1)
-	assert.Equal(t, "hi", conversation[0].Content)
+	require.Len(t, ptr.Conversation, 1)
+	assert.Equal(t, "hi", ptr.Conversation[0].Content)
 }
 
 func TestStoreConversation_CleansAndStores(t *testing.T) {
@@ -207,10 +221,10 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 		{Role: "tool", Name: "get_referenced_docs", Content: "referenced_docs"},
 		{Role: "tool", Name: "custom_tool", Content: "custom"},
 	}
-	ptr := &types.Conversation{}
+	ptr := &types.Conversation{Conversation: append([]types.ConversationMessage(nil), conversation...)}
 	req := types.AIRequest{ConversationID: "conv-1"}
 
-	StoreConversation(&fakeProvider{}, context.Background(), store, ptr, "session-1", req, conversation)
+	StoreConversation(&fakeProvider{}, context.Background(), store, ptr, "session-1", req)
 
 	require.Equal(t, 1, store.setCalls)
 	stored := store.conversations["session-1:conv-1"]
@@ -220,12 +234,21 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 }
 
 func TestStoreConversation_ReduceWithAI(t *testing.T) {
-	store := &fakeStore{enabled: true, reduceWithAI: true, reduceThresh: 1}
+	store := &fakeStore{enabled: true, reduceWithAI: true, reduceThresh: 6}
 	provider := &fakeProvider{}
-	ptr := &types.Conversation{}
+	ptr := &types.Conversation{Conversation: []types.ConversationMessage{
+		{Role: "system", Content: "base"},
+		{Role: "system", Content: "ctx"},
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+		{Role: "user", Content: "u2"},
+		{Role: "assistant", Content: "a2"},
+		{Role: "user", Content: "u3"},
+		{Role: "assistant", Content: "a3"},
+	}}
 	req := types.AIRequest{ConversationID: "conv-1"}
 
-	StoreConversation(provider, context.Background(), store, ptr, "session-1", req, []types.ConversationMessage{{Role: "user", Content: "hi"}})
+	StoreConversation(provider, context.Background(), store, ptr, "session-1", req)
 
 	require.True(t, provider.reduceCalled)
 	stored := store.conversations["session-1:conv-1"]
@@ -241,7 +264,7 @@ func TestStoreConversation_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StoreConversation(&fakeProvider{}, ctx, store, ptr, "session-1", req, []types.ConversationMessage{{Role: "user", Content: "hi"}})
+	StoreConversation(&fakeProvider{}, ctx, store, ptr, "session-1", req)
 
 	assert.Equal(t, 0, store.setCalls)
 }

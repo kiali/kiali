@@ -5,7 +5,6 @@ import {
   CHATBOT_CONVERSATION_ALWAYS_NAVIGATE,
   ChatRequest,
   ChatResponse,
-  ContextRequest,
   ExtendedMessage,
   ModelAI,
   ProviderAI
@@ -22,6 +21,9 @@ import userLogo from './icons/chat_avatar.svg';
 import logo from './icons/kiali_logo.svg';
 import { router } from 'app/History';
 import { saveConversation } from 'utils/ConversationStorage';
+import { useDispatch, useSelector } from 'react-redux';
+import { KialiAppState } from 'store/Store';
+import { ChatAIActions } from 'actions/ChatAIActions';
 
 const botName = document.getElementById('bot_name')?.innerText ?? KIALI_PRODUCT_NAME;
 
@@ -88,14 +90,12 @@ type UseChatbotResult = {
   addBotMessage: (content: string) => void;
   alertMessage: AlertMessage | undefined;
   botMessage: (response: ChatResponse | string) => ExtendedMessage;
-  conversationId: string | null | undefined;
-  handleSend: (query: string | number, context: ContextRequest, prompt?: string) => Promise<void>;
+  handleSend: (query: string | number, prompt?: string) => Promise<void>;
   isLoading: boolean;
   messages: ExtendedMessage[];
   selectedModel: ModelAI;
   selectedProvider: ProviderAI;
   setAlertMessage: Dispatch<SetStateAction<AlertMessage | undefined>>;
-  setConversationId: Dispatch<SetStateAction<string | null | undefined>>;
   setMessages: Dispatch<SetStateAction<ExtendedMessage[]>>;
   setSelectedModel: Dispatch<SetStateAction<ModelAI>>;
   setSelectedProvider: Dispatch<SetStateAction<ProviderAI>>;
@@ -103,12 +103,14 @@ type UseChatbotResult = {
 
 export const useChatbot = (userName: string, provider: ProviderAI, model: ModelAI): UseChatbotResult => {
   const isMountedRef = useRef(true);
+  const dispatch = useDispatch();
+  const conversationID = useSelector((state: KialiAppState) => state.aiChat.conversationID);
+  const context = useSelector((state: KialiAppState) => state.aiChat.context);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedModel, setSelectedModel] = useState<ModelAI>(model);
   const [selectedProvider, setSelectedProvider] = useState<ProviderAI>(provider);
   const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>(INITIAL_NOTICE);
-  const [conversationId, setConversationId] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     return () => {
@@ -172,22 +174,12 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     return message;
   };
 
-  const generateConversationId = (): string => {
-    const g: any = typeof globalThis !== 'undefined' ? (globalThis as any) : {};
-    if (g.crypto && typeof g.crypto.randomUUID === 'function') {
-      return g.crypto.randomUUID();
-    }
-    const random = (): string => Math.random().toString(16).slice(2);
-    return `${Date.now().toString(16)}-${random()}-${random()}`;
-  };
-
   const addBotMessage = (content: string): void => {
     addMessage(fixedMessage(content));
   };
 
   const handleSend = async (
     query: string | number,
-    context: ContextRequest,
     prompt: string | undefined = undefined
   ): Promise<void> => {
     const userMessage: ExtendedMessage = {
@@ -199,18 +191,13 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
       referenced_docs: []
     };
     addMessage(userMessage);
-
-    let nextConversationId = conversationId ?? undefined;
-    if (!nextConversationId) {
-      nextConversationId = generateConversationId();
-      setConversationId(nextConversationId);
-    }
-
+    const isFirstMessageInCurrentView = messages.length === 0;
     const chatRequest: ChatRequest = {
-      conversation_id: nextConversationId,
+      conversation_id: isFirstMessageInCurrentView ? undefined : conversationID || undefined,
       query: query.toString(),
       context: context
     };
+    
     setIsLoading(true);
 
     try {
@@ -220,6 +207,9 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
         const chatResponse: ChatResponse = resp.data;
 
         const newBotMessage: any = botMessage(chatResponse);
+        if (chatResponse.conversation_id && chatResponse.conversation_id !== conversationID) {
+          dispatch(ChatAIActions.setConversationID({ id: chatResponse.conversation_id }));
+        }
         if (chatResponse.actions && chatResponse.actions.length > 0) {
           const navigationActions = chatResponse.actions.filter(action => action.kind === 'navigation');
           const alwaysNavigate = localStorage.getItem(CHATBOT_CONVERSATION_ALWAYS_NAVIGATE) === 'true';
@@ -267,10 +257,10 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
 
   // Save conversation to storage whenever messages or conversationId changes
   useEffect(() => {
-    if (conversationId && messages.length > 0) {
-      saveConversation(conversationId, messages);
+    if (conversationID && messages.length > 0) {
+      saveConversation(conversationID, messages);
     }
-  }, [conversationId, messages]);
+  }, [conversationID, messages]);
 
   return {
     addBotMessage,
@@ -281,8 +271,6 @@ export const useChatbot = (userName: string, provider: ProviderAI, model: ModelA
     handleSend,
     alertMessage,
     setAlertMessage,
-    conversationId,
-    setConversationId,
     selectedModel,
     setSelectedModel,
     selectedProvider,

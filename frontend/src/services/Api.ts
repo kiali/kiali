@@ -1552,15 +1552,6 @@ export const postChatAI = (
   return newRequest<any>(HTTP_VERBS.POST, urls.chatAI(provider, model), undefined, chatRequest);
 };
 
-export const getChatConversations = (): Promise<ApiResponse<string[]>> => {
-  return newRequest<string[]>(HTTP_VERBS.GET, urls.chatConversations, {}, {});
-};
-
-export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiResponse<void>> => {
-  const conversationIDsParam = conversationIDs.join(',');
-  return newRequest<void>(HTTP_VERBS.DELETE, urls.chatConversations, { conversationIDs: conversationIDsParam }, {});
-};
-
 export const getOverviewAppRates = (): Promise<
   ApiResponse<{
     apps: Array<{

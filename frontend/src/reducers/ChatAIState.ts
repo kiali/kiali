@@ -4,11 +4,12 @@ import { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { ChatAIActions } from 'actions/ChatAIActions';
 
-export const INITIAL_CHAT_AI_STATE: ChatAIState = {
-  enabled: false,
+export const INITIAL_CHAT_AI_STATE: ChatAIState = {  
   context: undefined,
+  conversationID: '',
   providers: [],
-  defaultProvider: ''
+  enabled: false,
+  defaultProvider: '',
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
@@ -22,6 +23,9 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
         providers: action.payload.providers,
         defaultProvider: action.payload.defaultProvider
       });
+    case getType(ChatAIActions.setConversationID): {
+      return updateState(state, { conversationID: action.payload.id });
+    }  
     default:
       return state;
   }

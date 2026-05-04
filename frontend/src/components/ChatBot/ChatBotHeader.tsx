@@ -15,7 +15,6 @@ import {
   ChatbotHeader,
   ChatbotHeaderActions,
   ChatbotHeaderMain,
-  ChatbotHeaderMenu,
   ChatbotHeaderOptionsDropdown,
   ChatbotHeaderTitle
 } from '@patternfly/chatbot';
@@ -28,8 +27,6 @@ import { ModelAI, ProviderAI } from 'types/Chatbot';
 
 type ChatBotHeaderProps = {
   displayMode: ChatbotDisplayMode;
-  historyRef: React.RefObject<HTMLButtonElement>;
-  isDrawerOpen: boolean;
   onCloseChat: () => void;
   onSelectDisplayMode: (
     _event: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -37,7 +34,6 @@ type ChatBotHeaderProps = {
   ) => void;
   onSelectModel: (model: ModelAI) => void;
   onSelectProvider: (provider: ProviderAI) => void;
-  onToggleDrawer: () => void;
   providers: ProviderAI[];
   selectedMockConversation?: string;
   selectedModel: ModelAI;
@@ -47,11 +43,8 @@ type ChatBotHeaderProps = {
 
 export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
   displayMode,
-  isDrawerOpen,
-  onToggleDrawer,
   onSelectDisplayMode,
   onCloseChat,
-  historyRef,
   providers,
   selectedProvider,
   selectedModel,
@@ -106,7 +99,6 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({
   return (
     <ChatbotHeader>
       <ChatbotHeaderMain>
-        <ChatbotHeaderMenu ref={historyRef} aria-expanded={isDrawerOpen} onMenuToggle={onToggleDrawer} />
         <ChatbotHeaderTitle displayMode={displayMode} showOnFullScreen={horizontalLogo} showOnDefault={iconLogo} />
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
