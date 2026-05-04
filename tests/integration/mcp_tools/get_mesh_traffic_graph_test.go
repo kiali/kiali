@@ -30,7 +30,7 @@ func TestGetMeshTrafficGraph_InvalidNamespace(t *testing.T) {
 		"namespaces": "nonexistent-ns-12345",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
 
 func TestGetMeshTrafficGraph_ValidGraphTypes(t *testing.T) {
