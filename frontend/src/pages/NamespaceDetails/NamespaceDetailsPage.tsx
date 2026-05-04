@@ -35,7 +35,6 @@ import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtil
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
 import { kialiStyle } from 'styles/StyleUtils';
-import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
@@ -97,6 +96,7 @@ const tabIndex: { [tab: string]: number } = {
 
 export class NamespaceDetailsPageComponent extends React.Component<NamespaceDetailsPageProps, State> {
   private promises = new PromisesRegistry();
+  private _isMounted = false;
 
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
   static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
@@ -117,6 +117,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   }
 
   componentDidMount(): void {
+    this._isMounted = true;
     this.fetchGrafanaInfo();
     this.fetchPersesInfo();
     this.fetchControlPlanes();
@@ -148,6 +149,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   }
 
   componentWillUnmount(): void {
+    this._isMounted = false;
     this.promises.cancelAll();
   }
 
@@ -164,6 +166,9 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
       NamespaceDetailsPageComponent.grafanaInfoPromise
         .then(grafanaInfo => {
+          if (!this._isMounted) {
+            return;
+          }
           if (grafanaInfo) {
             this.setState({
               grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
@@ -173,7 +178,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           }
         })
         .catch(err => {
-          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
+          addError(t('Could not fetch Grafana info. Turning off links to Grafana.'), err, false, MessageType.INFO);
         });
     }
   };
@@ -191,6 +196,9 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
       NamespaceDetailsPageComponent.persesInfoPromise
         .then(persesInfo => {
+          if (!this._isMounted) {
+            return;
+          }
           if (persesInfo) {
             this.setState({
               persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
@@ -200,7 +208,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           }
         })
         .catch(err => {
-          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
+          addError(t('Could not fetch Perses info. Turning off links to Perses.'), err, false, MessageType.INFO);
         });
     }
   };
@@ -213,11 +221,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         this.setState({ controlPlanes });
       })
       .catch(err => {
-        addError('Error fetching control planes.', err);
+        addError(t('Error fetching control planes.'), err);
       });
   };
 
-  private hideTrafficManagement = (): void => {
+  private handleHideTrafficManagement = (): void => {
     this.setState({
       showTrafficPoliciesModal: false,
       nsTarget: '',
@@ -227,7 +235,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     });
   };
 
-  private onChangeAfterPolicy = (): void => {
+  private handleChangeAfterPolicy = (): void => {
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -360,7 +368,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         })
       )
       .catch(error => {
-        addError('Could not fetch Namespace.', error);
+        addError(t('Could not fetch Namespace.'), error);
         this.setState({
           error: {
             title: t('Namespace not found'),
@@ -389,7 +397,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           opTarget: p.opTarget,
           kind: p.kind
         }),
-      onRefreshAfterExternalLink: this.onChangeAfterPolicy,
+      onRefreshAfterExternalLink: this.handleChangeAfterPolicy,
       persesLinks: this.state.persesLinks
     });
   };
@@ -406,11 +414,14 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
       .then(() => {
-        addSuccess(`Namespace ${this.props.namespace} ${field} updated`);
+        addSuccess(t('Namespace {{namespace}} {{field}} updated', { namespace: this.props.namespace, field }));
         this.load();
       })
       .catch(error => {
-        addError(`Could not update namespace ${this.props.namespace} ${field}`, error);
+        addError(
+          t('Could not update namespace {{namespace}} {{field}}', { namespace: this.props.namespace, field }),
+          error
+        );
       });
   };
 
@@ -426,14 +437,12 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     const ns = this.state.nsInfo;
     const healthListDuration = healthComputeDurationValidSeconds();
 
-    const actionsToolbar =
-      !this.state.error && ns ? (
-        <NamespaceActions
-          namespace={this.props.namespace}
-          actions={this.getNamespaceActions()}
-          toggleVariant="actionsText"
-        />
-      ) : undefined;
+    const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
+    const hasActions = namespaceActions.some(a => !a.isSeparator);
+
+    const actionsToolbar = hasActions ? (
+      <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
+    ) : undefined;
 
     return (
       <>
@@ -449,12 +458,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                 <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
                   {this.props.namespace}
                 </Title>
-                {ns.cluster && isMultiCluster && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
-                    <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.top} />
-                    <span style={{ marginLeft: '0.25rem' }}>{ns.cluster}</span>
-                  </span>
-                )}
               </div>
             </div>
           )}
@@ -481,7 +484,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                 canEdit={!serverConfig.deployment.viewOnlyMode}
                 duration={this.props.duration}
                 namespace={this.props.namespace}
-                namespaceActions={this.getNamespaceActions()}
+                namespaceActions={namespaceActions}
                 nsInfo={ns}
                 onSaveAnnotations={this.handleSaveAnnotations}
                 onSaveLabels={this.handleSaveLabels}
@@ -498,11 +501,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
               cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
             )}
             kind={this.state.kind}
-            hideConfirmModal={this.hideTrafficManagement}
+            hideConfirmModal={this.handleHideTrafficManagement}
             nsTarget={this.state.nsTarget}
             nsInfo={this.state.nsInfo}
             duration={healthListDuration}
-            load={this.onChangeAfterPolicy}
+            load={this.handleChangeAfterPolicy}
           />
         )}
       </>

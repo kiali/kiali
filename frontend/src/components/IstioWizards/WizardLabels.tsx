@@ -50,7 +50,6 @@ export class WizardLabels extends React.Component<Props, State> {
 
     Object.keys(this.props.labels ?? {}).forEach((value, index) => m.set(index, [value, this.props.labels[value]]));
 
-    // should be empty line
     if (m.size === 0) {
       m.set(m.size, ['', '']);
     }
@@ -70,7 +69,7 @@ export class WizardLabels extends React.Component<Props, State> {
   };
 
   changeLabel = (value: [string, string], k: number): void => {
-    const labels = this.state.labels;
+    const labels = new Map(this.state.labels);
     labels.set(k, value);
     this.setState({ labels });
   };
@@ -78,31 +77,28 @@ export class WizardLabels extends React.Component<Props, State> {
   validate = (): boolean => {
     const validation: string[] = [];
 
-    // Check if duplicate keys
     if (
       Array.from(this.state.labels.values())
         .map(k => k[0])
         .some((e, i, arr) => arr.indexOf(e) !== i)
     ) {
-      validation.push('Duplicate keys found.');
+      validation.push(t('Duplicate keys found.'));
     }
 
-    // Check if empty keys
     if (
       Array.from(this.state.labels.values())
         .map(k => k[0])
         .filter(e => e.length === 0).length > 0
     ) {
-      validation.push('Empty keys found.');
+      validation.push(t('Empty keys found.'));
     }
 
-    // Check if empty values
     if (
       Array.from(this.state.labels.values())
         .map(k => k[1])
         .filter(e => e.length === 0).length > 0
     ) {
-      validation.push('Empty values found.');
+      validation.push(t('Empty values found.'));
     }
 
     this.setState({ validation });
@@ -138,7 +134,7 @@ export class WizardLabels extends React.Component<Props, State> {
                 aria-invalid={key === '' || Object.values(this.state.labels).filter(arr => arr[0] === key).length > 1}
                 id={`labelInputForKey_${index}`}
                 onChange={(_event, newKey) => this.changeLabel([newKey, value], index)}
-                placeholder="Key"
+                placeholder={t('Key')}
                 type="text"
                 value={key}
               />
@@ -149,7 +145,7 @@ export class WizardLabels extends React.Component<Props, State> {
                 aria-invalid={value === ''}
                 id={`labelInputForValue_${index}`}
                 onChange={(_event, v) => this.changeLabel([key, v], index)}
-                placeholder="Value"
+                placeholder={t('Value')}
                 type="text"
                 value={value}
               />
@@ -160,7 +156,7 @@ export class WizardLabels extends React.Component<Props, State> {
             </Th>
           </Tr>
         ) : (
-          <Tr>
+          <Tr key={`view_label_for_${index}`}>
             <Th dataLabel={key}>{key}</Th>
             <Th dataLabel={value}>{value}</Th>
           </Tr>
@@ -172,7 +168,7 @@ export class WizardLabels extends React.Component<Props, State> {
   };
 
   addMore = (): void => {
-    const labels = this.state.labels;
+    const labels = new Map(this.state.labels);
     labels.set(labels.size, ['', '']);
     this.setState({ labels });
   };
@@ -226,8 +222,8 @@ export class WizardLabels extends React.Component<Props, State> {
           <Table variant={TableVariant.compact}>
             <Thead>
               <Tr>
-                <Th dataLabel="Key">Key</Th>
-                <Th dataLabel="Value">Value</Th>
+                <Th dataLabel="Key">{t('Key')}</Th>
+                <Th dataLabel="Value">{t('Value')}</Th>
                 {this.props.canEdit && <Th></Th>}
               </Tr>
             </Thead>
@@ -245,12 +241,12 @@ export class WizardLabels extends React.Component<Props, State> {
               }}
               isInline
             >
-              <span style={{ marginLeft: '0.25rem' }}>Add more</span>
+              <span style={{ marginLeft: '0.25rem' }}>{t('Add more')}</span>
             </Button>
           )}
 
           {this.state.validation.length > 0 && (
-            <Alert variant="danger" className={alertStyle} isInline isExpandable title="An error occurred">
+            <Alert variant="danger" className={alertStyle} isInline isExpandable title={t('An error occurred')}>
               <List isPlain>
                 {this.state.validation.map((message, i) => (
                   <ListItem key={`Message_${i}`}>{message}</ListItem>

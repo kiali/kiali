@@ -20,6 +20,12 @@ export type NamespaceRowActionsParams = {
 /**
  * Actions menu entries for the namespace detail page.
  */
+const pushSeparator = (actions: NamespaceAction[]): void => {
+  if (actions.some(a => !a.isSeparator)) {
+    actions.push({ isGroup: false, isSeparator: true });
+  }
+};
+
 export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): NamespaceAction[] => {
   const { nsInfo } = p;
   const namespaceActions: NamespaceAction[] = [];
@@ -35,10 +41,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       serverConfig.kialiFeatureFlags.istioInjectionAction &&
       !serverConfig.kialiFeatureFlags.istioUpgradeAction
     ) {
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
+      pushSeparator(namespaceActions);
 
       const enableAction = {
         'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
@@ -151,10 +154,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         !nsInfo.labels[serverConfig.istioLabels.injectionLabelRev]
       ) {
         if (nsInfo.isAmbient) {
-          namespaceActions.push({
-            isGroup: false,
-            isSeparator: true
-          });
+          pushSeparator(namespaceActions);
           namespaceActions.push(disableAmbientAction);
           namespaceActions.push(removeAmbientAction);
         } else {
@@ -187,10 +187,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
         }));
 
       if (revisionActions && revisionActions.length > 0) {
-        namespaceActions.push({
-          isGroup: false,
-          isSeparator: true
-        });
+        pushSeparator(namespaceActions);
       }
 
       revisionActions?.forEach(action => {
@@ -228,10 +225,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     };
 
     if (p.istioAPIEnabled) {
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
+      pushSeparator(namespaceActions);
 
       namespaceActions.push(addAuthorizationAction);
 
@@ -241,10 +235,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     }
   } else {
     if (p.grafanaLinks.length > 0) {
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
+      pushSeparator(namespaceActions);
 
       p.grafanaLinks.forEach(link => {
         const grafanaDashboard = {
@@ -262,10 +253,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       });
     }
     if (p.persesLinks.length > 0) {
-      namespaceActions.push({
-        isGroup: false,
-        isSeparator: true
-      });
+      pushSeparator(namespaceActions);
 
       p.persesLinks.forEach(link => {
         const persesDashboard = {

@@ -83,13 +83,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   const [editLabels, setEditLabels] = React.useState<LabelEntry[]>([]);
   const [validationError, setValidationError] = React.useState<string | undefined>();
 
-  const startEditing = (): void => {
+  const handleStartEditing = (): void => {
     setEditLabels(Object.entries(labels ?? {}).map(([key, value]) => ({ key, value })));
     setValidationError(undefined);
     setEditing(true);
   };
 
-  const cancelEditing = (): void => {
+  const handleCancelEditing = (): void => {
     setEditing(false);
     setValidationError(undefined);
   };
@@ -152,12 +152,12 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
             <Button variant="plain" size="sm" onClick={handleSave} icon={<KialiIcon.Check />} />
           </Tooltip>
           <Tooltip content={t('Cancel')}>
-            <Button variant="plain" size="sm" onClick={cancelEditing} icon={<KialiIcon.Close />} />
+            <Button variant="plain" size="sm" onClick={handleCancelEditing} icon={<KialiIcon.Close />} />
           </Tooltip>
         </>
       ) : (
         <Tooltip content={t('Edit labels')}>
-          <Button variant="plain" size="sm" onClick={startEditing} icon={<KialiIcon.PencilAlt />} />
+          <Button variant="plain" size="sm" onClick={handleStartEditing} icon={<KialiIcon.PencilAlt />} />
         </Tooltip>
       )}
     </div>
