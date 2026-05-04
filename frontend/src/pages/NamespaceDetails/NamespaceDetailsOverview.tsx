@@ -39,6 +39,7 @@ import { classes } from 'typestyle';
 import { infoStyle } from 'styles/IconStyle';
 import { EditableAnnotationsCard } from 'components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
+import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
@@ -300,6 +301,35 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                       </DescriptionListGroup>
                     )}
                     <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        <NamespaceHealthStatus
+                          inlineIssueCount
+                          name={namespace}
+                          statusApp={nsInfo.statusApp}
+                          statusService={nsInfo.statusService}
+                          statusWorkload={nsInfo.statusWorkload}
+                          worstStatus={nsInfo.worstStatus ?? NA.id}
+                        />
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                    {(revisions.length > 0 || !nsInfo.isControlPlane) && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <NamespaceRevisionLabels ns={nsInfo} />
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        <PFLabel variant="outline" color={modeInfo.color} isCompact>
+                          {t(modeInfo.displayText)}
+                        </PFLabel>
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                    <DescriptionListGroup>
                       <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
                       <DescriptionListDescription>
                         {nsInfo.isControlPlane ? (
@@ -311,22 +341,6 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                         )}
                       </DescriptionListDescription>
                     </DescriptionListGroup>
-                    <DescriptionListGroup>
-                      <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                          {t(modeInfo.displayText)}
-                        </PFLabel>
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                    {(revisions.length > 0 || !nsInfo.isControlPlane) && (
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <NamespaceRevisionLabels ns={nsInfo} />
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    )}
                     {nsInfo.tlsStatus && (
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
@@ -346,7 +360,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           <Card>
             <CardBody>
               <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
-                {t('Navigate')}
+                {t('Resources')}
               </Title>
               <div className={navigateGridStyle}>
                 <KialiLink to={appsLink}>
