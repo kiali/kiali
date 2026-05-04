@@ -221,7 +221,7 @@ func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface,
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
-	if !conf.ExternalServices.Prometheus.Enabled || conf.RunMode == config.RunModeOffline {
+	if !conf.ExternalServices.Prometheus.Enabled || conf.ExternalServices.Prometheus.DisabledReason != "" || conf.RunMode == config.RunModeOffline {
 		return promConfig
 	}
 	// Check if thanosProxy

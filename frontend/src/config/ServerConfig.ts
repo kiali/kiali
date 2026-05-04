@@ -201,6 +201,10 @@ export const setServerConfig = (cfg: ServerConfig): void => {
   }
 };
 
+export const isPrometheusAvailable = (): boolean => {
+  return serverConfig.prometheus.enabled && !serverConfig.prometheus.disabledReason;
+};
+
 export const isIstioNamespace = (namespace: string): boolean => {
   return Object.values(serverConfig.controlPlanes).some(cpNamespace => cpNamespace === namespace);
 };

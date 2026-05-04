@@ -8,7 +8,7 @@ import { addError } from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
-import { getAppLabelName, getVersionLabelName, serverConfig } from '../../config/ServerConfig';
+import { getAppLabelName, getVersionLabelName, isPrometheusAvailable, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
 import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { KialiAppState } from '../../store/Store';
@@ -209,7 +209,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         tabsArray.push(logTab);
       }
 
-      if (serverConfig.prometheus.enabled) {
+      if (isPrometheusAvailable()) {
         tabsArray.push(
           <Tab title="Traffic" eventKey={1} key="Traffic">
             <TrafficDetails

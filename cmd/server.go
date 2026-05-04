@@ -95,27 +95,25 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
 	// If enabled=true but the URL is empty, unreachable, or the transport fails to initialize,
-	// Kiali falls back to disabled mode rather than crashing: it injects a NoopClient, sets
-	// Enabled=false in the config, and records a DisabledReason for the UI to surface.
+	// Kiali injects a NoopClient and records a DisabledReason but keeps Enabled=true so that
+	// addon status checks and the mesh page still probe Prometheus and report the error.
 	var prom prometheus.ClientInterface
 	if conf.ExternalServices.Prometheus.Enabled {
 		var disabledReason string
 		if conf.ExternalServices.Prometheus.URL == "" {
-			disabledReason = "Prometheus URL is empty; falling back to disabled mode"
+			disabledReason = "Prometheus URL is empty; metrics features are unavailable"
 		} else {
 			client, err := prometheus.NewClient(*conf, kialiToken)
 			if err != nil {
-				disabledReason = fmt.Sprintf("Prometheus client init failed. Falling back to disabled mode. err=%s", err)
+				disabledReason = fmt.Sprintf("Prometheus client init failed: %s", err)
 			} else {
-				// Use the same health check approach as business/istio_status.go getAddonStatus:
-				// This works with Prometheus, Thanos, and other TSDB backends.
 				healthURL := conf.ExternalServices.Prometheus.HealthCheckUrl
 				if healthURL == "" {
 					healthURL = conf.ExternalServices.Prometheus.URL + "/-/healthy"
 				}
 				_, statusCode, _, probeErr := httputil.HttpGet(healthURL, &conf.ExternalServices.Prometheus.Auth, 10*time.Second, nil, nil, conf)
 				if probeErr != nil || statusCode > 399 {
-					disabledReason = fmt.Sprintf("Prometheus unreachable at [%s] (status [%d]). Falling back to disabled mode", healthURL, statusCode)
+					disabledReason = fmt.Sprintf("Prometheus unreachable at [%s] (status [%d])", healthURL, statusCode)
 				} else {
 					prom = client
 				}
@@ -123,7 +121,6 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		}
 		if disabledReason != "" {
 			log.Warningf("%s", disabledReason)
-			conf.ExternalServices.Prometheus.Enabled = false
 			conf.ExternalServices.Prometheus.DisabledReason = disabledReason
 			config.Set(conf)
 			prom = prometheus.NewNoopClient()

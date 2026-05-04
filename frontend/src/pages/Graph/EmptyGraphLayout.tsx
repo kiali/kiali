@@ -17,7 +17,7 @@ import { RefreshIntervalManual } from 'config/Config';
 import { IntervalInMilliseconds } from 'types/Common';
 import { t } from 'utils/I18nUtils';
 import { RunMode } from 'types/ServerConfig';
-import { serverConfig } from 'config';
+import { isPrometheusAvailable, serverConfig } from 'config';
 
 type EmptyGraphLayoutProps = {
   action?: any;
@@ -85,7 +85,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, Emp
   }
 
   render(): React.ReactNode {
-    if (!serverConfig.prometheus.enabled) {
+    if (!isPrometheusAvailable()) {
       return (
         <EmptyState
           headingLevel="h5"

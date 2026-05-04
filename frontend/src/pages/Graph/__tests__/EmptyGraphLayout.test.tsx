@@ -15,11 +15,26 @@ describe('EmptyGraphLayout', () => {
   };
 
   afterEach(() => {
-    setServerConfig({ ...serverConfig, prometheus: { ...serverConfig.prometheus, enabled: true } });
+    setServerConfig({
+      ...serverConfig,
+      prometheus: { ...serverConfig.prometheus, enabled: true, disabledReason: undefined }
+    });
   });
 
-  it('shows prometheus disabled message when prometheus is disabled', () => {
+  it('shows prometheus disabled message when prometheus is explicitly disabled', () => {
     setServerConfig({ ...serverConfig, prometheus: { ...serverConfig.prometheus, enabled: false } });
+
+    const wrapper = shallow(<EmptyGraphLayout {...defaultProps} />);
+
+    expect(wrapper.find('#empty-graph-prometheus-disabled').exists()).toBe(true);
+    expect(wrapper.html()).toContain('Metrics are disabled');
+  });
+
+  it('shows prometheus disabled message when prometheus is enabled but unreachable', () => {
+    setServerConfig({
+      ...serverConfig,
+      prometheus: { ...serverConfig.prometheus, enabled: true, disabledReason: 'Prometheus unreachable' }
+    });
 
     const wrapper = shallow(<EmptyGraphLayout {...defaultProps} />);
 

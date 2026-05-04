@@ -201,17 +201,17 @@ class AuthenticationControllerComponent extends React.Component<
       this.props.setChatAI(configs[1].data.chatAI);
       this.applyUIDefaults();
 
-      // Notify the user if Prometheus is disabled -- either by their choice or due to an auto-fallback.
-      if (!configs[1].data.prometheus.enabled) {
-        if (configs[1].data.prometheus.disabledReason) {
-          addWarning(configs[1].data.prometheus.disabledReason);
-        } else {
-          addInfo(
-            'Prometheus metrics store is disabled. Some features (graph, metrics, health) are unavailable.',
-            '',
-            false
-          );
-        }
+      // Notify the user about Prometheus availability.
+      if (configs[1].data.prometheus.disabledReason) {
+        // Prometheus is enabled but was unreachable at startup — warn the user.
+        addWarning(configs[1].data.prometheus.disabledReason);
+      } else if (!configs[1].data.prometheus.enabled) {
+        // Prometheus was explicitly disabled by the user.
+        addInfo(
+          'Prometheus metrics store is disabled. Some features (graph, metrics, health) are unavailable.',
+          '',
+          false
+        );
       }
 
       if (this.props.landingRoute) {
