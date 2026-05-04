@@ -173,7 +173,6 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       } else if (this.props.namespaceActions && this.props.namespaceActions.length > 0) {
         graphCardActions.push(
           <NamespaceActionsDropdownGroup
-            key="namespaceActions"
             actions={this.props.namespaceActions}
             namespace={this.props.dataSource.fetchParameters.namespaces[0]?.name ?? ''}
             onAction={() => this.onGraphActionsToggle(false)}

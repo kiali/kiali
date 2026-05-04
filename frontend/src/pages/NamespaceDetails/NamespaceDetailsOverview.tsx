@@ -40,6 +40,7 @@ import { infoStyle } from 'styles/IconStyle';
 import { EditableAnnotationsCard } from 'components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
+import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
@@ -47,6 +48,7 @@ type Props = {
   canEdit: boolean;
   duration: DurationInSeconds;
   namespace: string;
+  namespaceActions?: NamespaceAction[];
   nsInfo: NamespaceInfo;
   onSaveAnnotations: (annotations: Record<string, string>) => void;
   onSaveLabels: (labels: Record<string, string>) => void;
@@ -430,7 +432,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
               <Stack hasGutter={true}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCard dataSource={this.graphDataSource} />
+              <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
             </GridItem>
           </Grid>
         </div>
