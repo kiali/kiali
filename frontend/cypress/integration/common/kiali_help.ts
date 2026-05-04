@@ -18,7 +18,7 @@ Then('user sees the {string} modal', (title: string) => {
 });
 
 Then('details about the certificates are displayed without an error', () => {
-    cy.contains('An error occurred getting certificates information').should('not.exist');
+  cy.contains('An error occurred getting certificates information').should('not.exist');
 });
 
 Then('user sees information about {int} clusters', (numOfClusters: number) => {

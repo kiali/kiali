@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
-	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/perses"
@@ -156,9 +154,6 @@ func ChatAI(
 				RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("AI initialization error: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName))
 				return
 			}
-			req.Username = clusterAuth.Username
-		} else {
-			req.Username = "anonymous"
 		}
 
 		provider, err := ai.NewAIProvider(conf, providerName, modelName)
@@ -175,60 +170,48 @@ func ChatAI(
 			return
 		}
 		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
-		resp, code := provider.SendChat(kialiInterface, req, aiStore)
+		// Add headers to prevent any buffering along the way
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache, no-transform")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+		// Disable gzip for this specific endpoint to ensure real-time streaming
+		w.Header().Set("Content-Encoding", "identity")
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			RespondWithError(w, http.StatusInternalServerError, "Streaming unsupported")
+			return
+		}
 
-		if resp == nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI response is empty")
-			return
-		}
-		if code != http.StatusOK && resp.Error != "" {
-			RespondWithError(w, code, resp.Error)
-			return
-		}
-		if code != http.StatusOK {
-			RespondWithError(w, code, http.StatusText(code))
-			return
-		}
-		RespondWithJSONIndent(w, code, resp)
-	}
-}
+		// Explicitly send the headers right now so proxies stop buffering
+		w.WriteHeader(http.StatusOK)
+		flusher.Flush()
 
-func ChatConversations(
-	conf *config.Config,
-	aiStore aiTypes.AIStore,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
-			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
-			return
-		}
-		sessionID := authentication.GetSessionIDContext(r.Context())
-		RespondWithJSON(w, http.StatusOK, aiStore.GetConversationIDs(sessionID))
-	}
-}
+		// Also try to flush using ResponseController if available
+		rc := http.NewResponseController(w)
+		_ = rc.Flush()
 
-func DeleteChatConversations(
-	conf *config.Config,
-	aiStore aiTypes.AIStore,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
-			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
-			return
+		if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
+			if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
+				f.Flush()
+			}
 		}
-		sessionID := authentication.GetSessionIDContext(r.Context())
-		conversationIDsParam := r.URL.Query().Get("conversationIDs")
-		if conversationIDsParam == "" {
-			RespondWithError(w, http.StatusBadRequest, "conversationIDs query parameter is required")
-			return
+
+		onChunk := func(chunk string) {
+			fmt.Fprintf(w, "data: %s\n\n", chunk)
+			flusher.Flush()
+
+			// Try to flush ResponseController if available
+			rc := http.NewResponseController(w)
+			_ = rc.Flush()
+
+			// Try to unwrap and flush if it's a wrapped writer
+			if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
+				if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
+					f.Flush()
+				}
+			}
 		}
-		// Split comma-separated conversation IDs
-		conversationIDs := strings.Split(conversationIDsParam, ",")
-		err := aiStore.DeleteConversations(sessionID, conversationIDs)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Failed to delete conversations: "+err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, "Conversations deleted successfully")
+		provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
 	}
 }

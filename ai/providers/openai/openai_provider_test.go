@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/config"
 )
 
@@ -59,6 +60,173 @@ func TestGetProviderOptions_UnsupportedProviderConfig(t *testing.T) {
 	_, err := getProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported provider config type")
+}
+
+func TestNewOpenAIProvider_DefaultConfig(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "test-openai",
+		Type:   config.OpenAIProvider,
+		Config: config.DefaultProviderConfigType,
+		Key:    "test-api-key",
+	}
+	model := &config.AIModel{
+		Name:  "gpt-4o",
+		Model: "gpt-4o",
+	}
+
+	p, err := NewOpenAIProvider(conf, provider, model)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+	assert.Equal(t, "gpt-4o", p.model)
+	assert.Equal(t, "OpenAI", p.GetName())
+}
+
+func TestNewOpenAIProvider_GeminiConfig(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "gemini-via-openai",
+		Type:   config.OpenAIProvider,
+		Config: config.ProviderConfigGemini,
+		Key:    "gemini-key",
+	}
+	model := &config.AIModel{
+		Name:  "gemini-1.5-pro",
+		Model: "gemini-1.5-pro",
+	}
+
+	p, err := NewOpenAIProvider(conf, provider, model)
+	require.NoError(t, err)
+	require.NotNil(t, p)
+	assert.Equal(t, "gemini-1.5-pro", p.model)
+}
+
+func TestNewOpenAIProvider_InvalidConfig(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "bad-config",
+		Config: "unsupported-type",
+		Key:    "key",
+	}
+	model := &config.AIModel{Model: "model"}
+
+	_, err := NewOpenAIProvider(conf, provider, model)
+	require.Error(t, err)
+}
+
+func TestGetProviderOptions_GeminiConfig_Success(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "gemini-provider",
+		Type:   config.OpenAIProvider,
+		Config: config.ProviderConfigGemini,
+		Key:    "gemini-api-key",
+	}
+	model := &config.AIModel{
+		Name:  "gemini-pro",
+		Model: "gemini-1.5-pro",
+	}
+
+	opts, err := getProviderOptions(conf, provider, model)
+	require.NoError(t, err)
+	assert.NotEmpty(t, opts)
+}
+
+func TestGetProviderOptions_GeminiConfig_CustomEndpoint(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "gemini-provider",
+		Type:   config.OpenAIProvider,
+		Config: config.ProviderConfigGemini,
+		Key:    "gemini-api-key",
+	}
+	model := &config.AIModel{
+		Name:     "gemini-pro",
+		Model:    "gemini-1.5-pro",
+		Endpoint: "https://custom.endpoint.example.com/v1",
+	}
+
+	opts, err := getProviderOptions(conf, provider, model)
+	require.NoError(t, err)
+	assert.NotEmpty(t, opts)
+}
+
+func TestGetProviderOptions_DefaultConfig_NoBaseURL(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "openai-provider",
+		Type:   config.OpenAIProvider,
+		Config: config.DefaultProviderConfigType,
+		Key:    "openai-api-key",
+	}
+	model := &config.AIModel{
+		Name:  "gpt-4o",
+		Model: "gpt-4o",
+	}
+
+	opts, err := getProviderOptions(conf, provider, model)
+	require.NoError(t, err)
+	assert.NotEmpty(t, opts)
+}
+
+func TestGetProviderOptions_DefaultConfig_WithBaseURL(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "openai-provider",
+		Type:   config.OpenAIProvider,
+		Config: config.DefaultProviderConfigType,
+		Key:    "openai-api-key",
+	}
+	model := &config.AIModel{
+		Name:     "gpt-4o",
+		Model:    "gpt-4o",
+		Endpoint: "https://my-custom-openai.example.com/v1",
+	}
+
+	opts, err := getProviderOptions(conf, provider, model)
+	require.NoError(t, err)
+	assert.NotEmpty(t, opts)
+}
+
+func TestGetProviderOptions_AzureConfig_WithEndpoint(t *testing.T) {
+	conf := config.NewConfig()
+	provider := &config.ProviderConfig{
+		Name:   "azure-provider",
+		Type:   config.OpenAIProvider,
+		Config: config.OpenAIProviderConfigAzure,
+		Key:    "azure-api-key",
+	}
+	model := &config.AIModel{
+		Name:     "gpt-4",
+		Model:    "gpt-4",
+		Endpoint: "https://my-deployment.openai.azure.com",
+	}
+
+	opts, err := getProviderOptions(conf, provider, model)
+	require.NoError(t, err)
+	assert.NotEmpty(t, opts)
+}
+
+func TestGetToolDefinitions_ReturnsToolList(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	p := &OpenAIProvider{tracingEnabled: true}
+	result := p.GetToolDefinitions()
+	tools, ok := result.([]openai.ChatCompletionToolUnionParam)
+	require.True(t, ok)
+	assert.NotEmpty(t, tools)
+}
+
+func TestGetToolDefinitions_FiltersTraceToolsWhenDisabled(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	pWith := &OpenAIProvider{tracingEnabled: true}
+	pWithout := &OpenAIProvider{tracingEnabled: false}
+
+	withTracing := pWith.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+	withoutTracing := pWithout.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+
+	assert.Less(t, len(withoutTracing), len(withTracing))
 }
 
 func TestTransformToolCallToToolsProcessor_InvalidJSON(t *testing.T) {

@@ -5,9 +5,9 @@ import { isValid } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
-  vsHosts: string[];
   gateway?: GatewaySelectorState;
   onVsHostsChange: (valid: boolean, vsHosts: string[]) => void;
+  vsHosts: string[];
 };
 
 export class VirtualServiceHosts extends React.Component<Props> {
@@ -32,7 +32,7 @@ export class VirtualServiceHosts extends React.Component<Props> {
     return true;
   };
 
-  render() {
+  render(): React.ReactNode {
     const vsHosts = this.props.vsHosts.length > 0 ? this.props.vsHosts.join(',') : '';
     return (
       <Form isHorizontal={true}>
@@ -51,8 +51,10 @@ export class VirtualServiceHosts extends React.Component<Props> {
             <HelperText>
               <HelperTextItem>
                 {isValid(this.isVirtualServiceHostsValid(this.props.vsHosts))
-                  ? t('The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.')
-                  : t('VirtualService Host \'*\' wildcard not allowed on mesh gateway.')}
+                  ? t(
+                      'The destination hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
+                    )
+                  : t("VirtualService Host '*' wildcard not allowed on mesh gateway.")}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>

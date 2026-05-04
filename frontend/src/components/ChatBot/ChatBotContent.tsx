@@ -1,61 +1,37 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  ChatbotAlert,
-  ChatbotContent,
-  ChatbotDisplayMode,
-  ChatbotWelcomePrompt,
-  Message,
-  MessageBox
-} from '@patternfly/chatbot';
+import React, { useEffect, useState } from 'react';
+import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
+import { ChatbotContent, ChatbotWelcomePrompt, MessageBox } from '@patternfly/chatbot';
+import { t } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { AlertMessage, ChatResponse, ExtendedMessage } from 'types/Chatbot';
-import { ChatMessage } from './ChatMessage/ChatMessage';
+import { useDispatch, useSelector } from 'react-redux';
+import { KialiAppState } from 'store/Store';
+import { EntryChat } from './EntryChat/EntryChat';
+import { ChatAIActions } from 'actions/ChatAIActions';
 
 type ChatBotContentProps = {
-  addBotMessage: (content: string) => void;
-  alertMessage?: AlertMessage;
-  botMessage: (response: ChatResponse | string) => ExtendedMessage;
-  context: any;
-  displayMode: ChatbotDisplayMode;
-  handleSend: (query: string | number, context: any, title?: string) => void;
-  isLoading: boolean;
-  messages: ExtendedMessage[];
-  setAlertMessage: (alertMessage?: AlertMessage) => void;
-  username: string;
+  chatHistoryEndRef: React.RefObject<HTMLDivElement>;
 };
 
-export const ChatBotContent: React.FC<ChatBotContentProps> = ({
-  addBotMessage,
-  username,
-  alertMessage,
-  handleSend,
-  setAlertMessage,
-  isLoading,
-  displayMode,
-  messages,
-  botMessage,
-  context
-}) => {
+export const ChatBotContent: React.FC<ChatBotContentProps> = ({ chatHistoryEndRef }) => {
   const { pathname } = useLocation();
   const category = pathname.split('/')[1];
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [promptData, setPromptData] = useState<any>(DataPrompts[category] || []);
-  const scrollToBottom = (): void => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-
+  const chatHistory: ImmutableList<ImmutableMap<string, unknown>> = useSelector(
+    (s: KialiAppState) => s.aiChat.chatHistory
+  );
+  const username = useSelector((state: KialiAppState) => state.authentication.session?.username ?? '');
+  const dispatch = useDispatch();
+  //const conversationID: string = useSelector((s: KialiAppState) => s.aiChat.conversationID);
   const generatePrompts = React.useCallback((): void => {
     setPromptData(
       (DataPrompts[category] || []).map(prompt => ({
         title: prompt.title,
         message: prompt.message,
-        onClick: () => handleSend(prompt.query, context, prompt.title)
+        onClick: () => dispatch(ChatAIActions.setQuery(prompt.query))
       }))
     );
-  }, [category, context, handleSend]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  }, [category, dispatch]);
 
   useEffect(() => {
     generatePrompts();
@@ -65,44 +41,14 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({
     <ChatbotContent>
       <MessageBox>
         <ChatbotWelcomePrompt
-          title={`Welcome to Kiali Chatbot ${username}`}
-          description="How may I help you today?"
+          title={`${t('Welcome to Kiali Chatbot')} ${username}`}
+          description={t('How may I help you today?')}
           prompts={promptData}
         />
-        {alertMessage && (
-          <ChatbotAlert
-            title={alertMessage.title}
-            onClose={() => setAlertMessage(undefined)}
-            variant={alertMessage.variant}
-          >
-            {alertMessage.message}
-          </ChatbotAlert>
-        )}
-        {messages.map(({ referenced_docs, scrollToHere, collapse, actions, ...message }: ExtendedMessage, index) => {
-          return (
-            <ChatMessage
-              key={`chatbot_message_${index}`}
-              addBotMessage={addBotMessage}
-              index={index.toString()}
-              message={message}
-              referenced_docs={referenced_docs}
-              collapse={collapse}
-              actions={actions || []}
-              scrollToHere={scrollToHere}
-              innerRef={messagesEndRef}
-              displayMode={displayMode}
-              context={context}
-              onSendMessage={handleSend}
-              setAlertMessage={setAlertMessage}
-            />
-          );
-        })}
-        {messages.at(-1)?.role === 'user' && isLoading ? (
-          <Message botWord="Kiali AI" key="bott_message_9999" {...botMessage('...')} isLoading={true} />
-        ) : (
-          <></>
-        )}
-        <div ref={messagesEndRef} />
+        {chatHistory.map((entry, i) => (
+          <EntryChat entryIndex={i} key={(entry.get('id') as string) ?? i} />
+        ))}
+        <div ref={chatHistoryEndRef} />
       </MessageBox>
     </ChatbotContent>
   );

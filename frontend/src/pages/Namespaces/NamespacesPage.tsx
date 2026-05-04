@@ -32,7 +32,6 @@ import { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { ApiError } from 'types/Api';
-import { setAIContext } from 'helpers/ChatAI';
 import { KialiDispatch } from 'types/Redux';
 import { t } from 'utils/I18nUtils';
 import { ControlPlane } from '../../types/Mesh';
@@ -286,8 +285,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
             this.fetchHealth(isAscending, sortField);
             this.fetchTLS(isAscending, sortField);
             this.fetchValidations(isAscending, sortField);
-
-            setAIContext(this.props.dispatch, `Namespaces list: ${this.state.namespaces.map(ns => ns.name).join(',')}`);
             this.fetchControlPlanes();
           }
         );

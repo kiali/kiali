@@ -11,6 +11,36 @@ Feature: Kiali AI Chatbot
     Given user is at administrator perspective
     And user is at the "overview" page
 
+  Scenario: Changing display mode updates the chatbot layout class and CSS variables
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the chatbot options menu
+    And the user selects display mode "Dock to window"
+    Then the chatbot should be in "docked" display mode
+    And the chatbot docked height CSS variable should be set
+    When the user opens the chatbot options menu
+    And the user selects display mode "Fullscreen"
+    Then the chatbot should be in "fullscreen" display mode
+    And the chatbot fullscreen size CSS variables should be set
+    When the user opens the chatbot options menu
+    And the user selects display mode "Overlay"
+    Then the chatbot should be in "default" display mode
+
+  Scenario: The Close Chat option hides the chatbot
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the chatbot options menu
+    And the user selects "Close Chat"
+    Then the AI chatbot window should be closed
+
+  Scenario: The chatbot toggle icon reflects the active theme
+    Given the theme is explicitly set to light
+    Then the AI chatbot toggle should show the light theme icon
+    When the user switches to dark theme
+    Then the AI chatbot toggle should show the dark theme icon
+    When the user switches to light theme
+    Then the AI chatbot toggle should show the light theme icon
+
   Scenario: The AI chatbot toggle button is visible
     Then the AI chatbot toggle button should be visible
 
@@ -28,6 +58,14 @@ Feature: Kiali AI Chatbot
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
     And the AI chatbot should display a welcome message
+
+  Scenario: The AI chatbot shows a cancelled alert when the user stops the stream
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message that starts streaming "Tell me about Istio"
+    And the AI chatbot stop button should be visible
+    When user clicks the stop button
+    Then the AI chatbot should show a cancelled alert
 
   Scenario: The AI chatbot responds with sources
     When user clicks the AI chatbot toggle
@@ -59,6 +97,188 @@ Feature: Kiali AI Chatbot
     Then the AI chatbot should display the answer "Sure, I can navigate you to the services in the bookinfo namespace."
     And the navigation actions container should not be visible
     And the URL should contain "/services?namespaces=bookinfo"
+
+  Scenario: The New Chat button opens the confirmation modal
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user clicks the new chat button
+    Then the new chat confirmation modal should be open
+
+  Scenario: The new chat modal shows the erase conversation message when opened from the new chat button
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When user clicks the new chat button
+    Then the new chat confirmation modal should be open
+    And the new chat modal should show the erase conversation message
+
+  Scenario: The new chat modal shows the provider change message when opened by selecting a different provider
+    Given two AI providers are configured
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user selects the second AI provider
+    Then the new chat confirmation modal should be open
+    And the new chat modal should show the provider change message
+
+  Scenario: Cancelling the new chat modal keeps the conversation intact
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user clicks the new chat button
+    And the new chat confirmation modal should be open
+    And user cancels the new chat modal
+    Then the new chat modal should be closed
+    And the AI chatbot should still contain the message "Of course."
+
+  Scenario: Closing the new chat modal with X keeps the conversation intact
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user clicks the new chat button
+    And the new chat confirmation modal should be open
+    And user closes the new chat modal with X
+    Then the new chat modal should be closed
+    And the AI chatbot should still contain the message "Of course."
+
+  Scenario: Confirming a new chat clears the conversation and resets the session
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user clicks the new chat button
+    And the new chat confirmation modal should be open
+    And user confirms the new chat modal
+    Then the new chat modal should be closed
+    And the AI chatbot window should be open
+    And the AI chatbot should display a welcome message
+    And the AI chatbot should not contain the message "Of course."
+    And the next chat message should be sent without a conversation ID
+
+  Scenario: Selecting a different AI provider opens the new chat confirmation modal
+    Given two AI providers are configured
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user selects the second AI provider
+    Then the new chat confirmation modal should be open
+
+  Scenario: Confirming a provider change updates the selected provider and clears the chat
+    Given two AI providers are configured
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user selects the second AI provider
+    And the new chat confirmation modal should be open
+    And user confirms the new chat modal
+    Then the new chat modal should be closed
+    And the AI chatbot should display a welcome message
+    And the AI chatbot should not contain the message "Of course."
+    And the AI chatbot header should show the second provider as selected
+    And the next chat message should be sent to the second AI provider without a conversation ID
+
+  Scenario: Selecting a different AI provider opens the new chat confirmation modal
+    Given two AI providers are configured
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user selects the second AI provider
+    Then the new chat confirmation modal should be open
+
+  Scenario: Confirming a provider change updates the selected provider and clears the chat
+    Given two AI providers are configured
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When user selects the second AI provider
+    And the new chat confirmation modal should be open
+    And user confirms the new chat modal
+    Then the new chat modal should be closed
+    And the AI chatbot should display a welcome message
+    And the AI chatbot should not contain the message "Of course."
+    And the AI chatbot header should show the second provider as selected
+    And the next chat message should be sent to the second AI provider without a conversation ID
+
+  Scenario: The AI chatbot renders a tool call label while the tool is running
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a running tool "What is the mesh status?"
+    Then the AI chatbot should show a running tool label for "get_mesh_status"
+
+  Scenario: The AI chatbot renders a completed tool call with success icon
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a successful tool "What is the mesh status?"
+    Then the AI chatbot should show a completed tool label for "get_mesh_status"
+
+  Scenario: The AI chatbot renders a failed tool call with error icon
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a failed tool "Get the application logs"
+    Then the AI chatbot should show an error tool label for "get_logs"
+
+  Scenario: The AI chatbot tool modal shows pending state when tool is still running
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a running tool "What is the mesh status?"
+    And the AI chatbot should show a running tool label for "get_mesh_status"
+    When user clicks the tool label for "get_mesh_status"
+    Then the AI chatbot tool modal should be open
+    And the AI chatbot tool modal should show "pending" status
+
+  Scenario: The AI chatbot tool modal shows result content after tool completion
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a successful tool "What is the mesh status?"
+    And the AI chatbot should show a completed tool label for "get_mesh_status"
+    When user clicks the tool label for "get_mesh_status"
+    Then the AI chatbot tool modal should be open
+    And the AI chatbot tool modal should show "success" status
+    And the AI chatbot tool modal should display tool output content
+
+  Scenario: The AI chatbot tool modal displays tool arguments
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message triggering a tool with arguments "List services in bookinfo"
+    And the AI chatbot should show a completed tool label for "list_or_get_resources"
+    When user clicks the tool label for "list_or_get_resources"
+    Then the AI chatbot tool modal should be open
+    And the AI chatbot tool modal should display tool arguments containing "namespaces=bookinfo"
+
+  Scenario: The AI chatbot renders multiple file attachments when the end event contains multiple actions
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message with multiple file actions "Apply traffic shifting for the reviews service"
+    Then the AI chatbot should display the file attachment label "dr_reviews"
+    And the AI chatbot should display the file attachment label "vs_reviews"
+
+  Scenario: The AI chatbot file attachment modal shows the YAML content and can be dismissed
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message with multiple file actions "Apply traffic shifting for the reviews service"
+    When user opens the chatbot YAML attachment "dr_reviews.yaml"
+    Then the chatbot YAML attachment modal should be open
+    And the chatbot YAML attachment modal should contain "DestinationRule" in the editor
+    When user closes the chatbot YAML attachment modal
+    Then the chatbot YAML attachment modal should be closed
+
+  Scenario: The AI chatbot file attachment create button calls the API and adds a success message
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message with multiple file actions "Apply traffic shifting for the reviews service"
+    When user opens the chatbot YAML attachment "dr_reviews.yaml"
+    And user confirms YAML create for the DestinationRule attachment
+    Then the Istio YAML apply request should succeed with method "POST"
+    And the AI chatbot should contain the text "Successfully created"
+    And the chatbot YAML attachment modal should be closed
 
   Scenario: The AI chatbot YAML attachment triggers Istio VirtualService create
     Given there is not a "vs-ai-cypress" "VirtualService" in the "bookinfo" namespace

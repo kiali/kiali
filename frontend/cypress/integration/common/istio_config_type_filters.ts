@@ -127,10 +127,7 @@ When('user chooses {int} type filters', (count: number) => {
 });
 
 When('user clicks the cross on one of them', () => {
-  cy.get('#filter-selection > :nth-child(2)')
-    .find('button[aria-label^="Close "]')
-    .first()
-    .click();
+  cy.get('#filter-selection > :nth-child(2)').find('button[aria-label^="Close "]').first().click();
 });
 
 Then('{int} filters should be visible', (count: number) => {

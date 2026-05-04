@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 )
 
@@ -47,7 +48,7 @@ func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, mo
 		return nil, err
 	}
 
-	baseURL := model.Endpoint
+	baseURL := providers.ResolveProviderEndpoint(provider, model)
 	switch provider.Config {
 	case config.ProviderConfigGemini:
 		if baseURL == "" {
@@ -66,11 +67,11 @@ func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, mo
 		}
 		return opts, nil
 	case config.OpenAIProviderConfigAzure:
-		if model.Endpoint == "" {
+		if baseURL == "" {
 			return nil, fmt.Errorf("endpoint is required for azure provider")
 		}
 		return []option.RequestOption{
-			azure.WithEndpoint(model.Endpoint, azureAPIVersion),
+			azure.WithEndpoint(baseURL, azureAPIVersion),
 			azure.WithAPIKey(resolvedKey),
 		}, nil
 	default:
@@ -100,23 +101,24 @@ func (p *OpenAIProvider) GetToolDefinitions() interface{} {
 	return tools
 }
 
-func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
+func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {
 	toolsSlice, ok := toolCall.([]openai.ChatCompletionMessageToolCallUnion)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}, nil
+		return []types.StreamToolCallData{}, []string{}, nil
 	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	tools := make([]types.StreamToolCallData, len(toolsSlice))
 	for i, tool := range toolsSlice {
 		toolNames[i] = tool.Function.Name
 		args := map[string]any{}
 		if err := json.Unmarshal([]byte(tool.Function.Arguments), &args); err != nil {
 			return nil, nil, fmt.Errorf("invalid arguments for tool %q: %w", tool.Function.Name, err)
 		}
-		tools[i] = mcp.ToolsProcessor{
-			Args:       args,
-			Name:       tool.Function.Name,
-			ToolCallID: tool.ID,
+		tools[i] = types.StreamToolCallData{
+			Args: args,
+			Name: tool.Function.Name,
+			ID:   tool.ID,
+			Type: "tool_call",
 		}
 	}
 	return tools, toolNames, nil

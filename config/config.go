@@ -783,11 +783,12 @@ type Validations struct {
 
 // AiStoreConfig defines configuration for the AI store subsystem
 type AiStoreConfig struct {
-	Enabled           bool           `yaml:"enabled,omitempty" json:"enabled,omitempty"`                      // Default: true
-	InactivityTimeout DurationString `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"` // Default: "30m"
-	MaxCacheMemoryMB  int            `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"` // Default: 1024
-	ReduceWithAI      bool           `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`          // Default: false
-	ReduceThreshold   int            `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`     // Default: 15 messages
+	Enabled                 bool           `yaml:"enabled,omitempty" json:"enabled,omitempty"`                                    // Default: true
+	InactivityTimeout       DurationString `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"`               // Default: "30m"
+	HistoryTokenBudgetRatio float64        `yaml:"history_token_budget_ratio,omitempty" json:"historyTokenBudgetRatio,omitempty"` // Default: 0.85
+	MaxCacheMemoryMB        int            `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"`               // Default: 1024
+	ReduceWithAI            bool           `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`                        // Default: false
+	ReduceThreshold         int            `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`                   // Default: 15 messages
 }
 
 type AIModel struct {
@@ -802,10 +803,11 @@ type AIModel struct {
 type ProviderType string
 
 const (
-	OpenAIProvider      ProviderType = "openai"
 	AnthropicProvider   ProviderType = "anthropic"
-	GoogleProvider      ProviderType = "google"
 	DefaultProviderType ProviderType = "default"
+	GoogleProvider      ProviderType = "google"
+	LightSpeedProvider  ProviderType = "lightspeed"
+	OpenAIProvider      ProviderType = "openai"
 )
 
 type ProviderConfigType string
@@ -822,6 +824,7 @@ type ProviderConfig struct {
 	Type         ProviderType       `yaml:"type" json:"type"`
 	Config       ProviderConfigType `yaml:"config" json:"config"`
 	Enabled      bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Endpoint     string             `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
 	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
 	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
 	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
@@ -1030,11 +1033,12 @@ func NewConfig() (c *Config) {
 			DefaultProvider: "",
 			Providers:       []ProviderConfig{},
 			StoreConfig: AiStoreConfig{
-				Enabled:           true,
-				InactivityTimeout: "30m",
-				MaxCacheMemoryMB:  1024,
-				ReduceWithAI:      false,
-				ReduceThreshold:   15,
+				Enabled:                 true,
+				InactivityTimeout:       "30m",
+				MaxCacheMemoryMB:        1024,
+				HistoryTokenBudgetRatio: 0.85,
+				ReduceWithAI:            false,
+				ReduceThreshold:         15,
 			},
 		},
 		Clustering: Clustering{
@@ -1372,9 +1376,10 @@ func (conf *Config) ValidateAI() error {
 
 	defaultProviderFound := false
 	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
-		OpenAIProvider:    {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
-		AnthropicProvider: {DefaultProviderConfigType},
-		GoogleProvider:    {ProviderConfigGemini},
+		AnthropicProvider:  {DefaultProviderConfigType},
+		GoogleProvider:     {ProviderConfigGemini},
+		LightSpeedProvider: {DefaultProviderConfigType},
+		OpenAIProvider:     {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
 	}
 
 	seenNames := make(map[string]struct{})
@@ -1419,6 +1424,24 @@ func (conf *Config) ValidateAI() error {
 
 		if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
 			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
+		}
+
+		// LightSpeed is a special case:
+		//   - No models, default_model, or API key are needed — authentication is
+		//     handled per-request via the Kiali user's Kubernetes bearer token.
+		//   - Only the provider-level endpoint is required.
+		//   - config defaults to DefaultProviderConfigType when empty (handled above).
+		//   - A synthetic model entry (named after the provider) is auto-created so
+		//     the frontend always has at least one selectable model.
+		if p.Type == LightSpeedProvider {
+			if p.Endpoint == "" {
+				return fmt.Errorf("chat_ai.providers[%q] of type %q requires an endpoint", p.Name, LightSpeedProvider)
+			}
+			if len(p.Models) == 0 {
+				p.Models = []AIModel{{Name: p.Name, Enabled: true}}
+				p.DefaultModel = p.Name
+			}
+			continue
 		}
 
 		if p.DefaultModel == "" {

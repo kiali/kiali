@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/types"
@@ -15,6 +17,105 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/log"
 )
+
+// Logging control for AI stuff
+type LogLevel int
+
+const (
+	LogLevelDebug LogLevel = iota
+	LogLevelInfo
+	LogLevelWarn
+	LogLevelError
+)
+
+// formatToolArgValue renders a single tool argument value for log output.
+// Strings and JSON-serialised values longer than maxArgLen characters are
+// truncated and annotated with their total length so the log stays readable
+// even when an argument contains full YAML or multi-line text.
+const maxArgLen = 100
+
+func formatToolArgValue(v any) string {
+	var s string
+	switch val := v.(type) {
+	case string:
+		s = val
+	case bool, float64, int, int64:
+		s = fmt.Sprintf("%v", val)
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			s = fmt.Sprintf("%v", v)
+		} else {
+			s = string(b)
+		}
+	}
+	if len(s) <= maxArgLen {
+		return s
+	}
+	return fmt.Sprintf("%s… (%d chars)", s[:maxArgLen], len(s))
+}
+
+// LogToolCalls emits a structured debug block per tool call, showing each
+// argument as key=value on its own indented line.  Large values (e.g. YAML
+// payloads) are truncated so the log stays human-readable.
+//
+// Example output:
+//
+//	[Chat AI][OpenAI][ToolCalls] Executing tool (iter=0): manage_istio_config
+//	  action    = create
+//	  confirmed = false
+//	  data      = apiVersion: networking.istio.io/v1… (843 chars)
+//	  group     = networking.istio.io
+//	  kind      = DestinationRule
+//	  namespace = bookinfo
+//	  object    = reviews
+func LogToolCalls(p AIProvider, iter int, tools []types.StreamToolCallData) {
+	for _, tc := range tools {
+		if len(tc.Args) == 0 {
+			Log(p, LogLevelDebug, "ToolCalls", "Executing tool (iter=%d): %s  id=%s (no args)", iter, tc.Name, tc.ID)
+			continue
+		}
+
+		// Collect keys in sorted order for a stable, readable output
+		keys := make([]string, 0, len(tc.Args))
+		for k := range tc.Args {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		// Find the longest key for alignment
+		maxKeyLen := 0
+		for _, k := range keys {
+			if len(k) > maxKeyLen {
+				maxKeyLen = len(k)
+			}
+		}
+
+		lines := make([]string, 0, len(keys)+1)
+		lines = append(lines, fmt.Sprintf("Executing tool (iter=%d): %s  id=%s", iter, tc.Name, tc.ID))
+		for _, k := range keys {
+			padding := strings.Repeat(" ", maxKeyLen-len(k))
+			lines = append(lines, fmt.Sprintf("  %s%s = %s", k, padding, formatToolArgValue(tc.Args[k])))
+		}
+
+		Log(p, LogLevelDebug, "ToolCalls", "%s", strings.Join(lines, "\n"))
+	}
+}
+
+func Log(provider AIProvider, level LogLevel, category string, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	prefix := fmt.Sprintf("[Chat AI][%s][%s]", provider.GetName(), category)
+	switch level {
+	case LogLevelDebug:
+		log.Debugf("%s %s", prefix, msg)
+	case LogLevelInfo:
+		log.Infof("%s %s", prefix, msg)
+	case LogLevelWarn:
+		log.Warningf("%s %s", prefix, msg)
+	case LogLevelError:
+		log.Errorf("%s %s", prefix, msg)
+	}
+}
 
 var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
@@ -32,18 +133,22 @@ func ParseMarkdownResponse(content string) string {
 	return content
 }
 
-func NewContextCanceledResponse(err error) (*types.AIResponse, int) {
+func NewContextCanceledResponse(onChunk func(chunk string), err error) {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return &types.AIResponse{Error: err.Error()}, http.StatusRequestTimeout
+		StreamError(onChunk, err.Error())
+		return
 	}
-	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
+	StreamError(onChunk, "request cancelled")
 }
 
-func CleanConversation(conversation *[]types.ConversationMessage) {
+func CleanConversation(ptr *types.Conversation) {
+	if ptr == nil {
+		return
+	}
 	// List of tool names that are not useful to store in conversation history
 
-	cleaned := make([]types.ConversationMessage, 0, len(*conversation))
-	for _, msg := range *conversation {
+	cleaned := make([]types.ConversationMessage, 0, len(ptr.Conversation))
+	for _, msg := range ptr.Conversation {
 		// Remove tool messages where the tool name is in the exclusion list
 		if msg.Role == "tool" && mcp.ExcludedToolNames[msg.Name] {
 			log.Debugf("Removing tool message with excluded tool name: %s", msg.Name)
@@ -70,133 +175,69 @@ func CleanConversation(conversation *[]types.ConversationMessage) {
 		}
 		cleaned = append(cleaned, msg)
 	}
-	*conversation = cleaned
+	ptr.Mu.Lock()
+	ptr.LastAccessed = time.Now()
+	ptr.Conversation = cleaned
+	ptr.Mu.Unlock()
 }
 
-func GetStoreConversation(r *http.Request, req types.AIRequest, aiStore types.AIStore) (*types.Conversation, string, []types.ConversationMessage) {
-	var conversation []types.ConversationMessage
-	var ptr *types.Conversation
+func GetStoreConversation(
+	r *http.Request,
+	req *types.AIRequest,
+	aiStore types.AIStore,
+	initializeConversation func(*types.Conversation, string),
+) (*types.Conversation, string) {
+	ptr := &types.Conversation{}
 	sessionID := authentication.GetSessionIDContext(r.Context())
+	if req.ConversationID == "" {
+		req.ConversationID = aiStore.GenerateConversationID()
+	}
 	if aiStore.Enabled() {
 		log.Debugf("Getting conversation for session ID: %s", sessionID)
 		var found bool
-		ptr, found = aiStore.GetConversation(sessionID, req.ConversationID)
-		if found && ptr != nil {
+		storedConversation, found := aiStore.GetConversation(sessionID, req.ConversationID)
+		if found && storedConversation != nil {
 			log.Debugf("Conversation found for conversation ID: %s", req.ConversationID)
-			conversation = ptr.Conversation
+			// Work on a copy to avoid mutating store-backed slice before persistence.
+			ptr.Conversation = append([]types.ConversationMessage(nil), storedConversation.Conversation...)
+			ptr.LastAccessed = storedConversation.LastAccessed
+			ptr.EstimatedMB = storedConversation.EstimatedMB
 		} else {
 			log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
-			// Create a new Conversation struct for storage later
-			ptr = &types.Conversation{}
+		}
+		if initializeConversation != nil {
+			initializeConversation(ptr, req.Query)
 		}
 	}
-	return ptr, sessionID, conversation
+
+	return ptr, sessionID
 }
 
-func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest, conversation []types.ConversationMessage) {
+func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest) {
 	if aiStore.Enabled() {
 		if err := ctx.Err(); err != nil {
 			log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 			return
 		}
 		// Clean conversation by removing tool messages that are not useful for storage
-		CleanConversation(&conversation)
+		CleanConversation(ptr)
 		if aiStore.ReduceWithAI() {
 			if err := ctx.Err(); err != nil {
 				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 				return
 			}
 			// Reduce the conversation with AI
-			conversation = aiProvider.ReduceConversation(ctx, conversation, aiStore.ReduceThreshold())
+			aiProvider.ReduceConversation(ctx, ptr, aiStore.ReduceThreshold())
 			if err := ctx.Err(); err != nil {
 				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 				return
 			}
 		}
-		ptr.Mu.Lock()
-		ptr.Conversation = conversation
-		ptr.Mu.Unlock()
 		err := aiStore.SetConversation(sessionID, req.ConversationID, ptr)
 		if err != nil {
 			log.Errorf("[Chat AI] Failed to set conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 		}
 	}
-}
-
-// ToolResultProcessingResult contains the processed tool results and metadata
-type ToolResultProcessingResult struct {
-	Response          *types.AIResponse
-	Conversation      []types.ConversationMessage
-	ShouldReturnEarly bool
-}
-
-// ProcessToolResults processes tool execution results in a standardized way
-// and builds the response and conversation accordingly
-func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
-	result := ToolResultProcessingResult{
-		Response:     &types.AIResponse{},
-		Conversation: conversation,
-	}
-
-	for _, toolResult := range toolResults {
-		// Handle errors
-		if toolResult.Error != nil {
-			result.Response.Error = toolResult.Error.Error()
-			result.ShouldReturnEarly = true
-			return result
-		}
-
-		// Collect actions and referenced_docs
-		if len(toolResult.Actions) > 0 {
-			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
-		}
-		if len(toolResult.ReferencedDocs) > 0 {
-			result.Response.ReferencedDocs = append(result.Response.ReferencedDocs, toolResult.ReferencedDocs...)
-		}
-
-		// Skip adding to conversation if we have actions/referenced_docs
-		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocs) > 0 {
-			continue
-		}
-
-		// Default: append tool message to conversation
-		if toolResult.Message.Content != "" {
-			result.Conversation = append(result.Conversation, toolResult.Message)
-		}
-	}
-
-	return result
-}
-
-// AddContextToConversation creates a temporary copy of the conversation with context added
-// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-func AddContextToConversation(conversation []types.ConversationMessage, req types.AIRequest) []types.ConversationMessage {
-	if len(conversation) == 0 {
-		return conversation
-	}
-
-	// Create a copy to avoid modifying the original
-	result := make([]types.ConversationMessage, 0, len(conversation)+1)
-
-	// Add system instruction (should be first)
-	result = append(result, conversation[0])
-
-	// Add context as second message (after system instruction, before user messages)
-	contextBytes, _ := json.Marshal(req.Context)
-	contextContent := fmt.Sprintf("CONTEXT (JSON):\n%s\n\n", string(contextBytes))
-	result = append(result, types.ConversationMessage{
-		Content: contextContent,
-		Name:    "",
-		Param:   nil,
-		Role:    "system",
-	})
-
-	// Add the rest of the conversation
-	if len(conversation) > 1 {
-		result = append(result, conversation[1:]...)
-	}
-
-	return result
 }
 
 func SplitConversationForReduction(
@@ -237,6 +278,18 @@ func FormatToolContent(result interface{}) (string, error) {
 		}
 		return string(bytes), nil
 	}
+}
+
+// ResolveProviderEndpoint returns the effective base URL for a model.
+// It prefers the model-level endpoint and falls back to the provider-level
+// endpoint when the model does not define one.  An empty string is returned
+// when neither specifies an endpoint; callers that require one (e.g. Azure)
+// are responsible for producing an appropriate error.
+func ResolveProviderEndpoint(provider *config.ProviderConfig, model *config.AIModel) string {
+	if model.Endpoint != "" {
+		return model.Endpoint
+	}
+	return provider.Endpoint
 }
 
 func ResolveProviderKey(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (string, error) {

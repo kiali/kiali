@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -84,14 +86,14 @@ func (s *AIStoreImpl) GetConversation(sessionID string, conversationID string) (
 	defer s.mu.RUnlock()
 	sessionConversation, found := s.conversations[sessionID]
 	if !found {
-		return nil, false
+		return &types.Conversation{}, false
 	}
 	sessionConversation.mu.Lock()
 	defer sessionConversation.mu.Unlock()
 	sessionConversation.LastAccessed = time.Now()
 	conversation, found := sessionConversation.Conversation[conversationID]
 	if !found {
-		return nil, false
+		return &types.Conversation{}, false
 	}
 	conversation.Mu.Lock()
 	conversation.LastAccessed = time.Now()
@@ -387,4 +389,9 @@ func EstimateConversationMemory(conversation []types.ConversationMessage) float6
 
 func EstimateMessageMemory(message types.ConversationMessage) float64 {
 	return float64(len(message.Content)) / 1024 / 1024
+}
+
+// GenerateConversationID generates a new unique conversation ID
+func (s *AIStoreImpl) GenerateConversationID() string {
+	return uuid.New().String()
 }

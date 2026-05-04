@@ -20,7 +20,7 @@ const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   return (
     <div style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '40%' }}>
-        <Label variant="outline" >{t(shortcut.shortcut)}</Label>
+        <Label variant="outline">{t(shortcut.shortcut)}</Label>
       </div>
       <div style={{ flex: '60%' }}>{t(shortcut.description)}</div>
     </div>

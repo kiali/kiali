@@ -1,23 +1,23 @@
 import React from 'react';
 import AceEditor from 'react-ace';
-import { ChatbotDisplayMode, FileDetailsLabel } from '@patternfly/chatbot';
+import { FileDetailsLabel } from '@patternfly/chatbot';
 import { Button, Stack, StackItem } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { Action, AlertMessage } from 'types/Chatbot';
+import { t } from 'utils/I18nUtils';
+import { Action } from 'types/Chatbot';
 import { Theme } from 'types/Common';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { load } from 'js-yaml';
 import * as API from 'services/Api';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { ChatAIActions } from 'actions/ChatAIActions';
+import { uniqueId } from 'lodash-es';
 
 type FileAttachmentProps = {
   action: Action;
-  addBotMessage?: (content: string) => void;
-  context?: any;
-  displayMode: ChatbotDisplayMode;
   fileName: string;
   onSendMessage?: (query: string | number, context?: any, title?: string) => void;
-  setAlertMessage?: (alertMessage?: AlertMessage) => void;
 };
 
 const toJsonString = (yamlText: string): string => {
@@ -25,14 +25,8 @@ const toJsonString = (yamlText: string): string => {
   return JSON.stringify(obj ?? {});
 };
 
-export const FileAttachment: React.FC<FileAttachmentProps> = ({
-  action,
-  addBotMessage,
-  context,
-  fileName,
-  onSendMessage,
-  setAlertMessage
-}) => {
+export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName, onSendMessage }) => {
+  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
   const theme = useKialiTheme();
@@ -54,34 +48,51 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
 
   const applyLabel =
     action.operation === 'create'
-      ? 'Create'
+      ? t('Create')
       : action.operation === 'patch'
-      ? 'Patch'
+      ? t('Patch')
       : action.operation === 'delete'
-      ? 'Delete'
-      : 'Apply';
+      ? t('Delete')
+      : t('Apply');
 
   const onApply = async (): Promise<void> => {
-    if (!setAlertMessage) {
-      return;
-    }
     if (!canApply || !action.operation) {
-      setAlertMessage({ title: 'Error', message: 'Cannot apply: missing operation.', variant: 'danger' });
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: uniqueId('ChatEntry_'),
+            error: { message: t('Cannot apply: missing operation.') },
+            who: 'ai',
+            isCancelled: false,
+            isTruncated: false,
+            isStreaming: false
+          }
+        })
+      );
       return;
     }
     if (!hasIstioMeta) {
       // Fallback: send to chat so the model can proceed using its tool memory.
       if (onSendMessage) {
         const prompt = `Please proceed with the ${action.operation} using this YAML:\n\n~~~\n${yamlText}\n~~~\n`;
-        onSendMessage(prompt, context);
+        onSendMessage(prompt, '');
         toggle();
         return;
       }
-      setAlertMessage({
-        title: 'Error',
-        message: 'Cannot apply directly: missing Istio metadata (namespace/group/version/kind/object).',
-        variant: 'danger'
-      });
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: uniqueId('ChatEntry_'),
+            error: {
+              message: t('Cannot apply directly: missing Istio metadata (namespace/group/version/kind/object).')
+            },
+            who: 'ai',
+            isCancelled: false,
+            isTruncated: false,
+            isStreaming: false
+          }
+        })
+      );
       return;
     }
 
@@ -93,28 +104,49 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         const successMsg = `Successfully created **${action.kindName}/${action.object ?? ''}** in namespace **${
           action.namespace
         }**`;
-        if (addBotMessage) {
-          addBotMessage(successMsg);
-        } else if (setAlertMessage) {
-          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
-        }
+        dispatch(
+          ChatAIActions.setChatHistoryAdd({
+            entry: {
+              id: uniqueId('ChatEntry_'),
+              text: successMsg,
+              who: 'ai',
+              isCancelled: false,
+              isTruncated: false,
+              isStreaming: false
+            }
+          })
+        );
       } else if (action.operation === 'patch') {
         const jsonPatch = toJsonString(yamlText);
         await API.updateIstioConfigDetail(action.namespace!, gvk, action.object!, jsonPatch, action.cluster);
         const successMsg = `Successfully patched **${action.kindName}/${action.object}** in namespace **${action.namespace}**`;
-        if (addBotMessage) {
-          addBotMessage(successMsg);
-        } else if (setAlertMessage) {
-          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
-        }
+        dispatch(
+          ChatAIActions.setChatHistoryAdd({
+            entry: {
+              id: uniqueId('ChatEntry_'),
+              text: successMsg,
+              who: 'ai',
+              isCancelled: false,
+              isTruncated: false,
+              isStreaming: false
+            }
+          })
+        );
       } else if (action.operation === 'delete') {
         await API.deleteIstioConfigDetail(action.namespace!, gvk, action.object!, action.cluster);
         const successMsg = `Successfully deleted **${action.kindName}/${action.object}** from namespace **${action.namespace}**`;
-        if (addBotMessage) {
-          addBotMessage(successMsg);
-        } else if (setAlertMessage) {
-          setAlertMessage({ title: 'Success', message: successMsg, variant: 'success' });
-        }
+        dispatch(
+          ChatAIActions.setChatHistoryAdd({
+            entry: {
+              id: uniqueId('ChatEntry_'),
+              text: successMsg,
+              who: 'ai',
+              isCancelled: false,
+              isTruncated: false,
+              isStreaming: false
+            }
+          })
+        );
       }
       toggle();
     } catch (e) {
@@ -123,16 +155,22 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         : e instanceof Error
         ? e.message
         : String(e);
-      if (addBotMessage) {
-        addBotMessage(
-          `**Error:** Failed to ${action.operation} **${action.kindName}/${action.object ?? ''}** in namespace **${
-            action.namespace
-          }**: ${msg}`
-        );
-        toggle();
-      } else if (setAlertMessage) {
-        setAlertMessage({ title: 'Error', message: msg, variant: 'danger' });
-      }
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: uniqueId('ChatEntry_'),
+            text: `**Error:** Failed to ${action.operation} **${action.kindName}/${
+              action.object ?? ''
+            }** in namespace **${action.namespace}**: ${msg}`,
+            error: { message: msg },
+            who: 'ai',
+            isCancelled: false,
+            isTruncated: false,
+            isStreaming: false
+          }
+        })
+      );
+      toggle();
     }
   };
 
@@ -153,7 +191,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
               </Button>
             ) : null,
             <Button key="close" variant="link" onClick={toggle}>
-              Close
+              {t('Close')}
             </Button>
           ].filter(Boolean) as any
         }

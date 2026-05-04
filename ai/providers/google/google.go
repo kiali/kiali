@@ -2,6 +2,7 @@ package google_provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,171 +16,228 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
-	if req.ConversationID == "" {
-		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
+func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+	if req.Query == "" {
+		providers.StreamError(onChunk, "query is required")
+		return
 	}
 
-	if req.Query == "" {
-		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
-	}
 	ctx := kialiInterface.Request.Context()
 	if p.client == nil {
 		client, err := genai.NewClient(ctx, &p.config)
 		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+			providers.StreamError(onChunk, err.Error())
+			return
 		}
 		p.client = client
 	}
-	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
-	log.Debugf("Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
-
-	p.InitializeConversation(&conversation, req)
-
-	// Create a temporary conversation with context for the API call
-	// The context is NOT saved to the persistent conversation to avoid contaminating future interactions
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
+	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
+	providers.Log(p, providers.LogLevelDebug, "Conversation", "Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
 		Tools: p.GetToolDefinitions().([]*genai.Tool),
 		ToolConfig: &genai.ToolConfig{
 			FunctionCallingConfig: &genai.FunctionCallingConfig{
-				Mode: genai.FunctionCallingConfigModeAny,
+				Mode: genai.FunctionCallingConfigModeAuto,
 			},
 		},
+		Temperature: genai.Ptr[float32](0),
 	}
 
 	// If the query is in conversationWithContext
 	// it must be removed to avoid duplication.
-	contentsForChat := p.ConversationToProvider(conversationWithContext).([]*genai.Content)
+	contentsForChat := p.ConversationToProvider(ptr.Conversation).([]*genai.Content)
 	if len(contentsForChat) > 0 {
 		last := contentsForChat[len(contentsForChat)-1]
 		if last != nil && last.Role == genai.RoleUser && len(last.Parts) == 1 && last.Parts[0] != nil && last.Parts[0].Text == req.Query {
 			contentsForChat = contentsForChat[:len(contentsForChat)-1]
 		}
 	}
-	chat, err := p.client.Chats.Create(ctx, p.model, config, contentsForChat)
-	if err != nil {
-		log.Debugf("Google provider error: %v", err)
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+
+	// Print content parts for debugging before starting the chat
+	providers.Log(p, providers.LogLevelDebug, "Conversation", "Conversation sent to Google (len=%d):", len(contentsForChat))
+	for i, c := range contentsForChat {
+		providers.Log(p, providers.LogLevelDebug, "Conversation", " Message =>[%d] [Role %s]  parts=%d", i, c.Role, len(c.Parts))
 	}
 
-	response := &types.AIResponse{}
-
-	result, err := chat.SendMessage(ctx, genai.Part{Text: req.Query})
+	var chat *genai.Chat
+	var err error
+	chat, err = p.client.Chats.Create(ctx, p.model, config, contentsForChat)
 	if err != nil {
-		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		providers.Log(p, providers.LogLevelError, "Error", "Error creating chat: %v", err)
+		providers.StreamError(onChunk, err.Error())
+		return
 	}
 
-	const maxToolIterations = 5
-	for iter := 0; iter < maxToolIterations; iter++ {
-		functionCalls := result.FunctionCalls()
-		if len(functionCalls) == 0 {
-			response.Answer = providers.ParseMarkdownResponse(result.Text())
-			break
-		}
-		if iter == maxToolIterations-1 {
-			log.Debugf("[Chat AI] Google provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
-			return &types.AIResponse{Error: fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
-		}
+	// nextParts and lastFunctionCalls are shared between streamTurn and prepareNextTurn
+	// via closure — each iteration updates them for the next.
+	var nextParts []genai.Part
+	nextParts = append(nextParts, genai.Part{Text: req.Query})
+	var lastFunctionCalls []*genai.FunctionCall // raw Gemini calls, needed for FunctionCall echo in prepareNextTurn
 
-		tools, toolNames, err := p.TransformToolCallToToolsProcessor(functionCalls)
-		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-		}
-		log.Debugf("Google provider tool names (iter=%d): %v", iter, toolNames)
-		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
-		}
+	// streamTurn executes one Gemini streaming turn using the current nextParts.
+	// ParseMarkdownResponse is NOT applied — the shared RunChatLoop does it.
+	streamTurn := func(ctx context.Context, onChunk func(string)) (string, []types.StreamToolCallData, error) {
+		var functionCalls []*genai.FunctionCall
+		text := ""
+		tokenID := 0
 
-		processResult := providers.ProcessToolResults(toolResults, conversation)
-		if processResult.Response.Error != "" {
-			return processResult.Response, http.StatusInternalServerError
-		}
-		if len(processResult.Response.Actions) > 0 {
-			response.Actions = append(response.Actions, processResult.Response.Actions...)
-		}
-		if len(processResult.Response.ReferencedDocs) > 0 {
-			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
-		}
-		conversation = processResult.Conversation
-
-		// Send function responses back to the chat (all tool calls in a single turn).
-		parts := make([]genai.Part, 0, len(toolResults))
-		for i, toolResult := range toolResults {
-			if toolResult.Error != nil {
-				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
+		for chunk, err := range chat.SendMessageStream(ctx, nextParts...) {
+			if err != nil {
+				if ctx.Err() == nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
+					providers.Log(p, providers.LogLevelDebug, "Content", "Google stream completed with internal SDK context cleanup — not an error")
+					break
+				}
+				return text, nil, err
 			}
-			content := toolResult.Message.Content
+			functionCalls = append(functionCalls, chunk.FunctionCalls()...)
+			if t := chunk.Text(); t != "" {
+				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", t)
+				providers.SendStreamEvent(onChunk, providers.LLM_TOKEN_EVENT, types.StreamTokenData{ID: tokenID, Token: t})
+				text += t
+				tokenID++
+			}
+		}
+
+		if len(functionCalls) == 0 {
+			lastFunctionCalls = nil
+			return text, nil, nil // no tool calls → shared loop applies ParseMarkdownResponse
+		}
+
+		toolCalls, _, err := p.TransformToolCallToToolsProcessor(functionCalls)
+		if err != nil {
+			providers.Log(p, providers.LogLevelError, "Error", "Error transforming tool calls: %v", err)
+			return text, nil, err
+		}
+		lastFunctionCalls = functionCalls
+		return text, toolCalls, nil
+	}
+
+	// prepareNextTurn builds function-response parts for the next Gemini turn.
+	// When all tools are excluded helpers, Gemini still needs the function responses
+	// to avoid an "unmatched function call" error — this is handled by sending a
+	// final stream and returning shouldContinue=false.
+	prepareNextTurn := func(ctx context.Context, toolCalls []types.StreamToolCallData, toolResults []types.StreamToolResultData, hasNonExcluded bool, onChunk func(string)) (bool, string) {
+		parts := make([]genai.Part, 0, len(toolResults)+len(lastFunctionCalls))
+
+		// Echo the raw FunctionCall parts from the last model turn so that
+		// Gemini can match responses to calls by position when IDs are empty
+		// (Gemini often returns empty IDs for parallel calls).  Without this
+		// echo the genai.Chat SDK cannot correlate the FunctionResponse parts
+		// and cancels the context before the next request is even sent.
+		for _, fnCall := range lastFunctionCalls {
+			parts = append(parts, genai.Part{FunctionCall: fnCall})
+		}
+		for i, tr := range toolResults {
+			content := tr.Content
 			if strings.TrimSpace(content) == "" {
 				content = "OK"
 			}
 			parts = append(parts, genai.Part{
 				FunctionResponse: &genai.FunctionResponse{
-					Name: tools[i].Name,
-					ID:   tools[i].ToolCallID,
-					Response: map[string]any{
-						"output": content,
-					},
+					Name:     toolCalls[i].Name,
+					ID:       toolCalls[i].ID,
+					Response: map[string]any{"output": content},
 				},
 			})
 		}
 
-		result, err = chat.SendMessage(ctx, parts...)
-		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-		}
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
+		if hasNonExcluded {
+			nextParts = parts
+			return true, ""
 		}
 
+		// Excluded-tool path: save responses to conversation history so future turns
+		// see them, then send a final acknowledgement stream to keep Gemini consistent.
+		for _, part := range parts {
+			if part.FunctionResponse != nil {
+				ptr.Mu.Lock()
+				ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+					Content: part.FunctionResponse.Response["output"].(string),
+					Name:    part.FunctionResponse.Name,
+					Param:   nil,
+					Role:    "tool",
+				})
+				ptr.Mu.Unlock()
+			}
+		}
+
+		extraText := ""
+		tokenID := 0
+		for chunk, err := range chat.SendMessageStream(ctx, parts...) {
+			if err != nil {
+				providers.Log(p, providers.LogLevelError, "Error", "Error sending final message for excluded tools: %v", err)
+				providers.StreamError(onChunk, err.Error())
+				return false, extraText
+			}
+			if t := chunk.Text(); t != "" {
+				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", t)
+				providers.SendStreamEvent(onChunk, providers.LLM_TOKEN_EVENT, types.StreamTokenData{ID: tokenID, Token: t})
+				extraText += t
+				tokenID++
+			}
+		}
+		return false, extraText
 	}
 
-	// Add the final assistant response to conversation (without tool call metadata)
-	// This keeps conversational context without confusing future tool selections
-	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
-			Content: response.Answer,
-			Name:    "",
-			Param:   nil,
-			Role:    "assistant",
+	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
+	if aborted {
+		return
+	}
+
+	if responseContent != "" {
+		ptr.Mu.Lock()
+		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+			Content: responseContent, Name: "", Param: nil, Role: "assistant",
 		})
+		ptr.Mu.Unlock()
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-
-	return response, http.StatusOK
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
+	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
+	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
+		Actions: actions, ReferencedDocuments: referencedDocs, Truncated: false,
+	})
 }
 
-func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
+func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {
 	toolsSlice, ok := toolCall.([]*genai.FunctionCall)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}, nil
+		return []types.StreamToolCallData{}, []string{}, nil
 	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	tools := make([]types.StreamToolCallData, len(toolsSlice))
 	for i, tool := range toolsSlice {
 		toolNames[i] = tool.Name
-		tools[i] = mcp.ToolsProcessor{
-			Args:       tool.Args,
-			Name:       tool.Name,
-			ToolCallID: tool.ID,
+		// Gemini may return empty or duplicate IDs for parallel calls of the same
+		// tool name.  When that happens every call would map to the same key in the
+		// Redux `tools` map, causing later results to overwrite earlier ones in the
+		// UI.  We guarantee uniqueness by falling back to a deterministic synthetic ID.
+		id := tool.ID
+		if id == "" {
+			id = fmt.Sprintf("google-fc-%d-%s", i, tool.Name)
+		}
+		tools[i] = types.StreamToolCallData{
+			Args: tool.Args,
+			Name: tool.Name,
+			ID:   id,
+			Type: "tool_call",
 		}
 	}
+
 	return tools, toolNames, nil
 }
 
-func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
-	if conversation == nil {
+func (p *GoogleAIProvider) InitializeConversation(ptr *types.Conversation, query string) {
+	if ptr == nil {
 		return
 	}
-	isNewConversation := len(*conversation) == 0
+	isNewConversation := len(ptr.Conversation) == 0
 	if isNewConversation {
 		// Initialize base system instruction when empty.
-		*conversation = []types.ConversationMessage{{
+		ptr.Conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
 			Name:    "",
 			Role:    "system",
@@ -187,8 +245,8 @@ func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.Conversa
 		}
 	}
 	// Adding user query to the conversation. This is the user message that is sent to the AI.
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: req.Query,
+	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+		Content: query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",
@@ -249,16 +307,16 @@ func (p *GoogleAIProvider) ProviderToConversation(providerMessage interface{}) t
 	}
 }
 
-func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(conversation, reduceThreshold, 4)
+func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
+	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(ptr.Conversation, reduceThreshold, 4)
 	if !ok {
-		return conversation
+		return
 	}
 
 	chat, err := p.client.Chats.Create(ctx, p.model, &genai.GenerateContentConfig{}, nil)
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to create chat in reduce conversation: %v", err)
-		return conversation // Return original if chat creation fails
+		return // Return original if chat creation fails
 	}
 	resp, err := chat.SendMessage(ctx,
 		genai.Part{Text: "You are a technical assistant for Kiali (Istio Service Mesh). Summarize the preceding troubleshooting steps, tool outputs, and user intents into a concise technical summary. Preserve key findings like pod names, error codes, or metrics."},
@@ -266,7 +324,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 	)
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to send message in reduce conversation: %v", err)
-		return conversation // Return original if message sending fails
+		return // Return original if message sending fails
 	}
 
 	summary := resp.Text()
@@ -281,5 +339,7 @@ func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation 
 		Role:    "system",
 	})
 	reduced = append(reduced, recentMessages...)
-	return reduced
+	ptr.Mu.Lock()
+	ptr.Conversation = reduced
+	ptr.Mu.Unlock()
 }

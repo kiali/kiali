@@ -93,7 +93,12 @@ export const GraphLegend: React.FC<GraphLegendProps> = (props: GraphLegendProps)
       <div className={headerStyle}>
         <span>{t('Legend')}</span>
         <Tooltip content={t('Close Legend')}>
-          <Button icon={<KialiIcon.Close />} id="legend_close" variant={ButtonVariant.plain} onClick={props.closeLegend} />
+          <Button
+            icon={<KialiIcon.Close />}
+            id="legend_close"
+            variant={ButtonVariant.plain}
+            onClick={props.closeLegend}
+          />
         </Tooltip>
       </div>
 

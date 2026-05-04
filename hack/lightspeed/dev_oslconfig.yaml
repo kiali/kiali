@@ -1,0 +1,54 @@
+# This is a sample config for reference.
+# Update properties with actual value; Ex: use the actual model name.
+llm_providers:
+- name: my_openai
+  type: openai
+  url: "https://api.openai.com/v1"
+  credentials_path: /app-root/.openai/openai_api_key.txt
+  models:
+  - name: gpt-5.4-mini
+  - name: gpt-5.4
+  - name: gpt-5.5
+ols_config:
+  # max_workers: 1
+  conversation_cache:
+    type: memory
+    memory:
+      max_entries: 1000
+  logging_config:
+    app_log_level: info
+    lib_log_level: warning
+    uvicorn_log_level: info
+    suppress_metrics_in_log: false
+    suppress_auth_checks_warning_in_log: false
+  default_provider: my_openai
+  default_model: gpt-5.4-mini
+  expire_llm_is_ready_persistent_state: -1
+  # query_filters:
+  #   - name: foo_filter
+  #     pattern: '\b(?:foo)\b'
+  #     replace_with: "deployment"
+  #   - name: bar_filter
+  #     pattern: '\b(?:bar)\b'
+  #     replace_with: "openshift"
+  tlsSecurityProfile:
+    type: Custom
+    ciphers:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+    minTLSVersion: VersionTLS13
+dev_config:
+  # config options specific to dev environment - launching OLS in local
+  enable_dev_ui: false
+  disable_auth: true
+  disable_tls: true
+  enable_system_prompt_override: true
+  # uvicorn_port_number: 8081
+  # llm_params:
+  #   temperature_override: 0
+  # k8s_auth_token: optional_token_when_no_available_kube_config
+
+# MCP servers - enables tool calling if present
+mcp_servers:
+- name: kubernetes
+  url: http://host.containers.internal:8081/mcp
