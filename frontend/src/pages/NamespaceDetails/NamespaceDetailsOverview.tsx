@@ -290,7 +290,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
 
     return (
       <>
-        <StackItem>
+        <StackItem key="details">
           <Card>
             <CardBody>
               <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
@@ -358,7 +358,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           </Card>
         </StackItem>
 
-        <StackItem>
+        <StackItem key="resources">
           <Card>
             <CardBody>
               <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
@@ -393,7 +393,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           </Card>
         </StackItem>
 
-        <StackItem>
+        <StackItem key="labels">
           <EditableLabelsCard
             canEdit={this.props.canEdit}
             labels={nsInfo.labels ?? {}}
@@ -408,7 +408,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           />
         </StackItem>
 
-        <StackItem>
+        <StackItem key="annotations">
           <EditableAnnotationsCard
             annotations={nsInfo.annotations ?? {}}
             canEdit={this.props.canEdit}

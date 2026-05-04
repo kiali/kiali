@@ -150,6 +150,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       if (this.props.workload && this.props.namespace) {
         graphCardActions.push(
           <WorkloadWizardActionsDropdownGroup
+            key="workloadActions"
             actionsLabel={true}
             namespace={this.props.namespace}
             onAction={this.handleWorkloadAction}
@@ -159,6 +160,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       } else if (this.props.serviceDetails) {
         graphCardActions.push(
           <ServiceWizardActionsDropdownGroup
+            key="serviceActions"
             virtualServices={this.props.serviceDetails.virtualServices ?? []}
             destinationRules={this.props.serviceDetails.destinationRules ?? []}
             k8sGRPCRoutes={this.props.serviceDetails.k8sGRPCRoutes ?? []}
@@ -171,6 +173,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       } else if (this.props.namespaceActions && this.props.namespaceActions.length > 0) {
         graphCardActions.push(
           <NamespaceActionsDropdownGroup
+            key="namespaceActions"
             actions={this.props.namespaceActions}
             namespace={this.props.dataSource.fetchParameters.namespaces[0]?.name ?? ''}
             onAction={() => this.onGraphActionsToggle(false)}
