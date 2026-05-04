@@ -291,18 +291,18 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     return (
       <>
         <StackItem key="details">
-          <Card>
+          <Card data-test="namespace-details-card">
             <CardBody>
               <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
                 <FlexItem>
                   <DescriptionList columnModifier={{ default: '2Col' }}>
                     {cluster && (
-                      <DescriptionListGroup>
+                      <DescriptionListGroup data-test="details-cluster">
                         <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
                         <DescriptionListDescription>{cluster}</DescriptionListDescription>
                       </DescriptionListGroup>
                     )}
-                    <DescriptionListGroup>
+                    <DescriptionListGroup data-test="details-status">
                       <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
                       <DescriptionListDescription>
                         <NamespaceHealthStatus
@@ -316,14 +316,14 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                       </DescriptionListDescription>
                     </DescriptionListGroup>
                     {(revisions.length > 0 || !nsInfo.isControlPlane) && (
-                      <DescriptionListGroup>
+                      <DescriptionListGroup data-test="details-revision">
                         <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
                         <DescriptionListDescription>
                           <NamespaceRevisionLabels ns={nsInfo} />
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     )}
-                    <DescriptionListGroup>
+                    <DescriptionListGroup data-test="details-mode">
                       <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
                       <DescriptionListDescription>
                         <PFLabel variant="outline" color={modeInfo.color} isCompact>
@@ -331,7 +331,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                         </PFLabel>
                       </DescriptionListDescription>
                     </DescriptionListGroup>
-                    <DescriptionListGroup>
+                    <DescriptionListGroup data-test="details-type">
                       <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
                       <DescriptionListDescription>
                         {nsInfo.isControlPlane ? (
@@ -344,7 +344,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                       </DescriptionListDescription>
                     </DescriptionListGroup>
                     {nsInfo.tlsStatus && (
-                      <DescriptionListGroup>
+                      <DescriptionListGroup data-test="details-mtls">
                         <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
                         <DescriptionListDescription>
                           <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
@@ -359,7 +359,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         </StackItem>
 
         <StackItem key="resources">
-          <Card>
+          <Card data-test="namespace-resources-card">
             <CardBody>
               <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
                 {t('Resources')}
@@ -393,7 +393,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           </Card>
         </StackItem>
 
-        <StackItem key="labels">
+        <StackItem key="labels" data-test="namespace-labels-card">
           <EditableLabelsCard
             canEdit={this.props.canEdit}
             labels={nsInfo.labels ?? {}}
@@ -408,7 +408,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
           />
         </StackItem>
 
-        <StackItem key="annotations">
+        <StackItem key="annotations" data-test="namespace-annotations-card">
           <EditableAnnotationsCard
             annotations={nsInfo.annotations ?? {}}
             canEdit={this.props.canEdit}
