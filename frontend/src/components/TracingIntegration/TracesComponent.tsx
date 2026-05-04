@@ -86,15 +86,7 @@ const traceDetailsTab = 0;
 const spansDetailsTab = 1;
 
 const containerStyle = kialiStyle({
-  paddingRight: '0.5rem',
-  flex: 1,
-  overflowY: 'auto',
-  minHeight: 0,
-  $nest: {
-    '& svg': {
-      overflow: 'visible'
-    }
-  }
+  paddingRight: '0.5rem'
 });
 
 class TracesComp extends React.Component<TracesProps, TracesState> {

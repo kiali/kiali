@@ -109,14 +109,36 @@ const mapStateToProps = (
 const TraceLabelContainer = connect(mapStateToProps)(TraceLabel);
 
 export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineInfo>> {
+  private getOrientation = (props: any): 'top' | 'bottom' | 'left' | 'right' => {
+    const x = props.x || 0;
+    const y = props.y || 0;
+    const width = typeof props.width === 'number' ? props.width : 0;
+
+    const horizontalMargin = flyoutWidth / 2 + flyoutMargin;
+    const verticalMargin = flyoutHeight / 2 + flyoutMargin;
+
+    if (x < horizontalMargin) {
+      return 'right';
+    }
+    if (width > 0 && x > width - horizontalMargin) {
+      return 'left';
+    }
+    if (y < verticalMargin) {
+      return 'bottom';
+    }
+    return 'top';
+  };
+
   render(): JSX.Element | null {
     if (this.props.activePoints && this.props.activePoints.length > 0) {
       const trace = this.props.activePoints[0].trace;
       return (
         <HookedChartTooltip
           {...this.props}
+          constrainToVisibleArea={false}
           flyoutWidth={flyoutWidth}
           flyoutHeight={flyoutHeight}
+          orientation={this.getOrientation}
           flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.9 }} />}
           labelComponent={<TraceLabelContainer trace={trace} />}
         />
