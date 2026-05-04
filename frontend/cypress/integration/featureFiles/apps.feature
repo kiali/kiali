@@ -140,7 +140,6 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
-  @skip-ossmc
   @health-cache-metrics
   Scenario: Health cache metrics increase when visiting apps list page
     Given health cache is enabled

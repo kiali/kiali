@@ -163,12 +163,12 @@ Then('{string} should be referenced', (gateway: string) => {
   ensureKialiFinishedLoading();
 
   cy.get('h5').contains('Validation References').should('be.visible');
-  cy.get(`a[data-test="K8sGateway-bookinfo-${gateway}"]`).should('be.visible');
+  cy.getBySel(`K8sGateway-bookinfo-${gateway}`).should('be.visible');
 });
 
 Then('{string} should not be referenced anymore', (gateway: string) => {
   ensureKialiFinishedLoading();
-  cy.get(`a[data-test="K8sGateway-bookinfo-${gateway}"]`).should('not.exist');
+  cy.getBySel(`K8sGateway-bookinfo-${gateway}`).should('not.exist');
 });
 
 Then('{string} details information for service entry {string} can be seen', (host: string, name: string) => {

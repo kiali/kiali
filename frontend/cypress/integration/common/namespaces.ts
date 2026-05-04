@@ -87,11 +87,7 @@ const columnTitleToId = (title: string): string => {
 When('user sets namespaces column order via URL to', (tableHeadings: TableDefinition) => {
   const columnTitles = tableHeadings.raw()[0] as string[];
   const orderParam = columnTitles.map(t => columnTitleToId(t)).join(',');
-  cy.url().then(url => {
-    const u = new URL(url);
-    u.searchParams.set('nsorder', orderParam);
-    cy.visit(u.toString());
-  });
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces?refresh=0&nsorder=${orderParam}` });
 });
 
 Then('the table column order on namespaces page is', (tableHeadings: TableDefinition) => {

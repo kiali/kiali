@@ -13,6 +13,7 @@ let didServiceInsightsRetry = false;
 let lastClickedServiceInsightsHref: string | undefined;
 let shouldWaitAppsCardRetry = false;
 let shouldWaitServiceInsightsRetry = false;
+let stopFailingClustersAPI = false;
 
 Before(() => {
   didAppsCardRetry = false;
@@ -20,6 +21,7 @@ Before(() => {
   lastClickedServiceInsightsHref = undefined;
   shouldWaitAppsCardRetry = false;
   shouldWaitServiceInsightsRetry = false;
+  stopFailingClustersAPI = false;
 });
 
 const istioConfigsWithNoValidations = {
@@ -265,19 +267,18 @@ const getClustersCard = (): Cypress.Chainable => {
 };
 
 Given('Clusters API fails once', () => {
-  // Intercept twice to cover both ClusterStats and IstioStatus components
-  // Subsequent requests (like retry) will hit real backend
-  cy.intercept(
-    {
-      method: 'GET',
-      url: CLUSTERS_API_URL,
-      times: 2
-    },
-    {
-      statusCode: 500,
-      body: {}
+  // Fail initial page-load requests (ClusterStats + IstioStatus, possibly more in OSSMC)
+  // but let the user-triggered retry succeed by passing through to the real backend.
+  // The "Try Again" step sets stopFailingClustersAPI = true before clicking.
+  stopFailingClustersAPI = false;
+
+  cy.intercept({ method: 'GET', url: CLUSTERS_API_URL }, req => {
+    if (!stopFailingClustersAPI) {
+      req.reply({ statusCode: 500, body: {} });
+    } else {
+      req.continue();
     }
-  ).as('clustersStatus');
+  }).as('clustersStatus');
 });
 
 Given('Clusters API returns empty data', () => {
@@ -291,6 +292,8 @@ Given('Clusters API returns empty data', () => {
 });
 
 When('user clicks Try Again in Clusters card', () => {
+  stopFailingClustersAPI = true;
+
   getClustersCard().within(() => {
     cy.contains('button', 'Try Again').should('be.visible').click();
   });
@@ -611,9 +614,14 @@ Then('Service insights card shows data tables and footer link', () => {
               return;
             }
             cy.wrap($rows[0]).within(() => {
-              cy.get('a')
-                .should('have.attr', 'href')
-                .and('match', /\/namespaces\/.+\/services\/.+/);
+              cy.get(linkSelector('/services/'))
+                .should('exist')
+                .then($el => {
+                  const attr = $el.is('a') ? 'href' : 'data-href';
+                  cy.wrap($el)
+                    .should('have.attr', attr)
+                    .and('match', /\/namespaces\/.+\/services\/.+/);
+                });
               cy.contains(/ms|s/).should('be.visible');
             });
           });
@@ -643,9 +651,14 @@ Then('Service insights card shows mock data tables', () => {
       cy.get('tbody tr').then($rows => {
         expect($rows).to.have.length(2);
         cy.wrap($rows[0]).within(() => {
-          cy.get('a')
-            .should('have.attr', 'href')
-            .and('match', /\/namespaces\/.+\/services\/.+/);
+          cy.get(linkSelector('/services/'))
+            .should('exist')
+            .then($el => {
+              const attr = $el.is('a') ? 'href' : 'data-href';
+              cy.wrap($el)
+                .should('have.attr', attr)
+                .and('match', /\/namespaces\/.+\/services\/.+/);
+            });
           cy.contains('%').should('be.visible');
         });
       });
