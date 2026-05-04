@@ -421,3 +421,10 @@ Feature: Kiali Graph page - Display menu
     And graph cache metrics are recorded
     When user opens the graph page for "bookinfo" with refresh 60000ms and reloads it 3 times
     Then graph cache metrics should show at least 1 miss and 2 hits
+
+  @smoke
+  @prometheus-disabled
+  Scenario: Graph shows empty state when Prometheus is disabled
+    Given prometheus is disabled
+    When user is at the "graph" page
+    Then user sees the prometheus disabled empty graph

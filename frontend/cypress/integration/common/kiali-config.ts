@@ -151,7 +151,7 @@ export interface KialiFeatureConfig {
  * Supports both operator (Kiali CR) and Helm (ConfigMap) installations.
  * Stores the previous value in Cypress env for cleanup.
  */
-export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
+export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = true): void => {
   discoverKialiRuntimeInfo().then(info => {
     Cypress.env('KIALI_CONFIGMAP_NAME', info.configMapName);
     Cypress.env('KIALI_DEPLOYMENT_NAME', info.deploymentName);
@@ -185,7 +185,7 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
         // Build the patch JSON dynamically using the last path segment as the key
         const pathParts = featureConfig.crSpecPath.split('.');
         const leafKey = pathParts[pathParts.length - 1];
-        let patchObj: Record<string, unknown> = { [leafKey]: true };
+        let patchObj: Record<string, unknown> = { [leafKey]: value };
         for (let i = pathParts.length - 2; i >= 0; i--) {
           patchObj = { [pathParts[i]]: patchObj };
         }
@@ -213,8 +213,8 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig): void => {
         Cypress.env(featureConfig.envKeyPrev, r.stdout.trim());
       });
 
-      // Enable the feature
-      cy.exec(`yq -i '${featureConfig.configPath} = true' /tmp/kiali-config.yaml`);
+      // Set the feature value
+      cy.exec(`yq -i '${featureConfig.configPath} = ${value}' /tmp/kiali-config.yaml`);
       cy.exec(
         `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
       ).then(() => doRestart());
@@ -294,6 +294,12 @@ export const HEALTH_CACHE_CONFIG: KialiFeatureConfig = {
   configPath: '.kiali_internal.health_cache.enabled',
   crSpecPath: 'kiali_internal.health_cache.enabled',
   envKeyPrev: 'HEALTH_CACHE_PREV'
+};
+
+export const PROMETHEUS_DISABLED_CONFIG: KialiFeatureConfig = {
+  configPath: '.external_services.prometheus.enabled',
+  crSpecPath: 'external_services.prometheus.enabled',
+  envKeyPrev: 'PROMETHEUS_ENABLED_PREV'
 };
 
 export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
