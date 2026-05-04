@@ -96,7 +96,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 
 	if len(namespaces) == 0 {
-		return "No namespaces were specified. Please provide at least one namespace to generate the traffic graph.", http.StatusOK
+		return "namespaces is required. Please provide at least one namespace to generate the traffic graph.", http.StatusBadRequest
 	}
 
 	resp := GetMeshGraphResponse{

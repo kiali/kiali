@@ -272,10 +272,10 @@ func TestExecute_NoNamespacesProvided_ReturnsOKWithMessage(t *testing.T) {
 	}
 
 	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, Prom: promClient, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf, Graphana: nil, Perses: nil, Discovery: discovery}, args)
-	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, http.StatusBadRequest, code)
 	msg, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, msg, "No namespaces were specified")
+	assert.Contains(t, msg, "namespaces is required")
 }
 
 func TestExecute_WorkloadGraphType_FetchesWorkloadHealth(t *testing.T) {
