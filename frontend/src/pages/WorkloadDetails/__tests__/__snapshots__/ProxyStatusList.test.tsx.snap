@@ -3,20 +3,22 @@
 exports[`ProxyStatusList when status is synced match the snapshot 1`] = `""`;
 
 exports[`ProxyStatusList when there are components without value match the snapshot 1`] = `
-<Stack>
+<Stack
+  className="kiali_f14kfh0p"
+>
   <StackItem
-    className="kiali_f2dl8or"
+    className="kiali_fsmbsvg"
   >
     Istio Proxy Status
   </StackItem>
   <StackItem
-    className="kiali_fchvff1"
+    className="kiali_f1wsrw0w"
     key="proxy-status-0"
   >
     CDS: -
   </StackItem>
   <StackItem
-    className="kiali_fchvff1"
+    className="kiali_f1wsrw0w"
     key="proxy-status-3"
   >
     RDS: -
@@ -25,20 +27,22 @@ exports[`ProxyStatusList when there are components without value match the snaps
 `;
 
 exports[`ProxyStatusList when there are unsyced components match the snapshot 1`] = `
-<Stack>
+<Stack
+  className="kiali_f14kfh0p"
+>
   <StackItem
-    className="kiali_f2dl8or"
+    className="kiali_fsmbsvg"
   >
     Istio Proxy Status
   </StackItem>
   <StackItem
-    className="kiali_fchvff1"
+    className="kiali_f1wsrw0w"
     key="proxy-status-0"
   >
     CDS: NOT_SENT
   </StackItem>
   <StackItem
-    className="kiali_fchvff1"
+    className="kiali_f1wsrw0w"
     key="proxy-status-3"
   >
     RDS: STALE

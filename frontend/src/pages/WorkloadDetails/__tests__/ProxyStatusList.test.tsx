@@ -5,20 +5,20 @@ import { ProxyStatus } from '../../../types/Health';
 import { Stack, StackItem } from '@patternfly/react-core';
 import { shallowToJson } from 'enzyme-to-json';
 
-const syncedProxyStatus: ProxyStatus = {
+const createSyncedProxyStatus = (): ProxyStatus => ({
   CDS: 'Synced',
   EDS: 'Synced',
   LDS: 'Synced',
   RDS: 'Synced'
-};
+});
 
-const shallowComponent = (statuses: ProxyStatus) => {
+const shallowComponent = (statuses: ProxyStatus): ReturnType<typeof shallow> => {
   return shallow(<ProxyStatusList status={statuses} />);
 };
 
 describe('ProxyStatusList', () => {
   describe('when status is synced', () => {
-    const subject = shallowComponent(syncedProxyStatus);
+    const subject = shallowComponent(createSyncedProxyStatus());
 
     it('does not render the stack', () => {
       expect(subject.find(Stack)).toHaveLength(0);
@@ -30,9 +30,11 @@ describe('ProxyStatusList', () => {
   });
 
   describe('when there are unsyced components', () => {
-    const statuses: ProxyStatus = syncedProxyStatus;
-    syncedProxyStatus.RDS = 'STALE';
-    syncedProxyStatus.CDS = 'NOT_SENT';
+    const statuses: ProxyStatus = {
+      ...createSyncedProxyStatus(),
+      CDS: 'NOT_SENT',
+      RDS: 'STALE'
+    };
 
     const subject = shallowComponent(statuses);
 
@@ -55,9 +57,11 @@ describe('ProxyStatusList', () => {
   });
 
   describe('when there are components without value', () => {
-    const statuses: ProxyStatus = syncedProxyStatus;
-    syncedProxyStatus.RDS = '';
-    syncedProxyStatus.CDS = '';
+    const statuses: ProxyStatus = {
+      ...createSyncedProxyStatus(),
+      CDS: '',
+      RDS: ''
+    };
 
     const subject = shallowComponent(statuses);
 

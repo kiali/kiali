@@ -4,20 +4,28 @@ import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';
 import { Stack, StackItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from '../Pf/PfColors';
 
 type ValidationStackProps = {
   checks?: ObjectCheck[];
 };
 
-const colorStyle = kialiStyle({ color: PFColors.White });
-const titleStyle = kialiStyle({ color: PFColors.White, fontWeight: 'bold' });
+const tooltipContentStyle = kialiStyle({
+  $nest: {
+    '& [class*="pf-v6-c-content"]': {
+      color: 'inherit'
+    }
+  }
+});
+
+const titleStyle = kialiStyle({
+  fontWeight: 'bold'
+});
 
 export const ValidationStack: React.FC<ValidationStackProps> = (props: ValidationStackProps) => {
   const validationList = (): React.ReactNode[] => {
     return (props.checks ?? []).map((check, index) => {
       return (
-        <StackItem key={`validation-check-item-${index}`} className={colorStyle}>
+        <StackItem key={`validation-check-item-${index}`}>
           <Validation
             key={`validation-check-${index}`}
             severity={check.severity}
@@ -33,7 +41,7 @@ export const ValidationStack: React.FC<ValidationStackProps> = (props: Validatio
 
   if (!isValid) {
     return (
-      <Stack>
+      <Stack className={tooltipContentStyle}>
         <StackItem className={titleStyle}>Istio validations</StackItem>
         {validationList()}
       </Stack>
