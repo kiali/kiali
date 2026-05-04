@@ -554,8 +554,8 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${MCP_TOOLS}" == "true" ]; then
     echo "Running backend MCP integration tests"
     ensureBookinfoGraphReady
-    cd "${SCRIPT_DIR}"/../tests/integration/mcp_tools | tee >(go-junit-report > ../junit-rest-report-mcp-tools.xml) ../int-test-mcp-tools.log
-    go test -tags exclude_frontend -v -failfast 2>&1
+    cd "${SCRIPT_DIR}"/../tests/integration/mcp_tools
+    go test -tags exclude_frontend -v -failfast ./... 2>&1 | tee >(go-junit-report > ../junit-rest-report-mcp-tools.xml) ../int-test-mcp-tools.log
   else
     # Run backend integration tests
     cd "${SCRIPT_DIR}"/../tests/integration/tests/
