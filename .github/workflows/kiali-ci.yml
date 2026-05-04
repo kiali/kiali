@@ -172,14 +172,13 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  mcp_contract_tests:
-    name: MCP Contract Tests
-    uses: ./.github/workflows/mcp-contract-tests.yml
+  integration_tests_backend_mcp:
+    name: Run backend MCP integration tests
+    uses: ./.github/workflows/integration-tests-backend-mcp.yml
     needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
-      istio_version: ""
 
   store_pr_metadata:
     name: Store PR metadata
