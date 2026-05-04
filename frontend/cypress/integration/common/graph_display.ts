@@ -566,6 +566,8 @@ Then('graph cache metrics should show at least {int} miss and {int} hits', (minM
 
 Given('prometheus is reported as disabled in the config', () => {
   // Use cy.intercept to simulate prometheus.enabled=false in the browser.
+  // The intercept must be registered before the page visit so it catches
+  // the /api/config call that the Kiali frontend makes on load.
   // This works in any suite (local binary, operator, Helm) without requiring
   // a server restart or CR/ConfigMap patch.
   cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
@@ -578,6 +580,9 @@ Given('prometheus is reported as disabled in the config', () => {
       return response;
     });
   }).as('configWithPrometheusDisabled');
+  // Visit the graph page immediately so the intercept is active for the config load
+  cy.visit(`${Cypress.config('baseUrl')}/console/graph/namespaces?refresh=0`);
+  cy.wait('@configWithPrometheusDisabled');
 });
 
 Then('user sees the prometheus disabled empty graph', () => {
