@@ -1,13 +1,12 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
-import { shallowToJson } from 'enzyme-to-json';
+import { render } from '@testing-library/react';
 
 import { GraphLegend } from '../../GraphLegend';
 
 describe('GraphLegend test', () => {
   it('should render correctly', () => {
-    const wrapper = shallow(<GraphLegend closeLegend={jest.fn()} />);
-    expect(shallowToJson(wrapper)).toBeDefined();
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    const { container } = render(<GraphLegend closeLegend={jest.fn()} />);
+    expect(container).toBeDefined();
+    expect(container).toMatchSnapshot();
   });
 });

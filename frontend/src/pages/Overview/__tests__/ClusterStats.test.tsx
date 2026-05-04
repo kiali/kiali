@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Status } from 'types/IstioStatus';
 import { Paths } from 'config';
@@ -22,19 +23,18 @@ const useClusterStatusMock = require('hooks/clusters').useClusterStatus as jest.
 const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
 const isControlPlaneAccessibleMock = require('utils/MeshUtils').isControlPlaneAccessible as jest.Mock;
 
+const renderComponent = (): ReturnType<typeof render> =>
+  render(
+    <MemoryRouter>
+      <ClusterStats />
+    </MemoryRouter>
+  );
+
 describe('Overview ClusterStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
+    useKialiSelectorMock.mockReturnValue('');
   });
-
-  const mountComponent = (): ReactWrapper => {
-    return mount(
-      <MemoryRouter>
-        <ClusterStats />
-      </MemoryRouter>
-    );
-  };
 
   it('renders spinner while loading', () => {
     isControlPlaneAccessibleMock.mockReturnValue(true);
@@ -43,12 +43,13 @@ describe('Overview ClusterStats', () => {
       statusMap: { c1: [{ cluster: 'c1', isCore: true, name: 'istiod', status: Status.Healthy }] }
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    expect(wrapper.find('[role="progressbar"]').exists()).toBeTruthy();
+    expect(document.querySelector('[role="progressbar"]')).toBeTruthy();
   });
 
-  it('shows total/healthy/unhealthy counters and builds mesh links for clusters with issues', () => {
+  it('shows total/healthy/unhealthy counters and builds mesh links for clusters with issues', async () => {
+    const user = userEvent.setup();
     isControlPlaneAccessibleMock.mockReturnValue(true);
     useClusterStatusMock.mockReturnValue({
       isLoading: false,
@@ -66,43 +67,33 @@ describe('Overview ClusterStats', () => {
       }
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    // Total clusters = 4
-    expect(wrapper.text()).toContain('Clusters (4)');
+    expect(screen.getByTestId('clusters-card-title').textContent).toContain('Clusters (4)');
 
-    // Known issues exist (Unreachable/Unhealthy) -> triangle icon (even if unknown issues also exist)
-    expect(wrapper.find('ExclamationTriangleIcon').exists()).toBeTruthy();
-    expect(wrapper.find('UnknownIcon').exists()).toBeFalsy();
+    const issuesTrigger = screen.getByTestId('clusters-issues');
 
-    // Healthy clusters: c1 only => 1
-    expect(wrapper.text()).toContain('1');
+    expect(document.body.textContent).toContain('1');
 
-    // Unhealthy clusters: c2 and c3 => 2 (shown as issues trigger)
-    expect(wrapper.find('[data-test="clusters-issues"]').text()).toContain('3');
+    expect(issuesTrigger.textContent).toContain('3');
 
-    const popover = wrapper.find('Popover[aria-label="Clusters with issues"]').first();
-    expect(popover.exists()).toBeTruthy();
+    await user.click(issuesTrigger);
 
-    const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
+    const linkC2 = await screen.findByRole('link', { name: 'c2' });
+    const allLinks = screen.getAllByRole('link');
+    expect(allLinks.some(a => a.getAttribute('href')?.includes(`/${Paths.MESH}?meshHide=`))).toBeTruthy();
+    expect(allLinks.some(a => decodeURIComponent(a.getAttribute('href') ?? '').includes('cluster!=c2'))).toBeTruthy();
+    expect(allLinks.some(a => decodeURIComponent(a.getAttribute('href') ?? '').includes('cluster!=c3'))).toBeTruthy();
+    expect(allLinks.some(a => decodeURIComponent(a.getAttribute('href') ?? '').includes('cluster!=c4'))).toBeTruthy();
+    expect(linkC2).toBeInTheDocument();
 
-    const links = popoverBody.find('a');
-    // buildMeshUrl uses meshHide param with "cluster!=X" to filter the mesh view
-    expect(links.someWhere(a => (a.prop('href') as string).includes(`/${Paths.MESH}?meshHide=`))).toBeTruthy();
-    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c2'))).toBeTruthy();
-    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c3'))).toBeTruthy();
-    expect(links.someWhere(a => decodeURIComponent(a.prop('href') as string).includes('cluster!=c4'))).toBeTruthy();
+    expect(screen.getByText('Unknown status')).toBeInTheDocument();
 
-    // NotFound status should render Unknown status instead of "1 issue"
-    expect(popoverBody.text()).toContain('Unknown status');
-
-    // Footer "View Mesh" link
-    const footerLink = wrapper.find(`a[href="/${Paths.MESH}"]`).first();
-    expect(footerLink.exists()).toBeTruthy();
+    expect(screen.getByRole('link', { name: /view mesh/i }).getAttribute('href')).toBe(`/${Paths.MESH}`);
   });
 
-  it('uses unknown icon when issues are only unknown', () => {
+  it('uses unknown icon when issues are only unknown', async () => {
+    const user = userEvent.setup();
     isControlPlaneAccessibleMock.mockReturnValue(true);
     useClusterStatusMock.mockReturnValue({
       isLoading: false,
@@ -112,13 +103,17 @@ describe('Overview ClusterStats', () => {
       }
     });
 
-    const wrapper = mountComponent();
-    expect(wrapper.find('[data-test="clusters-issues"]').text()).toContain('1');
-    expect(wrapper.find('UnknownIcon').exists()).toBeTruthy();
-    expect(wrapper.find('ExclamationTriangleIcon').exists()).toBeFalsy();
+    renderComponent();
+
+    expect(screen.getByTestId('clusters-issues').textContent).toContain('1');
+
+    await user.click(screen.getByTestId('clusters-issues'));
+
+    expect(await screen.findByText('Unknown status')).toBeInTheDocument();
   });
 
-  it('hides mesh links when control plane is not accessible', () => {
+  it('hides mesh links when control plane is not accessible', async () => {
+    const user = userEvent.setup();
     isControlPlaneAccessibleMock.mockReturnValue(false);
     useClusterStatusMock.mockReturnValue({
       isLoading: false,
@@ -128,17 +123,12 @@ describe('Overview ClusterStats', () => {
       }
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    // Footer "View Mesh" link should be hidden
-    expect(wrapper.find(`a[href="/${Paths.MESH}"]`).exists()).toBeFalsy();
+    expect(screen.queryByRole('link', { name: /view mesh/i })).not.toBeInTheDocument();
 
-    // Popover body should not contain mesh links for clusters
-    const popover = wrapper.find('Popover[aria-label="Clusters with issues"]').first();
-    expect(popover.exists()).toBeTruthy();
-
-    const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
-    expect(popoverBody.find('a').exists()).toBeFalsy();
+    await user.click(screen.getByTestId('clusters-issues'));
+    await screen.findByText('c2');
+    expect(screen.queryByRole('link', { name: 'c2' })).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,13 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from 'store/ConfigStore';
 import { MeshFindComponent } from '../MeshFind';
 import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
+
+const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Provider store={store}>{children}</Provider>
+);
 
 const testHandler = (): undefined => undefined;
 const testSetter = (_val: string): undefined => undefined;
@@ -10,21 +16,24 @@ const layout = MeshLayout.Dagre;
 // TODO Find out why typescript is unhappy and get rid of all of these ts-ignores
 describe('Parse find value test', () => {
   it('should return the correct selector for raw find values', () => {
-    const wrapper = shallow(
+    const ref = React.createRef<MeshFindComponent>();
+    render(
       <MeshFindComponent
+        ref={ref}
         controller={undefined}
         elementsChanged={true}
         findValue="testFind"
         hideValue="testHide"
-        showFindHelp={false}
+        layout={layout}
         setFindValue={testSetter}
         setHideValue={testSetter}
+        showFindHelp={false}
         toggleFindHelp={testHandler}
-        layout={layout}
-      />
+      />,
+      { wrapper: Wrapper }
     );
 
-    const instance = wrapper.instance() as MeshFindComponent;
+    const instance = ref.current as MeshFindComponent;
 
     // check coverage of node operands
     // @ts-ignore

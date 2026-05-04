@@ -1,634 +1,628 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphLegend test should render correctly 1`] = `
-<div
-  className="kiali_fogtfx9"
-  data-test="graph-legend"
->
+<div>
   <div
-    className="kiali_fokjcx6"
-  >
-    <span>
-      Legend
-    </span>
-    <Tooltip
-      content="Close Legend"
-    >
-      <Button
-        icon={<Close />}
-        id="legend_close"
-        onClick={[MockFunction]}
-        variant="plain"
-      />
-    </Tooltip>
-  </div>
-  <div
-    className="kiali_fgk3kmh"
+    class="kiali_fogtfx9"
+    data-test="graph-legend"
   >
     <div
-      className="kiali_fqqe0s6"
-      key="Node Shapes"
+      class="kiali_fokjcx6"
     >
-      Node Shapes
+      <span>
+        Legend
+      </span>
       <div
-        className="kiali_fxx5dxr"
-        key="node.svg"
+        style="display: contents;"
       >
-        <span
-          className="kiali_fzoxfwf"
+        <button
+          class="pf-v6-c-button pf-m-plain"
+          data-ouia-component-id="OUIA-Generated-Button-plain-1"
+          data-ouia-component-type="PF6/Button"
+          data-ouia-safe="true"
+          id="legend_close"
+          type="button"
         >
-          <img
-            alt="Workload"
-            className=""
-            src="node.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Workload
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="app.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="App"
-            className=""
-            src="app.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          App
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="operation.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Operation"
-            className=""
-            src="operation.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Operation
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="service.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Service"
-            className=""
-            src="service.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Service
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="service-entry.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Service Entry"
-            className=""
-            src="service-entry.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Service Entry
-        </span>
+          <span
+            class="pf-v6-c-button__icon"
+          >
+            <span
+              class="pf-v6-c-icon"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 730 1024"
+                  width="1em"
+                >
+                  <path
+                    d="M725.499315,767.757345 L469.242169,511.500499 L725.499315,255.243653 C729.196254,251.545719 731.096195,247.248119 731,242.4498 C731,237.653479 728.997365,233.35588 725.299427,229.558002 L647.542773,151.701495 C643.743891,147.903617 639.446287,146 634.64996,146 C629.852635,146 625.55503,147.803673 621.857092,151.500607 L365.5,407.857398 L109.241857,151.500607 C105.544917,147.803673 101.246314,145.904733 96.4499876,146 C91.6526619,146.104622 87.3550577,148.002562 83.5571748,151.701495 L5.7005771,229.457058 C1.90269428,233.255936 0,237.553535 0,242.350855 C0,247.148175 1.80175055,251.444775 5.50068853,255.143709 L261.857779,511.500499 L5.50068853,767.757345 C1.80175055,771.454279 -0.0961914123,775.752878 0,779.750645 C0.103697157,784.547965 2.00263857,788.845564 5.7005771,792.642443 L83.4572306,871.299502 C87.2541139,875.096381 91.5527176,877 96.3500433,877 C101.147369,877 105.444973,875.197325 109.142912,871.499391 L365.400058,615.241545 L621.657203,871.499391 C625.355142,875.197325 629.652746,877.095265 634.449072,877 C639.246398,877 643.545002,874.997437 647.342885,871.299502 L725.099538,793.54294 C728.896421,789.745062 730.796362,785.446463 730.796362,780.649143 C731.096195,775.752878 729.196254,771.454279 725.499315,767.757345"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
       </div>
     </div>
     <div
-      className="kiali_fqqe0s6"
-      key="Node Colors"
+      class="kiali_fgk3kmh"
     >
-      Node Colors
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-healthy.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Shapes
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Healthy"
-            className=""
-            src="node-color-healthy.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Workload"
+              class=""
+              src="node.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Workload
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Healthy
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="App"
+              class=""
+              src="app.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            App
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Operation"
+              class=""
+              src="operation.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Operation
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Service"
+              class=""
+              src="service.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Service
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Service Entry"
+              class=""
+              src="service-entry.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Service Entry
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-warning.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Colors
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Warn"
-            className=""
-            src="node-color-warning.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Healthy"
+              class=""
+              src="node-color-healthy.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Healthy
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Warn
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Warn"
+              class=""
+              src="node-color-warning.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Warn
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Unhealthy"
+              class=""
+              src="node-color-danger.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Unhealthy
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Idle"
+              class=""
+              src="node-color-idle.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Idle
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-danger.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Background
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Unhealthy"
-            className=""
-            src="node-color-danger.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Unselected Namespace"
+              class=""
+              src="external-namespace.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Unselected Namespace
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Unhealthy
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Restricted / External"
+              class=""
+              src="restricted-namespace.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Restricted / External
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-idle.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Edges
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Idle"
-            className=""
-            src="node-color-idle.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Failure"
+              class=""
+              src="edge-danger.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Failure
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Idle
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Node Background"
-    >
-      Node Background
-      <div
-        className="kiali_fxx5dxr"
-        key="external-namespace.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Degraded"
+              class=""
+              src="edge-warn.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Degraded
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Unselected Namespace"
-            className=""
-            src="external-namespace.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Healthy"
+              class=""
+              src="edge-success.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Healthy
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Unselected Namespace
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="restricted-namespace.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="TCP Connection"
+              class=""
+              src="edge-tcp.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            TCP Connection
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Restricted / External"
-            className=""
-            src="restricted-namespace.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Idle"
+              class=""
+              src="edge-idle.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Idle
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Restricted / External
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Edges"
-    >
-      Edges
-      <div
-        className="kiali_fxx5dxr"
-        key="edge-danger.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Failure"
-            className=""
-            src="edge-danger.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Failure
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="edge-warn.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Degraded"
-            className=""
-            src="edge-warn.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Degraded
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="edge-success.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Healthy"
-            className=""
-            src="edge-success.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Healthy
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="mTLS (badge)"
+              class=""
+              src="mtls-badge.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            mTLS (badge)
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="edge-tcp.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Traffic Animation
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="TCP Connection"
-            className=""
-            src="edge-tcp.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Healthy Request"
+              class=""
+              src="traffic-healthy-request.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Healthy Request
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          TCP Connection
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Failed Request"
+              class=""
+              src="traffic-failed-request.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Failed Request
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="TCP Traffic"
+              class=""
+              src="traffic-tcp.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            TCP Traffic
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="edge-idle.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Badges
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Idle"
-            className=""
-            src="edge-idle.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Circuit Breaker"
+              class="kiali_f8j7sv3"
+              src="node-badge-circuit-breaker.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Circuit Breaker
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Idle
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="mtls-badge.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Fault Injection"
+              class="kiali_f8j7sv3"
+              src="node-badge-fault-injection.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Fault Injection
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="mTLS (badge)"
-            className=""
-            src="mtls-badge.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Gateway"
+              class="kiali_f8j7sv3"
+              src="node-badge-gateways.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Gateway
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          mTLS (badge)
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Traffic Animation"
-    >
-      Traffic Animation
-      <div
-        className="kiali_fxx5dxr"
-        key="traffic-healthy-request.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Mirroring"
+              class="kiali_f8j7sv3"
+              src="node-badge-mirroring.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Mirroring
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Healthy Request"
-            className=""
-            src="traffic-healthy-request.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Missing Sidecar"
+              class="kiali_f8j7sv3"
+              src="node-badge-missing-sidecar.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Missing Sidecar
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Healthy Request
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="traffic-failed-request.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Request Timeout"
+              class="kiali_f8j7sv3"
+              src="node-badge-request-timeout.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Request Timeout
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Failed Request"
-            className=""
-            src="traffic-failed-request.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Traffic Shifting / TCP Traffic Shifting"
+              class="kiali_f8j7sv3"
+              src="node-badge-traffic-shifting.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Traffic Shifting / TCP Traffic Shifting
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Failed Request
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="traffic-tcp.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Traffic Source"
+              class="kiali_f8j7sv3"
+              src="node-badge-traffic-source.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Traffic Source
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="TCP Traffic"
-            className=""
-            src="traffic-tcp.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Virtual Service / Request Routing"
+              class="kiali_f8j7sv3"
+              src="node-badge-virtual-services.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Virtual Service / Request Routing
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          TCP Traffic
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Node Badges"
-    >
-      Node Badges
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-circuit-breaker.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Circuit Breaker"
-            className="kiali_f8j7sv3"
-            src="node-badge-circuit-breaker.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Circuit Breaker
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-fault-injection.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Fault Injection"
-            className="kiali_f8j7sv3"
-            src="node-badge-fault-injection.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Fault Injection
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-gateways.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Gateway"
-            className="kiali_f8j7sv3"
-            src="node-badge-gateways.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Gateway
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-mirroring.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Mirroring"
-            className="kiali_f8j7sv3"
-            src="node-badge-mirroring.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Mirroring
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-missing-sidecar.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Missing Sidecar"
-            className="kiali_f8j7sv3"
-            src="node-badge-missing-sidecar.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Missing Sidecar
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-request-timeout.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Request Timeout"
-            className="kiali_f8j7sv3"
-            src="node-badge-request-timeout.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Request Timeout
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-traffic-shifting.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Traffic Shifting / TCP Traffic Shifting"
-            className="kiali_f8j7sv3"
-            src="node-badge-traffic-shifting.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Traffic Shifting / TCP Traffic Shifting
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-traffic-source.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Traffic Source"
-            className="kiali_f8j7sv3"
-            src="node-badge-traffic-source.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Traffic Source
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-virtual-services.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Virtual Service / Request Routing"
-            className="kiali_f8j7sv3"
-            src="node-badge-virtual-services.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Virtual Service / Request Routing
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-badge-workload-entry.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Workload Entry"
-            className="kiali_f8j7sv3"
-            src="node-badge-workload-entry.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Workload Entry
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Workload Entry"
+              class="kiali_f8j7sv3"
+              src="node-badge-workload-entry.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Workload Entry
+          </span>
+        </div>
       </div>
     </div>
   </div>
