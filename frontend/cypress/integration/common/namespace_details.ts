@@ -3,7 +3,7 @@ import { ensureKialiFinishedLoading } from './transition';
 
 Given('user is at the details page for the {string} namespace', (ns: string) => {
   cy.visit({
-    url: `/namespaces/${ns}`,
+    url: `/console/namespaces/${ns}`,
     qs: { refresh: '0' }
   });
   ensureKialiFinishedLoading();
