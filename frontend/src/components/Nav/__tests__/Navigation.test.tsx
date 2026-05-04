@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
 import { ExternalServiceInfo } from '../../../types/StatusState';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -27,7 +27,7 @@ describe('Masthead Navigation', () => {
   const externalServicesInfo: ExternalServiceInfo[] = [];
 
   it('renders Masthead and Sidebar when not in kiosk mode', () => {
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <MemoryRouter>
           <NavigationComponent
@@ -43,12 +43,12 @@ describe('Masthead Navigation', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(wrapper.find('Masthead').exists()).toBe(true);
-    expect(wrapper.find('PageSidebar').exists()).toBe(true);
+    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByText('Overview')).toBeInTheDocument();
   });
 
   it('hides Masthead and Sidebar when in kiosk mode', () => {
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <MemoryRouter>
           <NavigationComponent
@@ -64,7 +64,7 @@ describe('Masthead Navigation', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(wrapper.find('Masthead').exists()).toBe(false);
-    expect(wrapper.find('PageSidebar').exists()).toBe(false);
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+    expect(screen.queryByText('Overview')).not.toBeInTheDocument();
   });
 });
