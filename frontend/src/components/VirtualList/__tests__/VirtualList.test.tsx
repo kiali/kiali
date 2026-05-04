@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
+import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 
@@ -41,25 +41,25 @@ describe('VirtualList', () => {
   it('calls onResize with the outer div clientHeight on mount', () => {
     const onResize = jest.fn();
 
-    const wrapper = mount(
+    const { container } = render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} onResize={onResize} />
       </Provider>
     );
 
-    const outerDiv = wrapper.find('div').first().getDOMNode();
+    const outerDiv = container.firstElementChild as HTMLElement;
 
     expect(onResize).toHaveBeenCalledWith(outerDiv.clientHeight);
   });
 
   it('attaches ResizeObserver to its own outer div', () => {
-    const wrapper = mount(
+    const { container } = render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} />
       </Provider>
     );
 
-    const outerDiv = wrapper.find('div').first().getDOMNode();
+    const outerDiv = container.firstElementChild as HTMLElement;
 
     expect(observedElement).toBe(outerDiv);
   });
@@ -67,7 +67,7 @@ describe('VirtualList', () => {
   it('calls onResize when ResizeObserver fires', () => {
     const onResize = jest.fn();
 
-    mount(
+    render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} onResize={onResize} />
       </Provider>
@@ -80,14 +80,14 @@ describe('VirtualList', () => {
   });
 
   it('disconnects ResizeObserver on unmount', () => {
-    const wrapper = mount(
+    const { unmount } = render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} />
       </Provider>
     );
 
     expect(resizeCallback).toBeDefined();
-    wrapper.unmount();
+    unmount();
     expect(resizeCallback).toBeUndefined();
   });
 
@@ -95,7 +95,7 @@ describe('VirtualList', () => {
     delete (window as any).ResizeObserver;
     const onResize = jest.fn();
 
-    mount(
+    render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} onResize={onResize} />
       </Provider>
@@ -111,7 +111,7 @@ describe('VirtualList', () => {
     const addSpy = jest.spyOn(window, 'addEventListener');
     const removeSpy = jest.spyOn(window, 'removeEventListener');
 
-    const wrapper = mount(
+    const { unmount } = render(
       <Provider store={store}>
         <VirtualList type="services" rows={[]} onResize={onResize} />
       </Provider>
@@ -123,7 +123,7 @@ describe('VirtualList', () => {
     window.dispatchEvent(new Event('resize'));
     expect(onResize).toHaveBeenCalled();
 
-    wrapper.unmount();
+    unmount();
     expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 
     addSpy.mockRestore();

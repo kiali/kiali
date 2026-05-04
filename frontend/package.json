@@ -148,9 +148,11 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@badeball/cypress-cucumber-preprocessor": "^20.1.2",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^14.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/cypress-cucumber-preprocessor": "^4.0.5",
     "@types/deep-freeze": "^0.1.5",
-    "@types/enzyme": "3.10.5",
     "@types/jest": "23.3.10",
     "@types/js-yaml": "^4.0.9",
     "@types/jsdom": "^21.1.6",
@@ -162,12 +164,9 @@
     "@types/react-redux": "7.1.7",
     "@types/react-router-dom": "^5.2.0",
     "@types/react-virtualized": "9.x",
-    "@wojtekmaj/enzyme-adapter-react-17": "^0.6.7",
     "axios-mock-adapter": "^1.22.0",
     "cypress": "^13.6.1",
     "cypress-multi-reporters": "^1.6.0",
-    "enzyme": "3.11.0",
-    "enzyme-to-json": "3.4.4",
     "husky": "^8.0.3",
     "i18next-parser": "^9.0.1",
     "jest-canvas-mock": "2.2.0",
@@ -211,5 +210,10 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^react-dom/client$": "<rootDir>/src/test-shims/react-dom-client.js"
+    }
   }
 }

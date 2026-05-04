@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { mount, shallow } from 'enzyme';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
@@ -83,55 +84,43 @@ const makeSeries = (names: string[]): VCLines<RichDataPoint> =>
 describe('ChartWithLegend', () => {
   it('renders legend items for each series', () => {
     const data = makeSeries(['Series A', 'Series B', 'Series C']);
-    const wrapper = shallow(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    const legendItems = wrapper.find('[role="button"]');
+    const legendItems = screen.getAllByRole('button');
     expect(legendItems).toHaveLength(3);
-    expect(legendItems.at(0).text()).toContain('Series A');
-    expect(legendItems.at(1).text()).toContain('Series B');
-    expect(legendItems.at(2).text()).toContain('Series C');
+    expect(legendItems[0]).toHaveTextContent('Series A');
+    expect(legendItems[1]).toHaveTextContent('Series B');
+    expect(legendItems[2]).toHaveTextContent('Series C');
   });
 
-  it('toggles series visibility on legend click and restores on second click', () => {
+  it('toggles series visibility on legend click and restores on second click', async () => {
+    const user = userEvent.setup();
     const data = makeSeries(['Series A', 'Series B']);
-    const wrapper = mount(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    const legendItem = (): any => wrapper.find('[role="button"]').at(0);
-    legendItem().simulate('click');
-    wrapper.update();
+    const seriesA = screen.getByRole('button', { name: /Series A/ });
+    await user.click(seriesA);
+    expect(seriesA).toHaveAttribute('aria-pressed', 'true');
 
-    expect((wrapper.state() as any).hiddenSeries.has('Series A')).toBe(true);
-
-    legendItem().simulate('click');
-    wrapper.update();
-
-    expect((wrapper.state() as any).hiddenSeries.has('Series A')).toBe(false);
+    await user.click(seriesA);
+    expect(seriesA).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('supports keyboard activation with Enter and Space', () => {
     const data = makeSeries(['Series A']);
-    const wrapper = mount(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    const legendItem = (): any => wrapper.find('[role="button"]').at(0);
+    const seriesA = screen.getByRole('button', { name: /Series A/ });
+    fireEvent.keyDown(seriesA, { key: 'Enter', preventDefault: jest.fn() });
+    expect(seriesA).toHaveAttribute('aria-pressed', 'true');
 
-    legendItem().simulate('keydown', { key: 'Enter', preventDefault: jest.fn() });
-    wrapper.update();
-    expect((wrapper.state() as any).hiddenSeries.has('Series A')).toBe(true);
-
-    legendItem().simulate('keydown', { key: ' ', preventDefault: jest.fn() });
-    wrapper.update();
-    expect((wrapper.state() as any).hiddenSeries.has('Series A')).toBe(false);
+    fireEvent.keyDown(seriesA, { key: ' ', preventDefault: jest.fn() });
+    expect(seriesA).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('does not render legend when chartHeight is below MIN_HEIGHT_YAXIS', () => {
     const data = makeSeries(['Series A']);
-    const wrapper = shallow(
+    const { container } = render(
       <ChartWithLegend
         data={data}
         unit="ops"
@@ -142,13 +131,13 @@ describe('ChartWithLegend', () => {
       />
     );
 
-    expect(wrapper.find('[role="button"]')).toHaveLength(0);
+    expect(container.querySelector('[role="button"]')).toBeNull();
   });
 
   it('reduces SVG chart height by LEGEND_HEIGHT when legend is shown', () => {
     const chartHeight = 300;
     const data = makeSeries(['Series A']);
-    const wrapper = shallow(
+    render(
       <ChartWithLegend
         data={data}
         unit="ops"
@@ -159,8 +148,8 @@ describe('ChartWithLegend', () => {
       />
     );
 
-    const chart = wrapper.find('Chart');
-    expect(chart.prop('height')).toBe(chartHeight - LEGEND_HEIGHT - CHART_LEGEND_GAP);
+    const chart = screen.getByTestId('chart');
+    expect(chart).toHaveAttribute('height', String(chartHeight - LEGEND_HEIGHT - CHART_LEGEND_GAP));
   });
 
   it('renderLegendSymbol produces correct SVG elements for each symbol type', () => {
@@ -171,90 +160,94 @@ describe('ChartWithLegend', () => {
       legendItem: { name: `s${idx}`, symbol: { fill: '#06c', type } }
     }));
 
-    const wrapper = shallow(
+    const { container } = render(
       <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
     );
 
-    const svgs = wrapper.find('svg[width="10"]');
-    expect(svgs.at(0).find('circle')).toHaveLength(1);
-    expect(svgs.at(1).find('polygon')).toHaveLength(1);
-    expect(svgs.at(2).find('polygon')).toHaveLength(1);
-    expect(svgs.at(3).find('polygon')).toHaveLength(1);
-    expect(svgs.at(4).find('polygon')).toHaveLength(1);
-    expect(svgs.at(5).find('rect')).toHaveLength(1);
+    const svgs = container.querySelectorAll('svg[width="10"]');
+    expect(svgs).toHaveLength(6);
+    expect(svgs[0].querySelectorAll('circle')).toHaveLength(1);
+    expect(svgs[1].querySelectorAll('polygon')).toHaveLength(1);
+    expect(svgs[2].querySelectorAll('polygon')).toHaveLength(1);
+    expect(svgs[3].querySelectorAll('polygon')).toHaveLength(1);
+    expect(svgs[4].querySelectorAll('polygon')).toHaveLength(1);
+    expect(svgs[5].querySelectorAll('rect')).toHaveLength(1);
   });
 
-  it('sets aria-pressed on legend items reflecting hidden state', () => {
+  it('sets aria-pressed on legend items reflecting hidden state', async () => {
+    const user = userEvent.setup();
     const data = makeSeries(['Series A', 'Series B']);
-    const wrapper = mount(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    expect(wrapper.find('[role="button"]').at(0).prop('aria-pressed')).toBe(false);
+    const seriesA = screen.getByRole('button', { name: /Series A/ });
+    expect(seriesA).toHaveAttribute('aria-pressed', 'false');
 
-    wrapper.find('[role="button"]').at(0).simulate('click');
-    wrapper.update();
-
-    expect(wrapper.find('[role="button"]').at(0).prop('aria-pressed')).toBe(true);
+    await user.click(seriesA);
+    expect(seriesA).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows toggle button when legendOverflows is true', () => {
     const data = makeSeries(['Series A', 'Series B']);
-    const wrapper = shallow(
+    const { rerender } = render(
       <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
     );
+    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
+    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
+    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
+    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    expect(wrapper.find('Button')).toHaveLength(0);
-
-    wrapper.setState({ legendOverflows: true });
-
-    expect(wrapper.find('Button')).toHaveLength(1);
+    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
+    expect(toggleButton).toBeDefined();
   });
 
   it('does not show toggle button when legend fits in one row', () => {
     const data = makeSeries(['Series A']);
-    const wrapper = shallow(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    wrapper.setState({ legendOverflows: false });
-    expect(wrapper.find('Button')).toHaveLength(0);
+    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
+    expect(toggleButton).toBeUndefined();
   });
 
   it('checkLegendOverflow sets legendOverflows state based on DOM measurement', () => {
     const data = makeSeries(['Series A', 'Series B']);
-    const wrapper = shallow(
+    const { rerender } = render(
       <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
     );
+    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
+    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
+    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
+    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    const instance = wrapper.instance() as any;
-    instance.legendRef = { scrollHeight: 50, clientHeight: 25 };
-    instance.checkLegendOverflow();
+    const toggleAfterOverflow = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
+    expect(toggleAfterOverflow).toBeDefined();
 
-    expect(wrapper.state('legendOverflows')).toBe(true);
+    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 25 });
+    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
+    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    instance.legendRef = { scrollHeight: 25, clientHeight: 25 };
-    instance.checkLegendOverflow();
-
-    expect(wrapper.state('legendOverflows')).toBe(false);
+    const toggleAfterFit = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
+    expect(toggleAfterFit).toBeUndefined();
   });
 
-  it('toggles legendExpanded state when toggle button is clicked', () => {
+  it('toggles legendExpanded state when toggle button is clicked', async () => {
+    const user = userEvent.setup();
     const data = makeSeries(['Series A', 'Series B']);
-    const wrapper = shallow(
+    const { rerender } = render(
       <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
     );
+    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
+    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
+    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
+    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    wrapper.setState({ legendOverflows: true });
+    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
+    expect(toggleButton).toBeDefined();
 
-    expect(wrapper.state('legendExpanded')).toBe(false);
+    const classBefore = legendHost.className;
+    await user.click(toggleButton!);
+    expect(legendHost.className).not.toBe(classBefore);
 
-    wrapper.find('Button').simulate('click');
-
-    expect(wrapper.state('legendExpanded')).toBe(true);
-
-    wrapper.find('Button').simulate('click');
-
-    expect(wrapper.state('legendExpanded')).toBe(false);
+    await user.click(toggleButton!);
+    expect(legendHost.className).toBe(classBefore);
   });
 });
