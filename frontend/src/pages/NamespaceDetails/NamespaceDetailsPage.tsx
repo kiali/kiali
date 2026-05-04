@@ -33,9 +33,7 @@ import { PersesInfo } from 'types/PersesInfo';
 import { MessageType } from 'types/NotificationCenter';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { TimeControl } from 'components/Time/TimeControl';
-import { NA } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isMultiCluster } from 'config';
 import { RefreshIntervalManual } from 'config/Config';
@@ -426,7 +424,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   render(): React.ReactNode {
     const ns = this.state.nsInfo;
-    const worstStatus = ns?.worstStatus ?? NA.id;
     const healthListDuration = healthComputeDurationValidSeconds();
 
     const actionsToolbar =
@@ -458,16 +455,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
                     <span style={{ marginLeft: '0.25rem' }}>{ns.cluster}</span>
                   </span>
                 )}
-                <span style={{ minWidth: 0 }}>
-                  <NamespaceHealthStatus
-                    inlineIssueCount
-                    name={this.props.namespace}
-                    statusApp={ns.statusApp}
-                    statusService={ns.statusService}
-                    statusWorkload={ns.statusWorkload}
-                    worstStatus={worstStatus}
-                  />
-                </span>
               </div>
             </div>
           )}

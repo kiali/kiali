@@ -388,7 +388,6 @@
   "Namespace: {{namespace}}": "Namespace: {{namespace}}",
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "Namespace: {{namespace}} is not found in cluster {{clusterName}}",
   "Namespaces": "命名空间",
-  "Navigate": "Navigate",
   "Next": "Next",
   "No {{direction}} traffic": "没有 {{direction}} traffic",
   "No {{type}} found": "No {{type}} found",
