@@ -241,7 +241,7 @@ export class WizardLabels extends React.Component<Props, State> {
               }}
               isInline
             >
-              <span style={{ marginLeft: '0.25rem' }}>Add more</span>
+              <span style={{ marginLeft: '0.25rem' }}>{t('Add more')}</span>
             </Button>
           )}
 
