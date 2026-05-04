@@ -172,6 +172,14 @@ func sanitizeConfigForCR(configYAML string) (string, error) {
 				delete(auth, "token") // Not in CRD schema
 			}
 		}
+		// Remove enabled from custom_dashboards.prometheus -- that field belongs only on the
+		// top-level external_services.prometheus, not on the custom-dashboards sub-config.
+		// The CRD schema for custom_dashboards.prometheus does not include an enabled property.
+		if customDashboards, ok := externalServices["custom_dashboards"].(map[string]any); ok {
+			if cdProm, ok := customDashboards["prometheus"].(map[string]any); ok {
+				delete(cdProm, "enabled")
+			}
+		}
 	}
 
 	// Remove unknown fields from istio_labels (never in CRD schema)
