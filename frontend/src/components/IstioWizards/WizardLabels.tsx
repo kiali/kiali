@@ -1,30 +1,18 @@
 import * as React from 'react';
-import {
-	ActionGroup,
-	Alert,
-	Button,
-	List,
-	ListItem,
-	TextInput,
-	Title,
-	TitleSizes
-} from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { ActionGroup, Alert, Button, List, ListItem, TextInput, Title, TitleSizes } from '@patternfly/react-core';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { IRow, Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
 interface Props {
-  labels: { [key: string]: string };
   canEdit: boolean;
-  type: string;
+  labels: { [key: string]: string };
   onChange: (labels: { [key: string]: string }) => void;
   onClose: () => void;
   showAnotationsWizard: boolean;
+  type: string;
 }
 
 interface State {
@@ -60,7 +48,7 @@ export class WizardLabels extends React.Component<Props, State> {
   convertLabelsToMap = (): Map<number, [string, string]> => {
     const m = new Map();
 
-    Object.keys(this.props.labels ?? {}).map((value, index) => m.set(index, [value, this.props.labels[value]]));
+    Object.keys(this.props.labels ?? {}).forEach((value, index) => m.set(index, [value, this.props.labels[value]]));
 
     // should be empty line
     if (m.size === 0) {
@@ -71,12 +59,12 @@ export class WizardLabels extends React.Component<Props, State> {
 
   removeLabel = (k: number): void => {
     const labels = new Map<number, [string, string]>();
-    const condition = (key: number) => key !== k;
+    const condition = (key: number): boolean => key !== k;
     let index = 0;
 
     Array.from(this.state.labels.entries())
       .filter(([key, _]) => condition(key))
-      .map(([_, [key, value]]: [number, [string, string]]) => labels.set(index++, [key, value]));
+      .forEach(([_, [key, value]]: [number, [string, string]]) => labels.set(index++, [key, value]));
 
     this.setState({ labels });
   };
@@ -125,7 +113,7 @@ export class WizardLabels extends React.Component<Props, State> {
   onChange = (): void => {
     if (this.validate()) {
       const annotates: { [key: string]: string } = {};
-      Array.from(this.state.labels.values()).map(element => (annotates[element[0]] = element[1]));
+      Array.from(this.state.labels.values()).forEach(element => (annotates[element[0]] = element[1]));
       this.props.onChange(annotates);
     }
   };
@@ -141,7 +129,7 @@ export class WizardLabels extends React.Component<Props, State> {
   generateInput = (): IRow[] => {
     const rows: IRow[] = [];
 
-    Array.from(this.state.labels.entries()).map(([index, [key, value]]: [number, [string, string]]) =>
+    Array.from(this.state.labels.entries()).forEach(([index, [key, value]]: [number, [string, string]]) =>
       rows.push(
         this.props.canEdit ? (
           <Tr key={`edit_label_for_${index}`}>
@@ -189,31 +177,38 @@ export class WizardLabels extends React.Component<Props, State> {
     this.setState({ labels });
   };
 
-  render() {
+  render(): React.ReactNode {
     const header = (
       <>
         <Title id="modal-custom-header-label" headingLevel="h1" size={TitleSizes['2xl']}>
-          {this.props.canEdit ? 'Edit ' : 'View '}
-          {this.props.type}
+          {this.props.type.charAt(0).toUpperCase() + this.props.type.slice(1)}
         </Title>
       </>
     );
 
     const footer = (
       <ActionGroup>
-        <Button variant="primary" isDisabled={!this.props.canEdit} onClick={this.onChange} data-test={'save-button'}>
-          {t('Save')}
-        </Button>
-
         {this.props.canEdit && (
-          <Button variant="secondary" className={clearButtonStyle} onClick={this.onClear}>
-            {t('Clear')}
-          </Button>
+          <>
+            <Button variant="primary" onClick={this.onChange} data-test={'save-button'}>
+              {t('Save')}
+            </Button>
+
+            <Button variant="secondary" className={clearButtonStyle} onClick={this.onClear}>
+              {t('Clear')}
+            </Button>
+
+            <Button variant="link" onClick={this.onClose}>
+              {t('Cancel')}
+            </Button>
+          </>
         )}
 
-        <Button variant="link" onClick={this.onClose}>
-          {t('Cancel')}
-        </Button>
+        {!this.props.canEdit && (
+          <Button variant="primary" onClick={this.onClose}>
+            {t('Close')}
+          </Button>
+        )}
       </ActionGroup>
     );
 
@@ -239,18 +234,20 @@ export class WizardLabels extends React.Component<Props, State> {
             <Tbody>{this.generateInput()}</Tbody>
           </Table>
 
-          <Button
-            variant="link"
-            className={addMoreStyle}
-            data-test={'add-more'}
-            icon={<KialiIcon.AddMore />}
-            onClick={() => {
-              this.addMore();
-            }}
-            isInline
-          >
-            <span style={{ marginLeft: '0.25rem' }}>Add more</span>
-          </Button>
+          {this.props.canEdit && (
+            <Button
+              variant="link"
+              className={addMoreStyle}
+              data-test={'add-more'}
+              icon={<KialiIcon.AddMore />}
+              onClick={() => {
+                this.addMore();
+              }}
+              isInline
+            >
+              <span style={{ marginLeft: '0.25rem' }}>Add more</span>
+            </Button>
+          )}
 
           {this.state.validation.length > 0 && (
             <Alert variant="danger" className={alertStyle} isInline isExpandable title="An error occurred">

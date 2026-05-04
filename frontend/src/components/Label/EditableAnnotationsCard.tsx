@@ -58,18 +58,23 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
   const annotationEntries = Object.entries(annotations ?? {});
   const hasAnnotations = annotationEntries.length > 0;
 
-  const headerActions = canEdit ? (
+  const headerActions = (
     <div className={headerActionsStyle}>
-      <Tooltip content={t('Edit annotations')}>
-        <Button variant="plain" size="sm" onClick={() => setShowEditor(true)} icon={<KialiIcon.PencilAlt />} />
+      <Tooltip content={canEdit ? t('Edit annotations') : t('View annotations')}>
+        <Button
+          variant="plain"
+          size="sm"
+          onClick={() => setShowEditor(true)}
+          icon={canEdit ? <KialiIcon.PencilAlt /> : <KialiIcon.ExpandArrows />}
+        />
       </Tooltip>
     </div>
-  ) : undefined;
+  );
 
   return (
     <>
       <Card>
-        <CardHeader actions={headerActions ? { actions: headerActions, hasNoOffset: true } : undefined}>
+        <CardHeader actions={{ actions: headerActions, hasNoOffset: true }}>
           <Title headingLevel="h4" size={TitleSizes.md}>
             {title}
           </Title>
