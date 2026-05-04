@@ -173,7 +173,7 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   mcp_contract_tests:
-    name: MCP Contract Tests (kubernetes-mcp-server)
+    name: MCP Contract Tests
     uses: ./.github/workflows/mcp-contract-tests.yml
     needs: [initialize, build_backend]
     with:
