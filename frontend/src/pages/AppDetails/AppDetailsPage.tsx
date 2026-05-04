@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
@@ -28,6 +28,27 @@ import { isPrometheusAvailable, serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { setAIContext } from 'helpers/ChatAI';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const titleRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--md)',
+  marginTop: '0.5rem',
+  minWidth: 0,
+  width: '100%'
+});
+
+const titleMainStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flex: '1 1 auto',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--sm)',
+  minWidth: 0
+});
 
 type AppDetailsState = {
   app?: App;
@@ -297,7 +318,18 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.app && (
+            <div className={titleRowStyle}>
+              <div className={titleMainStyle}>
+                <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                  {this.props.appId.app}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 

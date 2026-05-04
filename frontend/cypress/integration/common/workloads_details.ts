@@ -10,11 +10,12 @@ const openEnvoyTab = (tab: string): void => {
 };
 
 Then('user sees details information for workload', () => {
-  cy.getBySel('workload-description-card').within(() => {
+  cy.getBySel('workload-resources-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
-    cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
     cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+  });
 
+  cy.getBySel('workload-resources-card').within(() => {
     clusterParameterExists(false);
   });
 });
@@ -191,7 +192,7 @@ Then('the user can see the {string} span link', (link: string) => {
 });
 
 Then('user sees {string} badge', (badge: string) => {
-  cy.get('#WorkloadDescriptionCard').within(() => {
+  cy.getBySel('workload-details-card').within(() => {
     cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });
@@ -199,7 +200,7 @@ Then('user sees {string} badge', (badge: string) => {
 Then(
   'the user cannot see the {string} badge for {string} workload in {string} namespace',
   (badge: string, workload: string, ns: string) => {
-    cy.getBySel('workload-description-card').within(() => {
+    cy.getBySel('workload-details-card').within(() => {
       cy.get(`[data-test="${badge}-badge-for-${workload}-workload-in-${ns}-namespace"]`).should('not.exist');
     });
   }

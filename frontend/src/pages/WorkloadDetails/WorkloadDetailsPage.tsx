@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab } from '@patternfly/react-core';
+import {
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Tab,
+  Title,
+  TitleSizes,
+  TooltipPosition
+} from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
@@ -31,6 +39,27 @@ import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { setAIContext } from 'helpers/ChatAI';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const titleRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--md)',
+  marginTop: '0.5rem',
+  minWidth: 0,
+  width: '100%'
+});
+
+const titleMainStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flex: '1 1 auto',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--sm)',
+  minWidth: 0
+});
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -414,7 +443,22 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return (
       <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} actionsToolbar={actionsToolbar} />
+        <RenderHeader
+          rightToolbar={<TimeControl customDuration={useCustomTime} />}
+          actionsToolbar={actionsToolbar}
+          actionsToolbarTop="11.1rem"
+        >
+          {this.state.workload && (
+            <div className={titleRowStyle}>
+              <div className={titleMainStyle}>
+                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                  {this.state.workload.name}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 

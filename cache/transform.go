@@ -15,11 +15,12 @@ func TransformPod(pod any) (any, error) {
 
 	trimmedPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            obj.Name,
-			Namespace:       obj.Namespace,
-			Labels:          obj.Labels,
-			Annotations:     obj.Annotations,
-			OwnerReferences: obj.OwnerReferences,
+			Name:              obj.Name,
+			Namespace:         obj.Namespace,
+			Labels:            obj.Labels,
+			Annotations:       obj.Annotations,
+			OwnerReferences:   obj.OwnerReferences,
+			CreationTimestamp: obj.CreationTimestamp,
 		},
 		Spec: corev1.PodSpec{
 			Containers:         obj.Spec.Containers,
@@ -48,12 +49,13 @@ func TransformService(svc any) (any, error) {
 
 	trimmedService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            obj.Name,
-			Namespace:       obj.Namespace,
-			Labels:          obj.Labels,
-			Annotations:     obj.Annotations,
-			ResourceVersion: obj.ResourceVersion,
-			OwnerReferences: obj.OwnerReferences,
+			Name:              obj.Name,
+			Namespace:         obj.Namespace,
+			Labels:            obj.Labels,
+			Annotations:       obj.Annotations,
+			ResourceVersion:   obj.ResourceVersion,
+			OwnerReferences:   obj.OwnerReferences,
+			CreationTimestamp: obj.CreationTimestamp,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:     obj.Spec.Selector,

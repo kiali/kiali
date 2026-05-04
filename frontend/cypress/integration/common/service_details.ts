@@ -28,11 +28,12 @@ Then('sd::user sees the service actions', () => {
 });
 
 Then('sd::user sees {string} details information for service {string}', (name: string, version: string) => {
-  cy.get('#ServiceDescriptionCard').within(() => {
-    cy.get('#pfbadge-S').parent().parent().parent().contains(name); // Service
+  cy.getBySel('service-resources-card').within(() => {
     cy.get('#pfbadge-A').parent().parent().parent().contains(name); // App
     cy.get('#pfbadge-W').parent().parent().parent().contains(`${name}-${version}`); // Workload
+  });
 
+  cy.getBySel('service-resources-card').within(() => {
     clusterParameterExists(false);
   });
 });
@@ -97,7 +98,7 @@ Then('the graph type is disabled', () => {
 });
 
 Then('user sees {string} badge for service', (badge: string) => {
-  cy.get('#ServiceDescriptionCard').within(() => {
+  cy.getBySel('service-details-card').within(() => {
     cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });

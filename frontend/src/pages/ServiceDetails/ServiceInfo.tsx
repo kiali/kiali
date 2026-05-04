@@ -1,9 +1,24 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
-import { ServiceDescription } from './ServiceDescription';
-import { ServiceId, ServiceDetailsInfo } from '../../types/ServiceInfo';
+import {
+  Card,
+  CardBody,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Popover,
+  PopoverPosition,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
+import { ServiceId, ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
+import { AppWorkload } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
 import {
   DestinationRuleC,
@@ -44,6 +59,19 @@ import { addError, addSuccess } from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
+import { createIcon } from '../../config/KialiIcon';
+import * as H from '../../types/Health';
+import { NA, HEALTHY } from '../../types/Health';
+import { HealthDetails } from '../../components/Health/HealthDetails';
+import { LocalTime } from '../../components/Time/LocalTime';
+import { TextOrLink } from '../../components/Link/TextOrLink';
+import { renderAPILogo } from '../../components/Logo/Logos';
+import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { Labels } from '../../components/Label/Labels';
+import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
+import { getAppLabelName } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -61,7 +89,6 @@ interface Props extends ServiceId, ReduxProps {
 
 type ServiceInfoState = {
   showConfirmDeleteTrafficRouting: boolean;
-  // Wizards related
   showWizard: boolean;
   updateMode: boolean;
   wizardType: string;
@@ -73,6 +100,46 @@ const gridStyle = kialiStyle({
   marginTop: '1rem',
   minHeight: 0
 });
+
+const renderHealthStatus = (health?: H.Health): React.ReactNode => {
+  const status = health ? health.getStatus() : NA;
+  const isUnhealthy = health && status !== HEALTHY && status !== NA;
+
+  const statusContent = (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+        cursor: isUnhealthy ? 'pointer' : undefined
+      }}
+    >
+      {createIcon(status)}
+      {status.name}
+    </span>
+  );
+
+  if (isUnhealthy) {
+    return (
+      <Popover
+        aria-label="Health details"
+        position={PopoverPosition.right}
+        triggerAction="click"
+        showClose={true}
+        headerContent={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon(status)} <strong>{status.name}</strong>
+          </span>
+        }
+        bodyContent={<HealthDetails health={health!} />}
+      >
+        {statusContent}
+      </Popover>
+    );
+  }
+
+  return statusContent;
+};
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   private promises = new PromisesRegistry();
@@ -159,6 +226,193 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       updateMode: mode === 'update'
     });
   };
+
+  private renderDetailsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    const service = sd.service;
+    let serviceType = t('Service');
+    if (service.type === 'External') {
+      serviceType = t('External Service');
+    }
+
+    return (
+      <StackItem key="details">
+        <Card data-test="service-details-card">
+          <CardBody>
+            <DescriptionList columnModifier={{ default: '2Col' }}>
+              {service.cluster && (
+                <DescriptionListGroup data-test="details-cluster">
+                  <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                  <DescriptionListDescription>{service.cluster}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              <DescriptionListGroup data-test="details-status">
+                <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                <DescriptionListDescription>{renderHealthStatus(sd.health)}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-created">
+                <DescriptionListTerm>{t('Created')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <LocalTime time={service.createdAt} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-type">
+                <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                <DescriptionListDescription>{serviceType}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-version">
+                <DescriptionListTerm>{t('Version')}</DescriptionListTerm>
+                <DescriptionListDescription>{service.resourceVersion}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              {sd.isAmbient && (
+                <DescriptionListGroup data-test="details-ambient">
+                  <DescriptionListTerm>{t('Mesh')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <AmbientLabel tooltip={tooltipMsgType.service} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              {service.additionalDetails?.map((additionalItem, idx) => (
+                <DescriptionListGroup key={`additional-${idx}`}>
+                  <DescriptionListTerm>
+                    {additionalItem.title}
+                    {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                  </DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <TextOrLink text={additionalItem.value} urlTruncate={64} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              ))}
+            </DescriptionList>
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderResourcesCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    const apps: string[] = [];
+    const workloads: AppWorkload[] = [];
+
+    if (sd.workloads) {
+      sd.workloads
+        .sort((w1: WorkloadOverview, w2: WorkloadOverview) => (w1.name < w2.name ? -1 : 1))
+        .forEach(wk => {
+          if (wk.labels && !wk.isWaypoint && !wk.isZtunnel) {
+            const appLabelName = getAppLabelName(wk.labels);
+            if (appLabelName) {
+              const appName = wk.labels[appLabelName];
+              if (!apps.includes(appName)) {
+                apps.push(appName);
+              }
+            }
+          }
+
+          workloads.push({
+            namespace: wk.namespace,
+            workloadName: wk.name,
+            gvk: getIstioObjectGVK(wk.resourceVersion, wk.type),
+            istioSidecar: wk.istioSidecar,
+            isAmbient: wk.isAmbient,
+            isGateway: wk.isGateway,
+            isWaypoint: wk.isWaypoint,
+            isZtunnel: wk.isZtunnel,
+            serviceAccountNames: wk.serviceAccountNames,
+            labels: wk.labels ?? {},
+            spireInfo: wk.spireInfo
+          });
+        });
+    }
+
+    return (
+      <StackItem key="resources">
+        <Card data-test="service-resources-card">
+          <CardBody>
+            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+              {t('Resources')}
+            </Title>
+            <DetailDescription
+              namespace={this.props.namespace}
+              apps={apps.length > 0 ? apps : undefined}
+              workloads={workloads}
+              cluster={sd.service.cluster}
+              waypointWorkloads={sd.waypointWorkloads}
+            />
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderLabelsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    const service = sd.service;
+    let showServiceLabels = false;
+
+    if (service.labels && service.selectors) {
+      const keys = Object.keys(service.labels);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (service.selectors[key] !== service.labels[key]) {
+          showServiceLabels = true;
+          break;
+        }
+      }
+    }
+
+    const hasLabels = showServiceLabels && service.labels && Object.keys(service.labels).length > 0;
+    const hasSelectors = service.selectors && Object.keys(service.selectors).length > 0;
+
+    if (!hasLabels && !hasSelectors) {
+      return null;
+    }
+
+    return (
+      <StackItem key="labels" data-test="service-labels-card">
+        <Card>
+          <CardBody>
+            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+              {t('Labels')}
+            </Title>
+
+            {showServiceLabels && service.labels && (
+              <Labels labels={service.labels} tooltipMessage={t('Labels defined on the Service')} />
+            )}
+
+            {service.selectors && (
+              <Labels
+                labels={service.selectors}
+                tooltipMessage={
+                  showServiceLabels
+                    ? t('Labels defined on the Selector')
+                    : t('Labels defined on the Service and Selector')
+                }
+              />
+            )}
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
 
   render(): React.ReactNode {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
@@ -249,9 +503,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>
-                <StackItem>
-                  <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />
-                </StackItem>
+                {this.renderDetailsCard()}
+                {this.renderResourcesCard()}
+                {this.renderLabelsCard()}
 
                 {this.props.serviceDetails &&
                   this.props.serviceDetails.workloads &&

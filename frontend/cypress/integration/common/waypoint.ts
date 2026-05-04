@@ -458,21 +458,21 @@ Then('use_waypoint_name is enabled if tracing services contain waypoint in {stri
 });
 
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
-  cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseenter');
+  cy.get(`[data-test=workload-labels-card]`).contains('span', label).trigger('mouseenter');
   cy.get('[role="tooltip"]').should('be.visible').and('contain', text);
-  cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseleave');
+  cy.get(`[data-test=workload-labels-card]`).contains('span', label).trigger('mouseleave');
 });
 
 Then("the user doesn't see a L7 link", () => {
-  cy.get('[data-test=workload-description-card]').should('not.contain', 'L7');
+  cy.get('[data-test=workload-resources-card]').should('not.contain', 'L7');
 });
 
 Then('the workload description card has no config issues', () => {
-  cy.get('[data-test=workload-description-card]').should('be.visible').and('not.contain', 'Config Issues');
+  cy.get('[data-test=workload-details-card]').should('be.visible').and('not.contain', 'Config Issues');
 });
 
 Then('the user sees the L7 {string} link', (waypoint: string) => {
-  cy.get('[data-test=workload-description-card]').should('contain', 'L7');
+  cy.get('[data-test=workload-resources-card]').should('contain', 'L7');
   cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
   cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint);
 });

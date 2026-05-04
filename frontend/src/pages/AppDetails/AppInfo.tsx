@@ -1,6 +1,21 @@
 import * as React from 'react';
-import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
-import { AppDescription } from './AppDescription';
+import {
+  Alert,
+  Card,
+  CardBody,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Popover,
+  PopoverPosition,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
 import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
@@ -9,6 +24,16 @@ import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { kialiStyle } from 'styles/StyleUtils';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
+import { createIcon } from '../../config/KialiIcon';
+import * as H from '../../types/Health';
+import { NA, HEALTHY } from '../../types/Health';
+import { HealthDetails } from '../../components/Health/HealthDetails';
+import { serverConfig } from '../../config';
+import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { Labels } from '../../components/Label/Labels';
+import { getAppLabelName } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 type AppInfoProps = {
   app?: App;
@@ -23,6 +48,46 @@ const gridStyle = kialiStyle({
   marginTop: '1rem',
   minHeight: 0
 });
+
+const renderHealthStatus = (health?: H.Health): React.ReactNode => {
+  const status = health ? health.getStatus() : NA;
+  const isUnhealthy = health && status !== HEALTHY && status !== NA;
+
+  const statusContent = (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+        cursor: isUnhealthy ? 'pointer' : undefined
+      }}
+    >
+      {createIcon(status)}
+      {status.name}
+    </span>
+  );
+
+  if (isUnhealthy) {
+    return (
+      <Popover
+        aria-label="Health details"
+        position={PopoverPosition.right}
+        triggerAction="click"
+        showClose={true}
+        headerContent={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            {createIcon(status)} <strong>{status.name}</strong>
+          </span>
+        }
+        bodyContent={<HealthDetails health={health!} />}
+      >
+        {statusContent}
+      </Popover>
+    );
+  }
+
+  return statusContent;
+};
 
 export class AppInfo extends React.Component<AppInfoProps> {
   private graphDataSource = new GraphDataSource();
@@ -50,7 +115,103 @@ export class AppInfo extends React.Component<AppInfoProps> {
     );
   };
 
+  private renderDetailsCard(app: App): React.ReactNode {
+    return (
+      <StackItem key="details">
+        <Card data-test="app-details-card">
+          <CardBody>
+            <DescriptionList columnModifier={{ default: '2Col' }}>
+              {app.cluster && (
+                <DescriptionListGroup data-test="details-cluster">
+                  <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                  <DescriptionListDescription>{app.cluster}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              <DescriptionListGroup data-test="details-status">
+                <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                <DescriptionListDescription>{renderHealthStatus(this.props.health)}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              {app.isAmbient && (
+                <DescriptionListGroup data-test="details-ambient">
+                  <DescriptionListTerm>{t('Mesh')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <AmbientLabel tooltip={tooltipMsgType.app} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+            </DescriptionList>
+
+            {!this.props.isSupported && (
+              <Alert
+                variant="info"
+                isInline={true}
+                title={t('Limited info is supplied due to the referenced workload type')}
+                style={{ marginTop: '0.5rem' }}
+              />
+            )}
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderResourcesCard(app: App): React.ReactNode {
+    return (
+      <StackItem key="resources">
+        <Card data-test="app-resources-card">
+          <CardBody>
+            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+              {t('Resources')}
+            </Title>
+            <DetailDescription
+              namespace={app.namespace.name}
+              workloads={app.workloads}
+              services={app.serviceNames}
+              cluster={app.cluster}
+            />
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderLabelsCard(app: App): React.ReactNode {
+    const appLabels: { [key: string]: string } = {};
+
+    if (app.workloads && app.workloads.length > 0) {
+      const appLabelName = getAppLabelName(app.workloads[0].labels);
+      if (appLabelName) {
+        appLabels[appLabelName] = app.name;
+      }
+    }
+
+    if (Object.keys(appLabels).length === 0) {
+      return null;
+    }
+
+    return (
+      <StackItem key="labels" data-test="app-labels-card">
+        <Card>
+          <CardBody>
+            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+              {t('Labels')}
+            </Title>
+            <Labels
+              labels={appLabels}
+              tooltipMessage={t('Workloads and Services grouped by {{label}} label', {
+                label: serverConfig.istioLabels.appLabelName ?? 'app'
+              })}
+            />
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
   render(): React.ReactNode {
+    const app = this.props.app;
     const miniGraphSpan = 8;
 
     return (
@@ -58,16 +219,16 @@ export class AppInfo extends React.Component<AppInfoProps> {
         <Grid hasGutter={true} className={gridStyle}>
           <GridItem span={4} className={detailLeftColumnStyle}>
             <Stack hasGutter={true}>
-              <StackItem>
-                <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />
-              </StackItem>
+              {app && this.renderDetailsCard(app)}
+              {app && this.renderResourcesCard(app)}
+              {app && this.renderLabelsCard(app)}
 
-              {this.props.app &&
-                this.props.app.workloads &&
-                this.props.app.workloads.length > 0 &&
-                this.props.app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
+              {app &&
+                app.workloads &&
+                app.workloads.length > 0 &&
+                app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
                   <StackItem>
-                    <Spire object={this.props.app} objectType="app" />
+                    <Spire object={app} objectType="app" />
                   </StackItem>
                 )}
             </Stack>

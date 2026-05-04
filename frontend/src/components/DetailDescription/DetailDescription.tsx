@@ -1,24 +1,18 @@
 import * as React from 'react';
 import { AppWorkload } from '../../types/App';
-import { PopoverPosition, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from '../Link/KialiLink';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
-import * as H from '../../types/Health';
-import { HealthSubItem } from '../../types/Health';
-import { renderTrafficStatus } from '../Health/HealthDetails';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { KialiIcon, createIcon } from '../../config/KialiIcon';
 import { isMultiCluster } from '../../config';
 import { WorkloadInfo } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
-import { healthIndicatorStyle } from 'styles/HealthStyle';
 import { infoStyle } from 'styles/IconStyle';
 
 type Props = {
   apps?: string[];
   cluster?: string;
-  health?: H.Health;
   isWaypoint?: boolean;
   namespace: string;
   services?: string[];
@@ -163,145 +157,36 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
 
         <KialiLink to={href}>{workload.workloadName}</KialiLink>
 
-        <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
-          <KialiIcon.Info className={infoStyle} />
-        </Tooltip>
-
         {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
       </span>
     );
   };
 
-  const renderWorkloadHealthItem = (sub: HealthSubItem): React.ReactNode => {
-    let workload: AppWorkload | undefined = undefined;
-
+  const workloadList = (): React.ReactNode => {
     if (props.workloads && props.workloads.length > 0) {
-      for (let i = 0; i < props.workloads.length; i++) {
-        const hWorkload = sub.text.substring(0, sub.text.indexOf(':'));
-
-        if (hWorkload === props.workloads[i].workloadName) {
-          workload = props.workloads[i];
-          break;
-        }
-      }
-    }
-
-    if (workload) {
-      let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
-
-      if (props.cluster && isMultiCluster) {
-        href = `${href}?clusterName=${props.cluster}`;
-      }
-
       return (
-        <span key={`WorkloadItem_${workload.workloadName}`}>
-          <div className={iconStyle}>
-            <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-          </div>
-
-          <KialiLink to={href}>{workload.workloadName}</KialiLink>
-
-          <Tooltip position={TooltipPosition.right} content={renderServiceAccounts(workload)}>
-            <KialiIcon.Info className={infoStyle} />
-          </Tooltip>
-
-          <Tooltip
-            aria-label="Health indicator"
-            content={<>{sub.text}</>}
-            position={PopoverPosition.auto}
-            className={healthIndicatorStyle}
-          >
-            <span style={{ marginLeft: '0.5rem' }}>{createIcon(sub.status)}</span>
-          </Tooltip>
-
-          {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
-        </span>
-      );
-    } else {
-      return (
-        <span key={`WorkloadItem_${sub.text}`}>
-          <span style={{ marginRight: '0.5rem' }}>{createIcon(sub.status)}</span>
-          {sub.text}
-        </span>
-      );
-    }
-  };
-
-  const renderServiceAccounts = (workload: AppWorkload): React.ReactNode => {
-    return (
-      <div style={{ textAlign: 'left' }}>
-        {workload.serviceAccountNames && workload.serviceAccountNames.length > 0 ? (
-          <div key="properties-list" className={resourceListStyle}>
-            <span>Service accounts</span>
-
-            <ul>
-              {workload.serviceAccountNames.map((serviceAccount, i) => (
-                <li key={i} className={itemStyle}>
-                  {serviceAccount}
+        <div className={resourceListStyle}>
+          <ul id="workload-list" style={{ listStyleType: 'none' }}>
+            {props.workloads.map((wkd, idx) => {
+              return (
+                <li key={idx} className={itemStyle}>
+                  {renderWorkloadItem(wkd)}
                 </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          'Service Account Not found'
-        )}
-      </div>
-    );
-  };
-
-  const renderWorkloadStatus = (): React.ReactNode => {
-    if (props.health) {
-      const item = props.health.getWorkloadStatus();
-
-      if (item) {
-        item.children?.sort((i1, i2) => (i1.text < i2.text ? -1 : 1));
-        return (
-          <div>
-            {item.text}
-
-            {item.children && (
-              <ul id="workload-list" style={{ listStyleType: 'none' }}>
-                {item.children.map((sub, subIdx) => {
-                  return (
-                    <li key={subIdx} className={itemStyle}>
-                      {renderWorkloadHealthItem(sub)}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        );
-      } else {
-        return (
-          <div>
-            <ul id="workload-list" style={{ listStyleType: 'none' }}>
-              {props.workloads
-                ? props.workloads.map((wkd, subIdx) => {
-                    return (
-                      <li key={subIdx} className={itemStyle}>
-                        {renderWorkloadItem(wkd)}
-                      </li>
-                    );
-                  })
-                : undefined}
-            </ul>
-          </div>
-        );
-      }
+              );
+            })}
+          </ul>
+        </div>
+      );
     }
+
     return undefined;
   };
 
-  const workloadSummary = (): React.ReactNode => {
-    return <div className={resourceListStyle}>{renderWorkloadStatus()}</div>;
-  };
-
   const serviceList = (): React.ReactNode => {
-    let serviceList: React.ReactNode = <></>;
+    let serviceListContent: React.ReactNode = <></>;
 
-    if (serviceList !== undefined) {
-      serviceList =
+    if (props.services !== undefined) {
+      serviceListContent =
         props.services && props.services.length > 0
           ? props.services.map(name => renderServiceItem(props.namespace, name))
           : renderEmptyItem('services');
@@ -310,7 +195,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     return [
       <div key="service-list" className={resourceListStyle}>
         <ul id="service-list" style={{ listStyleType: 'none' }}>
-          {serviceList}
+          {serviceListContent}
         </ul>
       </div>
     ];
@@ -324,10 +209,9 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   return (
     <div className={containerStyle}>
       {props.apps !== undefined && appList()}
-      {props.workloads !== undefined && workloadSummary()}
+      {props.workloads !== undefined && workloadList()}
       {props.services !== undefined && serviceList()}
       {props.waypointWorkloads && renderWaypoints()}
-      {props.health && renderTrafficStatus(props.health)}
     </div>
   );
 };

@@ -398,7 +398,7 @@ Then('the sidecar of the workload should vanish', () => {
 });
 
 Then('I should see no override annotation for sidecar injection in the workload', () => {
-  cy.get('#WorkloadDescriptionCard').then($card => {
+  cy.get('[data-test=workload-labels-card]').then($card => {
     if ($card.find('label_more').length) {
       cy.wrap($card).get('label_more').should('be.visible').click();
     }
