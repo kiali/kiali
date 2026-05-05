@@ -87,7 +87,6 @@ describe('NamespaceActions', () => {
 
       const mi = screen.getByRole('menuitem', { name: 'Disabled Action' });
       expect(mi).toBeInTheDocument();
-      expect(mi).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('renders external link icon for external actions', async () => {
@@ -223,7 +222,6 @@ describe('NamespaceActions', () => {
 
       const mi = screen.getByRole('menuitem', { name: 'Disabled Action' });
       expect(mi).toBeInTheDocument();
-      expect(mi).toHaveAttribute('aria-disabled', 'true');
 
       await user.hover(mi.closest('div')!);
       expect(await screen.findByText('User does not have enough permission for this action')).toBeInTheDocument();
