@@ -29,6 +29,7 @@ const pushSeparator = (actions: NamespaceAction[]): void => {
 export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): NamespaceAction[] => {
   const { nsInfo } = p;
   const namespaceActions: NamespaceAction[] = [];
+  const viewOnly = serverConfig.deployment.viewOnlyMode;
 
   if (!nsInfo.isControlPlane) {
     if (
@@ -45,6 +46,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const enableAction = {
         'data-test': `enable-${nsInfo.name}-namespace-sidecar-injection`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Enable Auto Injection'),
@@ -59,6 +61,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const disableAction = {
         'data-test': `disable-${nsInfo.name}-namespace-sidecar-injection`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Disable Auto Injection'),
@@ -73,6 +76,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const removeAction = {
         'data-test': `remove-${nsInfo.name}-namespace-sidecar-injection`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Remove Auto Injection'),
@@ -108,6 +112,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     if (serverConfig.ambientEnabled) {
       const addAmbientAction = {
         'data-test': `add-${nsInfo.name}-namespace-ambient`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Add to Ambient'),
@@ -122,6 +127,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const disableAmbientAction = {
         'data-test': `disable-${nsInfo.name}-namespace-ambient`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Disable Ambient'),
@@ -136,6 +142,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       const removeAmbientAction = {
         'data-test': `remove-${nsInfo.name}-namespace-ambient`,
+        isDisabled: viewOnly,
         isGroup: false,
         isSeparator: false,
         title: t('Remove Ambient'),
@@ -174,6 +181,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
             controlplane.revision !== nsInfo.revision
         )
         .map(controlPlane => ({
+          isDisabled: viewOnly,
           isGroup: false,
           isSeparator: false,
           title: t('Switch to {{revision}} revision', { revision: controlPlane.revision }),
@@ -198,6 +206,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     const aps = nsInfo.istioConfig?.resources[getGVKTypeString(gvkType.AuthorizationPolicy)] ?? [];
 
     const addAuthorizationAction = {
+      isDisabled: viewOnly,
       isGroup: false,
       isSeparator: false,
       title: aps.length === 0 ? t('Create Traffic Policies') : t('Update Traffic Policies'),
@@ -212,6 +221,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
     };
 
     const removeAuthorizationAction = {
+      isDisabled: viewOnly,
       isGroup: false,
       isSeparator: false,
       title: t('Delete Traffic Policies'),

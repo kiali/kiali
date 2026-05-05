@@ -649,7 +649,6 @@
   "Unselected Namespace": "Espacio de nombres no seleccionado",
   "Update": "Actualizar",
   "Update Traffic Policies": "Update Traffic Policies",
-  "User does not have enough permission for this action.": "El usuario no tiene permiso suficiente para esta acción.",
   "User does not have permission": "El usuario no tiene permiso",
   "User does not have permission on this Workload": "El usuario no tiene permiso en esta carga de trabajo",
   "User does not have permission to create Istio Config on namespace: {{namespace}}": "El usuario no tiene permiso para crear configuración de Istio en el espacio de nombres: {{namespace}}",

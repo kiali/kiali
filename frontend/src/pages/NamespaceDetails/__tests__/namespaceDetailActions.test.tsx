@@ -1,5 +1,6 @@
 import { buildNamespaceRowActions, NamespaceRowActionsParams } from '../namespaceDetailActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
+import { serverConfig } from 'config';
 
 jest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key,
@@ -111,6 +112,38 @@ describe('buildNamespaceRowActions', () => {
           clusterTarget: 'test-cluster'
         });
       }
+    });
+  });
+
+  describe('view-only mode', () => {
+    const origViewOnly = serverConfig.deployment.viewOnlyMode;
+
+    afterEach(() => {
+      serverConfig.deployment.viewOnlyMode = origViewOnly;
+    });
+
+    it('disables all mutating actions when viewOnlyMode is true', () => {
+      serverConfig.deployment.viewOnlyMode = true;
+
+      const actions = buildNamespaceRowActions(baseParams(baseNsInfo));
+      const mutatingActions = actions.filter(a => !a.isSeparator && a.title);
+
+      expect(mutatingActions.length).toBeGreaterThan(0);
+      mutatingActions.forEach(a => {
+        expect(a.isDisabled).toBe(true);
+      });
+    });
+
+    it('does not disable actions when viewOnlyMode is false', () => {
+      serverConfig.deployment.viewOnlyMode = false;
+
+      const actions = buildNamespaceRowActions(baseParams(baseNsInfo));
+      const mutatingActions = actions.filter(a => !a.isSeparator && a.title);
+
+      expect(mutatingActions.length).toBeGreaterThan(0);
+      mutatingActions.forEach(a => {
+        expect(a.isDisabled).toBeFalsy();
+      });
     });
   });
 });
