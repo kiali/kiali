@@ -441,6 +441,17 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     }
 
     const graphUrl = `/graph/namespaces?${params.toString()}`;
+    params.set('graphType', graphType);
+    params.set('injectServiceNodes', 'true');
+    params.set('namespaces', namespace);
+    if (targetNamespace.cluster) {
+      params.set(URLParam.CLUSTERNAME, targetNamespace.cluster);
+    }
+    if (selected.length > 0) {
+      params.set(URLParam.FOCUS_SELECTOR, selected[0].getId());
+    }
+
+    const graphUrl = `/graph/namespaces?${params.toString()}`;
 
     const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&${focusSelector}`;
 
