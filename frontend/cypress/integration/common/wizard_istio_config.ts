@@ -120,9 +120,20 @@ When('user opens the {string} submenu', (title: string) => {
 });
 
 When('choosing to delete it', () => {
-  cy.get('#actions-toggle').should('be.visible').click();
-  cy.get('#actions').contains('Delete').should('be.visible').click();
-  cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+  const isOSSMC = Cypress.env('OSSMC');
+  if (isOSSMC) {
+    // In OSSMC, Istio config details are shown on the OCP Console's
+    // native resource page, which has its own Actions dropdown.
+    cy.contains('button', 'Actions').should('be.visible').click();
+    cy.contains('[role="menuitem"]', /^Delete/)
+      .should('be.visible')
+      .click();
+    cy.get('[role="dialog"]').contains('button', 'Delete').should('be.visible').click();
+  } else {
+    cy.get('#actions-toggle').should('be.visible').click();
+    cy.get('#actions').contains('Delete').should('be.visible').click();
+    cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+  }
 });
 
 When('user closes the success notification', () => {

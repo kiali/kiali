@@ -6,11 +6,11 @@ import { MeshCluster } from 'types/Mesh';
  * When called without arguments, returns a selector matching any link-like element.
  * Assumes hrefPattern contains only safe test paths (no user input).
  */
-export const linkSelector = (hrefPattern?: string, match: 'contains' | 'endsWith' = 'contains'): string => {
+export const linkSelector = (hrefPattern?: string, match: 'contains' | 'endsWith' | 'exact' = 'contains'): string => {
   if (!hrefPattern) {
     return 'a, button[data-href]';
   }
-  const op = match === 'endsWith' ? '$' : '*';
+  const op = match === 'exact' ? '' : match === 'endsWith' ? '$' : '*';
   return `a[href${op}="${hrefPattern}"], button[data-href${op}="${hrefPattern}"]`;
 };
 

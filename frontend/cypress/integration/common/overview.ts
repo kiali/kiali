@@ -599,9 +599,30 @@ Then('Service insights card shows data tables and footer link', () => {
 
   cy.get('body').then($body => {
     if ($body.find('[data-test="service-insights-rates"]').length > 0) {
-      cy.getBySel('service-insights-rates').within(() => {
-        cy.contains('not available').should('be.visible');
-      });
+      const $rates = $body.find('[data-test="service-insights-rates"]');
+      if ($rates.find('table tbody tr').length > 0) {
+        cy.getBySel('service-insights-rates').within(() => {
+          cy.contains('th', 'Name').should('be.visible');
+          cy.contains('th', 'Errors').should('be.visible');
+          cy.get('tbody tr')
+            .first()
+            .within(() => {
+              cy.get(linkSelector('/services/'))
+                .should('exist')
+                .then($el => {
+                  const attr = $el.is('a') ? 'href' : 'data-href';
+                  cy.wrap($el)
+                    .should('have.attr', attr)
+                    .and('match', /\/namespaces\/.+\/services\/.+/);
+                });
+              cy.contains('%').should('be.visible');
+            });
+        });
+      } else {
+        cy.getBySel('service-insights-rates').within(() => {
+          cy.contains('not available').should('be.visible');
+        });
+      }
     }
     if ($body.find('[data-test="service-insights-latencies"]').length > 0) {
       cy.getBySel('service-insights-latencies').within(() => {
@@ -717,8 +738,8 @@ When('user clicks a valid service link in Service insights card', () => {
   getServiceInsightsCard()
     .should($card => {
       const hasServiceLink =
-        $card.find('[data-test="service-insights-rates"] a').length > 0 ||
-        $card.find('[data-test="service-insights-latencies"] a').length > 0;
+        $card.find('[data-test="service-insights-rates"]').find(linkSelector()).length > 0 ||
+        $card.find('[data-test="service-insights-latencies"]').find(linkSelector()).length > 0;
 
       const hasEmptyState = $card.text().includes('not available');
 
@@ -728,8 +749,8 @@ When('user clicks a valid service link in Service insights card', () => {
       ).to.eq(true);
     })
     .then($card => {
-      const hasRateLink = $card.find('[data-test="service-insights-rates"] a').length > 0;
-      const hasLatencyLink = $card.find('[data-test="service-insights-latencies"] a').length > 0;
+      const hasRateLink = $card.find('[data-test="service-insights-rates"]').find(linkSelector()).length > 0;
+      const hasLatencyLink = $card.find('[data-test="service-insights-latencies"]').find(linkSelector()).length > 0;
       const hasServiceLink = hasRateLink || hasLatencyLink;
 
       if (!hasServiceLink) {
@@ -749,8 +770,6 @@ When('user clicks a valid service link in Service insights card', () => {
         return $body.find('#basic-tabs').length > 0;
       };
 
-      const escapeCssAttrValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-
       const tryHrefAtIndex = (hrefs: string[], idx: number): Cypress.Chainable => {
         if (idx >= hrefs.length) {
           throw new Error('No valid Service Insights service link found (all navigations ended in an error page).');
@@ -762,10 +781,7 @@ When('user clicks a valid service link in Service insights card', () => {
         // Click inside the Service Insights card to avoid matching other links.
         return getServiceInsightsCard()
           .within(() => {
-            cy.get(`a[href="${escapeCssAttrValue(href)}"]`)
-              .first()
-              .should('be.visible')
-              .click();
+            cy.get(linkSelector(href, 'exact')).first().should('be.visible').click();
           })
           .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
           .then(() => cy.get('body', { timeout: 40000 }))
@@ -784,11 +800,12 @@ When('user clicks a valid service link in Service insights card', () => {
           });
       };
 
-      cy.get(`${containerSel} table tbody tr a`)
+      cy.get(`${containerSel} table tbody tr`)
+        .find(linkSelector())
         .should('exist')
         .then($links => {
           const hrefs = Array.from($links)
-            .map(a => (a as HTMLAnchorElement).getAttribute('href') ?? '')
+            .map(el => el.getAttribute('href') ?? el.getAttribute('data-href') ?? '')
             .map(h => h.trim())
             .filter(Boolean);
 
