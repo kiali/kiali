@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { EmptyGraphLayout } from '../EmptyGraphLayout';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
 
@@ -24,10 +24,10 @@ describe('EmptyGraphLayout', () => {
   it('shows prometheus disabled message when prometheus is explicitly disabled', () => {
     setServerConfig({ ...serverConfig, prometheus: { ...serverConfig.prometheus, enabled: false } });
 
-    const wrapper = shallow(<EmptyGraphLayout {...defaultProps} />);
+    const { container } = render(<EmptyGraphLayout {...defaultProps} />);
 
-    expect(wrapper.find('#empty-graph-prometheus-disabled').exists()).toBe(true);
-    expect(wrapper.html()).toContain('Metrics are disabled');
+    expect(container.querySelector('#empty-graph-prometheus-disabled')).toBeInTheDocument();
+    expect(screen.getByText('Metrics are disabled')).toBeInTheDocument();
   });
 
   it('shows prometheus disabled message when prometheus is enabled but unreachable', () => {
@@ -36,21 +36,21 @@ describe('EmptyGraphLayout', () => {
       prometheus: { ...serverConfig.prometheus, enabled: true, disabledReason: 'Prometheus unreachable' }
     });
 
-    const wrapper = shallow(<EmptyGraphLayout {...defaultProps} />);
+    const { container } = render(<EmptyGraphLayout {...defaultProps} />);
 
-    expect(wrapper.find('#empty-graph-prometheus-disabled').exists()).toBe(true);
-    expect(wrapper.html()).toContain('Metrics are disabled');
+    expect(container.querySelector('#empty-graph-prometheus-disabled')).toBeInTheDocument();
+    expect(screen.getByText('Metrics are disabled')).toBeInTheDocument();
   });
 
   it('does not show prometheus disabled message when prometheus is enabled', () => {
     setServerConfig({ ...serverConfig, prometheus: { ...serverConfig.prometheus, enabled: true } });
 
-    const wrapper = shallow(
+    const { container } = render(
       <EmptyGraphLayout {...defaultProps}>
         <div id="graph-content">Graph Content</div>
       </EmptyGraphLayout>
     );
 
-    expect(wrapper.find('#empty-graph-prometheus-disabled').exists()).toBe(false);
+    expect(container.querySelector('#empty-graph-prometheus-disabled')).not.toBeInTheDocument();
   });
 });
