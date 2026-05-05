@@ -24,7 +24,7 @@ import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
-import { serverConfig } from 'config';
+import { isPrometheusAvailable, serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { setAIContext } from 'helpers/ChatAI';
@@ -226,7 +226,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     // Default tabs
     const tabsArray: React.ReactNode[] = [overTab];
     if (this.state.isSupported) {
-      tabsArray.push(trafficTab, inTab, outTab);
+      if (isPrometheusAvailable()) {
+        tabsArray.push(trafficTab, inTab, outTab);
+      }
       // Conditional Traces tab
       if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
         if (this.props.tracingInfo.integration) {

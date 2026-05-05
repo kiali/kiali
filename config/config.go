@@ -339,11 +339,20 @@ type PrometheusConfig struct {
 	CacheEnabled    bool              `yaml:"cache_enabled,omitempty" json:"cacheEnabled,omitempty"`       // Enable cache for Prometheus queries
 	CacheExpiration int               `yaml:"cache_expiration,omitempty" json:"cacheExpiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
-	HealthCheckUrl  string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
-	IsCore          bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	QueryScope      map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
-	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
-	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`
+	// DisabledReason is set at startup when Prometheus is enabled but unavailable (empty URL, transport
+	// failure, or unreachable endpoint). Enabled remains true so that addon status checks and the mesh
+	// page still probe Prometheus and report errors. The handlers layer surfaces DisabledReason to the
+	// frontend via the /api/config endpoint so the UI can warn the user and hide metrics features.
+	// When Enabled is true and DisabledReason is empty, Prometheus is fully operational.
+	// When Enabled is true and DisabledReason is non-empty, Prometheus was requested but is unavailable.
+	// When Enabled is false, the user explicitly disabled Prometheus.
+	DisabledReason string            `yaml:"-" json:"-"`             // in-memory only; never serialized to config files
+	Enabled        bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
+	HealthCheckUrl string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	QueryScope     map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
+	ThanosProxy    ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
+	URL            string            `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -1092,6 +1101,7 @@ func NewConfig() (c *Config) {
 				// Prom Cache expires and it forces to repopulate cache
 				CacheExpiration: 300,
 				CustomHeaders:   map[string]string{},
+				Enabled:         true,
 				QueryScope:      map[string]string{},
 				ThanosProxy: ThanosProxy{
 					Enabled:         false,

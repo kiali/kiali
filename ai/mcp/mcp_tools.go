@@ -46,11 +46,24 @@ var ExcludedToolNames = map[string]bool{
 	"get_action_ui":       true,
 }
 
+// MetricToolNames are MCP tools that require Prometheus.
+// They return an informative error when external_services.prometheus.enabled is false.
+var MetricToolNames = map[string]struct{}{
+	"get_mesh_traffic_graph": {},
+	"get_metrics":            {},
+	"get_pod_performance":    {},
+}
+
 // TraceToolNames are MCP tools that call the mesh tracing backend (Jaeger/Tempo).
 // They must not be offered or executed when external_services.tracing.enabled is false.
 var TraceToolNames = map[string]struct{}{
 	"list_traces":       {},
 	"get_trace_details": {},
+}
+
+func IsMetricTool(name string) bool {
+	_, ok := MetricToolNames[name]
+	return ok
 }
 
 func IsTraceTool(name string) bool {

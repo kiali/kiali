@@ -67,6 +67,80 @@ func TestConfigHandler(t *testing.T) {
 
 	var confResp handlers.PublicConfig
 	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.True(confResp.Prometheus.Enabled, "Prometheus should be enabled by default")
+}
+
+func TestConfigHandlerPrometheusDisabled(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.Enabled = false
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, cache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.False(confResp.Prometheus.Enabled, "Prometheus should be disabled")
+	require.Empty(confResp.Prometheus.DisabledReason, "DisabledReason should be empty when user explicitly disabled Prometheus")
+}
+
+func TestConfigHandlerPrometheusEnabledButUnreachable(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.Enabled = true
+	conf.ExternalServices.Prometheus.DisabledReason = "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0])"
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, cache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+
+	require.True(confResp.Prometheus.Enabled, "Prometheus should still be enabled (user's intent)")
+	require.NotEmpty(confResp.Prometheus.DisabledReason, "DisabledReason should be set when Prometheus is unreachable")
+	require.Equal(conf.ExternalServices.Prometheus.DisabledReason, confResp.Prometheus.DisabledReason)
 }
 
 func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {

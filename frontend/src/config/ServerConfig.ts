@@ -141,6 +141,7 @@ const defaultServerConfig: ComputedServerConfig = {
     }
   },
   prometheus: {
+    enabled: true,
     globalScrapeInterval: 15,
     storageTsdbRetention: 21600
   },
@@ -198,6 +199,10 @@ export const setServerConfig = (cfg: ServerConfig): void => {
     appLabelNames = ['service.istio.io/canonical-name', 'app.kubernetes.io/name', 'app'];
     versionLabelNames = ['service.istio.io/canonical-revision', 'app.kubernetes.io/version', 'version'];
   }
+};
+
+export const isPrometheusAvailable = (): boolean => {
+  return serverConfig.prometheus.enabled && !serverConfig.prometheus.disabledReason;
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {

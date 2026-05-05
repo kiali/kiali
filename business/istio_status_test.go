@@ -249,6 +249,35 @@ func TestGrafanaDisabled(t *testing.T) {
 	assertComponent(assert, icsl, "custom dashboards", kubernetes.ComponentHealthy, false)
 }
 
+func TestPrometheusDisabled(t *testing.T) {
+	assert := assert.New(t)
+
+	objects := []runtime.Object{
+		fakeDeploymentWithStatus(
+			"istio=egressgateway",
+			map[string]string{"istio": "egressgateway"},
+			apps_v1.DeploymentStatus{
+				Replicas:            2,
+				AvailableReplicas:   2,
+				UnavailableReplicas: 0,
+			}),
+	}
+	k8s, grafanaCalls, _, promCalls := mockAddOnsCalls(t, objects, true, false)
+	conf := config.Get()
+	conf.ExternalServices.Prometheus.Enabled = false
+	config.Set(conf)
+
+	iss := NewLayerBuilder(t, conf).WithClient(k8s).WithTraceLoader(mockJaeger).Build().IstioStatus
+	icsl, error := iss.GetStatus(context.TODO())
+	assert.NoError(error)
+
+	assert.Zero(*promCalls)
+	assertNotPresent(assert, icsl, "prometheus")
+
+	assert.NotZero(*grafanaCalls)
+	assertComponent(assert, icsl, "grafana", kubernetes.ComponentHealthy, false)
+}
+
 func TestGrafanaNotWorking(t *testing.T) {
 	assert := assert.New(t)
 	grafanaCalls, persesCalls, prometheusCalls := 0, 0, 0

@@ -22,11 +22,13 @@ import (
 func getVersions(ctx context.Context, conf *config.Config, clientFactory kubernetes.ClientFactory, grafana *grafana.Service, perses *perses.Service, prom prometheus.ClientInterface) []models.ExternalServiceInfo {
 	components := getKubernetesVersions(clientFactory)
 
-	pv, err := prometheusVersion(ctx, prom)
-	if err != nil {
-		log.Infof("Error getting Prometheus version: %v", err)
-	} else {
-		components = append(components, *pv)
+	if conf.ExternalServices.Prometheus.Enabled {
+		pv, err := prometheusVersion(ctx, prom)
+		if err != nil {
+			log.Infof("Error getting Prometheus version: %v", err)
+		} else {
+			components = append(components, *pv)
+		}
 	}
 
 	if conf.ExternalServices.Grafana.Enabled && grafana != nil {

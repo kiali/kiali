@@ -33,7 +33,7 @@ import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { durationSelector } from 'store/Selectors';
 import { basicTabStyle } from 'styles/TabStyles';
-import { serverConfig } from 'config';
+import { isPrometheusAvailable, serverConfig } from 'config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
 import { setAIContext } from 'helpers/ChatAI';
@@ -232,7 +232,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       </Tab>
     );
 
-    const tabsArray: React.ReactNode[] = [overTab, trafficTab, inTab];
+    const tabsArray: React.ReactNode[] = isPrometheusAvailable() ? [overTab, trafficTab, inTab] : [overTab];
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       const fromWaypoint =

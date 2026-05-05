@@ -548,7 +548,7 @@ func (iss *IstioStatusService) getAddonComponentStatus(ctx context.Context, clus
 
 	ics := kubernetes.IstioComponentStatus{}
 
-	go iss.getAddonStatus(cluster, "prometheus", true, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
+	go iss.getAddonStatus(cluster, "prometheus", extServices.Prometheus.Enabled, extServices.Prometheus.IsCore, &extServices.Prometheus.Auth, extServices.Prometheus.URL, extServices.Prometheus.HealthCheckUrl, staChan, &wg)
 	go iss.getAddonStatus(cluster, "grafana", extServices.Grafana.Enabled, extServices.Grafana.IsCore, &extServices.Grafana.Auth, extServices.Grafana.InternalURL, extServices.Grafana.HealthCheckUrl, staChan, &wg)
 	go iss.getAddonStatus(cluster, "perses", extServices.Perses.Enabled, extServices.Perses.IsCore, &extServices.Perses.Auth, extServices.Perses.InternalURL, extServices.Perses.HealthCheckUrl, staChan, &wg)
 	go iss.getTracingStatus(cluster, "tracing", extServices.Tracing.Enabled, extServices.Tracing.IsCore, staChan, &wg)

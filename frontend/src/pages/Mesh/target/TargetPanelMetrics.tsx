@@ -18,7 +18,7 @@ import * as API from '../../../services/Api';
 import { addError } from '../../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../../services/Prometheus';
 import { IstioMetricsOptions } from '../../../types/MetricsOptions';
-import { serverConfig } from '../../../config';
+import { isPrometheusAvailable, serverConfig } from '../../../config';
 
 type TargetPanelMetricsProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -66,7 +66,9 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
   };
 
   React.useEffect(() => {
-    fetchMetrics();
+    if (isPrometheusAvailable()) {
+      fetchMetrics();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.duration, props.target.elem]);
 
@@ -82,12 +84,17 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
       <div className={targetBodyStyle}>
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
         {targetPanelHR}
-        <TargetPanelControlPlaneMetrics
-          key={data.namespace}
-          istiodContainerMemory={metrics?.memory_usage}
-          istiodContainerCpu={metrics?.cpu_usage}
-          type={data.infraName}
-        />
+        {!isPrometheusAvailable() && (
+          <span>{t('Metrics are unavailable because the Prometheus metrics store is disabled.')}</span>
+        )}
+        {isPrometheusAvailable() && (
+          <TargetPanelControlPlaneMetrics
+            key={data.namespace}
+            istiodContainerMemory={metrics?.memory_usage}
+            istiodContainerCpu={metrics?.cpu_usage}
+            type={data.infraName}
+          />
+        )}
         {targetPanelHR}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>

@@ -252,3 +252,12 @@ func TestMeshGraphSchema_MCPToolsetRegistered(t *testing.T) {
 	_, inDefault := DefaultToolHandlers["get_mesh_traffic_graph"]
 	assert.True(t, inDefault, "get_mesh_traffic_graph should be in DefaultToolHandlers")
 }
+
+func TestIsMetricTool(t *testing.T) {
+	assert.True(t, IsMetricTool("get_metrics"))
+	assert.True(t, IsMetricTool("get_mesh_traffic_graph"))
+	assert.True(t, IsMetricTool("get_pod_performance"))
+	assert.False(t, IsMetricTool("list_traces"))
+	assert.False(t, IsMetricTool("list_or_get_resources"))
+	assert.False(t, IsMetricTool("nonexistent_tool"))
+}

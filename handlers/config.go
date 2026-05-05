@@ -35,8 +35,10 @@ type IstioAnnotations struct {
 // PrometheusConfig holds actual Prometheus configuration that is useful to Kiali.
 // All durations are in seconds.
 type PrometheusConfig struct {
-	GlobalScrapeInterval int64 `json:"globalScrapeInterval,omitempty"`
-	StorageTsdbRetention int64 `json:"storageTsdbRetention,omitempty"`
+	DisabledReason       string `json:"disabledReason,omitempty"`
+	Enabled              bool   `json:"enabled"`
+	GlobalScrapeInterval int64  `json:"globalScrapeInterval,omitempty"`
+	StorageTsdbRetention int64  `json:"storageTsdbRetention,omitempty"`
 }
 
 type DeploymentConfig struct {
@@ -140,11 +142,8 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			IstioLabels:         conf.IstioLabels,
 			KialiFeatureFlags:   conf.KialiFeatureFlags,
 			LogLevel:            log.GetLogLevel(),
-			Prometheus: PrometheusConfig{
-				GlobalScrapeInterval: promConfig.GlobalScrapeInterval,
-				StorageTsdbRetention: promConfig.StorageTsdbRetention,
-			},
-			RunMode: conf.RunMode,
+			Prometheus:          promConfig,
+			RunMode:             conf.RunMode,
 		}
 
 		if conf.RunMode == config.RunModeOffline {
@@ -217,10 +216,12 @@ type PrometheusPartialConfig struct {
 
 func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
 	promConfig := PrometheusConfig{
+		DisabledReason:       conf.ExternalServices.Prometheus.DisabledReason,
+		Enabled:              conf.ExternalServices.Prometheus.Enabled,
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
-	if conf.RunMode == config.RunModeOffline {
+	if !conf.ExternalServices.Prometheus.Enabled || conf.ExternalServices.Prometheus.DisabledReason != "" || conf.RunMode == config.RunModeOffline {
 		return promConfig
 	}
 	// Check if thanosProxy

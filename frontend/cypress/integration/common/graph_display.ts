@@ -116,7 +116,7 @@ Then(`user sees empty graph`, () => {
 
 Then(`user sees the {string} namespace`, ns => {
   // Wait for graph (and thus summary panel) to be ready before asserting on the panel (avoids race)
-  assertGraphReady(() => { });
+  assertGraphReady(() => {});
   cy.get('div#summary-panel-graph').find('div#summary-panel-graph-heading').find(`div#ns-${ns}`).should('be.visible');
 });
 
@@ -379,7 +379,7 @@ Then(
   'the Istio objects for the {string} namespace for both clusters should be grouped together in the panel',
   (namespace: string) => {
     // Wait for graph (and thus side panel) to be ready before asserting on the panel (avoids race)
-    assertGraphReady(() => { });
+    assertGraphReady(() => {});
     cy.get('#graph-side-panel')
       .find(`#ns-${namespace}`)
       .within(() => {
@@ -562,4 +562,29 @@ Then('graph cache metrics should show at least {int} miss and {int} hits', (minM
       expect(after.graphCacheHits).to.be.at.least(before.graphCacheHits + minHits);
     });
   });
+});
+
+Given('prometheus is reported as disabled in the config', () => {
+  // Use cy.intercept to simulate prometheus.enabled=false in the browser.
+  // The intercept must be registered before the page visit so it catches
+  // the /api/config call that the Kiali frontend makes on load.
+  // This works in any suite (local binary, operator, Helm) without requiring
+  // a server restart or CR/ConfigMap patch.
+  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+    request.reply(response => {
+      response.body['prometheus'] = {
+        ...response.body['prometheus'],
+        enabled: false,
+        disabledReason: ''
+      };
+      return response;
+    });
+  }).as('configWithPrometheusDisabled');
+  // Visit the graph page immediately so the intercept is active for the config load
+  cy.visit(`${Cypress.config('baseUrl')}/console/graph/namespaces?refresh=0`);
+  cy.wait('@configWithPrometheusDisabled');
+});
+
+Then('user sees the prometheus disabled empty graph', () => {
+  cy.get('#empty-graph-prometheus-disabled').should('be.visible');
 });

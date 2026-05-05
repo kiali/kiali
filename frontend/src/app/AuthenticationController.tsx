@@ -12,7 +12,7 @@ import { MessageType } from '../types/NotificationCenter';
 import { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
 import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
-import { addError } from '../utils/AlertUtils';
+import { addError, addInfo, addWarning } from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
 import { TracingInfo } from '../types/TracingInfo';
@@ -44,6 +44,7 @@ interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setChatAI: (chatAI: ChatAIConfig) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -51,7 +52,6 @@ interface ReduxDispatchProps {
   setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   statusRefresh: (statusState: StatusState) => void;
-  setChatAI: (chatAI: ChatAIConfig) => void;
 }
 
 type AuthenticationControllerReduxProps = ReduxStateProps & ReduxDispatchProps;
@@ -200,6 +200,19 @@ class AuthenticationControllerComponent extends React.Component<
       setServerConfig(configs[1].data);
       this.props.setChatAI(configs[1].data.chatAI);
       this.applyUIDefaults();
+
+      // Notify the user about Prometheus availability.
+      if (configs[1].data.prometheus.disabledReason) {
+        // Prometheus is enabled but was unreachable at startup — warn the user.
+        addWarning(configs[1].data.prometheus.disabledReason);
+      } else if (!configs[1].data.prometheus.enabled) {
+        // Prometheus was explicitly disabled by the user.
+        addInfo(
+          'Prometheus metrics store is disabled. Some features (graph, metrics, health) are unavailable.',
+          '',
+          false
+        );
+      }
 
       if (this.props.landingRoute) {
         router.navigate(this.props.landingRoute, { replace: true });
