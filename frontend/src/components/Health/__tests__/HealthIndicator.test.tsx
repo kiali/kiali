@@ -19,11 +19,11 @@ describe('HealthIndicator', () => {
   it('renders when empty', () => {
     // SMALL
     const { container: containerSmall } = render(<HealthIndicator id="svc" />);
-    expect(containerSmall.innerHTML).not.toContain('pficon');
+    expect(containerSmall.innerHTML).not.toContain('pf-v6-pficon');
 
     // LARGE
     const { container: containerLarge } = render(<HealthIndicator id="svc" />);
-    expect(containerLarge.innerHTML).not.toContain('pficon');
+    expect(containerLarge.innerHTML).not.toContain('pf-v6-pficon');
   });
 
   it('renders healthy', () => {

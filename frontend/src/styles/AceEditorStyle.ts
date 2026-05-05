@@ -13,7 +13,7 @@ export const istioAceEditorStyle = kialiStyle({
       $nest: {
         '&::before': {
           content: `'\\E92b'`,
-          fontFamily: 'pficon',
+          fontFamily: 'pf-v6-pficon',
           left: '5px',
           position: 'absolute'
         }
