@@ -72,7 +72,7 @@ jobs:
         path: debug-output
 
     - name: Upload multicluster coverage artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: coverage-multicluster
         path: tests/integration/multicluster/coverage-multicluster.out
