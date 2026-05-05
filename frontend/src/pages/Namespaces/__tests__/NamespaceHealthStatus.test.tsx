@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import { NamespaceHealthStatus } from '../NamespaceHealthStatus';
@@ -14,19 +14,22 @@ describe('NamespaceHealthStatus', () => {
     setServerConfig(healthConfig);
   });
 
-  const store = createStore(
-    // Minimal reducer/store for this connected component. Avoid importing the real ConfigStore (which pulls Mesh + ESM deps).
-    (state = {}) => state,
-    {
-      globalState: { kiosk: '' },
-      userSettings: { duration: 600, refreshInterval: 10000 }
-    } as any
-  );
+  const store = createStore((state = {}) => state, {
+    globalState: { kiosk: '' },
+    userSettings: { duration: 600, refreshInterval: 10000 }
+  } as any);
 
   const defaultProps = {
     name: 'test-namespace',
     worstStatus: 'NA'
   };
+
+  const renderStatus = (props: React.ComponentProps<typeof NamespaceHealthStatus>): ReturnType<typeof render> =>
+    render(
+      <Provider store={store}>
+        <NamespaceHealthStatus {...props} />
+      </Provider>
+    );
 
   it('renders Healthy when all statuses are healthy', () => {
     const statusApp: NamespaceStatus = {
@@ -37,14 +40,10 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: []
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Healthy" />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps, statusApp, worstStatus: 'Healthy' });
 
-    expect(wrapper.text()).toContain('Healthy');
-    expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeFalsy();
+    expect(screen.getByText('Healthy')).toBeInTheDocument();
+    expect(screen.queryByTestId('namespace-health-details-trigger')).not.toBeInTheDocument();
   });
 
   it('renders Failure when there are errors', () => {
@@ -56,15 +55,11 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: []
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps, statusApp, worstStatus: 'Failure' });
 
-    expect(wrapper.text()).toContain('Failure');
-    expect(wrapper.text()).toContain('1 issue');
-    expect(wrapper.find('[data-test="namespace-health-details-trigger"]').exists()).toBeTruthy();
+    expect(screen.getByText('Failure')).toBeInTheDocument();
+    expect(screen.getByText('1 issue')).toBeInTheDocument();
+    expect(screen.getByTestId('namespace-health-details-trigger')).toBeInTheDocument();
   });
 
   it('renders Degraded when there are warnings', () => {
@@ -76,14 +71,10 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: []
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Degraded" />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps, statusApp, worstStatus: 'Degraded' });
 
-    expect(wrapper.text()).toContain('Degraded');
-    expect(wrapper.text()).toContain('1 issue');
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
+    expect(screen.getByText('1 issue')).toBeInTheDocument();
   });
 
   it('renders n/a when worst status is NA', () => {
@@ -95,18 +86,14 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: ['app1']
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="NA" />
-      </Provider>
-    );
+    const { container } = renderStatus({ ...defaultProps, statusApp, worstStatus: 'NA' });
 
-    expect(wrapper.text()).toContain('n/a');
-    expect(wrapper.text()).not.toContain('Failure');
-    expect(wrapper.text()).not.toContain('Degraded');
-    expect(wrapper.text()).not.toContain('Not Ready');
-    expect(wrapper.text()).not.toContain('Healthy');
-    expect(wrapper.text()).not.toContain('issue');
+    expect(container.textContent).toContain('n/a');
+    expect(container.textContent).not.toContain('Failure');
+    expect(container.textContent).not.toContain('Degraded');
+    expect(container.textContent).not.toContain('Not Ready');
+    expect(container.textContent).not.toContain('Healthy');
+    expect(container.textContent).not.toContain('issue');
   });
 
   it('renders n/a when only notAvailable items exist across all status types', () => {
@@ -134,24 +121,20 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: ['wl1']
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus
-          {...defaultProps}
-          statusApp={statusApp}
-          statusService={statusService}
-          statusWorkload={statusWorkload}
-          worstStatus="NA"
-        />
-      </Provider>
-    );
+    const { container } = renderStatus({
+      ...defaultProps,
+      statusApp,
+      statusService,
+      statusWorkload,
+      worstStatus: 'NA'
+    });
 
-    expect(wrapper.text()).toContain('n/a');
-    expect(wrapper.text()).not.toContain('Failure');
-    expect(wrapper.text()).not.toContain('Degraded');
-    expect(wrapper.text()).not.toContain('Not Ready');
-    expect(wrapper.text()).not.toContain('Healthy');
-    expect(wrapper.text()).not.toContain('issue');
+    expect(container.textContent).toContain('n/a');
+    expect(container.textContent).not.toContain('Failure');
+    expect(container.textContent).not.toContain('Degraded');
+    expect(container.textContent).not.toContain('Not Ready');
+    expect(container.textContent).not.toContain('Healthy');
+    expect(container.textContent).not.toContain('issue');
   });
 
   it('renders Failure when there are errors even if notAvailable items exist', () => {
@@ -163,39 +146,22 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: ['app2']
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
-      </Provider>
-    );
+    const { container } = renderStatus({ ...defaultProps, statusApp, worstStatus: 'Failure' });
 
-    expect(wrapper.text()).toContain('Failure');
-    expect(wrapper.text()).not.toContain('n/a');
-    expect(wrapper.text()).toContain('1 issue');
+    expect(screen.getByText('Failure')).toBeInTheDocument();
+    expect(container.textContent).not.toContain('n/a');
+    expect(screen.getByText('1 issue')).toBeInTheDocument();
   });
 
   it('renders n/a when no status data is provided (and uses subtle/disabled colors)', () => {
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps });
 
-    expect(wrapper.text()).toContain('n/a');
+    const naText = screen.getByText('n/a');
+    expect(naText.closest(`div.${naTextStyle}`)).toBeTruthy();
 
-    // n/a text color
-    const naText = wrapper
-      .find('div')
-      .filterWhere(d => d.text() === 'n/a' && d.hasClass(naTextStyle))
-      .first();
-    expect(naText.exists()).toBeTruthy();
-    expect(naText.hasClass(naTextStyle)).toBeTruthy();
-
-    // NA icon color (createIcon(NA) yields a span with icon-na class)
-    const naIcon = wrapper.find('span.icon-na').first();
-    expect(naIcon.exists()).toBeTruthy();
-    // Don't assume a fixed DOM nesting for PatternFly Icon - just ensure the NA icon is within the disabled-color wrapper.
-    expect(wrapper.find(`.${namespaceNaIconStyle} span.icon-na`).exists()).toBeTruthy();
+    const naIcon = document.querySelector('span.icon-na');
+    expect(naIcon).toBeTruthy();
+    expect(naIcon!.closest(`.${namespaceNaIconStyle}`)).toBeTruthy();
   });
 
   it('prioritizes FAILURE over other statuses', () => {
@@ -207,14 +173,10 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: ['app5']
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Failure" />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps, statusApp, worstStatus: 'Failure' });
 
-    expect(wrapper.text()).toContain('Failure');
-    expect(wrapper.text()).toContain('3 issues');
+    expect(screen.getByText('Failure')).toBeInTheDocument();
+    expect(screen.getByText('3 issues')).toBeInTheDocument();
   });
 
   it('prioritizes DEGRADED over HEALTHY and NA', () => {
@@ -226,13 +188,9 @@ describe('NamespaceHealthStatus', () => {
       notAvailable: ['app3']
     };
 
-    const wrapper = mount(
-      <Provider store={store}>
-        <NamespaceHealthStatus {...defaultProps} statusApp={statusApp} worstStatus="Degraded" />
-      </Provider>
-    );
+    renderStatus({ ...defaultProps, statusApp, worstStatus: 'Degraded' });
 
-    expect(wrapper.text()).toContain('Degraded');
-    expect(wrapper.text()).toContain('1 issue');
+    expect(screen.getByText('Degraded')).toBeInTheDocument();
+    expect(screen.getByText('1 issue')).toBeInTheDocument();
   });
 });

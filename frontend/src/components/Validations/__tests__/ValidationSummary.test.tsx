@@ -1,16 +1,13 @@
 import * as React from 'react';
-import { shallowToJson } from 'enzyme-to-json';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { ValidationSummary } from '../ValidationSummary';
 
 const testScenario = (summary: any): void => {
-  const wrapper = shallow(summary);
-  expect(shallowToJson(wrapper)).toBeDefined();
-  expect(shallowToJson(wrapper)).toMatchSnapshot();
+  const { container } = render(summary);
+  expect(container).toMatchSnapshot();
 };
 
 describe('ValidationSummary renders', () => {
-  // Istio config validations
   it('success icon when all istio components are valid', () => {
     testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={1} type="istio" />);
     testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} objectCount={4} type="istio" />);
@@ -30,7 +27,6 @@ describe('ValidationSummary renders', () => {
     testScenario(<ValidationSummary id={'4'} errors={0} warnings={0} objectCount={0} type="istio" />);
   });
 
-  // Service validations
   it('success icon when all services are valid', () => {
     testScenario(<ValidationSummary id={'1'} errors={0} warnings={0} type="service" />);
   });

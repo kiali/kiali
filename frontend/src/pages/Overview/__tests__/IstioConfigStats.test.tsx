@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Paths } from 'config';
 
@@ -34,12 +35,11 @@ const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSel
 describe('Overview IstioConfigStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Default fallback for kiosk state (used by KialiLink)
     useKialiSelectorMock.mockReturnValue('');
   });
 
-  const mountComponent = (): ReactWrapper => {
-    return mount(
+  const renderComponent = (): void => {
+    render(
       <MemoryRouter>
         <IstioConfigStats />
       </MemoryRouter>
@@ -59,9 +59,9 @@ describe('Overview IstioConfigStats', () => {
       warnings: 0
     });
 
-    let wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Istio configs');
-    expect(wrapper.text()).toContain('Fetching Istio config data');
+    renderComponent();
+    expect(screen.getByText(/istio configs/i)).toBeInTheDocument();
+    expect(screen.getByText(/fetching istio config data/i)).toBeInTheDocument();
 
     useKialiSelectorMock.mockReturnValueOnce([]).mockReturnValueOnce([]);
     const refresh = jest.fn();
@@ -76,15 +76,15 @@ describe('Overview IstioConfigStats', () => {
       warnings: 0
     });
 
-    wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Istio configs could not be loaded');
+    renderComponent();
+    expect(screen.getByText(/istio configs could not be loaded/i)).toBeInTheDocument();
   });
 
-  it('navigates to Istio list with all known namespaces on footer click', () => {
-    // First selector call = namespaceItems, second = activeNamespaces
+  it('navigates to Istio list with all known namespaces on footer click', async () => {
+    const user = userEvent.setup();
     useKialiSelectorMock
-      .mockReturnValueOnce([{ name: 'b' }, { name: 'a' }, { name: 'a' }]) // namespaceItems (de-duped + sorted)
-      .mockReturnValueOnce([{ name: 'ignored' }]); // activeNamespaces
+      .mockReturnValueOnce([{ name: 'b' }, { name: 'a' }, { name: 'a' }])
+      .mockReturnValueOnce([{ name: 'ignored' }]);
 
     useIstioConfigStatusMock.mockReturnValue({
       errors: 0,
@@ -97,37 +97,27 @@ describe('Overview IstioConfigStats', () => {
       warnings: 0
     });
 
-    const wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Istio configs (10)');
+    renderComponent();
+    expect(screen.getByText(/istio configs \(10\)/i)).toBeInTheDocument();
 
-    const viewLink = wrapper
-      .find('a')
-      .filterWhere(a => a.text().includes('View Istio config'))
-      .first();
-    expect(viewLink.exists()).toBeTruthy();
-
-    // Verify link href is correctly built
-    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
+    const viewLink = screen.getByRole('link', { name: /view istio config/i });
+    const url = viewLink.getAttribute('href') ?? '';
     expect(url.startsWith(`/${Paths.ISTIO}?`)).toBeTruthy();
-    // namespaces should be "a,b" (sorted, deduped)
     expect(decodeURIComponent(url)).toContain('namespaces=a,b');
 
-    // Verify onClick handler calls resetFilters
-    viewLink.simulate('click');
+    await user.click(viewLink);
     expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 
-  it('adds config status filters when clicking "View warning Istio configs" in the popover footer', () => {
-    useKialiSelectorMock
-      .mockReturnValueOnce([{ name: 'ns1' }]) // namespaceItems
-      .mockReturnValueOnce([{ name: 'ns2' }]); // activeNamespaces (unused because namespaceItems is non-empty)
+  it('adds config status filters when clicking "View warning Istio configs" in the popover footer', async () => {
+    const user = userEvent.setup();
+    useKialiSelectorMock.mockReturnValueOnce([{ name: 'ns1' }]).mockReturnValueOnce([{ name: 'ns2' }]);
 
     useIstioConfigStatusMock.mockReturnValue({
       errors: 0,
       isError: false,
       isLoading: false,
       issues: [
-        // 4 issues ensures popover footer button is rendered (MAX=3)
         {
           apiVersion: 'networking.istio.io/v1',
           cluster: 'c1',
@@ -171,34 +161,21 @@ describe('Overview IstioConfigStats', () => {
       warnings: 4
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    const popover = wrapper.find('Popover[aria-label="Istio configs with warnings"]').first();
-    expect(popover.exists()).toBeTruthy();
+    await user.click(screen.getByTestId('istio-configs-warnings'));
 
-    const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
-
-    const viewLink = popoverBody
-      .find('a')
-      .filterWhere(a => a.text().includes('View warning Istio configs'))
-      .first();
-    expect(viewLink.exists()).toBeTruthy();
-
-    // Verify link href is correctly built with config filters
-    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
+    const viewLink = await screen.findByRole('link', { name: /view warning istio configs/i });
+    const url = viewLink.getAttribute('href') ?? '';
     expect(url.startsWith(`/${Paths.ISTIO}?`)).toBeTruthy();
 
     const decoded = decodeURIComponent(url);
-    // status filter list should include Warning and Not Validated; order doesn't matter
     expect(decoded).toContain(`config=${IstioConfigStatusLabel.Warning}`);
-    // URLSearchParams encodes spaces as '+' (or sometimes '%20' depending on context)
     expect(decoded).toMatch(/[?&]config=Not(\+|%20)Validated/);
     expect(decoded).toContain('opLabel=or');
     expect(decoded).toContain('namespaces=ns1');
 
-    // Verify onClick handler calls resetFilters
-    viewLink.simulate('click');
+    await user.click(viewLink);
     expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 });

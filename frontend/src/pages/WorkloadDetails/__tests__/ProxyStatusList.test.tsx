@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { ProxyStatusList } from '../ProxyStatusList';
 import { ProxyStatus } from '../../../types/Health';
-import { Stack, StackItem } from '@patternfly/react-core';
-import { shallowToJson } from 'enzyme-to-json';
 
 const createSyncedProxyStatus = (): ProxyStatus => ({
   CDS: 'Synced',
@@ -12,69 +10,69 @@ const createSyncedProxyStatus = (): ProxyStatus => ({
   RDS: 'Synced'
 });
 
-const shallowComponent = (statuses: ProxyStatus): ReturnType<typeof shallow> => {
-  return shallow(<ProxyStatusList status={statuses} />);
-};
+const syncedProxyStatus = createSyncedProxyStatus();
+
+const renderList = (statuses: ProxyStatus): ReturnType<typeof render> => render(<ProxyStatusList status={statuses} />);
 
 describe('ProxyStatusList', () => {
   describe('when status is synced', () => {
-    const subject = shallowComponent(createSyncedProxyStatus());
-
     it('does not render the stack', () => {
-      expect(subject.find(Stack)).toHaveLength(0);
+      const { container } = renderList(syncedProxyStatus);
+      expect(container.querySelector('[class*="l-stack"]')).toBeNull();
     });
 
     it('match the snapshot', () => {
-      expect(shallowToJson(subject)).toMatchSnapshot();
+      const { container } = renderList(syncedProxyStatus);
+      expect(container).toMatchSnapshot();
     });
   });
 
-  describe('when there are unsyced components', () => {
+  describe('when there are unsynced components', () => {
     const statuses: ProxyStatus = {
-      ...createSyncedProxyStatus(),
+      ...syncedProxyStatus,
       CDS: 'NOT_SENT',
       RDS: 'STALE'
     };
 
-    const subject = shallowComponent(statuses);
-
     it('match the snapshot', () => {
-      expect(shallowToJson(subject)).toMatchSnapshot();
+      const { container } = renderList(statuses);
+      expect(container).toMatchSnapshot();
     });
 
     it('renders the stack', () => {
-      const stack = subject.find(Stack);
-      expect(stack).toHaveLength(1);
+      const { container } = renderList(statuses);
+      expect(container.querySelector('[class*="l-stack"]')).toBeTruthy();
     });
 
     it('renders all unsynced statuses', () => {
-      const stackItems = subject.find(StackItem);
-      expect(stackItems).toHaveLength(3);
-      expect(stackItems.at(0).html()).toContain('Istio Proxy Status');
-      expect(stackItems.at(1).html()).toContain('CDS: NOT_SENT');
-      expect(stackItems.at(2).html()).toContain('RDS: STALE');
+      const { container } = renderList(statuses);
+      const stackItems = container.querySelectorAll('[class*="l-stack__item"]');
+      expect(stackItems.length).toBe(3);
+      expect(stackItems[0].textContent).toContain('Istio Proxy Status');
+      expect(stackItems[1].textContent).toContain('CDS: NOT_SENT');
+      expect(stackItems[2].textContent).toContain('RDS: STALE');
     });
   });
 
   describe('when there are components without value', () => {
     const statuses: ProxyStatus = {
-      ...createSyncedProxyStatus(),
+      ...syncedProxyStatus,
       CDS: '',
       RDS: ''
     };
 
-    const subject = shallowComponent(statuses);
-
     it('match the snapshot', () => {
-      expect(shallowToJson(subject)).toMatchSnapshot();
+      const { container } = renderList(statuses);
+      expect(container).toMatchSnapshot();
     });
 
     it('renders all unsynced statuses', () => {
-      const stackItems = subject.find(StackItem);
-      expect(stackItems).toHaveLength(3);
-      expect(stackItems.at(0).html()).toContain('Istio Proxy Status');
-      expect(stackItems.at(1).html()).toContain('CDS: -');
-      expect(stackItems.at(2).html()).toContain('RDS: -');
+      const { container } = renderList(statuses);
+      const stackItems = container.querySelectorAll('[class*="l-stack__item"]');
+      expect(stackItems.length).toBe(3);
+      expect(stackItems[0].textContent).toContain('Istio Proxy Status');
+      expect(stackItems[1].textContent).toContain('CDS: -');
+      expect(stackItems[2].textContent).toContain('RDS: -');
     });
   });
 });

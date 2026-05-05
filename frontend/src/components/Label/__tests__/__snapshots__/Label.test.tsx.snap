@@ -1,12 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#Badge render correctly with data should render badge 1`] = `
-<Label
-  className="kiali_fhx35ww"
-  isCompact={true}
-  textMaxWidth="500px"
-  tooltipPosition="top"
->
-  app=bookinfo
-</Label>
+<div>
+  <span
+    class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"
+  >
+    <span
+      class="pf-v6-c-label__content"
+    >
+      <span
+        class="pf-v6-c-label__text"
+        style="--pf-v6-c-label__text--MaxWidth: 500px;"
+      >
+        app=bookinfo
+      </span>
+    </span>
+  </span>
+</div>
 `;

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
-import { shallowToJson } from 'enzyme-to-json';
+import { render } from '@testing-library/react';
 
 import { HealthDetails } from '../HealthDetails';
 import { ServiceHealth } from '../../../types/Health';
@@ -19,8 +18,8 @@ describe('HealthDetails', () => {
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 
-    const wrapper = shallow(<HealthDetails health={health} />);
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    const { container } = render(<HealthDetails health={health} />);
+    expect(container).toMatchSnapshot();
   });
 
   it('renders deployments failure', () => {
@@ -31,7 +30,7 @@ describe('HealthDetails', () => {
       { rateInterval: 60, hasSidecar: true, hasAmbient: false }
     );
 
-    const wrapper = shallow(<HealthDetails health={health} />);
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    const { container } = render(<HealthDetails health={health} />);
+    expect(container).toMatchSnapshot();
   });
 });

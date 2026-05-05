@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 
 import { ChartModel } from 'types/Dashboards';
 import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
@@ -20,7 +20,12 @@ jest.mock('utils/VictoryChartsUtils', () => ({
 jest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
   return {
-    Chart: (props: any) => React.createElement('div', null, props.children),
+    Chart: (props: any) =>
+      React.createElement(
+        'div',
+        { 'data-test': 'victory-chart-inner', 'data-chart-height': props.height },
+        props.children
+      ),
     ChartArea: () => React.createElement('div'),
     ChartAxis: () => null,
     ChartBar: () => React.createElement('div'),
@@ -65,8 +70,10 @@ jest.mock('regression', () => ({
   default: { linear: () => ({ predict: () => [0, 0] }) }
 }));
 
-// eslint-disable-next-line import/first -- must import after jest.mock calls
+// eslint-disable-next-line import/first
 import { KChart } from '../KChart';
+// eslint-disable-next-line import/first
+import { CHART_LEGEND_GAP, LEGEND_HEIGHT } from '../ChartWithLegend';
 
 const makeChart = (overrides: Partial<ChartModel> = {}): ChartModel => ({
   chartType: 'line',
@@ -87,9 +94,33 @@ const makeData = (count = 1): VCLines<RichDataPoint> =>
   }));
 
 describe('KChart', () => {
+  let offsetHeightSpy: jest.SpyInstance;
+  let getComputedStyleSpy: jest.SpyInstance;
+
+  afterEach(() => {
+    offsetHeightSpy?.mockRestore();
+    getComputedStyleSpy?.mockRestore();
+  });
+
   it('computes innerChartHeight from refs when mounted', () => {
     const chartHeight = 400;
-    const wrapper = shallow(
+    const titleHeight = 24;
+    const marginTop = 20;
+
+    offsetHeightSpy = jest
+      .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        const el = this as HTMLElement & { style?: CSSStyleDeclaration };
+        if (el.style?.display === 'flex' && el.style?.justifyContent === 'space-between') {
+          return titleHeight;
+        }
+        return 0;
+      });
+    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+      marginTop: `${marginTop}px`
+    } as CSSStyleDeclaration);
+
+    render(
       <KChart
         chart={makeChart()}
         chartHeight={chartHeight}
@@ -100,32 +131,22 @@ describe('KChart', () => {
       />
     );
 
-    const instance = wrapper.instance() as any;
-
-    const titleHeight = 24;
-    const marginTop = 20;
-
-    instance.titleRef = {
-      current: { offsetHeight: titleHeight }
-    };
-    instance.chartContainerRef = {
-      current: {}
-    };
-
-    const originalGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = jest.fn().mockReturnValue({ marginTop: `${marginTop}px` }) as any;
-
-    instance.measureInnerChartHeight();
-    wrapper.update();
-
-    expect((wrapper.state() as any).innerChartHeight).toBe(chartHeight - titleHeight - marginTop);
-
-    window.getComputedStyle = originalGetComputedStyle;
+    const inner = chartHeight - titleHeight - marginTop;
+    const expectedChartSvgHeight = inner - LEGEND_HEIGHT - CHART_LEGEND_GAP;
+    expect(screen.getByTestId('victory-chart-inner')).toHaveAttribute(
+      'data-chart-height',
+      String(expectedChartSvgHeight)
+    );
   });
 
   it('does not update state when measured height is zero or negative', () => {
     const chartHeight = 30;
-    const wrapper = shallow(
+    offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(20);
+    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+      marginTop: '20px'
+    } as CSSStyleDeclaration);
+
+    render(
       <KChart
         chart={makeChart()}
         chartHeight={chartHeight}
@@ -136,25 +157,16 @@ describe('KChart', () => {
       />
     );
 
-    const instance = wrapper.instance() as any;
-
-    instance.titleRef = { current: { offsetHeight: 20 } };
-    instance.chartContainerRef = { current: {} };
-
-    const originalGetComputedStyle = window.getComputedStyle;
-    window.getComputedStyle = jest.fn().mockReturnValue({ marginTop: '20px' }) as any;
-
-    const initialHeight = (wrapper.state() as any).innerChartHeight;
-    instance.measureInnerChartHeight();
-    wrapper.update();
-
-    expect((wrapper.state() as any).innerChartHeight).toBe(initialHeight);
-
-    window.getComputedStyle = originalGetComputedStyle;
+    expect(screen.getByTestId('victory-chart-inner')).toHaveAttribute('data-chart-height', '30');
   });
 
   it('defaults to 300 when chartHeight prop is not provided', () => {
-    const wrapper = shallow(
+    offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(0);
+    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+      marginTop: '0px'
+    } as CSSStyleDeclaration);
+
+    render(
       <KChart
         chart={makeChart()}
         data={makeData()}
@@ -164,14 +176,15 @@ describe('KChart', () => {
       />
     );
 
-    expect((wrapper.state() as any).innerChartHeight).toBe(300);
+    const expectedSvg = 300 - LEGEND_HEIGHT - CHART_LEGEND_GAP;
+    expect(screen.getByTestId('victory-chart-inner')).toHaveAttribute('data-chart-height', String(expectedSvg));
   });
 
   it('collapses when data is empty', () => {
-    const wrapper = shallow(
+    render(
       <KChart chart={makeChart()} data={[]} isMaximized={false} onToggleMaximized={jest.fn()} showSpans={false} />
     );
 
-    expect((wrapper.state() as any).collapsed).toBe(true);
+    expect(screen.getByText('No data available')).toBeInTheDocument();
   });
 });

@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
-import { act } from 'react-dom/test-utils';
-import { ReactWrapper } from 'enzyme';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { DataPlaneStats } from '../DataPlaneStats';
@@ -67,17 +66,14 @@ const flushPromises = async (): Promise<void> => {
 };
 
 const flushAllPromises = async (): Promise<void> => {
-  // NamespaceStats triggers a couple of async state updates (fetch + finally).
-  // Flushing several ticks avoids "not wrapped in act" warnings.
   for (let i = 0; i < 5; i++) {
     await flushPromises();
   }
 };
 
-const mountAndFlush = async (): Promise<ReactWrapper> => {
-  let wrapper!: ReactWrapper;
+const renderAndFlush = async (): Promise<void> => {
   await act(async () => {
-    wrapper = mount(
+    render(
       <MemoryRouter>
         <DataPlaneStats />
       </MemoryRouter>
@@ -86,14 +82,12 @@ const mountAndFlush = async (): Promise<ReactWrapper> => {
   await act(async () => {
     await flushAllPromises();
   });
-  wrapper.update();
-  return wrapper;
 };
 
 describe('Overview DataPlaneStats', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
+    useKialiSelectorMock.mockReturnValue('');
   });
 
   it('fetches health only for data-plane namespaces and sets total to ambient+sidecar', async () => {
@@ -116,13 +110,12 @@ describe('Overview DataPlaneStats', () => {
       ])
     );
 
-    const wrapper = await mountAndFlush();
+    await renderAndFlush();
 
     expect(NamespaceHealthService.fetchClusterNamespacesHealth).toHaveBeenCalledTimes(1);
-    // Only 'amb', 'sc1', 'sc2' should be requested (no control-plane, no out-of-mesh)
     expect(NamespaceHealthService.fetchClusterNamespacesHealth).toHaveBeenCalledWith(['amb', 'sc1', 'sc2'], undefined);
 
-    expect(wrapper.text()).toContain('Data planes (3)');
+    expect(screen.getByText(/data planes \(3\)/i)).toBeInTheDocument();
   });
 
   it('renders separate counters per status bucket and navigates with data-plane type filter', async () => {
@@ -133,7 +126,6 @@ describe('Overview DataPlaneStats', () => {
         { name: 'f2', labels: { 'istio-injection': 'enabled' } },
         { name: 'd1', isAmbient: true },
         { name: 'nr1', labels: { 'istio.io/rev': 'rev1' } },
-        // 'na1' will be NA because health response omits it
         { name: 'na1', isAmbient: true }
       ]
     });
@@ -147,22 +139,19 @@ describe('Overview DataPlaneStats', () => {
       ])
     );
 
-    const wrapper = await mountAndFlush();
+    await renderAndFlush();
 
-    expect(wrapper.find('[data-test="data-planes-unhealthy"]').text()).toContain('4');
-    expect(wrapper.find('[data-test="data-planes-na"]').text()).toContain('1');
+    expect(screen.getByTestId('data-planes-unhealthy').textContent).toContain('4');
+    expect(screen.getByTestId('data-planes-na').textContent).toContain('1');
 
-    const viewLink = wrapper.find('[data-test="data-planes-view"]').first();
-    expect(viewLink.exists()).toBeTruthy();
-
-    // Verify link href is correctly built (use 'to' prop from Link component if 'href' not available)
-    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
+    const viewLink = screen.getByTestId('data-planes-view');
+    const url = viewLink.getAttribute('href') ?? '';
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
-    // Data plane filter should be present; URLSearchParams encodes spaces as '+'
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
   });
 
   it('shows unhealthy popover footer link when unhealthy > 3 and navigates with 3 health filters', async () => {
+    const user = userEvent.setup();
     useNamespacesMock.mockReturnValue({
       isLoading: false,
       namespaces: [
@@ -182,19 +171,12 @@ describe('Overview DataPlaneStats', () => {
       ])
     );
 
-    const wrapper = await mountAndFlush();
+    await renderAndFlush();
 
-    const popover = wrapper.find('Popover[aria-label="Unhealthy Data planes"]').first();
-    expect(popover.exists()).toBeTruthy();
+    await user.click(screen.getByTestId('data-planes-unhealthy'));
 
-    const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
-
-    const linkBtn = popoverBody.find('[data-test="data-planes-view-unhealthy"]').first();
-    expect(linkBtn.exists()).toBeTruthy();
-
-    // Verify link href is correctly built with all health filters (use 'to' prop from Link component if 'href' not available)
-    const url = (linkBtn.prop('href') as string) ?? (linkBtn.prop('to') as string);
+    const linkBtn = await screen.findByTestId('data-planes-view-unhealthy');
+    const url = linkBtn.getAttribute('href') ?? '';
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     expect(url).toMatch(/[?&]type=Data(\+|%20)plane/);
     expect(url).toMatch(/[?&]health=Failure/);

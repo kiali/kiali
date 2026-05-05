@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Status } from 'types/IstioStatus';
 import { Paths } from 'config';
@@ -38,11 +39,11 @@ describe('Overview ControlPlaneStats', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useKialiSelectorMock.mockReturnValue(''); // Non-kiosk mode
+    useKialiSelectorMock.mockReturnValue('');
   });
 
-  const mountComponent = (): ReactWrapper => {
-    return mount(
+  const renderComponent = (): void => {
+    render(
       <MemoryRouter>
         <ControlPlaneStats />
       </MemoryRouter>
@@ -57,12 +58,13 @@ describe('Overview ControlPlaneStats', () => {
       refresh
     });
 
-    const wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Control planes');
-    expect(wrapper.text()).toContain('Fetching control plane data');
+    renderComponent();
+    expect(screen.getByText(/control planes/i)).toBeInTheDocument();
+    expect(screen.getByText(/fetching control plane data/i)).toBeInTheDocument();
   });
 
-  it('renders error state and retries on try again', () => {
+  it('renders error state and retries on try again', async () => {
+    const user = userEvent.setup();
     useControlPlanesMock.mockReturnValue({
       controlPlanes: [],
       isError: true,
@@ -70,15 +72,15 @@ describe('Overview ControlPlaneStats', () => {
       refresh
     });
 
-    const wrapper = mountComponent();
-    expect(wrapper.text()).toContain('Control planes could not be loaded');
+    renderComponent();
+    expect(screen.getByText(/control planes could not be loaded/i)).toBeInTheDocument();
 
-    // OverviewCardErrorState uses a PF Button internally.
-    wrapper.find('button').first().simulate('click');
+    await user.click(screen.getByRole('button', { name: /try again/i }));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
-  it('renders stats and navigates to namespaces on view button click', () => {
+  it('renders stats and navigates to namespaces on view button click', async () => {
+    const user = userEvent.setup();
     useControlPlanesMock.mockReturnValue({
       controlPlanes: [
         {
@@ -97,25 +99,22 @@ describe('Overview ControlPlaneStats', () => {
       refresh
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    expect(wrapper.text()).toContain('Control planes (2)');
-    expect(wrapper.find('[data-test="control-planes-issues"]').text()).toContain('1');
+    expect(screen.getByText(/control planes \(2\)/i)).toBeInTheDocument();
+    expect(screen.getByTestId('control-planes-issues').textContent).toContain('1');
 
-    const viewLink = wrapper.find('[data-test="control-planes-view-namespaces"]').first();
-    expect(viewLink.exists()).toBeTruthy();
-
-    // Verify link href is correctly built (use 'to' prop from Link component if 'href' not available)
-    const url = (viewLink.prop('href') as string) ?? (viewLink.prop('to') as string);
+    const viewLink = screen.getByTestId('control-planes-view-namespaces');
+    const url = viewLink.getAttribute('href') ?? '';
     expect(url.startsWith(`/${Paths.NAMESPACES}?`)).toBeTruthy();
     expect(url).toMatch(/[?&]type=Control(\+|%20)plane/);
 
-    // Verify onClick handler calls resetFilters
-    viewLink.simulate('click');
+    await user.click(viewLink);
     expect(resetFiltersMock).toHaveBeenCalledTimes(1);
   });
 
-  it('builds mesh link with cluster hide filter for control planes with issues', () => {
+  it('builds mesh link with cluster hide filter for control planes with issues', async () => {
+    const user = userEvent.setup();
     useControlPlanesMock.mockReturnValue({
       controlPlanes: [
         {
@@ -129,17 +128,13 @@ describe('Overview ControlPlaneStats', () => {
       refresh
     });
 
-    const wrapper = mountComponent();
+    renderComponent();
 
-    const popover = wrapper.find('Popover[aria-label="Control planes with issues"]').first();
-    expect(popover.exists()).toBeTruthy();
+    await user.click(screen.getByTestId('control-planes-issues'));
 
-    const bodyContent = popover.prop('bodyContent') as any;
-    const popoverBody = mount(<MemoryRouter>{bodyContent}</MemoryRouter>);
-
-    const link = popoverBody.find('a').first();
-    expect(link.text()).toContain('istiod-2');
-    expect(link.prop('href')).toContain(`/${Paths.MESH}?`);
-    expect(decodeURIComponent(link.prop('href') as string)).toContain('meshHide=cluster!=c2');
+    const link = await screen.findByRole('link', { name: /istiod-2/i });
+    expect(link.textContent).toContain('istiod-2');
+    expect(link.getAttribute('href')).toContain(`/${Paths.MESH}?`);
+    expect(decodeURIComponent(link.getAttribute('href') as string)).toContain('meshHide=cluster!=c2');
   });
 });

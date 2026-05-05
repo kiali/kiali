@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
+import { act, render } from '@testing-library/react';
 import { StatefulFiltersComponent } from '../StatefulFilters';
 import { istioSidecarFilter, labelFilter } from '../CommonFilters';
 import { ActiveFilter, DEFAULT_LABEL_OPERATION } from '../../../types/Filters';
@@ -21,26 +21,32 @@ describe('StatefulFilters', () => {
 
   it('remove Filter', () => {
     const labelVersion = 'version:v1';
-    const wrapper = mount(
+    const ref = React.createRef<StatefulFiltersComponent>();
+
+    render(
       <StatefulFiltersComponent
+        ref={ref}
         onFilterChange={jest.fn()}
         initialFilters={[labelFilter, istioSidecarFilter]}
         language="en"
       />
-    ).instance() as StatefulFiltersComponent;
+    );
+    const inst = ref.current as StatefulFiltersComponent;
 
-    // Add filters
-    wrapper.filterAdded(labelFilter, labelValue);
-    wrapper.filterAdded(labelFilter, labelVersion);
-    wrapper.filterAdded(istioSidecarFilter, istioSidecarFilter.filterValues[0].id);
-    wrapper.forceUpdate();
-    expect(wrapper.state.activeFilters.filters.length).toEqual(3);
+    act(() => {
+      inst.filterAdded(labelFilter, labelValue);
+      inst.filterAdded(labelFilter, labelVersion);
+      inst.filterAdded(istioSidecarFilter, istioSidecarFilter.filterValues[0].id);
+    });
 
-    // Remove one
-    wrapper.removeFilter(labelFilter.category, labelValue);
-    wrapper.forceUpdate();
-    expect(wrapper.state.activeFilters.filters.length).toEqual(2);
-    expect(wrapper.state.activeFilters).toStrictEqual({
+    expect(inst.state.activeFilters.filters.length).toEqual(3);
+
+    act(() => {
+      inst.removeFilter(labelFilter.category, labelValue);
+    });
+
+    expect(inst.state.activeFilters.filters.length).toEqual(2);
+    expect(inst.state.activeFilters).toStrictEqual({
       filters: [
         {
           category: labelFilter.category,

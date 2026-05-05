@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 
-import { NotificationAlerts } from '../NotificationAlerts';
 import { NotificationCenterBadgeComponent } from '../NotificationCenterBadge';
 import { NotificationGroup, NotificationMessage, MessageType } from '../../../types/NotificationCenter';
 
@@ -56,7 +55,6 @@ describe('NotificationCenter', () => {
     }
   ];
 
-  // Helper function to extract alerts from groups (mimics mapStateToProps logic)
   const getAlertsFromGroups = (groups: NotificationGroup[]): NotificationMessage[] => {
     return groups
       .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
@@ -67,7 +65,7 @@ describe('NotificationCenter', () => {
 
   it('.getNotificationMessages only gets notifications', () => {
     const alerts = getAlertsFromGroups(groupMessages);
-    const wrapper = shallow(
+    render(
       <NotificationCenterBadgeComponent
         alerts={alerts}
         needsAttention={true}
@@ -76,7 +74,10 @@ describe('NotificationCenter', () => {
         toggleNotificationCenter={() => {}}
       />
     );
-    const notificationAlerts = wrapper.find(NotificationAlerts);
-    expect(notificationAlerts.prop('alerts').length).toEqual(2);
+    expect(screen.getByText('show me')).toBeInTheDocument();
+    expect(screen.getByText('hide me')).toBeInTheDocument();
+    expect(screen.queryByText('show me too')).not.toBeInTheDocument();
+    // Each PF6 Alert renders a heading (h4) with the alert title
+    expect(screen.getAllByRole('heading')).toHaveLength(2);
   });
 });

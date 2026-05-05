@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { mount, shallow } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { HistoryManager, URLParam } from 'app/History';
@@ -16,7 +15,8 @@ jest.mock('utils/HealthComputeDuration', () => ({
 }));
 
 jest.mock('utils/I18nUtils', () => ({
-  t: (key, opts) => (opts && opts.duration !== undefined ? `Last ${opts.duration}` : key)
+  t: (key: string, opts?: { duration?: string }) =>
+    opts && opts.duration !== undefined ? `Last ${opts.duration}` : key
 }));
 
 const mockDispatch = jest.fn();
@@ -44,29 +44,28 @@ describe('HealthComputeDurationMastheadToolbar', () => {
   });
 
   it('renders health duration label and children', () => {
-    const wrapper = shallow(
+    render(
       <HealthComputeDurationMastheadToolbar>
         <button type="button">child</button>
       </HealthComputeDurationMastheadToolbar>
     );
-    expect(wrapper.text()).toContain('Last 5m');
-    expect(wrapper.find('button').exists()).toBe(true);
+    expect(screen.getByText('Last 5m')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'child' })).toBeInTheDocument();
   });
 
-  it('syncs Redux duration and URL duration on mount', () => {
+  it('syncs Redux duration and URL duration on mount', async () => {
     mockValidSecs.mockReturnValue(600);
 
-    let wrapper: ReturnType<typeof mount>;
-    act(() => {
-      wrapper = mount(
-        <HealthComputeDurationMastheadToolbar>
-          <span />
-        </HealthComputeDurationMastheadToolbar>
-      );
-    });
+    const { unmount } = render(
+      <HealthComputeDurationMastheadToolbar>
+        <span />
+      </HealthComputeDurationMastheadToolbar>
+    );
 
-    expect(mockDispatch).toHaveBeenCalledWith(UserSettingsActions.setDuration(600));
-    expect(setParamSpy).toHaveBeenCalledWith(URLParam.DURATION, '600');
-    wrapper!.unmount();
+    await waitFor(() => {
+      expect(mockDispatch).toHaveBeenCalledWith(UserSettingsActions.setDuration(600));
+      expect(setParamSpy).toHaveBeenCalledWith(URLParam.DURATION, '600');
+    });
+    unmount();
   });
 });
