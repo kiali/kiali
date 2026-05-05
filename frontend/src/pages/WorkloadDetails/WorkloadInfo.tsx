@@ -55,6 +55,9 @@ import { WorkloadConfigValidation } from '../../components/Validations/WorkloadC
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
+import { Paths } from '../../config';
+import { router, URLParam } from '../../app/History';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 
@@ -513,6 +516,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={workload.labels ?? {}}
+          onLabelClick={(key, value) => {
+            FilterSelected.resetFilters();
+            const params = new URLSearchParams();
+            params.set(URLParam.NAMESPACES, this.props.namespace);
+            params.set('label', `${key}=${value}`);
+            router.navigate(`/${Paths.WORKLOADS}?${params.toString()}`);
+          }}
           onSave={labels => this.handleSaveMetadata('labels', labels)}
           title={t('Labels')}
         />

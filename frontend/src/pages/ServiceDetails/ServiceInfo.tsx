@@ -73,6 +73,9 @@ import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { Labels } from '../../components/Label/Labels';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
+import { Paths } from '../../config';
+import { router, URLParam } from '../../app/History';
+import { FilterSelected } from '../../components/Filters/StatefulFilters';
 import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
@@ -384,6 +387,13 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={sd.service.labels ?? {}}
+          onLabelClick={(key, value) => {
+            FilterSelected.resetFilters();
+            const params = new URLSearchParams();
+            params.set(URLParam.NAMESPACES, this.props.namespace);
+            params.set('label', `${key}=${value}`);
+            router.navigate(`/${Paths.SERVICES}?${params.toString()}`);
+          }}
           onSave={this.props.onSaveLabels}
           title={t('Labels')}
         />
