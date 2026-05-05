@@ -1,12 +1,12 @@
 import * as React from 'react';
+import { render, screen, within } from '@testing-library/react';
 import { renderBadgedLink } from '../SummaryLink';
 import { GraphNodeData, NodeType } from '../../../types/Graph';
-import { PFBadge, PFBadges } from '../../../components/Pf/PfBadges';
-import { mount } from 'enzyme';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
+import { PFBadges } from '../../../components/Pf/PfBadges';
 
 let defaultGraphData: GraphNodeData;
 
@@ -37,18 +37,13 @@ describe('renderBadgedLink', () => {
     const expectedLink = `/namespaces/${encodeURIComponent(node.namespace)}/workloads/${encodeURIComponent(
       node.workload!
     )}`;
-    const wrapper = mount(
+    const { container } = render(
       <Provider store={store}>
         <MemoryRouter>{renderBadgedLink(node)}</MemoryRouter>
       </Provider>
     );
-    expect(wrapper.find('a').filter(`[href="${expectedLink}"]`).exists()).toBeTruthy();
-    expect(
-      wrapper
-        .find(PFBadge)
-        .filterWhere(badge => badge.prop('badge').badge === PFBadges.Workload.badge)
-        .exists()
-    ).toBeTruthy();
+    expect(container.querySelector(`a[href="${expectedLink}"]`)).toBeTruthy();
+    expect(container.textContent).toContain(PFBadges.Workload.badge);
   });
 
   it('should generate link with link generator', () => {
@@ -58,19 +53,14 @@ describe('renderBadgedLink', () => {
     };
     const linkInfo = { link: '/custom/link/to/url', displayName: 'customDisplay', key: 'key-1-2' };
 
-    const wrapper = mount(
+    const { container } = render(
       <Provider store={store}>
         <MemoryRouter>{renderBadgedLink(node, undefined, undefined, () => linkInfo)}</MemoryRouter>
       </Provider>
     );
-    const linkNode = wrapper.find('a').filter(`[href="${linkInfo.link}"]`);
-    expect(linkNode.exists()).toBeTruthy();
-    expect(linkNode.text()).toContain(linkInfo.displayName);
-    expect(
-      wrapper
-        .find(PFBadge)
-        .filterWhere(badge => badge.prop('badge').badge === PFBadges.Workload.badge)
-        .exists()
-    ).toBeTruthy();
+    const link = screen.getByRole('link', { name: 'customDisplay' });
+    expect(link.getAttribute('href')).toBe(linkInfo.link);
+    expect(within(link).getByText('customDisplay')).toBeInTheDocument();
+    expect(container.textContent).toContain(PFBadges.Workload.badge);
   });
 });

@@ -1,33 +1,29 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { Labels } from '../Labels';
-import { shallowToJson } from 'enzyme-to-json';
 
-const mockBadge = (labels: { [key: string]: string }) => {
-  const component = <Labels labels={labels} />;
-  return shallow(component);
+const mockBadge = (labels: { [key: string]: string }): ReturnType<typeof render> => {
+  return render(<Labels labels={labels} />);
 };
 
 describe('#Labels render correctly with data', () => {
   it('should render badges with More labels link', () => {
-    const wrapper = mockBadge({
+    const { container } = mockBadge({
       app: 'bookinfo',
       version: 'v1',
       env: 'prod',
       team: 'A'
     });
 
-    expect(shallowToJson(wrapper)).toBeDefined();
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 
   it('should render badges without More labels link', () => {
-    const wrapper = mockBadge({
+    const { container } = mockBadge({
       app: 'bookinfo',
       version: 'v1'
     });
 
-    expect(shallowToJson(wrapper)).toBeDefined();
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 });

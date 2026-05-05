@@ -1,481 +1,479 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Spire component App type renders card when app has SPIRE-managed workloads 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-6"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-6"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This application has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This application has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component App type renders card when app has mixed workloads (some SPIRE-managed) 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-8"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-8"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This application has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This application has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component App type renders card when app has multiple SPIRE-managed workloads 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-7"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-7"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This application has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This application has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component Service type renders card when service has SPIRE-managed workloads 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-3"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-3"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This service has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This service has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component Service type renders card when service has mixed workloads (some SPIRE-managed) 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-4"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-4"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This service has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This service has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component Service type renders card when service has multiple SPIRE-managed workloads 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-5"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-5"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This service has workloads that are using SPIRE
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This service has workloads that are using SPIRE
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component Workload type renders card with multiple identity matches 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-2"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-2"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This workload is using SPIRE (SPIFFE Runtime Environment) for identity management.
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-        <li
-          key="match"
-        >
-          <span>
-            Annotations
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            <code
-              className="kiali_f107x8dj"
-            >
-              inject.istio.io/templates: spire
-            </code>
-          </div>
-        </li>
-        <li
-          key="spacer-0"
-          style={
-            Object {
-              "marginTop": "0.25rem",
-            }
-          }
-        />
-        <li
-          key="match"
-        >
-          <span>
-            Labels
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            <code
-              className="kiali_f107x8dj"
-            >
-              spiffe.io/spire-managed-identity: true
-            </code>
-          </div>
-        </li>
-        <li
-          key="spacer-1"
-          style={
-            Object {
-              "marginTop": "0.25rem",
-            }
-          }
-        />
-        <li
-          key="match"
-        >
-          <span>
-            PodLabels
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            <code
-              className="kiali_f107x8dj"
-            >
-              spiffe.io/spire-managed-identity: true
-            </code>
-          </div>
-        </li>
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This workload is using SPIRE (SPIFFE Runtime Environment) for identity management.
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+          <li>
+            <span>
+              Annotations
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              <code
+                class="kiali_f107x8dj"
+              >
+                inject.istio.io/templates: spire
+              </code>
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.25rem;"
+          />
+          <li>
+            <span>
+              Labels
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              <code
+                class="kiali_f107x8dj"
+              >
+                spiffe.io/spire-managed-identity: true
+              </code>
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.25rem;"
+          />
+          <li>
+            <span>
+              PodLabels
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              <code
+                class="kiali_f107x8dj"
+              >
+                spiffe.io/spire-managed-identity: true
+              </code>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Spire component Workload type renders card with single identity match 1`] = `
-<Card
-  id="SpireCard"
-  isCompact={true}
->
-  <CardHeader>
-    <Title
-      headingLevel="h5"
-      size="lg"
-    >
-      SPIRE
-    </Title>
-  </CardHeader>
-  <CardBody>
+<div>
+  <div
+    class="pf-v6-c-card pf-m-compact"
+    data-ouia-component-id="OUIA-Generated-Card-1"
+    data-ouia-component-type="PF6/Card"
+    data-ouia-safe="true"
+    id="SpireCard"
+  >
     <div
-      className="kiali_fz3g8mp"
+      class="pf-v6-c-card__header"
     >
-      <ul>
-        <li
-          key="status_message"
+      <div
+        class="pf-v6-c-card__header-main"
+      >
+        <h5
+          class="pf-v6-c-title pf-m-lg"
+          data-ouia-component-id="OUIA-Generated-Title-1"
+          data-ouia-component-type="PF6/Title"
+          data-ouia-safe="true"
         >
-          <span>
-            Status
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            This workload is using SPIRE (SPIFFE Runtime Environment) for identity management.
-          </div>
-        </li>
-        <li
-          key="divider"
-          style={
-            Object {
-              "marginTop": "0.5rem",
-            }
-          }
-        />
-        <li
-          key="match"
-        >
-          <span>
-            Labels
-          </span>
-          <div
-            style={
-              Object {
-                "display": "inline-block",
-              }
-            }
-          >
-            <code
-              className="kiali_f107x8dj"
-            >
-              spiffe.io/spire-managed-identity: true
-            </code>
-          </div>
-        </li>
-      </ul>
+          SPIRE
+        </h5>
+      </div>
     </div>
-  </CardBody>
-</Card>
+    <div
+      class="pf-v6-c-card__body"
+    >
+      <div
+        class="kiali_fz3g8mp"
+      >
+        <ul>
+          <li>
+            <span>
+              Status
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              This workload is using SPIRE (SPIFFE Runtime Environment) for identity management.
+            </div>
+          </li>
+          <li
+            style="margin-top: 0.5rem;"
+          />
+          <li>
+            <span>
+              Labels
+            </span>
+            <div
+              style="display: inline-block;"
+            >
+              <code
+                class="kiali_f107x8dj"
+              >
+                spiffe.io/spire-managed-identity: true
+              </code>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 `;

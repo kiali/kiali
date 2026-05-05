@@ -1,375 +1,384 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`GraphLegend test should render correctly 1`] = `
-<div
-  className="kiali_fogtfx9"
-  data-test="graph-legend"
->
+<div>
   <div
-    className="kiali_fokjcx6"
-  >
-    <span>
-      Legend
-    </span>
-    <Tooltip
-      content="Close Legend"
-    >
-      <Button
-        icon={<Close />}
-        id="legend_close"
-        onClick={[MockFunction]}
-        variant="plain"
-      />
-    </Tooltip>
-  </div>
-  <div
-    className="kiali_fgk3kmh"
+    class="kiali_fogtfx9"
+    data-test="graph-legend"
   >
     <div
-      className="kiali_fqqe0s6"
-      key="Node Shapes"
+      class="kiali_fokjcx6"
     >
-      Node Shapes
+      <span>
+        Legend
+      </span>
       <div
-        className="kiali_fxx5dxr"
-        key="node-infra.svg"
+        style="display: contents;"
       >
-        <span
-          className="kiali_fzoxfwf"
+        <button
+          class="pf-v6-c-button pf-m-plain"
+          data-ouia-component-id="OUIA-Generated-Button-plain-1"
+          data-ouia-component-type="PF6/Button"
+          data-ouia-safe="true"
+          id="legend_close"
+          type="button"
         >
-          <img
-            alt="Infra node"
-            className=""
-            src="node-infra.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Infra node
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-dataplane.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Data Plane"
-            className=""
-            src="node-dataplane.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Data Plane
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="node-gateway.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Gateway / Waypoint"
-            className=""
-            src="node-gateway.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Gateway / Waypoint
-        </span>
+          <span
+            class="pf-v6-c-button__icon"
+          >
+            <span
+              class="pf-v6-c-icon"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 730 1024"
+                  width="1em"
+                >
+                  <path
+                    d="M725.499315,767.757345 L469.242169,511.500499 L725.499315,255.243653 C729.196254,251.545719 731.096195,247.248119 731,242.4498 C731,237.653479 728.997365,233.35588 725.299427,229.558002 L647.542773,151.701495 C643.743891,147.903617 639.446287,146 634.64996,146 C629.852635,146 625.55503,147.803673 621.857092,151.500607 L365.5,407.857398 L109.241857,151.500607 C105.544917,147.803673 101.246314,145.904733 96.4499876,146 C91.6526619,146.104622 87.3550577,148.002562 83.5571748,151.701495 L5.7005771,229.457058 C1.90269428,233.255936 0,237.553535 0,242.350855 C0,247.148175 1.80175055,251.444775 5.50068853,255.143709 L261.857779,511.500499 L5.50068853,767.757345 C1.80175055,771.454279 -0.0961914123,775.752878 0,779.750645 C0.103697157,784.547965 2.00263857,788.845564 5.7005771,792.642443 L83.4572306,871.299502 C87.2541139,875.096381 91.5527176,877 96.3500433,877 C101.147369,877 105.444973,875.197325 109.142912,871.499391 L365.400058,615.241545 L621.657203,871.499391 C625.355142,875.197325 629.652746,877.095265 634.449072,877 C639.246398,877 643.545002,874.997437 647.342885,871.299502 L725.099538,793.54294 C728.896421,789.745062 730.796362,785.446463 730.796362,780.649143 C731.096195,775.752878 729.196254,771.454279 725.499315,767.757345"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
       </div>
     </div>
     <div
-      className="kiali_fqqe0s6"
-      key="Node Colors"
+      class="kiali_fgk3kmh"
     >
-      Node Colors
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-healthy.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Shapes
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Healthy"
-            className=""
-            src="node-color-healthy.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Infra node"
+              class=""
+              src="node-infra.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Infra node
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Healthy
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Data Plane"
+              class=""
+              src="node-dataplane.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Data Plane
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
+        >
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Gateway / Waypoint"
+              class=""
+              src="node-gateway.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Gateway / Waypoint
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="node-color-danger.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Colors
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Unhealthy"
-            className=""
-            src="node-color-danger.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Healthy"
+              class=""
+              src="node-color-healthy.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Healthy
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Unhealthy
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Edges"
-    >
-      Edges
-      <div
-        className="kiali_fxx5dxr"
-        key="edge-unhealthy.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Failure"
-            className=""
-            src="edge-unhealthy.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Failure
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Unhealthy"
+              class=""
+              src="node-color-danger.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Unhealthy
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="edge-healthy.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Edges
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Healthy"
-            className=""
-            src="edge-healthy.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Failure"
+              class=""
+              src="edge-unhealthy.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Failure
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Healthy
-        </span>
-      </div>
-    </div>
-    <div
-      className="kiali_fqqe0s6"
-      key="Node Background"
-    >
-      Node Background
-      <div
-        className="kiali_fxx5dxr"
-        key="dataplane.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Data Plane"
-            className="kiali_fkbfmy6"
-            src="dataplane.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Data Plane
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Healthy"
+              class=""
+              src="edge-healthy.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Healthy
+          </span>
+        </div>
       </div>
       <div
-        className="kiali_fxx5dxr"
-        key="gateway.svg"
+        class="kiali_fqqe0s6"
       >
-        <span
-          className="kiali_fzoxfwf"
+        Node Background
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Gateway"
-            className="kiali_fkbfmy6"
-            src="gateway.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Data Plane"
+              class="kiali_fkbfmy6"
+              src="dataplane.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Data Plane
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Gateway
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="grafana.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Gateway"
+              class="kiali_fkbfmy6"
+              src="gateway.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Gateway
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Grafana"
-            className="kiali_fkbfmy6"
-            src="grafana.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Grafana"
+              class="kiali_fkbfmy6"
+              src="grafana.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Grafana
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Grafana
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="jaeger.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Jaeger"
+              class="kiali_fkbfmy6"
+              src="jaeger.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Jaeger
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Jaeger"
-            className="kiali_fkbfmy6"
-            src="jaeger.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Kiali"
+              class="kiali_fkbfmy6"
+              src="kiali.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Kiali
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Jaeger
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="kiali.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Istio"
+              class="kiali_fkbfmy6"
+              src="istio.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Istio
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Kiali"
-            className="kiali_fkbfmy6"
-            src="kiali.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Perses"
+              class="kiali_fkbfmy6"
+              src="perses.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Perses
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Kiali
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="istio.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Prometheus"
+              class="kiali_fkbfmy6"
+              src="prometheus.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Prometheus
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          <img
-            alt="Istio"
-            className="kiali_fkbfmy6"
-            src="istio.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Tempo"
+              class="kiali_fkbfmy6"
+              src="tempo.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Tempo
+          </span>
+        </div>
+        <div
+          class="kiali_fxx5dxr"
         >
-          Istio
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="perses.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Perses"
-            className="kiali_fkbfmy6"
-            src="perses.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Perses
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="prometheus.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Prometheus"
-            className="kiali_fkbfmy6"
-            src="prometheus.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Prometheus
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="tempo.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Tempo"
-            className="kiali_fkbfmy6"
-            src="tempo.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Tempo
-        </span>
-      </div>
-      <div
-        className="kiali_fxx5dxr"
-        key="waypoint.svg"
-      >
-        <span
-          className="kiali_fzoxfwf"
-        >
-          <img
-            alt="Waypoint"
-            className="kiali_fkbfmy6"
-            src="waypoint.svg"
-          />
-        </span>
-        <span
-          className="kiali_f7pgfh0"
-        >
-          Waypoint
-        </span>
+          <span
+            class="kiali_fzoxfwf"
+          >
+            <img
+              alt="Waypoint"
+              class="kiali_fkbfmy6"
+              src="waypoint.svg"
+            />
+          </span>
+          <span
+            class="kiali_f7pgfh0"
+          >
+            Waypoint
+          </span>
+        </div>
       </div>
     </div>
   </div>

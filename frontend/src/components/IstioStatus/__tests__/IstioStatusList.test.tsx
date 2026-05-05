@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusList } from '../IstioStatusList';
-import { shallowToJson } from 'enzyme-to-json';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 
 it('lists all the components grouped', () => {
@@ -33,8 +32,6 @@ it('lists all the components grouped', () => {
     }
   ];
 
-  const wrapper = shallow(<IstioStatusList status={components} cluster={'Kubernetes'} />);
-
-  expect(shallowToJson(wrapper)).toBeDefined();
-  expect(shallowToJson(wrapper)).toMatchSnapshot();
+  const { container } = render(<IstioStatusList status={components} cluster={'Kubernetes'} />);
+  expect(container).toMatchSnapshot();
 });

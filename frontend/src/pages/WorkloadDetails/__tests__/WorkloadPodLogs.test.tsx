@@ -1,13 +1,12 @@
 import * as React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { mount, shallow } from 'enzyme';
 import { WorkloadPodLogsComponent, WorkloadPodLogsProps } from '../WorkloadPodLogs';
 import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
 import MockAdapter from 'axios-mock-adapter';
-import { Dropdown, DropdownItem } from '@patternfly/react-core';
-import { KialiIcon } from 'config/KialiIcon';
 
 const defaultProps = (): WorkloadPodLogsProps => ({
   theme: '',
@@ -36,7 +35,6 @@ describe('WorkloadPodLogsComponent', () => {
   let axiosMock: MockAdapter;
 
   beforeAll(() => {
-    // Mock axios just to avoid any network trip.
     axiosMock = new axiosMockAdapter(axios);
   });
 
@@ -52,78 +50,68 @@ describe('WorkloadPodLogsComponent', () => {
   it('renders', () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
 
-    const wrapper = shallow(<WorkloadPodLogsComponent {...defaultProps()} />);
-    expect(wrapper.exists()).toBeTruthy();
+    const { container } = render(
+      <Provider store={store}>
+        <WorkloadPodLogsComponent {...defaultProps()} />
+      </Provider>
+    );
+    expect(container).toBeTruthy();
   });
 
   it('renders a kebab toggle dropdown', () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
 
-    // using 'mount' since the kebab toggle is children of the dropdown
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
 
-    expect(wrapper.find(Dropdown).exists()).toBeTruthy();
-    expect(wrapper.find(KialiIcon.KebabToggle).exists()).toBeTruthy();
+    expect(screen.getByTestId('log-actions-dropdown')).toBeInTheDocument();
   });
 
-  it('renders a log level action in the kebab', () => {
+  it('renders a log level action in the kebab', async () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+    const user = userEvent.setup();
 
-    // using 'mount' since the dropdown items are children of the dropdown
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(KialiIcon.KebabToggle).simulate('click');
-    expect(
-      wrapper
-        .find(DropdownItem)
-        .findWhere(n => n.key() === 'setLogLevelDebug')
-        .exists()
-    ).toBeTruthy();
+    await user.click(screen.getByTestId('log-actions-dropdown'));
+    expect(document.getElementById('setLogLevelDebug')).toBeInTheDocument();
   });
 
-  it('does not render log level actions in the kebab when proxy not present', () => {
+  it('does not render log level actions in the kebab when proxy not present', async () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+    const user = userEvent.setup();
 
-    let props = defaultProps();
+    const props = defaultProps();
     props.pods[0].istioContainers = [];
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <WorkloadPodLogsComponent {...props} />
       </Provider>
     );
-    wrapper.find(KialiIcon.KebabToggle).simulate('click');
-    expect(
-      wrapper
-        .find(DropdownItem)
-        .findWhere(n => n.key() === 'setLogLevelDebug')
-        .exists()
-    ).toBeFalsy();
+    await user.click(screen.getByTestId('log-actions-dropdown'));
+    expect(document.getElementById('setLogLevelDebug')).not.toBeInTheDocument();
   });
 
-  it('calls set log level when action selected', () => {
+  it('calls set log level when action selected', async () => {
     axiosMock.onGet('api/namespaces/namespace/pods/testingpod/logs').reply(200, {});
+    const user = userEvent.setup();
 
     const api = require('../../../services/Api');
     const spy = jest.spyOn(api, 'setPodEnvoyProxyLogLevel');
 
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <WorkloadPodLogsComponent {...defaultProps()} />
       </Provider>
     );
-    wrapper.find(KialiIcon.KebabToggle).simulate('click');
-    wrapper
-      .find(DropdownItem)
-      .findWhere(n => n.key() === 'setLogLevelDebug')
-      .find('button')
-      .simulate('click');
+    await user.click(screen.getByTestId('log-actions-dropdown'));
+    await user.click(document.getElementById('setLogLevelDebug')!);
     expect(spy).toHaveBeenCalled();
   });
 });

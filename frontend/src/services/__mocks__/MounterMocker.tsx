@@ -1,6 +1,6 @@
 import * as React from 'react';
+import { render, waitFor } from '@testing-library/react';
 import * as API from '../Api';
-import { mount, ReactWrapper } from 'enzyme';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from '../../store/ConfigStore';
@@ -9,9 +9,10 @@ export class MounterMocker {
   private promises: Promise<void>[] = [];
   private toMount: JSX.Element = (<></>);
   private caughtErrors: string[] = [];
+  private unsubscribe: (() => void) | undefined;
 
   constructor() {
-    store.subscribe(() => {
+    this.unsubscribe = store.subscribe(() => {
       this.caughtErrors = [];
       const state = store.getState();
       state.notificationCenter.groups.forEach(g => {
@@ -60,19 +61,28 @@ export class MounterMocker {
     return this;
   };
 
-  run = (done: jest.DoneCallback, expect: (wrapper: ReactWrapper) => void): void => {
-    let wrapper: ReactWrapper;
-
+  run = (done: jest.DoneCallback, expectFn: (container: HTMLElement) => void): void => {
+    const utils = render(this.toMount);
     Promise.all(this.promises)
-      .then(() => {
-        wrapper.update();
+      .then(async () => {
         this.checkErrors();
-        expect(wrapper);
+        try {
+          await waitFor(
+            () => {
+              expectFn(utils.container);
+            },
+            { timeout: 10000 }
+          );
+        } finally {
+          utils.unmount();
+          this.unsubscribe?.();
+        }
         done();
       })
-      .catch(done.fail);
-
-    wrapper = mount(this.toMount);
+      .catch((err: unknown) => {
+        this.unsubscribe?.();
+        done(err instanceof Error ? err : new Error(String(err)));
+      });
   };
 
   private checkErrors(): void {

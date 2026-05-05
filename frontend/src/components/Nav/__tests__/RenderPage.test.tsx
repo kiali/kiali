@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
 import { ExternalServiceInfo } from '../../../types/StatusState';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
@@ -8,6 +8,18 @@ import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { LoginActions } from 'actions/LoginActions';
 import { Theme } from 'types/Common';
+
+jest.mock('../RenderPage', () => {
+  (jest as any).requireActual('../RenderPage');
+  const React = require('react');
+  return {
+    RenderPage: ({ isGraph }: { isGraph: boolean }) =>
+      React.createElement('div', {
+        'data-test': 'render-page-stub',
+        'data-is-graph': isGraph ? 'true' : 'false'
+      })
+  };
+});
 
 const session = {
   expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',
@@ -41,13 +53,13 @@ describe('RenderPage isGraph prop', () => {
 
     router.navigate('/graph/namespaces');
 
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <RouterProvider router={router} />
       </Provider>
     );
 
-    expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(true);
+    expect(screen.getByTestId('render-page-stub')).toHaveAttribute('data-is-graph', 'true');
   });
 
   it('be sure that RenderPage isGraph is false in other pages', () => {
@@ -56,12 +68,12 @@ describe('RenderPage isGraph prop', () => {
 
     router.navigate('/overview');
 
-    const wrapper = mount(
+    render(
       <Provider store={store}>
         <RouterProvider router={router} />
       </Provider>
     );
 
-    expect(wrapper.find('RenderPage').prop('isGraph')).toEqual(false);
+    expect(screen.getByTestId('render-page-stub')).toHaveAttribute('data-is-graph', 'false');
   });
 });

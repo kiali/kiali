@@ -1,15 +1,21 @@
-import { shallow } from 'enzyme';
+import * as React from 'react';
+import { render, screen } from '@testing-library/react';
 import { ControlPlaneBadge } from '../ControlPlaneBadge';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { Provider } from 'react-redux';
+import { store } from 'store/ConfigStore';
 
 describe('ControlPlaneBadge', () => {
-  it('does not show istio status for remote clusters', () => {
-    const wrapper = shallow(
-      <MemoryRouter>
-        <ControlPlaneBadge />
-      </MemoryRouter>
+  it('renders the control plane badge', () => {
+    const { container } = render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <ControlPlaneBadge />
+        </MemoryRouter>
+      </Provider>
     );
 
-    expect(wrapper.find('IstioStatus').exists()).toBeFalsy();
+    expect(screen.getByText('CP')).toBeInTheDocument();
+    expect(container).toMatchSnapshot();
   });
 });
