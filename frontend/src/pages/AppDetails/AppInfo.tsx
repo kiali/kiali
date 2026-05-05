@@ -11,23 +11,17 @@ import {
   GridItem,
   Stack,
   StackItem,
-  Popover,
-  PopoverPosition,
   Title,
   TitleSizes
 } from '@patternfly/react-core';
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
-import { kialiStyle } from 'styles/StyleUtils';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
-import { createIcon } from '../../config/KialiIcon';
-import * as H from '../../types/Health';
-import { NA, HEALTHY } from '../../types/Health';
-import { HealthDetails } from '../../components/Health/HealthDetails';
+import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { t } from 'utils/I18nUtils';
@@ -37,53 +31,6 @@ type AppInfoProps = {
   duration: DurationInSeconds;
   health?: AppHealth;
   isSupported?: boolean;
-};
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  marginTop: '1rem',
-  minHeight: 0
-});
-
-const renderHealthStatus = (health?: H.Health): React.ReactNode => {
-  const status = health ? health.getStatus() : NA;
-  const isUnhealthy = health && status !== HEALTHY && status !== NA;
-
-  const statusContent = (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        cursor: isUnhealthy ? 'pointer' : undefined
-      }}
-    >
-      {createIcon(status)}
-      {status.name}
-    </span>
-  );
-
-  if (isUnhealthy) {
-    return (
-      <Popover
-        aria-label="Health details"
-        position={PopoverPosition.right}
-        triggerAction="click"
-        showClose={true}
-        headerContent={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            {createIcon(status)} <strong>{status.name}</strong>
-          </span>
-        }
-        bodyContent={<HealthDetails health={health!} />}
-      >
-        {statusContent}
-      </Popover>
-    );
-  }
-
-  return statusContent;
 };
 
 export class AppInfo extends React.Component<AppInfoProps> {
@@ -127,7 +74,9 @@ export class AppInfo extends React.Component<AppInfoProps> {
 
               <DescriptionListGroup data-test="details-status">
                 <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
-                <DescriptionListDescription>{renderHealthStatus(this.props.health)}</DescriptionListDescription>
+                <DescriptionListDescription>
+                  <HealthStatusPopover health={this.props.health} />
+                </DescriptionListDescription>
               </DescriptionListGroup>
 
               {app.isAmbient && (
@@ -180,7 +129,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
 
     return (
       <div className={flexFillStyle}>
-        <Grid hasGutter={true} className={gridStyle}>
+        <Grid hasGutter={true} className={detailGridStyle}>
           <GridItem span={4} className={detailLeftColumnStyle}>
             <Stack hasGutter={true}>
               {app && this.renderDetailsCard(app)}

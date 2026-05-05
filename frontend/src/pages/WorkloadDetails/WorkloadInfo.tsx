@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
 import {
   Alert,
@@ -13,8 +12,6 @@ import {
   GridItem,
   Stack,
   StackItem,
-  Popover,
-  PopoverPosition,
   Title,
   TitleSizes
 } from '@patternfly/react-core';
@@ -22,7 +19,7 @@ import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObje
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig, getAppLabelName } from '../../config/ServerConfig';
@@ -39,10 +36,7 @@ import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { getGVKTypeString, isGVKSupported, stringToGVK } from '../../utils/IstioConfigUtils';
 import { WorkloadEntries } from './WorkloadEntries';
 import { Spire } from '../../components/Spire/Spire';
-import { createIcon } from '../../config/KialiIcon';
-import * as H from '../../types/Health';
-import { NA, HEALTHY } from '../../types/Health';
-import { HealthDetails } from '../../components/Health/HealthDetails';
+import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
@@ -56,8 +50,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { Paths } from '../../config';
-import { router, URLParam } from '../../app/History';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { navigateToFilteredList, buildMetadataPatch } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 
@@ -75,13 +68,6 @@ type WorkloadInfoState = {
   workloadIstioConfig?: IstioConfigList;
 };
 
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  minHeight: 0,
-  paddingTop: '1rem'
-});
-
 const tabName = 'list';
 const defaultTab = 'pods';
 
@@ -96,46 +82,6 @@ const workloadIstioResources = [
   getGVKTypeString(gvkType.WorkloadGroup),
   getGVKTypeString(gvkType.K8sInferencePool)
 ];
-
-const renderHealthStatus = (health?: H.Health): React.ReactNode => {
-  const status = health ? health.getStatus() : NA;
-  const isUnhealthy = health && status !== HEALTHY && status !== NA;
-
-  const statusContent = (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        cursor: isUnhealthy ? 'pointer' : undefined
-      }}
-    >
-      {createIcon(status)}
-      {status.name}
-    </span>
-  );
-
-  if (isUnhealthy) {
-    return (
-      <Popover
-        aria-label="Health details"
-        position={PopoverPosition.right}
-        triggerAction="click"
-        showClose={true}
-        headerContent={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            {createIcon(status)} <strong>{status.name}</strong>
-          </span>
-        }
-        bodyContent={<HealthDetails health={health!} />}
-      >
-        {statusContent}
-      </Popover>
-    );
-  }
-
-  return statusContent;
-};
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
   private graphDataSource = new GraphDataSource();
@@ -345,7 +291,9 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
               <DescriptionListGroup data-test="details-status">
                 <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
-                <DescriptionListDescription>{renderHealthStatus(this.props.health)}</DescriptionListDescription>
+                <DescriptionListDescription>
+                  <HealthStatusPopover health={this.props.health} />
+                </DescriptionListDescription>
               </DescriptionListGroup>
 
               <DescriptionListGroup data-test="details-created">
@@ -491,13 +439,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       return;
     }
     const original = (field === 'labels' ? workload.labels : workload.annotations) ?? {};
-    const patch: Record<string, string | null> = { ...updated };
-    Object.keys(original).forEach(key => {
-      if (!(key in updated)) {
-        patch[key] = null;
-      }
-    });
-    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
+    const jsonPatch = buildMetadataPatch(field, original, updated);
 
     API.updateWorkload(this.props.namespace, workload.name, workload.gvk, jsonPatch, undefined, workload.cluster)
       .then(() => {
@@ -516,13 +458,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={workload.labels ?? {}}
-          onLabelClick={(key, value) => {
-            FilterSelected.resetFilters();
-            const params = new URLSearchParams();
-            params.set(URLParam.NAMESPACES, this.props.namespace);
-            params.set('label', `${key}=${value}`);
-            router.navigate(`/${Paths.WORKLOADS}?${params.toString()}`);
-          }}
+          onLabelClick={(key, value) => navigateToFilteredList(Paths.WORKLOADS, key, value, this.props.namespace)}
           onSave={labels => this.handleSaveMetadata('labels', labels)}
           title={t('Labels')}
         />
@@ -559,7 +495,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return (
       <>
         <div className={flexFillStyle}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>
                 {workload && this.renderDetailsCard(workload)}

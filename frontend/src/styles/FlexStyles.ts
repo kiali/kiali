@@ -60,6 +60,36 @@ export const tabCardStyle = kialiStyle({
   marginTop: '1rem'
 });
 
+// Title row used in detail pages (App/Service/Workload/Namespace).
+// Contains the badge + title in a flex row.
+export const detailTitleRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--md)',
+  marginTop: '0.5rem',
+  minWidth: 0,
+  width: '100%'
+});
+
+// Main title content area inside the detail title row.
+export const detailTitleMainStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flex: '1 1 auto',
+  flexWrap: 'nowrap',
+  gap: 'var(--pf-t--global--spacer--sm)',
+  minWidth: 0
+});
+
+// Grid layout for info panels on detail pages.
+export const detailGridStyle = kialiStyle({
+  alignItems: 'stretch',
+  flex: 1,
+  marginTop: '1rem',
+  minHeight: 0
+});
+
 // Scrollable flex child for use inside a CardBody or similar container.
 // Must be a flex container itself so children with flex:1 are constrained
 // to the available height rather than growing with their content.

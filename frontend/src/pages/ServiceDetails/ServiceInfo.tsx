@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { kialiStyle } from 'styles/StyleUtils';
 import {
   Card,
   CardBody,
@@ -12,8 +11,6 @@ import {
   GridItem,
   Stack,
   StackItem,
-  Popover,
-  PopoverPosition,
   Title,
   TitleSizes
 } from '@patternfly/react-core';
@@ -31,7 +28,7 @@ import {
   PeerAuthentication,
   Validations
 } from '../../types/IstioObjects';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -59,10 +56,7 @@ import { addError, addSuccess } from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
-import { createIcon } from '../../config/KialiIcon';
-import * as H from '../../types/Health';
-import { NA, HEALTHY } from '../../types/Health';
-import { HealthDetails } from '../../components/Health/HealthDetails';
+import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo } from '../../components/Logo/Logos';
@@ -74,8 +68,7 @@ import { Labels } from '../../components/Label/Labels';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { Paths } from '../../config';
-import { router, URLParam } from '../../app/History';
-import { FilterSelected } from '../../components/Filters/StatefulFilters';
+import { navigateToFilteredList } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
@@ -99,53 +92,6 @@ type ServiceInfoState = {
   showWizard: boolean;
   updateMode: boolean;
   wizardType: string;
-};
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  marginTop: '1rem',
-  minHeight: 0
-});
-
-const renderHealthStatus = (health?: H.Health): React.ReactNode => {
-  const status = health ? health.getStatus() : NA;
-  const isUnhealthy = health && status !== HEALTHY && status !== NA;
-
-  const statusContent = (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        cursor: isUnhealthy ? 'pointer' : undefined
-      }}
-    >
-      {createIcon(status)}
-      {status.name}
-    </span>
-  );
-
-  if (isUnhealthy) {
-    return (
-      <Popover
-        aria-label="Health details"
-        position={PopoverPosition.right}
-        triggerAction="click"
-        showClose={true}
-        headerContent={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-            {createIcon(status)} <strong>{status.name}</strong>
-          </span>
-        }
-        bodyContent={<HealthDetails health={health!} />}
-      >
-        {statusContent}
-      </Popover>
-    );
-  }
-
-  return statusContent;
 };
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
@@ -260,7 +206,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
               <DescriptionListGroup data-test="details-status">
                 <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
-                <DescriptionListDescription>{renderHealthStatus(sd.health)}</DescriptionListDescription>
+                <DescriptionListDescription>
+                  <HealthStatusPopover health={sd.health} />
+                </DescriptionListDescription>
               </DescriptionListGroup>
 
               <DescriptionListGroup data-test="details-created">
@@ -387,13 +335,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={sd.service.labels ?? {}}
-          onLabelClick={(key, value) => {
-            FilterSelected.resetFilters();
-            const params = new URLSearchParams();
-            params.set(URLParam.NAMESPACES, this.props.namespace);
-            params.set('label', `${key}=${value}`);
-            router.navigate(`/${Paths.SERVICES}?${params.toString()}`);
-          }}
+          onLabelClick={(key, value) => navigateToFilteredList(Paths.SERVICES, key, value, this.props.namespace)}
           onSave={this.props.onSaveLabels}
           title={t('Labels')}
         />
@@ -506,7 +448,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     return (
       <>
         <div className={flexFillStyle}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>
                 {this.renderDetailsCard()}

@@ -13,6 +13,7 @@ import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
+import { buildMetadataPatch } from '../PageUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceId, getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
@@ -38,27 +39,8 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
 import { setAIContext } from 'helpers/ChatAI';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { kialiStyle } from 'styles/StyleUtils';
+import { detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { t } from 'utils/I18nUtils';
-
-const titleRowStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--md)',
-  marginTop: '0.5rem',
-  minWidth: 0,
-  width: '100%'
-});
-
-const titleMainStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flex: '1 1 auto',
-  flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--sm)',
-  minWidth: 0
-});
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -141,13 +123,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       (field === 'labels'
         ? this.state.serviceDetails?.service?.labels
         : this.state.serviceDetails?.service?.annotations) ?? {};
-    const patch: Record<string, string | null> = { ...updated };
-    Object.keys(original).forEach(key => {
-      if (!(key in updated)) {
-        patch[key] = null;
-      }
-    });
-    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
+    const jsonPatch = buildMetadataPatch(field, original, updated);
 
     API.updateService(
       this.props.serviceId.namespace,
@@ -364,8 +340,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           actionsToolbarTop="11.1rem"
         >
           {this.state.serviceDetails && (
-            <div className={titleRowStyle}>
-              <div className={titleMainStyle}>
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
                 <PFBadge
                   badge={
                     this.state.serviceDetails.service.type === 'External' ? PFBadges.ExternalService : PFBadges.Service

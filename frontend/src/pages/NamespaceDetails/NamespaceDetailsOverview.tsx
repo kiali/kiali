@@ -27,7 +27,7 @@ import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { KialiLink } from 'components/Link/KialiLink';
 import { Paths, isMultiCluster } from 'config';
-import { router, URLParam } from 'app/History';
+import { URLParam } from 'app/History';
 import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
@@ -41,7 +41,8 @@ import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { navigateToFilteredList } from '../PageUtils';
+import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
   canEdit: boolean;
@@ -52,13 +53,6 @@ type Props = {
   onSaveAnnotations: (annotations: Record<string, string>) => void;
   onSaveLabels: (labels: Record<string, string>) => void;
 };
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  marginTop: '1rem',
-  minHeight: 0
-});
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
@@ -409,12 +403,9 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                 canEdit={this.props.canEdit}
                 labels={sorted}
                 numLabels={numPriority}
-                onLabelClick={(key, value) => {
-                  FilterSelected.resetFilters();
-                  const params = new URLSearchParams();
-                  params.set('namespaceLabel', `${key}=${value}`);
-                  router.navigate(`/${Paths.NAMESPACES}?${params.toString()}`);
-                }}
+                onLabelClick={(key, value) =>
+                  navigateToFilteredList(Paths.NAMESPACES, key, value, undefined, 'namespaceLabel')
+                }
                 onSave={this.props.onSaveLabels}
                 title={t('Labels')}
               />
@@ -447,7 +438,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     return (
       <>
         <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack style={{ gap: '0.5rem' }}>{this.renderLeftCard()}</Stack>
             </GridItem>
