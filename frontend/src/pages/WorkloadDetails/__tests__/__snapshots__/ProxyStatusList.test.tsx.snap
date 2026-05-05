@@ -1,51 +1,51 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ProxyStatusList when status is synced match the snapshot 1`] = `""`;
+exports[`ProxyStatusList when status is synced match the snapshot 1`] = `<div />`;
 
 exports[`ProxyStatusList when there are components without value match the snapshot 1`] = `
-<Stack
-  className="kiali_f14kfh0p"
->
-  <StackItem
-    className="kiali_fsmbsvg"
+<div>
+  <div
+    class="pf-v6-l-stack kiali_f14kfh0p"
   >
-    Istio Proxy Status
-  </StackItem>
-  <StackItem
-    className="kiali_f1wsrw0w"
-    key="proxy-status-0"
-  >
-    CDS: -
-  </StackItem>
-  <StackItem
-    className="kiali_f1wsrw0w"
-    key="proxy-status-3"
-  >
-    RDS: -
-  </StackItem>
-</Stack>
+    <div
+      class="pf-v6-l-stack__item kiali_fsmbsvg"
+    >
+      Istio Proxy Status
+    </div>
+    <div
+      class="pf-v6-l-stack__item kiali_f1wsrw0w"
+    >
+      CDS: -
+    </div>
+    <div
+      class="pf-v6-l-stack__item kiali_f1wsrw0w"
+    >
+      RDS: -
+    </div>
+  </div>
+</div>
 `;
 
-exports[`ProxyStatusList when there are unsyced components match the snapshot 1`] = `
-<Stack
-  className="kiali_f14kfh0p"
->
-  <StackItem
-    className="kiali_fsmbsvg"
+exports[`ProxyStatusList when there are unsynced components match the snapshot 1`] = `
+<div>
+  <div
+    class="pf-v6-l-stack kiali_f14kfh0p"
   >
-    Istio Proxy Status
-  </StackItem>
-  <StackItem
-    className="kiali_f1wsrw0w"
-    key="proxy-status-0"
-  >
-    CDS: NOT_SENT
-  </StackItem>
-  <StackItem
-    className="kiali_f1wsrw0w"
-    key="proxy-status-3"
-  >
-    RDS: STALE
-  </StackItem>
-</Stack>
+    <div
+      class="pf-v6-l-stack__item kiali_fsmbsvg"
+    >
+      Istio Proxy Status
+    </div>
+    <div
+      class="pf-v6-l-stack__item kiali_f1wsrw0w"
+    >
+      CDS: NOT_SENT
+    </div>
+    <div
+      class="pf-v6-l-stack__item kiali_f1wsrw0w"
+    >
+      RDS: STALE
+    </div>
+  </div>
+</div>
 `;

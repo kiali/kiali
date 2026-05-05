@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { act, render } from '@testing-library/react';
 
 jest.mock('@patternfly/react-charts/victory', () => ({
   ChartScatter: () => null
@@ -29,8 +29,13 @@ jest.mock('utils/tracing/TraceStats', () => ({
   buildQueriesFromSpans: () => []
 }));
 
+let capturedChartProps: any;
+
 jest.mock('components/Charts/ChartWithLegend', () => ({
-  ChartWithLegend: () => null
+  ChartWithLegend: (props: any) => {
+    capturedChartProps = props;
+    return null;
+  }
 }));
 
 jest.mock('../TraceTooltip', () => ({
@@ -41,6 +46,8 @@ jest.mock('../TraceTooltip', () => ({
 import { TracingScatterComponent } from '../TracingScatter';
 // eslint-disable-next-line import/first
 import { JaegerTrace } from 'types/TracingInfo';
+
+const getChartProps = (): any => capturedChartProps;
 
 const makeTrace = (id = 'abc123'): JaegerTrace =>
   (({
@@ -67,13 +74,16 @@ const makeProps = (
   loadMetricsStats: jest.fn().mockResolvedValue(undefined),
   setTraceId: jest.fn(),
   showSpansAverage: false,
-  traces: [],
+  // Non-empty so that ChartWithLegend actually renders (the component shows an
+  // empty-state when traces is []), which lets the mock capture onTooltipOpen/Close props.
+  traces: [makeTrace()],
   ...overrides
 });
 
 describe('TracingScatterComponent debounce', () => {
   beforeEach(() => {
     jest.useFakeTimers();
+    capturedChartProps = undefined;
   });
 
   afterEach(() => {
@@ -82,10 +92,10 @@ describe('TracingScatterComponent debounce', () => {
 
   it('does not call loadMetricsStats before 400ms have elapsed', () => {
     const props = makeProps();
-    const wrapper = shallow(<TracingScatterComponent {...(props as any)} />);
-    const instance = wrapper.instance() as any;
+    render(<TracingScatterComponent {...(props as any)} />);
+    const chartProps = getChartProps();
 
-    instance.onTooltipOpen(makeTrace());
+    chartProps.onTooltipOpen({ trace: makeTrace() });
     jest.advanceTimersByTime(399);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
@@ -93,10 +103,10 @@ describe('TracingScatterComponent debounce', () => {
 
   it('calls loadMetricsStats after 400ms of sustained hover', () => {
     const props = makeProps();
-    const wrapper = shallow(<TracingScatterComponent {...(props as any)} />);
-    const instance = wrapper.instance() as any;
+    render(<TracingScatterComponent {...(props as any)} />);
+    const chartProps = getChartProps();
 
-    instance.onTooltipOpen(makeTrace());
+    chartProps.onTooltipOpen({ trace: makeTrace() });
     jest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).toHaveBeenCalledTimes(1);
@@ -104,13 +114,13 @@ describe('TracingScatterComponent debounce', () => {
 
   it('does not call loadMetricsStats when mouse leaves before 400ms', () => {
     const props = makeProps();
-    const wrapper = shallow(<TracingScatterComponent {...(props as any)} />);
-    const instance = wrapper.instance() as any;
+    render(<TracingScatterComponent {...(props as any)} />);
+    const chartProps = getChartProps();
 
     const trace = makeTrace();
-    instance.onTooltipOpen(trace);
+    chartProps.onTooltipOpen({ trace });
     jest.advanceTimersByTime(200);
-    instance.onTooltipClose(trace);
+    chartProps.onTooltipClose({ trace });
     jest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
@@ -118,34 +128,43 @@ describe('TracingScatterComponent debounce', () => {
 
   it('does not call loadMetricsStats when component unmounts before 400ms', () => {
     const props = makeProps();
-    const wrapper = shallow(<TracingScatterComponent {...(props as any)} />);
-    const instance = wrapper.instance() as any;
+    const { unmount } = render(<TracingScatterComponent {...(props as any)} />);
+    const chartProps = getChartProps();
 
-    instance.onTooltipOpen(makeTrace());
+    chartProps.onTooltipOpen({ trace: makeTrace() });
     jest.advanceTimersByTime(200);
-    wrapper.unmount();
+    unmount();
     jest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
   });
 
-  it('queues the second trace rather than firing a concurrent request when one is already in flight', () => {
-    const neverResolves = new Promise<void>(() => {});
-    const loadMetricsStats = jest.fn().mockReturnValue(neverResolves);
+  it('queues the second trace rather than firing a concurrent request when one is already in flight', async () => {
+    let resolveFirst!: (value?: void | PromiseLike<void>) => void;
+    const firstPromise = new Promise<void>(resolve => {
+      resolveFirst = resolve;
+    });
+    const loadMetricsStats = jest.fn().mockReturnValueOnce(firstPromise).mockResolvedValue(undefined);
     const props = makeProps({ loadMetricsStats });
-    const wrapper = shallow(<TracingScatterComponent {...(props as any)} />);
-    const instance = wrapper.instance() as any;
+    render(<TracingScatterComponent {...(props as any)} />);
+    const chartProps = getChartProps();
 
     const trace1 = makeTrace('trace-1');
     const trace2 = makeTrace('trace-2');
 
-    instance.onTooltipOpen(trace1);
+    chartProps.onTooltipOpen({ trace: trace1 });
     jest.advanceTimersByTime(400);
     expect(loadMetricsStats).toHaveBeenCalledTimes(1);
 
-    instance.onTooltipOpen(trace2);
+    chartProps.onTooltipOpen({ trace: trace2 });
     jest.advanceTimersByTime(400);
     expect(loadMetricsStats).toHaveBeenCalledTimes(1);
-    expect(instance.nextToLoad).toBe(trace2);
+
+    await act(async () => {
+      resolveFirst();
+      await Promise.resolve();
+    });
+
+    expect(loadMetricsStats).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,63 +1,159 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#LoginPage render correctly should render LoginPage 1`] = `
-<LoginPage
-  brandImgAlt="Kiali logo"
-  brandImgSrc="logo-darkbkg.svg"
-  className="kiali_f1atptrz"
-  footerListItems={
-    <React.Fragment>
-      <ListItem>
-        <LoginFooterItem
-          href="https://www.kiali.io/"
-        >
-          Documentation
-        </LoginFooterItem>
-      </ListItem>
-      <ListItem>
-        <LoginFooterItem
-          href="https://github.com/kiali/kiali"
-        >
-          Contribute
-        </LoginFooterItem>
-      </ListItem>
-    </React.Fragment>
-  }
-  footerListVariants="inline"
-  loginTitle="Log in Kiali"
-  textContent="Service mesh management for Istio."
->
-  <Form
-    data-test="login-form"
+<div>
+  
+  <div
+    class="pf-v6-c-login kiali_f1atptrz"
   >
-    <FormHelperText />
-    <FormGroup
-      fieldId="token"
-      isRequired={true}
-      label="Token"
+    <div
+      class="pf-v6-c-login__container"
     >
-      <TextInput
-        id="token"
-        isRequired={true}
-        onChange={[Function]}
-        type="password"
-      />
-    </FormGroup>
-    <ActionGroup>
-      <Button
-        isDisabled={false}
-        onClick={[Function]}
-        style={
-          Object {
-            "width": "100%",
-          }
-        }
-        type="submit"
-        variant="primary"
+      <header
+        class="pf-v6-c-login__header"
       >
-        Log In
-      </Button>
-    </ActionGroup>
-  </Form>
-</LoginPage>
+        <img
+          alt="Kiali logo"
+          class="pf-v6-c-brand"
+          src="logo-darkbkg.svg"
+        />
+      </header>
+      <main
+        class="pf-v6-c-login__main"
+      >
+        <div
+          class="pf-v6-c-login__main-header"
+        >
+          <h2
+            class="pf-v6-c-title pf-m-3xl"
+            data-ouia-component-id="OUIA-Generated-Title-1"
+            data-ouia-component-type="PF6/Title"
+            data-ouia-safe="true"
+          >
+            Log in Kiali
+          </h2>
+          
+        </div>
+        <div
+          class="pf-v6-c-login__main-body"
+        >
+          <form
+            class="pf-v6-c-form"
+            data-test="login-form"
+            novalidate=""
+          >
+            <div
+              class="pf-v6-c-form__helper-text"
+            />
+            <div
+              class="pf-v6-c-form__group"
+            >
+              <div
+                class="pf-v6-c-form__group-label"
+              >
+                <label
+                  class="pf-v6-c-form__label"
+                  for="token"
+                >
+                  <span
+                    class="pf-v6-c-form__label-text"
+                  >
+                    Token
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    class="pf-v6-c-form__label-required"
+                  >
+                     
+                    *
+                  </span>
+                </label>
+                  
+              </div>
+              <div
+                class="pf-v6-c-form__group-control"
+              >
+                <span
+                  class="pf-v6-c-form-control"
+                >
+                  <input
+                    aria-invalid="false"
+                    data-ouia-component-id="OUIA-Generated-TextInputBase-1"
+                    data-ouia-component-type="PF6/TextInput"
+                    data-ouia-safe="true"
+                    id="token"
+                    required=""
+                    type="password"
+                    value=""
+                  />
+                </span>
+              </div>
+            </div>
+            <div
+              class="pf-v6-c-form__group pf-m-action"
+            >
+              <div
+                class="pf-v6-c-form__group-control"
+              >
+                <div
+                  class="pf-v6-c-form__actions"
+                >
+                  <button
+                    class="pf-v6-c-button pf-m-primary"
+                    data-ouia-component-id="OUIA-Generated-Button-primary-1"
+                    data-ouia-component-type="PF6/Button"
+                    data-ouia-safe="true"
+                    style="width: 100%;"
+                    type="submit"
+                  >
+                    <span
+                      class="pf-v6-c-button__text"
+                    >
+                      Log In
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </main>
+      <footer
+        class="pf-v6-c-login__footer"
+      >
+        <p>
+          Service mesh management for Istio.
+        </p>
+        <ul
+          class="pf-v6-c-list pf-m-inline"
+        >
+          <li
+            class=""
+          >
+            <span>
+              <a
+                href="https://www.kiali.io/"
+                target="_blank"
+              >
+                Documentation
+              </a>
+            </span>
+          </li>
+          <li
+            class=""
+          >
+            <span>
+              <a
+                href="https://github.com/kiali/kiali"
+                target="_blank"
+              >
+                Contribute
+              </a>
+            </span>
+          </li>
+        </ul>
+      </footer>
+    </div>
+  </div>
+</div>
 `;

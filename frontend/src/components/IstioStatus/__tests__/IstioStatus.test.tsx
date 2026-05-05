@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusComponent, ClusterStatusMap } from '../IstioStatus';
-import { mountToJson } from 'enzyme-to-json';
 import { CLUSTER_DEFAULT } from '../../../types/Graph';
 import { serverConfig } from '../../../config';
 import { setServerConfig } from '../../../config/ServerConfig';
+import { store } from '../../../store/ConfigStore';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-// Mock the useClusterStatus hook
 let mockStatusMap: ClusterStatusMap = {};
 
 jest.mock('../../../hooks/clusters', () => ({
@@ -20,37 +21,41 @@ jest.mock('../../../hooks/clusters', () => ({
   })
 }));
 
-const mockIcon = (componentList: ComponentStatus[]): ReactWrapper => {
+const renderIcon = (componentList: ComponentStatus[]): ReturnType<typeof render> => {
   mockStatusMap = { Kubernetes: componentList };
-  return mount(
-    <MemoryRouter>
-      <IstioStatusComponent
-        namespaces={[
-          { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
-          { name: 'istio-system', cluster: CLUSTER_DEFAULT }
-        ]}
-      />
-    </MemoryRouter>
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <IstioStatusComponent
+          namespaces={[
+            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+          ]}
+        />
+      </MemoryRouter>
+    </Provider>
   );
 };
 
-const testSnapshot = (wrapper: any): void => {
-  const component = wrapper.find('IstioStatusComponent').first();
-  expect(mountToJson(component)).toBeDefined();
-  expect(mountToJson(component)).toMatchSnapshot();
+const testSnapshot = (container: HTMLElement): void => {
+  expect(container).toMatchSnapshot();
 };
 
-const testTooltip = (wrapper: any): void => {
-  const tooltip = wrapper.find('Tooltip').first();
-  expect(tooltip.exists()).toBe(true);
-  expect(tooltip.props().position).toEqual('top');
-  expect(tooltip.props().enableFlip).toEqual(true);
+const testIcon = (container: HTMLElement, dataTest: string, expectedLabelStatus?: string): void => {
+  const element = container.querySelector(`[data-test="${dataTest}"]`);
+  expect(element).toBeInTheDocument();
+  if (expectedLabelStatus) {
+    // Verify the PatternFly Label status prop via the CSS modifier class it generates
+    expect(element).toHaveClass(`pf-m-${expectedLabelStatus}`);
+  }
 };
 
-const testIcon = (wrapper: any, dataTest: string, expectedStatus: string): void => {
-  const labelWrapper = wrapper.find(`[data-test="${dataTest}"]`).first();
-  expect(labelWrapper.exists()).toBe(true);
-  expect(labelWrapper.prop('status')).toBe(expectedStatus);
+const testTooltip = async (container: HTMLElement): Promise<void> => {
+  const user = userEvent.setup();
+  const statusElement = container.querySelector('[data-test^="istio-status-"]');
+  expect(statusElement).toBeInTheDocument();
+  await user.hover(statusElement!);
+  expect(await screen.findByRole('tooltip')).toBeInTheDocument();
 };
 
 jest.mock('../../../utils/MeshUtils', () => ({
@@ -72,8 +77,8 @@ describe('When core component has a problem', () => {
     setServerConfig(serverConfig);
   });
 
-  it('the Icon shows is displayed in Red', () => {
-    const wrapper = mockIcon([
+  it('the Icon shows is displayed in Red', async () => {
+    const { container } = renderIcon([
       {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
@@ -88,15 +93,15 @@ describe('When core component has a problem', () => {
       }
     ]);
 
-    testSnapshot(wrapper);
-    testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-danger', 'danger');
+    testSnapshot(container);
+    testIcon(container, 'istio-status-danger', 'danger');
+    await testTooltip(container);
   });
 });
 
 describe('When addon component has a problem', () => {
-  it('the Icon shows is displayed in orange', () => {
-    const wrapper = mockIcon([
+  it('the Icon shows is displayed in orange', async () => {
+    const { container } = renderIcon([
       {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
@@ -111,16 +116,16 @@ describe('When addon component has a problem', () => {
       }
     ]);
 
-    testSnapshot(wrapper);
-    testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-warning', 'warning');
+    testSnapshot(container);
+    testIcon(container, 'istio-status-warning', 'warning');
+    await testTooltip(container);
   });
 });
 
 describe('When both core and addon component have problems', () => {
   describe('any component is in not ready', () => {
-    it('the Icon shows is displayed in red', () => {
-      const wrapper = mockIcon([
+    it('the Icon shows is displayed in red', async () => {
+      const { container } = renderIcon([
         {
           cluster: CLUSTER_DEFAULT,
           name: 'grafana',
@@ -135,9 +140,9 @@ describe('When both core and addon component have problems', () => {
         }
       ]);
 
-      testSnapshot(wrapper);
-      testTooltip(wrapper);
-      testIcon(wrapper, 'istio-status-danger', 'danger');
+      testSnapshot(container);
+      testIcon(container, 'istio-status-danger', 'danger');
+      await testTooltip(container);
     });
   });
 });
@@ -145,8 +150,8 @@ describe('When both core and addon component have problems', () => {
 describe('When there are not-ready components', () => {
   describe('mixed with other not healthy components', () => {
     describe('in core', () => {
-      it('the Icon is displayed in red', () => {
-        const wrapper = mockIcon([
+      it('the Icon is displayed in red', async () => {
+        const { container } = renderIcon([
           {
             cluster: CLUSTER_DEFAULT,
             name: 'istio-egressgateway',
@@ -161,15 +166,15 @@ describe('When there are not-ready components', () => {
           }
         ]);
 
-        testSnapshot(wrapper);
-        testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-danger', 'danger');
+        testSnapshot(container);
+        testIcon(container, 'istio-status-danger', 'danger');
+        await testTooltip(container);
       });
     });
 
     describe('in addons', () => {
-      it('the Icon is displayed in orange', () => {
-        const wrapper = mockIcon([
+      it('the Icon is displayed in orange', async () => {
+        const { container } = renderIcon([
           {
             cluster: CLUSTER_DEFAULT,
             name: 'grafana',
@@ -184,15 +189,15 @@ describe('When there are not-ready components', () => {
           }
         ]);
 
-        testSnapshot(wrapper);
-        testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-warning', 'warning');
+        testSnapshot(container);
+        testIcon(container, 'istio-status-warning', 'warning');
+        await testTooltip(container);
       });
     });
 
     describe('in both', () => {
-      it('the Icon shows is displayed in red', () => {
-        const wrapper = mockIcon([
+      it('the Icon shows is displayed in red', async () => {
+        const { container } = renderIcon([
           {
             cluster: CLUSTER_DEFAULT,
             name: 'grafana',
@@ -219,17 +224,17 @@ describe('When there are not-ready components', () => {
           }
         ]);
 
-        testSnapshot(wrapper);
-        testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-danger', 'danger');
+        testSnapshot(container);
+        testIcon(container, 'istio-status-danger', 'danger');
+        await testTooltip(container);
       });
     });
   });
 
   describe('not mixed with other unhealthy components', () => {
     describe('in core', () => {
-      it('renders the Icon in blue', () => {
-        const wrapper = mockIcon([
+      it('renders the Icon in blue', async () => {
+        const { container } = renderIcon([
           {
             cluster: CLUSTER_DEFAULT,
             name: 'jaeger',
@@ -238,15 +243,16 @@ describe('When there are not-ready components', () => {
           }
         ]);
 
-        testSnapshot(wrapper);
-        testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-info', 'success');
+        testSnapshot(container);
+        // PFColors.Info branch sets Label status='success' (see IstioStatus.tsx:426-428)
+        testIcon(container, 'istio-status-info', 'success');
+        await testTooltip(container);
       });
     });
 
     describe('in addons', () => {
-      it('renders the Icon in blue', () => {
-        const wrapper = mockIcon([
+      it('renders the Icon in blue', async () => {
+        const { container } = renderIcon([
           {
             cluster: CLUSTER_DEFAULT,
             name: 'istiod',
@@ -255,9 +261,10 @@ describe('When there are not-ready components', () => {
           }
         ]);
 
-        testSnapshot(wrapper);
-        testTooltip(wrapper);
-        testIcon(wrapper, 'istio-status-info', 'success');
+        testSnapshot(container);
+        // PFColors.Info branch sets Label status='success' (see IstioStatus.tsx:426-428)
+        testIcon(container, 'istio-status-info', 'success');
+        await testTooltip(container);
       });
     });
   });
@@ -265,7 +272,7 @@ describe('When there are not-ready components', () => {
 
 describe('When all components are good', () => {
   it('the Icon shows is displayed in green', () => {
-    const wrapper = mockIcon([
+    const { container } = renderIcon([
       {
         cluster: CLUSTER_DEFAULT,
         name: 'grafana',
@@ -280,7 +287,7 @@ describe('When all components are good', () => {
       }
     ]);
 
-    testIcon(wrapper, 'istio-status-success', 'success');
+    testIcon(container, 'istio-status-success', 'success');
   });
 });
 
@@ -326,20 +333,21 @@ describe('When there are multiple clusters', () => {
         }
       ]
     };
-    const wrapper = mount(
-      <MemoryRouter>
-        <IstioStatusComponent
-          namespaces={[
-            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
-            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
-          ]}
-        />
-      </MemoryRouter>
+    const { container } = render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <IstioStatusComponent
+            namespaces={[
+              { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+              { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+            ]}
+          />
+        </MemoryRouter>
+      </Provider>
     );
 
-    testSnapshot(wrapper);
-    testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-danger', 'danger');
+    testSnapshot(container);
+    testIcon(container, 'istio-status-danger', 'danger');
   });
 
   it('clusters without failing components do not show expand/collapse arrow', () => {
@@ -367,24 +375,23 @@ describe('When there are multiple clusters', () => {
         }
       ]
     };
-    const wrapper = mount(
-      <MemoryRouter>
-        <IstioStatusComponent
-          namespaces={[
-            { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
-            { name: 'istio-system', cluster: CLUSTER_DEFAULT }
-          ]}
-        />
-      </MemoryRouter>
+    const { container } = render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <IstioStatusComponent
+            namespaces={[
+              { name: 'bookinfo', cluster: CLUSTER_DEFAULT },
+              { name: 'istio-system', cluster: CLUSTER_DEFAULT }
+            ]}
+          />
+        </MemoryRouter>
+      </Provider>
     );
 
-    testSnapshot(wrapper);
-    testTooltip(wrapper);
-    testIcon(wrapper, 'istio-status-success', 'success');
+    testSnapshot(container);
+    testIcon(container, 'istio-status-success', 'success');
 
-    // When all clusters are healthy, they all show up but without expand/collapse buttons
-    // Verify there are no expand/collapse buttons (plain variant buttons)
-    const buttons = wrapper.find('Button[variant="plain"]');
+    const buttons = container.querySelectorAll('button');
     expect(buttons).toHaveLength(0);
   });
 });

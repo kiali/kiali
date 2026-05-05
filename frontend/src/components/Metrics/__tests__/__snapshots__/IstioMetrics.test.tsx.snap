@@ -1,87 +1,383 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Inbound Metrics for a workload renders initial layout 1`] = `
-<ContextProvider
-  value={
-    Object {
-      "store": Object {
-        "dispatch": [Function],
-        "getState": [Function],
-        "replaceReducer": [Function],
-        "subscribe": [Function],
-        Symbol(observable): [Function],
-      },
-      "subscription": Subscription {
-        "handleChangeWrapper": [Function],
-        "listeners": Object {
-          "notify": [Function],
-        },
-        "onStateChange": [Function],
-        "parentSub": undefined,
-        "store": Object {
-          "dispatch": [Function],
-          "getState": [Function],
-          "replaceReducer": [Function],
-          "subscribe": [Function],
-          Symbol(observable): [Function],
-        },
-        "unsubscribe": null,
-      },
-    }
-  }
->
-  <MemoryRouter>
-    <Connect(IstioMetricsComponent)
-      direction="inbound"
-      includeAmbient={false}
-      lastRefreshAt={1720526431902}
-      namespace="ns"
-      object="svc"
-      objectType={1}
-    />
-  </MemoryRouter>
-</ContextProvider>
+<div>
+  <div
+    class="kiali_ft2cic2 kiali_fvbgwgh"
+  >
+    <div
+      class="pf-v6-c-card kiali_ff5fcrt kiali_f83crca"
+      data-ouia-component-id="OUIA-Generated-Card-4"
+      data-ouia-component-type="PF6/Card"
+      data-ouia-safe="true"
+      id=""
+    >
+      <div
+        class="pf-v6-c-card__body"
+      >
+        <div
+          class="kiali_f1a0twes"
+        >
+          <div
+            class="kiali_fc9y95i"
+          >
+            <div
+              class="pf-v6-c-toolbar"
+              data-ouia-component-id="OUIA-Generated-Toolbar-4"
+              data-ouia-component-type="PF6/Toolbar"
+              data-ouia-safe="true"
+              id="pf-random-id-3"
+              style="padding: 0px; margin-bottom: 1.25rem;"
+            >
+              <div
+                class="pf-v6-c-toolbar__group"
+                style="align-items: center;"
+              >
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <button
+                    aria-expanded="false"
+                    class="pf-v6-c-menu-toggle"
+                    data-ouia-component-id="OUIA-Generated-MenuToggle-7"
+                    data-ouia-component-type="PF6/MenuToggle"
+                    data-ouia-safe="true"
+                    type="button"
+                  >
+                    <span
+                      class="pf-v6-c-menu-toggle__text"
+                    >
+                      Metrics Settings
+                    </span>
+                    <span
+                      class="pf-v6-c-menu-toggle__controls"
+                    >
+                      <span
+                        class="pf-v6-c-menu-toggle__toggle-icon"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="pf-v6-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 320 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                          />
+                        </svg>
+                      </span>
+                    </span>
+                  </button>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <span>
+                    <span
+                      class="kiali_f1jcl1sl"
+                      id="metrics_filter_reporter-name"
+                    >
+                      Reported from
+                    </span>
+                    <button
+                      aria-expanded="false"
+                      aria-label="Destination"
+                      class="pf-v6-c-menu-toggle"
+                      data-ouia-component-id="OUIA-Generated-MenuToggle-8"
+                      data-ouia-component-type="PF6/MenuToggle"
+                      data-ouia-safe="true"
+                      id="metrics_filter_reporter-toggle"
+                      type="button"
+                    >
+                      <span
+                        class="pf-v6-c-menu-toggle__text"
+                      >
+                        Destination
+                      </span>
+                      <span
+                        class="pf-v6-c-menu-toggle__controls"
+                      >
+                        <span
+                          class="pf-v6-c-menu-toggle__toggle-icon"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="pf-v6-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 320 512"
+                            width="1em"
+                          >
+                            <path
+                              d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                            />
+                          </svg>
+                        </span>
+                      </span>
+                    </button>
+                    <div
+                      style="display: contents;"
+                    >
+                      <span
+                        class="pf-v6-c-icon kiali_f1m8umqs kiali_f171jnzj kiali_f1leo02d"
+                      >
+                        <span
+                          class="pf-v6-c-icon__content"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="pf-v6-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M592,369 L592,289 C592.013862,284.755109 590.320137,280.682962 587.3,277.7 C584.338831,274.647672 580.252355,272.947987 576,273 L464,273 C459.755109,272.986138 455.682962,274.679863 452.7,277.7 C449.647672,280.661169 447.947987,284.747645 447.99884,289 L447.99884,369 C447.986138,373.244891 449.679863,377.317038 452.7,380.3 C455.661169,383.352328 459.747645,385.052013 464,385 L576,385 C580.244891,385.013862 584.317038,383.320137 587.3,380.3 C590.359349,377.343612 592.060354,373.253963 592,369 Z M592,705 L592,465 C592,456.163444 584.836556,449 576,449 L432,449 C423.163444,449 416,456.163444 416,465 L416,497 C416,505.836556 423.163444,513 432,513 L448,513 L448,705 L416,705 C407.163444,705 400,712.163444 400,721 L400,753 C400,761.836556 407.163444,769 416,769 L624,769 C632.836556,769 640,761.836556 640,753 L640,721 C640,712.163444 632.836556,705 624,705 L592,705 Z M512,896 C300.2,896 128,723.9 128,512 C128,300.3 300.2,128 512,128 C723.8,128 896,300.2 896,512 C896,723.8 723.7,896 512,896 Z M512.1,0 C229.7,0 0,229.8 0,512 C0,794.2 229.8,1024 512.1,1024 C794.4,1024 1024,794.3 1024,512 C1024,229.7 794.4,0 512.1,0 Z"
+                            />
+                          </svg>
+                        </span>
+                      </span>
+                    </div>
+                  </span>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <div
+                    class="pf-v6-c-check"
+                  >
+                    <input
+                      aria-invalid="false"
+                      class="pf-v6-c-check__input"
+                      data-ouia-component-id="OUIA-Generated-Checkbox-4"
+                      data-ouia-component-type="PF6/Checkbox"
+                      data-ouia-safe="true"
+                      id="trendlines-show-"
+                      type="checkbox"
+                    />
+                    <label
+                      class="pf-v6-c-check__label"
+                      for="trendlines-show-"
+                    >
+                      Trendlines
+                    </label>
+                  </div>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                  style="margin-left: auto; padding-right: 20px; display: block;"
+                />
+              </div>
+              <div
+                class="pf-v6-c-toolbar__content pf-m-hidden"
+                hidden=""
+              >
+                <div
+                  class="pf-v6-c-toolbar__group"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 `;
 
 exports[`Metrics for a service renders initial layout 1`] = `
-<ContextProvider
-  value={
-    Object {
-      "store": Object {
-        "dispatch": [Function],
-        "getState": [Function],
-        "replaceReducer": [Function],
-        "subscribe": [Function],
-        Symbol(observable): [Function],
-      },
-      "subscription": Subscription {
-        "handleChangeWrapper": [Function],
-        "listeners": Object {
-          "notify": [Function],
-        },
-        "onStateChange": [Function],
-        "parentSub": undefined,
-        "store": Object {
-          "dispatch": [Function],
-          "getState": [Function],
-          "replaceReducer": [Function],
-          "subscribe": [Function],
-          Symbol(observable): [Function],
-        },
-        "unsubscribe": null,
-      },
-    }
-  }
->
-  <MemoryRouter>
-    <Connect(IstioMetricsComponent)
-      direction="inbound"
-      includeAmbient={false}
-      lastRefreshAt={1720526431902}
-      namespace="ns"
-      object="svc"
-      objectType={0}
-    />
-  </MemoryRouter>
-</ContextProvider>
+<div>
+  <div
+    class="kiali_ft2cic2 kiali_fvbgwgh"
+  >
+    <div
+      class="pf-v6-c-card kiali_ff5fcrt kiali_f83crca"
+      data-ouia-component-id="OUIA-Generated-Card-1"
+      data-ouia-component-type="PF6/Card"
+      data-ouia-safe="true"
+      id=""
+    >
+      <div
+        class="pf-v6-c-card__body"
+      >
+        <div
+          class="kiali_f1a0twes"
+        >
+          <div
+            class="kiali_fc9y95i"
+          >
+            <div
+              class="pf-v6-c-toolbar"
+              data-ouia-component-id="OUIA-Generated-Toolbar-1"
+              data-ouia-component-type="PF6/Toolbar"
+              data-ouia-safe="true"
+              id="pf-random-id-0"
+              style="padding: 0px; margin-bottom: 1.25rem;"
+            >
+              <div
+                class="pf-v6-c-toolbar__group"
+                style="align-items: center;"
+              >
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <button
+                    aria-expanded="false"
+                    class="pf-v6-c-menu-toggle"
+                    data-ouia-component-id="OUIA-Generated-MenuToggle-1"
+                    data-ouia-component-type="PF6/MenuToggle"
+                    data-ouia-safe="true"
+                    type="button"
+                  >
+                    <span
+                      class="pf-v6-c-menu-toggle__text"
+                    >
+                      Metrics Settings
+                    </span>
+                    <span
+                      class="pf-v6-c-menu-toggle__controls"
+                    >
+                      <span
+                        class="pf-v6-c-menu-toggle__toggle-icon"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          class="pf-v6-svg"
+                          fill="currentColor"
+                          height="1em"
+                          role="img"
+                          viewBox="0 0 320 512"
+                          width="1em"
+                        >
+                          <path
+                            d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                          />
+                        </svg>
+                      </span>
+                    </span>
+                  </button>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <span>
+                    <span
+                      class="kiali_f1jcl1sl"
+                      id="metrics_filter_reporter-name"
+                    >
+                      Reported from
+                    </span>
+                    <button
+                      aria-expanded="false"
+                      aria-label="Destination"
+                      class="pf-v6-c-menu-toggle"
+                      data-ouia-component-id="OUIA-Generated-MenuToggle-2"
+                      data-ouia-component-type="PF6/MenuToggle"
+                      data-ouia-safe="true"
+                      id="metrics_filter_reporter-toggle"
+                      type="button"
+                    >
+                      <span
+                        class="pf-v6-c-menu-toggle__text"
+                      >
+                        Destination
+                      </span>
+                      <span
+                        class="pf-v6-c-menu-toggle__controls"
+                      >
+                        <span
+                          class="pf-v6-c-menu-toggle__toggle-icon"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="pf-v6-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 320 512"
+                            width="1em"
+                          >
+                            <path
+                              d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                            />
+                          </svg>
+                        </span>
+                      </span>
+                    </button>
+                    <div
+                      style="display: contents;"
+                    >
+                      <span
+                        class="pf-v6-c-icon kiali_f1m8umqs kiali_f171jnzj kiali_f1leo02d"
+                      >
+                        <span
+                          class="pf-v6-c-icon__content"
+                        >
+                          <svg
+                            aria-hidden="true"
+                            class="pf-v6-svg"
+                            fill="currentColor"
+                            height="1em"
+                            role="img"
+                            viewBox="0 0 1024 1024"
+                            width="1em"
+                          >
+                            <path
+                              d="M592,369 L592,289 C592.013862,284.755109 590.320137,280.682962 587.3,277.7 C584.338831,274.647672 580.252355,272.947987 576,273 L464,273 C459.755109,272.986138 455.682962,274.679863 452.7,277.7 C449.647672,280.661169 447.947987,284.747645 447.99884,289 L447.99884,369 C447.986138,373.244891 449.679863,377.317038 452.7,380.3 C455.661169,383.352328 459.747645,385.052013 464,385 L576,385 C580.244891,385.013862 584.317038,383.320137 587.3,380.3 C590.359349,377.343612 592.060354,373.253963 592,369 Z M592,705 L592,465 C592,456.163444 584.836556,449 576,449 L432,449 C423.163444,449 416,456.163444 416,465 L416,497 C416,505.836556 423.163444,513 432,513 L448,513 L448,705 L416,705 C407.163444,705 400,712.163444 400,721 L400,753 C400,761.836556 407.163444,769 416,769 L624,769 C632.836556,769 640,761.836556 640,753 L640,721 C640,712.163444 632.836556,705 624,705 L592,705 Z M512,896 C300.2,896 128,723.9 128,512 C128,300.3 300.2,128 512,128 C723.8,128 896,300.2 896,512 C896,723.8 723.7,896 512,896 Z M512.1,0 C229.7,0 0,229.8 0,512 C0,794.2 229.8,1024 512.1,1024 C794.4,1024 1024,794.3 1024,512 C1024,229.7 794.4,0 512.1,0 Z"
+                            />
+                          </svg>
+                        </span>
+                      </span>
+                    </div>
+                  </span>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                >
+                  <div
+                    class="pf-v6-c-check"
+                  >
+                    <input
+                      aria-invalid="false"
+                      class="pf-v6-c-check__input"
+                      data-ouia-component-id="OUIA-Generated-Checkbox-1"
+                      data-ouia-component-type="PF6/Checkbox"
+                      data-ouia-safe="true"
+                      id="trendlines-show-"
+                      type="checkbox"
+                    />
+                    <label
+                      class="pf-v6-c-check__label"
+                      for="trendlines-show-"
+                    >
+                      Trendlines
+                    </label>
+                  </div>
+                </div>
+                <div
+                  class="pf-v6-c-toolbar__item"
+                  style="margin-left: auto; padding-right: 20px; display: block;"
+                />
+              </div>
+              <div
+                class="pf-v6-c-toolbar__content pf-m-hidden"
+                hidden=""
+              >
+                <div
+                  class="pf-v6-c-toolbar__group"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 `;

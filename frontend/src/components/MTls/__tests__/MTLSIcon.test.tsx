@@ -1,13 +1,14 @@
 import * as React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MTLSIcon } from '../MTLSIcon';
-import { mount } from 'enzyme';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { TooltipPosition } from '@patternfly/react-core';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { MTLSIconTypes } from '../MTLSIconTypes';
 
-const mockIcon = (icon: string): ReturnType<typeof mount> => {
-  const component = (
+const renderIcon = (icon: string): ReturnType<typeof render> => {
+  return render(
     <Provider store={store}>
       <MTLSIcon
         icon={icon}
@@ -17,29 +18,44 @@ const mockIcon = (icon: string): ReturnType<typeof mount> => {
       />
     </Provider>
   );
-  return mount(component);
 };
 
 describe('when Icon is LOCK_FULL', () => {
   it('MTLSIcon renders properly', () => {
-    const mount = mockIcon(MTLSIconTypes.LOCK_FULL);
+    const { container } = renderIcon(MTLSIconTypes.LOCK_FULL);
 
-    const tooltip = mount.find(Tooltip);
-    expect(tooltip.exists()).toBeTruthy();
-    expect(tooltip.props().position).toEqual('right');
-    expect(tooltip.props().content).toEqual('Overlay Test');
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('className');
+  });
 
-    const svg = tooltip.find('svg');
-    expect(svg.exists()).toBeTruthy();
-    expect(svg.props().className).toEqual('className');
+  it('shows tooltip on hover', async () => {
+    const user = userEvent.setup();
+    const { container } = renderIcon(MTLSIconTypes.LOCK_FULL);
+
+    const svg = container.querySelector('svg')!;
+    await user.hover(svg);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Overlay Test');
   });
 });
 
 describe('when Icon is LOCK_HOLLOW', () => {
   it('MTLSIcon renders properly', () => {
-    const mount = mockIcon(MTLSIconTypes.LOCK_HOLLOW);
-    const svg = mount.find('svg');
-    expect(svg.exists()).toBeTruthy();
-    expect(svg.props().className).toEqual('className');
+    const { container } = renderIcon(MTLSIconTypes.LOCK_HOLLOW);
+
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('className');
+  });
+
+  it('shows tooltip on hover', async () => {
+    const user = userEvent.setup();
+    const { container } = renderIcon(MTLSIconTypes.LOCK_HOLLOW);
+
+    const svg = container.querySelector('svg')!;
+    await user.hover(svg);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Overlay Test');
   });
 });

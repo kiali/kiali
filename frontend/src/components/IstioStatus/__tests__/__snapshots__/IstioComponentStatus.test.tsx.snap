@@ -1,305 +1,433 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-isito-ingress"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       isito-ingress
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_fc3wfdg kiali_f16xt7kc"
-        >
-          <UnknownIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--color--gray--50)",
-          "borderColor": "var(--pf-t--color--gray--50)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
     >
-      Not found
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_fc3wfdg kiali_f16xt7kc"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 1024 1024"
+                width="1em"
+              >
+                <path
+                  d="M943.3,317.2 L706.9,80.7 C653,26.9 582.5,0 512,0 C441.5,0 371,26.9 317.1,80.7 L80.7,317.1 C-26.9,424.7 -26.9,599.2 80.7,706.8 L317.1,943.2 C371,997.1 441.5,1024 512,1024 C582.5,1024 653,997.1 706.9,943.3 L943.3,706.9 C1050.9,599.3 1050.9,424.8 943.3,317.2 Z M866.4,602.2 L602.8,866.1 C552.8,916.1 471.8,916.2 421.7,866.2 L157.7,602.2 C107.8,552.2 107.8,471.2 157.8,421.3 L421.4,158.4 C471.3,108.6 552.1,108.6 602.1,158.3 L866.3,421.3 C916.3,471.3 916.3,552.2 866.4,602.2 Z M521.3,576 C627.5,576 713.7,502 713.7,413.7 C713.7,325.4 627.6,253.6 521.3,253.6 C366,253.6 334.5,337.7 329.2,407.2 C329.2,414.3 335.2,416 343.5,416 L445,416 C450.5,416 458,415.5 460.8,406.5 C460.8,362.6 582.9,357.1 582.9,413.6 C582.9,441.9 556.2,470.9 521.3,473 C486.4,475.1 447.3,479.8 447.3,521.7 L447.3,553.8 C447.3,570.8 456.1,576 472,576 C488,576.1 521.3,576 521.3,576 L521.3,576 Z M575.3,751.3 L575.3,655.3 C575.3,650.9 573.7,647.3 570.6,644 C567.5,640.9 563.7,639.3 559.3,639.3 L463.3,639.3 C458.9,639.3 455.3,640.9 452,644 C448.9,647.1 447.3,650.9 447.3,655.3 L447.3,751.3 C447.3,755.7 448.9,759.3 452,762.6 C455.1,765.7 458.9,767.3 463.3,767.3 L559.3,767.3 C563.7,767.3 567.3,765.7 570.6,762.6 C573.8,759.4 575.3,755.6 575.3,751.3 L575.3,751.3 Z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not found
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-isito-ingress"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       isito-ingress
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_fqzjpeg kiali_f1q8dfts"
-        >
-          <ExclamationCircleIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--danger--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--danger--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--danger--default); border-width: 1px; border-style: solid;"
     >
-      Not healthy
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_fqzjpeg kiali_f1q8dfts"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 512 512"
+                width="1em"
+              >
+                <path
+                  d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zm-248 50c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not healthy
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-addon"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       addon
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_f49xmp9 kiali_f1leo02d"
-        >
-          <InProgressIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--info--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--info--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
     >
-      Not ready
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_f49xmp9 kiali_f1leo02d"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 1024 1024"
+                width="1em"
+              >
+                <path
+                  d="M513.417211,16.013668 L513.417211,112.013668 C513.406007,120.539653 520.082422,127.576718 528.597211,128.013668 C732.697211,136.513668 896.147211,305.013668 896.147211,511.343668 C896.147211,723.013668 724.007211,895.163668 512.417211,895.163668 C437.186239,895.277345 363.602574,873.135095 300.927211,831.523668 C294.58293,827.2982 286.138663,828.135095 280.747211,833.523668 L211.807211,902.353668 C208.502935,905.676185 206.82123,910.280199 207.20607,914.950237 C207.590911,919.620275 210.00361,923.886884 213.807211,926.623668 C300.709573,989.398037 405.213535,1023.13146 512.417211,1023.01398 C794.537211,1023.01398 1023.91724,793.433668 1023.91724,511.413668 C1024.00721,235.103668 804.007211,9.22366802 529.897211,0.00645736761 C525.571205,-0.116171039 521.377128,1.51204372 518.271915,4.52681369 C515.166702,7.54158367 513.415263,11.6857144 513.417211,16.013668 M97.1272107,212.923668 C64.2190689,258.479443 39.0698895,309.162997 22.6972107,362.923668 C21.2705092,367.756559 22.2039184,372.979173 25.2163356,377.018685 C28.2287528,381.058197 32.9681443,383.442545 38.0072107,383.453683 L139.407211,383.453683 C145.970195,383.46249 151.873012,379.462528 154.297211,373.363668 C164.307669,347.593304 177.068112,322.977652 192.357211,299.943668 C196.579666,293.633658 195.741339,285.216847 190.357211,279.863668 L121.497211,211.013668 C118.186635,207.662531 113.567544,205.940538 108.871166,206.30669 C104.174788,206.672841 99.8783994,209.089927 97.1272107,212.913668 M112.907211,511.433663 L17.0072107,511.433663 C12.679257,511.433663 8.5351263,513.183159 5.52035633,516.288373 C2.50558635,519.393586 0.877371594,523.587662 1.00721065,527.913668 C4.13104542,629.408217 37.6085847,727.635936 97.1172107,809.913668 C99.8539943,813.717268 104.120603,816.129968 108.790642,816.514809 C113.46068,816.899649 118.064693,815.217944 121.387211,811.913668 L190.217211,743.073668 C195.605784,737.682216 196.442679,729.237949 192.217211,722.893668 C153.520825,664.580171 131.611534,596.745437 128.887211,526.813668 C128.553964,518.220138 121.487197,511.427209 112.887211,511.433663"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not ready
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-core"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       core
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_f49xmp9 kiali_f1leo02d"
-        >
-          <InProgressIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--info--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--info--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
     >
-      Not ready
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_f49xmp9 kiali_f1leo02d"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 1024 1024"
+                width="1em"
+              >
+                <path
+                  d="M513.417211,16.013668 L513.417211,112.013668 C513.406007,120.539653 520.082422,127.576718 528.597211,128.013668 C732.697211,136.513668 896.147211,305.013668 896.147211,511.343668 C896.147211,723.013668 724.007211,895.163668 512.417211,895.163668 C437.186239,895.277345 363.602574,873.135095 300.927211,831.523668 C294.58293,827.2982 286.138663,828.135095 280.747211,833.523668 L211.807211,902.353668 C208.502935,905.676185 206.82123,910.280199 207.20607,914.950237 C207.590911,919.620275 210.00361,923.886884 213.807211,926.623668 C300.709573,989.398037 405.213535,1023.13146 512.417211,1023.01398 C794.537211,1023.01398 1023.91724,793.433668 1023.91724,511.413668 C1024.00721,235.103668 804.007211,9.22366802 529.897211,0.00645736761 C525.571205,-0.116171039 521.377128,1.51204372 518.271915,4.52681369 C515.166702,7.54158367 513.415263,11.6857144 513.417211,16.013668 M97.1272107,212.923668 C64.2190689,258.479443 39.0698895,309.162997 22.6972107,362.923668 C21.2705092,367.756559 22.2039184,372.979173 25.2163356,377.018685 C28.2287528,381.058197 32.9681443,383.442545 38.0072107,383.453683 L139.407211,383.453683 C145.970195,383.46249 151.873012,379.462528 154.297211,373.363668 C164.307669,347.593304 177.068112,322.977652 192.357211,299.943668 C196.579666,293.633658 195.741339,285.216847 190.357211,279.863668 L121.497211,211.013668 C118.186635,207.662531 113.567544,205.940538 108.871166,206.30669 C104.174788,206.672841 99.8783994,209.089927 97.1272107,212.913668 M112.907211,511.433663 L17.0072107,511.433663 C12.679257,511.433663 8.5351263,513.183159 5.52035633,516.288373 C2.50558635,519.393586 0.877371594,523.587662 1.00721065,527.913668 C4.13104542,629.408217 37.6085847,727.635936 97.1172107,809.913668 C99.8539943,813.717268 104.120603,816.129968 108.790642,816.514809 C113.46068,816.899649 118.064693,815.217944 121.387211,811.913668 L190.217211,743.073668 C195.605784,737.682216 196.442679,729.237949 192.217211,722.893668 C153.520825,664.580171 131.611534,596.745437 128.887211,526.813668 C128.553964,518.220138 121.487197,511.427209 112.887211,511.433663"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not ready
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-isito-ingress"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       isito-ingress
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_fngrjuo kiali_f1wrxx94"
-        >
-          <CheckCircleIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--success--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--success--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
     >
-      Healthy
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_fngrjuo kiali_f1wrxx94"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 512 512"
+                width="1em"
+              >
+                <path
+                  d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Healthy
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-prometheus"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       prometheus
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_fngrjuo kiali_f1wrxx94"
-        >
-          <CheckCircleIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--success--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--success--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
     >
-      Healthy
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_fngrjuo kiali_f1wrxx94"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 512 512"
+                width="1em"
+              >
+                <path
+                  d="M504 256c0 136.967-111.033 248-248 248S8 392.967 8 256 119.033 8 256 8s248 111.033 248 248zM227.314 387.314l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.249-16.379-6.249-22.628 0L216 308.118l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.249 16.379 6.249 22.628.001z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Healthy
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-prometheus"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       prometheus
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_fc3wfdg kiali_f16xt7kc"
-        >
-          <UnknownIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--color--gray--50)",
-          "borderColor": "var(--pf-t--color--gray--50)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
     >
-      Not found
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_fc3wfdg kiali_f16xt7kc"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 1024 1024"
+                width="1em"
+              >
+                <path
+                  d="M943.3,317.2 L706.9,80.7 C653,26.9 582.5,0 512,0 C441.5,0 371,26.9 317.1,80.7 L80.7,317.1 C-26.9,424.7 -26.9,599.2 80.7,706.8 L317.1,943.2 C371,997.1 441.5,1024 512,1024 C582.5,1024 653,997.1 706.9,943.3 L943.3,706.9 C1050.9,599.3 1050.9,424.8 943.3,317.2 Z M866.4,602.2 L602.8,866.1 C552.8,916.1 471.8,916.2 421.7,866.2 L157.7,602.2 C107.8,552.2 107.8,471.2 157.8,421.3 L421.4,158.4 C471.3,108.6 552.1,108.6 602.1,158.3 L866.3,421.3 C916.3,471.3 916.3,552.2 866.4,602.2 Z M521.3,576 C627.5,576 713.7,502 713.7,413.7 C713.7,325.4 627.6,253.6 521.3,253.6 C366,253.6 334.5,337.7 329.2,407.2 C329.2,414.3 335.2,416 343.5,416 L445,416 C450.5,416 458,415.5 460.8,406.5 C460.8,362.6 582.9,357.1 582.9,413.6 C582.9,441.9 556.2,470.9 521.3,473 C486.4,475.1 447.3,479.8 447.3,521.7 L447.3,553.8 C447.3,570.8 456.1,576 472,576 C488,576.1 521.3,576 521.3,576 L521.3,576 Z M575.3,751.3 L575.3,655.3 C575.3,650.9 573.7,647.3 570.6,644 C567.5,640.9 563.7,639.3 559.3,639.3 L463.3,639.3 C458.9,639.3 455.3,640.9 452,644 C448.9,647.1 447.3,650.9 447.3,655.3 L447.3,751.3 C447.3,755.7 448.9,759.3 452,762.6 C455.1,765.7 458.9,767.3 463.3,767.3 L559.3,767.3 C563.7,767.3 567.3,765.7 570.6,762.6 C573.8,759.4 575.3,755.6 575.3,751.3 L575.3,751.3 Z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not found
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;
 
 exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
-<Fragment>
-  <Split
-    className="kiali_f1km8g7f"
-    hasGutter={true}
-    key="cell-status-icon-prometheus"
+<div>
+  <div
+    class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
   >
-    <SplitItem
-      isFilled={true}
+    <div
+      class="pf-v6-l-split__item pf-m-fill"
     >
       prometheus
-    </SplitItem>
-    <Label
-      className="kiali_f1ha75wd"
+    </div>
+    <span
+      class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      icon={
-        <Icon
-          className="kiali_f3dfrvt kiali_f1cbc381"
-        >
-          <ExclamationTriangleIcon />
-        </Icon>
-      }
-      style={
-        Object {
-          "--pf-v6-c-label--m-outline--BorderColor": "var(--pf-t--global--icon--color--status--warning--default)",
-          "borderColor": "var(--pf-t--global--icon--color--status--warning--default)",
-          "borderStyle": "solid",
-          "borderWidth": "1px",
-        }
-      }
-      variant="outline"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--warning--default); border-width: 1px; border-style: solid;"
     >
-      Not healthy
-    </Label>
-  </Split>
-</Fragment>
+      <span
+        class="pf-v6-c-label__content"
+      >
+        <span
+          class="pf-v6-c-label__icon"
+        >
+          <span
+            class="pf-v6-c-icon kiali_f3dfrvt kiali_f1cbc381"
+          >
+            <span
+              class="pf-v6-c-icon__content"
+            >
+              <svg
+                aria-hidden="true"
+                class="pf-v6-svg"
+                fill="currentColor"
+                height="1em"
+                role="img"
+                viewBox="0 0 576 512"
+                width="1em"
+              >
+                <path
+                  d="M569.517 440.013C587.975 472.007 564.806 512 527.94 512H48.054c-36.937 0-59.999-40.055-41.577-71.987L246.423 23.985c18.467-32.009 64.72-31.951 83.154 0l239.94 416.028zM288 354c-25.405 0-46 20.595-46 46s20.595 46 46 46 46-20.595 46-46-20.595-46-46-46zm-43.673-165.346l7.418 136c.347 6.364 5.609 11.346 11.982 11.346h48.546c6.373 0 11.635-4.982 11.982-11.346l7.418-136c.375-6.874-5.098-12.654-11.982-12.654h-63.383c-6.884 0-12.356 5.78-11.981 12.654z"
+                />
+              </svg>
+            </span>
+          </span>
+        </span>
+        <span
+          class="pf-v6-c-label__text"
+        >
+          Not healthy
+        </span>
+      </span>
+    </span>
+  </div>
+</div>
 `;

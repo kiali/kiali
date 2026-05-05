@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
-import { shallowToJson } from 'enzyme-to-json';
+import { render } from '@testing-library/react';
 
 import { ToolbarDropdown } from '../ToolbarDropdown';
 import { config } from '../../../config';
@@ -23,7 +22,7 @@ const data = [
 describe('ToolbarDropdown', () => {
   it('Render correctly the toolbar dropdown', () => {
     data.forEach(dropdownType => {
-      const wrapper = shallow(
+      const { container } = render(
         <ToolbarDropdown
           id={dropdownType.id}
           disabled={false}
@@ -34,7 +33,7 @@ describe('ToolbarDropdown', () => {
           options={dropdownType.options}
         />
       );
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
+      expect(container).toMatchSnapshot();
     });
   });
 });

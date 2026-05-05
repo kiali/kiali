@@ -1,66 +1,107 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
-<div
-  className="kiali_f1ldck1g"
->
+<div>
   <div
-    data-test="app-label-container"
-    key="label_div_0"
+    class="kiali_f1ldck1g"
   >
-    <Label
-      key="label_0"
-      name="app"
-      value="bookinfo"
-    />
+    <div
+      data-test="app-label-container"
+    >
+      <span
+        class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"
+      >
+        <span
+          class="pf-v6-c-label__content"
+        >
+          <span
+            class="pf-v6-c-label__text"
+            style="--pf-v6-c-label__text--MaxWidth: 500px;"
+          >
+            app=bookinfo
+          </span>
+        </span>
+      </span>
+    </div>
+    <div
+      data-test="version-label-container"
+    >
+      <span
+        class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"
+      >
+        <span
+          class="pf-v6-c-label__content"
+        >
+          <span
+            class="pf-v6-c-label__text"
+            style="--pf-v6-c-label__text--MaxWidth: 500px;"
+          >
+            version=v1
+          </span>
+        </span>
+      </span>
+    </div>
+    <button
+      class="pf-v6-c-button pf-m-link kiali_fw8qhul"
+      data-ouia-component-id="OUIA-Generated-Button-link-1"
+      data-ouia-component-type="PF6/Button"
+      data-ouia-safe="true"
+      data-test="label_more"
+      type="button"
+    >
+      <span
+        class="pf-v6-c-button__text"
+      >
+        More 
+        labels
+        ...
+      </span>
+    </button>
   </div>
-  <div
-    data-test="version-label-container"
-    key="label_div_1"
-  >
-    <Label
-      key="label_1"
-      name="version"
-      value="v1"
-    />
-  </div>
-  <Button
-    className="kiali_fw8qhul"
-    data-test="label_more"
-    key="label_more"
-    onClick={[Function]}
-    variant="link"
-  >
-    More 
-    labels
-    ...
-  </Button>
 </div>
 `;
 
 exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
-<div
-  className="kiali_f1ldck1g"
->
+<div>
   <div
-    data-test="app-label-container"
-    key="label_div_0"
+    class="kiali_f1ldck1g"
   >
-    <Label
-      key="label_0"
-      name="app"
-      value="bookinfo"
-    />
-  </div>
-  <div
-    data-test="version-label-container"
-    key="label_div_1"
-  >
-    <Label
-      key="label_1"
-      name="version"
-      value="v1"
-    />
+    <div
+      data-test="app-label-container"
+    >
+      <span
+        class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"
+      >
+        <span
+          class="pf-v6-c-label__content"
+        >
+          <span
+            class="pf-v6-c-label__text"
+            style="--pf-v6-c-label__text--MaxWidth: 500px;"
+          >
+            app=bookinfo
+          </span>
+        </span>
+      </span>
+    </div>
+    <div
+      data-test="version-label-container"
+    >
+      <span
+        class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"
+      >
+        <span
+          class="pf-v6-c-label__content"
+        >
+          <span
+            class="pf-v6-c-label__text"
+            style="--pf-v6-c-label__text--MaxWidth: 500px;"
+          >
+            version=v1
+          </span>
+        </span>
+      </span>
+    </div>
   </div>
 </div>
 `;

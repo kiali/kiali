@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { shallow, ShallowWrapper } from 'enzyme';
-import { shallowToJson } from 'enzyme-to-json';
+import { render } from '@testing-library/react';
 import { Spire } from '../Spire';
 import { Workload, SpireManagedIdentityMatch } from '../../../types/Workload';
 import { ServiceDetailsInfo, Service, WorkloadOverview } from '../../../types/ServiceInfo';
@@ -116,8 +115,8 @@ describe('Spire component', () => {
         workloadEntries: []
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={workload} objectType="workload" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={workload} objectType="workload" />);
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('renders null when workload is not SPIRE managed', () => {
@@ -151,8 +150,8 @@ describe('Spire component', () => {
         }
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={workload} objectType="workload" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={workload} objectType="workload" />);
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('renders card with single identity match', () => {
@@ -194,11 +193,10 @@ describe('Spire component', () => {
         }
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={workload} objectType="workload" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={workload} objectType="workload" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders card with multiple identity matches', () => {
@@ -248,11 +246,10 @@ describe('Spire component', () => {
         }
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={workload} objectType="workload" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={workload} objectType="workload" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders null when workload is SPIRE server', () => {
@@ -286,8 +283,8 @@ describe('Spire component', () => {
         }
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={workload} objectType="workload" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={workload} objectType="workload" />);
+      expect(container).toBeEmptyDOMElement();
     });
   });
 
@@ -295,25 +292,24 @@ describe('Spire component', () => {
     it('renders null when service has no workloads', () => {
       const service = mockServiceDetailsInfo();
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={service} objectType="service" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={service} objectType="service" />);
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('renders null when service has no SPIRE-managed workloads', () => {
       const service = mockServiceDetailsInfo([mockWorkloadOverview(false)]);
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={service} objectType="service" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={service} objectType="service" />);
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('renders card when service has SPIRE-managed workloads', () => {
       const service = mockServiceDetailsInfo([mockWorkloadOverview(true)]);
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={service} objectType="service" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={service} objectType="service" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders card when service has mixed workloads (some SPIRE-managed)', () => {
@@ -322,11 +318,10 @@ describe('Spire component', () => {
         mockWorkloadOverview(true, 'workload-with-spire')
       ]);
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={service} objectType="service" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={service} objectType="service" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders card when service has multiple SPIRE-managed workloads', () => {
@@ -335,11 +330,10 @@ describe('Spire component', () => {
         mockWorkloadOverview(true, 'workload-2')
       ]);
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={service} objectType="service" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={service} objectType="service" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
   });
 
@@ -356,8 +350,8 @@ describe('Spire component', () => {
         workloads: [mockAppWorkload(false)]
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={app} objectType="app" />);
-      expect(wrapper.type()).toBeNull();
+      const { container } = render(<Spire object={app} objectType="app" />);
+      expect(container).toBeEmptyDOMElement();
     });
 
     it('renders card when app has SPIRE-managed workloads', () => {
@@ -372,11 +366,10 @@ describe('Spire component', () => {
         workloads: [mockAppWorkload(true)]
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={app} objectType="app" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={app} objectType="app" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders card when app has multiple SPIRE-managed workloads', () => {
@@ -391,11 +384,10 @@ describe('Spire component', () => {
         workloads: [mockAppWorkload(true, 'workload-1'), mockAppWorkload(true, 'workload-2')]
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={app} objectType="app" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={app} objectType="app" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
 
     it('renders card when app has mixed workloads (some SPIRE-managed)', () => {
@@ -410,11 +402,10 @@ describe('Spire component', () => {
         workloads: [mockAppWorkload(false, 'workload-no-spire'), mockAppWorkload(true, 'workload-with-spire')]
       };
 
-      const wrapper: ShallowWrapper = shallow(<Spire object={app} objectType="app" />);
-      expect(wrapper.type()).not.toBeNull();
-      expect(shallowToJson(wrapper)).toBeDefined();
-      expect(shallowToJson(wrapper)).toMatchSnapshot();
-      expect(wrapper.find('#SpireCard').exists()).toBeTruthy();
+      const { container } = render(<Spire object={app} objectType="app" />);
+      expect(container).not.toBeEmptyDOMElement();
+      expect(container).toMatchSnapshot();
+      expect(container.querySelector('#SpireCard')).toBeInTheDocument();
     });
   });
 });

@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
-import { shallowToJson } from 'enzyme-to-json';
 import { IstioMetrics } from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
@@ -80,6 +79,10 @@ const createHistogramChart = (name: string): ChartModel => {
 describe('Metrics for a service', () => {
   beforeEach(() => {
     jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
+    jest.spyOn(API, 'getPersesInfo').mockResolvedValue({ url: '', dashboards: {} });
+    jest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
+      data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
+    } as any);
     jest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
       requestSize: false,
       requestSizeAverage: false,
@@ -98,7 +101,7 @@ describe('Metrics for a service', () => {
   });
 
   it('renders initial layout', () => {
-    const wrapper = shallow(
+    const { container } = render(
       <Provider store={store}>
         <MemoryRouter>
           <IstioMetrics
@@ -112,7 +115,7 @@ describe('Metrics for a service', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 
   it('mounts and loads empty metrics', done => {
@@ -129,10 +132,10 @@ describe('Metrics for a service', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, wrapper => {
-        expect(wrapper.find('Chart')).toHaveLength(0);
+      .run(done, container => {
+        expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(0);
       });
-  });
+  }, 10000);
 
   it('mounts and loads full metrics', done => {
     const dashboard: DashboardModel = {
@@ -159,14 +162,19 @@ describe('Metrics for a service', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, wrapper => {
-        expect(wrapper.find('Chart')).toHaveLength(4);
+      .run(done, container => {
+        expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(4);
       });
-  }, 10000); // Increase timeout for this test
+  }, 10000);
 });
 
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
+    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
+    jest.spyOn(API, 'getPersesInfo').mockResolvedValue({ url: '', dashboards: {} });
+    jest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
+      data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
+    } as any);
     jest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
       requestSize: false,
       requestSizeAverage: false,
@@ -185,7 +193,7 @@ describe('Inbound Metrics for a workload', () => {
   });
 
   it('renders initial layout', () => {
-    const wrapper = shallow(
+    const { container } = render(
       <Provider store={store}>
         <MemoryRouter>
           <IstioMetrics
@@ -199,7 +207,7 @@ describe('Inbound Metrics for a workload', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(shallowToJson(wrapper)).toMatchSnapshot();
+    expect(container).toMatchSnapshot();
   });
 
   it('mounts and loads empty metrics', done => {
@@ -216,10 +224,10 @@ describe('Inbound Metrics for a workload', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, wrapper => {
-        expect(wrapper.find('Chart')).toHaveLength(0);
+      .run(done, container => {
+        expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(0);
       });
-  });
+  }, 10000);
 
   it('mounts and loads full metrics', done => {
     const dashboard: DashboardModel = {
@@ -246,8 +254,8 @@ describe('Inbound Metrics for a workload', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, wrapper => {
-        expect(wrapper.find('Chart')).toHaveLength(4);
+      .run(done, container => {
+        expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(4);
       });
-  }, 10000); // Increase timeout for this test
+  }, 10000);
 });

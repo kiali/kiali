@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { shallow, mount, ReactWrapper } from 'enzyme';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { NamespaceTrafficPolicies } from '../NamespaceTrafficPolicies';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
 import { ControlPlane } from '../../../types/Mesh';
@@ -15,10 +16,10 @@ jest.mock('services/Api', () => ({
   createIstioConfigDetail: jest.fn(() => Promise.resolve({}))
 }));
 
-// Avoid pulling in the full preview/editor stack (react-ace + redux-connected components) in these unit tests.
 jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
-  IstioConfigPreview: (props: any) => <div data-test="IstioConfigPreview" {...props} />,
-  // Exported to satisfy named import; not needed for these tests.
+  IstioConfigPreview: (props: any) => (
+    <div data-test="IstioConfigPreview" data-is-open={props.isOpen ? 'true' : 'false'} />
+  ),
   ConfigPreviewItem: {}
 }));
 
@@ -62,8 +63,6 @@ const defaultProps = {
   opTarget: 'create'
 };
 
-const mountWrapper = (props = defaultProps): ReactWrapper => mount(<NamespaceTrafficPolicies {...props} />);
-
 describe('NamespaceTrafficPolicies', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -71,146 +70,174 @@ describe('NamespaceTrafficPolicies', () => {
 
   describe('Component initialization', () => {
     it('renders without crashing', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} />);
-      expect(wrapper.exists()).toBeTruthy();
+      const { container } = render(<NamespaceTrafficPolicies {...defaultProps} />);
+      expect(container).toBeTruthy();
     });
 
     it('initializes state correctly for create operation', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} opTarget="create" />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      expect(instance.state.loaded).toBe(false);
-      expect(instance.state.disableOp).toBe(true);
-      expect(instance.state.confirmationModal).toBe(false);
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} opTarget="create" />);
+      expect(ref.current!.state.loaded).toBe(false);
+      expect(ref.current!.state.disableOp).toBe(true);
+      expect(ref.current!.state.confirmationModal).toBe(false);
     });
 
     it('initializes state correctly for update operation', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} opTarget="update" />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      expect(instance.state.loaded).toBe(true);
-      expect(instance.state.disableOp).toBe(true);
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} opTarget="update" />);
+      expect(ref.current!.state.loaded).toBe(true);
+      expect(ref.current!.state.disableOp).toBe(true);
     });
 
     it('initializes state correctly for canary kind', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} kind="canary" opTarget="revision-1" />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      expect(instance.state.selectedRevision).toBe('revision-1');
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="canary" opTarget="revision-1" />);
+      expect(ref.current!.state.selectedRevision).toBe('revision-1');
     });
   });
 
   describe('Modal rendering', () => {
     it('renders confirmation modal for injection kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
-      wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="injection" opTarget="enable" />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      expect(wrapper.find('Modal').exists()).toBeTruthy();
-      expect(wrapper.find('Modal').prop('title')).toContain('Enable Auto Injection');
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('dialog').textContent).toContain('Enable Auto Injection');
     });
 
     it('renders confirmation modal for ambient kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'ambient', opTarget: 'enable' });
-      wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="ambient" opTarget="enable" />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      expect(wrapper.find('Modal').exists()).toBeTruthy();
-      expect(wrapper.find('Modal').prop('title')).toContain('Enable Ambient');
+      expect(screen.getByRole('dialog').textContent).toContain('Enable Ambient');
     });
 
     it('renders confirmation modal for canary kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'canary', opTarget: 'revision-1' });
-      wrapper.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="canary" opTarget="revision-1" />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
+      });
 
-      expect(wrapper.find('Modal').exists()).toBeTruthy();
-      expect(wrapper.find('Modal').prop('title')).toContain('Switch to revision-1');
+      expect(screen.getByRole('dialog').textContent).toContain('Switch to revision-1');
     });
 
     it('renders confirmation modal for policy kind with create operation', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
-      wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="create" />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      expect(wrapper.find('Modal').exists()).toBeTruthy();
-      expect(wrapper.find('Modal').prop('title')).toContain('Create Traffic Policies');
+      expect(screen.getByRole('dialog').textContent).toContain('Create Traffic Policies');
     });
 
     it('renders confirmation modal for policy kind with delete operation', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'delete' });
-      wrapper.setState({ confirmationModal: true, disableOp: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="delete" />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      expect(wrapper.find('Modal').exists()).toBeTruthy();
-      expect(wrapper.find('Modal').prop('title')).toContain('Delete Traffic Policies');
+      expect(screen.getByRole('dialog').textContent).toContain('Delete Traffic Policies');
     });
 
     it('does not render modal when confirmationModal is false', () => {
-      const wrapper = mountWrapper(defaultProps);
-      wrapper.setState({ confirmationModal: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
+      act(() => {
+        ref.current!.setState({ confirmationModal: false });
+      });
 
-      expect(wrapper.find('Modal').prop('isOpen')).toBe(false);
+      expect(screen.queryByTestId('confirm-create')).not.toBeInTheDocument();
     });
   });
 
   describe('IstioConfigPreview rendering', () => {
     it('renders preview when loaded and has authorization policies', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
-      wrapper.setState({
-        loaded: true,
-        authorizationPolicies: [
-          {
-            metadata: { name: 'test-ap', namespace: 'test-namespace' },
-            spec: {}
-          }
-        ] as any
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="create" />);
+      act(() => {
+        ref.current!.setState({
+          loaded: true,
+          authorizationPolicies: [
+            {
+              metadata: { name: 'test-ap', namespace: 'test-namespace' },
+              spec: {}
+            }
+          ] as any
+        });
       });
-      wrapper.update();
 
-      expect(wrapper.find('IstioConfigPreview').exists()).toBeTruthy();
+      expect(screen.getByTestId('IstioConfigPreview')).toBeInTheDocument();
     });
 
     it('does not render preview when not loaded', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
-      wrapper.setState({ loaded: false });
-      wrapper.update();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="create" />);
+      act(() => {
+        ref.current!.setState({ loaded: false });
+      });
 
-      expect(wrapper.find('IstioConfigPreview').exists()).toBe(false);
+      expect(screen.queryByTestId('IstioConfigPreview')).not.toBeInTheDocument();
     });
 
     it('does not render preview for delete operation', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'delete' });
-      wrapper.setState({
-        loaded: true,
-        authorizationPolicies: [
-          {
-            metadata: { name: 'test-ap', namespace: 'test-namespace' },
-            spec: {}
-          }
-        ] as any
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="delete" />);
+      act(() => {
+        ref.current!.setState({
+          loaded: true,
+          authorizationPolicies: [
+            {
+              metadata: { name: 'test-ap', namespace: 'test-namespace' },
+              spec: {}
+            }
+          ] as any
+        });
       });
-      wrapper.update();
 
-      expect(wrapper.find('IstioConfigPreview').prop('isOpen')).toBe(false);
+      expect(screen.getByTestId('IstioConfigPreview').getAttribute('data-is-open')).toBe('false');
     });
   });
 
   describe('Component lifecycle', () => {
     it('calls fetchPermission on mount for injection kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const fetchPermissionSpy = jest.spyOn(instance, 'fetchPermission').mockImplementation(() => {});
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      const { rerender } = render(
+        <NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="injection" opTarget="enable" />
+      );
+      const fetchPermissionSpy = jest.spyOn(ref.current!, 'fetchPermission').mockImplementation(() => {});
 
-      wrapper.setProps({ nsTarget: 'new-namespace' });
+      rerender(
+        <NamespaceTrafficPolicies
+          ref={ref}
+          {...defaultProps}
+          kind="injection"
+          opTarget="enable"
+          nsTarget="new-namespace"
+        />
+      );
 
       expect(fetchPermissionSpy).toHaveBeenCalled();
     });
 
     it('generates traffic policies when opTarget changes to create', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'update' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const generateTrafficPoliciesSpy = jest.spyOn(instance, 'generateTrafficPolicies').mockImplementation(() => {});
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      const { rerender } = render(
+        <NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="update" />
+      );
+      const generateTrafficPoliciesSpy = jest
+        .spyOn(ref.current!, 'generateTrafficPolicies')
+        .mockImplementation(() => {});
 
-      wrapper.setProps({ opTarget: 'create' });
+      rerender(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="create" />);
 
       expect(generateTrafficPoliciesSpy).toHaveBeenCalled();
     });
@@ -238,12 +265,14 @@ describe('NamespaceTrafficPolicies', () => {
         }
       };
 
-      const wrapper = mountWrapper({ ...defaultProps, nsInfo: nsInfoWithConfig, opTarget: 'create' });
-      wrapper.setProps({ opTarget: 'update' });
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      const { rerender } = render(
+        <NamespaceTrafficPolicies ref={ref} {...defaultProps} nsInfo={nsInfoWithConfig} opTarget="create" />
+      );
+      rerender(<NamespaceTrafficPolicies ref={ref} {...defaultProps} nsInfo={nsInfoWithConfig} opTarget="update" />);
 
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      expect(instance.state.authorizationPolicies.length).toBeGreaterThan(0);
-      expect(instance.state.sidecars.length).toBeGreaterThan(0);
+      expect(ref.current!.state.authorizationPolicies.length).toBeGreaterThan(0);
+      expect(ref.current!.state.sidecars.length).toBeGreaterThan(0);
     });
   });
 
@@ -261,14 +290,15 @@ describe('NamespaceTrafficPolicies', () => {
         }
       });
 
-      const wrapper = mountWrapper(defaultProps);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
 
-      instance.fetchPermission();
-      await new Promise(resolve => setTimeout(resolve, 0));
-      wrapper.update();
+      await act(async () => {
+        ref.current!.fetchPermission();
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
-      expect(instance.state.disableOp).toBe(false);
+      expect(ref.current!.state.disableOp).toBe(false);
     });
 
     it('sets disableOp to true when permissions are not granted', async () => {
@@ -284,68 +314,88 @@ describe('NamespaceTrafficPolicies', () => {
         }
       });
 
-      const wrapper = mountWrapper(defaultProps);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
 
-      instance.fetchPermission();
-      await new Promise(resolve => setTimeout(resolve, 0));
-      wrapper.update();
+      await act(async () => {
+        ref.current!.fetchPermission();
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
 
-      expect(instance.state.disableOp).toBe(true);
+      expect(ref.current!.state.disableOp).toBe(true);
     });
   });
 
   describe('onConfirm', () => {
-    it('calls onAddRemoveAutoInjection for injection kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'injection', opTarget: 'enable' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const onAddRemoveAutoInjectionSpy = jest.spyOn(instance, 'onAddRemoveAutoInjection').mockImplementation(() => {});
+    const clickLastConfirm = async (user: ReturnType<typeof userEvent.setup>): Promise<void> => {
+      const buttons = screen.getAllByTestId('confirm-create');
+      await user.click(buttons[buttons.length - 1]);
+    };
 
-      wrapper.setState({ confirmationModal: true, disableOp: false });
+    it('calls onAddRemoveAutoInjection for injection kind', async () => {
+      const user = userEvent.setup();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="injection" opTarget="enable" />);
+      const onAddRemoveAutoInjectionSpy = jest
+        .spyOn(ref.current!, 'onAddRemoveAutoInjection')
+        .mockImplementation(() => {});
 
-      const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
-      confirmButton.simulate('click');
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
+
+      await clickLastConfirm(user);
 
       expect(onAddRemoveAutoInjectionSpy).toHaveBeenCalledWith(false);
     });
 
-    it('calls onAddRemoveAutoInjection for ambient kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'ambient', opTarget: 'enable' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const onAddRemoveAutoInjectionSpy = jest.spyOn(instance, 'onAddRemoveAutoInjection').mockImplementation(() => {});
+    it('calls onAddRemoveAutoInjection for ambient kind', async () => {
+      const user = userEvent.setup();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="ambient" opTarget="enable" />);
+      const onAddRemoveAutoInjectionSpy = jest
+        .spyOn(ref.current!, 'onAddRemoveAutoInjection')
+        .mockImplementation(() => {});
 
-      wrapper.setState({ confirmationModal: true, disableOp: false });
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
-      confirmButton.simulate('click');
+      await clickLastConfirm(user);
 
       expect(onAddRemoveAutoInjectionSpy).toHaveBeenCalledWith(true);
     });
 
-    it('calls onUpgradeDowngradeIstio for canary kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'canary', opTarget: 'revision-1' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
-      const onUpgradeDowngradeIstioSpy = jest.spyOn(instance, 'onUpgradeDowngradeIstio').mockImplementation(() => {});
+    it('calls onUpgradeDowngradeIstio for canary kind', async () => {
+      const user = userEvent.setup();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="canary" opTarget="revision-1" />);
+      const onUpgradeDowngradeIstioSpy = jest
+        .spyOn(ref.current!, 'onUpgradeDowngradeIstio')
+        .mockImplementation(() => {});
 
-      wrapper.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false, selectedRevision: 'revision-1' });
+      });
 
-      const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
-      confirmButton.simulate('click');
+      await clickLastConfirm(user);
 
       expect(onUpgradeDowngradeIstioSpy).toHaveBeenCalled();
     });
 
-    it('calls onAddRemoveTrafficPolicies for policy kind', () => {
-      const wrapper = mountWrapper({ ...defaultProps, kind: 'policy', opTarget: 'create' });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+    it('calls onAddRemoveTrafficPolicies for policy kind', async () => {
+      const user = userEvent.setup();
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} kind="policy" opTarget="create" />);
       const onAddRemoveTrafficPoliciesSpy = jest
-        .spyOn(instance, 'onAddRemoveTrafficPolicies')
+        .spyOn(ref.current!, 'onAddRemoveTrafficPolicies')
         .mockImplementation(() => {});
 
-      wrapper.setState({ confirmationModal: true, disableOp: false });
+      act(() => {
+        ref.current!.setState({ confirmationModal: true, disableOp: false });
+      });
 
-      const confirmButton = wrapper.find('Button[data-test="confirm-create"]');
-      confirmButton.simulate('click');
+      await clickLastConfirm(user);
 
       expect(onAddRemoveTrafficPoliciesSpy).toHaveBeenCalled();
     });
@@ -354,67 +404,73 @@ describe('NamespaceTrafficPolicies', () => {
   describe('onHideConfirmModal', () => {
     it('resets state and calls hideConfirmModal prop', () => {
       const hideConfirmModalSpy = jest.fn();
-      const wrapper = mountWrapper({ ...defaultProps, hideConfirmModal: hideConfirmModalSpy });
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} hideConfirmModal={hideConfirmModalSpy} />);
 
-      wrapper.setState({
-        confirmationModal: true,
-        authorizationPolicies: [{ metadata: { name: 'test' }, spec: {} }] as any,
-        sidecars: [{ metadata: { name: 'test' }, spec: {} }] as any
+      act(() => {
+        ref.current!.setState({
+          confirmationModal: true,
+          authorizationPolicies: [{ metadata: { name: 'test' }, spec: {} }] as any,
+          sidecars: [{ metadata: { name: 'test' }, spec: {} }] as any
+        });
       });
 
-      instance.onHideConfirmModal();
+      ref.current!.onHideConfirmModal();
 
-      expect(instance.state.confirmationModal).toBe(false);
-      expect(instance.state.authorizationPolicies).toEqual([]);
-      expect(instance.state.sidecars).toEqual([]);
+      expect(ref.current!.state.confirmationModal).toBe(false);
+      expect(ref.current!.state.authorizationPolicies).toEqual([]);
+      expect(ref.current!.state.sidecars).toEqual([]);
       expect(hideConfirmModalSpy).toHaveBeenCalled();
     });
   });
 
   describe('getItemsPreview', () => {
     it('returns empty array when no policies exist', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
 
-      const items = instance.getItemsPreview();
+      const items = ref.current!.getItemsPreview();
 
       expect(items).toEqual([]);
     });
 
     it('returns items with authorization policies', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
 
-      wrapper.setState({
-        authorizationPolicies: [
-          {
-            metadata: { name: 'test-ap', namespace: 'test-namespace' },
-            spec: {}
-          }
-        ] as any
+      act(() => {
+        ref.current!.setState({
+          authorizationPolicies: [
+            {
+              metadata: { name: 'test-ap', namespace: 'test-namespace' },
+              spec: {}
+            }
+          ] as any
+        });
       });
 
-      const items = instance.getItemsPreview();
+      const items = ref.current!.getItemsPreview();
 
       expect(items.length).toBe(1);
       expect(items[0].title).toBe('Authorization Policies');
     });
 
     it('returns items with sidecars', () => {
-      const wrapper = shallow(<NamespaceTrafficPolicies {...defaultProps} />);
-      const instance = wrapper.instance() as NamespaceTrafficPolicies;
+      const ref = React.createRef<NamespaceTrafficPolicies>();
+      render(<NamespaceTrafficPolicies ref={ref} {...defaultProps} />);
 
-      wrapper.setState({
-        sidecars: [
-          {
-            metadata: { name: 'test-sidecar', namespace: 'test-namespace' },
-            spec: {}
-          }
-        ] as any
+      act(() => {
+        ref.current!.setState({
+          sidecars: [
+            {
+              metadata: { name: 'test-sidecar', namespace: 'test-namespace' },
+              spec: {}
+            }
+          ] as any
+        });
       });
 
-      const items = instance.getItemsPreview();
+      const items = ref.current!.getItemsPreview();
 
       expect(items.length).toBe(1);
       expect(items[0].title).toBe('Sidecars');
