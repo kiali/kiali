@@ -281,7 +281,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         )}
         {this.props.disableAction && (
           <div className={kialiStyle({ color: PFColors.Danger })}>
-            {t('User does not have enough permission for this action.')}
+            {t('No user permission or Kiali in view-only mode')}
           </div>
         )}
       </Modal>

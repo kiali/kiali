@@ -73,7 +73,7 @@ export const NamespaceActions: React.FC<Props> = (props: Props) => {
               ? renderDisabledDropdownOption(
                   `tooltip_${itemKey}`,
                   TooltipPosition.left,
-                  'User does not have enough permission for this action',
+                  t('No user permission or Kiali in view-only mode'),
                   item
                 )
               : item;
@@ -96,7 +96,7 @@ export const NamespaceActions: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             `tooltip_action_${i}`,
             TooltipPosition.left,
-            'User does not have enough permission for this action',
+            t('No user permission or Kiali in view-only mode'),
             item
           )
         : item;
