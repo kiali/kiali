@@ -26,18 +26,11 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-const resourceListStyle = kialiStyle({
-  margin: '0 0 0.5rem 0',
-  $nest: {
-    '& > span': {
-      width: '125px',
-      fontWeight: 700
-    }
-  }
-});
-
-const containerStyle = kialiStyle({
-  margin: '1rem 0 0.5rem 0'
+const twoColumnStyle = kialiStyle({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  columnGap: '1rem',
+  margin: '0.5rem 0'
 });
 
 const itemStyle = kialiStyle({
@@ -45,32 +38,23 @@ const itemStyle = kialiStyle({
 });
 
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
-  const renderWaypoints = (): React.ReactNode => {
-    const waypointList = props.waypointWorkloads?.map(waypoint => {
-      let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
-      if (props.cluster && isMultiCluster) {
-        href = `${href}?clusterName=${props.cluster}`;
-      }
+  const renderWaypointItem = (waypoint: WorkloadInfo): React.ReactNode => {
+    let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
+    if (props.cluster && isMultiCluster) {
+      href = `${href}?clusterName=${props.cluster}`;
+    }
 
-      return (
-        <li key={`App_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
-          <div className={iconStyle}>
-            <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
-          </div>
+    return (
+      <li key={`Waypoint_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
+        <div className={iconStyle}>
+          <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
+        </div>
 
-          <KialiLink to={href} dataTest="waypoint-link">
-            {waypoint.name}
-          </KialiLink>
-        </li>
-      );
-    });
-    return [
-      <div key="waypoint-list" className={resourceListStyle}>
-        <ul id="waypoint-list" data-test="waypoint-list" style={{ listStyleType: 'none' }}>
-          {waypointList}
-        </ul>
-      </div>
-    ];
+        <KialiLink to={href} dataTest="waypoint-link">
+          {waypoint.name}
+        </KialiLink>
+      </li>
+    );
   };
 
   const renderAppItem = (namespace: string, appName: string): React.ReactNode => {
@@ -109,39 +93,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const renderEmptyItem = (type: string): React.ReactNode => {
-    const message = `No ${type} found`;
-
-    return <div> {message} </div>;
-  };
-
-  const appList = (): React.ReactNode => {
-    let applicationList: React.ReactNode = <></>;
-
-    if (props.apps !== undefined) {
-      applicationList =
-        props.apps && props.apps.length > 0
-          ? props.apps
-              .filter(name => {
-                if (name === undefined) {
-                  return null;
-                }
-
-                return name;
-              })
-              .map(name => renderAppItem(props.namespace, name))
-          : renderEmptyItem('applications');
-    }
-
-    return [
-      <div key="app-list" className={resourceListStyle}>
-        <ul id="app-list" style={{ listStyleType: 'none' }}>
-          {applicationList}
-        </ul>
-      </div>
-    ];
-  };
-
   const renderWorkloadItem = (workload: AppWorkload): React.ReactNode => {
     let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
 
@@ -150,7 +101,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     }
 
     return (
-      <span key={`WorkloadItem_${workload.workloadName}`}>
+      <li key={`WorkloadItem_${workload.workloadName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
         </div>
@@ -158,47 +109,8 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         <KialiLink to={href}>{workload.workloadName}</KialiLink>
 
         {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
-      </span>
+      </li>
     );
-  };
-
-  const workloadList = (): React.ReactNode => {
-    if (props.workloads && props.workloads.length > 0) {
-      return (
-        <div className={resourceListStyle}>
-          <ul id="workload-list" style={{ listStyleType: 'none' }}>
-            {props.workloads.map((wkd, idx) => {
-              return (
-                <li key={idx} className={itemStyle}>
-                  {renderWorkloadItem(wkd)}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      );
-    }
-
-    return undefined;
-  };
-
-  const serviceList = (): React.ReactNode => {
-    let serviceListContent: React.ReactNode = <></>;
-
-    if (props.services !== undefined) {
-      serviceListContent =
-        props.services && props.services.length > 0
-          ? props.services.map(name => renderServiceItem(props.namespace, name))
-          : renderEmptyItem('services');
-    }
-
-    return [
-      <div key="service-list" className={resourceListStyle}>
-        <ul id="service-list" style={{ listStyleType: 'none' }}>
-          {serviceListContent}
-        </ul>
-      </div>
-    ];
   };
 
   props.apps?.sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1));
@@ -206,12 +118,41 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   props.waypointWorkloads?.sort((w1: WorkloadInfo, w2: WorkloadInfo) => (w1.name < w2.name ? -1 : 1));
   props.workloads?.sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1));
 
+  const leftColumnItems: React.ReactNode[] = [];
+  if (props.apps && props.apps.length > 0) {
+    props.apps.filter(Boolean).forEach(name => leftColumnItems.push(renderAppItem(props.namespace, name)));
+  }
+  if (props.services && props.services.length > 0) {
+    props.services.forEach(name => leftColumnItems.push(renderServiceItem(props.namespace, name)));
+  }
+  if (props.waypointWorkloads && props.waypointWorkloads.length > 0) {
+    props.waypointWorkloads.forEach(wp => leftColumnItems.push(renderWaypointItem(wp)));
+  }
+
+  const rightColumnItems: React.ReactNode[] = [];
+  if (props.workloads && props.workloads.length > 0) {
+    props.workloads.forEach(wkd => rightColumnItems.push(renderWorkloadItem(wkd)));
+  }
+
+  const hasLeft = leftColumnItems.length > 0;
+  const hasRight = rightColumnItems.length > 0;
+
+  if (!hasLeft && !hasRight) {
+    return null;
+  }
+
   return (
-    <div className={containerStyle}>
-      {props.apps !== undefined && appList()}
-      {props.workloads !== undefined && workloadList()}
-      {props.services !== undefined && serviceList()}
-      {props.waypointWorkloads && renderWaypoints()}
+    <div className={twoColumnStyle}>
+      <div>
+        <ul id="resource-left-list" style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          {leftColumnItems}
+        </ul>
+      </div>
+      <div>
+        <ul id="workload-list" style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          {rightColumnItems}
+        </ul>
+      </div>
     </div>
   );
 };

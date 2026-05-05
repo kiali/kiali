@@ -68,6 +68,8 @@ import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo } from '../../components/Logo/Logos';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
+import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { Labels } from '../../components/Label/Labels';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
@@ -82,6 +84,8 @@ interface Props extends ServiceId, ReduxProps {
   duration: DurationInSeconds;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
+  onSaveAnnotations: (annotations: Record<string, string>) => void;
+  onSaveLabels: (labels: Record<string, string>) => void;
   peerAuthentications: PeerAuthentication[];
   serviceDetails?: ServiceDetailsInfo;
   validations: Validations;
@@ -293,6 +297,15 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               ))}
+
+              {service.selectors && Object.keys(service.selectors).length > 0 && (
+                <DescriptionListGroup data-test="details-selector">
+                  <DescriptionListTerm>{t('Selector')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <Labels labels={service.selectors} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
             </DescriptionList>
           </CardBody>
         </Card>
@@ -365,51 +378,34 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       return null;
     }
 
-    const service = sd.service;
-    let showServiceLabels = false;
+    return (
+      <StackItem key="labels" data-test="service-labels-card">
+        <EditableLabelsCard
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          isVertical={false}
+          labels={sd.service.labels ?? {}}
+          onSave={this.props.onSaveLabels}
+          title={t('Labels')}
+        />
+      </StackItem>
+    );
+  }
 
-    if (service.labels && service.selectors) {
-      const keys = Object.keys(service.labels);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        if (service.selectors[key] !== service.labels[key]) {
-          showServiceLabels = true;
-          break;
-        }
-      }
-    }
-
-    const hasLabels = showServiceLabels && service.labels && Object.keys(service.labels).length > 0;
-    const hasSelectors = service.selectors && Object.keys(service.selectors).length > 0;
-
-    if (!hasLabels && !hasSelectors) {
+  private renderAnnotationsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
       return null;
     }
 
     return (
-      <StackItem key="labels" data-test="service-labels-card">
-        <Card>
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
-              {t('Labels')}
-            </Title>
-
-            {showServiceLabels && service.labels && (
-              <Labels labels={service.labels} tooltipMessage={t('Labels defined on the Service')} />
-            )}
-
-            {service.selectors && (
-              <Labels
-                labels={service.selectors}
-                tooltipMessage={
-                  showServiceLabels
-                    ? t('Labels defined on the Selector')
-                    : t('Labels defined on the Service and Selector')
-                }
-              />
-            )}
-          </CardBody>
-        </Card>
+      <StackItem key="annotations" data-test="service-annotations-card">
+        <EditableAnnotationsCard
+          annotations={sd.service.annotations ?? {}}
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          numAnnotations={0}
+          onSave={this.props.onSaveAnnotations}
+          title={t('Annotations')}
+        />
       </StackItem>
     );
   }
@@ -506,6 +502,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 {this.renderDetailsCard()}
                 {this.renderResourcesCard()}
                 {this.renderLabelsCard()}
+                {this.renderAnnotationsCard()}
 
                 {this.props.serviceDetails &&
                   this.props.serviceDetails.workloads &&

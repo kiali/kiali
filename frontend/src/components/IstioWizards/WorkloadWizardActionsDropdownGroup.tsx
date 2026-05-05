@@ -4,7 +4,6 @@ import { serverConfig } from 'config';
 import {
   buildWorkloadInjectionPatch,
   WIZARD_DISABLE_AUTO_INJECTION,
-  WIZARD_EDIT_ANNOTATIONS,
   WIZARD_ENABLE_AUTO_INJECTION,
   WIZARD_REMOVE_AUTO_INJECTION
 } from './WizardActions';
@@ -14,12 +13,9 @@ import { Workload } from 'types/Workload';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { groupMenuStyle } from 'styles/DropdownStyles';
 import { t } from 'utils/I18nUtils';
-import { getGVKTypeString } from '../../utils/IstioConfigUtils';
-import { gvkType } from '../../types/IstioConfigList';
 
 type Props = {
   actionsLabel: boolean;
-  annotations?: { [key: string]: string };
   namespace: string;
   onAction: (key: string) => void;
   workload: Workload;
@@ -54,10 +50,6 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
             props.onAction(key);
           });
         break;
-      case WIZARD_EDIT_ANNOTATIONS: {
-        props.onAction(key);
-        break;
-      }
       default:
         console.warn(`WorkloadWizardDropdown: key ${key} not supported`);
     }
@@ -137,24 +129,6 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       // If sidecar is present, we offer first the disable action
       actionItems.push(props.workload.istioSidecar ? disableActionWrapper : enableActionWrapper);
     }
-  }
-
-  // Annotations
-  if (props.annotations && getGVKTypeString(props.workload.gvk) === getGVKTypeString(gvkType.Deployment)) {
-    const annotationsAction = (
-      <DropdownItem
-        data-test={WIZARD_EDIT_ANNOTATIONS}
-        key={WIZARD_EDIT_ANNOTATIONS}
-        component="button"
-        onClick={() => onAction(WIZARD_EDIT_ANNOTATIONS)}
-      >
-        {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-          ? t('Edit Annotations')
-          : t('View Annotations')}
-      </DropdownItem>
-    );
-
-    actionItems.push(annotationsAction);
   }
 
   if (props.actionsLabel && actionItems.length > 0) {

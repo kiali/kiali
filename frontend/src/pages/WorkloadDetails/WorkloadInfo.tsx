@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
-import { addError } from '../../utils/AlertUtils';
 import {
   Alert,
   Card,
@@ -54,8 +53,10 @@ import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLa
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 import { WorkloadConfigValidation } from '../../components/Validations/WorkloadConfigValidation';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
-import { Labels } from '../../components/Label/Labels';
+import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
+import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { t } from 'utils/I18nUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -481,34 +482,54 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     );
   }
 
-  private renderLabelsCard(workload: Workload): React.ReactNode {
-    if (!workload.labels || Object.keys(workload.labels).length === 0) {
-      return null;
+  private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
+    const workload = this.props.workload;
+    if (!workload) {
+      return;
     }
+    const original = (field === 'labels' ? workload.labels : workload.annotations) ?? {};
+    const patch: Record<string, string | null> = { ...updated };
+    Object.keys(original).forEach(key => {
+      if (!(key in updated)) {
+        patch[key] = null;
+      }
+    });
+    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
 
-    const isTemplateLabels =
-      [
-        getGVKTypeString(gvkType.Deployment),
-        getGVKTypeString(gvkType.ReplicaSet),
-        getGVKTypeString(gvkType.ReplicationController),
-        getGVKTypeString(gvkType.DeploymentConfig),
-        getGVKTypeString(gvkType.StatefulSet),
-        getGVKTypeString(gvkType.WorkloadGroup)
-      ].indexOf(getGVKTypeString(workload.gvk)) >= 0;
+    API.updateWorkload(this.props.namespace, workload.name, workload.gvk, jsonPatch, undefined, workload.cluster)
+      .then(() => {
+        addSuccess(t('Workload {{workload}} {{field}} updated', { workload: workload.name, field }));
+        this.props.refreshWorkload();
+      })
+      .catch(error => {
+        addError(t('Could not update workload {{workload}} {{field}}', { workload: workload.name, field }), error);
+      });
+  };
 
+  private renderLabelsCard(workload: Workload): React.ReactNode {
     return (
       <StackItem key="labels" data-test="workload-labels-card">
-        <Card>
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
-              {t('Labels')}
-            </Title>
-            <Labels
-              labels={workload.labels}
-              tooltipMessage={isTemplateLabels ? t('Labels defined on the Workload template') : undefined}
-            />
-          </CardBody>
-        </Card>
+        <EditableLabelsCard
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          isVertical={false}
+          labels={workload.labels ?? {}}
+          onSave={labels => this.handleSaveMetadata('labels', labels)}
+          title={t('Labels')}
+        />
+      </StackItem>
+    );
+  }
+
+  private renderAnnotationsCard(workload: Workload): React.ReactNode {
+    return (
+      <StackItem key="annotations" data-test="workload-annotations-card">
+        <EditableAnnotationsCard
+          annotations={workload.annotations ?? {}}
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          numAnnotations={0}
+          onSave={annotations => this.handleSaveMetadata('annotations', annotations)}
+          title={t('Annotations')}
+        />
       </StackItem>
     );
   }
@@ -534,6 +555,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 {workload && this.renderDetailsCard(workload)}
                 {workload && this.renderResourcesCard(workload)}
                 {workload && this.renderLabelsCard(workload)}
+                {workload && this.renderAnnotationsCard(workload)}
 
                 {workload && workload?.spireInfo?.isSpireManaged && (
                   <StackItem>

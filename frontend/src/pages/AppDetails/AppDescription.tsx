@@ -76,7 +76,6 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           namespace={props.app ? props.app.namespace.name : ''}
           workloads={props.app ? props.app.workloads : []}
           services={props.app ? props.app.serviceNames : []}
-          health={props.health}
           cluster={props.app?.cluster}
         />
       </CardBody>

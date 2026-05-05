@@ -28,11 +28,8 @@ import { createIcon } from '../../config/KialiIcon';
 import * as H from '../../types/Health';
 import { NA, HEALTHY } from '../../types/Health';
 import { HealthDetails } from '../../components/Health/HealthDetails';
-import { serverConfig } from '../../config';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
-import { Labels } from '../../components/Label/Labels';
-import { getAppLabelName } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
 
 type AppInfoProps = {
@@ -177,39 +174,6 @@ export class AppInfo extends React.Component<AppInfoProps> {
     );
   }
 
-  private renderLabelsCard(app: App): React.ReactNode {
-    const appLabels: { [key: string]: string } = {};
-
-    if (app.workloads && app.workloads.length > 0) {
-      const appLabelName = getAppLabelName(app.workloads[0].labels);
-      if (appLabelName) {
-        appLabels[appLabelName] = app.name;
-      }
-    }
-
-    if (Object.keys(appLabels).length === 0) {
-      return null;
-    }
-
-    return (
-      <StackItem key="labels" data-test="app-labels-card">
-        <Card>
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
-              {t('Labels')}
-            </Title>
-            <Labels
-              labels={appLabels}
-              tooltipMessage={t('Workloads and Services grouped by {{label}} label', {
-                label: serverConfig.istioLabels.appLabelName ?? 'app'
-              })}
-            />
-          </CardBody>
-        </Card>
-      </StackItem>
-    );
-  }
-
   render(): React.ReactNode {
     const app = this.props.app;
     const miniGraphSpan = 8;
@@ -221,8 +185,6 @@ export class AppInfo extends React.Component<AppInfoProps> {
             <Stack hasGutter={true}>
               {app && this.renderDetailsCard(app)}
               {app && this.renderResourcesCard(app)}
-              {app && this.renderLabelsCard(app)}
-
               {app &&
                 app.workloads &&
                 app.workloads.length > 0 &&

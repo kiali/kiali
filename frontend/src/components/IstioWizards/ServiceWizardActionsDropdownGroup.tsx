@@ -7,7 +7,6 @@ import {
   SERVICE_WIZARD_ACTIONS,
   WIZARD_K8S_REQUEST_ROUTING,
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
-  WIZARD_EDIT_ANNOTATIONS,
   WIZARD_TITLES,
   WizardAction,
   WizardMode,
@@ -25,7 +24,6 @@ import { t } from 'utils/I18nUtils';
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
 type Props = {
-  annotations?: { [key: string]: string };
   className?: string;
   destinationRules: DestinationRule[];
   isDisabled?: boolean;
@@ -133,22 +131,6 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
       return wizardItem;
     }
   });
-
-  // Annotations
-  if (props.annotations) {
-    actionItems.push(
-      <DropdownItem
-        key={WIZARD_EDIT_ANNOTATIONS}
-        component="button"
-        onClick={() => handleActionClick(WIZARD_EDIT_ANNOTATIONS)}
-        data-test={WIZARD_EDIT_ANNOTATIONS}
-      >
-        {serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode
-          ? t('Edit Annotations')
-          : t('View Annotations')}
-      </DropdownItem>
-    );
-  }
 
   actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
 
