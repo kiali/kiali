@@ -246,19 +246,19 @@ jobs:
       # Download artifacts
       # -------------------------------
       - name: Download backend coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage-backend
           path: coverage
 
       - name: Download multicluster coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage-multicluster
           path: coverage
       
       - name: Download unit coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage-unit
           path: coverage
