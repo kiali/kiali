@@ -77,5 +77,7 @@ describe('NotificationCenter', () => {
     expect(screen.getByText('show me')).toBeInTheDocument();
     expect(screen.getByText('hide me')).toBeInTheDocument();
     expect(screen.queryByText('show me too')).not.toBeInTheDocument();
+    // Each PF6 Alert renders a heading (h4) with the alert title
+    expect(screen.getAllByRole('heading')).toHaveLength(2);
   });
 });

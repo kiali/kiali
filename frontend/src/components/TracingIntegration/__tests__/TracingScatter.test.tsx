@@ -74,6 +74,8 @@ const makeProps = (
   loadMetricsStats: jest.fn().mockResolvedValue(undefined),
   setTraceId: jest.fn(),
   showSpansAverage: false,
+  // Non-empty so that ChartWithLegend actually renders (the component shows an
+  // empty-state when traces is []), which lets the mock capture onTooltipOpen/Close props.
   traces: [makeTrace()],
   ...overrides
 });

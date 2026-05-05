@@ -41,11 +41,12 @@ const testSnapshot = (container: HTMLElement): void => {
   expect(container).toMatchSnapshot();
 };
 
-const testIcon = (container: HTMLElement, dataTest: string, expectedStatus?: string): void => {
+const testIcon = (container: HTMLElement, dataTest: string, expectedLabelStatus?: string): void => {
   const element = container.querySelector(`[data-test="${dataTest}"]`);
   expect(element).toBeInTheDocument();
-  if (expectedStatus) {
-    expect(element).toHaveAttribute('data-test', `istio-status-${expectedStatus}`);
+  if (expectedLabelStatus) {
+    // Verify the PatternFly Label status prop via the CSS modifier class it generates
+    expect(element).toHaveClass(`pf-m-${expectedLabelStatus}`);
   }
 };
 
@@ -243,7 +244,8 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-info', 'info');
+        // PFColors.Info branch sets Label status='success' (see IstioStatus.tsx:426-428)
+        testIcon(container, 'istio-status-info', 'success');
         await testTooltip(container);
       });
     });
@@ -260,7 +262,8 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-info', 'info');
+        // PFColors.Info branch sets Label status='success' (see IstioStatus.tsx:426-428)
+        testIcon(container, 'istio-status-info', 'success');
         await testTooltip(container);
       });
     });
