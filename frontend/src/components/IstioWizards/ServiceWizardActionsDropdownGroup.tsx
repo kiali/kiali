@@ -68,7 +68,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean): string => {
     if (serverConfig.deployment.viewOnlyMode) {
-      return t('User does not have permission');
+      return t('No user permission or Kiali in view-only mode');
     } else if (hasTrafficRouting()) {
       return t('Traffic routing already exists for this service');
     } else if (isGatewayAPI) {

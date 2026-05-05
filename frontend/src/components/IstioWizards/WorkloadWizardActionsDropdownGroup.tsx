@@ -72,7 +72,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'enable_auto_injection',
           TooltipPosition.left,
-          t('User does not have permission'),
+          t('No user permission or Kiali in view-only mode'),
           enableAction
         )
       : enableAction;
@@ -93,7 +93,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'disable_auto_injection',
           TooltipPosition.left,
-          t('User does not have permission'),
+          t('No user permission or Kiali in view-only mode'),
           disableAction
         )
       : disableAction;
@@ -114,7 +114,7 @@ export const WorkloadWizardActionsDropdownGroup: React.FunctionComponent<Props> 
       ? renderDisabledDropdownOption(
           'remove_auto_injection',
           TooltipPosition.left,
-          t('User does not have permission'),
+          t('No user permission or Kiali in view-only mode'),
           removeAction
         )
       : removeAction;
