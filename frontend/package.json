@@ -218,6 +218,9 @@
   "jest": {
     "moduleNameMapper": {
       "^react-dom/client$": "<rootDir>/src/test-shims/react-dom-client.js"
-    }
+    },
+    "setupFiles": [
+      "<rootDir>/src/test-shims/text-encoding.js"
+    ]
   }
 }
