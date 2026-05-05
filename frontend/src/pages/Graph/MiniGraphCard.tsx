@@ -423,37 +423,25 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   private onViewFullGraph = (): void => {
-    const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
+    const namespace = this.props.dataSource.fetchParameters.namespaces[0];
     const graphType: GraphType = this.props.dataSource.fetchParameters.graphType;
 
     const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
       { prop: 'isSelected', op: 'truthy' }
     ]);
-   const params = new URLSearchParams();
+
+    const params = new URLSearchParams();
     params.set('graphType', graphType);
     params.set('injectServiceNodes', 'true');
-    params.set('namespaces', namespace);
-    if (targetNamespace.cluster) {
-      params.set(URLParam.CLUSTERNAME, targetNamespace.cluster);
+    params.set('namespaces', namespace.name);
+    if (namespace.cluster) {
+      params.set(URLParam.CLUSTERNAME, namespace.cluster);
     }
     if (selected.length > 0) {
       params.set(URLParam.FOCUS_SELECTOR, selected[0].getId());
     }
 
     const graphUrl = `/graph/namespaces?${params.toString()}`;
-    params.set('graphType', graphType);
-    params.set('injectServiceNodes', 'true');
-    params.set('namespaces', namespace);
-    if (targetNamespace.cluster) {
-      params.set(URLParam.CLUSTERNAME, targetNamespace.cluster);
-    }
-    if (selected.length > 0) {
-      params.set(URLParam.FOCUS_SELECTOR, selected[0].getId());
-    }
-
-    const graphUrl = `/graph/namespaces?${params.toString()}`;
-
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&${focusSelector}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskNavigateAction(graphUrl);
