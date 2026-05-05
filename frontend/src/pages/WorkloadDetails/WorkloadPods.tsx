@@ -5,9 +5,15 @@ import {
   Card,
   CardBody,
   CardHeader,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
   EmptyState,
   EmptyStateBody,
   EmptyStateVariant,
+  Popover,
+  PopoverPosition,
   Title,
   TitleSizes,
   Tooltip,
@@ -35,19 +41,35 @@ const emptyStyle = kialiStyle({
   margin: 0
 });
 
-const resourceListStyle = kialiStyle({
-  margin: '0 0 0.5rem 0',
+const podPopoverStyle = kialiStyle({
+  maxWidth: '25rem',
   $nest: {
-    '& > ul > li > span': {
-      float: 'left',
-      width: '125px',
-      fontWeight: 700
+    '& .pf-v6-c-description-list__group': {
+      rowGap: 0
+    },
+    '& .pf-v6-c-description-list': {
+      rowGap: '0.25rem'
     }
   }
 });
 
-const iconStyle = kialiStyle({
-  display: 'inline-block'
+const fixedTableStyle = kialiStyle({
+  tableLayout: 'fixed',
+  width: '100%'
+});
+
+const nameCellStyle = kialiStyle({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.25rem',
+  minWidth: 0
+});
+
+const podNameStyle = kialiStyle({
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  minWidth: 0
 });
 
 export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsProps) => {
@@ -55,9 +77,9 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
   const [sortDirection, setSortDirection] = React.useState<SortByDirection>(SortByDirection.asc);
 
   const columns: SortableTh[] = [
-    { title: 'Name', sortable: true },
-    { title: 'Revision', width: 25, sortable: true },
-    { title: 'Status', width: 20, sortable: true }
+    { title: 'Name', width: 50, sortable: true },
+    { title: 'Revision', width: 30, sortable: true },
+    { title: 'Health', width: 20, sortable: true }
   ];
 
   const sort: ISortBy = { index: sortIndex, direction: sortDirection };
@@ -92,76 +114,92 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
     }
 
     const podProperties = (
-      <div key="properties-list" className={resourceListStyle}>
-        <ul style={{ listStyleType: 'none' }}>
-          <li>
-            <span>Created</span>
-            <div style={{ display: 'inline-block' }}>
-              <LocalTime time={pod.createdAt} />
-            </div>
-          </li>
+      <DescriptionList isCompact>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Created</DescriptionListTerm>
+          <DescriptionListDescription>
+            <LocalTime time={pod.createdAt} />
+          </DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span>Created By</span>
-            <div style={{ display: 'inline-block' }}>
-              {pod.createdBy && pod.createdBy.length > 0
-                ? pod.createdBy.map(ref => `${ref.name} (${ref.kind})`).join(', ')
-                : 'Not found'}
-            </div>
-          </li>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Created By</DescriptionListTerm>
+          <DescriptionListDescription>
+            {pod.createdBy && pod.createdBy.length > 0
+              ? pod.createdBy.map(ref => `${ref.name} (${ref.kind})`).join(', ')
+              : 'Not found'}
+          </DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span>Service Account</span>
-            <div style={{ display: 'inline-block' }}>{pod.serviceAccountName ?? 'Not found'}</div>
-          </li>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Service Account</DescriptionListTerm>
+          <DescriptionListDescription>{pod.serviceAccountName ?? 'Not found'}</DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span>Istio Init Container</span>
-            <div style={{ display: 'inline-block' }}>
-              {pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
-            </div>
-          </li>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Istio Init Container</DescriptionListTerm>
+          <DescriptionListDescription>
+            {pod.istioInitContainers ? pod.istioInitContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
+          </DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span>Istio Container</span>
-            <div style={{ display: 'inline-block' }}>
-              {pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
-            </div>
-          </li>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Istio Container</DescriptionListTerm>
+          <DescriptionListDescription>
+            {pod.istioContainers ? pod.istioContainers.map(c => `${c.image}`).join(', ') : 'Not found'}
+          </DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span data-test="protocol">Protocol</span>
-            <div style={{ display: 'inline-block' }} data-test="protocol-value">
-              {pod.protocol ? pod.protocol : ''}
-            </div>
-          </li>
+        <DescriptionListGroup>
+          <DescriptionListTerm data-test="protocol">Protocol</DescriptionListTerm>
+          <DescriptionListDescription data-test="protocol-value">
+            {pod.protocol ? pod.protocol : ''}
+          </DescriptionListDescription>
+        </DescriptionListGroup>
 
-          <li>
-            <span>Labels</span>
-            <div style={{ display: 'inline-block' }}>
-              <Labels labels={pod.labels} expanded={true} />
-            </div>
-          </li>
-        </ul>
-      </div>
+        <DescriptionListGroup>
+          <DescriptionListTerm>Labels</DescriptionListTerm>
+          <DescriptionListDescription>
+            <Labels labels={pod.labels} expanded={true} />
+          </DescriptionListDescription>
+        </DescriptionListGroup>
+      </DescriptionList>
     );
 
     return {
       cells: [
-        <span>
-          <div key="service-icon" className={iconStyle}>
-            <PFBadge badge={PFBadges.Pod} size="sm" position={TooltipPosition.top} />
-          </div>
+        <span className={nameCellStyle}>
+          <PFBadge badge={PFBadges.Pod} size="sm" position={TooltipPosition.top} />
 
-          {pod.name}
+          <Tooltip content={pod.name} position={TooltipPosition.top}>
+            <span className={podNameStyle}>{pod.name}</span>
+          </Tooltip>
 
-          <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{podProperties}</div>}>
-            <span data-test="pod-info">
+          <Popover
+            aria-label="Pod details"
+            className={podPopoverStyle}
+            position={PopoverPosition.right}
+            headerContent={
+              <>
+                <PFBadge badge={PFBadges.Pod} size="sm" /> {pod.name}
+              </>
+            }
+            bodyContent={podProperties}
+            showClose={true}
+            triggerAction="click"
+          >
+            <span data-test="pod-info" style={{ cursor: 'pointer' }}>
               <KialiIcon.Info className={infoStyle} />
             </span>
-          </Tooltip>
+          </Popover>
         </span>,
-        <span>{pod.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? 'N/A'}</span>,
+
+        <Tooltip
+          content={pod.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? 'N/A'}
+          position={TooltipPosition.top}
+        >
+          <span className={podNameStyle}>{pod.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? 'N/A'}</span>
+        </Tooltip>,
 
         <PodStatus proxyStatus={pod.proxyStatus} checks={validation.checks} />
       ]
@@ -178,6 +216,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
 
       <CardBody>
         <SimpleTable
+          className={fixedTableStyle}
           label="Workload Pod List"
           columns={columns}
           rows={rows}
