@@ -778,11 +778,13 @@ When('user clicks a valid service link in Service insights card', () => {
         const href = hrefs[idx];
         lastClickedServiceInsightsHref = parseUrlPathAndSearch(href);
 
-        // Click inside the Service Insights card to avoid matching other links.
+        // Scope click to the Service Insights card. Using .find() instead of
+        // .within() so Cypress retries from a fresh parent if the card re-renders.
         return getServiceInsightsCard()
-          .within(() => {
-            cy.get(linkSelector(href, 'exact')).first().should('be.visible').click();
-          })
+          .find(linkSelector(href))
+          .first()
+          .should('be.visible')
+          .click()
           .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
           .then(() => cy.get('body', { timeout: 40000 }))
           .then($body => {
