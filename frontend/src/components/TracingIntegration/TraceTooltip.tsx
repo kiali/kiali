@@ -13,19 +13,19 @@ import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/Custom
 import { formatDuration } from 'utils/tracing/TracingHelper';
 
 const flyoutWidth = 300;
-const flyoutHeight = 160;
-const flyoutMargin = 10;
+const flyoutHeight = 100;
+const flyoutMargin = 5;
 const innerWidth = flyoutWidth - 2 * flyoutMargin;
 const innerHeight = flyoutHeight - 2 * flyoutMargin;
 
 const tooltipStyle = kialiStyle({
   color: PFColors.ColorLight100,
-  backgroundColor: PFColors.Color100,
-  borderRadius: '4px',
-  padding: '10px',
+  backgroundColor: 'transparent',
+  borderRadius: '0.25rem',
+  padding: '0.625rem',
   width: innerWidth,
   height: innerHeight,
-  fontSize: '12px',
+  fontSize: '0.75rem',
   lineHeight: '1.4'
 });
 
@@ -34,7 +34,7 @@ const titleStyle = kialiStyle({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   fontWeight: 'bold',
-  marginBottom: '8px'
+  marginBottom: '0.5rem'
 });
 
 const contentStyle = kialiStyle({
@@ -44,7 +44,7 @@ const contentStyle = kialiStyle({
 
 const leftStyle = kialiStyle({
   width: '80px',
-  marginRight: '12px',
+  marginRight: '0.75rem',
   flexShrink: 0
 });
 
@@ -108,26 +108,33 @@ const mapStateToProps = (
 
 const TraceLabelContainer = connect(mapStateToProps)(TraceLabel);
 
+type FlyoutOrientation = 'top' | 'bottom' | 'left' | 'right';
+type FlyoutOrientationProps = Pick<ChartLabelProps, 'x' | 'y' | 'width'>;
+
+export const computeFlyoutOrientation = (props: FlyoutOrientationProps): FlyoutOrientation => {
+  const x = typeof props.x === 'number' ? props.x : 0;
+  const y = typeof props.y === 'number' ? props.y : 0;
+  const width = typeof props.width === 'number' ? props.width : 0;
+
+  const horizontalMargin = flyoutWidth / 2 + flyoutMargin;
+  const verticalMargin = flyoutHeight / 2 + flyoutMargin;
+
+  if (x <= horizontalMargin) {
+    return 'right';
+  }
+  if (width > 0 && x >= width - horizontalMargin) {
+    return 'left';
+  }
+  if (y <= verticalMargin) {
+    return 'bottom';
+  }
+  return 'top';
+};
+
 export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineInfo>> {
-  private getOrientation = (props: any): 'top' | 'bottom' | 'left' | 'right' => {
-    const x = props.x || 0;
-    const y = props.y || 0;
-    const width = typeof props.width === 'number' ? props.width : 0;
-
-    const horizontalMargin = flyoutWidth / 2 + flyoutMargin;
-    const verticalMargin = flyoutHeight / 2 + flyoutMargin;
-
-    if (x < horizontalMargin) {
-      return 'right';
-    }
-    if (width > 0 && x > width - horizontalMargin) {
-      return 'left';
-    }
-    if (y < verticalMargin) {
-      return 'bottom';
-    }
-    return 'top';
-  };
+  // Victory passes callback args that are broader than ChartLabelProps.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getOrientation = (props: any): FlyoutOrientation => computeFlyoutOrientation(props);
 
   render(): JSX.Element | null {
     if (this.props.activePoints && this.props.activePoints.length > 0) {
@@ -139,7 +146,7 @@ export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineI
           flyoutWidth={flyoutWidth}
           flyoutHeight={flyoutHeight}
           orientation={this.getOrientation}
-          flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.9 }} />}
+          flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6, pointerEvents: 'none' }} />}
           labelComponent={<TraceLabelContainer trace={trace} />}
         />
       );
