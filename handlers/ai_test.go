@@ -479,6 +479,10 @@ func TestChatAI_InvalidRequestBody(t *testing.T) {
 	t.Cleanup(func() { resp.Body.Close() })
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "invalid JSON body should return 400")
+
+	var payload map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&payload))
+	assert.Equal(t, "Invalid request body", payload["error"])
 }
 
 func TestChatAI_ProviderNotFound(t *testing.T) {

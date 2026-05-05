@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
@@ -22,10 +23,11 @@ type AIChatConversation struct {
 }
 
 type AiStoreConfig struct {
-	Enabled          bool
-	MaxCacheMemoryMB int  // Maximum memory for all conversations
-	ReduceWithAI     bool // Reduce conversations with AI if memory limit is reached
-	ReduceThreshold  int  // Threshold for reducing conversations
+	Enabled           bool
+	InactivityTimeout time.Duration
+	MaxCacheMemoryMB  int  // Maximum memory for all conversations
+	ReduceWithAI      bool // Reduce conversations with AI if memory limit is reached
+	ReduceThreshold   int  // Threshold for reducing conversations
 }
 
 type AIStoreImpl struct {
@@ -37,19 +39,26 @@ type AIStoreImpl struct {
 
 // NewAIStore creates a new AI store instance
 func NewAIStore(ctx context.Context, config *AiStoreConfig) types.AIStore {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if config == nil {
 		// Default configuration
 		config = &AiStoreConfig{
-			Enabled:          true,
-			MaxCacheMemoryMB: 1024,
-			ReduceWithAI:     false,
-			ReduceThreshold:  15,
+			Enabled:           true,
+			InactivityTimeout: 30 * time.Minute,
+			MaxCacheMemoryMB:  1024,
+			ReduceWithAI:      false,
+			ReduceThreshold:   15,
 		}
 	}
 	self := &AIStoreImpl{
 		config:        config,
 		ctx:           ctx,
 		conversations: make(map[string]*AIChatConversation),
+	}
+	if self.config.Enabled && self.config.InactivityTimeout > 0 {
+		go self.startInactivityCleanupLoop()
 	}
 	return self
 }
@@ -120,6 +129,11 @@ func (s *AIStoreImpl) SetConversation(sessionID string, conversationID string, c
 // checkMemoryLimits ensures we don't exceed memory limits
 // Must be called with write lock held
 func (s *AIStoreImpl) checkMemoryLimits(sessionID string, conversationID string, newConversation *types.Conversation) error {
+	maxMemoryMB := float64(s.config.MaxCacheMemoryMB)
+	if newConversation.EstimatedMB > maxMemoryMB {
+		return fmt.Errorf("conversation [%s] requires %.2f MB but max cache memory is %d MB", conversationID, newConversation.EstimatedMB, s.config.MaxCacheMemoryMB)
+	}
+
 	// Calculate current memory usage
 	currentMemory := s.totalMemoryMBLocked()
 
@@ -138,11 +152,26 @@ func (s *AIStoreImpl) checkMemoryLimits(sessionID string, conversationID string,
 	projectedMemory := currentMemory + newConversation.EstimatedMB
 
 	// If over limit, evict LRU sessions until under limit
-	if projectedMemory > float64(s.config.MaxCacheMemoryMB) {
+	if projectedMemory > maxMemoryMB {
 		log.Debugf("Approaching AI store memory limit: %.2f MB / %d MB", projectedMemory, s.config.MaxCacheMemoryMB)
 
-		excessMB := projectedMemory - float64(s.config.MaxCacheMemoryMB)
+		excessMB := projectedMemory - maxMemoryMB
 		s.evictLRUConversations(excessMB)
+
+		currentMemory = s.totalMemoryMBLocked()
+		if sessionConversation, exists := s.conversations[sessionID]; exists {
+			sessionConversation.mu.RLock()
+			if conversation, exists := sessionConversation.Conversation[conversationID]; exists {
+				conversation.Mu.RLock()
+				currentMemory -= conversation.EstimatedMB
+				conversation.Mu.RUnlock()
+			}
+			sessionConversation.mu.RUnlock()
+		}
+		projectedMemory = currentMemory + newConversation.EstimatedMB
+		if projectedMemory > maxMemoryMB {
+			return fmt.Errorf("conversation [%s] cannot be stored without exceeding max cache memory (%0.2f MB > %d MB)", conversationID, projectedMemory, s.config.MaxCacheMemoryMB)
+		}
 	}
 
 	return nil
@@ -195,6 +224,9 @@ func (s *AIStoreImpl) evictLRUConversations(targetMB float64) {
 			session.memoryMB)
 
 		delete(s.conversations[session.sessionID].Conversation, session.conversationID)
+		if len(s.conversations[session.sessionID].Conversation) == 0 {
+			delete(s.conversations, session.sessionID)
+		}
 		internalmetrics.GetAIStoreEvictionsTotalMetric().Inc()
 		freedMB += session.memoryMB
 		evictedCount++
@@ -233,8 +265,9 @@ func (s *AIStoreImpl) GetConversationIDs(sessionID string) []string {
 		log.Debugf("Returned empty list for session [%s]: no session found", sessionID)
 		return []string{}
 	}
-	sessionConversation.mu.RLock()
-	defer sessionConversation.mu.RUnlock()
+	sessionConversation.mu.Lock()
+	defer sessionConversation.mu.Unlock()
+	sessionConversation.LastAccessed = time.Now()
 	return slices.Collect(maps.Keys(sessionConversation.Conversation))
 }
 
@@ -249,6 +282,7 @@ func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []st
 	}
 	sessionConversation.mu.Lock()
 	defer sessionConversation.mu.Unlock()
+	sessionConversation.LastAccessed = time.Now()
 
 	for _, conversationID := range conversationIDs {
 		if _, exists := sessionConversation.Conversation[conversationID]; exists {
@@ -258,12 +292,20 @@ func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []st
 			log.Debugf("Conversation [%s] not found for session [%s]", conversationID, sessionID)
 		}
 	}
+	if len(sessionConversation.Conversation) == 0 {
+		delete(s.conversations, sessionID)
+	}
 	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
 	return nil
 }
 
 // LoadAIStoreConfig loads AI store configuration from Kiali config
 func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration strings from config
+	inactivityTimeout, err := cfg.ChatAI.StoreConfig.InactivityTimeout.ToDuration()
+	if err != nil || inactivityTimeout <= 0 {
+		log.Warningf("Invalid chat_ai.store_config.inactivity_timeout %q, using default 30m", cfg.ChatAI.StoreConfig.InactivityTimeout)
+		inactivityTimeout = 30 * time.Minute
+	}
 	maxMemory := cfg.ChatAI.StoreConfig.MaxCacheMemoryMB
 	if maxMemory <= 0 {
 		log.Warningf("Invalid chat_ai.store_config.max_cache_memory_mb %d, using default 1024", maxMemory)
@@ -271,11 +313,68 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 	}
 
 	return &AiStoreConfig{
-		Enabled:          cfg.ChatAI.Enabled && cfg.ChatAI.StoreConfig.Enabled,
-		MaxCacheMemoryMB: maxMemory,
-		ReduceWithAI:     cfg.ChatAI.StoreConfig.ReduceWithAI,
-		ReduceThreshold:  cfg.ChatAI.StoreConfig.ReduceThreshold,
+		Enabled:           cfg.ChatAI.Enabled && cfg.ChatAI.StoreConfig.Enabled,
+		InactivityTimeout: inactivityTimeout,
+		MaxCacheMemoryMB:  maxMemory,
+		ReduceWithAI:      cfg.ChatAI.StoreConfig.ReduceWithAI,
+		ReduceThreshold:   cfg.ChatAI.StoreConfig.ReduceThreshold,
 	}
+}
+
+func (s *AIStoreImpl) startInactivityCleanupLoop() {
+	cleanupInterval := s.config.InactivityTimeout / 2
+	if cleanupInterval <= 0 {
+		cleanupInterval = time.Minute
+	}
+	if cleanupInterval > time.Minute {
+		cleanupInterval = time.Minute
+	}
+	if cleanupInterval < 50*time.Millisecond {
+		cleanupInterval = 50 * time.Millisecond
+	}
+
+	ticker := time.NewTicker(cleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-ticker.C:
+			s.purgeInactiveSessions(time.Now())
+		}
+	}
+}
+
+func (s *AIStoreImpl) purgeInactiveSessions(now time.Time) int {
+	if s.config.InactivityTimeout <= 0 {
+		return 0
+	}
+
+	cutoff := now.Add(-s.config.InactivityTimeout)
+	purgedConversations := 0
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for sessionID, sessionConversation := range s.conversations {
+		sessionConversation.mu.RLock()
+		lastAccessed := sessionConversation.LastAccessed
+		conversationCount := len(sessionConversation.Conversation)
+		sessionConversation.mu.RUnlock()
+
+		if lastAccessed.Before(cutoff) {
+			delete(s.conversations, sessionID)
+			purgedConversations += conversationCount
+		}
+	}
+
+	if purgedConversations > 0 {
+		log.Debugf("Purged %d inactive AI store conversations older than %s", purgedConversations, s.config.InactivityTimeout)
+		internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
+	}
+
+	return purgedConversations
 }
 
 func EstimateConversationMemory(conversation []types.ConversationMessage) float64 {

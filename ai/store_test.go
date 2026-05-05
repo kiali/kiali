@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -22,20 +23,23 @@ func TestNewAIStore_DefaultConfig(t *testing.T) {
 	assert.True(t, store.Enabled())
 	assert.False(t, store.ReduceWithAI())
 	assert.Equal(t, 15, store.ReduceThreshold())
+	assert.Equal(t, 30*time.Minute, store.(*AIStoreImpl).config.InactivityTimeout)
 }
 
 func TestNewAIStore_CustomConfig(t *testing.T) {
 	cfg := &AiStoreConfig{
-		Enabled:          true,
-		MaxCacheMemoryMB: 512,
-		ReduceWithAI:     true,
-		ReduceThreshold:  10,
+		Enabled:           true,
+		InactivityTimeout: 45 * time.Minute,
+		MaxCacheMemoryMB:  512,
+		ReduceWithAI:      true,
+		ReduceThreshold:   10,
 	}
 	store := NewAIStore(context.Background(), cfg)
 	require.NotNil(t, store)
 	assert.True(t, store.Enabled())
 	assert.True(t, store.ReduceWithAI())
 	assert.Equal(t, 10, store.ReduceThreshold())
+	assert.Equal(t, 45*time.Minute, store.(*AIStoreImpl).config.InactivityTimeout)
 }
 
 func TestNewAIStore_DisabledConfig(t *testing.T) {
@@ -187,14 +191,27 @@ func TestStore_DeleteConversations_NonexistentConversation(t *testing.T) {
 	assert.Len(t, ids, 1, "existing conversation should not be deleted")
 }
 
+func TestStore_DeleteConversations_RemovesEmptySession(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, store.SetConversation("session-1", "conv-1", conv))
+
+	require.NoError(t, store.DeleteConversations("session-1", []string{"conv-1"}))
+
+	assert.Empty(t, store.GetConversationIDs("session-1"))
+}
+
 // --- Memory management tests ---
 
 func TestStore_EvictsLRUWhenOverMemoryLimit(t *testing.T) {
 	cfg := &AiStoreConfig{
-		Enabled:          true,
-		MaxCacheMemoryMB: 1, // 1 MB limit
-		ReduceWithAI:     false,
-		ReduceThreshold:  15,
+		Enabled:           true,
+		InactivityTimeout: 30 * time.Minute,
+		MaxCacheMemoryMB:  1, // 1 MB limit
+		ReduceWithAI:      false,
+		ReduceThreshold:   15,
 	}
 	store := NewAIStore(context.Background(), cfg)
 
@@ -215,6 +232,28 @@ func TestStore_EvictsLRUWhenOverMemoryLimit(t *testing.T) {
 
 	_, found = store.GetConversation("s2", "c2")
 	assert.True(t, found, "newest conversation should remain")
+}
+
+func TestStore_RejectsSingleConversationLargerThanLimit(t *testing.T) {
+	cfg := &AiStoreConfig{
+		Enabled:           true,
+		InactivityTimeout: 30 * time.Minute,
+		MaxCacheMemoryMB:  1,
+		ReduceWithAI:      false,
+		ReduceThreshold:   15,
+	}
+	store := NewAIStore(context.Background(), cfg)
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: makeTestString(2 * 1024 * 1024)}},
+	}
+
+	err := store.SetConversation("s1", "c1", conv)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "requires")
+
+	_, found := store.GetConversation("s1", "c1")
+	assert.False(t, found)
 }
 
 func TestStore_EstimateConversationMemory(t *testing.T) {
@@ -240,6 +279,7 @@ func TestLoadAIStoreConfig_FromConfig(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = true
 	conf.ChatAI.StoreConfig.Enabled = true
+	conf.ChatAI.StoreConfig.InactivityTimeout = "45m"
 	conf.ChatAI.StoreConfig.MaxCacheMemoryMB = 2048
 	conf.ChatAI.StoreConfig.ReduceWithAI = true
 	conf.ChatAI.StoreConfig.ReduceThreshold = 20
@@ -247,6 +287,7 @@ func TestLoadAIStoreConfig_FromConfig(t *testing.T) {
 	storeCfg := LoadAIStoreConfig(conf)
 
 	assert.True(t, storeCfg.Enabled)
+	assert.Equal(t, 45*time.Minute, storeCfg.InactivityTimeout)
 	assert.Equal(t, 2048, storeCfg.MaxCacheMemoryMB)
 	assert.True(t, storeCfg.ReduceWithAI)
 	assert.Equal(t, 20, storeCfg.ReduceThreshold)
@@ -279,6 +320,17 @@ func TestLoadAIStoreConfig_ZeroMemoryUsesDefault(t *testing.T) {
 
 	storeCfg := LoadAIStoreConfig(conf)
 	assert.Equal(t, 1024, storeCfg.MaxCacheMemoryMB, "zero memory should default to 1024")
+}
+
+func TestLoadAIStoreConfig_InvalidTimeoutUsesDefault(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.StoreConfig.Enabled = true
+	conf.ChatAI.StoreConfig.InactivityTimeout = "not-a-duration"
+
+	storeCfg := LoadAIStoreConfig(conf)
+
+	assert.Equal(t, 30*time.Minute, storeCfg.InactivityTimeout, "invalid timeout should default to 30m")
 }
 
 // --- Concurrent access tests ---
@@ -384,10 +436,11 @@ func TestStore_MetricsConversationsTotalUpdatedOnDelete(t *testing.T) {
 
 func TestStore_MetricsEvictionsTotalIncrementedOnEviction(t *testing.T) {
 	cfg := &AiStoreConfig{
-		Enabled:          true,
-		MaxCacheMemoryMB: 1,
-		ReduceWithAI:     false,
-		ReduceThreshold:  15,
+		Enabled:           true,
+		InactivityTimeout: 30 * time.Minute,
+		MaxCacheMemoryMB:  1,
+		ReduceWithAI:      false,
+		ReduceThreshold:   15,
 	}
 	store := NewAIStore(context.Background(), cfg)
 
@@ -428,6 +481,31 @@ func TestStore_MetricsConversationsTotalAccurateAcrossOperations(t *testing.T) {
 	delta := afterThreeAdds - afterTwoDeletes
 	assert.InDelta(t, 2.0, delta, 0.01,
 		"deleting 2 of 3 conversations should reduce the gauge by 2")
+}
+
+func TestStore_PurgesInactiveSessions(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	store := NewAIStore(ctx, &AiStoreConfig{
+		Enabled:           true,
+		InactivityTimeout: 100 * time.Millisecond,
+		MaxCacheMemoryMB:  1024,
+		ReduceWithAI:      false,
+		ReduceThreshold:   15,
+	}).(*AIStoreImpl)
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+	require.NoError(t, store.SetConversation("stale-session", "conv-1", conv))
+
+	require.Eventually(t, func() bool {
+		store.mu.RLock()
+		defer store.mu.RUnlock()
+		_, exists := store.conversations["stale-session"]
+		return !exists
+	}, time.Second, 25*time.Millisecond)
 }
 
 func makeTestString(n int) string {
