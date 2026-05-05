@@ -41,9 +41,12 @@ const testSnapshot = (container: HTMLElement): void => {
   expect(container).toMatchSnapshot();
 };
 
-const testIcon = (container: HTMLElement, dataTest: string): void => {
+const testIcon = (container: HTMLElement, dataTest: string, expectedStatus?: string): void => {
   const element = container.querySelector(`[data-test="${dataTest}"]`);
   expect(element).toBeInTheDocument();
+  if (expectedStatus) {
+    expect(element).toHaveAttribute('data-test', `istio-status-${expectedStatus}`);
+  }
 };
 
 const testTooltip = async (container: HTMLElement): Promise<void> => {
@@ -90,7 +93,7 @@ describe('When core component has a problem', () => {
     ]);
 
     testSnapshot(container);
-    testIcon(container, 'istio-status-danger');
+    testIcon(container, 'istio-status-danger', 'danger');
     await testTooltip(container);
   });
 });
@@ -113,7 +116,7 @@ describe('When addon component has a problem', () => {
     ]);
 
     testSnapshot(container);
-    testIcon(container, 'istio-status-warning');
+    testIcon(container, 'istio-status-warning', 'warning');
     await testTooltip(container);
   });
 });
@@ -137,7 +140,7 @@ describe('When both core and addon component have problems', () => {
       ]);
 
       testSnapshot(container);
-      testIcon(container, 'istio-status-danger');
+      testIcon(container, 'istio-status-danger', 'danger');
       await testTooltip(container);
     });
   });
@@ -163,7 +166,7 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-danger');
+        testIcon(container, 'istio-status-danger', 'danger');
         await testTooltip(container);
       });
     });
@@ -186,7 +189,7 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-warning');
+        testIcon(container, 'istio-status-warning', 'warning');
         await testTooltip(container);
       });
     });
@@ -221,7 +224,7 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-danger');
+        testIcon(container, 'istio-status-danger', 'danger');
         await testTooltip(container);
       });
     });
@@ -240,7 +243,7 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-info');
+        testIcon(container, 'istio-status-info', 'info');
         await testTooltip(container);
       });
     });
@@ -257,7 +260,7 @@ describe('When there are not-ready components', () => {
         ]);
 
         testSnapshot(container);
-        testIcon(container, 'istio-status-info');
+        testIcon(container, 'istio-status-info', 'info');
         await testTooltip(container);
       });
     });
@@ -281,7 +284,7 @@ describe('When all components are good', () => {
       }
     ]);
 
-    testIcon(container, 'istio-status-success');
+    testIcon(container, 'istio-status-success', 'success');
   });
 });
 
@@ -341,7 +344,7 @@ describe('When there are multiple clusters', () => {
     );
 
     testSnapshot(container);
-    testIcon(container, 'istio-status-danger');
+    testIcon(container, 'istio-status-danger', 'danger');
   });
 
   it('clusters without failing components do not show expand/collapse arrow', () => {
@@ -383,7 +386,7 @@ describe('When there are multiple clusters', () => {
     );
 
     testSnapshot(container);
-    testIcon(container, 'istio-status-success');
+    testIcon(container, 'istio-status-success', 'success');
 
     const buttons = container.querySelectorAll('button');
     expect(buttons).toHaveLength(0);

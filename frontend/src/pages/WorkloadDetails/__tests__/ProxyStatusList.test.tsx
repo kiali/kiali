@@ -27,7 +27,7 @@ describe('ProxyStatusList', () => {
     });
   });
 
-  describe('when there are unsyced components', () => {
+  describe('when there are unsynced components', () => {
     const statuses: ProxyStatus = {
       ...syncedProxyStatus,
       CDS: 'NOT_SENT',

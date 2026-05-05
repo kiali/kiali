@@ -29,9 +29,11 @@ jest.mock('utils/tracing/TraceStats', () => ({
   buildQueriesFromSpans: () => []
 }));
 
+let capturedChartProps: any;
+
 jest.mock('components/Charts/ChartWithLegend', () => ({
   ChartWithLegend: (props: any) => {
-    (globalThis as { __tracingScatterChartProps?: typeof props }).__tracingScatterChartProps = props;
+    capturedChartProps = props;
     return null;
   }
 }));
@@ -45,7 +47,7 @@ import { TracingScatterComponent } from '../TracingScatter';
 // eslint-disable-next-line import/first
 import { JaegerTrace } from 'types/TracingInfo';
 
-const getChartProps = (): any => (globalThis as { __tracingScatterChartProps?: any }).__tracingScatterChartProps!;
+const getChartProps = (): any => capturedChartProps;
 
 const makeTrace = (id = 'abc123'): JaegerTrace =>
   (({
@@ -79,7 +81,7 @@ const makeProps = (
 describe('TracingScatterComponent debounce', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    delete (globalThis as { __tracingScatterChartProps?: any }).__tracingScatterChartProps;
+    capturedChartProps = undefined;
   });
 
   afterEach(() => {

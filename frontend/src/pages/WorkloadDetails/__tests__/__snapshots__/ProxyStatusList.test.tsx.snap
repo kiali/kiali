@@ -26,7 +26,7 @@ exports[`ProxyStatusList when there are components without value match the snaps
 </div>
 `;
 
-exports[`ProxyStatusList when there are unsyced components match the snapshot 1`] = `
+exports[`ProxyStatusList when there are unsynced components match the snapshot 1`] = `
 <div>
   <div
     class="pf-v6-l-stack kiali_f14kfh0p"
