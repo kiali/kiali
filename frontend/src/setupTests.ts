@@ -1,11 +1,14 @@
 import { jest } from '@jest/globals';
 import '@testing-library/jest-dom/jest-globals';
 import { configure } from '@testing-library/react';
+import { configure as configureEnzyme } from 'enzyme';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import jsdom from 'jsdom';
 
 import 'jest-canvas-mock';
 
 configure({ testIdAttribute: 'data-test' });
+configureEnzyme({ adapter: new Adapter() });
 
 const JSDOM = jsdom.JSDOM;
 
