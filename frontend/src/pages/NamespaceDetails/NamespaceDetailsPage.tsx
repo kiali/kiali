@@ -304,7 +304,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       fetchClusterNamespacesHealth([name], cluster, this.props.duration).catch(() => new Map()),
       API.getClustersTls(name, cluster).catch(() => ({ data: [] as TLSStatus[] })),
       API.getConfigValidations(name, cluster).catch(() => ({ data: [] as ValidationStatus[] })),
-      API.getAllIstioConfigs([], false, '', '', cluster).catch(() => ({
+      API.getIstioConfig(name, [], false, '', '', cluster).catch(() => ({
         data: { permissions: {}, resources: {}, validations: {} } as IstioConfigList
       }))
     ]);
