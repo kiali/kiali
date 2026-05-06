@@ -844,10 +844,14 @@ Then('user is redirected to that Service details page', () => {
   });
 
   // Basic smoke validation that the page exists/loaded.
-  cy.get('#basic-tabs').should('exist');
-  cy.contains('button, a', 'Overview').should('be.visible');
-  cy.contains('button, a', 'Traffic').should('be.visible');
-  cy.contains('button, a', 'Inbound Metrics').should('be.visible');
+  // Scope to #basic-tabs so we don't accidentally match OpenShift Console nav items in OSSMC.
+  cy.get('#basic-tabs')
+    .should('exist')
+    .within(() => {
+      cy.contains('button, a', 'Overview').should('be.visible');
+      cy.contains('button, a', 'Traffic').should('be.visible');
+      cy.contains('button, a', 'Inbound Metrics').should('be.visible');
+    });
 });
 
 // ==================== Applications Card ====================
