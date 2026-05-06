@@ -164,7 +164,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   ) : undefined;
 
   return (
-    <Card>
+    <Card isCompact>
       <CardHeader actions={headerActions ? { actions: headerActions, hasNoOffset: true } : undefined}>
         <Title headingLevel="h4" size={TitleSizes.md}>
           {title}

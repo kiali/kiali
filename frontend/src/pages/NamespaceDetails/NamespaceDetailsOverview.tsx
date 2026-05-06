@@ -2,12 +2,11 @@ import * as React from 'react';
 import {
   Card,
   CardBody,
+  CardHeader,
   DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
-  Flex,
-  FlexItem,
   Grid,
   GridItem,
   Label as PFLabel,
@@ -291,79 +290,77 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     return (
       <>
         <StackItem key="details">
-          <Card data-test="namespace-details-card">
+          <Card data-test="namespace-details-card" isCompact>
             <CardBody>
-              <Flex direction={{ default: 'column' }} gap={{ default: 'gapMd' }}>
-                <FlexItem>
-                  <DescriptionList columnModifier={{ default: '2Col' }}>
-                    {cluster && (
-                      <DescriptionListGroup data-test="details-cluster">
-                        <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
-                        <DescriptionListDescription>{cluster}</DescriptionListDescription>
-                      </DescriptionListGroup>
+              <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
+                {cluster && (
+                  <DescriptionListGroup data-test="details-cluster">
+                    <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                    <DescriptionListDescription>{cluster}</DescriptionListDescription>
+                  </DescriptionListGroup>
+                )}
+                <DescriptionListGroup data-test="details-status">
+                  <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <NamespaceHealthStatus
+                      inlineIssueCount
+                      name={namespace}
+                      statusApp={nsInfo.statusApp}
+                      statusService={nsInfo.statusService}
+                      statusWorkload={nsInfo.statusWorkload}
+                      worstStatus={nsInfo.worstStatus ?? NA.id}
+                    />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+                {(revisions.length > 0 || !nsInfo.isControlPlane) && (
+                  <DescriptionListGroup data-test="details-revision">
+                    <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      <NamespaceRevisionLabels ns={nsInfo} />
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                )}
+                <DescriptionListGroup data-test="details-mode">
+                  <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <PFLabel variant="outline" color={modeInfo.color} isCompact>
+                      {t(modeInfo.displayText)}
+                    </PFLabel>
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+                <DescriptionListGroup data-test="details-type">
+                  <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    {nsInfo.isControlPlane ? (
+                      <ControlPlaneBadge />
+                    ) : isDataPlane ? (
+                      <DataPlaneBadge />
+                    ) : (
+                      <NotPartOfMeshBadge />
                     )}
-                    <DescriptionListGroup data-test="details-status">
-                      <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <NamespaceHealthStatus
-                          inlineIssueCount
-                          name={namespace}
-                          statusApp={nsInfo.statusApp}
-                          statusService={nsInfo.statusService}
-                          statusWorkload={nsInfo.statusWorkload}
-                          worstStatus={nsInfo.worstStatus ?? NA.id}
-                        />
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                    {(revisions.length > 0 || !nsInfo.isControlPlane) && (
-                      <DescriptionListGroup data-test="details-revision">
-                        <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <NamespaceRevisionLabels ns={nsInfo} />
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    )}
-                    <DescriptionListGroup data-test="details-mode">
-                      <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                          {t(modeInfo.displayText)}
-                        </PFLabel>
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                    <DescriptionListGroup data-test="details-type">
-                      <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
-                      <DescriptionListDescription>
-                        {nsInfo.isControlPlane ? (
-                          <ControlPlaneBadge />
-                        ) : isDataPlane ? (
-                          <DataPlaneBadge />
-                        ) : (
-                          <NotPartOfMeshBadge />
-                        )}
-                      </DescriptionListDescription>
-                    </DescriptionListGroup>
-                    {nsInfo.tlsStatus && (
-                      <DescriptionListGroup data-test="details-mtls">
-                        <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    )}
-                  </DescriptionList>
-                </FlexItem>
-              </Flex>
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+                {nsInfo.tlsStatus && (
+                  <DescriptionListGroup data-test="details-mtls">
+                    <DescriptionListTerm>{t('mTLS')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      <NamespaceMTLSStatus status={nsInfo.tlsStatus.status} />
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                )}
+              </DescriptionList>
             </CardBody>
           </Card>
         </StackItem>
 
         <StackItem key="resources">
-          <Card data-test="namespace-resources-card">
-            <CardBody>
-              <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+          <Card data-test="namespace-resources-card" isCompact>
+            <CardHeader>
+              <Title headingLevel="h4" size={TitleSizes.md}>
                 {t('Resources')}
               </Title>
+            </CardHeader>
+            <CardBody>
               <div className={navigateGridStyle}>
                 <KialiLink to={appsLink}>
                   {t('Applications')}
@@ -429,7 +426,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
           <Grid hasGutter={true} className={gridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack hasGutter={true}>{this.renderLeftCard()}</Stack>
+              <Stack style={{ gap: '0.5rem' }}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />

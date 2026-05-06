@@ -73,7 +73,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
 
   return (
     <>
-      <Card>
+      <Card isCompact>
         <CardHeader actions={{ actions: headerActions, hasNoOffset: true }}>
           <Title headingLevel="h4" size={TitleSizes.md}>
             {title}
