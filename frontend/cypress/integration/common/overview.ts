@@ -765,9 +765,12 @@ When('user clicks a valid service link in Service insights card', () => {
         ? '[data-test="service-insights-rates"]'
         : '[data-test="service-insights-latencies"]';
 
-      const isServiceDetailsPageValid = ($body: JQuery<HTMLBodyElement>): boolean => {
-        // When the service is not found, ServiceDetailsPage sets error and does NOT render tabs.
-        return $body.find('#basic-tabs').length > 0;
+      const goBackToOverview = (): Cypress.Chainable => {
+        return cy
+          .go('back')
+          .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
+          .then(() => cy.location('pathname').should('match', /\/(console|ossmconsole)\/overview$/))
+          .then(() => getServiceInsightsCard().should('be.visible'));
       };
 
       const tryHrefAtIndex = (hrefs: string[], idx: number): Cypress.Chainable => {
@@ -778,28 +781,26 @@ When('user clicks a valid service link in Service insights card', () => {
         const href = hrefs[idx];
         lastClickedServiceInsightsHref = parseUrlPathAndSearch(href);
 
-        // Scope click to the Service Insights card. Using .find() instead of
-        // .within() so Cypress retries from a fresh parent if the card re-renders.
+        // Intercept the service detail API so we can check its response status
+        // instead of racing the DOM for #basic-tabs vs #empty-page-error.
+        const alias = `serviceDetail_${idx}`;
+        cy.intercept('GET', '**/api/namespaces/*/services/*').as(alias);
+
         return getServiceInsightsCard()
           .find(linkSelector(href))
           .first()
           .should('be.visible')
           .click()
           .then(() => cy.location('pathname', { timeout: 40000 }).should('include', '/services/'))
-          .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
-          .then(() => cy.get('body', { timeout: 40000 }))
-          .then($body => {
-            if (isServiceDetailsPageValid($body as JQuery<HTMLBodyElement>)) {
-              return;
+          .then(() => cy.wait(`@${alias}`, { timeout: 40000 }))
+          .then(interception => {
+            const ok = interception.response && interception.response.statusCode < 400;
+
+            if (!ok) {
+              return goBackToOverview().then(() => tryHrefAtIndex(hrefs, idx + 1));
             }
 
-            // Invalid service details; go back and try the next link.
-            return cy
-              .go('back')
-              .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
-              .then(() => cy.location('pathname').should('match', /\/(console|ossmconsole)\/overview$/))
-              .then(() => getServiceInsightsCard().should('be.visible'))
-              .then(() => tryHrefAtIndex(hrefs, idx + 1));
+            cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist');
           });
       };
 
