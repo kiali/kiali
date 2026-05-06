@@ -2,6 +2,7 @@ import * as React from 'react';
 import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
+import { useIconFontReady } from 'hooks/useIconFontReady';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { AnimationEdge } from '../TrafficAnimation/AnimationEdge';
@@ -23,13 +24,15 @@ type StyleEdgeProps = {
   element: Edge;
 } & WithSelectionProps;
 
-const tagClass = kialiStyle({
-  fontFamily: 'Verdana,Arial,Helvetica,sans-serif,pficon'
-});
+const tagFontFamily = 'Verdana,Arial,Helvetica,pf-v6-pficon,sans-serif';
+
+const tagClass = kialiStyle({ fontFamily: tagFontFamily });
+const fontLoadedClass = kialiStyle({ textRendering: 'auto' });
 
 const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
+  const iconFontReady = useIconFontReady();
 
   let cssClasses: string[] = [];
 
@@ -141,7 +144,13 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <DefaultEdge className={classes(...cssClasses)} element={element} tagClass={tagClass} {...rest} {...passedData} />
+      <DefaultEdge
+        className={classes(...cssClasses)}
+        element={element}
+        tagClass={iconFontReady ? classes(tagClass, fontLoadedClass) : tagClass}
+        {...rest}
+        {...passedData}
+      />
       {hasAnimation && (
         <AnimationEdge
           animationHash={data.animation?.getHash(data)}
