@@ -14,6 +14,64 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/env.sh "$@"
 
+ensure_remote_validating_webhook_cabundle() {
+  local context="${1}"
+  local namespace="${2:-istio-system}"
+  local timeout_seconds="${3:-120}"
+  local sleep_seconds=5
+  local elapsed=0
+  local validator_config=""
+  local validator_index=""
+  local validator_len=0
+  local mutating_cabundle=""
+
+  validator_config=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfigurations -o json | \
+    jq -r '.items[] | select(any(.webhooks[]?; .name=="validation.istio.io" and .clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'")) | .metadata.name' | head -n1)
+  if [ -z "${validator_config}" ]; then
+    echo "WARNING: No Istio validating webhook configuration found in context [${context}]"
+    return 0
+  fi
+
+  validator_index=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfiguration "${validator_config}" -o json | \
+    jq -r '.webhooks | to_entries[] | select(.value.name=="validation.istio.io") | .key')
+  if [ -z "${validator_index}" ]; then
+    echo "WARNING: validation.istio.io webhook not found in configuration [${validator_config}]"
+    return 0
+  fi
+
+  while [ "${elapsed}" -lt "${timeout_seconds}" ]; do
+    validator_len=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfiguration "${validator_config}" -o json | \
+      jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle | length')
+    if [ "${validator_len}" -gt 0 ]; then
+      echo "Istio validating webhook caBundle is ready in context [${context}]"
+      return 0
+    fi
+
+    mutating_cabundle=$(${CLIENT_EXE} --context="${context}" get mutatingwebhookconfigurations -o json | \
+      jq -r '.items[] | .webhooks[]? | select(.clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'" and (.clientConfig.caBundle | length) > 0) | .clientConfig.caBundle' | head -n1)
+    if [ -n "${mutating_cabundle}" ] && [ "${mutating_cabundle}" != "null" ]; then
+      echo "Patching Istio validating webhook caBundle in context [${context}] from mutating webhook"
+      ${CLIENT_EXE} --context="${context}" patch validatingwebhookconfiguration "${validator_config}" --type='json' -p="[{\"op\":\"replace\",\"path\":\"/webhooks/${validator_index}/clientConfig/caBundle\",\"value\":\"${mutating_cabundle}\"}]"
+
+      validator_len=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfiguration "${validator_config}" -o json | \
+        jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle | length')
+      if [ "${validator_len}" -gt 0 ]; then
+        return 0
+      fi
+
+      echo "ERROR: Istio validating webhook caBundle is still empty after patching in context [${context}]"
+      return 1
+    fi
+
+    echo "Waiting for Istio validating webhook caBundle in context [${context}]"
+    sleep "${sleep_seconds}"
+    elapsed=$((elapsed + sleep_seconds))
+  done
+
+  echo "ERROR: Could not find a non-empty Istio mutating webhook caBundle in context [${context}]"
+  return 1
+}
+
 # Start up two minikube instances if requested
 if [ "${MANAGE_MINIKUBE}" == "true" ]; then
   echo "Starting minikube instances"
@@ -118,6 +176,7 @@ install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
 # also creates the RBAC and if that happens Sail can't take ownership of those resources.
 kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=1m
+ensure_remote_validating_webhook_cabundle "${CLUSTER2_CONTEXT}" "${ISTIO_NAMESPACE}" "120"
 
 # For kind we need to use the container IP otherwise the unresolvable localhost will be used.
 SERVER_FLAG=""
