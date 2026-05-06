@@ -51,7 +51,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { Paths } from '../../config';
-import { navigateToFilteredList, buildMetadataPatch } from '../PageUtils';
+import { navigateToFilteredList, buildWorkloadMetadataPatch } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 
@@ -442,7 +442,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       return;
     }
     const original = (field === 'labels' ? workload.labels : workload.annotations) ?? {};
-    const jsonPatch = buildMetadataPatch(field, original, updated);
+    const jsonPatch = buildWorkloadMetadataPatch(field, original, updated, workload.gvk.Kind);
 
     API.updateWorkload(this.props.namespace, workload.name, workload.gvk, jsonPatch, undefined, workload.cluster)
       .then(() => {

@@ -30,3 +30,34 @@ export const buildMetadataPatch = (
   });
   return JSON.stringify({ metadata: { [field]: patch } });
 };
+
+const templatedWorkloadKinds = new Set([
+  'Deployment',
+  'ReplicaSet',
+  'ReplicationController',
+  'DeploymentConfig',
+  'StatefulSet',
+  'DaemonSet'
+]);
+
+export const buildWorkloadMetadataPatch = (
+  field: 'labels' | 'annotations',
+  original: Record<string, string>,
+  updated: Record<string, string>,
+  kind: string
+): string => {
+  const patch: Record<string, string | null> = { ...updated };
+  Object.keys(original).forEach(key => {
+    if (!(key in updated)) {
+      patch[key] = null;
+    }
+  });
+
+  if (templatedWorkloadKinds.has(kind)) {
+    return JSON.stringify({
+      metadata: { [field]: patch },
+      spec: { template: { metadata: { [field]: patch } } }
+    });
+  }
+  return JSON.stringify({ metadata: { [field]: patch } });
+};
