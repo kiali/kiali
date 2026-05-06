@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { mount } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+import { render, act } from '@testing-library/react';
 import { useIconFontReady, _resetForTesting } from '../useIconFontReady';
 
 const HookConsumer: React.FC<{ onValue: (v: boolean) => void }> = ({ onValue }) => {
@@ -8,7 +7,7 @@ const HookConsumer: React.FC<{ onValue: (v: boolean) => void }> = ({ onValue }) 
   React.useEffect(() => {
     onValue(ready);
   }, [ready, onValue]);
-  return <div data-ready={ready} />;
+  return <div data-testid="hook-output" data-ready={String(ready)} />;
 };
 
 describe('useIconFontReady', () => {
@@ -56,13 +55,13 @@ describe('useIconFontReady', () => {
 
   it('starts as false when font is not loaded', () => {
     let value = false;
-    mount(<HookConsumer onValue={v => (value = v)} />);
+    render(<HookConsumer onValue={v => (value = v)} />);
     expect(value).toBe(false);
   });
 
   it('transitions to true when font loads via loadingdone event', () => {
     let value = false;
-    mount(<HookConsumer onValue={v => (value = v)} />);
+    render(<HookConsumer onValue={v => (value = v)} />);
     expect(value).toBe(false);
 
     mockFontLoaded.mockReturnValue(true);
@@ -75,7 +74,7 @@ describe('useIconFontReady', () => {
 
   it('transitions to true when document.fonts.ready resolves', async () => {
     let value = false;
-    mount(<HookConsumer onValue={v => (value = v)} />);
+    render(<HookConsumer onValue={v => (value = v)} />);
     expect(value).toBe(false);
 
     mockFontLoaded.mockReturnValue(true);
@@ -87,8 +86,8 @@ describe('useIconFontReady', () => {
   });
 
   it('removes event listener on unmount', () => {
-    const wrapper = mount(<HookConsumer onValue={() => {}} />);
-    wrapper.unmount();
+    const { unmount } = render(<HookConsumer onValue={() => {}} />);
+    unmount();
 
     expect(document.fonts!.removeEventListener).toHaveBeenCalledWith('loadingdone', expect.any(Function));
   });
@@ -103,7 +102,7 @@ describe('useIconFontReady', () => {
 
     let value = false;
     act(() => {
-      mount(<HookConsumer onValue={v => (value = v)} />);
+      render(<HookConsumer onValue={v => (value = v)} />);
     });
 
     expect(value).toBe(true);
