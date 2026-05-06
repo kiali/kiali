@@ -290,6 +290,26 @@ Then('security {string} in the graph', (action: string) => {
   });
 });
 
+Then('the lock icon font is loaded', () => {
+  cy.get('g.pf-topology__edge__tag text', { timeout: 10000 })
+    .first()
+    .then($text => {
+      const computedFont = window.getComputedStyle($text[0]).fontFamily;
+      const iconFont = computedFont
+        .split(',')
+        .map(f => f.trim().replace(/['"]/g, ''))
+        .find(f => f.includes('pficon'));
+
+      expect(iconFont).to.not.be.undefined;
+
+      cy.document().then(doc => {
+        cy.wrap(doc.fonts.ready).then(() => {
+          expect(doc.fonts.check(`1em ${iconFont}`)).to.be.true;
+        });
+      });
+    });
+});
+
 Then('{string} option {string} in the graph', (option: string, action: string) => {
   switch (option.toLowerCase()) {
     case 'missing sidecars':
