@@ -7,7 +7,7 @@ describe('GlobalStateReducer reducer', () => {
   const currentDate = Date.now();
 
   const mockDate = (date: number): number => {
-    global.Date.now = jest.fn(() => date);
+    global.Date.now = rstest.fn(() => date);
 
     return date;
   };

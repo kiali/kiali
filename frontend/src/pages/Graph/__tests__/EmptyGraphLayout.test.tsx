@@ -11,7 +11,7 @@ describe('EmptyGraphLayout', () => {
     namespaces: [{ name: 'default' }],
     refreshInterval: 15000,
     showIdleNodes: false,
-    toggleIdleNodes: jest.fn()
+    toggleIdleNodes: rstest.fn()
   };
 
   afterEach(() => {

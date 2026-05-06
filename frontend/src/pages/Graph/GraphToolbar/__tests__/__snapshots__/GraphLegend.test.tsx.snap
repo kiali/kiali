@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`GraphLegend test should render correctly 1`] = `
+exports[`GraphLegend test > should render correctly 1`] = `
 <div>
   <div
     class="kiali_fogtfx9"
@@ -67,7 +67,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Workload"
               class=""
-              src="node.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBjeD0iMTMuNTYyIiBjeT0iMTMuNjA1IiByPSIxMi41IiBzdHlsZT0iZmlsbDpub25lO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojOGI4ZDhmO3N0cm9rZS13aWR0aDoxIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -85,7 +85,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="App"
               class=""
-              src="app.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjciIHdpZHRoPSIyNyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6IzhiOGQ4ZjtzdHJva2Utd2lkdGg6LjgwMDAwMDAxO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lO3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjIwLjAxNiIgaGVpZ2h0PSIyMC4wMDQiIHg9IjMuNDkyIiB5PSIzLjQ5OCIgcnk9IjMuOTA4Ii8+PC9zdmc+"
             />
           </span>
           <span
@@ -103,7 +103,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Operation"
               class=""
-              src="operation.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cgo8c3ZnCiAgIHdpZHRoPSIyOCIKICAgaGVpZ2h0PSIyOCIKICAgdmlld0JveD0iMCAwIDAuNzggMC43OCIKICAgZmlsbD0ibm9uZSIKICAgdmVyc2lvbj0iMS4xIgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoCiAgICAgZD0ibSAwLjcxMDU0MDE4LDAuMzUyNTE3ODggYyAwLjAwNTE1OCwwLjAwOTI4MyAwLjAwNzczNywwLjAxMzkwNTEgMC4wMDg3NDgsMC4wMTg4MTUzIDguOTU5OWUtNCwwLjAwNDM1MyA4Ljk1OTllLTQsMC4wMDg4MzEgMCwwLjAxMzE4MzEgLTAuMDAxMDExLDAuMDA0OTEgLTAuMDAzNTksMC4wMDk1NTIgLTAuMDA4NzQ4LDAuMDE4ODE1MyBMIDAuNTc2MDg5MTUsMC42NDUzNDQyNSBjIC0wLjAwNTQ0NywwLjAwOTc5OSAtMC4wMDgxNywwLjAxNDY4OTIgLTAuMDEyMDI3NywwLjAxODI1ODMgLTAuMDAzNDI1LDAuMDAzMTU3IC0wLjAwNzQ4OSwwLjAwNTU1IC0wLjAxMTkwNCwwLjAwNjk5NCAtMC4wMDQ5OTMsMC4wMDE2NTIgLTAuMDEwNjAzOCwwLjAwMTY1MiAtMC4wMjE4MDQ3LDAuMDAxNjUyIEggMC4yNjQ4ODE3NiBjIC0wLjAxMTIwMjYsMCAtMC4wMTY4MTQxLDAgLTAuMDIxODA2OCwtMC4wMDE2NTIgLTAuMDA0NDE1LC0wLjAwMTQ1OCAtMC4wMDg0OCwtMC4wMDM4NTggLTAuMDExOTA0LC0wLjAwNjk5NCAtMC4wMDM4NzksLTAuMDAzNTY5IC0wLjAwNjU4MiwtMC4wMDg0NTkgLTAuMDEyMDI3NywtMC4wMTgyNTgzIGwgLTAuMTM0NDU1LC0wLjI0MjAwMzggYyAtMC4wMDUxNTM2LC0wLjAwOTI4MyAtMC4wMDc3MzA0LC0wLjAxMzkwNTEgLTAuMDA4NzM5MiwtMC4wMTg4MTUzIC04Ljk0MTRlLTQsLTAuMDA0MzUzIC04Ljk0MTRlLTQsLTAuMDA4ODMxIDAsLTAuMDEzMTgzMSAwLjAwMTAwOTksLTAuMDA0OTEgMC4wMDM1ODU2LC0wLjAwOTU1MiAwLjAwODczOTIsLTAuMDE4ODE1MyBsIDAuMTM0NDUxNSwtMC4yNDIwMjI1MSBjIDAuMDA1NDQ3LC0wLjAwOTc5NiAwLjAwODE3LC0wLjAxNDY5MzMgMC4wMTIwMjc3LC0wLjAxODI2MDMgMC4wMDM0MjUsLTAuMDAzMTU1IDAuMDA3NDg5LC0wLjAwNTU0NCAwLjAxMTkwNCwtMC4wMDcwMDQgMC4wMDQ5OTMsLTAuMDAxNjUxIDAuMDEwNjAzOCwtMC4wMDE2NTEgMC4wMjE4MDY4LC0wLjAwMTY1MSBoIDAuMjY1NDY2ODEgYyAwLjAxMTIwMjUsMCAwLjAxNjgxNDEsMCAwLjAyMTgwNDcsMC4wMDE2NTIgMC4wMDQ0MTUsMC4wMDE0NjEgMC4wMDg0OCwwLjAwMzg0NyAwLjAxMTkwNCwwLjAwNzAwNCAwLjAwMzg3OSwwLjAwMzU2NyAwLjAwNjU4MiwwLjAwODQ2NSAwLjAxMjAyNzcsMC4wMTgyNjAzIHoiCiAgICAgc3Ryb2tlPSIjOGI4ZDhmIgogICAgIHN0cm9rZS13aWR0aD0iMiIKICAgICBzdHJva2UtbGluZWNhcD0icm91bmQiCiAgICAgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIKICAgICBpZD0icGF0aDEiCiAgICAgc3R5bGU9InN0cm9rZS13aWR0aDowLjAyOTAwOTI7c3Ryb2tlLWRhc2hhcnJheTpub25lIiAvPgo8L3N2Zz4K"
             />
           </span>
           <span
@@ -121,7 +121,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Service"
               class=""
-              src="service.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgaGVpZ2h0PSIyNyIKICAgd2lkdGg9IjI3IgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoCiAgICAgaWQ9InJlY3QxIgogICAgIHN0eWxlPSJmaWxsOm5vbmU7c3Ryb2tlOiM4YjhkOGY7c3Ryb2tlLXdpZHRoOjAuOTIzMTI4IgogICAgIGQ9Im0gMTUuMzUxMDA4LDQuNDI1NTk4NyA2LjgwODQzNSwxMS44NTY3OTIzIGMgMS4yNzExODQsMi4yMTM3NDkgNC44MjYxNTEsNy4yMzU4MjMgMi42NzE2MjEsNy4yMDk3NTMgbCAtOC40Mzg4MjYsLTAuMTAyMTAzIGMgLTIuMTU0NTI5LC0wLjAyNjA3IC0zLjQ1NjY4MywwLjA2NjU5IC01LjYxMTI5OCwwLjA3MTQzIGwgLTguNjEyMDAyMSwwLjAxOTMzIGMgLTIuMTU0NjE0MDksMC4wMDQ3IDEuNjM2ODU4NCwtNC44ODQwMzQgMi45MDY0MzUxLC03LjA5ODcwNyBMIDExLjkzMTIxMiw0LjQyMjY0NjIgYyAxLjI2OTU3NywtMi4yMTQ2NzIyIDIuMTQ4NjExLC0yLjIxMDc5NzIgMy40MTk3OTYsMC4wMDI5NSB6IiAvPgo8L3N2Zz4K"
             />
           </span>
           <span
@@ -139,7 +139,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Service Entry"
               class=""
-              src="service-entry.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgaGVpZ2h0PSIyNyIKICAgd2lkdGg9IjI3IgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoCiAgICAgaWQ9InJlY3QxIgogICAgIHN0eWxlPSJmaWxsOm5vbmU7c3Ryb2tlOiM4YjhkOGY7c3Ryb2tlLXdpZHRoOjAuOCIKICAgICBkPSJtIDguMjI1NDAwOSwzLjQ5Nzk5OTkgNy43NDc0MzYxLDAuMTAxNDQzNyBjIDAuODc4MzcsLTAuMDAyNzcgNy40NDgxNDUsNy4wMDk3NzY0IDcuNTM2MjE4LDkuMjg3NTU3NCBsIDAuMDA2NiwwLjE3MDUzMSBjIDAuMDQ1MywxLjE3MTY4NSAtNS41OTc3NzcsMTAuMjY1MDMyIC03LjUxNzM5MiwxMC4zMDA1NjkgTCA4LjIyNTQwMDksMjMuNTAyIEMgNS42MDM1NDYyLDIzLjU1MDUzOCAzLjQ5MjAwMDEsMjEuMzkwOTAzIDMuNDkyMDAwMSwxOC43Njg1OTkgViA4LjIzMTQwMDcgYyAwLC0yLjYyMjMwNCAyLjExMTMyMTYsLTQuNzY3NzMzOSA0LjczMzQwMDgsLTQuNzMzNDAwOCB6IiAvPgo8L3N2Zz4K"
             />
           </span>
           <span
@@ -162,7 +162,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Healthy"
               class=""
-              src="node-color-healthy.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBjeD0iMTMuNDk5IiBjeT0iMTMuNDY0IiByPSIxMi41IiBzdHlsZT0iZmlsbDpub25lO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojM2U4NjM1O3N0cm9rZS13aWR0aDoxIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -180,7 +180,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Warn"
               class=""
-              src="node-color-warning.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBjeD0iMTMuNDQ3IiBjeT0iMTMuNjA1IiByPSIxMi41IiBzdHlsZT0iZmlsbDpub25lO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojZjBhYjAwO3N0cm9rZS13aWR0aDoxIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -198,7 +198,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Unhealthy"
               class=""
-              src="node-color-danger.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBzdHlsZT0iZmlsbDpub25lO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojYzkxOTBiO3N0cm9rZS13aWR0aDoxIiByPSIxMi41IiBjeT0iMTMuNTAxIiBjeD0iMTMuNDI0Ii8+PC9zdmc+"
             />
           </span>
           <span
@@ -216,7 +216,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Idle"
               class=""
-              src="node-color-idle.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBjeD0iMTMuNDk5IiBjeT0iMTMuNDY0IiByPSIxMi41IiBzdHlsZT0iZmlsbDpub25lO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojOGI4ZDhmO3N0cm9rZS13aWR0aDoxIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -239,7 +239,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Unselected Namespace"
               class=""
-              src="external-namespace.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBzdHlsZT0iZmlsbDojZmZmO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojOGI4ZDhmO3N0cm9rZS13aWR0aDoxIiByPSIxMi41IiBjeT0iMTMuNTc2IiBjeD0iMTMuNDk5Ii8+PHBhdGggZD0iTTEwLjk5OSA4LjEwNmExLjUgMS41IDAgMSAxLTMuMDAyLS4wMDJBMS41IDEuNSAwIDAgMSAxMSA4LjEwNnpNMjAuOTk5IDE3LjA3NWExLjUgMS41IDAgMSAxLTMuMDAyLS4wMDIgMS41IDEuNSAwIDAgMSAzLjAwMi4wMDJaTTguOTk5IDE2LjA3NWExLjUgMS41IDAgMSAxLTMuMDAyLS4wMDJBMS41IDEuNSAwIDAgMSA5IDE2LjA3NVpNMTcuMzMgMTUuMzg3bC0xLjAyOC0uN2MuMTE2LS4zNS4xOC0uNzIyLjE4LTEuMTEgMC0uNzUyLS4yMzYtMS40NS0uNjQ2LTIuMDIxbDEuMi0xLjIyNWEyLjAwMiAyLjAwMiAwIDEgMCAuOTYzLTMuNzU2IDIuMDAyIDIuMDAyIDAgMCAwLTEuNjkxIDMuMDY5bC0xLjE2MyAxLjE4N2EzLjQ3NCAzLjQ3NCAwIDAgMC0zLjQ2LS40ODVsLS4xOTEtLjI2Yy0uMTg0LS4yNS0uNTE2LS4zMjEtLjczNC0uMTU1LS4yMjIuMTYzLS4yNTMuNS0uMDcyLjc1bC4xMy4xNzhhMy40NzMgMy40NzMgMCAwIDAtMS4xOSAzLjYwNmwtLjAzNy4wMTZjLS4yNjIuMTI4LS4zODguNDM4LS4yODEuNjg4LjEwNy4yNS40MDkuMzUuNjY5LjIyNWwuMDM0LS4wMTZhMy40OTEgMy40OTEgMCAwIDAgMi4yMTkgMS42bC0uMDYuNTc1YTEuNTIyIDEuNTIyIDAgMCAwLTEuMTcxIDEuNDk0YzAgLjg0Ny42NzIgMS41MyAxLjUgMS41M3MxLjUtLjY4MyAxLjUtMS41M2MwLS42MDMtLjM0MS0xLjEyMi0uODM0LTEuMzcybC4wNjYtLjYyYTMuNDkgMy40OSAwIDAgMCAyLjYyMi0xLjQ3NGwuOTQuNjRjLjI1LjE3My41NzkuMTI2LjcyNi0uMTA1LjE0Ny0uMjMxLjA2Mi0uNTYtLjE5MS0uNzI4Wm0uNjY5LTcuODc1YTEuMDYxIDEuMDYxIDAgMSAxIDAgMi4xMjIgMS4wNjEgMS4wNjEgMCAwIDEgMC0yLjEyMnptLTUuNSAxMi4zNDRhLjgxMS44MTEgMCAwIDEtLjgxMy0uODEzLjgxLjgxIDAgMCAxIC44MTMtLjgxMy44MS44MSAwIDAgMSAuODEzLjgxMy44MS44MSAwIDAgMS0uODEzLjgxM3ptLjUtNC4zNzVhMS45MDYgMS45MDYgMCAxIDEtLjAwMS0zLjgxMiAxLjkwNiAxLjkwNiAwIDAgMSAwIDMuODEyWiIvPjwvc3ZnPg=="
             />
           </span>
           <span
@@ -257,7 +257,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Restricted / External"
               class=""
-              src="restricted-namespace.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PGNpcmNsZSBzdHlsZT0iZmlsbDojZmZmO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojOGI4ZDhmO3N0cm9rZS13aWR0aDoxIiByPSIxMi41IiBjeT0iODguMzc2IiBjeD0iNDQzLjcwOSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQzMC4yMSAtNzQuOCkiLz48cGF0aCBkPSJNMjEuMDAzIDEwLjkzN2E1LjMxNCA1LjMxNCAwIDAgMS02LjMwNCA1LjIybC0uNzI1LjgxNmEuNzI1LjcyNSAwIDAgMS0uNTQyLjI0NEgxMi4zMXYxLjIwN2MwIC40LS4zMjUuNzI1LS43MjUuNzI1aC0xLjIwOHYxLjIwN2MwIC40LS4zMjQuNzI1LS43MjQuNzI1SDYuMjdhLjcyNS43MjUgMCAwIDEtLjcyNC0uNzI1VjE4YzAtLjE5Mi4wNzYtLjM3Ny4yMTItLjUxM2w0Ljg4NS00Ljg4NWE1LjMxNCA1LjMxNCAwIDAgMSA1LjA0Ny02Ljk4IDUuMzAyIDUuMzAyIDAgMCAxIDUuMzEzIDUuMzE1em0tNS4zMTMtMS40NWExLjQ1IDEuNDUgMCAxIDAgMi44OTggMCAxLjQ1IDEuNDUgMCAwIDAtMi44OTggMHoiIHN0eWxlPSJmaWxsOmN1cnJlbnRDb2xvcjtzdHJva2Utd2lkdGg6LjAzMDE5MDQ3Ii8+PC9zdmc+"
             />
           </span>
           <span
@@ -280,7 +280,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Failure"
               class=""
-              src="edge-danger.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICB3aWR0aD0iNDYiCiAgaGVpZ2h0PSIxNSIKICB2ZXJzaW9uPSIxLjEiCiAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aAogICAgc3R5bGU9ImZpbGw6I2M5MTkwYjtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6Ljk2MzE2Mzc5IgogICAgZD0ibTYxNS4yNTMgOTcuMTItMTQuMDAyLTYuNDkzdjEyLjk4NnptLTQ0LjAwNi45MjhINjAzLjI1MXYtMS44NTZINTcwLjI0N3YxLjg1NnoiCiAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNTY5LjcwNiAtODkuODM5KSIKICAgIGlkPSJwYXRoMSIgLz4KPC9zdmc+Cg=="
             />
           </span>
           <span
@@ -298,7 +298,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Degraded"
               class=""
-              src="edge-warn.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICB3aWR0aD0iNDYiCiAgaGVpZ2h0PSIxNSIKICB2ZXJzaW9uPSIxLjEiCiAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aAogICAgc3R5bGU9ImZpbGw6I2YwYWIwMDtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6Ljk2MzE2Mzc5IgogICAgZD0ibTYxNS4yNTMgOTcuMTItMTQuMDAyLTYuNDkzdjEyLjk4NnptLTQ0LjAwNi45MjhINjAzLjI1MXYtMS44NTZINTcwLjI0N3YxLjg1NnoiCiAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNTY5LjcwNiAtODkuODM5KSIKICAgIGlkPSJwYXRoMSIgLz4KPC9zdmc+Cg=="
             />
           </span>
           <span
@@ -316,7 +316,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Healthy"
               class=""
-              src="edge-success.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICB3aWR0aD0iNDYiCiAgaGVpZ2h0PSIxNSIKICB2ZXJzaW9uPSIxLjEiCiAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aAogICAgc3R5bGU9ImZpbGw6IzNlODYzNTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6Ljk2MzE2Mzc5IgogICAgZD0ibTYxNS4yNTMgOTcuMTItMTQuMDAyLTYuNDkzdjEyLjk4NnptLTQ0LjAwNi45MjhINjAzLjI1MXYtMS44NTZINTcwLjI0N3YxLjg1NnoiCiAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNTY5LjcwNiAtODkuODM5KSIKICAgIGlkPSJwYXRoMSIgLz4KPC9zdmc+Cg=="
             />
           </span>
           <span
@@ -334,7 +334,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="TCP Connection"
               class=""
-              src="edge-tcp.svg"
+              src="data:image/svg+xml;base64,PHN2Zwp3aWR0aD0iNDYiCmhlaWdodD0iMTUiCnZlcnNpb249IjEuMSIKeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGgKICBzdHlsZT0iZmlsbDojMDA0MzY4O2ZpbGwtcnVsZTpub256ZXJvO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDouOTYzMTYzNzkiCiAgZD0ibTYxNS4yNTMgOTcuMTItMTQuMDAyLTYuNDkzdjEyLjk4NnptLTQ0LjAwNi45MjhINjAzLjI1MXYtMS44NTZINTcwLjI0N3YxLjg1NnoiCiAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTU2OS43MDYgLTg5LjgzOSkiCiAgaWQ9InBhdGgxIiAvPgo8L3N2Zz4K"
             />
           </span>
           <span
@@ -352,7 +352,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Idle"
               class=""
-              src="edge-idle.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICB3aWR0aD0iNDYiCiAgaGVpZ2h0PSIxNSIKICB2ZXJzaW9uPSIxLjEiCiAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aAogICAgc3R5bGU9ImZpbGw6IzhiOGQ4ZjtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6Ljk2MzE2Mzc5IgogICAgZD0ibTYxNS4yNTMgOTcuMTItMTQuMDAyLTYuNDkzdjEyLjk4NnptLTQ0LjAwNi45MjhINjAzLjI1MXYtMS44NTZINTcwLjI0N3YxLjg1NnoiCiAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNTY5LjcwNiAtODkuODM5KSIKICAgIGlkPSJwYXRoMSIgLz4KPC9zdmc+Cg=="
             />
           </span>
           <span
@@ -370,7 +370,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="mTLS (badge)"
               class=""
-              src="mtls-badge.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNyI+PHBhdGggZD0iTTExLjkyNyAxMTEyLjkzN2gtLjY2M3YtMi4xMDFjMC0yLjQ0NS0xLjg4MS00LjQzNS00LjE5My00LjQzNS0yLjMxMiAwLTQuMTkzIDEuOTktNC4xOTMgNC40MzV2Mi4xaC0uNjYyYy0uNzMyIDAtMS4zMjUuNjI4LTEuMzI1IDEuNDAxdjUuNjAyYzAgLjc3NC41OTMgMS40IDEuMzI1IDEuNGg5LjcxYy43MzIgMCAxLjMyNS0uNjI2IDEuMzI1LTEuNHYtNS42MDJjMC0uNzczLS41OTMtMS40LTEuMzI0LTEuNHptLTIuODcgMEg1LjA4NXYtMi4xMDFjMC0xLjE1OS44OS0yLjEwMSAxLjk4Ni0yLjEwMSAxLjA5NSAwIDEuOTg2Ljk0MiAxLjk4NiAyLjF6IiBzdHlsZT0iZmlsbDpjdXJyZW50Q29sb3I7c3Ryb2tlLXdpZHRoOi4wMjgzNzIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAgLTExMDUuNTIpIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -393,7 +393,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Healthy Request"
               class=""
-              src="traffic-healthy-request.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjQ2IgogICBoZWlnaHQ9IjE1IgogICB2ZXJzaW9uPSIxLjEiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgICBkPSJNNzQ3LjM0NiA1Ny44ODNoNDMuNzc1IgogICAgIHN0eWxlPSJmaWxsOiMzZTg2MzU7ZmlsbC1vcGFjaXR5OjA7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlOiMzZTg2MzU7c3Ryb2tlLXdpZHRoOjI7c3Ryb2tlLWxpbmVjYXA6c3F1YXJlO3N0cm9rZS1vcGFjaXR5OjE7c3Ryb2tlLWRhc2hhcnJheToyLCA0O3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZmlsbD0ibm9uZSIKICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNzQ2LjI1OCAtNTAuNTQ1KSIKICAgICBpZD0icGF0aDEiIC8+CiAgPHBhdGgKICAgICBzdHlsZT0iZmlsbDojM2U4NjM1O2ZpbGwtb3BhY2l0eTowO3N0cm9rZS13aWR0aDowLjAzMzg5ODM7c3Ryb2tlLWRhc2hhcnJheTowLjA2Nzc5NjYsIDAuMTM1NTkzO3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZD0iTSAwLjExODY0NDA3LDcuMzM4OTgzMSBWIDYuMzU1OTMyMiBIIDIuMTAxNjk0OSA0LjA4NDc0NTggViA3LjMzODk4MzEgOC4zMjIwMzM5IEggMi4xMDE2OTQ5IDAuMTE4NjQ0MDcgWiIKICAgICBpZD0icGF0aDMiIC8+CiAgPHBhdGgKICAgICBzdHlsZT0iZmlsbDojM2U4NjM1O2ZpbGwtb3BhY2l0eTowO3N0cm9rZS13aWR0aDowLjAzMzg5ODM7c3Ryb2tlLWRhc2hhcnJheTowLjA2Nzc5NjYsIDAuMTM1NTkzO3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZD0iTSAwLjExODY0NDA3LDcuMzM4OTgzMSBWIDYuMzU1OTMyMiBIIDIuMTAxNjk0OSA0LjA4NDc0NTggViA3LjMzODk4MzEgOC4zMjIwMzM5IEggMi4xMDE2OTQ5IDAuMTE4NjQ0MDcgWiIKICAgICBpZD0icGF0aDQiIC8+Cjwvc3ZnPgo="
             />
           </span>
           <span
@@ -411,7 +411,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Failed Request"
               class=""
-              src="traffic-failed-request.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjQ2IgogICBoZWlnaHQ9IjE1IgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmczIgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoCiAgICAgZD0iTTc0Ny4zNDYgNTcuODgzaDQzLjc3NSIKICAgICBzdHlsZT0iZmlsbDojYzkxOTBiO2ZpbGwtb3BhY2l0eTowO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTojYzkxOTBiO3N0cm9rZS13aWR0aDoyO3N0cm9rZS1saW5lY2FwOnNxdWFyZTtzdHJva2Utb3BhY2l0eToxO3N0cm9rZS1kYXNoYXJyYXk6MiwgNDtzdHJva2UtZGFzaG9mZnNldDowIgogICAgIGZpbGw9Im5vbmUiCiAgICAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTc0Ni4yNTggLTUwLjU0NSkiCiAgICAgaWQ9InBhdGgxIiAvPgogIDxwYXRoCiAgICAgc3R5bGU9ImZpbGw6I2M5MTkwYjtmaWxsLW9wYWNpdHk6MDtzdHJva2Utd2lkdGg6MC4wMzM4OTgzO3N0cm9rZS1kYXNoYXJyYXk6MC4wNjc3OTY2LCAwLjEzNTU5MztzdHJva2UtZGFzaG9mZnNldDowIgogICAgIGQ9Ik0gMC4xMTg2NDQwNyw3LjMzODk4MzEgViA2LjM1NTkzMjIgSCAyLjEwMTY5NDkgNC4wODQ3NDU4IFYgNy4zMzg5ODMxIDguMzIyMDMzOSBIIDIuMTAxNjk0OSAwLjExODY0NDA3IFoiCiAgICAgaWQ9InBhdGgzIiAvPgogIDxwYXRoCiAgICAgc3R5bGU9ImZpbGw6I2M5MTkwYjtmaWxsLW9wYWNpdHk6MDtzdHJva2Utd2lkdGg6MC4wMzM4OTgzO3N0cm9rZS1kYXNoYXJyYXk6MC4wNjc3OTY2LCAwLjEzNTU5MztzdHJva2UtZGFzaG9mZnNldDowIgogICAgIGQ9Ik0gMC4xMTg2NDQwNyw3LjMzODk4MzEgViA2LjM1NTkzMjIgSCAyLjEwMTY5NDkgNC4wODQ3NDU4IFYgNy4zMzg5ODMxIDguMzIyMDMzOSBIIDIuMTAxNjk0OSAwLjExODY0NDA3IFoiCiAgICAgaWQ9InBhdGg0IiAvPgo8L3N2Zz4K"
             />
           </span>
           <span
@@ -429,7 +429,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="TCP Traffic"
               class=""
-              src="traffic-tcp.svg"
+              src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjQ2IgogICBoZWlnaHQ9IjE1IgogICB2ZXJzaW9uPSIxLjEiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgICBkPSJNNzQ3LjM0NiA1Ny44ODNoNDMuNzc1IgogICAgIHN0eWxlPSJmaWxsOiMwMDQzNjg7ZmlsbC1vcGFjaXR5OjA7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlOiMwMDQzNjg7c3Ryb2tlLXdpZHRoOjI7c3Ryb2tlLWxpbmVjYXA6c3F1YXJlO3N0cm9rZS1vcGFjaXR5OjE7c3Ryb2tlLWRhc2hhcnJheToyLCA0O3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZmlsbD0ibm9uZSIKICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNzQ2LjI1OCAtNTAuNTQ1KSIKICAgICBpZD0icGF0aDEiIC8+CiAgPHBhdGgKICAgICBzdHlsZT0iZmlsbDojMDA0MzY4O2ZpbGwtb3BhY2l0eTowO3N0cm9rZS13aWR0aDowLjAzMzg5ODM7c3Ryb2tlLWRhc2hhcnJheTowLjA2Nzc5NjYsIDAuMTM1NTkzO3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZD0iTSAwLjExODY0NDA3LDcuMzM4OTgzMSBWIDYuMzU1OTMyMiBIIDIuMTAxNjk0OSA0LjA4NDc0NTggViA3LjMzODk4MzEgOC4zMjIwMzM5IEggMi4xMDE2OTQ5IDAuMTE4NjQ0MDcgWiIKICAgICBpZD0icGF0aDMiIC8+CiAgPHBhdGgKICAgICBzdHlsZT0iZmlsbDojMDA0MzY4O2ZpbGwtb3BhY2l0eTowO3N0cm9rZS13aWR0aDowLjAzMzg5ODM7c3Ryb2tlLWRhc2hhcnJheTowLjA2Nzc5NjYsIDAuMTM1NTkzO3N0cm9rZS1kYXNob2Zmc2V0OjAiCiAgICAgZD0iTSAwLjExODY0NDA3LDcuMzM4OTgzMSBWIDYuMzU1OTMyMiBIIDIuMTAxNjk0OSA0LjA4NDc0NTggViA3LjMzODk4MzEgOC4zMjIwMzM5IEggMi4xMDE2OTQ5IDAuMTE4NjQ0MDcgWiIKICAgICBpZD0icGF0aDQiIC8+Cjwvc3ZnPgo="
             />
           </span>
           <span
@@ -452,7 +452,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Circuit Breaker"
               class="kiali_f8j7sv3"
-              src="node-badge-circuit-breaker.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yNzgiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIHN0eWxlPSJmaWxsOiNmZmY7ZmlsbC1vcGFjaXR5OjE7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOi4wNDAxOTM1NCIgZD0iTTE4Ljk2NSA5LjY0MWgtNC42MzhsMS4zOTEtNS4yMTdhLjk2NS45NjUgMCAwIDAtLjkzMi0xLjIxNEg5LjMyYS45NjUuOTY1IDAgMCAwLS45NTYuODM4bC0xLjI4NiA5LjY0NmEuOTY1Ljk2NSAwIDAgMCAuOTU2IDEuMDkyaDQuNzdsLTEuODUgNy44MTZhLjk2NS45NjUgMCAwIDAgMS43NzMuNzA2TDE5LjggMTEuMDlhLjk2Ni45NjYgMCAwIDAtLjgzNS0xLjQ0OHoiLz48L3N2Zz4="
             />
           </span>
           <span
@@ -470,7 +470,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Fault Injection"
               class="kiali_f8j7sv3"
-              src="node-badge-fault-injection.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjciIGhlaWdodD0iMjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik0yNTYgOEMxMTkuMDM0IDggOCAxMTkuMDMzIDggMjU2YzAgMTM2Ljk2NyAxMTEuMDM0IDI0OCAyNDggMjQ4czI0OC0xMTEuMDM0IDI0OC0yNDhTMzkyLjk2NyA4IDI1NiA4Wm0xMzAuMTA4IDExNy44OTJjNjUuNDQ4IDY1LjQ0OCA3MCAxNjUuNDgxIDIwLjY3NyAyMzUuNjM3TDE1MC40NyAxMDUuMjE2YzcwLjIwNC00OS4zNTYgMTcwLjIyNi00NC43MzUgMjM1LjYzOCAyMC42NzZaTTEyNS44OTIgMzg2LjEwOGMtNjUuNDQ4LTY1LjQ0OC03MC0xNjUuNDgxLTIwLjY3Ny0yMzUuNjM3TDM2MS41MyA0MDYuNzg0Yy03MC4yMDMgNDkuMzU2LTE3MC4yMjYgNDQuNzM2LTIzNS42MzgtMjAuNjc2WiIgc3R5bGU9ImZpbGw6I2ZmZiIgdHJhbnNmb3JtPSJtYXRyaXgoLjA0Njg2IDAgMCAuMDQ2ODYgMS40MTUgMS41MjgpIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -488,7 +488,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Gateway"
               class="kiali_f8j7sv3"
-              src="node-badge-gateways.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjciIGhlaWdodD0iMjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik0xMTAyLjQgNjIwLjggOTUyIDc2Ny43NzFWNjU4LjI4NUg4MDUuMjU3di03My4xNDNIOTUyVjQ3NS40MjhaTTI5Ny44MjkgMTgxLjk0M2wtMTUwLjQgMTQ2Ljk3MVYyMTkuNDI4SC42ODZ2LTczLjE0M2gxNDYuNzQzVjM2LjU3MVpNMTAyMS40ODYgNDQwbC00MzcuMDI5LTEuMTQzdjE0Ni45NzFoMzYuOGw3NC45NzEgNzIuNDU3SDU4NC40NTd2MTM3LjgyOWMuOTE0IDAgMi4wNTctLjIyOSAyLjk3MS0uMjI5IDI0LjY4Ni0xOC4yODYgNDcuMDg2LTM5LjU0MyA2Ny4yLTYzLjMxNCAxNy42LTIwLjggMzMuMzcxLTQzLjg4NiA0Ny4zMTQtNjguNTcxbDYyLjE3MSA2MC4xMTRjLTIuOTcxIDUuMDI5LTUuOTQzIDEwLjA1Ny05LjE0MyAxNS4wODYgNS4wMjktMi45NzEgMTAuMDU3LTYuMTcxIDE0Ljg1Ny05LjZsNTQuNCA1Mi41NzEgMy4yIDQuOGMtMTMuMDI5IDkuMzcxLTI2Ljc0MyAxOC4yODYtNDAuOTE0IDI2Ljc0My03Mi42ODYgNDIuNTE0LTE1Mi4yMjkgNjMuNzcxLTIzOC40IDYzLjc3MS04Ni4xNzEgMC0xNjUuNzE0LTIxLjI1Ny0yMzguNC02My43NzEtNzIuNjg2LTQyLjUxNC0xMzAuMjg2LTEwMC4xMTQtMTcyLjgtMTcyLjgtNDIuNTE0LTczLjE0My02My43NzEtMTUyLjY4Ni02My43NzEtMjM4Ljg1NyAwLTEyLjM0My40NTctMjQuNDU3IDEuMzcxLTM2LjM0M2w0MzcuNDg2LjY4NlYyMTkuNDI5aC0zNS42NTdsLTc0Ljk3MS03Mi40NTdINTEyVjguMDAxYy0xLjE0MyAwLTIuNTE0LjIyOS0zLjY1Ny4yMjktMjMuNzcxIDE4LjA1Ny00NS40ODYgMzguNjI5LTY1LjE0MyA2MS45NDMtMTguMDU3IDIxLjI1Ny0zNC4wNTcgNDQuOC00OC40NTcgNzAuNGwtNjIuMTcxLTYwLjExNGMzLjItNS40ODYgNi40LTEwLjc0MyA5LjYtMTYtNS4yNTcgMy4yLTEwLjUxNCA2LjYyOS0xNS43NzEgMTAuMDU3bC01OC41MTQtNTYuNDU3YzEzLjI1Ny05LjYgMjcuMi0xOC43NDMgNDEuODI5LTI3LjIgNzIuNjg2LTQyLjUxNCAxNTIuMjI5LTYzLjc3MSAyMzguNC02My43NzEgODYuMTcxIDAgMTY1LjcxNCAyMS4yNTcgMjM4LjQgNjMuNzcxIDcyLjY4NiA0Mi41MTQgMTMwLjI4NiAxMDAuMTE0IDE3Mi44IDE3Mi44IDQyLjUxNCA3Mi42ODYgNjMuNzcxIDE1Mi4yMjkgNjMuNzcxIDIzOC40LS4yMjkgMTIuOC0uNjg2IDI1LjM3MS0xLjYgMzcuOTQzem0tNzcyLjU3Mi0xLjE0M2gtOTQuODU3YzMuNjU3IDQwLjQ1NyAxMy43MTQgNzkuMzE0IDI5LjcxNCAxMTYuOGE2MTAuMjI2IDYxMC4yMjYgMCAwIDAgMTQuNCAzMC4xNzFoNzUuMmMtMTMuNzE0LTQ2Ljg1Ny0yMS43MTQtOTYtMjQuNDU3LTE0Ni45NzF6bTUwLjc0MyAyMTkuNDI5aC01My4wMjljNi44NTcgOC4yMjkgMTQuMTcxIDE2IDIxLjcxNCAyMy41NDMgMjIuMTcxIDIyLjE3MSA0Ni44NTcgNDEuMzcxIDc0LjI4NiA1Ny44MjlhNjcyLjEyOCA2NzIuMTI4IDAgMCAxLTMwLjg1Ny01NS4wODZjLTQuMzQzLTguNjg2LTguNDU3LTE3LjM3MS0xMi4xMTQtMjYuMjg2ek01MTIgNDM4Ljg1N0gzMjguNDU3YzMuMiA1MC4yODYgMTMuNDg2IDk4Ljc0MyAzMC40IDE0NS4xNDMuMjI5LjY4Ni40NTcgMS4xNDMuNjg2IDEuODI5SDUxMlY0MzguODU4Wm0wIDIxOS40MjlIMzkyYzE0Ljg1NyAyNy40MjkgMzIgNTIuNTcxIDUxLjIgNzUuNDI5IDE5LjY1NyAyMy4zMTQgNDEuNiA0NC4xMTQgNjUuNiA2Mi4xNzEgMS4xNDMgMCAyLjA1Ny4yMjkgMy4yLjIyOXpNNjU0LjYyOSA2OS4wMjhjLTE4Ljk3MS0yMi42MjktNDAtNDIuNzQzLTYzLjA4Ni02MC4zNDMtMi4yODYtLjIyOS00LjgtLjQ1Ny03LjA4Ni0uNjg2VjE0Ni45N0g3MDcuMmMtMTUuMzE0LTI4LjU3MS0zMi45MTQtNTQuNC01Mi41NzEtNzcuOTQzWm0tNzAuMTcyIDE1MC40djE0Ni45NzFINzY5LjZjLTMuMi01MC45NzEtMTMuMjU3LTk5Ljg4Ni0zMC4xNzEtMTQ2Ljk3MUg1ODQuNDU4Wm0yNDMuNDI5LTk3LjE0MmMtMjEuMDI5LTIxLjAyOS00NC41NzEtMzkuNTQzLTcwLjQtNTUuNTQzIDEwLjA1NyAxNi40NTcgMTkuNjU3IDMzLjM3MSAyOC4zNDMgNTEuNDI5IDQuOCA5LjYgOS4xNDMgMTkuMiAxMy4yNTcgMjkuMDI5aDUxLjQyOWMtNy4wODYtOC42ODYtMTQuNjI5LTE3LjE0My0yMi42MjktMjQuOTE0em04NC4zNDMgMTI2LjE3MWMtNC4zNDMtMTAuMDU3LTguOTE0LTE5LjY1Ny0xMy43MTQtMjkuMDI5aC03My42YzEzLjQ4NiA0Ni44NTcgMjEuMjU3IDk2IDIzLjc3MSAxNDYuOTcxaDkzLjQ4NmMtMy42NTctNDAuNjg2LTEzLjQ4Ni04MC0yOS45NDMtMTE3Ljk0M3oiIHRyYW5zZm9ybT0ibWF0cml4KC4wMjE2OSAwIDAgLS4wMjE2OSAxLjU3MyAyMS44MTMpIiBzdHlsZT0iZmlsbDojZmZmIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -506,7 +506,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Mirroring"
               class="kiali_f8j7sv3"
-              src="node-badge-mirroring.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjciIGhlaWdodD0iMjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yNzgiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik03Ny42NzggNDQ1LjUxM2MtMy42NTcgMy42NTctNS40ODYgNy45NzMtNS40ODYgMTIuOHY1Mi44MDlILS45NTF2LTU1LjA3N2MwLTI1LjE2MSA4LjkyMy00Ni42NjUgMjYuOTktNjQuNjU4IDE3Ljg0Ny0xNy44NDcgMzkuNTctMjYuOTkgNjQuNjU4LTI2Ljk5aDU0Ljg1N3Y3NS40MUg5MC40NzdjLTUuMDQ3LjQzOS05LjE0MyAyLjI2Ny0xMi44IDUuNzA1ek05OTcuMjMgNTU2LjU0NGMtMTcuODQ3IDE3Ljg0Ny0zOS41NyAyNi45OS02NC42NTggMjYuOTlINDU3LjE0M2MtNC41MzUgMC04Ljk5Ny0uMjkzLTEzLjM4NS0uODc4TDMxMy41NjQgNzEyLjg1Yy0xNS43OTkgMTUuNzk5LTIxLjQzMSAxMy40NTgtNDAuOTYgMTcuMDQyLTE5LjUyOSAzLjU4NC0yOC45NjUtMS4yNDMtMzkuOTM2LTEyLjE0MnMtMTUuNzI2LTIwLjQwNy0xMi4xNDItMzkuOTM2YzMuNTExLTE5LjUyOSAxLjI0My0yNS4yMzQgMTcuMDQyLTQwLjk2bDEyOS4yNDMtMTI5LjI0M2MtLjg3OC01LjA0Ny0xLjI0My0xMC4zMTMtMS4yNDMtMTUuNjUzdi01NC44NTdIMjE5LjA2M3YtNzMuMTQzaDE0Ni41MDVWMTguNTc3YzAtMjUuMTYxIDguOTIzLTQ2LjY2NSAyNi45OS02NC42NTggMTcuODQ3LTE3Ljg0NyAzOS41Ny0yNi45OSA2NC42NTgtMjYuOTloNDc1LjY0OGMyNS4xNjEgMCA0Ni42NjUgOC45MjMgNjQuNjU4IDI2Ljk5IDE3Ljg0NyAxNy44NDcgMjYuOTkgMzkuNTcgMjYuOTkgNjQuNjU4djQ3My4zODFjLS4yMTkgMjUuMTYxLTkuMTQzIDQ2LjY2NS0yNy4yMDkgNjQuNjU4ek05NTEuMDc3IDE4LjUwNWMwLTUuMDQ3LTEuODI5LTkuMTQzLTUuNDg2LTEyLjhzLTcuOTczLTUuNDg2LTEyLjgtNS40ODZINDU3LjE0M2MtNS4wNDcgMC05LjE0MyAxLjgyOS0xMi44IDUuNDg2cy01LjQ4NiA3Ljk3My01LjQ4NiAxMi44djQxNi45ODdsMTg1LjEyNS0xODUuMTI1Yy45NTEtLjk1MSAxLjkwMi0xLjgyOSAyLjc3OS0yLjcwNmwtMTguNTA1LTE4LjY1MS04Ny45MTgtODcuOTE4Yy0xMy4xNjYtMTIuNzI3LTE2LjE2NS0yNy4zNTUtOC45MjMtNDMuOTU5IDcuMjQxLTE2Ljk2OSAxOS43NDktMjUuNDU0IDM3LjU5NS0yNS40NTRoMjg1LjQ3N2MxMS4wNDUgMCAyMC42MjYgNC4wMjMgMjguNjcyIDEyLjA2OSA4LjA0NiA4LjA0NiAxMi4wNjkgMTcuNjI3IDEyLjA2OSAyOC42NzJ2Mjg1LjQ3N2MwIDE3Ljg0Ny04LjI2NSAzMi42OTUtMjQuODY5IDM5LjkzNi0xNy40MDggNy4xNjgtMzIuMjU2IDEuOTAyLTQ0LjYxNy0xMS4yNjRsLTgyLjc5OC04Mi4yMTMtMjAuMzM0LTIwLjQ4Yy0uODA1LjgwNS0xLjYwOSAxLjY4Mi0yLjQ4NyAyLjU2TDUxNi4zODggNTEwLjE3MWg0MTYuNDc1YzUuMDQ3IDAgOS4xNDMtMS44MjkgMTIuOC01LjQ4NnM1LjQ4Ni03Ljk3MyA1LjQ4Ni0xMi44VjE4LjUwNFpNLS45NTEgNzMzLjAzOGg3My4xNDNWNTg1LjU4MkgtLjk1MVptNTEwLjY4NC0uOTUxaDczLjE0M1Y1ODQuNjMxaC03My4xNDNaTTI1LjgxOSA5MjUuMzNDNy45NzIgOTA3LjQ4My0uOTUxIDg4Ni4wNTItLjk1MSA4NjAuODkxdi01NS43MzVoNzMuMTQzdjU1LjczNWMwIDUuMDQ3IDEuODI5IDkuMTQzIDUuNDg2IDEyLjhzNy45NzMgNS40ODYgMTIuOCA1LjQ4Nmg1NS4yOTZ2NzMuMTQzSDkwLjQ3OGMtMjUuMTYxIDAtNDYuNjY1LTguOTIzLTY0LjY1OC0yNi45OXptMTkyLjIyIDI2LjkxN2gxNDcuNDU2di03My4xNDNIMjE4LjAzOVptMjg3Ljc0NC03OC42MjljMy42NTctMy42NTcgNS40ODYtNy45NzMgNS40ODYtMTIuOHYtOTEuNDI5aDc1LjQxdjkxLjQyOWMwIDI1LjE2MS04LjkyMyA0Ni42NjUtMjYuOTkgNjQuNjU4LTE3Ljg0NyAxNy44NDctMzkuNTcgMjYuOTktNjQuNjU4IDI2Ljk5aC01NS41MTV2LTczLjE0M2g1My4yNDhjNS4wNDctLjIxOSA5LjM2Mi0yLjA0OCAxMy4wMTktNS43MDV6IiB0cmFuc2Zvcm09Im1hdHJpeCguMDIwOSAwIDAgLS4wMjA5IDIuODU2IDIyLjU2OCkiIHN0eWxlPSJmaWxsOiNmZmYiLz48L3N2Zz4="
             />
           </span>
           <span
@@ -524,7 +524,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Missing Sidecar"
               class="kiali_f8j7sv3"
-              src="node-badge-missing-sidecar.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yNzgiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxnIHN0eWxlPSJmaWxsOiNmZmY7ZmlsbC1vcGFjaXR5OjEiPjxwYXRoIGQ9Ik05LjA3MiAxNy4xNzVBLjI0LjI0IDAgMCAxIDguOTk3IDE3di0uNzUzaC0xVjE3YzAgLjM0NC4xMjIuNjM4LjM2OS44ODQuMjQ0LjI0NC41NDEuMzY5Ljg4NC4zNjloMS4yNXYtMUg5LjI0N2EuMjguMjggMCAwIDEtLjE3NS0uMDc4Wk0yMS42MzEgMTAuNjEyYTEuMjExIDEuMjExIDAgMCAwLS44ODQtLjM2OWgtOC41Yy0uMzQ0IDAtLjYzOC4xMjItLjg4NC4zNjlhMS4yMTEgMS4yMTEgMCAwIDAtLjM2OS44ODR2OC41MDNjMCAuMzQ0LjEyMi42MzguMzY5Ljg4NC4yNDQuMjQ0LjU0MS4zNjkuODg0LjM2OWg4LjUwM2MuMzQ0IDAgLjYzOC0uMTIyLjg4NC0uMzY5LjI0NC0uMjQ0LjM2OS0uNTQxLjM2OS0uODg0di04LjUwM2ExLjIxNiAxLjIxNiAwIDAgMC0uMzcyLS44ODRaTTIxIDIwYS4yMzYuMjM2IDAgMCAxLS4wNzUuMTc1LjI0LjI0IDAgMCAxLS4xNzUuMDc1aC04LjUwM2EuMjM2LjIzNiAwIDAgMS0uMTc1LS4wNzUuMjQuMjQgMCAwIDEtLjA3NS0uMTc1di04LjUwM2MwLS4wNjkuMDI1LS4xMjUuMDc1LS4xNzVhLjI0LjI0IDAgMCAxIC4xNzUtLjA3NWg4LjUwM2MuMDY5IDAgLjEyNS4wMjUuMTc1LjA3NWEuMjQuMjQgMCAwIDEgLjA3NS4xNzV6TTcuOTk3IDEzLjI0NGgxdjIuMDE2aC0xek03Ljk5NyAxMC4yNDRoMXYyLjAxNmgtMXpNOC45OTcgOC40OTdjMC0uMDY5LjAyNS0uMTI1LjA3NS0uMTc1YS4yNC4yNCAwIDAgMSAuMTc1LS4wNzVoLjc1NnYtMWgtLjc1NmMtLjM0NCAwLS42MzguMTIyLS44ODQuMzY5YTEuMiAxLjIgMCAwIDAtLjM2Ni44ODF2Ljc2Mmgxek0xMC45OTEgNy4yNDdoMi4wMTZ2MWgtMi4wMTZ6TTE3LjkyNSA4LjMyMmEuMjQuMjQgMCAwIDEgLjA3NS4xNzV2MS4yNWgxdi0xLjI1YzAtLjM0NC0uMTIyLS42MzgtLjM2OS0uODg0YTEuMjExIDEuMjExIDAgMCAwLS44ODQtLjM2OWgtLjc1OXYxaC43NTlhLjI1OC4yNTggMCAwIDEgLjE3OC4wNzh6TTEzLjk5MSA3LjI0N2gyLjAxNnYxaC0yLjAxNnoiIHN0eWxlPSJmaWxsOiNmZmY7ZmlsbC1vcGFjaXR5OjEiIHRyYW5zZm9ybT0ibWF0cml4KDEuNDA3MTUgMCAwIDEuNDA3MTUgLTcuNjA3IC02LjU0OSkiLz48L2c+PC9zdmc+"
             />
           </span>
           <span
@@ -542,7 +542,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Request Timeout"
               class="kiali_f8j7sv3"
-              src="node-badge-request-timeout.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjciIGhlaWdodD0iMjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik0yNTYgOEMxMTkgOCA4IDExOSA4IDI1NnMxMTEgMjQ4IDI0OCAyNDggMjQ4LTExMSAyNDgtMjQ4UzM5MyA4IDI1NiA4Wm0wIDQ0OGMtMTEwLjUgMC0yMDAtODkuNS0yMDAtMjAwUzE0NS41IDU2IDI1NiA1NnMyMDAgODkuNSAyMDAgMjAwLTg5LjUgMjAwLTIwMCAyMDB6bTYxLjgtMTA0LjQtODQuOS02MS43Yy0zLjEtMi4zLTQuOS01LjktNC45LTkuN1YxMTZjMC02LjYgNS40LTEyIDEyLTEyaDMyYzYuNiAwIDEyIDUuNCAxMiAxMnYxNDEuN2w2Ni44IDQ4LjZjNS40IDMuOSA2LjUgMTEuNCAyLjYgMTYuOEwzMzQuNiAzNDljLTMuOSA1LjMtMTEuNCA2LjUtMTYuOCAyLjZ6IiBzdHlsZT0iZmlsbDpub25lO2ZpbGwtb3BhY2l0eToxIiB0cmFuc2Zvcm09Im1hdHJpeCguMDQ2NiAwIDAgLjA0NjYgMS4zMjcgMi4wMTUpIi8+PHBhdGggc3R5bGU9ImZpbGw6I2ZmZjtmaWxsLW9wYWNpdHk6MTtzdHJva2Utd2lkdGg6LjA1NTY2NjEiIGQ9Ik0tMTYuNDM5IDMyLjQ4NGMtLjU5MiAwLTEuMTgyLjA0Mi0xLjU3Ni4xMjgtMS42NjUuMzY2LTIuOTM2IDEuMDU2LTQuMTE0IDIuMjM0LTEuMTk1IDEuMTk2LTEuOTMgMi41NjQtMi4yNiA0LjIxMi0uMTUuNzUtLjEzNSAyLjMwOC4wMjggMy4wNjguNzA4IDMuMjk2IDMuMjM3IDUuNzY0IDYuNTIzIDYuMzY2Ljc4MS4xNDMgMi4zNDMuMTE4IDMuMDY3LS4wNSAzLjI0Ny0uNzUyIDUuNjE4LTMuMTcxIDYuMjY4LTYuMzk1LjE0LS42OS4xNC0yLjM2IDAtMy4wMmE5LjAyMSA5LjAyMSAwIDAgMC0uNzM3LTIuMTE2Yy0xLjEtMi4xOTgtMy4xNDUtMy43NjUtNS42MS00LjI5Ny0uNDAyLS4wODctLjk5Ni0uMTMtMS41ODktLjEzem0tLjAwOCAxLjg2NmMuNzk2IDAgLjgzNS4wMDUuOTg1LjEzNGwuMTU2LjEzNS4wMjkgMi45OTMuMDI3IDIuOTkzIDEuMzY0Ljk5MmMuNzUuNTQ2IDEuMzk1IDEuMDM1IDEuNDMzIDEuMDg3LjEyOC4xNzEuMDgxLjQzNC0uMTM1Ljc0OC0uNDM1LjYzMy0uNy45NjktLjgxNiAxLjAzNGEuNTExLjUxMSAwIDAgMS0uNDI2LjAzMWMtLjA0Ni0uMDE4LS44ODktLjYxNy0xLjg3Mi0xLjMzMi0xLjI0Mi0uOTAzLTEuODA4LTEuMzQ3LTEuODUyLTEuNDU0LS4wNDYtLjExLS4wNi0xLjExNi0uMDQ5LTMuNjIzbC4wMTUtMy40NjkuMTU3LS4xMzVjLjE1LS4xMjkuMTg4LS4xMzQuOTg0LS4xMzR6IiB0cmFuc2Zvcm09Im1hdHJpeCgxLjE0OTc3IDAgMCAxLjE0OTc3IDMyLjE2IC0zMi42NjQpIi8+PC9zdmc+"
             />
           </span>
           <span
@@ -560,7 +560,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Traffic Shifting / TCP Traffic Shifting"
               class="kiali_f8j7sv3"
-              src="node-badge-traffic-shifting.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjciIGhlaWdodD0iMjciIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIHN0eWxlPSJmaWxsOiNmZmY7ZmlsbC1vcGFjaXR5OjE7c3Ryb2tlLXdpZHRoOi4wMDAzNDYwODQiIGQ9Ik0xOC40NTQgMTYuMjIzYy0uOTA1IDAtMS43MzYuMzEzLTIuMzkzLjgzN2wtNC4xMDMtMi41NjRhMy44NjUgMy44NjUgMCAwIDAgMC0xLjY2OWw0LjEwMy0yLjU2NGEzLjg0MyAzLjg0MyAwIDEgMC0xLjM1OC0yLjE3MkwxMC42IDEwLjY1NWEzLjg0MyAzLjg0MyAwIDEgMCAwIDYuMDEzbDQuMTAzIDIuNTY0YTMuODU1IDMuODU1IDAgMCAwLS4wOTIuODM0IDMuODQzIDMuODQzIDAgMSAwIDMuODQzLTMuODQzeiIvPjwvc3ZnPg=="
             />
           </span>
           <span
@@ -578,7 +578,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Traffic Source"
               class="kiali_f8j7sv3"
-              src="node-badge-traffic-source.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik0zMiwyQzE1LjQzMiwyLDIsMTUuNDMyLDIsMzJjMCwxNi41NjgsMTMuNDMyLDMwLDMwLDMwczMwLTEzLjQzMiwzMC0zMEM2MiwxNS40MzIsNDguNTY4LDIsMzIsMnogTTI5LjY5Myw0OFYzNS40MjhIMTAgVjI4LjE0M2gxOS42OTNWMTZMNTYsMzJMMzAuNjkzLDQ4eiIgZmlsbD0iI2ZmZiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMyAzKSBzY2FsZSgwLjMyLCAwLjMyKSIvPjwvc3ZnPgo="
             />
           </span>
           <span
@@ -596,7 +596,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Virtual Service / Request Routing"
               class="kiali_f8j7sv3"
-              src="node-badge-virtual-services.svg"
+              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNyIgaGVpZ2h0PSIyNyI+PHJlY3Qgc3R5bGU9ImZpbGw6bm9uZTtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6LjQ2Nzk5MDE5O3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheToxLjQwMzk3MDYsMS40MDM5NzA2O3N0cm9rZS1kYXNob2Zmc2V0OjA7c3Ryb2tlLW9wYWNpdHk6MSIgd2lkdGg9IjI2LjQ0NCIgaGVpZ2h0PSIyNi43MzYiIHg9Ii4yMjIiIHk9Ii4xMzIiIHJ5PSIzLjA2NyIvPjxwYXRoIGQ9Ik0xMC41MTggMjEuMTY4cTAtLjUzMy0uMzczLS45MDYtLjM3Mi0uMzcyLS45MDUtLjM3Mi0uNTMyIDAtLjkwNS4zNzItLjM3My4zNzMtLjM3My45MDYgMCAuNTMyLjM3My45MDUuMzczLjM3Mi45MDUuMzcyLjUzMyAwIC45MDUtLjM3Mi4zNzMtLjM3My4zNzMtLjkwNXptMC0xNS4zMzZxMC0uNTMyLS4zNzMtLjkwNS0uMzcyLS4zNzItLjkwNS0uMzcyLS41MzIgMC0uOTA1LjM3Mi0uMzczLjM3My0uMzczLjkwNSAwIC41MzMuMzczLjkwNi4zNzMuMzcyLjkwNS4zNzIuNTMzIDAgLjkwNS0uMzcyLjM3My0uMzczLjM3My0uOTA2em04LjUyIDEuNzA0cTAtLjUzMi0uMzczLS45MDV0LS45MDUtLjM3M3EtLjUzMyAwLS45MDUuMzczLS4zNzMuMzczLS4zNzMuOTA1IDAgLjUzMy4zNzMuOTA2LjM3Mi4zNzIuOTA1LjM3Mi41MzIgMCAuOTA1LS4zNzIuMzczLS4zNzMuMzczLS45MDZ6bTEuMjc4IDBxMCAuNjkzLS4zNDcgMS4yODUtLjM0Ni41OTItLjkzMS45MjUtLjAyNyAzLjgyLTMuMDA5IDUuNTExLS44OTIuNTA2LTIuNzAyIDEuMDc4LTEuNzA0LjUzMy0yLjI1Ni45NDYtLjU1My40MTItLjU1MyAxLjMzdi4zNDdxLjU4Ni4zMzMuOTMyLjkyNS4zNDYuNTkyLjM0NiAxLjI4NSAwIDEuMDY0LS43NDUgMS44MS0uNzQ2Ljc0NS0xLjgxLjc0NS0xLjA2NiAwLTEuODExLS43NDUtLjc0Ni0uNzQ2LS43NDYtMS44MSAwLS42OTMuMzQ3LTEuMjg1LjM0Ni0uNTkyLjkzMS0uOTI1VjguMDQycS0uNTg1LS4zMzMtLjkzMS0uOTI1LS4zNDctLjU5Mi0uMzQ3LTEuMjg1IDAtMS4wNjQuNzQ2LTEuODEuNzQ1LS43NDUgMS44MS0uNzQ1dDEuODEuNzQ1cS43NDYuNzQ2Ljc0NiAxLjgxIDAgLjY5My0uMzQ2IDEuMjg1dC0uOTMyLjkyNXY2LjYxNnEuNzE5LS4zNDYgMi4wNS0uNzU5LjczMi0uMjI2IDEuMTY1LS4zOTIuNDMzLS4xNjcuOTM4LS40MTMuNTA2LS4yNDYuNzg2LS41MjZ0LjUzOS0uNjc5cS4yNi0uNC4zNzMtLjkyNS4xMTMtLjUyNi4xMTMtMS4yMTgtLjU4Ni0uMzMzLS45MzItLjkyNS0uMzQ2LS41OTItLjM0Ni0xLjI4NSAwLTEuMDY1Ljc0NS0xLjgxLjc0Ni0uNzQ1IDEuODEtLjc0NSAxLjA2NiAwIDEuODExLjc0NS43NDYuNzQ1Ljc0NiAxLjgxeiIgc3R5bGU9ImZpbGw6I2ZmZjtmaWxsLW9wYWNpdHk6MTtzdHJva2Utd2lkdGg6LjAxMzMxMTY4Ii8+PC9zdmc+"
             />
           </span>
           <span
@@ -614,7 +614,7 @@ exports[`GraphLegend test should render correctly 1`] = `
             <img
               alt="Workload Entry"
               class="kiali_f8j7sv3"
-              src="node-badge-workload-entry.svg"
+              src="static/svg/node-badge-workload-entry.260ce88d9d.svg"
             />
           </span>
           <span

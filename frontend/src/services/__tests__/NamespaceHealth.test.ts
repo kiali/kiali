@@ -1,13 +1,14 @@
 import { fetchClusterNamespacesHealth } from '../NamespaceHealth';
 import * as API from 'services/Api';
 import { addDanger } from 'utils/AlertUtils';
+import type { Mock } from '@rstest/core';
 
-jest.mock('services/Api', () => ({
-  getClustersHealth: jest.fn()
+rstest.mock('services/Api', () => ({
+  getClustersHealth: rstest.fn()
 }));
 
-jest.mock('utils/AlertUtils', () => ({
-  addDanger: jest.fn()
+rstest.mock('utils/AlertUtils', () => ({
+  addDanger: rstest.fn()
 }));
 
 describe('NamespaceHealth service', () => {
@@ -20,13 +21,13 @@ describe('NamespaceHealth service', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
   });
 
   it('chunks namespace lists and merges results', async () => {
     const namespaces = Array.from({ length: 205 }, (_, i) => `ns${i}`);
 
-    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+    (API.getClustersHealth as Mock).mockImplementation(async (nsStr: string) => {
       const keys = nsStr.split(',');
       const m = new Map<string, any>();
       m.set(keys[0], {
@@ -52,7 +53,7 @@ describe('NamespaceHealth service', () => {
   it('adds chunk context when a namespace health request fails', async () => {
     const namespaces = Array.from({ length: 101 }, (_, i) => `ns${i}`);
 
-    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+    (API.getClustersHealth as Mock).mockImplementation(async (nsStr: string) => {
       if (nsStr === 'ns100') {
         throw new Error('request timed out');
       }
@@ -69,7 +70,7 @@ describe('NamespaceHealth service', () => {
   });
 
   it('keeps single request failures scoped to the namespace instead of chunk context', async () => {
-    (API.getClustersHealth as jest.Mock).mockRejectedValueOnce(new Error('request timed out'));
+    (API.getClustersHealth as Mock).mockRejectedValueOnce(new Error('request timed out'));
 
     const result = await fetchClusterNamespacesHealth(['bookinfo'], 'east', 60);
 
@@ -82,7 +83,7 @@ describe('NamespaceHealth service', () => {
   it('reports chunk failures without rejecting', async () => {
     const namespaces = Array.from({ length: 101 }, (_, i) => `ns${i}`);
 
-    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+    (API.getClustersHealth as Mock).mockImplementation(async (nsStr: string) => {
       if (nsStr === 'ns100') {
         throw new Error('request timed out');
       }
@@ -111,7 +112,7 @@ describe('NamespaceHealth service', () => {
   it('reports each failed chunk with a unique message', async () => {
     const namespaces = Array.from({ length: 201 }, (_, i) => `ns${i}`);
 
-    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+    (API.getClustersHealth as Mock).mockImplementation(async (nsStr: string) => {
       if (nsStr.startsWith('ns0') || nsStr === 'ns200') {
         throw new Error('request timed out');
       }

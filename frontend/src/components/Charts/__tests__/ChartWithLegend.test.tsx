@@ -5,22 +5,22 @@ import userEvent from '@testing-library/user-event';
 import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
 // Mock heavy ESM dependencies that Jest cannot transform
-jest.mock('d3-format', () => ({
+rstest.mock('d3-format', () => ({
   format: () => (v: number) => String(v)
 }));
 
-jest.mock('utils/Formatter', () => ({
+rstest.mock('utils/Formatter', () => ({
   getFormatter: () => (v: number) => String(v),
   getUnit: () => ''
 }));
 
-jest.mock('utils/VictoryChartsUtils', () => ({
-  toBuckets: jest.fn()
+rstest.mock('utils/VictoryChartsUtils', () => ({
+  toBuckets: rstest.fn()
 }));
 
 let lastChartEvents: any[] = [];
 
-jest.mock('@patternfly/react-charts/victory', () => {
+rstest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const MockChart = (props: any) => {
@@ -44,38 +44,38 @@ jest.mock('@patternfly/react-charts/victory', () => {
   };
 });
 
-jest.mock('victory-core', () => ({
+rstest.mock('victory-core', () => ({
   VictoryPortal: (props: any) => props.children
 }));
 
-jest.mock('victory-box-plot', () => ({
+rstest.mock('victory-box-plot', () => ({
   VictoryBoxPlot: () => null
 }));
 
-jest.mock('victory-voronoi-container', () => {
+rstest.mock('victory-voronoi-container', () => {
   const React = require('react');
   return {
     VictoryVoronoiContainer: (props: any) => React.createElement('div', null, props.children)
   };
 });
 
-jest.mock('../Container', () => ({
+rstest.mock('../Container', () => ({
   getVoronoiContainerProps: () => ({})
 }));
 
-jest.mock('../CustomTooltip', () => {
+rstest.mock('../CustomTooltip', () => {
   const React = require('react');
   return {
     CustomTooltip: () => React.createElement('div')
   };
 });
 
-jest.mock('regression', () => ({
+rstest.mock('regression', () => ({
   __esModule: true,
   default: { linear: () => ({ predict: () => [0, 0] }) }
 }));
 
-// eslint-disable-next-line import/first -- must import after jest.mock calls
+// eslint-disable-next-line import/first -- must import after rstest.mock calls
 import { ChartWithLegend, CHART_LEGEND_GAP, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
 
 const COLORS = ['#06c', '#c00', '#0a0', '#f80'];
@@ -130,10 +130,10 @@ describe('ChartWithLegend', () => {
     render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
     const seriesA = screen.getByRole('button', { name: /Series A/ });
-    fireEvent.keyDown(seriesA, { key: 'Enter', preventDefault: jest.fn() });
+    fireEvent.keyDown(seriesA, { key: 'Enter', preventDefault: rstest.fn() });
     expect(seriesA).toHaveAttribute('aria-pressed', 'true');
 
-    fireEvent.keyDown(seriesA, { key: ' ', preventDefault: jest.fn() });
+    fireEvent.keyDown(seriesA, { key: ' ', preventDefault: rstest.fn() });
     expect(seriesA).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -294,9 +294,7 @@ describe('ChartWithLegend', () => {
 
   it('does not register click events when onClick prop is not provided', () => {
     const data = makeSeries(['Series A']);
-    render(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
+    render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
     expect(lastChartEvents).toHaveLength(0);
   });

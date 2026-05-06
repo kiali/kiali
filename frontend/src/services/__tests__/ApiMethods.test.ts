@@ -16,7 +16,7 @@ describe('#getHeaders via public API calls', () => {
 
   afterEach(() => {
     mock.restore();
-    jest.restoreAllMocks();
+    rstest.restoreAllMocks();
   });
 
   it('should include Kiali-UI and Content-Type on GET requests', async () => {
@@ -30,7 +30,7 @@ describe('#getHeaders via public API calls', () => {
   });
 
   it('should not include X-CSRFToken on GET requests', async () => {
-    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
+    rstest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
 
     await API.getStatus();
 
@@ -39,7 +39,7 @@ describe('#getHeaders via public API calls', () => {
   });
 
   it('should include X-CSRFToken on non-GET requests when token exists', async () => {
-    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
+    rstest.spyOn(Auth, 'getCSRFToken').mockReturnValue('test-csrf-token');
 
     await API.createIstioConfigDetail(
       'test-ns',
@@ -53,7 +53,7 @@ describe('#getHeaders via public API calls', () => {
   });
 
   it('should not include X-CSRFToken on non-GET requests when token is undefined', async () => {
-    jest.spyOn(Auth, 'getCSRFToken').mockReturnValue(undefined);
+    rstest.spyOn(Auth, 'getCSRFToken').mockReturnValue(undefined);
 
     await API.createIstioConfigDetail(
       'test-ns',

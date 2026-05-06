@@ -2,7 +2,6 @@ import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config, isMultiCluster, serverConfig } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
-import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
@@ -38,13 +37,13 @@ type ReduxDispatchProps = {
 type UserProps = ReduxStateProps & ReduxDispatchProps;
 
 type UserState = {
-  checkSessionTimerId?: Timer;
+  checkSessionTimerId?: ReturnType<typeof setInterval>;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
   isSessionTokenStatsOpen: boolean;
   showSessionTimeOut: boolean;
   timeCountDownSeconds: number;
-  timeLeftTimerId?: Timer;
+  timeLeftTimerId?: ReturnType<typeof setInterval>;
 };
 
 const dropdownStyle = kialiStyle({

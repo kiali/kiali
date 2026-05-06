@@ -2,46 +2,41 @@ import * as React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
+import type { Mock } from '@rstest/core';
 
 import { DataPlaneStats } from '../DataPlaneStats';
 import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
 import { Paths } from 'config';
 import * as NamespaceHealthService from 'services/NamespaceHealth';
 
-jest.mock('hooks/namespaces', () => ({
-  useNamespaces: jest.fn()
+rstest.mock('hooks/namespaces', () => ({
+  useNamespaces: rstest.fn()
 }));
 
-jest.mock('hooks/redux', () => ({
-  useKialiSelector: jest.fn()
+rstest.mock('hooks/redux', () => ({
+  useKialiSelector: rstest.fn()
 }));
 
-jest.mock('react-redux', () => {
-  const actual = (jest as any).requireActual('react-redux');
-  return {
-    ...actual,
-    useSelector: jest.fn()
-  };
-});
+rstest.mock('react-redux', { spy: true });
 
-jest.mock('services/NamespaceHealth', () => ({
-  fetchClusterNamespacesHealth: jest.fn()
+rstest.mock('services/NamespaceHealth', () => ({
+  fetchClusterNamespacesHealth: rstest.fn()
 }));
 
-jest.mock('utils/AlertUtils', () => ({
-  addDanger: jest.fn()
+rstest.mock('utils/AlertUtils', () => ({
+  addDanger: rstest.fn()
 }));
 
-jest.mock('services/Api', () => ({
-  getErrorString: jest.fn(() => 'err')
+rstest.mock('services/Api', () => ({
+  getErrorString: rstest.fn(() => 'err')
 }));
 
-jest.mock('app/History', () => ({
-  router: { navigate: jest.fn() }
+rstest.mock('app/History', () => ({
+  router: { navigate: rstest.fn() }
 }));
 
-const useNamespacesMock = require('hooks/namespaces').useNamespaces as jest.Mock;
-const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
+const useNamespacesMock = require('hooks/namespaces').useNamespaces as Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as Mock;
 
 type TestNamespaceHealth = {
   appHealth: Record<string, any>;
@@ -86,7 +81,7 @@ const renderAndFlush = async (): Promise<void> => {
 
 describe('Overview DataPlaneStats', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     useKialiSelectorMock.mockReturnValue('');
   });
 
@@ -102,7 +97,7 @@ describe('Overview DataPlaneStats', () => {
       ]
     });
 
-    (NamespaceHealthService.fetchClusterNamespacesHealth as jest.Mock).mockResolvedValue(
+    (NamespaceHealthService.fetchClusterNamespacesHealth as Mock).mockResolvedValue(
       new Map<string, any>([
         ['amb', makeNamespaceHealth(FAILURE)],
         ['sc1', makeNamespaceHealth(DEGRADED)],
@@ -130,7 +125,7 @@ describe('Overview DataPlaneStats', () => {
       ]
     });
 
-    (NamespaceHealthService.fetchClusterNamespacesHealth as jest.Mock).mockResolvedValue(
+    (NamespaceHealthService.fetchClusterNamespacesHealth as Mock).mockResolvedValue(
       new Map<string, any>([
         ['f1', makeNamespaceHealth(FAILURE)],
         ['f2', makeNamespaceHealth(FAILURE)],
@@ -162,7 +157,7 @@ describe('Overview DataPlaneStats', () => {
       ]
     });
 
-    (NamespaceHealthService.fetchClusterNamespacesHealth as jest.Mock).mockResolvedValue(
+    (NamespaceHealthService.fetchClusterNamespacesHealth as Mock).mockResolvedValue(
       new Map<string, any>([
         ['f1', makeNamespaceHealth(FAILURE)],
         ['f2', makeNamespaceHealth(FAILURE)],

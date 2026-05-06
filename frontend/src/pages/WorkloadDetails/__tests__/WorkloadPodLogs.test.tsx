@@ -43,7 +43,7 @@ describe('WorkloadPodLogsComponent', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     axiosMock.reset();
   });
 
@@ -103,7 +103,7 @@ describe('WorkloadPodLogsComponent', () => {
     const user = userEvent.setup();
 
     const api = require('../../../services/Api');
-    const spy = jest.spyOn(api, 'setPodEnvoyProxyLogLevel');
+    const spy = rstest.spyOn(api, 'setPodEnvoyProxyLogLevel');
 
     render(
       <Provider store={store}>

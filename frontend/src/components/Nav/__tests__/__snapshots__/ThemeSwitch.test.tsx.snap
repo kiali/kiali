@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`ThemeSwitch renders dark theme 1`] = `
+exports[`ThemeSwitch renders > dark theme 1`] = `
 <div>
   <div
     aria-label="Theme switch"
@@ -83,7 +83,7 @@ exports[`ThemeSwitch renders dark theme 1`] = `
 </div>
 `;
 
-exports[`ThemeSwitch renders light theme 1`] = `
+exports[`ThemeSwitch renders > light theme 1`] = `
 <div>
   <div
     aria-label="Theme switch"

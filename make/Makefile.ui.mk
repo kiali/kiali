@@ -2,24 +2,13 @@
 # Targets for working with the UI from source
 #
 
-## run-frontend: Run the frontend UI in a local development server. Set KIALI_PROXY_URL to update package.json.
-# The 'proxy' field will be set to the KIALI_PROXY_URL value (or empty if not provided).
-# The proxy field will be automatically cleaned up when yarn start exits.
+## run-frontend: Run the frontend UI in a local development server. Set KIALI_PROXY_URL to configure the API proxy.
 run-frontend: .ensure-yarn-version
 ifdef YARN_START_URL
 	@echo "ERROR: YARN_START_URL has been renamed to KIALI_PROXY_URL. Please unset YARN_START_URL and use KIALI_PROXY_URL instead." && exit 1
 endif
-	sed -i -e "2 i \ \ \"proxy\": \"${KIALI_PROXY_URL}\"," -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json
-	@echo "'yarn start' will use this proxy setting: $$(grep proxy ${ROOTDIR}/frontend/package.json || echo 'No proxy configured')"
-	@cleanup() { \
-		if [ "$$cleanup_done" != "true" ]; then \
-			echo "Cleaning up: removing proxy field from package.json"; \
-			sed -i -e "/\"proxy\":/d" ${ROOTDIR}/frontend/package.json; \
-			cleanup_done=true; \
-		fi; \
-	}; \
-	trap cleanup EXIT INT TERM; \
-	cd ${ROOTDIR}/frontend && yarn start
+	@echo "Starting frontend dev server with proxy target: ${KIALI_PROXY_URL}"
+	cd ${ROOTDIR}/frontend && KIALI_PROXY_URL=${KIALI_PROXY_URL} yarn start
 
 ## yarn-start: Alias for run-frontend
 yarn-start: run-frontend

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`ToolbarDropdown Render correctly the toolbar dropdown 1`] = `
+exports[`ToolbarDropdown > Render correctly the toolbar dropdown 1`] = `
 <div>
   <span
     class="kiali_f1jcl1sl"
@@ -48,7 +48,7 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 1`] = `
 </div>
 `;
 
-exports[`ToolbarDropdown Render correctly the toolbar dropdown 2`] = `
+exports[`ToolbarDropdown > Render correctly the toolbar dropdown 2`] = `
 <div>
   <span
     class="kiali_f1jcl1sl"
@@ -96,7 +96,7 @@ exports[`ToolbarDropdown Render correctly the toolbar dropdown 2`] = `
 </div>
 `;
 
-exports[`ToolbarDropdown Render correctly the toolbar dropdown 3`] = `
+exports[`ToolbarDropdown > Render correctly the toolbar dropdown 3`] = `
 <div>
   <span
     class="kiali_f1jcl1sl"

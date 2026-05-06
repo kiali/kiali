@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`HealthDetails renders deployments failure 1`] = `
+exports[`HealthDetails > renders deployments failure 1`] = `
 <div>
   <div>
     Traffic Status (Last {{duration}}) {"duration":"1m"} 
@@ -40,4 +40,4 @@ exports[`HealthDetails renders deployments failure 1`] = `
 </div>
 `;
 
-exports[`HealthDetails renders healthy 1`] = `<div />`;
+exports[`HealthDetails > renders healthy 1`] = `<div />`;

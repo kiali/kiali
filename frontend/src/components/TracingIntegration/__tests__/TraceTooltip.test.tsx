@@ -1,22 +1,22 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
-jest.mock('@patternfly/react-charts/victory', () => ({
+rstest.mock('@patternfly/react-charts/victory', () => ({
   ChartCursorFlyout: () => null
 }));
 
-jest.mock('store/Store', () => ({}));
+rstest.mock('store/Store', () => ({}));
 
-jest.mock('utils/tracing/TraceStats', () => ({
+rstest.mock('utils/tracing/TraceStats', () => ({
   averageSpanDuration: () => 100000,
-  reduceMetricsStats: jest.fn()
+  reduceMetricsStats: rstest.fn()
 }));
 
-jest.mock('../TracingResults/StatsComparison', () => ({
+rstest.mock('../TracingResults/StatsComparison', () => ({
   renderTraceHeatMap: () => require('react').createElement('div', { 'data-test': 'heatmap' })
 }));
 
-jest.mock('components/Charts/CustomTooltip', () => ({
+rstest.mock('components/Charts/CustomTooltip', () => ({
   HookedChartTooltip: () => null
 }));
 

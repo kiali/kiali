@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`DateTimePicker renders correctly with no selected date 1`] = `
+exports[`DateTimePicker > renders correctly with no selected date 1`] = `
 <div>
   <div
     class="kiali_f11bk5e8"
@@ -118,7 +118,7 @@ exports[`DateTimePicker renders correctly with no selected date 1`] = `
 </div>
 `;
 
-exports[`DateTimePicker renders correctly with selected date 1`] = `
+exports[`DateTimePicker > renders correctly with selected date 1`] = `
 <div>
   <div
     class="kiali_f11bk5e8"
@@ -236,7 +236,7 @@ exports[`DateTimePicker renders correctly with selected date 1`] = `
 </div>
 `;
 
-exports[`DateTimePicker renders with min and max date constraints 1`] = `
+exports[`DateTimePicker > renders with min and max date constraints 1`] = `
 <div>
   <div
     class="kiali_f11bk5e8"
