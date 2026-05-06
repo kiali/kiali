@@ -23,6 +23,21 @@ export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElemen
 };
 
 /**
+ * Normalize a browser pathname to Kiali's canonical format so that
+ * paths from standalone Kiali and OSSMC can be compared directly.
+ *
+ * Kiali standalone: /console/namespaces/{ns}/services/{svc}
+ * OSSMC:            /k8s/ns/{ns}/services/{svc}/ossmconsole
+ * Canonical result: /namespaces/{ns}/services/{svc}
+ */
+export const normalizeKialiPath = (pathname: string): string => {
+  if (Cypress.env('OSSMC')) {
+    return pathname.replace(/\/ossmconsole$/, '').replace(/^\/k8s\/ns\//, '/namespaces/');
+  }
+  return pathname.replace(/^\/(console|ossmconsole)/, '');
+};
+
+/**
  * Fetches /api/config, asserts exactly one cluster exists, and yields
  * its name. Intended for single-cluster test environments.
  */

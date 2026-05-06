@@ -1,5 +1,5 @@
 import { After, Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { linkSelector } from './utils';
+import { linkSelector, normalizeKialiPath } from './utils';
 
 const APP_RATES_API_PATHNAME = '**/api/overview/metrics/apps/rates';
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
@@ -825,13 +825,6 @@ Then('user is redirected to that Service details page', () => {
     return;
   }
 
-  const normalizePath = (pathname: string): string => {
-    return pathname
-      .replace(/^\/(console|ossmconsole)/, '')
-      .replace(/\/ossmconsole$/, '')
-      .replace(/^\/k8s\/ns\//, '/namespaces/');
-  };
-
   const toUrl = (pathAndSearch: string): URL => {
     return new URL(pathAndSearch, Cypress.config('baseUrl') as string);
   };
@@ -841,8 +834,7 @@ Then('user is redirected to that Service details page', () => {
       const actualUrl = toUrl(`${pathname}${search}`);
       const expectedUrl = toUrl(lastClickedServiceInsightsHref);
 
-      // Path must match exactly (ignoring /console vs /ossmconsole prefix).
-      expect(normalizePath(actualUrl.pathname)).to.eq(normalizePath(expectedUrl.pathname));
+      expect(normalizeKialiPath(actualUrl.pathname)).to.eq(normalizeKialiPath(expectedUrl.pathname));
 
       // Expected query params must be present (allowing extra params like duration/refresh).
       expectedUrl.searchParams.forEach((value, key) => {
