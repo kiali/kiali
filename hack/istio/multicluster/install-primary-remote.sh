@@ -17,13 +17,19 @@ source ${SCRIPT_DIR}/env.sh "$@"
 ensure_remote_validating_webhook_cabundle() {
   local context="${1}"
   local namespace="${2:-istio-system}"
-  local timeout_seconds="${3:-120}"
+  local timeout_seconds="${3:-30}"
   local sleep_seconds=5
   local elapsed=0
+  local attempt=1
+  local max_attempts=1
   local validator_config=""
   local validator_index=""
   local validator_len=0
   local mutating_cabundle=""
+
+  if [[ "${timeout_seconds}" =~ ^[0-9]+$ ]] && [ "${timeout_seconds}" -gt 0 ]; then
+    max_attempts=$(((timeout_seconds + sleep_seconds - 1) / sleep_seconds))
+  fi
 
   validator_config=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfigurations -o json | \
     jq -r '.items[] | select(any(.webhooks[]?; .name=="validation.istio.io" and .clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'")) | .metadata.name' | head -n1)
@@ -50,12 +56,13 @@ ensure_remote_validating_webhook_cabundle() {
     mutating_cabundle=$(${CLIENT_EXE} --context="${context}" get mutatingwebhookconfigurations -o json | \
       jq -r '.items[] | .webhooks[]? | select(.clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'" and (.clientConfig.caBundle | length) > 0) | .clientConfig.caBundle' | head -n1)
     if [ -n "${mutating_cabundle}" ] && [ "${mutating_cabundle}" != "null" ]; then
-      echo "Patching Istio validating webhook caBundle in context [${context}] from mutating webhook"
+      echo "Istio validating webhook caBundle is empty in context [${context}]; copying CA bundle from mutating webhook"
       ${CLIENT_EXE} --context="${context}" patch validatingwebhookconfiguration "${validator_config}" --type='json' -p="[{\"op\":\"replace\",\"path\":\"/webhooks/${validator_index}/clientConfig/caBundle\",\"value\":\"${mutating_cabundle}\"}]"
 
       validator_len=$(${CLIENT_EXE} --context="${context}" get validatingwebhookconfiguration "${validator_config}" -o json | \
         jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle | length')
       if [ "${validator_len}" -gt 0 ]; then
+        echo "Istio validating webhook caBundle copied successfully in context [${context}]"
         return 0
       fi
 
@@ -63,9 +70,10 @@ ensure_remote_validating_webhook_cabundle() {
       return 1
     fi
 
-    echo "Waiting for Istio validating webhook caBundle in context [${context}]"
+    echo "Waiting for Istio validating webhook caBundle in context [${context}] (${attempt}/${max_attempts})"
     sleep "${sleep_seconds}"
     elapsed=$((elapsed + sleep_seconds))
+    attempt=$((attempt + 1))
   done
 
   echo "ERROR: Could not find a non-empty Istio mutating webhook caBundle in context [${context}]"
@@ -176,7 +184,6 @@ install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
 # also creates the RBAC and if that happens Sail can't take ownership of those resources.
 kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=1m
-ensure_remote_validating_webhook_cabundle "${CLUSTER2_CONTEXT}" "${ISTIO_NAMESPACE}" "120"
 
 # For kind we need to use the container IP otherwise the unresolvable localhost will be used.
 SERVER_FLAG=""
@@ -185,6 +192,7 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
 fi
 ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+ensure_remote_validating_webhook_cabundle "${CLUSTER2_CONTEXT}" "${ISTIO_NAMESPACE}" "30"
 
 helm install istio-eastwestgateway gateway \
   --repo https://istio-release.storage.googleapis.com/charts \
