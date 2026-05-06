@@ -34,7 +34,7 @@ export const normalizeKialiPath = (pathname: string): string => {
   if (Cypress.env('OSSMC')) {
     return pathname.replace(/\/ossmconsole$/, '').replace(/^\/k8s\/ns\//, '/namespaces/');
   }
-  return pathname.replace(/^\/(console|ossmconsole)/, '');
+  return pathname.replace(/^\/console/, '');
 };
 
 /**
