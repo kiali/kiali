@@ -2,6 +2,7 @@ package mcp_tools
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -300,32 +301,55 @@ func TestBookinfo_TrafficGraphContainsExpectedNodes(t *testing.T) {
 // --- Mesh status shows bookinfo namespace healthy ---
 
 func TestBookinfo_MeshStatusShowsBookinfoHealthy(t *testing.T) {
-	resp, err := CallMCPToolEmptyBody("get_mesh_status")
-	require.NoError(t, err)
-	require.Equal(t, 200, resp.StatusCode)
+	// Health depends on Prometheus metrics over a 10m window. In CI, transient
+	// errors right after deployment can push the error ratio above the threshold.
+	// Retry until the namespace stabilizes or the timeout expires.
+	const (
+		timeout  = 2 * time.Minute
+		interval = 10 * time.Second
+	)
+	deadline := time.Now().Add(timeout)
 
-	components, ok := resp.Parsed["components"].(map[string]interface{})
-	require.True(t, ok)
-	dataPlane, ok := components["data_plane"].(map[string]interface{})
-	require.True(t, ok)
-	monitored, ok := dataPlane["monitored_namespaces"].([]interface{})
-	require.True(t, ok)
+	var lastHealth string
+	for {
+		resp, err := CallMCPToolEmptyBody("get_mesh_status")
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
 
-	found := false
-	for _, item := range monitored {
-		ns, ok := item.(map[string]interface{})
-		if !ok {
-			continue
+		components, ok := resp.Parsed["components"].(map[string]interface{})
+		require.True(t, ok)
+		dataPlane, ok := components["data_plane"].(map[string]interface{})
+		require.True(t, ok)
+		monitored, ok := dataPlane["monitored_namespaces"].([]interface{})
+		require.True(t, ok)
+
+		found := false
+		for _, item := range monitored {
+			ns, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if ns["name"] == bookinfoNS {
+				found = true
+				lastHealth, _ = ns["health"].(string)
+				break
+			}
 		}
-		if ns["name"] == bookinfoNS {
-			found = true
-			health, _ := ns["health"].(string)
-			assert.Equal(t, "HEALTHY", health,
-				"bookinfo namespace should be HEALTHY in mesh status")
+		require.True(t, found, "bookinfo should be in monitored_namespaces")
+
+		if lastHealth == "HEALTHY" {
+			return
+		}
+
+		if time.Now().After(deadline) {
 			break
 		}
+		t.Logf("bookinfo health is %q, retrying in %s...", lastHealth, interval)
+		time.Sleep(interval)
 	}
-	assert.True(t, found, "bookinfo should be in monitored_namespaces")
+
+	assert.Equal(t, "HEALTHY", lastHealth,
+		"bookinfo namespace should be HEALTHY in mesh status after retries")
 }
 
 // --- Namespace detail has correct istio context ---
