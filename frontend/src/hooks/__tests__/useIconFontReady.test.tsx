@@ -10,15 +10,45 @@ const HookConsumer: React.FC<{ onValue: (v: boolean) => void }> = ({ onValue }) 
   return <div data-testid="hook-output" data-ready={String(ready)} />;
 };
 
+// isFontLoaded compares measureText widths between a monospace fallback and the
+// PF icon font. We control its return value by making the mock canvas report
+// different widths when the icon font family is set vs monospace-only.
+const FALLBACK_WIDTH = 10;
+const LOADED_WIDTH = 14;
+let simulateFontLoaded = false;
+
+const makeCanvasCtx = (): Record<string, unknown> => {
+  let currentFont = '';
+  return {
+    get font() {
+      return currentFont;
+    },
+    set font(v: string) {
+      currentFont = v;
+    },
+    measureText: () => {
+      const isIconFont = currentFont.includes('pf-v6-pficon');
+      return { width: simulateFontLoaded && isIconFont ? LOADED_WIDTH : FALLBACK_WIDTH };
+    }
+  };
+};
+
 describe('useIconFontReady', () => {
   let loadingdoneListeners: Array<() => void>;
   let readyResolve: () => void;
   let originalFonts: FontFaceSet | undefined;
-  let mockFontLoaded: jest.SpyInstance;
+  let origGetContext: typeof HTMLCanvasElement.prototype.getContext;
 
   beforeEach(() => {
     originalFonts = document.fonts;
+    origGetContext = HTMLCanvasElement.prototype.getContext;
 
+    HTMLCanvasElement.prototype.getContext = ((type: string) => {
+      if (type === '2d') return makeCanvasCtx();
+      return null;
+    }) as any;
+
+    simulateFontLoaded = false;
     loadingdoneListeners = [];
 
     Object.defineProperty(document, 'fonts', {
@@ -26,10 +56,10 @@ describe('useIconFontReady', () => {
         ready: new Promise<void>(resolve => {
           readyResolve = resolve;
         }),
-        addEventListener: jest.fn((_event: string, cb: () => void) => {
+        addEventListener: rstest.fn((_event: string, cb: () => void) => {
           loadingdoneListeners.push(cb);
         }),
-        removeEventListener: jest.fn((_event: string, cb: () => void) => {
+        removeEventListener: rstest.fn((_event: string, cb: () => void) => {
           loadingdoneListeners = loadingdoneListeners.filter(l => l !== cb);
         })
       },
@@ -37,15 +67,11 @@ describe('useIconFontReady', () => {
       configurable: true
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require('../useIconFontReady');
-    mockFontLoaded = jest.spyOn(mod, 'isFontLoaded').mockReturnValue(false);
-
     _resetForTesting();
   });
 
   afterEach(() => {
-    mockFontLoaded.mockRestore();
+    HTMLCanvasElement.prototype.getContext = origGetContext;
     Object.defineProperty(document, 'fonts', {
       value: originalFonts,
       writable: true,
@@ -64,7 +90,7 @@ describe('useIconFontReady', () => {
     render(<HookConsumer onValue={v => (value = v)} />);
     expect(value).toBe(false);
 
-    mockFontLoaded.mockReturnValue(true);
+    simulateFontLoaded = true;
     act(() => {
       loadingdoneListeners.forEach(cb => cb());
     });
@@ -77,7 +103,7 @@ describe('useIconFontReady', () => {
     render(<HookConsumer onValue={v => (value = v)} />);
     expect(value).toBe(false);
 
-    mockFontLoaded.mockReturnValue(true);
+    simulateFontLoaded = true;
     await act(async () => {
       readyResolve();
     });

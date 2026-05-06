@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`#Badge render correctly with data should render badge 1`] = `
+exports[`#Badge render correctly with data > should render badge 1`] = `
 <div>
   <span
     class="pf-v6-c-label pf-m-filled pf-m-compact kiali_fhx35ww"

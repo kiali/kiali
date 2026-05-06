@@ -3,38 +3,39 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Paths } from 'config';
+import type { Mock } from '@rstest/core';
 
 import { IstioConfigStats } from '../IstioConfigStats';
 import { IstioConfigStatusLabel } from 'hooks/istioConfigs';
 
-jest.mock('hooks/istioConfigs', () => ({
+rstest.mock('hooks/istioConfigs', () => ({
   IstioConfigStatusLabel: {
     Warning: 'Warning',
     NotValid: 'Not Valid',
     NotValidated: 'Not Validated'
   },
-  useIstioConfigStatus: jest.fn()
+  useIstioConfigStatus: rstest.fn()
 }));
 
-jest.mock('hooks/redux', () => ({
-  useKialiSelector: jest.fn()
+rstest.mock('hooks/redux', () => ({
+  useKialiSelector: rstest.fn()
 }));
 
-jest.mock('components/Filters/StatefulFilters', () => ({
-  FilterSelected: { resetFilters: jest.fn() }
+rstest.mock('components/Filters/StatefulFilters', () => ({
+  FilterSelected: { resetFilters: rstest.fn() }
 }));
 
-jest.mock('app/History', () => ({
-  router: { navigate: jest.fn() }
+rstest.mock('app/History', () => ({
+  router: { navigate: rstest.fn() }
 }));
 
-const useIstioConfigStatusMock = require('hooks/istioConfigs').useIstioConfigStatus as jest.Mock;
-const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
-const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as jest.Mock;
+const useIstioConfigStatusMock = require('hooks/istioConfigs').useIstioConfigStatus as Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as Mock;
+const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as Mock;
 
 describe('Overview IstioConfigStats', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     useKialiSelectorMock.mockReturnValue('');
   });
 
@@ -53,7 +54,7 @@ describe('Overview IstioConfigStats', () => {
       isError: false,
       isLoading: true,
       issues: [],
-      refresh: jest.fn(),
+      refresh: rstest.fn(),
       total: 0,
       valid: 0,
       warnings: 0
@@ -64,7 +65,7 @@ describe('Overview IstioConfigStats', () => {
     expect(screen.getByText(/fetching istio config data/i)).toBeInTheDocument();
 
     useKialiSelectorMock.mockReturnValueOnce([]).mockReturnValueOnce([]);
-    const refresh = jest.fn();
+    const refresh = rstest.fn();
     useIstioConfigStatusMock.mockReturnValue({
       errors: 0,
       isError: true,
@@ -91,7 +92,7 @@ describe('Overview IstioConfigStats', () => {
       isError: false,
       isLoading: false,
       issues: [],
-      refresh: jest.fn(),
+      refresh: rstest.fn(),
       total: 10,
       valid: 10,
       warnings: 0
@@ -155,7 +156,7 @@ describe('Overview IstioConfigStats', () => {
           status: 'Not Validated'
         }
       ],
-      refresh: jest.fn(),
+      refresh: rstest.fn(),
       total: 4,
       valid: 0,
       warnings: 4

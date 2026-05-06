@@ -656,8 +656,8 @@ describe('Parse find value test', () => {
 });
 describe('Rank auto-enable side effects', () => {
   it('should call toggleRank and setRankBy when showRank is false and rankBy is empty', () => {
-    const mockToggleRank = jest.fn();
-    const mockSetRankBy = jest.fn();
+    const mockToggleRank = rstest.fn();
+    const mockSetRankBy = rstest.fn();
     const ref = React.createRef<GraphFindComponent>();
     render(
       <GraphFindComponent
@@ -669,19 +669,19 @@ describe('Rank auto-enable side effects', () => {
         findValue=""
         hideValue=""
         rankBy={[] as RankMode[]}
-        setEdgeLabels={jest.fn()}
-        setFindValue={jest.fn()}
-        setHideValue={jest.fn()}
+        setEdgeLabels={rstest.fn()}
+        setFindValue={rstest.fn()}
+        setHideValue={rstest.fn()}
         setRankBy={mockSetRankBy}
         showFindHelp={false}
         showIdleNodes={false}
         showRank={false}
         showSecurity={false}
         showVirtualServices={true}
-        toggleFindHelp={jest.fn()}
-        toggleGraphSecurity={jest.fn()}
-        toggleGraphVirtualServices={jest.fn()}
-        toggleIdleNodes={jest.fn()}
+        toggleFindHelp={rstest.fn()}
+        toggleGraphSecurity={rstest.fn()}
+        toggleGraphVirtualServices={rstest.fn()}
+        toggleIdleNodes={rstest.fn()}
         toggleRank={mockToggleRank}
       />,
       { wrapper: Wrapper }
@@ -694,8 +694,8 @@ describe('Rank auto-enable side effects', () => {
   });
 
   it('should call setRankBy but not toggleRank when showRank is true and rankBy is empty', () => {
-    const mockToggleRank = jest.fn();
-    const mockSetRankBy = jest.fn();
+    const mockToggleRank = rstest.fn();
+    const mockSetRankBy = rstest.fn();
     const ref = React.createRef<GraphFindComponent>();
     render(
       <GraphFindComponent
@@ -707,19 +707,19 @@ describe('Rank auto-enable side effects', () => {
         findValue=""
         hideValue=""
         rankBy={[] as RankMode[]}
-        setEdgeLabels={jest.fn()}
-        setFindValue={jest.fn()}
-        setHideValue={jest.fn()}
+        setEdgeLabels={rstest.fn()}
+        setFindValue={rstest.fn()}
+        setHideValue={rstest.fn()}
         setRankBy={mockSetRankBy}
         showFindHelp={false}
         showIdleNodes={false}
         showRank={true}
         showSecurity={false}
         showVirtualServices={true}
-        toggleFindHelp={jest.fn()}
-        toggleGraphSecurity={jest.fn()}
-        toggleGraphVirtualServices={jest.fn()}
-        toggleIdleNodes={jest.fn()}
+        toggleFindHelp={rstest.fn()}
+        toggleGraphSecurity={rstest.fn()}
+        toggleGraphVirtualServices={rstest.fn()}
+        toggleIdleNodes={rstest.fn()}
         toggleRank={mockToggleRank}
       />,
       { wrapper: Wrapper }
@@ -732,8 +732,8 @@ describe('Rank auto-enable side effects', () => {
   });
 
   it('should not call toggleRank or setRankBy when showRank is true and rankBy is already set', () => {
-    const mockToggleRank = jest.fn();
-    const mockSetRankBy = jest.fn();
+    const mockToggleRank = rstest.fn();
+    const mockSetRankBy = rstest.fn();
     const ref = React.createRef<GraphFindComponent>();
     render(
       <GraphFindComponent
@@ -745,19 +745,19 @@ describe('Rank auto-enable side effects', () => {
         findValue=""
         hideValue=""
         rankBy={[RankMode.RANK_BY_INBOUND_EDGES]}
-        setEdgeLabels={jest.fn()}
-        setFindValue={jest.fn()}
-        setHideValue={jest.fn()}
+        setEdgeLabels={rstest.fn()}
+        setFindValue={rstest.fn()}
+        setHideValue={rstest.fn()}
         setRankBy={mockSetRankBy}
         showFindHelp={false}
         showIdleNodes={false}
         showRank={true}
         showSecurity={false}
         showVirtualServices={true}
-        toggleFindHelp={jest.fn()}
-        toggleGraphSecurity={jest.fn()}
-        toggleGraphVirtualServices={jest.fn()}
-        toggleIdleNodes={jest.fn()}
+        toggleFindHelp={rstest.fn()}
+        toggleGraphSecurity={rstest.fn()}
+        toggleGraphVirtualServices={rstest.fn()}
+        toggleIdleNodes={rstest.fn()}
         toggleRank={mockToggleRank}
       />,
       { wrapper: Wrapper }
@@ -770,8 +770,8 @@ describe('Rank auto-enable side effects', () => {
   });
 
   it('should call toggleRank exactly once for compound rank expressions', () => {
-    const mockToggleRank = jest.fn();
-    const mockSetRankBy = jest.fn();
+    const mockToggleRank = rstest.fn();
+    const mockSetRankBy = rstest.fn();
     const ref = React.createRef<GraphFindComponent>();
     render(
       <GraphFindComponent
@@ -783,19 +783,19 @@ describe('Rank auto-enable side effects', () => {
         findValue=""
         hideValue=""
         rankBy={[] as RankMode[]}
-        setEdgeLabels={jest.fn()}
-        setFindValue={jest.fn()}
-        setHideValue={jest.fn()}
+        setEdgeLabels={rstest.fn()}
+        setFindValue={rstest.fn()}
+        setHideValue={rstest.fn()}
         setRankBy={mockSetRankBy}
         showFindHelp={false}
         showIdleNodes={false}
         showRank={false}
         showSecurity={false}
         showVirtualServices={true}
-        toggleFindHelp={jest.fn()}
-        toggleGraphSecurity={jest.fn()}
-        toggleGraphVirtualServices={jest.fn()}
-        toggleIdleNodes={jest.fn()}
+        toggleFindHelp={rstest.fn()}
+        toggleGraphSecurity={rstest.fn()}
+        toggleGraphVirtualServices={rstest.fn()}
+        toggleIdleNodes={rstest.fn()}
         toggleRank={mockToggleRank}
       />,
       { wrapper: Wrapper }

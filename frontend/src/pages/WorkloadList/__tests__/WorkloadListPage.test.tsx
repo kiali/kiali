@@ -9,44 +9,59 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
+import type { Mock } from '@rstest/core';
 
-jest.mock('../../../hooks/refresh', () => ({
+rstest.mock('../../../hooks/refresh', () => ({
   useRefreshInterval: () => ({ lastRefreshAt: 1 })
 }));
 
-jest.mock('../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
+rstest.mock('../../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
   DefaultSecondaryMasthead: ({ children }: { children?: React.ReactNode }) => (
     <div data-test="DefaultSecondaryMasthead">{children}</div>
   )
 }));
 
-jest.mock('components/Time/HealthComputeDurationMastheadToolbar', () => ({
+rstest.mock('components/Time/HealthComputeDurationMastheadToolbar', () => ({
   HealthComputeDurationMastheadToolbar: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }));
 
-jest.mock('../../../services/Api', () => ({
-  getClustersWorkloads: jest.fn()
+rstest.mock('../../../services/Api', () => ({
+  getClustersWorkloads: rstest.fn()
 }));
 
-jest.mock('../../../utils/PerformanceUtils', () => ({
-  startPerfTimer: jest.fn(),
-  endPerfTimer: jest.fn()
+rstest.mock('../../../utils/PerformanceUtils', () => ({
+  startPerfTimer: rstest.fn(),
+  endPerfTimer: rstest.fn()
 }));
 
-jest.mock('app/History', () => ({
-  ...(jest as any).requireActual('app/History'),
+rstest.mock('app/History', () => ({
   HistoryManager: {
-    getBooleanParam: jest.fn(),
-    getDuration: jest.fn(),
-    getNumericParam: jest.fn(),
-    getParam: jest.fn(),
-    getRefresh: jest.fn(() => 0)
-  }
+    getBooleanParam: rstest.fn(),
+    getClusterName: rstest.fn(),
+    getDuration: rstest.fn(),
+    getNumericParam: rstest.fn(),
+    getParam: rstest.fn(),
+    getRefresh: rstest.fn(() => 0),
+    setParam: rstest.fn()
+  },
+  URLParam: {
+    BY_LABELS: 'bylbl',
+    DIRECTION: 'direction',
+    DURATION: 'duration',
+    NAMESPACES: 'namespaces',
+    REFRESH_INTERVAL: 'refresh',
+    SORT: 'sort'
+  },
+  location: {
+    getPathname: () => '/',
+    getSearch: () => ''
+  },
+  router: { navigate: rstest.fn(), state: { location: { pathname: '/', search: '' } }, basename: '' }
 }));
 
 describe('WorkloadListPage shallow render', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     store.dispatch(NamespaceActions.setActiveNamespaces([{ name: 'test-namespace' }]));
     serverConfig.clusters = {
       'test-cluster': {
@@ -97,7 +112,7 @@ describe('WorkloadListPage shallow render', () => {
       ]
     };
 
-    (API.getClustersWorkloads as jest.Mock).mockResolvedValue({ data: mockResponse });
+    (API.getClustersWorkloads as Mock).mockResolvedValue({ data: mockResponse });
 
     const { container } = renderPage();
     await waitFor(() => {
@@ -131,7 +146,7 @@ describe('WorkloadListPage shallow render', () => {
       ]
     };
 
-    (API.getClustersWorkloads as jest.Mock).mockResolvedValue({ data: mockResponse });
+    (API.getClustersWorkloads as Mock).mockResolvedValue({ data: mockResponse });
 
     const { container } = renderPage();
     await waitFor(() => {

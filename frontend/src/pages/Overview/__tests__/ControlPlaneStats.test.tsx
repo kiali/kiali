@@ -4,41 +4,42 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Status } from 'types/IstioStatus';
 import { Paths } from 'config';
+import type { Mock } from '@rstest/core';
 
 import { ControlPlaneStats } from '../ControlPlaneStats';
 
-jest.mock('hooks/controlPlanes', () => ({
-  useControlPlanes: jest.fn()
+rstest.mock('hooks/controlPlanes', () => ({
+  useControlPlanes: rstest.fn()
 }));
 
-jest.mock('components/Badge/IstioAPIDisabledBadge', () => ({
+rstest.mock('components/Badge/IstioAPIDisabledBadge', () => ({
   IstioAPIDisabledBadge: () => null
 }));
 
-jest.mock('hooks/redux', () => ({
-  useKialiSelector: jest.fn()
+rstest.mock('hooks/redux', () => ({
+  useKialiSelector: rstest.fn()
 }));
 
-jest.mock('components/Filters/StatefulFilters', () => ({
-  FilterSelected: { resetFilters: jest.fn() }
+rstest.mock('components/Filters/StatefulFilters', () => ({
+  FilterSelected: { resetFilters: rstest.fn() }
 }));
 
-jest.mock('app/History', () => ({
-  router: { navigate: jest.fn() },
+rstest.mock('app/History', () => ({
+  router: { navigate: rstest.fn() },
   URLParam: {
     MESH_HIDE: 'meshHide'
   }
 }));
 
-const useControlPlanesMock = require('hooks/controlPlanes').useControlPlanes as jest.Mock;
-const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
-const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as jest.Mock;
+const useControlPlanesMock = require('hooks/controlPlanes').useControlPlanes as Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as Mock;
+const resetFiltersMock = require('components/Filters/StatefulFilters').FilterSelected.resetFilters as Mock;
 
 describe('Overview ControlPlaneStats', () => {
-  const refresh = jest.fn();
+  const refresh = rstest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     useKialiSelectorMock.mockReturnValue('');
   });
 

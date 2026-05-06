@@ -26,7 +26,7 @@ describe('StatefulFilters', () => {
     render(
       <StatefulFiltersComponent
         ref={ref}
-        onFilterChange={jest.fn()}
+        onFilterChange={rstest.fn()}
         initialFilters={[labelFilter, istioSidecarFilter]}
         language="en"
       />

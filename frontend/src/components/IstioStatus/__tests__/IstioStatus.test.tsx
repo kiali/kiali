@@ -12,11 +12,11 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 let mockStatusMap: ClusterStatusMap = {};
 
-jest.mock('../../../hooks/clusters', () => ({
+rstest.mock('../../../hooks/clusters', () => ({
   useClusterStatus: () => ({
     isError: false,
     isLoading: false,
-    refresh: jest.fn(),
+    refresh: rstest.fn(),
     statusMap: mockStatusMap
   })
 }));
@@ -58,7 +58,7 @@ const testTooltip = async (container: HTMLElement): Promise<void> => {
   expect(await screen.findByRole('tooltip')).toBeInTheDocument();
 };
 
-jest.mock('../../../utils/MeshUtils', () => ({
+rstest.mock('../../../utils/MeshUtils', () => ({
   isControlPlaneAccessible: () => true
 }));
 

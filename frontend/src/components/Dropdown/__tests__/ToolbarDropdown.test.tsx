@@ -26,7 +26,7 @@ describe('ToolbarDropdown', () => {
         <ToolbarDropdown
           id={dropdownType.id}
           disabled={false}
-          handleSelect={jest.fn()}
+          handleSelect={rstest.fn()}
           nameDropdown={dropdownType.id}
           value={dropdownType.default}
           label={dropdownType.options[dropdownType.default]}

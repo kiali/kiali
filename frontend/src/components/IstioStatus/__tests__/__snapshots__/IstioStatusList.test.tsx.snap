@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
 exports[`lists all the components grouped 1`] = `
 <div>
@@ -18,7 +18,7 @@ exports[`lists all the components grouped 1`] = `
       <span
         class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
         data-test="component-status-icon"
-        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
+        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-color: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
       >
         <span
           class="pf-v6-c-label__content"
@@ -67,7 +67,7 @@ exports[`lists all the components grouped 1`] = `
       <span
         class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
         data-test="component-status-icon"
-        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--danger--default); border-width: 1px; border-style: solid;"
+        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--danger--default); border-color: var(--pf-t--global--icon--color--status--danger--default); border-width: 1px; border-style: solid;"
       >
         <span
           class="pf-v6-c-label__content"
@@ -116,7 +116,7 @@ exports[`lists all the components grouped 1`] = `
       <span
         class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
         data-test="component-status-icon"
-        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
+        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-color: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
       >
         <span
           class="pf-v6-c-label__content"
@@ -165,7 +165,7 @@ exports[`lists all the components grouped 1`] = `
       <span
         class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
         data-test="component-status-icon"
-        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--warning--default); border-width: 1px; border-style: solid;"
+        style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--warning--default); border-color: var(--pf-t--global--icon--color--status--warning--default); border-width: 1px; border-style: solid;"
       >
         <span
           class="pf-v6-c-label__content"

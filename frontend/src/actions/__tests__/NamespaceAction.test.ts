@@ -15,7 +15,7 @@ describe('NamespaceActions', () => {
   const RealDate = Date;
 
   const mockDate = (date: Date): Date => {
-    global.Date = jest.fn(() => date) as any;
+    global.Date = rstest.fn(() => date) as any;
     return date;
   };
 

@@ -4,20 +4,20 @@ import { render, screen } from '@testing-library/react';
 import { ChartModel } from 'types/Dashboards';
 import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
-jest.mock('d3-format', () => ({
+rstest.mock('d3-format', () => ({
   format: () => (v: number) => String(v)
 }));
 
-jest.mock('utils/Formatter', () => ({
+rstest.mock('utils/Formatter', () => ({
   getFormatter: () => (v: number) => String(v),
   getUnit: () => ''
 }));
 
-jest.mock('utils/VictoryChartsUtils', () => ({
-  toBuckets: jest.fn()
+rstest.mock('utils/VictoryChartsUtils', () => ({
+  toBuckets: rstest.fn()
 }));
 
-jest.mock('@patternfly/react-charts/victory', () => {
+rstest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
   return {
     Chart: (props: any) =>
@@ -39,33 +39,33 @@ jest.mock('@patternfly/react-charts/victory', () => {
   };
 });
 
-jest.mock('victory-core', () => ({
+rstest.mock('victory-core', () => ({
   VictoryPortal: (props: any) => props.children
 }));
 
-jest.mock('victory-box-plot', () => ({
+rstest.mock('victory-box-plot', () => ({
   VictoryBoxPlot: () => null
 }));
 
-jest.mock('victory-voronoi-container', () => {
+rstest.mock('victory-voronoi-container', () => {
   const React = require('react');
   return {
     VictoryVoronoiContainer: (props: any) => React.createElement('div', null, props.children)
   };
 });
 
-jest.mock('../Container', () => ({
+rstest.mock('../Container', () => ({
   getVoronoiContainerProps: () => ({})
 }));
 
-jest.mock('../CustomTooltip', () => {
+rstest.mock('../CustomTooltip', () => {
   const React = require('react');
   return {
     CustomTooltip: () => React.createElement('div')
   };
 });
 
-jest.mock('regression', () => ({
+rstest.mock('regression', () => ({
   __esModule: true,
   default: { linear: () => ({ predict: () => [0, 0] }) }
 }));
@@ -94,8 +94,8 @@ const makeData = (count = 1): VCLines<RichDataPoint> =>
   }));
 
 describe('KChart', () => {
-  let offsetHeightSpy: jest.SpyInstance;
-  let getComputedStyleSpy: jest.SpyInstance;
+  let offsetHeightSpy: ReturnType<typeof rstest.spyOn>;
+  let getComputedStyleSpy: ReturnType<typeof rstest.spyOn>;
 
   afterEach(() => {
     offsetHeightSpy?.mockRestore();
@@ -107,7 +107,7 @@ describe('KChart', () => {
     const titleHeight = 24;
     const marginTop = 20;
 
-    offsetHeightSpy = jest
+    offsetHeightSpy = rstest
       .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
       .mockImplementation(function (this: HTMLElement) {
         const el = this as HTMLElement & { style?: CSSStyleDeclaration };
@@ -116,7 +116,7 @@ describe('KChart', () => {
         }
         return 0;
       });
-    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+    getComputedStyleSpy = rstest.spyOn(window, 'getComputedStyle').mockReturnValue({
       marginTop: `${marginTop}px`
     } as CSSStyleDeclaration);
 
@@ -126,7 +126,7 @@ describe('KChart', () => {
         chartHeight={chartHeight}
         data={makeData()}
         isMaximized={false}
-        onToggleMaximized={jest.fn()}
+        onToggleMaximized={rstest.fn()}
         showSpans={false}
       />
     );
@@ -141,8 +141,8 @@ describe('KChart', () => {
 
   it('does not update state when measured height is zero or negative', () => {
     const chartHeight = 30;
-    offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(20);
-    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+    offsetHeightSpy = rstest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(20);
+    getComputedStyleSpy = rstest.spyOn(window, 'getComputedStyle').mockReturnValue({
       marginTop: '20px'
     } as CSSStyleDeclaration);
 
@@ -152,7 +152,7 @@ describe('KChart', () => {
         chartHeight={chartHeight}
         data={makeData()}
         isMaximized={false}
-        onToggleMaximized={jest.fn()}
+        onToggleMaximized={rstest.fn()}
         showSpans={false}
       />
     );
@@ -161,8 +161,8 @@ describe('KChart', () => {
   });
 
   it('defaults to 300 when chartHeight prop is not provided', () => {
-    offsetHeightSpy = jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(0);
-    getComputedStyleSpy = jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+    offsetHeightSpy = rstest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(0);
+    getComputedStyleSpy = rstest.spyOn(window, 'getComputedStyle').mockReturnValue({
       marginTop: '0px'
     } as CSSStyleDeclaration);
 
@@ -171,7 +171,7 @@ describe('KChart', () => {
         chart={makeChart()}
         data={makeData()}
         isMaximized={false}
-        onToggleMaximized={jest.fn()}
+        onToggleMaximized={rstest.fn()}
         showSpans={false}
       />
     );
@@ -182,7 +182,7 @@ describe('KChart', () => {
 
   it('collapses when data is empty', () => {
     render(
-      <KChart chart={makeChart()} data={[]} isMaximized={false} onToggleMaximized={jest.fn()} showSpans={false} />
+      <KChart chart={makeChart()} data={[]} isMaximized={false} onToggleMaximized={rstest.fn()} showSpans={false} />
     );
 
     expect(screen.getByText('No data available')).toBeInTheDocument();

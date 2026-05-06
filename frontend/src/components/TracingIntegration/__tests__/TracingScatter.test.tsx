@@ -1,44 +1,45 @@
 import * as React from 'react';
 import { act, render } from '@testing-library/react';
+import type { Mock } from '@rstest/core';
 
-jest.mock('@patternfly/react-charts/victory', () => ({
+rstest.mock('@patternfly/react-charts/victory', () => ({
   ChartScatter: () => null
 }));
 
-jest.mock('store/Store', () => ({}));
+rstest.mock('store/Store', () => ({}));
 
-jest.mock('store/Selectors', () => ({
+rstest.mock('store/Selectors', () => ({
   durationSelector: () => 600
 }));
 
-jest.mock('actions/MetricsStatsThunkActions', () => ({
-  MetricsStatsThunkActions: { load: jest.fn() }
+rstest.mock('actions/MetricsStatsThunkActions', () => ({
+  MetricsStatsThunkActions: { load: rstest.fn() }
 }));
 
-jest.mock('actions/TracingThunkActions', () => ({
-  TracingThunkActions: { setTraceId: jest.fn() }
+rstest.mock('actions/TracingThunkActions', () => ({
+  TracingThunkActions: { setTraceId: rstest.fn() }
 }));
 
-jest.mock('app/History', () => ({
+rstest.mock('app/History', () => ({
   HistoryManager: { getParam: () => undefined },
   URLParam: { TRACING_TRACE_ID: 'traceId' }
 }));
 
-jest.mock('utils/tracing/TraceStats', () => ({
+rstest.mock('utils/tracing/TraceStats', () => ({
   averageSpanDuration: () => undefined,
   buildQueriesFromSpans: () => []
 }));
 
 let capturedChartProps: any;
 
-jest.mock('components/Charts/ChartWithLegend', () => ({
+rstest.mock('components/Charts/ChartWithLegend', () => ({
   ChartWithLegend: (props: any) => {
     capturedChartProps = props;
     return null;
   }
 }));
 
-jest.mock('../TraceTooltip', () => ({
+rstest.mock('../TraceTooltip', () => ({
   TraceTooltip: () => null
 }));
 
@@ -65,14 +66,14 @@ const makeProps = (
   overrides: object = {}
 ): {
   duration: number;
-  loadMetricsStats: jest.Mock<any>;
-  setTraceId: jest.Mock<any>;
+  loadMetricsStats: Mock<any>;
+  setTraceId: Mock<any>;
   showSpansAverage: boolean;
   traces: JaegerTrace[];
 } => ({
   duration: 600,
-  loadMetricsStats: jest.fn().mockResolvedValue(undefined),
-  setTraceId: jest.fn(),
+  loadMetricsStats: rstest.fn().mockResolvedValue(undefined),
+  setTraceId: rstest.fn(),
   showSpansAverage: false,
   // Non-empty so that ChartWithLegend actually renders (the component shows an
   // empty-state when traces is []), which lets the mock capture onTooltipOpen/Close props.
@@ -82,12 +83,12 @@ const makeProps = (
 
 describe('TracingScatterComponent debounce', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    rstest.useFakeTimers();
     capturedChartProps = undefined;
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    rstest.useRealTimers();
   });
 
   it('does not call loadMetricsStats before 400ms have elapsed', () => {
@@ -96,7 +97,7 @@ describe('TracingScatterComponent debounce', () => {
     const chartProps = getChartProps();
 
     chartProps.onTooltipOpen({ trace: makeTrace() });
-    jest.advanceTimersByTime(399);
+    rstest.advanceTimersByTime(399);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
   });
@@ -107,7 +108,7 @@ describe('TracingScatterComponent debounce', () => {
     const chartProps = getChartProps();
 
     chartProps.onTooltipOpen({ trace: makeTrace() });
-    jest.advanceTimersByTime(400);
+    rstest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).toHaveBeenCalledTimes(1);
   });
@@ -119,9 +120,9 @@ describe('TracingScatterComponent debounce', () => {
 
     const trace = makeTrace();
     chartProps.onTooltipOpen({ trace });
-    jest.advanceTimersByTime(200);
+    rstest.advanceTimersByTime(200);
     chartProps.onTooltipClose({ trace });
-    jest.advanceTimersByTime(400);
+    rstest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
   });
@@ -132,9 +133,9 @@ describe('TracingScatterComponent debounce', () => {
     const chartProps = getChartProps();
 
     chartProps.onTooltipOpen({ trace: makeTrace() });
-    jest.advanceTimersByTime(200);
+    rstest.advanceTimersByTime(200);
     unmount();
-    jest.advanceTimersByTime(400);
+    rstest.advanceTimersByTime(400);
 
     expect(props.loadMetricsStats).not.toHaveBeenCalled();
   });
@@ -144,7 +145,7 @@ describe('TracingScatterComponent debounce', () => {
     const firstPromise = new Promise<void>(resolve => {
       resolveFirst = resolve;
     });
-    const loadMetricsStats = jest.fn().mockReturnValueOnce(firstPromise).mockResolvedValue(undefined);
+    const loadMetricsStats = rstest.fn().mockReturnValueOnce(firstPromise).mockResolvedValue(undefined);
     const props = makeProps({ loadMetricsStats });
     render(<TracingScatterComponent {...(props as any)} />);
     const chartProps = getChartProps();
@@ -153,11 +154,11 @@ describe('TracingScatterComponent debounce', () => {
     const trace2 = makeTrace('trace-2');
 
     chartProps.onTooltipOpen({ trace: trace1 });
-    jest.advanceTimersByTime(400);
+    rstest.advanceTimersByTime(400);
     expect(loadMetricsStats).toHaveBeenCalledTimes(1);
 
     chartProps.onTooltipOpen({ trace: trace2 });
-    jest.advanceTimersByTime(400);
+    rstest.advanceTimersByTime(400);
     expect(loadMetricsStats).toHaveBeenCalledTimes(1);
 
     await act(async () => {

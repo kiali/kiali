@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`ValidationSummary renders error icon when all istio components are valid 1`] = `
+exports[`ValidationSummary renders > error icon when all istio components are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -31,7 +31,7 @@ exports[`ValidationSummary renders error icon when all istio components are vali
 </div>
 `;
 
-exports[`ValidationSummary renders error icon when all istio components are valid 2`] = `
+exports[`ValidationSummary renders > error icon when all istio components are valid 2`] = `
 <div>
   <div
     style="display: contents;"
@@ -62,7 +62,7 @@ exports[`ValidationSummary renders error icon when all istio components are vali
 </div>
 `;
 
-exports[`ValidationSummary renders error icon when all services are valid 1`] = `
+exports[`ValidationSummary renders > error icon when all services are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -93,7 +93,7 @@ exports[`ValidationSummary renders error icon when all services are valid 1`] = 
 </div>
 `;
 
-exports[`ValidationSummary renders error icon when all services are valid 2`] = `
+exports[`ValidationSummary renders > error icon when all services are valid 2`] = `
 <div>
   <div
     style="display: contents;"
@@ -124,7 +124,7 @@ exports[`ValidationSummary renders error icon when all services are valid 2`] = 
 </div>
 `;
 
-exports[`ValidationSummary renders n/a when all istio components are valid 1`] = `
+exports[`ValidationSummary renders > n/a when all istio components are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -138,7 +138,7 @@ exports[`ValidationSummary renders n/a when all istio components are valid 1`] =
 </div>
 `;
 
-exports[`ValidationSummary renders success icon when all istio components are valid 1`] = `
+exports[`ValidationSummary renders > success icon when all istio components are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -169,7 +169,7 @@ exports[`ValidationSummary renders success icon when all istio components are va
 </div>
 `;
 
-exports[`ValidationSummary renders success icon when all istio components are valid 2`] = `
+exports[`ValidationSummary renders > success icon when all istio components are valid 2`] = `
 <div>
   <div
     style="display: contents;"
@@ -200,7 +200,7 @@ exports[`ValidationSummary renders success icon when all istio components are va
 </div>
 `;
 
-exports[`ValidationSummary renders success icon when all services are valid 1`] = `
+exports[`ValidationSummary renders > success icon when all services are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -231,7 +231,7 @@ exports[`ValidationSummary renders success icon when all services are valid 1`] 
 </div>
 `;
 
-exports[`ValidationSummary renders warning icon when all istio components are valid 1`] = `
+exports[`ValidationSummary renders > warning icon when all istio components are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -262,7 +262,7 @@ exports[`ValidationSummary renders warning icon when all istio components are va
 </div>
 `;
 
-exports[`ValidationSummary renders warning icon when all istio components are valid 2`] = `
+exports[`ValidationSummary renders > warning icon when all istio components are valid 2`] = `
 <div>
   <div
     style="display: contents;"
@@ -293,7 +293,7 @@ exports[`ValidationSummary renders warning icon when all istio components are va
 </div>
 `;
 
-exports[`ValidationSummary renders warning icon when all services are valid 1`] = `
+exports[`ValidationSummary renders > warning icon when all services are valid 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -324,7 +324,7 @@ exports[`ValidationSummary renders warning icon when all services are valid 1`] 
 </div>
 `;
 
-exports[`ValidationSummary renders warning icon when all services are valid 2`] = `
+exports[`ValidationSummary renders > warning icon when all services are valid 2`] = `
 <div>
   <div
     style="display: contents;"

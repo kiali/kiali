@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`ControlPlaneBadge renders the control plane badge 1`] = `
+exports[`ControlPlaneBadge > renders the control plane badge 1`] = `
 <div>
   <div
     style="display: contents;"
