@@ -259,6 +259,7 @@ Feature: Kiali Graph page - Display menu
     When user "opens" display menu
     And user "enables" "security" option
     Then security "appears" in the graph
+    And the lock icon font is loaded
     And user "closes" display menu
 
   @error-rates-app
