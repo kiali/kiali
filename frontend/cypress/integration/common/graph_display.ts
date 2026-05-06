@@ -300,11 +300,11 @@ Then('the lock icon font is loaded', () => {
         .map(f => f.trim().replace(/['"]/g, ''))
         .find(f => f.includes('pficon'));
 
-      expect(iconFont).to.not.be.undefined;
+      assert.isDefined(iconFont, 'Edge tag should reference a pficon font');
 
       cy.document().then(doc => {
         cy.wrap(doc.fonts.ready).then(() => {
-          expect(doc.fonts.check(`1em ${iconFont}`)).to.be.true;
+          assert.isTrue(doc.fonts.check(`1rem ${iconFont}`), `Font "${iconFont}" should be loaded`);
         });
       });
     });
