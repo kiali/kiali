@@ -24,6 +24,8 @@ type EditableLabelsCardProps = {
   numLabels?: number;
   onLabelClick?: (key: string, value: string) => void;
   onSave: (labels: Record<string, string>) => void;
+  prioritizeIstio?: boolean;
+  prioritizeIstioCount?: boolean;
   title: string;
 };
 
@@ -69,14 +71,27 @@ const parseLabel = (text: string): [string, string] | undefined => {
 
 type LabelEntry = { key: string; value: string };
 
+const partitionByIstio = (entries: Record<string, string>): { istioCount: number; sorted: Record<string, string> } => {
+  const keys = Object.keys(entries);
+  const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
+  const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
+  const sorted: Record<string, string> = {};
+  for (const k of [...istioKeys, ...otherKeys]) {
+    sorted[k] = entries[k];
+  }
+  return { sorted, istioCount: istioKeys.length };
+};
+
 export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   canEdit,
   isCompact = false,
   isVertical = true,
   labels,
-  numLabels = 5,
+  numLabels,
   onLabelClick,
   onSave,
+  prioritizeIstio = false,
+  prioritizeIstioCount = false,
   title
 }) => {
   const [editing, setEditing] = React.useState(false);
@@ -141,7 +156,9 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     setEditLabels(prev => [...prev, { key: '', value: '' }]);
   };
 
-  const labelEntries = Object.entries(labels ?? {});
+  const { sorted, istioCount } = prioritizeIstio ? partitionByIstio(labels ?? {}) : { sorted: labels, istioCount: 0 };
+  const effectiveNumLabels = prioritizeIstioCount ? istioCount : numLabels ?? 5;
+  const labelEntries = Object.entries(sorted ?? {});
   const hasLabels = labelEntries.length > 0;
 
   const headerActions = canEdit ? (
@@ -181,7 +198,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         {editing ? (
           <LabelGroup
             isVertical={isVertical}
-            numLabels={numLabels}
+            numLabels={effectiveNumLabels}
             isEditable
             addLabelControl={
               <Label variant="add" onClick={handleAdd}>
@@ -203,7 +220,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
             ))}
           </LabelGroup>
         ) : hasLabels ? (
-          <LabelGroup isVertical={isVertical} numLabels={numLabels}>
+          <LabelGroup isVertical={isVertical} numLabels={effectiveNumLabels}>
             {labelEntries.map(([key, value]) => (
               <Label
                 key={`${key}=${value}`}

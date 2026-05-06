@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import {
   Card,
   CardBody,
+  CardHeader,
   DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
@@ -194,9 +195,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
     return (
       <StackItem key="details">
-        <Card data-test="service-details-card">
+        <Card data-test="service-details-card" isCompact>
           <CardBody>
-            <DescriptionList columnModifier={{ default: '2Col' }}>
+            <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
               {service.cluster && (
                 <DescriptionListGroup data-test="details-cluster">
                   <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
@@ -305,11 +306,13 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
     return (
       <StackItem key="resources">
-        <Card data-test="service-resources-card">
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+        <Card data-test="service-resources-card" isCompact>
+          <CardHeader>
+            <Title headingLevel="h4" size={TitleSizes.md}>
               {t('Resources')}
             </Title>
+          </CardHeader>
+          <CardBody>
             <DetailDescription
               namespace={this.props.namespace}
               apps={apps.length > 0 ? apps : undefined}
@@ -335,8 +338,10 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={sd.service.labels ?? {}}
+          numLabels={999}
           onLabelClick={(key, value) => navigateToFilteredList(Paths.SERVICES, key, value, this.props.namespace)}
           onSave={this.props.onSaveLabels}
+          prioritizeIstio
           title={t('Labels')}
         />
       </StackItem>
@@ -354,8 +359,9 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         <EditableAnnotationsCard
           annotations={sd.service.annotations ?? {}}
           canEdit={!serverConfig.deployment.viewOnlyMode}
-          numAnnotations={0}
           onSave={this.props.onSaveAnnotations}
+          prioritizeIstio
+          prioritizeIstioCount
           title={t('Annotations')}
         />
       </StackItem>
@@ -450,7 +456,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack hasGutter={true}>
+              <Stack style={{ gap: '0.5rem' }}>
                 {this.renderDetailsCard()}
                 {this.renderResourcesCard()}
                 {this.renderLabelsCard()}

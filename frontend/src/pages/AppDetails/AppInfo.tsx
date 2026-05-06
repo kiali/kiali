@@ -3,6 +3,7 @@ import {
   Alert,
   Card,
   CardBody,
+  CardHeader,
   DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
@@ -62,9 +63,9 @@ export class AppInfo extends React.Component<AppInfoProps> {
   private renderDetailsCard(app: App): React.ReactNode {
     return (
       <StackItem key="details">
-        <Card data-test="app-details-card">
+        <Card data-test="app-details-card" isCompact>
           <CardBody>
-            <DescriptionList columnModifier={{ default: '2Col' }}>
+            <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
               {app.cluster && (
                 <DescriptionListGroup data-test="details-cluster">
                   <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
@@ -106,11 +107,13 @@ export class AppInfo extends React.Component<AppInfoProps> {
   private renderResourcesCard(app: App): React.ReactNode {
     return (
       <StackItem key="resources">
-        <Card data-test="app-resources-card">
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+        <Card data-test="app-resources-card" isCompact>
+          <CardHeader>
+            <Title headingLevel="h4" size={TitleSizes.md}>
               {t('Resources')}
             </Title>
+          </CardHeader>
+          <CardBody>
             <DetailDescription
               namespace={app.namespace.name}
               workloads={app.workloads}
@@ -131,7 +134,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
       <div className={flexFillStyle}>
         <Grid hasGutter={true} className={detailGridStyle}>
           <GridItem span={4} className={detailLeftColumnStyle}>
-            <Stack hasGutter={true}>
+            <Stack style={{ gap: '0.5rem' }}>
               {app && this.renderDetailsCard(app)}
               {app && this.renderResourcesCard(app)}
               {app &&

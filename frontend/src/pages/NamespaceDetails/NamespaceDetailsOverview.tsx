@@ -229,17 +229,6 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
   );
 };
 
-const partitionByIstio = (entries: Record<string, string>): { numPriority: number; sorted: Record<string, string> } => {
-  const keys = Object.keys(entries);
-  const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
-  const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
-  const sorted: Record<string, string> = {};
-  for (const k of [...istioKeys, ...otherKeys]) {
-    sorted[k] = entries[k];
-  }
-  return { sorted, numPriority: istioKeys.length };
-};
-
 export class NamespaceDetailsOverview extends React.Component<Props> {
   private graphDataSource = new GraphDataSource();
 
@@ -396,36 +385,28 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         </StackItem>
 
         <StackItem key="labels" data-test="namespace-labels-card">
-          {(() => {
-            const { sorted, numPriority } = partitionByIstio(nsInfo.labels ?? {});
-            return (
-              <EditableLabelsCard
-                canEdit={this.props.canEdit}
-                labels={sorted}
-                numLabels={numPriority}
-                onLabelClick={(key, value) =>
-                  navigateToFilteredList(Paths.NAMESPACES, key, value, undefined, 'namespaceLabel')
-                }
-                onSave={this.props.onSaveLabels}
-                title={t('Labels')}
-              />
-            );
-          })()}
+          <EditableLabelsCard
+            canEdit={this.props.canEdit}
+            labels={nsInfo.labels ?? {}}
+            onLabelClick={(key, value) =>
+              navigateToFilteredList(Paths.NAMESPACES, key, value, undefined, 'namespaceLabel')
+            }
+            onSave={this.props.onSaveLabels}
+            prioritizeIstio
+            prioritizeIstioCount
+            title={t('Labels')}
+          />
         </StackItem>
 
         <StackItem key="annotations" data-test="namespace-annotations-card">
-          {(() => {
-            const { sorted, numPriority } = partitionByIstio(nsInfo.annotations ?? {});
-            return (
-              <EditableAnnotationsCard
-                annotations={sorted}
-                canEdit={this.props.canEdit}
-                numAnnotations={numPriority}
-                onSave={this.props.onSaveAnnotations}
-                title={t('Annotations')}
-              />
-            );
-          })()}
+          <EditableAnnotationsCard
+            annotations={nsInfo.annotations ?? {}}
+            canEdit={this.props.canEdit}
+            onSave={this.props.onSaveAnnotations}
+            prioritizeIstio
+            prioritizeIstioCount
+            title={t('Annotations')}
+          />
         </StackItem>
       </>
     );

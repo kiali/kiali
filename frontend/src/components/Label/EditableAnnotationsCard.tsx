@@ -22,6 +22,8 @@ type EditableAnnotationsCardProps = {
   canEdit: boolean;
   numAnnotations?: number;
   onSave: (annotations: Record<string, string>) => void;
+  prioritizeIstio?: boolean;
+  prioritizeIstioCount?: boolean;
   title: string;
 };
 
@@ -40,11 +42,24 @@ const annotationValueStyle = kialiStyle({
   paddingLeft: '1rem'
 });
 
+const partitionByIstio = (entries: Record<string, string>): { istioCount: number; sorted: Record<string, string> } => {
+  const keys = Object.keys(entries);
+  const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
+  const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
+  const sorted: Record<string, string> = {};
+  for (const k of [...istioKeys, ...otherKeys]) {
+    sorted[k] = entries[k];
+  }
+  return { sorted, istioCount: istioKeys.length };
+};
+
 export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = ({
   annotations,
   canEdit,
-  numAnnotations = 5,
+  numAnnotations,
   onSave,
+  prioritizeIstio = false,
+  prioritizeIstioCount = false,
   title
 }) => {
   const [showEditor, setShowEditor] = React.useState(false);
@@ -55,7 +70,11 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
     setShowEditor(false);
   };
 
-  const annotationEntries = Object.entries(annotations ?? {});
+  const { istioCount, sorted } = prioritizeIstio
+    ? partitionByIstio(annotations ?? {})
+    : { istioCount: 0, sorted: annotations };
+  const effectiveNumAnnotations = prioritizeIstioCount ? istioCount : numAnnotations ?? 5;
+  const annotationEntries = Object.entries(sorted ?? {});
   const hasAnnotations = annotationEntries.length > 0;
 
   const headerActions = (
@@ -83,20 +102,24 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
           {hasAnnotations ? (
             <>
               <DescriptionList isCompact style={{ gap: 0 }}>
-                {(expanded ? annotationEntries : annotationEntries.slice(0, numAnnotations)).map(([key, value]) => (
-                  <DescriptionListGroup key={key}>
-                    <DescriptionListTerm>{key}</DescriptionListTerm>
-                    {value && (
-                      <DescriptionListDescription className={annotationValueStyle}>{value}</DescriptionListDescription>
-                    )}
-                  </DescriptionListGroup>
-                ))}
+                {(expanded ? annotationEntries : annotationEntries.slice(0, effectiveNumAnnotations)).map(
+                  ([key, value]) => (
+                    <DescriptionListGroup key={key}>
+                      <DescriptionListTerm>{key}</DescriptionListTerm>
+                      {value && (
+                        <DescriptionListDescription className={annotationValueStyle}>
+                          {value}
+                        </DescriptionListDescription>
+                      )}
+                    </DescriptionListGroup>
+                  )
+                )}
               </DescriptionList>
-              {annotationEntries.length > numAnnotations && (
+              {annotationEntries.length > effectiveNumAnnotations && (
                 <Button variant="link" isInline onClick={() => setExpanded(!expanded)} style={{ marginTop: '0.25rem' }}>
                   {expanded
                     ? t('Show less')
-                    : t('{{count}} more', { count: annotationEntries.length - numAnnotations })}
+                    : t('{{count}} more', { count: annotationEntries.length - effectiveNumAnnotations })}
                 </Button>
               )}
             </>

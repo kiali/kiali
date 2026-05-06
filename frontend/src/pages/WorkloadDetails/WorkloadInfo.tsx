@@ -4,6 +4,7 @@ import {
   Alert,
   Card,
   CardBody,
+  CardHeader,
   DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
@@ -279,9 +280,9 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     return (
       <StackItem key="details">
-        <Card data-test="workload-details-card">
+        <Card data-test="workload-details-card" isCompact>
           <CardBody>
-            <DescriptionList columnModifier={{ default: '2Col' }}>
+            <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
               {workload.cluster && (
                 <DescriptionListGroup data-test="details-cluster">
                   <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
@@ -414,11 +415,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     return (
       <StackItem key="resources">
-        <Card data-test="workload-resources-card">
-          <CardBody>
-            <Title headingLevel="h4" size={TitleSizes.md} style={{ marginBottom: '0.5rem' }}>
+        <Card data-test="workload-resources-card" isCompact>
+          <CardHeader>
+            <Title headingLevel="h4" size={TitleSizes.md}>
               {t('Resources')}
             </Title>
+          </CardHeader>
+          <CardBody>
             <DetailDescription
               namespace={this.props.namespace}
               apps={apps.length > 0 ? apps : undefined}
@@ -458,8 +461,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           canEdit={!serverConfig.deployment.viewOnlyMode}
           isVertical={false}
           labels={workload.labels ?? {}}
+          numLabels={999}
           onLabelClick={(key, value) => navigateToFilteredList(Paths.WORKLOADS, key, value, this.props.namespace)}
           onSave={labels => this.handleSaveMetadata('labels', labels)}
+          prioritizeIstio
           title={t('Labels')}
         />
       </StackItem>
@@ -472,8 +477,9 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         <EditableAnnotationsCard
           annotations={workload.annotations ?? {}}
           canEdit={!serverConfig.deployment.viewOnlyMode}
-          numAnnotations={0}
           onSave={annotations => this.handleSaveMetadata('annotations', annotations)}
+          prioritizeIstio
+          prioritizeIstioCount
           title={t('Annotations')}
         />
       </StackItem>
@@ -497,7 +503,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack hasGutter={true}>
+              <Stack style={{ gap: '0.5rem' }}>
                 {workload && this.renderDetailsCard(workload)}
                 {workload && this.renderResourcesCard(workload)}
                 {workload && this.renderLabelsCard(workload)}
