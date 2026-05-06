@@ -6,8 +6,8 @@ const openTab = (tab: string): void => {
 
 Then('sd::user sees {string} details information for the remote service {string}', (name: string, version: string) => {
   cy.getBySel('service-resources-card').within(() => {
-    cy.get('#pfbadge-A').parent().parent().parent().contains(name); // App
-    cy.get('#pfbadge-W').parent().parent().parent().contains(`${name}-${version}`); // Workload
+    cy.get('#pfbadge-A').closest('li').contains(name); // App
+    cy.get('#pfbadge-W').closest('li').contains(`${name}-${version}`); // Workload
   });
 });
 

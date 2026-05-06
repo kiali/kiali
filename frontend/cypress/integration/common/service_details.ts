@@ -29,8 +29,8 @@ Then('sd::user sees the service actions', () => {
 
 Then('sd::user sees {string} details information for service {string}', (name: string, version: string) => {
   cy.getBySel('service-resources-card').within(() => {
-    cy.get('#pfbadge-A').parent().parent().parent().contains(name); // App
-    cy.get('#pfbadge-W').parent().parent().parent().contains(`${name}-${version}`); // Workload
+    cy.get('#pfbadge-A').closest('li').contains(name); // App
+    cy.get('#pfbadge-W').closest('li').contains(`${name}-${version}`); // Workload
   });
 
   cy.getBySel('service-resources-card').within(() => {
@@ -50,6 +50,18 @@ Then('sd::user sees Istio Config', () => {
     cy.get('#pfbadge-G').should('be.visible');
     cy.get('#pfbadge-VS').should('be.visible');
   });
+});
+
+Then('sd::user sees Resources card', () => {
+  cy.getBySel('service-resources-card').should('be.visible');
+});
+
+Then('sd::user sees Labels card', () => {
+  cy.getBySel('service-labels-card').should('be.visible');
+});
+
+Then('sd::user sees Annotations card', () => {
+  cy.getBySel('service-annotations-card').should('be.visible');
 });
 
 Then('sd::user sees inbound and outbound traffic information', () => {

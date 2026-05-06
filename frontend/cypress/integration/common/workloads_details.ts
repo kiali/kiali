@@ -11,13 +11,25 @@ const openEnvoyTab = (tab: string): void => {
 
 Then('user sees details information for workload', () => {
   cy.getBySel('workload-resources-card').within(() => {
-    cy.get('#pfbadge-A').parent().parent().parent().contains('details'); // App
-    cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+    cy.get('#pfbadge-A').closest('li').contains('details'); // App
+    cy.get('#pfbadge-S').closest('li').contains('details'); // Service
   });
 
   cy.getBySel('workload-resources-card').within(() => {
     clusterParameterExists(false);
   });
+});
+
+Then('user sees workload Resources card', () => {
+  cy.getBySel('workload-resources-card').should('be.visible');
+});
+
+Then('user sees workload Labels card', () => {
+  cy.getBySel('workload-labels-card').should('be.visible');
+});
+
+Then('user sees workload Annotations card', () => {
+  cy.getBySel('workload-annotations-card').should('be.visible');
 });
 
 Then('user sees workload inbound and outbound traffic information', () => {

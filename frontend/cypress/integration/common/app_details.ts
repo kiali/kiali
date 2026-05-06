@@ -8,14 +8,23 @@ const NAMESPACE = 'bookinfo';
 const WAYPOINT_FALLBACK = 'waypoint';
 
 Then('user sees details information for the {string} app', (name: string) => {
+  cy.getBySel('app-details-card').within(() => {
+    cy.get('[data-test="details-cluster"]').contains('Cluster').should('be.visible');
+    cy.get('[data-test="details-status"]').contains('Status').should('be.visible');
+  });
+
   cy.getBySel('app-resources-card').within(() => {
-    cy.get('#pfbadge-W').parent().parent().parent().contains('details-v1'); // Workload
-    cy.get('#pfbadge-S').parent().parent().parent().contains('details'); // Service
+    cy.get('#pfbadge-W').closest('li').contains(`${name}-v1`); // Workload
+    cy.get('#pfbadge-S').closest('li').contains(name); // Service
   });
 
   cy.getBySel('app-resources-card').within(() => {
     clusterParameterExists(false);
   });
+});
+
+Then('user sees app Resources card', () => {
+  cy.getBySel('app-resources-card').should('be.visible');
 });
 
 Then('user sees inbound and outbound traffic information', () => {
@@ -112,9 +121,7 @@ Then('no cluster badge for the {string} should be visible', (type: string) => {
       cy.get('#pfbadge-C').should('not.exist');
     });
   } else {
-    cy.get(typeToDetailsCardSelector(type)).within(() => {
-      cy.contains('Cluster').should('not.exist');
-    });
+    cy.get('#pfbadge-C').should('not.exist');
   }
 });
 

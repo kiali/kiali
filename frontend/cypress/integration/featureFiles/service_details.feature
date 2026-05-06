@@ -28,9 +28,11 @@ Feature: Kiali Service Details page
   @lpinterop
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
+    Then sd::user sees Resources card
     Then sd::user sees Network card
     Then sd::user sees Istio Config
-    But no cluster badge for the "service" should be visible
+    Then sd::user sees Labels card
+    Then sd::user sees Annotations card
 
   @bookinfo-app
   @core-2

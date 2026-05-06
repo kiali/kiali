@@ -17,7 +17,9 @@ Feature: Kiali Workload Details page
   @lpinterop
   Scenario: See details for workload
     Then user sees details information for workload
-    But no cluster badge for the "workload" should be visible
+    Then user sees workload Resources card
+    Then user sees workload Labels card
+    Then user sees workload Annotations card
 
   # TODO: offline - workload health.
   @bookinfo-app

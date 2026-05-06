@@ -19,7 +19,7 @@ Feature: Kiali App Details page
   @lpinterop
   Scenario: See details for app.
     Then user sees details information for the "details" app
-    But no cluster badge for the "app" should be visible
+    Then user sees app Resources card
 
   @bookinfo-app
   @core-1
