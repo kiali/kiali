@@ -55,10 +55,18 @@ Feature: Kiali Graph page - Display menu
   @core-1
   @offline
   @lpinterop
-  Scenario: Graph alpha and beta namespaces
+  Scenario: Graph multiple namespaces
     When user graphs "alpha,beta" namespaces
     Then user sees the "alpha" namespace
     And user sees the "beta" namespace
+
+  @error-rates-app
+  @core-1
+  @offline
+  @lpinterop
+  Scenario: Graph alpha namespace
+    When user graphs "alpha" namespaces
+    Then user sees the "alpha" namespace
 
   @error-rates-app
   @core-1
