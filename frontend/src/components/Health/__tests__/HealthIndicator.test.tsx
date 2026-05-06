@@ -15,11 +15,11 @@ describe('HealthIndicator', () => {
   it('renders when empty', () => {
     // SMALL
     let wrapper = shallow(<HealthIndicator id="svc" />);
-    expect(wrapper.html()).not.toContain('pficon');
+    expect(wrapper.html()).not.toContain('pf-v6-pficon');
 
     // LARGE
     wrapper = shallow(<HealthIndicator id="svc" />);
-    expect(wrapper.html()).not.toContain('pficon');
+    expect(wrapper.html()).not.toContain('pf-v6-pficon');
   });
 
   it('renders healthy', () => {
