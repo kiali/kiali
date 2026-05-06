@@ -26,15 +26,19 @@ const iconStyle = kialiStyle({
   display: 'inline-block'
 });
 
-const twoColumnStyle = kialiStyle({
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  columnGap: '1rem',
-  margin: '0.5rem 0'
+const flowStyle = kialiStyle({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '0.25rem 0.75rem',
+  padding: 0,
+  margin: 0,
+  listStyleType: 'none'
 });
 
 const itemStyle = kialiStyle({
-  paddingBottom: '0.25rem'
+  display: 'inline-flex',
+  alignItems: 'center',
+  whiteSpace: 'nowrap'
 });
 
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
@@ -118,43 +122,25 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   props.waypointWorkloads?.sort((w1: WorkloadInfo, w2: WorkloadInfo) => (w1.name < w2.name ? -1 : 1));
   props.workloads?.sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1));
 
-  const leftColumnItems: React.ReactNode[] = [];
+  const items: React.ReactNode[] = [];
   if (props.apps && props.apps.length > 0) {
-    props.apps.filter(Boolean).forEach(name => leftColumnItems.push(renderAppItem(props.namespace, name)));
+    props.apps.filter(Boolean).forEach(name => items.push(renderAppItem(props.namespace, name)));
   }
   if (props.services && props.services.length > 0) {
-    props.services.forEach(name => leftColumnItems.push(renderServiceItem(props.namespace, name)));
+    props.services.forEach(name => items.push(renderServiceItem(props.namespace, name)));
   }
   if (props.waypointWorkloads && props.waypointWorkloads.length > 0) {
-    props.waypointWorkloads.forEach(wp => leftColumnItems.push(renderWaypointItem(wp)));
+    props.waypointWorkloads.forEach(wp => items.push(renderWaypointItem(wp)));
   }
-
-  const rightColumnItems: React.ReactNode[] = [];
   if (props.workloads && props.workloads.length > 0) {
-    props.workloads.forEach(wkd => rightColumnItems.push(renderWorkloadItem(wkd)));
+    props.workloads.forEach(wkd => items.push(renderWorkloadItem(wkd)));
   }
 
-  const hasLeft = leftColumnItems.length > 0;
-  const hasRight = rightColumnItems.length > 0;
-
-  if (!hasLeft && !hasRight) {
+  if (items.length === 0) {
     return null;
   }
 
-  return (
-    <div className={twoColumnStyle}>
-      <div>
-        <ul id="resource-left-list" style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-          {leftColumnItems}
-        </ul>
-      </div>
-      <div>
-        <ul id="workload-list" style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-          {rightColumnItems}
-        </ul>
-      </div>
-    </div>
-  );
+  return <ul className={flowStyle}>{items}</ul>;
 };
 
 export const DetailDescription = DetailDescriptionComponent;
