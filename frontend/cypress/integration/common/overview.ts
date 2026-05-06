@@ -848,9 +848,9 @@ Then('user is redirected to that Service details page', () => {
   cy.get('#basic-tabs')
     .should('exist')
     .within(() => {
-      cy.contains('button, a', 'Overview').should('be.visible');
-      cy.contains('button, a', 'Traffic').should('be.visible');
-      cy.contains('button, a', 'Inbound Metrics').should('be.visible');
+      cy.contains('button', 'Overview').should('be.visible');
+      cy.contains('button', 'Traffic').should('be.visible');
+      cy.contains('button', 'Inbound Metrics').should('be.visible');
     });
 });
 
