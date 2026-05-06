@@ -826,7 +826,10 @@ Then('user is redirected to that Service details page', () => {
   }
 
   const normalizePath = (pathname: string): string => {
-    return pathname.replace(/^\/(console|ossmconsole)/, '');
+    return pathname
+      .replace(/^\/(console|ossmconsole)/, '')
+      .replace(/\/ossmconsole$/, '')
+      .replace(/^\/k8s\/ns\//, '/namespaces/');
   };
 
   const toUrl = (pathAndSearch: string): URL => {
