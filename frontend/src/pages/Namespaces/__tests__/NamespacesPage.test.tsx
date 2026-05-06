@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { NamespacesPageComponent } from '../NamespacesPage';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
 import { IntervalInMilliseconds } from 'types/Common';
@@ -127,9 +128,11 @@ describe('NamespacesPageComponent', () => {
   describe('Component initialization', () => {
     it('renders without crashing', () => {
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
       expect(container).toBeTruthy();
     });
@@ -137,9 +140,11 @@ describe('NamespacesPageComponent', () => {
     it('initializes state correctly', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       expect(ref.current!.state.loaded).toBe(false);
@@ -152,9 +157,11 @@ describe('NamespacesPageComponent', () => {
     it('calls load on mount when refresh interval is not manual', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
@@ -167,9 +174,11 @@ describe('NamespacesPageComponent', () => {
     it('does not call load on mount when refresh interval is manual', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={RefreshIntervalManual} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={RefreshIntervalManual} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
@@ -183,16 +192,20 @@ describe('NamespacesPageComponent', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const firstLast = Date.now();
       const { rerender } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
       rerender(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast + 1000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast + 1000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       expect(loadSpy).toHaveBeenCalled();
@@ -201,9 +214,11 @@ describe('NamespacesPageComponent', () => {
     it('cancels promises on unmount', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { unmount } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
       const cancelAllSpy = jest.spyOn(ref.current!['promises'], 'cancelAll');
 
@@ -238,9 +253,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       ref.current!.load();
@@ -259,9 +276,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       await act(async () => {
@@ -295,9 +314,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       await act(async () => {
@@ -321,9 +342,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -359,9 +382,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -401,9 +426,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -428,9 +455,11 @@ describe('NamespacesPageComponent', () => {
     it('sorts namespaces correctly', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -475,9 +504,11 @@ describe('NamespacesPageComponent', () => {
     it('renders empty state when no namespaces', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -490,9 +521,11 @@ describe('NamespacesPageComponent', () => {
     it('renders VirtualList when namespaces exist', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
