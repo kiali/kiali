@@ -39,17 +39,21 @@ Then('sd::user sees {string} details information for service {string}', (name: s
 });
 
 Then('sd::user sees Network card', () => {
-  cy.get('#ServiceNetworkCard').within(() => {
-    cy.get('.pf-v6-c-card__body').contains('Service IP');
-    cy.get('.pf-v6-c-card__body').contains('Hostnames');
-  });
+  cy.get('#ServiceNetworkCard')
+    .scrollIntoView()
+    .within(() => {
+      cy.get('.pf-v6-c-card__body').contains('Service IP');
+      cy.get('.pf-v6-c-card__body').contains('Hostnames');
+    });
 });
 
 Then('sd::user sees Istio Config', () => {
-  cy.get('#IstioConfigCard').within(() => {
-    cy.get('#pfbadge-G').should('be.visible');
-    cy.get('#pfbadge-VS').should('be.visible');
-  });
+  cy.get('#IstioConfigCard')
+    .scrollIntoView()
+    .within(() => {
+      cy.get('#pfbadge-G').should('be.visible');
+      cy.get('#pfbadge-VS').should('be.visible');
+    });
 });
 
 Then('sd::user sees Resources card', () => {
@@ -57,11 +61,11 @@ Then('sd::user sees Resources card', () => {
 });
 
 Then('sd::user sees Labels card', () => {
-  cy.getBySel('service-labels-card').should('be.visible');
+  cy.getBySel('service-labels-card').scrollIntoView().should('be.visible');
 });
 
 Then('sd::user sees Annotations card', () => {
-  cy.getBySel('service-annotations-card').should('be.visible');
+  cy.getBySel('service-annotations-card').scrollIntoView().should('be.visible');
 });
 
 Then('sd::user sees inbound and outbound traffic information', () => {

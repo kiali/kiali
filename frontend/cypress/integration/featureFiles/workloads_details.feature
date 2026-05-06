@@ -18,6 +18,8 @@ Feature: Kiali Workload Details page
   Scenario: See details for workload
     Then user sees details information for workload
     Then user sees workload Resources card
+    Then user sees workload Pods card
+    Then user sees workload Istio Config card
     Then user sees workload Labels card
     Then user sees workload Annotations card
 

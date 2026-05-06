@@ -21,15 +21,23 @@ Then('user sees details information for workload', () => {
 });
 
 Then('user sees workload Resources card', () => {
-  cy.getBySel('workload-resources-card').should('be.visible');
+  cy.getBySel('workload-resources-card').scrollIntoView().should('be.visible');
+});
+
+Then('user sees workload Pods card', () => {
+  cy.get('#WorkloadPodsCard').scrollIntoView().should('be.visible');
+});
+
+Then('user sees workload Istio Config card', () => {
+  cy.get('#IstioConfigCard').scrollIntoView().should('be.visible');
 });
 
 Then('user sees workload Labels card', () => {
-  cy.getBySel('workload-labels-card').should('be.visible');
+  cy.getBySel('workload-labels-card').scrollIntoView().should('be.visible');
 });
 
 Then('user sees workload Annotations card', () => {
-  cy.getBySel('workload-annotations-card').should('be.visible');
+  cy.getBySel('workload-annotations-card').scrollIntoView().should('be.visible');
 });
 
 Then('user sees workload inbound and outbound traffic information', () => {

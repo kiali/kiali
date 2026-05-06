@@ -473,8 +473,8 @@ Then('the workload description card has no config issues', () => {
 
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-resources-card]').should('contain', 'L7');
-  cy.get(`[data-test=waypoint-list]`).contains('span', 'L7');
-  cy.get(`[data-test=waypoint-link]`).contains('a,button', waypoint);
+  cy.get('[data-test=waypoint-link]').closest('li').find('span').contains('L7');
+  cy.get('[data-test=waypoint-link]').contains('a,button', waypoint);
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
