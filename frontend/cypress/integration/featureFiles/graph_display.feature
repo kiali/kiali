@@ -13,7 +13,7 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Operation nodes has its own test script
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
-  @error-rates-app
+  @bookinfo-app
   @core-1
   @offline
   @lpinterop
@@ -29,7 +29,6 @@ Feature: Kiali Graph page - Display menu
     When user graphs "default" namespaces
     Then user sees empty graph
 
-  @error-rates-app
   @core-1
   @offline
   @lpinterop
@@ -41,7 +40,6 @@ Feature: Kiali Graph page - Display menu
     And idle nodes "appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   @lpinterop
@@ -51,16 +49,14 @@ Feature: Kiali Graph page - Display menu
     Then idle nodes "do not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
+  @bookinfo-app
   @core-1
   @offline
   @lpinterop
-  Scenario: Graph alpha and beta namespaces
-    When user graphs "alpha,beta" namespaces
-    Then user sees the "alpha" namespace
-    And user sees the "beta" namespace
+  Scenario: Graph bookinfo namespace
+    When user graphs "bookinfo" namespaces
+    Then user sees the "bookinfo" namespace
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User clicks Display Menu
@@ -72,7 +68,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: Average Response-time edge labels
     When user "opens" display menu
@@ -82,7 +77,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: Median Response-time edge labels
     When user "opens" display menu
@@ -92,7 +86,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: 95th Percentile Response-time edge labels
@@ -103,7 +96,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: 99th Percentile Response-time edge labels
     When user "opens" display menu
@@ -112,7 +104,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: Disable response time edge labels
     When user "opens" display menu
@@ -122,7 +113,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: Request Throughput edge labels
     When user "opens" display menu
@@ -132,7 +122,6 @@ Feature: Kiali Graph page - Display menu
 
   # percentile variable must match input id
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   Scenario: Response Throughput edge labels
     When user "opens" display menu
@@ -141,7 +130,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: Disable throughput edge labels
@@ -151,7 +139,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: Enable Traffic Distribution edge labels
@@ -161,7 +148,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: Disable Traffic Distribution edge labels
@@ -171,7 +157,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: Enable Traffic Rate edge labels
@@ -181,7 +166,6 @@ Feature: Kiali Graph page - Display menu
     And user "closes" display menu
 
   # edge label variable must match edge data name
-  @error-rates-app
   @core-1
   @offline
   Scenario: Disable Traffic Rate edge labels
@@ -190,7 +174,6 @@ Feature: Kiali Graph page - Display menu
     Then user sees "trafficRate" edge label option is closed
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables cluster boxes
@@ -199,7 +182,6 @@ Feature: Kiali Graph page - Display menu
     Then user does not see "Cluster" boxing
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables Namespace boxes
@@ -208,7 +190,6 @@ Feature: Kiali Graph page - Display menu
     Then user does not see "Namespace" boxing
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User enables idle edges
@@ -217,7 +198,6 @@ Feature: Kiali Graph page - Display menu
     Then idle edges "appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables idle edges
@@ -226,7 +206,6 @@ Feature: Kiali Graph page - Display menu
     Then idle edges "do not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User enables rank
@@ -235,7 +214,6 @@ Feature: Kiali Graph page - Display menu
     Then ranks "appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables rank
@@ -244,7 +222,6 @@ Feature: Kiali Graph page - Display menu
     Then ranks "do not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables service nodes
@@ -253,15 +230,14 @@ Feature: Kiali Graph page - Display menu
     Then user does not see service nodes
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   Scenario: User enables security
     When user "opens" display menu
     And user "enables" "security" option
     Then security "appears" in the graph
+    And the lock icon font is loaded
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   Scenario: User disables security
     When user "opens" display menu
@@ -269,7 +245,6 @@ Feature: Kiali Graph page - Display menu
     Then security "does not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables missing sidecars
@@ -278,7 +253,6 @@ Feature: Kiali Graph page - Display menu
     Then "missing sidecars" option "does not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables virtual services
@@ -287,7 +261,6 @@ Feature: Kiali Graph page - Display menu
     Then "virtual services" option "does not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User enables animation
@@ -296,7 +269,6 @@ Feature: Kiali Graph page - Display menu
     Then "traffic animation" option "appears" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User disables animation
@@ -305,7 +277,6 @@ Feature: Kiali Graph page - Display menu
     Then "traffic animation" option "does not appear" in the graph
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User resets to factory default setting
@@ -315,7 +286,6 @@ Feature: Kiali Graph page - Display menu
     And the display menu has default settings
     And user "closes" display menu
 
-  @error-rates-app
   @core-1
   @offline
   Scenario: User observes some options not being clickable when switching to Service graph
