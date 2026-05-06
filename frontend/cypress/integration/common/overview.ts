@@ -785,6 +785,7 @@ When('user clicks a valid service link in Service insights card', () => {
           .first()
           .should('be.visible')
           .click()
+          .then(() => cy.location('pathname', { timeout: 40000 }).should('include', '/services/'))
           .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
           .then(() => cy.get('body', { timeout: 40000 }))
           .then($body => {
