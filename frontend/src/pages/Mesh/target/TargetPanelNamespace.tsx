@@ -24,7 +24,7 @@ import { PromisesRegistry } from 'utils/CancelablePromises';
 import { ControlPlaneDonut } from '../components/ControlPlaneDonut';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
 import { ControlPlaneVersionBadge } from 'components/Badge/ControlPlaneVersionBadge';
-import { AmbientBadge } from 'components/Badge/AmbientBadge';
+import { ModeBadge } from 'components/Badge/ModeBadge';
 import { IstioAPIDisabledBadge } from 'components/Badge/IstioAPIDisabledBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
@@ -370,7 +370,9 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
         {isControlPlane && <IstioAPIDisabledBadge />}
 
         {!isControlPlane && serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
-          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>
+          <span style={{ marginLeft: '0.5rem' }}>
+            <ModeBadge mode="ambient" popoverMessage={tooltip ? 'Labeled as part of Ambient Mesh' : undefined} />
+          </span>
         )}
       </>
     );

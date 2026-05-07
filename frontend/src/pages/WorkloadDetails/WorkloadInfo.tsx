@@ -44,9 +44,9 @@ import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
 import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
-import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
-import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 import { WorkloadConfigValidation } from '../../components/Validations/WorkloadConfigValidation';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
@@ -314,10 +314,45 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 <DescriptionListDescription>{workload.resourceVersion}</DescriptionListDescription>
               </DescriptionListGroup>
 
+              <DescriptionListGroup data-test="details-mode">
+                <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ModeBadge
+                    isAmbient={workload.isAmbient}
+                    istioSidecar={workload.istioSidecar}
+                    popoverMessage={
+                      workload.isAmbient ? (
+                        <div style={{ textAlign: 'left' }}>
+                          <ul style={{ paddingLeft: '1rem', margin: 0 }}>
+                            <li>
+                              <PFBadge badge={PFBadges.Ztunnel} size="sm" />
+                              {t('Captured by ztunnel for secure overlay with L4 capabilities')}
+                            </li>
+                            {workload.waypointWorkloads && workload.waypointWorkloads.length > 0 && (
+                              <li>
+                                <PFBadge badge={PFBadges.Waypoint} size="sm" />
+                                {t('Captured by a waypoint proxy for L7 processing')}
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
               {workload.istioInjectionAnnotation !== undefined && (
                 <DescriptionListGroup data-test="details-istio-injection">
                   <DescriptionListTerm>{t('Istio Injection')}</DescriptionListTerm>
                   <DescriptionListDescription>{String(workload.istioInjectionAnnotation)}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              {workload.isWaypoint && (
+                <DescriptionListGroup data-test="details-waypoint">
+                  <DescriptionListTerm>{t('Waypoint')}</DescriptionListTerm>
+                  <DescriptionListDescription>{t('true')}</DescriptionListDescription>
                 </DescriptionListGroup>
               )}
 
@@ -364,20 +399,11 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               />
             )}
 
-            {workload.isAmbient && !workload.isWaypoint && (
-              <AmbientLabel
-                tooltip={tooltipMsgType.workload}
-                waypoint={workload.waypointWorkloads && workload.waypointWorkloads.length > 0 ? true : false}
-              />
-            )}
-
             {(!workload.appLabel || !workload.versionLabel) &&
               !workload.isWaypoint &&
               !workload.spireInfo?.isSpireServer && (
                 <MissingLabel missingApp={!workload.appLabel} missingVersion={!workload.versionLabel} tooltip={true} />
               )}
-
-            {workload.isWaypoint && renderWaypointSimpleLabel()}
 
             {!isGVKSupported(workload.gvk) && (
               <Alert

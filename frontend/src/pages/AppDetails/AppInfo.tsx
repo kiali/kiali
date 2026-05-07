@@ -23,8 +23,8 @@ import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
-import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { t } from 'utils/I18nUtils';
 
 type AppInfoProps = {
@@ -80,14 +80,22 @@ export class AppInfo extends React.Component<AppInfoProps> {
                 </DescriptionListDescription>
               </DescriptionListGroup>
 
-              {app.isAmbient && (
-                <DescriptionListGroup data-test="details-ambient">
-                  <DescriptionListTerm>{t('Mesh')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    <AmbientLabel tooltip={tooltipMsgType.app} />
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-              )}
+              <DescriptionListGroup data-test="details-mode">
+                <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ModeBadge
+                    isAmbient={app.isAmbient}
+                    istioSidecar={!app.isAmbient}
+                    popoverMessage={
+                      app.isAmbient
+                        ? t(
+                            "All of this App's Workloads are in the Ambient Mesh. For more information, see the Workload details."
+                          )
+                        : undefined
+                    }
+                  />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
             </DescriptionList>
 
             {!this.props.isSupported && (

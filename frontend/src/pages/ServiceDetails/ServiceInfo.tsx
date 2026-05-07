@@ -13,7 +13,8 @@ import {
   Stack,
   StackItem,
   Title,
-  TitleSizes
+  TitleSizes,
+  Tooltip
 } from '@patternfly/react-core';
 import { ServiceId, ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
 import { AppWorkload } from '../../types/App';
@@ -61,11 +62,10 @@ import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo } from '../../components/Logo/Logos';
-import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
-import { Labels } from '../../components/Label/Labels';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { Paths } from '../../config';
@@ -229,14 +229,22 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 <DescriptionListDescription>{service.resourceVersion}</DescriptionListDescription>
               </DescriptionListGroup>
 
-              {sd.isAmbient && (
-                <DescriptionListGroup data-test="details-ambient">
-                  <DescriptionListTerm>{t('Mesh')}</DescriptionListTerm>
-                  <DescriptionListDescription>
-                    <AmbientLabel tooltip={tooltipMsgType.service} />
-                  </DescriptionListDescription>
-                </DescriptionListGroup>
-              )}
+              <DescriptionListGroup data-test="details-mode">
+                <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ModeBadge
+                    isAmbient={sd.isAmbient}
+                    istioSidecar={sd.istioSidecar}
+                    popoverMessage={
+                      sd.isAmbient
+                        ? t(
+                            "All of this Service's Workloads are in the Ambient Mesh. For more information, see the Workload details."
+                          )
+                        : undefined
+                    }
+                  />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
 
               {service.additionalDetails?.map((additionalItem, idx) => (
                 <DescriptionListGroup key={`additional-${idx}`}>
@@ -254,7 +262,31 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                 <DescriptionListGroup data-test="details-selector">
                   <DescriptionListTerm>{t('Selector')}</DescriptionListTerm>
                   <DescriptionListDescription>
-                    <Labels labels={service.selectors} />
+                    <Tooltip
+                      content={
+                        <span style={{ whiteSpace: 'nowrap' }}>
+                          {Object.entries(service.selectors)
+                            .map(([k, v]) => `${k}=${v}`)
+                            .join(', ')}
+                        </span>
+                      }
+                      position="top"
+                      maxWidth="none"
+                    >
+                      <span
+                        style={{
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '100%'
+                        }}
+                      >
+                        {Object.entries(service.selectors)
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join(', ')}
+                      </span>
+                    </Tooltip>
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               )}

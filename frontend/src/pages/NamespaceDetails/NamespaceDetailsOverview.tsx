@@ -29,6 +29,7 @@ import { KialiLink } from 'components/Link/KialiLink';
 import { Paths, isMultiCluster } from 'config';
 import { URLParam } from 'app/History';
 import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
 import { isRevisionAvailable } from 'pages/Namespaces/NamespaceRevisionUtils';
@@ -317,9 +318,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                 <DescriptionListGroup data-test="details-mode">
                   <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
                   <DescriptionListDescription>
-                    <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                      {t(modeInfo.displayText)}
-                    </PFLabel>
+                    <ModeBadge mode={modeInfo.mode} />
                   </DescriptionListDescription>
                 </DescriptionListGroup>
                 <DescriptionListGroup data-test="details-type">
