@@ -19,6 +19,7 @@ func newTestConfig(providers []config.ProviderConfig) *config.Config {
 func TestGetProvider_Found(t *testing.T) {
 	conf := newTestConfig([]config.ProviderConfig{
 		{Name: "openai-prod", Type: config.OpenAIProvider, Enabled: true},
+		{Name: "anthropic-prod", Type: config.AnthropicProvider, Enabled: true},
 		{Name: "google-prod", Type: config.GoogleProvider, Enabled: true},
 	})
 
@@ -26,6 +27,11 @@ func TestGetProvider_Found(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "openai-prod", p.Name)
 	assert.Equal(t, config.OpenAIProvider, p.Type)
+
+	p, err = getProvider(conf, "anthropic-prod")
+	require.NoError(t, err)
+	assert.Equal(t, "anthropic-prod", p.Name)
+	assert.Equal(t, config.AnthropicProvider, p.Type)
 
 	p, err = getProvider(conf, "google-prod")
 	require.NoError(t, err)
@@ -158,16 +164,36 @@ func TestNewAIProvider_ModelNotFound(t *testing.T) {
 func TestGetProvider_SelectsCorrectAmongMultiple(t *testing.T) {
 	conf := newTestConfig([]config.ProviderConfig{
 		{Name: "provider-a", Type: config.OpenAIProvider, Enabled: true},
-		{Name: "provider-b", Type: config.GoogleProvider, Enabled: true},
-		{Name: "provider-c", Type: config.OpenAIProvider, Enabled: false},
+		{Name: "provider-b", Type: config.AnthropicProvider, Enabled: true},
+		{Name: "provider-c", Type: config.GoogleProvider, Enabled: true},
+		{Name: "provider-d", Type: config.OpenAIProvider, Enabled: false},
 	})
 
 	p, err := getProvider(conf, "provider-b")
 	require.NoError(t, err)
-	assert.Equal(t, config.GoogleProvider, p.Type)
+	assert.Equal(t, config.AnthropicProvider, p.Type)
 
-	_, err = getProvider(conf, "provider-c")
+	_, err = getProvider(conf, "provider-d")
 	require.Error(t, err, "disabled provider should not be selectable")
+}
+
+func TestNewAIProvider_AnthropicProvider(t *testing.T) {
+	conf := newTestConfig([]config.ProviderConfig{
+		{
+			Name:    "anthropic-prod",
+			Type:    config.AnthropicProvider,
+			Config:  config.DefaultProviderConfigType,
+			Enabled: true,
+			Models: []config.AIModel{
+				{Name: "claude-sonnet", Model: "claude-sonnet-4-5", Enabled: true, Key: "test-key"},
+			},
+			Key: "test-key",
+		},
+	})
+
+	provider, err := NewAIProvider(conf, "anthropic-prod", "claude-sonnet")
+	require.NoError(t, err)
+	assert.NotNil(t, provider)
 }
 
 func TestGetModel_SelectsCorrectAmongMultiple(t *testing.T) {
