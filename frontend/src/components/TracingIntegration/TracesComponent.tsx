@@ -44,9 +44,8 @@ import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
 import { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
-import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
-import { tabCardStyle, flexFillStyle } from 'styles/FlexStyles';
+import { tabCardStyle } from 'styles/FlexStyles';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -287,7 +286,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     const tracingURL = this.getTracingUrl();
     return (
       <>
-        <div className={classes(flexFillStyle, containerStyle)}>
+        <div className={containerStyle}>
           <Card className={tabCardStyle}>
             <CardBody>
               <Toolbar style={{ padding: 0 }}>
@@ -358,11 +357,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
             </CardBody>
           </Card>
           {this.props.selectedTrace && (
-            <div
-              style={{
-                marginTop: 25
-              }}
-            >
+            <div style={{ marginTop: '2rem' }}>
               <div className={subTabStyle}>
                 <Tabs
                   id="trace-details"

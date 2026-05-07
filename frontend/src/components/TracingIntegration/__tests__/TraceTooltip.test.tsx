@@ -21,7 +21,7 @@ jest.mock('components/Charts/CustomTooltip', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { TraceLabel } from '../TraceTooltip';
+import { computeFlyoutOrientation, TraceLabel } from '../TraceTooltip';
 // eslint-disable-next-line import/first
 import { JaegerTrace } from 'types/TracingInfo';
 // eslint-disable-next-line import/first
@@ -85,5 +85,19 @@ describe('TraceLabel heatmap column rendering', () => {
     expect(screen.getByText('n/a')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     expect(screen.queryByTestId('heatmap')).not.toBeInTheDocument();
+  });
+});
+
+describe('computeFlyoutOrientation', () => {
+  it.each([
+    ['near left edge', { x: 100, y: 100, width: 500 }, 'right'],
+    ['left boundary equality', { x: 135, y: 100, width: 500 }, 'right'],
+    ['near right edge', { x: 400, y: 100, width: 500 }, 'left'],
+    ['right boundary equality', { x: 365, y: 100, width: 500 }, 'left'],
+    ['missing width skips right-edge check', { x: 400, y: 100, width: 0 }, 'top'],
+    ['near top edge', { x: 200, y: 55, width: 500 }, 'bottom'],
+    ['default placement', { x: 200, y: 100, width: 500 }, 'top']
+  ] as const)('returns %s', (_, props, expected) => {
+    expect(computeFlyoutOrientation(props)).toBe(expected);
   });
 });
