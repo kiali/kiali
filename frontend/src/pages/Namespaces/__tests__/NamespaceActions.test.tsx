@@ -224,7 +224,7 @@ describe('NamespaceActions', () => {
       expect(mi).toBeInTheDocument();
 
       await user.hover(mi.closest('div')!);
-      expect(await screen.findByText('User does not have enough permission for this action')).toBeInTheDocument();
+      expect(await screen.findByText('No user permission or Kiali in view-only mode')).toBeInTheDocument();
     });
   });
 

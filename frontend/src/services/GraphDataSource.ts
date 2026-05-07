@@ -494,15 +494,20 @@ export class GraphDataSource {
     return params;
   };
 
-  public fetchForNamespace = (duration: DurationInSeconds, namespace: string): void => {
-    const params = this.fetchForNamespaceParams(duration, namespace);
+  public fetchForNamespace = (duration: DurationInSeconds, namespace: string, cluster?: string): void => {
+    const params = this.fetchForNamespaceParams(duration, namespace, cluster);
     this.fetchGraphData(params);
   };
 
-  public fetchForNamespaceParams = (duration: DurationInSeconds, namespace: string): FetchParams => {
+  public fetchForNamespaceParams = (duration: DurationInSeconds, namespace: string, cluster?: string): FetchParams => {
     const params = GraphDataSource.defaultFetchParams(duration, namespace);
-    params.graphType = GraphType.WORKLOAD;
+    params.graphType = GraphType.VERSIONED_APP;
     params.showSecurity = true;
+    params.showWaypoints = false;
+    if (cluster) {
+      params.namespaces = [{ name: namespace, cluster }];
+      params.node!.cluster = cluster;
+    }
     return params;
   };
 

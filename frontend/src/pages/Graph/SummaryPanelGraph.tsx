@@ -32,6 +32,7 @@ import { serverConfig } from '../../config/ServerConfig';
 import { ValidationStatus } from 'types/IstioObjects';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { NodeData } from 'pages/Graph/GraphElems';
 import { edgesIn, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
@@ -40,6 +41,7 @@ import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { store } from '../../store/ConfigStore';
 import { namespacesForCluster } from '../../utils/Common';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelGraphMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -437,7 +439,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   private renderNamespacesSummary = (): React.ReactNode => {
     return (
       <div style={{ marginBottom: '1rem' }}>
-        {this.props.namespaces.map(namespace => this.renderNamespace(namespace.name))}
+        {this.props.namespaces.map(namespace => this.renderNamespace(namespace.name, namespace.cluster))}
       </div>
     );
   };
@@ -468,11 +470,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     );
   };
 
-  private renderNamespace = (ns: string): React.ReactNode => {
+  private renderNamespace = (ns: string, cluster?: string): React.ReactNode => {
     return (
       <div key={`rf-${ns}`} id={`ns-${ns}`} className={namespaceStyle}>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
-        {ns} {this.renderValidations(ns)}
+        <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster })}>{ns}</KialiLink> {this.renderValidations(ns)}
       </div>
     );
   };

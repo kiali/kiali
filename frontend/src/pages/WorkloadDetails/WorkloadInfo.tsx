@@ -8,7 +8,7 @@ import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
@@ -267,7 +267,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       <>
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={gridStyle}>
-            <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+            <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack hasGutter={true}>
                 <StackItem>
                   <WorkloadDescription

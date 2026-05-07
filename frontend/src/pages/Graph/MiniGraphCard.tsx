@@ -46,6 +46,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
 import { Workload } from 'types/Workload';
+import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
+import { NamespaceActionsDropdownGroup } from 'pages/Namespaces/NamespaceActionsDropdownGroup';
 import { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -82,6 +84,7 @@ type ReduxProps = ReduxDispatchProps & {
 type MiniGraphCardProps = ReduxProps & {
   dataSource: GraphDataSource;
   namespace?: string;
+  namespaceActions?: NamespaceAction[];
   onDeleteTrafficRouting?: (key: string) => void;
   onLaunchWizard?: (key: WizardAction, mode: WizardMode) => void;
   refreshWorkload?: () => void;
@@ -125,19 +128,29 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   render(): React.ReactNode {
+    const hasNode =
+      this.props.dataSource.fetchParameters.node &&
+      this.props.dataSource.fetchParameters.node.nodeType !== NodeType.UNKNOWN;
+
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
         Show full graph
-      </DropdownItem>,
-      <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-        Show node graph
       </DropdownItem>
     ];
+
+    if (hasNode) {
+      graphCardActions.push(
+        <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
+          Show node graph
+        </DropdownItem>
+      );
+    }
 
     if (isKiosk(this.props.kiosk)) {
       if (this.props.workload && this.props.namespace) {
         graphCardActions.push(
           <WorkloadWizardActionsDropdownGroup
+            key="workloadActions"
             actionsLabel={true}
             namespace={this.props.namespace}
             onAction={this.handleWorkloadAction}
@@ -147,6 +160,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       } else if (this.props.serviceDetails) {
         graphCardActions.push(
           <ServiceWizardActionsDropdownGroup
+            key="serviceActions"
             virtualServices={this.props.serviceDetails.virtualServices ?? []}
             destinationRules={this.props.serviceDetails.destinationRules ?? []}
             k8sGRPCRoutes={this.props.serviceDetails.k8sGRPCRoutes ?? []}
@@ -154,6 +168,15 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
+          />
+        );
+      } else if (this.props.namespaceActions && this.props.namespaceActions.length > 0) {
+        graphCardActions.push(
+          <NamespaceActionsDropdownGroup
+            key="namespaceActions"
+            actions={this.props.namespaceActions}
+            namespace={this.props.dataSource.fetchParameters.namespaces[0]?.name ?? ''}
+            onAction={() => this.onGraphActionsToggle(false)}
           />
         );
       }
@@ -400,15 +423,25 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
   };
 
   private onViewFullGraph = (): void => {
-    const namespace = this.props.dataSource.fetchParameters.namespaces[0].name;
-    let graphType: GraphType = GraphType.APP;
+    const namespace = this.props.dataSource.fetchParameters.namespaces[0];
+    const graphType: GraphType = this.props.dataSource.fetchParameters.graphType;
 
     const selected = selectAnd(elems(this.state.graphRefs!.getController()).nodes, [
       { prop: 'isSelected', op: 'truthy' }
     ]);
-    const focusSelector = selected.length > 0 ? `${URLParam.FOCUS_SELECTOR}=${encodeURI(selected[0].getId())}` : '';
 
-    const graphUrl = `/graph/namespaces?graphType=${graphType}&injectServiceNodes=true&namespaces=${namespace}&${focusSelector}`;
+    const params = new URLSearchParams();
+    params.set('graphType', graphType);
+    params.set('injectServiceNodes', 'true');
+    params.set('namespaces', namespace.name);
+    if (namespace.cluster) {
+      params.set(URLParam.CLUSTERNAME, namespace.cluster);
+    }
+    if (selected.length > 0) {
+      params.set(URLParam.FOCUS_SELECTOR, selected[0].getId());
+    }
+
+    const graphUrl = `/graph/namespaces?${params.toString()}`;
 
     if (isParentKiosk(this.props.kiosk)) {
       kioskNavigateAction(graphUrl);

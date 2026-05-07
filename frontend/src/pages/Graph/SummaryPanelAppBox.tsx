@@ -29,11 +29,13 @@ import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'pages/Graph/ContextMenu/NodeContextMenu';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesOut, select, selectAnd, selectOr } from 'helpers/GraphHelpers';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { isMultiCluster, serverConfig } from 'config';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import {
   Dropdown,
   DropdownGroup,
@@ -178,6 +180,12 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       </DropdownGroup>
     ];
 
+    const nsLink = (
+      <KialiLink to={getNamespaceDetailUrl({ name: nodeData.namespace, cluster: nodeData.cluster })}>
+        {nodeData.namespace}
+      </KialiLink>
+    );
+
     const firstBadge = isMultiCluster ? (
       <>
         <PFBadge badge={PFBadges.Cluster} size="sm" style={{ marginBottom: '0.125rem' }} />
@@ -186,14 +194,14 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
     ) : (
       <>
         <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
-        {nodeData.namespace}
+        {nsLink}
       </>
     );
 
     const secondBadge = isMultiCluster ? (
       <div>
         <PFBadge badge={PFBadges.Namespace} size="sm" style={{ marginBottom: '0.125rem' }} />
-        {nodeData.namespace}
+        {nsLink}
       </div>
     ) : (
       <></>

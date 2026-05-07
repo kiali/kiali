@@ -11,6 +11,7 @@ import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { GraphDataSource } from 'services/GraphDataSource';
+import { GraphType } from 'types/Graph';
 import {
   buildGraphAuthorizationPolicy,
   buildNamespaceInjectionPatch,
@@ -129,7 +130,13 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       this.setState({ authorizationPolicies: aps, sidecars: scs });
     });
 
-    graphDataSource.fetchForNamespace(this.props.duration, this.props.nsTarget);
+    const params = graphDataSource.fetchForNamespaceParams(
+      this.props.duration,
+      this.props.nsTarget,
+      this.props.nsInfo?.cluster
+    );
+    params.graphType = GraphType.WORKLOAD;
+    graphDataSource.fetchGraphData(params);
   };
 
   onConfirm = (): void => {
@@ -270,7 +277,9 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       addDanger(errorMessage);
     });
 
-    graphDataSource.fetchForNamespace(duration, ns);
+    const params = graphDataSource.fetchForNamespaceParams(duration, ns, cluster);
+    params.graphType = GraphType.WORKLOAD;
+    graphDataSource.fetchGraphData(params);
   };
 
   getItemsPreview = (): ConfigPreviewItem[] => {

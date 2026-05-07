@@ -45,18 +45,17 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
         alignItems: 'center',
         justifyContent: 'center',
         lineHeight: 1,
-        width: '1.25em',
-        height: '1.25em'
+        width: '1em',
+        height: '1em'
       }
     : {};
 
   const innerIconStyle: React.CSSProperties = useCircle
     ? {
         color: iconColor,
-        width: '1.16em',
-        height: '1.16em',
-        display: 'block',
-        transform: 'translate(-0.03em, 0.03em)'
+        width: '0.9em',
+        height: '0.9em',
+        display: 'block'
       }
     : {};
 

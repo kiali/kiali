@@ -40,6 +40,8 @@ type ReduxProps = {
 };
 
 type Props = ReduxProps & {
+  /** When set, "N issues" appears on the same line as the status (e.g. namespace detail title). */
+  inlineIssueCount?: boolean;
   name: string;
   statusApp?: NamespaceStatus;
   statusService?: NamespaceStatus;
@@ -162,21 +164,55 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
       workloadCounts.failure + workloadCounts.degraded + workloadCounts.notReady) > 0;
 
   const iconClassName = classes(statusIconStyle, isNA ? namespaceNaIconStyle : '');
-  const icon = <span className={iconClassName}>{createIcon(worstStatus)}</span>;
+  const inlineIconStyle: React.CSSProperties | undefined = props.inlineIssueCount
+    ? { marginRight: 0, display: 'inline-flex', alignItems: 'center' }
+    : undefined;
+  const icon = (
+    <span className={iconClassName} style={inlineIconStyle}>
+      {createIcon(worstStatus)}
+    </span>
+  );
   const iconWithPopoverTrigger = (
     <span
       className={iconClassName}
       data-test="namespace-health-details-trigger"
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', ...inlineIconStyle }}
       aria-label={t('Show unhealthy resources')}
     >
       {createIcon(worstStatus)}
     </span>
   );
 
+  const issueCountText =
+    !isHealthy && !isNA && unhealthyCount > 0 ? (
+      <span
+        style={{
+          fontSize: 'var(--pf-t--global--font--size--sm)',
+          color: 'var(--pf-t--global--text--color--subtle)',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {pluralize(unhealthyCount, 'issue')}
+      </span>
+    ) : null;
+
+  const rowStyle: React.CSSProperties = props.inlineIssueCount
+    ? {
+        alignItems: 'center',
+        display: 'flex',
+        flexWrap: 'nowrap',
+        gap: '0.25rem',
+        marginBottom: 0,
+        textAlign: 'left'
+      }
+    : {
+        marginBottom: '0.125rem',
+        textAlign: 'left'
+      };
+
   return (
     <div style={{ textAlign: 'left' }}>
-      <div style={{ marginBottom: '0.125rem' }}>
+      <div style={rowStyle}>
         {worstStatus ? (
           !isHealthy && !isNA && hasIssueDetails ? (
             <Popover
@@ -206,8 +242,9 @@ const NamespaceHealthStatusComponent: React.FC<Props> = (props: Props) => {
           <div style={{ display: 'inline-block', marginRight: '0.5rem', width: '1.5rem' }}></div>
         )}
         <div className={isNA ? naTextStyle : statusTextStyle}>{getStatusText()}</div>
+        {props.inlineIssueCount && issueCountText}
       </div>
-      {!isHealthy && !isNA && unhealthyCount > 0 && (
+      {!props.inlineIssueCount && !isHealthy && !isNA && unhealthyCount > 0 && (
         <div
           style={{
             marginLeft: '1.375rem',

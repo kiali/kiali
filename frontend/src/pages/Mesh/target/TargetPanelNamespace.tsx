@@ -9,6 +9,7 @@ import {
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
@@ -45,6 +46,7 @@ import { isRemoteCluster } from './TargetPanelControlPlane';
 import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
 import { isIstioNamespace } from 'config/ServerConfig';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type TargetPanelNamespaceProps = TargetPanelCommonProps & {
   target: BoxTarget<NamespaceNodeData>;
@@ -168,7 +170,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
               <span className={namespaceNameStyle}>
                 <span>
                   <PFBadge badge={PFBadges.Namespace} />
-                  {ns}
+                  <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster: nsInfo.cluster })}>{ns}</KialiLink>
                 </span>
 
                 {this.renderNamespaceBadges(nsInfo, true)}

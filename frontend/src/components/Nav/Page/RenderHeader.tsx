@@ -23,8 +23,7 @@ const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto'
 });
 
-// Absolute position so it floats at tab-strip level without adding vertical space.
-const actionsToolbarStyle = kialiStyle({
+const actionsToolbarPositionStyle = kialiStyle({
   position: 'absolute',
   right: '3rem',
   top: '9rem',
@@ -37,6 +36,7 @@ type ReduxProps = {
 
 type RenderHeaderProps = ReduxProps & {
   actionsToolbar?: React.ReactNode;
+  actionsToolbarTop?: string;
   children?: React.ReactNode;
   rightToolbar?: React.ReactNode;
 };
@@ -54,7 +54,11 @@ const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderP
         {props.children}
       </div>
 
-      {props.actionsToolbar && <div className={actionsToolbarStyle}>{props.actionsToolbar}</div>}
+      {props.actionsToolbar && (
+        <div className={actionsToolbarPositionStyle} style={{ top: props.actionsToolbarTop ?? '9rem' }}>
+          {props.actionsToolbar}
+        </div>
+      )}
     </>
   );
 };

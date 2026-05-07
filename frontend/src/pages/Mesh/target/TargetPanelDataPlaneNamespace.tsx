@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { targetBodyStyle, TargetPanelCommonProps, targetPanelHR } from './TargetPanelCommon';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
@@ -29,6 +30,7 @@ import { TLSStatus } from 'types/TLSStatus';
 import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
 import { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { TargetPanelEditor } from './TargetPanelEditor';
 
 type TargetPanelDataPlaneNamespaceProps = Omit<TargetPanelCommonProps, 'target'> & {
@@ -133,7 +135,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             <span className={namespaceNameStyle}>
               <span>
                 <PFBadge badge={PFBadges.Namespace} />
-                {ns}
+                <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster: nsInfo.cluster })}>{ns}</KialiLink>
               </span>
               {this.renderNamespaceBadges(nsInfo, true)}
             </span>

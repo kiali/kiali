@@ -11,6 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { KialiIcon } from 'config/KialiIcon';
 
@@ -27,10 +28,14 @@ export type NamespaceAction = {
 type Props = {
   actions: NamespaceAction[];
   namespace: string;
+  /** Plain "Actions" button (detail page); default is kebab for list rows */
+  toggleVariant?: 'actionsText' | 'kebab';
 };
 
 export const NamespaceActions: React.FC<Props> = (props: Props) => {
+  const { t } = useKialiTranslation();
   const [isKebabOpen, setIsKebabOpen] = React.useState<boolean>(false);
+  const variant = props.toggleVariant ?? 'kebab';
 
   const onKebabToggle = (isOpen: boolean): void => {
     setIsKebabOpen(isOpen);
@@ -68,7 +73,7 @@ export const NamespaceActions: React.FC<Props> = (props: Props) => {
               ? renderDisabledDropdownOption(
                   `tooltip_${itemKey}`,
                   TooltipPosition.left,
-                  'User does not have enough permission for this action',
+                  t('No user permission or Kiali in view-only mode'),
                   item
                 )
               : item;
@@ -91,7 +96,7 @@ export const NamespaceActions: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             `tooltip_action_${i}`,
             TooltipPosition.left,
-            'User does not have enough permission for this action',
+            t('No user permission or Kiali in view-only mode'),
             item
           )
         : item;
@@ -100,18 +105,24 @@ export const NamespaceActions: React.FC<Props> = (props: Props) => {
     return undefined;
   });
 
+  const isDetailActions = variant === 'actionsText';
+
   return (
     <Dropdown
+      data-test={isDetailActions ? 'namespace-actions-dropdown' : undefined}
+      id={isDetailActions ? 'actions' : undefined}
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
-          className={kebabToggleStyle}
-          aria-label="Actions"
-          variant="plain"
+          className={variant === 'kebab' ? kebabToggleStyle : undefined}
+          aria-label={variant === 'kebab' ? 'Actions' : undefined}
+          data-test={isDetailActions ? 'namespace-actions-toggle' : undefined}
+          id={isDetailActions ? 'actions-toggle' : undefined}
+          variant={variant === 'kebab' ? 'plain' : undefined}
           onClick={() => onKebabToggle(!isKebabOpen)}
           isExpanded={isKebabOpen}
         >
-          <KialiIcon.KebabToggle />
+          {variant === 'kebab' ? <KialiIcon.KebabToggle /> : t('Actions')}
         </MenuToggle>
       )}
       isOpen={isKebabOpen}

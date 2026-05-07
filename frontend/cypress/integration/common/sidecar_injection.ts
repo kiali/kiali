@@ -1,6 +1,5 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { MeshCluster } from 'types/Mesh';
 
 // Most of these "Given" implementations are directly using the Kiali API
 // in order to reach a well known state in the environment before performing
@@ -285,88 +284,43 @@ When('I visit the overview page', () => {
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
 
-// Only works for single cluster.
+When('user navigates to the namespace detail page for {string}', function (namespace: string) {
+  this.targetNamespace = namespace;
+  cy.visit({ url: `/console/namespaces/${namespace}?refresh=0` });
+  ensureKialiFinishedLoading();
+});
+
+function openNamespaceActionsMenu(): void {
+  cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+}
+
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-    expect(response.status).to.equal(200);
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      ensureKialiFinishedLoading();
-
-      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-        .should('be.visible')
-        .click();
-
-      cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-create').should('be.visible').click();
-    });
-
-    ensureKialiFinishedLoading();
-  });
+  ensureKialiFinishedLoading();
+  openNamespaceActionsMenu();
+  cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+  cy.getBySel('confirm-create').should('be.visible').click();
+  ensureKialiFinishedLoading();
 });
 
 When(
   'I change the override configuration for automatic sidecar injection policy in the namespace to {string} it',
   function (enabledOrDisabled: string) {
-    cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-      expect(response.status).to.equal(200);
-
-      cy.request({ url: '/api/config' }).then(response => {
-        cy.wrap(response.isOkStatusCode).should('be.true');
-
-        const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-        const clusterNames = Object.keys(clusters);
-        cy.wrap(clusterNames).should('have.length', 1);
-        const cluster = clusterNames[0];
-
-        ensureKialiFinishedLoading();
-
-        cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-          .should('be.visible')
-          .click();
-
-        cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
-          .should('be.visible')
-          .click();
-
-        cy.getBySel('confirm-create').should('be.visible').click();
-        ensureKialiFinishedLoading();
-      });
-    });
+    ensureKialiFinishedLoading();
+    openNamespaceActionsMenu();
+    cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
+      .should('be.visible')
+      .click();
+    cy.getBySel('confirm-create').should('be.visible').click();
+    ensureKialiFinishedLoading();
   }
 );
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-    expect(response.status).to.equal(200);
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      ensureKialiFinishedLoading();
-
-      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-        .should('be.visible')
-        .click();
-
-      cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-create').should('be.visible').click();
-
-      ensureKialiFinishedLoading();
-    });
-  });
+  ensureKialiFinishedLoading();
+  openNamespaceActionsMenu();
+  cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+  cy.getBySel('confirm-create').should('be.visible').click();
+  ensureKialiFinishedLoading();
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
@@ -422,42 +376,16 @@ When('I remove override configuration for sidecar injection in the workload', fu
 Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (
   enabled: string
 ) {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
     expect(response.status).to.equal(200);
-
-    const expectation = 'exist';
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
-        .contains(`istio-injection=${enabled}`)
-        .should(expectation);
-    });
+    expect(response.body.labels['istio-injection']).to.equal(enabled);
   });
 });
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
     expect(response.status).to.equal(200);
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      cy.getBySel(`VirtualItem_Cluster${cluster}_${this.targetNamespace}`)
-        .contains(`istio-injection`)
-        .should('not.exist');
-    });
+    expect(response.body.labels).to.not.have.property('istio-injection');
   });
 });
 

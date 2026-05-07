@@ -5,6 +5,15 @@ Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => 
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);
 });
 
+When('user clicks the namespace detail link for {string}', (ns: string) => {
+  cy.get('tbody').contains('td[data-label="Namespace"]', ns).find('a').filter(`:contains("${ns}")`).first().click();
+});
+
+Then('user is on the namespace detail page for {string}', (ns: string) => {
+  cy.url().should('include', `/namespaces/${ns}`);
+  cy.get(`[data-test="namespace-detail-overview-${ns}"]`).should('exist');
+});
+
 Then(`user sees the {string} namespace in cluster {string} in the namespaces page`, (ns: string, cluster: string) => {
   cy.getBySel(`VirtualItem_Cluster${cluster}_${ns}`).should('exist');
 });

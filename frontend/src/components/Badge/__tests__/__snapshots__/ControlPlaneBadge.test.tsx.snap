@@ -8,7 +8,6 @@ exports[`ControlPlaneBadge renders the control plane badge 1`] = `
     <span
       class="pf-v6-c-label pf-m-green pf-m-filled pf-m-compact"
       data-test="control-plane-badge"
-      style="margin-left: 0.5rem;"
     >
       <span
         class="pf-v6-c-label__content"

@@ -9,6 +9,7 @@ import { Validation } from 'components/Validations/Validation';
 import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
 import { t } from 'utils/I18nUtils';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
 import { serverConfig } from '../../../config';
@@ -19,6 +20,7 @@ import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { Controller, Node } from '@patternfly/react-topology';
 import { MeshData } from '../MeshPage';
 import { panelHeadingStyle } from '../../Graph/SummaryPanelStyle';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 export interface TargetPanelCommonProps {
   duration: DurationInSeconds;
@@ -225,7 +227,9 @@ export const renderNodeHeader = (
         <>
           <span className={nodeStyle}>
             <PFBadge badge={PFBadges.Namespace} size="sm" />
-            {data.namespace}
+            <KialiLink to={getNamespaceDetailUrl({ name: data.namespace, cluster: data.cluster })}>
+              {data.namespace}
+            </KialiLink>
           </span>
 
           <span className={nodeStyle}>

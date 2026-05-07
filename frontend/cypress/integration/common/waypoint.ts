@@ -612,44 +612,56 @@ Then('the user updates the log level to {string}', (level: string) => {
   cy.get(`#setLogLevel${level}`).should('exist').click();
 });
 
-When('user opens the menu for the {string} namespace', (namespace: string) => {
-  cy.get('tbody').contains('tr', namespace).find('button[aria-label="Actions"]').should('be.visible').click();
+When('user opens the namespace actions menu', () => {
+  cy.getBySel('namespace-actions-toggle').should('be.visible').click();
 });
 
-When('the option {string} does not exist for {string} namespace', (option, namespace: string) => {
-  let selector = '';
-  if (option === 'Add to Ambient') {
-    selector = `add-${namespace}-namespace-ambient`;
-  }
-  cy.get(`[data-test="${selector}"]`).should('not.exist');
-});
-
-When('the user clicks on {string} for {string} namespace', (option, namespace: string) => {
-  let selector = '';
-  switch (option) {
-    case 'removes auto injection':
-      selector = `remove-${namespace}-namespace-sidecar-injection`;
-      break;
-    case 'Add to Ambient':
-      selector = `add-${namespace}-namespace-ambient`;
-      break;
-    case 'remove Ambient':
-      selector = `remove-${namespace}-namespace-ambient`;
-      break;
-    case 'enable sidecar':
-      selector = `enable-${namespace}-namespace-sidecar-injection`;
-      break;
-  }
-  // Click the menu item button (the button inside the li element)
-  cy.get(`[data-test=${selector}]`).find('button').click();
-  // Click outside the menu to close it before interacting with the modal
+Then('the option {string} does not exist in namespace actions', (option: string) => {
+  cy.get('[role="menu"]').should('be.visible');
+  cy.get('[role="menu"]').contains(option).should('not.exist');
   cy.get('body').click(0, 0);
-  // Wait for the modal to appear - check for modal content to ensure it's fully rendered
-  cy.contains('Are you sure?', { timeout: 10000 }).should('be.visible');
-  // Wait for modal confirm button to be visible and clickable
-  cy.get(`[data-test="confirm-create"]`).should('be.visible').should('not.be.disabled').click();
-  ensureKialiFinishedLoading();
 });
+
+When('user clicks on {string} in namespace actions', (option: string) => {
+  cy.url().then(url => {
+    const namespace = url.split('/namespaces/')[1]?.split('?')[0] ?? '';
+    let selector = '';
+    switch (option) {
+      case 'removes auto injection':
+        selector = `remove-${namespace}-namespace-sidecar-injection`;
+        break;
+      case 'Add to Ambient':
+        selector = `add-${namespace}-namespace-ambient`;
+        break;
+      case 'remove Ambient':
+        selector = `remove-${namespace}-namespace-ambient`;
+        break;
+      case 'enable sidecar':
+        selector = `enable-${namespace}-namespace-sidecar-injection`;
+        break;
+    }
+    cy.get(`[data-test="${selector}"]`).should('be.visible').click();
+    cy.get(`[data-test="confirm-create"]`, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
+    ensureKialiFinishedLoading();
+  });
+});
+
+Then('the namespace {string} labels do not contain {string}', (namespace: string, labelKey: string) => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+    expect(response.status).to.equal(200);
+    expect(response.body.labels).to.not.have.property(labelKey);
+  });
+});
+
+Then(
+  'the namespace {string} labels contain {string} with value {string}',
+  (namespace: string, labelKey: string, labelValue: string) => {
+    cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+      expect(response.status).to.equal(200);
+      expect(response.body.labels[labelKey]).to.equal(labelValue);
+    });
+  }
+);
 
 When('{string} badge {string}', (badge, option: string) => {
   let selector = 'not.exist';

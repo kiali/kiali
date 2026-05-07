@@ -32,12 +32,14 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { ValidationStatus } from 'types/IstioObjects';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -174,6 +176,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const data = namespaceBox.getData();
     const boxed = descendents(namespaceBox);
     const namespace = data[NodeAttr.namespace];
+    const cluster = data[NodeAttr.cluster];
 
     const { numApps, numVersions } = this.countApps(boxed);
     const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
@@ -191,7 +194,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       <div className={panelStyle} style={SummaryPanelNamespaceBox.panelStyle}>
         <div className={panelHeadingStyle}>
           {getTitle('Namespace')}
-          {this.renderNamespace(namespace)}
+          {this.renderNamespace(namespace, cluster)}
           {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
@@ -397,13 +400,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     };
   };
 
-  private renderNamespace = (ns: string): React.ReactNode => {
+  private renderNamespace = (ns: string, cluster?: string): React.ReactNode => {
     const validation = this.state.validation;
 
     return (
       <div key={ns} className={namespaceStyle}>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
-        {ns}
+        <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster })}>{ns}</KialiLink>
         {!!validation && (
           <div style={{ marginLeft: '0.25rem' }}>
             <ValidationSummaryLink
