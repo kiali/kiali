@@ -5,6 +5,11 @@ import { pluginSvgr } from '@rsbuild/plugin-svgr';
 
 const { publicVars } = loadEnv({ prefixes: ['REACT_APP_'] });
 
+// Catch-all so any unmatched process.env.X resolves to undefined instead of crashing.
+// Skipped during test runs because Rstest's runtime needs real process.env access.
+const isTestRunner = Boolean(process.env.RSTEST || process.env.TEST_RUNNER);
+const processEnvFallback = isTestRunner ? {} : { 'process.env': JSON.stringify({}) };
+
 // Preserve React component names so Cypress cy.getReact() can find them via the fiber tree.
 const keepNames = {
   jsOptions: {
@@ -30,6 +35,7 @@ export default defineConfig({
   source: {
     define: {
       ...publicVars,
+      ...processEnvFallback,
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env.PUBLIC_URL': JSON.stringify(''),
       'process.env.API_PROXY': JSON.stringify(process.env.API_PROXY || ''),
@@ -39,6 +45,13 @@ export default defineConfig({
       'process.env.TEST_RUNNER': JSON.stringify(process.env.TEST_RUNNER || '')
     },
     tsconfigPath: './tsconfig.json'
+  },
+  tools: {
+    cssExtract: {
+      loaderOptions: {
+        publicPath: '../../'
+      }
+    }
   },
   server: {
     historyApiFallback: true,

@@ -132,7 +132,6 @@
     "redux-persist": "5.10.0",
     "redux-persist-transform-filter": "^0.0.22",
     "redux-thunk": "2.4.1",
-    "refractor": "^5.0.0",
     "regression": "^2.0.1",
     "reselect": "4.0.0",
     "typesafe-actions": "^4.2.1",
@@ -183,8 +182,6 @@
     "typescript": "^5.9.0"
   },
   "resolutions": {
-    "nth-check": "^2.0.1",
-    "postcss": "^8.4.31",
     "unist-util-visit-parents": "5.1.3",
     "react-markdown": "8.0.7"
   },
