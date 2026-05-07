@@ -198,7 +198,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         {editing ? (
           <LabelGroup
             isVertical={isVertical}
-            numLabels={effectiveNumLabels}
+            numLabels={999}
             isEditable
             addLabelControl={
               <Label variant="add" onClick={handleAdd}>
