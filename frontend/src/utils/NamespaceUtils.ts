@@ -1,4 +1,4 @@
-import { serverConfig } from 'config';
+import { isMultiCluster, serverConfig } from 'config';
 
 type NamespaceLike = {
   isAmbient?: boolean;
@@ -80,4 +80,13 @@ export const getNamespaceModeInfo = (ns: NamespaceLike): NamespaceModeInfo => {
 export const isDataPlaneNamespace = (ns: NamespaceLike): boolean => {
   const mode = getNamespaceMode(ns);
   return !ns.isControlPlane && (mode === 'ambient' || mode === 'sidecar');
+};
+
+/** URL for the namespace detail page (matches list row name link). */
+export const getNamespaceDetailUrl = (ns: { cluster?: string; name: string }): string => {
+  let url = `/namespaces/${ns.name}`;
+  if (ns.cluster && isMultiCluster && !url.includes('clusterName')) {
+    url += `${url.includes('?') ? '&' : '?'}clusterName=${encodeURIComponent(ns.cluster)}`;
+  }
+  return url;
 };

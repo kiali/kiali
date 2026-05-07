@@ -14,34 +14,88 @@ const cleanFilters = (): void => {
   FilterSelected.resetFilters();
 };
 
-export const BreadcrumbView: React.FC = () => {
-  const [cluster, setCluster] = React.useState<string>();
-  const [istioType, setIstioType] = React.useState<string>();
-  const [item, setItem] = React.useState<string>('');
-  const [namespace, setNamespace] = React.useState<string>('');
-  const [pathItem, setPathItem] = React.useState<string>('');
+type BreadcrumbModel =
+  | {
+      cluster?: string;
+      mode: 'namespaceDetail';
+      namespace: string;
+    }
+  | {
+      cluster?: string;
+      istioType: string;
+      item: string;
+      mode: 'entity';
+      namespace: string;
+      pathItem: string;
+    };
 
+const parseBreadcrumbModel = (pathname: string, search: string): BreadcrumbModel | undefined => {
+  const match = pathname.split('/').filter(Boolean);
+  const urlParams = new URLSearchParams(search);
+  const cluster = HistoryManager.getClusterName(urlParams);
+  const nsSeg = match.indexOf('namespaces');
+
+  if (nsSeg < 0) {
+    return undefined;
+  }
+
+  if (match.length === nsSeg + 2) {
+    return {
+      mode: 'namespaceDetail',
+      cluster,
+      namespace: match[nsSeg + 1]
+    };
+  }
+
+  const ns = match[nsSeg + 1];
+  const segment = match[nsSeg + 2];
+  const page = Paths[segment.toUpperCase() as keyof typeof Paths];
+  const base = nsSeg + 2;
+  const istioTypeResolved = page === 'istio' ? kindToStringIncludeK8s(match[base + 1], match[base + 3]) : '';
+  const itemPage = page !== 'istio' ? match[base + 1] : match[base + 4];
+
+  return {
+    mode: 'entity',
+    cluster,
+    namespace: ns,
+    pathItem: page,
+    item: itemPage,
+    istioType: istioTypeResolved
+  };
+};
+
+export const BreadcrumbView: React.FC = () => {
   const { pathname, search } = useLocation();
   const { t } = useKialiTranslation();
 
-  React.useEffect(() => {
-    const match = pathname.split('/');
-    const ns = match[2];
-    const page = Paths[match[3].toUpperCase()];
-    const istioType = page === 'istio' ? kindToStringIncludeK8s(match[4], match[6]) : '';
-    const urlParams = new URLSearchParams(search);
-    const itemPage = page !== 'istio' ? match[4] : match[7];
+  const model = React.useMemo(() => parseBreadcrumbModel(pathname, search), [pathname, search]);
 
-    setCluster(HistoryManager.getClusterName(urlParams));
-    setIstioType(istioType);
-    setItem(itemPage);
-    setNamespace(ns);
-    setPathItem(page);
-  }, [pathname, search]);
+  if (!model) {
+    return (
+      <Breadcrumb>
+        <BreadcrumbItem isActive={true}>Kiali</BreadcrumbItem>
+      </Breadcrumb>
+    );
+  }
 
-  const isIstioPath = (): boolean => {
-    return pathItem === 'istio';
-  };
+  if (model.mode === 'namespaceDetail') {
+    const listHref =
+      model.cluster && isMultiCluster ? `/${Paths.NAMESPACES}?clusterName=${model.cluster}` : `/${Paths.NAMESPACES}`;
+
+    return (
+      <Breadcrumb>
+        <BreadcrumbItem>
+          <Link to={listHref} onClick={cleanFilters}>
+            {capitalize(Paths.NAMESPACES)}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem isActive={true}>{model.namespace}</BreadcrumbItem>
+      </Breadcrumb>
+    );
+  }
+
+  const { cluster, namespace, pathItem, item, istioType } = model;
+  const isIstio = pathItem === 'istio';
 
   const getItemPage = (): string => {
     let path = `/namespaces/${namespace}/${pathItem}/${item}`;
@@ -52,8 +106,6 @@ export const BreadcrumbView: React.FC = () => {
 
     return path;
   };
-
-  const isIstio = isIstioPath();
 
   const linkItem = isIstio ? (
     <BreadcrumbItem isActive={true}>{item}</BreadcrumbItem>

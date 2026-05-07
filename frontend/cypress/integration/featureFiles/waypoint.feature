@@ -431,18 +431,17 @@ Feature: Kiali Waypoint related features
   # TODO: Remove skip-ossmc tag once the namespace page is created in OSSMC
   @skip-ossmc
   Scenario: [Namespaces] Add to Ambient in the test-sidecar namespace
-    Given user is at the "namespaces" list page
-    When user selects filter "Namespace"
-    And user filters for name "test-sidecar"
-    And user opens the menu for the "test-sidecar" namespace
-    And the option "Add to Ambient" does not exist for "test-sidecar" namespace
-    And the user clicks on "removes auto injection" for "test-sidecar" namespace
-    Then the "Labels" column on the "test-sidecar" row does not contain "istio-injection"
-    And user opens the menu for the "test-sidecar" namespace
-    And the user clicks on "Add to Ambient" for "test-sidecar" namespace
-    Then the "Labels" column on the "test-sidecar" row has the text "istio.io/dataplane-mode=ambient"
-    And user opens the menu for the "test-sidecar" namespace
-    And the user clicks on "remove Ambient" for "test-sidecar" namespace
-    And user opens the menu for the "test-sidecar" namespace
-    And the user clicks on "enable sidecar" for "test-sidecar" namespace
-    Then the "Labels" column on the "test-sidecar" row has the text "istio-injection=enabled"
+    Given user navigates to the namespace detail page for "test-sidecar"
+    When user opens the namespace actions menu
+    Then the option "Add to Ambient" does not exist in namespace actions
+    When user opens the namespace actions menu
+    And user clicks on "removes auto injection" in namespace actions
+    Then the namespace "test-sidecar" labels do not contain "istio-injection"
+    When user opens the namespace actions menu
+    And user clicks on "Add to Ambient" in namespace actions
+    Then the namespace "test-sidecar" labels contain "istio.io/dataplane-mode" with value "ambient"
+    When user opens the namespace actions menu
+    And user clicks on "remove Ambient" in namespace actions
+    When user opens the namespace actions menu
+    And user clicks on "enable sidecar" in namespace actions
+    Then the namespace "test-sidecar" labels contain "istio-injection" with value "enabled"

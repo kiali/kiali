@@ -11,6 +11,13 @@ Feature: Kiali Namespaces page
 
   @core-2
   @offline
+  Scenario: Namespace name links to namespace detail page
+    Then user sees the "bookinfo" namespace in the namespaces page
+    When user clicks the namespace detail link for "bookinfo"
+    Then user is on the namespace detail page for "bookinfo"
+
+  @core-2
+  @offline
   @lpinterop
   Scenario: Cluster column is hidden on single-cluster namespaces list
     Then user sees the "bookinfo" namespace in the namespaces page

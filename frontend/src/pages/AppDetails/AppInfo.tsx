@@ -3,7 +3,7 @@ import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { AppDescription } from './AppDescription';
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
-import { flexFillStyle } from 'styles/FlexStyles';
+import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
@@ -56,7 +56,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
     return (
       <div className={flexFillStyle}>
         <Grid hasGutter={true} className={gridStyle}>
-          <GridItem span={4} style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+          <GridItem span={4} className={detailLeftColumnStyle}>
             <Stack hasGutter={true}>
               <StackItem>
                 <AppDescription app={this.props.app} health={this.props.health} isSupported={this.props.isSupported} />

@@ -17,6 +17,7 @@ import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, statusFromString } from 'types/Health';
 import { NamespaceWithHealthStatus, useDataPlanes } from 'hooks/dataPlanes';
 import {
@@ -125,7 +126,7 @@ export const DataPlaneStats: React.FC = () => {
         <div key={`${ns.cluster}-${ns.name}`} className={popoverItemStyle}>
           <span>
             <PFBadge badge={PFBadges.Namespace} size="sm" />
-            {ns.name}
+            <KialiLink to={getNamespaceDetailUrl({ name: ns.name, cluster: ns.cluster })}>{ns.name}</KialiLink>
           </span>
           <span
             className={popoverItemStatusStyle}

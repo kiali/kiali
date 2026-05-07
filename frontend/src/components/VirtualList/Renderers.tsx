@@ -50,7 +50,7 @@ import { namespaceMTLSStatusDescriptors } from '../MTls/NamespaceMTLSStatusDescr
 import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
-import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { getNamespaceDetailUrl, getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { isRevisionAvailable } from '../../pages/Namespaces/NamespaceRevisionUtils';
 
 const revisionWarningIconStyle = kialiStyle({
@@ -283,7 +283,9 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-      {item.namespace}
+      <KialiLink to={getNamespaceDetailUrl({ name: item.namespace, cluster: item.cluster })}>
+        {item.namespace}
+      </KialiLink>
     </Td>
   );
 };
@@ -342,6 +344,7 @@ export const labels: Renderer<SortResource | NamespaceInfo> = (
               key={`label_${i}`}
               name={key}
               value={value}
+              color={labelAct ? 'yellow' : undefined}
               style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
               onClick={(): void => {
                 if (statefulFilter?.current) {
@@ -481,7 +484,9 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       style={{ verticalAlign: 'middle' }}
     >
       <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-      {ns.name}
+      <KialiLink key={`link_ns_${ns.cluster ?? ''}_${ns.name}`} to={getNamespaceDetailUrl(ns)}>
+        {ns.name}
+      </KialiLink>
     </Td>
   );
 };

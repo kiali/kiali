@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { NamespacesPageComponent } from '../NamespacesPage';
 import { NamespaceInfo } from '../../../types/NamespaceInfo';
 import { IntervalInMilliseconds } from 'types/Common';
@@ -8,11 +9,6 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { RefreshIntervalManual } from '../../../config/Config';
 import { HistoryManager } from '../../../app/History';
-import { Show } from '../../../types/Common';
-
-jest.mock('../NamespaceTrafficPolicies', () => ({
-  NamespaceTrafficPolicies: (props: any) => <div data-test="NamespaceTrafficPolicies" {...props} />
-}));
 
 jest.mock('components/Badge/ControlPlaneBadge', () => ({
   ControlPlaneBadge: () => <span data-test="ControlPlaneBadge" />
@@ -34,9 +30,7 @@ jest.mock('../../../services/Api', () => ({
   getClustersTls: jest.fn(),
   getConfigValidations: jest.fn(),
   getAllIstioConfigs: jest.fn(),
-  getGrafanaInfo: jest.fn(() => Promise.resolve({ data: {} })),
   getErrorString: jest.fn(() => ''),
-  getPersesInfo: jest.fn(() => Promise.resolve({ data: {} })),
   getControlPlanes: jest.fn(() => Promise.resolve({ data: [] }))
 }));
 
@@ -108,9 +102,7 @@ const mockNamespaces: NamespaceInfo[] = [
 
 const defaultReduxProps = {
   columnOrder: [] as string[],
-  externalServices: [],
   hiddenColumnIds: [],
-  istioAPIEnabled: true,
   kiosk: '',
   language: 'en',
   meshStatus: 'MTLS_ENABLED',
@@ -131,16 +123,16 @@ describe('NamespacesPageComponent', () => {
     (HistoryManager.getParam as jest.Mock).mockReturnValue(undefined);
     (HistoryManager.getRefresh as jest.Mock).mockReturnValue(RefreshIntervalManual);
     (API.getControlPlanes as jest.Mock).mockResolvedValue({ data: [] });
-    (API.getGrafanaInfo as jest.Mock).mockResolvedValue({ data: {} });
-    (API.getPersesInfo as jest.Mock).mockResolvedValue({ data: {} });
   });
 
   describe('Component initialization', () => {
     it('renders without crashing', () => {
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
       expect(container).toBeTruthy();
     });
@@ -148,17 +140,16 @@ describe('NamespacesPageComponent', () => {
     it('initializes state correctly', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       expect(ref.current!.state.loaded).toBe(false);
       expect(ref.current!.state.namespaces).toEqual([]);
-      expect(ref.current!.state.nsTarget).toBe('');
-      expect(ref.current!.state.opTarget).toBe('');
-      expect(ref.current!.state.kind).toBe('');
-      expect(ref.current!.state.showTrafficPoliciesModal).toBe(false);
+      expect(ref.current!.state.showColumnManagement).toBe(false);
     });
   });
 
@@ -166,9 +157,11 @@ describe('NamespacesPageComponent', () => {
     it('calls load on mount when refresh interval is not manual', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
@@ -181,9 +174,11 @@ describe('NamespacesPageComponent', () => {
     it('does not call load on mount when refresh interval is manual', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={RefreshIntervalManual} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={RefreshIntervalManual} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
@@ -197,16 +192,20 @@ describe('NamespacesPageComponent', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const firstLast = Date.now();
       const { rerender } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast} />
+          </Provider>
+        </MemoryRouter>
       );
       const loadSpy = jest.spyOn(ref.current!, 'load');
 
       rerender(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast + 1000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} lastRefreshAt={firstLast + 1000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       expect(loadSpy).toHaveBeenCalled();
@@ -215,9 +214,11 @@ describe('NamespacesPageComponent', () => {
     it('cancels promises on unmount', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { unmount } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
       const cancelAllSpy = jest.spyOn(ref.current!['promises'], 'cancelAll');
 
@@ -252,9 +253,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       ref.current!.load();
@@ -273,9 +276,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       await act(async () => {
@@ -309,9 +314,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} refreshInterval={15000} />
+          </Provider>
+        </MemoryRouter>
       );
 
       await act(async () => {
@@ -335,9 +342,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -373,9 +382,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -415,9 +426,11 @@ describe('NamespacesPageComponent', () => {
 
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -438,89 +451,15 @@ describe('NamespacesPageComponent', () => {
     });
   });
 
-  describe('getNamespaceActions', () => {
-    it('returns actions for non-control-plane namespace', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      const actions = ref.current!.getNamespaceActions(mockNamespaces[0]);
-
-      expect(actions.length).toBeGreaterThan(0);
-      expect(actions.some(a => a.title === 'Show')).toBeTruthy();
-    });
-
-    it('returns actions for control-plane namespace', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({ grafanaLinks: [{ name: 'Performance', url: 'http://grafana', variables: {} }] });
-      });
-      const actions = ref.current!.getNamespaceActions(mockNamespaces[1]);
-
-      expect(actions.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe('hideTrafficManagement', () => {
-    it('resets traffic management state', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: 'test-namespace',
-          opTarget: 'create',
-          kind: 'policy',
-          clusterTarget: 'test-cluster'
-        });
-      });
-
-      ref.current!.hideTrafficManagement();
-
-      expect(ref.current!.state.showTrafficPoliciesModal).toBe(false);
-      expect(ref.current!.state.nsTarget).toBe('');
-      expect(ref.current!.state.opTarget).toBe('');
-      expect(ref.current!.state.kind).toBe('');
-      expect(ref.current!.state.clusterTarget).toBe('');
-    });
-  });
-
-  describe('show method', () => {
-    it('navigates to graph page', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      ref.current!.show(Show.GRAPH, 'default');
-
-      expect(() => ref.current!.show(0, 'default')).not.toThrow();
-    });
-  });
-
   describe('sort method', () => {
     it('sorts namespaces correctly', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -565,9 +504,11 @@ describe('NamespacesPageComponent', () => {
     it('renders empty state when no namespaces', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -580,9 +521,11 @@ describe('NamespacesPageComponent', () => {
     it('renders VirtualList when namespaces exist', () => {
       const ref = React.createRef<NamespacesPageComponent>();
       const { container } = render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
+        <MemoryRouter>
+          <Provider store={store}>
+            <NamespacesPageComponent ref={ref} {...defaultProps} />
+          </Provider>
+        </MemoryRouter>
       );
 
       act(() => {
@@ -590,27 +533,6 @@ describe('NamespacesPageComponent', () => {
       });
 
       expect(container.querySelector('table') || container.querySelector('[role="grid"]')).toBeInTheDocument();
-    });
-
-    it('renders NamespaceTrafficPolicies when modal is open', () => {
-      const ref = React.createRef<NamespacesPageComponent>();
-      render(
-        <Provider store={store}>
-          <NamespacesPageComponent ref={ref} {...defaultProps} />
-        </Provider>
-      );
-
-      act(() => {
-        ref.current!.setState({
-          showTrafficPoliciesModal: true,
-          nsTarget: 'test-namespace',
-          opTarget: 'create',
-          kind: 'policy',
-          namespaces: mockNamespaces
-        });
-      });
-
-      expect(screen.getByTestId('NamespaceTrafficPolicies')).toBeInTheDocument();
     });
   });
 });

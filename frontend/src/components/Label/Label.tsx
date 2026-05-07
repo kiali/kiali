@@ -4,6 +4,7 @@ import { canRender } from '../../utils/SafeRender';
 import { kialiStyle } from 'styles/StyleUtils';
 
 interface Props {
+  color?: 'blue' | 'teal' | 'green' | 'orange' | 'purple' | 'red' | 'orangered' | 'grey' | 'yellow';
   name: string;
   onClick?: () => void;
   style?: React.CSSProperties;
@@ -18,7 +19,7 @@ const labelStyle = kialiStyle({
   maxWidth: '100%'
 });
 
-export const Label = (props: Props) => {
+export const Label: React.FC<Props> = (props: Props) => {
   const { name, value } = props;
   let label = 'This label has an unexpected format';
 
@@ -31,6 +32,7 @@ export const Label = (props: Props) => {
       className={labelStyle}
       tooltipPosition="top"
       style={props.style}
+      color={props.color}
       isCompact={true}
       onClick={props.onClick}
       textMaxWidth="500px"

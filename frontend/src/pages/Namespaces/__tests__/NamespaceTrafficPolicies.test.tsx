@@ -26,7 +26,9 @@ jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
 jest.mock('services/GraphDataSource', () => ({
   GraphDataSource: jest.fn().mockImplementation(() => ({
     on: jest.fn(),
-    fetchForNamespace: jest.fn()
+    fetchForNamespace: jest.fn(),
+    fetchForNamespaceParams: jest.fn().mockReturnValue({}),
+    fetchGraphData: jest.fn()
   }))
 }));
 
