@@ -3,7 +3,6 @@ import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
 import { ensureKialiFinishedLoading } from './transition';
 import { getClusterForSingleCluster, linkSelector } from './utils';
-export { linkSelector } from './utils';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -145,8 +144,6 @@ export const colExists = (colName: string, exists: boolean): Cypress.Chainable =
   return cy.get(`th[data-label="${colName}"]`).should(exists ? 'exist' : 'not.exist');
 };
 
-export { hasAtLeastOneClass } from './utils';
-
 // getColWithRowText will find the column matching the unique row text and column header name.
 // This func makes a couple assumptions:
 //
@@ -233,8 +230,6 @@ export const ensureObjectsInTable = (...names: string[]): void => {
     });
   });
 };
-
-export { getClusterForSingleCluster } from './utils';
 
 // Only works for a single cluster.
 // Retries by clicking the Refresh button if the expected health indicator

@@ -727,6 +727,54 @@ Step definitions are **global** — any `.ts` file in `cypress/integration/` is 
    - `openTab(tabName)` → click a tab in the details page (from `transition.ts`)
    - Use `data-test` attributes on React components for reliable selectors
 
+6. **OSSMC compatibility — required patterns:**
+
+   Cypress tests must work in both standalone Kiali and OSSMC (OpenShift Service Mesh Console plugin). OSSMC runs Kiali in kiosk mode behind a proxy, which changes how links render and how API URLs are routed. Follow these three rules:
+
+   **a) `cy.request` must use object format:**
+
+   OSSMC proxies API calls, so `cy.request` needs the object form to let Cypress resolve the base URL correctly.
+
+   ```typescript
+   // ❌ BAD — breaks under OSSMC proxy
+   cy.request('/api/config')
+
+   // ✅ GOOD — works in both standalone and OSSMC
+   cy.request({ url: '/api/config' })
+   ```
+
+   **b) `cy.intercept` patterns must start with `**`:**
+
+   In OSSMC the API path is prefixed by the console proxy, so intercept patterns must use a leading wildcard glob to match regardless of prefix.
+
+   ```typescript
+   // ❌ BAD — only matches standalone Kiali
+   cy.intercept('/api/namespaces').as('namespaces')
+
+   // ✅ GOOD — matches both /api/namespaces and /proxy/.../api/namespaces
+   cy.intercept('**/api/namespaces').as('namespaces')
+   ```
+
+   **c) Use `linkSelector` for Kiali navigation links:**
+
+   In OSSMC kiosk mode, `KialiLink` renders `<button data-href="...">` instead of `<a href="...">`. The `linkSelector` utility (from `utils.ts`) builds a CSS selector that matches both.
+
+   ```typescript
+   import { linkSelector } from './utils';
+
+   // ❌ BAD — only matches standalone Kiali <a> links
+   cy.get('a[href*="/namespaces/bookinfo/services"]')
+
+   // ✅ GOOD — matches <a href> and <button data-href>
+   cy.get(linkSelector('/namespaces/bookinfo/services'))
+
+   // Match by endsWith (useful for partial paths)
+   cy.get(linkSelector('/services/productpage', 'endsWith'))
+
+   // Match any link-like element (no pattern)
+   cy.get(linkSelector())
+   ```
+
 **Running your new test:**
 
 Ensure the cluster and Kiali are running (see [Prerequisites](#debugging-cypress-tests-with-playwright-mcp) in the MCP debugging section above).
