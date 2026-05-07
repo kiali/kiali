@@ -85,4 +85,4 @@ Feature: Kiali Service Details page
   @ambient-multi-primary
   # TODO: offline - ambient support.
   Scenario: See ambient label for service
-    Then user sees "ambient" badge for service
+    Then user sees "Ambient" badge for service

@@ -33,7 +33,7 @@ Feature: Kiali Waypoint related features
 
   Scenario: [Workload details - ratings] The workload ratings is enrolled in waypoint
     Given user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "" cluster
-    Then user sees "ambient" badge
+    Then user sees "Ambient" badge
     Then the user cannot see the "missing-sidecar" badge for "ratings-v1" workload in "bookinfo" namespace
     And the user hovers in the "ambient" label and sees "L4" in the tooltip
     And the user hovers in the "ambient" label and sees "L7" in the tooltip
@@ -47,7 +47,7 @@ Feature: Kiali Waypoint related features
 
   Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     And user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
-    Then the user sees the "L7" badge
+    Then the user sees the waypoint attribute
     Then the user cannot see the "missing-sidecar" badge for "waypoint" workload in "bookinfo" namespace
     And the proxy status is "info" with "RDS: IGNORED" details
     And the user can see the "K8sGateway-bookinfo-waypoint" istio config and badge "pfbadge-G"

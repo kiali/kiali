@@ -130,5 +130,5 @@ Feature: Kiali Workload Details page
   @ambient-multi-primary
   # TODO: offline - ambient support.
   Scenario: See ambient label for workload
-    Then user sees "ambient" badge
+    Then user sees "Ambient" badge
     Then the user cannot see the "missing-sidecar" badge for "details-v1" workload in "bookinfo" namespace

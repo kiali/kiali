@@ -520,6 +520,10 @@ Then('the user sees the {string} badge', (name: string) => {
   cy.get(`#pfbadge-${name}`).should('exist').contains(name);
 });
 
+Then('the user sees the waypoint attribute', () => {
+  cy.get('[data-test="details-waypoint"]').should('exist').and('contain', 'true');
+});
+
 Then('the proxy status is {string}', (status: string) => {
   cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
 });
