@@ -1,4 +1,5 @@
 @namespaces
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Namespaces page
@@ -52,8 +53,6 @@ Feature: Kiali Namespaces page
     Then the list is sorted by column "Cluster" in "descending" order
 
   @ambient
-  # TODO: Enable once OSSMC has namespaces page
-  @skip-ossmc
   Scenario: Ambient badge is visible on namespaces list
     Then user sees the "istio-system" namespace in the namespaces page
     And badge for "Ambient" is visible in the namespaces page in the namespace "istio-system"

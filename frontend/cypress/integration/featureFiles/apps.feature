@@ -1,4 +1,5 @@
 @apps
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Apps List page
@@ -139,7 +140,6 @@ Feature: Kiali Apps List page
 
   @bookinfo-app
   @core-1
-  @skip-ossmc
   @health-cache-metrics
   Scenario: Health cache metrics increase when visiting apps list page
     Given health cache is enabled

@@ -1,17 +1,16 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-enum detailType {
-  App = 'app',
-  Istio = 'istio',
-  Pods = 'pods',
-  Service = 'service',
-  Workload = 'workload'
+enum DetailType {
+  APP = 'app',
+  ISTIO = 'istio',
+  SERVICE = 'service',
+  WORKLOAD = 'workload'
 }
 
 Given('user is at the {string} list page', (page: string) => {
   // enable toggles on the list pages so that they can be tested
-  cy.intercept(`${Cypress.config('baseUrl')}/api/config`, request => {
+  cy.intercept(`**/api/config`, request => {
     request.reply(response => {
       response.body['kialiFeatureFlags']['uiDefaults']['list']['showIncludeToggles'] = true;
       return response;
@@ -19,7 +18,7 @@ Given('user is at the {string} list page', (page: string) => {
   }).as('config');
 
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit(`${Cypress.config('baseUrl')}/console/${page}?refresh=0`);
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=0` });
   cy.wait('@config');
 });
 
@@ -48,25 +47,15 @@ Given('autorefresh is enabled', () => {
     const url = new URL(currentURL);
     const tenSecondsInMiliSeconds = '10000';
     url.searchParams.set('refresh', tenSecondsInMiliSeconds);
-    cy.visit(url.toString());
+    cy.visit({ url: url.toString() });
   });
 });
 
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
-  (detail: detailType, namespacedNamed: string, cluster: string) => {
-    cy.url().then(currentURL => {
-      let detailPage = '';
-      // ossmc requires deployment as the pod name is different than the deployment name. Ex for waypoints, can be waypoint-fdsfdsfs
-      if (detail === detailType.Pods) {
-        if (currentURL.includes('openshift-console') || currentURL.includes('/ossmconsole/')) {
-          detailPage = detailType.Pods;
-        } else {
-          detailPage = 'workloads';
-        }
-      } else {
-        detailPage = getPageDetail(detail);
-      }
+  (detail: DetailType, namespacedNamed: string, cluster: string) => {
+    cy.url().then(() => {
+      const detailPage = getPageDetail(detail);
       const qs = {
         // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
         refresh: '0'
@@ -98,23 +87,17 @@ Given(
   }
 );
 
-const getPageDetail = (detail: detailType): string => {
-  let pageDetail: string;
+const getPageDetail = (detail: DetailType): string => {
   switch (detail) {
-    case detailType.App:
-      pageDetail = 'applications';
-      break;
-    case detailType.Service:
-      pageDetail = 'services';
-      break;
-    case detailType.Workload:
-      pageDetail = 'workloads';
-      break;
-    case detailType.Istio:
-      pageDetail = 'istio';
-      break;
+    case DetailType.APP:
+      return 'applications';
+    case DetailType.SERVICE:
+      return 'services';
+    case DetailType.WORKLOAD:
+      return 'workloads';
+    case DetailType.ISTIO:
+      return 'istio';
   }
-  return pageDetail;
 };
 
 Given(
@@ -177,7 +160,7 @@ Given(
 // Then the browser is at the details page for the "<type>" "bookinfo/<name>" located in the "west" cluster
 Given(
   'the browser is at the details page for the {string} {string} located in the {string} cluster',
-  (detail: detailType, namespacedName: string, cluster: string) => {
+  (detail: DetailType, namespacedName: string, cluster: string) => {
     const namespaceAndName = namespacedName.split('/');
     const namespace = namespaceAndName[0];
     const pageDetail = getPageDetail(detail);

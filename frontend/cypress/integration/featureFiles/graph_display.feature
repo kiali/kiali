@@ -13,7 +13,6 @@ Feature: Kiali Graph page - Display menu
   # NOTE: Operation nodes has its own test script
   # NOTE: Traffic animation, missing sidecars, virtual service, and idle edge options are nominally tested
 
-  @bookinfo-app
   @core-1
   @offline
   @lpinterop

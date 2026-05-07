@@ -1,11 +1,6 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import {
-  checkHealthIndicatorInTable,
-  checkHealthStatusInTable,
-  colExists,
-  getColWithRowText,
-  hasAtLeastOneClass
-} from './table';
+import { checkHealthIndicatorInTable, checkHealthStatusInTable, colExists, getColWithRowText } from './table';
+import { hasAtLeastOneClass } from './utils';
 import { ensureKialiFinishedLoading } from './transition';
 
 Given('a service in the cluster with a healthy amount of traffic', function () {

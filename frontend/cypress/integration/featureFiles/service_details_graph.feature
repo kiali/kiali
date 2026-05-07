@@ -19,7 +19,6 @@ Feature: Kiali Service Details page
 
   # TODO: offline - support minigraph
   @bookinfo-app
-  @skip-ossmc
   @core-2
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph

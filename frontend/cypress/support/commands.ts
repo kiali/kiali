@@ -108,9 +108,10 @@ function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
     throw new Error(`Timed out after ${timeout / 1000}s waiting for multicluster applications to become healthy.`);
   }
 
-  cy.request(
-    'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
-  ).then(resp => {
+  cy.request({
+    url:
+      'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+  }).then(resp => {
     const has_http_200 = resp.body.elements.nodes.some(
       (node: any) =>
         node.data.app === 'reviews' &&
@@ -136,9 +137,10 @@ function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): voi
     );
   }
 
-  cy.request(
-    'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
-  ).then(resp => {
+  cy.request({
+    url:
+      'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+  }).then(resp => {
     const has_tcp = resp.body.elements.nodes.some(
       (node: any) =>
         node.data.app === 'reviews' &&
@@ -202,7 +204,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           );
         }
 
-        cy.request('api/auth/info').then(({ body }) => {
+        cy.request({ url: 'api/auth/info' }).then(({ body }) => {
           let authEndpoint = body.authorizationEndpoint;
           cy.request({
             url: authEndpoint,

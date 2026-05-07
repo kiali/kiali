@@ -1,5 +1,6 @@
 @overview
 @offline
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Manual Refresh option
@@ -21,7 +22,6 @@ Feature: Manual Refresh option
     When user is at the "namespaces" page with manual refresh
     Then user "sees" manual refresh messaging
 
-  @ossmc
   @core-2
   Scenario: Graph page shows manual
     When user is at the "graph" page with manual refresh
@@ -33,11 +33,13 @@ Feature: Manual Refresh option
     Then user "sees" manual refresh messaging
 
   @core-2
+  @skip-ossmc
   Scenario: Services page shows manual
     When user is at the "services" page with manual refresh
     Then user "sees" manual refresh messaging
 
   @core-2
+  @skip-ossmc
   Scenario: Workloads page shows manual
     When user is at the "workloads" page with manual refresh
     Then user "sees" manual refresh messaging
@@ -47,7 +49,6 @@ Feature: Manual Refresh option
     When user is at the "istio" page with manual refresh
     Then user "does not see" manual refresh messaging
 
-  @ossmc
   @core-2
   Scenario: Mesh page shows manual
     When user is at the "mesh" page with manual refresh

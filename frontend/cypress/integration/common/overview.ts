@@ -1,4 +1,5 @@
 import { After, Before, Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { linkSelector, normalizeKialiPath } from './utils';
 
 const APP_RATES_API_PATHNAME = '**/api/overview/metrics/apps/rates';
 const CONTROL_PLANES_API_PATHNAME = '**/api/mesh/controlplanes';
@@ -12,6 +13,7 @@ let didServiceInsightsRetry = false;
 let lastClickedServiceInsightsHref: string | undefined;
 let shouldWaitAppsCardRetry = false;
 let shouldWaitServiceInsightsRetry = false;
+let stopFailingClustersAPI = false;
 
 Before(() => {
   didAppsCardRetry = false;
@@ -19,6 +21,7 @@ Before(() => {
   lastClickedServiceInsightsHref = undefined;
   shouldWaitAppsCardRetry = false;
   shouldWaitServiceInsightsRetry = false;
+  stopFailingClustersAPI = false;
 });
 
 const istioConfigsWithNoValidations = {
@@ -195,11 +198,11 @@ When('user opens the Control planes issues popover', () => {
 });
 
 When('user clicks the {string} control plane link in the popover', (istiodName: string) => {
-  cy.contains('a', istiodName).should('be.visible').click();
+  cy.contains(linkSelector('/mesh'), istiodName).should('be.visible').click();
 });
 
 Then('user is redirected to Mesh page with cluster filter {string}', (clusterName: string) => {
-  cy.location('pathname').should('match', /\/console\/mesh$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/mesh$/);
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
     expect(params.get('meshHide')).to.eq(`cluster!=${clusterName}`);
@@ -217,7 +220,7 @@ When('user clicks the {string} popover action', (label: string) => {
 });
 
 Then('user is redirected to Istio config list with all namespaces and warning filters', () => {
-  cy.location('pathname').should('match', /\/console\/istio$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/istio$/);
 
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
@@ -236,7 +239,7 @@ Then('user is redirected to Istio config list with all namespaces and warning fi
       )
     ).sort();
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
@@ -250,7 +253,7 @@ When('user clicks View Data planes in Data planes card', () => {
 });
 
 Then('user is redirected to Namespaces page with data-plane type filter', () => {
-  cy.location('pathname').should('match', /\/console\/namespaces$/);
+  cy.location('pathname').should('match', /\/(console|ossmconsole)\/namespaces$/);
   cy.location('search').then(search => {
     const params = new URLSearchParams(search);
     expect(params.get('type')).to.eq('Data plane');
@@ -264,19 +267,18 @@ const getClustersCard = (): Cypress.Chainable => {
 };
 
 Given('Clusters API fails once', () => {
-  // Intercept twice to cover both ClusterStats and IstioStatus components
-  // Subsequent requests (like retry) will hit real backend
-  cy.intercept(
-    {
-      method: 'GET',
-      url: CLUSTERS_API_URL,
-      times: 2
-    },
-    {
-      statusCode: 500,
-      body: {}
+  // Fail initial page-load requests (ClusterStats + IstioStatus, possibly more in OSSMC)
+  // but let the user-triggered retry succeed by passing through to the real backend.
+  // The "Try Again" step sets stopFailingClustersAPI = true before clicking.
+  stopFailingClustersAPI = false;
+
+  cy.intercept({ method: 'GET', url: CLUSTERS_API_URL }, req => {
+    if (!stopFailingClustersAPI) {
+      req.reply({ statusCode: 500, body: {} });
+    } else {
+      req.continue();
     }
-  ).as('clustersStatus');
+  }).as('clustersStatus');
 });
 
 Given('Clusters API returns empty data', () => {
@@ -290,6 +292,8 @@ Given('Clusters API returns empty data', () => {
 });
 
 When('user clicks Try Again in Clusters card', () => {
+  stopFailingClustersAPI = true;
+
   getClustersCard().within(() => {
     cy.contains('button', 'Try Again').should('be.visible').click();
   });
@@ -343,13 +347,13 @@ Then('Clusters card shows cluster count and footer link', () => {
     cy.getBySel('clusters-card-title').should('contain', 'Clusters');
 
     // Footer link should be visible when data loaded successfully
-    cy.contains('a', 'View Mesh').should('be.visible');
+    cy.contains('View Mesh').should('be.visible');
   });
 });
 
 When('user clicks View Mesh link in Clusters card', () => {
   getClustersCard().within(() => {
-    cy.contains('a', 'View Mesh').click();
+    cy.get(linkSelector('/mesh')).click();
   });
 });
 
@@ -595,9 +599,30 @@ Then('Service insights card shows data tables and footer link', () => {
 
   cy.get('body').then($body => {
     if ($body.find('[data-test="service-insights-rates"]').length > 0) {
-      cy.getBySel('service-insights-rates').within(() => {
-        cy.contains('not available').should('be.visible');
-      });
+      const $rates = $body.find('[data-test="service-insights-rates"]');
+      if ($rates.find('table tbody tr').length > 0) {
+        cy.getBySel('service-insights-rates').within(() => {
+          cy.contains('th', 'Name').should('be.visible');
+          cy.contains('th', 'Errors').should('be.visible');
+          cy.get('tbody tr')
+            .first()
+            .within(() => {
+              cy.get(linkSelector('/services/'))
+                .should('exist')
+                .then($el => {
+                  const attr = $el.is('a') ? 'href' : 'data-href';
+                  cy.wrap($el)
+                    .should('have.attr', attr)
+                    .and('match', /\/namespaces\/.+\/services\/.+/);
+                });
+              cy.contains('%').should('be.visible');
+            });
+        });
+      } else {
+        cy.getBySel('service-insights-rates').within(() => {
+          cy.contains('not available').should('be.visible');
+        });
+      }
     }
     if ($body.find('[data-test="service-insights-latencies"]').length > 0) {
       cy.getBySel('service-insights-latencies').within(() => {
@@ -610,9 +635,14 @@ Then('Service insights card shows data tables and footer link', () => {
               return;
             }
             cy.wrap($rows[0]).within(() => {
-              cy.get('a')
-                .should('have.attr', 'href')
-                .and('match', /\/namespaces\/.+\/services\/.+/);
+              cy.get(linkSelector('/services/'))
+                .should('exist')
+                .then($el => {
+                  const attr = $el.is('a') ? 'href' : 'data-href';
+                  cy.wrap($el)
+                    .should('have.attr', attr)
+                    .and('match', /\/namespaces\/.+\/services\/.+/);
+                });
               cy.contains(/ms|s/).should('be.visible');
             });
           });
@@ -642,9 +672,14 @@ Then('Service insights card shows mock data tables', () => {
       cy.get('tbody tr').then($rows => {
         expect($rows).to.have.length(2);
         cy.wrap($rows[0]).within(() => {
-          cy.get('a')
-            .should('have.attr', 'href')
-            .and('match', /\/namespaces\/.+\/services\/.+/);
+          cy.get(linkSelector('/services/'))
+            .should('exist')
+            .then($el => {
+              const attr = $el.is('a') ? 'href' : 'data-href';
+              cy.wrap($el)
+                .should('have.attr', attr)
+                .and('match', /\/namespaces\/.+\/services\/.+/);
+            });
           cy.contains('%').should('be.visible');
         });
       });
@@ -685,7 +720,7 @@ Then('user is redirected to Services list with all namespaces and service insigh
 
     expect(urlNamespaces.length, 'namespaces query param should be present').to.be.greaterThan(0);
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });
@@ -703,8 +738,8 @@ When('user clicks a valid service link in Service insights card', () => {
   getServiceInsightsCard()
     .should($card => {
       const hasServiceLink =
-        $card.find('[data-test="service-insights-rates"] a').length > 0 ||
-        $card.find('[data-test="service-insights-latencies"] a').length > 0;
+        $card.find('[data-test="service-insights-rates"]').find(linkSelector()).length > 0 ||
+        $card.find('[data-test="service-insights-latencies"]').find(linkSelector()).length > 0;
 
       const hasEmptyState = $card.text().includes('not available');
 
@@ -714,8 +749,8 @@ When('user clicks a valid service link in Service insights card', () => {
       ).to.eq(true);
     })
     .then($card => {
-      const hasRateLink = $card.find('[data-test="service-insights-rates"] a').length > 0;
-      const hasLatencyLink = $card.find('[data-test="service-insights-latencies"] a').length > 0;
+      const hasRateLink = $card.find('[data-test="service-insights-rates"]').find(linkSelector()).length > 0;
+      const hasLatencyLink = $card.find('[data-test="service-insights-latencies"]').find(linkSelector()).length > 0;
       const hasServiceLink = hasRateLink || hasLatencyLink;
 
       if (!hasServiceLink) {
@@ -730,12 +765,13 @@ When('user clicks a valid service link in Service insights card', () => {
         ? '[data-test="service-insights-rates"]'
         : '[data-test="service-insights-latencies"]';
 
-      const isServiceDetailsPageValid = ($body: JQuery<HTMLBodyElement>): boolean => {
-        // When the service is not found, ServiceDetailsPage sets error and does NOT render tabs.
-        return $body.find('#basic-tabs').length > 0;
+      const goBackToOverview = (): Cypress.Chainable => {
+        return cy
+          .go('back')
+          .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
+          .then(() => cy.location('pathname').should('match', /\/(console|ossmconsole)\/overview$/))
+          .then(() => getServiceInsightsCard().should('be.visible'));
       };
-
-      const escapeCssAttrValue = (value: string): string => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
       const tryHrefAtIndex = (hrefs: string[], idx: number): Cypress.Chainable => {
         if (idx >= hrefs.length) {
@@ -745,36 +781,35 @@ When('user clicks a valid service link in Service insights card', () => {
         const href = hrefs[idx];
         lastClickedServiceInsightsHref = parseUrlPathAndSearch(href);
 
-        // Click inside the Service Insights card to avoid matching other links.
+        // Intercept the service detail API so we can check its response status
+        // instead of racing the DOM for #basic-tabs vs #empty-page-error.
+        const alias = `serviceDetail_${idx}`;
+        cy.intercept('GET', '**/api/namespaces/*/services/*').as(alias);
+
         return getServiceInsightsCard()
-          .within(() => {
-            cy.get(`a[href="${escapeCssAttrValue(href)}"]`)
-              .first()
-              .should('be.visible')
-              .click();
-          })
-          .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
-          .then(() => cy.get('body', { timeout: 40000 }))
-          .then($body => {
-            if (isServiceDetailsPageValid($body as JQuery<HTMLBodyElement>)) {
-              return;
+          .find(linkSelector(href))
+          .first()
+          .should('be.visible')
+          .click()
+          .then(() => cy.location('pathname', { timeout: 40000 }).should('include', '/services/'))
+          .then(() => cy.wait(`@${alias}`, { timeout: 40000 }))
+          .then(interception => {
+            const ok = interception.response && interception.response.statusCode < 400;
+
+            if (!ok) {
+              return goBackToOverview().then(() => tryHrefAtIndex(hrefs, idx + 1));
             }
 
-            // Invalid service details; go back and try the next link.
-            return cy
-              .go('back')
-              .then(() => cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist'))
-              .then(() => cy.location('pathname').should('match', /\/(console|ossmconsole)\/overview$/))
-              .then(() => getServiceInsightsCard().should('be.visible'))
-              .then(() => tryHrefAtIndex(hrefs, idx + 1));
+            cy.get('#loading_kiali_spinner', { timeout: 40000 }).should('not.exist');
           });
       };
 
-      cy.get(`${containerSel} table tbody tr a`)
+      cy.get(`${containerSel} table tbody tr`)
+        .find(linkSelector())
         .should('exist')
         .then($links => {
           const hrefs = Array.from($links)
-            .map(a => (a as HTMLAnchorElement).getAttribute('href') ?? '')
+            .map(el => el.getAttribute('href') ?? el.getAttribute('data-href') ?? '')
             .map(h => h.trim())
             .filter(Boolean);
 
@@ -790,10 +825,6 @@ Then('user is redirected to that Service details page', () => {
     return;
   }
 
-  const normalizePath = (pathname: string): string => {
-    return pathname.replace(/^\/(console|ossmconsole)/, '');
-  };
-
   const toUrl = (pathAndSearch: string): URL => {
     return new URL(pathAndSearch, Cypress.config('baseUrl') as string);
   };
@@ -803,8 +834,7 @@ Then('user is redirected to that Service details page', () => {
       const actualUrl = toUrl(`${pathname}${search}`);
       const expectedUrl = toUrl(lastClickedServiceInsightsHref);
 
-      // Path must match exactly (ignoring /console vs /ossmconsole prefix).
-      expect(normalizePath(actualUrl.pathname)).to.eq(normalizePath(expectedUrl.pathname));
+      expect(normalizeKialiPath(actualUrl.pathname)).to.eq(normalizeKialiPath(expectedUrl.pathname));
 
       // Expected query params must be present (allowing extra params like duration/refresh).
       expectedUrl.searchParams.forEach((value, key) => {
@@ -814,10 +844,14 @@ Then('user is redirected to that Service details page', () => {
   });
 
   // Basic smoke validation that the page exists/loaded.
-  cy.get('#basic-tabs').should('exist');
-  cy.contains('button, a', 'Overview').should('be.visible');
-  cy.contains('button, a', 'Traffic').should('be.visible');
-  cy.contains('button, a', 'Inbound Metrics').should('be.visible');
+  // Scope to #basic-tabs so we don't accidentally match OpenShift Console nav items in OSSMC.
+  cy.get('#basic-tabs')
+    .should('exist')
+    .within(() => {
+      cy.contains('button', 'Overview').should('be.visible');
+      cy.contains('button', 'Traffic').should('be.visible');
+      cy.contains('button', 'Inbound Metrics').should('be.visible');
+    });
 });
 
 // ==================== Applications Card ====================
@@ -963,7 +997,7 @@ Then('user is redirected to Applications list with all namespaces', () => {
 
     expect(urlNamespaces.length, 'namespaces query param should be present').to.be.greaterThan(0);
 
-    cy.request('api/namespaces').then(resp => {
+    cy.request({ url: 'api/namespaces' }).then(resp => {
       const allNamespaces = Array.from(new Set((resp.body as Array<{ name: string }>).map(ns => ns.name))).sort();
       expect(urlNamespaces).to.deep.eq(allNamespaces);
     });

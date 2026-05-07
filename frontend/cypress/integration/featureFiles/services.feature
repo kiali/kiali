@@ -188,7 +188,6 @@ Feature: Kiali Services page
 
   # TODO: offline - no ambient support.
   @ambient
-  @skip-ossmc
   Scenario: Filter services table by health
     And user is at the "services" page
     When user selects the "bookinfo" namespace
