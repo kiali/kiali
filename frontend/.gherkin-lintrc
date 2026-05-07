@@ -1,0 +1,20 @@
+{
+  "no-files-without-scenarios": "on",
+  "no-unnamed-features": "on",
+  "no-unnamed-scenarios": "on",
+  "no-dupe-scenario-names": "off",
+  "no-dupe-feature-names": "off",
+  "no-partially-commented-tag-lines": "on",
+  "indentation": "off",
+  "no-trailing-spaces": "off",
+  "no-multiple-empty-lines": "off",
+  "new-line-at-eof": "off",
+  "no-empty-file": "on",
+  "allowed-tags": "off",
+  "no-restricted-tags": "off",
+  "no-scenario-outlines-without-examples": "on",
+  "use-and": "off",
+  "no-homogenous-tags": "off",
+  "no-superfluous-tags": "off",
+  "no-empty-background": "on"
+}

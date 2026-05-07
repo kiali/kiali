@@ -125,14 +125,65 @@ describe('ClusterActions', () => {
 
 Flag: test files not in an `__tests__/` subdirectory, or tests using patterns other than `describe`/`it`.
 
-### Cypress for E2E Only
+## Cypress E2E Tests
 
-Cypress is for integration and end-to-end tests only. Unit and component tests belong in Jest. Do not use Cypress to test logic that can be tested with Jest.
+Cypress tests live in `frontend/cypress/`. Full guidance: `AGENTS.md` § Writing New E2E Tests.
 
-Flag: Cypress tests covering logic that has no UI interaction requirement (pure functions, Redux actions, utility functions).
+### Scope
+
+Cypress is for E2E/integration tests only. Unit tests belong in Jest.
+
+Flag: Cypress tests covering pure functions, Redux actions, or utilities with no UI interaction.
+
+### Structure
+
+```
+frontend/cypress/
+├── integration/
+│   ├── featureFiles/     # Gherkin .feature files
+│   └── common/           # Step definitions (global across all features)
+├── support/commands.ts   # Custom cy.commands()
+└── fixtures/             # Test data
+```
+
+### Tagging
+
+Scenarios require:
+- **Suite tag**: `@smoke`, `@core-1`, `@core-2`, `@ambient`, `@multi-cluster`, `@multi-primary`, `@tracing`, `@offline`
+- **App tag** (if needed): `@bookinfo-app`, `@error-rates-app`, `@sleep-app`
+
+Flag:
+- Missing suite tag
+- `@selected` tag committed (debugging only — must remove before merge)
+- Wrong app/suite combo (e.g., `@core-1` with `@error-rates-app`)
+
+### Step Definitions
+
+Step definitions in `integration/common/*.ts` are global. Reuse existing steps before writing new ones.
+
+Key files: `navigation.ts`, `table.ts`, `transition.ts`, `services.ts`, `apps.ts`, `workloads.ts`
+
+Flag:
+- Duplicate step definitions
+- Missing `data-test` attributes on selectors
+- Brittle CSS paths or element indices
+
+### Gherkin Linting
+
+Feature files must pass `yarn lint:gherkin` (runs `gherkin-lint` with `.gherkin-lintrc` config).
+
+Enforced rules:
+- `no-files-without-scenarios`
+- `no-unnamed-features`, `no-unnamed-scenarios`
+- `no-scenario-outlines-without-examples`
+- `no-empty-background`, `no-empty-file`
+
+Run before committing: `cd frontend && yarn lint:gherkin`
 
 ## Changelog
 
 | Date | Change | Trigger |
 |------|--------|---------|
+| 2026-04-24 | Restructure Cypress E2E section; add gherkin-lint reference; align with AGENTS.md | Manual |
+| 2026-04-24 | Add Gherkin BDD feature file and step definition patterns | /code-reviewer:setup (refresh) |
 | 2026-04-08 | Initial generation | /code-reviewer:setup |
