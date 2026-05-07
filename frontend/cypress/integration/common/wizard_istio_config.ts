@@ -1,5 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { linkSelector } from './utils';
 
 When('user clicks in the {string} Istio config actions', (action: string) => {
   cy.get('button[data-test="istio-actions-toggle"]')
@@ -18,7 +19,7 @@ When('user clicks in the {string} Istio config actions', (action: string) => {
 
 When('viewing the detail for {string}', (object: string) => {
   ensureKialiFinishedLoading();
-  cy.get('a').contains(object).should('be.visible').click();
+  cy.get(linkSelector()).contains(object).should('be.visible').click();
 });
 
 When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {
@@ -119,9 +120,22 @@ When('user opens the {string} submenu', (title: string) => {
 });
 
 When('choosing to delete it', () => {
-  cy.get('#actions-toggle').should('be.visible').click();
-  cy.get('#actions').contains('Delete').should('be.visible').click();
-  cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+  const isOSSMC = Cypress.env('OSSMC');
+  if (isOSSMC) {
+    // In OSSMC, Istio config details are shown on the OCP Console's
+    // native resource page, which has its own Actions dropdown.
+    // These selectors target Console's generic resource action UI; they
+    // may break if Console changes its markup (no stable data-test attrs).
+    cy.contains('button', 'Actions').should('be.visible').click();
+    cy.contains('[role="menuitem"]', /^Delete/)
+      .should('be.visible')
+      .click();
+    cy.get('[role="dialog"]').contains('button', 'Delete').should('be.visible').click();
+  } else {
+    cy.get('#actions-toggle').should('be.visible').click();
+    cy.get('#actions').contains('Delete').should('be.visible').click();
+    cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+  }
 });
 
 When('user closes the success notification', () => {
@@ -162,12 +176,12 @@ Then('{string} should be referenced', (gateway: string) => {
   ensureKialiFinishedLoading();
 
   cy.get('h5').contains('Validation References').should('be.visible');
-  cy.get(`a[data-test="K8sGateway-bookinfo-${gateway}"]`).should('be.visible');
+  cy.getBySel(`K8sGateway-bookinfo-${gateway}`).should('be.visible');
 });
 
 Then('{string} should not be referenced anymore', (gateway: string) => {
   ensureKialiFinishedLoading();
-  cy.get(`a[data-test="K8sGateway-bookinfo-${gateway}"]`).should('not.exist');
+  cy.getBySel(`K8sGateway-bookinfo-${gateway}`).should('not.exist');
 });
 
 Then('{string} details information for service entry {string} can be seen', (host: string, name: string) => {

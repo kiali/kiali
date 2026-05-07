@@ -1,4 +1,5 @@
 @waypoint
+@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 # TODO: offline - ambient support.
 Feature: Kiali Waypoint related features
@@ -117,14 +118,11 @@ Feature: Kiali Waypoint related features
     Then 10 edges appear in the graph
     And 11 nodes appear in the graph
 
-  @skip-ossmc
   Scenario: [Istio Config] Waypoint should not have validation errors
     Given user is at the "istio" page
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" object in "bookinfo" namespace with "waypoint" name Istio Config is valid
 
-  # TODO: Remove tag once namespace actions exist in OSSMC
-  @skip-ossmc
   Scenario: [Namespaces] Namespace is labeled with the waypoint labels
     Given user is at the "namespaces" list page
     When user selects filter "Namespace"
@@ -428,8 +426,6 @@ Feature: Kiali Waypoint related features
     And user is at the details page for the "workload" "test-ambient/curl-client" located in the "" cluster
     Then the workload description card has no config issues
 
-  # TODO: Remove skip-ossmc tag once the namespace page is created in OSSMC
-  @skip-ossmc
   Scenario: [Namespaces] Add to Ambient in the test-sidecar namespace
     Given user navigates to the namespace detail page for "test-sidecar"
     When user opens the namespace actions menu

@@ -1,5 +1,6 @@
 import { Then, When, TableDefinition } from '@badeball/cypress-cucumber-preprocessor';
-import { colExists, getClusterForSingleCluster, getColWithRowText } from './table';
+import { colExists, getColWithRowText } from './table';
+import { getClusterForSingleCluster } from './utils';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);
@@ -37,14 +38,14 @@ const normalizeColumn = (column: string): string => {
 Then('the {string} column on the {string} row is not empty', (column: string, rowText: string) => {
   const normalized = normalizeColumn(column);
 
-  getColWithRowText(rowText, normalized).then($cell => {
-    // Some columns can be icon-only (ex: Istio config validation status).
-    if (normalized === 'Config') {
-      cy.wrap($cell).find('[data-test$="-validation"]').should('exist');
-      return;
-    }
-    expect($cell.text().trim()).to.not.equal('');
-  });
+  // Some columns can be icon-only (ex: Istio config validation status)
+  if (normalized === 'Config') {
+    getColWithRowText(rowText, normalized).find('[data-test$="-validation"]').should('exist');
+    return;
+  }
+  getColWithRowText(rowText, normalized)
+    .invoke('text')
+    .should(text => expect(text.trim()).to.not.eq(''));
 });
 
 When('user filters for type {string}', (type: string) => {
@@ -97,11 +98,7 @@ const columnTitleToId = (title: string): string => {
 When('user sets namespaces column order via URL to', (tableHeadings: TableDefinition) => {
   const columnTitles = tableHeadings.raw()[0] as string[];
   const orderParam = columnTitles.map(t => columnTitleToId(t)).join(',');
-  cy.url().then(url => {
-    const u = new URL(url);
-    u.searchParams.set('nsorder', orderParam);
-    cy.visit(u.toString());
-  });
+  cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces?refresh=0&nsorder=${orderParam}` });
 });
 
 Then('the table column order on namespaces page is', (tableHeadings: TableDefinition) => {

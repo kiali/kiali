@@ -170,7 +170,6 @@ Feature: Kiali Workloads page
 
   # TODO: offline - ambient.
   @ambient
-  @skip-ossmc
   Scenario: Out of mesh
     When user selects the "sleep" namespace
     Then user sees "Out of mesh" in the table
