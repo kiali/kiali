@@ -466,6 +466,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     this.graphDataSource.removeListener('fetchError', this.handleGraphDataSourceError);
     this.graphDataSource.removeListener('fetchSuccess', this.handleGraphDataSourceSuccess);
     this.graphDataSource.removeListener('emptyNamespaces', this.handleGraphDataSourceEmpty);
+    this.graphDataSource.destroy();
 
     this.props.updateSummary(INITIAL_GRAPH_STATE.summaryData);
   }

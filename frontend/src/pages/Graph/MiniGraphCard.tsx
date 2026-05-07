@@ -51,6 +51,7 @@ import { NamespaceActionsDropdownGroup } from 'pages/Namespaces/NamespaceActions
 import { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 const cardStyle = kialiStyle({
   height: '100%',
@@ -134,14 +135,14 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     const graphCardActions = [
       <DropdownItem key="viewFullGraph" onClick={this.onViewFullGraph}>
-        Show full graph
+        {t('Show full graph')}
       </DropdownItem>
     ];
 
     if (hasNode) {
       graphCardActions.push(
         <DropdownItem key="viewNodeGraph" onClick={this.onViewNodeGraph}>
-          Show node graph
+          {t('Show node graph')}
         </DropdownItem>
       );
     }

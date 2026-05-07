@@ -198,11 +198,17 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   private fetchControlPlanes = (): void => {
     API.getControlPlanes()
       .then(response => {
+        if (!this._isMounted) {
+          return;
+        }
         const controlPlanes = response.data;
         setControlPlaneRevisions(new Set(controlPlanes.map(cp => cp.revision)));
         this.setState({ controlPlanes });
       })
       .catch(err => {
+        if (!this._isMounted) {
+          return;
+        }
         addError(t('Error fetching control planes.'), err);
       });
   };
@@ -350,6 +356,9 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         })
       )
       .catch(error => {
+        if (error?.isCanceled) {
+          return;
+        }
         addError(t('Could not fetch Namespace.'), error);
         this.setState({
           error: {
@@ -358,7 +367,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           },
           nsInfo: undefined
         });
-        return Promise.reject(error);
       });
   };
 
@@ -474,7 +482,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             opTarget={this.state.opTarget}
             isOpen={this.state.showTrafficPoliciesModal}
             controlPlanes={this.state.controlPlanes?.filter(cp =>
-              cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
+              cp.managedNamespaces?.some(
+                mn =>
+                  mn.name === this.state.nsTarget &&
+                  (!this.state.clusterTarget || mn.cluster === this.state.clusterTarget)
+              )
             )}
             kind={this.state.kind}
             hideConfirmModal={this.handleHideTrafficManagement}

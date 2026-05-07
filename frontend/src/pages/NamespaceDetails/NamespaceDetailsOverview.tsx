@@ -237,6 +237,10 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     this.fetchGraph();
   }
 
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: Props): void {
     if (
       prev.duration !== this.props.duration ||

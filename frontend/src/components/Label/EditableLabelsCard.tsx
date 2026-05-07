@@ -52,11 +52,9 @@ const editableLabelStyle = kialiStyle({
   }
 });
 
-const NEW_LABEL_PLACEHOLDER = 'key=value';
-
-const formatLabel = (key: string, value: string): string => {
+const formatLabel = (key: string, value: string, placeholder: string): string => {
   if (key.length === 0 && value.length === 0) {
-    return NEW_LABEL_PLACEHOLDER;
+    return placeholder;
   }
   return value.length > 0 ? `${key}=${value}` : key;
 };
@@ -97,6 +95,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   const [editing, setEditing] = React.useState(false);
   const [editLabels, setEditLabels] = React.useState<LabelEntry[]>([]);
   const [validationError, setValidationError] = React.useState<string | undefined>();
+  const newLabelPlaceholder = `${t('key')}=${t('value')}`;
 
   const handleStartEditing = (): void => {
     setEditLabels(Object.entries(labels ?? {}).map(([key, value]) => ({ key, value })));
@@ -138,7 +137,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
 
   const handleEditComplete = (idx: number, _event: MouseEvent | KeyboardEvent, newText: string): void => {
     const trimmed = newText.trim();
-    if (trimmed === NEW_LABEL_PLACEHOLDER || trimmed.length === 0) {
+    if (trimmed === newLabelPlaceholder || trimmed.length === 0) {
       return;
     }
     const parsed = parseLabel(trimmed);
@@ -215,7 +214,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
                 onClose={() => handleClose(idx)}
                 isCompact={isCompact}
               >
-                {formatLabel(entry.key, entry.value)}
+                {formatLabel(entry.key, entry.value, newLabelPlaceholder)}
               </Label>
             ))}
           </LabelGroup>
@@ -229,7 +228,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
                 tooltipPosition="top"
                 onClick={onLabelClick ? () => onLabelClick(key, value) : undefined}
               >
-                {formatLabel(key, value)}
+                {formatLabel(key, value, newLabelPlaceholder)}
               </Label>
             ))}
           </LabelGroup>

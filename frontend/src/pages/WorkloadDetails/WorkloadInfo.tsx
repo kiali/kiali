@@ -98,6 +98,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     this.fetchBackend();
   }
 
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: WorkloadInfoProps): void {
     if (prev.duration !== this.props.duration || this.props.workload !== prev.workload) {
       this.fetchBackend();

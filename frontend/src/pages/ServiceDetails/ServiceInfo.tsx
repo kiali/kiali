@@ -113,6 +113,11 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     this.fetchBackend();
   }
 
+  componentWillUnmount(): void {
+    this.promises.cancelAll();
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: Props): void {
     if (prev.duration !== this.props.duration || prev.serviceDetails !== this.props.serviceDetails) {
       this.fetchBackend();

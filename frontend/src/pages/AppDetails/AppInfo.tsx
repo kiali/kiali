@@ -41,6 +41,10 @@ export class AppInfo extends React.Component<AppInfoProps> {
     this.fetchBackend();
   }
 
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: AppInfoProps): void {
     if (this.props.duration !== prev.duration || this.props.app !== prev.app) {
       this.fetchBackend();

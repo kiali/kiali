@@ -175,6 +175,9 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ k8sGateways: response.data.resources[getGVKTypeString(gvkType.K8sGateway)] });
       })
       .catch(gwError => {
+        if (gwError?.isCanceled) {
+          return;
+        }
         addError('Could not fetch Gateways list.', gwError);
       });
 
