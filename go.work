@@ -1,0 +1,6 @@
+go 1.25.9
+
+use (
+	.
+	tools/cmd/installer
+)
