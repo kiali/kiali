@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { AppWorkload } from '../../types/App';
-import { TooltipPosition } from '@patternfly/react-core';
+import { Popover, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
+import { KialiIcon } from '../../config/KialiIcon';
 import { KialiLink } from '../Link/KialiLink';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -97,6 +98,30 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     );
   };
 
+  const renderServiceAccounts = (workload: AppWorkload): React.ReactNode => {
+    if (workload.serviceAccountNames && workload.serviceAccountNames.length > 0) {
+      return (
+        <div style={{ textAlign: 'left' }}>
+          {workload.serviceAccountNames.map((sa, i) => (
+            <div
+              key={i}
+              style={{
+                padding: '0.25rem 0',
+                borderBottom:
+                  i < workload.serviceAccountNames.length - 1
+                    ? '1px solid var(--pf-t--global--border--color--default)'
+                    : undefined
+              }}
+            >
+              {sa}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return <span>No service account found</span>;
+  };
+
   const renderWorkloadItem = (workload: AppWorkload): React.ReactNode => {
     let href = `/namespaces/${props.namespace}/workloads/${workload.workloadName}`;
 
@@ -111,6 +136,16 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         </div>
 
         <KialiLink to={href}>{workload.workloadName}</KialiLink>
+
+        <Popover
+          position={PopoverPosition.right}
+          headerContent="Service Accounts"
+          bodyContent={renderServiceAccounts(workload)}
+        >
+          <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+            <KialiIcon.Info className={infoStyle} />
+          </span>
+        </Popover>
 
         {hasMissingSidecar(workload) && <MissingSidecar tooltip={true} className={infoStyle} text="" />}
       </li>
