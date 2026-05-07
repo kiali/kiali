@@ -34,7 +34,9 @@ Then('the {string} column on the {string} row is not empty', (column: string, ro
     getColWithRowText(rowText, normalized).find('[data-test$="-validation"]').should('exist');
     return;
   }
-  getColWithRowText(rowText, normalized).invoke('text').should('not.be.empty');
+  getColWithRowText(rowText, normalized)
+    .invoke('text')
+    .should(text => expect(text.trim()).to.not.eq(''));
 });
 
 When('user filters for type {string}', (type: string) => {

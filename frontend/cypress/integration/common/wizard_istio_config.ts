@@ -124,6 +124,8 @@ When('choosing to delete it', () => {
   if (isOSSMC) {
     // In OSSMC, Istio config details are shown on the OCP Console's
     // native resource page, which has its own Actions dropdown.
+    // These selectors target Console's generic resource action UI; they
+    // may break if Console changes its markup (no stable data-test attrs).
     cy.contains('button', 'Actions').should('be.visible').click();
     cy.contains('[role="menuitem"]', /^Delete/)
       .should('be.visible')
