@@ -509,11 +509,11 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
   });
 });
 
-Then('the user sees the {string} option in the pod tooltip, and is {string}', (option: string, value: string) => {
-  cy.get(`[data-test=pod-info]`).trigger('mouseenter');
-  cy.get('[role="tooltip"]').should('be.visible').and('contain', option);
-  cy.get('[role="tooltip"]').should('be.visible').and('contain', value);
-  cy.get(`[data-test=pod-info]`).trigger('mouseleave');
+Then('the user sees the {string} option in the pod popover, and is {string}', (option: string, value: string) => {
+  cy.get(`[data-test=pod-info]`).first().click();
+  cy.get('[role="dialog"]').should('be.visible').and('contain', option);
+  cy.get('[role="dialog"]').should('be.visible').and('contain', value);
+  cy.get('[role="dialog"]').find('button[aria-label="Close"]').click();
 });
 
 Then('the user sees the {string} badge', (name: string) => {

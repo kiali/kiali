@@ -37,7 +37,7 @@ Feature: Kiali Waypoint related features
     Then the user cannot see the "missing-sidecar" badge for "ratings-v1" workload in "bookinfo" namespace
     And the user clicks the mode info icon and sees "L4" in the popover
     And the user clicks the mode info icon and sees "L7" in the popover
-    And the user sees the "Protocol" option in the pod tooltip, and is "HBONE"
+    And the user sees the "Protocol" option in the pod popover, and is "HBONE"
     And user sees trace information
     When user selects a trace
     Then user sees trace details
