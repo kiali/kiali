@@ -177,4 +177,5 @@ Flag: `ReduxProps` type definitions with fields in non-alphabetical order.
 
 | Date | Change | Trigger |
 |------|--------|---------|
+| 2026-04-24 | Refresh: verify existing conventions current, no changes needed | /code-reviewer:setup (refresh) |
 | 2026-04-08 | Initial generation | /code-reviewer:setup |

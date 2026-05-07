@@ -53,6 +53,9 @@ hack/*.local.sh
 !.claude/code-reviewer/
 !.claude/code-reviewer/**
 
+# Claude Code skills for agentic SDLC
+!.claude/skills/
+
 # Cursor — ignore all .cursor files except code-reviewer docs (which are intentionally committed)
 .cursor/*
 !.cursor/code-reviewer/

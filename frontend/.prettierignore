@@ -2,5 +2,8 @@
 # touches these up then it will change the build commit hash.
 frontend/build
 
+# Gherkin feature files - formatted by gherkin-lint
+*.feature
+
 # Raw mcpchecker eval output (repo root; large, tooling-specific JSON)
 ../tests/evals/results/mcpchecker-gemini-eval-out.json

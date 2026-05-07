@@ -372,12 +372,14 @@ detectRaceConditions() {
   fi
 }
 
-ensureCypressInstalled() {
+ensureCypressReady() {
   cd "${SCRIPT_DIR}"/../frontend
   if ! yarn cypress --help &> /dev/null; then
     echo "cypress binary was not detected in your PATH. Did you install the frontend directory? Before running the frontend tests you must run 'make build-ui'."
     exit 1
   fi
+  infomsg "Validating Gherkin feature files..."
+  yarn lint:gherkin
   cd -
 }
 
@@ -596,7 +598,7 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
   go test -v -failfast -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-multicluster.out 2>&1 | tee >(go-junit-report > ../junit-rest-report.xml) ../int-test.log
   detectRaceConditions "${CLUSTER1_CONTEXT}"
 elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
@@ -620,7 +622,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   yarn run cypress:run
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-ai "true"
@@ -645,7 +647,7 @@ elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_1}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
@@ -674,7 +676,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_1}" ]; then
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
@@ -703,7 +705,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
@@ -732,7 +734,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
@@ -759,7 +761,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   yarn run cypress:run:ambient
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
@@ -786,7 +788,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   yarn run cypress:run:multi-cluster
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   # Configure auth strategy based on ambient mode
   if [ -n "$AMBIENT" ]; then
@@ -854,7 +856,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_PRIMARY}" ]; then
   fi
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
       MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
@@ -890,7 +892,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   yarn run cypress:run:external-kiali
   detectRaceConditions ${CYPRESS_CLUSTER1_CONTEXT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
@@ -914,7 +916,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   yarn run cypress:run:tracing
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     # Setup single cluster with multi mesh
@@ -944,7 +946,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
   yarn run cypress:run:multi-mesh
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
 
   GOPATH=$(go env GOPATH)
   
@@ -1011,7 +1013,7 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run:smoke
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
-  ensureCypressInstalled
+  ensureCypressReady
   
   GOPATH=$(go env GOPATH)
   if [ -z "${GOPATH}" ]; then
