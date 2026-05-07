@@ -5,19 +5,15 @@ import { pluginSvgr } from '@rsbuild/plugin-svgr';
 
 const { publicVars } = loadEnv({ prefixes: ['REACT_APP_'] });
 
-// Preserve React component names so Cypress cy.getReact() can find them.
-// Excluded from test builds because it interferes with Rstest's mock system.
-const isTestRunner = Boolean(process.env.RSTEST || process.env.TEST_RUNNER);
-const swcConfig = isTestRunner
-  ? {}
-  : {
-      jsc: {
-        minify: {
-          compress: { keep_classnames: true, keep_fnames: true },
-          mangle: { keep_classnames: true, keep_fnames: true }
-        }
-      }
-    };
+// Preserve React component names so Cypress cy.getReact() can find them via the fiber tree.
+const keepNames = {
+  jsOptions: {
+    minimizerOptions: {
+      compress: { keep_classnames: true, keep_fnames: true },
+      mangle: { keep_classnames: true, keep_fnames: true }
+    }
+  }
+};
 
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
@@ -28,10 +24,8 @@ export default defineConfig({
   output: {
     assetPrefix: './',
     distPath: { root: 'build' },
+    minify: keepNames,
     sourceMap: { css: false, js: false }
-  },
-  tools: {
-    swc: swcConfig
   },
   source: {
     define: {
@@ -49,7 +43,7 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
     open: true,
-    port: 3000,
+    port: Number(process.env.PORT) || 3001,
     proxy: {
       '/api': {
         changeOrigin: true,
