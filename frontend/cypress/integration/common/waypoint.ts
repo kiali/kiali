@@ -457,10 +457,10 @@ Then('use_waypoint_name is enabled if tracing services contain waypoint in {stri
   });
 });
 
-Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
-  cy.get(`[data-test=workload-labels-card]`).contains('span', label).trigger('mouseenter');
-  cy.get('[role="tooltip"]').should('be.visible').and('contain', text);
-  cy.get(`[data-test=workload-labels-card]`).contains('span', label).trigger('mouseleave');
+Then('the user clicks the mode info icon and sees {string} in the popover', (text: string) => {
+  cy.get('[data-test="details-mode"]').find('svg').click();
+  cy.get('[role="dialog"]').should('be.visible').and('contain', text);
+  cy.get('body').click(0, 0);
 });
 
 Then("the user doesn't see a L7 link", () => {

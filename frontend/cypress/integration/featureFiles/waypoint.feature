@@ -35,8 +35,8 @@ Feature: Kiali Waypoint related features
     Given user is at the details page for the "workload" "bookinfo/ratings-v1" located in the "" cluster
     Then user sees "Ambient" badge
     Then the user cannot see the "missing-sidecar" badge for "ratings-v1" workload in "bookinfo" namespace
-    And the user hovers in the "ambient" label and sees "L4" in the tooltip
-    And the user hovers in the "ambient" label and sees "L7" in the tooltip
+    And the user clicks the mode info icon and sees "L4" in the popover
+    And the user clicks the mode info icon and sees "L7" in the popover
     And the user sees the "Protocol" option in the pod tooltip, and is "HBONE"
     And user sees trace information
     When user selects a trace

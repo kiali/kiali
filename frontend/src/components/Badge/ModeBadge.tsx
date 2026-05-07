@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Label, Popover, PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { infoStyle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
 
 type ModeBadgeProps = {
@@ -47,7 +48,7 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({ mode, isAmbient, istioSide
       {label}
       <Popover aria-label={t('Mode info')} position={PopoverPosition.right} bodyContent={popoverMessage}>
         <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
-          <KialiIcon.Help />
+          <KialiIcon.Info className={infoStyle} />
         </span>
       </Popover>
     </span>
