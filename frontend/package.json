@@ -33,10 +33,8 @@
     "Some build environments we use do not include npm access, and installing yarn is not possible."
   ],
   "scripts": {
-    "build": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi'",
-    "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
+    "build": "npm run lint && npm run build:kiali",
     "build:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name rsbuild build",
-    "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
     "cypress": "cypress open -e TAGS=\"@core-1 or @core-2 or @core-caching or @crd-validation or @perses or @ai-chatbot\"",
     "cypress:ambient": "cypress open -e TAGS=\"@ambient\"",
     "cypress:ambient-multi-primary": "cypress open -e TAGS=\"@ambient-multi-primary or @waypoint-multicluster\"",
@@ -91,12 +89,10 @@
     "precypress:run:junit": "npm run cypress:delete:reports",
     "prepare": "cd .. && husky install frontend/.husky",
     "prettier": "prettier --write \"**/*.{ts,tsx,scss,json}\"",
-    "start": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi'",
-    "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
+    "start": "npm run start:kiali",
     "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) rsbuild dev",
     "msw:init": "[ -f public/mockServiceWorker.js ] || npx msw init public/ --save=false",
-    "start:mock": "npm run generate:chatbot-conversations && npm run msw:init && sh -ac '. ./.env.upstream; REACT_APP_MOCK_API=true npm run start:kiali'",
-    "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
+    "start:mock": "npm run generate:chatbot-conversations && npm run msw:init && REACT_APP_MOCK_API=true npm run start:kiali",
     "test": "TZ=UTC tsc -p . && TZ=UTC TEST_RUNNER=1 rstest run",
     "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' -e 's/justify-content: end;/justify-content: flex-end;/g' -e 's/align-items: end;/align-items: flex-end;/g' {} + && cypress install"
   },

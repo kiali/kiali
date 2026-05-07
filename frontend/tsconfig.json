@@ -23,16 +23,6 @@
     "target": "es6",
     "typeRoots": ["node_modules/@types"]
   },
-  "exclude": [
-    "node_modules",
-    "build",
-    "scripts",
-    "acceptance-tests",
-    "coverage",
-    "webpack",
-    "jest",
-    "src/setupTests.ts",
-    "src/mocks/**/*"
-  ],
+  "exclude": ["node_modules", "build", "coverage", "src/setupTests.ts", "src/mocks/**/*"],
   "include": ["src"]
 }

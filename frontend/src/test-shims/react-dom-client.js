@@ -1,5 +1,3 @@
-'use strict';
-
 // React 17: RTL 14+ resolves `react-dom/client`, which does not exist before React 18.
 // Map it to createRoot/hydrateRoot shims backed by react-dom 17 APIs so the test runner can load RTL.
 const ReactDOM = require('react-dom');

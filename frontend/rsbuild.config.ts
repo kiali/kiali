@@ -16,6 +16,16 @@ export default defineConfig({
     distPath: { root: 'build' },
     sourceMap: { css: false, js: false }
   },
+  tools: {
+    swc: {
+      jsc: {
+        minify: {
+          compress: { keep_classnames: true, keep_fnames: true },
+          mangle: { keep_classnames: true, keep_fnames: true }
+        }
+      }
+    }
+  },
   source: {
     define: {
       ...publicVars,
