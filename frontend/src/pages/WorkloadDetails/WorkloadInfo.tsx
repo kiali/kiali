@@ -20,7 +20,7 @@ import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObje
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
-import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
 import { isIstioNamespace, serverConfig, getAppLabelName } from '../../config/ServerConfig';
@@ -573,7 +573,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack style={{ gap: '0.5rem' }}>
+              <Stack className={detailCardStackStyle}>
                 {workload && this.renderDetailsCard(workload)}
                 {workload && this.renderResourcesCard(workload)}
                 {workload && this.renderLabelsCard(workload)}

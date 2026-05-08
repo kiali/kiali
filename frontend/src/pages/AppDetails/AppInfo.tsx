@@ -17,7 +17,7 @@ import {
 } from '@patternfly/react-core';
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
-import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
@@ -146,7 +146,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
       <div className={flexFillStyle}>
         <Grid hasGutter={true} className={detailGridStyle}>
           <GridItem span={4} className={detailLeftColumnStyle}>
-            <Stack style={{ gap: '0.5rem' }}>
+            <Stack className={detailCardStackStyle}>
               {app && this.renderDetailsCard(app)}
               {app && this.renderResourcesCard(app)}
               {app &&

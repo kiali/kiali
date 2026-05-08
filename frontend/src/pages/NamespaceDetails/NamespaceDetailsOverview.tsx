@@ -43,7 +43,7 @@ import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { navigateToFilteredList } from '../PageUtils';
-import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
   canEdit: boolean;
@@ -424,7 +424,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
           <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack style={{ gap: '0.5rem' }}>{this.renderLeftCard()}</Stack>
+              <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />

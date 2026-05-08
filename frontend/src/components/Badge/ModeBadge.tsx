@@ -3,6 +3,7 @@ import { Label, Popover, PopoverPosition } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { infoStyle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
+import { clickableInlineStyle, inlineIconRowStyle } from 'styles/FlexStyles';
 
 type ModeBadgeProps = {
   isAmbient?: boolean;
@@ -44,10 +45,10 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({ mode, isAmbient, istioSide
   }
 
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+    <span className={inlineIconRowStyle}>
       {label}
       <Popover aria-label={t('Mode info')} position={PopoverPosition.right} bodyContent={popoverMessage}>
-        <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+        <span className={clickableInlineStyle}>
           <KialiIcon.Info className={infoStyle} />
         </span>
       </Popover>

@@ -29,7 +29,7 @@ import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { setAIContext } from 'helpers/ChatAI';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 
 type AppDetailsState = {
   app?: App;
@@ -304,7 +304,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             <div className={detailTitleRowStyle}>
               <div className={detailTitleMainStyle}>
                 <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
                   {this.props.appId.app}
                 </Title>
               </div>

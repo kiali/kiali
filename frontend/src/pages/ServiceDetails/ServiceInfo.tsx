@@ -30,7 +30,7 @@ import {
   PeerAuthentication,
   Validations
 } from '../../types/IstioObjects';
-import { detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -493,7 +493,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         <div className={flexFillStyle}>
           <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack style={{ gap: '0.5rem' }}>
+              <Stack className={detailCardStackStyle}>
                 {this.renderDetailsCard()}
                 {this.renderResourcesCard()}
                 {this.renderLabelsCard()}

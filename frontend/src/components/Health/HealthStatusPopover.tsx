@@ -5,6 +5,7 @@ import * as H from '../../types/Health';
 import { NA, HEALTHY } from '../../types/Health';
 import { HealthDetails } from './HealthDetails';
 import { t } from 'utils/I18nUtils';
+import { inlineIconRowStyle } from 'styles/FlexStyles';
 
 type HealthStatusPopoverProps = {
   health?: H.Health;
@@ -15,14 +16,7 @@ export const HealthStatusPopover: React.FC<HealthStatusPopoverProps> = ({ health
   const isUnhealthy = health && status !== HEALTHY && status !== NA;
 
   const statusContent = (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        cursor: isUnhealthy ? 'pointer' : undefined
-      }}
-    >
+    <span className={inlineIconRowStyle} style={isUnhealthy ? { cursor: 'pointer' } : undefined}>
       {createIcon(status)}
       {status.name}
     </span>
@@ -36,7 +30,7 @@ export const HealthStatusPopover: React.FC<HealthStatusPopoverProps> = ({ health
         triggerAction="click"
         showClose={true}
         headerContent={
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+          <span className={inlineIconRowStyle}>
             {createIcon(status)} <strong>{status.name}</strong>
           </span>
         }

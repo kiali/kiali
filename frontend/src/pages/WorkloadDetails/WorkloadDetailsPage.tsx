@@ -40,7 +40,7 @@ import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { setAIContext } from 'helpers/ChatAI';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -433,7 +433,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             <div className={detailTitleRowStyle}>
               <div className={detailTitleMainStyle}>
                 <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
                   {this.state.workload.name}
                 </Title>
               </div>

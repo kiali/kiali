@@ -90,6 +90,32 @@ export const detailGridStyle = kialiStyle({
   minHeight: 0
 });
 
+// Page title inside detail pages — removes default margin and prevents
+// the title from shrinking when the actions area grows.
+export const detailPageTitleStyle = kialiStyle({
+  margin: 0,
+  flexShrink: 0
+});
+
+// Stack gap used between cards in detail page left columns.
+export const detailCardStackStyle = kialiStyle({
+  gap: '0.5rem'
+});
+
+// Inline-flex row for icon + text combinations (health status, badges, etc.).
+export const inlineIconRowStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.25rem'
+});
+
+// Clickable inline-flex trigger for popovers and expandable elements.
+export const clickableInlineStyle = kialiStyle({
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center'
+});
+
 // Scrollable flex child for use inside a CardBody or similar container.
 // Must be a flex container itself so children with flex:1 are constrained
 // to the available height rather than growing with their content.

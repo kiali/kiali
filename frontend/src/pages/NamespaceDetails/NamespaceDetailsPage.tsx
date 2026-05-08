@@ -35,7 +35,7 @@ import { MessageType } from 'types/NotificationCenter';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
-import { detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
@@ -360,7 +360,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         })
       )
       .catch(error => {
-        if (error?.isCanceled) {
+        if (error?.isCanceled || !this._isMounted) {
           return;
         }
         addError(t('Could not fetch Namespace.'), error);
@@ -443,7 +443,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             <div className={detailTitleRowStyle} data-test="namespace-detail-title-row">
               <div className={detailTitleMainStyle}>
                 <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
                   {this.props.namespace}
                 </Title>
               </div>

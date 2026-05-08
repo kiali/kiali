@@ -39,7 +39,7 @@ import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
 import { setAIContext } from 'helpers/ChatAI';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import { detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { t } from 'utils/I18nUtils';
 
 type ServiceDetailsState = {
@@ -351,7 +351,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
                   }
                   position={TooltipPosition.top}
                 />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
                   {this.props.serviceId.service}
                 </Title>
               </div>
