@@ -75,11 +75,18 @@ When('user clicks in the {string} actions', (action: string) => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 
-  cy.get('button[data-test="service-actions-toggle"]')
-    .should('exist')
-    .click()
-    .get('#loading_kiali_spinner')
-    .should('not.exist');
+  if (Cypress.env('OSSMC')) {
+    cy.intercept('**/api/**/services/**/graph*').as('serviceMinigraph');
+    cy.wait('@serviceMinigraph');
+    cy.waitForReact();
+    cy.get('button#minigraph-toggle').should('be.visible').click();
+  } else {
+    cy.get('button[data-test="service-actions-toggle"]')
+      .should('exist')
+      .click()
+      .get('#loading_kiali_spinner')
+      .should('not.exist');
+  }
 
   cy.get(`li[data-test="${actionId}"]`)
     .find('button')

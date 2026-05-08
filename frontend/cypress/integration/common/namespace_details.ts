@@ -1,5 +1,6 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
+import { linkSelector } from './utils';
 
 Given('user is at the details page for the {string} namespace', (ns: string) => {
   cy.visit({
@@ -34,5 +35,9 @@ Then('user sees the {string} card', (title: string) => {
 });
 
 Then('user sees resource links for {string}', (resource: string) => {
-  cy.get('[data-test="namespace-resources-card"]').contains('a', resource).should('be.visible');
+  cy.get('[data-test="namespace-resources-card"]')
+    .find(linkSelector())
+    .filter(`:contains("${resource}")`)
+    .first()
+    .should('be.visible');
 });
