@@ -5,7 +5,7 @@ import { SimpleTable } from '../Table/SimpleTable';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'i18next';
-import { SortableCompareTh, stickyThead, yoverflow } from './ZtunnelConfig';
+import { SortableCompareTh, yoverflow } from './ZtunnelConfig';
 
 type ZtunnelServicesProps = {
   config?: ZtunnelService[];
@@ -110,7 +110,7 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
         emptyState={noServicesConfig}
         sortBy={sort}
         onSort={onSort}
-        theadStyle={stickyThead}
+        isStickyHeader
       />
     </div>
   );

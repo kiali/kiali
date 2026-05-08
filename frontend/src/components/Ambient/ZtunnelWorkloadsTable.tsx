@@ -5,7 +5,7 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react
 import { emtpytStyle } from './ZtunnelServicesTable';
 import { SimpleTable } from '../Table/SimpleTable';
 import { t } from 'i18next';
-import { SortableCompareTh, stickyThead, yoverflow } from './ZtunnelConfig';
+import { SortableCompareTh, yoverflow } from './ZtunnelConfig';
 
 type ZtunnelWorkloadsProps = {
   config?: ZtunnelWorkload[];
@@ -97,7 +97,7 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
         emptyState={noWorkloadsConfig}
         sortBy={sort}
         onSort={onSort}
-        theadStyle={stickyThead}
+        isStickyHeader
       />
     </div>
   );
