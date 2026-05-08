@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 )
 
 type ZtunnelConfigDump struct {
@@ -138,6 +139,38 @@ type DNSResolverOptions struct {
 type TimeDuration struct {
 	Nanos int `json:"nanos"`
 	Secs  int `json:"secs"`
+}
+
+func (d *TimeDuration) UnmarshalJSON(data []byte) (err error) {
+	type durationAlias TimeDuration
+
+	var objectVal durationAlias
+	if err := json.Unmarshal(data, &objectVal); err == nil {
+		*d = TimeDuration(objectVal)
+		return nil
+	}
+
+	var intVal int
+	if err := json.Unmarshal(data, &intVal); err == nil {
+		*d = TimeDuration{Secs: intVal}
+		return nil
+	}
+
+	var floatVal float64
+	if err := json.Unmarshal(data, &floatVal); err == nil {
+		secs, nanos := math.Modf(floatVal)
+		*d = TimeDuration{
+			Secs:  int(secs),
+			Nanos: int(math.Round(nanos * 1e9)),
+		}
+		if d.Nanos == 1e9 {
+			d.Secs++
+			d.Nanos = 0
+		}
+		return nil
+	}
+
+	return err
 }
 
 type SocketAddress struct {
