@@ -70,4 +70,36 @@ describe('EditableAnnotationsCard', () => {
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThan(0);
   });
+
+  it('sorts annotations alphabetically by key', () => {
+    const annotations = { zebra: 'z', alpha: 'a', mango: 'm' };
+    render(<EditableAnnotationsCard {...defaultProps} annotations={annotations} />);
+    const terms = screen.getAllByRole('term').map(el => el.textContent);
+    expect(terms).toEqual(['alpha', 'mango', 'zebra']);
+  });
+
+  it('prioritizes istio annotations when prioritizeIstio is true', () => {
+    const annotations = { zebra: 'z', 'istio.io/rev': 'default', alpha: 'a' };
+    render(<EditableAnnotationsCard {...defaultProps} annotations={annotations} prioritizeIstio />);
+    const terms = screen.getAllByRole('term').map(el => el.textContent);
+    const istioIdx = terms.findIndex(t => t?.includes('istio'));
+    const nonIstioIdx = terms.findIndex(t => t === 'alpha');
+    expect(istioIdx).toBeLessThan(nonIstioIdx);
+  });
+
+  it('uses istio count for collapsed view when prioritizeIstioCount is true', () => {
+    const annotations = {
+      'istio.io/rev': 'default',
+      'istio.io/dataplane-mode': 'ambient',
+      alpha: 'a',
+      bravo: 'b',
+      charlie: 'c'
+    };
+    render(
+      <EditableAnnotationsCard {...defaultProps} annotations={annotations} prioritizeIstio prioritizeIstioCount />
+    );
+    const terms = screen.getAllByRole('term').map(el => el.textContent);
+    expect(terms).toHaveLength(2);
+    expect(terms).toEqual(['istio.io/dataplane-mode', 'istio.io/rev']);
+  });
 });
