@@ -1,5 +1,6 @@
 @waypoint-multicluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+
 Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
 
   Validates that a waypoint proxy is installed in an ambient multi-primary setup and that the traffic graph
