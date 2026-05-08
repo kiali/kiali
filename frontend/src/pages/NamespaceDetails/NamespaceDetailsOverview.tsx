@@ -284,7 +284,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     const appCount = statusCount(nsInfo.statusApp);
     const serviceCount = statusCount(nsInfo.statusService);
     const workloadCount = statusCount(nsInfo.statusWorkload);
-    const istioCount = validations.objectCount && validations.objectCount > 0 ? validations.objectCount : undefined;
+    const istioCount = validations.objectCount !== undefined ? validations.objectCount : undefined;
 
     return (
       <>

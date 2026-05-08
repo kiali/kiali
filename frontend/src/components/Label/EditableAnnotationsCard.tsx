@@ -28,7 +28,7 @@ type EditableAnnotationsCardProps = {
 };
 
 const noAnnotationsStyle = kialiStyle({
-  color: 'var(--pf-t--global--color--nonstatus--gray--default)',
+  color: 'var(--pf-t--global--text--color--subtle)',
   fontStyle: 'italic'
 });
 
@@ -75,6 +75,9 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
     : { istioCount: 0, sorted: annotations };
   const effectiveNumAnnotations = prioritizeIstioCount ? istioCount : numAnnotations ?? 5;
   const annotationEntries = Object.entries(sorted ?? {});
+  if (!prioritizeIstio) {
+    annotationEntries.sort(([a], [b]) => a.localeCompare(b));
+  }
   const hasAnnotations = annotationEntries.length > 0;
 
   const headerActions = (

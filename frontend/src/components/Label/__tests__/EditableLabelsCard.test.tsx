@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { EditableLabelsCard } from '../EditableLabelsCard';
+import { EditableLabelsCard, parseLabel } from '../EditableLabelsCard';
 
 jest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key
@@ -47,6 +47,18 @@ describe('EditableLabelsCard', () => {
     expect(screen.getByText('Add label')).toBeInTheDocument();
   });
 
+  it('renders a key-only label (no value)', () => {
+    render(<EditableLabelsCard {...defaultProps} labels={{ 'my-flag': '' }} />);
+    expect(screen.getByText('my-flag')).toBeInTheDocument();
+  });
+
+  it('sorts labels alphabetically by key', () => {
+    const labels = { zebra: 'z', alpha: 'a', mango: 'm' };
+    const { container } = render(<EditableLabelsCard {...defaultProps} labels={labels} />);
+    const labelTexts = Array.from(container.querySelectorAll('.pf-v6-c-label__content')).map(el => el.textContent);
+    expect(labelTexts).toEqual(['alpha=a', 'mango=m', 'zebra=z']);
+  });
+
   it('prioritizes istio labels when prioritizeIstio is true', () => {
     const labels = { version: 'v1', 'istio.io/rev': 'default', app: 'ratings' };
     const { container } = render(<EditableLabelsCard {...defaultProps} labels={labels} prioritizeIstio />);
@@ -56,5 +68,39 @@ describe('EditableLabelsCard', () => {
     if (istioIdx !== -1 && nonIstioIdx !== -1) {
       expect(istioIdx).toBeLessThan(nonIstioIdx);
     }
+  });
+});
+
+describe('parseLabel', () => {
+  it('parses a key=value pair', () => {
+    expect(parseLabel('app=bookinfo')).toEqual(['app', 'bookinfo']);
+  });
+
+  it('parses a key-only label (no equals sign)', () => {
+    expect(parseLabel('my-flag')).toEqual(['my-flag', '']);
+  });
+
+  it('trims whitespace from a key-only label', () => {
+    expect(parseLabel('  my-flag  ')).toEqual(['my-flag', '']);
+  });
+
+  it('trims whitespace from key and value', () => {
+    expect(parseLabel('  app = bookinfo  ')).toEqual(['app', 'bookinfo']);
+  });
+
+  it('returns undefined for an empty string', () => {
+    expect(parseLabel('')).toBeUndefined();
+  });
+
+  it('returns undefined for whitespace-only string', () => {
+    expect(parseLabel('   ')).toBeUndefined();
+  });
+
+  it('returns undefined when equals sign is at position 0 (no key)', () => {
+    expect(parseLabel('=value')).toBeUndefined();
+  });
+
+  it('allows an empty value after equals sign', () => {
+    expect(parseLabel('key=')).toEqual(['key', '']);
   });
 });

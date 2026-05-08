@@ -30,7 +30,7 @@ type EditableLabelsCardProps = {
 };
 
 const noLabelsStyle = kialiStyle({
-  color: 'var(--pf-t--global--color--nonstatus--gray--default)',
+  color: 'var(--pf-t--global--text--color--subtle)',
   fontStyle: 'italic'
 });
 
@@ -59,9 +59,13 @@ const formatLabel = (key: string, value: string, placeholder: string): string =>
   return value.length > 0 ? `${key}=${value}` : key;
 };
 
-const parseLabel = (text: string): [string, string] | undefined => {
+export const parseLabel = (text: string): [string, string] | undefined => {
   const eqIdx = text.indexOf('=');
-  if (eqIdx < 1) {
+  if (eqIdx === -1) {
+    const key = text.trim();
+    return key.length > 0 ? [key, ''] : undefined;
+  }
+  if (eqIdx === 0) {
     return undefined;
   }
   return [text.substring(0, eqIdx).trim(), text.substring(eqIdx + 1).trim()];
@@ -158,6 +162,9 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   const { sorted, istioCount } = prioritizeIstio ? partitionByIstio(labels ?? {}) : { sorted: labels, istioCount: 0 };
   const effectiveNumLabels = prioritizeIstioCount ? istioCount : numLabels ?? 5;
   const labelEntries = Object.entries(sorted ?? {});
+  if (!prioritizeIstio) {
+    labelEntries.sort(([a], [b]) => a.localeCompare(b));
+  }
   const hasLabels = labelEntries.length > 0;
 
   const headerActions = canEdit ? (
