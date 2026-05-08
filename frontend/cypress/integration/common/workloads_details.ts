@@ -159,6 +159,13 @@ Then('the user sees the metrics tab', () => {
   cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
 });
 
+Then('the user sees the ztunnel services table', () => {
+  openTab('Ztunnel');
+  cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
+  cy.get('table[aria-label="Ztunnel services config"]').should('be.visible');
+  cy.get('table[aria-label="Ztunnel services config"]').find('th[data-label="Service VIP"]').should('be.visible');
+});
+
 Then('the user can see the {string} link', (link: string) => {
   cy.getBySel('view-in-tracing').contains(link);
 });
