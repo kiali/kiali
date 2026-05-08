@@ -24,12 +24,14 @@ const (
 	BoxByCluster            string = "cluster"
 	BoxByNamespace          string = "namespace"
 	defaultIncludeGateways  bool   = false
+	defaultIncludeKiali     bool   = false
 	defaultIncludeWaypoints bool   = false
 )
 
 // CommonOptions are those supplied to Vendors
 type CommonOptions struct {
 	IncludeGateways  bool
+	IncludeKiali     bool
 	IncludeWaypoints bool
 	Params           url.Values // make available the raw query params for vendor-specific handling
 	QueryTime        int64      // unix time in seconds
@@ -80,11 +82,13 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 	// query params
 	params := r.URL.Query()
 	var includeGateways bool
+	var includeKiali bool
 	var includeWaypoints bool
 	var queryTime int64
 	appenders := RequestedAppenders{All: true}
 	configVendor := params.Get("configVendor")
 	includeGatewaysString := params.Get("includeGateways")
+	includeKialiString := params.Get("includeKiali")
 	includeWaypointsString := params.Get("includeWaypoints")
 	queryTimeString := params.Get("queryTime")
 
@@ -107,6 +111,15 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 		includeGateways, meshGatewaysErr = strconv.ParseBool(includeGatewaysString)
 		if meshGatewaysErr != nil {
 			BadRequest(fmt.Sprintf("Invalid meshGateways [%s]", includeGatewaysString))
+		}
+	}
+	if includeKialiString == "" {
+		includeKiali = defaultIncludeKiali
+	} else {
+		var meshKialiErr error
+		includeKiali, meshKialiErr = strconv.ParseBool(includeKialiString)
+		if meshKialiErr != nil {
+			BadRequest(fmt.Sprintf("Invalid meshKiali [%s]", includeKialiString))
 		}
 	}
 	if includeWaypointsString == "" {
@@ -141,6 +154,7 @@ func NewOptions(r *http.Request, namespacesService *business.NamespaceService) O
 		ConfigOptions: ConfigOptions{
 			CommonOptions: CommonOptions{
 				IncludeGateways:  includeGateways,
+				IncludeKiali:     includeKiali,
 				IncludeWaypoints: includeWaypoints,
 				Params:           params,
 				QueryTime:        queryTime,

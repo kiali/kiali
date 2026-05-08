@@ -178,6 +178,7 @@ export interface MeshElements {
 export interface MeshQuery {
   appenders?: AppenderString;
   includeGateways?: boolean;
+  includeKiali?: boolean;
   includeWaypoints?: boolean;
 }
 

@@ -47,6 +47,7 @@ type EmitEvents = {
 export interface MeshFetchParams {
   includeLabels?: boolean; // // TODO: Actually deal with this option if we want to do find/hide on labels
   showGateways?: boolean;
+  showKiali?: boolean;
   showWaypoints?: boolean;
 }
 
@@ -105,6 +106,7 @@ export class MeshDataSource {
 
     const restParams: MeshQuery = {
       includeGateways: fetchParams.showGateways,
+      includeKiali: fetchParams.showKiali,
       includeWaypoints: fetchParams.showWaypoints
     };
 
