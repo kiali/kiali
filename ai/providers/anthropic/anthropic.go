@@ -73,6 +73,15 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 			return &types.AIResponse{Error: "anthropic returned no content"}, http.StatusInternalServerError
 		}
 
+		if resp.StopReason == anthropic.StopReasonPauseTurn {
+			if iter == maxToolIterations-1 {
+				log.Debugf("[Chat AI] Anthropic provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
+				return &types.AIResponse{Error: fmt.Sprintf("anthropic reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+			}
+			modelConversation.Messages = append(modelConversation.Messages, resp.ToParam())
+			continue
+		}
+
 		if !anthropicHasToolUse(resp.Content) {
 			response.Answer = providers.ParseMarkdownResponse(anthropicTextContent(resp.Content))
 			break
