@@ -18,11 +18,11 @@ func TestGetPodTrimmed(t *testing.T) {
 	ts := metav1.NewTime(time.Date(2026, 4, 21, 16, 55, 25, 0, time.UTC))
 	obj := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "foo",
-			Namespace:         "test",
-			Labels:            map[string]string{"a": "b"},
 			Annotations:       map[string]string{"c": "d"},
 			CreationTimestamp: ts,
+			Labels:            map[string]string{"a": "b"},
+			Name:              "foo",
+			Namespace:         "test",
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name: "o",
@@ -61,11 +61,11 @@ func TestGetPodTrimmed(t *testing.T) {
 	}
 	want := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "foo",
-			Namespace:         "test",
-			Labels:            map[string]string{"a": "b"},
 			Annotations:       map[string]string{"c": "d"},
 			CreationTimestamp: ts,
+			Labels:            map[string]string{"a": "b"},
+			Name:              "foo",
+			Namespace:         "test",
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name: "o",
@@ -116,17 +116,17 @@ func TestGetServiceTrimmed(t *testing.T) {
 	ts := metav1.NewTime(time.Date(2026, 4, 21, 16, 55, 25, 0, time.UTC))
 	obj := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
+			Annotations:       map[string]string{"c": "d"},
+			CreationTimestamp: ts,
+			Labels:            map[string]string{"a": "b"},
 			Name:              "foo",
 			Namespace:         "test",
-			Labels:            map[string]string{"a": "b"},
-			Annotations:       map[string]string{"c": "d"},
-			ResourceVersion:   "v1",
-			CreationTimestamp: ts,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name: "o",
 				},
 			},
+			ResourceVersion: "v1",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"a": "b"},
@@ -143,17 +143,17 @@ func TestGetServiceTrimmed(t *testing.T) {
 	}
 	want := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
+			Annotations:       map[string]string{"c": "d"},
+			CreationTimestamp: ts,
+			Labels:            map[string]string{"a": "b"},
 			Name:              "foo",
 			Namespace:         "test",
-			Labels:            map[string]string{"a": "b"},
-			Annotations:       map[string]string{"c": "d"},
-			ResourceVersion:   "v1",
-			CreationTimestamp: ts,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					Name: "o",
 				},
 			},
+			ResourceVersion: "v1",
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"a": "b"},
