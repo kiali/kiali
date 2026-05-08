@@ -194,8 +194,11 @@ if [ "${WAYPOINT}" == "true" ]; then
 fi
 
 if [ "${AMBIENT}" != "true" ]; then
-  # If istio CRDs exist on both clusters then it's multi-primary and we need to create traffic shifting rules on both clusters.
-  if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get crds virtualservices.networking.istio.io --ignore-not-found 2>&1)" ]; then
+  # Only create traffic shifting rules on cluster2 if it has its own istiod (multi-primary).
+  # In primary-remote, cluster2 has no local istiod so the validation webhook can't reach
+  # istiod and VirtualService creation would fail. We cannot check for presence of CRDs
+  # because the Sail operator installs CRDs on the remote cluster.
+  if [ -n "$(${CLIENT_EXE} --context "${CLUSTER2_CONTEXT}" get deploy -l app=istiod -n "${ISTIO_NAMESPACE}" --ignore-not-found -o name 2>/dev/null)" ]; then
     create_traffic_shifting_rules "${CLUSTER2_CONTEXT}"
   fi
 else
