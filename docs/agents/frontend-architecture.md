@@ -3,10 +3,10 @@ scribe:
   title: "Frontend Architecture"
   description: "React/TypeScript frontend — component structure, routing, Redux state, PatternFly, i18n, Cypress tests"
   watch_paths: [frontend/src/, frontend/cypress/]
-  scan: "HEAD"
-  freshness: 60
+  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
+  freshness: 89
   human_input: 0
-  completeness: 82
+  completeness: 91
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "entry-points", heading: "Entry Points and Bootstrap"}
@@ -92,6 +92,7 @@ A `RouteObject[]` array consumed by `createBrowserRouter`. The mapping of paths 
 | `/namespaces/:namespace/services/:service` | `ServiceDetailsRoute` |
 | `/namespaces/:namespace/workloads/:workload` | `WorkloadDetailsRoute` |
 | `/namespaces/:namespace/applications/:app` | `AppDetailsRoute` |
+| `/namespaces/:namespace` | `NamespaceDetailsRoute` |
 | `/namespaces/:namespace/istio/...` | `IstioConfigDetailsRoute` |
 | `/istio/new/:group/:version/:kind` | `IstioConfigNewRoute` |
 | `/istio` | `IstioConfigListPage` |
@@ -113,6 +114,7 @@ Each subdirectory of `frontend/src/pages/` corresponds to a top-level route:
 | `Graph/` | Traffic graph canvas built on `@patternfly/react-topology` |
 | `Mesh/` | Mesh topology visualisation |
 | `Namespaces/` | Namespace list |
+| `NamespaceDetails/` | Single-namespace detail — overview, resources, labels, annotations, minigraph |
 | `AppList/` | Application list across namespaces |
 | `AppDetails/` | Single-app detail (workloads, metrics, traces) |
 | `ServiceList/` | Kubernetes service list |
@@ -123,6 +125,63 @@ Each subdirectory of `frontend/src/pages/` corresponds to a top-level route:
 | `IstioConfigDetails/` | Single Istio config object viewer/editor |
 | `IstioConfigNew/` | Wizard for creating new Istio config |
 | `Login/` | Login page |
+
+### NamespaceDetails Page
+
+**Route:** `/namespaces/:namespace` → `NamespaceDetailsRoute` (thin wrapper in [frontend/src/routes/NamespaceDetailsRoute.tsx](frontend/src/routes/NamespaceDetailsRoute.tsx)) → `NamespaceDetailsPage` → `NamespaceDetailsOverview`.
+
+`NamespaceDetailsRoute` uses `useParams` to extract `:namespace` and passes it as a prop to the page component. This follows the same pattern as `WorkloadDetailsRoute` and `ServiceDetailsRoute`.
+
+**Component tree:**
+
+```
+NamespaceDetailsRoute           (route param extraction)
+  NamespaceDetailsPage          (class, Redux-connected, connectRefresh HOC)
+    RenderHeader                (title row with PFBadge + namespace name, actions menu, TimeControl)
+    ParameterizedTabs           (single "Overview" tab at index 0)
+      NamespaceDetailsOverview  (Grid layout: 4 left + 8 right columns)
+        Stack (left column)
+          Card[data-test="namespace-details-card"]     (Status/Type/Mode/Revision/mTLS/Cluster)
+          Card[data-test="namespace-resources-card"]   (Apps/Services/Workloads/Istio config with health breakdowns)
+          EditableLabelsCard[data-test="namespace-labels-card"]
+          EditableAnnotationsCard[data-test="namespace-annotations-card"]
+        MiniGraphCard (right column, spans 8 of 12)   (traffic minigraph for the namespace)
+    NamespaceTrafficPolicies    (modal for injection/mTLS traffic policy operations)
+```
+
+**Data loading (`NamespaceDetailsPage.load()`):**
+
+1. `API.getNamespaceInfo(namespace, cluster)` — fetches base `Namespace` object.
+2. `enrichNamespaceInfo()` — runs four API calls in parallel via `Promise.all`:
+   - `fetchClusterNamespacesHealth` → populates `statusApp`, `statusService`, `statusWorkload`, `worstStatus`
+   - `API.getClustersTls` → populates `nsInfo.tlsStatus` (with mesh-wide mTLS inheritance logic in `resolveNamespaceTlsStatusForDisplay`)
+   - `API.getConfigValidations` → populates `nsInfo.validations`
+   - `API.getIstioConfig` → populates `nsInfo.istioConfig` (filtered to the target namespace via `buildIstioConfigForNamespace`)
+3. Uses `PromisesRegistry` (cancellable promises) to avoid setting state after unmount.
+
+**Static Grafana/Perses info** is fetched once via class-level static promise caches (`NamespaceDetailsPageComponent.grafanaInfoPromise`, `persesInfoPromise`) to avoid re-fetching on route reuse; these links are filtered to `ISTIO_DASHBOARDS` entries and passed to `buildNamespaceRowActions`.
+
+**Control plane revisions** are fetched via `API.getControlPlanes()` on mount and stored in state; passed to `NamespaceTrafficPolicies` filtered to planes that manage the current namespace.
+
+**Label/annotation editing** (when not in viewOnlyMode):
+- `EditableLabelsCard` and `EditableAnnotationsCard` allow in-place editing.
+- On save, `handleSaveMetadata` computes a JSON merge-patch (setting removed keys to `null`) and calls `API.updateNamespace(namespace, jsonPatch, cluster)`.
+- Keys containing `"istio"` are sorted first in both cards via `partitionByIstio()` (renders `numPriority` highlighted entries at the top).
+
+**Actions menu** (`buildNamespaceRowActions` in [frontend/src/pages/NamespaceDetails/namespaceDetailActions.ts](frontend/src/pages/NamespaceDetails/namespaceDetailActions.ts)): builds conditional entries for sidecar injection enable/disable, Grafana dashboards, Perses dashboards — all gated on `serverConfig` flags and `viewOnlyMode`.
+
+**Cypress coverage** (`frontend/cypress/integration/featureFiles/namespace_details.feature`, tagged `@namespace-details @ossmc`):
+
+| Tag | Scenario |
+|---|---|
+| `@core-2 @offline` | Overview card exists (`[data-test="namespace-detail-overview-bookinfo"]`) |
+| `@core-2 @offline` | Details card has Status, Type, Mode entries |
+| `@core-2 @offline` | Resources card has links for Applications, Services, Workloads, Istio config |
+| `@core-2 @offline` | Labels card exists |
+| `@core-2 @offline` | Annotations card exists |
+| `@core-2` | Minigraph is visible |
+
+Step definitions are in [frontend/cypress/integration/common/namespace_details.ts](frontend/cypress/integration/common/namespace_details.ts). The `Given` step navigates to `/console/namespaces/${ns}?refresh=0`; `Then` steps query by `data-test` attributes matching those emitted by `NamespaceDetailsOverview`.
 
 ## Components
 
@@ -300,3 +359,32 @@ Shared step implementation files (one per feature area):
 ### CI test scripts
 
 `npm run cypress:run` runs three segments in sequence: `@crd-validation`, `@core-1 or @core-2`, and `@perses`. The full set of CI scripts also covers `@ambient`, `@waypoint`, `@waypoint-tracing`, `@ambient-multi-primary`, `@waypoint-multicluster`, `@ai-chatbot`, `@multi-cluster`, `@multi-primary`, `@external-kiali`, and more. JUnit XML reports are generated with `cypress-multi-reporters` via the `:junit` variants of each script.
+
+### Gherkin Lint
+
+Feature files are validated at commit time by `gherkin-lint` (v4.2.4, separate from Cypress itself).
+
+**Config:** [frontend/.gherkin-lintrc](frontend/.gherkin-lintrc) — a flat JSON object of rule → `"on"/"off"`.
+
+Rules that are **ON** (enforced):
+
+| Rule | What it catches |
+|---|---|
+| `no-files-without-scenarios` | `.feature` file with no `Scenario` or `Scenario Outline` |
+| `no-unnamed-features` | `Feature:` keyword with no name |
+| `no-unnamed-scenarios` | `Scenario:` / `Scenario Outline:` with no name |
+| `no-partially-commented-tag-lines` | Lines mixing `@tag` and `# comment` — Gherkin parser silently drops the tag |
+| `no-empty-file` | Zero-byte feature files |
+| `no-scenario-outlines-without-examples` | `Scenario Outline` block with no `Examples:` table |
+| `no-empty-background` | `Background:` block with no steps |
+
+All **formatting** rules are OFF (`indentation`, `no-trailing-spaces`, `no-multiple-empty-lines`, `new-line-at-eof`) — Prettier handles whitespace uniformly via the pre-commit hook, and mixing two formatters for the same concern caused conflicts.
+
+`allowed-tags`, `no-restricted-tags`, `no-dupe-scenario-names`, `no-dupe-feature-names`, `use-and`, `no-homogenous-tags`, `no-superfluous-tags` are all OFF — tag governance is enforced by convention and CI tag-filter scripts rather than the linter.
+
+**When it runs:**
+
+- `npm run lint:gherkin` — runs `gherkin-lint cypress/integration/featureFiles` (54 `.feature` files).
+- `npm run pre-commit` — runs `prettier-quick --staged`, `lint:precommit` (ESLint on staged `.tsx?`), **`lint:gherkin`**, and `format:precommit` in that order. All four must pass or the commit is rejected.
+
+**Separation of concerns** — `gherkin-lint` validates Gherkin syntax/structure at commit time. `@badeball/cypress-cucumber-preprocessor` (used in `cypress.config.ts`) parses the same `.feature` files at test runtime and binds steps to TypeScript step-definition functions via `Given`/`When`/`Then` from the preprocessor. They operate independently: `gherkin-lint` never executes tests; the preprocessor never enforces structural rules.

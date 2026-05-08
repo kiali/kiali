@@ -3,8 +3,8 @@ scribe:
   title: "Kubernetes Client Layer"
   description: "K8s/Istio API access, multi-cluster support, client factory, offline mode, store, and config"
   watch_paths: [kubernetes/, store/, config/]
-  scan: "HEAD"
-  freshness: 60
+  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
+  freshness: 96
   human_input: 0
   completeness: 85
   inferred_sections:

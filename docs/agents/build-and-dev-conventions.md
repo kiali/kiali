@@ -3,8 +3,8 @@ scribe:
   title: "Build System and Dev Conventions"
   description: "How the Kiali build system is structured — Makefile decomposition, Go and frontend build mechanics, container image variants, multi-cluster push paths, operator symlink, test wiring, and CI."
   watch_paths: [Makefile, hack/, operator/, make/, STYLE_GUIDE.adoc, CONTRIBUTING.md]
-  scan: "HEAD"
-  freshness: 60
+  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
+  freshness: 99
   human_input: 0
   completeness: 78
   inferred_sections:
@@ -19,7 +19,8 @@ scribe:
     - {id: "hack-scripts", heading: "hack/ Script Ecosystem"}
     - {id: "ci", heading: "CI/CD Pipeline"}
     - {id: "code-conventions", heading: "Code Conventions"}
-  stale_flags: []
+  stale_flags:
+    - {section: "Test Infrastructure", reason: "hack/run-integration-tests.sh: ensureCypressInstalled renamed to ensureCypressReady; now also runs yarn lint:gherkin (Gherkin feature file validation) before each Cypress test suite. Doc does not mention this Gherkin validation step."}
 ---
 
 # Build System and Dev Conventions

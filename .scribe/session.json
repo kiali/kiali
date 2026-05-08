@@ -1,50 +1,52 @@
 {
   "version": "1.0",
   "branch": "claude-scribe-docs",
-  "last_active_sha": "b60f2eac0b80fbd0eb7adb5eddeeae4d5e4da8eb",
-  "last_active_time": "2026-05-07T00:00:00Z",
+  "last_active_sha": "8b3121d092244fb3aba0087f449ff717b6fd709b",
+  "last_active_time": "2026-05-08T00:00:00Z",
   "current_phase": "maintain",
   "total_files_read": 179,
   "topics": {
     "backend-architecture": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 22,
       "completeness": 88
     },
     "business-logic": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 26,
       "completeness": 80
     },
     "kubernetes-client": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 25,
       "completeness": 85
     },
     "graph-engine": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 24,
       "completeness": 83
     },
     "observability-and-ai": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 32,
       "completeness": 87
     },
     "auth-and-security": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 18,
       "completeness": 82
     },
     "frontend-architecture": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 20,
-      "completeness": 82
+      "completeness": 82,
+      "stale_flags": 1
     },
     "build-and-dev-conventions": {
-      "phase_status": "drafted",
+      "phase_status": "current",
       "files_read": 12,
-      "completeness": 78
+      "completeness": 78,
+      "stale_flags": 1
     }
   }
 }
