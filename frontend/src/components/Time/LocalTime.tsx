@@ -11,7 +11,7 @@ export class LocalTime extends React.Component<TimeProps> {
 
     if (this.props.time) {
       const date = new Date(this.props.time);
-      renderedTime = date.getFullYear() <= 1 ? 'Unknown' : toString(date.valueOf());
+      renderedTime = Number.isNaN(date.getTime()) || date.getFullYear() <= 1 ? 'Unknown' : toString(date.valueOf());
     } else {
       renderedTime = '-';
     }
