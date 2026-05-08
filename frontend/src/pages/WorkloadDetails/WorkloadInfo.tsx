@@ -393,37 +393,77 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               )}
+              {(() => {
+                const detailItems: React.ReactNode[] = [];
+
+                const wkValidations =
+                  workload.validations?.['workload']?.[validationKey(workload.name, workload.namespace)];
+                if (wkValidations && wkValidations.checks.length > 0 && !isIstioNamespace(this.props.namespace)) {
+                  detailItems.push(
+                    <li key="validation">
+                      <WorkloadConfigValidation
+                        validations={wkValidations}
+                        namespace={this.props.namespace}
+                        iconSize={'md'}
+                        detailed={true}
+                      />
+                    </li>
+                  );
+                }
+
+                if (hasMissingSidecar(workload)) {
+                  detailItems.push(
+                    <li key="missing-sidecar">
+                      <MissingSidecar
+                        dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
+                      />
+                    </li>
+                  );
+                }
+
+                if (
+                  (!workload.appLabel || !workload.versionLabel) &&
+                  !workload.isWaypoint &&
+                  !workload.spireInfo?.isSpireServer
+                ) {
+                  detailItems.push(
+                    <li key="missing-label">
+                      <MissingLabel
+                        missingApp={!workload.appLabel}
+                        missingVersion={!workload.versionLabel}
+                        tooltip={false}
+                      />
+                    </li>
+                  );
+                }
+
+                if (!isGVKSupported(workload.gvk)) {
+                  detailItems.push(
+                    <li key="unsupported-type">
+                      <Alert
+                        variant="info"
+                        isInline={true}
+                        title={t('Kiali can only supply limited information for this workload type')}
+                        style={{ marginTop: '0.25rem' }}
+                      />
+                    </li>
+                  );
+                }
+
+                if (detailItems.length === 0) {
+                  return null;
+                }
+
+                return (
+                  <DescriptionListGroup data-test="details-details">
+                    <DescriptionListTerm>{t('Details')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>{detailItems}</ul>
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                );
+              })()}
             </DescriptionList>
-
-            {hasMissingSidecar(workload) && (
-              <MissingSidecar
-                dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
-                tooltip={true}
-                text=""
-              />
-            )}
-
-            {(!workload.appLabel || !workload.versionLabel) &&
-              !workload.isWaypoint &&
-              !workload.spireInfo?.isSpireServer && (
-                <MissingLabel missingApp={!workload.appLabel} missingVersion={!workload.versionLabel} tooltip={true} />
-              )}
-
-            {!isGVKSupported(workload.gvk) && (
-              <Alert
-                variant="info"
-                isInline={true}
-                title={t('Kiali can only supply limited information for this workload type')}
-                style={{ marginTop: '0.5rem' }}
-              />
-            )}
-
-            <WorkloadConfigValidation
-              validations={workload.validations?.['workload']?.[validationKey(workload.name, workload.namespace)]}
-              namespace={this.props.namespace}
-              iconSize={'md'}
-              detailed={true}
-            />
           </CardBody>
         </Card>
       </StackItem>

@@ -190,6 +190,7 @@
   "Denies all requests to workloads in given namespace(s)": "Deniega todas las solicitudes a cargas de trabajo en los espacios de nombres dados",
   "Destination Hosts": "Destinos de host",
   "Destination workload": "Carga de trabajo de destino",
+  "Details": "Details",
   "Details in side panel on nodes": "Detalles en el panel lateral de nodos",
   "Determine how traffic is distributed across different workloads.": "Determina cómo se distribuye el tráfico entre las distintas cargas de trabajo.",
   "Direction": "Dirección",
