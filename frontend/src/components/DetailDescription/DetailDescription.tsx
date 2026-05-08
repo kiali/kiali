@@ -10,6 +10,7 @@ import { isMultiCluster } from '../../config';
 import { WorkloadInfo } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { infoStyle } from 'styles/IconStyle';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   apps?: string[];
@@ -119,7 +120,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
         </div>
       );
     }
-    return <span>No service account found</span>;
+    return <span>{t('No service account found')}</span>;
   };
 
   const renderWorkloadItem = (workload: AppWorkload): React.ReactNode => {
@@ -139,7 +140,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
 
         <Popover
           position={PopoverPosition.right}
-          headerContent="Service Accounts"
+          headerContent={t('Service Accounts')}
           bodyContent={renderServiceAccounts(workload)}
         >
           <span style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>

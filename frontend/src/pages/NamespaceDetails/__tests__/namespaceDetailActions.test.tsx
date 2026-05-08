@@ -1,9 +1,15 @@
 import { buildNamespaceRowActions, NamespaceRowActionsParams } from '../namespaceDetailActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { serverConfig } from 'config';
+import { ControlPlane } from 'types/Mesh';
 
 jest.mock('utils/I18nUtils', () => ({
-  t: (key: string) => key,
+  t: (key: string, opts?: Record<string, unknown>) => {
+    if (opts) {
+      return Object.entries(opts).reduce((s, [k, v]) => s.replace(`{{${k}}}`, String(v)), key);
+    }
+    return key;
+  },
   tMap: (m: Record<string, string>) => m,
   useKialiTranslation: () => ({
     t: (key: string) => key
@@ -144,6 +150,103 @@ describe('buildNamespaceRowActions', () => {
       mutatingActions.forEach(a => {
         expect(a.isDisabled).toBeFalsy();
       });
+    });
+  });
+
+  describe('ambient namespace actions', () => {
+    const origAmbient = serverConfig.ambientEnabled;
+
+    afterEach(() => {
+      serverConfig.ambientEnabled = origAmbient;
+    });
+
+    it('includes "Add to Ambient" for non-ambient namespace when ambient is enabled', () => {
+      serverConfig.ambientEnabled = true;
+      const nsInfo: NamespaceInfo = { ...baseNsInfo, isAmbient: false, labels: {} };
+      const titles = actionTitles(baseParams(nsInfo));
+      expect(titles).toContain('Add to Ambient');
+    });
+
+    it('includes disable/remove ambient for ambient namespace', () => {
+      serverConfig.ambientEnabled = true;
+      const nsInfo: NamespaceInfo = {
+        ...baseNsInfo,
+        isAmbient: true,
+        labels: {
+          [serverConfig.istioLabels.ambientNamespaceLabel]: serverConfig.istioLabels.ambientNamespaceLabelValue
+        }
+      };
+      const titles = actionTitles(baseParams(nsInfo));
+      expect(titles).toContain('Disable Ambient');
+      expect(titles).toContain('Remove Ambient');
+      expect(titles).not.toContain('Add to Ambient');
+    });
+
+    it('omits ambient actions when ambientEnabled is false', () => {
+      serverConfig.ambientEnabled = false;
+      const titles = actionTitles(baseParams(baseNsInfo));
+      expect(titles).not.toContain('Add to Ambient');
+      expect(titles).not.toContain('Disable Ambient');
+    });
+  });
+
+  describe('canary upgrade / revision switching', () => {
+    const origUpgrade = serverConfig.kialiFeatureFlags.istioUpgradeAction;
+    const origInjection = serverConfig.kialiFeatureFlags.istioInjectionAction;
+
+    afterEach(() => {
+      serverConfig.kialiFeatureFlags.istioUpgradeAction = origUpgrade;
+      serverConfig.kialiFeatureFlags.istioInjectionAction = origInjection;
+    });
+
+    it('shows revision switch actions when upgrade action is enabled and control planes differ', () => {
+      serverConfig.kialiFeatureFlags.istioUpgradeAction = true;
+      serverConfig.kialiFeatureFlags.istioInjectionAction = false;
+
+      const nsInfo: NamespaceInfo = { ...baseNsInfo, revision: '1-20' };
+      const controlPlanes: ControlPlane[] = [
+        {
+          cluster: { name: 'test-cluster' },
+          config: {},
+          istiodName: 'istiod',
+          revision: '1-21',
+          managedClusters: [{ name: 'test-cluster' }],
+          thresholds: {}
+        } as ControlPlane
+      ];
+
+      const titles = actionTitles(baseParams(nsInfo, { controlPlanes }));
+      expect(titles).toContain('Switch to 1-21 revision');
+    });
+
+    it('does not show revision switch when namespace revision matches control plane', () => {
+      serverConfig.kialiFeatureFlags.istioUpgradeAction = true;
+      serverConfig.kialiFeatureFlags.istioInjectionAction = false;
+
+      const nsInfo: NamespaceInfo = { ...baseNsInfo, revision: '1-20' };
+      const controlPlanes: ControlPlane[] = [
+        {
+          cluster: { name: 'test-cluster' },
+          config: {},
+          istiodName: 'istiod',
+          revision: '1-20',
+          managedClusters: [{ name: 'test-cluster' }],
+          thresholds: {}
+        } as ControlPlane
+      ];
+
+      const titles = actionTitles(baseParams(nsInfo, { controlPlanes }));
+      expect(titles).not.toContain('Switch to 1-20 revision');
+    });
+
+    it('omits revision actions when controlPlanes is undefined', () => {
+      serverConfig.kialiFeatureFlags.istioUpgradeAction = true;
+      serverConfig.kialiFeatureFlags.istioInjectionAction = false;
+
+      const nsInfo: NamespaceInfo = { ...baseNsInfo, revision: '1-20' };
+      const titles = actionTitles(baseParams(nsInfo, { controlPlanes: undefined }));
+      const revisionTitles = titles.filter(t => t.includes('revision'));
+      expect(revisionTitles).toHaveLength(0);
     });
   });
 });

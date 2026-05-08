@@ -89,7 +89,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
                 <DescriptionListDescription>
                   <ModeBadge
                     isAmbient={app.isAmbient}
-                    istioSidecar={!app.isAmbient}
+                    istioSidecar={app.workloads?.some(w => w.istioSidecar) ?? false}
                     popoverMessage={
                       app.isAmbient
                         ? t(

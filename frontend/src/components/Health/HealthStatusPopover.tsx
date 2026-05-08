@@ -4,6 +4,7 @@ import { createIcon } from '../../config/KialiIcon';
 import * as H from '../../types/Health';
 import { NA, HEALTHY } from '../../types/Health';
 import { HealthDetails } from './HealthDetails';
+import { t } from 'utils/I18nUtils';
 
 type HealthStatusPopoverProps = {
   health?: H.Health;
@@ -30,7 +31,7 @@ export const HealthStatusPopover: React.FC<HealthStatusPopoverProps> = ({ health
   if (isUnhealthy) {
     return (
       <Popover
-        aria-label="Health details"
+        aria-label={t('Health details')}
         position={PopoverPosition.right}
         triggerAction="click"
         showClose={true}

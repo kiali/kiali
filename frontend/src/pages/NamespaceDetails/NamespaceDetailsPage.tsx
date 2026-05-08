@@ -340,6 +340,10 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
           await this.enrichNamespaceInfo(base, effectiveCluster);
 
+          if (!this._isMounted) {
+            return;
+          }
+
           this.setState(
             {
               nsInfo: base,
