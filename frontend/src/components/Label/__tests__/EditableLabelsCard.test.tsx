@@ -63,11 +63,7 @@ describe('EditableLabelsCard', () => {
     const labels = { version: 'v1', 'istio.io/rev': 'default', app: 'ratings' };
     const { container } = render(<EditableLabelsCard {...defaultProps} labels={labels} prioritizeIstio />);
     const labelTexts = Array.from(container.querySelectorAll('.pf-v6-c-label__content')).map(el => el.textContent);
-    const istioIdx = labelTexts.findIndex(t => t?.includes('istio'));
-    const nonIstioIdx = labelTexts.findIndex(t => t?.includes('app'));
-    if (istioIdx !== -1 && nonIstioIdx !== -1) {
-      expect(istioIdx).toBeLessThan(nonIstioIdx);
-    }
+    expect(labelTexts).toEqual(['istio.io/rev=default', 'app=ratings', 'version=v1']);
   });
 });
 

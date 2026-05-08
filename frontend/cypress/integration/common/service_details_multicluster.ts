@@ -1,4 +1,5 @@
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
+import { linkSelector } from './utils';
 
 const openTab = (tab: string): void => {
   cy.get('.pf-v6-c-tabs__list').should('be.visible').contains(tab).click();
@@ -53,8 +54,9 @@ Then(
   'links in the {string} description card should contain a reference to a {string} cluster',
   (type: string, cluster: string) => {
     cy.getBySel(descriptionTypeToResourcesSelector(type)).within(() => {
-      cy.get('a').each($el => {
-        cy.wrap($el).should('have.attr', 'href').and('include', `clusterName=${cluster}`);
+      cy.get(linkSelector()).each($el => {
+        const attr = $el.is('a') ? 'href' : 'data-href';
+        cy.wrap($el).should('have.attr', attr).and('include', `clusterName=${cluster}`);
       });
     });
   }

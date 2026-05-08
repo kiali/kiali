@@ -1,4 +1,5 @@
 import { kialiStyle } from './StyleUtils';
+import { PFSpacer } from './PfSpacer';
 
 // Flex column that fills its parent. Tab content areas and similar
 // containers use this to participate in the page flex chain.
@@ -66,7 +67,7 @@ export const detailTitleRowStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
   flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--md)',
+  gap: PFSpacer.md,
   marginTop: '0.5rem',
   minWidth: 0,
   width: '100%'
@@ -78,7 +79,7 @@ export const detailTitleMainStyle = kialiStyle({
   display: 'flex',
   flex: '1 1 auto',
   flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--sm)',
+  gap: PFSpacer.sm,
   minWidth: 0
 });
 

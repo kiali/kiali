@@ -22,7 +22,7 @@ export const HealthStatusPopover: React.FC<HealthStatusPopoverProps> = ({ health
     </span>
   );
 
-  if (isUnhealthy) {
+  if (health && isUnhealthy) {
     return (
       <Popover
         aria-label={t('Health details')}
@@ -34,7 +34,7 @@ export const HealthStatusPopover: React.FC<HealthStatusPopoverProps> = ({ health
             {createIcon(status)} <strong>{status.name}</strong>
           </span>
         }
-        bodyContent={<HealthDetails health={health!} />}
+        bodyContent={<HealthDetails health={health} />}
       >
         {statusContent}
       </Popover>

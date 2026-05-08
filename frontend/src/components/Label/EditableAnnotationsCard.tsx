@@ -16,6 +16,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { WizardLabels } from 'components/IstioWizards/WizardLabels';
 import { t } from 'utils/I18nUtils';
+import { partitionByIstio } from '../../pages/PageUtils';
 
 type EditableAnnotationsCardProps = {
   annotations: Record<string, string>;
@@ -41,17 +42,6 @@ const headerActionsStyle = kialiStyle({
 const annotationValueStyle = kialiStyle({
   paddingLeft: '1rem'
 });
-
-const partitionByIstio = (entries: Record<string, string>): { istioCount: number; sorted: Record<string, string> } => {
-  const keys = Object.keys(entries);
-  const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
-  const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
-  const sorted: Record<string, string> = {};
-  for (const k of [...istioKeys, ...otherKeys]) {
-    sorted[k] = entries[k];
-  }
-  return { sorted, istioCount: istioKeys.length };
-};
 
 export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = ({
   annotations,
