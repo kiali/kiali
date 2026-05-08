@@ -424,11 +424,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return (
       <>
-        <RenderHeader
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-          actionsToolbarTop="11.1rem"
-        >
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
           {this.state.workload && (
             <div className={detailTitleRowStyle}>
               <div className={detailTitleMainStyle}>
@@ -447,6 +443,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}

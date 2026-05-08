@@ -434,11 +434,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     return (
       <>
-        <RenderHeader
-          actionsToolbar={actionsToolbar}
-          actionsToolbarTop="11.1rem"
-          rightToolbar={<TimeControl customDuration={false} />}
-        >
+        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
           {!this.state.error && ns && (
             <div className={detailTitleRowStyle} data-test="namespace-detail-title-row">
               <div className={detailTitleMainStyle}>
@@ -457,6 +453,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}

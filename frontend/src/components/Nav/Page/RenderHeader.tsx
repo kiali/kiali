@@ -9,7 +9,7 @@ import { PFColors } from 'components/Pf/PfColors';
 const containerStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
   flexShrink: 0,
-  paddingBottom: '1rem'
+  paddingBottom: '0.5rem'
 });
 
 const headerRowStyle = kialiStyle({
@@ -23,43 +23,26 @@ const rightToolbarStyle = kialiStyle({
   marginLeft: 'auto'
 });
 
-const actionsToolbarPositionStyle = kialiStyle({
-  position: 'absolute',
-  right: '3rem',
-  top: '9rem',
-  zIndex: 1
-});
-
 type ReduxProps = {
   kiosk: string;
 };
 
 type RenderHeaderProps = ReduxProps & {
-  actionsToolbar?: React.ReactNode;
-  actionsToolbarTop?: string;
   children?: React.ReactNode;
   rightToolbar?: React.ReactNode;
 };
 
 const RenderHeaderComponent: React.FC<RenderHeaderProps> = (props: RenderHeaderProps) => {
   return isKiosk(props.kiosk) ? null : (
-    <>
-      <div className={containerStyle}>
-        <div className={headerRowStyle}>
-          <BreadcrumbView />
+    <div className={containerStyle}>
+      <div className={headerRowStyle}>
+        <BreadcrumbView />
 
-          {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
-        </div>
-
-        {props.children}
+        {props.rightToolbar && <div className={rightToolbarStyle}>{props.rightToolbar}</div>}
       </div>
 
-      {props.actionsToolbar && (
-        <div className={actionsToolbarPositionStyle} style={{ top: props.actionsToolbarTop ?? '9rem' }}>
-          {props.actionsToolbar}
-        </div>
-      )}
-    </>
+      {props.children}
+    </div>
   );
 };
 

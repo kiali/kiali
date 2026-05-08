@@ -337,11 +337,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     return (
       <>
-        <RenderHeader
-          rightToolbar={<TimeControl customDuration={useCustomTime} />}
-          actionsToolbar={actionsToolbar}
-          actionsToolbarTop="11.1rem"
-        >
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
           {this.state.serviceDetails && (
             <div className={detailTitleRowStyle}>
               <div className={detailTitleMainStyle}>
@@ -365,6 +361,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}
