@@ -88,7 +88,7 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
         ? renderDisabledDropdownOption(
             'tooltip_wizard_actions',
             TooltipPosition.top,
-            t('User does not have permission on this Workload'),
+            t('No actions available on this Workload'),
             dropdown
           )
         : !supportedWorkload
