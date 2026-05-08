@@ -15,6 +15,7 @@ export const INITIAL_MESH_STATE: MeshState = {
     hideValue: '',
     showFindHelp: false,
     showGateways: false,
+    showKiali: false,
     showLegend: false,
     showWaypoints: false
   },
@@ -67,6 +68,12 @@ export const MeshDataStateReducer = (state: MeshState = INITIAL_MESH_STATE, acti
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           showGateways: !state.toolbarState.showGateways
+        })
+      });
+    case getType(MeshToolbarActions.toggleKiali):
+      return updateState(state, {
+        toolbarState: updateState(state.toolbarState, {
+          showKiali: !state.toolbarState.showKiali
         })
       });
     case getType(MeshToolbarActions.toggleLegend):

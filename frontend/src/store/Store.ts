@@ -143,6 +143,7 @@ export interface MeshToolbarState {
   hideValue: string;
   showFindHelp: boolean;
   showGateways: boolean;
+  showKiali: boolean;
   showLegend: boolean;
   showWaypoints: boolean;
 }

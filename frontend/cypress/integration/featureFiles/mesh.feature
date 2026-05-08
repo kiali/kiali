@@ -30,7 +30,10 @@ Feature: Kiali Mesh page
   @lpinterop
   # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
   Scenario: See mesh
-    When user sees mesh side panel
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user sees mesh side panel
     Then user sees expected mesh infra
 
   @core-2
@@ -85,6 +88,18 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
     Then user does not see "dataplane namespaces: 0" in mesh body
+
+  @core-2
+  Scenario: User enables kiali
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "kiali"
+    Then user sees "kiali" node side panel
+
+  @core-2
+  Scenario: Kiali is hidden by default
+    Then user does not see a "kiali" mesh node
 
   # TODO: offline - must gather does not collect gateway-api resources which are what the integration tests use to create gateways.
   @bookinfo-app
@@ -196,6 +211,9 @@ Feature: Kiali Mesh page
 
   @external-kiali
   Scenario: External-kiali: see only kiali for mgmt cluster
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
     Then user sees 1 "kiali" nodes on the "mgmt" cluster
     And user sees 0 "dataplane" nodes on the "mgmt" cluster
     And user sees 0 "istiod" nodes on the "mgmt" cluster
@@ -203,6 +221,9 @@ Feature: Kiali Mesh page
 
   @smoke
   Scenario: Local-kiali: see kiali node in local mode
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
     And user sees the "kiali" node connected to the 1 "istiod" nodes
 
   @ambient-multi-primary
