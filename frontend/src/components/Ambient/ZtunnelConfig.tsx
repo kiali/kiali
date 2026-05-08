@@ -16,7 +16,7 @@ import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { classes } from 'typestyle';
-import { tabCardStyle, constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
+import { tabCardStyle, constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
 import { ZtunnelServicesTable } from './ZtunnelServicesTable';
 import { ZtunnelWorkloadsTable } from './ZtunnelWorkloadsTable';
 import { t } from 'utils/I18nUtils';
@@ -60,13 +60,6 @@ const toolbarClass = kialiStyle({
 export interface SortableCompareTh<T> extends SortableTh {
   compare?: (a: T, b: T) => number;
 }
-
-export const yoverflow = kialiStyle({
-  height: 'calc(100vh - 400px)',
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: 0
-});
 
 export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfigProps) => {
   const sortedPods = (): Pod[] => {
@@ -171,8 +164,8 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Services')} eventKey={0} key="services">
       <Card className={classes(flexCardStyle, tabCardStyle)}>
         <CardBody>
-          <div>
-            <div className={toolbarStyle}>
+          <div className={flexFillStyle}>
+            <div className={classes(toolbarStyle, noShrinkStyle)}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
@@ -211,8 +204,8 @@ export const ZtunnelConfig: React.FC<ZtunnelConfigProps> = (props: ZtunnelConfig
     <Tab title={t('Workloads')} eventKey={1} key="workloads">
       <Card className={classes(flexCardStyle, tabCardStyle)}>
         <CardBody>
-          <div>
-            <div className={toolbarStyle}>
+          <div className={flexFillStyle}>
+            <div className={classes(toolbarStyle, noShrinkStyle)}>
               <div key="service-icon" className={iconStyle}>
                 <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
               </div>
