@@ -613,7 +613,11 @@ Then('the user updates the log level to {string}', (level: string) => {
 });
 
 When('user opens the namespace actions menu', () => {
-  cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+  if (Cypress.env('OSSMC')) {
+    cy.get('button#minigraph-toggle', { timeout: 40000 }).should('be.visible').click();
+  } else {
+    cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+  }
 });
 
 Then('the option {string} does not exist in namespace actions', (option: string) => {
