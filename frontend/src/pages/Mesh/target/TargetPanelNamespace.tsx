@@ -34,6 +34,7 @@ import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
+import { t } from 'utils/I18nUtils';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import { addDanger, addError } from '../../../utils/AlertUtils';
@@ -371,7 +372,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
         {!isControlPlane && serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
           <span style={{ marginLeft: '0.5rem' }}>
-            <ModeBadge mode="ambient" popoverMessage={tooltip ? 'Labeled as part of Ambient Mesh' : undefined} />
+            <ModeBadge mode="ambient" popoverMessage={tooltip ? t('Labeled as part of Ambient Mesh') : undefined} />
           </span>
         )}
       </>

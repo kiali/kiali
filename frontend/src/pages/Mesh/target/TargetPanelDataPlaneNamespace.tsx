@@ -271,7 +271,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       <>
         {serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
           <span style={{ marginLeft: '0.5rem' }}>
-            <ModeBadge mode="ambient" popoverMessage={tooltip ? 'Labeled as part of Ambient Mesh' : undefined} />
+            <ModeBadge mode="ambient" popoverMessage={tooltip ? t('Labeled as part of Ambient Mesh') : undefined} />
           </span>
         )}
       </>

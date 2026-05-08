@@ -348,6 +348,7 @@
   "Kiali: {{num}}": "Kiali: {{num}}",
   "Kiali.io Validations": "Validaciones de Kiali.io",
   "kubernetes version: {{version}}": "versión de kubernetes: {{version}}",
+  "Labeled as part of Ambient Mesh": "Labeled as part of Ambient Mesh",
   "Labeled by": "Etiquetado por",
   "Labels": "Etiquetas",
   "Labels must have non-empty keys": "Labels must have non-empty keys",
