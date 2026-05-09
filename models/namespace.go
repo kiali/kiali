@@ -71,7 +71,7 @@ func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace
 }
 
 func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
-	istioLabels := config.Get().IstioLabels
+	// istioLabels := config.Get().IstioLabels
 
 	namespace := Namespace{}
 	namespace.Name = ns.Name
@@ -92,7 +92,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 		}
 	}
 
-	if label, hasLabel := ns.Labels[istioLabels.AmbientNamespaceLabel]; hasLabel && label == istioLabels.AmbientNamespaceLabelValue {
+	if label, hasLabel := ns.Labels[config.IstioAmbientNamespaceLabel]; hasLabel && label == config.IstioAmbientNamespaceLabelValue {
 		namespace.IsAmbient = true
 	}
 	return namespace

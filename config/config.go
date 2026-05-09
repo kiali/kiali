@@ -140,6 +140,13 @@ const (
 	WaypointNone                  = "none"
 	WaypointUseNamespaceLabel     = "istio.io/use-waypoint-namespace"
 	Ztunnel                       = "ztunnel"
+
+	IstioAmbientNamespaceLabel      = "istio.io/dataplane-mode"
+	IstioAmbientNamespaceLabelValue = "ambient"
+	IstioInjectionLabelName         = "istio-injection"
+	IstioServiceCanonicalName       = "service.istio.io/canonical-name"
+	IstioServiceCanonicalRevision   = "service.istio.io/canonical-revision"
+	// IstioAmbientWaypointUseLabel          = WaypointUseLabel
 )
 
 // CA bundle file paths used by CredentialManager.
@@ -509,18 +516,18 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AmbientNamespaceLabel       string `yaml:"ambient_namespace_label,omitempty" json:"ambientNamespaceLabel"`
-	AmbientNamespaceLabelValue  string `yaml:"ambient_namespace_label_value,omitempty" json:"ambientNamespaceLabelValue"`
-	AmbientWaypointGatewayLabel string `yaml:"ambient_waypoint_gateway_label,omitempty" json:"ambientWaypointGatewayLabel"`
-	AmbientWaypointLabel        string `yaml:"ambient_waypoint_label,omitempty" json:"ambientWaypointLabel"`
-	AmbientWaypointLabelValue   string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
-	AmbientWaypointUseLabel     string `yaml:"ambient_waypoint_use_label,omitempty" json:"ambientWaypointUseLabel"`
-	AppLabelName                string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName          string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
-	InjectionLabelRev           string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-	ServiceCanonicalName        string `yaml:"service_canonical_name,omitempty" json:"serviceCanonicalName"`
-	ServiceCanonicalRevision    string `yaml:"service_canonical_revision,omitempty" json:"serviceCanonicalRevision"`
-	VersionLabelName            string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	// AmbientNamespaceLabel       string `yaml:"ambient_namespace_label,omitempty" json:"ambientNamespaceLabel"`
+	// AmbientNamespaceLabelValue  string `yaml:"ambient_namespace_label_value,omitempty" json:"ambientNamespaceLabelValue"`
+	// AmbientWaypointGatewayLabel string `yaml:"ambient_waypoint_gateway_label,omitempty" json:"ambientWaypointGatewayLabel"`
+	// AmbientWaypointLabel        string `yaml:"ambient_waypoint_label,omitempty" json:"ambientWaypointLabel"`
+	// AmbientWaypointLabelValue   string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
+	// AmbientWaypointUseLabel     string `yaml:"ambient_waypoint_use_label,omitempty" json:"ambientWaypointUseLabel"`
+	AppLabelName string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	// InjectionLabelName          string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
+	// InjectionLabelRev           string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
+	// ServiceCanonicalName        string `yaml:"service_canonical_name,omitempty" json:"serviceCanonicalName"`
+	// ServiceCanonicalRevision    string `yaml:"service_canonical_revision,omitempty" json:"serviceCanonicalRevision"`
+	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -1145,16 +1152,16 @@ func NewConfig() (c *Config) {
 			},
 		},
 		IstioLabels: IstioLabels{
-			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
-			AmbientNamespaceLabelValue:  "ambient",
-			AmbientWaypointGatewayLabel: GatewayLabel,
-			AmbientWaypointUseLabel:     WaypointUseLabel,
-			AppLabelName:                "",
-			InjectionLabelName:          "istio-injection",
-			InjectionLabelRev:           IstioRevisionLabel,
-			ServiceCanonicalName:        "service.istio.io/canonical-name",
-			ServiceCanonicalRevision:    "service.istio.io/canonical-revision",
-			VersionLabelName:            "",
+			// AmbientNamespaceLabel:       "istio.io/dataplane-mode",
+			// AmbientNamespaceLabelValue:  "ambient",
+			// AmbientWaypointGatewayLabel: GatewayLabel,
+			// AmbientWaypointUseLabel:     WaypointUseLabel,
+			AppLabelName: "",
+			// InjectionLabelName:          "istio-injection",
+			// InjectionLabelRev:           IstioRevisionLabel,
+			// ServiceCanonicalName:        "service.istio.io/canonical-name",
+			// ServiceCanonicalRevision:    "service.istio.io/canonical-revision",
+			VersionLabelName: "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Authz: FeatureFlagAuthz{
@@ -1519,8 +1526,8 @@ func Set(conf *Config) {
 			appLabelNames = []string{conf.IstioLabels.AppLabelName}
 			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
 		} else {
-			appLabelNames = []string{conf.IstioLabels.ServiceCanonicalName, "app.kubernetes.io/name", "app"}
-			versionLabelNames = []string{conf.IstioLabels.ServiceCanonicalRevision, "app.kubernetes.io/version", "version"}
+			appLabelNames = []string{IstioServiceCanonicalName, "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{IstioServiceCanonicalRevision, "app.kubernetes.io/version", "version"}
 		}
 	}
 }

@@ -1440,7 +1440,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
 
-	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+	waypointLabel := config.WaypointUseLabel
 
 	// Setup mocks
 	kubeObjs := []runtime.Object{

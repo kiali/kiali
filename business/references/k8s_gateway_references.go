@@ -36,7 +36,7 @@ func (g K8sGatewayReferences) getWorkloadReferences(gw *k8s_networking_v1.Gatewa
 
 	// Gateway searches Workloads from own namespace and Gateway Label
 	for _, w := range g.WorkloadsPerNamespace[gw.Namespace] {
-		if gw.Name == w.Labels[g.Conf.IstioLabels.AmbientWaypointGatewayLabel] {
+		if gw.Name == w.Labels[config.GatewayLabel] {
 			result = append(result, models.WorkloadReference{Name: w.Name, Namespace: gw.Namespace})
 		}
 	}

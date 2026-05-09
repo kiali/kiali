@@ -307,7 +307,7 @@ func (in *SvcService) buildKubernetesServices(ctx context.Context, svcs []core_v
 			svcGateways := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, svcVirtualServices)
 			svcK8sGRPCRoutes := kubernetes.FilterK8sGRPCRoutesByService(istioConfigList.K8sGRPCRoutes, istioConfigList.K8sReferenceGrants, item.Namespace, item.Name, identityDomain)
 			svcK8sHTTPRoutes := kubernetes.FilterK8sHTTPRoutesByService(istioConfigList.K8sHTTPRoutes, istioConfigList.K8sReferenceGrants, item.Namespace, item.Name, identityDomain)
-			svcK8sGateways := append(kubernetes.FilterK8sGatewaysByRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes, svcK8sGRPCRoutes), kubernetes.FilterK8sGatewaysByLabel(kubernetes.FilterByNamespaceNames(istioConfigList.K8sGateways, []string{item.Namespace}), item.Labels[in.conf.IstioLabels.AmbientWaypointGatewayLabel])...)
+			svcK8sGateways := append(kubernetes.FilterK8sGatewaysByRoutes(istioConfigList.K8sGateways, svcK8sHTTPRoutes, svcK8sGRPCRoutes), kubernetes.FilterK8sGatewaysByLabel(kubernetes.FilterByNamespaceNames(istioConfigList.K8sGateways, []string{item.Namespace}), item.Labels[config.GatewayLabel])...)
 			svcK8sInferencePools := kubernetes.FilterK8sInferencePoolByService(istioConfigList.K8sInferencePools, item.Namespace, item.Name)
 
 			for _, vs := range svcVirtualServices {

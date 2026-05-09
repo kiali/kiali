@@ -1016,7 +1016,7 @@ func FakeWaypointPod() []core_v1.Pod {
 func FakeWaypointNamespaceEnrolledPods(conf *config.Config, waypoint bool) []core_v1.Pod {
 	appLabel := conf.IstioLabels.AppLabelName
 	versionLabel := conf.IstioLabels.VersionLabelName
-	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+	waypointLabel := config.WaypointUseLabel
 
 	wpLabels := map[string]string{appLabel: "details", versionLabel: "v1"}
 	if waypoint {
@@ -1055,7 +1055,7 @@ func FakeWaypointNamespaceEnrolledPods(conf *config.Config, waypoint bool) []cor
 }
 
 func FakeWaypointNServiceEnrolledPods(conf *config.Config) []core_v1.Service {
-	waypointLabel := conf.IstioLabels.AmbientWaypointUseLabel
+	waypointLabel := config.WaypointUseLabel
 
 	return []core_v1.Service{
 		{

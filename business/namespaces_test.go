@@ -53,9 +53,9 @@ func setupNamespaceServiceWithNs() *kubetest.FakeK8sClient {
 
 // Namespace service setup
 func setupAmbientNamespaceServiceWithNs() kubernetes.UserClientInterface {
-	c := config.NewConfig()
+	// c := config.NewConfig()
 	labels := map[string]string{
-		c.IstioLabels.AmbientNamespaceLabel: c.IstioLabels.AmbientNamespaceLabelValue,
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
@@ -74,9 +74,9 @@ func setupAmbientNamespaceServiceWithNs() kubernetes.UserClientInterface {
 
 // Project service setup
 func setupAmbientProjectWithNs() kubernetes.UserClientInterface {
-	c := config.NewConfig()
+	// c := config.NewConfig()
 	labels := map[string]string{
-		c.IstioLabels.AmbientNamespaceLabel: c.IstioLabels.AmbientNamespaceLabelValue,
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}
 	// config needs to be set by other services since those rely on the global.
 	objects := []runtime.Object{
