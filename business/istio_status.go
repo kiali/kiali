@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
@@ -446,7 +444,11 @@ func (iss *IstioStatusService) getStatusOf(workloads []*models.Workload, cluster
 
 	// Map workloads there by app name
 	for _, workload := range workloads {
-		appLabel := labels.Set(workload.Labels).Get(config.IstioAppLabel)
+		appLabelName, hasAppLabel := iss.conf.GetAppLabelName(workload.Labels)
+		if !hasAppLabel {
+			continue
+		}
+		appLabel := workload.Labels[appLabelName]
 		if appLabel == "" {
 			continue
 		}
