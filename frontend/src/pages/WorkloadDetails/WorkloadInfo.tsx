@@ -488,7 +488,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         <Card data-test="workload-resources-card" isCompact>
           <CardHeader>
             <Title headingLevel="h4" size={TitleSizes.md}>
-              {t('Resources')}
+              {t('Related')}
             </Title>
           </CardHeader>
           <CardBody>

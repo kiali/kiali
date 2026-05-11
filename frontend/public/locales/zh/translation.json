@@ -502,6 +502,7 @@
   "Refresh": "Refresh",
   "Refresh interval": "Refresh interval",
   "Refresh interval. \"Pause\" refreshes on page change or Refresh button click. \"Manual\" refreshes only on Refresh button click.": "Refresh interval. \"Pause\" refreshes on page change or Refresh button click. \"Manual\" refreshes only on Refresh button click.",
+  "Related": "Related",
   "Remove Ambient": "Remove Ambient",
   "Remove Auto Injection": "删除自动注入",
   "Remove Rule": "删除规则",

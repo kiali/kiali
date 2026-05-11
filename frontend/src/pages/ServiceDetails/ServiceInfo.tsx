@@ -346,7 +346,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
         <Card data-test="service-resources-card" isCompact>
           <CardHeader>
             <Title headingLevel="h4" size={TitleSizes.md}>
-              {t('Resources')}
+              {t('Related')}
             </Title>
           </CardHeader>
           <CardBody>

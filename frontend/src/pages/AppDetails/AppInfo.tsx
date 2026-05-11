@@ -122,7 +122,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
         <Card data-test="app-resources-card" isCompact>
           <CardHeader>
             <Title headingLevel="h4" size={TitleSizes.md}>
-              {t('Resources')}
+              {t('Related')}
             </Title>
           </CardHeader>
           <CardBody>

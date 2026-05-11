@@ -520,6 +520,7 @@
   "Refresh": "Actualizar",
   "Refresh interval": "Intervalo de actualización",
   "Refresh interval. \"Pause\" refreshes on page change or Refresh button click. \"Manual\" refreshes only on Refresh button click.": "Intervalo de actualización. \"Pausa\" actualiza al cambiar de página o hacer clic en el botón de actualización. \"Manual\" solo actualiza al hacer clic en el botón de actualización.",
+  "Related": "Related",
   "Remove Ambient": "Remove Ambient",
   "Remove Auto Injection": "Quitar inyección automática",
   "Remove Rule": "Quitar regla",
