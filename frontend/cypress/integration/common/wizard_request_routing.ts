@@ -219,11 +219,11 @@ When('user confirms delete the configuration', () => {
 });
 
 Then('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get(`a[data-test="${type}-${namespace}-${name}"]`);
+  cy.get(`[data-test="${type}-${namespace}-${name}"]`);
 });
 
 When('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get(`a[data-test="${type}-${namespace}-${name}"]`).click();
+  cy.get(`[data-test="${type}-${namespace}-${name}"]`).click();
 
   let expectedURl = '';
 
