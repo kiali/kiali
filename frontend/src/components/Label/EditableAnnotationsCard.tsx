@@ -43,6 +43,11 @@ const annotationValueStyle = kialiStyle({
   paddingLeft: '1rem'
 });
 
+const annotationGroupStyle = kialiStyle({
+  gap: '0 !important',
+  marginBottom: 'var(--pf-t--global--spacer--sm)'
+});
+
 export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = ({
   annotations,
   canEdit,
@@ -97,7 +102,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
               <DescriptionList isCompact style={{ gap: 0 }}>
                 {(expanded ? annotationEntries : annotationEntries.slice(0, effectiveNumAnnotations)).map(
                   ([key, value]) => (
-                    <DescriptionListGroup key={key}>
+                    <DescriptionListGroup key={key} className={annotationGroupStyle}>
                       <DescriptionListTerm>{key}</DescriptionListTerm>
                       {value && (
                         <DescriptionListDescription className={annotationValueStyle}>
