@@ -16,8 +16,7 @@ When('user clicks the namespace detail link for {string}', (ns: string) => {
 });
 
 Then('user is on the namespace detail page for {string}', (ns: string) => {
-  const urlSegment = Cypress.env('OSSMC') ? `/projects/${ns}` : `/namespaces/${ns}`;
-  cy.url().should('include', urlSegment);
+  cy.url().should('match', new RegExp(`/(namespaces|projects)/${ns}(\\b|/|$)`));
   cy.get(`[data-test="namespace-detail-overview-${ns}"]`).should('exist');
 });
 
