@@ -15,6 +15,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -164,6 +165,101 @@ func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
 	for key := range validations {
 		assert.NotEqual(orphan, key.Namespace, "unmanaged namespace %q should have no validations", orphan)
 	}
+}
+
+func TestAmbientNamespaceWaypointDoesNotTriggerWaypointNotFound(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	namespaceLabels := map[string]string{
+		conf.IstioLabels.AmbientNamespaceLabel:   conf.IstioLabels.AmbientNamespaceLabelValue,
+		conf.IstioLabels.AmbientWaypointUseLabel: "waypoint",
+	}
+
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace", Labels: namespaceLabels}},
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+	}
+
+	for _, pod := range FakeWaypointPod() {
+		p := pod
+		objects = append(objects, &p)
+	}
+	for _, pod := range FakeWaypointNamespaceEnrolledPods(conf, false) {
+		p := pod
+		objects = append(objects, &p)
+	}
+	objects = append(objects, &apps_v1.Deployment{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: kubernetes.Deployments.GroupVersion().String(),
+			Kind:       kubernetes.Deployments.Kind,
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "waypoint",
+			Namespace: "Namespace",
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{
+						"gateway.istio.io/managed":               "istio.io-mesh-controller",
+						"gateway.networking.k8s.io/gateway-name": "waypoint",
+					},
+				},
+			},
+		},
+	})
+
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:    &models.KubeCluster{IsKialiHome: true},
+			MeshConfig: models.NewMeshConfig(),
+			ManagedNamespaces: []models.Namespace{
+				{Name: "Namespace"},
+				{Name: "istio-system"},
+			},
+		}},
+	}
+
+	vs := fakeValidationMeshServiceWithMesh(t, *conf, mesh, objects...)
+
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+	require.NoError(err)
+
+	var detailsWorkload *models.Workload
+	for _, workload := range vInfo.wlMap[conf.KubernetesConfig.ClusterName]["Namespace"] {
+		if workload.Name == "details" {
+			detailsWorkload = workload
+			break
+		}
+	}
+	require.NotNil(detailsWorkload)
+	require.Len(detailsWorkload.WaypointWorkloads, 1)
+	assert.Equal("waypoint", detailsWorkload.WaypointWorkloads[0].Name)
+
+	validationPerformed, allValidations, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+	require.NoError(err)
+	assert.True(validationPerformed)
+
+	key := models.IstioValidationKey{
+		ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"},
+		Namespace: "Namespace",
+		Name:      "details",
+		Cluster:   conf.KubernetesConfig.ClusterName,
+	}
+	require.Contains(allValidations, key)
+
+	hasWaypointNotFound := false
+	for _, check := range allValidations[key].Checks {
+		if validations.ConfirmIstioCheckMessage("workload.ambient.waypointnotfound", check) == nil {
+			hasWaypointNotFound = true
+			break
+		}
+	}
+	assert.False(hasWaypointNotFound, "namespace waypoint should resolve without KIA1313")
 }
 
 func TestGetIstioObjectValidations(t *testing.T) {
