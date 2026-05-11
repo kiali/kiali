@@ -1,7 +1,7 @@
 @overview
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @offline
 @ossmc
-# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Manual Refresh option
 

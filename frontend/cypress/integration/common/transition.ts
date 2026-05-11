@@ -69,5 +69,5 @@ export const waitForResourceDeletion = (
 };
 
 export const openTab = (tab: string): void => {
-  cy.get('#basic-tabs', { timeout: 60000 }).should('exist').contains(tab).click(); // Can be very slow for OpenShift, specially in the UI
+  cy.contains('.pf-v6-c-tabs__list button', tab, { timeout: 60000 }).scrollIntoView().should('be.visible').click();
 };

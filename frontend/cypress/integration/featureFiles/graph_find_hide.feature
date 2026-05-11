@@ -1,7 +1,7 @@
 @graph-page-find-hide
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @ossmc
 @offline
-# don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
 Feature: Kiali Graph page - Find/Hide
 

@@ -75,11 +75,18 @@ When('user clicks in the {string} actions', (action: string) => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 
-  cy.get('button[data-test="service-actions-toggle"]')
-    .should('exist')
-    .click()
-    .get('#loading_kiali_spinner')
-    .should('not.exist');
+  if (Cypress.env('OSSMC')) {
+    cy.intercept('**/api/**/services/**/graph*').as('serviceMinigraph');
+    cy.wait('@serviceMinigraph');
+    cy.waitForReact();
+    cy.get('button#minigraph-toggle').should('be.visible').click();
+  } else {
+    cy.get('button[data-test="service-actions-toggle"]')
+      .should('exist')
+      .click()
+      .get('#loading_kiali_spinner')
+      .should('not.exist');
+  }
 
   cy.get(`li[data-test="${actionId}"]`)
     .find('button')
@@ -212,11 +219,11 @@ When('user confirms delete the configuration', () => {
 });
 
 Then('user sees the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get(`a[data-test="${type}-${namespace}-${name}"]`);
+  cy.get(`[data-test="${type}-${namespace}-${name}"]`);
 });
 
 When('user clicks in the {string} {string} {string} reference', (namespace: string, name: string, type: string) => {
-  cy.get(`a[data-test="${type}-${namespace}-${name}"]`).click();
+  cy.get(`[data-test="${type}-${namespace}-${name}"]`).click();
 
   let expectedURl = '';
 

@@ -18,6 +18,7 @@ import { KialiIcon } from 'config/KialiIcon';
 export type NamespaceAction = {
   action?: (namespace: string) => void;
   children?: NamespaceAction[];
+  'data-test'?: string;
   isDisabled?: boolean;
   isExternal?: boolean;
   isGroup: boolean;

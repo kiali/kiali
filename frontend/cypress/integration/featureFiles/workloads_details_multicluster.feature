@@ -1,7 +1,7 @@
 @workload-details-multi-cluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
-
 @multi-cluster
+
 Feature: Kiali Workload Details page
 
   On the Workload Details page, the user should see the details of a workload located in a remote cluster, as well as

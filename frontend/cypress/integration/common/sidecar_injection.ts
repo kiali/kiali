@@ -291,7 +291,14 @@ When('user navigates to the namespace detail page for {string}', function (names
 });
 
 function openNamespaceActionsMenu(): void {
-  cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+  if (Cypress.env('OSSMC')) {
+    cy.intercept('**/api/namespaces/graph*').as('namespaceMinigraph');
+    cy.wait('@namespaceMinigraph');
+    cy.waitForReact();
+    cy.get('button#minigraph-toggle').should('be.visible').click();
+  } else {
+    cy.getBySel('namespace-actions-toggle').should('be.visible').click();
+  }
 }
 
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {

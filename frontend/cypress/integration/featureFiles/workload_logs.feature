@@ -1,6 +1,6 @@
 @workload-logs
-@ossmc
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@ossmc
 
 Feature: Workload logs tab
   The Logs tab of a specific workload allows to see the generated logs of
@@ -99,6 +99,7 @@ Feature: Workload logs tab
     And the "waypoint-ratings" container should be checked
     And the "container-ratings" container should be checked
     And I should see some "ratings-v1" pod selected in the pod selector
+    When I type "ratings" on the Show text field
     Then the log pane should show log lines containing "ratings.bookinfo.svc.cluster.local"
 
   @bookinfo-app
