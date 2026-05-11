@@ -13,6 +13,7 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 import { partitionByIstio } from '../../pages/PageUtils';
@@ -103,6 +104,11 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const validate = (entries: LabelEntry[]): string | undefined => {
+    const defaultKey = t('key');
+    const defaultValue = t('value');
+    if (entries.some(e => e.key === defaultKey && e.value === defaultValue)) {
+      return t('Default key=value is not valid, please edit key or value');
+    }
     const keys = entries.map(e => e.key);
     if (keys.some(k => k.length === 0)) {
       return t('Labels must have non-empty keys');
@@ -114,14 +120,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const handleSave = (): void => {
-    const nonEmpty = editLabels.filter(e => !(e.key.length === 0 && e.value.length === 0));
-    const err = validate(nonEmpty);
+    const err = validate(editLabels);
     if (err) {
       setValidationError(err);
       return;
     }
     const result: Record<string, string> = {};
-    nonEmpty.forEach(e => {
+    editLabels.forEach(e => {
       result[e.key] = e.value;
     });
     onSave(result);
@@ -130,15 +135,10 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const handleEditComplete = (idx: number, _event: MouseEvent | KeyboardEvent, newText: string): void => {
-    const trimmed = newText.trim();
-    if (trimmed === newLabelPlaceholder || trimmed.length === 0) {
-      return;
+    const parsed = parseLabel(newText.trim());
+    if (parsed) {
+      setEditLabels(prev => prev.map((entry, i) => (i === idx ? { key: parsed[0], value: parsed[1] } : entry)));
     }
-    const parsed = parseLabel(trimmed);
-    if (!parsed) {
-      return;
-    }
-    setEditLabels(prev => prev.map((entry, i) => (i === idx ? { key: parsed[0], value: parsed[1] } : entry)));
   };
 
   const handleClose = (idx: number): void => {
@@ -187,7 +187,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         {validationError && (
           <Flex style={{ marginBottom: 'var(--pf-t--global--spacer--sm)' }}>
             <FlexItem>
-              <span style={{ color: 'var(--pf-t--global--color--nonstatus--red--default)' }}>{validationError}</span>
+              <span style={{ color: PFColors.Danger }}>{validationError}</span>
             </FlexItem>
           </Flex>
         )}

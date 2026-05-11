@@ -183,6 +183,7 @@
   "Debug Information": "Información de depuración",
   "Debug information has been copied to your clipboard.": "La información de depuración se ha copiado en su portapapeles.",
   "Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.": "La información de depuración se copió en su portapapeles, pero está desactualizada. Esto podría deberse a nuevos datos recibidos por los temporizadores de actualización automática.",
+  "Default key=value is not valid, please edit key or value": "Default key=value is not valid, please edit key or value",
   "Degraded": "Degradado",
   "Delay Percentage": "Porcentaje de retraso",
   "Delete": "Eliminar",

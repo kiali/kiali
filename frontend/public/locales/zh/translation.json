@@ -167,6 +167,7 @@
   "Debug Information": "Debug Information",
   "Debug information has been copied to your clipboard.": "Debug information has been copied to your clipboard.",
   "Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.": "Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.",
+  "Default key=value is not valid, please edit key or value": "Default key=value is not valid, please edit key or value",
   "Degraded": "Degraded",
   "Delay Percentage": "延迟比例",
   "Delete": "删除",
