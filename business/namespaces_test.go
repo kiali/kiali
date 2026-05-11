@@ -53,7 +53,6 @@ func setupNamespaceServiceWithNs() *kubetest.FakeK8sClient {
 
 // Namespace service setup
 func setupAmbientNamespaceServiceWithNs() kubernetes.UserClientInterface {
-	// c := config.NewConfig()
 	labels := map[string]string{
 		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}
@@ -74,7 +73,6 @@ func setupAmbientNamespaceServiceWithNs() kubernetes.UserClientInterface {
 
 // Project service setup
 func setupAmbientProjectWithNs() kubernetes.UserClientInterface {
-	// c := config.NewConfig()
 	labels := map[string]string{
 		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}

@@ -71,8 +71,6 @@ func CastNamespaceCollection(ns []core_v1.Namespace, cluster string) []Namespace
 }
 
 func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
-	// istioLabels := config.Get().IstioLabels
-
 	namespace := Namespace{}
 	namespace.Name = ns.Name
 	namespace.Cluster = cluster
