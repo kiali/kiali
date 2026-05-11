@@ -4,8 +4,9 @@ import { ZtunnelEndpoint, ZtunnelService } from '../../types/IstioObjects';
 import { SimpleTable } from '../Table/SimpleTable';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
-import { t } from 'i18next';
-import { SortableCompareTh, stickyThead, yoverflow } from './ZtunnelConfig';
+import { t } from 'utils/I18nUtils';
+import { SortableCompareTh } from './ZtunnelConfig';
+import { flexFillStyle } from 'styles/FlexStyles';
 
 type ZtunnelServicesProps = {
   config?: ZtunnelService[];
@@ -101,7 +102,7 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
   );
 
   return (
-    <div className={yoverflow}>
+    <div className={flexFillStyle}>
       <SimpleTable
         label={t('Ztunnel services config')}
         columns={columns}
@@ -110,7 +111,7 @@ export const ZtunnelServicesTable: React.FC<ZtunnelServicesProps> = (props: Ztun
         emptyState={noServicesConfig}
         sortBy={sort}
         onSort={onSort}
-        theadStyle={stickyThead}
+        isStickyHeader
       />
     </div>
   );

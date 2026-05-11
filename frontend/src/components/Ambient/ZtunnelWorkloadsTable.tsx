@@ -4,8 +4,9 @@ import { ZtunnelWorkload } from '../../types/IstioObjects';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { emtpytStyle } from './ZtunnelServicesTable';
 import { SimpleTable } from '../Table/SimpleTable';
-import { t } from 'i18next';
-import { SortableCompareTh, stickyThead, yoverflow } from './ZtunnelConfig';
+import { t } from 'utils/I18nUtils';
+import { SortableCompareTh } from './ZtunnelConfig';
+import { flexFillStyle } from 'styles/FlexStyles';
 
 type ZtunnelWorkloadsProps = {
   config?: ZtunnelWorkload[];
@@ -88,7 +89,7 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
   );
 
   return (
-    <div className={yoverflow}>
+    <div className={flexFillStyle}>
       <SimpleTable
         label={t('Ztunnel workloads config')}
         columns={columns}
@@ -97,7 +98,7 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
         emptyState={noWorkloadsConfig}
         sortBy={sort}
         onSort={onSort}
-        theadStyle={stickyThead}
+        isStickyHeader
       />
     </div>
   );
