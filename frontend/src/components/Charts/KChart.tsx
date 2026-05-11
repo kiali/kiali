@@ -263,7 +263,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
       >
         <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle} {...conditionalIcon}>
           <EmptyStateBody className={emptyStyle}>
-            An error occured while fetching this metric:
+            An error occurred while fetching this metric:
             <p>
               <i>{this.props.chart.error}</i>
             </p>
