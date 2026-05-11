@@ -1,6 +1,6 @@
 @traffic-policies-multi-cluster
-@multi-cluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@multi-cluster
 
 Feature: Manipulate Traffic Policies in the Primary-Remote and Multi-Primary setup
   In Primary-Remote setup, user should be able to create, update and delete policies on the local cluster only.

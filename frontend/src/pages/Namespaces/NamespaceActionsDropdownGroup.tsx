@@ -41,6 +41,7 @@ export const NamespaceActionsDropdownGroup: React.FC<Props> = ({ actions, namesp
       items.push(
         <DropdownItem
           key={`ns-action-${i}`}
+          data-test={action['data-test']}
           isDisabled={action.isDisabled}
           onClick={() => {
             onAction?.();

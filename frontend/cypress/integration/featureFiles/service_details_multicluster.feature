@@ -1,5 +1,7 @@
-@multi-cluster
 @service-details-multi-cluster
+# don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@multi-cluster
+
 Feature: Kiali Service Details page for remote cluster
 
   User opens the Services page and sees the bookinfo namespaces,

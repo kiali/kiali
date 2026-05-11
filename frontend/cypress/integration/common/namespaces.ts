@@ -1,17 +1,23 @@
 import { Then, When, TableDefinition } from '@badeball/cypress-cucumber-preprocessor';
 import { colExists, getColWithRowText } from './table';
-import { getClusterForSingleCluster } from './utils';
+import { getClusterForSingleCluster, linkSelector } from './utils';
 
 Then(`user sees the {string} namespace in the namespaces page`, (ns: string) => {
   cy.get('tbody').contains('td[data-label="Namespace"]', ns);
 });
 
 When('user clicks the namespace detail link for {string}', (ns: string) => {
-  cy.get('tbody').contains('td[data-label="Namespace"]', ns).find('a').filter(`:contains("${ns}")`).first().click();
+  cy.get('tbody')
+    .contains('td[data-label="Namespace"]', ns)
+    .find(linkSelector())
+    .filter(`:contains("${ns}")`)
+    .first()
+    .click();
 });
 
 Then('user is on the namespace detail page for {string}', (ns: string) => {
-  cy.url().should('include', `/namespaces/${ns}`);
+  const urlSegment = Cypress.env('OSSMC') ? `/projects/${ns}` : `/namespaces/${ns}`;
+  cy.url().should('include', urlSegment);
   cy.get(`[data-test="namespace-detail-overview-${ns}"]`).should('exist');
 });
 

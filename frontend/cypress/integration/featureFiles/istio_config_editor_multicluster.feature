@@ -1,6 +1,6 @@
 @istio-config-editor-multi-cluster
-@multi-cluster
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@multi-cluster
 
 Feature: Kiali Istio Config editor page for Multi-cluster deployment
 
