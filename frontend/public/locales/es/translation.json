@@ -68,6 +68,7 @@
   "Allows all requests to workloads in given namespace(s)": "Permite todas las solicitudes a cargas de trabajo en los espacios de nombres dados",
   "Ambient": "Ambient",
   "An error occurred": "An error occurred",
+  "An error occurred while fetching this metric:": "An error occurred while fetching this metric:",
   "An Istio Config resource needs at least one cluster selected": "Un recurso de configuración de Istio necesita al menos un clúster seleccionado",
   "An Istio Config resource needs at least one namespace selected": "Un recurso de configuración de Istio necesita al menos un espacio de nombres seleccionado",
   "and": "y",

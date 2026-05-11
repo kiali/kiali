@@ -54,6 +54,7 @@
   "Allows all requests to workloads in given namespace(s)": "Allows all requests to workloads in given namespace(s)",
   "Ambient": "Ambient",
   "An error occurred": "An error occurred",
+  "An error occurred while fetching this metric:": "An error occurred while fetching this metric:",
   "An Istio Config resource needs at least one cluster selected": "An Istio Config resource needs at least one cluster selected",
   "An Istio Config resource needs at least one namespace selected": "An Istio Config resource needs at least one namespace selected",
   "and": "and",
