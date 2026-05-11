@@ -24,6 +24,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  DEFAULT_BRANCH: ${{ github.event.repository.default_branch || 'master' }}
+
 jobs:
   check-trigger:
     name: Check if evaluation should run
@@ -83,7 +86,7 @@ jobs:
     if: needs.check-trigger.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     env:
-      TARGET_BRANCH: ${{ github.base_ref || 'master' }}
+      TARGET_BRANCH: ${{ github.base_ref || env.DEFAULT_BRANCH }}
       BUILD_BRANCH: ${{ needs.check-trigger.outputs.pr-sha }}
       KUBERNETES_MCP_SERVER_REPO: ${{ needs.check-trigger.outputs.kubernetes-mcp-server-repo }}
     steps:
@@ -179,10 +182,10 @@ jobs:
         MCPCHECKER="$(go env GOPATH)/bin/mcpchecker"
         PR_RAW="tests/evals/results/mcpchecker-gemini-eval-out.json"
 
-        git fetch origin master
+        git fetch origin "${DEFAULT_BRANCH}"
         BASE_TMP="$(mktemp)"
-        if ! git show "origin/master:tests/evals/results/mcpchecker-gemini-eval-out.json" > "${BASE_TMP}" 2>/dev/null; then
-          echo "::warning::No MCP eval baseline on origin/master (tests/evals/results/mcpchecker-gemini-eval-out.json)"
+        if ! git show "origin/${DEFAULT_BRANCH}:tests/evals/results/mcpchecker-gemini-eval-out.json" > "${BASE_TMP}" 2>/dev/null; then
+          echo "::warning::No MCP eval baseline on origin/${DEFAULT_BRANCH} (tests/evals/results/mcpchecker-gemini-eval-out.json)"
           rm -f "${BASE_TMP}"
           BASE_TMP=""
         fi
@@ -199,7 +202,7 @@ jobs:
             "${MCPCHECKER}" diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown || \
                echo "⚠ Diff comparison not available. See [workflow run](${RUN_URL}) for evaluation results."
           else
-            echo "⚠️ Could not compare runs: baseline on master or PR results is missing."
+            echo "⚠️ Could not compare runs: baseline on ${DEFAULT_BRANCH} or PR results is missing."
           fi
         } > "${COMMENT_FILE}"
 
@@ -227,10 +230,10 @@ jobs:
       needs.check-trigger.outputs.is-pr != 'true'
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout master
+    - name: Checkout default branch
       uses: actions/checkout@v6
       with:
-        ref: master
+        ref: ${{ env.DEFAULT_BRANCH }}
 
     - name: Set up Go
       uses: actions/setup-go@v6
@@ -282,7 +285,7 @@ jobs:
         if [[ "${PREVIOUS_EXISTS}" -eq 1 ]]; then
           "${MCPCHECKER}" diff --base "${PREVIOUS}" --current tests/evals/results/mcpchecker-gemini-eval-out.json --output markdown > baseline-pr-diff.md
         else
-          echo "_No previous committed baseline on \`master\` at this path — first update or new file._" > baseline-pr-diff.md
+          echo "_No previous committed baseline on \`${DEFAULT_BRANCH}\` at this path — first update or new file._" > baseline-pr-diff.md
         fi
 
         make mcp-update-token-readme
@@ -315,7 +318,7 @@ jobs:
         {
           echo "## MCP Evaluation Token Baseline Update"
           echo ""
-          echo "Updates the committed MCP evaluation results (\`tests/evals/results/mcpchecker-gemini-eval-out.json\`) and the token consumption section in \`ai/mcp/README.md\` from the latest **MCP-Checker Evaluation** run on \`master\`."
+          echo "Updates the committed MCP evaluation results (\`tests/evals/results/mcpchecker-gemini-eval-out.json\`) and the token consumption section in \`ai/mcp/README.md\` from the latest **MCP-Checker Evaluation** run on \`${DEFAULT_BRANCH}\`."
           echo ""
           echo "### mcpchecker diff (previous baseline → new baseline)"
           echo ""
@@ -337,6 +340,6 @@ jobs:
           gh pr create \
             --title "chore: update MCP evaluation token baseline" \
             --body-file pr-body.md \
-            --base master \
+            --base "${DEFAULT_BRANCH}" \
             --head "$BRANCH"
         fi

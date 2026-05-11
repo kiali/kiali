@@ -84,7 +84,10 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 			return &types.AIResponse{Error: fmt.Sprintf("google reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
 		}
 
-		tools, toolNames := p.TransformToolCallToToolsProcessor(functionCalls)
+		tools, toolNames, err := p.TransformToolCallToToolsProcessor(functionCalls)
+		if err != nil {
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
 		log.Debugf("Google provider tool names (iter=%d): %v", iter, toolNames)
 		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
 		if err := ctx.Err(); err != nil {
@@ -151,11 +154,11 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 	return response, http.StatusOK
 }
 
-func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string) {
+func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
 	toolsSlice, ok := toolCall.([]*genai.FunctionCall)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}
+		return []mcp.ToolsProcessor{}, []string{}, nil
 	}
 	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
 	for i, tool := range toolsSlice {
@@ -166,7 +169,7 @@ func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mc
 			ToolCallID: tool.ID,
 		}
 	}
-	return tools, toolNames
+	return tools, toolNames, nil
 }
 
 func (p *GoogleAIProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
@@ -247,35 +250,12 @@ func (p *GoogleAIProvider) ProviderToConversation(providerMessage interface{}) t
 }
 
 func (p *GoogleAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	// Threshold: Only reduce if conversation gets long (e.g., > 10 messages)
-	// You could also use a token counter here for more precision.
-	if len(conversation) < reduceThreshold {
+	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(conversation, reduceThreshold, 4)
+	if !ok {
 		return conversation
 	}
-	// Usually: [0] is SystemInstruction, [1] is Context JSON
-	// We want to keep these "Instructional" messages separate from the "Dialogue"
-	anchorIndex := 0
-	for i, msg := range conversation {
-		if i < 2 && msg.Role == genai.RoleModel {
-			anchorIndex = i // Keep up to the first two system messages (Instructions + Kiali Context)
-		} else {
-			break
-		}
-	}
 
-	// Keep the last 4 messages (usually the latest User prompt, Tool calls, and Assistant answer)
-	keepCount := 4
-	if len(conversation)-anchorIndex <= keepCount {
-		return conversation // Not enough dialogue to summarize yet
-	}
-
-	splitPoint := len(conversation) - keepCount
-
-	instructions := conversation[:anchorIndex+1]
-	toSummarize := conversation[anchorIndex+1 : splitPoint]
-	recentMessages := conversation[splitPoint:]
-
-	chat, err := p.client.Chats.Create(ctx, p.model, &genai.GenerateContentConfig{}, p.ConversationToProvider(conversation).([]*genai.Content))
+	chat, err := p.client.Chats.Create(ctx, p.model, &genai.GenerateContentConfig{}, nil)
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to create chat in reduce conversation: %v", err)
 		return conversation // Return original if chat creation fails

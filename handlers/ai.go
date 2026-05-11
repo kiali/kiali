@@ -142,7 +142,7 @@ func ChatAI(
 		}
 		var req aiTypes.AIRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
 		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
@@ -167,7 +167,6 @@ func ChatAI(
 			return
 		}
 
-		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
 		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
 		defer requestTimer.ObserveDuration()
 		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
@@ -175,6 +174,7 @@ func ChatAI(
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 			return
 		}
+		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
 		resp, code := provider.SendChat(kialiInterface, req, aiStore)
 
 		if resp == nil {
@@ -183,6 +183,10 @@ func ChatAI(
 		}
 		if code != http.StatusOK && resp.Error != "" {
 			RespondWithError(w, code, resp.Error)
+			return
+		}
+		if code != http.StatusOK {
+			RespondWithError(w, code, http.StatusText(code))
 			return
 		}
 		RespondWithJSONIndent(w, code, resp)

@@ -88,7 +88,10 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 		}
 		messagesForModel = append(messagesForModel, openai.ChatCompletionMessageParamUnion{OfAssistant: &assistantWithToolCalls})
 
-		tools, toolNames := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
+		tools, toolNames, err := p.TransformToolCallToToolsProcessor(msg.ToolCalls)
+		if err != nil {
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
 		log.Debugf("[Chat AI] OpenAI provider tool calls (iter=%d): %v", iter, toolNames)
 
 		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
@@ -170,33 +173,10 @@ func (p *OpenAIProvider) InitializeConversation(conversation *[]types.Conversati
 }
 
 func (p *OpenAIProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	// Threshold: Only reduce if conversation gets long (e.g., > 10 messages)
-	// You could also use a token counter here for more precision.
-	if len(conversation) < reduceThreshold {
+	instructions, toSummarize, recentMessages, ok := providers.SplitConversationForReduction(conversation, reduceThreshold, 4)
+	if !ok {
 		return conversation
 	}
-	// Usually: [0] is SystemInstruction, [1] is Context JSON
-	// We want to keep these "Instructional" messages separate from the "Dialogue"
-	anchorIndex := 0
-	for i, msg := range conversation {
-		if i < 2 && msg.Role == "system" {
-			anchorIndex = i // Keep up to the first two system messages (Instructions + Kiali Context)
-		} else {
-			break
-		}
-	}
-
-	// Keep the last 4 messages (usually the latest User prompt, Tool calls, and Assistant answer)
-	keepCount := 4
-	if len(conversation)-anchorIndex <= keepCount {
-		return conversation // Not enough dialogue to summarize yet
-	}
-
-	splitPoint := len(conversation) - keepCount
-
-	instructions := conversation[:anchorIndex+1]
-	toSummarize := conversation[anchorIndex+1 : splitPoint]
-	recentMessages := conversation[splitPoint:]
 
 	resp, err := p.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Model: openai.ChatModel(p.model),

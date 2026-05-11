@@ -3,6 +3,7 @@ package openai_provider
 import (
 	"testing"
 
+	openai "github.com/openai/openai-go/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -58,4 +59,20 @@ func TestGetProviderOptions_UnsupportedProviderConfig(t *testing.T) {
 	_, err := getProviderOptions(conf, provider, model)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported provider config type")
+}
+
+func TestTransformToolCallToToolsProcessor_InvalidJSON(t *testing.T) {
+	provider := &OpenAIProvider{}
+
+	_, _, err := provider.TransformToolCallToToolsProcessor([]openai.ChatCompletionMessageToolCallUnion{{
+		ID:   "call-1",
+		Type: "function",
+		Function: openai.ChatCompletionMessageFunctionToolCallFunction{
+			Name:      "get_logs",
+			Arguments: "{not-json}",
+		},
+	}})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `invalid arguments for tool "get_logs"`)
 }
