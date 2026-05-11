@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IRow, ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
+import { IRow, ISortBy, SortByDirection, TableVariant, ThProps } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
@@ -94,6 +94,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
             label="Summary Table"
             columns={this.props.writer.head()}
             rows={this.props.writer.rows()}
+            variant={TableVariant.compact}
             sortBy={this.props.writer.sortBy()}
             onSort={this.onSort}
             isStickyHeader

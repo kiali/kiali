@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IRow, ISortBy, OnSort, SortByDirection } from '@patternfly/react-table';
+import { IRow, ISortBy, OnSort, SortByDirection, TableVariant } from '@patternfly/react-table';
 import { ZtunnelWorkload } from '../../types/IstioObjects';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { emtpytStyle } from './ZtunnelServicesTable';
@@ -94,6 +94,7 @@ export const ZtunnelWorkloadsTable: React.FC<ZtunnelWorkloadsProps> = (props: Zt
         label={t('Ztunnel workloads config')}
         columns={columns}
         rows={rows}
+        variant={TableVariant.compact}
         emptyState={noWorkloadsConfig}
         sortBy={sort}
         onSort={onSort}
