@@ -69,9 +69,5 @@ export const waitForResourceDeletion = (
 };
 
 export const openTab = (tab: string): void => {
-  cy.get('.pf-v6-c-tabs__list', { timeout: 60000 })
-    .should('exist')
-    .contains('button', tab)
-    .should('be.visible')
-    .click();
+  cy.contains('.pf-v6-c-tabs__list button', tab, { timeout: 60000 }).scrollIntoView().should('be.visible').click();
 };
