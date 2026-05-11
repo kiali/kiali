@@ -199,6 +199,31 @@ func AddContextToConversation(conversation []types.ConversationMessage, req type
 	return result
 }
 
+func SplitConversationForReduction(
+	conversation []types.ConversationMessage,
+	reduceThreshold int,
+	keepCount int,
+) (instructions []types.ConversationMessage, toSummarize []types.ConversationMessage, recentMessages []types.ConversationMessage, ok bool) {
+	if len(conversation) < reduceThreshold {
+		return nil, nil, nil, false
+	}
+
+	anchorCount := 0
+	for i, msg := range conversation {
+		if i >= 2 || msg.Role != "system" {
+			break
+		}
+		anchorCount++
+	}
+
+	if len(conversation)-anchorCount <= keepCount {
+		return nil, nil, nil, false
+	}
+
+	splitPoint := len(conversation) - keepCount
+	return conversation[:anchorCount], conversation[anchorCount:splitPoint], conversation[splitPoint:], true
+}
+
 func FormatToolContent(result interface{}) (string, error) {
 	switch v := result.(type) {
 	case string:

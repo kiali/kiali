@@ -13,7 +13,7 @@ type AIProvider interface {
 	InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest)
 	ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage
 	GetToolDefinitions() interface{}
-	TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string)
+	TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}
 	ProviderToConversation(providerMessage interface{}) types.ConversationMessage
 	SendChat(kialiInterface *mcputil.KialiInterface,

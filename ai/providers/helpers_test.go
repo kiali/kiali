@@ -78,8 +78,8 @@ func (f *fakeProvider) GetToolDefinitions() interface{} {
 	return nil
 }
 
-func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]mcp.ToolsProcessor, []string) {
-	return nil, nil
+func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]mcp.ToolsProcessor, []string, error) {
+	return nil, nil, nil
 }
 
 func (f *fakeProvider) ConversationToProvider(_ []types.ConversationMessage) interface{} {
@@ -140,6 +140,46 @@ func TestFormatToolContent(t *testing.T) {
 	out, err = FormatToolContent(map[string]any{"a": "b"})
 	require.NoError(t, err)
 	assert.Contains(t, out, `"a":"b"`)
+}
+
+func TestSplitConversationForReduction_PreservesTwoLeadingSystemMessages(t *testing.T) {
+	conversation := []types.ConversationMessage{
+		{Role: "system", Content: "base"},
+		{Role: "system", Content: "summary"},
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+		{Role: "user", Content: "u2"},
+		{Role: "assistant", Content: "a2"},
+		{Role: "user", Content: "u3"},
+		{Role: "assistant", Content: "a3"},
+	}
+
+	instructions, toSummarize, recentMessages, ok := SplitConversationForReduction(conversation, 6, 4)
+
+	require.True(t, ok)
+	require.Len(t, instructions, 2)
+	assert.Equal(t, []string{"base", "summary"}, []string{instructions[0].Content, instructions[1].Content})
+	assert.Len(t, toSummarize, 2)
+	assert.Equal(t, []string{"u1", "a1"}, []string{toSummarize[0].Content, toSummarize[1].Content})
+	assert.Len(t, recentMessages, 4)
+	assert.Equal(t, []string{"u2", "a2", "u3", "a3"}, []string{
+		recentMessages[0].Content,
+		recentMessages[1].Content,
+		recentMessages[2].Content,
+		recentMessages[3].Content,
+	})
+}
+
+func TestSplitConversationForReduction_SkipsShortConversation(t *testing.T) {
+	conversation := []types.ConversationMessage{
+		{Role: "system", Content: "base"},
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+	}
+
+	_, _, _, ok := SplitConversationForReduction(conversation, 10, 4)
+
+	assert.False(t, ok)
 }
 
 func TestGetStoreConversation(t *testing.T) {

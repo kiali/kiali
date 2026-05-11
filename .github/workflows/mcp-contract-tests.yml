@@ -20,13 +20,13 @@ on:
         default: "main"
   push:
     paths:
-    - 'kiali/routing/routes.go'
+    - 'routing/routes.go'
     branches:
     - master
     - 'v*.*'
   pull_request:
     paths:
-    - 'kiali/routing/routes.go'
+    - 'routing/routes.go'
     branches:
     - master
     - 'v*.*'
@@ -52,12 +52,11 @@ jobs:
       CI: 1
       # avoid warnings like "tput: No value for $TERM and no -T specified"
       TERM: xterm
-    continue-on-error: true
     steps:
     - name: Check out Kiali code
       uses: actions/checkout@v6
       with:
-        ref: ${{ inputs.build_branch }}
+        ref: ${{ env.BUILD_BRANCH }}
 
     - name: Install Helm
       uses: Azure/setup-helm@v5.0.0
@@ -165,7 +164,6 @@ jobs:
 
     - name: Get debug info when tests fail
       if: failure()
-      working-directory: kiali
       run: |
         mkdir -p debug-output
         hack/ci-get-debug-info.sh --output-directory debug-output || true
@@ -175,5 +173,5 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: debug-info-mcp-contract-tests
-        path: kiali/debug-output
+        path: debug-output
 
