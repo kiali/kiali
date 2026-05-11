@@ -513,7 +513,7 @@ Then('the user sees the {string} option in the pod popover, and is {string}', (o
   cy.get(`[data-test=pod-info]`).first().click();
   cy.get('[role="dialog"]').should('be.visible').and('contain', option);
   cy.get('[role="dialog"]').should('be.visible').and('contain', value);
-  cy.get('[role="dialog"]').find('button[aria-label="Close"]').click();
+  cy.get('[role="dialog"]').find('button[aria-label="Close"]').first().click();
 });
 
 Then('the user sees the {string} badge', (name: string) => {
