@@ -628,7 +628,7 @@ Then('the option {string} does not exist in namespace actions', (option: string)
 
 When('user clicks on {string} in namespace actions', (option: string) => {
   cy.url().then(url => {
-    const namespace = url.split('/namespaces/')[1]?.split('?')[0] ?? '';
+    const namespace = url.match(/\/(projects|namespaces)\/([^/?]+)/)?.[2] ?? '';
     let selector = '';
     switch (option) {
       case 'removes auto injection':
