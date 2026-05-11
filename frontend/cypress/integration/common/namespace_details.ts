@@ -15,7 +15,12 @@ Then('user sees the namespace detail overview for {string}', (ns: string) => {
 });
 
 Then('user sees the title {string} in the namespace detail page', (name: string) => {
-  cy.get('[data-test="namespace-detail-title-row"]').contains(name).should('be.visible');
+  if (Cypress.env('OSSMC')) {
+    // In OSSMC kiosk mode, the Kiali header is hidden; the OpenShift console provides the project title.
+    cy.contains(name).should('exist');
+  } else {
+    cy.get('[data-test="namespace-detail-title-row"]').contains(name).should('be.visible');
+  }
 });
 
 Then('the details card has a {string} entry', (term: string) => {
