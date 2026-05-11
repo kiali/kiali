@@ -93,7 +93,10 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 
 		modelConversation.Messages = append(modelConversation.Messages, resp.ToParam())
 
-		tools, toolNames := p.TransformToolCallToToolsProcessor(resp.Content)
+		tools, toolNames, err := p.TransformToolCallToToolsProcessor(resp.Content)
+		if err != nil {
+			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+		}
 		log.Debugf("[Chat AI] Anthropic provider tool calls (iter=%d): %v", iter, toolNames)
 
 		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
@@ -154,10 +157,10 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 	return response, http.StatusOK
 }
 
-func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string) {
+func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
 	contentBlocks, ok := toolCall.([]anthropic.ContentBlockUnion)
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}
+		return []mcp.ToolsProcessor{}, []string{}, nil
 	}
 
 	toolNames := make([]string, 0)
@@ -170,7 +173,9 @@ func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]m
 
 		toolNames = append(toolNames, toolUse.Name)
 		args := map[string]any{}
-		_ = json.Unmarshal(toolUse.Input, &args)
+		if err := json.Unmarshal(toolUse.Input, &args); err != nil {
+			return nil, nil, fmt.Errorf("invalid arguments for tool %q: %w", toolUse.Name, err)
+		}
 		tools = append(tools, mcp.ToolsProcessor{
 			Args:       args,
 			Name:       toolUse.Name,
@@ -178,7 +183,7 @@ func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]m
 		})
 	}
 
-	return tools, toolNames
+	return tools, toolNames, nil
 }
 
 func (p *AnthropicProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
