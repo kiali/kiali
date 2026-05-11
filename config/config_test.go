@@ -723,6 +723,30 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "config",
 		},
+		"anthropic config default is valid": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.ChatAI.Providers[0].Config = DefaultProviderConfigType
+			},
+			expectErr: "",
+		},
+		"anthropic config empty defaults to default": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.ChatAI.Providers[0].Config = ""
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+			},
+		},
+		"anthropic config invalid for type": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+			},
+			expectErr: "config",
+		},
 		"google config must be gemini": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers[0].Type = GoogleProvider

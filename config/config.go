@@ -802,6 +802,7 @@ type ProviderType string
 
 const (
 	OpenAIProvider      ProviderType = "openai"
+	AnthropicProvider   ProviderType = "anthropic"
 	GoogleProvider      ProviderType = "google"
 	DefaultProviderType ProviderType = "default"
 )
@@ -1369,8 +1370,9 @@ func (conf *Config) ValidateAI() error {
 
 	defaultProviderFound := false
 	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
-		OpenAIProvider: {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
-		GoogleProvider: {ProviderConfigGemini},
+		OpenAIProvider:    {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
+		AnthropicProvider: {DefaultProviderConfigType},
+		GoogleProvider:    {ProviderConfigGemini},
 	}
 
 	seenNames := make(map[string]struct{})
