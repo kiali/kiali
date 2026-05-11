@@ -150,7 +150,7 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			for cluster, client := range aHandler.kialiSAClients {
 				userSessions[cluster] = &authentication.UserSessionData{
 					AuthInfo:  &api.AuthInfo{Token: client.GetToken()},
-					SessionID: AnonymousSessionID,
+					SessionID: AnonymousSessionID, // All anonymous users share a single session ID
 				}
 			}
 		}
