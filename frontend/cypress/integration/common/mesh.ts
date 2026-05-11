@@ -123,6 +123,9 @@ When('user {string} mesh display option {string}', (action: string, option: stri
     case 'gateways':
       option = 'filterGateways';
       break;
+    case 'kiali':
+      option = 'filterKiali';
+      break;
     case 'waypoints':
       option = 'filterWaypoints';
       break;
@@ -263,6 +266,24 @@ Then('user sees expected mesh infra', () => {
         // Single control plane - tabs should not exist
         cy.getBySel('mesh-tabs').should('not.exist');
       }
+    });
+});
+
+Then('user does not see a {string} mesh node', (infraType: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const matchingNodes = nodes.filter(n => n.getData().infraType === infraType);
+
+      expect(matchingNodes).to.have.lengthOf(0);
     });
 });
 

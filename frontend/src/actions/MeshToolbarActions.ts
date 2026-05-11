@@ -9,6 +9,7 @@ export const MeshToolbarActions = {
   // Toggle actions
   toggleFindHelp: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_FIND_HELP),
   toggleGateways: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_GATEWAYS),
+  toggleKiali: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_KIALI),
   toggleLegend: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_LEGEND),
   toggleWaypoints: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_WAYPOINTS)
 };

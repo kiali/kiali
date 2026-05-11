@@ -429,6 +429,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		mesh.CheckError(err)
 	}
 
+	if !o.IncludeKiali {
+		removeKialiNodes(meshMap)
+	}
+
 	// The finalizers can perform final manipulations on the complete graph
 	for _, f := range finalizers {
 		f.AppendGraph(meshMap, gi, nil)
@@ -471,6 +475,29 @@ func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, 
 	}
 
 	return node, found, nil
+}
+
+func removeKialiNodes(meshMap mesh.MeshMap) {
+	kialiIDs := make(map[string]bool)
+	for id, node := range meshMap {
+		if node.InfraType == mesh.InfraTypeKiali {
+			kialiIDs[id] = true
+		}
+	}
+
+	for id := range kialiIDs {
+		delete(meshMap, id)
+	}
+
+	for _, node := range meshMap {
+		filtered := make([]*mesh.Edge, 0, len(node.Edges))
+		for _, edge := range node.Edges {
+			if !kialiIDs[edge.Dest.ID] {
+				filtered = append(filtered, edge)
+			}
+		}
+		node.Edges = filtered
+	}
 }
 
 // inMeshUrlRegexp is an array of regex to be matched, in order (most to least restrictive), against external service [inCluster] URLs

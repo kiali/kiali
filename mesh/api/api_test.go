@@ -337,7 +337,7 @@ func TestMeshGraph(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	url := ts.URL + "/api/mesh/graph?queryTime=1523364075&includeGateways=true&includeWaypoints=true"
+	url := ts.URL + "/api/mesh/graph?queryTime=1523364075&includeGateways=true&includeKiali=true&includeWaypoints=true"
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)
