@@ -218,17 +218,17 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 
 	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
-		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
-		if err != nil {
-			return nil, err
-		}
-		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
-
 		namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
 		if err != nil {
 			return nil, err
 		}
 		vInfo.nsMap[cluster] = namespaces
+
+		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
+		if err != nil {
+			return nil, err
+		}
+		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
 
 		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], ResolveClusterIdentityDomain(mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain))
 	}
