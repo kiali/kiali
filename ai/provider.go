@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
+	anthropicProvider "github.com/kiali/kiali/ai/providers/anthropic"
 	googleProvider "github.com/kiali/kiali/ai/providers/google"
 	openaiProvider "github.com/kiali/kiali/ai/providers/openai"
 	"github.com/kiali/kiali/config"
@@ -26,6 +27,8 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	switch provider.Type {
 	case config.OpenAIProvider:
 		return openaiProvider.NewOpenAIProvider(conf, provider, model)
+	case config.AnthropicProvider:
+		return anthropicProvider.NewAnthropicProvider(conf, provider, model)
 	case config.GoogleProvider:
 		return googleProvider.NewGoogleAIProvider(conf, provider, model)
 	default:
