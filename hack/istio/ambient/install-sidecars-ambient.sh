@@ -97,15 +97,6 @@ users:
 SCC
 }
 
-format_http_host() {
-  local host="$1"
-  if [[ "${host}" == *:* ]]; then
-    printf '[%s]' "${host}"
-  else
-    printf '%s' "${host}"
-  fi
-}
-
 CLIENT_EXE=`which ${CLIENT_EXE}`
 if [ "$?" = "0" ]; then
   echo "The cluster client executable is found here: ${CLIENT_EXE}"
@@ -144,22 +135,6 @@ fi
 # Create the echo service
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
-${CLIENT_EXE} rollout status deployment/echo-server -n ${AMBIENT_NS} --timeout=120s
-${CLIENT_EXE} rollout status deployment/echo-server -n ${SIDECAR_NS} --timeout=120s
-
-AMBIENT_ECHO_POD_IP=$(${CLIENT_EXE} get pod -l app=echo-server -n ${AMBIENT_NS} -o jsonpath="{.items[0].status.podIP}")
-SIDECAR_ECHO_POD_IP=$(${CLIENT_EXE} get pod -l app=echo-server -n ${SIDECAR_NS} -o jsonpath="{.items[0].status.podIP}")
-
-if [ -z "${AMBIENT_ECHO_POD_IP}" ] || [ -z "${SIDECAR_ECHO_POD_IP}" ]; then
-  echo "Failed to determine echo-server pod IPs in ${AMBIENT_NS} or ${SIDECAR_NS}"
-  exit 1
-fi
-
-AMBIENT_ECHO_POD_HOST=$(format_http_host "${AMBIENT_ECHO_POD_IP}")
-SIDECAR_ECHO_POD_HOST=$(format_http_host "${SIDECAR_ECHO_POD_IP}")
-
-echo "Creating client in ns ${SIDECAR_NS} with ambient echo pod IP ${AMBIENT_ECHO_POD_IP}"
-echo "Creating client in ns ${AMBIENT_NS} with sidecar echo pod IP ${SIDECAR_ECHO_POD_IP}"
 
 # Create the curl client deployment for sidecar namespace
 cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
@@ -184,14 +159,7 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - |
-          while true; do
-            echo "Calling ambient echo pod at ${AMBIENT_ECHO_POD_IP}..."
-            if ! curl -g -sSf --connect-timeout 5 --max-time 15 "http://${AMBIENT_ECHO_POD_HOST}/" >/dev/null; then
-              echo "[${SIDECAR_NS}] curl failed for baked-in ambient echo pod IP ${AMBIENT_ECHO_POD_IP}. If echo-server was recreated, this IP is stale (curl Deployment args are fixed at apply time). Re-run this install script or patch/reapply curl-client with the current pod IP."
-            fi
-            sleep 5
-          done
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient; sleep 5; done;
 NAD
 
 # Create the curl client deployment for ambient namespace
@@ -217,14 +185,7 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - |
-          while true; do
-            echo "Calling sidecar echo pod at ${SIDECAR_ECHO_POD_IP}..."
-            if ! curl -g -sSf --connect-timeout 5 --max-time 15 "http://${SIDECAR_ECHO_POD_HOST}/" >/dev/null; then
-              echo "[${AMBIENT_NS}] curl failed for baked-in sidecar echo pod IP ${SIDECAR_ECHO_POD_IP}. If echo-server was recreated, this IP is stale (curl Deployment args are fixed at apply time). Re-run this install script or patch/reapply curl-client with the current pod IP."
-            fi
-            sleep 5
-          done
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar; sleep 5; done;
 NAD
 
 # Use waypoint?
