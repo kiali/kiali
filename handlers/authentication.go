@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/http"
@@ -94,10 +95,10 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 					// However, this check is still useful for cases where the fallback fails or
 					// for other K8s API calls that may return Forbidden.
 					statusCode = http.StatusForbidden
-					log.Errorf("User does not have sufficient privileges: %s", err.Error())
+					log.Errorf("User does not have sufficient privileges [client: %s]: %s", r.RemoteAddr, err.Error())
 				} else {
 					// Unexpected server error during validation
-					log.Errorf("Failed to validate session: %s", err.Error())
+					log.Errorf("Failed to validate session [client: %s]: %s", r.RemoteAddr, err.Error())
 					statusCode = http.StatusInternalServerError
 				}
 			} else {
@@ -118,7 +119,7 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case http.StatusOK:
 			if len(userSessions) == 0 {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				log.Errorf("No active user session: %v", http.StatusBadRequest)
+				log.Errorf("No active user session [client: %s]: %v", r.RemoteAddr, http.StatusBadRequest)
 				return
 			}
 			ctx := authentication.SetAuthInfoContext(r.Context(), userSessions.GetAuthInfos())
@@ -131,7 +132,7 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case http.StatusUnauthorized:
 			err := aHandler.authController.TerminateSession(r, w)
 			if err != nil {
-				log.Errorf("Failed to clean a stale session: %s", err.Error())
+				log.Errorf("Failed to clean a stale session [client: %s]: %s", r.RemoteAddr, err.Error())
 			}
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		case http.StatusForbidden:
@@ -139,7 +140,7 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		default:
 			http.Error(w, http.StatusText(statusCode), statusCode)
-			log.Errorf("Cannot send response to user: %v", statusCode)
+			log.Errorf("Cannot send response to user [client: %s]: %v", r.RemoteAddr, statusCode)
 		}
 	})
 }
@@ -167,13 +168,21 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 						status = e.HttpStatus
 					}
 					if e.Detail != nil {
-						log.Warningf("Authentication failure [%s]: %v", e.Reason, e.Detail)
+						log.Warningf("Authentication failure [%s] [client: %s]: %v", e.Reason, r.RemoteAddr, e.Detail)
 					}
 					RespondWithError(w, status, e.Reason)
 				} else {
+					log.Errorf("Unexpected authentication error [client: %s]: %s", r.RemoteAddr, err.Error())
 					RespondWithError(w, http.StatusInternalServerError, err.Error())
 				}
 			} else {
+				if response.AuthInfo != nil {
+					// Truncated SHA-256 hash (16 hex chars) for log correlation without exposing the full token
+					tokenFingerprint := fmt.Sprintf("%x", sha256.Sum256([]byte(response.AuthInfo.Token)))[:16]
+					log.Infof("Authentication successful for user [%s] [client: %s] [token: %s]", response.Username, r.RemoteAddr, tokenFingerprint)
+				} else {
+					log.Infof("Authentication successful for user [%s] [client: %s]", response.Username, r.RemoteAddr)
+				}
 				RespondWithJSONIndent(w, http.StatusOK, response)
 			}
 		case config.AuthStrategyAnonymous:
@@ -229,16 +238,20 @@ func AuthenticationInfo(conf *config.Config, authController authentication.AuthC
 func Logout(conf *config.Config, authController authentication.AuthController) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if conf.Auth.Strategy == config.AuthStrategyAnonymous {
+			log.Infof("Logout requested [client: %s] (anonymous strategy)", r.RemoteAddr)
 			RespondWithCode(w, http.StatusNoContent)
 		} else {
+			log.Infof("Logout initiated [client: %s]", r.RemoteAddr)
 			err := authController.TerminateSession(r, w)
 			if err != nil {
+				log.Errorf("Logout failed [client: %s]: %s", r.RemoteAddr, err.Error())
 				if e, ok := err.(*authentication.TerminateSessionError); ok {
 					RespondWithError(w, e.HttpStatus, e.Error())
 				} else {
 					RespondWithError(w, http.StatusInternalServerError, err.Error())
 				}
 			} else {
+				log.Infof("Logout completed [client: %s]", r.RemoteAddr)
 				RespondWithCode(w, http.StatusNoContent)
 			}
 		}
