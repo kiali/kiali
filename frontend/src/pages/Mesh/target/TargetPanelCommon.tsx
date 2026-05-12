@@ -218,7 +218,7 @@ export const renderNodeHeader = (
           {data.infraName}
 
           {renderHealthStatus(data)}
-          {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && (
+          {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && data.isAmbient && (
             <AmbientLabel tooltip={tooltipMsgType.mesh} />
           )}
         </span>
@@ -428,7 +428,7 @@ const renderMeshControlPlanes = (
           const cpRev = infra.getData().infraData.revision ?? 'default';
           const dataPlaneNode = dataPlaneNodes.find(dpn => {
             const dpRev = dpn.getData().version ?? 'default';
-            return cpRev === dpRev;
+            return cpRev === dpRev && dpn.getData().cluster === infra.getData().cluster;
           });
           const dataPlaneNamespaceCount = dataPlaneNode?.getData().infraData?.length ?? 0;
           return renderControlPlaneSummary(infra.getData(), dataPlaneNamespaceCount);
@@ -567,7 +567,7 @@ const MeshTabsComponent: React.FC<{
         </Tab>
         <Tab
           eventKey={1}
-          title={<TabTitleText>{t('Meshes ({{count}})', { count: meshData.names.length })}</TabTitleText>}
+          title={<TabTitleText>{t('Meshes ({{count}})', { count: meshesWithControlPlanes.length })}</TabTitleText>}
         >
           <SearchInput
             placeholder="Filter meshes..."
@@ -661,14 +661,16 @@ export const renderInfraSummary = (
 
   // If only one mesh, render without tabs
   if (meshData.names.length <= 1) {
+    const meshName = meshData.names[0] || t('Istio mesh');
     return (
       <div>
         <div id="target-panel-mesh-heading" className={panelHeadingStyle}>
           <div className={summaryTitle}>
-            {t('Mesh: {{meshName}}', { meshName: meshData.names })}
+            {t('Mesh: {{meshName}}', { meshName })}
             <br />
           </div>
         </div>
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
         {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
       </div>
     );

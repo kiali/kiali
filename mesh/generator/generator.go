@@ -119,6 +119,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		istiod, _, err := addInfra(meshMap, mesh.InfraTypeIstiod, cp.Cluster.Name, cp.IstiodNamespace, name, cp, version, false, healthData[healthDataKey])
 		mesh.CheckError(err)
 
+		if gi.KialiCache.IsControlPlaneNamespaceAmbient(ctx, cp.Cluster.Name, cp.IstiodNamespace, cp.IstiodName) {
+			istiod.Metadata[mesh.IsAmbient] = true
+		}
+
 		for _, mc := range cp.ManagedClusters {
 			// add managed clusters if not already added
 			if _, ok := clusterMap[mc.Name]; !ok {
