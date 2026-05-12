@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -9,7 +9,6 @@ import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { RefreshIntervalManual } from '../../../config/Config';
 import { HistoryManager } from '../../../app/History';
-import { Show } from '../../../types/Common';
 import type { Mock } from '@rstest/core';
 
 rstest.mock('../NamespaceTrafficPolicies', () => ({

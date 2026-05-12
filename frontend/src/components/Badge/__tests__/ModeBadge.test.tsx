@@ -1,8 +1,7 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ModeBadge } from '../ModeBadge';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key
 }));
 
