@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, Store } from 'redux';
 import { NamespaceActions } from '../NamespaceAction';
 import { NamespaceThunkActions } from '../NamespaceThunkActions';
 import { NamespaceState } from '../../store/Store';
@@ -14,7 +14,7 @@ interface TestState {
   namespaces: NamespaceState;
 }
 
-const createTestStore = (initialNamespaces = INITIAL_NAMESPACE_STATE): ReturnType<typeof createStore> =>
+const createTestStore = (initialNamespaces = INITIAL_NAMESPACE_STATE): Store<TestState> =>
   createStore(
     (state: TestState = { namespaces: initialNamespaces }, action: any): TestState => ({
       namespaces: NamespaceStateReducer(state.namespaces, action)

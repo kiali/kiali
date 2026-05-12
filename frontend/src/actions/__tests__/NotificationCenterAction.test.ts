@@ -1,6 +1,7 @@
-import { createStore, applyMiddleware, combineReducers } from 'redux';
+import { createStore, applyMiddleware, combineReducers, Store } from 'redux';
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
+import { NotificationCenterState } from '../../store/Store';
 import { MessageType } from '../../types/NotificationCenter';
 import { NotificationCenterReducer } from '../../reducers/NotificationCenter';
 
@@ -8,10 +9,15 @@ import { NotificationCenterReducer } from '../../reducers/NotificationCenter';
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
-const createTestStore = (
-  initialGroups?: any[]
-): { idsByGroup: Map<string, number[]>; store: ReturnType<typeof createStore> } => {
-  const store = createStore(combineReducers({ notificationCenter: NotificationCenterReducer }), applyMiddleware(thunk));
+interface TestState {
+  notificationCenter: NotificationCenterState;
+}
+
+const createTestStore = (initialGroups?: any[]): { idsByGroup: Map<string, number[]>; store: Store<TestState> } => {
+  const store: Store<TestState> = createStore(
+    combineReducers({ notificationCenter: NotificationCenterReducer }),
+    applyMiddleware(thunk)
+  );
   if (initialGroups) {
     // Populate groups by dispatching addMessage for each message in each group,
     // then collect the assigned IDs so tests can assert on them.
