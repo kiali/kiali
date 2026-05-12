@@ -447,6 +447,21 @@ func (p *cookieSessionPersistor[T]) ReadAllSessions(r *http.Request, w http.Resp
 				log.Debugf("Skipping cookie [%s] (not a valid session or failed to decrypt): %v", cookie.Name, err)
 				continue
 			}
+
+			sessionKey := extractKeyFromSessionCookieName(cookie.Name)
+
+			if sData.Strategy != p.conf.Auth.Strategy {
+				log.Debugf("Session is invalid because it was created with authentication strategy [%s], but current authentication strategy is [%s]", sData.Strategy, p.conf.Auth.Strategy)
+				p.TerminateSession(r, w, sessionKey)
+				continue
+			}
+
+			if !util.Clock.Now().Before(sData.ExpiresOn) {
+				log.Debugf("Session is invalid because it expired on %s", sData.ExpiresOn.Format(time.RFC822))
+				p.TerminateSession(r, w, sessionKey)
+				continue
+			}
+
 			sessions = append(sessions, sData)
 		}
 	}

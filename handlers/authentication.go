@@ -79,8 +79,8 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyToken, config.AuthStrategyOpenId, config.AuthStrategyOpenshift, config.AuthStrategyHeader:
 			sessions, err := aHandler.authController.ValidateSession(r, w)
 			if err != nil {
-				if errors.Is(err, authentication.ErrSessionNotFound) {
-					// Session doesn't exist - user needs to authenticate
+				if errors.Is(err, authentication.ErrSessionNotFound) || errors.Is(err, authentication.ErrSubjectMismatch) {
+					// Session doesn't exist or has an integrity violation - user needs to authenticate
 					statusCode = http.StatusUnauthorized
 				} else if k8serrors.IsUnauthorized(err) {
 					// Kubernetes API rejected the token as invalid/expired.
@@ -166,7 +166,10 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 					if e.HttpStatus != 0 {
 						status = e.HttpStatus
 					}
-					RespondWithError(w, status, e.Error())
+					if e.Detail != nil {
+						log.Warningf("Authentication failure [%s]: %v", e.Reason, e.Detail)
+					}
+					RespondWithError(w, status, e.Reason)
 				} else {
 					RespondWithError(w, http.StatusInternalServerError, err.Error())
 				}

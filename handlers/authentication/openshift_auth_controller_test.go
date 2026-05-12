@@ -127,6 +127,7 @@ func validSession(t *testing.T, authController *authentication.OpenshiftAuthCont
 func TestOpenshiftAuthController(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
 	conf.KubernetesConfig.ClusterName = "test-cluster"
 	conf.LoginToken.SigningKey = "kiali67890123456"
 
@@ -266,6 +267,7 @@ func TestUnauthorizedUserSessionGetsDropped(t *testing.T) {
 func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.LoginToken.SigningKey = "kiali67890123456"
 
@@ -341,6 +343,7 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 func TestTerminateSession(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.LoginToken.SigningKey = "kiali67890123456"
 

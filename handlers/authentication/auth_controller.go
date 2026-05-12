@@ -113,6 +113,10 @@ func (e *AuthenticationFailureError) Error() string {
 	return e.Reason
 }
 
+// ErrSubjectMismatch is returned when the subject claim in a token does not match
+// the stored subject, indicating a potential session integrity violation.
+var ErrSubjectMismatch = fmt.Errorf("subject mismatch")
+
 func nonceCookieName(cluster string) string {
 	return NonceCookieName + "-" + cluster
 }

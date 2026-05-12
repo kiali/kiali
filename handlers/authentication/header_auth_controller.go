@@ -77,20 +77,19 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 		return nil, err
 	}
 
-	// The token has been validated via k8s TokenReview, extract the subject for the ui to display
-	// from either the subject (via the TokenReview) or the impersonation header
-	var tokenSubject string
+	tokenOwner := strings.TrimPrefix(subjectFromToken, "system:serviceaccount:")
 
-	if authInfo.Impersonate == "" {
-		tokenSubject = subjectFromToken
-		tokenSubject = strings.TrimPrefix(tokenSubject, "system:serviceaccount:") // Shorten the subject displayed in UI.
+	var displayName string
+	if authInfo.Impersonate != "" {
+		displayName = authInfo.Impersonate
+		log.Infof("Header auth: token owner [%s] is impersonating [%s]", tokenOwner, authInfo.Impersonate)
 	} else {
-		tokenSubject = authInfo.Impersonate
+		displayName = tokenOwner
 	}
 
 	// Create the session
 	timeExpire := util.Clock.Now().Add(time.Second * time.Duration(conf.LoginToken.ExpirationSeconds))
-	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyHeader, timeExpire, &headerSessionPayload{Token: authInfo.Token, Subject: tokenSubject})
+	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyHeader, timeExpire, &headerSessionPayload{Token: authInfo.Token, Subject: displayName})
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,7 @@ func (c headerAuthController) Authenticate(r *http.Request, w http.ResponseWrite
 		AuthInfo:  authInfo,
 		ExpiresOn: timeExpire,
 		SessionID: sessionData.SessionID,
-		Username:  tokenSubject,
+		Username:  displayName,
 	}, nil
 }
 
@@ -141,6 +140,13 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 		expiration = sData.ExpiresOn
 		sessionID = sData.SessionID
 		subject = sData.Payload.Subject
+	}
+
+	// Use the verified token identity for audit, not the session display name which
+	// may be a user-supplied impersonation header value.
+	tokenSubject, err := c.homeClusterSAClient.GetTokenSubject(authInfo)
+	if err == nil {
+		r.Header.Set("Kiali-User", strings.TrimPrefix(tokenSubject, "system:serviceaccount:"))
 	}
 
 	return UserSessions{
