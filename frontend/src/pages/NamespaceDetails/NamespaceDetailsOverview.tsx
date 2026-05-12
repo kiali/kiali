@@ -27,8 +27,9 @@ import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { KialiLink } from 'components/Link/KialiLink';
 import { Paths, isMultiCluster } from 'config';
-import { router, URLParam } from 'app/History';
+import { URLParam } from 'app/History';
 import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
 import { isRevisionAvailable } from 'pages/Namespaces/NamespaceRevisionUtils';
@@ -41,7 +42,8 @@ import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { navigateToFilteredList } from '../PageUtils';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 
 type Props = {
   canEdit: boolean;
@@ -52,13 +54,6 @@ type Props = {
   onSaveAnnotations: (annotations: Record<string, string>) => void;
   onSaveLabels: (labels: Record<string, string>) => void;
 };
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  marginTop: '1rem',
-  minHeight: 0
-});
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
@@ -235,22 +230,15 @@ const NamespaceRevisionLabels: React.FC<{ ns: NamespaceInfo }> = ({ ns }) => {
   );
 };
 
-const partitionByIstio = (entries: Record<string, string>): { numPriority: number; sorted: Record<string, string> } => {
-  const keys = Object.keys(entries);
-  const istioKeys = keys.filter(k => k.toLowerCase().includes('istio')).sort();
-  const otherKeys = keys.filter(k => !k.toLowerCase().includes('istio')).sort();
-  const sorted: Record<string, string> = {};
-  for (const k of [...istioKeys, ...otherKeys]) {
-    sorted[k] = entries[k];
-  }
-  return { sorted, numPriority: istioKeys.length };
-};
-
 export class NamespaceDetailsOverview extends React.Component<Props> {
   private graphDataSource = new GraphDataSource();
 
   componentDidMount(): void {
     this.fetchGraph();
+  }
+
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
   }
 
   componentDidUpdate(prev: Props): void {
@@ -296,7 +284,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     const appCount = statusCount(nsInfo.statusApp);
     const serviceCount = statusCount(nsInfo.statusService);
     const workloadCount = statusCount(nsInfo.statusWorkload);
-    const istioCount = validations.objectCount && validations.objectCount > 0 ? validations.objectCount : undefined;
+    const istioCount = validations.objectCount !== undefined ? validations.objectCount : undefined;
 
     return (
       <>
@@ -334,9 +322,7 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                 <DescriptionListGroup data-test="details-mode">
                   <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
                   <DescriptionListDescription>
-                    <PFLabel variant="outline" color={modeInfo.color} isCompact>
-                      {t(modeInfo.displayText)}
-                    </PFLabel>
+                    <ModeBadge mode={modeInfo.mode} />
                   </DescriptionListDescription>
                 </DescriptionListGroup>
                 <DescriptionListGroup data-test="details-type">
@@ -402,39 +388,28 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
         </StackItem>
 
         <StackItem key="labels" data-test="namespace-labels-card">
-          {(() => {
-            const { sorted, numPriority } = partitionByIstio(nsInfo.labels ?? {});
-            return (
-              <EditableLabelsCard
-                canEdit={this.props.canEdit}
-                labels={sorted}
-                numLabels={numPriority}
-                onLabelClick={(key, value) => {
-                  FilterSelected.resetFilters();
-                  const params = new URLSearchParams();
-                  params.set('namespaceLabel', `${key}=${value}`);
-                  router.navigate(`/${Paths.NAMESPACES}?${params.toString()}`);
-                }}
-                onSave={this.props.onSaveLabels}
-                title={t('Labels')}
-              />
-            );
-          })()}
+          <EditableLabelsCard
+            canEdit={this.props.canEdit}
+            labels={nsInfo.labels ?? {}}
+            onLabelClick={(key, value) =>
+              navigateToFilteredList(Paths.NAMESPACES, key, value, undefined, 'namespaceLabel')
+            }
+            onSave={this.props.onSaveLabels}
+            prioritizeIstio
+            prioritizeIstioCount
+            title={t('Labels')}
+          />
         </StackItem>
 
         <StackItem key="annotations" data-test="namespace-annotations-card">
-          {(() => {
-            const { sorted, numPriority } = partitionByIstio(nsInfo.annotations ?? {});
-            return (
-              <EditableAnnotationsCard
-                annotations={sorted}
-                canEdit={this.props.canEdit}
-                numAnnotations={numPriority}
-                onSave={this.props.onSaveAnnotations}
-                title={t('Annotations')}
-              />
-            );
-          })()}
+          <EditableAnnotationsCard
+            annotations={nsInfo.annotations ?? {}}
+            canEdit={this.props.canEdit}
+            onSave={this.props.onSaveAnnotations}
+            prioritizeIstio
+            prioritizeIstioCount
+            title={t('Annotations')}
+          />
         </StackItem>
       </>
     );
@@ -447,9 +422,9 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     return (
       <>
         <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack style={{ gap: '0.5rem' }}>{this.renderLeftCard()}</Stack>
+              <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />

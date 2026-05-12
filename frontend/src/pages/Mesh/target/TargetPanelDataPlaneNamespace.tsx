@@ -13,7 +13,7 @@ import { DirectionType, Show } from 'types/Common';
 import { MeshResourceType, switchMeshResourceType } from 'types/Mesh';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
-import { AmbientBadge } from 'components/Badge/AmbientBadge';
+import { ModeBadge } from 'components/Badge/ModeBadge';
 import { PFColors } from 'components/Pf/PfColors';
 import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
@@ -270,7 +270,9 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     return (
       <>
         {serverConfig.ambientEnabled && ns.labels && ns.isAmbient && (
-          <AmbientBadge tooltip={tooltip ? 'labeled as part of Ambient Mesh' : undefined}></AmbientBadge>
+          <span style={{ marginLeft: '0.5rem' }}>
+            <ModeBadge mode="ambient" popoverMessage={tooltip ? t('Labeled as part of Ambient Mesh') : undefined} />
+          </span>
         )}
       </>
     );

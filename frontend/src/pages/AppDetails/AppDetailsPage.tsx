@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
@@ -28,6 +28,8 @@ import { isPrometheusAvailable, serverConfig } from 'config';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { setAIContext } from 'helpers/ChatAI';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 
 type AppDetailsState = {
   app?: App;
@@ -297,7 +299,18 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
     return (
       <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.app && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.props.appId.app}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 

@@ -13,8 +13,10 @@ import {
   Tooltip
 } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
+import { partitionByIstio } from '../../pages/PageUtils';
 
 type EditableLabelsCardProps = {
   canEdit: boolean;
@@ -24,11 +26,13 @@ type EditableLabelsCardProps = {
   numLabels?: number;
   onLabelClick?: (key: string, value: string) => void;
   onSave: (labels: Record<string, string>) => void;
+  prioritizeIstio?: boolean;
+  prioritizeIstioCount?: boolean;
   title: string;
 };
 
 const noLabelsStyle = kialiStyle({
-  color: 'var(--pf-t--global--color--nonstatus--gray--default)',
+  color: 'var(--pf-t--global--text--color--subtle)',
   fontStyle: 'italic'
 });
 
@@ -50,18 +54,20 @@ const editableLabelStyle = kialiStyle({
   }
 });
 
-const NEW_LABEL_PLACEHOLDER = 'key=value';
-
-const formatLabel = (key: string, value: string): string => {
+const formatLabel = (key: string, value: string, placeholder: string): string => {
   if (key.length === 0 && value.length === 0) {
-    return NEW_LABEL_PLACEHOLDER;
+    return placeholder;
   }
   return value.length > 0 ? `${key}=${value}` : key;
 };
 
-const parseLabel = (text: string): [string, string] | undefined => {
+export const parseLabel = (text: string): [string, string] | undefined => {
   const eqIdx = text.indexOf('=');
-  if (eqIdx < 1) {
+  if (eqIdx === -1) {
+    const key = text.trim();
+    return key.length > 0 ? [key, ''] : undefined;
+  }
+  if (eqIdx === 0) {
     return undefined;
   }
   return [text.substring(0, eqIdx).trim(), text.substring(eqIdx + 1).trim()];
@@ -74,14 +80,17 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   isCompact = false,
   isVertical = true,
   labels,
-  numLabels = 5,
+  numLabels,
   onLabelClick,
   onSave,
+  prioritizeIstio = false,
+  prioritizeIstioCount = false,
   title
 }) => {
   const [editing, setEditing] = React.useState(false);
   const [editLabels, setEditLabels] = React.useState<LabelEntry[]>([]);
   const [validationError, setValidationError] = React.useState<string | undefined>();
+  const newLabelPlaceholder = `${t('key')}=${t('value')}`;
 
   const handleStartEditing = (): void => {
     setEditLabels(Object.entries(labels ?? {}).map(([key, value]) => ({ key, value })));
@@ -95,6 +104,11 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const validate = (entries: LabelEntry[]): string | undefined => {
+    const defaultKey = t('key');
+    const defaultValue = t('value');
+    if (entries.some(e => e.key === defaultKey && e.value === defaultValue)) {
+      return t('Default key=value is not valid, please edit key or value');
+    }
     const keys = entries.map(e => e.key);
     if (keys.some(k => k.length === 0)) {
       return t('Labels must have non-empty keys');
@@ -106,14 +120,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const handleSave = (): void => {
-    const nonEmpty = editLabels.filter(e => !(e.key.length === 0 && e.value.length === 0));
-    const err = validate(nonEmpty);
+    const err = validate(editLabels);
     if (err) {
       setValidationError(err);
       return;
     }
     const result: Record<string, string> = {};
-    nonEmpty.forEach(e => {
+    editLabels.forEach(e => {
       result[e.key] = e.value;
     });
     onSave(result);
@@ -122,15 +135,10 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const handleEditComplete = (idx: number, _event: MouseEvent | KeyboardEvent, newText: string): void => {
-    const trimmed = newText.trim();
-    if (trimmed === NEW_LABEL_PLACEHOLDER || trimmed.length === 0) {
-      return;
+    const parsed = parseLabel(newText.trim());
+    if (parsed) {
+      setEditLabels(prev => prev.map((entry, i) => (i === idx ? { key: parsed[0], value: parsed[1] } : entry)));
     }
-    const parsed = parseLabel(trimmed);
-    if (!parsed) {
-      return;
-    }
-    setEditLabels(prev => prev.map((entry, i) => (i === idx ? { key: parsed[0], value: parsed[1] } : entry)));
   };
 
   const handleClose = (idx: number): void => {
@@ -141,7 +149,12 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     setEditLabels(prev => [...prev, { key: '', value: '' }]);
   };
 
-  const labelEntries = Object.entries(labels ?? {});
+  const { sorted, istioCount } = prioritizeIstio ? partitionByIstio(labels ?? {}) : { sorted: labels, istioCount: 0 };
+  const effectiveNumLabels = prioritizeIstioCount ? istioCount : numLabels ?? 5;
+  const labelEntries = Object.entries(sorted ?? {});
+  if (!prioritizeIstio) {
+    labelEntries.sort(([a], [b]) => a.localeCompare(b));
+  }
   const hasLabels = labelEntries.length > 0;
 
   const headerActions = canEdit ? (
@@ -174,14 +187,14 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
         {validationError && (
           <Flex style={{ marginBottom: 'var(--pf-t--global--spacer--sm)' }}>
             <FlexItem>
-              <span style={{ color: 'var(--pf-t--global--color--nonstatus--red--default)' }}>{validationError}</span>
+              <span style={{ color: PFColors.Danger }}>{validationError}</span>
             </FlexItem>
           </Flex>
         )}
         {editing ? (
           <LabelGroup
             isVertical={isVertical}
-            numLabels={numLabels}
+            numLabels={999}
             isEditable
             addLabelControl={
               <Label variant="add" onClick={handleAdd}>
@@ -198,12 +211,12 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
                 onClose={() => handleClose(idx)}
                 isCompact={isCompact}
               >
-                {formatLabel(entry.key, entry.value)}
+                {formatLabel(entry.key, entry.value, newLabelPlaceholder)}
               </Label>
             ))}
           </LabelGroup>
         ) : hasLabels ? (
-          <LabelGroup isVertical={isVertical} numLabels={numLabels}>
+          <LabelGroup isVertical={isVertical} numLabels={effectiveNumLabels}>
             {labelEntries.map(([key, value]) => (
               <Label
                 key={`${key}=${value}`}
@@ -212,7 +225,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
                 tooltipPosition="top"
                 onClick={onLabelClick ? () => onLabelClick(key, value) : undefined}
               >
-                {formatLabel(key, value)}
+                {formatLabel(key, value, newLabelPlaceholder)}
               </Label>
             ))}
           </LabelGroup>

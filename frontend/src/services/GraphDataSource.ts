@@ -143,6 +143,10 @@ export class GraphDataSource {
     this._isError = this._isLoading = false;
   }
 
+  public destroy = (): void => {
+    this.promiseRegistry.cancelAll();
+  };
+
   public fetchGraphData = (fetchParams: FetchParams): void => {
     const previousFetchParams = this.fetchParameters;
 

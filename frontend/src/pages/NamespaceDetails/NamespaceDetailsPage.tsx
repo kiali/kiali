@@ -8,6 +8,7 @@ import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from 'services/Api';
 import { addError, addSuccess } from 'utils/AlertUtils';
+import { buildMetadataPatch } from '../PageUtils';
 import { ParameterizedTabs, activeTab } from 'components/Tab/Tabs';
 import { RenderHeader } from 'components/Nav/Page/RenderHeader';
 import { ErrorSection } from 'components/ErrorSection/ErrorSection';
@@ -34,29 +35,10 @@ import { MessageType } from 'types/NotificationCenter';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
-import { kialiStyle } from 'styles/StyleUtils';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
-
-const titleRowStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--md)',
-  marginTop: '0.5rem',
-  minWidth: 0,
-  width: '100%'
-});
-
-const titleMainStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flex: '1 1 auto',
-  flexWrap: 'nowrap',
-  gap: 'var(--pf-t--global--spacer--sm)',
-  minWidth: 0
-});
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -216,11 +198,17 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   private fetchControlPlanes = (): void => {
     API.getControlPlanes()
       .then(response => {
+        if (!this._isMounted) {
+          return;
+        }
         const controlPlanes = response.data;
         setControlPlaneRevisions(new Set(controlPlanes.map(cp => cp.revision)));
         this.setState({ controlPlanes });
       })
       .catch(err => {
+        if (!this._isMounted) {
+          return;
+        }
         addError(t('Error fetching control planes.'), err);
       });
   };
@@ -352,6 +340,10 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
           await this.enrichNamespaceInfo(base, effectiveCluster);
 
+          if (!this._isMounted) {
+            return;
+          }
+
           this.setState(
             {
               nsInfo: base,
@@ -368,6 +360,9 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         })
       )
       .catch(error => {
+        if (error?.isCanceled || !this._isMounted) {
+          return;
+        }
         addError(t('Could not fetch Namespace.'), error);
         this.setState({
           error: {
@@ -376,7 +371,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           },
           nsInfo: undefined
         });
-        return Promise.reject(error);
       });
   };
 
@@ -404,13 +398,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
     const original = (field === 'labels' ? this.state.nsInfo?.labels : this.state.nsInfo?.annotations) ?? {};
-    const patch: Record<string, string | null> = { ...updated };
-    Object.keys(original).forEach(key => {
-      if (!(key in updated)) {
-        patch[key] = null;
-      }
-    });
-    const jsonPatch = JSON.stringify({ metadata: { [field]: patch } });
+    const jsonPatch = buildMetadataPatch(field, original, updated);
 
     API.updateNamespace(this.props.namespace, jsonPatch, this.state.cluster)
       .then(() => {
@@ -446,16 +434,12 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     return (
       <>
-        <RenderHeader
-          actionsToolbar={actionsToolbar}
-          actionsToolbarTop="11.1rem"
-          rightToolbar={<TimeControl customDuration={false} />}
-        >
+        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
           {!this.state.error && ns && (
-            <div className={titleRowStyle} data-test="namespace-detail-title-row">
-              <div className={titleMainStyle}>
+            <div className={detailTitleRowStyle} data-test="namespace-detail-title-row">
+              <div className={detailTitleMainStyle}>
                 <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
                   {this.props.namespace}
                 </Title>
               </div>
@@ -469,6 +453,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}
@@ -498,7 +483,11 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             opTarget={this.state.opTarget}
             isOpen={this.state.showTrafficPoliciesModal}
             controlPlanes={this.state.controlPlanes?.filter(cp =>
-              cp.managedNamespaces?.some(mn => mn.name === this.state.nsTarget)
+              cp.managedNamespaces?.some(
+                mn =>
+                  mn.name === this.state.nsTarget &&
+                  (!this.state.clusterTarget || mn.cluster === this.state.clusterTarget)
+              )
             )}
             kind={this.state.kind}
             hideConfirmModal={this.handleHideTrafficManagement}

@@ -361,7 +361,8 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 	workload.Namespace = meta.Namespace
 	if tplMeta != nil && tplMeta.Labels != nil {
 		workload.TemplateLabels = tplMeta.Labels
-		// TODO: This is not right since the template labels won't match the workload's labels.
+		// TODO: workload.Labels exposes only the pod template labels, not the controller's own
+		// metadata.labels. If they differ (e.g. via external edit), Kiali won't show the controller labels.
 		workload.Labels = tplMeta.Labels
 		/** Check the labels app and version required by Istio in template Pods*/
 		if appLabelName, found := conf.GetAppLabelName(tplMeta.Labels); found {
@@ -374,7 +375,8 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 		workload.Labels = map[string]string{}
 	}
 	annotations := meta.Annotations
-	// TODO: This is not right since the template labels won't match the workload's labels.
+	// TODO: Same as labels above — only template annotations are exposed via workload.Annotations
+	// (except for Deployments which override this in ParseDeployment with the controller annotations).
 	if tplMeta.Annotations != nil {
 		workload.TemplateAnnotations = tplMeta.Annotations
 		annotations = tplMeta.Annotations

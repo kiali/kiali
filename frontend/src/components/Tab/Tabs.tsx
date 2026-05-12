@@ -6,6 +6,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 
 type TabsProps = {
+  actionsToolbar?: React.ReactNode;
   activeTab: string;
   className?: string;
   defaultTab: string;
@@ -30,7 +31,15 @@ const flexTabWrapperStyle = kialiStyle({
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
-  minHeight: 0
+  minHeight: 0,
+  position: 'relative'
+});
+
+const actionsToolbarStyle = kialiStyle({
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  zIndex: 1
 });
 
 type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
@@ -111,6 +120,8 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
   render(): React.ReactNode {
     return (
       <div className={classes(flexTabWrapperStyle, this.props.className, tabStyle)}>
+        {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
+
         <Tabs
           id={this.props.id}
           activeKey={this.activeIndex()}

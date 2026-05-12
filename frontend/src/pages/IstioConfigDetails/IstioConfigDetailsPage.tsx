@@ -23,10 +23,18 @@ import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsD
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
 import { Paths } from '../../config';
-import { getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, getIstioObject, mergeJsonPatch } from '../../utils/IstioConfigUtils';
+import { PFBadge } from '../../components/Pf/PfBadges';
+import { GVKToBadge } from '../../components/VirtualList/Config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
-import { constrainedScrollStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import {
+  constrainedScrollStyle,
+  detailTitleMainStyle,
+  detailTitleRowStyle,
+  flexFillStyle,
+  noShrinkStyle
+} from 'styles/FlexStyles';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import {
   Drawer,
@@ -36,7 +44,10 @@ import {
   DrawerContentBody,
   DrawerHead,
   DrawerPanelContent,
-  Tab
+  Tab,
+  Title,
+  TitleSizes,
+  TooltipPosition
 } from '@patternfly/react-core';
 import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { Refresh } from '../../components/Refresh/Refresh';
@@ -668,10 +679,29 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       <>
         <RefreshNotifier onTick={this.onRefresh} />
 
-        <RenderHeader
-          rightToolbar={<Refresh id="config_details_refresh" />}
-          actionsToolbar={!this.state.error ? this.renderActions() : undefined}
-        />
+        <RenderHeader rightToolbar={<Refresh id="config_details_refresh" />}>
+          {this.state.istioObjectDetails && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge
+                  badge={
+                    GVKToBadge[
+                      getGVKTypeString({
+                        Group: this.props.istioConfigId.objectGroup,
+                        Kind: this.props.istioConfigId.objectKind,
+                        Version: this.props.istioConfigId.objectVersion
+                      })
+                    ]
+                  }
+                  position={TooltipPosition.top}
+                />
+                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                  {this.props.istioConfigId.objectName}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 
@@ -679,6 +709,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={this.renderActions()}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}

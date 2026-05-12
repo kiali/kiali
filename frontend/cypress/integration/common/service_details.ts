@@ -28,27 +28,44 @@ Then('sd::user sees the service actions', () => {
 });
 
 Then('sd::user sees {string} details information for service {string}', (name: string, version: string) => {
-  cy.get('#ServiceDescriptionCard').within(() => {
-    cy.get('#pfbadge-S').parent().parent().parent().contains(name); // Service
-    cy.get('#pfbadge-A').parent().parent().parent().contains(name); // App
-    cy.get('#pfbadge-W').parent().parent().parent().contains(`${name}-${version}`); // Workload
+  cy.getBySel('service-resources-card').within(() => {
+    cy.get('#pfbadge-A').closest('li').contains(name); // App
+    cy.get('#pfbadge-W').closest('li').contains(`${name}-${version}`); // Workload
+  });
 
+  cy.getBySel('service-resources-card').within(() => {
     clusterParameterExists(false);
   });
 });
 
 Then('sd::user sees Network card', () => {
-  cy.get('#ServiceNetworkCard').within(() => {
-    cy.get('.pf-v6-c-card__body').contains('Service IP');
-    cy.get('.pf-v6-c-card__body').contains('Hostnames');
-  });
+  cy.get('#ServiceNetworkCard')
+    .scrollIntoView()
+    .within(() => {
+      cy.get('.pf-v6-c-card__body').contains('Service IP');
+      cy.get('.pf-v6-c-card__body').contains('Hostnames');
+    });
 });
 
 Then('sd::user sees Istio Config', () => {
-  cy.get('#IstioConfigCard').within(() => {
-    cy.get('#pfbadge-G').should('be.visible');
-    cy.get('#pfbadge-VS').should('be.visible');
-  });
+  cy.get('#IstioConfigCard')
+    .scrollIntoView()
+    .within(() => {
+      cy.get('#pfbadge-G').should('be.visible');
+      cy.get('#pfbadge-VS').should('be.visible');
+    });
+});
+
+Then('sd::user sees Resources card', () => {
+  cy.getBySel('service-resources-card').should('be.visible');
+});
+
+Then('sd::user sees Labels card', () => {
+  cy.getBySel('service-labels-card').scrollIntoView().should('be.visible');
+});
+
+Then('sd::user sees Annotations card', () => {
+  cy.getBySel('service-annotations-card').scrollIntoView().should('be.visible');
 });
 
 Then('sd::user sees inbound and outbound traffic information', () => {
@@ -97,7 +114,7 @@ Then('the graph type is disabled', () => {
 });
 
 Then('user sees {string} badge for service', (badge: string) => {
-  cy.get('#ServiceDescriptionCard').within(() => {
+  cy.getBySel('service-details-card').within(() => {
     cy.get('.pf-v6-c-label__content').contains(badge);
   });
 });

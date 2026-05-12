@@ -6,11 +6,12 @@ interface TimeProps {
 }
 
 export class LocalTime extends React.Component<TimeProps> {
-  render() {
+  render(): React.ReactNode {
     let renderedTime: string;
 
     if (this.props.time) {
-      renderedTime = toString(new Date(this.props.time).valueOf());
+      const date = new Date(this.props.time);
+      renderedTime = Number.isNaN(date.getTime()) || date.getFullYear() <= 1 ? 'Unknown' : toString(date.valueOf());
     } else {
       renderedTime = '-';
     }

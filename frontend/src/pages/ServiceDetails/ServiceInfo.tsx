@@ -1,9 +1,23 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { kialiStyle } from 'styles/StyleUtils';
-import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
-import { ServiceDescription } from './ServiceDescription';
-import { ServiceId, ServiceDetailsInfo } from '../../types/ServiceInfo';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Title,
+  TitleSizes,
+  Tooltip
+} from '@patternfly/react-core';
+import { ServiceId, ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
+import { AppWorkload } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
 import {
   DestinationRuleC,
@@ -16,7 +30,7 @@ import {
   PeerAuthentication,
   Validations
 } from '../../types/IstioObjects';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
@@ -44,6 +58,19 @@ import { addError, addSuccess } from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
+import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
+import { LocalTime } from '../../components/Time/LocalTime';
+import { TextOrLink } from '../../components/Link/TextOrLink';
+import { renderAPILogo } from '../../components/Logo/Logos';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
+import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
+import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
+import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
+import { getAppLabelName } from 'config/ServerConfig';
+import { Paths } from '../../config';
+import { navigateToFilteredList } from '../PageUtils';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -54,6 +81,8 @@ interface Props extends ServiceId, ReduxProps {
   duration: DurationInSeconds;
   gateways: Gateway[];
   k8sGateways: K8sGateway[];
+  onSaveAnnotations: (annotations: Record<string, string>) => void;
+  onSaveLabels: (labels: Record<string, string>) => void;
   peerAuthentications: PeerAuthentication[];
   serviceDetails?: ServiceDetailsInfo;
   validations: Validations;
@@ -61,18 +90,10 @@ interface Props extends ServiceId, ReduxProps {
 
 type ServiceInfoState = {
   showConfirmDeleteTrafficRouting: boolean;
-  // Wizards related
   showWizard: boolean;
   updateMode: boolean;
   wizardType: string;
 };
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  marginTop: '1rem',
-  minHeight: 0
-});
 
 class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   private promises = new PromisesRegistry();
@@ -90,6 +111,11 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
 
   componentDidMount(): void {
     this.fetchBackend();
+  }
+
+  componentWillUnmount(): void {
+    this.promises.cancelAll();
+    this.graphDataSource.destroy();
   }
 
   componentDidUpdate(prev: Props): void {
@@ -159,6 +185,225 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
       updateMode: mode === 'update'
     });
   };
+
+  private renderDetailsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    const service = sd.service;
+    let serviceType = t('Service');
+    if (service.type === 'External') {
+      serviceType = t('External Service');
+    }
+
+    return (
+      <StackItem key="details">
+        <Card data-test="service-details-card" isCompact>
+          <CardBody>
+            <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
+              {service.cluster && (
+                <DescriptionListGroup data-test="details-cluster">
+                  <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                  <DescriptionListDescription>{service.cluster}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              <DescriptionListGroup data-test="details-status">
+                <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <HealthStatusPopover health={sd.health} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-created">
+                <DescriptionListTerm>{t('Created')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <LocalTime time={service.createdAt} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-type">
+                <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                <DescriptionListDescription>{serviceType}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-version">
+                <DescriptionListTerm>{t('Version')}</DescriptionListTerm>
+                <DescriptionListDescription>{service.resourceVersion}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-mode">
+                <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ModeBadge
+                    isAmbient={sd.isAmbient}
+                    istioSidecar={sd.istioSidecar}
+                    popoverMessage={
+                      sd.isAmbient
+                        ? t(
+                            "All of this Service's Workloads are in the Ambient Mesh. For more information, see the Workload details."
+                          )
+                        : undefined
+                    }
+                  />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              {service.additionalDetails?.map((additionalItem, idx) => (
+                <DescriptionListGroup key={`additional-${idx}`}>
+                  <DescriptionListTerm>
+                    {additionalItem.title}
+                    {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                  </DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <TextOrLink text={additionalItem.value} urlTruncate={64} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              ))}
+
+              {service.selectors && Object.keys(service.selectors).length > 0 && (
+                <DescriptionListGroup data-test="details-selector">
+                  <DescriptionListTerm>{t('Selector')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <Tooltip
+                      content={
+                        <span style={{ whiteSpace: 'nowrap' }}>
+                          {Object.entries(service.selectors)
+                            .map(([k, v]) => `${k}=${v}`)
+                            .join(', ')}
+                        </span>
+                      }
+                      position="top"
+                      maxWidth="none"
+                    >
+                      <span
+                        style={{
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '100%'
+                        }}
+                      >
+                        {Object.entries(service.selectors)
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join(', ')}
+                      </span>
+                    </Tooltip>
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+            </DescriptionList>
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderResourcesCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    const apps: string[] = [];
+    const workloads: AppWorkload[] = [];
+
+    if (sd.workloads) {
+      sd.workloads
+        .sort((w1: WorkloadOverview, w2: WorkloadOverview) => (w1.name < w2.name ? -1 : 1))
+        .forEach(wk => {
+          if (wk.labels && !wk.isWaypoint && !wk.isZtunnel) {
+            const appLabelName = getAppLabelName(wk.labels);
+            if (appLabelName) {
+              const appName = wk.labels[appLabelName];
+              if (!apps.includes(appName)) {
+                apps.push(appName);
+              }
+            }
+          }
+
+          workloads.push({
+            namespace: wk.namespace,
+            workloadName: wk.name,
+            gvk: getIstioObjectGVK(wk.resourceVersion, wk.type),
+            istioSidecar: wk.istioSidecar,
+            isAmbient: wk.isAmbient,
+            isGateway: wk.isGateway,
+            isWaypoint: wk.isWaypoint,
+            isZtunnel: wk.isZtunnel,
+            serviceAccountNames: wk.serviceAccountNames,
+            labels: wk.labels ?? {},
+            spireInfo: wk.spireInfo
+          });
+        });
+    }
+
+    return (
+      <StackItem key="resources">
+        <Card data-test="service-resources-card" isCompact>
+          <CardHeader>
+            <Title headingLevel="h4" size={TitleSizes.md}>
+              {t('Related')}
+            </Title>
+          </CardHeader>
+          <CardBody>
+            <DetailDescription
+              namespace={this.props.namespace}
+              apps={apps.length > 0 ? apps : undefined}
+              workloads={workloads}
+              cluster={sd.service.cluster}
+              waypointWorkloads={sd.waypointWorkloads}
+            />
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderLabelsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    return (
+      <StackItem key="labels" data-test="service-labels-card">
+        <EditableLabelsCard
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          isVertical={false}
+          labels={sd.service.labels ?? {}}
+          numLabels={999}
+          onLabelClick={(key, value) => navigateToFilteredList(Paths.SERVICES, key, value, this.props.namespace)}
+          onSave={this.props.onSaveLabels}
+          prioritizeIstio
+          title={t('Labels')}
+        />
+      </StackItem>
+    );
+  }
+
+  private renderAnnotationsCard(): React.ReactNode {
+    const sd = this.props.serviceDetails;
+    if (!sd) {
+      return null;
+    }
+
+    return (
+      <StackItem key="annotations" data-test="service-annotations-card">
+        <EditableAnnotationsCard
+          annotations={sd.service.annotations ?? {}}
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          onSave={this.props.onSaveAnnotations}
+          prioritizeIstio
+          prioritizeIstioCount
+          title={t('Annotations')}
+        />
+      </StackItem>
+    );
+  }
 
   render(): React.ReactNode {
     const vsIstioConfigItems = this.props.serviceDetails?.virtualServices
@@ -246,12 +491,13 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
     return (
       <>
         <div className={flexFillStyle}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack hasGutter={true}>
-                <StackItem>
-                  <ServiceDescription namespace={this.props.namespace} serviceDetails={this.props.serviceDetails} />
-                </StackItem>
+              <Stack className={detailCardStackStyle}>
+                {this.renderDetailsCard()}
+                {this.renderResourcesCard()}
+                {this.renderLabelsCard()}
+                {this.renderAnnotationsCard()}
 
                 {this.props.serviceDetails &&
                   this.props.serviceDetails.workloads &&

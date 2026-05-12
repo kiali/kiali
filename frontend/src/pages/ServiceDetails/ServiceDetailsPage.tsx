@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { Tab } from '@patternfly/react-core';
+import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
@@ -12,7 +12,8 @@ import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
 import { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import * as API from '../../services/Api';
-import { addError } from '../../utils/AlertUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
+import { buildMetadataPatch } from '../PageUtils';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ServiceId, getServiceWizardLabel, ServiceDetailsInfo } from '../../types/ServiceInfo';
 import {
@@ -37,6 +38,9 @@ import { isPrometheusAvailable, serverConfig } from 'config';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
 import { gvkType } from '../../types/IstioConfigList';
 import { setAIContext } from 'helpers/ChatAI';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { t } from 'utils/I18nUtils';
 
 type ServiceDetailsState = {
   cluster?: string;
@@ -114,6 +118,40 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     }
   }
 
+  private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
+    const original =
+      (field === 'labels'
+        ? this.state.serviceDetails?.service?.labels
+        : this.state.serviceDetails?.service?.annotations) ?? {};
+    const jsonPatch = buildMetadataPatch(field, original, updated);
+
+    API.updateService(
+      this.props.serviceId.namespace,
+      this.props.serviceId.service,
+      jsonPatch,
+      undefined,
+      this.state.cluster
+    )
+      .then(() => {
+        addSuccess(t('Service {{service}} {{field}} updated', { service: this.props.serviceId.service, field }));
+        this.fetchService();
+      })
+      .catch(error => {
+        addError(
+          t('Could not update service {{service}} {{field}}', { service: this.props.serviceId.service, field }),
+          error
+        );
+      });
+  };
+
+  private handleSaveLabels = (labels: Record<string, string>): void => {
+    this.handleSaveMetadata('labels', labels);
+  };
+
+  private handleSaveAnnotations = (annotations: Record<string, string>): void => {
+    this.handleSaveMetadata('annotations', annotations);
+  };
+
   private fetchService = async (cluster?: string): Promise<void> => {
     if (!cluster) {
       cluster = this.state.cluster;
@@ -137,6 +175,9 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         this.setState({ k8sGateways: response.data.resources[getGVKTypeString(gvkType.K8sGateway)] });
       })
       .catch(gwError => {
+        if (gwError?.isCanceled) {
+          return;
+        }
         addError('Could not fetch Gateways list.', gwError);
       });
 
@@ -200,6 +241,8 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           serviceDetails={this.state.serviceDetails}
           gateways={this.state.gateways}
           k8sGateways={this.state.k8sGateways}
+          onSaveAnnotations={this.handleSaveAnnotations}
+          onSaveLabels={this.handleSaveLabels}
           peerAuthentications={this.state.peerAuthentications}
           validations={this.state.validations}
         />
@@ -275,7 +318,6 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         namespace={this.props.serviceId.namespace}
         cluster={this.state.cluster ? this.state.cluster : ''}
         serviceName={this.state.serviceDetails.service.name}
-        annotations={this.state.serviceDetails.service.annotations}
         show={false}
         readOnly={getServiceWizardLabel(this.state.serviceDetails.service) !== ''}
         workloads={this.state.serviceDetails.workloads || []}
@@ -295,7 +337,23 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     return (
       <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} actionsToolbar={actionsToolbar} />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.serviceDetails && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge
+                  badge={
+                    this.state.serviceDetails.service.type === 'External' ? PFBadges.ExternalService : PFBadges.Service
+                  }
+                  position={TooltipPosition.top}
+                />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.props.serviceId.service}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 
@@ -303,6 +361,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue });
             }}
