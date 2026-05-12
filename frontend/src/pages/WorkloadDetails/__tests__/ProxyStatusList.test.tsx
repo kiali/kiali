@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { ProxyStatusList } from '../ProxyStatusList';
 import { ProxyStatus } from '../../../types/Health';

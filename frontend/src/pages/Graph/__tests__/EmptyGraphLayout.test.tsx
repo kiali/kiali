@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { EmptyGraphLayout } from '../EmptyGraphLayout';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';

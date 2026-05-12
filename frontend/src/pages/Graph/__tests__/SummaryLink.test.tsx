@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import { renderBadgedLink } from '../SummaryLink';
 import { GraphNodeData, NodeType } from '../../../types/Graph';

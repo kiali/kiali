@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { act, render } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
 
