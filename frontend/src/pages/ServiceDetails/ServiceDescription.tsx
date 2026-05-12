@@ -195,7 +195,6 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
           namespace={props.namespace}
           apps={apps.length > 0 ? apps : undefined}
           workloads={workloads}
-          health={props.serviceDetails?.health}
           cluster={props.serviceDetails?.service.cluster}
           waypointWorkloads={props.serviceDetails?.waypointWorkloads}
         />

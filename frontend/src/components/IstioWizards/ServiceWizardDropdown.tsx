@@ -13,19 +13,15 @@ import {
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { serverConfig } from '../../config';
 import { TLSStatus } from '../../types/TLSStatus';
-import * as API from '../../services/Api';
 import {
-  buildAnnotationPatch,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
   WIZARD_REQUEST_TIMEOUTS,
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_K8S_REQUEST_ROUTING,
-  WIZARD_K8S_GRPC_REQUEST_ROUTING,
-  WIZARD_EDIT_ANNOTATIONS
+  WIZARD_K8S_GRPC_REQUEST_ROUTING
 } from './WizardActions';
-import { WizardLabels } from './WizardLabels';
 import { ServiceWizard } from './ServiceWizard';
 import { canCreate, canUpdate, ResourcePermissions } from '../../types/Permissions';
 import { ServiceWizardActionsDropdownGroup, DELETE_TRAFFIC_ROUTING } from './ServiceWizardActionsDropdownGroup';
@@ -37,7 +33,6 @@ import { t } from 'utils/I18nUtils';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
 type Props = {
-  annotations: { [key: string]: string };
   cluster?: string;
   destinationRules: DestinationRule[];
   gateways: string[];
@@ -60,7 +55,6 @@ type Props = {
 export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
   const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
   const [isActionsOpen, setIsActionsOpen] = React.useState<boolean>(false);
-  const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
   const [showConfirmDelete, setShowConfirmDelete] = React.useState<boolean>(false);
   const [showWizard, setShowWizard] = React.useState<boolean>(props.show);
   const [updateWizard, setUpdateWizard] = React.useState<boolean>(false);
@@ -116,10 +110,6 @@ export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
         setShowConfirmDelete(true);
         break;
       }
-      case WIZARD_EDIT_ANNOTATIONS: {
-        setShowAnnotationsWizard(true);
-        break;
-      }
       default:
         console.log('Unrecognized key');
     }
@@ -164,22 +154,6 @@ export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
       });
   };
 
-  const onChangeAnnotations = (annotations: { [key: string]: string }): void => {
-    const jsonInjectionPatch = buildAnnotationPatch(annotations);
-
-    API.updateService(props.namespace, props.serviceName, jsonInjectionPatch, 'json', props.cluster)
-      .then(_ => {
-        addSuccess(`Service ${props.serviceName} updated`);
-      })
-      .catch(error => {
-        addError(`Could not update service ${props.serviceName}`, error);
-      })
-      .finally(() => {
-        setShowAnnotationsWizard(false);
-        props.onChange();
-      });
-  };
-
   const hasMeshWorkloads = checkHasMeshWorkloads();
   const toolTipMsgActions = !hasMeshWorkloads
     ? t('There are no Workloads with sidecar for this service')
@@ -219,7 +193,6 @@ export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
           destinationRules={props.destinationRules}
           k8sHTTPRoutes={props.k8sHTTPRoutes ?? []}
           k8sGRPCRoutes={props.k8sGRPCRoutes ?? []}
-          annotations={props.annotations}
           istioPermissions={props.istioPermissions}
           onAction={onAction}
           onDelete={onAction}
@@ -232,15 +205,6 @@ export const ServiceWizardDropdown: React.FC<Props> = (props: Props) => {
       {!hasMeshWorkloads
         ? renderDisabledDropdownOption('tooltip_wizard_actions', TooltipPosition.top, toolTipMsgActions, dropdown)
         : dropdown}
-
-      <WizardLabels
-        showAnotationsWizard={showAnnotationsWizard}
-        type={'annotations'}
-        onChange={annotations => onChangeAnnotations(annotations)}
-        onClose={() => setShowAnnotationsWizard(false)}
-        labels={props.annotations}
-        canEdit={serverConfig.kialiFeatureFlags.istioAnnotationAction && !serverConfig.deployment.viewOnlyMode}
-      />
 
       <ServiceWizard
         show={showWizard}

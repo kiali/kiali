@@ -3,11 +3,12 @@ import { clusterParameterExists } from './navigation';
 import { openTab } from './transition';
 
 Then('user sees details information for a remote workload', () => {
-  cy.getBySel('workload-description-card').within(() => {
-    cy.get('#pfbadge-A').parent().parent().parent().contains('reviews'); // App
-    cy.get('#pfbadge-W').parent().parent().parent().contains('reviews-v2'); // Workload
-    cy.get('#pfbadge-S').parent().parent().parent().contains('reviews'); // Service
+  cy.getBySel('workload-resources-card').within(() => {
+    cy.get('#pfbadge-A').closest('li').contains('reviews'); // App
+    cy.get('#pfbadge-S').closest('li').contains('reviews'); // Service
+  });
 
+  cy.getBySel('workload-resources-card').within(() => {
     clusterParameterExists(true);
   });
 });

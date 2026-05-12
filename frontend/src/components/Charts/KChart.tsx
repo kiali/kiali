@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Button, EmptyState, EmptyStateBody, ButtonVariant, EmptyStateVariant } from '@patternfly/react-core';
 import { ChartArea, ChartBar, ChartScatter, ChartLine } from '@patternfly/react-charts/victory';
 import { CubesIcon, ErrorCircleOIcon } from '@patternfly/react-icons';
-
 import { ChartModel } from 'types/Dashboards';
 import { VCLines, RawOrBucket, RichDataPoint, LineInfo } from 'types/VictoryChartInfo';
 import { Overlay } from 'types/Overlay';
@@ -11,6 +10,7 @@ import { BrushHandlers } from './Container';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { t } from 'utils/I18nUtils';
 
 type KChartProps<T extends LineInfo> = {
   brushHandlers?: BrushHandlers;
@@ -263,7 +263,7 @@ export class KChart<T extends LineInfo> extends React.Component<KChartProps<T>, 
       >
         <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle} {...conditionalIcon}>
           <EmptyStateBody className={emptyStyle}>
-            An error occured while fetching this metric:
+            {t('An error occurred while fetching this metric:')}
             <p>
               <i>{this.props.chart.error}</i>
             </p>

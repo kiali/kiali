@@ -1,24 +1,59 @@
 import * as React from 'react';
-import { kialiStyle } from 'styles/StyleUtils';
 import * as API from '../../services/Api';
-import { addError } from '../../utils/AlertUtils';
+import {
+  Alert,
+  Card,
+  CardBody,
+  CardHeader,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Grid,
+  GridItem,
+  Stack,
+  StackItem,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
 import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
-import { WorkloadDescription } from './WorkloadDescription';
 import { WorkloadHealth } from '../../types/Health';
 import { Workload } from '../../types/Workload';
-import { Grid, GridItem, Stack, StackItem } from '@patternfly/react-core';
 import { activeTab } from '../../components/Tab/Tabs';
-import { detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
-import { isIstioNamespace, serverConfig } from '../../config/ServerConfig';
-import { gvkType, IstioConfigList, skipUnrelatedK8sGateways, toIstioItems } from '../../types/IstioConfigList';
+import { isIstioNamespace, serverConfig, getAppLabelName } from '../../config/ServerConfig';
+import {
+  gvkType,
+  IstioConfigList,
+  skipUnrelatedK8sGateways,
+  toIstioItems,
+  validationKey
+} from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
-import { getGVKTypeString, stringToGVK } from '../../utils/IstioConfigUtils';
+import { getGVKTypeString, isGVKSupported, stringToGVK } from '../../utils/IstioConfigUtils';
 import { WorkloadEntries } from './WorkloadEntries';
 import { Spire } from '../../components/Spire/Spire';
+import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
+import { LocalTime } from '../../components/Time/LocalTime';
+import { TextOrLink } from '../../components/Link/TextOrLink';
+import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
+import { hasMissingSidecar } from 'components/VirtualList/Config';
+import { MissingSidecar } from '../../components/MissingSidecar/MissingSidecar';
+import { MissingLabel } from '../../components/MissingLabel/MissingLabel';
+import { WorkloadConfigValidation } from '../../components/Validations/WorkloadConfigValidation';
+import { ModeBadge } from '../../components/Badge/ModeBadge';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
+import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
+import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
+import { Paths } from '../../config';
+import { navigateToFilteredList, buildWorkloadMetadataPatch } from '../PageUtils';
+import { t } from 'utils/I18nUtils';
+import { addError, addSuccess } from '../../utils/AlertUtils';
 
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
@@ -33,13 +68,6 @@ type WorkloadInfoState = {
   validations?: Validations;
   workloadIstioConfig?: IstioConfigList;
 };
-
-const gridStyle = kialiStyle({
-  alignItems: 'stretch',
-  flex: 1,
-  minHeight: 0,
-  paddingTop: '1rem'
-});
 
 const tabName = 'list';
 const defaultTab = 'pods';
@@ -70,8 +98,11 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     this.fetchBackend();
   }
 
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: WorkloadInfoProps): void {
-    // Fetch WorkloadInfo backend on duration changes or WorkloadDetailsPage update
     if (prev.duration !== this.props.duration || this.props.workload !== prev.workload) {
       this.fetchBackend();
     }
@@ -102,7 +133,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     });
 
     const workloadSelector = wkLabels.join(',');
-    // make sure workload selector is not empty, not to load all configs, this can happen when WorkloadGroup has no labels
     if (workloadSelector) {
       API.getIstioConfig(
         this.props.namespace,
@@ -119,7 +149,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     }
   };
 
-  // All information for validations is fetched in the workload, no need to add another call
   private workloadValidations(workload: Workload): Validations {
     const noIstiosidecar: ObjectCheck = {
       message: 'Pod has no Istio sidecar',
@@ -235,7 +264,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           // Pod healthy
         }
 
-        // If statusReason is present
         if (pod.statusReason) {
           validations.pod[pod.name].checks.push({
             message: pod.statusReason,
@@ -249,6 +277,283 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     }
 
     return validations;
+  }
+
+  private renderDetailsCard(workload: Workload): React.ReactNode {
+    const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
+
+    return (
+      <StackItem key="details">
+        <Card data-test="workload-details-card" isCompact>
+          <CardBody>
+            <DescriptionList columnModifier={{ default: '2Col' }} isCompact>
+              {workload.cluster && (
+                <DescriptionListGroup data-test="details-cluster">
+                  <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
+                  <DescriptionListDescription>{workload.cluster}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              <DescriptionListGroup data-test="details-status">
+                <DescriptionListTerm>{t('Status')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <HealthStatusPopover health={this.props.health} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-created">
+                <DescriptionListTerm>{t('Created')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <LocalTime time={workload.createdAt} />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-type">
+                <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
+                <DescriptionListDescription>{workload.gvk.Kind || 'N/A'}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-version">
+                <DescriptionListTerm>{t('Version')}</DescriptionListTerm>
+                <DescriptionListDescription>{workload.resourceVersion}</DescriptionListDescription>
+              </DescriptionListGroup>
+
+              <DescriptionListGroup data-test="details-mode">
+                <DescriptionListTerm>{t('Mode')}</DescriptionListTerm>
+                <DescriptionListDescription>
+                  <ModeBadge
+                    isAmbient={workload.isAmbient}
+                    istioSidecar={workload.istioSidecar}
+                    popoverMessage={
+                      workload.isAmbient ? (
+                        <div style={{ textAlign: 'left' }}>
+                          <ul style={{ paddingLeft: '1rem', margin: 0 }}>
+                            <li>
+                              <PFBadge badge={PFBadges.Ztunnel} size="sm" />
+                              {t('Captured by ztunnel for secure overlay with L4 capabilities')}
+                            </li>
+                            {workload.waypointWorkloads && workload.waypointWorkloads.length > 0 && (
+                              <li>
+                                <PFBadge badge={PFBadges.Waypoint} size="sm" />
+                                {t('Captured by a waypoint proxy for L7 processing')}
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      ) : undefined
+                    }
+                  />
+                </DescriptionListDescription>
+              </DescriptionListGroup>
+
+              {workload.istioInjectionAnnotation !== undefined && (
+                <DescriptionListGroup data-test="details-istio-injection">
+                  <DescriptionListTerm>{t('Istio Injection')}</DescriptionListTerm>
+                  <DescriptionListDescription>{String(workload.istioInjectionAnnotation)}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              {workload.isWaypoint && (
+                <DescriptionListGroup data-test="details-waypoint">
+                  <DescriptionListTerm>{t('Waypoint')}</DescriptionListTerm>
+                  <DescriptionListDescription>{t('true')}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              {!isGVKSupported(workload.gvk) && (
+                <DescriptionListGroup data-test="details-api-version">
+                  <DescriptionListTerm>{t('API Version')}</DescriptionListTerm>
+                  <DescriptionListDescription>{`${workload.gvk.Group}.${workload.gvk.Version}`}</DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
+              {workload.additionalDetails.map((additionalItem, idx) => (
+                <DescriptionListGroup key={`additional-${idx}`}>
+                  <DescriptionListTerm>
+                    {additionalItem.title}
+                    {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                  </DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <TextOrLink text={additionalItem.value} urlTruncate={64} />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              ))}
+
+              {runtimes.length > 0 && (
+                <DescriptionListGroup data-test="details-runtimes">
+                  <DescriptionListTerm>{t('Runtimes')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    {runtimes
+                      .map((rt, idx) => renderRuntimeLogo(rt, idx))
+                      .reduce(
+                        (list: React.ReactNode[], elem) =>
+                          list.length > 0 ? [...list, <span key="sep"> | </span>, elem] : [elem],
+                        []
+                      )}
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+              {(() => {
+                const detailItems: React.ReactNode[] = [];
+
+                const wkValidations =
+                  workload.validations?.['workload']?.[validationKey(workload.name, workload.namespace)];
+                if (wkValidations && wkValidations.checks.length > 0 && !isIstioNamespace(this.props.namespace)) {
+                  detailItems.push(
+                    <li key="validation">
+                      <WorkloadConfigValidation
+                        validations={wkValidations}
+                        namespace={this.props.namespace}
+                        iconSize={'md'}
+                        detailed={true}
+                      />
+                    </li>
+                  );
+                }
+
+                if (hasMissingSidecar(workload)) {
+                  detailItems.push(
+                    <li key="missing-sidecar">
+                      <MissingSidecar
+                        dataTest={`missing-sidecar-badge-for-${workload.name}-workload-in-${this.props.namespace}-namespace`}
+                      />
+                    </li>
+                  );
+                }
+
+                if (
+                  (!workload.appLabel || !workload.versionLabel) &&
+                  !workload.isWaypoint &&
+                  !workload.spireInfo?.isSpireServer
+                ) {
+                  detailItems.push(
+                    <li key="missing-label">
+                      <MissingLabel
+                        missingApp={!workload.appLabel}
+                        missingVersion={!workload.versionLabel}
+                        tooltip={false}
+                      />
+                    </li>
+                  );
+                }
+
+                if (!isGVKSupported(workload.gvk)) {
+                  detailItems.push(
+                    <li key="unsupported-type">
+                      <Alert
+                        variant="info"
+                        isInline={true}
+                        title={t('Kiali can only supply limited information for this workload type')}
+                        style={{ marginTop: '0.25rem' }}
+                      />
+                    </li>
+                  );
+                }
+
+                if (detailItems.length === 0) {
+                  return null;
+                }
+
+                return (
+                  <DescriptionListGroup data-test="details-details">
+                    <DescriptionListTerm>{t('Details')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>{detailItems}</ul>
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                );
+              })()}
+            </DescriptionList>
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private renderResourcesCard(workload: Workload): React.ReactNode {
+    const apps: string[] = [];
+    const services: string[] = [];
+
+    if (!workload.isWaypoint && !workload.isZtunnel) {
+      const appLabelName = getAppLabelName(workload.labels);
+      if (appLabelName) {
+        apps.push(workload.labels[appLabelName]);
+      }
+    }
+
+    workload.services?.forEach(s => services.push(s.name));
+
+    return (
+      <StackItem key="resources">
+        <Card data-test="workload-resources-card" isCompact>
+          <CardHeader>
+            <Title headingLevel="h4" size={TitleSizes.md}>
+              {t('Related')}
+            </Title>
+          </CardHeader>
+          <CardBody>
+            <DetailDescription
+              namespace={this.props.namespace}
+              apps={apps.length > 0 ? apps : undefined}
+              services={services}
+              cluster={workload.cluster}
+              isWaypoint={workload.isWaypoint}
+              waypointWorkloads={!workload.isWaypoint ? workload.waypointWorkloads : []}
+            />
+          </CardBody>
+        </Card>
+      </StackItem>
+    );
+  }
+
+  private handleSaveMetadata = (field: 'labels' | 'annotations', updated: Record<string, string>): void => {
+    const workload = this.props.workload;
+    if (!workload) {
+      return;
+    }
+    const original = (field === 'labels' ? workload.labels : workload.annotations) ?? {};
+    const jsonPatch = buildWorkloadMetadataPatch(field, original, updated, workload.gvk.Kind);
+
+    API.updateWorkload(this.props.namespace, workload.name, workload.gvk, jsonPatch, undefined, workload.cluster)
+      .then(() => {
+        addSuccess(t('Workload {{workload}} {{field}} updated', { workload: workload.name, field }));
+        this.props.refreshWorkload();
+      })
+      .catch(error => {
+        addError(t('Could not update workload {{workload}} {{field}}', { workload: workload.name, field }), error);
+      });
+  };
+
+  private renderLabelsCard(workload: Workload): React.ReactNode {
+    return (
+      <StackItem key="labels" data-test="workload-labels-card">
+        <EditableLabelsCard
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          isVertical={false}
+          labels={workload.labels ?? {}}
+          numLabels={999}
+          onLabelClick={(key, value) => navigateToFilteredList(Paths.WORKLOADS, key, value, this.props.namespace)}
+          onSave={labels => this.handleSaveMetadata('labels', labels)}
+          prioritizeIstio
+          title={t('Labels')}
+        />
+      </StackItem>
+    );
+  }
+
+  private renderAnnotationsCard(workload: Workload): React.ReactNode {
+    return (
+      <StackItem key="annotations" data-test="workload-annotations-card">
+        <EditableAnnotationsCard
+          annotations={workload.annotations ?? {}}
+          canEdit={!serverConfig.deployment.viewOnlyMode}
+          onSave={annotations => this.handleSaveMetadata('annotations', annotations)}
+          prioritizeIstio
+          prioritizeIstioCount
+          title={t('Annotations')}
+        />
+      </StackItem>
+    );
   }
 
   render(): React.ReactNode {
@@ -266,16 +571,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return (
       <>
         <div className={flexFillStyle}>
-          <Grid hasGutter={true} className={gridStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
             <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack hasGutter={true}>
-                <StackItem>
-                  <WorkloadDescription
-                    workload={workload}
-                    health={this.props.health}
-                    namespace={this.props.namespace}
-                  />
-                </StackItem>
+              <Stack className={detailCardStackStyle}>
+                {workload && this.renderDetailsCard(workload)}
+                {workload && this.renderResourcesCard(workload)}
+                {workload && this.renderLabelsCard(workload)}
+                {workload && this.renderAnnotationsCard(workload)}
 
                 {workload && workload?.spireInfo?.isSpireManaged && (
                   <StackItem>

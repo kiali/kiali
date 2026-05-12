@@ -1,22 +1,20 @@
 import * as React from 'react';
 import {
-	Button,
-	ButtonVariant,
-	Dropdown,
-	DropdownItem,
-	DropdownList,
-	MenuToggle,
-	MenuToggleElement,
-	Content,
-	ContentVariants,
-	TooltipPosition
+  Button,
+  ButtonVariant,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  Content,
+  ContentVariants,
+  TooltipPosition
 } from '@patternfly/react-core';
-import {
-	Modal,
-	ModalVariant
-} from '@patternfly/react-core/deprecated';
+import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
+import { t } from 'utils/I18nUtils';
 
 type IstioActionDropdownProps = {
   canDelete: boolean;
@@ -29,23 +27,23 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
   const [showConfirmModal, setShowConfirmModal] = React.useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
-  const onSelect = () => {
+  const onSelect = (): void => {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const onToggle = (dropdownState: boolean) => {
+  const onToggle = (dropdownState: boolean): void => {
     setDropdownOpen(dropdownState);
   };
 
-  const hideConfirmModal = () => {
+  const hideConfirmModal = (): void => {
     setShowConfirmModal(false);
   };
 
-  const onClickDelete = () => {
+  const onClickDelete = (): void => {
     setShowConfirmModal(true);
   };
 
-  const onDelete = () => {
+  const onDelete = (): void => {
     setShowConfirmModal(false);
     props.onDelete();
   };
@@ -59,7 +57,12 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
   );
 
   const deleteActionWrapper = serverConfig.deployment.viewOnlyMode
-    ? renderDisabledDropdownOption('delete', TooltipPosition.left, 'User does not have permission', deleteAction)
+    ? renderDisabledDropdownOption(
+        'delete',
+        TooltipPosition.left,
+        t('No user permission or Kiali in view-only mode'),
+        deleteAction
+      )
     : deleteAction;
 
   return (

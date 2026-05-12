@@ -251,7 +251,6 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           namespace={props.namespace}
           apps={apps.length > 0 ? apps : undefined}
           services={services}
-          health={props.health}
           cluster={props.workload?.cluster}
           isWaypoint={workload.isWaypoint}
           waypointWorkloads={!workload.isWaypoint ? workload.waypointWorkloads : []}

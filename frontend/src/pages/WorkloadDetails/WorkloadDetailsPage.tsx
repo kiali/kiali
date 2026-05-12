@@ -1,6 +1,14 @@
 import * as React from 'react';
 import { connect, DispatchProp } from 'react-redux';
-import { EmptyState, EmptyStateBody, EmptyStateVariant, Tab } from '@patternfly/react-core';
+import {
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Tab,
+  Title,
+  TitleSizes,
+  TooltipPosition
+} from '@patternfly/react-core';
 import * as API from '../../services/Api';
 import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
@@ -31,6 +39,8 @@ import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { setAIContext } from 'helpers/ChatAI';
+import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -414,7 +424,18 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return (
       <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />} actionsToolbar={actionsToolbar} />
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.workload && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.state.workload.name}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
 
         {this.state.error && <ErrorSection error={this.state.error} />}
 
@@ -422,6 +443,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           <ParameterizedTabs
             id="basic-tabs"
             className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue, cluster: this.state.cluster });
             }}

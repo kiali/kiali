@@ -1,4 +1,5 @@
 import { kialiStyle } from './StyleUtils';
+import { PFSpacer } from './PfSpacer';
 
 // Flex column that fills its parent. Tab content areas and similar
 // containers use this to participate in the page flex chain.
@@ -58,6 +59,62 @@ export const noShrinkStyle = kialiStyle({
 // Top margin for Cards rendered inside tab content areas.
 export const tabCardStyle = kialiStyle({
   marginTop: '1rem'
+});
+
+// Title row used in detail pages (App/Service/Workload/Namespace).
+// Contains the badge + title in a flex row.
+export const detailTitleRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'nowrap',
+  gap: PFSpacer.md,
+  marginTop: '0.5rem',
+  minWidth: 0,
+  width: '100%'
+});
+
+// Main title content area inside the detail title row.
+export const detailTitleMainStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flex: '1 1 auto',
+  flexWrap: 'nowrap',
+  gap: PFSpacer.sm,
+  minWidth: 0
+});
+
+// Grid layout for info panels on detail pages.
+export const detailGridStyle = kialiStyle({
+  alignItems: 'stretch',
+  flex: 1,
+  marginTop: '1rem',
+  minHeight: 0
+});
+
+// Page title inside detail pages — removes default margin and prevents
+// the title from shrinking when the actions area grows.
+export const detailPageTitleStyle = kialiStyle({
+  margin: 0,
+  flexShrink: 0
+});
+
+// Stack gap used between cards in detail page left columns.
+export const detailCardStackStyle = kialiStyle({
+  gap: '0.5rem'
+});
+
+// Inline-flex row for icon + text combinations (health status, badges, etc.).
+export const inlineIconRowStyle = kialiStyle({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.25rem'
+});
+
+// Clickable inline-flex trigger for popovers and expandable elements.
+export const clickableInlineStyle = kialiStyle({
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center'
 });
 
 // Scrollable flex child for use inside a CardBody or similar container.
