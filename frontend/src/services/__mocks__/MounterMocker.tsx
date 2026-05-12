@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import * as API from '../Api';
 import { Provider } from 'react-redux';

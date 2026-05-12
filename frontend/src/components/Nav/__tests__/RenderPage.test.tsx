@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
 import { ExternalServiceInfo } from '../../../types/StatusState';

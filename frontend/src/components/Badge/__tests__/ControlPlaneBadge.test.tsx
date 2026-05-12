@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ControlPlaneBadge } from '../ControlPlaneBadge';
 import { MemoryRouter } from 'react-router-dom-v5-compat';

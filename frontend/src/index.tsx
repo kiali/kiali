@@ -1,4 +1,3 @@
-import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { globalStyle } from 'styles/GlobalStyle';
 import { RouterProvider } from 'react-router-dom-v5-compat';
