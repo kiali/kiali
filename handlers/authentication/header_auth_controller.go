@@ -147,6 +147,8 @@ func (c headerAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	tokenSubject, err := c.homeClusterSAClient.GetTokenSubject(authInfo)
 	if err == nil {
 		r.Header.Set("Kiali-User", strings.TrimPrefix(tokenSubject, "system:serviceaccount:"))
+	} else {
+		log.Warningf("Could not verify token subject for audit header [client: %s]: %v", r.RemoteAddr, err)
 	}
 
 	return UserSessions{

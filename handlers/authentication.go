@@ -248,7 +248,7 @@ func Logout(conf *config.Config, authController authentication.AuthController) h
 				if e, ok := err.(*authentication.TerminateSessionError); ok {
 					RespondWithError(w, e.HttpStatus, e.Error())
 				} else {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
+					RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				}
 			} else {
 				log.Infof("Logout completed [client: %s]", r.RemoteAddr)
