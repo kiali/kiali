@@ -283,7 +283,7 @@ func TestValidateOpenIdTokenInHouse(t *testing.T) {
 	// we start with a good token - our second test will switch this to the token with the bad aud value
 	openIdTestTokenToUse := openIdTestTokenWithGoodAud
 
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	var jwksResponseBytes []byte
 	testServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -490,7 +490,7 @@ func TestOpenIdAuthControllerRejectsImplicitFlow(t *testing.T) {
 /*** Authorization code flow tests ***/
 
 func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -595,7 +595,7 @@ func TestOpenIdAuthControllerAuthenticatesCorrectlyWithAuthorizationCodeFlow(t *
 }
 
 func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -676,7 +676,7 @@ func TestOpenIdCodeFlowShouldFailWithMissingIdTokenFromOpenIdServer(t *testing.T
 }
 
 func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -755,7 +755,7 @@ func TestOpenIdCodeFlowShouldFailWithBadResponseFromTokenEndpoint(t *testing.T) 
 }
 
 func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -834,7 +834,7 @@ func TestOpenIdCodeFlowShouldFailWithNonJsonResponse(t *testing.T) {
 }
 
 func TestOpenIdCodeFlowShouldFailWithNonJwtIdToken(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -956,7 +956,7 @@ func TestOpenIdCodeFlowShouldRejectMissingAuthorizationCode(t *testing.T) {
 }
 
 func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -1037,7 +1037,7 @@ func TestOpenIdCodeFlowShouldFailWithIdTokenWithoutExpiration(t *testing.T) {
 }
 
 func TestOpenIdCodeFlowShouldFailWithIdTokenWithNonNumericExpClaim(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -1295,7 +1295,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceCookie(t *testing.T) {
 }
 
 func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/.well-known/openid-configuration" {
@@ -1368,7 +1368,7 @@ func TestOpenIdCodeFlowShouldRejectMissingNonceInToken(t *testing.T) {
 
 	// Redirection to boot the UI
 	q := url.Values{}
-	q.Add("openid_error", "OpenId token rejected: nonce code mismatch")
+	q.Add("openid_error", "OpenId token rejected: nonce claim is absent")
 	assert.Equal(t, "/kiali-test/?"+q.Encode(), response.Header.Get("Location"))
 	assert.Equal(t, http.StatusFound, response.StatusCode)
 }
@@ -1499,11 +1499,11 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		}
 
 		// Mock the metadata to point to our token server
-		cachedOpenIdMetadata = &openIdMetadata{
+		cachedOpenIdMetadata.Store(&openIdMetadata{
 			Issuer:   "https://example.com",
 			TokenURL: tokenServer.URL,
-		}
-		defer func() { cachedOpenIdMetadata = nil }()
+		})
+		defer func() { cachedOpenIdMetadata.Store(nil) }()
 
 		flow.requestOpenIdToken("http://localhost/callback")
 
@@ -1552,11 +1552,11 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		}
 
 		// Mock the metadata
-		cachedOpenIdMetadata = &openIdMetadata{
+		cachedOpenIdMetadata.Store(&openIdMetadata{
 			Issuer:   "https://example.com",
 			TokenURL: tokenServer.URL,
-		}
-		defer func() { cachedOpenIdMetadata = nil }()
+		})
+		defer func() { cachedOpenIdMetadata.Store(nil) }()
 
 		flow.requestOpenIdToken("http://localhost/callback")
 
@@ -1590,11 +1590,11 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 		}
 
 		// Mock the metadata
-		cachedOpenIdMetadata = &openIdMetadata{
+		cachedOpenIdMetadata.Store(&openIdMetadata{
 			Issuer:   "https://example.com",
 			TokenURL: "https://example.com/token",
-		}
-		defer func() { cachedOpenIdMetadata = nil }()
+		})
+		defer func() { cachedOpenIdMetadata.Store(nil) }()
 
 		flow.requestOpenIdToken("http://localhost/callback")
 
@@ -1607,7 +1607,7 @@ func TestRequestOpenIdToken_UsesGetCredential(t *testing.T) {
 /*** Explicit OIDC endpoints tests ***/
 
 func TestOpenIdAuthControllerUsesExplicitEndpointsWhenProvided(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	// Test server that should NOT be called for auto-discovery
 	autoDiscoveryCallCount := 0
@@ -1675,7 +1675,7 @@ func TestOpenIdAuthControllerUsesExplicitEndpointsWhenProvided(t *testing.T) {
 }
 
 func TestOpenIdAuthControllerDiscoveryOverride(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	autoDiscoveryCallCount := 0
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1730,7 +1730,7 @@ func TestOpenIdAuthControllerDiscoveryOverride(t *testing.T) {
 }
 
 func TestOpenIdAuthControllerFallsBackToAutoDiscoveryWhenExplicitEndpointsMissing(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	autoDiscoveryCallCount := 0
 	var oidcMetadata []byte
@@ -1776,7 +1776,7 @@ func TestOpenIdAuthControllerFallsBackToAutoDiscoveryWhenExplicitEndpointsMissin
 }
 
 func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForDiscoveryOverride(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	autoDiscoveryCallCount := 0
 	var oidcMetadata []byte
@@ -1814,7 +1814,7 @@ func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForDiscov
 	assert.Equal(t, 1, autoDiscoveryCallCount, "Auto-discovery should be called when token_endpoint is missing in DiscoveryOverride")
 
 	// Reset for next test
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	autoDiscoveryCallCount = 0
 
 	// Test case 2: Only token_endpoint in DiscoveryOverride (should use auto-discovery)
@@ -1830,7 +1830,7 @@ func TestOpenIdAuthControllerRequiresBothAuthorizationAndTokenEndpointsForDiscov
 }
 
 func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverride(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	conf := config.NewConfig()
 	conf.Auth.OpenId.IssuerUri = "https://example.com"
@@ -1855,7 +1855,7 @@ func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverrid
 	// Test with UserInfoEndpoint provided in DiscoveryOverride
 	conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint = "https://example.com/userinfo"
 	config.Set(conf)
-	cachedOpenIdMetadata = nil // Reset cache
+	cachedOpenIdMetadata.Store(nil) // Reset cache
 
 	metadata, err = getOpenIdMetadata(conf)
 	require.NoError(t, err)
@@ -1873,7 +1873,7 @@ func TestOpenIdAuthControllerHandlesOptionalUserInfoEndpointWithDiscoveryOverrid
 // authorization code to the client that requested it. Without proper PKCE implementation, the authentication
 // flow would be vulnerable to malicious actors intercepting and using authorization codes.
 func TestOpenIdRedirectHandlerGeneratesPKCEParameters(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 
 	// Setup mock OIDC server
 	var oidcMetadata []byte
@@ -2031,7 +2031,7 @@ func TestOpenIdCodeFlowShouldRejectMissingCodeVerifierCookie(t *testing.T) {
 // sending PKCE parameters but not requiring provider validation, we provide enhanced security for modern
 // providers while maintaining compatibility with legacy systems.
 func TestOpenIdPKCEWorksWithProviderThatIgnoresIt(t *testing.T) {
-	cachedOpenIdMetadata = nil
+	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte
 
 	// Setup mock OIDC server that ignores PKCE parameters (simulates older provider)

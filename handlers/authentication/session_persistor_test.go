@@ -1075,3 +1075,125 @@ func TestReadAllSessions_WorksWithNumericEndingKeys(t *testing.T) {
 
 	assert.Empty(t, readRR.Result().Cookies(), "No cookies should be dropped")
 }
+
+func TestReadAllSessions_RejectsExpiredSession(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	payload := testSessionPayload{FirstField: "expired-session"}
+	expiresTime := clockTime.Add(time.Hour)
+	cookies := newValidSessionCookies(t, persistor, "cluster1", conf.Auth.Strategy, expiresTime, payload)
+
+	// Advance clock past the session's expiry
+	util.Clock = util.ClockMock{Time: clockTime.Add(2 * time.Hour)}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	for _, c := range cookies {
+		request.AddCookie(c)
+	}
+
+	readRR := httptest.NewRecorder()
+	sessions, err := persistor.ReadAllSessions(request, readRR)
+
+	require.Error(err)
+	require.Nil(sessions)
+	assert.True(t, errors.Is(err, ErrSessionNotFound))
+
+	// The expired session cookie should have been terminated
+	droppedCookies := readRR.Result().Cookies()
+	assert.NotEmpty(t, droppedCookies, "Expired session cookie should be terminated")
+}
+
+func TestReadAllSessions_RejectsMismatchedStrategy(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "openshift"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	payload := testSessionPayload{FirstField: "old-strategy-session"}
+	expiresTime := clockTime.Add(time.Hour)
+	cookies := newValidSessionCookies(t, persistor, "cluster1", conf.Auth.Strategy, expiresTime, payload)
+
+	// Reconfigure to a different strategy
+	conf.Auth.Strategy = "token"
+
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	for _, c := range cookies {
+		request.AddCookie(c)
+	}
+
+	readRR := httptest.NewRecorder()
+	sessions, err := persistor.ReadAllSessions(request, readRR)
+
+	require.Error(err)
+	require.Nil(sessions)
+	assert.True(t, errors.Is(err, ErrSessionNotFound))
+
+	// The mismatched-strategy session cookie should have been terminated
+	droppedCookies := readRR.Result().Cookies()
+	assert.NotEmpty(t, droppedCookies, "Mismatched strategy session cookie should be terminated")
+}
+
+func TestReadAllSessions_MixedValidAndInvalidSessions(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Server.WebRoot = "/kiali-app"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = "test"
+
+	clockTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	persistor, err := NewCookieSessionPersistor[testSessionPayload](conf)
+	require.NoError(err)
+
+	// Create a session that will expire in 1 hour (valid)
+	validPayload := testSessionPayload{FirstField: "valid-session"}
+	validCookies := newValidSessionCookies(t, persistor, "good-cluster", conf.Auth.Strategy, clockTime.Add(time.Hour), validPayload)
+
+	// Create a session that expires in 30 minutes (will be expired when we advance the clock)
+	expiredPayload := testSessionPayload{FirstField: "expired-session"}
+	expiredCookies := newValidSessionCookies(t, persistor, "expired-cluster", conf.Auth.Strategy, clockTime.Add(30*time.Minute), expiredPayload)
+
+	// Advance clock to 45 minutes: the 30-minute session is expired, the 1-hour session is still valid
+	util.Clock = util.ClockMock{Time: clockTime.Add(45 * time.Minute)}
+
+	request := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	for _, c := range validCookies {
+		request.AddCookie(c)
+	}
+	for _, c := range expiredCookies {
+		request.AddCookie(c)
+	}
+
+	readRR := httptest.NewRecorder()
+	sessions, err := persistor.ReadAllSessions(request, readRR)
+
+	require.NoError(err)
+	require.Len(sessions, 1, "Only the valid session should be returned")
+	assert.Equal(t, "good-cluster", sessions[0].Cluster)
+	assert.Equal(t, "valid-session", sessions[0].Payload.FirstField)
+
+	// The expired session should have been terminated
+	droppedCookies := readRR.Result().Cookies()
+	assert.NotEmpty(t, droppedCookies, "Expired session cookie should be terminated")
+}

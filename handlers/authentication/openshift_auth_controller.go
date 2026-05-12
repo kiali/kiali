@@ -213,6 +213,10 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			SessionID: "",
 			Username:  user.Name,
 		}
+		// WARNING: Reading the bearer token from a URL query parameter exposes it in proxy/access
+		// logs, browser history, and Referer headers. This path exists because OpenShift's OAuth
+		// server redirects back with the token as a query parameter. Operators should configure
+		// their proxy/ingress to strip or mask the oauth_token parameter from access logs.
 	} else if authToken := r.URL.Query().Get("oauth_token"); len(authToken) != 0 {
 		token := strings.TrimSpace(authToken)
 		expires := util.Clock.Now().Add(time.Second * time.Duration(o.conf.LoginToken.ExpirationSeconds))
@@ -265,7 +269,7 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		return nil, fmt.Errorf("no valid session found for home cluster")
 	} else {
 		// Internal header used to propagate the subject of the request for audit purposes
-		r.Header.Add("Kiali-User", homeClusterUserSession.Username)
+		r.Header.Set("Kiali-User", homeClusterUserSession.Username)
 	}
 
 	return userSessions, nil
