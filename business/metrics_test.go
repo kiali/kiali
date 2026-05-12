@@ -377,6 +377,26 @@ func TestCreateStatsMetricsLabelsBuilder(t *testing.T) {
 		QueryTime: time.Now(),
 	}
 	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
+	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
+}
+
+func TestCreateStatsMetricsLabelsBuilderWithoutAmbient(t *testing.T) {
+	assert := assert.New(t)
+	includeAmbient := false
+	q := models.MetricsStatsQuery{
+		Target: models.Target{
+			Namespace: "ns3",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		IncludeAmbient: &includeAmbient,
+		Direction:      "inbound",
+		Interval:       "3h",
+		Avg:            true,
+		Quantiles:      []string{"0.90", "0.5"},
+		QueryTime:      time.Now(),
+	}
+	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
@@ -400,7 +420,7 @@ func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
 		QueryTime: time.Now(),
 	}
 	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
-	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
+	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
 }
 
 func TestGetMetricsStats(t *testing.T) {
@@ -449,8 +469,8 @@ func TestGetMetricsStats(t *testing.T) {
 	q1P95 := model.Vector{createSample(8)}
 	q2P50 := model.Vector{createSample(6.3)}
 	q2P95 := model.Vector{createSample(9.3)}
-	q1Labels := `reporter="source",source_workload_namespace="ns1",source_canonical_service="foo"`
-	q2Labels := `reporter="destination",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
+	q1Labels := `reporter=~"source|waypoint",source_workload_namespace="ns1",source_canonical_service="foo"`
+	q2Labels := `reporter=~"destination|waypoint",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
 	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q1Labels+"}[30m]", q1Avg, v0, q1P95, v0)
 	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q2Labels+"}[3h]", v0, q2P50, q2P95, v0)
 

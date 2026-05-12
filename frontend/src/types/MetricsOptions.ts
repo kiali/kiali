@@ -23,10 +23,10 @@ export type Aggregator = 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'stdvar';
 
 export interface IstioMetricsOptions extends MetricsQuery {
   direction: Direction;
-  includeAmbient: boolean;
   filters?: string[];
-  requestProtocol?: string;
+  includeAmbient: boolean;
   reporter: Reporter;
+  requestProtocol?: string;
 }
 
 export type Reporter = 'source' | 'destination' | 'both';
@@ -42,6 +42,7 @@ export interface Target {
 export interface MetricsStatsQuery {
   avg: boolean;
   direction: Direction;
+  includeAmbient?: boolean;
   interval: string;
   peerTarget?: Target;
   quantiles: string[];

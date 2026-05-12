@@ -68,15 +68,16 @@ type Target struct {
 }
 
 type MetricsStatsQuery struct {
-	Target       Target
-	PeerTarget   *Target
-	RawQueryTime int64     `json:"queryTime"`
-	QueryTime    time.Time `json:"-"`
-	RawInterval  string    `json:"interval"`
-	Interval     string    `json:"-"`
-	Direction    string    // outbound | inbound
-	Avg          bool
-	Quantiles    []string
+	Target         Target
+	PeerTarget     *Target
+	IncludeAmbient *bool     `json:"includeAmbient,omitempty"`
+	RawQueryTime   int64     `json:"queryTime"`
+	QueryTime      time.Time `json:"-"`
+	RawInterval    string    `json:"interval"`
+	Interval       string    `json:"-"`
+	Direction      string    // outbound | inbound
+	Avg            bool
+	Quantiles      []string
 }
 
 func (q *MetricsStatsQuery) Validate() *util.Errors {

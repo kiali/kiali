@@ -250,6 +250,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                 target={this.props.appId.app}
                 targetKind={'app'}
                 fromWaypoint={fromWaypoint}
+                includeAmbient={fromWaypoint || !!this.state.app?.isAmbient}
               />
             </Tab>
           );

@@ -56,18 +56,34 @@ const traceDifferentOperations = {
   ] as Span[]
 } as JaegerTrace;
 
-const mockEnvoySpan = (op: string, duration: number, wkd: string): RichSpanData => {
+const mockEnvoySpan = (op: string, duration: number, wkd: string, waypoint = false): RichSpanData => {
   const spanInfo = { direction: 'inbound' } as EnvoySpanInfo;
   return {
+    app: 'app',
+    component: 'proxy',
     type: 'envoy',
     info: spanInfo,
+    logs: [],
     operationName: op,
     duration: duration * 1000,
     namespace: 'ns',
-    workload: wkd
+    processID: 'p1',
+    workload: wkd,
+    process: { serviceName: waypoint ? 'waypoint.ns' : 'proxy.ns', tags: [] },
+    depth: 0,
+    hasChildren: false,
+    references: [],
+    relativeStartTime: 0,
+    spanID: `${op}-${wkd}`,
+    startTime: 0,
+    tags: waypoint
+      ? [{ key: 'node_id', type: 'string', value: 'waypoint~10.0.0.1~waypoint-abc.ns~ns.svc.cluster.local' }]
+      : [],
+    traceID: 'trace-1',
+    warnings: []
   } as RichSpanData;
 };
-const mockStats = (avg: number, p50: number, p90: number, p99: number, isCompact = false) => {
+const mockStats = (avg: number, p50: number, p90: number, p99: number, isCompact = false): MetricsStats => {
   return {
     isCompact: isCompact,
     responseTimes: [
@@ -175,6 +191,7 @@ describe('TraceStats.buildQueriesFromSpans', () => {
   it('should build one query per workload and time interval', () => {
     const queries = buildQueriesFromSpans(spans, false);
     expect(queries).toHaveLength(6);
+    expect(queries.every(q => q.includeAmbient === false)).toBe(true);
     expect(queries.map(q => statsQueryToKey(q))).toEqual([
       'ns:workload:w1::inbound:10m',
       'ns:workload:w1::inbound:60m',
@@ -187,10 +204,16 @@ describe('TraceStats.buildQueriesFromSpans', () => {
 
   it('should cap to eight spans', () => {
     const spans = new Array(20).fill(0).map((_, idx) => {
-      return mockEnvoySpan('operation', 1, 'worload-' + idx);
+      return mockEnvoySpan('operation', 1, `worload-${idx}`);
     });
     expect(spans).toHaveLength(20);
     const queries = buildQueriesFromSpans(spans, false);
     expect(queries).toHaveLength(8 * 3); // three intervals x 8-capped number of spans/workloads
+  });
+
+  it('should include ambient when waypoint spans are present', () => {
+    const queries = buildQueriesFromSpans([mockEnvoySpan('op1', 3, 'w1', true)], true);
+    expect(queries).toHaveLength(2);
+    expect(queries.every(q => q.includeAmbient === true)).toBe(true);
   });
 });

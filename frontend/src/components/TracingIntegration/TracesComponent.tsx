@@ -60,6 +60,7 @@ type ReduxProps = {
 type TracesProps = ReduxProps & {
   cluster?: string;
   fromWaypoint: boolean;
+  includeAmbient?: boolean;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   target: string;
@@ -189,6 +190,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   };
 
   private fetchPercentiles = (): Promise<Map<string, number>> => {
+    const includeAmbient = this.shouldIncludeAmbient();
     // We'll fetch percentiles on a large enough interval (unrelated to the selected interval)
     // in order to have stable values and avoid constantly fetching again
     const query: MetricsStatsQuery = {
@@ -202,6 +204,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       interval: '1h',
       direction: 'inbound',
       avg: false,
+      includeAmbient,
       quantiles: percentilesOptions.map(p => p.id).filter(id => id !== 'all')
     };
     const queries: MetricsStatsQuery[] =
@@ -253,6 +256,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   private getUrlProvider = (): TracingUrlProvider | undefined =>
     GetTracingUrlProvider(this.props.externalServices, this.props.provider);
+
+  private shouldIncludeAmbient = (): boolean => !!this.props.includeAmbient || this.props.fromWaypoint;
 
   private getTracingUrl = (): string | undefined => {
     if (!this.urlProvider || !this.state.targetApp || !this.urlProvider.HomeUrl()) {
@@ -352,6 +357,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 traces={this.state.traces}
                 errorFetchTraces={this.state.tracingErrors}
                 errorTraces={true}
+                includeAmbient={this.shouldIncludeAmbient()}
                 cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
               />
             </CardBody>
@@ -372,6 +378,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       targetKind={this.props.targetKind}
                       tracingURLProvider={this.urlProvider}
                       otherTraces={this.state.traces}
+                      includeAmbient={this.shouldIncludeAmbient()}
                       cluster={this.props.cluster ? this.props.cluster : ''}
                       provider={this.props.provider}
                     />
@@ -385,6 +392,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       traceID={this.props.selectedTrace.traceID}
                       cluster={this.props.cluster ? this.props.cluster : ''}
                       fromWaypoint={this.props.fromWaypoint}
+                      includeAmbient={this.shouldIncludeAmbient()}
                       waypointServiceFilter={this.props.waypointServiceFilter}
                     />
                   </Tab>

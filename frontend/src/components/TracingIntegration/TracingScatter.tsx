@@ -36,6 +36,7 @@ interface TracingScatterProps {
   duration: number;
   errorFetchTraces?: TracingError[];
   errorTraces?: boolean;
+  includeAmbient?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -199,7 +200,7 @@ export class TracingScatterComponent extends React.Component<TracingScatterProps
       this.seletedTraceMatched = trace.matched;
     }
 
-    const queries = buildQueriesFromSpans(trace.spans, true);
+    const queries = buildQueriesFromSpans(trace.spans, true, !!this.props.includeAmbient);
 
     this.props
       .loadMetricsStats(queries, true)

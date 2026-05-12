@@ -40,6 +40,7 @@ type Props = ReduxProps &
     cluster?: string;
     externalURLProvider?: TracingUrlProvider;
     fromWaypoint: boolean; // If the traces come from a waypoint proxy
+    includeAmbient?: boolean;
     items: RichSpanData[];
     namespace: string;
     target: string;
@@ -202,7 +203,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   private fetchComparisonMetrics(items: RichSpanData[]): void {
-    const queries = buildQueriesFromSpans(items, false);
+    const queries = buildQueriesFromSpans(items, false, !!this.props.includeAmbient);
     this.props.loadMetricsStats(queries, false);
   }
 

@@ -46,6 +46,7 @@ type StateProps = {
 type Props = ReduxProps &
   StateProps & {
     cluster?: string;
+    includeAmbient?: boolean;
     namespace: string;
     otherTraces: JaegerTrace[];
     provider?: string;
@@ -88,7 +89,7 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 
   private fetchComparisonMetrics(spans: RichSpanData[]): void {
-    const queries = buildQueriesFromSpans(spans, false);
+    const queries = buildQueriesFromSpans(spans, false, !!this.props.includeAmbient);
     this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
 

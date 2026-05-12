@@ -232,7 +232,11 @@ func (in *MetricsService) getSingleQueryStats(ctx context.Context, q *models.Met
 
 func createStatsMetricsLabelsBuilder(q *models.MetricsStatsQuery, conf *config.Config) *MetricsLabelsBuilder {
 	lb := NewMetricsLabelsBuilder(q.Direction, conf)
-	lb.SelfReporter()
+	includeAmbient := true
+	if q.IncludeAmbient != nil {
+		includeAmbient = *q.IncludeAmbient
+	}
+	lb.Reporter(lb.side, includeAmbient)
 	switch q.Target.Kind {
 	case "app":
 		lb.App(q.Target.Name, q.Target.Namespace)
