@@ -232,9 +232,14 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("cannot parse the payload of the id_token: %w", err)
 		}
 
-		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok && sData.Payload.Subject != userClaim {
-			log.Warning("Kiali token rejected because of subject claim mismatch")
-			return nil, fmt.Errorf("session [%w]: token subject does not match stored subject", ErrSubjectMismatch)
+		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok {
+			if s, ok := userClaim.(string); !ok {
+				log.Warningf("Kiali token rejected: username claim %q is not a string", c.conf.Auth.OpenId.UsernameClaim)
+				return nil, fmt.Errorf("session [%w]: username claim is not a string type", ErrSubjectMismatch)
+			} else if sData.Payload.Subject != s {
+				log.Warning("Kiali token rejected because of subject claim mismatch")
+				return nil, fmt.Errorf("session [%w]: token subject does not match stored subject", ErrSubjectMismatch)
+			}
 		}
 	}
 

@@ -173,7 +173,7 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 					RespondWithError(w, status, e.Reason)
 				} else {
 					log.Errorf("Unexpected authentication error [client: %s]: %s", r.RemoteAddr, err.Error())
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
+					RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				}
 			} else {
 				if response.AuthInfo != nil {
