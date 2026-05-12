@@ -1,8 +1,7 @@
-import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EditableAnnotationsCard } from '../EditableAnnotationsCard';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string, opts?: Record<string, unknown>) => {
     if (opts && 'count' in opts) {
       return `${opts.count} more`;
@@ -11,14 +10,14 @@ jest.mock('utils/I18nUtils', () => ({
   }
 }));
 
-jest.mock('components/IstioWizards/WizardLabels', () => ({
+rstest.mock('components/IstioWizards/WizardLabels', () => ({
   WizardLabels: () => null
 }));
 
 const defaultProps = {
   annotations: { 'kubectl.kubernetes.io/restartedAt': '2024-01-01', note: 'test' } as Record<string, string>,
   canEdit: true,
-  onSave: jest.fn(),
+  onSave: rstest.fn(),
   title: 'Annotations'
 };
 

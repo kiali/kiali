@@ -1,15 +1,14 @@
-import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EditableLabelsCard, parseLabel } from '../EditableLabelsCard';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key
 }));
 
 const defaultProps = {
   canEdit: true,
   labels: { app: 'bookinfo', version: 'v1' } as Record<string, string>,
-  onSave: jest.fn(),
+  onSave: rstest.fn(),
   title: 'Labels'
 };
 
