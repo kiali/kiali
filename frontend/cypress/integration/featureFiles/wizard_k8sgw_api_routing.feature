@@ -1,6 +1,5 @@
 @wizard-k8sgw-api-routing
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
-@ossmc
 
 Feature: Service Details Wizard: K8s HTTP Routing
 

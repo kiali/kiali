@@ -1,6 +1,5 @@
 @wizard-istio-config
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
-@ossmc
 
 Feature: Kiali Istio Config wizard
 
@@ -301,7 +300,6 @@ Feature: Kiali Istio Config wizard
 
   @bookinfo-app
   @core-2
-  @skip-ossmc
   Scenario: Create a ServiceEntry and view the service detail page of the external service associated
     When user deletes service named "myservice3" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions

@@ -1,7 +1,6 @@
 @waypoint
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 # TODO: offline - ambient support.
-@ossmc
 
 Feature: Kiali Waypoint related features
 
@@ -20,7 +19,6 @@ Feature: Kiali Waypoint related features
     And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
     And use_waypoint_name is enabled if tracing services contain waypoint in "bookinfo"
 
-  @skip-ossmc
   Scenario: [Workload list] See the workload list of bookinfo with the correct info
     Given user is at the "workloads" list page
     When user selects the "bookinfo" namespace

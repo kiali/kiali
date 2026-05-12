@@ -1,7 +1,6 @@
 @overview
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 @offline
-@ossmc
 
 Feature: Manual Refresh option
 
@@ -33,13 +32,11 @@ Feature: Manual Refresh option
     Then user "sees" manual refresh messaging
 
   @core-2
-  @skip-ossmc
   Scenario: Services page shows manual
     When user is at the "services" page with manual refresh
     Then user "sees" manual refresh messaging
 
   @core-2
-  @skip-ossmc
   Scenario: Workloads page shows manual
     When user is at the "workloads" page with manual refresh
     Then user "sees" manual refresh messaging
