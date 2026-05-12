@@ -1,4 +1,5 @@
 import { HistoryManager, URLParam } from '../app/History';
+import { store } from 'store/ConfigStore';
 
 export const getKioskMode = (): string => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -8,7 +9,7 @@ export const getKioskMode = (): string => {
     return kioskParam;
   }
 
-  return '';
+  return store?.getState()?.globalState?.kiosk ?? '';
 };
 
 export const isKioskMode = (): boolean => {
