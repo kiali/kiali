@@ -14,7 +14,7 @@ jest.mock('@patternfly/react-topology', () => ({
 }));
 
 jest.mock('store/ConfigStore', () => {
-  const { createStore: cs } = jest.requireActual('redux');
+  const { createStore: cs } = (jest as any).requireActual('redux');
   const s = cs(() => ({}));
   return { store: s };
 });
