@@ -2928,7 +2928,6 @@ __metadata:
     react-syntax-highlighter: "npm:^16.1.0"
     react-virtualized: "npm:9.x"
     redux: "npm:4.0.3"
-    redux-mock-store: "npm:1.5.4"
     redux-persist: "npm:5.10.0"
     redux-persist-transform-filter: "npm:^0.0.22"
     redux-thunk: "npm:2.4.1"
@@ -11131,13 +11130,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.isplainobject@npm:^4.0.6":
-  version: 4.0.6
-  resolution: "lodash.isplainobject@npm:4.0.6"
-  checksum: 10c0/afd70b5c450d1e09f32a737bed06ff85b873ecd3d3d3400458725283e3f2e0bb6bf48e67dbe7a309eb371a822b16a26cca4a63c8c52db3fc7dc9d5f9dd324cbb
-  languageName: node
-  linkType: hard
-
 "lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
@@ -13996,15 +13988,6 @@ __metadata:
   version: 1.1.2
   resolution: "reduce-configs@npm:1.1.2"
   checksum: 10c0/dfd1c11e8e01b7ffef4469747a49f9f4f03442fddb2dab8a85fff094fd90eb8dd130fabba4e7fdd30272cae1e06d43d690b8cf01684ef17e821b3d0aad47dc3f
-  languageName: node
-  linkType: hard
-
-"redux-mock-store@npm:1.5.4":
-  version: 1.5.4
-  resolution: "redux-mock-store@npm:1.5.4"
-  dependencies:
-    lodash.isplainobject: "npm:^4.0.6"
-  checksum: 10c0/674fc7a68ffdb9a9ad50c9f987a2711387b1fc348a8ed3d07b7abd4d2560762347a9565cf9080e786d9f66012ff47f90bef244623c62136511d9b4f2411fb658
   languageName: node
   linkType: hard
 

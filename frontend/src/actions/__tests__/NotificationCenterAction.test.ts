@@ -1,14 +1,42 @@
+import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import { MessageType } from '../../types/NotificationCenter';
-import configureMockStore from 'redux-mock-store';
+import { NotificationCenterReducer } from '../../reducers/NotificationCenter';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
-const middlewares = [thunk];
-const mockStore = configureMockStore(middlewares);
+const createTestStore = (
+  initialGroups?: any[]
+): { idsByGroup: Map<string, number[]>; store: ReturnType<typeof createStore> } => {
+  const store = createStore(combineReducers({ notificationCenter: NotificationCenterReducer }), applyMiddleware(thunk));
+  if (initialGroups) {
+    // Populate groups by dispatching addMessage for each message in each group,
+    // then collect the assigned IDs so tests can assert on them.
+    const idsByGroup = new Map<string, number[]>();
+    for (const group of initialGroups) {
+      const ids: number[] = [];
+      for (const msg of group.messages) {
+        store.dispatch(
+          NotificationCenterActions.addMessage(
+            msg.content ?? `msg-${msg.id}`,
+            '',
+            group.id,
+            group.id as MessageType,
+            false
+          )
+        );
+        const currentGroup = store.getState().notificationCenter.groups.find(g => g.id === group.id)!;
+        ids.push(currentGroup.messages[currentGroup.messages.length - 1].id);
+      }
+      idsByGroup.set(group.id, ids);
+    }
+    return { store, idsByGroup };
+  }
+  return { store, idsByGroup: new Map<string, number[]>() };
+};
 
 describe('NotificationCenterActions', () => {
   it('should add a message', () => {
@@ -52,44 +80,39 @@ describe('NotificationCenterActions', () => {
     const action = NotificationCenterActions.hideNotification([8, 9, 7]);
     expect(action.payload.messageId).toEqual([8, 9, 7]);
   });
-  it('should only mark selected group as read', () => {
-    const expectedActions = [NotificationCenterActions.markAsRead([1, 2, 3])];
-    const store = mockStore({
-      notificationCenter: {
-        groups: [
-          {
-            id: 'my-group',
-            messages: [{ id: 1 }, { id: 2 }, { id: 3 }]
-          },
-          {
-            id: 'other',
-            messages: [{ id: 5 }, { id: 6 }, { id: 7 }]
-          }
-        ]
+  it('should only mark selected group as read', async () => {
+    const { store, idsByGroup } = createTestStore([
+      { id: MessageType.DANGER, messages: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+      { id: MessageType.WARNING, messages: [{ id: 5 }, { id: 6 }, { id: 7 }] }
+    ]);
+
+    const dangerIds = idsByGroup.get(MessageType.DANGER)!;
+    await store.dispatch(NotificationCenterThunkActions.markGroupAsRead(MessageType.DANGER) as any);
+
+    const dangerGroup = store.getState().notificationCenter.groups.find(g => g.id === MessageType.DANGER)!;
+    const warningGroup = store.getState().notificationCenter.groups.find(g => g.id === MessageType.WARNING)!;
+
+    dangerGroup.messages.forEach(msg => {
+      if (dangerIds.includes(msg.id)) {
+        expect(msg.seen).toBe(true);
       }
     });
-    return store.dispatch(NotificationCenterThunkActions.markGroupAsRead('my-group')).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
+    warningGroup.messages.forEach(msg => {
+      expect(msg.seen).toBe(false);
     });
   });
-  it('should only clear messages of selected group', () => {
-    const expectedActions = [NotificationCenterActions.removeMessage([5, 6, 7])];
-    const store = mockStore({
-      notificationCenter: {
-        groups: [
-          {
-            id: 'my-group',
-            messages: [{ id: 1 }, { id: 2 }, { id: 3 }]
-          },
-          {
-            id: 'other',
-            messages: [{ id: 5 }, { id: 6 }, { id: 7 }]
-          }
-        ]
-      }
-    });
-    return store.dispatch(NotificationCenterThunkActions.clearGroup('other')).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-    });
+  it('should only clear messages of selected group', async () => {
+    const { store } = createTestStore([
+      { id: MessageType.DANGER, messages: [{ id: 1 }, { id: 2 }, { id: 3 }] },
+      { id: MessageType.WARNING, messages: [{ id: 5 }, { id: 6 }, { id: 7 }] }
+    ]);
+
+    await store.dispatch(NotificationCenterThunkActions.clearGroup(MessageType.WARNING) as any);
+
+    const dangerGroup = store.getState().notificationCenter.groups.find(g => g.id === MessageType.DANGER)!;
+    const warningGroup = store.getState().notificationCenter.groups.find(g => g.id === MessageType.WARNING)!;
+
+    expect(dangerGroup.messages.length).toBe(3);
+    expect(warningGroup.messages.length).toBe(0);
   });
 });
