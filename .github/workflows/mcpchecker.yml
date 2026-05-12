@@ -86,7 +86,7 @@ jobs:
     if: needs.check-trigger.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     env:
-      TARGET_BRANCH: ${{ github.base_ref || env.DEFAULT_BRANCH }}
+      TARGET_BRANCH: ${{ github.base_ref || github.event.repository.default_branch || 'master' }}
       BUILD_BRANCH: ${{ needs.check-trigger.outputs.pr-sha }}
       KUBERNETES_MCP_SERVER_REPO: ${{ needs.check-trigger.outputs.kubernetes-mcp-server-repo }}
     steps:
