@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-jose/go-jose/v4"
@@ -31,17 +32,17 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-// cachedOpenIdKeySet stores the metadata obtained from the /.well-known/openid-configuration
+// cachedOpenIdMetadata stores the metadata obtained from the /.well-known/openid-configuration
 // endpoint of the OpenId server. Once the metadata is obtained for the first time, subsequent
 // retrievals are served from this cached value rather than doing another request to the
 // metadata endpoint of the OpenId server.
-var cachedOpenIdMetadata *openIdMetadata
+var cachedOpenIdMetadata atomic.Pointer[openIdMetadata]
 
 // cachedOpenIdKeySet stores the public key sets used for verification of the received
 // id_tokens from the OpenId server. Its purpose is to prevent repeated queries to the JWKS
 // endpoint of the OpenId server. However, since the keys can rotate, this is refreshed
 // each time an id_token is signed with a key that is not present in the cached key set.
-var cachedOpenIdKeySet *jose.JSONWebKeySet
+var cachedOpenIdKeySet atomic.Pointer[jose.JSONWebKeySet]
 
 // openIdFlightGroup is used to synchronize different threads of different HTTP requests so
 // that only one request active to the metadata or jwks endpoints of the OpenId server. This
@@ -132,6 +133,10 @@ type OpenIdAuthController struct {
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
 func NewOpenIdAuthController(kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) (*OpenIdAuthController, error) {
+	if conf.Server.WebFQDN == "" {
+		log.Warning("OpenID auth strategy is active but server.web_fqdn is not set. The OIDC redirect_uri will be derived from request headers, which can be manipulated if Kiali is not behind a trusted proxy. Set server.web_fqdn to a known hostname to prevent this.")
+	}
+
 	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
 	if err != nil {
 		return nil, err
@@ -205,7 +210,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	// The OpenId token must be present in the session
 	if len(sData.Payload.Token) == 0 {
 		log.Warning("Session is invalid: the OIDC token is absent")
-		return nil, nil
+		return nil, fmt.Errorf("session [%w]: OIDC token is absent", ErrSessionNotFound)
 	}
 
 	// If the id_token is being used to make calls to the cluster API, it's known that
@@ -227,9 +232,14 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 			return nil, fmt.Errorf("cannot parse the payload of the id_token: %w", err)
 		}
 
-		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok && sData.Payload.Subject != userClaim {
-			log.Warning("Kiali token rejected because of subject claim mismatch")
-			return nil, nil
+		if userClaim, ok := claims[c.conf.Auth.OpenId.UsernameClaim]; ok {
+			if s, ok := userClaim.(string); !ok {
+				log.Warningf("Kiali token rejected: username claim %q is not a string", c.conf.Auth.OpenId.UsernameClaim)
+				return nil, fmt.Errorf("session [%w]: username claim is not a string type", ErrSubjectMismatch)
+			} else if sData.Payload.Subject != s {
+				log.Warning("Kiali token rejected because of subject claim mismatch")
+				return nil, fmt.Errorf("session [%w]: token subject does not match stored subject", ErrSubjectMismatch)
+			}
 		}
 	}
 
@@ -272,7 +282,7 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	}
 
 	// Internal header used to propagate the subject of the request for audit purpose
-	r.Header.Add("Kiali-User", sData.Payload.Subject)
+	r.Header.Set("Kiali-User", sData.Payload.Subject)
 
 	return userSessions, nil
 }
@@ -795,8 +805,10 @@ func (p *openidFlowHelper) parseOpenIdToken() *openidFlowHelper {
 
 	// Extract the name of the user from the id_token. The "subject" is passed to the front-end to be displayed.
 	p.Subject = "OpenId User" // Set a default value
-	if userClaim, ok := claims[p.conf.Auth.OpenId.UsernameClaim]; ok && len(userClaim.(string)) > 0 {
-		p.Subject = userClaim.(string)
+	if userClaim, ok := claims[p.conf.Auth.OpenId.UsernameClaim]; ok {
+		if s, ok := userClaim.(string); ok && len(s) > 0 {
+			p.Subject = s
+		}
 	}
 
 	return p
@@ -814,7 +826,16 @@ func (p *openidFlowHelper) validateOpenIdNonceCode() *openidFlowHelper {
 
 	// Parse the received id_token from the IdP and check nonce code
 	nonceHashHex := fmt.Sprintf("%x", p.NonceHash)
-	if nonceClaim, ok := p.IdTokenPayload["nonce"]; !ok || nonceHashHex != nonceClaim.(string) {
+	nonceClaim, ok := p.IdTokenPayload["nonce"]
+	if !ok {
+		p.Error = &AuthenticationFailureError{
+			HttpStatus: http.StatusForbidden,
+			Reason:     "OpenId token rejected: nonce claim is absent",
+		}
+		return p
+	}
+	nonceStr, nonceIsString := nonceClaim.(string)
+	if !nonceIsString || nonceHashHex != nonceStr {
 		p.Error = &AuthenticationFailureError{
 			HttpStatus: http.StatusForbidden,
 			Reason:     "OpenId token rejected: nonce code mismatch",
@@ -935,7 +956,7 @@ func (p *openidFlowHelper) requestOpenIdToken(redirect_uri string) *openidFlowHe
 	}
 
 	if response.StatusCode != 200 {
-		log.Debugf("OpenId token request failed with response: %s", string(rawTokenResponse))
+		log.Debugf("OpenId token request failed with status %s (response body: %d bytes)", response.Status, len(rawTokenResponse))
 		p.Error = fmt.Errorf("request failed (HTTP response status = %s)", response.Status)
 		return p
 	}
@@ -1125,9 +1146,9 @@ func getJwkFromKeySet(conf *config.Config, keyId string) (*jose.JSONWebKey, erro
 		return nil
 	}
 
-	if cachedOpenIdKeySet != nil {
+	if ks := cachedOpenIdKeySet.Load(); ks != nil {
 		// If key-set is cached, try to find the key in the cached key-set
-		foundKey := findJwkFunc(keyId, cachedOpenIdKeySet)
+		foundKey := findJwkFunc(keyId, ks)
 		if foundKey != nil {
 			return foundKey, nil
 		}
@@ -1186,8 +1207,8 @@ func getOpenIdJwks(conf *config.Config) (*jose.JSONWebKeySet, error) {
 			return nil, fmt.Errorf("cannot parse OpenId JWKS document: %s", err.Error())
 		}
 
-		cachedOpenIdKeySet = &oidcKeys // Store the keyset in a "cache"
-		return cachedOpenIdKeySet, nil
+		cachedOpenIdKeySet.Store(&oidcKeys)
+		return &oidcKeys, nil
 	})
 
 	if fetchError != nil {
@@ -1208,8 +1229,8 @@ func getOpenIdJwks(conf *config.Config) (*jose.JSONWebKeySet, error) {
 //
 // The result is cached after the first successful call; subsequent calls return the cached metadata.
 func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
-	if cachedOpenIdMetadata != nil {
-		return cachedOpenIdMetadata, nil
+	if md := cachedOpenIdMetadata.Load(); md != nil {
+		return md, nil
 	}
 
 	fetchedMetadata, fetchError, _ := openIdFlightGroup.Do("metadata", func() (interface{}, error) {
@@ -1311,8 +1332,8 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 		}
 
 		// Return parsed metadata
-		cachedOpenIdMetadata = &metadata
-		return cachedOpenIdMetadata, nil
+		cachedOpenIdMetadata.Store(&metadata)
+		return &metadata, nil
 	})
 
 	if fetchError != nil {

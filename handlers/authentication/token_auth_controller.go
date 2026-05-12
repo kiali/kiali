@@ -154,7 +154,7 @@ func (c *tokenAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	}
 
 	// If we are here, the session looks valid. Return the session details.
-	r.Header.Add("Kiali-User", extractSubjectFromK8sToken(sData.Payload.Token)) // Internal header used to propagate the subject of the request for audit purposes
+	r.Header.Set("Kiali-User", extractSubjectFromK8sToken(sData.Payload.Token)) // Internal header used to propagate the subject of the request for audit purposes
 	return UserSessions{
 		c.conf.KubernetesConfig.ClusterName: &UserSessionData{
 			AuthInfo:  &api.AuthInfo{Token: sData.Payload.Token},

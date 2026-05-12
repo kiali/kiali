@@ -274,7 +274,7 @@ func (in *OpenshiftOAuthService) Logout(ctx context.Context, token string, clust
 	sha256Prefix := "sha256~"
 	h := sha256.Sum256([]byte(strings.TrimPrefix(token, sha256Prefix)))
 	oauthTokenName := sha256Prefix + base64.RawURLEncoding.EncodeToString(h[0:])
-	log.Debugf("Logging out by deleting OAuth access token [%v] which was converted from access token [%v]", oauthTokenName, token)
+	log.Debugf("Logging out by deleting OAuth access token [%v]", oauthTokenName)
 
 	// Delete the access token from the API server using OpenShift 4.6+ access token name
 	kialiSAClient := in.kialiSAClients[cluster]
