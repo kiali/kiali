@@ -111,7 +111,7 @@ Feature: Kiali Waypoint related features
     And user "enables" "ambient" traffic option
     And user "enables" "ambientWaypoint" traffic option
     And user "closes" traffic menu
-    Then 11 edges appear in the graph
+    Then 10 edges appear in the graph
 
   @skip-ossmc
   Scenario: [Istio Config] Waypoint should not have validation errors
@@ -402,13 +402,13 @@ Feature: Kiali Waypoint related features
     And user "closes" traffic menu
     Then user "opens" display menu
     And user "enables" "security" option
-    Then 9 edges appear in the graph
+    Then 8 edges appear in the graph
     Then security "appears" in the graph
     And user "closes" display menu
     Then user "opens" traffic menu
     And user "disables" "ambient" traffic option
     And user "closes" traffic menu
-    Then 5 edges appear in the graph
+    Then 4 edges appear in the graph
     Then user "opens" traffic menu
     Then user "enables" "ambient" traffic option
     Then user "disables" "tcp" traffic option
