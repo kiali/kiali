@@ -2,7 +2,9 @@ import { reportFilePath, measureListsLoadTime, baselines } from './common';
 
 describe('Namespaces performance tests', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
+      cy.login(USERNAME, PASSWD);
+    });
   });
 
   describe('Namespaces list page', () => {
@@ -24,12 +26,12 @@ describe('Namespaces performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Namespaces List page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('All Namespaces', Cypress.env(baselines).namespaceListAll, namespacesUrlAllNamespaces);
+    it('Measures All Namespaces load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureListsLoadTime('All Namespaces', Cypress.expose(baselines).namespaceListAll, namespacesUrlAllNamespaces);
     });
 
-    it('Measures Selected Namespaces load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces', Cypress.env(baselines).namespaceListSelected, namespacesUrl);
+    it('Measures Selected Namespaces load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureListsLoadTime('Selected Namespaces', Cypress.expose(baselines).namespaceListSelected, namespacesUrl);
     });
   });
 });

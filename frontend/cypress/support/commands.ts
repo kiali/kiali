@@ -174,8 +174,8 @@ function fillLoginForm({ authProvider, username, password }: LoginForm): void {
 }
 
 Cypress.Commands.add('login', (username: string, password: string) => {
-  const auth_strategy = Cypress.env('AUTH_STRATEGY');
-  const tags = (Cypress.env('TAGS') ?? '') as string;
+  const auth_strategy = Cypress.expose('AUTH_STRATEGY');
+  const tags = (Cypress.expose('TAGS') ?? '') as string;
   cy.session(
     username,
     () => {
@@ -196,7 +196,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         // Kiali's OpenShift auth redirects through /api/auth/redirect,
         // which 302s to the OAuth server. Probe that endpoint with
         // cy.request() (Node.js, no CORS) to discover the OAuth origin.
-        const authProvider = Cypress.env('AUTH_PROVIDER');
+        const authProvider = Cypress.expose('AUTH_PROVIDER');
         cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
           // Cypress stores redirects as "<status> <url>" strings (e.g.
           // "302 https://oauth-openshift.apps.../..."), so split/pop
@@ -345,7 +345,7 @@ Cypress.Commands.add('waitForReact', (waitTimeout = 30000, reactRoot?: string) =
   const startTime = Date.now();
 
   // Use provided root, or configured rootSelector, or body as fallback
-  const rootSelector = reactRoot || Cypress.env('rootSelector') || 'body';
+  const rootSelector = reactRoot || Cypress.expose('rootSelector') || 'body';
 
   cy.log(`Waiting for page to be ready (root: ${rootSelector})...`);
 

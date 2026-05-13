@@ -19,11 +19,11 @@ export default defineConfig({
   requestTimeout: 15000,
   responseTimeout: 15000,
   fixturesFolder: 'cypress/fixtures',
-  env: {
-    rootSelector: '#root',
+  expose: {
     cookie: false,
+    filterSpecs: true,
     omitFiltered: true,
-    filterSpecs: true
+    rootSelector: '#root'
   },
   e2e: {
     baseUrl: 'http://localhost:3001',
@@ -48,8 +48,9 @@ export default defineConfig({
         })
       );
 
-      // This name is non-standard and might change based on your environment hence the separate env variable.
-      config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
+      // Auth strategy is discovered at config time and is safe to expose.
+      config.expose = config.expose ?? {};
+      config.expose.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
 
       return config;
     },

@@ -33,7 +33,7 @@ export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElemen
  * Canonical result: /namespaces/{ns}/services/{svc}
  */
 export const normalizeKialiPath = (pathname: string): string => {
-  if (Cypress.env('OSSMC')) {
+  if (Cypress.expose('OSSMC')) {
     return pathname.replace(/\/ossmconsole$/, '').replace(/^\/k8s\/ns\//, '/namespaces/');
   }
   return pathname.replace(/^\/console/, '');

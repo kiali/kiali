@@ -3,7 +3,7 @@ import { Visualization } from '@patternfly/react-topology';
 import { MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { elems } from './graph';
 
-const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
+const IN_OFFLINE_MODE = Cypress.expose('RUN_MODE') === 'offline';
 
 When('user closes mesh tour', () => {
   cy.waitForReact();

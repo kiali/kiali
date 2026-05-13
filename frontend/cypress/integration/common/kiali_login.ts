@@ -1,9 +1,8 @@
 import { Before, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-const USERNAME = Cypress.env('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
-const PASSWD = Cypress.env('PASSWD'); // CYPRESS_PASSWD to the user
-const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER'); // CYPRESS_AUTH_PROVIDER to the user
-const auth_strategy = Cypress.env('AUTH_STRATEGY');
+const USERNAME = Cypress.expose('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
+const KUBEADMIN_IDP = Cypress.expose('AUTH_PROVIDER'); // CYPRESS_AUTH_PROVIDER to the user
+const auth_strategy = Cypress.expose('AUTH_STRATEGY');
 
 Given('all sessions are cleared', () => {
   Cypress.session.clearAllSavedSessions();
@@ -38,13 +37,14 @@ Given('user clicks my_htpasswd_provider', () => {
 Given('user fill in username and password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user: ${USERNAME}`);
+    cy.env(['PASSWD']).then(({ PASSWD }) => {
+      cy.get('#inputUsername')
+        .clear()
+        .type('' || USERNAME);
 
-    cy.get('#inputUsername')
-      .clear()
-      .type('' || USERNAME);
-
-    cy.get('#inputPassword').type('' || PASSWD);
-    cy.get('button[type="submit"]').click();
+      cy.get('#inputPassword').type('' || PASSWD);
+      cy.get('button[type="submit"]').click();
+    });
   }
 });
 
@@ -54,26 +54,28 @@ Given('user fills in an invalid username', () => {
 
     cy.log(`Log in with invalid username: ${invalid}`);
     cy.log(`The real username should be: ${USERNAME}`);
+    cy.env(['PASSWD']).then(({ PASSWD }) => {
+      cy.get('#inputUsername')
+        .clear()
+        .type('' || invalid);
 
-    cy.get('#inputUsername')
-      .clear()
-      .type('' || invalid);
-
-    cy.get('#inputPassword').type('' || PASSWD);
-    cy.get('button[type="submit"]').click();
+      cy.get('#inputPassword').type('' || PASSWD);
+      cy.get('button[type="submit"]').click();
+    });
   }
 });
 
 Given('user fills in an invalid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with wrong password: ${USERNAME}`);
+    cy.env(['PASSWD']).then(({ PASSWD }) => {
+      cy.get('#inputUsername')
+        .clear()
+        .type('' || USERNAME);
 
-    cy.get('#inputUsername')
-      .clear()
-      .type('' || USERNAME);
-
-    cy.get('#inputPassword').type('' || `${PASSWD.toLowerCase()}123456`);
-    cy.get('button[type="submit"]').click();
+      cy.get('#inputPassword').type('' || `${PASSWD.toLowerCase()}123456`);
+      cy.get('button[type="submit"]').click();
+    });
   }
 });
 
@@ -94,11 +96,12 @@ Then('user sees the {string} phrase displayed', (phrase: string) => {
 Then('user fills in a valid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with valid password: ${USERNAME}`);
+    cy.env(['PASSWD']).then(({ PASSWD }) => {
+      cy.get('#inputUsername').clear().type(`${USERNAME}`);
 
-    cy.get('#inputUsername').clear().type(`${USERNAME}`);
-
-    cy.get('#inputPassword').type(`${PASSWD}`);
-    cy.get('button[type="submit"]').click();
+      cy.get('#inputPassword').type(`${PASSWD}`);
+      cy.get('button[type="submit"]').click();
+    });
   }
   if (auth_strategy === 'token') {
     cy.exec('kubectl -n istio-system create token citest').then(result => {
@@ -110,14 +113,18 @@ Then('user fills in a valid password', () => {
 
 Then('user fills in a valid password for {string} cluster', (cluster: string) => {
   if (auth_strategy === 'openshift') {
-    const username = Cypress.env(`${cluster.toUpperCase()}_USERNAME`);
-    const password = Cypress.env(`${cluster.toUpperCase()}_PASSWD`);
-    cy.log(`Log in as user with valid password: ${username}`);
+    const usernameKey = `${cluster.toUpperCase()}_USERNAME`;
+    const passwordKey = `${cluster.toUpperCase()}_PASSWD`;
+    cy.env([usernameKey, passwordKey]).then(envVars => {
+      const username = envVars[usernameKey];
+      const password = envVars[passwordKey];
+      cy.log(`Log in as user with valid password: ${username}`);
 
-    cy.get('#inputUsername').clear().type(`${username}`);
+      cy.get('#inputUsername').clear().type(`${username}`);
 
-    cy.get('#inputPassword').type(`${password}`);
-    cy.get('button[type="submit"]').click();
+      cy.get('#inputPassword').type(`${password}`);
+      cy.get('button[type="submit"]').click();
+    });
   }
 });
 
