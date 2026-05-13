@@ -143,10 +143,12 @@ export const serviceHandlers = [
       const serviceEntries = isExternal
         ? [
             {
+              apiVersion: 'networking.istio.io/v1',
+              kind: 'ServiceEntry',
               metadata: {
+                creationTimestamp: new Date().toISOString(),
                 name: `${service}-entry`,
                 namespace: namespace,
-                createdTimestamp: new Date().toISOString(),
                 resourceVersion: '12345'
               },
               spec: {
