@@ -338,9 +338,9 @@ Cypress.Commands.overwrite('exec', (originalFn, command, options) => {
   }
 
   return originalFn(command, { ...options, failOnNonZeroExit: false }).then(result => {
-    if (result.code) {
+    if (result.exitCode) {
       throw new Error(`Execution of "${command}" failed
-      Exit code: ${result.code}
+      Exit code: ${result.exitCode}
       Stdout:\n${result.stdout}
       Stderr:\n${result.stderr}`);
     }

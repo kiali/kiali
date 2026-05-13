@@ -11,6 +11,10 @@ export default defineConfig({
     threshold: 100000,
     timeout: 10000
   },
+  env: {
+    // PASSWD: 'kiali',
+    // USERNAME: 'kiali'
+  },
   e2e: {
     baseUrl: 'http://localhost:3000',
     async setupNodeEvents(

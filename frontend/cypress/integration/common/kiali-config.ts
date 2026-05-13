@@ -48,7 +48,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
               failOnNonZeroExit: false
             })
             .then(cmRes => {
-              if (cmRes.code === 0 && cmRes.stdout.trim() !== '') {
+              if (cmRes.exitCode === 0 && cmRes.stdout.trim() !== '') {
                 return cy.wrap(cmName);
               }
               return findConfigMapWithConfigYaml(idx + 1);
