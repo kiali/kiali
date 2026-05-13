@@ -213,6 +213,10 @@ Cypress.Commands.add('login', (username: string, password: string) => {
           cy.visit({ url: '/' });
 
           if (oauthOrigin !== baseOrigin) {
+            // Wait for the client-side redirect to the OAuth server to
+            // complete before switching origin context.
+            const oauthHost = new URL(oauthOrigin).host;
+            cy.url().should('include', oauthHost);
             cy.origin(oauthOrigin, { args: { authProvider, username, password } }, fillLoginForm);
           } else {
             fillLoginForm({ authProvider, username, password });
