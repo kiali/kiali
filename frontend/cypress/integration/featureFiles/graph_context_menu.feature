@@ -1,7 +1,6 @@
 @graph-context-menu
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
 
-
 Feature: Kiali Graph page - Context menu actions
 
   User opens the Graph page and opens the context menu of graph nodes.

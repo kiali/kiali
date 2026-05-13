@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
-import { location, router } from '../../app/History';
-import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
+
+import { location, router } from '../../app/History';
+import { PFColors } from 'components/Pf/PfColors';
 import { isKioskMode } from '../../utils/SearchParamUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type TabsProps = {
   actionsToolbar?: React.ReactNode;

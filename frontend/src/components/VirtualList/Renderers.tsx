@@ -232,6 +232,16 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   return status;
 };
 
+export const getKioskParamsForListItem = (item: TResource, config: Resource): string | undefined => {
+  if (config.name === 'workloads' && 'gvk' in item) {
+    return `type=${encodeURIComponent((item as WorkloadListItem).gvk.Kind)}`;
+  }
+  if (config.name === 'services' && item['serviceRegistry'] === 'External') {
+    return 'type=External';
+  }
+  return undefined;
+};
+
 export const item: Renderer<TResource> = (item: TResource, config: Resource, badge: PFBadgeType) => {
   const key = `link_definition_${config.name}_${item.namespace}_${item.name}`;
   let serviceBadge = badge;
@@ -244,12 +254,7 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
     }
   }
 
-  let kioskParams: string | undefined;
-  if (config.name === 'workloads' && 'gvk' in item) {
-    kioskParams = `type=${(item as WorkloadListItem).gvk.Kind}`;
-  } else if (config.name === 'services' && item['serviceRegistry'] === 'External') {
-    kioskParams = 'type=External';
-  }
+  const kioskParams = getKioskParamsForListItem(item, config);
 
   return (
     <Td

@@ -96,7 +96,7 @@ Before(() => {
       return false;
     }
 
-    if (err.message.includes('ResizeObserver loop')) {
+    if (err.message?.includes('ResizeObserver loop')) {
       return false;
     }
   });

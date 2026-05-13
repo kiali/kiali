@@ -1,5 +1,4 @@
 @skip-ossmc
-
 Feature: Kiali logout
 
   User wants to logout to Kiali
