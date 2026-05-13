@@ -38,6 +38,9 @@ function fillOAuthForm(
   getOAuthOrigin().then(origin => {
     const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
     if (origin !== baseOrigin) {
+      // Wait for the client-side redirect to the OAuth server to complete.
+      const oauthHost = new URL(origin).host;
+      cy.url().should('include', oauthHost);
       cy.origin(origin, { args }, formAction);
     } else {
       formAction(args);
@@ -70,6 +73,8 @@ Given('user clicks my_htpasswd_provider', () => {
         getOAuthOrigin().then(origin => {
           const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
           if (origin !== baseOrigin) {
+            const oauthHost = new URL(origin).host;
+            cy.url().should('include', oauthHost);
             cy.origin(origin, { args: { idp: KUBEADMIN_IDP } }, ({ idp }) => {
               cy.contains(idp).should('be.visible').click();
             });
