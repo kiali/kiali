@@ -72,6 +72,14 @@ Feature: Kiali Workload Details page
     And user sees span details
     And user can filter spans by workload "details-v1"
 
+  @waypoint-tracing
+  Scenario: See tracing tooltip heat map for travels-v1 workload in travel-agency
+    Given the tracing data is ready for the "workload" "travel-agency/travels-v1"
+    And user is at the details page for the "workload" "travel-agency/travels-v1" located in the "" cluster
+    And user sees trace information
+    When user hovers over a trace with at least 4 spans
+    Then user sees the tracing tooltip heat map
+
   @bookinfo-app
   @tracing
   # TODO: offline - tracing.

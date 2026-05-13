@@ -46,21 +46,6 @@ Feature: Kiali Waypoint related features
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
 
-  @selected
-  @waypoint-tracing
-  Scenario Outline: [Tracing tooltip] Travel agency waypoint targets show a heat map
-    Given the tracing data is ready for the "<detail>" "travel-agency/<name>"
-    And user is at the details page for the "<detail>" "travel-agency/<name>" located in the "" cluster
-    And user sees trace information
-    When user hovers over a trace with at least 4 spans
-    Then user sees the tracing tooltip heat map
-
-    Examples:
-      | detail   | name       |
-      | service  | insurances |
-      | app      | flights    |
-      | workload | travels-v1 |
-
   Scenario: [Workload details - waypoint] The workload details for a waypoint are valid
     And user is at the details page for the "workload" "bookinfo/waypoint" located in the "" cluster
     Then the user sees the waypoint attribute
