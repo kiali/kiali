@@ -29,6 +29,10 @@ type anthropicConversation struct {
 	System   []anthropic.TextBlockParam
 }
 
+func (p *AnthropicProvider) GetName() string {
+	return "Anthropic"
+}
+
 func NewAnthropicProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*AnthropicProvider, error) {
 	opts, err := getProviderOptions(conf, provider, model)
 	if err != nil {

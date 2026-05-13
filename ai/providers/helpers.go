@@ -17,6 +17,31 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// Logging control for AI stuff
+type LogLevel int
+
+const (
+	LogLevelDebug LogLevel = iota
+	LogLevelInfo
+	LogLevelWarn
+	LogLevelError
+)
+
+func Log(provider AIProvider, level LogLevel, category string, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	prefix := fmt.Sprintf("[Chat AI][%s][%s]", provider.GetName(), category)
+	switch level {
+	case LogLevelDebug:
+		log.Debugf("%s %s", prefix, msg)
+	case LogLevelInfo:
+		log.Infof("%s %s", prefix, msg)
+	case LogLevelWarn:
+		log.Warningf("%s %s", prefix, msg)
+	case LogLevelError:
+		log.Errorf("%s %s", prefix, msg)
+	}
+}
+
 var dateLikeRegexp = regexp.MustCompile(`\b\d{4}-\d{2}-\d{2}\b`)
 
 func ParseMarkdownResponse(content string) string {
@@ -33,11 +58,12 @@ func ParseMarkdownResponse(content string) string {
 	return content
 }
 
-func NewContextCanceledResponse(err error) (*types.AIResponse, int) {
+func NewContextCanceledResponse(onChunk func(chunk string), err error) {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return &types.AIResponse{Error: err.Error()}, http.StatusRequestTimeout
+		StreamError(onChunk, err.Error())
+		return
 	}
-	return &types.AIResponse{Error: "request cancelled"}, http.StatusRequestTimeout
+	StreamError(onChunk, "request cancelled")
 }
 
 func CleanConversation(ptr *types.Conversation) {
@@ -137,51 +163,6 @@ func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types
 			log.Errorf("[Chat AI] Failed to set conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
 		}
 	}
-}
-
-// ToolResultProcessingResult contains the processed tool results and metadata
-type ToolResultProcessingResult struct {
-	Response          *types.AIResponse
-	Conversation      []types.ConversationMessage
-	ShouldReturnEarly bool
-}
-
-// ProcessToolResults processes tool execution results in a standardized way
-// and builds the response and conversation accordingly
-func ProcessToolResults(toolResults []mcp.ToolCallResult, conversation []types.ConversationMessage) ToolResultProcessingResult {
-	result := ToolResultProcessingResult{
-		Response:     &types.AIResponse{},
-		Conversation: conversation,
-	}
-
-	for _, toolResult := range toolResults {
-		// Handle errors
-		if toolResult.Error != nil {
-			result.Response.Error = toolResult.Error.Error()
-			result.ShouldReturnEarly = true
-			return result
-		}
-
-		// Collect actions and referenced_docs
-		if len(toolResult.Actions) > 0 {
-			result.Response.Actions = append(result.Response.Actions, toolResult.Actions...)
-		}
-		if len(toolResult.ReferencedDocs) > 0 {
-			result.Response.ReferencedDocs = append(result.Response.ReferencedDocs, toolResult.ReferencedDocs...)
-		}
-
-		// Skip adding to conversation if we have actions/referenced_docs
-		if len(toolResult.Actions) > 0 || len(toolResult.ReferencedDocs) > 0 {
-			continue
-		}
-
-		// Default: append tool message to conversation
-		if toolResult.Message.Content != "" {
-			result.Conversation = append(result.Conversation, toolResult.Message)
-		}
-	}
-
-	return result
 }
 
 // AddContextToConversation creates a temporary copy of the conversation with context added

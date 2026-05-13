@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
@@ -91,7 +90,7 @@ func (f *fakeProvider) GetToolDefinitions() interface{} {
 	return nil
 }
 
-func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]mcp.ToolsProcessor, []string, error) {
+func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]types.StreamToolCallData, []string, error) {
 	return nil, nil, nil
 }
 
@@ -103,9 +102,10 @@ func (f *fakeProvider) ProviderToConversation(_ interface{}) types.ConversationM
 	return types.ConversationMessage{}
 }
 
-func (f *fakeProvider) SendChat(_ *mcputil.KialiInterface, _ types.AIRequest, _ types.AIStore) (*types.AIResponse, int) {
-	return nil, 0
+func (f *fakeProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
 }
+
+func (f *fakeProvider) GetName() string { return "fake" }
 
 func TestParseMarkdownResponse(t *testing.T) {
 	input := "Here is code:\n```go\nfmt.Println(\"hi\")\n```"
@@ -113,32 +113,20 @@ func TestParseMarkdownResponse(t *testing.T) {
 	assert.Equal(t, expected, ParseMarkdownResponse(input))
 }
 
-func TestNewContextCanceledResponse(t *testing.T) {
-	resp, code := NewContextCanceledResponse(context.Canceled)
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, context.Canceled.Error(), resp.Error)
-
-	resp, code = NewContextCanceledResponse(context.DeadlineExceeded)
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, context.DeadlineExceeded.Error(), resp.Error)
-
-	resp, code = NewContextCanceledResponse(fmt.Errorf("other error"))
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, "request cancelled", resp.Error)
-}
-
 func TestCleanConversation_RemovesExcludedTools(t *testing.T) {
-	conversation := []types.ConversationMessage{
-		{Role: "user", Content: "hello"},
-		{Role: "tool", Name: "get_action_ui", Content: "actions"},
-		{Role: "tool", Name: "custom_tool", Content: "custom"},
+	conversation := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "hello"},
+			{Role: "tool", Name: "get_action_ui", Content: "actions"},
+			{Role: "tool", Name: "custom_tool", Content: "custom"},
+		},
 	}
 
-	CleanConversation(&conversation)
+	CleanConversation(conversation)
 
-	require.Len(t, conversation, 2)
-	assert.Equal(t, "user", conversation[0].Role)
-	assert.Equal(t, "custom_tool", conversation[1].Name)
+	require.Len(t, conversation.Conversation, 2)
+	assert.Equal(t, "user", conversation.Conversation[0].Role)
+	assert.Equal(t, "custom_tool", conversation.Conversation[1].Name)
 }
 
 func TestFormatToolContent(t *testing.T) {

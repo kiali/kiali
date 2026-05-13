@@ -17,6 +17,10 @@ type GoogleAIProvider struct {
 	tracingEnabled bool
 }
 
+func (p *GoogleAIProvider) GetName() string {
+	return "Google"
+}
+
 func NewGoogleAIProvider(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (*GoogleAIProvider, error) {
 	opts, err := getProviderOptions(conf, provider, model)
 	if err != nil {

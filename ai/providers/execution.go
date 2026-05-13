@@ -10,70 +10,93 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
-	"github.com/kiali/kiali/log"
 )
 
 // ExecuteToolCallsInParallel executes all tool calls in parallel and returns results in order
 func ExecuteToolCallsInParallel(
+	p AIProvider,
+	onChunk func(chunk string),
 	kialiInterface *mcputil.KialiInterface,
-	toolCalls []mcp.ToolsProcessor,
-) []mcp.ToolCallResult {
-	results := make([]mcp.ToolCallResult, len(toolCalls))
+	toolCalls []types.StreamToolCallData,
+) ([]types.StreamToolResultData, []get_action_ui.Action, []types.ReferencedDoc) {
+	results := make([]types.StreamToolResultData, len(toolCalls))
+	actions := []get_action_ui.Action{}
+	referencedDocuments := []types.ReferencedDoc{}
 	var wg sync.WaitGroup
-	log.Debugf("Executing %d tool calls in parallel", len(toolCalls))
+	Log(p, LogLevelDebug, "ToolCalls", "Executing %d tool calls in parallel", len(toolCalls))
 	// Execute all tool calls in parallel
 	for i, toolCall := range toolCalls {
+		if !mcp.ExcludedToolNames[toolCall.Name] {
+			Log(p, LogLevelDebug, "ToolCall", "Sending tool_call event: %s", toolCall.Name)
+			SendStreamEvent(onChunk, "tool_call", toolCall)
+		}
 		wg.Add(1)
-		go func(index int, call mcp.ToolsProcessor) {
+		go func(index int, call types.StreamToolCallData) {
 			defer wg.Done()
-			actions := []get_action_ui.Action{}
-			referencedDocs := []types.ReferencedDoc{}
 			if err := kialiInterface.Request.Context().Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled before executing tool %s: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			handler, ok := mcp.DefaultToolHandlers[call.Name]
 			if !ok {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("tool handler not found: %s", call.Name),
-					Code:  http.StatusInternalServerError,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("tool handler not found: %s", call.Name).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			if !kialiInterface.Conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(call.Name) {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name),
-					Code:  http.StatusNotFound,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			// 404 mirrors the tracing gate convention above
 			if !kialiInterface.Conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(call.Name) {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("metrics are unavailable because Prometheus is disabled"),
-					Code:  http.StatusNotFound,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("metrics are unavailable because Prometheus is disabled").Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			mcpResult, code := handler.Call(kialiInterface, call.Args)
 			if code != http.StatusOK {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult),
-					Code:  code,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("tool %s returned error: %s", call.Name, mcpResult).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 			if err := kialiInterface.Request.Context().Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled after executing tool %s: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
@@ -97,7 +120,7 @@ func ExecuteToolCallsInParallel(
 						actions = append(actions, mcpRes.Actions...)
 						switch {
 						case len(actions) > 0:
-							content = "Success. The user's UI has been redirected to the requested view."
+							content = "Success. The user's UI has been redirected to the requested view or link was provided."
 						case mcpRes.Errors != "":
 							// Surface get_action_ui validation failures to the model instead of
 							// silently reporting success when no UI action was produced.
@@ -107,56 +130,60 @@ func ExecuteToolCallsInParallel(
 				}
 				if call.Name == "get_referenced_docs" {
 					if mcpRes, ok := mcpResult.(get_referenced_docs.GetReferencedDocResponse); ok {
-						referencedDocs = append(referencedDocs, mcpRes.ReferencedDocs...)
+						referencedDocuments = append(referencedDocuments, mcpRes.ReferencedDocs...)
 						content = "Success. Documentation links have been displayed in the user's UI."
 					}
 				}
-				results[index] = mcp.ToolCallResult{
-					Message: types.ConversationMessage{
-						Content: content,
-						Name:    call.Name,
-						Param:   nil,
-						Role:    "tool",
-					},
-					Code:           http.StatusOK,
-					Actions:        actions,
-					ReferencedDocs: referencedDocs,
+				results[index] = types.StreamToolResultData{
+					Content: content,
+					ID:      call.ID,
+					Round:   1,
+					Status:  "success",
+					Type:    "tool_result",
 				}
 				return
 			}
 
 			toolContent, err := FormatToolContent(mcpResult)
 			if err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("failed to format tool %s content: %w", call.Name, err),
-					Code:  http.StatusInternalServerError,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("failed to format tool %s content: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
 			if err := kialiInterface.Request.Context().Err(); err != nil {
-				results[index] = mcp.ToolCallResult{
-					Error: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err),
-					Code:  http.StatusRequestTimeout,
+				results[index] = types.StreamToolResultData{
+					Content: fmt.Errorf("context canceled after formatting tool %s content: %w", call.Name, err).Error(),
+					ID:      call.ID,
+					Round:   1,
+					Status:  "error",
+					Type:    "tool_result",
 				}
 				return
 			}
-
-			results[index] = mcp.ToolCallResult{
-				Message: types.ConversationMessage{
-					Content: toolContent,
-					Name:    call.Name,
-					Param:   call.Args,
-					Role:    "tool",
-				},
-				Code:           http.StatusOK,
-				Actions:        actions,
-				ReferencedDocs: referencedDocs,
+			toolResult := types.StreamToolResultData{
+				Content: toolContent,
+				ID:      call.ID,
+				Round:   1,
+				Status:  "success",
+				Type:    "tool_result",
 			}
+			if !mcp.ExcludedToolNames[toolCall.Name] {
+				Log(p, LogLevelDebug, "ToolCall", "Sending tool_result event: %s", toolCall.Name)
+				SendStreamEvent(onChunk, "tool_result", toolResult)
+			} else {
+				Log(p, LogLevelDebug, "ToolCall", "Skipping tool_result event for excluded tool: %s", toolCall.Name)
+			}
+			results[index] = toolResult
 		}(i, toolCall)
 	}
 
 	// Wait for all tool calls to complete
 	wg.Wait()
 
-	return results
+	return results, actions, referencedDocuments
 }

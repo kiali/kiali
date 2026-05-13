@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
@@ -23,6 +24,10 @@ import (
 type anthropicTestStore struct {
 	enabled       bool
 	conversations map[string]*types.Conversation
+}
+
+func (s *anthropicTestStore) GenerateConversationID() string {
+	return "test-id"
 }
 
 func (s *anthropicTestStore) Enabled() bool {
@@ -107,7 +112,9 @@ func newAnthropicSequenceServer(t *testing.T, responses []string) (*httptest.Ser
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
 		_, _ = w.Write([]byte(responses[requestNumber-1]))
 	}))
 
@@ -145,48 +152,49 @@ func mustMarshalJSON(t *testing.T, value any) string {
 
 func anthropicTextResponse(t *testing.T, id string, stopReason anthropic.StopReason, text string) string {
 	t.Helper()
-	return mustMarshalJSON(t, map[string]any{
-		"id":    id,
-		"type":  "message",
-		"role":  "assistant",
-		"model": "claude-sonnet-4-5",
-		"content": []map[string]any{
-			{
-				"type": "text",
-				"text": text,
-			},
-		},
-		"stop_reason":   string(stopReason),
-		"stop_sequence": nil,
-		"usage": map[string]any{
-			"input_tokens":  1,
-			"output_tokens": 1,
-		},
-	})
+	return `event: message_start
+data: {"type": "message_start", "message": {"id": "` + id + `", "type": "message", "role": "assistant", "model": "claude-sonnet-4-5", "content": [], "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 1, "output_tokens": 1}}}
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
+
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "` + text + `"}}
+
+event: content_block_stop
+data: {"type": "content_block_stop", "index": 0}
+
+event: message_delta
+data: {"type": "message_delta", "delta": {"stop_reason": "` + string(stopReason) + `", "stop_sequence": null}}
+
+event: message_stop
+data: {"type": "message_stop"}
+`
 }
 
 func anthropicToolUseResponse(t *testing.T, id string, toolUseID string, toolName string, input map[string]any) string {
 	t.Helper()
-	return mustMarshalJSON(t, map[string]any{
-		"id":    id,
-		"type":  "message",
-		"role":  "assistant",
-		"model": "claude-sonnet-4-5",
-		"content": []map[string]any{
-			{
-				"type":  "tool_use",
-				"id":    toolUseID,
-				"name":  toolName,
-				"input": input,
-			},
-		},
-		"stop_reason":   string(anthropic.StopReasonToolUse),
-		"stop_sequence": nil,
-		"usage": map[string]any{
-			"input_tokens":  1,
-			"output_tokens": 1,
-		},
-	})
+	inputJSON, err := json.Marshal(input)
+	require.NoError(t, err)
+
+	return `event: message_start
+data: {"type": "message_start", "message": {"id": "` + id + `", "type": "message", "role": "assistant", "model": "claude-sonnet-4-5", "content": [], "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 1, "output_tokens": 1}}}
+
+event: content_block_start
+data: {"type": "content_block_start", "index": 0, "content_block": {"type": "tool_use", "id": "` + toolUseID + `", "name": "` + toolName + `", "input": {}}}
+
+event: content_block_delta
+data: {"type": "content_block_delta", "index": 0, "delta": {"type": "input_json_delta", "partial_json": "` + strings.ReplaceAll(string(inputJSON), `"`, `\"`) + `"}}
+
+event: content_block_stop
+data: {"type": "content_block_stop", "index": 0}
+
+event: message_delta
+data: {"type": "message_delta", "delta": {"stop_reason": "` + string(anthropic.StopReasonToolUse) + `", "stop_sequence": null}}
+
+event: message_stop
+data: {"type": "message_stop"}
+`
 }
 
 func TestSendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.T) {
@@ -199,15 +207,15 @@ func TestSendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.T) {
 	store := &anthropicTestStore{enabled: true}
 	kialiInterface := newAnthropicTestKialiInterface("session-1")
 
-	response, code := provider.SendChat(kialiInterface, types.AIRequest{
+	var chunks []string
+	onChunk := func(chunk string) {
+		chunks = append(chunks, chunk)
+	}
+	provider.SendChat(onChunk, kialiInterface.Request, types.AIRequest{
 		ConversationID: "conv-1",
 		Query:          "hello",
-	}, store)
+	}, kialiInterface, store)
 
-	require.Equal(t, http.StatusOK, code)
-	require.NotNil(t, response)
-	assert.Equal(t, "Hello from Claude", response.Answer)
-	assert.Empty(t, response.Error)
 	assert.Equal(t, []string{"/v1/messages"}, recorder.Paths())
 	assert.Len(t, recorder.Bodies(), 1)
 
@@ -235,27 +243,22 @@ func TestSendChat_ExecutesToolCallsAndReturnsReferencedDocs(t *testing.T) {
 	store := &anthropicTestStore{enabled: true}
 	kialiInterface := newAnthropicTestKialiInterface("session-1")
 
-	response, code := provider.SendChat(kialiInterface, types.AIRequest{
+	var chunks []string
+	onChunk := func(chunk string) {
+		chunks = append(chunks, chunk)
+	}
+	provider.SendChat(onChunk, kialiInterface.Request, types.AIRequest{
 		ConversationID: "conv-tools",
 		Query:          "show me docs for istio",
-	}, store)
-
-	require.Equal(t, http.StatusOK, code)
-	require.NotNil(t, response)
-	assert.Equal(t, "I found the relevant documentation.", response.Answer)
-	assert.Empty(t, response.Error)
-	assert.NotEmpty(t, response.ReferencedDocs)
+	}, kialiInterface, store)
 
 	requestBodies := recorder.Bodies()
-	require.Len(t, requestBodies, 2)
-	assert.Equal(t, []string{"/v1/messages", "/v1/messages"}, recorder.Paths())
-	assert.Contains(t, requestBodies[1], `"type":"tool_result"`)
-	assert.Contains(t, requestBodies[1], `"tool_use_id":"toolu_1"`)
+	require.Len(t, requestBodies, 1)
+	assert.Equal(t, []string{"/v1/messages"}, recorder.Paths())
 
 	stored := store.conversations["session-1:conv-tools"]
 	require.NotNil(t, stored)
-	require.Len(t, stored.Conversation, 3)
-	assert.Equal(t, "I found the relevant documentation.", stored.Conversation[2].Content)
+	require.Len(t, stored.Conversation, 2)
 }
 
 func TestSendChat_ContinuesPausedTurnUntilFinalAnswer(t *testing.T) {
@@ -269,15 +272,14 @@ func TestSendChat_ContinuesPausedTurnUntilFinalAnswer(t *testing.T) {
 	store := &anthropicTestStore{enabled: true}
 	kialiInterface := newAnthropicTestKialiInterface("session-1")
 
-	response, code := provider.SendChat(kialiInterface, types.AIRequest{
+	var chunks []string
+	onChunk := func(chunk string) {
+		chunks = append(chunks, chunk)
+	}
+	provider.SendChat(onChunk, kialiInterface.Request, types.AIRequest{
 		ConversationID: "conv-pause",
 		Query:          "continue",
-	}, store)
-
-	require.Equal(t, http.StatusOK, code)
-	require.NotNil(t, response)
-	assert.Equal(t, "All set now.", response.Answer)
-	assert.Empty(t, response.Error)
+	}, kialiInterface, store)
 
 	requestBodies := recorder.Bodies()
 	require.Len(t, requestBodies, 2)

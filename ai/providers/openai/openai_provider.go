@@ -10,6 +10,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
+	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 )
 
@@ -100,23 +101,24 @@ func (p *OpenAIProvider) GetToolDefinitions() interface{} {
 	return tools
 }
 
-func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
+func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {
 	toolsSlice, ok := toolCall.([]openai.ChatCompletionMessageToolCallUnion)
 	toolNames := make([]string, len(toolsSlice))
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}, nil
+		return []types.StreamToolCallData{}, []string{}, nil
 	}
-	tools := make([]mcp.ToolsProcessor, len(toolsSlice))
+	tools := make([]types.StreamToolCallData, len(toolsSlice))
 	for i, tool := range toolsSlice {
 		toolNames[i] = tool.Function.Name
 		args := map[string]any{}
 		if err := json.Unmarshal([]byte(tool.Function.Arguments), &args); err != nil {
 			return nil, nil, fmt.Errorf("invalid arguments for tool %q: %w", tool.Function.Name, err)
 		}
-		tools[i] = mcp.ToolsProcessor{
-			Args:       args,
-			Name:       tool.Function.Name,
-			ToolCallID: tool.ID,
+		tools[i] = types.StreamToolCallData{
+			Args: args,
+			Name: tool.Function.Name,
+			ID:   tool.ID,
+			Type: "tool_call",
 		}
 	}
 	return tools, toolNames, nil

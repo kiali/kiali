@@ -327,6 +327,21 @@ func (srw *statusResponseWriter) WriteHeader(code int) {
 	srw.StatusCode = code
 }
 
+// Flush implements the http.Flusher interface to allow streaming
+func (srw *statusResponseWriter) Flush() {
+	if f, ok := srw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	} else {
+		rc := http.NewResponseController(srw.ResponseWriter)
+		_ = rc.Flush()
+	}
+}
+
+// Unwrap returns the underlying http.ResponseWriter
+func (srw *statusResponseWriter) Unwrap() http.ResponseWriter {
+	return srw.ResponseWriter
+}
+
 // updateMetric evaluates the StatusCode, if there is an error, increase the API failure counter, otherwise save the duration
 func updateMetric(ctx context.Context, route string, srw *statusResponseWriter, timer *prometheus.Timer) {
 	// Always measure the duration even if the API call ended in an error
