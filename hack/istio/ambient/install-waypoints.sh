@@ -68,6 +68,15 @@ users:
 SCC
 }
 
+format_http_host() {
+  local host="$1"
+  if [[ "${host}" == *:* ]]; then
+    printf '[%s]' "${host}"
+  else
+    printf '%s' "${host}"
+  fi
+}
+
 # Go to the main output directory and try to find an Istio there.
 HACK_SCRIPT_DIR="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
@@ -157,6 +166,7 @@ ${CLIENT_EXE} wait --for=condition=Ready pod -l app=echo-server -n waypoint-forw
 sleep 15
 # Update with echo-server IP
 POD_IP=$($CLIENT_EXE get pod -l app=echo-server -n waypoint-forworkload -o jsonpath="{.items[0].status.podIP}")
+POD_HOST=$(format_http_host "${POD_IP}")
 echo "Creating client in ns waypoint-forworkload with podIP $POD_IP"
 cat <<NAD | $CLIENT_EXE -n waypoint-forworkload apply -f -
 apiVersion: apps/v1
@@ -182,7 +192,7 @@ spec:
           args:
             - while true; do
               echo "Calling echo-service...";
-              curl -s http://$POD_IP
+              curl -g -s http://$POD_HOST
               sleep 5;
               done;
 NAD
