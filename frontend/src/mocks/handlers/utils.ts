@@ -303,7 +303,7 @@ export interface MockServiceListItem {
   istioReferences: unknown[];
   istioSidecar: boolean;
   kialiWizard: string;
-  labels: { app: string };
+  labels: Record<string, string>;
   name: string;
   namespace: string;
   ports: Record<string, number>;
@@ -459,10 +459,12 @@ export const createMockWorkloadListItem = (
 export const createMockServiceListItem = (
   name: string,
   namespace: string,
-  cluster = 'cluster-default'
+  cluster = 'cluster-default',
+  serviceRegistry = 'Kubernetes'
 ): MockServiceListItem => {
   const healthStatus = getItemHealthStatus(name, namespace, cluster);
   const errorRate = getScenarioConfig().errorRate;
+  const isExternal = serviceRegistry === 'External';
 
   let httpResponses: Record<string, number> = { '200': 100 };
   if (healthStatus === 'unhealthy') {
@@ -476,19 +478,15 @@ export const createMockServiceListItem = (
     namespace,
     cluster,
     instanceType: InstanceType.Service,
-    istioSidecar: true,
+    istioSidecar: !isExternal,
     isAmbient: false,
     isWaypoint: false,
     isZtunnel: false,
     istioReferences: [],
     kialiWizard: '',
-    serviceRegistry: 'Kubernetes',
-    labels: {
-      app: name
-    },
-    ports: {
-      http: 9080
-    },
+    serviceRegistry,
+    labels: isExternal ? {} : { app: name },
+    ports: isExternal ? { https: 443 } : { http: 9080 },
     health: {
       requests: {
         inbound: { http: httpResponses },
@@ -624,6 +622,11 @@ export const serviceDefinitions: Record<string, string[]> = {
   'travel-portal': ['voyages', 'viaggi']
 };
 
+export const externalServiceDefinitions: Record<string, string[]> = {
+  bookinfo: ['googleapis.com', 'aws.amazon.com'],
+  'travel-agency': ['api.openweathermap.org', 'maps.googleapis.com']
+};
+
 export const appDefinitions = serviceDefinitions;
 
 export const getAllWorkloads = (): MockWorkloadListItem[] => {
@@ -669,6 +672,11 @@ export const getAllServices = (): MockServiceListItem[] => {
       const definitions = serviceDefinitions[namespace] || [];
       definitions.forEach(name => {
         services.push(createMockServiceListItem(name, namespace, cluster.name));
+      });
+
+      const externalDefs = externalServiceDefinitions[namespace] || [];
+      externalDefs.forEach(name => {
+        services.push(createMockServiceListItem(name, namespace, cluster.name, 'External'));
       });
     });
   });

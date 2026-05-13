@@ -67,61 +67,65 @@ export const serviceHandlers = [
     const found = nsServices.find(s => s.name === service);
 
     if (found) {
+      const isExternal = found.serviceRegistry === 'External';
+
       const workloadsByNamespace = getWorkloadsByNamespace();
       const nsWorkloads = workloadsByNamespace[namespace as string] || [];
-      const relatedWorkloads = nsWorkloads
-        .filter(w => w.labels.app === service)
-        .map(w => ({
-          name: w.name,
-          namespace: namespace as string,
-          createdAt: new Date().toISOString(),
-          resourceVersion: '12345',
-          type: 'Deployment',
-          istioSidecar: true,
-          isAmbient: false,
-          isGateway: false,
-          isWaypoint: false,
-          isZtunnel: false,
-          labels: w.labels,
-          serviceAccountNames: [`${w.labels.app}-service-account`]
-        }));
+      const relatedWorkloads = isExternal
+        ? []
+        : nsWorkloads
+            .filter(w => w.labels.app === service)
+            .map(w => ({
+              name: w.name,
+              namespace: namespace as string,
+              createdAt: new Date().toISOString(),
+              resourceVersion: '12345',
+              type: 'Deployment',
+              istioSidecar: true,
+              isAmbient: false,
+              isGateway: false,
+              isWaypoint: false,
+              isZtunnel: false,
+              labels: w.labels,
+              serviceAccountNames: [`${w.labels.app}-service-account`]
+            }));
 
-      return HttpResponse.json({
-        service: {
-          name: service,
-          namespace: namespace,
-          cluster: 'cluster-default',
-          createdAt: new Date().toISOString(),
-          resourceVersion: '12345',
-          type: 'ClusterIP',
-          ip: '10.96.0.10',
-          externalName: '',
-          labels: { app: service },
-          selectors: { app: service },
-          ports: [
-            {
-              name: 'http',
-              port: 9080,
-              protocol: 'TCP',
-              appProtocol: 'http',
-              istioProtocol: 'http',
-              tlsMode: 'istio'
-            }
-          ],
-          annotations: {},
-          additionalDetails: []
-        },
-        endpoints: [
-          {
-            addresses: [
+      const serviceDetail = isExternal
+        ? {
+            name: service,
+            namespace: namespace,
+            cluster: 'cluster-default',
+            createdAt: new Date().toISOString(),
+            resourceVersion: '12345',
+            type: 'ExternalName',
+            ip: '',
+            externalName: service as string,
+            labels: {},
+            selectors: {},
+            ports: [
               {
-                ip: '10.244.0.10',
-                kind: 'Pod',
-                name: `${service}-v1-abc123`,
-                istioProtocol: 'http',
-                tlsMode: 'istio'
+                name: 'https',
+                port: 443,
+                protocol: 'TCP',
+                appProtocol: 'https',
+                istioProtocol: 'https',
+                tlsMode: 'disabled'
               }
             ],
+            annotations: {},
+            additionalDetails: []
+          }
+        : {
+            name: service,
+            namespace: namespace,
+            cluster: 'cluster-default',
+            createdAt: new Date().toISOString(),
+            resourceVersion: '12345',
+            type: 'ClusterIP',
+            ip: '10.96.0.10',
+            externalName: '',
+            labels: { app: service },
+            selectors: { app: service },
             ports: [
               {
                 name: 'http',
@@ -131,17 +135,65 @@ export const serviceHandlers = [
                 istioProtocol: 'http',
                 tlsMode: 'istio'
               }
-            ]
-          }
-        ],
+            ],
+            annotations: {},
+            additionalDetails: []
+          };
+
+      const serviceEntries = isExternal
+        ? [
+            {
+              metadata: {
+                name: `${service}-entry`,
+                namespace: namespace,
+                createdTimestamp: new Date().toISOString(),
+                resourceVersion: '12345'
+              },
+              spec: {
+                hosts: [service as string],
+                location: 'MESH_EXTERNAL',
+                ports: [{ name: 'https', number: 443, protocol: 'TLS' }],
+                resolution: 'DNS'
+              }
+            }
+          ]
+        : [];
+
+      return HttpResponse.json({
+        service: serviceDetail,
+        endpoints: isExternal
+          ? []
+          : [
+              {
+                addresses: [
+                  {
+                    ip: '10.244.0.10',
+                    kind: 'Pod',
+                    name: `${service}-v1-abc123`,
+                    istioProtocol: 'http',
+                    tlsMode: 'istio'
+                  }
+                ],
+                ports: [
+                  {
+                    name: 'http',
+                    port: 9080,
+                    protocol: 'TCP',
+                    appProtocol: 'http',
+                    istioProtocol: 'http',
+                    tlsMode: 'istio'
+                  }
+                ]
+              }
+            ],
         workloads: relatedWorkloads,
         virtualServices: [],
         destinationRules: [],
         k8sHTTPRoutes: [],
         k8sGRPCRoutes: [],
         k8sInferencePools: [],
-        serviceEntries: [],
-        istioSidecar: true,
+        serviceEntries,
+        istioSidecar: !isExternal,
         isAmbient: false,
         istioPermissions: {
           create: true,
