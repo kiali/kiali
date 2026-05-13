@@ -4,6 +4,19 @@ import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
 import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
+const tracingPathByTarget = (targetType: string, namespace: string, name: string): string => {
+  switch (targetType) {
+    case 'app':
+      return `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/apps/${name}/traces`;
+    case 'service':
+      return `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/services/${name}/traces`;
+    case 'workload':
+      return `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/${name}/traces`;
+    default:
+      throw new Error(`Unsupported tracing target type: ${targetType}`);
+  }
+};
+
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
 // This is usually enough (Slower) to have the workloads enrolled
@@ -199,6 +212,60 @@ const waitForWorkloadTracesInApi = (
   });
 };
 
+const waitForTargetTracesInApi = (
+  targetType: string,
+  namespace: string,
+  name: string,
+  clusterName?: string,
+  maxRetries = 18,
+  retryCount = 0
+): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Tracing data not found after ${maxRetries} retries (targetType=${targetType}, namespace=${namespace}, name=${name}, cluster=${
+        clusterName ?? ''
+      }, baseUrl=${Cypress.config('baseUrl')})`
+    );
+  }
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 100
+  };
+  if (clusterName) {
+    qs.clusterName = clusterName;
+  }
+
+  cy.request({
+    method: 'GET',
+    url: tracingPathByTarget(targetType, namespace, name),
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const traces = response.body?.data;
+    if (Array.isArray(traces) && traces.length > 0) {
+      return;
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForTargetTraces',
+        message: `retry=${retryCount}/${maxRetries} targetType=${targetType} namespace=${namespace} name=${name} tracesCount=${
+          Array.isArray(traces) ? traces.length : -1
+        } baseUrl=${Cypress.config('baseUrl')}`
+      });
+    }
+
+    return cy
+      .wait(10000)
+      .then(() => waitForTargetTracesInApi(targetType, namespace, name, clusterName, maxRetries, retryCount + 1));
+  });
+};
+
 const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: string): void => {
   const maxRetries = 20;
   let requestUrl = `${Cypress.config(
@@ -369,6 +436,11 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
   waitForWorkloadTracesInApi(namespace, workload);
+});
+
+Then('the tracing data is ready for the {string} {string}', (targetType: string, namespacedName: string) => {
+  const [namespace, name] = namespacedName.split('/');
+  waitForTargetTracesInApi(targetType, namespace, name);
 });
 
 const waitForWaypointNodeInGraph = (namespace: string, maxRetries = 30, retryCount = 0): void => {

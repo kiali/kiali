@@ -130,6 +130,34 @@ Then('user sees trace details', () => {
   cy.getBySel('trace-details-dropdown').contains('View on Graph');
 });
 
+When('user hovers over a trace with at least {int} spans', (spans: number) => {
+  cy.getBySel('tracing-scatterplot').within(() => {
+    // Victory can render points in an initial transient position before settling them.
+    // Give the scatter plot a moment to stabilize before resolving the target point.
+    cy.wait(5000);
+    cy.waitForReact();
+    cy.getReact('*oint', { props: { symbol: 'circle' } })
+      .should('have.length.at.least', 1)
+      .then(($points: any) => {
+        const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
+        const dataPointInGraph = pointWithTraceName.children[0].props.d;
+
+        cy.get(`path[d="${dataPointInGraph}"]`)
+          .should('be.visible')
+          .trigger('mouseover', { force: true })
+          .trigger('mouseenter', { force: true })
+          .trigger('mousemove', { force: true });
+      });
+  });
+});
+
+Then('user sees the tracing tooltip heat map', () => {
+  cy.getBySel('trace-tooltip', { timeout: 10000 }).should('be.visible');
+  cy.getBySel('trace-tooltip-heatmap', { timeout: 20000 }).should('be.visible');
+  cy.getBySel('trace-tooltip-heatmap-area').should('not.contain', 'n/a');
+  cy.getBySel('trace-tooltip').find('[role="progressbar"]').should('not.exist');
+});
+
 When('user selects a trace', function () {
   Step(this, 'user selects a trace with at least 0 spans');
 });

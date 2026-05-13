@@ -741,6 +741,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
+    "${SCRIPT_DIR}"/istio/install-travel-agency-demo.sh -c kubectl -ai false -di travel-control,travel-agency,travel-portal -w true
   fi
 
   ensureKialiServerReady

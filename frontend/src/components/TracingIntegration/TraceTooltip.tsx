@@ -68,12 +68,12 @@ export class TraceLabel extends React.Component<LabelProps> {
 
     return (
       <foreignObject width={innerWidth} height={innerHeight} x={left} y={top}>
-        <div className={tooltipStyle}>
+        <div className={tooltipStyle} data-test="trace-tooltip">
           <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
           <div className={contentStyle}>
-            <div className={leftStyle}>
+            <div className={leftStyle} data-test="trace-tooltip-heatmap-area">
               {hasStats ? (
-                renderTraceHeatMap(this.props.statsMatrix!, true)
+                <div data-test="trace-tooltip-heatmap">{renderTraceHeatMap(this.props.statsMatrix!, true)}</div>
               ) : this.props.isStatsMatrixComplete ? (
                 'n/a'
               ) : (
