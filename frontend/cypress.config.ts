@@ -25,6 +25,11 @@ export default defineConfig({
     omitFiltered: true,
     rootSelector: '#root'
   },
+  env: {
+    // ALLOW_INSECURE_KIALI_API: true,
+    // PASSWD: 'kiali',
+    // USERNAME: 'kiali'
+  },
   e2e: {
     baseUrl: 'http://localhost:3001',
     async setupNodeEvents(
@@ -47,6 +52,21 @@ export default defineConfig({
           plugins: [createEsbuildPlugin(config)]
         })
       );
+
+      // When targeting an HTTPS endpoint with self-signed certificates
+      // (e.g. CRC), the browser itself must also bypass cert validation
+      // — ALLOW_INSECURE_KIALI_API only covers Node.js cy.request() calls.
+      if (config.env.ALLOW_INSECURE_KIALI_API) {
+        on('before:browser:launch', (browser, launchOptions) => {
+          if (browser.family === 'chromium') {
+            launchOptions.args.push('--ignore-certificate-errors');
+          }
+          if (browser.family === 'firefox') {
+            launchOptions.preferences['security.enterprise_roots.enabled'] = true;
+          }
+          return launchOptions;
+        });
+      }
 
       // Auth strategy is discovered at config time and is safe to expose.
       config.expose = config.expose ?? {};
