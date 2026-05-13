@@ -244,8 +244,12 @@ export const item: Renderer<TResource> = (item: TResource, config: Resource, bad
     }
   }
 
-  const kioskParams =
-    config.name === 'workloads' && 'gvk' in item ? `type=${(item as WorkloadListItem).gvk.Kind}` : undefined;
+  let kioskParams: string | undefined;
+  if (config.name === 'workloads' && 'gvk' in item) {
+    kioskParams = `type=${(item as WorkloadListItem).gvk.Kind}`;
+  } else if (config.name === 'services' && item['serviceRegistry'] === 'External') {
+    kioskParams = 'type=External';
+  }
 
   return (
     <Td

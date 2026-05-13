@@ -12,8 +12,6 @@
 HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # ISTIO_DIR is where the Istio download is installed and thus where the sleep demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
 ISTIO_DIR=
@@ -109,8 +107,23 @@ else
   echo "Installing the 'sleep' app in the 'sleep' namespace..."
   ISTIO_INJECTION=""
   if [ "${ISTIO_DIR}" == "" ]; then
-    ISTIO_DIR=$(ls -dt1 ${SCRIPT_DIR}/../../_output/istio-* | head -n1)
+    OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../_output}"
+    if ! ls -dt1 ${OUTPUT_DIR}/istio-* >/dev/null 2>&1; then
+      ${HACK_SCRIPT_DIR}/download-istio.sh
+      if [ "$?" != "0" ]; then
+        echo "ERROR: You do not have Istio installed and it cannot be downloaded"
+        exit 1
+      fi
+    fi
+    ISTIO_DIR=$(ls -dt1 ${OUTPUT_DIR}/istio-* | head -n1)
   fi
+
+  if [ ! -d "${ISTIO_DIR}" ]; then
+    echo "ERROR: Istio cannot be found at: ${ISTIO_DIR}"
+    exit 1
+  fi
+
+  echo "Istio is found here: ${ISTIO_DIR}"
 
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     ${CLIENT_EXE} get project "sleep" || ${CLIENT_EXE} new-project "sleep"

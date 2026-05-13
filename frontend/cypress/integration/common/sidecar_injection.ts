@@ -301,12 +301,18 @@ function openNamespaceActionsMenu(): void {
   }
 }
 
+function confirmAndWaitForNamespacePatch(): void {
+  cy.intercept('PATCH', '**/api/namespaces/**').as('namespacePatch');
+  cy.getBySel('confirm-create').should('be.visible').click();
+  cy.wait('@namespacePatch');
+  ensureKialiFinishedLoading();
+}
+
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
   ensureKialiFinishedLoading();
   openNamespaceActionsMenu();
   cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-  cy.getBySel('confirm-create').should('be.visible').click();
-  ensureKialiFinishedLoading();
+  confirmAndWaitForNamespacePatch();
 });
 
 When(
@@ -317,8 +323,7 @@ When(
     cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
       .should('be.visible')
       .click();
-    cy.getBySel('confirm-create').should('be.visible').click();
-    ensureKialiFinishedLoading();
+    confirmAndWaitForNamespacePatch();
   }
 );
 
@@ -326,8 +331,7 @@ When('I remove override configuration for sidecar injection in the namespace', f
   ensureKialiFinishedLoading();
   openNamespaceActionsMenu();
   cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-  cy.getBySel('confirm-create').should('be.visible').click();
-  ensureKialiFinishedLoading();
+  confirmAndWaitForNamespacePatch();
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
