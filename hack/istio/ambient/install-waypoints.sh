@@ -71,6 +71,15 @@ users:
 SCC
 }
 
+format_http_host() {
+  local host="$1"
+  if [[ "${host}" == *:* ]]; then
+    printf '[%s]' "${host}"
+  else
+    printf '%s' "${host}"
+  fi
+}
+
 # Go to the main output directory and try to find an Istio there.
 HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${OUTPUT_DIR:-${HACK_SCRIPT_DIR}/../../../_output}"
@@ -160,6 +169,7 @@ ${CLIENT_EXE} wait --for=condition=Ready pod -l gateway.networking.k8s.io/gatewa
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-server-waypoint-forworkload.yaml -n waypoint-forworkload
 ${CLIENT_EXE} rollout status deployment/echo-server -n waypoint-forworkload --timeout=120s
 POD_IP=$($CLIENT_EXE get pod -l app=echo-server -n waypoint-forworkload -o jsonpath="{.items[0].status.podIP}")
+POD_HOST=$(format_http_host "${POD_IP}")
 echo "Creating client in ns waypoint-forworkload with echo pod IP ${POD_IP}"
 cat <<NAD | $CLIENT_EXE -n waypoint-forworkload apply -f -
 apiVersion: apps/v1
@@ -186,7 +196,7 @@ spec:
             - |
               while true; do
                 echo "Calling echo pod at ${POD_IP}..."
-                if ! curl -sSf --connect-timeout 5 --max-time 15 "http://${POD_IP}/" >/dev/null; then
+                if ! curl -g -sSf --connect-timeout 5 --max-time 15 "http://${POD_HOST}/" >/dev/null; then
                   echo "[waypoint-forworkload] curl failed for baked-in echo pod IP ${POD_IP}. If echo-server was recreated, this IP is stale (curl Deployment args are fixed at apply time). Re-run this install script for waypoint-forworkload or patch/reapply curl-client with the current pod IP."
                 fi
                 sleep 5
