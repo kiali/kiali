@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 let mockKioskValue = '';
 
 jest.mock('store/ConfigStore', () => ({
@@ -13,7 +14,6 @@ jest.mock('store/ConfigStore', () => ({
   }
 }));
 
-// eslint-disable-next-line import/first
 import { getKioskMode, isKioskMode, getParamsSeparator } from '../SearchParamUtils';
 
 describe('getKioskMode', () => {

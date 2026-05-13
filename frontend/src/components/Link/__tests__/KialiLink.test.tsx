@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 import * as React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
@@ -20,9 +21,7 @@ jest.mock('config/ServerConfig', () => ({
   serverConfig: { ambientEnabled: false }
 }));
 
-// eslint-disable-next-line import/first
 import { store } from '../../../store/ConfigStore';
-// eslint-disable-next-line import/first
 import { KialiLink } from '../KialiLink';
 
 let postMessageSpy: jest.SpyInstance;

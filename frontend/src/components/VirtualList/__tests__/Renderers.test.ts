@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 import { InstanceType } from '../../../types/Common';
 
 jest.mock('store/ConfigStore', () => ({
@@ -15,11 +16,8 @@ jest.mock('config/ServerConfig', () => ({
   serverConfig: { ambientEnabled: false }
 }));
 
-// eslint-disable-next-line import/first
 import { getKioskParamsForListItem } from '../Renderers';
-// eslint-disable-next-line import/first
 import { Resource, TResource } from '../Config';
-// eslint-disable-next-line import/first
 import { WorkloadListItem } from '../../../types/Workload';
 
 const workloadConfig: Resource = { name: 'workloads', columns: [] };

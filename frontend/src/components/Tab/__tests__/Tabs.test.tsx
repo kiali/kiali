@@ -1,3 +1,4 @@
+/* eslint-disable import/first */
 import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Tab } from '@patternfly/react-core';
@@ -22,14 +23,11 @@ jest.mock('../../../utils/SearchParamUtils', () => ({
   isKioskMode: jest.fn(() => false)
 }));
 
-// eslint-disable-next-line import/first
 import { store } from '../../../store/ConfigStore';
-// eslint-disable-next-line import/first
 import { ParameterizedTabs } from '../Tabs';
-// eslint-disable-next-line import/first
 import { isKioskMode } from '../../../utils/SearchParamUtils';
 
-const mockedIsKioskMode = isKioskMode as jest.MockedFunction<typeof isKioskMode>;
+const mockedIsKioskMode = isKioskMode as jest.Mock;
 
 const defaultProps = {
   activeTab: 'info',
