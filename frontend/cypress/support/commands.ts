@@ -195,16 +195,20 @@ Cypress.Commands.add('login', (username: string, password: string) => {
 
         // Kiali's OpenShift auth redirects through /api/auth/redirect,
         // which 302s to the OAuth server. Probe that endpoint with
-        // cy.request() (Node.js, no CORS) to discover the OAuth origin.
+        // cy.request() (Node.js, no CORS) to discover the OAuth origin
+        // so we can use cy.origin() for cross-origin form interactions.
         const authProvider = Cypress.expose('AUTH_PROVIDER');
         cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
-          // Cypress stores redirects as "<status> <url>" strings (e.g.
-          // "302 https://oauth-openshift.apps.../..."), so split/pop
-          // extracts the URL part.
           const lastRedirect = resp.redirects?.at(-1);
-          const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop()! : Cypress.config('baseUrl')!;
-          const oauthOrigin = new URL(redirectUrl).origin;
+          const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop() : undefined;
           const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
+          let oauthOrigin: string;
+          try {
+            oauthOrigin = redirectUrl ? new URL(redirectUrl).origin : baseOrigin;
+          } catch {
+            cy.log(`Could not parse OAuth redirect URL "${redirectUrl}", falling back to baseUrl origin`);
+            oauthOrigin = baseOrigin;
+          }
 
           cy.visit({ url: '/' });
 

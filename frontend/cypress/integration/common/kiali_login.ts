@@ -1,8 +1,49 @@
 import { Before, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-const USERNAME = Cypress.expose('USERNAME') ?? 'jenkins'; // CYPRESS_USERNAME to the user
-const KUBEADMIN_IDP = Cypress.expose('AUTH_PROVIDER'); // CYPRESS_AUTH_PROVIDER to the user
+const USERNAME = Cypress.expose('USERNAME') ?? 'jenkins';
+const KUBEADMIN_IDP = Cypress.expose('AUTH_PROVIDER');
 const auth_strategy = Cypress.expose('AUTH_STRATEGY');
+
+// Cached OAuth origin discovered via /api/auth/redirect probe.
+let oauthOrigin: string | undefined;
+
+/**
+ * Discovers the OAuth server origin by following redirects from Kiali's
+ * auth redirect endpoint. Needed because Cypress 15 enforces strict
+ * origin boundaries — interactions with cross-origin OAuth forms must
+ * be wrapped in cy.origin().
+ */
+function getOAuthOrigin(): Cypress.Chainable<string> {
+  if (oauthOrigin !== undefined) {
+    return cy.wrap(oauthOrigin);
+  }
+  return cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
+    const lastRedirect = resp.redirects?.at(-1);
+    const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop() : undefined;
+    const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
+    oauthOrigin = redirectUrl ? new URL(redirectUrl).origin : baseOrigin;
+    return oauthOrigin;
+  });
+}
+
+/**
+ * Fills a login form, handling cross-origin OAuth when needed.
+ * Wraps the form interaction in cy.origin() if the OAuth server
+ * differs from the Kiali base URL.
+ */
+function fillOAuthForm(
+  formAction: (args: { password: string; username: string }) => void,
+  args: { password: string; username: string }
+): void {
+  getOAuthOrigin().then(origin => {
+    const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
+    if (origin !== baseOrigin) {
+      cy.origin(origin, { args }, formAction);
+    } else {
+      formAction(args);
+    }
+  });
+}
 
 Given('all sessions are cleared', () => {
   Cypress.session.clearAllSavedSessions();
@@ -17,7 +58,6 @@ Given('user opens base url', () => {
       cy.log('Skipping login, Kiali is running with auth disabled');
     }
 
-    // Make sure we clear the cookie in case a previous test failed to logout.
     cy.clearCookie('openshift-session-token');
   });
 });
@@ -27,8 +67,16 @@ Given('user clicks my_htpasswd_provider', () => {
     cy.exec('kubectl get user').then(result => {
       if (result.stderr !== 'No resources found') {
         cy.log(`Log in using auth provider: ${KUBEADMIN_IDP}`);
-
-        cy.contains(KUBEADMIN_IDP).should('be.visible').click();
+        getOAuthOrigin().then(origin => {
+          const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
+          if (origin !== baseOrigin) {
+            cy.origin(origin, { args: { idp: KUBEADMIN_IDP } }, ({ idp }) => {
+              cy.contains(idp).should('be.visible').click();
+            });
+          } else {
+            cy.contains(KUBEADMIN_IDP).should('be.visible').click();
+          }
+        });
       }
     });
   }
@@ -38,29 +86,33 @@ Given('user fill in username and password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user: ${USERNAME}`);
     cy.env(['PASSWD']).then(({ PASSWD }) => {
-      cy.get('#inputUsername')
-        .clear()
-        .type('' || USERNAME);
-
-      cy.get('#inputPassword').type('' || PASSWD);
-      cy.get('button[type="submit"]').click();
+      fillOAuthForm(
+        ({ username, password }) => {
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+        },
+        { username: USERNAME, password: PASSWD }
+      );
     });
   }
 });
 
 Given('user fills in an invalid username', () => {
   if (auth_strategy === 'openshift') {
-    let invalid = 'foobar';
+    const invalid = 'foobar';
 
     cy.log(`Log in with invalid username: ${invalid}`);
     cy.log(`The real username should be: ${USERNAME}`);
     cy.env(['PASSWD']).then(({ PASSWD }) => {
-      cy.get('#inputUsername')
-        .clear()
-        .type('' || invalid);
-
-      cy.get('#inputPassword').type('' || PASSWD);
-      cy.get('button[type="submit"]').click();
+      fillOAuthForm(
+        ({ username, password }) => {
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+        },
+        { username: invalid, password: PASSWD }
+      );
     });
   }
 });
@@ -69,12 +121,14 @@ Given('user fills in an invalid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with wrong password: ${USERNAME}`);
     cy.env(['PASSWD']).then(({ PASSWD }) => {
-      cy.get('#inputUsername')
-        .clear()
-        .type('' || USERNAME);
-
-      cy.get('#inputPassword').type('' || `${PASSWD.toLowerCase()}123456`);
-      cy.get('button[type="submit"]').click();
+      fillOAuthForm(
+        ({ username, password }) => {
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+        },
+        { username: USERNAME, password: `${PASSWD.toLowerCase()}123456` }
+      );
     });
   }
 });
@@ -97,10 +151,14 @@ Then('user fills in a valid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with valid password: ${USERNAME}`);
     cy.env(['PASSWD']).then(({ PASSWD }) => {
-      cy.get('#inputUsername').clear().type(`${USERNAME}`);
-
-      cy.get('#inputPassword').type(`${PASSWD}`);
-      cy.get('button[type="submit"]').click();
+      fillOAuthForm(
+        ({ username, password }) => {
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+        },
+        { username: USERNAME, password: PASSWD }
+      );
     });
   }
   if (auth_strategy === 'token') {
@@ -119,11 +177,14 @@ Then('user fills in a valid password for {string} cluster', (cluster: string) =>
       const username = envVars[usernameKey];
       const password = envVars[passwordKey];
       cy.log(`Log in as user with valid password: ${username}`);
-
-      cy.get('#inputUsername').clear().type(`${username}`);
-
-      cy.get('#inputPassword').type(`${password}`);
-      cy.get('button[type="submit"]').click();
+      fillOAuthForm(
+        ({ username, password }) => {
+          cy.get('#inputUsername').clear().type(username);
+          cy.get('#inputPassword').type(password);
+          cy.get('button[type="submit"]').click();
+        },
+        { username, password }
+      );
     });
   }
 });
