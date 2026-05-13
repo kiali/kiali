@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +31,13 @@ var argoCDApplicationGVR = schema.GroupVersionResource{
 	Version:  "v1alpha1",
 }
 
-func newDynamicClient(clientFactory kubernetes.ClientFactory, clusterName string) (dynamic.Interface, error) {
+var dynamicClientCache sync.Map // map[clusterName]dynamic.Interface
+
+func getOrCreateDynamicClient(clientFactory kubernetes.ClientFactory, clusterName string) (dynamic.Interface, error) {
+	if cached, ok := dynamicClientCache.Load(clusterName); ok {
+		return cached.(dynamic.Interface), nil
+	}
+
 	saClient := clientFactory.GetSAClient(clusterName)
 	if saClient == nil {
 		return nil, fmt.Errorf("no SA client available for cluster %q", clusterName)
@@ -39,7 +46,13 @@ func newDynamicClient(clientFactory kubernetes.ClientFactory, clusterName string
 	if restConfig == nil {
 		return nil, fmt.Errorf("no REST config available for cluster %q", clusterName)
 	}
-	return dynamic.NewForConfig(restConfig)
+	client, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	actual, _ := dynamicClientCache.LoadOrStore(clusterName, client)
+	return actual.(dynamic.Interface), nil
 }
 
 func getArgoCDAppDetail(ctx context.Context, dynClient dynamic.Interface, name, namespace, cluster string) (interface{}, int) {
@@ -48,7 +61,7 @@ func getArgoCDAppDetail(ctx context.Context, dynClient dynamic.Interface, name, 
 		if k8serrors.IsNotFound(err) {
 			return fmt.Sprintf("ArgoCD Application %q not found in namespace %q.", name, namespace), http.StatusOK
 		}
-		return classifyError(err, "application", name, namespace), http.StatusOK
+		return classifyError(err, "argoapp", name, namespace), http.StatusOK
 	}
 	return TransformArgoCDAppDetail(result.Object, cluster), http.StatusOK
 }
@@ -85,7 +98,7 @@ func executeArgoCDApplication(kialiInterface *mcputil.KialiInterface, namespaces
 		}
 	}
 
-	dynClient, dynErr := newDynamicClient(kialiInterface.ClientFactory, clusterName)
+	dynClient, dynErr := getOrCreateDynamicClient(kialiInterface.ClientFactory, clusterName)
 	if dynErr != nil {
 		return "ArgoCD Application resources could not be queried. " +
 			"Please ensure ArgoCD is installed and the Kiali service account has permission to read Application CRDs.", http.StatusOK
@@ -221,12 +234,6 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	if resourceType == "namespace" && resourceName != "" {
 		namespaces = resourceName
 	}
-	if resourceName != "" && namespaces == "" {
-		return "Namespaces are required when resource name is provided", http.StatusBadRequest
-	}
-	if queryTime.IsZero() {
-		queryTime = util.Clock.Now()
-	}
 	if clusterName == "" {
 		clusterName = kialiInterface.Conf.KubernetesConfig.ClusterName
 	}
@@ -234,8 +241,15 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	// ArgoCD Application CRs often live outside the mesh (e.g. the "argocd"
 	// namespace) so we bypass Kiali's mesh-scoped namespace access check and
 	// let Kubernetes RBAC on the dynamic client handle authorization.
-	if resourceType == "application" {
+	if resourceType == "argoapp" {
 		return executeArgoCDApplication(kialiInterface, namespaces, resourceName, clusterName)
+	}
+
+	if resourceName != "" && namespaces == "" {
+		return "Namespaces are required when resource name is provided", http.StatusBadRequest
+	}
+	if queryTime.IsZero() {
+		queryTime = util.Clock.Now()
 	}
 
 	var namespacesSlice []string

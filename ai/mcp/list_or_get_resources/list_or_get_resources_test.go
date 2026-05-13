@@ -95,7 +95,7 @@ func TestExecute_InvalidResourceType(t *testing.T) {
 func TestExecute_ValidResourceTypes(t *testing.T) {
 	util.Clock = util.RealClock{}
 
-	validTypes := []string{"service", "workload", "app", "application"}
+	validTypes := []string{"service", "workload", "app", "argoapp"}
 
 	for _, rt := range validTypes {
 		t.Run("ResourceType_"+rt, func(t *testing.T) {
@@ -397,7 +397,7 @@ func TestExecute_ApplicationList(t *testing.T) {
 	ki := setupMocks(t)
 
 	args := map[string]interface{}{
-		"resource_type": "application",
+		"resource_type": "argoapp",
 	}
 
 	resp, code := Execute(ki, args)
@@ -415,7 +415,7 @@ func TestExecute_ApplicationListWithNonExistentNamespace(t *testing.T) {
 	ki := setupMocks(t)
 
 	args := map[string]interface{}{
-		"resource_type": "application",
+		"resource_type": "argoapp",
 		"namespaces":    "argocd-wrong",
 	}
 
@@ -433,14 +433,18 @@ func TestExecute_ApplicationDetailWithoutNamespace(t *testing.T) {
 	ki := setupMocks(t)
 
 	args := map[string]interface{}{
-		"resource_type": "application",
+		"resource_type": "argoapp",
 		"resource_name": "guestbook",
 	}
 
 	resp, code := Execute(ki, args)
 
+	// argoapp routes early (before the generic namespace check) so with a fake
+	// client the dynamic client creation fails gracefully.
 	assert.Equal(t, http.StatusOK, code)
-	assert.Equal(t, "Namespaces are required when resource name is provided", resp)
+	respStr, ok := resp.(string)
+	assert.True(t, ok, "Expected string response, got %T", resp)
+	assert.Contains(t, respStr, "ArgoCD Application resources could not be queried")
 }
 
 func TestExecute_ApplicationDetailInNonExistentNamespace(t *testing.T) {
@@ -448,7 +452,7 @@ func TestExecute_ApplicationDetailInNonExistentNamespace(t *testing.T) {
 	ki := setupMocks(t)
 
 	args := map[string]interface{}{
-		"resource_type": "application",
+		"resource_type": "argoapp",
 		"resource_name": "nonexistent-app",
 		"namespaces":    "argocd-wrong",
 	}
@@ -516,17 +520,17 @@ func TestExecute_ApplicationAlwaysReturns200(t *testing.T) {
 	}{
 		{
 			name:         "list all namespaces",
-			args:         map[string]interface{}{"resource_type": "application"},
+			args:         map[string]interface{}{"resource_type": "argoapp"},
 			wantContains: "could not be queried",
 		},
 		{
 			name:         "list non-existent namespace",
-			args:         map[string]interface{}{"resource_type": "application", "namespaces": "argocd"},
+			args:         map[string]interface{}{"resource_type": "argoapp", "namespaces": "argocd"},
 			wantContains: "not found or not accessible",
 		},
 		{
 			name:         "get from non-existent namespace",
-			args:         map[string]interface{}{"resource_type": "application", "resource_name": "myapp", "namespaces": "does-not-exist"},
+			args:         map[string]interface{}{"resource_type": "argoapp", "resource_name": "myapp", "namespaces": "does-not-exist"},
 			wantContains: "not found or not accessible",
 		},
 	}

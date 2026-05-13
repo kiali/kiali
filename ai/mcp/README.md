@@ -235,7 +235,7 @@ Returns a human-readable summary of Pod CPU/memory usage (from Prometheus) compa
 Unified tool to list or get details for services, workloads, apps, namespaces, and ArgoCD applications. If `resourceName` is omitted, returns a compact list. If provided, returns detailed information for that specific resource.
 
 **Parameters**:
-- `resourceType` (string, required): `"service"`, `"workload"`, `"app"`, `"namespace"`, or `"application"` (ArgoCD).
+- `resourceType` (string, required): `"service"`, `"workload"`, `"app"`, `"namespace"`, or `"argoapp"` (ArgoCD).
 - `namespaces` (string, optional): Comma-separated namespaces. If empty, queries all accessible namespaces.
 - `resourceName` (string, optional): If provided, returns detail view. If empty, returns list view.
 - `clusterName` (string, optional): Cluster name. Defaults to the Kiali configuration cluster.
@@ -244,12 +244,16 @@ Unified tool to list or get details for services, workloads, apps, namespaces, a
 - **Services/Workloads**: `map[cluster][]ResourceListItem` with `name`, `namespace`, `health`, `configuration`, `details`, `labels`, `type` (workloads only).
 - **Apps**: `AppListResponse` with `cluster` at root, `applications` array with `name`, `namespace`, `health`, `istio` status, `versions`, `istioReferences`.
 - **Namespaces**: `NamespaceListResponse` with `cluster` at root, `namespaces` array with `name`, `injection`, `health`, `counts`, `validations` (omitted when zero).
+- **ArgoCD Apps**: `ArgoCDAppListResponse` with `cluster` at root, `applications` array with `name`, `namespace`, `health`, `syncStatus`, `repoURL`.
 
 **Returns (detail mode)**:
 - **Services**: `ServiceDetailResponse` with service info, istio config, workloads, endpoints, health status, inbound success rate.
 - **Workloads**: `WorkloadDetailResponse` with workload info, replica status, traffic success rates, istio mode/proxy version/sync status, pods, associated services.
 - **Apps**: `AppDetailResponse` with app name, services, istio context, workloads with versions.
 - **Namespaces**: `NamespaceDetailResponse` with istio context (injection, discovery, revision) and resource counts.
+- **ArgoCD Apps**: `ArgoCDAppDetailResponse` with source, destination, sync status, health, managed resources, revision history, operation state.
+
+> **RBAC Requirement**: The `argoapp` resource type queries ArgoCD `Application` CRDs (`applications.argoproj.io`) using a Kubernetes dynamic client. The **Kiali Service Account must have `get` and `list` permissions** on `applications.argoproj.io` in the relevant namespaces (or cluster-wide). Without these permissions, queries will return a permission-denied error. See [ArgoCD RBAC Setup](#argocd-rbac-setup) below.
 
 **Examples**:
 ```json
@@ -258,6 +262,8 @@ Unified tool to list or get details for services, workloads, apps, namespaces, a
 {"resourceType": "namespace"}
 {"resourceType": "namespace", "resourceName": "bookinfo"}
 {"resourceType": "app", "namespaces": "bookinfo", "resourceName": "productpage"}
+{"resourceType": "argoapp", "namespaces": "argocd"}
+{"resourceType": "argoapp", "namespaces": "argocd", "resourceName": "guestbook"}
 ```
 
 ---
@@ -314,6 +320,38 @@ Create, patch, or delete Istio configuration. Always use `confirmed: false` firs
 
 ---
 
+## ArgoCD RBAC Setup
+
+To use the `argoapp` resource type in `list_or_get_resources`, the Kiali Service Account needs read access to ArgoCD Application CRDs. Create a `ClusterRole` and `ClusterRoleBinding` (or namespace-scoped `Role`/`RoleBinding` if ArgoCD applications are limited to specific namespaces):
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kiali-argocd-reader
+rules:
+- apiGroups: ["argoproj.io"]
+  resources: ["applications"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kiali-argocd-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kiali-argocd-reader
+subjects:
+- kind: ServiceAccount
+  name: kiali
+  namespace: kiali  # adjust to your Kiali namespace
+```
+
+Without these permissions, the AI assistant will return a message indicating that ArgoCD Application resources could not be queried.
+
+---
+
 ## Tool Definitions (YAML)
 
 Tool definitions are described in YAML files under `ai/mcp/tools/`. Each file defines a single tool (or a list with exactly one tool). The loader reads all `*.yaml`/`*.yml` files and registers them by name.
@@ -336,7 +374,7 @@ Tool definitions are described in YAML files under `ai/mcp/tools/`. Each file de
       resourceType:
         type: "string"
         description: "The type of resource to query."
-        enum: ["service", "workload", "app", "namespace", "application"]
+        enum: ["service", "workload", "app", "namespace", "argoapp"]
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces to query."
