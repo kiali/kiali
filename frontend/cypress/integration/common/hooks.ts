@@ -2,9 +2,9 @@ import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 import { discoverKialiRuntimeInfo, enableKialiCaching } from './kiali-config';
 import { waitForResourceDeletion } from './transition';
 
-const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
-const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
-const IN_OFFLINE_MODE = Cypress.env('RUN_MODE') === 'offline';
+const CLUSTER1_CONTEXT = Cypress.expose('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.expose('CLUSTER2_CONTEXT');
+const IN_OFFLINE_MODE = Cypress.expose('RUN_MODE') === 'offline';
 
 const install_demoapp = (demoapp: string): void => {
   if (IN_OFFLINE_MODE) {
@@ -323,9 +323,11 @@ function restoreMeshConfigAfterSharedMeshConfig(): void {
 Before({ tags: '@shared-mesh-config' }, () => {
   // Before runs before Background, so no cy.visit() has run yet and the session is not restored.
   // cy.request() then has no auth cookies → 401 on OpenShift. Ensure we're logged in first.
-  const authStrategy = Cypress.env('AUTH_STRATEGY');
+  const authStrategy = Cypress.expose('AUTH_STRATEGY');
   if (authStrategy !== undefined && authStrategy !== 'anonymous') {
-    cy.login(Cypress.env('USERNAME') ?? 'jenkins', Cypress.env('PASSWD'));
+    cy.env(['PASSWD']).then(({ PASSWD }) => {
+      cy.login(Cypress.expose('USERNAME') ?? 'jenkins', PASSWD);
+    });
   }
   cy.exec(`kubectl get pods -l app=istiod -n istio-system -o jsonpath="{.items[0].metadata.name}"`).then(result => {
     const podName = result.stdout;
@@ -375,7 +377,7 @@ After({ tags: '@shared-mesh-config' }, () => {
 });
 
 Before(() => {
-  if (Cypress.env('STERN') === true) {
+  if (Cypress.expose('STERN') === true) {
     const specName = Cypress.spec && Cypress.spec.name ? Cypress.spec.name : 'unknown-spec';
     cy.exec(`../hack/stern/run-stern.sh --logfile ${specName}.json`, { failOnNonZeroExit: false }).then(result => {
       if (result.code !== 0) {
@@ -386,7 +388,7 @@ Before(() => {
 });
 
 After(() => {
-  if (Cypress.env('STERN') === true) {
+  if (Cypress.expose('STERN') === true) {
     cy.exec(`../hack/stern/run-stern.sh --stop true`, { failOnNonZeroExit: false }).then(result => {
       if (result.code !== 0) {
         cy.log('Failed to stop stern. Check if the stern binary is downloaded.');

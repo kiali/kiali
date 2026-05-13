@@ -120,7 +120,7 @@ When('user opens the {string} submenu', (title: string) => {
 });
 
 When('choosing to delete it', () => {
-  const isOSSMC = Cypress.env('OSSMC');
+  const isOSSMC = Cypress.expose('OSSMC');
   if (isOSSMC) {
     // In OSSMC, Istio config details are shown on the OCP Console's
     // native resource page, which has its own Actions dropdown.

@@ -2,7 +2,9 @@ import { baselines, measureGraphLoadTime, reportFilePath } from './common';
 
 describe('Graph Appender performance tests - Issue #8524', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
+      cy.login(USERNAME, PASSWD);
+    });
   });
 
   describe('Graph appender combinations', () => {
@@ -32,21 +34,25 @@ describe('Graph Appender performance tests - Issue #8524', () => {
       cy.writeFile(reportFilePath, '\n[Graph Appender Performance - Issue #8524]\n', { flag: 'a+' });
     });
 
-    it('Measures Issue Baseline (Full List) load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    it('Measures Issue Baseline (Full List) load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
       measureGraphLoadTime(
         'Issue Baseline (Full List)',
-        Cypress.env(baselines).graphIssueBaseline,
+        Cypress.expose(baselines).graphIssueBaseline,
         graphUrlIssueBaseline
       );
     });
-    it('Measures Without Istio (Test Fix) load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureGraphLoadTime('Without Istio (Test Fix)', Cypress.env(baselines).graphWithoutIstio, graphUrlWithoutIstio);
+    it('Measures Without Istio (Test Fix) load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureGraphLoadTime(
+        'Without Istio (Test Fix)',
+        Cypress.expose(baselines).graphWithoutIstio,
+        graphUrlWithoutIstio
+      );
     });
-    it('Measures Only Istio (Isolate Problem) load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureGraphLoadTime('Only Istio (Isolate Problem)', Cypress.env(baselines).graphOnlyIstio, graphUrlOnlyIstio);
+    it('Measures Only Istio (Isolate Problem) load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureGraphLoadTime('Only Istio (Isolate Problem)', Cypress.expose(baselines).graphOnlyIstio, graphUrlOnlyIstio);
     });
-    it('Measures Core Appenders Only load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureGraphLoadTime('Core Appenders Only', Cypress.env(baselines).graphCore, graphUrlCore);
+    it('Measures Core Appenders Only load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureGraphLoadTime('Core Appenders Only', Cypress.expose(baselines).graphCore, graphUrlCore);
     });
   });
 });

@@ -7,7 +7,7 @@ export const baselines = 'baselines';
 before(() => {
   cy.fixture('baselines.json')
     .then(data => {
-      Cypress.env(baselines, data);
+      Cypress.expose(baselines, data);
     })
     .as('data');
 });

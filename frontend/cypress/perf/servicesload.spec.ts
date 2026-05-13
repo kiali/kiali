@@ -2,7 +2,9 @@ import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines
 
 describe('Services performance tests', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
+      cy.login(USERNAME, PASSWD);
+    });
   });
 
   describe('Services list page', () => {
@@ -24,11 +26,15 @@ describe('Services performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Services List page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces Services load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('All Namespaces Services', Cypress.env(baselines).serviceListAll, servicesUrlAllNamespaces);
+    it('Measures All Namespaces Services load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureListsLoadTime(
+        'All Namespaces Services',
+        Cypress.expose(baselines).serviceListAll,
+        servicesUrlAllNamespaces
+      );
     });
-    it('Measures Services load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Services', Cypress.env(baselines).serviceListSelected, servicesUrl);
+    it('Measures Services load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureListsLoadTime('Selected Namespaces Services', Cypress.expose(baselines).serviceListSelected, servicesUrl);
     });
   });
 
@@ -51,9 +57,9 @@ describe('Services performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Service details page]\n', { flag: 'a+' });
     });
 
-    it('Service details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    it('Service details load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
       serviceUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, Cypress.env(baselines).serviceDetails, url);
+        measureDetailsLoadTime(name, Cypress.expose(baselines).serviceDetails, url);
       });
     });
   });

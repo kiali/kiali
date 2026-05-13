@@ -550,7 +550,7 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
-  const isOSSMC = Cypress.env('OSSMC');
+  const isOSSMC = Cypress.expose('OSSMC');
   cy.get('[data-test=waypoint-link]')
     .contains('a,button', waypoint)
     .then($el => {
@@ -689,7 +689,7 @@ Then('the user updates the log level to {string}', (level: string) => {
 });
 
 When('user opens the namespace actions menu', () => {
-  if (Cypress.env('OSSMC')) {
+  if (Cypress.expose('OSSMC')) {
     cy.get('button#minigraph-toggle', { timeout: 40000 }).should('be.visible').click();
   } else {
     cy.getBySel('namespace-actions-toggle').should('be.visible').click();

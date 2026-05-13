@@ -4,8 +4,8 @@ import { linkSelector } from './utils';
 import { ensureKialiFinishedLoading, waitForResourceDeletion } from './transition';
 import { getGVKTypeString } from 'utils/IstioConfigUtils';
 
-const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
-const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
+const CLUSTER1_CONTEXT = Cypress.expose('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.expose('CLUSTER2_CONTEXT');
 
 const labelsStringToJson = (labelsString: string): string => {
   let labelsJson = '';

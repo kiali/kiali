@@ -2,7 +2,9 @@ import { baselines, compareToBaseline, reportFilePath, visits } from './common';
 
 describe('Overview performance tests', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
+      cy.login(USERNAME, PASSWD);
+    });
   });
 
   describe('Overview page with cards', () => {
@@ -10,7 +12,7 @@ describe('Overview performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Overview page]\n\n', { flag: 'a+' });
     });
 
-    it('loads the overview page', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    it('loads the overview page', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
       let sum = 0;
 
       const visitsList = Array.from({ length: visits });
@@ -52,7 +54,7 @@ describe('Overview performance tests', () => {
         .then(() => {
           sum = sum / visitsList.length;
 
-          const contents = `Init page load time: ${compareToBaseline(sum, Cypress.env(baselines).overview)}\n`;
+          const contents = `Init page load time: ${compareToBaseline(sum, Cypress.expose(baselines).overview)}\n`;
           cy.writeFile(reportFilePath, contents, { flag: 'a+' });
         });
     });

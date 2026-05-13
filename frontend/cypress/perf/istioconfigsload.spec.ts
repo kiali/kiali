@@ -2,7 +2,9 @@ import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines
 
 describe('Istio Configs performance tests', () => {
   beforeEach(() => {
-    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
+    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
+      cy.login(USERNAME, PASSWD);
+    });
   });
 
   describe('Istio Configs list page', () => {
@@ -20,15 +22,19 @@ describe('Istio Configs performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Istio Configs List page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    it('Measures All Namespaces Istio Configs load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
       measureListsLoadTime(
         'All Namespaces Istio Configs',
-        Cypress.env(baselines).configListAdd,
+        Cypress.expose(baselines).configListAdd,
         configsUrlAllNamespaces
       );
     });
-    it('Measures Istio Configs load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Istio Configs', Cypress.env(baselines).configListSelected, configsUrl);
+    it('Measures Istio Configs load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+      measureListsLoadTime(
+        'Selected Namespaces Istio Configs',
+        Cypress.expose(baselines).configListSelected,
+        configsUrl
+      );
     });
   });
 
@@ -48,9 +54,9 @@ describe('Istio Configs performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Istio Config details page]\n', { flag: 'a+' });
     });
 
-    it('Istio Config details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+    it('Istio Config details load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
       configUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, Cypress.env(baselines).configDetails, url);
+        measureDetailsLoadTime(name, Cypress.expose(baselines).configDetails, url);
       });
     });
   });
