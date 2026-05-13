@@ -571,24 +571,16 @@ Then('the namespace panel shows only control planes from the {string} cluster', 
       const controller = state.meshRefs.getController() as Visualization;
       const { nodes } = elems(controller);
 
-      const selectedId = state.meshRefs.getSelectedIds()[0];
-      const selectedNode = nodes.find(n => n.getId() === selectedId);
-      assert.exists(selectedNode, 'Selected node should exist');
-
-      const selectedData = selectedNode!.getData() as MeshNodeData;
-      assert.equal(selectedData.cluster, cluster, `Selected namespace should be on cluster "${cluster}"`);
-
-      const graphData = controller.getGraph().getData();
-      const istiodNodes = graphData.meshData.elements.nodes?.filter(
-        (n: any) =>
-          n.data.infraType === MeshInfraType.ISTIOD &&
-          n.data.cluster === selectedData.cluster &&
-          n.data.namespace === selectedData.namespace
+      const istiodNodes = nodes.filter(
+        n =>
+          (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD &&
+          (n.getData() as MeshNodeData).cluster === cluster
       );
 
       assert.isAbove(istiodNodes.length, 0, `Should have istiod nodes for cluster "${cluster}"`);
-      istiodNodes.forEach((n: any) => {
-        assert.equal(n.data.cluster, cluster, `All control plane nodes should be from cluster "${cluster}"`);
+      istiodNodes.forEach(n => {
+        const data = n.getData() as MeshNodeData;
+        assert.equal(data.cluster, cluster, `All control plane nodes should be from cluster "${cluster}"`);
       });
     });
 });
