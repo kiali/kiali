@@ -300,7 +300,6 @@ Feature: Kiali Istio Config wizard
 
   @bookinfo-app
   @core-2
-  @skip-ossmc
   Scenario: Create a ServiceEntry and view the service detail page of the external service associated
     When user deletes service named "myservice3" and the resource is no longer available
     And user clicks in the "ServiceEntry" Istio config actions

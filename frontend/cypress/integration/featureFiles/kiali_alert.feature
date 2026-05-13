@@ -1,4 +1,5 @@
 @skip-ossmc
+
 Feature: Kiali alerts verify
 
   User does not want to see any alerts when opening a fresh installation of Kiali

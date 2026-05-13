@@ -1,4 +1,5 @@
 @skip-ossmc
+
 Feature: Kiali login cookie
 
   Smoke to verify cy.login function is working and stores cookies into session
