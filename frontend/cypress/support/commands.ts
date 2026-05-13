@@ -165,9 +165,6 @@ interface LoginForm {
   username: string;
 }
 
-// Handles the full login flow (IDP selection + credentials) in a single
-// cy.origin() callback. kiali_login.ts has a slimmer submitLoginForm that
-// only fills credentials — there, IDP clicking is a separate Gherkin step.
 function fillLoginForm({ authProvider, username, password }: LoginForm): void {
   if (authProvider !== '' && authProvider !== undefined) {
     cy.contains(authProvider).should('be.visible').click();
@@ -197,15 +194,22 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('**/api/tracing').as('getTracing');
         cy.intercept('**/api/auth/info').as('getAuthInfo');
 
+        // Kiali's OpenShift auth redirects through /api/auth/redirect,
+        // which 302s to the OAuth server. Probe that endpoint with
+        // cy.request() (Node.js, no CORS) to discover the OAuth origin.
         const authProvider = Cypress.env('AUTH_PROVIDER');
-        discoverOAuthOrigin().then(oauthOrigin => {
+        cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
+          // Cypress stores redirects as "<status> <url>" strings (e.g.
+          // "302 https://oauth-openshift.apps.../..."), so split/pop
+          // extracts the URL part.
+          const lastRedirect = resp.redirects?.at(-1);
+          const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop()! : Cypress.config('baseUrl')!;
+          const oauthOrigin = new URL(redirectUrl).origin;
           const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
 
           cy.visit({ url: '/' });
 
           if (oauthOrigin !== baseOrigin) {
-            const oauthHost = new URL(oauthOrigin).host;
-            cy.url().should('include', oauthHost);
             cy.origin(oauthOrigin, { args: { authProvider, username, password } }, fillLoginForm);
           } else {
             fillLoginForm({ authProvider, username, password });
