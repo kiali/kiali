@@ -158,6 +158,21 @@ function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): voi
   });
 }
 
+interface LoginForm {
+  authProvider?: string;
+  password: string;
+  username: string;
+}
+
+function fillLoginForm({ authProvider, username, password }: LoginForm): void {
+  if (authProvider !== '' && authProvider !== undefined) {
+    cy.contains(authProvider).should('be.visible').click();
+  }
+  cy.get('#inputUsername').clear().type(username);
+  cy.get('#inputPassword').type(password);
+  cy.get('button[type="submit"]').click();
+}
+
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
   const tags = (Cypress.env('TAGS') ?? '') as string;
@@ -178,15 +193,27 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('**/api/tracing').as('getTracing');
         cy.intercept('**/api/auth/info').as('getAuthInfo');
 
-        cy.visit({ url: '/' });
+        // Kiali's OpenShift auth redirects through /api/auth/redirect,
+        // which 302s to the OAuth server. Probe that endpoint with
+        // cy.request() (Node.js, no CORS) to discover the OAuth origin.
         const authProvider = Cypress.env('AUTH_PROVIDER');
-        if (authProvider !== '' && authProvider !== undefined) {
-          cy.contains(authProvider).should('be.visible').click();
-        }
-        cy.get('#inputUsername').clear().type(username);
+        cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
+          // Cypress stores redirects as "<status> <url>" strings (e.g.
+          // "302 https://oauth-openshift.apps.../..."), so split/pop
+          // extracts the URL part.
+          const lastRedirect = resp.redirects?.at(-1);
+          const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop()! : Cypress.config('baseUrl')!;
+          const oauthOrigin = new URL(redirectUrl).origin;
+          const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
 
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
+          cy.visit({ url: '/' });
+
+          if (oauthOrigin !== baseOrigin) {
+            cy.origin(oauthOrigin, { args: { authProvider, username, password } }, fillLoginForm);
+          } else {
+            fillLoginForm({ authProvider, username, password });
+          }
+        });
 
         // Wait for post login routes to be loaded. Otherwise cypress redirects you back to the home page
         // which causes other tests to fail: https://github.com/cypress-io/cypress/issues/1713.
