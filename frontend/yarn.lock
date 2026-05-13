@@ -1700,14 +1700,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bahmutov/cypress-esbuild-preprocessor@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "@bahmutov/cypress-esbuild-preprocessor@npm:2.2.0"
+"@bahmutov/cypress-esbuild-preprocessor@npm:^2.2.8":
+  version: 2.2.8
+  resolution: "@bahmutov/cypress-esbuild-preprocessor@npm:2.2.8"
   dependencies:
-    debug: "npm:4.3.4"
+    debug: "npm:4.4.3"
   peerDependencies:
     esbuild: ">=0.17.0"
-  checksum: 10c0/0e667b3fce46830191e28bd1bed5e650488174a5352b2856192f43db3207ed1fc7318248eb551649cd649153e6ce1a36ba32c128730b5e1827014f0be36b7869
+  checksum: 10c0/c4901ad1f35565ed97c782e4229c060c61fe4a2f94c3f877f8dcbc1649e79d35b68b68541c8007cae0df2f5eca985a4b9063140a464c7a6aebc2c294300f8db7
   languageName: node
   linkType: hard
 
@@ -3274,7 +3274,7 @@ __metadata:
   dependencies:
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@badeball/cypress-cucumber-preprocessor": "npm:^24.0.1"
-    "@bahmutov/cypress-esbuild-preprocessor": "npm:^2.2.0"
+    "@bahmutov/cypress-esbuild-preprocessor": "npm:^2.2.8"
     "@patternfly/chatbot": "npm:^6.5.0"
     "@patternfly/patternfly": "npm:^6.4.0"
     "@patternfly/react-charts": "npm:^8.4.0"
@@ -8849,7 +8849,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:4, debug@npm:^4.0.0, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.4.0, debug@npm:^4.4.3":
+"debug@npm:4, debug@npm:4.4.3, debug@npm:^4.0.0, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.3, debug@npm:^4.3.4, debug@npm:^4.3.5, debug@npm:^4.3.6, debug@npm:^4.4.0, debug@npm:^4.4.3":
   version: 4.4.3
   resolution: "debug@npm:4.4.3"
   dependencies:
