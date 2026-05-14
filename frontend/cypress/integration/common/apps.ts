@@ -23,8 +23,8 @@ interface HealthCacheMetrics {
 
 // Choosing a random bookinfo app to test with.
 const APP = 'details';
-const CLUSTER1_CONTEXT = Cypress.expose('CLUSTER1_CONTEXT');
-const CLUSTER2_CONTEXT = Cypress.expose('CLUSTER2_CONTEXT');
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 // Helper function to wait for an app to reach a specific health status
 const waitForAppHealthStatus = (

@@ -1,6 +1,6 @@
 import { Given } from '@badeball/cypress-cucumber-preprocessor';
 
-const USERNAME = Cypress.expose('USERNAME') ?? 'jenkins';
+const USERNAME = Cypress.env('USERNAME') ?? 'jenkins';
 
 // This user is not defined in a Cypress environment variable because
 // It is used just for the multi clusters scripts to check permissions
@@ -9,9 +9,7 @@ const BOOKINFO_USERNAME = 'bookinfouser';
 const BOOKINFO_PASSWD = 'kiali';
 
 Given('user is at administrator perspective', () => {
-  cy.env(['PASSWD']).then(({ PASSWD }) => {
-    cy.login(USERNAME, PASSWD);
-  });
+  cy.login(USERNAME, Cypress.env('PASSWD'));
 });
 
 Given('user visits base url', () => {

@@ -15,7 +15,7 @@ Then('user sees the namespace detail overview for {string}', (ns: string) => {
 });
 
 Then('user sees the title {string} in the namespace detail page', (name: string) => {
-  if (Cypress.expose('OSSMC')) {
+  if (Cypress.env('OSSMC')) {
     // In OSSMC kiosk mode, the Kiali header is hidden; the OpenShift console provides the project title.
     cy.contains(name).should('exist');
   } else {

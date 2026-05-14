@@ -2,9 +2,7 @@ import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines
 
 describe('Apps performance tests', () => {
   beforeEach(() => {
-    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
-      cy.login(USERNAME, PASSWD);
-    });
+    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
   describe('Apps list page', () => {
@@ -26,11 +24,11 @@ describe('Apps performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Apps List page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces Apps load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
-      measureListsLoadTime('All Namespaces Apps', Cypress.expose(baselines).appListAll, appsUrlAllNamespaces);
+    it('Measures All Namespaces Apps load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureListsLoadTime('All Namespaces Apps', Cypress.env(baselines).appListAll, appsUrlAllNamespaces);
     });
-    it('Measures Apps load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces Apps', Cypress.expose(baselines).appListSelected, appsUrl);
+    it('Measures Apps load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureListsLoadTime('Selected Namespaces Apps', Cypress.env(baselines).appListSelected, appsUrl);
     });
   });
 
@@ -54,9 +52,9 @@ describe('Apps performance tests', () => {
       cy.writeFile(reportFilePath, '\n[App details page]\n', { flag: 'a+' });
     });
 
-    it('App details load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+    it('App details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       appUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, Cypress.expose(baselines).appDetails, url);
+        measureDetailsLoadTime(name, Cypress.env(baselines).appDetails, url);
       });
     });
   });

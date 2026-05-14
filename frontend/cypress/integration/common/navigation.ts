@@ -94,7 +94,7 @@ Given(
   'user is at the details page for the daemonset {string} located in the {string} cluster',
   (namespacedNamed: string, cluster: string) => {
     // Check if we're in OSSMC environment
-    const isOSSMC = Cypress.expose('OSSMC');
+    const isOSSMC = Cypress.env('OSSMC');
     if (isOSSMC) {
       // In OSSMC, we need to get the pod name from the DaemonSet
       const namespaceAndName = namespacedNamed.split('/');

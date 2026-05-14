@@ -291,7 +291,7 @@ When('user navigates to the namespace detail page for {string}', function (names
 });
 
 function openNamespaceActionsMenu(): void {
-  if (Cypress.expose('OSSMC')) {
+  if (Cypress.env('OSSMC')) {
     cy.intercept('**/api/namespaces/graph*').as('namespaceMinigraph');
     cy.wait('@namespaceMinigraph');
     cy.waitForReact();
@@ -338,7 +338,7 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
   cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
 
   // In OSSMC, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
-  if (Cypress.expose('OSSMC')) {
+  if (Cypress.env('OSSMC')) {
     cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
     cy.wait('@workloadMinigraph');
 

@@ -162,9 +162,9 @@ export interface KialiFeatureConfig {
  */
 export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = true): void => {
   discoverKialiRuntimeInfo().then(info => {
-    Cypress.expose('KIALI_CONFIGMAP_NAME', info.configMapName);
-    Cypress.expose('KIALI_DEPLOYMENT_NAME', info.deploymentName);
-    Cypress.expose('KIALI_DEPLOYMENT_NAMESPACE', info.namespace);
+    Cypress.env('KIALI_CONFIGMAP_NAME', info.configMapName);
+    Cypress.env('KIALI_DEPLOYMENT_NAME', info.deploymentName);
+    Cypress.env('KIALI_DEPLOYMENT_NAMESPACE', info.namespace);
 
     const doRestart = (): void => {
       restartKiali(info.deploymentName, info.namespace);
@@ -181,14 +181,14 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
         const parts = primaryResource.split('/');
         const crNamespace = parts[0];
         const crName = parts[1];
-        Cypress.expose('KIALI_PRIMARY_RESOURCE', primaryResource);
+        Cypress.env('KIALI_PRIMARY_RESOURCE', primaryResource);
 
         // Get current value
         cy.exec(`kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.${featureConfig.crSpecPath}}"`, {
           failOnNonZeroExit: false
         }).then(r => {
           const prev = r.stdout.trim();
-          Cypress.expose(featureConfig.envKeyPrev, prev);
+          Cypress.env(featureConfig.envKeyPrev, prev);
         });
 
         // Build the patch JSON dynamically using the last path segment as the key
@@ -208,7 +208,7 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
       }
 
       // Helm installation - update the ConfigMap
-      Cypress.expose('KIALI_PRIMARY_RESOURCE', '');
+      Cypress.env('KIALI_PRIMARY_RESOURCE', '');
 
       // Dump current config.yaml
       cy.exec(
@@ -219,7 +219,7 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
       cy.exec(`yq '${featureConfig.configPath}' /tmp/kiali-config.yaml`, {
         failOnNonZeroExit: false
       }).then(r => {
-        Cypress.expose(featureConfig.envKeyPrev, r.stdout.trim());
+        Cypress.env(featureConfig.envKeyPrev, r.stdout.trim());
       });
 
       // Set the feature value
@@ -308,14 +308,13 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
  * Call this in an After hook.
  */
 export const restoreKialiFeature = (featureConfig: KialiFeatureConfig): void => {
-  const primaryResource = (Cypress.expose('KIALI_PRIMARY_RESOURCE') as string | undefined) ?? '';
-  const prev = (Cypress.expose(featureConfig.envKeyPrev) as string | undefined) ?? '';
+  const primaryResource = (Cypress.env('KIALI_PRIMARY_RESOURCE') as string | undefined) ?? '';
+  const prev = (Cypress.env(featureConfig.envKeyPrev) as string | undefined) ?? '';
   const prevBool = prev === 'true';
 
-  const kialiDeploymentName = (Cypress.expose('KIALI_DEPLOYMENT_NAME') as string | undefined) ?? 'kiali';
-  const kialiDeploymentNamespace =
-    (Cypress.expose('KIALI_DEPLOYMENT_NAMESPACE') as string | undefined) ?? 'istio-system';
-  const kialiConfigMapName = (Cypress.expose('KIALI_CONFIGMAP_NAME') as string | undefined) ?? 'kiali';
+  const kialiDeploymentName = (Cypress.env('KIALI_DEPLOYMENT_NAME') as string | undefined) ?? 'kiali';
+  const kialiDeploymentNamespace = (Cypress.env('KIALI_DEPLOYMENT_NAMESPACE') as string | undefined) ?? 'istio-system';
+  const kialiConfigMapName = (Cypress.env('KIALI_CONFIGMAP_NAME') as string | undefined) ?? 'kiali';
 
   const doRestart = (): void => {
     cy.exec(

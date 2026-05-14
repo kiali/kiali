@@ -1,8 +1,8 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
 
-const CLUSTER1_CONTEXT = Cypress.expose('CLUSTER1_CONTEXT');
-const CLUSTER2_CONTEXT = Cypress.expose('CLUSTER2_CONTEXT');
+const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
+const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
@@ -75,7 +75,7 @@ When('user clicks in the {string} actions', (action: string) => {
     cy.get('#loading_kiali_spinner').should('not.exist');
   });
 
-  if (Cypress.expose('OSSMC')) {
+  if (Cypress.env('OSSMC')) {
     cy.intercept('**/api/**/services/**/graph*').as('serviceMinigraph');
     cy.wait('@serviceMinigraph');
     cy.waitForReact();

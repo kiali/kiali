@@ -19,16 +19,14 @@ export default defineConfig({
   requestTimeout: 15000,
   responseTimeout: 15000,
   fixturesFolder: 'cypress/fixtures',
-  expose: {
+  env: {
+    // ALLOW_INSECURE_KIALI_API: true,
+    // USERNAME: 'kiali',
+    // PASSWD: 'kiali',
     cookie: false,
     filterSpecs: true,
     omitFiltered: true,
     rootSelector: '#root'
-  },
-  env: {
-    // ALLOW_INSECURE_KIALI_API: true,
-    // PASSWD: 'kiali',
-    // USERNAME: 'kiali'
   },
   e2e: {
     baseUrl: 'http://localhost:3001',
@@ -68,9 +66,8 @@ export default defineConfig({
         });
       }
 
-      // Auth strategy is discovered at config time and is safe to expose.
-      config.expose = config.expose ?? {};
-      config.expose.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
+      config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
+      config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);
 
       return config;
     },

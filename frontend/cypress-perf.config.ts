@@ -5,15 +5,13 @@ import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 /* eslint-disable import/no-default-export*/
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
-  expose: {
+  env: {
+    // USERNAME: 'kiali',
+    // PASSWD: 'kiali',
     cookie: false,
     rootSelector: '#root',
     threshold: 100000,
     timeout: 10000
-  },
-  env: {
-    // PASSWD: 'kiali',
-    // USERNAME: 'kiali'
   },
   e2e: {
     baseUrl: 'http://localhost:3000',
@@ -23,9 +21,8 @@ export default defineConfig({
     ): Promise<Cypress.PluginConfigOptions> {
       on('file:preprocessor', createBundler());
 
-      config.expose = config.expose ?? {};
-      config.expose.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
-      config.expose.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
+      config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
+      config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
 
       return config;
     },
