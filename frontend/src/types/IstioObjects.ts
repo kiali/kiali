@@ -134,6 +134,7 @@ export interface References {
 }
 
 export interface ServiceReference {
+  isServiceEntry?: boolean;
   name: string;
   namespace: string;
 }

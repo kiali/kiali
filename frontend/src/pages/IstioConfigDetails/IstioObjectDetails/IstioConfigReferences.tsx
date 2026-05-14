@@ -50,7 +50,12 @@ export class IstioConfigReferences extends React.Component<IstioConfigReferences
           this.props.serviceReferences.map((reference, sRef) => {
             return (
               <StackItem key={`serviceReferenceExist_${sRef}`}>
-                <ServiceLink name={reference.name} namespace={reference.namespace} cluster={this.props.cluster} />
+                <ServiceLink
+                  name={reference.name}
+                  namespace={reference.namespace}
+                  cluster={this.props.cluster}
+                  isServiceEntry={reference.isServiceEntry}
+                />
               </StackItem>
             );
           })}

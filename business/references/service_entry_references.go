@@ -122,7 +122,7 @@ func (n ServiceEntryReferences) getServiceReferences(se *networking_v1.ServiceEn
 			continue
 		}
 
-		ref := models.ServiceReference{Name: seHost, Namespace: se.Namespace}
+		ref := models.ServiceReference{IsServiceEntry: true, Name: seHost, Namespace: se.Namespace}
 		key := util.BuildNameNSKey(ref.Name, ref.Namespace)
 		if !keys[key] {
 			result = append(result, ref)
