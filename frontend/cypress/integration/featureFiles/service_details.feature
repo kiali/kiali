@@ -83,9 +83,10 @@ Feature: Kiali Service Details page
     Then user sees span details
 
   @waypoint-tracing
-  Scenario: See tracing tooltip heat map for insurances service in travel-agency
-    Given the tracing data is ready for the "service" "travel-agency/insurances"
-    And user is at the details page for the "service" "travel-agency/insurances" located in the "" cluster
+  # TODO: Switch this back to travel-agency/insurances once the travels demo image is updated.
+  Scenario: See tracing tooltip heat map for reviews service in bookinfo
+    Given the tracing data is ready for the "service" "bookinfo/reviews"
+    And user is at the details page for the "service" "bookinfo/reviews" located in the "" cluster
     And user sees trace information
     When user hovers over a trace with at least 4 spans
     Then user sees the tracing tooltip heat map

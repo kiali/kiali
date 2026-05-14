@@ -73,9 +73,10 @@ Feature: Kiali Workload Details page
     And user can filter spans by workload "details-v1"
 
   @waypoint-tracing
-  Scenario: See tracing tooltip heat map for travels-v1 workload in travel-agency
-    Given the tracing data is ready for the "workload" "travel-agency/travels-v1"
-    And user is at the details page for the "workload" "travel-agency/travels-v1" located in the "" cluster
+  # TODO: Switch this back to travel-agency/travels-v1 once the travels demo image is updated.
+  Scenario: See tracing tooltip heat map for reviews-v2 workload in bookinfo
+    Given the tracing data is ready for the "workload" "bookinfo/reviews-v2"
+    And user is at the details page for the "workload" "bookinfo/reviews-v2" located in the "" cluster
     And user sees trace information
     When user hovers over a trace with at least 4 spans
     Then user sees the tracing tooltip heat map
