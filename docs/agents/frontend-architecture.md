@@ -3,8 +3,8 @@ scribe:
   title: "Frontend Architecture"
   description: "React/TypeScript frontend — component structure, routing, Redux state, PatternFly, i18n, Cypress tests"
   watch_paths: [frontend/src/, frontend/cypress/]
-  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
-  freshness: 89
+  scan: "f9d619df93bb21a45a15076ec025938f8e79f856"
+  freshness: 84
   human_input: 0
   completeness: 91
   inferred_sections:
@@ -12,6 +12,7 @@ scribe:
     - {id: "entry-points", heading: "Entry Points and Bootstrap"}
     - {id: "routing", heading: "Routing"}
     - {id: "pages", heading: "Pages"}
+    - {id: "page-utils", heading: "Shared Page Utilities"}
     - {id: "components", heading: "Components"}
     - {id: "redux-state", heading: "Redux State Management"}
     - {id: "styling", heading: "Styling and PatternFly"}
@@ -19,6 +20,27 @@ scribe:
     - {id: "hooks", heading: "Custom Hooks"}
     - {id: "cypress", heading: "Cypress End-to-End Tests"}
   stale_flags: []
+  review_notes:
+    - finding: "styling:4 states 'Six new kialiStyle exports' but seven are exported (detailTitleRowStyle, detailTitleMainStyle, detailGridStyle, detailPageTitleStyle, detailCardStackStyle, inlineIconRowStyle, clickableInlineStyle). Fix count."
+      severity: minor
+      tag: inaccuracy
+      confidence: 0.99
+      date: "2026-05-14"
+    - finding: "page-utils:1 lists navigateToFilteredList third but it is the first export in the source file. Reorder for accuracy."
+      severity: minor
+      tag: inaccuracy
+      confidence: 0.95
+      date: "2026-05-14"
+    - finding: "FlexStyles.ts has an eighth export scrollableContentStyle (lines 123-129) not mentioned in the documentation."
+      severity: minor
+      tag: gap
+      confidence: 0.9
+      date: "2026-05-14"
+    - finding: "styling:1 notes removed props but does not document the surviving rightToolbar prop on RenderHeader."
+      severity: minor
+      tag: gap
+      confidence: 0.9
+      date: "2026-05-14"
 ---
 
 # Frontend Architecture
@@ -126,6 +148,18 @@ Each subdirectory of `frontend/src/pages/` corresponds to a top-level route:
 | `IstioConfigNew/` | Wizard for creating new Istio config |
 | `Login/` | Login page |
 
+### WorkloadDetails Page — Pod List
+
+`WorkloadPods.tsx` renders the list of pods for a workload. Pod details are shown in a click-triggered PF6 `<Popover>` that renders pod metadata using `<DescriptionList isCompact>`. Column widths are explicit: Name=50%, Revision=30%, Health=20%, with `tableLayout: fixed` applied via `fixedTableStyle`. The pod `name` cell wraps the name in a `<Tooltip>` with `overflow: hidden; text-overflow: ellipsis` so long names are truncated with the full name visible on hover. The Revision cell likewise applies `podNameStyle` (ellipsis truncation) with a `<Tooltip>` showing the full value.
+
+### ServiceDetails Page — Label/Annotation Editing
+
+`ServiceDetailsPage.tsx` supports in-place editing of service labels and annotations. `handleSaveMetadata(field, updated)` computes a merge-patch via `buildMetadataPatch` (from `PageUtils`) and calls `API.updateService`. On success it triggers `fetchService()` and shows a success toast; on failure it shows an error toast. `onSaveLabels` and `onSaveAnnotations` callbacks are passed down to `ServiceInfo` / `ServiceDescription` components. A `isCanceled` guard on the K8s Gateways fetch error handler silences errors from cancelled promises on unmount. The actions dropdown is passed to `<ParameterizedTabs actionsToolbar={...}>` rather than `<RenderHeader>`.
+
+### GraphDataSource — `destroy()` method
+
+`frontend/src/services/GraphDataSource.ts` exposes a `public destroy()` method that calls `this.promiseRegistry.cancelAll()`, cancelling all in-flight graph data requests. Components call this on unmount to avoid setting state after unmounting.
+
 ### NamespaceDetails Page
 
 **Route:** `/namespaces/:namespace` → `NamespaceDetailsRoute` (thin wrapper in [frontend/src/routes/NamespaceDetailsRoute.tsx](frontend/src/routes/NamespaceDetailsRoute.tsx)) → `NamespaceDetailsPage` → `NamespaceDetailsOverview`.
@@ -182,6 +216,20 @@ NamespaceDetailsRoute           (route param extraction)
 | `@core-2` | Minigraph is visible |
 
 Step definitions are in [frontend/cypress/integration/common/namespace_details.ts](frontend/cypress/integration/common/namespace_details.ts). The `Given` step navigates to `/console/namespaces/${ns}?refresh=0`; `Then` steps query by `data-test` attributes matching those emitted by `NamespaceDetailsOverview`.
+
+## Shared Page Utilities
+
+`frontend/src/pages/PageUtils.ts` is a new module (added in this revision) that consolidates utility functions shared across multiple detail pages. It exports:
+
+**`buildMetadataPatch(field, original, updated)`** — produces a JSON merge-patch string for Kubernetes `metadata.labels` or `metadata.annotations`. Keys present in `original` but absent from `updated` are set to `null` (the JSON merge-patch convention for deletion). Used by `NamespaceDetailsPage`, `ServiceDetailsPage`, and other detail pages when saving edits from `EditableLabelsCard` / `EditableAnnotationsCard`.
+
+**`buildWorkloadMetadataPatch(field, original, updated, kind)`** — like `buildMetadataPatch` but also patches `spec.template.metadata` for *templated* workload kinds (`Deployment`, `ReplicaSet`, `ReplicationController`, `DeploymentConfig`, `StatefulSet`, `DaemonSet`). Non-templated kinds (`Pod`, `Job`, `CronJob`) receive only the top-level `metadata` patch.
+
+**`navigateToFilteredList(path, key, value, namespace?, labelParam?)`** — resets `FilterSelected` state then navigates to `/<path>?[namespaces=<ns>&]<labelParam>=<key>=<value>`. Used by label-click handlers throughout the list pages.
+
+**`partitionByIstio(entries)`** — splits a string-keyed record into `istio`-prefixed keys (sorted first) and the rest (sorted alphabetically). Returns `{ sorted, istioCount }`. Used by `EditableLabelsCard` and `EditableAnnotationsCard` to surface Istio-specific labels at the top.
+
+Tests for all three exported functions are in `frontend/src/pages/__tests__/PageUtils.test.ts`, which mocks `StatefulFilters` and `History` module-level singletons via `jest.mock`.
 
 ## Components
 
@@ -287,11 +335,32 @@ The triple-ampersand specificity trick is intentional — it ensures Kiali style
 | `GraphStyle.ts` | Graph toolbar and layout style utilities |
 | `HealthStyle.ts` | Health status colour tokens |
 | `AceEditorStyle.ts` | ACE editor theming |
-| `FlexStyles.ts` | Common flexbox utilities |
+| `FlexStyles.ts` | Common flexbox utilities (see additions below) |
 | `PfSpacer.ts` | PatternFly spacer constants |
 | `PfTypography.ts` | Typography helpers |
 | `TabStyles.ts` | Tab component styling |
 | `variables.module.scss` | SCSS CSS custom-property tokens (imported as a CSS module) |
+
+#### Exports in `FlexStyles.ts` for detail pages
+
+`FlexStyles.ts` exports shared styles used across App, Service, Workload, and Namespace detail pages:
+
+| Export | Purpose |
+|---|---|
+| `detailTitleRowStyle` | Outer flex row for the badge + title in the `RenderHeader` children area |
+| `detailTitleMainStyle` | Inner flex row (`flex: 1 1 auto`) containing the badge and the `<Title>` element |
+| `detailPageTitleStyle` | Removes default margin from `<Title>` and prevents it shrinking when actions grow |
+| `detailGridStyle` | `flex: 1` grid for info card panels below the header |
+| `detailCardStackStyle` | 0.5 rem stack gap for cards in the left column |
+| `inlineIconRowStyle` | `inline-flex` + gap for icon+text combos (health indicators, badges) |
+| `clickableInlineStyle` | `cursor: pointer` + `inline-flex` for popover/expandable triggers |
+| `scrollableContentStyle` | Scroll container for overflow content areas |
+
+### `RenderHeader`
+
+`RenderHeader` (`frontend/src/components/Nav/Page/RenderHeader.tsx`) accepts a `children` slot (for the badge+title row rendered by detail pages) and a `rightToolbar` slot. It does not accept an `actionsToolbar` prop. `paddingBottom` is `0.5rem`.
+
+The `ParameterizedTabs` component (`frontend/src/components/Tab/Tabs.tsx`) accepts an optional `actionsToolbar` prop and renders it as an `absolute`-positioned overlay (`right: 0; top: 0; zIndex: 1`) inside `flexTabWrapperStyle` (which has `position: relative`). Detail pages pass their action dropdown to `<ParameterizedTabs actionsToolbar={...}>`, keeping it visually attached to the tab bar.
 
 ## Internationalisation
 

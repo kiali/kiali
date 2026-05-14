@@ -68,7 +68,7 @@ fi
 yaml_files=()
 while IFS= read -r f; do
   yaml_files+=("$f")
-done < <(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
+done < <(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml$|\.yaml$' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
 
 if [ "${#yaml_files[@]}" -gt 0 ]; then
   # Exclude MCP config files that intentionally use TOML syntax with a .yaml extension.

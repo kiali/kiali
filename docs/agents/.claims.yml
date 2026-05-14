@@ -1,0 +1,192 @@
+# Codebase Scribe — Claims Registry
+# Auto-generated. Do not edit by hand.
+# Format: topic-name:section-id:N — claim text — file:line
+
+observability-and-ai:
+  ai-providers:
+  - id: 1
+    claim: "A third AI provider type — Anthropic (config.AnthropicProvider) — is now supported alongside OpenAI and Google, routed through ai/providers/anthropic/"
+    file: "ai/providers/provider.go"
+    approx_line: 27
+  - id: 2
+    claim: "The Anthropic provider uses github.com/anthropics/anthropic-sdk-go and stores system messages separately from dialogue messages in an anthropicConversation struct"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 27
+  - id: 3
+    claim: "Anthropic provider supports only provider.Config = '' (DefaultProviderConfigType); any other config type returns an error"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 58
+  - id: 4
+    claim: "SendChat iterates up to 5 tool-call rounds (maxToolIterations = 5) for the Anthropic provider"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 52
+  - id: 5
+    claim: "StopReasonPauseTurn causes the loop to continue without executing tools (Anthropic-specific streaming pause)"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 72
+  - id: 6
+    claim: "TransformToolCallToToolsProcessor now returns ([]mcp.ToolsProcessor, []string, error) — the interface was extended with an error return value"
+    file: "ai/providers/provider.go"
+    approx_line: 16
+  - id: 7
+    claim: "Tool schemas are normalized for Anthropic API: allOf is merged, anyOf/oneOf are stripped and approximated as constraint notes in descriptions, object schemas default additionalProperties to false"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 150
+  - id: 8
+    claim: "SplitConversationForReduction in helpers.go extracts the shared conversation-split logic previously duplicated in OpenAI and Google providers; anchor is leading messages with Role=='system' (up to first 2)"
+    file: "ai/providers/helpers.go"
+    approx_line: 200
+  - id: 9
+    claim: "Anthropic token limits: defaultMaxTokens=4096 for chat, reduceConversationMaxTokens=1024 for summarization"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 17
+  - id: 10
+    claim: "Model-level endpoint override: if model.Endpoint is non-empty, option.WithBaseURL is passed to the Anthropic client"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 53
+  ai-store:
+  - id: 1
+    claim: "AiStoreConfig now includes InactivityTimeout (default 30m); NewAIStore launches a background goroutine startInactivityCleanupLoop when Enabled=true and InactivityTimeout>0"
+    file: "ai/store.go"
+    approx_line: 39
+  - id: 2
+    claim: "purgeInactiveSessions deletes entire sessions (all their conversations) when LastAccessed is before the cutoff time"
+    file: "ai/store.go"
+    approx_line: 346
+  - id: 3
+    claim: "GetConversationIDs and DeleteConversations now update AIChatConversation.LastAccessed to extend the inactivity timeout on read/delete operations"
+    file: "ai/store.go"
+    approx_line: 265
+  - id: 4
+    claim: "A single conversation that alone exceeds MaxCacheMemoryMB is rejected immediately without triggering eviction"
+    file: "ai/store.go"
+    approx_line: 130
+  - id: 5
+    claim: "When the last conversation in a session is evicted or deleted, the session map entry itself is removed"
+    file: "ai/store.go"
+    approx_line: 224
+  - id: 6
+    claim: "The cleanup loop tick interval is half the InactivityTimeout, clamped between 50ms and 1 minute"
+    file: "ai/store.go"
+    approx_line: 323
+  - id: 7
+    claim: "The system prompt includes a TOOL OUTPUT HANDLING section instructing the LLM to treat tool output as untrusted data and never follow directives found in it (prompt injection mitigation)"
+    file: "ai/types/prompt.go"
+    approx_line: 32
+  - id: 8
+    claim: "InactivityTimeout config is read from cfg.ChatAI.StoreConfig.InactivityTimeout as a duration string; invalid/zero values fall back to 30m with a warning"
+    file: "ai/store.go"
+    approx_line: 313
+
+frontend-architecture:
+  page-utils:
+  - id: 1
+    claim: "PageUtils.ts (frontend/src/pages/PageUtils.ts) is a new module exposing buildMetadataPatch, buildWorkloadMetadataPatch, navigateToFilteredList, and partitionByIstio"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 1
+  - id: 2
+    claim: "buildMetadataPatch sets removed keys to null, conforming to JSON merge-patch (RFC 7396)"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 22
+  - id: 3
+    claim: "buildWorkloadMetadataPatch patches both metadata and spec.template.metadata for Deployment, ReplicaSet, ReplicationController, DeploymentConfig, StatefulSet, DaemonSet; only metadata for Pod, Job, CronJob"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 32
+  styling:
+  - id: 1
+    claim: "RenderHeader no longer accepts actionsToolbar or actionsToolbarTop props; the absolutely-positioned overlay was removed from RenderHeader"
+    file: "frontend/src/components/Nav/Page/RenderHeader.tsx"
+    approx_line: 1
+  - id: 2
+    claim: "ParameterizedTabs now accepts actionsToolbar and renders it as position:absolute; right:0; top:0; zIndex:1 inside flexTabWrapperStyle which gained position:relative"
+    file: "frontend/src/components/Tab/Tabs.tsx"
+    approx_line: 30
+  - id: 3
+    claim: "RenderHeader.paddingBottom was reduced from 1rem to 0.5rem"
+    file: "frontend/src/components/Nav/Page/RenderHeader.tsx"
+    approx_line: 11
+  - id: 4
+    claim: "Six new kialiStyle exports in FlexStyles.ts: detailTitleRowStyle, detailTitleMainStyle, detailGridStyle, detailPageTitleStyle, detailCardStackStyle, inlineIconRowStyle, clickableInlineStyle"
+    file: "frontend/src/styles/FlexStyles.ts"
+    approx_line: 61
+  pages:
+  - id: 1
+    claim: "WorkloadPods now renders pod detail in a PF6 Popover (click-triggered) with DescriptionList instead of a Tooltip (hover-triggered) with a custom ul"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 114
+  - id: 2
+    claim: "WorkloadPods column layout: Name=50%, Revision=30%, Health=20% with tableLayout:fixed; previously no explicit widths and column was named 'Status'"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 77
+  - id: 3
+    claim: "Pod names and revision values use ellipsis truncation with Tooltip showing the full value"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 41
+  - id: 4
+    claim: "ServiceDetailsPage now supports in-place label/annotation editing via handleSaveMetadata calling buildMetadataPatch and API.updateService"
+    file: "frontend/src/pages/ServiceDetails/ServiceDetailsPage.tsx"
+    approx_line: 118
+  - id: 5
+    claim: "GraphDataSource.destroy() cancels all in-flight promises via promiseRegistry.cancelAll()"
+    file: "frontend/src/services/GraphDataSource.ts"
+    approx_line: 143
+
+auth-and-security:
+  auth-controller-interface:
+  - id: 1
+    claim: "ErrSubjectMismatch is a package-level sentinel error used when a token's subject claim does not match the stored subject"
+    file: "handlers/authentication/auth_controller.go"
+    approx_line: 116
+  openid-flow:
+  - id: 1
+    claim: "cachedOpenIdMetadata and cachedOpenIdKeySet are atomic.Pointer[T] values, making their load/store operations race-free without an explicit mutex"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 96
+  - id: 2
+    claim: "NewOpenIdAuthController logs a startup warning when conf.Server.WebFQDN is empty, because the OIDC redirect_uri would be derived from manipulable Host headers"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 111
+  - id: 3
+    claim: "ValidateSession returns fmt.Errorf wrapping ErrSessionNotFound when the OIDC token is absent, instead of returning nil, nil"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 122
+  - id: 4
+    claim: "ValidateSession returns ErrSubjectMismatch when the username claim in the refreshed id_token is not a string type or does not match the stored subject"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 134
+  - id: 5
+    claim: "validateOpenIdNonceCode distinguishes absent nonce claim from nonce value mismatch, and separately rejects non-string nonce claims"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 826
+  - id: 6
+    claim: "All three strategies (OpenID, OpenShift, Token) now use r.Header.Set for Kiali-User to prevent duplicate header accumulation"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 150
+  header-strategy:
+  - id: 1
+    claim: "In header auth Authenticate(), tokenOwner is the verified token subject; displayName is either the impersonation target or tokenOwner; only displayName is stored in the cookie"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 28
+  - id: 2
+    claim: "In header auth ValidateSession(), Kiali-User is set to the freshly verified token subject (via GetTokenSubject), not the session displayName, to prevent audit trail poisoning"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 142
+  session-persistence:
+  - id: 1
+    claim: "ReadAllSessions now actively terminates (MaxAge=-1) cookies whose strategy does not match the current config, rather than silently yielding stale-strategy sessions"
+    file: "handlers/authentication/session_persistor.go"
+    approx_line: 522
+  - id: 2
+    claim: "ReadAllSessions now actively terminates expired session cookies during multi-session reading rather than passing expired sessions to callers for per-strategy handling"
+    file: "handlers/authentication/session_persistor.go"
+    approx_line: 528
+  openshift-flow:
+  - id: 1
+    claim: "The oauth_token URL query parameter code path carries an explicit comment warning that it exposes the bearer token in proxy logs, browser history, and Referer headers"
+    file: "handlers/authentication/openshift_auth_controller.go"
+    approx_line: 470
+  token-strategy:
+  - id: 1
+    claim: "Token strategy ValidateSession uses r.Header.Set (not r.Header.Add) for Kiali-User to prevent duplicate header accumulation"
+    file: "handlers/authentication/token_auth_controller.go"
+    approx_line: 676

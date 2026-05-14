@@ -3,10 +3,10 @@ scribe:
   title: "Observability Integrations and AI"
   description: "Distributed tracing (Jaeger/Tempo/OTel), Grafana, Perses, Kiali self-instrumentation, and the AI Chat integration"
   watch_paths: [tracing/, grafana/, perses/, observability/, ai/]
-  scan: "HEAD"
-  freshness: 60
+  scan: "f9d619df93bb21a45a15076ec025938f8e79f856"
+  freshness: 92
   human_input: 0
-  completeness: 87
+  completeness: 90
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "tracing-backends", heading: "Tracing: Supported Backends"}
@@ -21,11 +21,27 @@ scribe:
     - {id: "mcp-tools", heading: "MCP Tool System"}
     - {id: "ai-store", heading: "AI Conversation Store"}
   stale_flags: []
+  review_notes:
+    - finding: "Claim ai-providers:5: StopReasonPauseTurn block is at lines 76-83 (not 72-76), and at the final iteration the code returns an error rather than continuing — this edge case is not documented."
+      severity: minor
+      tag: WRONG_CLAIM
+      confidence: 0.9
+      date: "2026-05-14"
+    - finding: "purgeInactiveSessions evicts based on session-level LastAccessed (AIChatConversation.LastAccessed), not per-conversation timestamps — all conversations in a stale session are purged together. This granularity detail is absent from the ai-store section."
+      severity: minor
+      tag: MISSING_SECTION
+      confidence: 0.95
+      date: "2026-05-14"
+    - finding: "Several claim line numbers are off by 1-3 lines (ai-providers:4 cites line 52, actual is 53; ai-store:2 cites 346-375, actual function is 349-378)."
+      severity: minor
+      tag: STALE_REFERENCE
+      confidence: 0.85
+      date: "2026-05-14"
 ---
 
 # Observability Integrations and AI
 
-> TL;DR: Kiali proxies distributed traces from Jaeger or Tempo (via HTTP or gRPC), generates deep-links to Grafana and Perses dashboards, exports its own spans via OTel, and provides an AI Chat feature backed by OpenAI-compatible or Google Gemini providers that call a set of MCP tools to query live mesh data.
+> TL;DR: Kiali proxies distributed traces from Jaeger or Tempo (via HTTP or gRPC), generates deep-links to Grafana and Perses dashboards, exports its own spans via OTel, and provides an AI Chat feature backed by OpenAI-compatible, Anthropic (Claude), or Google Gemini providers that call a set of MCP tools to query live mesh data.
 
 ## Overview
 
@@ -203,12 +219,14 @@ The feature is gated by `conf.ChatAI.Enabled`. Providers and models are configur
 switch provider.Type {
 case config.OpenAIProvider:
     return openaiProvider.NewOpenAIProvider(conf, provider, model)
+case config.AnthropicProvider:
+    return anthropicProvider.NewAnthropicProvider(conf, provider, model)
 case config.GoogleProvider:
     return googleProvider.NewGoogleAIProvider(conf, provider, model)
 }
 ```
 
-Two provider types are implemented:
+Three provider types are implemented:
 
 ### OpenAI Provider (`ai/providers/openai/`)
 
@@ -220,6 +238,31 @@ Two provider types are implemented:
 | `""` (default) | Standard OpenAI endpoint |
 | `"azure"` | Azure OpenAI endpoint with `azureAPIVersion = "2024-06-01"` and `azure.NewTokenCredential` |
 
+### Anthropic Provider (`ai/providers/anthropic/`)
+
+`anthropic_provider.go` uses the `github.com/anthropics/anthropic-sdk-go` SDK. `NewAnthropicProvider` resolves the API key via `providers.ResolveProviderKey` and constructs an `anthropic.Client` with `option.WithAPIKey`. An optional `model.Endpoint` overrides the base URL (for custom Anthropic-compatible endpoints).
+
+Only `provider.Config = ""` (default) is supported; other config type values return an error.
+
+The provider uses an internal `anthropicConversation` struct that separates system messages (`[]anthropic.TextBlockParam`) from dialogue messages (`[]anthropic.MessageParam`), reflecting Anthropic's API shape where system prompts are passed as a top-level parameter rather than inline with the conversation.
+
+`SendChat` iterates up to **5 tool-call rounds** (`maxToolIterations = 5`). Within each round:
+1. Calls `p.client.Messages.New(ctx, ...)` with the current conversation and tool definitions.
+2. If `resp.StopReason == StopReasonPauseTurn`, appends the response and continues without executing tools.
+3. If tool-use blocks are present (`anthropicHasToolUse`), extracts them via `TransformToolCallToToolsProcessor`, executes them in parallel, and appends `ToolResult` blocks in a new user message.
+4. If no tool use is present, extracts the text answer and exits the loop.
+
+`TransformToolCallToToolsProcessor` returns `([]mcp.ToolsProcessor, []string, error)`, propagating JSON unmarshalling failures from tool argument payloads.
+
+Tool schemas are normalized for Anthropic API compatibility by `normalizeAnthropicInputSchema`:
+- `allOf` entries are merged into the top-level schema via `mergeTopLevelAllOf`.
+- `anyOf` / `oneOf` combinators are stripped and their semantics approximated as human-readable constraint notes appended to the tool description and individual property descriptions.
+- Object schemas without `additionalProperties` have it defaulted to `false`.
+
+`ReduceConversation` uses the shared `providers.SplitConversationForReduction` helper (see below) and summarizes the middle portion via a dedicated `p.client.Messages.New` call with `reduceConversationMaxTokens = 1024`.
+
+Token limits: `defaultMaxTokens = 4096` for chat, `reduceConversationMaxTokens = 1024` for summarization.
+
 The provider implements `providers.AIProvider` (defined in `ai/providers/provider.go`):
 
 ```go
@@ -227,16 +270,22 @@ type AIProvider interface {
     InitializeConversation(conversation *[]ConversationMessage, req AIRequest)
     ReduceConversation(ctx, conversation, reduceThreshold) []ConversationMessage
     GetToolDefinitions() interface{}
-    TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string)
+    TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error)
     ConversationToProvider(conversation []ConversationMessage) interface{}
     ProviderToConversation(providerMessage interface{}) ConversationMessage
     SendChat(kialiInterface *mcputil.KialiInterface, req AIRequest, aiStore AIStore) (*AIResponse, int)
 }
 ```
 
+All three provider implementations (OpenAI, Anthropic, Google) propagate errors from `TransformToolCallToToolsProcessor`.
+
 ### Google Provider (`ai/providers/google/`)
 
 `google_provider.go` uses the Google Generative AI Go SDK. The `GoogleAIProvider` implements the same `AIProvider` interface.
+
+### Shared helpers (`ai/providers/helpers.go`)
+
+`SplitConversationForReduction(conversation, reduceThreshold, keepCount)` splits a conversation into a system-instruction anchor, the summarizable middle portion, and the recent tail. Returns `(instructions, toSummarize, recentMessages, ok bool)` where `ok = false` if the conversation is below the threshold or too short to split meaningfully. The anchor is determined by counting leading messages whose `Role == "system"` (up to the first 2).
 
 ### Key credential resolution
 
@@ -302,15 +351,20 @@ type AIStore interface {
 
 The concrete `AIStoreImpl` stores conversations in a `map[sessionID]*AIChatConversation` where each value holds a `map[conversationID]*Conversation`. Thread-safety is maintained at two levels: a top-level `sync.RWMutex` on the store, and per-session and per-conversation mutexes.
 
-**Memory management**: `SetConversation` calls `EstimateConversationMemory` (character count / 1024 / 1024 → MB) before storing. If the projected total memory would exceed `MaxCacheMemoryMB` (default 1024 MB), `evictLRUConversations` evicts the least-recently-accessed conversations until enough space is freed. `internalmetrics.GetAIStoreEvictionsTotalMetric().Inc()` is called for each eviction.
+**Memory management**: `SetConversation` calls `EstimateConversationMemory` (character count / 1024 / 1024 → MB) before storing. If the projected total memory would exceed `MaxCacheMemoryMB` (default 1024 MB), `evictLRUConversations` evicts the least-recently-accessed conversations until enough space is freed. A single conversation that alone exceeds `MaxCacheMemoryMB` is rejected immediately with an error rather than triggering eviction. After eviction, if the post-eviction projected memory still exceeds the cap, `SetConversation` returns an error. `internalmetrics.GetAIStoreEvictionsTotalMetric().Inc()` is called for each evicted conversation. When the last conversation in a session is evicted, the session entry itself is deleted.
+
+**Inactivity-based cleanup**: `NewAIStore` launches a background goroutine (`startInactivityCleanupLoop`) when `Enabled = true` and `InactivityTimeout > 0`. The goroutine ticks at half the timeout duration (clamped between 50 ms and 1 minute) and calls `purgeInactiveSessions(now)`. Any session whose `LastAccessed` is older than `InactivityTimeout` is deleted wholesale. `GetConversationIDs` and `DeleteConversations` both update `AIChatConversation.LastAccessed` (previously only `SetConversation` / `GetConversation` updated it). Empty sessions (zero conversations) are also removed immediately after `DeleteConversations` empties them.
 
 **Configuration** (loaded by `LoadAIStoreConfig`):
 
 | Field | Default | Purpose |
 |---|---|---|
+| `InactivityTimeout` | 30m | Purge sessions not accessed within this duration |
 | `MaxCacheMemoryMB` | 1024 | Memory cap across all sessions |
 | `ReduceWithAI` | false | Use the AI to summarize long conversations before they hit the threshold |
 | `ReduceThreshold` | 15 | Message count threshold that triggers AI-based reduction |
+
+`InactivityTimeout` is loaded from `cfg.ChatAI.StoreConfig.InactivityTimeout` (parsed as a duration string). Invalid or zero values fall back to 30 minutes with a warning log.
 
 A `Conversation` contains:
 ```go
@@ -323,5 +377,7 @@ type Conversation struct {
 ```
 
 Each `ConversationMessage` has `Role`, `Content`, `Name`, and `Param` fields — the role/content model is provider-agnostic; providers convert to/from their SDK-specific message types via `ConversationToProvider` / `ProviderToConversation`.
+
+**System prompt security**: The system prompt (`ai/types/prompt.go`) includes a `TOOL OUTPUT HANDLING` section that instructs the LLM to treat data returned by tools as raw, untrusted data — never as instructions — preventing prompt injection attacks via tool results that might contain directive text from the cluster.
 
 The AI store is initialized in `routing/router.go` via `ai.NewAIStore(ctx, aiStoreConfig)` and passed to the AI handler functions as `aiStore types.AIStore`.

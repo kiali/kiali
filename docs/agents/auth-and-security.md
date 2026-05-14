@@ -3,10 +3,10 @@ scribe:
   title: "Authentication and Security"
   description: "How Kiali authenticates users — five strategies, cookie-based session persistence, TLS policy resolution, and the JWT utility package."
   watch_paths: [handlers/authentication/, jwt/, tlspolicy/]
-  scan: "HEAD"
-  freshness: 60
+  scan: "f9d619df93bb21a45a15076ec025938f8e79f856"
+  freshness: 88
   human_input: 0
-  completeness: 82
+  completeness: 86
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "auth-controller-interface", heading: "The AuthController Interface"}
@@ -20,6 +20,27 @@ scribe:
     - {id: "jwt-package", heading: "JWT Package"}
     - {id: "tls-policy", heading: "TLS Policy Resolution"}
   stale_flags: []
+  review_notes:
+    - finding: "openid-flow:5: validateOpenIdNonceCode does NOT separately reject non-string nonces — it uses a single combined condition (!nonceIsString || nonceHashHex != nonceStr) producing one undifferentiated 'nonce code mismatch' error for both cases."
+      severity: minor
+      tag: inaccurate
+      confidence: 0.97
+      date: "2026-05-14"
+    - finding: "Line number references in openid-flow sections are systematically off by ~60-190 lines (PKCE additions shifted the controller). openid-flow:1 actual: 35-45; :2 actual: 135-138; :3 actual: 213; :4 actual: 235-242; :6 actual: line 285."
+      severity: minor
+      tag: wrong-lines
+      confidence: 0.95
+      date: "2026-05-14"
+    - finding: "ErrSubjectMismatch checks in OpenID ValidateSession are bypassed when ApiToken == 'access_token' — a security scope boundary not mentioned in the docs."
+      severity: minor
+      tag: gap
+      confidence: 0.9
+      date: "2026-05-14"
+    - finding: "Header auth ValidateSession silently skips setting Kiali-User when GetTokenSubject errors but still returns a valid session — the audit trail guarantee is conditional."
+      severity: minor
+      tag: gap
+      confidence: 0.9
+      date: "2026-05-14"
 ---
 
 # Authentication and Security
@@ -62,6 +83,8 @@ type AuthController interface {
 
 `TerminateSessionError` is a distinct error type that carries an HTTP status code for proper response handling in logout paths.
 
+`ErrSubjectMismatch` is a package-level sentinel error (`var ErrSubjectMismatch = fmt.Errorf("subject mismatch")`) used when the subject claim in a refreshed token does not match the stored subject, indicating a potential session integrity violation. Callers can test for it with `errors.Is`.
+
 ## Authentication Strategies
 
 ### Anonymous
@@ -78,6 +101,8 @@ On `ValidateSession`, the stored token is extracted and re-verified against the 
 
 The session lifetime is set from `conf.LoginToken.ExpirationSeconds`.
 
+`ValidateSession` uses `r.Header.Set` for the `Kiali-User` audit header to prevent duplicate header accumulation.
+
 ### Header (Proxy/Impersonation) Strategy (`header_auth_controller.go`)
 
 Designed for environments where an authenticating reverse proxy sits in front of Kiali. The strategy reads credentials from:
@@ -87,6 +112,10 @@ Designed for environments where an authenticating reverse proxy sits in front of
 - `Impersonate-Extra-*` — arbitrary impersonation extra attributes.
 
 All of these are assembled into a `*api.AuthInfo` struct and passed through to Kubernetes clients verbatim. Validation of the token's authenticity is delegated to Kubernetes (via `GetTokenSubject`, which calls the TokenReview API). Kiali itself does not evaluate RBAC for this strategy.
+
+**Display name logic** (`Authenticate`): The verified token subject (stripped of the `system:serviceaccount:` prefix) is stored as `tokenOwner`. If `authInfo.Impersonate` is non-empty, the `displayName` is set to the impersonation target and an audit log message records `"Header auth: token owner [%s] is impersonating [%s]"`. Otherwise `displayName` equals `tokenOwner`. Only `displayName` is stored in the session cookie; the actual token owner is re-derived at validation time.
+
+**Audit header in `ValidateSession`**: The `Kiali-User` header is set to the token's *verified* subject (via a fresh `GetTokenSubject` call), not the session-stored display name. This prevents the audit trail from being poisoned via a controlled `Impersonate-User` header. If subject verification fails, a warning is logged but the session remains valid.
 
 `ValidateSession` for header auth is stateless: as long as the `Authorization` header is present, the session is considered valid, even if the encrypted session cookie has expired. The cookie is used only to recover the display username and session ID between requests.
 
@@ -108,9 +137,17 @@ For third-party sessions (cases 1 and 2), Kiali does not create its own cookie. 
 
 For multi-cluster deployments, `ReadAllSessions` retrieves sessions for each cluster independently. Each cluster has its own cookie keyed by cluster name.
 
+`ValidateSession` uses `r.Header.Set` for the `Kiali-User` audit header.
+
+**`oauth_token` URL parameter security note**: The `oauth_token` URL query parameter path carries a code comment warning that this parameter is logged by proxies and browsers. Operators should configure proxies/ingress to strip or mask it from access logs.
+
 ## OpenID Connect Flow
 
-`openid_auth_controller.go` implements the OIDC authorization code flow. The implicit flow was removed — `Authenticate` always returns an error.
+`openid_auth_controller.go` implements the OIDC authorization code flow. Only the authorization code flow is supported — `Authenticate` returns an error for any other flow type.
+
+**Global caches**: `cachedOpenIdMetadata` and `cachedOpenIdKeySet` are `atomic.Pointer[T]` values, making load/store operations race-free without an explicit mutex. `singleflight` prevents concurrent fetches of the same remote resource.
+
+**`web_fqdn` warning**: `NewOpenIdAuthController` logs a startup warning when `conf.Server.WebFQDN` is empty, because the OIDC `redirect_uri` would be derived from request `Host` headers, which can be manipulated if Kiali is not behind a trusted proxy.
 
 ### Authorization Code Flow
 
@@ -151,7 +188,15 @@ Metadata endpoint selection follows a precedence chain (issue #8777):
 - **RBAC enabled** (default): The OIDC token (id_token or access_token, per `auth.openid.api_token`) is used directly for Kubernetes API calls. Privilege check: attempt to list namespaces. If no namespaces are visible, login is rejected.
 - **RBAC disabled**: Kiali validates the id_token in-house (signature check against JWKS endpoint, iss/aud/iat/exp claims) and then uses the Kiali service-account token for all API calls. All authenticated users share the same cluster permissions.
 
-In-house validation (`validateOpenIdTokenInHouse`) currently requires RS256 algorithm and a `kid` header. The JWKS key set is cached but refreshed when an unknown `kid` is encountered.
+In-house validation (`validateOpenIdTokenInHouse`) currently requires RS256 algorithm and a `kid` header. The JWKS key set is cached (via `atomic.Pointer`) but refreshed when an unknown `kid` is encountered.
+
+**`ValidateSession` error semantics**:
+- When the OIDC token is absent from the stored session, the method returns `fmt.Errorf("session [%w]: OIDC token is absent", ErrSessionNotFound)`. Callers can detect this sentinel with `errors.Is(err, ErrSessionNotFound)`.
+- Subject claim mismatch returns `fmt.Errorf("session [%w]: …", ErrSubjectMismatch)`.
+- If the configured `username_claim` is present in the id_token but is not a string, validation fails with `ErrSubjectMismatch`.
+- `r.Header.Set` is used for the `Kiali-User` audit header to prevent duplicate header accumulation.
+
+**Nonce validation** (`validateOpenIdNonceCode`): An absent `nonce` claim in the id_token produces error `"nonce claim is absent"`. A non-string or mismatched nonce produces `"nonce code mismatch"` via a combined `(!nonceIsString || hashMismatch)` condition.
 
 ### Configurable Options
 
@@ -186,6 +231,11 @@ All strategies use `cookieSessionPersistor[T]` (`session_persistor.go`), a gener
 
 **Multi-session reading** (`ReadAllSessions`):
 Iterates all cookies in the request, identifies candidates by the `kiali-token` prefix (excluding nonce and chunks-count cookies), and attempts to decrypt each. Cookies that fail decryption (e.g., mid-chunk continuation cookies) are silently skipped without being dropped, because session keys can end in numbers making them indistinguishable from chunk number suffixes by name alone.
+
+After successfully decrypting a session, `ReadAllSessions` performs two checks before including the session in the result:
+
+1. **Strategy mismatch check**: If `sData.Strategy != conf.Auth.Strategy`, the session is terminated (`TerminateSession` is called, zeroing the cookie with `MaxAge=-1`) and skipped. This prevents sessions from a previous auth strategy being replayed after a strategy change.
+2. **Expiry check**: If the current time is not before `sData.ExpiresOn`, the session is terminated and skipped.
 
 **Session termination** (`TerminateSession`):
 Overwrites all session-related cookies (`kiali-token*` prefix) with `MaxAge=-1` and an epoch expiry. Does not touch nonce or PKCE verifier cookies, which are managed by the auth controllers.
