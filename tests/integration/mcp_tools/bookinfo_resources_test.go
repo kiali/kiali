@@ -107,7 +107,16 @@ func TestBookinfo_AppDetail_Productpage(t *testing.T) {
 
 	services, ok := resp.Parsed["services"].([]interface{})
 	require.True(t, ok, "app detail should have 'services' array")
-	assert.Contains(t, services, "productpage")
+	require.NotEmpty(t, services)
+	svcNames := make([]string, 0, len(services))
+	for _, s := range services {
+		svcMap, mapOk := s.(map[string]any)
+		require.True(t, mapOk, "each service should be an object")
+		name, nameOk := svcMap["name"].(string)
+		require.True(t, nameOk, "each service should have a 'name' string")
+		svcNames = append(svcNames, name)
+	}
+	assert.Contains(t, svcNames, "productpage")
 
 	workloads, ok := resp.Parsed["workloads"].([]interface{})
 	require.True(t, ok, "app detail should have 'workloads' array")
