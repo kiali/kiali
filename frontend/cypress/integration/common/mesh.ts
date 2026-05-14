@@ -526,7 +526,50 @@ Then('user sees the Tester result {string}', (result: string) => {
   });
 });
 
-// Multi-cluster / multi-mesh namespace panel step definitions
+// Multi-cluster / multi-mesh step definitions
+
+When('user selects cluster mesh node on cluster {string}', (cluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(
+        n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER && n.getData().cluster === cluster
+      );
+      assert.exists(node, `Cluster node for "${cluster}" should exist`);
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+Then('user sees {string} in cluster panel', (text: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster')
+    .should('be.visible')
+    .within(() => {
+      cy.contains(text).should('be.visible');
+    });
+});
+
+Then('user sees the primary cluster name {string} in managed control plane info', (primaryCluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster')
+    .should('be.visible')
+    .within(() => {
+      cy.contains('Managed by remote ControlPlane').should('be.visible');
+      cy.contains(primaryCluster).should('be.visible');
+    });
+});
 
 When('user selects mesh node with label {string} on cluster {string}', (label: string, cluster: string) => {
   cy.waitForReact();

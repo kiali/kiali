@@ -206,6 +206,18 @@ Feature: Kiali Mesh page
     And user sees the "kiali" node connected to the 1 "istiod" nodes
 
   @multi-cluster
+  Scenario: Primary-remote: namespace panel shows control plane donut for local istio-system
+    When user selects mesh node with label "istio-system" on cluster "east"
+    Then user sees "istio-system" namespace side panel
+    And user sees control plane donut in namespace panel
+
+  @multi-cluster
+  Scenario: Primary-remote: remote cluster shows managed by remote control plane
+    When user selects cluster mesh node on cluster "west"
+    Then user sees "Managed by remote ControlPlane" in cluster panel
+    And user sees the primary cluster name "east" in managed control plane info
+
+  @multi-cluster
   @multi-primary
   Scenario: Multi-primary: each namespace panel shows only its own control plane donut
     When user selects mesh node with label "istio-system" on cluster "east"

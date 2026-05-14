@@ -416,13 +416,62 @@ const filterSharedInfrastructureNodes = (nodes: Node[]): Node[] => {
   });
 };
 
+const findRemoteControlPlanes = (
+  allControlPlaneNodes: Node[],
+  dataPlaneNodes: Node[],
+  meshName: string,
+  forCluster: string
+): Node[] => {
+  return filterNodesByMesh(allControlPlaneNodes, meshName).filter(n => {
+    const data = n.getData() as MeshNodeData;
+    if (data.cluster === forCluster) {
+      return false;
+    }
+    const cpRev = data.infraData.revision ?? 'default';
+    return dataPlaneNodes.some(dpn => {
+      const dpRev = dpn.getData().version ?? 'default';
+      return cpRev === dpRev;
+    });
+  });
+};
+
 // Helper function to render mesh control planes content
 const renderMeshControlPlanes = (
   meshName: string,
   controlPlaneNodes: Node[],
-  dataPlaneNodes: Node[]
+  dataPlaneNodes: Node[],
+  allControlPlaneNodes?: Node[],
+  forCluster?: string
 ): React.ReactNode => {
   const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
+
+  if (meshControlPlanes.length === 0 && forCluster && allControlPlaneNodes) {
+    const remoteCPs = findRemoteControlPlanes(allControlPlaneNodes, dataPlaneNodes, meshName, forCluster);
+    if (remoteCPs.length > 0) {
+      return (
+        <div key={meshName} style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
+          {t('Managed by remote ControlPlane:')}
+          <div>
+            {remoteCPs.map(infra => {
+              const data = infra.getData() as MeshNodeData;
+              return (
+                <div key={data.id} className={summaryStyle}>
+                  {renderNodeHeader(data, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
+                  <div className={summaryInfoStyle}>
+                    <div>
+                      <PFBadge badge={PFBadges.Cluster} size="sm" />
+                      {data.cluster}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div key={meshName} style={{ marginLeft: '1rem', marginTop: '0.5rem' }}>
@@ -491,6 +540,7 @@ const renderSharedInfrastructure = (
 
 // Component for mesh expandable table
 const MeshTabsComponent: React.FC<{
+  allControlPlaneNodes: Node[];
   clusterNodes: Node[];
   controlPlaneNodes: Node[];
   dataPlaneNodes: Node[];
@@ -502,6 +552,7 @@ const MeshTabsComponent: React.FC<{
   waypointNodes: Node[];
 }> = ({
   meshData,
+  allControlPlaneNodes,
   clusterNodes,
   controlPlaneNodes,
   dataPlaneNodes,
@@ -527,13 +578,19 @@ const MeshTabsComponent: React.FC<{
     setExpanded(updatedExpanded);
   };
 
-  // Filter out meshes that have no control planes
+  // Filter meshes that have local or remote control planes relevant to this view
   const meshesWithControlPlanes = meshData.names.filter(meshName => {
-    const meshControlPlanes = filterNodesByMesh(controlPlaneNodes, meshName);
-    return meshControlPlanes.length > 0;
+    const localCPs = filterNodesByMesh(controlPlaneNodes, meshName);
+    if (localCPs.length > 0) {
+      return true;
+    }
+    if (forCluster) {
+      return findRemoteControlPlanes(allControlPlaneNodes, dataPlaneNodes, meshName, forCluster).length > 0;
+    }
+    return false;
   });
 
-  // If no meshes with control planes, render only shared infrastructure without tabs
+  // If no meshes with any control planes, render only shared infrastructure without tabs
   if (meshesWithControlPlanes.length === 0) {
     return (
       <div>
@@ -551,7 +608,7 @@ const MeshTabsComponent: React.FC<{
         <div className={targetBodyStyle}>
           <div className={meshTitleStyle}>{t('Mesh: {{meshName}}', { meshName })}</div>
         </div>
-        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes, allControlPlaneNodes, forCluster)}
 
         {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
       </div>
@@ -602,7 +659,13 @@ const MeshTabsComponent: React.FC<{
                   <Tr isExpanded={isExpanded(meshName)}>
                     <Td dataLabel={`mesh-detail-${meshName}`} className={expandBodyStyle} colSpan={2}>
                       <ExpandableRowContent>
-                        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+                        {renderMeshControlPlanes(
+                          meshName,
+                          controlPlaneNodes,
+                          dataPlaneNodes,
+                          allControlPlaneNodes,
+                          forCluster
+                        )}
                       </ExpandableRowContent>
                     </Td>
                   </Tr>
@@ -627,9 +690,10 @@ export const renderInfraSummary = (
     { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.CLUSTER }
   ]) as Node[];
   const clusterNodes = clusterAndExternalNodes.filter(rcn => !rcn.getData().isExternal);
-  let controlPlaneNodes = selectAnd(nodes, [
+  const allControlPlaneNodes = selectAnd(nodes, [
     { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.ISTIOD }
   ]) as Node[];
+  let controlPlaneNodes = [...allControlPlaneNodes];
   let dataPlaneNodes = selectAnd(nodes, [
     { prop: MeshAttr.infraType, op: '=', val: MeshInfraType.DATAPLANE }
   ]) as Node[];
@@ -647,7 +711,6 @@ export const renderInfraSummary = (
     controlPlaneNodes = controlPlaneNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
     );
-    // 'infraType: dataplane' does not have a value for 'namespace', a filtering by 'revision' is used when displaying
     dataPlaneNodes = dataPlaneNodes.filter(n => n.getData().cluster === forCluster);
     gatewayNodes = gatewayNodes.filter(
       n => n.getData().cluster === forCluster && (!forNamespace || n.getData().namespace === forNamespace)
@@ -674,7 +737,7 @@ export const renderInfraSummary = (
             <br />
           </div>
         </div>
-        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes)}
+        {renderMeshControlPlanes(meshName, controlPlaneNodes, dataPlaneNodes, allControlPlaneNodes, forCluster)}
         {renderSharedInfrastructure(clusterNodes, gatewayNodes, waypointNodes, kialiNodes, observeNodes, forCluster)}
       </div>
     );
@@ -684,6 +747,7 @@ export const renderInfraSummary = (
   return (
     <MeshTabsComponent
       meshData={meshData}
+      allControlPlaneNodes={allControlPlaneNodes}
       clusterNodes={clusterNodes}
       controlPlaneNodes={controlPlaneNodes}
       dataPlaneNodes={dataPlaneNodes}

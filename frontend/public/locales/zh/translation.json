@@ -337,6 +337,7 @@
   "Logs": "Logs",
   "Manage columns": "Manage columns",
   "Manage metrics": "Manage metrics",
+  "Managed by remote ControlPlane:": "Managed by remote ControlPlane:",
   "Manual": "Manual",
   "Manual refresh required": "Manual refresh required",
   "Mark all read": "Mark all read",
