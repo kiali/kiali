@@ -1,6 +1,7 @@
 import { Before, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const USERNAME = Cypress.env('USERNAME') ?? 'jenkins';
+const PASSWD = Cypress.env('PASSWD');
 const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER');
 const auth_strategy = Cypress.env('AUTH_STRATEGY');
 
@@ -48,6 +49,14 @@ function fillOAuthForm(
   });
 }
 
+// Defined as a named function so cy.origin() can serialize it.
+// Cannot be imported from commands.ts due to cy.origin() serialization constraints.
+function submitLoginForm({ username, password }: { password: string; username: string }): void {
+  cy.get('#inputUsername').clear().type(username);
+  cy.get('#inputPassword').type(password);
+  cy.get('button[type="submit"]').click();
+}
+
 Given('all sessions are cleared', () => {
   Cypress.session.clearAllSavedSessions();
   Cypress.session.clearCurrentSessionData();
@@ -90,14 +99,7 @@ Given('user clicks my_htpasswd_provider', () => {
 Given('user fill in username and password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user: ${USERNAME}`);
-    fillOAuthForm(
-      ({ username, password }) => {
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
-      },
-      { username: USERNAME, password: Cypress.env('PASSWD') }
-    );
+    fillOAuthForm(submitLoginForm, { username: USERNAME, password: PASSWD });
   }
 });
 
@@ -107,29 +109,14 @@ Given('user fills in an invalid username', () => {
 
     cy.log(`Log in with invalid username: ${invalid}`);
     cy.log(`The real username should be: ${USERNAME}`);
-    fillOAuthForm(
-      ({ username, password }) => {
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
-      },
-      { username: invalid, password: Cypress.env('PASSWD') }
-    );
+    fillOAuthForm(submitLoginForm, { username: invalid, password: PASSWD });
   }
 });
 
 Given('user fills in an invalid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with wrong password: ${USERNAME}`);
-    const PASSWD = Cypress.env('PASSWD');
-    fillOAuthForm(
-      ({ username, password }) => {
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
-      },
-      { username: USERNAME, password: `${PASSWD.toLowerCase()}123456` }
-    );
+    fillOAuthForm(submitLoginForm, { username: USERNAME, password: `${PASSWD.toLowerCase()}123456` });
   }
 });
 
@@ -150,14 +137,7 @@ Then('user sees the {string} phrase displayed', (phrase: string) => {
 Then('user fills in a valid password', () => {
   if (auth_strategy === 'openshift') {
     cy.log(`Log in as user with valid password: ${USERNAME}`);
-    fillOAuthForm(
-      ({ username, password }) => {
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
-      },
-      { username: USERNAME, password: Cypress.env('PASSWD') }
-    );
+    fillOAuthForm(submitLoginForm, { username: USERNAME, password: PASSWD });
   }
   if (auth_strategy === 'token') {
     cy.exec('kubectl -n istio-system create token citest').then(result => {
@@ -174,14 +154,7 @@ Then('user fills in a valid password for {string} cluster', (cluster: string) =>
     const username = Cypress.env(usernameKey);
     const password = Cypress.env(passwordKey);
     cy.log(`Log in as user with valid password: ${username}`);
-    fillOAuthForm(
-      ({ username, password }) => {
-        cy.get('#inputUsername').clear().type(username);
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
-      },
-      { username, password }
-    );
+    fillOAuthForm(submitLoginForm, { username, password });
   }
 });
 
