@@ -2,9 +2,7 @@ import { baselines, measureGraphLoadTime, reportFilePath } from './common';
 
 describe('Graph performance tests', () => {
   beforeEach(() => {
-    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
-      cy.login(USERNAME, PASSWD);
-    });
+    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
   describe('Graph page', () => {
@@ -30,22 +28,18 @@ describe('Graph performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Graph page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces Graph load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
-      measureGraphLoadTime('All Namespaces Graph', Cypress.expose(baselines).graphAll, graphUrlAllNamespaces);
+    it('Measures All Namespaces Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureGraphLoadTime('All Namespaces Graph', Cypress.env(baselines).graphAll, graphUrlAllNamespaces);
     });
-    it(
-      'Measures All Namespaces Graph Idle Nodes load time',
-      { defaultCommandTimeout: Cypress.expose('timeout') },
-      () => {
-        measureGraphLoadTime(
-          'All Namespaces Graph Idle Nodes',
-          Cypress.expose(baselines).graphAllIdle,
-          graphUrlAllNamespacesIdle
-        );
-      }
-    );
-    it('Measures Graph load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
-      measureGraphLoadTime('Selected Namespaces Graph', Cypress.expose(baselines).graphSelected, graphUrl);
+    it('Measures All Namespaces Graph Idle Nodes load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureGraphLoadTime(
+        'All Namespaces Graph Idle Nodes',
+        Cypress.env(baselines).graphAllIdle,
+        graphUrlAllNamespacesIdle
+      );
+    });
+    it('Measures Graph load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureGraphLoadTime('Selected Namespaces Graph', Cypress.env(baselines).graphSelected, graphUrl);
     });
   });
 });

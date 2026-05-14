@@ -15,7 +15,7 @@ Given(
     };
 
     // In OSSMC, the duration interval is configured using the time duration modal component
-    if (Cypress.expose('OSSMC')) {
+    if (Cypress.env('OSSMC')) {
       cy.get('#time_duration').click();
       changeIntervalDuration();
       cy.get('#time-duration-modal').find('button').contains('Confirm').click();

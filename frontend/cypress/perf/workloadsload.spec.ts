@@ -2,9 +2,7 @@ import { reportFilePath, measureListsLoadTime, measureDetailsLoadTime, baselines
 
 describe('Workloads performance tests', () => {
   beforeEach(() => {
-    cy.env(['USERNAME', 'PASSWD']).then(({ USERNAME, PASSWD }) => {
-      cy.login(USERNAME, PASSWD);
-    });
+    cy.login(Cypress.env('USERNAME'), Cypress.env('PASSWD'));
   });
 
   describe('Workloads list page', () => {
@@ -26,19 +24,15 @@ describe('Workloads performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Workloads List page]\n', { flag: 'a+' });
     });
 
-    it('Measures All Namespaces Workloads load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+    it('Measures All Namespaces Workloads load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       measureListsLoadTime(
         'All Namespaces Workloads',
-        Cypress.expose(baselines).workloadListAll,
+        Cypress.env(baselines).workloadListAll,
         workloadsUrlAllNamespaces
       );
     });
-    it('Measures Workloads load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
-      measureListsLoadTime(
-        'Selected Namespaces Workloads',
-        Cypress.expose(baselines).workloadListSelected,
-        workloadsUrl
-      );
+    it('Measures Workloads load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureListsLoadTime('Selected Namespaces Workloads', Cypress.env(baselines).workloadListSelected, workloadsUrl);
     });
   });
 
@@ -69,9 +63,9 @@ describe('Workloads performance tests', () => {
       cy.writeFile(reportFilePath, '\n[Workload details page]\n', { flag: 'a+' });
     });
 
-    it('Workload details load time', { defaultCommandTimeout: Cypress.expose('timeout') }, () => {
+    it('Workload details load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
       workloadUrls.forEach((url, name) => {
-        measureDetailsLoadTime(name, Cypress.expose(baselines).workloadDetails, url);
+        measureDetailsLoadTime(name, Cypress.env(baselines).workloadDetails, url);
       });
     });
   });

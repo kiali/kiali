@@ -1,6 +1,6 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-const auth_strategy = Cypress.expose('AUTH_STRATEGY');
+const auth_strategy = Cypress.env('AUTH_STRATEGY');
 
 Given('user clicks on admin', () => {
   if (auth_strategy === 'openshift') {
