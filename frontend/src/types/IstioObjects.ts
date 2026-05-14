@@ -341,6 +341,7 @@ export interface Service {
   namespace: Namespace;
   ports?: ServicePort[];
   resourceVersion: string;
+  serviceRegistry?: string;
   type: string;
 }
 

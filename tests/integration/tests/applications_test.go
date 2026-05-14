@@ -45,8 +45,8 @@ func TestApplicationDetails(t *testing.T) {
 		}
 	}
 	require.NotEmpty(app.ServiceNames)
-	for _, serviceName := range app.ServiceNames {
-		require.Equal(name, serviceName)
+	for _, svc := range app.ServiceNames {
+		require.Equal(name, svc.Name)
 	}
 	require.NotNil(app.Runtimes)
 	require.NotNil(app.Health)

@@ -75,7 +75,8 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
   }
 
   const apps: string[] = [];
-  const services: string[] = [];
+  const services =
+    workload.services?.map(s => ({ isServiceEntry: s.serviceRegistry === 'External', name: s.name })) ?? [];
 
   // ignore app links for ambient infra
   if (!workload.isWaypoint && !workload.isZtunnel) {
@@ -84,8 +85,6 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
       apps.push(workload.labels[appLabelName]);
     }
   }
-
-  workload.services?.forEach(s => services.push(s.name));
 
   const isTemplateLabels =
     [

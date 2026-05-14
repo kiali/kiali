@@ -109,6 +109,12 @@ type WorkloadItem struct {
 	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
 }
 
+// ServiceItem represents a service linked with an application or workload.
+type ServiceItem struct {
+	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
+	Name           string `json:"name"`
+}
+
 type App struct {
 	// Namespace where the app lives in
 	// required: true
@@ -134,9 +140,9 @@ type App struct {
 	// required: true
 	Workloads []WorkloadItem `json:"workloads"`
 
-	// List of service names linked with an application
+	// List of services linked with an application
 	// required: true
-	ServiceNames []string `json:"serviceNames"`
+	ServiceNames []ServiceItem `json:"serviceNames"`
 
 	// Runtimes and associated dashboards
 	Runtimes []Runtime `json:"runtimes"`

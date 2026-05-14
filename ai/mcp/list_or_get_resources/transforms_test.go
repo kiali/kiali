@@ -339,7 +339,7 @@ func TestTransformAppDetail(t *testing.T) {
 			Name:   "bookinfo",
 			Labels: map[string]string{"istio-injection": "enabled"},
 		},
-		ServiceNames: []string{"productpage"},
+		ServiceNames: []models.ServiceItem{{Name: "productpage"}},
 		Workloads: []models.WorkloadItem{
 			{
 				WorkloadName:        "productpage-v1",

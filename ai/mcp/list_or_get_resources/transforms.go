@@ -434,9 +434,9 @@ func TransformAppDetail(app *models.App) AppDetailResponse {
 		workloads = []AppWorkloadInfo{}
 	}
 
-	services := app.ServiceNames
-	if services == nil {
-		services = []string{}
+	services := make([]string, 0, len(app.ServiceNames))
+	for _, svc := range app.ServiceNames {
+		services = append(services, svc.Name)
 	}
 
 	return AppDetailResponse{
