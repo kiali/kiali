@@ -585,8 +585,7 @@ Then('the namespace panel shows only control planes from the {string} cluster', 
     });
 
   cy.get('#target-panel-namespace').should('be.visible');
-  cy.get('#target-panel-namespace')
-    .contains(/dataplane namespaces: \d+/)
+  cy.contains(/dataplane namespaces: \d+/)
     .invoke('text')
     .then(text => {
       const match = text.match(/dataplane namespaces: (\d+)/);
