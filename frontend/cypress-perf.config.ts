@@ -6,8 +6,6 @@ import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
   env: {
-    // USERNAME: 'kiali',
-    // PASSWD: 'kiali',
     cookie: false,
     rootSelector: '#root',
     threshold: 100000,
@@ -21,6 +19,8 @@ export default defineConfig({
     ): Promise<Cypress.PluginConfigOptions> {
       on('file:preprocessor', createBundler());
 
+      // This name is non-standard and might change based on your environment hence the separate
+      // env variable.
       config.env.AUTH_PROVIDER = config.env.AUTH_PROVIDER || 'my_htpasswd_provider';
       config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!);
 
