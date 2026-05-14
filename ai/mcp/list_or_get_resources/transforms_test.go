@@ -361,7 +361,7 @@ func TestTransformAppDetail(t *testing.T) {
 	assert.Equal(t, "bookinfo", result.Namespace)
 	assert.Equal(t, "Healthy", result.Health)
 	assert.Equal(t, "enabled", result.IstioContext.NamespaceInjection)
-	assert.Equal(t, []string{"productpage"}, result.Services)
+	assert.Equal(t, []AppServiceInfo{{Name: "productpage"}}, result.Services)
 	assert.Len(t, result.Workloads, 1)
 	assert.Equal(t, "productpage-v1", result.Workloads[0].Name)
 	assert.Equal(t, "v1", result.Workloads[0].Version)

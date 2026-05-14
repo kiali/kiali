@@ -185,6 +185,11 @@ type AppDetailResponse struct {
 	Health       string            `json:"health"`
 	IstioContext AppIstioContext   `json:"istioContext"`
 	Namespace    string            `json:"namespace"`
-	Services     []string          `json:"services"`
+	Services     []AppServiceInfo  `json:"services"`
 	Workloads    []AppWorkloadInfo `json:"workloads"`
+}
+
+type AppServiceInfo struct {
+	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
+	Name           string `json:"name"`
 }

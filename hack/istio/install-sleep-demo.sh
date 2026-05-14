@@ -67,7 +67,7 @@ Valid command line arguments:
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -ds|--delete-sleep <true|false>: If true, uninstall sleep. If false, install sleep. (default: false).
-  -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, this script aborts.
+  -id|--istio-dir <dir>: Where Istio has already been downloaded. If not found, Istio will be auto-downloaded to the _output directory.
   -c|--client-exe <name>: Cluster client executable name - valid values are "kubectl" or "oc"
   -h|--help : this message
 HELPMSG

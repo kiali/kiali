@@ -44,6 +44,26 @@ describe('getKioskMode', () => {
     expect(getKioskMode()).toBe('https://console.example.com');
   });
 
+  it('falls back to Redux when URL has empty kiosk value', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, search: '?kiosk=' },
+      configurable: true
+    });
+    mockKioskValue = 'https://console.example.com';
+
+    expect(getKioskMode()).toBe('https://console.example.com');
+  });
+
+  it('returns empty string when URL has empty kiosk and Redux is also empty', () => {
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, search: '?kiosk=' },
+      configurable: true
+    });
+    mockKioskValue = '';
+
+    expect(getKioskMode()).toBe('');
+  });
+
   it('returns empty string when neither URL nor Redux has a value', () => {
     Object.defineProperty(window, 'location', {
       value: { ...originalLocation, search: '' },

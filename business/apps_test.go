@@ -145,6 +145,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
 	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
+	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
 }
 
 func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
@@ -185,6 +186,7 @@ func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
 	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
+	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
 }
 
 func TestGetAppFromWorkloadGroups(t *testing.T) {
@@ -301,6 +303,42 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
 	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
+	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
+}
+
+func TestGetAppTracingNameNoWaypoints(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	config.Set(conf)
+
+	objects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+	for _, obj := range FakeServices(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+
+	tracingName := svc.GetAppTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "Namespace", "httpbin")
+
+	require.Equal("httpbin", tracingName.App)
+	assert.Equal("httpbin", tracingName.Lookup)
+	assert.Empty(tracingName.WaypointName)
+	assert.Empty(tracingName.WaypointNamespace)
 }
 
 func TestJoinMap(t *testing.T) {

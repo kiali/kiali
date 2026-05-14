@@ -130,4 +130,16 @@ describe('KialiLink — kiosk mode', () => {
 
     expect(postMessageSpy).toHaveBeenCalledWith('/services/ns/my-svc', 'https://console.example.com');
   });
+
+  it('does not alter path when kioskParams is an empty string', () => {
+    const { getByText } = renderKialiLink({
+      to: '/details',
+      kioskParams: '',
+      children: 'Empty Params'
+    });
+
+    fireEvent.click(getByText('Empty Params'));
+
+    expect(postMessageSpy).toHaveBeenCalledWith('/details', 'https://console.example.com');
+  });
 });
