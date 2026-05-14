@@ -49,7 +49,7 @@ describe('ServiceLink badge selection', () => {
   it('renders Service badge for regular services', () => {
     const { container } = renderServiceLink(false);
 
-    const badge = container.querySelector('.pf-v5-c-badge');
+    const badge = container.querySelector('.pf-v6-c-badge');
     expect(badge).toBeTruthy();
     expect(badge!.textContent).toBe('S');
   });
@@ -57,7 +57,7 @@ describe('ServiceLink badge selection', () => {
   it('renders ExternalService badge for service entries', () => {
     const { container } = renderServiceLink(true);
 
-    const badge = container.querySelector('.pf-v5-c-badge');
+    const badge = container.querySelector('.pf-v6-c-badge');
     expect(badge).toBeTruthy();
     expect(badge!.textContent).toBe('ES');
   });
