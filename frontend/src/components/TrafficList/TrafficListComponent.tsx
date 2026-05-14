@@ -282,6 +282,8 @@ class TrafficListComponent extends FilterComponent.Component<
       .map((item, i) => {
         const name = item.node.name;
         const links = this.getLinks(item);
+        const kioskParams =
+          item.node.type === NodeType.SERVICE && item.node.isServiceEntry ? 'type=External' : undefined;
 
         let irow: IRow = {
           cells: [
@@ -295,7 +297,7 @@ class TrafficListComponent extends FilterComponent.Component<
             <>
               <PFBadge badge={item.badge} position={TooltipPosition.top} keyValue={`tt_badge_${i}`} />
               {!!links.detail ? (
-                <KialiLink key={`link_d_${item.badge}_${name}`} to={links.detail}>
+                <KialiLink key={`link_d_${item.badge}_${name}`} to={links.detail} kioskParams={kioskParams}>
                   {name}
                 </KialiLink>
               ) : (
@@ -310,7 +312,7 @@ class TrafficListComponent extends FilterComponent.Component<
             </>,
             <>
               {!!links.metrics && (
-                <KialiLink key={`link_m_${item.badge}_${name}`} to={links.metrics}>
+                <KialiLink key={`link_m_${item.badge}_${name}`} to={links.metrics} kioskParams={kioskParams}>
                   View metrics
                 </KialiLink>
               )}
