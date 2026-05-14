@@ -1,9 +1,33 @@
 import { http, HttpResponse } from 'msw';
-import { ChatRequest, ChatResponse } from '../../../types/Chatbot';
+import { ChatRequest, ChatResponse, ChatSessionUsageMetric } from '../../../types/Chatbot';
 import { conversationEntries } from './conversations';
 
 const conversationEntryIds = Array.from(conversationEntries.keys());
 const conversationIdStore = new Set<string>(conversationEntryIds);
+const sessionUsageMetrics: ChatSessionUsageMetric[] = [
+  {
+    user_id: 'mock-session',
+    provider: 'openai',
+    model: 'gpt-4.1',
+    request_count: 3,
+    prompt_tokens: 1240,
+    completion_tokens: 488,
+    total_tokens: 1728,
+    since: '2026-05-14T11:30:00Z',
+    last_updated: '2026-05-14T11:45:00Z'
+  },
+  {
+    user_id: 'mock-session',
+    provider: 'google',
+    model: 'gemini-2.5-pro',
+    request_count: 1,
+    prompt_tokens: 315,
+    completion_tokens: 92,
+    total_tokens: 407,
+    since: '2026-05-14T11:48:00Z',
+    last_updated: '2026-05-14T11:48:00Z'
+  }
+];
 
 const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model: string): ChatResponse => {
   const query = chatRequest.query.trim();
@@ -65,6 +89,10 @@ export const chatbotHandlers = [
 
   http.get('*/api/chat/conversations', () => {
     return HttpResponse.json(Array.from(conversationIdStore));
+  }),
+
+  http.get('*/api/chat/session/usage', () => {
+    return HttpResponse.json(sessionUsageMetrics);
   }),
 
   http.delete('*/api/chat/conversations', ({ request }) => {

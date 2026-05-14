@@ -61,6 +61,14 @@ func (s *anthropicTestStore) DeleteConversations(_ string, _ []string) error {
 	return nil
 }
 
+func (s *anthropicTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+	return nil
+}
+
+func (s *anthropicTestStore) GetUsageMetrics(_ string) []types.UsageMetric {
+	return nil
+}
+
 type anthropicRequestRecorder struct {
 	mu     sync.Mutex
 	bodies []string

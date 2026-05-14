@@ -14,6 +14,13 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+func usageFromChatCompletion(resp *openai.ChatCompletion) types.TokenUsage {
+	if resp == nil {
+		return types.TokenUsage{}
+	}
+	return types.NewTokenUsage(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
+}
+
 func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
 	if req.ConversationID == "" {
 		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
@@ -68,6 +75,7 @@ func (p *OpenAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req ty
 			log.Debugf("[Chat AI] OpenAI provider error in send chat with tools no choices: %v", resp)
 			return &types.AIResponse{Error: "openai returned no choices"}, http.StatusInternalServerError
 		}
+		response.Usage.Add(usageFromChatCompletion(resp))
 
 		msg := resp.Choices[0].Message
 		if len(msg.ToolCalls) == 0 {

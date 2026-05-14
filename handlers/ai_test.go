@@ -839,3 +839,50 @@ func TestChatAI_MetricsNotIncrementedOnBadRequest(t *testing.T) {
 	assert.Equal(t, before, after,
 		"kiali_ai_requests_total should NOT be incremented on invalid request body")
 }
+
+func TestRecordChatAIUsage_UsesResolvedUserID(t *testing.T) {
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	recordChatAIUsage(aiStore, "session-123", "openai", "gpt-4.1", aiTypes.NewTokenUsage(12, 8, 20))
+
+	metrics := aiStore.GetUsageMetrics("session-123")
+	require.Len(t, metrics, 1)
+	assert.Equal(t, "session-123", metrics[0].UserID)
+	assert.Equal(t, "openai", metrics[0].Provider)
+	assert.Equal(t, "gpt-4.1", metrics[0].Model)
+	assert.Equal(t, int64(20), metrics[0].TotalTokens)
+}
+
+func TestResolveChatAIUsageUserID_FallsBackToUsername(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	req := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+
+	userID := resolveChatAIUsageUserID(req, conf, "alice")
+	assert.Equal(t, "alice", userID)
+}
+
+func TestChatSessionUsage_ReturnsSessionScopedMetrics(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+	require.NoError(t, aiStore.RecordUsage("session-usage", "openai", "gpt-4.1", aiTypes.NewTokenUsage(4, 6, 10)))
+
+	handler := ChatSessionUsage(conf, aiStore)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+	r = r.WithContext(authentication.SetSessionIDContext(r.Context(), "session-usage"))
+
+	handler(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var metrics []aiTypes.UsageMetric
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&metrics))
+	require.Len(t, metrics, 1)
+	assert.Equal(t, "session-usage", metrics[0].UserID)
+	assert.Equal(t, "openai", metrics[0].Provider)
+	assert.Equal(t, int64(10), metrics[0].TotalTokens)
+	assert.False(t, metrics[0].Since.IsZero())
+}

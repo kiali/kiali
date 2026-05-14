@@ -8,6 +8,7 @@ import (
 	anthropicProvider "github.com/kiali/kiali/ai/providers/anthropic"
 	googleProvider "github.com/kiali/kiali/ai/providers/google"
 	openaiProvider "github.com/kiali/kiali/ai/providers/openai"
+	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
 )
 
@@ -34,6 +35,22 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	default:
 		return nil, fmt.Errorf("unsupported provider type %q", provider.Type)
 	}
+}
+
+func ResolveUsageMetadata(conf *config.Config, providerName string, modelName string) (*aiTypes.UsageMetric, error) {
+	provider, err := getProvider(conf, providerName)
+	if err != nil {
+		return nil, err
+	}
+	model, err := getModel(*provider, modelName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &aiTypes.UsageMetric{
+		Provider: string(provider.Type),
+		Model:    model.Model,
+	}, nil
 }
 
 func getProvider(conf *config.Config, providerName string) (*config.ProviderConfig, error) {

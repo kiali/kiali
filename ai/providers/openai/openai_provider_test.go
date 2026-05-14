@@ -76,3 +76,17 @@ func TestTransformToolCallToToolsProcessor_InvalidJSON(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `invalid arguments for tool "get_logs"`)
 }
+
+func TestUsageFromChatCompletion(t *testing.T) {
+	usage := usageFromChatCompletion(&openai.ChatCompletion{
+		Usage: openai.CompletionUsage{
+			PromptTokens:     21,
+			CompletionTokens: 34,
+			TotalTokens:      55,
+		},
+	})
+
+	assert.Equal(t, int64(21), usage.PromptTokens)
+	assert.Equal(t, int64(34), usage.CompletionTokens)
+	assert.Equal(t, int64(55), usage.TotalTokens)
+}

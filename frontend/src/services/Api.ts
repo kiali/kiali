@@ -7,7 +7,7 @@ import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
-import { ChatResponse } from '../types/Chatbot';
+import { ChatResponse, ChatSessionUsageMetric } from '../types/Chatbot';
 import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '../types/Graph';
 import {
   AppHealth,
@@ -1554,6 +1554,10 @@ export const postChatAI = (
 
 export const getChatConversations = (): Promise<ApiResponse<string[]>> => {
   return newRequest<string[]>(HTTP_VERBS.GET, urls.chatConversations, {}, {});
+};
+
+export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
+  return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, {}, {});
 };
 
 export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiResponse<void>> => {

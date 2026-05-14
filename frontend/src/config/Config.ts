@@ -126,6 +126,7 @@ const conf = {
       authInfo: 'api/auth/info',
       chatAI: (provider: string, model: string) => `api/chat/${provider}/${model}/ai`,
       chatConversations: `api/chat/conversations`,
+      chatSessionUsage: `api/chat/session/usage`,
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
       clustersMetrics: () => `api/clusters/metrics`,

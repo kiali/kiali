@@ -91,3 +91,15 @@ export type ChatAIConfig = {
   enabled: boolean;
   providers: ProviderAI[];
 };
+
+export type ChatSessionUsageMetric = {
+  completion_tokens: number;
+  last_updated: string;
+  model: string;
+  prompt_tokens: number;
+  provider: string;
+  request_count: number;
+  since: string;
+  total_tokens: number;
+  user_id: string;
+};

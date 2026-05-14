@@ -3,6 +3,7 @@ package anthropic_provider
 import (
 	"testing"
 
+	anthropic "github.com/anthropics/anthropic-sdk-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -143,4 +144,17 @@ func TestNormalizeAnthropicInputSchema_StripsTopLevelAnyOfAndPreservesConstraint
 
 	assert.Contains(t, podName["description"], "At least one of these fields is required")
 	assert.Contains(t, workloadName["description"], "At least one of these fields is required")
+}
+
+func TestUsageFromAnthropicMessage(t *testing.T) {
+	usage := usageFromAnthropicMessage(&anthropic.Message{
+		Usage: anthropic.Usage{
+			InputTokens:  9,
+			OutputTokens: 4,
+		},
+	})
+
+	assert.Equal(t, int64(9), usage.PromptTokens)
+	assert.Equal(t, int64(4), usage.CompletionTokens)
+	assert.Equal(t, int64(13), usage.TotalTokens)
 }

@@ -16,6 +16,13 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+func usageFromAnthropicMessage(resp *anthropic.Message) types.TokenUsage {
+	if resp == nil {
+		return types.TokenUsage{}
+	}
+	return types.NewTokenUsage(resp.Usage.InputTokens, resp.Usage.OutputTokens, 0)
+}
+
 func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
 	if req.ConversationID == "" {
 		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
@@ -72,6 +79,7 @@ func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req
 		if len(resp.Content) == 0 {
 			return &types.AIResponse{Error: "anthropic returned no content"}, http.StatusInternalServerError
 		}
+		response.Usage.Add(usageFromAnthropicMessage(resp))
 
 		if resp.StopReason == anthropic.StopReasonPauseTurn {
 			if iter == maxToolIterations-1 {

@@ -63,6 +63,14 @@ func (f *fakeStore) DeleteConversations(_ string, _ []string) error {
 	return nil
 }
 
+func (f *fakeStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+	return nil
+}
+
+func (f *fakeStore) GetUsageMetrics(_ string) []types.UsageMetric {
+	return nil
+}
+
 type fakeProvider struct {
 	reduceCalled bool
 }

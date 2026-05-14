@@ -29,6 +29,7 @@ type AIResponse struct {
 	Answer         string                 `json:"answer"`
 	ReferencedDocs []ReferencedDoc        `json:"referenced_docs,omitempty"`
 	Error          string                 `json:"error,omitempty"`
+	Usage          TokenUsage             `json:"-"`
 	Mu             sync.Mutex             `json:"-"`
 }
 

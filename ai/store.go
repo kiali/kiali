@@ -18,6 +18,7 @@ import (
 // AIChatConversation represents a user's cached conversation with metadata
 type AIChatConversation struct {
 	Conversation map[string]*types.Conversation // map key is conversationID
+	UsageMetrics map[string]*types.UsageMetric  // map key is provider|model
 	LastAccessed time.Time                      // When last retrieved by user this session
 	mu           sync.RWMutex                   // Protects LastAccessed field
 }
@@ -113,6 +114,7 @@ func (s *AIStoreImpl) SetConversation(sessionID string, conversationID string, c
 	if _, exists := s.conversations[sessionID]; !exists {
 		s.conversations[sessionID] = &AIChatConversation{
 			Conversation: make(map[string]*types.Conversation),
+			UsageMetrics: make(map[string]*types.UsageMetric),
 			LastAccessed: time.Now(),
 			mu:           sync.RWMutex{},
 		}
@@ -124,6 +126,98 @@ func (s *AIStoreImpl) SetConversation(sessionID string, conversationID string, c
 	s.conversations[sessionID].Conversation[conversationID] = conversation
 	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
 	return nil
+}
+
+func usageMetricKey(provider string, model string) string {
+	return provider + "|" + model
+}
+
+func (s *AIStoreImpl) RecordUsage(sessionID string, provider string, model string, usage types.TokenUsage) error {
+	if !usage.HasTokens() {
+		return nil
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	sessionConversation, exists := s.conversations[sessionID]
+	if !exists {
+		sessionConversation = &AIChatConversation{
+			Conversation: make(map[string]*types.Conversation),
+			UsageMetrics: make(map[string]*types.UsageMetric),
+			LastAccessed: time.Now(),
+			mu:           sync.RWMutex{},
+		}
+		s.conversations[sessionID] = sessionConversation
+	}
+
+	sessionConversation.mu.Lock()
+	defer sessionConversation.mu.Unlock()
+	sessionConversation.LastAccessed = time.Now()
+
+	if sessionConversation.UsageMetrics == nil {
+		sessionConversation.UsageMetrics = make(map[string]*types.UsageMetric)
+	}
+
+	key := usageMetricKey(provider, model)
+	metric, found := sessionConversation.UsageMetrics[key]
+	if !found {
+		now := time.Now()
+		metric = &types.UsageMetric{
+			UserID:   sessionID,
+			Provider: provider,
+			Model:    model,
+			Since:    now,
+		}
+		sessionConversation.UsageMetrics[key] = metric
+	}
+
+	now := time.Now()
+	metric.RequestCount++
+	metric.PromptTokens += usage.PromptTokens
+	metric.CompletionTokens += usage.CompletionTokens
+	metric.TotalTokens += usage.TotalTokens
+	if metric.TotalTokens == 0 {
+		metric.TotalTokens = metric.PromptTokens + metric.CompletionTokens
+	}
+	metric.LastUpdated = now
+
+	return nil
+}
+
+func (s *AIStoreImpl) GetUsageMetrics(sessionID string) []types.UsageMetric {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sessionConversation, exists := s.conversations[sessionID]
+	if !exists {
+		return []types.UsageMetric{}
+	}
+
+	sessionConversation.mu.Lock()
+	defer sessionConversation.mu.Unlock()
+	sessionConversation.LastAccessed = time.Now()
+
+	if len(sessionConversation.UsageMetrics) == 0 {
+		return []types.UsageMetric{}
+	}
+
+	metrics := make([]types.UsageMetric, 0, len(sessionConversation.UsageMetrics))
+	for _, metric := range sessionConversation.UsageMetrics {
+		if metric == nil {
+			continue
+		}
+		metrics = append(metrics, *metric)
+	}
+
+	sort.Slice(metrics, func(i, j int) bool {
+		if metrics[i].Provider != metrics[j].Provider {
+			return metrics[i].Provider < metrics[j].Provider
+		}
+		return metrics[i].Model < metrics[j].Model
+	})
+
+	return metrics
 }
 
 // checkMemoryLimits ensures we don't exceed memory limits
@@ -292,7 +386,7 @@ func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []st
 			log.Debugf("Conversation [%s] not found for session [%s]", conversationID, sessionID)
 		}
 	}
-	if len(sessionConversation.Conversation) == 0 {
+	if len(sessionConversation.Conversation) == 0 && len(sessionConversation.UsageMetrics) == 0 {
 		delete(s.conversations, sessionID)
 	}
 	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())

@@ -15,6 +15,17 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+func usageFromGenerateContentResponse(resp *genai.GenerateContentResponse) types.TokenUsage {
+	if resp == nil || resp.UsageMetadata == nil {
+		return types.TokenUsage{}
+	}
+
+	promptTokens := int64(resp.UsageMetadata.PromptTokenCount + resp.UsageMetadata.ToolUsePromptTokenCount)
+	completionTokens := int64(resp.UsageMetadata.CandidatesTokenCount + resp.UsageMetadata.ThoughtsTokenCount)
+
+	return types.NewTokenUsage(promptTokens, completionTokens, int64(resp.UsageMetadata.TotalTokenCount))
+}
+
 func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
 	if req.ConversationID == "" {
 		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
@@ -71,6 +82,7 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 	if err != nil {
 		return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 	}
+	response.Usage.Add(usageFromGenerateContentResponse(result))
 
 	const maxToolIterations = 5
 	for iter := 0; iter < maxToolIterations; iter++ {
@@ -131,6 +143,7 @@ func (p *GoogleAIProvider) SendChat(kialiInterface *mcputil.KialiInterface, req 
 		if err != nil {
 			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
 		}
+		response.Usage.Add(usageFromGenerateContentResponse(result))
 		if err := ctx.Err(); err != nil {
 			return providers.NewContextCanceledResponse(err)
 		}

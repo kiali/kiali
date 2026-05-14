@@ -203,6 +203,70 @@ func TestStore_DeleteConversations_RemovesEmptySession(t *testing.T) {
 	assert.Empty(t, store.GetConversationIDs("session-1"))
 }
 
+func TestStore_RecordUsageAggregatesByProviderAndModel(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+
+	require.NoError(t, store.RecordUsage("session-1", "openai", "gpt-4.1", types.NewTokenUsage(10, 5, 15)))
+	firstMetrics := store.GetUsageMetrics("session-1")
+	require.Len(t, firstMetrics, 1)
+	firstSince := firstMetrics[0].Since
+	require.NoError(t, store.RecordUsage("session-1", "openai", "gpt-4.1", types.NewTokenUsage(7, 3, 10)))
+	require.NoError(t, store.RecordUsage("session-1", "google", "gemini-2.5-pro", types.NewTokenUsage(20, 8, 28)))
+
+	metrics := store.GetUsageMetrics("session-1")
+	require.Len(t, metrics, 2)
+
+	assert.Equal(t, "google", metrics[0].Provider)
+	assert.Equal(t, "gemini-2.5-pro", metrics[0].Model)
+	assert.Equal(t, int64(1), metrics[0].RequestCount)
+	assert.Equal(t, int64(20), metrics[0].PromptTokens)
+	assert.Equal(t, int64(8), metrics[0].CompletionTokens)
+	assert.Equal(t, int64(28), metrics[0].TotalTokens)
+
+	assert.Equal(t, "openai", metrics[1].Provider)
+	assert.Equal(t, "gpt-4.1", metrics[1].Model)
+	assert.Equal(t, int64(2), metrics[1].RequestCount)
+	assert.Equal(t, int64(17), metrics[1].PromptTokens)
+	assert.Equal(t, int64(8), metrics[1].CompletionTokens)
+	assert.Equal(t, int64(25), metrics[1].TotalTokens)
+	assert.True(t, metrics[0].Since.Before(metrics[0].LastUpdated) || metrics[0].Since.Equal(metrics[0].LastUpdated))
+	assert.True(t, metrics[1].Since.Equal(firstSince), "usage since should remain stable across updates")
+	assert.True(t, metrics[1].Since.Before(metrics[1].LastUpdated) || metrics[1].Since.Equal(metrics[1].LastUpdated))
+}
+
+func TestStore_GetUsageMetrics_IsSessionScoped(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+
+	require.NoError(t, store.RecordUsage("session-1", "openai", "gpt-4.1", types.NewTokenUsage(3, 2, 5)))
+	require.NoError(t, store.RecordUsage("session-2", "openai", "gpt-4.1", types.NewTokenUsage(11, 4, 15)))
+
+	sessionOneMetrics := store.GetUsageMetrics("session-1")
+	require.Len(t, sessionOneMetrics, 1)
+	assert.Equal(t, "session-1", sessionOneMetrics[0].UserID)
+	assert.Equal(t, int64(5), sessionOneMetrics[0].TotalTokens)
+
+	sessionTwoMetrics := store.GetUsageMetrics("session-2")
+	require.Len(t, sessionTwoMetrics, 1)
+	assert.Equal(t, "session-2", sessionTwoMetrics[0].UserID)
+	assert.Equal(t, int64(15), sessionTwoMetrics[0].TotalTokens)
+}
+
+func TestStore_DeleteLastConversationPreservesSessionUsage(t *testing.T) {
+	store := NewAIStore(context.Background(), nil)
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
+	}
+
+	require.NoError(t, store.SetConversation("session-1", "conv-1", conv))
+	require.NoError(t, store.RecordUsage("session-1", "openai", "gpt-4.1", types.NewTokenUsage(9, 1, 10)))
+	require.NoError(t, store.DeleteConversations("session-1", []string{"conv-1"}))
+
+	metrics := store.GetUsageMetrics("session-1")
+	require.Len(t, metrics, 1)
+	assert.Equal(t, int64(10), metrics[0].TotalTokens)
+	assert.Empty(t, store.GetConversationIDs("session-1"))
+}
+
 // --- Memory management tests ---
 
 func TestStore_EvictsLRUWhenOverMemoryLimit(t *testing.T) {
