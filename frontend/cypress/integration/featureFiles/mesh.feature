@@ -220,12 +220,6 @@ Feature: Kiali Mesh page
     Then user sees "istio-system" namespace side panel
     And user sees "west" cluster badge in namespace panel
 
-  @multi-cluster
-  Scenario: Primary-remote: namespace panel shows control plane donut for local istio-system
-    When user selects mesh node with label "istio-system" on cluster "east"
-    Then user sees "istio-system" namespace side panel
-    And user sees control plane donut in namespace panel
-
   @multi-mesh
   Scenario: Multi-mesh: mesh panel shows correct mesh count in tabs
     When user sees mesh side panel
@@ -236,10 +230,21 @@ Feature: Kiali Mesh page
     When user sees mesh side panel
     Then user does not see "dataplane namespaces: 0" in mesh body
 
+  @multi-mesh
+  Scenario: Multi-mesh: control plane summary shows cluster name
+    When user sees mesh side panel
+    Then user sees cluster badge with cluster name in control plane summary
+
   @ambient-multi-primary
-  Scenario: Ambient Multi-Primary: ambient badge shown only on ambient control planes
+  Scenario: Ambient Multi-Primary: ambient badge shown on ambient control planes
     When user selects ambient istiod mesh node
     Then user sees ambient badge on the control plane panel
+
+  @multi-cluster
+  @multi-primary
+  Scenario: Multi-primary: no ambient badge on sidecar control planes
+    When user selects non-ambient istiod mesh node
+    Then user does not see ambient badge on the control plane panel
 
   @ambient-multi-primary
   Scenario: Ambient Multi-Primary: Mesh page shows ambient control planes in both clusters

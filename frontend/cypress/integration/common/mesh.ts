@@ -583,6 +583,17 @@ Then('the namespace panel shows only control planes from the {string} cluster', 
         assert.equal(data.cluster, cluster, `All control plane nodes should be from cluster "${cluster}"`);
       });
     });
+
+  cy.get('#target-panel-namespace').should('be.visible');
+  cy.get('#target-panel-namespace')
+    .contains(/dataplane namespaces: \d+/)
+    .invoke('text')
+    .then(text => {
+      const match = text.match(/dataplane namespaces: (\d+)/);
+      assert.exists(match, 'Should show dataplane namespaces count');
+      const count = parseInt(match![1]);
+      assert.isAbove(count, 0, `Dataplane namespaces count should be > 0, got ${count}`);
+    });
 });
 
 Then('user sees {string} cluster badge in namespace panel', (cluster: string) => {
@@ -592,6 +603,29 @@ Then('user sees {string} cluster badge in namespace panel', (cluster: string) =>
     .should('be.visible')
     .within(() => {
       cy.contains(cluster).should('be.visible');
+    });
+});
+
+Then('user sees cluster badge with cluster name in control plane summary', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      const { nodes } = elems(controller);
+
+      const istiodNodes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD);
+      assert.isAbove(istiodNodes.length, 0, 'Should have at least one istiod node');
+
+      const clusterNames = istiodNodes.map(n => (n.getData() as MeshNodeData).cluster);
+
+      cy.get('#target-panel-mesh').should('be.visible');
+      clusterNames.forEach(cluster => {
+        cy.get('#target-panel-mesh').contains(cluster).should('exist');
+      });
     });
 });
 

@@ -328,6 +328,10 @@ export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNames
     <div key={nodeData.id} className={summaryStyle}>
       {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
       <div className={summaryInfoStyle}>
+        <div>
+          <PFBadge badge={PFBadges.Cluster} size="sm" />
+          {nodeData.cluster}
+        </div>
         <div>{t('version: {{version}}', { version: nodeData.version || t(UNKNOWN) })}</div>
         <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
         <div>

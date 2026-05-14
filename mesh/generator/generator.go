@@ -218,7 +218,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 				// add edge to the managing control plane
 				for _, infraNode := range meshMap {
-					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster && infraNode.Namespace == ztunnel.Namespace {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
 						tag := "default"
 						if cp.Tag != nil {
