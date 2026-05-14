@@ -14,20 +14,27 @@ import (
 
 func NewGlobalIstioInfo() *GlobalIstioInfo {
 	return &GlobalIstioInfo{
-		AmbientWaypoints:  make(map[graph.NodeKey]bool),
-		AppsMap:           make(map[string]map[string]*models.AppListItem),
-		ServiceEntryHosts: make(map[string]serviceEntryHosts),
-		ServiceLists:      make(map[string]*models.ServiceList),
-		WorkloadLists:     make(map[string]*models.WorkloadList),
+		AllWorkloads:        make(map[string]models.Workloads),
+		AmbientWaypoints:    make(map[graph.NodeKey]bool),
+		AppsMap:             make(map[string]map[string]*models.AppListItem),
+		ClusterServiceLists: make(map[string]*models.ServiceList),
+		ServiceEntryHosts:   make(map[string]serviceEntryHosts),
+		ServiceLists:        make(map[string]*models.ServiceList),
+		WorkloadLists:       make(map[string]*models.WorkloadList),
 	}
 }
 
 // GlobalIstioInfo contains structured information for Istio telemetry vendor
 type GlobalIstioInfo struct {
+	// AllWorkloads caches full workload models by cluster name, populated by populateWorkloadMap.
+	// Used by decorateGateways to filter locally instead of re-fetching per gateway.
+	AllWorkloads map[string]models.Workloads
 	// AmbientWaypoints maps waypoint keys to their availability status
 	AmbientWaypoints any
 	// AppsMap contains application list items keyed by cluster:namespace
 	AppsMap map[string]map[string]*models.AppListItem
+	// ClusterServiceLists caches cluster-wide service lists by cluster name
+	ClusterServiceLists map[string]*models.ServiceList
 	// ServiceEntryHosts maps composite keys (serviceEntryHostsKey:cluster:namespace) to service entry hosts
 	ServiceEntryHosts map[string]serviceEntryHosts
 	// ServiceLists caches service lists by cluster:namespace key
@@ -496,12 +503,16 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *Globa
 }
 
 // populateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
+// It also caches the full workload models in AllWorkloads so that decorateGateways can
+// filter locally by label selector instead of re-fetching workloads per gateway.
 func populateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *GlobalInfo, trafficMap graph.TrafficMap) {
 	for _, cluster := range globalInfo.Clusters {
 		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
 		if err != nil {
 			graph.Error(fmt.Sprintf("Error fetching workloads: %s", err.Error()))
 		}
+
+		globalInfo.Vendor.AllWorkloads[cluster.Name] = workloads
 
 		for _, workload := range workloads {
 			globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}] = nil

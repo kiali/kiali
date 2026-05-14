@@ -6,6 +6,7 @@ import (
 
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -45,54 +46,137 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		populateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
 	}
 
-	serviceLists := map[string]*models.ServiceList{}
+	// Fetch cluster-wide service lists once per cluster for use by addLabels.
 	for _, cluster := range globalInfo.Clusters {
-		svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
-			business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
-			cluster.Name,
-		)
-		graph.CheckError(err)
-
-		serviceLists[cluster.Name] = svcs
+		if _, ok := globalInfo.Vendor.ClusterServiceLists[cluster.Name]; !ok {
+			svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
+				business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
+				cluster.Name,
+			)
+			graph.CheckError(err)
+			globalInfo.Vendor.ClusterServiceLists[cluster.Name] = svcs
+		}
 	}
 
-	addBadging(ctx, trafficMap, globalInfo)
-	addLabels(ctx, trafficMap, globalInfo, serviceLists)
+	// Fetch all needed Istio config (DRs, VSes, Gateways) in a single call per cluster
+	// to avoid redundant GetIstioConfigList and GetClusterNamespaces calls.
 	for _, cluster := range globalInfo.Clusters {
-		a.decorateGateways(ctx, cluster.Name, globalInfo)
-	}
-}
-
-func addBadging(ctx context.Context, trafficMap graph.TrafficMap, globalInfo *GlobalInfo) {
-	for _, cluster := range globalInfo.Clusters {
-		// Currently no other appenders use DestinationRules or VirtualServices, so they are not cached in AppenderNamespaceInfo
 		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{
 			IncludeDestinationRules: true,
+			IncludeGateways:         true,
+			IncludeK8sGateways:      true,
 			IncludeVirtualServices:  true,
 		})
 		graph.CheckError(err)
 
 		identityDomain := globalInfo.Business.Svc.ResolveIdentityDomain(ctx, cluster.Name)
+
 		applyCircuitBreakers(trafficMap, istioConfig.DestinationRules, identityDomain)
 		applyVirtualServices(trafficMap, istioConfig.VirtualServices, identityDomain)
+		decorateGateways(ctx, cluster.Name, globalInfo, istioConfig.Gateways, istioConfig.K8sGateways)
 	}
+
+	addLabels(ctx, trafficMap, globalInfo, globalInfo.Vendor.ClusterServiceLists)
+}
+
+// cbSubsetInfo holds pre-computed circuit breaker info for a single DR subset.
+type cbSubsetInfo struct {
+	// version is the version label value from subset.Labels (via GetVersionLabelName).
+	// Empty means the subset has no version label -- it does NOT match versioned queries
+	// (where the caller knows the specific version). It only matches unversioned queries
+	// (where the caller passes version="").
+	version string
+}
+
+// drEntry holds pre-computed circuit breaker info for a single DestinationRule.
+type drEntry struct {
+	cbSubsets []cbSubsetInfo
+	dr        *networkingv1.DestinationRule
+	hasCB     bool // true if top-level TrafficPolicy has CB
+}
+
+// drKey is the canonical index key for DR/VS host lookup.
+func drKey(namespace, serviceName string) string {
+	return namespace + "/" + serviceName
+}
+
+// buildDRIndex pre-indexes DestinationRules by their normalized target host for O(1) lookup.
+func buildDRIndex(destinationRules []*networkingv1.DestinationRule) map[string][]*drEntry {
+	conf := config.Get()
+	idx := make(map[string][]*drEntry, len(destinationRules))
+
+	for _, dr := range destinationRules {
+		entry := &drEntry{
+			dr:    dr,
+			hasCB: models.IsCB(dr.Spec.TrafficPolicy),
+		}
+
+		for _, subset := range dr.Spec.Subsets {
+			if subset == nil {
+				continue
+			}
+			if models.IsCB(subset.TrafficPolicy) {
+				info := cbSubsetInfo{}
+				if verLabelName, found := conf.GetVersionLabelName(subset.Labels); found {
+					if v, ok := subset.Labels[verLabelName]; ok {
+						info.version = v
+					}
+				}
+				entry.cbSubsets = append(entry.cbSubsets, info)
+			}
+		}
+
+		if !entry.hasCB && len(entry.cbSubsets) == 0 {
+			continue
+		}
+
+		ns, svc := kubernetes.NormalizeHost(dr.Spec.Host, dr.Namespace)
+		key := drKey(ns, svc)
+		idx[key] = append(idx[key], entry)
+	}
+
+	return idx
+}
+
+// drMatchesCB checks whether a pre-indexed drEntry matches a CB query for the given
+// namespace, service, version, and identityDomain. It uses FilterByHost to confirm
+// the match (narrow-then-confirm pattern).
+func drMatchesCB(entry *drEntry, namespace, serviceName, version, identityDomain string) bool {
+	if !kubernetes.FilterByHost(entry.dr.Spec.Host, entry.dr.Namespace, serviceName, namespace, identityDomain) {
+		return false
+	}
+
+	if entry.hasCB {
+		return true
+	}
+
+	if version == "" {
+		return len(entry.cbSubsets) > 0
+	}
+
+	for _, sub := range entry.cbSubsets {
+		if sub.version == version {
+			return true
+		}
+	}
+	return false
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule, identityDomain string) {
+	idx := buildDRIndex(destinationRules)
+
 NODES:
 	for _, n := range trafficMap {
-		// Skip nodes that are outside the requested namespaces.
 		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok && outside {
 			continue
 		}
 
-		// Note, Because DestinationRules are applied to services we limit CB badges to service nodes and app nodes.
-		// Whether we should add to workload nodes is debatable, we could add it later if needed.
 		versionOk := graph.IsOK(n.Version)
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			for _, destinationRule := range destinationRules {
-				if models.HasDRCircuitBreaker(destinationRule, n.Namespace, n.Service, "", identityDomain) {
+			key := drKey(n.Namespace, n.Service)
+			for _, entry := range idx[key] {
+				if drMatchesCB(entry, n.Namespace, n.Service, "", identityDomain) {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -100,8 +184,9 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range destinationRules {
-						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, "", identityDomain) {
+					key := drKey(ds.Namespace, ds.Name)
+					for _, entry := range idx[key] {
+						if drMatchesCB(entry, ds.Namespace, ds.Name, "", identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -111,8 +196,9 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					for _, destinationRule := range destinationRules {
-						if models.HasDRCircuitBreaker(destinationRule, ds.Namespace, ds.Name, n.Version, identityDomain) {
+					key := drKey(ds.Namespace, ds.Name)
+					for _, entry := range idx[key] {
+						if drMatchesCB(entry, ds.Namespace, ds.Name, n.Version, identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -125,61 +211,125 @@ NODES:
 	}
 }
 
+// vsEntry holds pre-computed feature flags for a single VirtualService.
+type vsEntry struct {
+	hasFaultInjection  bool
+	hasMirroring       bool
+	hasRequestRouting  bool
+	hasRequestTimeout  bool
+	hasTCPShifting     bool
+	hasTrafficShifting bool
+	isK8sGatewayAPI    bool
+	vs                 *networkingv1.VirtualService
+}
+
+// buildVSIndex pre-indexes VirtualServices by the normalized hosts of their route
+// destinations. A single VS may appear under multiple keys. The slice for each key
+// preserves the original VS list order from GetIstioConfigList.
+func buildVSIndex(virtualServices []*networkingv1.VirtualService) map[string][]*vsEntry {
+	idx := make(map[string][]*vsEntry, len(virtualServices))
+
+	for _, vs := range virtualServices {
+		entry := &vsEntry{
+			hasFaultInjection:  models.HasVSFaultInjection(vs),
+			hasMirroring:       models.HasVSMirroring(vs),
+			hasRequestRouting:  models.HasVSRequestRouting(vs),
+			hasRequestTimeout:  models.HasVSRequestTimeout(vs),
+			hasTCPShifting:     models.HasVSTCPTrafficShifting(vs),
+			hasTrafficShifting: models.HasVSTrafficShifting(vs),
+			isK8sGatewayAPI:    kubernetes.IsAutogenerated(vs.Name),
+			vs:                 vs,
+		}
+
+		seen := make(map[string]bool)
+		addHost := func(host string) {
+			ns, svc := kubernetes.NormalizeHost(host, vs.Namespace)
+			key := drKey(ns, svc)
+			if !seen[key] {
+				seen[key] = true
+				idx[key] = append(idx[key], entry)
+			}
+		}
+
+		for _, httpRoute := range vs.Spec.Http {
+			for _, dest := range httpRoute.Route {
+				if dest.Destination != nil {
+					addHost(dest.Destination.Host)
+				}
+			}
+		}
+		for _, tcpRoute := range vs.Spec.Tcp {
+			for _, dest := range tcpRoute.Route {
+				if dest.Destination != nil {
+					addHost(dest.Destination.Host)
+				}
+			}
+		}
+		for _, tlsRoute := range vs.Spec.Tls {
+			for _, dest := range tlsRoute.Route {
+				if dest.Destination != nil {
+					addHost(dest.Destination.Host)
+				}
+			}
+		}
+	}
+
+	return idx
+}
+
 func applyVirtualServices(trafficMap graph.TrafficMap, virtualServices []*networkingv1.VirtualService, identityDomain string) {
+	idx := buildVSIndex(virtualServices)
+
 NODES:
 	for _, n := range trafficMap {
 		var isOutsider bool
 		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok {
 			isOutsider = outside
 		}
-		// Skip nodes that are outside the requested namespaces.
 		if n.NodeType != graph.NodeTypeService || isOutsider {
 			continue
 		}
 
-		for _, virtualService := range virtualServices {
-			if models.IsVSValidHost(virtualService, n.Namespace, n.Service, identityDomain) {
-				var vsMetadata graph.VirtualServicesMetadata
-				var vsOk bool
-				if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
-					vsMetadata = make(graph.VirtualServicesMetadata)
-					n.Metadata[graph.HasVS] = vsMetadata
-				}
-
-				if len(virtualService.Spec.Hosts) != 0 {
-					vsMetadata[virtualService.Name] = virtualService.Spec.Hosts
-				}
-
-				if models.HasVSRequestRouting(virtualService) {
-					n.Metadata[graph.HasRequestRouting] = true
-				}
-
-				if models.HasVSRequestTimeout(virtualService) {
-					n.Metadata[graph.HasRequestTimeout] = true
-				}
-
-				if models.HasVSFaultInjection(virtualService) {
-					n.Metadata[graph.HasFaultInjection] = true
-				}
-
-				if models.HasVSTrafficShifting(virtualService) {
-					n.Metadata[graph.HasTrafficShifting] = true
-				}
-
-				if models.HasVSTCPTrafficShifting(virtualService) {
-					n.Metadata[graph.HasTCPTrafficShifting] = true
-				}
-
-				if models.HasVSMirroring(virtualService) {
-					n.Metadata[graph.HasMirroring] = true
-				}
-
-				if kubernetes.IsAutogenerated(virtualService.Name) {
-					n.Metadata[graph.IsK8sGatewayAPI] = true
-				}
-
-				continue NODES
+		key := drKey(n.Namespace, n.Service)
+		for _, entry := range idx[key] {
+			if !models.IsVSValidHost(entry.vs, n.Namespace, n.Service, identityDomain) {
+				continue
 			}
+
+			var vsMetadata graph.VirtualServicesMetadata
+			var vsOk bool
+			if vsMetadata, vsOk = n.Metadata[graph.HasVS].(graph.VirtualServicesMetadata); !vsOk {
+				vsMetadata = make(graph.VirtualServicesMetadata)
+				n.Metadata[graph.HasVS] = vsMetadata
+			}
+
+			if len(entry.vs.Spec.Hosts) != 0 {
+				vsMetadata[entry.vs.Name] = entry.vs.Spec.Hosts
+			}
+
+			if entry.hasRequestRouting {
+				n.Metadata[graph.HasRequestRouting] = true
+			}
+			if entry.hasRequestTimeout {
+				n.Metadata[graph.HasRequestTimeout] = true
+			}
+			if entry.hasFaultInjection {
+				n.Metadata[graph.HasFaultInjection] = true
+			}
+			if entry.hasTrafficShifting {
+				n.Metadata[graph.HasTrafficShifting] = true
+			}
+			if entry.hasTCPShifting {
+				n.Metadata[graph.HasTCPTrafficShifting] = true
+			}
+			if entry.hasMirroring {
+				n.Metadata[graph.HasMirroring] = true
+			}
+			if entry.isK8sGatewayAPI {
+				n.Metadata[graph.IsK8sGatewayAPI] = true
+			}
+
+			continue NODES
 		}
 	}
 }
@@ -193,7 +343,6 @@ type serviceKey struct {
 // addLabels is a chance to add any missing label info to nodes when the telemetry does not provide enough information.
 // For example, service injection has this problem.
 func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo, serviceLists map[string]*models.ServiceList) {
-	// build map for quick lookup
 	svcMap := map[serviceKey]models.ServiceOverview{}
 	for cluster, serviceList := range serviceLists {
 		for _, sd := range serviceList.Services {
@@ -206,12 +355,9 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo,
 		if outside, ok := n.Metadata[graph.IsOutside].(bool); ok {
 			isOutsider = outside
 		}
-		// make sure service nodes have the defined app label so it can be used for app grouping in the UI.
 		if n.NodeType != graph.NodeTypeService || n.App != "" || isOutsider {
 			continue
 		}
-		// For service nodes that are a service entries, use the `hosts` property of the SE to find
-		// a matching Kubernetes Svc for adding missing labels
 		if _, ok := n.Metadata[graph.IsServiceEntry]; ok {
 			seInfo := n.Metadata[graph.IsServiceEntry].(*graph.SEInfo)
 			for _, host := range seInfo.Hosts {
@@ -234,7 +380,6 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo,
 			}
 			continue
 		}
-		// A service node that is an Istio egress cluster will not have a service definition
 		if _, ok := n.Metadata[graph.IsEgressCluster]; ok {
 			continue
 		}
@@ -251,27 +396,24 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo,
 	}
 }
 
-// decorateGateways gets all the Gateway CRDs and GatewayAPI CRDs for the given cluster and namespace and adds the hostnames to the node metadata.
-func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInfo) {
-	l, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
-		IncludeGateways:    true,
-		IncludeK8sGateways: true,
-	})
-	graph.CheckError(err)
+// decorateGateways decorates workload nodes with gateway metadata. It uses the
+// pre-cached AllWorkloads to filter locally by label selector instead of calling
+// GetAllWorkloads/GetWorkloadList per gateway.
+func decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInfo, gateways []*networkingv1.Gateway, k8sGateways []*k8s_networking_v1.Gateway) {
+	allWorkloads := globalInfo.Vendor.AllWorkloads[cluster]
 
-	for _, gw := range l.Gateways {
+	for _, gw := range gateways {
 		selector := labels.Set(gw.Spec.Selector).AsSelector()
-		wk, err := globalInfo.Business.Workload.GetAllWorkloads(ctx, cluster, selector.String())
-		if err != nil {
-			log.FromContext(ctx).Warn().Msgf("Skipping gateway [%s]/[%s] with selector [%s]: %v", gw.Namespace, gw.Name, selector.String(), err)
-			continue
-		}
+
 		var hostnames []string
 		for _, gwServer := range gw.Spec.Servers {
-			gwHosts := gwServer.Hosts
-			hostnames = append(hostnames, gwHosts...)
+			hostnames = append(hostnames, gwServer.Hosts...)
 		}
-		for _, w := range wk {
+
+		for _, w := range allWorkloads {
+			if !selector.Matches(labels.Set(w.Labels)) {
+				continue
+			}
 			node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
 			if node != nil {
 				// TODO: This doesn't work for the generic gateway chart.
@@ -285,30 +427,35 @@ func (a IstioAppender) decorateGateways(ctx context.Context, cluster string, glo
 		}
 	}
 
-	for _, gw := range l.K8sGateways {
-		wl, err := globalInfo.Business.Workload.GetWorkloadList(ctx, business.WorkloadCriteria{
-			Cluster:       cluster,
-			LabelSelector: labels.Set(map[string]string{config.GatewayLabel: gw.Name}).String(),
-		})
-		graph.CheckError(err)
-		if wlLen := len(wl.Workloads); wlLen == 0 {
+	k8sGwSelector := func(gwName string) labels.Selector {
+		return labels.Set(map[string]string{config.GatewayLabel: gwName}).AsSelector()
+	}
+
+	for _, gw := range k8sGateways {
+		sel := k8sGwSelector(gw.Name)
+
+		var matched []*models.Workload
+		for _, w := range allWorkloads {
+			if sel.Matches(labels.Set(w.Labels)) {
+				matched = append(matched, w)
+			}
+		}
+
+		if len(matched) == 0 {
 			continue
-		} else if wlLen > 1 {
+		} else if len(matched) > 1 {
 			log.FromContext(ctx).Warn().Msgf("Multiple workloads found for GatewayAPI %s in namespace %s", gw.Name, gw.Namespace)
 		}
 
-		workload := wl.Workloads[0]
+		workload := matched[0]
 		node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
 		if node != nil {
-			gwListeners := gw.Spec.Listeners
 			var hostnames []string
-
-			for _, gwListener := range gwListeners {
+			for _, gwListener := range gw.Spec.Listeners {
 				if gwListener.Hostname != nil {
 					hostnames = append(hostnames, string(*gwListener.Hostname))
 				}
 			}
-			// Hostnames are not required. Adding * to be processed by the frontend (Indicates the kind of GW).
 			if len(hostnames) == 0 {
 				hostnames = append(hostnames, "*")
 			}

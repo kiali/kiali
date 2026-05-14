@@ -74,6 +74,27 @@ func FilterByHost(host, hostNamespace, serviceName, svcNamespace, identityDomain
 	return false
 }
 
+// NormalizeHost extracts a canonical (namespace, serviceName) pair from a host string
+// that may be in any of the forms accepted by FilterByHost:
+//   - "ratings"                              -> (resourceNamespace, "ratings")
+//   - "ratings.testNs"                       -> ("testNs", "ratings")
+//   - "ratings.testNs.svc"                   -> ("testNs", "ratings")
+//   - "ratings.testNs.svc.cluster.local"     -> ("testNs", "ratings")
+//
+// resourceNamespace is used when the host is a short name (no dots) -- in that case
+// the host is scoped to the namespace of the Istio resource that defines it.
+//
+// Wildcard hosts (e.g. "*.testNs.svc.cluster.local") normalize to ("testNs", "*").
+// Since no graph node has service name "*", these will never match during index lookup,
+// which is consistent with FilterByHost's behavior (it has no wildcard logic).
+func NormalizeHost(host, resourceNamespace string) (namespace, serviceName string) {
+	parts := strings.Split(host, ".")
+	if len(parts) == 1 {
+		return resourceNamespace, parts[0]
+	}
+	return parts[1], parts[0]
+}
+
 func FilterDestinationRulesByHostname(allDr []*networking_v1.DestinationRule, hostname string) []*networking_v1.DestinationRule {
 	destinationRules := []*networking_v1.DestinationRule{}
 	for _, destinationRule := range allDr {
