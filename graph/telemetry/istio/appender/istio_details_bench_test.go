@@ -397,6 +397,7 @@ func BenchmarkIstioAppender(b *testing.B) {
 		{namespaces: 50, appsPerNs: 5, versionsPerApp: 3, drsPerNs: 10, vsPerNs: 10, istioGateways: 5, k8sGateways: 5},
 		{namespaces: 50, appsPerNs: 10, versionsPerApp: 3, drsPerNs: 10, vsPerNs: 10, istioGateways: 10, k8sGateways: 10},
 		{namespaces: 50, appsPerNs: 10, versionsPerApp: 3, drsPerNs: 10, vsPerNs: 10, istioGateways: 0, k8sGateways: 0},
+		{namespaces: 500, appsPerNs: 5, versionsPerApp: 2, drsPerNs: 5, vsPerNs: 5, istioGateways: 3, k8sGateways: 3},
 	}
 
 	for _, s := range scenarios {

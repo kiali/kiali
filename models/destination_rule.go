@@ -19,14 +19,14 @@ type (
 func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceName, version, identityDomain string) bool {
 	conf := config.Get()
 	if kubernetes.FilterByHost(dr.Spec.Host, dr.Namespace, serviceName, namespace, identityDomain) {
-		if IsCB(dr.Spec.TrafficPolicy) {
+		if isCB(dr.Spec.TrafficPolicy) {
 			return true
 		}
 		for _, subset := range dr.Spec.Subsets {
 			if subset == nil {
 				continue
 			}
-			if IsCB(subset.TrafficPolicy) {
+			if isCB(subset.TrafficPolicy) {
 				if version == "" {
 					return true
 				}
@@ -41,7 +41,7 @@ func HasDRCircuitBreaker(dr *networking_v1.DestinationRule, namespace, serviceNa
 	return false
 }
 
-func IsCB(trafficPolicy *api_networking_v1.TrafficPolicy) bool {
+func isCB(trafficPolicy *api_networking_v1.TrafficPolicy) bool {
 	if trafficPolicy == nil {
 		return false
 	}

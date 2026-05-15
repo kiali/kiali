@@ -79,87 +79,45 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	addLabels(ctx, trafficMap, globalInfo, globalInfo.Vendor.ClusterServiceLists)
 }
 
-// cbSubsetInfo holds pre-computed circuit breaker info for a single DR subset.
-type cbSubsetInfo struct {
-	// version is the version label value from subset.Labels (via GetVersionLabelName).
-	// Empty means the subset has no version label -- it does NOT match versioned queries
-	// (where the caller knows the specific version). It only matches unversioned queries
-	// (where the caller passes version="").
-	version string
-}
-
-// drEntry holds pre-computed circuit breaker info for a single DestinationRule.
-type drEntry struct {
-	cbSubsets []cbSubsetInfo
-	dr        *networkingv1.DestinationRule
-	hasCB     bool // true if top-level TrafficPolicy has CB
-}
-
 // hostIndexKey is the canonical index key for DR and VS host lookup.
 func hostIndexKey(namespace, serviceName string) string {
 	return namespace + "/" + serviceName
 }
 
-// buildDRIndex pre-indexes DestinationRules by their normalized target host for O(1) lookup.
-func buildDRIndex(destinationRules []*networkingv1.DestinationRule) map[string][]*drEntry {
-	conf := config.Get()
-	idx := make(map[string][]*drEntry, len(destinationRules))
-
-	for _, dr := range destinationRules {
-		entry := &drEntry{
-			dr:    dr,
-			hasCB: models.IsCB(dr.Spec.TrafficPolicy),
-		}
-
-		for _, subset := range dr.Spec.Subsets {
-			if subset == nil {
-				continue
-			}
-			if models.IsCB(subset.TrafficPolicy) {
-				info := cbSubsetInfo{}
-				if verLabelName, found := conf.GetVersionLabelName(subset.Labels); found {
-					if v, ok := subset.Labels[verLabelName]; ok {
-						info.version = v
-					}
-				}
-				entry.cbSubsets = append(entry.cbSubsets, info)
-			}
-		}
-
-		if !entry.hasCB && len(entry.cbSubsets) == 0 {
-			continue
-		}
-
-		ns, svc := kubernetes.NormalizeHost(dr.Spec.Host, dr.Namespace)
-		key := hostIndexKey(ns, svc)
-		idx[key] = append(idx[key], entry)
-	}
-
-	return idx
-}
-
-// drMatchesCB checks whether a pre-indexed drEntry matches a CB query for the given
-// namespace, service, version, and identityDomain. It uses FilterByHost to confirm
-// the match (narrow-then-confirm pattern).
-func drMatchesCB(entry *drEntry, namespace, serviceName, version, identityDomain string) bool {
-	if !kubernetes.FilterByHost(entry.dr.Spec.Host, entry.dr.Namespace, serviceName, namespace, identityDomain) {
-		return false
-	}
-
-	if entry.hasCB {
+// hasCBConfig checks whether a DestinationRule has any circuit breaker configuration
+// (ConnectionPool or OutlierDetection) at the top level or in any subset.
+func hasCBConfig(dr *networkingv1.DestinationRule) bool {
+	tp := dr.Spec.TrafficPolicy
+	if tp != nil && (tp.ConnectionPool != nil || tp.OutlierDetection != nil) {
 		return true
 	}
-
-	if version == "" {
-		return len(entry.cbSubsets) > 0
-	}
-
-	for _, sub := range entry.cbSubsets {
-		if sub.version == version {
+	for _, subset := range dr.Spec.Subsets {
+		if subset == nil {
+			continue
+		}
+		stp := subset.TrafficPolicy
+		if stp != nil && (stp.ConnectionPool != nil || stp.OutlierDetection != nil) {
 			return true
 		}
 	}
 	return false
+}
+
+// buildDRIndex pre-indexes DestinationRules by their normalized target host
+// for O(1) lookup. Only DRs with CB config are indexed to avoid unnecessary
+// FilterByHost allocations at lookup time. The confirmation step uses
+// models.HasDRCircuitBreaker for full host-matching and version semantics.
+func buildDRIndex(destinationRules []*networkingv1.DestinationRule) map[string][]*networkingv1.DestinationRule {
+	idx := make(map[string][]*networkingv1.DestinationRule, len(destinationRules))
+	for _, dr := range destinationRules {
+		if !hasCBConfig(dr) {
+			continue
+		}
+		ns, svc := kubernetes.NormalizeHost(dr.Spec.Host, dr.Namespace)
+		key := hostIndexKey(ns, svc)
+		idx[key] = append(idx[key], dr)
+	}
+	return idx
 }
 
 func applyCircuitBreakers(trafficMap graph.TrafficMap, destinationRules []*networkingv1.DestinationRule, identityDomain string) {
@@ -175,8 +133,8 @@ NODES:
 		switch {
 		case n.NodeType == graph.NodeTypeService:
 			key := hostIndexKey(n.Namespace, n.Service)
-			for _, entry := range idx[key] {
-				if drMatchesCB(entry, n.Namespace, n.Service, "", identityDomain) {
+			for _, dr := range idx[key] {
+				if models.HasDRCircuitBreaker(dr, n.Namespace, n.Service, "", identityDomain) {
 					n.Metadata[graph.HasCB] = true
 					continue NODES
 				}
@@ -185,8 +143,8 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					key := hostIndexKey(ds.Namespace, ds.Name)
-					for _, entry := range idx[key] {
-						if drMatchesCB(entry, ds.Namespace, ds.Name, "", identityDomain) {
+					for _, dr := range idx[key] {
+						if models.HasDRCircuitBreaker(dr, ds.Namespace, ds.Name, "", identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
@@ -197,8 +155,8 @@ NODES:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
 					key := hostIndexKey(ds.Namespace, ds.Name)
-					for _, entry := range idx[key] {
-						if drMatchesCB(entry, ds.Namespace, ds.Name, n.Version, identityDomain) {
+					for _, dr := range idx[key] {
+						if models.HasDRCircuitBreaker(dr, ds.Namespace, ds.Name, n.Version, identityDomain) {
 							n.Metadata[graph.HasCB] = true
 							continue NODES
 						}
