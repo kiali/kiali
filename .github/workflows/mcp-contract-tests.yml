@@ -40,7 +40,8 @@ on:
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref_name }}
+  # Use the full Git ref so pull_request runs keep refs/pull/<n>/merge.
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
 
 jobs:
   mcp_contract_tests:
