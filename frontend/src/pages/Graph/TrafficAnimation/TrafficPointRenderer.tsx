@@ -61,6 +61,8 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly percentVisible: number;
   readonly radius: number;
   readonly withOffsets: boolean;
+  private cachedStyleClass: string | undefined;
+  private cachedMoveAnimation: string | undefined;
 
   constructor(
     animationDuration: string,
@@ -80,7 +82,11 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   }
 
   private getStyle(moveAnimation: string): string {
-    return kialiStyle({
+    if (this.cachedMoveAnimation === moveAnimation && this.cachedStyleClass) {
+      return this.cachedStyleClass;
+    }
+    this.cachedMoveAnimation = moveAnimation;
+    this.cachedStyleClass = kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationIterationCount: 'infinite',
@@ -90,6 +96,7 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
       opacity: 0,
       stroke: this.borderColor
     });
+    return this.cachedStyleClass;
   }
 
   render(
@@ -128,6 +135,8 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   readonly borderColor: string;
   readonly percentVisible: number;
   readonly radius: number;
+  private cachedStyleClass: string | undefined;
+  private cachedMoveAnimation: string | undefined;
 
   constructor(
     animationDuration: string,
@@ -145,7 +154,11 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   }
 
   private getStyle(moveAnimation: string): string {
-    return kialiStyle({
+    if (this.cachedMoveAnimation === moveAnimation && this.cachedStyleClass) {
+      return this.cachedStyleClass;
+    }
+    this.cachedMoveAnimation = moveAnimation;
+    this.cachedStyleClass = kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationIterationCount: 'infinite',
@@ -159,6 +172,7 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
       transformBox: 'fill-box',
       transformOrigin: 'center'
     });
+    return this.cachedStyleClass;
   }
 
   render(
