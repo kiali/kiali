@@ -26,10 +26,9 @@ export function getMoveAnimation(edge: Edge, percentVisible: number): string {
       opacity: 1,
       translate: `${moveX}px ${moveY}px`
     };
-    // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
-      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
-      moveAnimation['100%'] = { display: 'none' };
+      moveAnimation[`${percentVisible}.1%`] = { opacity: 0 };
+      moveAnimation['100%'] = { opacity: 0 };
     }
   } else {
     // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
@@ -45,10 +44,9 @@ export function getMoveAnimation(edge: Edge, percentVisible: number): string {
     moveAnimation[`${percentVisible}%`] = {
       translate: `${moveEndX}px ${moveEndY}px`
     };
-    // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
-      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
-      moveAnimation['100%'] = { display: 'none' };
+      moveAnimation[`${percentVisible}.1%`] = { opacity: 0 };
+      moveAnimation['100%'] = { opacity: 0 };
     }
   }
   return keyframes(moveAnimation);
