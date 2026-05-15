@@ -95,8 +95,8 @@ type drEntry struct {
 	hasCB     bool // true if top-level TrafficPolicy has CB
 }
 
-// drKey is the canonical index key for DR/VS host lookup.
-func drKey(namespace, serviceName string) string {
+// hostIndexKey is the canonical index key for DR and VS host lookup.
+func hostIndexKey(namespace, serviceName string) string {
 	return namespace + "/" + serviceName
 }
 
@@ -131,7 +131,7 @@ func buildDRIndex(destinationRules []*networkingv1.DestinationRule) map[string][
 		}
 
 		ns, svc := kubernetes.NormalizeHost(dr.Spec.Host, dr.Namespace)
-		key := drKey(ns, svc)
+		key := hostIndexKey(ns, svc)
 		idx[key] = append(idx[key], entry)
 	}
 
@@ -174,7 +174,7 @@ NODES:
 		versionOk := graph.IsOK(n.Version)
 		switch {
 		case n.NodeType == graph.NodeTypeService:
-			key := drKey(n.Namespace, n.Service)
+			key := hostIndexKey(n.Namespace, n.Service)
 			for _, entry := range idx[key] {
 				if drMatchesCB(entry, n.Namespace, n.Service, "", identityDomain) {
 					n.Metadata[graph.HasCB] = true
@@ -184,7 +184,7 @@ NODES:
 		case !versionOk && (n.NodeType == graph.NodeTypeApp):
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					key := drKey(ds.Namespace, ds.Name)
+					key := hostIndexKey(ds.Namespace, ds.Name)
 					for _, entry := range idx[key] {
 						if drMatchesCB(entry, ds.Namespace, ds.Name, "", identityDomain) {
 							n.Metadata[graph.HasCB] = true
@@ -196,7 +196,7 @@ NODES:
 		case versionOk:
 			if destServices, ok := n.Metadata[graph.DestServices]; ok {
 				for _, ds := range destServices.(graph.DestServicesMetadata) {
-					key := drKey(ds.Namespace, ds.Name)
+					key := hostIndexKey(ds.Namespace, ds.Name)
 					for _, entry := range idx[key] {
 						if drMatchesCB(entry, ds.Namespace, ds.Name, n.Version, identityDomain) {
 							n.Metadata[graph.HasCB] = true
@@ -244,7 +244,7 @@ func buildVSIndex(virtualServices []*networkingv1.VirtualService) map[string][]*
 		seen := make(map[string]bool)
 		addHost := func(host string) {
 			ns, svc := kubernetes.NormalizeHost(host, vs.Namespace)
-			key := drKey(ns, svc)
+			key := hostIndexKey(ns, svc)
 			if !seen[key] {
 				seen[key] = true
 				idx[key] = append(idx[key], entry)
@@ -252,6 +252,9 @@ func buildVSIndex(virtualServices []*networkingv1.VirtualService) map[string][]*
 		}
 
 		for _, httpRoute := range vs.Spec.Http {
+			if httpRoute == nil {
+				continue
+			}
 			for _, dest := range httpRoute.Route {
 				if dest.Destination != nil {
 					addHost(dest.Destination.Host)
@@ -259,6 +262,9 @@ func buildVSIndex(virtualServices []*networkingv1.VirtualService) map[string][]*
 			}
 		}
 		for _, tcpRoute := range vs.Spec.Tcp {
+			if tcpRoute == nil {
+				continue
+			}
 			for _, dest := range tcpRoute.Route {
 				if dest.Destination != nil {
 					addHost(dest.Destination.Host)
@@ -266,6 +272,9 @@ func buildVSIndex(virtualServices []*networkingv1.VirtualService) map[string][]*
 			}
 		}
 		for _, tlsRoute := range vs.Spec.Tls {
+			if tlsRoute == nil {
+				continue
+			}
 			for _, dest := range tlsRoute.Route {
 				if dest.Destination != nil {
 					addHost(dest.Destination.Host)
@@ -290,7 +299,7 @@ NODES:
 			continue
 		}
 
-		key := drKey(n.Namespace, n.Service)
+		key := hostIndexKey(n.Namespace, n.Service)
 		for _, entry := range idx[key] {
 			if !models.IsVSValidHost(entry.vs, n.Namespace, n.Service, identityDomain) {
 				continue

@@ -8,6 +8,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
 )
@@ -509,7 +510,8 @@ func populateWorkloadMap(ctx context.Context, business *business.Layer, globalIn
 	for _, cluster := range globalInfo.Clusters {
 		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
 		if err != nil {
-			graph.Error(fmt.Sprintf("Error fetching workloads: %s", err.Error()))
+			log.FromContext(ctx).Warn().Msgf("Error fetching workloads for cluster [%s], gateway decoration may be incomplete: %s", cluster.Name, err.Error())
+			continue
 		}
 
 		globalInfo.Vendor.AllWorkloads[cluster.Name] = workloads

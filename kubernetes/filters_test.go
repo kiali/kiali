@@ -270,3 +270,79 @@ func createHTTPRoute(name string, namespace string, serviceName string, serviceN
 	rt.Spec.Rules = append(rt.Spec.Rules, rule)
 	return &rt
 }
+
+func TestNormalizeHost(t *testing.T) {
+	tests := []struct {
+		host              string
+		resourceNamespace string
+		wantNamespace     string
+		wantService       string
+	}{
+		{host: "ratings", resourceNamespace: "testNs", wantNamespace: "testNs", wantService: "ratings"},
+		{host: "ratings.prodNs", resourceNamespace: "testNs", wantNamespace: "prodNs", wantService: "ratings"},
+		{host: "ratings.prodNs.svc", resourceNamespace: "testNs", wantNamespace: "prodNs", wantService: "ratings"},
+		{host: "ratings.prodNs.svc.cluster.local", resourceNamespace: "testNs", wantNamespace: "prodNs", wantService: "ratings"},
+		{host: "*.testNs.svc.cluster.local", resourceNamespace: "testNs", wantNamespace: "testNs", wantService: "*"},
+		{host: "", resourceNamespace: "testNs", wantNamespace: "testNs", wantService: ""},
+		{host: "httpbin.org", resourceNamespace: "testNs", wantNamespace: "org", wantService: "httpbin"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.host, func(t *testing.T) {
+			ns, svc := NormalizeHost(tt.host, tt.resourceNamespace)
+			assert.Equal(t, tt.wantNamespace, ns)
+			assert.Equal(t, tt.wantService, svc)
+		})
+	}
+}
+
+// TestNormalizeHostAlignedWithFilterByHost verifies that for every host form
+// that FilterByHost accepts, NormalizeHost produces a key that would match
+// a lookup for the target (namespace, service) pair.
+func TestNormalizeHostAlignedWithFilterByHost(t *testing.T) {
+	svcNamespace := "testNs"
+	serviceName := "ratings"
+	resourceNamespace := "testNs"
+	identityDomain := "svc.cluster.local"
+
+	hostForms := []string{
+		"ratings",
+		"ratings.testNs",
+		"ratings.testNs.svc",
+		"ratings.testNs.svc.cluster.local",
+	}
+
+	for _, host := range hostForms {
+		t.Run(host, func(t *testing.T) {
+			assert.True(t, FilterByHost(host, resourceNamespace, serviceName, svcNamespace, identityDomain),
+				"FilterByHost should accept this host form")
+
+			ns, svc := NormalizeHost(host, resourceNamespace)
+			assert.Equal(t, svcNamespace, ns, "NormalizeHost namespace must match service namespace")
+			assert.Equal(t, serviceName, svc, "NormalizeHost service must match service name")
+		})
+	}
+}
+
+// TestNormalizeHostCrossNamespace verifies that a host in "svc.otherNs" form
+// normalizes to the correct namespace (not the resource namespace).
+func TestNormalizeHostCrossNamespace(t *testing.T) {
+	resourceNamespace := "istio-system"
+	identityDomain := "svc.cluster.local"
+
+	hostForms := []string{
+		"ratings.prodNs",
+		"ratings.prodNs.svc",
+		"ratings.prodNs.svc.cluster.local",
+	}
+
+	for _, host := range hostForms {
+		t.Run(host, func(t *testing.T) {
+			assert.True(t, FilterByHost(host, resourceNamespace, "ratings", "prodNs", identityDomain))
+
+			ns, svc := NormalizeHost(host, resourceNamespace)
+			assert.Equal(t, "prodNs", ns)
+			assert.Equal(t, "ratings", svc)
+		})
+	}
+}
