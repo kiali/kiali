@@ -6,12 +6,13 @@ import { Edge } from '@patternfly/react-topology';
 export abstract class TrafficPointRenderer {
   abstract render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGElement>;
 }
 
-function getMoveAnimation(edge: Edge, percentVisible: number): string {
+export function getMoveAnimation(edge: Edge, percentVisible: number): string {
   const startPoint = edge.getStartPoint();
   const endPoint = edge.getEndPoint();
   const moveAnimation = {};
@@ -93,11 +94,11 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
 
   render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
     // If requested, calculate offsets. The offset must be small to avoid more serious
     // calculation that would ensure perpendicular distance from the edge. Instead, we
     // just apply a [-2.5, 2.5] offset to both 'x' and 'y'
@@ -162,11 +163,11 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
 
   render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
     const key = `point-rect-${Math.random()}}`;

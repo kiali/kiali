@@ -1,6 +1,11 @@
 import * as React from 'react';
 import { Point, clamp, distance } from '../../../utils/MathUtils';
-import { TrafficPointCircleRenderer, TrafficPointDiamondRenderer, TrafficPointRenderer } from './TrafficPointRenderer';
+import {
+  getMoveAnimation,
+  TrafficPointCircleRenderer,
+  TrafficPointDiamondRenderer,
+  TrafficPointRenderer
+} from './TrafficPointRenderer';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
 import { Controller, Edge, EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
@@ -152,10 +157,11 @@ export class TrafficPointGenerator {
           : getTrafficPointRendererForRpsSuccess(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
+      const moveAnimation = getMoveAnimation(edge, percentVisible);
 
       for (let i = 0; i < pointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
-        const point = renderer.render(edge, animationDelay, undefined);
+        const point = renderer.render(edge, moveAnimation, animationDelay, undefined);
         points.unshift(point);
       }
     } else {
@@ -181,6 +187,7 @@ export class TrafficPointGenerator {
       const errorRenderer = getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
+      const moveAnimation = getMoveAnimation(edge, percentVisible);
 
       for (let i = 0, injectedError = false; i < renderedPointsOnEdge; ++i) {
         const animationDelay = `${i * delayInterval + initialDelay}ms`;
@@ -189,8 +196,8 @@ export class TrafficPointGenerator {
         injectedError = injectedError || isErrorPoint;
 
         const point = isErrorPoint
-          ? errorRenderer.render(edge, animationDelay, undefined)
-          : renderer.render(edge, animationDelay, undefined);
+          ? errorRenderer.render(edge, moveAnimation, animationDelay, undefined)
+          : renderer.render(edge, moveAnimation, animationDelay, undefined);
 
         points.unshift(point);
       }
