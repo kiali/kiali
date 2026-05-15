@@ -863,6 +863,56 @@ func TestResolveChatAIUsageUserID_FallsBackToUsername(t *testing.T) {
 	assert.Equal(t, "alice", userID)
 }
 
+func TestResolveChatAIUsageUserID_PrefersSessionID(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	req := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+	req = req.WithContext(authentication.SetSessionIDContext(req.Context(), "session-123"))
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), map[string]*api.AuthInfo{
+		conf.KubernetesConfig.ClusterName: {Username: "alice"},
+	}))
+
+	userID := resolveChatAIUsageUserID(req, conf, "")
+	assert.Equal(t, "session-123", userID)
+}
+
+func TestResolveChatAIUsageUserID_UsesAuthInfoWhenAvailable(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+
+	req := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), map[string]*api.AuthInfo{
+		conf.KubernetesConfig.ClusterName: {Username: "alice"},
+	}))
+
+	userID := resolveChatAIUsageUserID(req, conf, "")
+	assert.Equal(t, "alice", userID)
+}
+
+func TestResolveChatAIUsageUserID_AnonymousFallbackWithoutSessionOrUsername(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyAnonymous
+
+	req := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+
+	userID := resolveChatAIUsageUserID(req, conf, "")
+	assert.Equal(t, "anonymous", userID)
+}
+
+func TestResolveChatAIUsageUserID_ReturnsEmptyWhenAuthInfoUnavailable(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+
+	req := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+
+	userID := resolveChatAIUsageUserID(req, conf, "")
+	assert.Empty(t, userID)
+}
+
 func TestChatSessionUsage_ReturnsSessionScopedMetrics(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = true
@@ -885,4 +935,33 @@ func TestChatSessionUsage_ReturnsSessionScopedMetrics(t *testing.T) {
 	assert.Equal(t, "openai", metrics[0].Provider)
 	assert.Equal(t, int64(10), metrics[0].TotalTokens)
 	assert.False(t, metrics[0].Since.IsZero())
+}
+
+func TestChatSessionUsage_DisabledReturnsError(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := ChatSessionUsage(conf, aiStore)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+
+	handler(w, r)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestChatSessionUsage_ReturnsBadRequestWhenUserScopeCannotBeDetermined(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := ChatSessionUsage(conf, aiStore)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/chat/session/usage", nil)
+
+	handler(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

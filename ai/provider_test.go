@@ -213,3 +213,58 @@ func TestGetModel_SelectsCorrectAmongMultiple(t *testing.T) {
 	_, err = getModel(provider, "model-b")
 	require.Error(t, err, "disabled model should not be selectable")
 }
+
+func TestResolveUsageMetadata_ReturnsNormalizedProviderAndModel(t *testing.T) {
+	conf := newTestConfig([]config.ProviderConfig{
+		{
+			Name:    "gemini-openai-compatible",
+			Type:    config.OpenAIProvider,
+			Enabled: true,
+			Models: []config.AIModel{
+				{Name: "flash", Model: "gemini-2.5-flash", Enabled: true},
+			},
+		},
+	})
+
+	usageMetadata, err := ResolveUsageMetadata(conf, "gemini-openai-compatible", "flash")
+	require.NoError(t, err)
+	require.NotNil(t, usageMetadata)
+	assert.Equal(t, "openai", usageMetadata.Provider)
+	assert.Equal(t, "gemini-2.5-flash", usageMetadata.Model)
+}
+
+func TestResolveUsageMetadata_ProviderNotFound(t *testing.T) {
+	conf := newTestConfig([]config.ProviderConfig{
+		{
+			Name:    "openai-prod",
+			Type:    config.OpenAIProvider,
+			Enabled: true,
+			Models: []config.AIModel{
+				{Name: "gpt-4", Model: "gpt-4.1", Enabled: true},
+			},
+		},
+	})
+
+	usageMetadata, err := ResolveUsageMetadata(conf, "missing-provider", "gpt-4")
+	require.Error(t, err)
+	assert.Nil(t, usageMetadata)
+	assert.Contains(t, err.Error(), "not found or disabled")
+}
+
+func TestResolveUsageMetadata_ModelNotFound(t *testing.T) {
+	conf := newTestConfig([]config.ProviderConfig{
+		{
+			Name:    "google-prod",
+			Type:    config.GoogleProvider,
+			Enabled: true,
+			Models: []config.AIModel{
+				{Name: "pro", Model: "gemini-2.5-pro", Enabled: true},
+			},
+		},
+	})
+
+	usageMetadata, err := ResolveUsageMetadata(conf, "google-prod", "missing-model")
+	require.Error(t, err)
+	assert.Nil(t, usageMetadata)
+	assert.Contains(t, err.Error(), "not found or disabled")
+}
