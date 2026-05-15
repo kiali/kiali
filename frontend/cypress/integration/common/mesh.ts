@@ -805,7 +805,7 @@ Then('user sees ambient data planes in both clusters', () => {
         const data = cp.getData() as MeshNodeData;
         const ambient = data.infraData.filter(n => n.isAmbient);
         // Check for ambient-specific properties or labels
-        assert.exists(ambient, 'Control plane data should exist');
+        assert.isAtLeast(ambient.length, 1, 'An ambient namespace should exist in data plane');
       });
     });
 });
