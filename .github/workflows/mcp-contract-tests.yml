@@ -40,8 +40,7 @@ on:
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
-  # Use the full Git ref so pull_request runs keep refs/pull/<n>/merge.
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
+  BUILD_BRANCH: ${{ inputs.build_branch || github.ref }}
 
 jobs:
   mcp_contract_tests:
@@ -64,6 +63,13 @@ jobs:
       with:
         version: 'v3.18.4'
 
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        cache: true
+        cache-dependency-path: go.sum
+
     # Corepack must be enabled before setup-node so that setup-node's
     # cache: yarn correctly detects the Yarn 4 cache directory.
     - name: Enable corepack
@@ -79,13 +85,19 @@ jobs:
         cache-dependency-path: frontend/yarn.lock
 
     - name: Download go binary
+      if: github.event_name == 'workflow_call'
       uses: actions/download-artifact@v8
       with:
         name: kiali
         path: ~/go/bin/
 
     - name: Ensure kiali binary is executable
+      if: github.event_name == 'workflow_call'
       run: chmod +x ~/go/bin/kiali
+
+    - name: Build frontend and backend
+      if: github.event_name != 'workflow_call'
+      run: make build-ui clean build
 
     - name: Install frontend dependencies
       working-directory: ./frontend
