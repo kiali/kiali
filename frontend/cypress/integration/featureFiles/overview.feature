@@ -93,7 +93,6 @@ Feature: Kiali Overview page
   @error-rates-app
   @bookinfo-app
   @core-2
-  @lpinterop
   Scenario: The healthy status of a logical mesh application is reported in the overview of a namespace
     Given a healthy application in the cluster
     When I fetch the overview of the cluster
