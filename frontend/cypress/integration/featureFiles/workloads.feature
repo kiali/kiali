@@ -122,7 +122,6 @@ Feature: Kiali Workloads page
   @bookinfo-app
   @core-2
   @offline
-  @lpinterop
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster
     When user selects the "bookinfo" namespace
