@@ -205,6 +205,59 @@ Feature: Kiali Mesh page
   Scenario: Local-kiali: see kiali node in local mode
     And user sees the "kiali" node connected to the 1 "istiod" nodes
 
+  @multi-cluster
+  Scenario: Primary-remote: namespace panel shows control plane donut for local istio-system
+    When user selects mesh node with label "istio-system" on cluster "east"
+    Then user sees "istio-system" namespace side panel
+    And user sees control plane donut in namespace panel
+
+  @multi-cluster
+  Scenario: Primary-remote: remote cluster shows managed by remote control plane
+    When user selects cluster mesh node on cluster "west"
+    Then user sees "Managed by remote ControlPlane" in cluster panel
+    And user sees the primary cluster name "east" in managed control plane info
+
+  @multi-cluster
+  @multi-primary
+  Scenario: Multi-primary: each namespace panel shows only its own control plane donut
+    When user selects mesh node with label "istio-system" on cluster "east"
+    Then user sees "istio-system" namespace side panel
+    And user sees control plane donut in namespace panel
+    And the namespace panel shows only control planes from the "east" cluster
+
+  @multi-cluster
+  @multi-primary
+  Scenario: Multi-primary: namespace panel shows correct cluster badge
+    When user selects mesh node with label "istio-system" on cluster "west"
+    Then user sees "istio-system" namespace side panel
+    And user sees "west" cluster badge in namespace panel
+
+  @multi-mesh
+  Scenario: Multi-mesh: mesh panel shows correct mesh count in tabs
+    When user sees mesh side panel
+    Then the mesh tab count matches the number of meshes with control planes
+
+  @multi-mesh
+  Scenario: Multi-mesh: single mesh infra summary shows control planes
+    When user sees mesh side panel
+    Then user does not see "dataplane namespaces: 0" in mesh body
+
+  @multi-mesh
+  Scenario: Multi-mesh: control plane summary shows cluster name
+    When user sees mesh side panel
+    Then user sees cluster badge with cluster name in control plane summary
+
+  @ambient-multi-primary
+  Scenario: Ambient Multi-Primary: ambient badge shown on ambient control planes
+    When user selects ambient istiod mesh node
+    Then user sees ambient badge on the control plane panel
+
+  @multi-cluster
+  @multi-primary
+  Scenario: Multi-primary: no ambient badge on sidecar control planes
+    When user selects non-ambient istiod mesh node
+    Then user does not see ambient badge on the control plane panel
+
   @ambient-multi-primary
   Scenario: Ambient Multi-Primary: Mesh page shows ambient control planes in both clusters
     Then user sees the mesh

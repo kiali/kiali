@@ -156,6 +156,10 @@ func buildConfig(meshMap mesh.MeshMap, nodes *[]*NodeWrapper, edges *[]*EdgeWrap
 			nd.IsInaccessible = val.(bool)
 		}
 
+		if val, ok := n.Metadata[mesh.IsAmbient]; ok && val.(bool) {
+			nd.IsAmbient = true
+		}
+
 		if val, ok := n.Metadata[mesh.Version]; ok {
 			nd.Version = val.(string)
 		}
