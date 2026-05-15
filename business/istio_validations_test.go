@@ -174,8 +174,8 @@ func TestAmbientNamespaceWaypointDoesNotTriggerWaypointNotFound(t *testing.T) {
 	config.Set(conf)
 
 	namespaceLabels := map[string]string{
-		conf.IstioLabels.AmbientNamespaceLabel:   conf.IstioLabels.AmbientNamespaceLabelValue,
-		conf.IstioLabels.AmbientWaypointUseLabel: "waypoint",
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+		config.WaypointUseLabel:           "waypoint",
 	}
 
 	objects := []runtime.Object{

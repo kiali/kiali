@@ -116,11 +116,16 @@ const (
 	AmbientAnnotation               = "ambient.istio.io/redirection"
 	AmbientAnnotationEnabled        = "enabled"
 	GatewayLabel                    = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
-	IstioAppLabel                   = "app"                                    // we can assume istio components are labeled with "app"
-	IstioInjectionAnnotation        = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
-	IstioRevisionLabel              = "istio.io/rev"                           // the standard label key used to identify the istio revision.
-	IstioSidecarAnnotation          = "sidecar.istio.io/status"                // the standard annotation for sidecar status
-	IstioVersionLabel               = "version"                                // we can assume istio components are labeled with "version", if versioned
+	IstioAmbientNamespaceLabel      = "istio.io/dataplane-mode"
+	IstioAmbientNamespaceLabelValue = "ambient"
+	IstioAppLabel                   = "app"                     // we can assume istio components are labeled with "app"
+	IstioInjectionAnnotation        = "sidecar.istio.io/inject" // the standard annotation for sidecar injection
+	IstioInjectionLabelName         = "istio-injection"
+	IstioRevisionLabel              = "istio.io/rev" // the standard label key used to identify the istio revision.
+	IstioServiceCanonicalName       = "service.istio.io/canonical-name"
+	IstioServiceCanonicalRevision   = "service.istio.io/canonical-revision"
+	IstioSidecarAnnotation          = "sidecar.istio.io/status" // the standard annotation for sidecar status
+	IstioVersionLabel               = "version"                 // we can assume istio components are labeled with "version", if versioned
 	KubernetesAppLabel              = "app.kubernetes.io/name"
 	SpireComponentLabel             = "app.kubernetes.io/instance"
 	SpireManagedIdentityLabel       = "spiffe.io/spire-managed-identity" // SPIRE label indicating workload is managed by SPIRE
@@ -140,11 +145,6 @@ const (
 	WaypointNone                    = "none"
 	WaypointUseNamespaceLabel       = "istio.io/use-waypoint-namespace"
 	Ztunnel                         = "ztunnel"
-	IstioAmbientNamespaceLabel      = "istio.io/dataplane-mode"
-	IstioAmbientNamespaceLabelValue = "ambient"
-	IstioInjectionLabelName         = "istio-injection"
-	IstioServiceCanonicalName       = "service.istio.io/canonical-name"
-	IstioServiceCanonicalRevision   = "service.istio.io/canonical-revision"
 )
 
 // CA bundle file paths used by CredentialManager.
