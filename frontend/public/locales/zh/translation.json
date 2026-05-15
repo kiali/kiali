@@ -701,6 +701,7 @@
   "Version": "Version",
   "version: {{version}}": "version: {{version}}",
   "Version: {{version}}": "Version: {{version}}",
+  "View": "View",
   "View all applications": "View all applications",
   "View all n/a Data planes": "View all n/a Data planes",
   "View all services": "View all services",

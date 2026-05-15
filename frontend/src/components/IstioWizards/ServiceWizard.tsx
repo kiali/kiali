@@ -849,17 +849,22 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
+    const isViewOnly = serverConfig.deployment.viewOnlyMode;
 
     const titleAction =
       this.props.type.length > 0
-        ? this.props.update
+        ? isViewOnly
+          ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].title)}`
+          : this.props.update
           ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
           : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
       this.props.type.length > 0
-        ? this.props.update
+        ? isViewOnly
+          ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+          : this.props.update
           ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
           : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
@@ -908,24 +913,32 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           onKeyDown={e => {
-            if (e.key === 'Enter' && this.isValid(this.state)) {
+            if (!isViewOnly && e.key === 'Enter' && this.isValid(this.state)) {
               this.onPreview();
             }
           }}
-          actions={[
-            <Button
-              isDisabled={!(this.isValid(this.state) || this.isK8sAPIValid(this.state))}
-              key="confirm"
-              variant={ButtonVariant.primary}
-              onClick={this.onPreview}
-              data-test="preview"
-            >
-              {t('Create')}
-            </Button>,
-            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-              {t('Cancel')}
-            </Button>
-          ]}
+          actions={
+            isViewOnly
+              ? [
+                  <Button key="close" variant={ButtonVariant.primary} onClick={() => this.onClose(false)}>
+                    {t('Close')}
+                  </Button>
+                ]
+              : [
+                  <Button
+                    isDisabled={!(this.isValid(this.state) || this.isK8sAPIValid(this.state))}
+                    key="confirm"
+                    variant={ButtonVariant.primary}
+                    onClick={this.onPreview}
+                    data-test="preview"
+                  >
+                    {t('Create')}
+                  </Button>,
+                  <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
+                    {t('Cancel')}
+                  </Button>
+                ]
+          }
         >
           <IstioConfigPreview
             isOpen={this.state.showPreview}

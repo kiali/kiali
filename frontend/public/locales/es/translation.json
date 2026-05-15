@@ -719,6 +719,7 @@
   "Version": "Versión",
   "version: {{version}}": "versión: {{version}}",
   "Version: {{version}}": "Versión: {{version}}",
+  "View": "View",
   "View all applications": "Ver todas las aplicaciones",
   "View all n/a Data planes": "Ver todos los planos de datos sin estado",
   "View all services": "Ver todos los servicios",
