@@ -1,4 +1,4 @@
-import { serverConfig } from 'config';
+import { INJECTION_LABEL_REV } from 'config/ServerConfig';
 
 type NamespaceLike = {
   labels?: Record<string, string>;
@@ -11,7 +11,7 @@ export const setControlPlaneRevisions = (revisions: Set<string>): void => {
 };
 
 export const isRevisionAvailable = (ns: NamespaceLike): boolean => {
-  const rev = ns.labels?.[serverConfig.istioLabels.injectionLabelRev] ?? ns.labels?.['istio.io/rev'];
+  const rev = ns.labels?.[INJECTION_LABEL_REV] ?? ns.labels?.['istio.io/rev'];
   if (!rev) {
     return true;
   }

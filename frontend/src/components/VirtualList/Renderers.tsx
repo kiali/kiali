@@ -34,7 +34,7 @@ import {
   kindToStringIncludeK8s
 } from 'utils/IstioConfigUtils';
 import { Label } from 'components/Label/Label';
-import { isMultiCluster, serverConfig } from 'config/ServerConfig';
+import { isMultiCluster, INJECTION_LABEL_NAME, INJECTION_LABEL_REV } from 'config/ServerConfig';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -516,8 +516,8 @@ export const nsMode: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
   let revision: string | undefined;
   if (ns.labels) {
-    if (ns.labels[serverConfig.istioLabels.injectionLabelRev]) {
-      revision = ns.labels[serverConfig.istioLabels.injectionLabelRev];
+    if (ns.labels[INJECTION_LABEL_REV]) {
+      revision = ns.labels[INJECTION_LABEL_REV];
     } else if (ns.labels['istio.io/rev']) {
       revision = ns.labels['istio.io/rev'];
     }
@@ -607,12 +607,11 @@ export const nsHealth: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const nsTls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   const isControlPlane = !!ns.isControlPlane;
-  const isDataPlane =
+    const isDataPlane =
     !isControlPlane &&
     !!ns.labels &&
-    (ns.labels[serverConfig.istioLabels.injectionLabelName] === 'enabled' ||
-      (ns.labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
-        ns.labels[serverConfig.istioLabels.injectionLabelRev] !== ''));
+    (ns.labels[INJECTION_LABEL_NAME] === 'enabled' ||
+      (ns.labels[INJECTION_LABEL_REV] !== undefined && ns.labels[INJECTION_LABEL_REV] !== ''));
 
   // If the namespace is not part of the mesh, mTLS does not apply.
   // Consider ambient namespaces as part of the mesh too.

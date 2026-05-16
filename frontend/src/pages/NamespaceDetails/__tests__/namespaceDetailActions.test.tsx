@@ -1,6 +1,7 @@
 import { buildNamespaceRowActions, NamespaceRowActionsParams } from '../namespaceDetailActions';
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { serverConfig } from 'config';
+import { AMBIENT_NAMESPACE_LABEL, AMBIENT_NAMESPACE_LABEL_VALUE } from 'config/ServerConfig';
 import { ControlPlane } from 'types/Mesh';
 
 jest.mock('utils/I18nUtils', () => ({
@@ -173,7 +174,7 @@ describe('buildNamespaceRowActions', () => {
         ...baseNsInfo,
         isAmbient: true,
         labels: {
-          [serverConfig.istioLabels.ambientNamespaceLabel]: serverConfig.istioLabels.ambientNamespaceLabelValue
+          [AMBIENT_NAMESPACE_LABEL]: AMBIENT_NAMESPACE_LABEL_VALUE
         }
       };
       const titles = actionTitles(baseParams(nsInfo));

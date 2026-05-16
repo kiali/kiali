@@ -1,11 +1,7 @@
+// import { INJECTION_LABEL_NAME, INJECTION_LABEL_REV } from 'config/ServerConfig';
 jest.mock('config', () => ({
   isMultiCluster: false,
-  serverConfig: {
-    istioLabels: {
-      injectionLabelName: 'istio-injection',
-      injectionLabelRev: 'istio.io/rev'
-    }
-  }
+  serverConfig: {}
 }));
 
 const { getNamespaceDetailUrl, isDataPlaneNamespace } = require('../NamespaceUtils');

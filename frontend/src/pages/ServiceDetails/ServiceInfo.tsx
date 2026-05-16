@@ -57,6 +57,7 @@ import { deleteServiceTrafficRouting } from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { triggerRefresh } from '../../hooks/refresh';
 import { serverConfig } from 'config';
+import { AMBIENT_WAYPOINT_GATEWAY_LABEL } from 'config/ServerConfig';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
 import { LocalTime } from '../../components/Time/LocalTime';
@@ -441,7 +442,7 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             this.props.serviceDetails.validations,
             this.props.cluster,
             this.props.serviceDetails?.service?.labels
-              ? this.props.serviceDetails.service.labels[serverConfig.istioLabels.ambientWaypointGatewayLabel]
+              ? this.props.serviceDetails.service.labels[AMBIENT_WAYPOINT_GATEWAY_LABEL]
               : ''
           )
         : [];
