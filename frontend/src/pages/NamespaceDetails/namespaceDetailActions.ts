@@ -161,8 +161,8 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
 
       if (
         nsInfo.labels &&
-          !nsInfo.labels[INJECTION_LABEL_NAME] &&
-         !nsInfo.labels[INJECTION_LABEL_NAME] && !nsInfo.labels[INJECTION_LABEL_REV]
+        !nsInfo.labels[INJECTION_LABEL_NAME] &&
+        !nsInfo.labels[INJECTION_LABEL_REV]
       ) {
         if (nsInfo.isAmbient) {
           pushSeparator(namespaceActions);

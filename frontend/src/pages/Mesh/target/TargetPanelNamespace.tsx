@@ -229,7 +229,12 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
 
                 {this.renderStatus()}
 
-                <div style={{ height: '110px' }} />
+                {this.state.controlPlanes && (
+                  <div>
+                    {targetPanelHR}
+                    <ControlPlaneDonut controlPlanes={this.state.controlPlanes} />
+                  </div>
+                )}
               </>
             )}
 
@@ -281,10 +286,16 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   // object from infraData. The controlplane object has all the
   // managed namespaces that is needed by elements on this page.
   private getControlPlanes = (): ControlPlane[] | undefined => {
+    const { cluster, namespace } = this.props.target.elem.getData()!;
     const controlPlanes: ControlPlane[] | undefined = this.props.target.elem
       ?.getGraph()
       .getData()
-      .meshData.elements.nodes?.filter(node => node.data.infraType === MeshInfraType.ISTIOD)
+      .meshData.elements.nodes?.filter(
+        node =>
+          node.data.infraType === MeshInfraType.ISTIOD &&
+          node.data.cluster === cluster &&
+          node.data.namespace === namespace
+      )
       .map(node => node.data.infraData);
     return controlPlanes;
   };
@@ -458,7 +469,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   };
 
   private fetchNamespaceInfo = async (): Promise<void> => {
-    return API.getNamespaceInfo(this.state.targetNamespace)
+    return API.getNamespaceInfo(this.state.targetNamespace, this.state.targetCluster)
       .then(response => {
         this.setState({
           nsInfo: response.data
@@ -533,8 +544,10 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
   };
 
   private isControlPlane = (): boolean => {
-    const namespace = this.state.targetNamespace!;
-    return isIstioNamespace(namespace);
+    if (this.state.controlPlanes && this.state.controlPlanes.length > 0) {
+      return true;
+    }
+    return isIstioNamespace(this.state.targetNamespace!);
   };
 
   private handleApiError = (message: string, error: ApiError): void => {

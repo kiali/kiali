@@ -526,6 +526,247 @@ Then('user sees the Tester result {string}', (result: string) => {
   });
 });
 
+// Multi-cluster / multi-mesh step definitions
+
+When('user selects cluster mesh node on cluster {string}', (cluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(
+        n => (n.getData() as MeshNodeData).infraType === MeshInfraType.CLUSTER && n.getData().cluster === cluster
+      );
+      assert.exists(node, `Cluster node for "${cluster}" should exist`);
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+Then('user sees {string} in cluster panel', (text: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster')
+    .should('be.visible')
+    .within(() => {
+      cy.contains(text).should('be.visible');
+    });
+});
+
+Then('user sees the primary cluster name {string} in managed control plane info', (primaryCluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-cluster')
+    .should('be.visible')
+    .within(() => {
+      cy.contains('Managed by remote ControlPlane').should('be.visible');
+      cy.contains(primaryCluster).should('be.visible');
+    });
+});
+
+When('user selects mesh node with label {string} on cluster {string}', (label: string, cluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(
+        n => n.getLabel().toLowerCase() === label.toLowerCase() && n.getData().cluster === cluster
+      );
+      assert.exists(node, `Node with label "${label}" on cluster "${cluster}" should exist`);
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+Then('user sees control plane donut in namespace panel', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-namespace')
+    .should('be.visible')
+    .within(() => {
+      cy.contains('Namespaces managed by Control Planes').should('be.visible');
+    });
+});
+
+Then('the namespace panel shows only control planes from the {string} cluster', (cluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      const { nodes } = elems(controller);
+
+      const istiodNodes = nodes.filter(
+        n =>
+          (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD &&
+          (n.getData() as MeshNodeData).cluster === cluster
+      );
+
+      assert.isAbove(istiodNodes.length, 0, `Should have istiod nodes for cluster "${cluster}"`);
+      istiodNodes.forEach(n => {
+        const data = n.getData() as MeshNodeData;
+        assert.equal(data.cluster, cluster, `All control plane nodes should be from cluster "${cluster}"`);
+      });
+    });
+
+  cy.get('#target-panel-namespace').should('be.visible');
+  cy.contains(/dataplane namespaces: \d+/)
+    .invoke('text')
+    .then(text => {
+      const match = text.match(/dataplane namespaces: (\d+)/);
+      assert.exists(match, 'Should show dataplane namespaces count');
+      const count = parseInt(match![1]);
+      assert.isAbove(count, 0, `Dataplane namespaces count should be > 0, got ${count}`);
+    });
+});
+
+Then('user sees {string} cluster badge in namespace panel', (cluster: string) => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-namespace')
+    .should('be.visible')
+    .within(() => {
+      cy.contains(cluster).should('be.visible');
+    });
+});
+
+Then('user sees cluster badge with cluster name in control plane summary', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      const { nodes } = elems(controller);
+
+      const istiodNodes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD);
+      assert.isAbove(istiodNodes.length, 0, 'Should have at least one istiod node');
+
+      const clusterNames = istiodNodes.map(n => (n.getData() as MeshNodeData).cluster);
+
+      cy.get('#target-panel-mesh').should('be.visible');
+      clusterNames.forEach(cluster => {
+        cy.get('#target-panel-mesh').contains(cluster).should('exist');
+      });
+    });
+});
+
+Then('the mesh tab count matches the number of meshes with control planes', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      const { nodes } = elems(controller);
+
+      const controlPlaneNodes = nodes.filter(n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD);
+      const meshNames = new Set(
+        controlPlaneNodes.map(n => {
+          const data = n.getData() as MeshNodeData;
+          return (
+            data.infraData?.config?.standardConfig?.configMap?.mesh?.defaultConfig?.meshId ||
+            data.infraData?.config?.standardConfig?.configMap?.mesh?.trustDomain ||
+            'Istio mesh'
+          );
+        })
+      );
+
+      if (meshNames.size > 1) {
+        cy.getBySel('mesh-tabs').should('exist');
+        cy.getBySel('mesh-tabs').within(() => {
+          cy.contains('button', `Meshes (${meshNames.size})`).should('exist');
+        });
+      }
+    });
+});
+
+When('user selects ambient istiod mesh node', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(
+        n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD && n.getData().isAmbient === true
+      );
+      assert.exists(node, 'An ambient istiod node should exist');
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+When('user selects non-ambient istiod mesh node', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.getReact('MeshPageComponent', { state: { isReady: true } })
+    .should('have.length', 1)
+    .then($graph => {
+      const { state } = $graph[0];
+
+      const controller = state.meshRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+
+      const { nodes } = elems(controller);
+      const node = nodes.find(
+        n => (n.getData() as MeshNodeData).infraType === MeshInfraType.ISTIOD && !n.getData().isAmbient
+      );
+      assert.exists(node, 'A non-ambient istiod node should exist');
+
+      const setSelectedIds = state.meshRefs.setSelectedIds as (values: string[]) => void;
+      setSelectedIds([node!.getId()]);
+    });
+});
+
+Then('user sees ambient badge on the control plane panel', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-control-plane')
+    .should('be.visible')
+    .within(() => {
+      cy.contains('ambient').should('be.visible');
+    });
+});
+
+Then('user does not see ambient badge on the control plane panel', () => {
+  cy.waitForReact();
+  cy.get('#loading_kiali_spinner').should('not.exist');
+  cy.get('#target-panel-control-plane')
+    .should('be.visible')
+    .within(() => {
+      cy.contains('ambient').should('not.exist');
+    });
+});
+
 // Ambient multi-primary mesh step definitions
 
 Then('user sees ztunnel nodes in both clusters', () => {
@@ -564,7 +805,7 @@ Then('user sees ambient data planes in both clusters', () => {
         const data = cp.getData() as MeshNodeData;
         const ambient = data.infraData.filter(n => n.isAmbient);
         // Check for ambient-specific properties or labels
-        assert.exists(ambient, 'Control plane data should exist');
+        assert.isAtLeast(ambient.length, 1, 'An ambient namespace should exist in data plane');
       });
     });
 });
