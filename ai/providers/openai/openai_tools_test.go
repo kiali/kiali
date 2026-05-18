@@ -429,12 +429,13 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListOrGetResources(t *testing.T)
 					"properties": map[string]interface{}{
 						"resourceType": map[string]interface{}{
 							"type":        "string",
-							"description": "The type of resource to query.",
+							"description": "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
 							"enum": []interface{}{
 								"service",
 								"workload",
 								"app",
 								"namespace",
+								"argoapp",
 							},
 						},
 						"namespaces": map[string]interface{}{

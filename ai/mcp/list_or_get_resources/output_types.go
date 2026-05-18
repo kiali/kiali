@@ -188,3 +188,74 @@ type AppDetailResponse struct {
 	Services     []string          `json:"services"`
 	Workloads    []AppWorkloadInfo `json:"workloads"`
 }
+
+// --- ArgoCD Application types ---
+
+type ArgoCDAppSource struct {
+	Path           string `json:"path,omitempty"`
+	RepoURL        string `json:"repoURL"`
+	TargetRevision string `json:"targetRevision,omitempty"`
+}
+
+type ArgoCDAppDestination struct {
+	Namespace string `json:"namespace"`
+	Server    string `json:"server"`
+}
+
+type ArgoCDAppSyncStatus struct {
+	Revision string `json:"revision"`
+	Status   string `json:"status"`
+}
+
+type ArgoCDAppHealthStatus struct {
+	Message string `json:"message,omitempty"`
+	Status  string `json:"status"`
+}
+
+type ArgoCDRevisionHistoryEntry struct {
+	DeployedAt string          `json:"deployedAt,omitempty"`
+	ID         int64           `json:"id"`
+	Revision   string          `json:"revision"`
+	Source     ArgoCDAppSource `json:"source"`
+}
+
+type ArgoCDManagedResource struct {
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+	Status    string `json:"status,omitempty"`
+}
+
+type ArgoCDOperationState struct {
+	FinishedAt string `json:"finishedAt,omitempty"`
+	Message    string `json:"message,omitempty"`
+	Phase      string `json:"phase"`
+}
+
+type ArgoCDAppDetailResponse struct {
+	Cluster         string                       `json:"cluster"`
+	Destination     ArgoCDAppDestination         `json:"destination"`
+	Health          ArgoCDAppHealthStatus        `json:"health"`
+	Name            string                       `json:"name"`
+	Namespace       string                       `json:"namespace"`
+	OperationState  *ArgoCDOperationState        `json:"operationState,omitempty"`
+	Project         string                       `json:"project"`
+	Resources       []ArgoCDManagedResource      `json:"resources"`
+	RevisionHistory []ArgoCDRevisionHistoryEntry `json:"revisionHistory"`
+	Source          ArgoCDAppSource              `json:"source"`
+	SourceType      string                       `json:"sourceType,omitempty"`
+	Sync            ArgoCDAppSyncStatus          `json:"sync"`
+}
+
+type ArgoCDAppListItem struct {
+	Health     string `json:"health"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+	RepoURL    string `json:"repoURL,omitempty"`
+	SyncStatus string `json:"syncStatus"`
+}
+
+type ArgoCDAppListResponse struct {
+	Applications []ArgoCDAppListItem `json:"applications"`
+	Cluster      string              `json:"cluster"`
+}
