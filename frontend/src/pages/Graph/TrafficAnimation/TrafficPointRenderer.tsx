@@ -6,12 +6,13 @@ import { Edge } from '@patternfly/react-topology';
 export abstract class TrafficPointRenderer {
   abstract render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGElement>;
 }
 
-function getMoveAnimation(edge: Edge, percentVisible: number): string {
+export function getMoveAnimation(edge: Edge, percentVisible: number): string {
   const startPoint = edge.getStartPoint();
   const endPoint = edge.getEndPoint();
   const moveAnimation = {};
@@ -25,10 +26,9 @@ function getMoveAnimation(edge: Edge, percentVisible: number): string {
       opacity: 1,
       translate: `${moveX}px ${moveY}px`
     };
-    // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
-      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
-      moveAnimation['100%'] = { display: 'none' };
+      moveAnimation[`${percentVisible}.1%`] = { opacity: 0 };
+      moveAnimation['100%'] = { opacity: 0 };
     }
   } else {
     // a kiali edge can have at most 1 bendpoint, in the middle. see extendedBaseEdge.ts
@@ -42,12 +42,12 @@ function getMoveAnimation(edge: Edge, percentVisible: number): string {
     moveAnimation['0%'] = { opacity: 1, translate: '0' };
     moveAnimation[`${bend}%`] = { opacity: 1, translate: `${moveBendX}px ${moveBendY}px` };
     moveAnimation[`${percentVisible}%`] = {
+      opacity: 1,
       translate: `${moveEndX}px ${moveEndY}px`
     };
-    // this acts like a delay at the end, the animation continues but nothing is visible
     if (percentVisible < 100) {
-      moveAnimation[`${percentVisible}.1%`] = { display: 'none' };
-      moveAnimation['100%'] = { display: 'none' };
+      moveAnimation[`${percentVisible}.1%`] = { opacity: 0 };
+      moveAnimation['100%'] = { opacity: 0 };
     }
   }
   return keyframes(moveAnimation);
@@ -60,6 +60,8 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   readonly percentVisible: number;
   readonly radius: number;
   readonly withOffsets: boolean;
+  private cachedStyleClass: string | undefined;
+  private cachedMoveAnimation: string | undefined;
 
   constructor(
     animationDuration: string,
@@ -79,7 +81,11 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
   }
 
   private getStyle(moveAnimation: string): string {
-    return kialiStyle({
+    if (this.cachedMoveAnimation === moveAnimation && this.cachedStyleClass) {
+      return this.cachedStyleClass;
+    }
+    this.cachedMoveAnimation = moveAnimation;
+    this.cachedStyleClass = kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationIterationCount: 'infinite',
@@ -89,15 +95,16 @@ export class TrafficPointCircleRenderer extends TrafficPointRenderer {
       opacity: 0,
       stroke: this.borderColor
     });
+    return this.cachedStyleClass;
   }
 
   render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGCircleElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
     // If requested, calculate offsets. The offset must be small to avoid more serious
     // calculation that would ensure perpendicular distance from the edge. Instead, we
     // just apply a [-2.5, 2.5] offset to both 'x' and 'y'
@@ -127,6 +134,8 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   readonly borderColor: string;
   readonly percentVisible: number;
   readonly radius: number;
+  private cachedStyleClass: string | undefined;
+  private cachedMoveAnimation: string | undefined;
 
   constructor(
     animationDuration: string,
@@ -144,7 +153,11 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
   }
 
   private getStyle(moveAnimation: string): string {
-    return kialiStyle({
+    if (this.cachedMoveAnimation === moveAnimation && this.cachedStyleClass) {
+      return this.cachedStyleClass;
+    }
+    this.cachedMoveAnimation = moveAnimation;
+    this.cachedStyleClass = kialiStyle({
       animationDuration: this.animationDuration,
       animationFillMode: 'forwards',
       animationIterationCount: 'infinite',
@@ -158,15 +171,16 @@ export class TrafficPointDiamondRenderer extends TrafficPointRenderer {
       transformBox: 'fill-box',
       transformOrigin: 'center'
     });
+    return this.cachedStyleClass;
   }
 
   render(
     edge: Edge,
+    moveAnimation: string,
     animationDelay: string,
     onAnimationEnd?: React.AnimationEventHandler
   ): React.SVGProps<SVGRectElement> {
     const startPoint = edge.getStartPoint();
-    const moveAnimation = getMoveAnimation(edge, this.percentVisible);
 
     // use random # to ensure the key is not repeated, or it can be ignored by the render
     const key = `point-rect-${Math.random()}}`;
