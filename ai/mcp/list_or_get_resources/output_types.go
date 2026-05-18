@@ -164,6 +164,16 @@ type WorkloadDetailResponse struct {
 	Workload           WorkloadInfo      `json:"workload"`
 }
 
+type AppIstioContext struct {
+	IsAmbient          bool   `json:"isAmbient"`
+	NamespaceInjection string `json:"namespaceInjection"`
+}
+
+type AppServiceInfo struct {
+	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
+	Name           string `json:"name"`
+}
+
 type AppWorkloadInfo struct {
 	IstioSidecar   bool   `json:"istioSidecar"`
 	IsAmbient      bool   `json:"isAmbient"`
@@ -174,11 +184,6 @@ type AppWorkloadInfo struct {
 	Version        string `json:"version"`
 }
 
-type AppIstioContext struct {
-	IsAmbient          bool   `json:"isAmbient"`
-	NamespaceInjection string `json:"namespaceInjection"`
-}
-
 type AppDetailResponse struct {
 	App          string            `json:"app"`
 	Cluster      string            `json:"cluster"`
@@ -187,9 +192,4 @@ type AppDetailResponse struct {
 	Namespace    string            `json:"namespace"`
 	Services     []AppServiceInfo  `json:"services"`
 	Workloads    []AppWorkloadInfo `json:"workloads"`
-}
-
-type AppServiceInfo struct {
-	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
-	Name           string `json:"name"`
 }
