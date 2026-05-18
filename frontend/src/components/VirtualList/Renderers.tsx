@@ -234,7 +234,7 @@ export const istioConfig: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const getKioskParamsForListItem = (item: TResource, config: Resource): string | undefined => {
   if (config.name === 'workloads' && 'gvk' in item) {
-    return `type=${encodeURIComponent((item as WorkloadListItem).gvk.Kind)}`;
+    return `type=${(item as WorkloadListItem).gvk.Kind}`;
   }
   if (config.name === 'services' && item['serviceRegistry'] === 'External') {
     return 'type=External';
