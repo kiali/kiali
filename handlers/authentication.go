@@ -176,12 +176,15 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 					RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				}
 			} else {
-				if response.AuthInfo != nil {
-					// Truncated SHA-256 hash (16 hex chars) for log correlation without exposing the full token
-					tokenFingerprint := fmt.Sprintf("%x", sha256.Sum256([]byte(response.AuthInfo.Token)))[:16]
-					log.Infof("Authentication successful for user [%s] [client: %s] [token: %s]", response.Username, r.RemoteAddr, tokenFingerprint)
-				} else {
-					log.Infof("Authentication successful for user [%s] [client: %s]", response.Username, r.RemoteAddr)
+				if conf.Server.AuditLog {
+					event := log.FromRequest(r).Info().
+						Str("user", response.Username).
+						Str("client", r.RemoteAddr)
+					if response.AuthInfo != nil {
+						tokenFingerprint := fmt.Sprintf("%x", sha256.Sum256([]byte(response.AuthInfo.Token)))[:16]
+						event = event.Str("token", tokenFingerprint)
+					}
+					event.Msg("AUDIT: Login successful")
 				}
 				RespondWithJSONIndent(w, http.StatusOK, response)
 			}
@@ -238,10 +241,13 @@ func AuthenticationInfo(conf *config.Config, authController authentication.AuthC
 func Logout(conf *config.Config, authController authentication.AuthController) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if conf.Auth.Strategy == config.AuthStrategyAnonymous {
-			log.Infof("Logout requested [client: %s] (anonymous strategy)", r.RemoteAddr)
+			if conf.Server.AuditLog {
+				log.FromRequest(r).Info().
+					Str("client", r.RemoteAddr).
+					Msg("AUDIT: Logout requested (anonymous strategy)")
+			}
 			RespondWithCode(w, http.StatusNoContent)
 		} else {
-			log.Infof("Logout initiated [client: %s]", r.RemoteAddr)
 			err := authController.TerminateSession(r, w)
 			if err != nil {
 				log.Errorf("Logout failed [client: %s]: %s", r.RemoteAddr, err.Error())
@@ -251,7 +257,11 @@ func Logout(conf *config.Config, authController authentication.AuthController) h
 					RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				}
 			} else {
-				log.Infof("Logout completed [client: %s]", r.RemoteAddr)
+				if conf.Server.AuditLog {
+					log.FromRequest(r).Info().
+						Str("client", r.RemoteAddr).
+						Msg("AUDIT: Logout completed")
+				}
 				RespondWithCode(w, http.StatusNoContent)
 			}
 		}
