@@ -34,7 +34,7 @@ import {
 } from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
 import { DisplaySettings, percentilesOptions, QuerySettings, TracesDisplayOptions } from './TracesDisplayOptions';
-import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
+import { Direction, genStatsKey, getStatsReporters, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
@@ -204,11 +204,13 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       interval: '1h',
       direction: 'inbound',
       avg: false,
-      includeAmbient,
+      reporters: getStatsReporters('inbound', includeAmbient),
       quantiles: percentilesOptions.map(p => p.id).filter(id => id !== 'all')
     };
     const queries: MetricsStatsQuery[] =
-      this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
+      this.props.targetKind === 'service'
+        ? [query]
+        : [query, { ...query, direction: 'outbound', reporters: getStatsReporters('outbound', includeAmbient) }];
     return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
   };
 
@@ -218,7 +220,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     }
     const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
       const map = new Map<string, number>();
-      const key = genStatsKey(q.target, undefined, dir, q.interval);
+      const includeWaypoint = !!q.reporters?.includes('waypoint');
+      const key = genStatsKey(q.target, undefined, dir, q.interval, getStatsReporters(dir, includeWaypoint));
       if (key) {
         const statsForKey = r.stats[key];
         if (statsForKey) {

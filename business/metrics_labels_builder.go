@@ -2,6 +2,7 @@ package business
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/kiali/kiali/config"
@@ -57,6 +58,28 @@ func (lb *MetricsLabelsBuilder) Reporter(name string, includeAmbient bool) *Metr
 		return lb.AddOp("reporter", fmt.Sprintf("%s|%s", name, "waypoint"), "=~")
 	}
 	return lb.Add("reporter", name)
+}
+
+func (lb *MetricsLabelsBuilder) Reporters(reporters []string) *MetricsLabelsBuilder {
+	if len(reporters) == 0 {
+		return lb
+	}
+
+	normalized := make([]string, 0, len(reporters))
+	seen := make(map[string]struct{}, len(reporters))
+	for _, reporter := range reporters {
+		if _, found := seen[reporter]; found {
+			continue
+		}
+		seen[reporter] = struct{}{}
+		normalized = append(normalized, reporter)
+	}
+
+	sort.Strings(normalized)
+	if len(normalized) == 1 {
+		return lb.Add("reporter", normalized[0])
+	}
+	return lb.AddOp("reporter", strings.Join(normalized, "|"), "=~")
 }
 
 func (lb *MetricsLabelsBuilder) SelfReporter() *MetricsLabelsBuilder {

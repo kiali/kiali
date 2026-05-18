@@ -1,6 +1,6 @@
 import { EnvoySpanInfo, JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { MetricsStats } from 'types/Metrics';
-import { genStatsKey, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
+import { genStatsKey, getStatsReporters, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
 import { average } from '../MathUtils';
 import { isWaypointProxySpan } from './TracingHelper';
 
@@ -96,11 +96,11 @@ export const buildQueriesFromSpans = (
       const query: MetricsStatsQuery = {
         avg: true,
         direction: info.direction,
-        includeAmbient: shouldIncludeAmbient,
         interval: '', // placeholder
         peerTarget: statsPerPeer ? info.peer : undefined,
         quantiles: isCompact ? compactStatsQuantiles : statsQuantiles,
         queryTime: queryTime,
+        reporters: getStatsReporters(info.direction, shouldIncludeAmbient),
         target: {
           namespace: item.namespace,
           name: name,
@@ -149,7 +149,8 @@ export const statsToMatrix = (itemStats: StatsWithIntervalIndex[], intervals: st
 export const getSpanStats = (
   item: RichSpanData,
   metricsStats: Map<string, MetricsStats>,
-  isCompact: boolean
+  isCompact: boolean,
+  includeAmbient: boolean
 ): StatsWithIntervalIndex[] => {
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
 
@@ -161,7 +162,13 @@ export const getSpanStats = (
       kind: statsCompareKind,
       cluster: item.cluster
     };
-    const key = genStatsKey(target, statsPerPeer ? info.peer : undefined, info.direction!, interval);
+    const key = genStatsKey(
+      target,
+      statsPerPeer ? info.peer : undefined,
+      info.direction!,
+      interval,
+      getStatsReporters(info.direction!, includeAmbient)
+    );
     if (key) {
       const stats = metricsStats.get(key);
       if (stats) {
@@ -179,7 +186,8 @@ export const getSpanStats = (
 export const reduceMetricsStats = (
   trace: JaegerTrace,
   allStats: Map<string, MetricsStats>,
-  isCompact: boolean
+  isCompact: boolean,
+  includeAmbient: boolean
 ): { isComplete: boolean; matrix: StatsMatrix } => {
   let isComplete = true;
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
@@ -191,7 +199,7 @@ export const reduceMetricsStats = (
   trace.spans
     .filter(s => s.type === 'envoy')
     .forEach(span => {
-      const spanStats = getSpanStats(span, allStats, isCompact);
+      const spanStats = getSpanStats(span, allStats, isCompact, includeAmbient);
       if (spanStats.length > 0) {
         spanStats.forEach(statsPerInterval => {
           statsPerInterval.responseTimes.forEach(stat => {

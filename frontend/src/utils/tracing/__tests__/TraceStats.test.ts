@@ -1,6 +1,6 @@
 import { EnvoySpanInfo, JaegerTrace, Span, RichSpanData } from 'types/TracingInfo';
 import { MetricsStats } from 'types/Metrics';
-import { statsQueryToKey } from 'types/MetricsOptions';
+import { MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
 import { averageSpanDuration, buildQueriesFromSpans, isSimilarTrace, reduceMetricsStats } from '../TraceStats';
 
 const traceBase = {
@@ -136,13 +136,13 @@ describe('TraceStats.reduceMetricsStats', () => {
 
   it('should reduce span matrices with complete stats', () => {
     const metricsStats = new Map<string, MetricsStats>([
-      ['ns:workload:w1::inbound:10m', mockStats(3, 2, 5, 7)],
-      ['ns:workload:w1::inbound:60m', mockStats(2, 2, 6, 10)],
-      ['ns:workload:w2::inbound:10m', mockStats(1, 1, 1, 1)],
-      ['ns:workload:w2::inbound:60m', mockStats(1, 1, 1, 1)]
+      ['ns:workload:w1::inbound:10m:destination', mockStats(3, 2, 5, 7)],
+      ['ns:workload:w1::inbound:60m:destination', mockStats(2, 2, 6, 10)],
+      ['ns:workload:w2::inbound:10m:destination', mockStats(1, 1, 1, 1)],
+      ['ns:workload:w2::inbound:60m:destination', mockStats(1, 1, 1, 1)]
     ]);
 
-    const reduced = reduceMetricsStats(trace, metricsStats, false);
+    const reduced = reduceMetricsStats(trace, metricsStats, false, false);
 
     expect(reduced.isComplete).toBe(true);
     expect(reduced.matrix).toHaveLength(4);
@@ -161,11 +161,11 @@ describe('TraceStats.reduceMetricsStats', () => {
 
   it('should reduce span matrices with incomplete stats', () => {
     const metricsStats = new Map<string, MetricsStats>([
-      ['ns:workload:w1::inbound:10m', mockStats(3, 2, 5, 7)],
-      ['ns:workload:w1::inbound:60m', mockStats(2, 2, 6, 10)]
+      ['ns:workload:w1::inbound:10m:destination', mockStats(3, 2, 5, 7)],
+      ['ns:workload:w1::inbound:60m:destination', mockStats(2, 2, 6, 10)]
     ]);
 
-    const reduced = reduceMetricsStats(trace, metricsStats, false);
+    const reduced = reduceMetricsStats(trace, metricsStats, false, false);
 
     expect(reduced.isComplete).toBe(false);
     expect(reduced.matrix).toHaveLength(4);
@@ -191,14 +191,14 @@ describe('TraceStats.buildQueriesFromSpans', () => {
   it('should build one query per workload and time interval', () => {
     const queries = buildQueriesFromSpans(spans, false);
     expect(queries).toHaveLength(6);
-    expect(queries.every(q => q.includeAmbient === false)).toBe(true);
+    expect(queries.every(q => q.reporters?.join(',') === 'destination')).toBe(true);
     expect(queries.map(q => statsQueryToKey(q))).toEqual([
-      'ns:workload:w1::inbound:10m',
-      'ns:workload:w1::inbound:60m',
-      'ns:workload:w1::inbound:3h',
-      'ns:workload:w2::inbound:10m',
-      'ns:workload:w2::inbound:60m',
-      'ns:workload:w2::inbound:3h'
+      'ns:workload:w1::inbound:10m:destination',
+      'ns:workload:w1::inbound:60m:destination',
+      'ns:workload:w1::inbound:3h:destination',
+      'ns:workload:w2::inbound:10m:destination',
+      'ns:workload:w2::inbound:60m:destination',
+      'ns:workload:w2::inbound:3h:destination'
     ]);
   });
 
@@ -214,6 +214,27 @@ describe('TraceStats.buildQueriesFromSpans', () => {
   it('should include ambient when waypoint spans are present', () => {
     const queries = buildQueriesFromSpans([mockEnvoySpan('op1', 3, 'w1', true)], true);
     expect(queries).toHaveLength(2);
-    expect(queries.every(q => q.includeAmbient === true)).toBe(true);
+    expect(queries.every(q => q.reporters?.join(',') === 'destination,waypoint')).toBe(true);
+  });
+
+  it('should keep mixed reporters queries distinct', () => {
+    const baseQuery: MetricsStatsQuery = {
+      avg: true,
+      direction: 'inbound',
+      interval: '10m',
+      quantiles: ['0.5'],
+      queryTime: 1,
+      reporters: ['destination'],
+      target: {
+        namespace: 'ns',
+        name: 'w1',
+        kind: 'workload'
+      }
+    };
+
+    expect(statsQueryToKey(baseQuery)).toBe('ns:workload:w1::inbound:10m:destination');
+    expect(statsQueryToKey({ ...baseQuery, reporters: ['waypoint', 'destination'] })).toBe(
+      'ns:workload:w1::inbound:10m:destination,waypoint'
+    );
   });
 });

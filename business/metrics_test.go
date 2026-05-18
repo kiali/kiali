@@ -377,27 +377,26 @@ func TestCreateStatsMetricsLabelsBuilder(t *testing.T) {
 		QueryTime: time.Now(),
 	}
 	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
-	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
+	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
-func TestCreateStatsMetricsLabelsBuilderWithoutAmbient(t *testing.T) {
+func TestCreateStatsMetricsLabelsBuilderWithWaypointReporter(t *testing.T) {
 	assert := assert.New(t)
-	includeAmbient := false
 	q := models.MetricsStatsQuery{
 		Target: models.Target{
 			Namespace: "ns3",
 			Name:      "foo",
 			Kind:      "app",
 		},
-		IncludeAmbient: &includeAmbient,
-		Direction:      "inbound",
-		Interval:       "3h",
-		Avg:            true,
-		Quantiles:      []string{"0.90", "0.5"},
-		QueryTime:      time.Now(),
+		Reporters: []string{"destination", "waypoint"},
+		Direction: "inbound",
+		Interval:  "3h",
+		Avg:       true,
+		Quantiles: []string{"0.90", "0.5"},
+		QueryTime: time.Now(),
 	}
 	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
-	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
+	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
 func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
@@ -420,7 +419,7 @@ func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
 		QueryTime: time.Now(),
 	}
 	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
-	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
+	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo",source_workload_namespace="ns4",source_canonical_service="bar"}`, lb.Build())
 }
 
 func TestGetMetricsStats(t *testing.T) {
@@ -438,6 +437,7 @@ func TestGetMetricsStats(t *testing.T) {
 			Name:      "foo",
 			Kind:      "app",
 		},
+		Reporters:    []string{"source", "waypoint"},
 		Direction:    "outbound",
 		Interval:     "30m",
 		RawInterval:  "30m",
@@ -455,6 +455,7 @@ func TestGetMetricsStats(t *testing.T) {
 			Name:      "w1",
 			Kind:      "workload",
 		},
+		Reporters:    []string{"destination", "waypoint"},
 		Direction:    "inbound",
 		Interval:     "3h",
 		RawInterval:  "3h",
@@ -479,8 +480,8 @@ func TestGetMetricsStats(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(stats, 2)
 	fmt.Printf("%v\n", stats)
-	assert.Equal([]models.Stat{{Name: "0.95", Value: 8.0}, {Name: "avg", Value: 5.0}}, stats["ns1:app:foo::outbound:30m"].ResponseTimes)
-	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h"].ResponseTimes)
+	assert.Equal([]models.Stat{{Name: "0.95", Value: 8.0}, {Name: "avg", Value: 5.0}}, stats["ns1:app:foo::outbound:30m:source,waypoint"].ResponseTimes)
+	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h:destination,waypoint"].ResponseTimes)
 }
 
 func TestGetZtunnelMetrics(t *testing.T) {

@@ -75,9 +75,10 @@ export const renderMetricsComparison = (
   item: RichSpanData,
   isCompact: boolean,
   metricsStats: Map<string, MetricsStats>,
+  includeAmbient: boolean,
   load: () => void
 ): React.ReactNode => {
-  const itemStats = getSpanStats(item, metricsStats, isCompact);
+  const itemStats = getSpanStats(item, metricsStats, isCompact, includeAmbient);
   const key = `${item.spanID}-metcomp`;
 
   if (itemStats.length > 0) {

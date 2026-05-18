@@ -172,7 +172,7 @@ export class TracingScatterComponent extends React.Component<TracingScatterProps
             onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
-            labelComponent={<TraceTooltip />}
+            labelComponent={<TraceTooltip includeAmbient={this.props.includeAmbient} />}
             pointer={true}
           />
         </div>

@@ -28,7 +28,7 @@ import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
-import { formatDuration, sameSpans } from 'utils/tracing/TracingHelper';
+import { formatDuration, isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
 import { TracingUrlProvider } from 'types/Tracing';
 import _ from 'lodash';
 
@@ -43,17 +43,18 @@ type StateProps = {
   trace?: JaegerTrace;
 };
 
-type Props = ReduxProps &
-  StateProps & {
-    cluster?: string;
-    includeAmbient?: boolean;
-    namespace: string;
-    otherTraces: JaegerTrace[];
-    provider?: string;
-    target: string;
-    targetKind: TargetKind;
-    tracingURLProvider?: TracingUrlProvider;
-  };
+type OwnProps = {
+  cluster?: string;
+  includeAmbient?: boolean;
+  namespace: string;
+  otherTraces: JaegerTrace[];
+  provider?: string;
+  target: string;
+  targetKind: TargetKind;
+  tracingURLProvider?: TracingUrlProvider;
+};
+
+type Props = ReduxProps & StateProps & OwnProps;
 
 interface State {}
 
@@ -268,9 +269,16 @@ class TraceDetailsComponent extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: KialiAppState): StateProps => {
+const mapStateToProps = (state: KialiAppState, props: OwnProps): StateProps => {
   if (state.tracingState.selectedTrace) {
-    const { matrix, isComplete } = reduceMetricsStats(state.tracingState.selectedTrace, state.metricsStats.data, false);
+    const includeAmbient =
+      !!props.includeAmbient || state.tracingState.selectedTrace.spans.some(span => isWaypointProxySpan(span));
+    const { matrix, isComplete } = reduceMetricsStats(
+      state.tracingState.selectedTrace,
+      state.metricsStats.data,
+      false,
+      includeAmbient
+    );
 
     return {
       trace: state.tracingState.selectedTrace,
