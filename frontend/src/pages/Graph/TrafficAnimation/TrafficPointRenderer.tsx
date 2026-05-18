@@ -42,6 +42,7 @@ export function getMoveAnimation(edge: Edge, percentVisible: number): string {
     moveAnimation['0%'] = { opacity: 1, translate: '0' };
     moveAnimation[`${bend}%`] = { opacity: 1, translate: `${moveBendX}px ${moveBendY}px` };
     moveAnimation[`${percentVisible}%`] = {
+      opacity: 1,
       translate: `${moveEndX}px ${moveEndY}px`
     };
     if (percentVisible < 100) {
