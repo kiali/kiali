@@ -8,8 +8,10 @@ allowed-tools: Bash(yarn *)
 Run Gherkin linting in the frontend directory:
 
 ```bash
-cd /home/scsh/work/github.com/scriptingshrimp/kiali/frontend && yarn lint:gherkin
+cd frontend && yarn lint:gherkin
 ```
+
+Run from the Kiali repository root (the directory that contains `frontend/`).
 
 The linting tool will validate all .feature files under `cypress/integration/featureFiles/` and report any syntax or formatting issues.
 
