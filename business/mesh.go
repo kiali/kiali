@@ -108,3 +108,19 @@ func ResolveClusterIdentityDomain(mesh *models.Mesh, cluster, configured string)
 	}
 	return config.ResolveIdentityDomain(configured, trustDomain)
 }
+
+// ResolveClusterTrustDomainAliases extracts the trustDomainAliases for a
+// specific cluster from the mesh. Returns nil when the mesh, cluster, or
+// MeshConfig is not available or when no aliases are configured.
+func ResolveClusterTrustDomainAliases(mesh *models.Mesh, cluster string) []string {
+	if mesh == nil {
+		return nil
+	}
+	for i := range mesh.ControlPlanes {
+		cp := &mesh.ControlPlanes[i]
+		if cp.Cluster != nil && cp.Cluster.Name == cluster && cp.MeshConfig != nil {
+			return cp.MeshConfig.TrustDomainAliases
+		}
+	}
+	return nil
+}

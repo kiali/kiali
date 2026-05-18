@@ -83,6 +83,7 @@ func TestNotPresentServiceAccount(t *testing.T) {
 	vals, valid := PrincipalsChecker{
 		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong", "test"}),
 		Cluster:             config.DefaultClusterID,
+		KnownTrustDomains:   []string{"cluster.local"},
 		ServiceAccounts:     map[string][]string{config.DefaultClusterID: {"cluster.local/ns/bookinfo/sa/default", "cluster.local/ns/bookinfo/sa/test"}},
 	}.Check()
 
@@ -121,6 +122,7 @@ func TestEmptyServiceAccount(t *testing.T) {
 
 	vals, valid := PrincipalsChecker{
 		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/wrong"}),
+		KnownTrustDomains:   []string{"cluster.local"},
 		ServiceAccounts:     map[string][]string{},
 	}.Check()
 
@@ -131,6 +133,66 @@ func TestEmptyServiceAccount(t *testing.T) {
 	assert.Equal(models.ErrorSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[0]))
 	assert.Equal("spec/rules[0]/from[0]/source/principals[0]", vals[0].Path)
+}
+
+func TestPrincipalWithTrustDomainAlias(t *testing.T) {
+	assert := assert.New(t)
+
+	// SA list includes entries for both the primary trust domain and an alias,
+	// simulating what getServiceAccounts produces when trustDomainAliases are set.
+	validations, valid := PrincipalsChecker{
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{
+			"central.example.com/ns/pokemon-trainers/sa/ash",
+			"north.example.com/ns/pokemon-trainers/sa/red",
+		}),
+		Cluster: config.DefaultClusterID,
+		ServiceAccounts: map[string][]string{config.DefaultClusterID: {
+			"central.example.com/ns/pokemon-trainers/sa/ash",
+			"north.example.com/ns/pokemon-trainers/sa/ash",
+			"central.example.com/ns/pokemon-trainers/sa/red",
+			"north.example.com/ns/pokemon-trainers/sa/red",
+		}},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestPrincipalWithForeignTrustDomain(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := PrincipalsChecker{
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"unknown.example.com/ns/bookinfo/sa/default"}),
+		Cluster:             config.DefaultClusterID,
+		KnownTrustDomains:   []string{"cluster.local", "central.example.com"},
+		ServiceAccounts: map[string][]string{config.DefaultClusterID: {
+			"cluster.local/ns/bookinfo/sa/default",
+			"central.example.com/ns/bookinfo/sa/default",
+		}},
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalforeign", vals[0]))
+}
+
+func TestPrincipalWithKnownDomainButMissingSA(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := PrincipalsChecker{
+		AuthorizationPolicy: authPolicyWithPrincipals([]string{"cluster.local/ns/bookinfo/sa/nonexistent"}),
+		Cluster:             config.DefaultClusterID,
+		KnownTrustDomains:   []string{"cluster.local", "central.example.com"},
+		ServiceAccounts: map[string][]string{config.DefaultClusterID: {
+			"cluster.local/ns/bookinfo/sa/default",
+		}},
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.source.principalnotfound", vals[0]))
 }
 
 func authPolicyWithPrincipals(principalsList []string) *security_v1.AuthorizationPolicy {

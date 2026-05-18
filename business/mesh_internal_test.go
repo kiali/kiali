@@ -87,3 +87,77 @@ func TestResolveClusterIdentityDomain(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveClusterTrustDomainAliases(t *testing.T) {
+	cases := map[string]struct {
+		mesh     *models.Mesh
+		cluster  string
+		expected []string
+	}{
+		"nil mesh returns nil": {
+			mesh:     nil,
+			cluster:  "mycluster",
+			expected: nil,
+		},
+		"no matching cluster returns nil": {
+			mesh: &models.Mesh{
+				ControlPlanes: []models.ControlPlane{{
+					Cluster: &models.KubeCluster{Name: "other"},
+					MeshConfig: &models.MeshConfig{
+						MeshConfig: &istiov1alpha1.MeshConfig{
+							TrustDomainAliases: []string{"alias.example.com"},
+						},
+					},
+				}},
+			},
+			cluster:  "mycluster",
+			expected: nil,
+		},
+		"matching cluster with nil MeshConfig returns nil": {
+			mesh: &models.Mesh{
+				ControlPlanes: []models.ControlPlane{{
+					Cluster:    &models.KubeCluster{Name: "mycluster"},
+					MeshConfig: nil,
+				}},
+			},
+			cluster:  "mycluster",
+			expected: nil,
+		},
+		"matching cluster with no aliases returns nil": {
+			mesh: &models.Mesh{
+				ControlPlanes: []models.ControlPlane{{
+					Cluster: &models.KubeCluster{Name: "mycluster"},
+					MeshConfig: &models.MeshConfig{
+						MeshConfig: &istiov1alpha1.MeshConfig{
+							TrustDomain: "central.example.com",
+						},
+					},
+				}},
+			},
+			cluster:  "mycluster",
+			expected: nil,
+		},
+		"matching cluster returns aliases": {
+			mesh: &models.Mesh{
+				ControlPlanes: []models.ControlPlane{{
+					Cluster: &models.KubeCluster{Name: "mycluster"},
+					MeshConfig: &models.MeshConfig{
+						MeshConfig: &istiov1alpha1.MeshConfig{
+							TrustDomain:        "central.example.com",
+							TrustDomainAliases: []string{"north.example.com", "south.example.com"},
+						},
+					},
+				}},
+			},
+			cluster:  "mycluster",
+			expected: []string{"north.example.com", "south.example.com"},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			got := ResolveClusterTrustDomainAliases(tc.mesh, tc.cluster)
+			assert.Equal(t, tc.expected, got)
+		})
+	}
+}

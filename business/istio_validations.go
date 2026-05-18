@@ -163,12 +163,13 @@ func (in ValidationChangeMap) update(key, value string, report bool) bool {
 // may otherwise need to be recalculated.
 type validationInfo struct {
 	// cross-cluster information
-	clusters []string                               // all clusters being validated
-	conf     *config.Config                         // kiali config
-	mesh     *models.Mesh                           // control plane info
-	nsMap    map[string][]models.Namespace          // cluster => namespaces
-	saMap    map[string][]string                    // cluster => serviceAccounts
-	wlMap    map[string]map[string]models.Workloads // cluster => namespace => Workloads, all workloads
+	clusters          []string                               // all clusters being validated
+	conf              *config.Config                         // kiali config
+	knownTrustDomains []string                               // all trust domains + aliases across clusters
+	mesh              *models.Mesh                           // control plane info
+	nsMap             map[string][]models.Namespace          // cluster => namespaces
+	saMap             map[string][]string                    // cluster => serviceAccounts
+	wlMap             map[string]map[string]models.Workloads // cluster => namespace => Workloads, all workloads
 
 	// clusterInfo is reset for each cluster being validated
 	clusterInfo *validationClusterInfo
@@ -230,8 +231,12 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		}
 		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
 
-		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], ResolveClusterIdentityDomain(mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain))
+		identityDomain := ResolveClusterIdentityDomain(mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
+		aliases := ResolveClusterTrustDomainAliases(mesh, cluster)
+		vInfo.saMap[cluster] = in.getServiceAccounts(namespaces, vInfo.wlMap[cluster], identityDomain, aliases)
 	}
+
+	vInfo.knownTrustDomains = collectKnownTrustDomains(mesh, clusters, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 
 	// if changeDetection is enabled then loop through the namespaces and workloads, looking for a change
 	if changeMap != nil {
@@ -535,7 +540,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 	identityDomain := vInfo.clusterInfo.identityDomain
 
 	return []checkers.ObjectChecker{
-		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, MtlsDetails: *mtlsDetails, Namespaces: nsNames, PolicyAllowAny: policyAllowAny, ServiceAccounts: vInfo.saMap, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace},
+		checkers.AuthorizationPolicyChecker{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, KnownTrustDomains: vInfo.knownTrustDomains, KubeServiceHosts: kubeServiceHosts, MtlsDetails: *mtlsDetails, Namespaces: nsNames, PolicyAllowAny: policyAllowAny, ServiceAccounts: vInfo.saMap, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.DestinationRulesChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, MTLSDetails: *mtlsDetails, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries},
 		checkers.GatewayChecker{Cluster: cluster, Conf: conf, Gateways: istioConfigList.Gateways, IsGatewayToNamespace: gatewayToNamespace, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.K8sGatewayChecker{Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster), K8sGateways: istioConfigList.K8sGateways},
@@ -710,11 +715,20 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		referenceChecker = references.SidecarReferences{Conf: conf, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.AuthorizationPolicies:
 		authPoliciesChecker := checkers.AuthorizationPolicyChecker{
+			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
+			Cluster:               cluster,
 			Conf:                  conf,
 			IdentityDomain:        identityDomain,
-			AuthorizationPolicies: rbacDetails.AuthorizationPolicies,
-			Cluster:               cluster, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, ServiceAccounts: vInfo.saMap,
-			WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: policyAllowAny,
+			KnownTrustDomains:     vInfo.knownTrustDomains,
+			KubeServiceHosts:      kubeServiceHosts,
+			MtlsDetails:           *mtlsDetails,
+			Namespaces:            nsNames,
+			PolicyAllowAny:        policyAllowAny,
+			ServiceAccounts:       vInfo.saMap,
+			ServiceEntries:        istioConfigList.ServiceEntries,
+			Services:              services,
+			VirtualServices:       istioConfigList.VirtualServices,
+			WorkloadsPerNamespace: workloadsPerNamespace,
 		}
 		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
 		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, identityDomain, cluster, rootNamespaces, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
@@ -826,22 +840,52 @@ func runObjectReferenceChecker(ctx context.Context, conf *config.Config, referen
 	return referenceChecker.References()
 }
 
+// collectKnownTrustDomains gathers all trust domains and aliases across every
+// cluster so that the principals checker can distinguish between principals
+// referencing a known-but-missing SA (KIA0106) and those referencing a
+// completely foreign trust domain that Kiali cannot validate (KIA0108).
+func collectKnownTrustDomains(mesh *models.Mesh, clusters []string, configuredIdentityDomain string) []string {
+	seen := map[string]struct{}{}
+	for _, cluster := range clusters {
+		idDomain := ResolveClusterIdentityDomain(mesh, cluster, configuredIdentityDomain)
+		td := strings.TrimPrefix(idDomain, "svc.")
+		seen[td] = struct{}{}
+		for _, alias := range ResolveClusterTrustDomainAliases(mesh, cluster) {
+			seen[alias] = struct{}{}
+		}
+	}
+	return slices.Collect(maps.Keys(seen))
+}
+
 // getServiceAccounts gets SA information given the namespaces and workloads for a given cluster.
+// trustDomainAliases are additional trust domains (from MeshConfig.TrustDomainAliases) that
+// Istio treats as equivalent to the primary trust domain. Entries are generated for both the
+// primary domain and each alias so that AuthorizationPolicy principals referencing any of them
+// are validated correctly.
 func (in *IstioValidationsService) getServiceAccounts(
 	namespaces []models.Namespace,
 	workloadsMap map[string]models.Workloads,
 	identityDomain string,
+	trustDomainAliases []string,
 ) []string {
 	serviceAccounts := map[string]bool{}
 	istioDomain := strings.TrimPrefix(identityDomain, "svc.")
 
+	domains := []string{istioDomain}
+	for _, alias := range trustDomainAliases {
+		if alias != istioDomain {
+			domains = append(domains, alias)
+		}
+	}
+
 	for _, ns := range namespaces {
-		saFullNameNs := fmt.Sprintf("%s/ns/%s/sa/", istioDomain, ns.Name)
 		workloads := workloadsMap[ns.Name]
 		for _, w := range workloads {
 			for _, sAccountName := range w.ServiceAccountNames {
-				saFullName := saFullNameNs + sAccountName
-				serviceAccounts[saFullName] = true
+				for _, domain := range domains {
+					saFullName := fmt.Sprintf("%s/ns/%s/sa/%s", domain, ns.Name, sAccountName)
+					serviceAccounts[saFullName] = true
+				}
 			}
 		}
 	}
