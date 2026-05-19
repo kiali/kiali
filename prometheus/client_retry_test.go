@@ -74,16 +74,10 @@ func TestNewClientWithRetryContextCancelled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
 
 	conf := newTestConf(t, server.URL)
-
-	// Cancel after a short delay so the retry loop gets a chance to run at
-	// least once before being interrupted.
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		cancel()
-	}()
 
 	client, err := newClientWithRetry(ctx, conf, "", shortRetry)
 	assert.Error(t, err)
@@ -158,11 +152,8 @@ func TestNewClientWithRetryConstructionFailure(t *testing.T) {
 	// which means NewClient always returns an error regardless of connectivity.
 	conf := newTestConf(t, "http://\x00invalid")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		cancel()
-	}()
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
 
 	client, err := newClientWithRetry(ctx, conf, "", shortRetry)
 	assert.Error(t, err, "should return context error after retries are exhausted")
