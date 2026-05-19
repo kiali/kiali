@@ -2,9 +2,9 @@
   "version": "1.0",
   "branch": "claude-scribe-docs",
   "last_active_sha": "5b5a2d914858e50b0072a7b3fbf6c92e564908c1",
-  "last_active_time": "2026-05-18T00:00:00Z",
+  "last_active_time": "2026-05-19T00:00:00Z",
   "current_phase": "focus-enrich",
-  "total_files_read": 275,
+  "total_files_read": 281,
   "topics": {
     "backend-architecture": {
       "phase_status": "drifted",
@@ -22,9 +22,10 @@
       "completeness": 85
     },
     "graph-engine": {
-      "phase_status": "current",
-      "files_read": 24,
-      "completeness": 83
+      "phase_status": "complete",
+      "files_read": 30,
+      "completeness": 83,
+      "review": "pending"
     },
     "observability-and-ai": {
       "phase_status": "complete",

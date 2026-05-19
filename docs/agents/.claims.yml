@@ -331,3 +331,74 @@ frontend-architecture-auth:
       origin: inferred
 _meta:
   frontend-architecture_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+graph-engine:
+  caching:
+  - id: 1
+    claim: "Only namespace graphs (GraphNamespaces) are cached; node-detail graphs (GraphNode) are always generated fresh"
+    file: "handlers/graph.go"
+    approx_line: 81
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "Graph cache is keyed per browser session (SessionID from session cookie) rather than per graph options, to prevent cross-user RBAC data leakage"
+    file: "graph/graph_cache.go"
+    approx_line: 73
+    provenance:
+      origin: user
+      context: "Per-session keying is a security choice — different users have different RBAC scopes, so cross-user cache sharing would risk leaking data"
+      recorded: "2026-05-19"
+  - id: 3
+    claim: "RefreshJob fires the first refresh at interval/2, then switches to the full interval — a heuristic approximation to reduce worst-case staleness, not a hard guarantee"
+    file: "graph/refresh_job.go"
+    approx_line: 63
+    provenance:
+      origin: user
+      context: "The interval/2 offset is a good-enough approximation to reduce worst-case staleness rather than a formal staleness-bound guarantee"
+      recorded: "2026-05-19"
+  - id: 4
+    claim: "A RefreshJob panic evicts the session's graph and stops the job; the next user request becomes a cache miss — because serving a stale graph after a panic would be misleading"
+    file: "graph/refresh_job.go"
+    approx_line: 238
+    provenance:
+      origin: user
+      context: "Evict-on-panic is intentional — a panic means the refresh cycle is broken and a stale graph would be misleading; fresh regeneration on next request is preferred"
+      recorded: "2026-05-19"
+  - id: 5
+    claim: "Historical queries (explicit queryTime param, QueryTimeProvided=true) bypass the cache and generate a fresh graph without disrupting the running background refresh job"
+    file: "handlers/graph.go"
+    approx_line: 170
+    provenance:
+      origin: inferred
+  - id: 6
+    claim: "RefreshInterval <= 0 triggers cache bypass mode: stops the refresh job, evicts the cached graph, generates fresh graph without caching"
+    file: "handlers/graph.go"
+    approx_line: 179
+    provenance:
+      origin: inferred
+  - id: 7
+    claim: "graphOptionsMatch deliberately ignores QueryTime when comparing cached vs requested options — background refresh handles time progression"
+    file: "handlers/graph.go"
+    approx_line: 343
+    provenance:
+      origin: inferred
+  - id: 8
+    claim: "Memory estimation: (nodes × 3KB) + (edges × 1KB) × 1.1 overhead; calculated once on first SetSessionGraph and reused on updates"
+    file: "graph/graph_cache.go"
+    approx_line: 286
+    provenance:
+      origin: inferred
+  - id: 9
+    claim: "LRU eviction: when new graph would exceed MaxCacheMemoryMB, oldest-LastAccessed sessions are evicted until enough memory is freed; tracked by kiali_graph_cache_evictions_total Prometheus counter"
+    file: "graph/graph_cache.go"
+    approx_line: 237
+    provenance:
+      origin: inferred
+  - id: 10
+    claim: "getSessionGraphInternal reads the cache without updating LastAccessed — used by RefreshJob to avoid artificially extending session lifetime during inactivity checks"
+    file: "graph/graph_cache.go"
+    approx_line: 120
+    provenance:
+      origin: inferred
+_meta:
+  graph-engine_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"

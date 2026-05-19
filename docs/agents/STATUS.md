@@ -5,7 +5,7 @@
 | Backend Architecture | 60 | 0 | 88 | — | pending (drifted) | [backend-architecture.md](backend-architecture.md) |
 | Business Logic Layer | 100 | 13 | 80 | — | pending (review needed) | [business-logic.md](business-logic.md) |
 | Kubernetes Client Layer | 100 | 0 | 85 | — | pending (review needed) | [kubernetes-client.md](kubernetes-client.md) |
-| Graph Engine | 60 | 0 | 83 | — | current | [graph-engine.md](graph-engine.md) |
+| Graph Engine | 100 | 9 | 83 | — | pending (review needed) | [graph-engine.md](graph-engine.md) |
 | Observability Integrations and AI | 92 | 0 | 90 | — | PASS_WITH_ANNOTATIONS | [observability-and-ai.md](observability-and-ai.md) |
 | Authentication and Security | 100 | 18 | 86 | — | pending (review needed) | [auth-and-security.md](auth-and-security.md) |
 | Frontend Architecture | 100 | 9 | 91 | — | pending (review needed) | [frontend-architecture.md](frontend-architecture.md) |
@@ -27,4 +27,4 @@ No active stale flags.
 None detected across topics.
 
 ---
-*Updated by codebase-scribe — 2026-05-18. Scan SHA: 5b5a2d914858e50b0072a7b3fbf6c92e564908c1. Focus run: auth-and-security and frontend-architecture enriched with authentication strategy deep-dive. 1 topic remains drifted (backend-architecture). Run `/codebase-scribe` again to continue.*
+*Updated by codebase-scribe — 2026-05-19. Scan SHA: 5b5a2d914858e50b0072a7b3fbf6c92e564908c1. Focus run: graph-engine caching section enriched with background refresh mechanics. 1 topic remains drifted (backend-architecture). Run `/codebase-scribe` again to continue.*

@@ -3,9 +3,9 @@ scribe:
   title: "Graph Engine"
   description: "Traffic graph computation, appenders, telemetry pipelines, graph caching"
   watch_paths: [graph/, prometheus/]
-  scan: "HEAD"
-  freshness: 60
-  human_input: 0
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
+  human_input: 9
   completeness: 83
   inferred_sections:
     - {id: "overview", heading: "Overview"}
@@ -16,7 +16,6 @@ scribe:
     - {id: "prometheus-queries", heading: "Prometheus Queries"}
     - {id: "appender-pipeline", heading: "Appender Pipeline"}
     - {id: "appenders-reference", heading: "Appenders Reference"}
-    - {id: "caching", heading: "Graph Caching and Background Refresh"}
     - {id: "api", heading: "Graph API Entry Point"}
     - {id: "prometheus-client", heading: "Prometheus Client"}
   stale_flags: []
@@ -336,60 +335,67 @@ Callers can request a subset of appenders via the `appenders` query parameter (c
 
 ## Graph Caching and Background Refresh
 
-### `GraphCache` (`graph/graph_cache.go`)
+**Only namespace graphs are cached.** Node-detail graphs (`GraphNode`) are always generated fresh. Namespace graphs are cached **per browser session** — keyed by the session cookie value (`SessionID`) extracted from each request. The per-session (not per-options) key is a deliberate security choice: different users have different RBAC scopes, so cross-user cache sharing would risk leaking data from one user's namespace view into another's. Multiple tabs in the same browser share one session and one cached graph. Different browsers or incognito windows have separate sessions.
 
-```go
-type GraphCache interface {
-    ActiveSessions() int
-    Clear()
-    Config() *GraphCacheConfig
-    Enabled() bool
-    Evict(sessionID string)
-    GetGraphGenerator() GraphGenerator
-    GetSessionGraph(sessionID string) (*CachedGraph, bool)
-    SetGraphGenerator(generator GraphGenerator)
-    SetSessionGraph(sessionID string, cached *CachedGraph) error
-    TotalMemoryMB() float64
-}
-```
-
-**Only namespace graphs are cached** — node-detail graphs (`GraphNode`) are explicitly not cached and always generated fresh. Namespace graphs are cached **per browser session** (keyed by the session cookie value extracted from each request). Multiple tabs in the same browser share one session and one cached graph. Different browsers or incognito windows have separate sessions.
-
-### `CachedGraph`
-
-```go
-type CachedGraph struct {
-    LastAccessed    time.Time
-    Options         Options
-    RefreshInterval time.Duration  // user's requested refresh interval
-    Timestamp       time.Time      // when the graph was generated
-    TrafficMap      TrafficMap
-    estimatedMB     float64        // estimated memory in MB
-}
-```
+Graph caching is enabled by default (`kiali_internal.graph_cache.enabled: true`) and configured under the `kiali_internal.graph_cache` section (a deliberately obscure path — this is an internal tuning knob, not a user-facing setting). Defaults: `refresh_interval: "60s"`, `inactivity_timeout: "10m"`, `max_cache_memory_mb: 1000`.
 
 ### `GraphCacheConfig`
 
-| Field | Purpose |
-|---|---|
-| `Enabled` | Whether graph caching is active |
-| `InactivityTimeout` | How long to keep a cached graph for an inactive session |
-| `MaxCacheMemoryMB` | Memory cap across all cached sessions |
-| `RefreshInterval` | Default refresh interval |
+| Field | Type | Default | Purpose |
+|---|---|---|---|
+| `Enabled` | bool | true | Enable/disable graph caching globally |
+| `RefreshInterval` | string (duration) | `"60s"` | Background refresh period |
+| `InactivityTimeout` | string (duration) | `"10m"` | Evict session graphs idle longer than this |
+| `MaxCacheMemoryMB` | int | 1000 | Memory cap across all cached sessions |
 
-### Background refresh via `RefreshJob` (`graph/refresh_job.go`)
+### `GraphCache` interface (`graph/graph_cache.go`)
 
-When a session's graph is first cached (or its refresh interval changes), a `RefreshJob` goroutine is started. The job:
+`GraphCacheImpl` is the concrete type created by `NewGraphCache(ctx, config)` in `router.go`. Its `sessionGraphs map[string]*CachedGraph` is the in-memory store, protected by a `sync.RWMutex`.
 
-1. Waits for the requested `RefreshInterval` using a `time.Ticker`.
-2. Calls the injected `GraphGenerator` function to regenerate the graph with a moving query time window.
-3. Updates `SetSessionGraph` with the new `CachedGraph`.
+`GetSessionGraph` updates `LastAccessed` on every read. The internal method `getSessionGraphInternal` reads without updating `LastAccessed` — used by the `RefreshJob` so that background checks don't artificially extend session lifetimes.
 
-The `GraphGenerator` type is `func(ctx context.Context, options Options) (TrafficMap, error)` — injected via `SetGraphGenerator` so the cache has no direct dependency on the API layer.
+Memory estimation: `EstimateGraphMemory(trafficMap)` computes `(nodes × 3 KB) + (edges × 1 KB) × 1.1` overhead. The estimate is calculated once on first `SetSessionGraph` and reused on subsequent updates — on the assumption that graph size is stable between refreshes.
 
-Cache options comparison (`GraphOptionsMatch`) is used to determine whether a new request's options fundamentally differ from the cached graph (e.g. different namespaces, graph type, or rate settings), in which case the cache is invalidated and a fresh graph is generated.
+Memory enforcement: before storing a new graph, `checkMemoryLimits` evicts the least-recently-used sessions (`evictLRU`) until the projected total falls below `MaxCacheMemoryMB`. Evictions are tracked by the `kiali_graph_cache_evictions_total` Prometheus counter (cache hits and misses are tracked by `kiali_graph_cache_hits_total` and `kiali_graph_cache_misses_total`).
 
-If `queryTime` is explicitly provided in the request (historical query), the cache is bypassed (`QueryTimeProvided` flag).
+### Request flow (`handlers/graph.go:graphNamespacesWithCache`)
+
+Every `GraphNamespaces` request passes through `graphNamespacesWithCache`:
+
+1. **Cache disabled or no SessionID** → call `api.GraphNamespaces` directly (no caching).
+2. **Historical query** (`QueryTimeProvided = true`, explicit `queryTime` param) → bypass cache, generate fresh graph, leave any existing cache/job intact. This allows graph replay without disrupting the live background refresh.
+3. **Client bypass** (`RefreshInterval <= 0`) → stop the session's refresh job, evict the cached graph, generate fresh graph. Used when the user turns off auto-refresh in the UI.
+4. **Cache hit + options match** → return the cached `TrafficMap` converted to config format immediately. If the requested `RefreshInterval` has changed, call `job.UpdateInterval(newInterval)` to adjust the background ticker without interrupting the running job.
+5. **Cache miss or options mismatch** → generate graph via `api.GraphNamespaces`, store in cache, start a new `RefreshJob` for the session.
+
+`graphOptionsMatch` compares namespaces, duration, graph type, inject-service-nodes, idle-edges, boxBy, appenders, and rate settings. It deliberately **ignores `QueryTime`** — the background refresh handles time progression automatically.
+
+### `RefreshJob` (`graph/refresh_job.go`)
+
+Each session gets one `RefreshJob` goroutine, managed by a `RefreshJobManager` (one per server, created in `routing/router.go`). The job lifecycle:
+
+**Start pattern (interval/2 offset):**
+```
+NewRefreshJob → go job.Start()
+  |-- wait interval/2 --> fire first refresh
+  |-- create time.NewTicker(interval) --> fire subsequent refreshes
+```
+
+The first refresh fires at `interval/2` rather than `interval`. This reduces worst-case staleness when a user first loads the graph: on average the cached data will be at most `interval/2` old rather than `interval` old. This is a heuristic approximation, not a hard guarantee.
+
+**Refresh cycle (`refresh` method):**
+1. `getSessionGraphInternal` — checks the session's graph exists without touching `LastAccessed`.
+2. Inactivity check — if `time.Since(LastAccessed) > InactivityTimeout`, evict and stop.
+3. Update `Options.QueryTime` to `time.Now()` in a copy — this is the **moving time window** that keeps the cached graph current.
+4. Call `graphGenerator(ctx, refreshedOptions)` — the `GraphGenerator` function (type `func(ctx, Options) (TrafficMap, error)`) injected at cache-miss time.
+5. On success: call `SetSessionGraph` with the fresh `TrafficMap`, preserving the original `LastAccessed` timestamp.
+6. On error: log and return — the stale graph remains in cache. The job will retry on the next tick.
+
+**Panic recovery:** If `graphGenerator` panics, the deferred recovery logs the stack trace, evicts the session graph, and calls `Stop()`. A panic means the refresh cycle is broken, and serving a stale graph would be misleading — the next user request becomes a cache miss and regenerates from scratch.
+
+**Interval changes:** `UpdateInterval(newInterval)` cancels any pending ticker, starts a goroutine that waits `newInterval/2` then fires a refresh, then sends a new `time.Ticker` to the `Start` loop via `resetChan`. A context (`updateIntervalCancel`) guards against concurrent `UpdateInterval` calls racing each other.
+
+**Stopping:** `Stop()` closes `stopChan` and cancels the job's context, which unblocks the `select` in `Start`. The `RefreshJobManager.StopAll()` is called on server shutdown.
 
 ## Graph API Entry Point
 
