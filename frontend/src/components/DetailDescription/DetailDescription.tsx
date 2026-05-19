@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AppWorkload, ServiceItem } from '../../types/App';
+import { AppWorkload } from '../../types/App';
 import { Popover, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -18,7 +18,7 @@ type Props = {
   cluster?: string;
   isWaypoint?: boolean;
   namespace: string;
-  services?: ServiceItem[];
+  services?: string[];
   waypointWorkloads?: WorkloadInfo[];
   workloads?: AppWorkload[];
 };
@@ -84,25 +84,20 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     );
   };
 
-  const renderServiceItem = (namespace: string, service: ServiceItem): React.ReactNode => {
-    let href = `/namespaces/${namespace}/services/${service.name}`;
+  const renderServiceItem = (namespace: string, serviceName: string): React.ReactNode => {
+    let href = `/namespaces/${namespace}/services/${serviceName}`;
 
     if (props.cluster && isMultiCluster) {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
-    const badge = service.isServiceEntry ? PFBadges.ExternalService : PFBadges.Service;
-    const kioskParams = service.isServiceEntry ? 'type=External' : undefined;
-
     return (
-      <li key={`Service_${service.name}`} className={itemStyle}>
+      <li key={`Service_${serviceName}`} className={itemStyle}>
         <div className={iconStyle}>
-          <PFBadge badge={badge} position={TooltipPosition.top} />
+          <PFBadge badge={PFBadges.Service} position={TooltipPosition.top} />
         </div>
 
-        <KialiLink to={href} kioskParams={kioskParams}>
-          {service.name}
-        </KialiLink>
+        <KialiLink to={href}>{serviceName}</KialiLink>
       </li>
     );
   };
@@ -166,7 +161,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   };
 
   props.apps?.sort((a1: string, a2: string) => (a1 < a2 ? -1 : 1));
-  props.services?.sort((s1: ServiceItem, s2: ServiceItem) => (s1.name < s2.name ? -1 : 1));
+  props.services?.sort((s1: string, s2: string) => (s1 < s2 ? -1 : 1));
   props.waypointWorkloads?.sort((w1: WorkloadInfo, w2: WorkloadInfo) => (w1.name < w2.name ? -1 : 1));
   props.workloads?.sort((w1: AppWorkload, w2: AppWorkload) => (w1.workloadName < w2.workloadName ? -1 : 1));
 

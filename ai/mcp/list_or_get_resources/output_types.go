@@ -169,11 +169,6 @@ type AppIstioContext struct {
 	NamespaceInjection string `json:"namespaceInjection"`
 }
 
-type AppServiceInfo struct {
-	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
-	Name           string `json:"name"`
-}
-
 type AppWorkloadInfo struct {
 	IstioSidecar   bool   `json:"istioSidecar"`
 	IsAmbient      bool   `json:"isAmbient"`
@@ -190,6 +185,6 @@ type AppDetailResponse struct {
 	Health       string            `json:"health"`
 	IstioContext AppIstioContext   `json:"istioContext"`
 	Namespace    string            `json:"namespace"`
-	Services     []AppServiceInfo  `json:"services"`
+	Services     []string          `json:"services"`
 	Workloads    []AppWorkloadInfo `json:"workloads"`
 }

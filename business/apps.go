@@ -451,12 +451,9 @@ func (in *AppService) GetAppDetails(ctx context.Context, criteria AppCriteria) (
 		appInstance.Workloads[i] = models.WorkloadItem{WorkloadName: wkd.Name, Namespace: wkd.Namespace, WorkloadGVK: wkd.WorkloadGVK, IstioSidecar: wkd.IstioSidecar, Labels: wkd.Labels, IsAmbient: wkd.IsAmbient, ServiceAccountNames: wkd.Pods.ServiceAccounts(), SpireInfo: wkd.SpireInfo, WaypointWorkloads: wkd.WaypointWorkloads}
 	}
 
-	appInstance.ServiceNames = make([]models.ServiceItem, len(appDetails.Services))
+	appInstance.ServiceNames = make([]string, len(appDetails.Services))
 	for i, svc := range appDetails.Services {
-		appInstance.ServiceNames[i] = models.ServiceItem{
-			IsServiceEntry: svc.ServiceRegistry == "External",
-			Name:           svc.Name,
-		}
+		appInstance.ServiceNames[i] = svc.Name
 	}
 
 	pods := models.Pods{}
@@ -608,9 +605,9 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 				identityDomain := resolveIdentityDomainWithLayer(ctx, in.businessLayer, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
 				lookupName := ""
 				if in.conf.ExternalServices.Tracing.NamespaceSelector {
-					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0].Name, namespace, identityDomain)
+					lookupName = fmt.Sprintf("%s.%s.%s", appDetails.ServiceNames[0], namespace, identityDomain)
 				} else {
-					lookupName = fmt.Sprintf("%s.%s", appDetails.ServiceNames[0].Name, identityDomain)
+					lookupName = fmt.Sprintf("%s.%s", appDetails.ServiceNames[0], identityDomain)
 				}
 				tracingName.Lookup = lookupName
 				tracingName.WaypointName = lookupName
