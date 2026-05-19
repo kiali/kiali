@@ -5,14 +5,13 @@ scribe:
   watch_paths: [business/, models/, cache/]
   scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
   freshness: 100
-  human_input: 13
+  human_input: 25
   completeness: 80
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "layer-pattern", heading: "The Layer Pattern"}
     - {id: "domain-concepts", heading: "Key Domain Concepts"}
     - {id: "models", heading: "Models Package"}
-    - {id: "cache", heading: "Cache Architecture"}
     - {id: "checkers-validators", heading: "Checkers and Validators"}
     - {id: "kubernetes-client", heading: "Kubernetes Client Interface"}
   stale_flags: []
@@ -259,10 +258,39 @@ type IstioValidation struct {
 | Proxy status | `cluster:namespace:pod` | Written by proxy-status background job |
 | Ztunnel config dumps | `cluster:namespace:pod` | Written by ztunnel dump background job |
 
+### Health Pre-Compute (`business/health_cache.go`, `business/health_status_exporter.go`)
+
+`HealthMonitor` is a background goroutine that pre-computes health for every namespace in every cluster and stores the results in `KialiCache`. It is created by `NewHealthMonitor` in `cmd/server.go` and started via `hcm.Start(ctx)` after the cache is initialized. Enabled/disabled via `kiali_internal.health_cache.enabled` (default: true). The compute schedule is controlled by `health_config.compute` (not `kiali_internal`):
+
+| Config field | Default | Purpose |
+|---|---|---|
+| `health_config.compute.duration` | `"5m"` | Prometheus rate window for each health query |
+| `health_config.compute.refresh_interval` | `"3m"` | How often the full refresh cycle runs |
+| `health_config.compute.timeout` | `"10m"` | Max wall-clock time for a single full refresh cycle |
+
+**Start behavior**: `Start` returns immediately; the initial refresh and all subsequent refreshes run in a background goroutine. Panics in either the initial or periodic refresh are recovered — a failed cycle logs the error but does not crash the server.
+
+**Refresh cycle** (`RefreshHealth`):
+1. Reads current cluster list from `cache.GetClusters()`.
+2. Creates a single `Layer` using SA clients (shared across all namespaces in the cycle).
+3. For each cluster, calls `refreshClusterHealth`:
+   a. Calls `layer.Namespace.GetClusterNamespaces` to get the Kiali-visible namespace list (respects namespace filtering config).
+   b. Pre-fetches **all workloads for the cluster** in one `GetAllWorkloads` call and partitions them by namespace. This avoids N per-namespace cluster-wide workload fetches that the per-namespace health APIs would trigger independently.
+   c. For each namespace: computes app, service, and workload health. App and workload health use the pre-fetched workload slice; service health calls `GetNamespaceServiceHealth` per-namespace (services are natively namespace-scoped and don't require the cluster-wide pre-fetch optimization).
+4. Writes a `models.CachedHealthData` struct to the cache via `cache.SetHealth(cluster, namespace, data)`.
+
+**RBAC note**: health is computed with the Kiali SA token, not per-user tokens. All users see the same pre-computed health data. Namespace-level RBAC filtering (which namespaces a user can see) is enforced upstream — within visible namespaces, health data is shared.
+
+**Duration catch-up**: `calculateDuration()` normally uses `health_config.compute.duration`. If a refresh cycle was delayed (elapsed time since last run exceeds the configured duration), the Prometheus query window is extended to `elapsed × 1.1` to cover the gap.
+
+**Health status metrics** (`business/health_status_exporter.go`): optionally exports per-entity health severity as Prometheus gauge `kiali_health_status` (enabled by `server.observability.metrics.health_status.enabled`, disabled by default). The `HealthStatusExporter` tracks a per-entity `naStreak` counter to avoid deleting metric series on transient NA status — series are deleted only after `server.observability.metrics.health_status.max_consecutive_na` (default: 3) consecutive NA or missing refresh cycles.
+
+**Reconciliation**: after each namespace refresh, `ReconcileNamespace` advances the NA streak for entities that disappeared from the namespace (services/apps/workloads that were deleted). `ReconcileDroppedNamespacesForCluster` and `ReconcileDroppedClusters` handle namespace and cluster removal respectively.
+
 ### Cache invalidation
 
 - **Namespace cache**: cleared per-cluster via `RefreshTokenNamespaces(cluster)`.
-- **Health cache**: individual entries can be updated in-place (`UpdateAppHealth`, `UpdateServiceHealth`, `UpdateWorkloadHealth`) using copy-on-write semantics protected by `healthUpdateMutex`.
+- **Health cache**: individual entries can be updated in-place (`UpdateAppHealth`, `UpdateServiceHealth`, `UpdateWorkloadHealth`) using copy-on-write semantics protected by `healthUpdateMutex`. The background `HealthMonitor` overwrites entire namespace entries via `SetHealth`.
 - **Kube cache**: backed by controller-runtime informers; invalidation is handled by the informer framework (watch events).
 - **Validation cache**: the `ValidationWatcher` `store.Store` holds config hashes to detect when a re-validation run is needed.
 

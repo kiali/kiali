@@ -402,3 +402,58 @@ graph-engine:
       origin: inferred
 _meta:
   graph-engine_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+business-logic-health:
+  cache/health-pre-compute:
+  - id: 1
+    claim: "HealthMonitor is started via hcm.Start(ctx) in cmd/server.go after cache initialization; Start returns immediately with the refresh running in a background goroutine"
+    file: "business/health_cache.go"
+    approx_line: 75
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "RefreshHealth pre-fetches all workloads for the cluster once with GetAllWorkloads, then partitions by namespace — avoiding N per-namespace cluster-wide workload fetches"
+    file: "business/health_cache.go"
+    approx_line: 247
+    provenance:
+      origin: inferred
+  - id: 3
+    claim: "Health is computed with Kiali SA clients, not per-user tokens — all users see the same pre-computed health; namespace-level RBAC filtering is the user isolation boundary"
+    file: "business/health_cache.go"
+    approx_line: 192
+    provenance:
+      origin: user
+      context: "Intentional — health is a shared cluster view; RBAC filtering happens at the namespace level, not at individual health metric level"
+      recorded: "2026-05-19"
+  - id: 4
+    claim: "Panics during the initial or periodic health refresh are recovered — a failed cycle logs the error but does not crash the server"
+    file: "business/health_cache.go"
+    approx_line: 94
+    provenance:
+      origin: inferred
+  - id: 5
+    claim: "calculateDuration() extends the Prometheus query window to elapsed × 1.1 if a cycle was delayed (elapsed > configured duration)"
+    file: "business/health_cache.go"
+    approx_line: 411
+    provenance:
+      origin: inferred
+  - id: 6
+    claim: "HealthStatusExporter tracks naStreak per entity and deletes kiali_health_status gauge series only after max_consecutive_na (default 3) consecutive NA or missing refresh cycles"
+    file: "business/health_status_exporter.go"
+    approx_line: 74
+    provenance:
+      origin: inferred
+  - id: 7
+    claim: "health_config.compute.refresh_interval (default 3m) controls the HealthMonitor ticker; health_config.compute.duration (default 5m) is the Prometheus rate window per query"
+    file: "config/config.go"
+    approx_line: 930
+    provenance:
+      origin: inferred
+  - id: 8
+    claim: "Service health is fetched per-namespace (GetNamespaceServiceHealth); app and workload health use pre-fetched workloads (GetNamespaceAppHealthFromWorkloads / GetNamespaceWorkloadHealthFromWorkloads)"
+    file: "business/health_cache.go"
+    approx_line: 307
+    provenance:
+      origin: inferred
+_meta:
+  business-logic-health_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
