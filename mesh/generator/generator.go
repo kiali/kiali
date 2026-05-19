@@ -217,16 +217,23 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				// add edge to the managing control plane
+				ztunnelVersion := ztunnel.Labels["app.kubernetes.io/version"]
 				for _, infraNode := range meshMap {
-					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster && infraNode.Namespace == ztunnel.Namespace {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-						tag := "default"
-						if cp.Tag != nil {
-							tag = cp.Tag.Name
-						}
-						if tag == ztunnelNode.Metadata[mesh.Version] {
-							// Validate that this control plane is actually ambient
-							if gi.KialiCache.IsControlPlaneNamespaceAmbient(ctx, ztunnel.Cluster, cp.IstiodNamespace, cp.IstiodName) {
+						// Match by app.kubernetes.io/version to disambiguate multi-mesh
+						if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" {
+							if ztunnelVersion == cp.Version.Version {
+								infraNode.AddEdge(ztunnelNode)
+								break
+							}
+						} else {
+							// Fallback to revision/tag match when version labels are unavailable
+							tag := "default"
+							if cp.Tag != nil {
+								tag = cp.Tag.Name
+							}
+							if tag == ztunnelNode.Metadata[mesh.Version] {
 								infraNode.AddEdge(ztunnelNode)
 								break
 							}
