@@ -134,7 +134,7 @@ type App struct {
 	// required: true
 	Workloads []WorkloadItem `json:"workloads"`
 
-	// List of services linked with an application
+	// List of service names linked with an application
 	// required: true
 	ServiceNames []string `json:"serviceNames"`
 

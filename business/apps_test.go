@@ -144,8 +144,7 @@ func TestGetAppFromDeployments(t *testing.T) {
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
-	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
-	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }
 
 func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
@@ -185,8 +184,7 @@ func TestGetAppFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
-	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
-	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }
 
 func TestGetAppFromWorkloadGroups(t *testing.T) {
@@ -302,8 +300,7 @@ func TestGetAppFromReplicaSets(t *testing.T) {
 	assert.Equal("httpbin-v1", appDetails.Workloads[0].WorkloadName)
 	assert.Equal("httpbin-v2", appDetails.Workloads[1].WorkloadName)
 	assert.Equal(1, len(appDetails.ServiceNames))
-	assert.Equal("httpbin", appDetails.ServiceNames[0].Name)
-	assert.False(appDetails.ServiceNames[0].IsServiceEntry)
+	assert.Equal("httpbin", appDetails.ServiceNames[0])
 }
 
 func TestGetAppTracingNameNoWaypoints(t *testing.T) {

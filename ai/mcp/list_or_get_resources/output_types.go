@@ -164,11 +164,6 @@ type WorkloadDetailResponse struct {
 	Workload           WorkloadInfo      `json:"workload"`
 }
 
-type AppIstioContext struct {
-	IsAmbient          bool   `json:"isAmbient"`
-	NamespaceInjection string `json:"namespaceInjection"`
-}
-
 type AppWorkloadInfo struct {
 	IstioSidecar   bool   `json:"istioSidecar"`
 	IsAmbient      bool   `json:"isAmbient"`
@@ -177,6 +172,11 @@ type AppWorkloadInfo struct {
 	Replicas       string `json:"replicas"`
 	ServiceAccount string `json:"service_account"`
 	Version        string `json:"version"`
+}
+
+type AppIstioContext struct {
+	IsAmbient          bool   `json:"isAmbient"`
+	NamespaceInjection string `json:"namespaceInjection"`
 }
 
 type AppDetailResponse struct {
