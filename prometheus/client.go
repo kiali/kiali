@@ -347,8 +347,7 @@ func newClientWithRetry(ctx context.Context, conf config.Config, kialiSAToken st
 
 	var client *Client
 	retryErr := wait.PollUntilContextCancel(ctx, retryInterval, true, func(ctx context.Context) (bool, error) {
-		var err error
-		client, err = NewClient(conf, kialiSAToken)
+		c, err := NewClient(conf, kialiSAToken)
 		if err != nil {
 			log.Warningf("Prometheus client init failed: %v. Retrying in %s", err, retryInterval)
 			return false, nil
@@ -358,6 +357,7 @@ func newClientWithRetry(ctx context.Context, conf config.Config, kialiSAToken st
 			log.Warningf("Prometheus unreachable at [%s] (status %d): %v. Retrying in %s", healthURL, statusCode, probeErr, retryInterval)
 			return false, nil
 		}
+		client = c
 		return true, nil
 	})
 	if retryErr != nil {
