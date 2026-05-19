@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# Keep CodeRabbit aligned with the repository's shared AI guidance files
+# without duplicating those instructions here.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+    - "AI_POLICY.md"
+    - "CONTRIBUTING.md"
+    - "STYLE_GUIDE.adoc"
