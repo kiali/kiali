@@ -87,10 +87,13 @@ func TestNewClientWithRetryContextCancelled(t *testing.T) {
 // TestNewClientWithRetryUsesCustomHealthCheckURL verifies that when
 // HealthCheckUrl is set, that URL is probed instead of URL + "/-/healthy".
 func TestNewClientWithRetryUsesCustomHealthCheckURL(t *testing.T) {
-	var customHit atomic.Bool
+	var customHit, defaultHit atomic.Bool
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/custom/health" {
 			customHit.Store(true)
+		}
+		if r.URL.Path == "/-/healthy" {
+			defaultHit.Store(true)
 		}
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -103,6 +106,7 @@ func TestNewClientWithRetryUsesCustomHealthCheckURL(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, client)
 	assert.True(t, customHit.Load(), "custom health check URL should have been probed")
+	assert.False(t, defaultHit.Load(), "default /-/healthy should not have been probed when HealthCheckUrl is set")
 }
 
 // TestClientRefGoroutineStartupFlow simulates the full startup wiring in
