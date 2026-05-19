@@ -74,7 +74,7 @@ func TestClientRefSetIsVisibleToAllCallers(t *testing.T) {
 // is called, so callers that invoke client.API() directly don't panic.
 func TestClientRefAPINotNil(t *testing.T) {
 	ref := NewClientRef(NewNoopClient())
-	assert.NotNil(t, ref.API())
+	require.NotNil(t, ref.API())
 }
 
 // TestClientRefAPIUpdatesAfterSet verifies that API() returns the upgraded
