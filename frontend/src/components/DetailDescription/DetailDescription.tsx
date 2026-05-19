@@ -170,7 +170,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
     props.apps.filter(Boolean).forEach(name => items.push(renderAppItem(props.namespace, name)));
   }
   if (props.services && props.services.length > 0) {
-    props.services.forEach(svc => items.push(renderServiceItem(props.namespace, svc)));
+    props.services.forEach(name => items.push(renderServiceItem(props.namespace, name)));
   }
   if (props.waypointWorkloads && props.waypointWorkloads.length > 0) {
     props.waypointWorkloads.forEach(wp => items.push(renderWaypointItem(wp)));

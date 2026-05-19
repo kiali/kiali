@@ -110,10 +110,8 @@ func TestBookinfo_AppDetail_Productpage(t *testing.T) {
 	require.NotEmpty(t, services)
 	svcNames := make([]string, 0, len(services))
 	for _, s := range services {
-		svcMap, mapOk := s.(map[string]any)
-		require.True(t, mapOk, "each service should be an object")
-		name, nameOk := svcMap["name"].(string)
-		require.True(t, nameOk, "each service should have a 'name' string")
+		name, nameOk := s.(string)
+		require.True(t, nameOk, "each service should be a string")
 		svcNames = append(svcNames, name)
 	}
 	assert.Contains(t, svcNames, "productpage")
