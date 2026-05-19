@@ -199,7 +199,7 @@ jobs:
           echo "**Commit:** \`${PR_SHA:0:7}\` — [View full workflow run](${RUN_URL})"
           echo ""
           if [[ -n "${BASE_TMP}" && -s "${BASE_TMP}" && -f "${PR_RAW}" ]]; then
-            "${MCPCHECKER}" diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown || \
+            "${MCPCHECKER}" result diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown || \
                echo "⚠ Diff comparison not available. See [workflow run](${RUN_URL}) for evaluation results."
           else
             echo "⚠️ Could not compare runs: baseline on ${DEFAULT_BRANCH} or PR results is missing."
@@ -283,14 +283,14 @@ jobs:
         cp "${ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-eval-out.json
 
         if [[ "${PREVIOUS_EXISTS}" -eq 1 ]]; then
-          "${MCPCHECKER}" diff --base "${PREVIOUS}" --current tests/evals/results/mcpchecker-gemini-eval-out.json --output markdown > baseline-pr-diff.md
+          "${MCPCHECKER}" result diff --base "${PREVIOUS}" --current tests/evals/results/mcpchecker-gemini-eval-out.json --output markdown > baseline-pr-diff.md
         else
           echo "_No previous committed baseline on \`${DEFAULT_BRANCH}\` at this path — first update or new file._" > baseline-pr-diff.md
         fi
 
         make mcp-update-token-readme
         echo "Updated baseline summary:"
-        "${MCPCHECKER}" summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json | head -c 2000
+        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json | head -c 2000
         echo
 
     - name: Create PR with updated baseline
