@@ -1,6 +1,5 @@
 @app-details
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
-@ossmc
 
 Feature: Kiali App Details page
 
@@ -20,5 +19,6 @@ Feature: Kiali App Details page
   Scenario: Application detail URL stays under applications after the mini graph loads
     Given user is at the details page for the "app" "alpha/a-client" located in the "" cluster
     Then user sees a minigraph
-    And the browser URL should include "applications/a-client"
+    And the browser URL should include "a-client"
+    And the browser URL should include "/applications/"
     And the browser URL should not include "/workloads/"

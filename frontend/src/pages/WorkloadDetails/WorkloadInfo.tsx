@@ -472,7 +472,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
   private renderResourcesCard(workload: Workload): React.ReactNode {
     const apps: string[] = [];
-    const services: string[] = [];
+    const services = workload.services?.map(s => s.name) ?? [];
 
     if (!workload.isWaypoint && !workload.isZtunnel) {
       const appLabelName = getAppLabelName(workload.labels);
@@ -480,8 +480,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
         apps.push(workload.labels[appLabelName]);
       }
     }
-
-    workload.services?.forEach(s => services.push(s.name));
 
     return (
       <StackItem key="resources">

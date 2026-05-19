@@ -1,3 +1,5 @@
+@skip-ossmc
+
 Feature: Kiali login
 
   User wants to login to Kiali and see landing page

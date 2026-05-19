@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { TabProps, Tabs } from '@patternfly/react-core';
-import { location, router } from '../../app/History';
-import { kialiStyle } from 'styles/StyleUtils';
-import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
+
+import { location, router } from '../../app/History';
+import { PFColors } from 'components/Pf/PfColors';
+import { isKioskMode } from '../../utils/SearchParamUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
@@ -120,7 +122,9 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
   render(): React.ReactNode {
     return (
       <div className={classes(flexTabWrapperStyle, this.props.className, tabStyle)}>
-        {this.props.actionsToolbar && <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>}
+        {this.props.actionsToolbar && !isKioskMode() && (
+          <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>
+        )}
 
         <Tabs
           id={this.props.id}

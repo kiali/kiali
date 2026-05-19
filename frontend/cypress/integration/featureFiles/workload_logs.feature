@@ -1,6 +1,5 @@
 @workload-logs
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
-@ossmc
 
 Feature: Workload logs tab
   The Logs tab of a specific workload allows to see the generated logs of

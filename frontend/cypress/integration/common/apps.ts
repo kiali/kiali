@@ -85,6 +85,8 @@ Given('an idle sleep application in the cluster', function () {
   this.targetApp = 'sleep';
 
   cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
+
+  waitForAppHealthStatus(this.targetNamespace, this.targetApp, 'Not Ready');
 });
 
 Given('a failing application in the mesh', function () {

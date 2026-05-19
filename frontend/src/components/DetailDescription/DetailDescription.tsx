@@ -51,13 +51,15 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
+    const kioskParams = waypoint.type ? `type=${waypoint.type}` : undefined;
+
     return (
       <li key={`Waypoint_${waypoint.namespace}_${waypoint.name}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Waypoint} position={TooltipPosition.top} />
         </div>
 
-        <KialiLink to={href} dataTest="waypoint-link">
+        <KialiLink to={href} kioskParams={kioskParams} dataTest="waypoint-link">
           {waypoint.name}
         </KialiLink>
       </li>
@@ -131,13 +133,17 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
       href = `${href}?clusterName=${props.cluster}`;
     }
 
+    const kioskParams = workload.gvk?.Kind ? `type=${workload.gvk.Kind}` : undefined;
+
     return (
       <li key={`WorkloadItem_${workload.workloadName}`} className={itemStyle}>
         <div className={iconStyle}>
           <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
         </div>
 
-        <KialiLink to={href}>{workload.workloadName}</KialiLink>
+        <KialiLink to={href} kioskParams={kioskParams}>
+          {workload.workloadName}
+        </KialiLink>
 
         <Popover
           position={PopoverPosition.right}

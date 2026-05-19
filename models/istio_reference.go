@@ -33,8 +33,9 @@ type IstioReference struct {
 
 // ServiceReference is the key value composed of a Name and Namespace.
 type ServiceReference struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	IsServiceEntry bool   `json:"isServiceEntry,omitempty"`
+	Name           string `json:"name"`
+	Namespace      string `json:"namespace"`
 }
 
 // WorkloadReference is the key value composed of a Name and Namespace.

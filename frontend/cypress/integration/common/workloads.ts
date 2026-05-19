@@ -77,6 +77,8 @@ Given('an idle sleep workload in the cluster', function () {
   this.targetWorkload = 'sleep';
 
   cy.exec('kubectl scale -n sleep --replicas=0 deployment/sleep');
+
+  waitForWorkloadHealthStatus(this.targetNamespace, this.targetWorkload, 'Not Ready');
 });
 
 Given('a failing workload in the mesh', function () {

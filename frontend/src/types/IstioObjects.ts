@@ -134,6 +134,7 @@ export interface References {
 }
 
 export interface ServiceReference {
+  isServiceEntry?: boolean;
   name: string;
   namespace: string;
 }
@@ -340,6 +341,7 @@ export interface Service {
   namespace: Namespace;
   ports?: ServicePort[];
   resourceVersion: string;
+  serviceRegistry?: string;
   type: string;
 }
 

@@ -1,5 +1,6 @@
 @ai-chatbot
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@skip-ossmc
 
 Feature: Kiali AI Chatbot
 

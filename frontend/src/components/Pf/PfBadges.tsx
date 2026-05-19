@@ -23,7 +23,11 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   DestinationRule: { badge: 'DR', tt: 'Destination Rule' } as PFBadgeType,
   EnvoyFilter: { badge: 'EF', tt: 'Envoy Filter' } as PFBadgeType,
   Extension: { badge: 'E', tt: 'Extension', style: { backgroundColor: PFColors.Black400 } } as PFBadgeType,
-  ExternalService: { badge: 'ES', tt: 'External Service' } as PFBadgeType,
+  ExternalService: {
+    badge: 'ES',
+    tt: 'External Service',
+    style: { backgroundColor: PFColors.LightGreen500 }
+  } as PFBadgeType,
   FaultInjectionAbort: {
     badge: 'FI',
     tt: 'Fault Injection: Abort',

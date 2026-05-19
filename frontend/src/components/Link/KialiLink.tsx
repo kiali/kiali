@@ -3,12 +3,14 @@ import { Button } from '@patternfly/react-core';
 import { Link } from 'react-router-dom-v5-compat';
 import { isParentKiosk, kioskNavigateAction } from '../Kiosk/KioskActions';
 import { useKialiSelector } from '../../hooks/redux';
+import { getParamsSeparator } from '../../utils/SearchParamUtils';
 
 type KialiLinkProps = {
   children: React.ReactNode;
   className?: string;
   dataTest?: string;
   id?: string;
+  kioskParams?: string;
   onClick?: () => void;
   style?: React.CSSProperties;
   to: string;
@@ -20,7 +22,11 @@ export const KialiLink: React.FC<KialiLinkProps> = (props: KialiLinkProps) => {
   const handleClick = (): void => {
     props.onClick?.();
     if (isParentKiosk(kiosk)) {
-      kioskNavigateAction(props.to);
+      let href = props.to;
+      if (props.kioskParams) {
+        href += `${getParamsSeparator(href)}${props.kioskParams}`;
+      }
+      kioskNavigateAction(href);
     }
   };
 

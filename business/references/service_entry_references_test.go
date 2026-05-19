@@ -42,6 +42,8 @@ func TestServiceEntryReferences(t *testing.T) {
 	assert.Len(references.ServiceReferences, 2)
 	assert.Contains([]string{references.ServiceReferences[0].Name, references.ServiceReferences[1].Name}, "foo-dev.istio-system.svc.cluster.local")
 	assert.Contains([]string{references.ServiceReferences[0].Name, references.ServiceReferences[1].Name}, "foo-dev.bookinfo.svc.cluster.local")
+	assert.True(references.ServiceReferences[0].IsServiceEntry)
+	assert.True(references.ServiceReferences[1].IsServiceEntry)
 
 	// Check DR and AuthPolicy references
 	assert.Len(references.ObjectReferences, 3)
@@ -68,6 +70,7 @@ func TestServiceEntryNoReferences(t *testing.T) {
 	assert.Len(references.ServiceReferences, 1)
 	assert.Equal("*.googleapis.com", references.ServiceReferences[0].Name)
 	assert.Equal("test", references.ServiceReferences[0].Namespace)
+	assert.True(references.ServiceReferences[0].IsServiceEntry)
 	assert.Empty(references.WorkloadReferences)
 	assert.Empty(references.ObjectReferences)
 }
@@ -168,6 +171,7 @@ func TestServiceEntryReferencesKubeServiceVisible(t *testing.T) {
 	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "bookinfo", Name: "override-reviews"}]
 	assert.Len(seRefs.ServiceReferences, 1)
 	assert.Equal("reviews.bookinfo.svc.cluster.local", seRefs.ServiceReferences[0].Name)
+	assert.True(seRefs.ServiceReferences[0].IsServiceEntry)
 }
 
 func TestServiceEntryReferencesMixed(t *testing.T) {
@@ -201,6 +205,7 @@ func TestServiceEntryReferencesMixed(t *testing.T) {
 	seRefs := result[models.IstioReferenceKey{ObjectGVK: kubernetes.ServiceEntries, Namespace: "other-ns", Name: "mixed-se"}]
 	assert.Len(seRefs.ServiceReferences, 1)
 	assert.Equal("api.example.com", seRefs.ServiceReferences[0].Name)
+	assert.True(seRefs.ServiceReferences[0].IsServiceEntry)
 }
 
 func fakeService(name, namespace string) core_v1.Service {
