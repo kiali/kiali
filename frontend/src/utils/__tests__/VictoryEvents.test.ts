@@ -31,7 +31,7 @@ describe('addLegendEvent', () => {
   });
 
   it('should invoke onClick callback exactly once per click on both data and labels targets', () => {
-    const clickSpy = jest.fn();
+    const clickSpy = rstest.fn();
     const events: VCEvent[] = [];
     addLegendEvent(events, {
       idx: 0,
@@ -87,8 +87,8 @@ describe('addLegendEvent', () => {
   });
 
   it('should register onMouseOver and onMouseOut when provided', () => {
-    const overSpy = jest.fn().mockReturnValue({ style: { fill: 'red' } });
-    const outSpy = jest.fn().mockReturnValue(null);
+    const overSpy = rstest.fn().mockReturnValue({ style: { fill: 'red' } });
+    const outSpy = rstest.fn().mockReturnValue(null);
     const events: VCEvent[] = [];
 
     addLegendEvent(events, {

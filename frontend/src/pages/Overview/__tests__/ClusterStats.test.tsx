@@ -1,27 +1,27 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { Status } from 'types/IstioStatus';
 import { Paths } from 'config';
+import type { Mock } from '@rstest/core';
 
 import { ClusterStats } from '../ClusterStats';
 
-jest.mock('hooks/clusters', () => ({
-  useClusterStatus: jest.fn()
+rstest.mock('hooks/clusters', () => ({
+  useClusterStatus: rstest.fn()
 }));
 
-jest.mock('hooks/redux', () => ({
-  useKialiSelector: jest.fn()
+rstest.mock('hooks/redux', () => ({
+  useKialiSelector: rstest.fn()
 }));
 
-jest.mock('utils/MeshUtils', () => ({
-  isControlPlaneAccessible: jest.fn()
+rstest.mock('utils/MeshUtils', () => ({
+  isControlPlaneAccessible: rstest.fn()
 }));
 
-const useClusterStatusMock = require('hooks/clusters').useClusterStatus as jest.Mock;
-const useKialiSelectorMock = require('hooks/redux').useKialiSelector as jest.Mock;
-const isControlPlaneAccessibleMock = require('utils/MeshUtils').isControlPlaneAccessible as jest.Mock;
+const useClusterStatusMock = require('hooks/clusters').useClusterStatus as Mock;
+const useKialiSelectorMock = require('hooks/redux').useKialiSelector as Mock;
+const isControlPlaneAccessibleMock = require('utils/MeshUtils').isControlPlaneAccessible as Mock;
 
 const renderComponent = (): ReturnType<typeof render> =>
   render(
@@ -32,7 +32,7 @@ const renderComponent = (): ReturnType<typeof render> =>
 
 describe('Overview ClusterStats', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     useKialiSelectorMock.mockReturnValue('');
   });
 

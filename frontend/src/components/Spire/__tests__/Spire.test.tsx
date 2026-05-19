@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Spire } from '../Spire';
 import { Workload, SpireManagedIdentityMatch } from '../../../types/Workload';

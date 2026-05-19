@@ -1,23 +1,29 @@
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
-import configureMockStore from 'redux-mock-store';
+import { createStore, applyMiddleware, Store } from 'redux';
 import { NamespaceActions } from '../NamespaceAction';
 import { NamespaceThunkActions } from '../NamespaceThunkActions';
+import { NamespaceState } from '../../store/Store';
+import { NamespaceStateReducer, INITIAL_NAMESPACE_STATE } from '../../reducers/NamespaceState';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 
-const middlewares = [thunk];
-const mockStore = configureMockStore(middlewares);
+interface TestState {
+  namespaces: NamespaceState;
+}
+
+const createTestStore = (initialNamespaces = INITIAL_NAMESPACE_STATE): Store<TestState> =>
+  createStore(
+    (state: TestState = { namespaces: initialNamespaces }, action: any): TestState => ({
+      namespaces: NamespaceStateReducer(state.namespaces, action)
+    }),
+    applyMiddleware(thunk)
+  );
 
 describe('NamespaceActions', () => {
   const RealDate = Date;
-
-  const mockDate = (date: Date): Date => {
-    global.Date = jest.fn(() => date) as any;
-    return date;
-  };
 
   afterEach(() => {
     global.Date = RealDate;
@@ -44,42 +50,36 @@ describe('NamespaceActions', () => {
     expect(NamespaceActions.receiveList([{ name: 'a' }, { name: 'b' }], currentDate).payload).toEqual(expectedAction);
   });
 
-  it('should success if api request success', () => {
-    const currentDate = new Date();
-    mockDate(currentDate);
-    const expectedActions = [
-      NamespaceActions.requestStarted(),
-      NamespaceActions.receiveList([{ name: 'a' }, { name: 'b' }, { name: 'c' }], currentDate)
-    ];
+  it('should success if api request success', async () => {
     const axiosMock = new axiosMockAdapter(axios);
     axiosMock.onGet('/api/namespaces').reply(200, [{ name: 'a' }, { name: 'b' }, { name: 'c' }]);
 
-    const store = mockStore({});
-    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces()).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-    });
+    const store = createTestStore();
+    await store.dispatch(NamespaceThunkActions.asyncFetchNamespaces() as any);
+
+    const state = store.getState().namespaces;
+    expect(state.isFetching).toBe(false);
+    expect(state.items).toEqual([{ name: 'a' }, { name: 'b' }, { name: 'c' }]);
   });
 
-  it('should fail if api request fails', () => {
-    const expectedActions = [NamespaceActions.requestStarted(), NamespaceActions.requestFailed()];
+  it('should fail if api request fails', async () => {
     const axiosMock = new axiosMockAdapter(axios);
     axiosMock.onGet('/api/namespaces').reply(404);
 
-    const store = mockStore({});
-    return store.dispatch(NamespaceThunkActions.asyncFetchNamespaces()).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-    });
+    const store = createTestStore();
+    await store.dispatch(NamespaceThunkActions.asyncFetchNamespaces() as any);
+
+    const state = store.getState().namespaces;
+    expect(state.isFetching).toBe(false);
+    expect(state.items).toEqual([]);
   });
 
-  it("it won't fetch a namespace if one is loading", () => {
-    const expectedActions = [];
-    const store = mockStore({
-      namespaces: {
-        isFetching: true
-      }
-    });
-    return store.dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded()).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-    });
+  it("it won't fetch a namespace if one is loading", async () => {
+    const store = createTestStore({ ...INITIAL_NAMESPACE_STATE, isFetching: true });
+    await store.dispatch(NamespaceThunkActions.fetchNamespacesIfNeeded() as any);
+
+    const state = store.getState().namespaces;
+    expect(state.isFetching).toBe(true);
+    expect(state.items).toEqual([]);
   });
 });

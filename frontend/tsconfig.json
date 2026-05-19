@@ -1,38 +1,25 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "allowSyntheticDefaultImports": true,
     "baseUrl": "src",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "jsx": "preserve",
-    "lib": ["es2022", "dom"],
+    "jsx": "react-jsx",
+    "lib": ["es2022", "dom", "dom.iterable"],
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "build/dist",
     "resolveJsonModule": true,
-    "rootDir": "src",
     "skipLibCheck": true,
-    "sourceMap": true,
     "strict": true,
-    "target": "es6",
-    "typeRoots": ["node_modules/@types"]
+    "target": "es2022"
   },
-  "exclude": [
-    "node_modules",
-    "build",
-    "scripts",
-    "acceptance-tests",
-    "coverage",
-    "webpack",
-    "jest",
-    "src/setupTests.ts",
-    "src/mocks/**/*"
-  ],
+  "exclude": ["node_modules", "build", "coverage", "src/setupTests.ts", "src/mocks/**/*"],
   "include": ["src"]
 }

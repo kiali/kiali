@@ -1,8 +1,9 @@
 import { fetchClusterNamespacesHealth } from '../NamespaceHealth';
 import * as API from 'services/Api';
+import type { Mock } from '@rstest/core';
 
-jest.mock('services/Api', () => ({
-  getClustersHealth: jest.fn()
+rstest.mock('services/Api', () => ({
+  getClustersHealth: rstest.fn()
 }));
 
 describe('NamespaceHealth service', () => {
@@ -17,7 +18,7 @@ describe('NamespaceHealth service', () => {
   it('chunks namespace lists and merges results', async () => {
     const namespaces = Array.from({ length: 205 }, (_, i) => `ns${i}`);
 
-    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+    (API.getClustersHealth as Mock).mockImplementation(async (nsStr: string) => {
       const keys = nsStr.split(',');
       const m = new Map<string, any>();
       m.set(keys[0], {

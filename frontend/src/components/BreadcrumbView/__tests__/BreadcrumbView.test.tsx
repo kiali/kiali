@@ -1,15 +1,14 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { BreadcrumbView } from '../BreadcrumbView';
 
-jest.mock('../../Filters/StatefulFilters', () => ({
-  FilterSelected: { resetFilters: jest.fn() }
+rstest.mock('../../Filters/StatefulFilters', () => ({
+  FilterSelected: { resetFilters: rstest.fn() }
 }));
 
-jest.mock('../../../app/History', () => ({
+rstest.mock('../../../app/History', () => ({
   HistoryManager: {
-    getClusterName: jest.fn(() => undefined)
+    getClusterName: rstest.fn(() => undefined)
   }
 }));
 

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`IstioComponentStatus renders error icon when core component is not found 1`] = `
+exports[`IstioComponentStatus renders > error icon when core component is not found 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -13,7 +13,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-color: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -54,7 +54,7 @@ exports[`IstioComponentStatus renders error icon when core component is not foun
 </div>
 `;
 
-exports[`IstioComponentStatus renders error icon when core component is not running 1`] = `
+exports[`IstioComponentStatus renders > error icon when core component is not running 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -67,7 +67,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--danger--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--danger--default); border-color: var(--pf-t--global--icon--color--status--danger--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -108,7 +108,7 @@ exports[`IstioComponentStatus renders error icon when core component is not runn
 </div>
 `;
 
-exports[`IstioComponentStatus renders minus icon when addon component is not ready 1`] = `
+exports[`IstioComponentStatus renders > minus icon when addon component is not ready 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -121,7 +121,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-color: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -162,7 +162,7 @@ exports[`IstioComponentStatus renders minus icon when addon component is not rea
 </div>
 `;
 
-exports[`IstioComponentStatus renders minus icon when core component is not ready 1`] = `
+exports[`IstioComponentStatus renders > minus icon when core component is not ready 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -175,7 +175,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--info--default); border-color: var(--pf-t--global--icon--color--status--info--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -216,7 +216,7 @@ exports[`IstioComponentStatus renders minus icon when core component is not read
 </div>
 `;
 
-exports[`IstioComponentStatus renders success icon when core component is running 1`] = `
+exports[`IstioComponentStatus renders > success icon when core component is running 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -229,7 +229,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-color: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -270,7 +270,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 </div>
 `;
 
-exports[`IstioComponentStatus renders success icon when core component is running 2`] = `
+exports[`IstioComponentStatus renders > success icon when core component is running 2`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -283,7 +283,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--success--default); border-color: var(--pf-t--global--icon--color--status--success--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -324,7 +324,7 @@ exports[`IstioComponentStatus renders success icon when core component is runnin
 </div>
 `;
 
-exports[`IstioComponentStatus renders warning icon when core component is not found 1`] = `
+exports[`IstioComponentStatus renders > warning icon when core component is not found 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -337,7 +337,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--color--gray--50); border-color: var(--pf-t--color--gray--50); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"
@@ -378,7 +378,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not fo
 </div>
 `;
 
-exports[`IstioComponentStatus renders warning icon when core component is not running 1`] = `
+exports[`IstioComponentStatus renders > warning icon when core component is not running 1`] = `
 <div>
   <div
     class="pf-v6-l-split pf-m-gutter kiali_f1km8g7f"
@@ -391,7 +391,7 @@ exports[`IstioComponentStatus renders warning icon when core component is not ru
     <span
       class="pf-v6-c-label pf-m-outline kiali_f1ha75wd"
       data-test="component-status-icon"
-      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--warning--default); border-width: 1px; border-style: solid;"
+      style="--pf-v6-c-label--m-outline--BorderColor: var(--pf-t--global--icon--color--status--warning--default); border-color: var(--pf-t--global--icon--color--status--warning--default); border-width: 1px; border-style: solid;"
     >
       <span
         class="pf-v6-c-label__content"

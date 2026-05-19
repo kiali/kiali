@@ -3,7 +3,7 @@ import { NamespaceInfo } from 'types/NamespaceInfo';
 import { serverConfig } from 'config';
 import { ControlPlane } from 'types/Mesh';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string, opts?: Record<string, unknown>) => {
     if (opts) {
       return Object.entries(opts).reduce((s, [k, v]) => s.replace(`{{${k}}}`, String(v)), key);
@@ -42,7 +42,7 @@ const baseParams = (
   grafanaLinks: [],
   istioAPIEnabled: true,
   nsInfo,
-  onOpenTrafficPoliciesModal: jest.fn(),
+  onOpenTrafficPoliciesModal: rstest.fn(),
   persesLinks: [],
   ...overrides
 });
@@ -65,7 +65,7 @@ describe('buildNamespaceRowActions', () => {
     });
 
     it('calls onOpenTrafficPoliciesModal when a policy action is invoked', () => {
-      const onOpen = jest.fn();
+      const onOpen = rstest.fn();
       const actions = buildNamespaceRowActions(baseParams(baseNsInfo, { onOpenTrafficPoliciesModal: onOpen }));
       const createAction = actions.find(a => a.title?.includes('Traffic Policies') && a.action);
       expect(createAction).toBeDefined();
@@ -105,7 +105,7 @@ describe('buildNamespaceRowActions', () => {
 
   describe('traffic management modal state', () => {
     it('opens the modal with correct params for injection enable', () => {
-      const onOpen = jest.fn();
+      const onOpen = rstest.fn();
       const actions = buildNamespaceRowActions(baseParams(baseNsInfo, { onOpenTrafficPoliciesModal: onOpen }));
 
       const enableAction = actions.find(a => a.title === 'Enable Auto Injection');

@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
 import { ExternalServiceInfo } from '../../../types/StatusState';
@@ -8,10 +7,17 @@ import { Provider } from 'react-redux';
 import { LoginActions } from 'actions/LoginActions';
 import { Theme } from 'types/Common';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...(jest as any).requireActual('react-router-dom-v5-compat'),
-  useLocation: () => ({ pathname: '/overview', search: '', hash: '', state: null })
-}));
+rstest.mock('app/History', async () => {
+  const actual = await rstest.importActual<typeof import('app/History')>('app/History');
+  return {
+    ...actual,
+    router: {
+      state: { location: { pathname: '/overview', search: '', hash: '' } },
+      basename: '',
+      navigate: rstest.fn()
+    }
+  };
+});
 
 const session = {
   expiresOn: '2018-05-29 21:51:40.186179601 +0200 CEST m=+36039.431579761',

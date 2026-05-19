@@ -7,7 +7,7 @@ describe('NotificationCenterReducer reducer', () => {
   const RealDate = Date;
 
   const mockDate = (date: any): any => {
-    global.Date = jest.fn(() => date) as any;
+    global.Date = rstest.fn(() => date) as any;
     return date;
   };
 

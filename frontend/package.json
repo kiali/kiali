@@ -14,7 +14,6 @@
     "*Do not* change this setting if you wish run Kiali under different server root.",
     "Instead update 'web_root' in Kaili config map in OpenShift console."
   ],
-  "homepage": "./",
   "bugs": {
     "url": "https://github.com/kiali/kiali/issues"
   },
@@ -34,10 +33,8 @@
     "Some build environments we use do not include npm access, and installing yarn is not possible."
   ],
   "scripts": {
-    "build": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run build:prod; else npm run build:dev; fi'",
-    "build:dev": "sh -ac '. ./.env.upstream; npm run lint && npm run build:kiali'",
-    "build:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name GENERATE_SOURCEMAP=false EXTEND_ESLINT=true react-scripts build --profile",
-    "build:prod": "sh -ac '. ./.env.downstream; npm run build:kiali'",
+    "build": "npm run lint && npm run build:kiali",
+    "build:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name rsbuild build",
     "cypress": "cypress open -e TAGS=\"@core-1 or @core-2 or @crd-validation or @perses or @ai-chatbot\"",
     "cypress:ambient": "cypress open -e TAGS=\"@ambient\"",
     "cypress:ambient-multi-primary": "cypress open -e TAGS=\"@ambient-multi-primary or @waypoint-multicluster\"",
@@ -90,13 +87,11 @@
     "precypress:run:junit": "npm run cypress:delete:reports",
     "prepare": "cd .. && husky install frontend/.husky",
     "prettier": "prettier --write \"**/*.{ts,tsx,scss,json}\"",
-    "start": "sh -c 'if [ \"${KIALI_ENV}\" = \"production\" ]; then npm run start:prod; else npm run start:dev; fi'",
-    "start:dev": "sh -ac '. ./.env.upstream; npm run start:kiali'",
-    "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) react-scripts start",
+    "start": "npm run start:kiali",
+    "start:kiali": "npm run i18n && REACT_APP_VERSION=$npm_package_version REACT_APP_NAME=$npm_package_name REACT_APP_GIT_HASH=$(git rev-parse HEAD) rsbuild dev",
     "msw:init": "[ -f public/mockServiceWorker.js ] || npx msw init public/ --save=false",
-    "start:mock": "npm run generate:chatbot-conversations && npm run msw:init && sh -ac '. ./.env.upstream; REACT_APP_MOCK_API=true npm run start:kiali'",
-    "start:prod": "sh -ac '. ./.env.downstream; npm run start:kiali'",
-    "test": "TZ=UTC tsc -p . && TZ=UTC TEST_RUNNER=1 react-scripts test --env=jsdom __tests__ --transformIgnorePatterns='node_modules/(?!my-library-dir)/' --forceExit",
+    "start:mock": "npm run generate:chatbot-conversations && npm run msw:init && REACT_APP_MOCK_API=true npm run start:kiali",
+    "test": "TZ=UTC tsc -p . && TZ=UTC TEST_RUNNER=1 rstest run",
     "postinstall": "find node_modules/@patternfly -name '*.css' -exec sed -i -e 's/justify-content: start;/justify-content: flex-start;/g' -e 's/align-items: start;/align-items: flex-start;/g' -e 's/justify-content: end;/justify-content: flex-end;/g' -e 's/align-items: end;/align-items: flex-end;/g' {} +"
   },
   "dependencies": {
@@ -137,7 +132,6 @@
     "redux-persist": "5.10.0",
     "redux-persist-transform-filter": "^0.0.22",
     "redux-thunk": "2.4.1",
-    "refractor": "^5.0.0",
     "regression": "^2.0.1",
     "reselect": "4.0.0",
     "typesafe-actions": "^4.2.1",
@@ -146,17 +140,19 @@
     "visibilityjs": "2.0.2"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@badeball/cypress-cucumber-preprocessor": "^20.1.2",
+    "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
+    "@rsbuild/core": "^2.0.3",
+    "@rsbuild/plugin-react": "^2.0.0",
+    "@rsbuild/plugin-sass": "^1.5.2",
+    "@rsbuild/plugin-svgr": "^2.0.2",
+    "@rstest/adapter-rsbuild": "^0.2.6",
+    "@rstest/core": "^0.9.10",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/cypress-cucumber-preprocessor": "^4.0.5",
     "@types/deep-freeze": "^0.1.5",
-    "@types/jest": "23.3.10",
     "@types/js-yaml": "^4.0.9",
-    "@types/jsdom": "^21.1.6",
     "@types/lodash-es": "4.17.x",
     "@types/node": "^24.0.0",
     "@types/react": "^17.0.1",
@@ -165,31 +161,28 @@
     "@types/react-redux": "7.1.7",
     "@types/react-router-dom": "^5.2.0",
     "@types/react-virtualized": "9.x",
-    "axios-mock-adapter": "^1.22.0",
-    "cypress": "^13.6.1",
-    "cypress-multi-reporters": "^1.6.0",
+    "axios-mock-adapter": "^2.1.0",
+    "cypress": "^15.14.2",
+    "cypress-multi-reporters": "^2.0.5",
+    "esbuild": "^0.25.2",
+    "eslint": "8",
+    "eslint-config-react-app": "^7.0.1",
     "gherkin-lint": "^4.2.4",
     "husky": "^8.0.3",
     "i18next-parser": "^9.0.1",
-    "jest-canvas-mock": "2.2.0",
-    "junit-report-merger": "^3.0.5",
+    "jsdom": "^29.1.1",
+    "junit-report-merger": "^9.0.3",
     "mocha-junit-reporter": "^2.2.1",
     "msw": "^2.12.7",
     "prettier": "2.0.5",
     "pretty-quick": "2.0.1",
-    "react-scripts": "^5.0.1",
-    "redux-mock-store": "1.5.4",
     "sass": "^1.63.6",
     "seedrandom": "^3.0.5",
     "typescript": "^5.9.0"
   },
   "resolutions": {
-    "esbuild": "^0.25.2",
-    "nth-check": "^2.0.1",
-    "postcss": "^8.4.31",
     "unist-util-visit-parents": "5.1.3",
-    "react-markdown": "8.0.7",
-    "workbox-webpack-plugin": "^7.1.0"
+    "react-markdown": "8.0.7"
   },
   "overrides": {
     "react": "^17.0.1",
@@ -212,10 +205,5 @@
     "workerDirectory": [
       "public"
     ]
-  },
-  "jest": {
-    "moduleNameMapper": {
-      "^react-dom/client$": "<rootDir>/src/test-shims/react-dom-client.js"
-    }
   }
 }

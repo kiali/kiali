@@ -5,8 +5,8 @@ import { LoginPageComponent } from '../LoginPage';
 import { LoginStatus } from '../../../store/Store';
 
 const LoginProps = {
-  authenticate: jest.fn(),
-  checkCredentials: jest.fn(),
+  authenticate: rstest.fn(),
+  checkCredentials: rstest.fn(),
   isPostLoginPerforming: false,
   message: '',
   status: LoginStatus.loggedOut
@@ -40,7 +40,7 @@ describe('#LoginPage render correctly', () => {
 
   it('handleSubmit should call authenticate', async () => {
     const user = userEvent.setup();
-    const authenticate = jest.fn();
+    const authenticate = rstest.fn();
     render(<LoginPageComponent {...LoginProps} authenticate={authenticate} />);
     await user.type(screen.getByLabelText(/token/i), username);
     await user.click(screen.getByRole('button', { name: /log in/i }));

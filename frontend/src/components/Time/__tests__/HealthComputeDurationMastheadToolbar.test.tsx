@@ -1,34 +1,33 @@
-import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-
+import type { Mock } from '@rstest/core';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { HistoryManager, URLParam } from 'app/History';
 import { HealthComputeDurationMastheadToolbar } from '../HealthComputeDurationMastheadToolbar';
 
-jest.mock('hooks/redux', () => ({
-  useKialiDispatch: jest.fn()
+rstest.mock('hooks/redux', () => ({
+  useKialiDispatch: rstest.fn()
 }));
 
-jest.mock('utils/HealthComputeDuration', () => ({
-  getHealthComputeDurationLabel: jest.fn(() => '5m'),
-  healthComputeDurationValidSeconds: jest.fn(() => 300)
+rstest.mock('utils/HealthComputeDuration', () => ({
+  getHealthComputeDurationLabel: rstest.fn(() => '5m'),
+  healthComputeDurationValidSeconds: rstest.fn(() => 300)
 }));
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string, opts?: { duration?: string }) =>
     opts && opts.duration !== undefined ? `Last ${opts.duration}` : key
 }));
 
-const mockDispatch = jest.fn();
-const useKialiDispatchMock = require('hooks/redux').useKialiDispatch as jest.Mock;
-const mockValidSecs = require('utils/HealthComputeDuration').healthComputeDurationValidSeconds as jest.Mock;
-const mockGetLabel = require('utils/HealthComputeDuration').getHealthComputeDurationLabel as jest.Mock;
+const mockDispatch = rstest.fn();
+const useKialiDispatchMock = require('hooks/redux').useKialiDispatch as Mock;
+const mockValidSecs = require('utils/HealthComputeDuration').healthComputeDurationValidSeconds as Mock;
+const mockGetLabel = require('utils/HealthComputeDuration').getHealthComputeDurationLabel as Mock;
 
 describe('HealthComputeDurationMastheadToolbar', () => {
-  let setParamSpy: jest.SpyInstance;
+  let setParamSpy: ReturnType<typeof rstest.spyOn>;
 
   beforeAll(() => {
-    setParamSpy = jest.spyOn(HistoryManager, 'setParam').mockImplementation(() => undefined);
+    setParamSpy = rstest.spyOn(HistoryManager, 'setParam').mockImplementation(() => undefined);
   });
 
   afterAll(() => {

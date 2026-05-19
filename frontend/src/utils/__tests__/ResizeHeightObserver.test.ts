@@ -28,7 +28,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should invoke onHeight when height exceeds hysteresis', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight);
     const el = document.createElement('div');
 
@@ -39,7 +39,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should not invoke onHeight when height change is below hysteresis', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight, 5);
     const el = document.createElement('div');
 
@@ -52,7 +52,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should invoke onHeight when height change meets hysteresis threshold', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight, 5);
     const el = document.createElement('div');
 
@@ -65,7 +65,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should not invoke onHeight when height is at or below minHeight', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight, 2, 50);
     const el = document.createElement('div');
 
@@ -82,10 +82,10 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should short-circuit when observing the same element', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight);
     const el = document.createElement('div');
-    const spy = jest.spyOn(MockResizeObserver.prototype, 'observe');
+    const spy = rstest.spyOn(MockResizeObserver.prototype, 'observe');
 
     observer.observe(el);
     const callsAfterFirst = spy.mock.calls.length;
@@ -96,7 +96,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should reset lastHeight when observing a new element', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight, 50);
     const el1 = document.createElement('div');
     const el2 = document.createElement('div');
@@ -114,7 +114,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should allow re-observing after unobserve()', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight);
     const el = document.createElement('div');
 
@@ -131,7 +131,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should create a fresh internal observer after disconnect()', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight);
     const el = document.createElement('div');
 
@@ -145,7 +145,7 @@ describe('ResizeHeightObserver', () => {
   });
 
   it('should handle empty entries gracefully', () => {
-    const onHeight = jest.fn();
+    const onHeight = rstest.fn();
     const observer = new ResizeHeightObserver(onHeight);
     const el = document.createElement('div');
 

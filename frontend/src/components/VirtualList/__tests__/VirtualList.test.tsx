@@ -1,9 +1,8 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 
-jest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
+rstest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
   // eslint-disable-next-line react/display-name
   DefaultSecondaryMasthead: () => <div data-test="DefaultSecondaryMasthead" />
 }));
@@ -39,7 +38,7 @@ describe('VirtualList', () => {
   });
 
   it('calls onResize with the outer div clientHeight on mount', () => {
-    const onResize = jest.fn();
+    const onResize = rstest.fn();
 
     const { container } = render(
       <Provider store={store}>
@@ -65,7 +64,7 @@ describe('VirtualList', () => {
   });
 
   it('calls onResize when ResizeObserver fires', () => {
-    const onResize = jest.fn();
+    const onResize = rstest.fn();
 
     render(
       <Provider store={store}>
@@ -93,7 +92,7 @@ describe('VirtualList', () => {
 
   it('still calls onResize once on mount when ResizeObserver is unavailable', () => {
     delete (window as any).ResizeObserver;
-    const onResize = jest.fn();
+    const onResize = rstest.fn();
 
     render(
       <Provider store={store}>
@@ -107,9 +106,9 @@ describe('VirtualList', () => {
 
   it('falls back to window resize listener when ResizeObserver is unavailable', () => {
     delete (window as any).ResizeObserver;
-    const onResize = jest.fn();
-    const addSpy = jest.spyOn(window, 'addEventListener');
-    const removeSpy = jest.spyOn(window, 'removeEventListener');
+    const onResize = rstest.fn();
+    const addSpy = rstest.spyOn(window, 'addEventListener');
+    const removeSpy = rstest.spyOn(window, 'removeEventListener');
 
     const { unmount } = render(
       <Provider store={store}>

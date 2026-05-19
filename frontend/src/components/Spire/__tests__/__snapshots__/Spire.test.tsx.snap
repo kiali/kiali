@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`Spire component App type renders card when app has SPIRE-managed workloads 1`] = `
+exports[`Spire component > App type > renders card when app has SPIRE-managed workloads 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -52,7 +52,7 @@ exports[`Spire component App type renders card when app has SPIRE-managed worklo
 </div>
 `;
 
-exports[`Spire component App type renders card when app has mixed workloads (some SPIRE-managed) 1`] = `
+exports[`Spire component > App type > renders card when app has mixed workloads (some SPIRE-managed) 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -104,7 +104,7 @@ exports[`Spire component App type renders card when app has mixed workloads (som
 </div>
 `;
 
-exports[`Spire component App type renders card when app has multiple SPIRE-managed workloads 1`] = `
+exports[`Spire component > App type > renders card when app has multiple SPIRE-managed workloads 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -156,7 +156,7 @@ exports[`Spire component App type renders card when app has multiple SPIRE-manag
 </div>
 `;
 
-exports[`Spire component Service type renders card when service has SPIRE-managed workloads 1`] = `
+exports[`Spire component > Service type > renders card when service has SPIRE-managed workloads 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -208,7 +208,7 @@ exports[`Spire component Service type renders card when service has SPIRE-manage
 </div>
 `;
 
-exports[`Spire component Service type renders card when service has mixed workloads (some SPIRE-managed) 1`] = `
+exports[`Spire component > Service type > renders card when service has mixed workloads (some SPIRE-managed) 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -260,7 +260,7 @@ exports[`Spire component Service type renders card when service has mixed worklo
 </div>
 `;
 
-exports[`Spire component Service type renders card when service has multiple SPIRE-managed workloads 1`] = `
+exports[`Spire component > Service type > renders card when service has multiple SPIRE-managed workloads 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -312,7 +312,7 @@ exports[`Spire component Service type renders card when service has multiple SPI
 </div>
 `;
 
-exports[`Spire component Workload type renders card with multiple identity matches 1`] = `
+exports[`Spire component > Workload type > renders card with multiple identity matches 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"
@@ -412,7 +412,7 @@ exports[`Spire component Workload type renders card with multiple identity match
 </div>
 `;
 
-exports[`Spire component Workload type renders card with single identity match 1`] = `
+exports[`Spire component > Workload type > renders card with single identity match 1`] = `
 <div>
   <div
     class="pf-v6-c-card pf-m-compact"

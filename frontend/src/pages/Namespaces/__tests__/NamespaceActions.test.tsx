@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NamespaceActions, NamespaceAction } from '../NamespaceActions';
@@ -18,7 +17,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'Test Action',
-          action: jest.fn()
+          action: rstest.fn()
         }
       ];
 
@@ -35,7 +34,7 @@ describe('NamespaceActions', () => {
   describe('Simple actions', () => {
     it('renders simple action items', async () => {
       const user = userEvent.setup();
-      const actionFn = jest.fn();
+      const actionFn = rstest.fn();
       const actions: NamespaceAction[] = [
         {
           isGroup: false,
@@ -53,7 +52,7 @@ describe('NamespaceActions', () => {
 
     it('calls action when simple item is clicked', async () => {
       const user = userEvent.setup();
-      const actionFn = jest.fn();
+      const actionFn = rstest.fn();
       const actions: NamespaceAction[] = [
         {
           isGroup: false,
@@ -77,7 +76,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'Disabled Action',
-          action: jest.fn(),
+          action: rstest.fn(),
           isDisabled: true
         }
       ];
@@ -96,7 +95,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'External Action',
-          action: jest.fn(),
+          action: rstest.fn(),
           isExternal: true
         }
       ];
@@ -122,13 +121,13 @@ describe('NamespaceActions', () => {
               isGroup: true,
               isSeparator: false,
               title: 'Graph',
-              action: jest.fn()
+              action: rstest.fn()
             },
             {
               isGroup: true,
               isSeparator: false,
               title: 'Applications',
-              action: jest.fn()
+              action: rstest.fn()
             }
           ]
         }
@@ -153,13 +152,13 @@ describe('NamespaceActions', () => {
               isGroup: true,
               isSeparator: false,
               title: 'Graph',
-              action: jest.fn()
+              action: rstest.fn()
             },
             {
               isGroup: true,
               isSeparator: false,
               title: 'Applications',
-              action: jest.fn()
+              action: rstest.fn()
             }
           ]
         }
@@ -174,7 +173,7 @@ describe('NamespaceActions', () => {
 
     it('calls action when grouped item is clicked', async () => {
       const user = userEvent.setup();
-      const actionFn = jest.fn();
+      const actionFn = rstest.fn();
       const actions: NamespaceAction[] = [
         {
           isGroup: true,
@@ -210,7 +209,7 @@ describe('NamespaceActions', () => {
               isGroup: true,
               isSeparator: false,
               title: 'Disabled Action',
-              action: jest.fn(),
+              action: rstest.fn(),
               isDisabled: true
             }
           ]
@@ -236,7 +235,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'Action 1',
-          action: jest.fn()
+          action: rstest.fn()
         },
         {
           isGroup: false,
@@ -246,7 +245,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'Action 2',
-          action: jest.fn()
+          action: rstest.fn()
         }
       ];
 
@@ -276,7 +275,7 @@ describe('NamespaceActions', () => {
           isGroup: false,
           isSeparator: false,
           title: 'Test Action',
-          action: jest.fn()
+          action: rstest.fn()
         }
       ];
 

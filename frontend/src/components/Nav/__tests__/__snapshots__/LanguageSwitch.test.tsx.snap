@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`Language switch renders correctly 1`] = `
+exports[`Language switch > renders correctly 1`] = `
 <div>
   <button
     aria-expanded="false"
