@@ -154,14 +154,9 @@ func TestClientRefGoroutineStartupFlow(t *testing.T) {
 // trying until the context is cancelled, rather than returning immediately or
 // panicking.
 func TestNewClientWithRetryConstructionFailure(t *testing.T) {
-	conf := config.NewConfig()
-	var err error
-	conf.Credentials, err = config.NewCredentialManager(nil)
-	require.NoError(t, err)
-	t.Cleanup(conf.Close)
 	// A null byte in the URL causes url.Parse to fail inside api.NewClient,
 	// which means NewClient always returns an error regardless of connectivity.
-	conf.ExternalServices.Prometheus.URL = "http://\x00invalid"
+	conf := newTestConf(t, "http://\x00invalid")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -169,7 +164,7 @@ func TestNewClientWithRetryConstructionFailure(t *testing.T) {
 		cancel()
 	}()
 
-	client, err := newClientWithRetry(ctx, *conf, "", shortRetry)
+	client, err := newClientWithRetry(ctx, conf, "", shortRetry)
 	assert.Error(t, err, "should return context error after retries are exhausted")
 	assert.Nil(t, client)
 }
