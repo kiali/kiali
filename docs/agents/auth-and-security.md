@@ -3,16 +3,14 @@ scribe:
   title: "Authentication and Security"
   description: "How Kiali authenticates users — five strategies, cookie-based session persistence, TLS policy resolution, and the JWT utility package."
   watch_paths: [handlers/authentication/, jwt/, tlspolicy/]
-  scan: "f9d619df93bb21a45a15076ec025938f8e79f856"
-  freshness: 88
-  human_input: 0
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
+  human_input: 18
   completeness: 86
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "auth-controller-interface", heading: "The AuthController Interface"}
     - {id: "strategies", heading: "Authentication Strategies"}
-    - {id: "openid-flow", heading: "OpenID Connect Flow"}
-    - {id: "openshift-flow", heading: "OpenShift OAuth Flow"}
     - {id: "token-strategy", heading: "Token Strategy"}
     - {id: "header-strategy", heading: "Header (Proxy) Strategy"}
     - {id: "session-persistence", heading: "Session Persistence"}
@@ -20,27 +18,6 @@ scribe:
     - {id: "jwt-package", heading: "JWT Package"}
     - {id: "tls-policy", heading: "TLS Policy Resolution"}
   stale_flags: []
-  review_notes:
-    - finding: "openid-flow:5: validateOpenIdNonceCode does NOT separately reject non-string nonces — it uses a single combined condition (!nonceIsString || nonceHashHex != nonceStr) producing one undifferentiated 'nonce code mismatch' error for both cases."
-      severity: minor
-      tag: inaccurate
-      confidence: 0.97
-      date: "2026-05-14"
-    - finding: "Line number references in openid-flow sections are systematically off by ~60-190 lines (PKCE additions shifted the controller). openid-flow:1 actual: 35-45; :2 actual: 135-138; :3 actual: 213; :4 actual: 235-242; :6 actual: line 285."
-      severity: minor
-      tag: wrong-lines
-      confidence: 0.95
-      date: "2026-05-14"
-    - finding: "ErrSubjectMismatch checks in OpenID ValidateSession are bypassed when ApiToken == 'access_token' — a security scope boundary not mentioned in the docs."
-      severity: minor
-      tag: gap
-      confidence: 0.9
-      date: "2026-05-14"
-    - finding: "Header auth ValidateSession silently skips setting Kiali-User when GetTokenSubject errors but still returns a valid session — the audit trail guarantee is conditional."
-      severity: minor
-      tag: gap
-      confidence: 0.9
-      date: "2026-05-14"
 ---
 
 # Authentication and Security
@@ -141,6 +118,8 @@ For multi-cluster deployments, `ReadAllSessions` retrieves sessions for each clu
 
 **`oauth_token` URL parameter security note**: The `oauth_token` URL query parameter path carries a code comment warning that this parameter is logged by proxies and browsers. Operators should configure proxies/ingress to strip or mask it from access logs.
 
+**Home cluster requirement**: `ValidateSession` requires a valid session for the home cluster (`conf.KubernetesConfig.ClusterName`). If sessions exist for remote clusters but the home cluster session is absent, the method returns an error. In the external Kiali topology (`ignore_home_cluster: true`), the home cluster is the dedicated management cluster — authenticating against its OpenShift OAuth server is correct and expected behavior. The TODOs in the code describe a future capability: allowing a user who has credentials only on a mesh cluster (not the mgmt cluster) to authenticate. That is not supported today.
+
 ## OpenID Connect Flow
 
 `openid_auth_controller.go` implements the OIDC authorization code flow. Only the authorization code flow is supported — `Authenticate` returns an error for any other flow type.
@@ -154,7 +133,7 @@ For multi-cluster deployments, `ReadAllSessions` retrieves sessions for each clu
 **Step 1 — Redirect (`redirectToAuthServerHandler`):**
 - Fetches provider metadata from `<issuer_uri>/.well-known/openid-configuration` (cached after first fetch, protected by `singleflight` to prevent concurrent fetches).
 - Generates a 15-character cryptographic nonce.
-- Generates a PKCE code verifier (RFC 7636, 43 characters from `[A-Za-z0-9\-._~]`) and derives the code challenge via `SHA-256 + Base64URL`.
+- Generates a PKCE code verifier (RFC 7636, 43 characters from `[A-Za-z0-9\-._~]`) and derives the code challenge via `SHA-256 + Base64URL`. PKCE is mandatory (not negotiated) because modern identity providers require it as best practice for public clients; an absent verifier cookie causes a hard failure before the flow proceeds.
 - Sets two `SameSite=Lax` cookies: `kiali-token-nonce-<cluster>` storing the **raw** 15-character nonce, and `kiali-token-pkce-verifier-<cluster>` storing the raw PKCE code verifier. (The SHA-224 hash of the nonce is computed separately and sent to the IdP in the authorization URL's `nonce` parameter — it is not stored in the cookie.)
 - Computes the CSRF state parameter: `SHA-224(nonce + timestamp + signingKey)` concatenated with the timestamp.
 - Redirects to the authorization endpoint with `response_type=code`, scopes, nonce hash, state, `code_challenge`, and `code_challenge_method=S256`.
@@ -194,6 +173,7 @@ In-house validation (`validateOpenIdTokenInHouse`) currently requires RS256 algo
 - When the OIDC token is absent from the stored session, the method returns `fmt.Errorf("session [%w]: OIDC token is absent", ErrSessionNotFound)`. Callers can detect this sentinel with `errors.Is(err, ErrSessionNotFound)`.
 - Subject claim mismatch returns `fmt.Errorf("session [%w]: …", ErrSubjectMismatch)`.
 - If the configured `username_claim` is present in the id_token but is not a string, validation fails with `ErrSubjectMismatch`.
+- **`access_token` bypass**: When `conf.Auth.OpenId.ApiToken == "access_token"`, the entire JWT sanity-check block (subject claim parsing and `ErrSubjectMismatch` checks) is skipped — the access token is opaque and cannot be introspected. Session integrity for this path relies entirely on the upstream IdP validating the access token.
 - `r.Header.Set` is used for the `Kiali-User` audit header to prevent duplicate header accumulation.
 
 **Nonce validation** (`validateOpenIdNonceCode`): An absent `nonce` claim in the id_token produces error `"nonce claim is absent"`. A non-string or mismatched nonce produces `"nonce code mismatch"` via a combined `(!nonceIsString || hashMismatch)` condition.
@@ -259,7 +239,7 @@ Overwrites all session-related cookies (`kiali-token*` prefix) with `MaxAge=-1` 
 
 `SetAuthInfoContext` / `GetAuthInfoContext` and `SetSessionIDContext` / `GetSessionIDContext` are the typed accessors.
 
-Additionally, most `ValidateSession` implementations add the `Kiali-User` internal request header for audit logging — specifically token and OpenShift strategies. The header strategy does not set this header, as the proxy is expected to have already authenticated the user.
+All four non-anonymous `ValidateSession` implementations attempt to set the `Kiali-User` internal request header for audit logging. The header strategy (`header_auth_controller.go`) sets it to the freshly-verified token subject via `GetTokenSubject` — if that call fails, the header is omitted and a warning is logged, but the session is still considered valid. The OpenID and token strategies set it unconditionally from the stored subject claim.
 
 ## JWT Package
 

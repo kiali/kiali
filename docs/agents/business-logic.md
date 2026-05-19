@@ -3,14 +3,13 @@ scribe:
   title: "Business Logic Layer"
   description: "Core service-mesh domain logic — apps, workloads, health, Istio config, mesh topology"
   watch_paths: [business/, models/, cache/]
-  scan: "HEAD"
-  freshness: 60
-  human_input: 0
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
+  human_input: 13
   completeness: 80
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "layer-pattern", heading: "The Layer Pattern"}
-    - {id: "services", heading: "Service Structs"}
     - {id: "domain-concepts", heading: "Key Domain Concepts"}
     - {id: "models", heading: "Models Package"}
     - {id: "cache", heading: "Cache Architecture"}
@@ -140,6 +139,8 @@ Orchestrates Istio configuration validation by:
 
 Checks that Istio control-plane components (istiod, ingress gateways, etc.) are healthy by inspecting their Deployment ready/desired replica counts. Results are stored in `KialiCache`.
 
+When mapping workloads to Istio app components, `getStatusOf()` resolves the app label name dynamically via `conf.GetAppLabelName(workload.Labels)` rather than using the static `config.IstioAppLabel` constant. This means custom app label configurations (e.g. `app.kubernetes.io/name`) are honoured when correlating workloads with Istio status components.
+
 ### `MeshService` (`business/mesh.go`)
 
 Uses `istio.MeshDiscovery` to build a `models.Mesh` — the topology of clusters, control planes, and their interconnections.
@@ -247,7 +248,7 @@ type IstioValidation struct {
 
 | Data | Cache key | Notes |
 |---|---|---|
-| Kubernetes objects (pods, deployments, etc.) | per cluster | Via controller-runtime `client.Reader` (informer cache) |
+| Kubernetes objects (pods, deployments, etc.) | per cluster | Via controller-runtime `client.Reader` (informer cache). Pods and Services are trimmed by `cache/transform.go` — only `Name`, `Namespace`, `Labels`, `Annotations`, `OwnerReferences`, `CreationTimestamp`, and relevant Spec fields are kept in memory. |
 | Namespaces | `token + cluster` | TTL controlled by `CacheTokenNamespaceDuration` config |
 | Health data | `cluster:namespace` | Written by background health jobs and individual handlers |
 | Gateways (Istio) | singleton `"gateways"` | Refreshed by background job |

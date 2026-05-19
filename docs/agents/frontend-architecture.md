@@ -3,9 +3,9 @@ scribe:
   title: "Frontend Architecture"
   description: "React/TypeScript frontend — component structure, routing, Redux state, PatternFly, i18n, Cypress tests"
   watch_paths: [frontend/src/, frontend/cypress/]
-  scan: "f9d619df93bb21a45a15076ec025938f8e79f856"
-  freshness: 84
-  human_input: 0
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
+  human_input: 9
   completeness: 91
   inferred_sections:
     - {id: "overview", heading: "Overview"}
@@ -20,27 +20,6 @@ scribe:
     - {id: "hooks", heading: "Custom Hooks"}
     - {id: "cypress", heading: "Cypress End-to-End Tests"}
   stale_flags: []
-  review_notes:
-    - finding: "styling:4 states 'Six new kialiStyle exports' but seven are exported (detailTitleRowStyle, detailTitleMainStyle, detailGridStyle, detailPageTitleStyle, detailCardStackStyle, inlineIconRowStyle, clickableInlineStyle). Fix count."
-      severity: minor
-      tag: inaccuracy
-      confidence: 0.99
-      date: "2026-05-14"
-    - finding: "page-utils:1 lists navigateToFilteredList third but it is the first export in the source file. Reorder for accuracy."
-      severity: minor
-      tag: inaccuracy
-      confidence: 0.95
-      date: "2026-05-14"
-    - finding: "FlexStyles.ts has an eighth export scrollableContentStyle (lines 123-129) not mentioned in the documentation."
-      severity: minor
-      tag: gap
-      confidence: 0.9
-      date: "2026-05-14"
-    - finding: "styling:1 notes removed props but does not document the surviving rightToolbar prop on RenderHeader."
-      severity: minor
-      tag: gap
-      confidence: 0.9
-      date: "2026-05-14"
 ---
 
 # Frontend Architecture
@@ -89,6 +68,49 @@ Other files in `frontend/src/app/`:
 - `AuthenticationController.tsx` — checks session state and renders either the public or protected area.
 - `InitializingScreen.tsx` — loading screen shown during startup and PersistGate hydration.
 - `StartupInitializer.tsx` — fetches configuration, status, and auth strategy before the app is usable.
+
+## Authentication Flow
+
+The frontend auth system has three layers: the React gate (`AuthenticationController`), the strategy dispatcher (`LoginDispatcher`), and per-strategy login classes.
+
+### AuthenticationController
+
+`frontend/src/app/AuthenticationController.tsx` is a Redux-connected class component that controls which UI tree is rendered based on login state. It tracks four stages via the `LoginStage` enum:
+
+| Stage | Rendered content |
+|---|---|
+| `LOGIN` | Public area (login form or IdP redirect) |
+| `POST_LOGIN` | Initializing screen (or login form on error) |
+| `LOGGED_IN_AT_LOAD` | Initializing screen while post-login actions run |
+| `LOGGED_IN` | Protected area (full Kiali UI) |
+
+On mount, for `anonymous` and `header` strategies, `checkCredentials()` is dispatched immediately (no credentials to collect) and the stage is set to `LOGGED_IN_AT_LOAD` to show the initializing screen rather than briefly flashing the login form.
+
+`doPostLoginActions()` fires after authentication succeeds. It concurrently fetches namespaces, server config, and tracing info, then applies UI defaults (language, refresh interval, selected namespaces, traffic rates) from `serverConfig.kialiFeatureFlags.uiDefaults`. A 3-second timer transitions to `LOGGED_IN_AT_LOAD` if the post-login calls are slow — so the initializing screen always appears rather than leaving the user on the login page indefinitely.
+
+### LoginDispatcher and Strategy Classes
+
+`frontend/src/services/Login.ts` defines `LoginDispatcher`, which maps each `AuthStrategy` to a `LoginStrategy` implementation:
+
+| Strategy | Class | Behavior |
+|---|---|---|
+| `anonymous` | `AnonymousLogin` | Returns a synthetic session with `ANONYMOUS_USER` and a 1-day expiry; no API call |
+| `token` | `TokenLogin` | POSTs the entered token to `API.login()`; exchange happens server-side |
+| `header` | `HeaderLogin` | POSTs empty credentials to `API.login()`; server reads the `Authorization` header |
+| `openshift` | `OAuthLogin` | Returns `AuthResult.HOLD`, triggering a redirect to the OpenShift OAuth server |
+| `openid` | `OAuthLogin` | Same as openshift — redirect to IdP |
+
+`OAuthLogin.prepare()` returns `AuthResult.HOLD`, which causes `LoginDispatcher.prepare()` to wait 3 seconds then reject with a failure. This assumes the browser redirect away from the page happens within that window — if the IdP redirect is unusually slow, the promise rejects before navigation completes. This is a known limitation.
+
+### Auth Config and Strategy Detection
+
+`frontend/src/config/AuthenticationConfig.ts` holds the global `authenticationConfig` singleton (type `AuthConfig`). It is populated from the `/api/auth/info` response fetched by `StartupInitializer`. The `AuthStrategy` enum (`frontend/src/types/Auth.ts`) mirrors the backend constants: `anonymous`, `openshift`, `token`, `openid`, `header`.
+
+`isAuthStrategyOAuth()` returns true for `openshift` and `openid` — used in `AuthenticationController` to keep the initializing screen during post-login for OAuth flows (where the redirect back from the IdP triggers a second render cycle).
+
+### Session Expiry
+
+The global Axios response interceptor in `App.tsx` dispatches `LoginActions.sessionExpired()` on any HTTP 401 response. `AuthenticationController.componentDidUpdate` transitions back to `LOGIN` stage when `authenticated` flips from true to false. `SessionTimeout.tsx` renders a `Modal` dialog warning users before session expiry, with a countdown in seconds sourced from the Redux `authentication` state.
 
 ## Routing
 

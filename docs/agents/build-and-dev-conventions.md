@@ -3,8 +3,8 @@ scribe:
   title: "Build System and Dev Conventions"
   description: "How the Kiali build system is structured — Makefile decomposition, Go and frontend build mechanics, container image variants, multi-cluster push paths, operator symlink, test wiring, and CI."
   watch_paths: [Makefile, hack/, operator/, make/, STYLE_GUIDE.adoc, CONTRIBUTING.md]
-  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
-  freshness: 99
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
   human_input: 0
   completeness: 78
   inferred_sections:
@@ -19,8 +19,7 @@ scribe:
     - {id: "hack-scripts", heading: "hack/ Script Ecosystem"}
     - {id: "ci", heading: "CI/CD Pipeline"}
     - {id: "code-conventions", heading: "Code Conventions"}
-  stale_flags:
-    - {section: "Test Infrastructure", reason: "hack/run-integration-tests.sh: ensureCypressInstalled renamed to ensureCypressReady; now also runs yarn lint:gherkin (Gherkin feature file validation) before each Cypress test suite. Doc does not mention this Gherkin validation step."}
+  stale_flags: []
 ---
 
 # Build System and Dev Conventions
@@ -58,7 +57,7 @@ Makefile
 ```
 
 Global variables of note in the root `Makefile`:
-- `VERSION` — the Kiali semantic version (e.g., `v2.26.0-SNAPSHOT`). Embedded in the binary at link time.
+- `VERSION` — the Kiali semantic version (e.g., `v2.27.0-SNAPSHOT`). Embedded in the binary at link time.
 - `TARGET_ARCHS` — `amd64 arm64 s390x ppc64le` — the multi-arch matrix for published images.
 - `DORP` — `docker` or `podman`. All build targets branch on this variable.
 - `CLUSTER_TYPE` — `openshift`, `minikube`, `kind`, or `local`. Selects the registry path in `Makefile.cluster.mk`.
@@ -207,6 +206,8 @@ Full end-to-end API tests against a live cluster, in `tests/integration/tests/`.
 The `hack/run-integration-tests.sh` script is the canonical entry point for both CI and local runs. It accepts a `--test-suite` flag selecting from: `backend`, `frontend`, `frontend-core-1`, `frontend-core-2`, `frontend-ambient`, `frontend-primary-remote`, `frontend-multi-primary`, `frontend-multi-mesh`, `frontend-external-kiali`, `frontend-tempo`, `backend-external-controlplane`, `local`, `offline`, `ai-chatbot`, and several others. The default suite is `backend`.
 
 The script handles setup (cluster provisioning, Kiali install, Istio install) and teardown, with flags like `--setup-only` and `--tests-only` for split execution.
+
+Before each Cypress suite is launched, the `ensureCypressReady()` helper verifies the Cypress binary is available and runs `yarn lint:gherkin` from `frontend/` to validate all Gherkin `.feature` files. The build fails fast if any feature file is malformed, before the cluster is provisioned.
 
 ### Controller Integration Tests (`make test-integration-controller`)
 

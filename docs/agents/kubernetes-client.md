@@ -3,8 +3,8 @@ scribe:
   title: "Kubernetes Client Layer"
   description: "K8s/Istio API access, multi-cluster support, client factory, offline mode, store, and config"
   watch_paths: [kubernetes/, store/, config/]
-  scan: "8b3121d092244fb3aba0087f449ff717b6fd709b"
-  freshness: 96
+  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  freshness: 100
   human_input: 0
   completeness: 85
   inferred_sections:
@@ -220,7 +220,7 @@ const (
 - `conf.Clustering.IgnoreHomeCluster` — exclude the home cluster from multi-cluster views.
 - `conf.Deployment.AccessibleNamespaces` — when set, restricts cache and controller-runtime to these namespaces.
 - `conf.ExternalServices.{Prometheus,Tracing,Grafana,Perses}.{Enabled,InternalURL,ExternalURL}` — per-service connectivity.
-- `conf.ChatAI.Enabled` / `conf.ChatAI.Providers` — AI feature flag and provider list.
+- `conf.ChatAI.Enabled` / `conf.ChatAI.Providers` — AI feature flag and provider list. Supported `ProviderType` constants: `OpenAIProvider`, `AnthropicProvider`, `GoogleProvider`, `DefaultProviderType`. `AiStoreConfig.InactivityTimeout` (default `"30m"`) controls session eviction — sessions idle longer than this are purged.
 - `conf.Server.Observability.Tracing.{Enabled,CollectorURL,SamplingRate}` — Kiali's own OTel self-instrumentation.
 
 ## Kubernetes Types and Scheme

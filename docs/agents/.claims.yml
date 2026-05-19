@@ -190,3 +190,144 @@ auth-and-security:
     claim: "Token strategy ValidateSession uses r.Header.Set (not r.Header.Add) for Kiali-User to prevent duplicate header accumulation"
     file: "handlers/authentication/token_auth_controller.go"
     approx_line: 676
+
+kubernetes-client:
+  config-package:
+  - id: 1
+    claim: "AiStoreConfig has an InactivityTimeout field (DurationString, default '30m') that triggers background session eviction in the AI store"
+    file: "config/config.go"
+    approx_line: 787
+  - id: 2
+    claim: "Supported ProviderType constants are OpenAIProvider, AnthropicProvider, GoogleProvider, and DefaultProviderType; AnthropicProvider maps only to DefaultProviderConfigType"
+    file: "config/config.go"
+    approx_line: 806
+  client-factory:
+  - id: 3
+    claim: "User clients are cached by SHA-256 of the bearer token plus any impersonation fields and expire after 15 minutes (defaultExpirationTime)"
+    file: "kubernetes/client_factory.go"
+    approx_line: 1
+  - id: 4
+    claim: "SA clients are created once per cluster at startup and stored in saClientEntries; they are exposed as ClientInterface (read-only) by default"
+    file: "kubernetes/client_factory.go"
+    approx_line: 1
+  multi-cluster:
+  - id: 5
+    claim: "Remote cluster credentials are stored as Kubernetes Secrets in the home cluster and read by GetRemoteClusterInfos() at startup"
+    file: "kubernetes/cluster_secret.go"
+    approx_line: 1
+  - id: 6
+    claim: "conf.Clustering.IgnoreHomeCluster = true causes Kiali to exclude home cluster resources from the UI"
+    file: "config/config.go"
+    approx_line: 1
+_meta:
+  kubernetes-client_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+build-and-dev-conventions:
+  makefile-structure:
+  - id: 1
+    claim: "VERSION is set to v2.27.0-SNAPSHOT in the root Makefile and embedded in the binary at link time via ldflags -X"
+    file: "Makefile"
+    approx_line: 14
+  test-infrastructure:
+  - id: 2
+    claim: "ensureCypressReady() runs 'yarn lint:gherkin' to validate Gherkin .feature files before launching any Cypress test suite"
+    file: "hack/run-integration-tests.sh"
+    approx_line: 375
+  - id: 3
+    claim: "hack/hooks/pre-commit.sh uses anchored regex (.yml$ / .yaml$) for YAML file detection to avoid false positives on files like .yml.bak"
+    file: "hack/hooks/pre-commit.sh"
+    approx_line: 71
+_meta:
+  build-and-dev-conventions_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+business-logic:
+  services:
+  - id: 1
+    claim: "IstioStatusService.getStatusOf() resolves the app label name via conf.GetAppLabelName(workload.Labels) to support custom app label configurations beyond the static IstioAppLabel constant"
+    file: "business/istio_status.go"
+    approx_line: 444
+    provenance:
+      origin: user
+      context: "Driven by a user-reported GitHub issue in kiali/kiali requesting support for custom app label names beyond the default IstioAppLabel constant"
+      recorded: "2026-05-18"
+  - id: 2
+    claim: "IstioValidationsService.NewValidationInfo fetches namespaces before workloads (not after) so namespace metadata is available when building service account maps"
+    file: "business/istio_validations.go"
+    approx_line: 218
+  cache:
+  - id: 3
+    claim: "TransformPod and TransformService preserve CreationTimestamp in the trimmed ObjectMeta alongside Name, Namespace, Labels, Annotations, and OwnerReferences"
+    file: "cache/transform.go"
+    approx_line: 15
+_meta:
+  business-logic_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+auth-and-security:
+  openid-flow:
+  - id: 1
+    claim: "PKCE is mandatory in the OIDC flow — an absent code_verifier cookie causes a hard failure; not negotiated because modern IdPs require it as best practice"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 649
+    provenance:
+      origin: user
+      context: "PKCE made mandatory (not optional/negotiated) because most current identity providers require it as best practice for public clients"
+      recorded: "2026-05-18"
+  - id: 2
+    claim: "When conf.Auth.OpenId.ApiToken == 'access_token', the JWT sanity-check block (ErrSubjectMismatch checks) in ValidateSession is skipped because the access token is opaque"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 220
+    provenance:
+      origin: inferred
+  openshift-flow:
+  - id: 3
+    claim: "OpenShift ValidateSession requires a valid home cluster session; clustering.ignore_home_cluster only hides home cluster resources from the data plane and does not bypass this auth check"
+    file: "handlers/authentication/openshift_auth_controller.go"
+    approx_line: 268
+    provenance:
+      origin: inferred
+  header-strategy:
+  - id: 4
+    claim: "Header auth ValidateSession sets Kiali-User from GetTokenSubject; if GetTokenSubject fails, the header is omitted with a warning but the session is still returned as valid"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 147
+    provenance:
+      origin: inferred
+_meta:
+  auth-and-security_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+frontend-architecture-auth:
+  authentication-flow:
+  - id: 1
+    claim: "AuthenticationController uses a LoginStage enum (LOGIN, POST_LOGIN, LOGGED_IN_AT_LOAD, LOGGED_IN) to gate which UI tree is rendered"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 64
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "For anonymous and header strategies, checkCredentials() is dispatched on mount and the stage is immediately set to LOGGED_IN_AT_LOAD to prevent flashing the login form"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 104
+    provenance:
+      origin: inferred
+  - id: 3
+    claim: "OAuthLogin.prepare() returns AuthResult.HOLD; LoginDispatcher waits 3 seconds then rejects — this is a known limitation when IdP redirects are slow"
+    file: "frontend/src/services/Login.ts"
+    approx_line: 127
+    provenance:
+      origin: user
+      context: "The 3-second delay before rejecting OAuth prepare is a known limitation, not an intentional design tradeoff"
+      recorded: "2026-05-18"
+  - id: 4
+    claim: "isAuthStrategyOAuth() returns true for openshift and openid strategies and is used to keep the initializing screen during post-login for OAuth flows"
+    file: "frontend/src/config/AuthenticationConfig.ts"
+    approx_line: 8
+    provenance:
+      origin: inferred
+  - id: 5
+    claim: "Global Axios interceptor dispatches LoginActions.sessionExpired() on HTTP 401; AuthenticationController.componentDidUpdate transitions back to LOGIN stage"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 83
+    provenance:
+      origin: inferred
+_meta:
+  frontend-architecture_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"

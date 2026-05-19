@@ -3,54 +3,28 @@
 | Topic | Fresh | Human | Complete | Stale Flags | Review | File |
 |-------|-------|-------|----------|-------------|--------|------|
 | Backend Architecture | 60 | 0 | 88 | — | pending (drifted) | [backend-architecture.md](backend-architecture.md) |
-| Business Logic Layer | 60 | 0 | 80 | — | pending (drifted) | [business-logic.md](business-logic.md) |
-| Kubernetes Client Layer | 96 | 0 | 85 | — | pending (drifted) | [kubernetes-client.md](kubernetes-client.md) |
+| Business Logic Layer | 100 | 13 | 80 | — | pending (review needed) | [business-logic.md](business-logic.md) |
+| Kubernetes Client Layer | 100 | 0 | 85 | — | pending (review needed) | [kubernetes-client.md](kubernetes-client.md) |
 | Graph Engine | 60 | 0 | 83 | — | current | [graph-engine.md](graph-engine.md) |
 | Observability Integrations and AI | 92 | 0 | 90 | — | PASS_WITH_ANNOTATIONS | [observability-and-ai.md](observability-and-ai.md) |
-| Authentication and Security | 88 | 0 | 86 | — | PASS_WITH_ANNOTATIONS | [auth-and-security.md](auth-and-security.md) |
-| Frontend Architecture | 84 | 0 | 91 | — | PASS_WITH_ANNOTATIONS | [frontend-architecture.md](frontend-architecture.md) |
-| Build System and Dev Conventions | 99 | 0 | 78 | 1 | pending (drifted) | [build-and-dev-conventions.md](build-and-dev-conventions.md) |
+| Authentication and Security | 100 | 18 | 86 | — | pending (review needed) | [auth-and-security.md](auth-and-security.md) |
+| Frontend Architecture | 100 | 9 | 91 | — | pending (review needed) | [frontend-architecture.md](frontend-architecture.md) |
+| Build System and Dev Conventions | 100 | 0 | 78 | — | PASS | [build-and-dev-conventions.md](build-and-dev-conventions.md) |
 
 ## Stale Flags
 
-### build-and-dev-conventions.md — Test Infrastructure
-`hack/run-integration-tests.sh`: the helper function `ensureCypressInstalled` was renamed to `ensureCypressReady` and now also runs `yarn lint:gherkin` to validate Gherkin `.feature` files before every Cypress test suite launch. The Test Infrastructure section does not mention this Gherkin validation step.
+No active stale flags.
 
 ## Review Annotations (PASS_WITH_ANNOTATIONS)
 
 ### observability-and-ai.md
-- **Minor / WRONG_CLAIM**: `ai-providers:5` — `StopReasonPauseTurn` block is at lines 76-83 (not 72-76); at the final iteration the code returns an error rather than continuing. Document does not reflect this edge case.
-- **Minor / MISSING_SECTION**: `purgeInactiveSessions` evicts based on session-level `LastAccessed`, not per-conversation timestamps — all conversations in a stale session are purged together.
-- **Minor / STALE_REFERENCE**: Several line number citations are off by 1-3 lines (will drift further as code changes).
-
-### auth-and-security.md
-- **Minor / inaccurate**: `openid-flow:5` — `validateOpenIdNonceCode` does NOT separately reject non-string nonces with a distinct error; it folds them into the same `"nonce code mismatch"` error via a combined `(!nonceIsString || mismatch)` condition.
-- **Minor / wrong-lines**: Line number references in `openid-flow` sections are systematically off by ~60-190 lines due to PKCE additions shifting the controller file. Actual positions: `:1` → 35-45, `:2` → 135-138, `:3` → 213, `:4` → 235-242, `:6` → 285.
-- **Minor / gap**: `ErrSubjectMismatch` checks in `ValidateSession` are bypassed when `ApiToken == "access_token"` — a security scope boundary not documented.
-- **Minor / gap**: Header auth `ValidateSession` silently skips setting `Kiali-User` when `GetTokenSubject` errors but still returns a valid session — the audit trail guarantee is conditional.
-
-### frontend-architecture.md
-- **Minor / inaccuracy**: `styling:4` states "Six new kialiStyle exports" but seven are exported. Fix count.
-- **Minor / inaccuracy**: `page-utils:1` lists `navigateToFilteredList` third, but it is the first export in source.
-- **Minor / gap**: `FlexStyles.ts` has an eighth export `scrollableContentStyle` (lines 123-129) not mentioned in documentation.
-- **Minor / gap**: `styling:1` notes removed props but does not document the surviving `rightToolbar` prop on `RenderHeader`.
+- **Minor / WRONG_CLAIM**: `ai-providers:5` — StopReasonPauseTurn block is at lines 76-83 (not 72-76); at the final iteration the code returns an error rather than continuing.
+- **Minor / MISSING_SECTION**: purgeInactiveSessions evicts based on session-level LastAccessed, not per-conversation timestamps.
+- **Minor / STALE_REFERENCE**: Several line number citations are off by 1-3 lines.
 
 ## Contradictions
 
 None detected across topics.
 
-## Drift Summary (since previous scan: 8b3121d09 → f9d619df9)
-
-| Topic | Status | Changed Files | Classification |
-|-------|--------|--------------|----------------|
-| observability-and-ai | ✅ Updated | 16 files (+1423/-96) | Major — Anthropic provider, AI store inactivity cleanup |
-| frontend-architecture | ✅ Updated | 100 files (+2361/-894) | Major — PageUtils, WorkloadPods, RenderHeader refactor |
-| auth-and-security | ✅ Updated | 9 files (+236/-59) | Moderate — ValidateSession hardening, cookie termination |
-| backend-architecture | ⚠️ Drifted | 13 files (+285/-79) | Pending next batch |
-| business-logic | ⚠️ Drifted | 8 files (+152/-39) | Pending next batch |
-| kubernetes-client | ⚠️ Drifted | 2 files (+38/-10) | Pending next batch |
-| build-and-dev-conventions | ⚠️ Drifted | 3 files (+17/-4) | Pending (+ existing stale flag) |
-| graph-engine | ✅ Current | 0 files | No drift |
-
 ---
-*Generated by codebase-scribe — 2026-05-14. Scan SHA: f9d619df93bb21a45a15076ec025938f8e79f856. 3 topics updated this run. 4 topics remain drifted. Run `/codebase-scribe` again to draft the next batch.*
+*Updated by codebase-scribe — 2026-05-18. Scan SHA: 5b5a2d914858e50b0072a7b3fbf6c92e564908c1. Focus run: auth-and-security and frontend-architecture enriched with authentication strategy deep-dive. 1 topic remains drifted (backend-architecture). Run `/codebase-scribe` again to continue.*
