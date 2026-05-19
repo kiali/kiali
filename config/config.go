@@ -1480,6 +1480,17 @@ func Get() (conf *Config) {
 	return &copy
 }
 
+// SetPrometheusDisabledReason atomically updates only the in-memory DisabledReason
+// field of the global config without triggering a full config.Set() and its side
+// effects (e.g. AddHealthDefault appending duplicate health rate entries). Use this
+// instead of config.Get() + mutate + config.Set() whenever only DisabledReason needs
+// to change.
+func SetPrometheusDisabledReason(reason string) {
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
+	configuration.ExternalServices.Prometheus.DisabledReason = reason
+}
+
 // Set the global Config
 // This function should not be called outside of main or tests.
 // If possible keep config unmutated and use globals and/or appstate package for mutable states to avoid concurrent writes risk.
