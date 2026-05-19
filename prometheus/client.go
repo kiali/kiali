@@ -17,6 +17,7 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -320,11 +321,49 @@ func initPromCache(ctx context.Context) {
 	}
 }
 
+const defaultClientRetryInterval = 30 * time.Second
+
 // NewClient creates a new client to the Prometheus API. It delegates to
 // NewClientFromPrometheusConfig with the main Prometheus configuration so
 // existing callers don't need to specify a PrometheusConfig explicitly.
 func NewClient(conf config.Config, kialiSAToken string) (*Client, error) {
 	return NewClientFromPrometheusConfig(conf, conf.ExternalServices.Prometheus, kialiSAToken)
+}
+
+// NewClientWithRetry creates a Prometheus client and verifies reachability,
+// retrying every 30s until both the client creation and the health probe succeed
+// or the context is cancelled. Use this at startup when Prometheus connectivity
+// is required before serving traffic.
+func NewClientWithRetry(ctx context.Context, conf config.Config, kialiSAToken string) (*Client, error) {
+	return newClientWithRetry(ctx, conf, kialiSAToken, defaultClientRetryInterval)
+}
+
+// newClientWithRetry is the testable inner implementation; callers should use NewClientWithRetry.
+func newClientWithRetry(ctx context.Context, conf config.Config, kialiSAToken string, retryInterval time.Duration) (*Client, error) {
+	healthURL := conf.ExternalServices.Prometheus.HealthCheckUrl
+	if healthURL == "" {
+		healthURL = conf.ExternalServices.Prometheus.URL + "/-/healthy"
+	}
+
+	var client *Client
+	retryErr := wait.PollUntilContextCancel(ctx, retryInterval, true, func(ctx context.Context) (bool, error) {
+		var err error
+		client, err = NewClient(conf, kialiSAToken)
+		if err != nil {
+			log.Warningf("Prometheus client init failed: %v. Retrying in %s", err, retryInterval)
+			return false, nil
+		}
+		_, statusCode, _, probeErr := httputil.HttpGet(healthURL, &conf.ExternalServices.Prometheus.Auth, 10*time.Second, nil, nil, &conf)
+		if probeErr != nil || statusCode > 399 {
+			log.Warningf("Prometheus unreachable at [%s] (status %d): %v. Retrying in %s", healthURL, statusCode, probeErr, retryInterval)
+			return false, nil
+		}
+		return true, nil
+	})
+	if retryErr != nil {
+		return nil, retryErr
+	}
+	return client, nil
 }
 
 // NewClientFromPrometheusConfig creates a new Prometheus API client from

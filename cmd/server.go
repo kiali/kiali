@@ -9,7 +9,6 @@ import (
 	"maps"
 	"os"
 	"slices"
-	"time"
 
 	"github.com/go-logr/zerologr"
 	"github.com/rs/zerolog"
@@ -49,7 +48,6 @@ import (
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/tlspolicy"
 	"github.com/kiali/kiali/tracing"
-	"github.com/kiali/kiali/util/httputil"
 )
 
 func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFactory kubernetes.ClientFactory) <-chan struct{} {
@@ -94,40 +92,44 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	business.SetKialiSAToken(kialiToken)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	// If enabled=true but the URL is empty, unreachable, or the transport fails to initialize,
-	// Kiali injects a NoopClient and records a DisabledReason but keeps Enabled=true so that
-	// addon status checks and the mesh page still probe Prometheus and report the error.
+	// When a URL is configured, connectivity is established in a background goroutine so Kiali
+	// starts serving immediately (like tracing). All consumers hold a *ClientRef; once the
+	// goroutine connects, a single Set call upgrades every caller transparently.
+	// When Prometheus is explicitly disabled or the URL is empty (misconfiguration), a plain
+	// NoopClient is used directly — no ClientRef is needed since there is no swap to perform.
 	var prom prometheus.ClientInterface
-	if conf.ExternalServices.Prometheus.Enabled {
-		var disabledReason string
-		if conf.ExternalServices.Prometheus.URL == "" {
-			disabledReason = "Prometheus URL is empty; metrics features are unavailable"
-		} else {
-			client, err := prometheus.NewClient(*conf, kialiToken)
-			if err != nil {
-				disabledReason = fmt.Sprintf("Prometheus client init failed: %s", err)
-			} else {
-				healthURL := conf.ExternalServices.Prometheus.HealthCheckUrl
-				if healthURL == "" {
-					healthURL = conf.ExternalServices.Prometheus.URL + "/-/healthy"
-				}
-				_, statusCode, _, probeErr := httputil.HttpGet(healthURL, &conf.ExternalServices.Prometheus.Auth, 10*time.Second, nil, nil, conf)
-				if probeErr != nil || statusCode > 399 {
-					disabledReason = fmt.Sprintf("Prometheus unreachable at [%s] (status [%d])", healthURL, statusCode)
-				} else {
-					prom = client
-				}
-			}
-		}
-		if disabledReason != "" {
-			log.Warningf("%s", disabledReason)
-			conf.ExternalServices.Prometheus.DisabledReason = disabledReason
-			config.Set(conf)
-			prom = prometheus.NewNoopClient()
-		}
-	} else {
+	if !conf.ExternalServices.Prometheus.Enabled {
 		log.Info("Prometheus is disabled")
 		prom = prometheus.NewNoopClient()
+	} else if conf.ExternalServices.Prometheus.URL == "" {
+		disabledReason := "Prometheus URL is empty; metrics features are unavailable"
+		log.Warningf("%s", disabledReason)
+		conf.ExternalServices.Prometheus.DisabledReason = disabledReason
+		config.Set(conf)
+		prom = prometheus.NewNoopClient()
+	} else {
+		// Set a temporary DisabledReason so the frontend shows a "connecting" warning
+		// and the config handler short-circuits instead of calling NoopClient methods.
+		// The goroutine clears it once the real client is installed.
+		conn := config.Get()
+		conn.ExternalServices.Prometheus.DisabledReason = "Prometheus is connecting, metrics features are temporarily unavailable"
+		config.Set(conn)
+
+		promRef := prometheus.NewClientRef(prometheus.NewNoopClient())
+		prom = promRef
+		go func() {
+			client, err := prometheus.NewClientWithRetry(ctx, *conf, kialiToken)
+			if err != nil {
+				log.Warningf("Prometheus client initialization cancelled (context done): %s", err)
+				return
+			}
+			promRef.Set(client)
+			// Clear the "connecting" reason so the frontend sees Prometheus as operational.
+			connected := config.Get()
+			connected.ExternalServices.Prometheus.DisabledReason = ""
+			config.Set(connected)
+			log.Info("Prometheus connected -- metrics features restored")
+		}()
 	}
 
 	// Create shared tracing client shared by all tracing requests in the business layer.
