@@ -104,8 +104,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	} else if conf.ExternalServices.Prometheus.URL == "" {
 		disabledReason := "Prometheus URL is empty; metrics features are unavailable"
 		log.Warningf("%s", disabledReason)
-		conf.ExternalServices.Prometheus.DisabledReason = disabledReason
-		config.Set(conf)
+		config.SetPrometheusDisabledReason(disabledReason)
 		prom = prometheus.NewNoopClient()
 	} else {
 		// Set a temporary DisabledReason so the frontend shows a "connecting" warning
