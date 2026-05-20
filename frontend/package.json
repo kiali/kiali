@@ -208,8 +208,9 @@
     "not dead"
   ],
   "cypress-cucumber-preprocessor": {
-    "stepDefinitions": "cypress/integration/**/*.{js,ts}",
-    "filterSpecs": true
+    "filterSpecs": true,
+    "omitFiltered": true,
+    "stepDefinitions": "cypress/integration/**/*.{js,ts}"
   },
   "msw": {
     "workerDirectory": [

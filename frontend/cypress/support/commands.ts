@@ -1,3 +1,4 @@
+import { discoverOAuthOrigin } from './oauth-utils';
 import { buildNodeTree, findComponentsInTree, getReactFiber, isReactRoot, ReactNode, ReactOpts } from './react-utils';
 
 // ***********************************************
@@ -164,6 +165,9 @@ interface LoginForm {
   username: string;
 }
 
+// Handles the full login flow (IDP selection + credentials) in a single
+// cy.origin() callback. kiali_login.ts has a slimmer submitLoginForm that
+// only fills credentials — there, IDP clicking is a separate Gherkin step.
 function fillLoginForm({ authProvider, username, password }: LoginForm): void {
   if (authProvider !== '' && authProvider !== undefined) {
     cy.contains(authProvider).should('be.visible').click();
@@ -193,28 +197,13 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('**/api/tracing').as('getTracing');
         cy.intercept('**/api/auth/info').as('getAuthInfo');
 
-        // Kiali's OpenShift auth redirects through /api/auth/redirect,
-        // which 302s to the OAuth server. Probe that endpoint with
-        // cy.request() (Node.js, no CORS) to discover the OAuth origin
-        // so we can use cy.origin() for cross-origin form interactions.
         const authProvider = Cypress.env('AUTH_PROVIDER');
-        cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
-          const lastRedirect = resp.redirects?.at(-1);
-          const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop() : undefined;
+        discoverOAuthOrigin().then(oauthOrigin => {
           const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
-          let oauthOrigin: string;
-          try {
-            oauthOrigin = redirectUrl ? new URL(redirectUrl).origin : baseOrigin;
-          } catch {
-            cy.log(`Could not parse OAuth redirect URL "${redirectUrl}", falling back to baseUrl origin`);
-            oauthOrigin = baseOrigin;
-          }
 
           cy.visit({ url: '/' });
 
           if (oauthOrigin !== baseOrigin) {
-            // Wait for the client-side redirect to the OAuth server to
-            // complete before switching origin context.
             const oauthHost = new URL(oauthOrigin).host;
             cy.url().should('include', oauthHost);
             cy.origin(oauthOrigin, { args: { authProvider, username, password } }, fillLoginForm);
