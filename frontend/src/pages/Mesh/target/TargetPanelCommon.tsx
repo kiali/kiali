@@ -73,8 +73,8 @@ export const summaryTitle = kialiStyle({
 
 export const getMeshId = (nodeData: MeshNodeData): string => {
   return (
-    nodeData.infraData.config?.standardConfig.configMap.mesh.defaultConfig.meshId ||
-    nodeData.infraData.config?.standardConfig.configMap.mesh.trustDomain ||
+    nodeData.infraData?.config?.standardConfig?.configMap?.mesh?.defaultConfig?.meshId ||
+    nodeData.infraData?.config?.standardConfig?.configMap?.mesh?.trustDomain ||
     t('Istio mesh')
   );
 };
