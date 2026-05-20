@@ -38,6 +38,11 @@ const flowStyle = kialiStyle({
   listStyleType: 'none'
 });
 
+const emptyStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  fontStyle: 'italic'
+});
+
 const itemStyle = kialiStyle({
   display: 'inline-flex',
   alignItems: 'center',
@@ -180,7 +185,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   }
 
   if (items.length === 0) {
-    return null;
+    return <span className={emptyStyle}>{t('No related resources')}</span>;
   }
 
   return <ul className={flowStyle}>{items}</ul>;

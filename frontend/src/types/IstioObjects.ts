@@ -253,7 +253,7 @@ export type AccessLog = {
   // mixer_status: string;
   // OriginalMessage is the original raw log line.
   // original_message: string;
-  // ParseError provides a string value if a parse error occured.
+  // ParseError provides a string value if a parse error occurred.
   // parse_error: string;
 };
 
