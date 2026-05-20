@@ -267,6 +267,31 @@ func TestStore_DeleteLastConversationPreservesSessionUsage(t *testing.T) {
 	assert.Empty(t, store.GetConversationIDs("session-1"))
 }
 
+func TestStore_EvictLRUPreservesUsageOnlySession(t *testing.T) {
+	cfg := &AiStoreConfig{
+		Enabled:           true,
+		InactivityTimeout: 30 * time.Minute,
+		MaxCacheMemoryMB:  1,
+		ReduceWithAI:      false,
+		ReduceThreshold:   15,
+	}
+	store := NewAIStore(context.Background(), cfg)
+
+	largeContent := makeTestString(600 * 1024) // ~0.6 MB
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{{Role: "user", Content: largeContent}},
+	}
+
+	require.NoError(t, store.SetConversation("session-1", "conv-1", conv))
+	require.NoError(t, store.RecordUsage("session-1", "openai", "gpt-4.1", types.NewTokenUsage(9, 1, 10)))
+	require.NoError(t, store.SetConversation("session-2", "conv-2", conv))
+
+	assert.Empty(t, store.GetConversationIDs("session-1"))
+	metrics := store.GetUsageMetrics("session-1")
+	require.Len(t, metrics, 1)
+	assert.Equal(t, int64(10), metrics[0].TotalTokens)
+}
+
 // --- Memory management tests ---
 
 func TestStore_EvictsLRUWhenOverMemoryLimit(t *testing.T) {

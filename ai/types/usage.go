@@ -20,9 +20,7 @@ func (u *TokenUsage) Add(other TokenUsage) {
 	u.PromptTokens += other.PromptTokens
 	u.CompletionTokens += other.CompletionTokens
 	u.TotalTokens += other.TotalTokens
-	if u.TotalTokens == 0 {
-		u.TotalTokens = u.PromptTokens + u.CompletionTokens
-	}
+	u.TotalTokens = u.PromptTokens + u.CompletionTokens
 }
 
 func NewTokenUsage(promptTokens, completionTokens, totalTokens int64) TokenUsage {

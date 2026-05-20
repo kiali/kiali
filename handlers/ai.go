@@ -238,7 +238,7 @@ func recordChatAIUsage(aiStore aiTypes.AIStore, userID string, provider string, 
 	}
 
 	if err := aiStore.RecordUsage(userID, provider, model, usage); err != nil {
-		log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", userID, provider, model, err)
+		log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", "<redacted>", provider, model, err)
 	}
 }
 

@@ -317,8 +317,9 @@ func (s *AIStoreImpl) evictLRUConversations(targetMB float64) {
 			time.Since(session.lastAccessed).Round(time.Second),
 			session.memoryMB)
 
-		delete(s.conversations[session.sessionID].Conversation, session.conversationID)
-		if len(s.conversations[session.sessionID].Conversation) == 0 {
+		sessionConversation := s.conversations[session.sessionID]
+		delete(sessionConversation.Conversation, session.conversationID)
+		if len(sessionConversation.Conversation) == 0 && len(sessionConversation.UsageMetrics) == 0 {
 			delete(s.conversations, session.sessionID)
 		}
 		internalmetrics.GetAIStoreEvictionsTotalMetric().Inc()
