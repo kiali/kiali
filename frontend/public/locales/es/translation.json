@@ -156,7 +156,7 @@
   "Could not create Istio {{type}} objects": "No se pudieron crear objetos de Istio {{type}}",
   "Could not fetch Grafana info. Turning off links to Grafana.": "No se pudo obtener la información de Grafana. Se desactivan los enlaces a Grafana.",
   "Could not fetch health": "No se pudo obtener el estado de salud",
-  "Could not fetch Namespace.": "No se pudo obtener el espacio de nombres.",
+  "Could not fetch Namespace.": "No se pudo obtener el namespace.",
   "Could not fetch Permissions.": "No se pudieron obtener permisos.",
   "Could not update service {{service}} {{field}}": "Could not update service {{service}} {{field}}",
   "Could not update workload {{workload}} {{field}}": "Could not update workload {{workload}} {{field}}",
