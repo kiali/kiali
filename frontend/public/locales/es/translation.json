@@ -27,7 +27,7 @@
   "{{oldDate}} to {{newDate}}": "{{oldDate}} hasta {{newDate}}",
   "{{rate}} req/s": "{{rate}} req/s",
   "{{rate}}k req/s": "{{rate}}k req/s",
-  "A namespace's status is determined by its lowest-performing component.": "El estado de un espacio de nombres viene determinado por su componente con peor rendimiento.",
+  "A namespace's status is determined by its lowest-performing component.": "El estado de un namespace viene determinado por su componente con peor rendimiento.",
   "A Request Routing scenario needs at least a Route Rule": "Un escenario de enrutamiento de solicitudes necesita al menos una regla de enrutamiento",
   "A Rule needs at least an item in \"From\", \"To\" or \"When\" sections": "Una regla necesita al menos un elemento en las secciones \"De\", \"A\" o \"Cuando\"",
   "A valid {{kind}} name is required": "Es necesario un nombre válido para {{kind}}",
