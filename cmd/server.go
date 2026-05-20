@@ -92,35 +92,14 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	business.SetKialiSAToken(kialiToken)
 
 	// Create shared prometheus client shared by all prometheus requests in the business layer.
-	// When a URL is configured, connectivity is established in a background goroutine so Kiali
-	// starts serving immediately (like tracing). All consumers hold a *ClientRef; once the
-	// goroutine connects, a single Set call upgrades every caller transparently.
 	// config.Validate() ensures that if Prometheus is enabled, a URL is always present,
-	// so the only two cases here are disabled (NoopClient) or enabled with a URL (ClientRef).
+	// so the only two cases here are disabled (NoopClient) or enabled with a URL (LazyClient).
 	var prom prometheus.ClientInterface
 	if !conf.ExternalServices.Prometheus.Enabled {
 		log.Info("Prometheus is disabled")
 		prom = prometheus.NewNoopClient()
 	} else {
-		// Set a connecting status so the frontend shows a warning banner and the config
-		// handler short-circuits instead of calling NoopClient methods.
-		// The goroutine clears it once the real client is installed.
-		config.SetPrometheusDisabledReason("Connecting to Prometheus, metrics features are temporarily unavailable")
-
-		promRef := prometheus.NewClientRef(prometheus.NewNoopClient())
-		prom = promRef
-		go func() {
-			client, err := prometheus.NewClientWithRetry(ctx, *conf, kialiToken)
-			if err != nil {
-				log.Warningf("Prometheus client initialization cancelled (context done): %s", err)
-				return
-			}
-			promRef.Set(client)
-			// Clear only after the real client is installed so no request window sees
-			// an empty reason with a still-noop client.
-			config.SetPrometheusDisabledReason("")
-			log.Info("Prometheus connected -- metrics features restored")
-		}()
+		prom = prometheus.NewLazyClient(ctx, *conf, kialiToken)
 	}
 
 	// Create shared tracing client shared by all tracing requests in the business layer.
