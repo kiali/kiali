@@ -242,7 +242,7 @@
   "Error fetching Istio deployment status.": "Error al obtener el estado de implementación de Istio.",
   "Error fetching namespaces.": "Error al obtener los espacios de nombres.",
   "Error loading graph": "Error al cargar el gráfico",
-  "Error loading Mesh": "Error al cargar Mesh",
+  "Error loading Mesh": "Error al cargar el mesh",
   "Error rates": "Tasas de error",
   "Error-rate limits for traffic health:": "Límites de tasa de error para la salud del tráfico:",
   "Errors": "Errores",
