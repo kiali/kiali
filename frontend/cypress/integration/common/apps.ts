@@ -13,8 +13,7 @@ import {
   getColWithRowText
 } from './table';
 import { hasAtLeastOneClass, linkSelector } from './utils';
-import { openTab, waitForKialiApiReady } from './transition';
-import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
+import { openTab } from './transition';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -336,9 +335,13 @@ Then('user should see no duplicate namespaces', () => {
 });
 
 // Health cache metrics test steps
+// The @core-caching suite starts Kiali with caching pre-enabled so no
+// config change or restart is needed. Verify the cache metrics endpoint
+// is reachable which confirms the health cache is active.
 Given('health cache is enabled', () => {
-  enableKialiFeature(HEALTH_CACHE_CONFIG);
-  waitForKialiApiReady();
+  cy.request({ url: 'api/test/metrics/health/cache' }).then(resp => {
+    expect(resp.status).to.eq(200);
+  });
 });
 
 Given('health cache metrics are recorded', () => {

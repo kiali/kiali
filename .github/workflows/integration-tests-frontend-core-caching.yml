@@ -1,0 +1,110 @@
+name: Integration Tests Frontend Core Caching
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+      stern_logs:
+        required: false
+        type: boolean
+        default: false
+
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
+
+jobs:
+  integration_tests_frontend_core_caching:
+    name: Cypress tests (core caching)
+    runs-on: ubuntu-latest
+    env:
+      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
+      # prevents extra Cypress installation progress messages
+      CI: 1
+      # avoid warnings like "tput: No value for $TERM and no -T specified"
+      TERM: xterm
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.build_branch }}
+
+    - name: Install Helm
+      uses: Azure/setup-helm@v5.0.0
+      with:
+        version: 'v3.18.4'
+
+    # Corepack must be enabled before setup-node so that setup-node's
+    # cache: yarn correctly detects the Yarn 4 cache directory.
+    - name: Enable corepack
+      run: corepack enable
+
+    # This caches the yarn deps but does not touch node_modules so it's still necessary
+    # to run 'yarn install' later to link these into node_modules.
+    - name: Setup node
+      uses: actions/setup-node@v6
+      with:
+        node-version: "24"
+        cache: yarn
+        cache-dependency-path: frontend/yarn.lock
+
+    - name: Download go binary
+      uses: actions/download-artifact@v8
+      with:
+        name: kiali
+        path: ~/go/bin/
+
+    - name: Ensure kiali binary is executable
+      run: chmod +x ~/go/bin/kiali
+
+    # Need to install frontend dependencies to run cypress tests.
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: yarn install --immutable
+
+    - name: Run frontend core caching integration tests
+      run: hack/run-integration-tests.sh --test-suite frontend-core-caching --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: junit-frontend-core-caching-report
+        path: frontend/cypress/results/combined-report.xml
+        if-no-files-found: warn
+
+    - name: Get debug info when integration tests fail
+      if: failure()
+      run: |
+        mkdir debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output
+
+    - name: Upload debug info artifact
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: debug-info-${{ github.job }}
+        path: debug-output
+
+    - name: Upload cypress screenshots when tests fail
+      uses: actions/upload-artifact@v7
+      if: failure()
+      with:
+        name: cypress-screenshots-${{ github.job }}
+        path: frontend/cypress/screenshots
+
+    - name: Upload cypress logs from stern
+      uses: actions/upload-artifact@v7
+      if: ${{ inputs.stern_logs == true }}
+      with:
+        name: cypress-logs-${{ github.job }}
+        path: hack/stern

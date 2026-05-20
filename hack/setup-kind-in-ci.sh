@@ -77,6 +77,9 @@ Options:
 -ea|--enable-ai <true|false>
     Whether to enable AI chatbot integration tests.
     Default: false
+-ec|--enable-cache <true|false>
+    Whether to enable graph and health caching in Kiali.
+    Default: false
 -hcd|--helm-charts-dir
     Directory where the Kiali helm charts are located.
     If one is not supplied a /tmp dir will be created and used.
@@ -129,6 +132,7 @@ while [[ $# -gt 0 ]]; do
     -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -ea|--enable-ai)              ENABLE_AI="$2";             shift;shift; ;;
+    -ec|--enable-cache)           ENABLE_CACHE="$2";          shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
@@ -186,6 +190,7 @@ install_istio() {
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
+ENABLE_CACHE="${ENABLE_CACHE:-false}"
 TEMPO="${TEMPO:-false}"
 
 # Defaults the branch to master unless it is already set
@@ -303,6 +308,7 @@ AUTH_STRATEGY=$AUTH_STRATEGY
 DEPLOY_KIALI=$DEPLOY_KIALI
 DORP=$DORP
 ENABLE_AI=$ENABLE_AI
+ENABLE_CACHE=$ENABLE_CACHE
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -524,8 +530,8 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
-    --set kiali_internal.graph_cache.enabled="false" \
-    --set kiali_internal.health_cache.enabled="false" \
+    --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
+    --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -629,8 +635,8 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
-    --set kiali_internal.graph_cache.enabled="false" \
-    --set kiali_internal.health_cache.enabled="false" \
+    --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
+    --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
