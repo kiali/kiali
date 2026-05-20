@@ -477,7 +477,14 @@ const TopologyContent: React.FC<{
     </TopologyView>
   ) : (
     <>
-      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <ReactResizeDetector
+        refreshMode="debounce"
+        refreshRate={100}
+        handleWidth={true}
+        handleHeight={true}
+        skipOnMount={true}
+        onResize={handleResize}
+      />
       <TopologyView
         data-test="mesh-topology-view-pf"
         controlBar={
