@@ -27,17 +27,6 @@ func newTestConf(t *testing.T, serverURL string) config.Config {
 	return *conf
 }
 
-// sentinelClient embeds NoopClient but overrides GetExistingMetricNames to
-// return a known sentinel value, making it behaviourally distinguishable
-// from a plain NoopClient which always returns an empty slice.
-type sentinelClient struct {
-	*NoopClient
-}
-
-func (s *sentinelClient) GetExistingMetricNames(_ context.Context, _ []string) ([]string, error) {
-	return []string{"sentinel"}, nil
-}
-
 func TestLazyClientStartsWithNoopClient(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
 	defer cancel()
