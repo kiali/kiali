@@ -136,7 +136,6 @@ const generateRandomSeries = (
   metricName: string,
   baseValue: number,
   variance: number,
-  reporter: string,
   extraLabels?: Record<string, string>,
   stat?: string
 ): Array<Record<string, unknown>> => {
@@ -145,14 +144,13 @@ const generateRandomSeries = (
 
   return workloadNames.slice(0, count).map((wl, i) => ({
     datapoints: generateDatapoints(baseValue * (1 + i * 0.15), variance),
-    labels: { reporter, source_workload: wl, ...extraLabels },
+    labels: { source_workload: wl, ...extraLabels },
     name: metricName,
     ...(stat ? { stat } : {})
   }));
 };
 
 export const generateMockDashboard = (entityType: string, direction: string): Record<string, unknown> => {
-  const reporter = direction === 'inbound' ? 'destination' : 'source';
   const directionLabel = direction === 'inbound' ? 'Inbound' : 'Outbound';
 
   return {
@@ -162,18 +160,18 @@ export const generateMockDashboard = (entityType: string, direction: string): Re
         name: 'Request volume',
         unit: 'ops',
         spans: 3,
-        metrics: generateRandomSeries('request_count', 10, 5, reporter, {
+        metrics: generateRandomSeries('request_count', 10, 5, {
           request_protocol: 'http',
           response_code: '200'
         }),
-        chartType: 'area',
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'Request duration',
         unit: 'ms',
         spans: 3,
-        metrics: generateRandomSeries('request_duration_millis', 30, 10, reporter, {}, 'avg'),
+        metrics: generateRandomSeries('request_duration_millis', 30, 10, {}, 'avg'),
         chartType: 'line',
         xAxis: 'time'
       },
@@ -181,80 +179,80 @@ export const generateMockDashboard = (entityType: string, direction: string): Re
         name: 'Request size',
         unit: 'B',
         spans: 3,
-        metrics: generateRandomSeries('request_size', 360, 20, reporter, {}, 'avg'),
-        chartType: 'area',
+        metrics: generateRandomSeries('request_size', 360, 20, {}, 'avg'),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'Response size',
         unit: 'B',
         spans: 3,
-        metrics: generateRandomSeries('response_size', 190, 10, reporter, {}, 'avg'),
-        chartType: 'area',
+        metrics: generateRandomSeries('response_size', 190, 10, {}, 'avg'),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'Request throughput',
         unit: 'kbit/s',
         spans: 3,
-        metrics: generateRandomSeries('request_throughput', 900, 300, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('request_throughput', 900, 300),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'Response throughput',
         unit: 'bit/s',
         spans: 3,
-        metrics: generateRandomSeries('response_throughput', 450, 150, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('response_throughput', 450, 150),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'gRPC received',
         unit: 'msg/s',
         spans: 3,
-        metrics: generateRandomSeries('grpc_received', 5, 2, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('grpc_received', 5, 2),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'gRPC sent',
         unit: 'msg/s',
         spans: 3,
-        metrics: generateRandomSeries('grpc_sent', 5, 2, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('grpc_sent', 5, 2),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'TCP opened',
         unit: 'conn/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_opened', 0.3, 0.15, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('tcp_opened', 0.3, 0.15),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'TCP closed',
         unit: 'conn/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_closed', 0.3, 0.15, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('tcp_closed', 0.3, 0.15),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'TCP received',
         unit: 'bit/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_received', 80, 30, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('tcp_received', 80, 30),
+        chartType: 'line',
         xAxis: 'time'
       },
       {
         name: 'TCP sent',
         unit: 'bit/s',
         spans: 3,
-        metrics: generateRandomSeries('tcp_sent', 70, 25, reporter),
-        chartType: 'area',
+        metrics: generateRandomSeries('tcp_sent', 70, 25),
+        chartType: 'line',
         xAxis: 'time'
       }
     ],

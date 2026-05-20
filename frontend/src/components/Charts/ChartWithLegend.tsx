@@ -258,8 +258,10 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       // Victory data-level handlers receive (event, victoryProps) but the VCEvent
       // type only declares (event).  We cast to any to bridge the mismatch.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dataClickHandler: any = (_evt: MouseEvent, victoryProps: { datum: RawOrBucket<O> }) => {
-        onClick(victoryProps.datum);
+      const dataClickHandler: any = (_evt: MouseEvent, victoryProps: { datum?: RawOrBucket<O> }) => {
+        if (victoryProps.datum) {
+          onClick(victoryProps.datum);
+        }
         return [];
       };
 

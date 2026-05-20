@@ -18,10 +18,17 @@ jest.mock('utils/VictoryChartsUtils', () => ({
   toBuckets: jest.fn()
 }));
 
+let lastChartEvents: any[] = [];
+
 jest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const MockChart = (props: any) => React.createElement('div', { 'data-test': 'chart', ...props }, props.children);
+  const MockChart = (props: any) => {
+    // Capture events so click-handler tests can invoke them directly
+    const { events, ...rest } = props;
+    lastChartEvents = events || [];
+    return React.createElement('div', { 'data-test': 'chart', ...rest }, props.children);
+  };
   MockChart.displayName = 'Chart';
   return {
     Chart: MockChart,
@@ -71,15 +78,27 @@ jest.mock('regression', () => ({
 // eslint-disable-next-line import/first -- must import after jest.mock calls
 import { ChartWithLegend, CHART_LEGEND_GAP, LEGEND_HEIGHT, MIN_HEIGHT_YAXIS } from '../ChartWithLegend';
 
-const makeSeries = (names: string[]): VCLines<RichDataPoint> =>
-  names.map((name, idx) => ({
-    color: ['#06c', '#c00', '#0a0', '#f80'][idx % 4],
-    datapoints: [{ name, x: new Date('2025-01-01T00:00:00Z'), y: idx + 1, color: '#06c' }],
-    legendItem: {
-      name,
-      symbol: { fill: ['#06c', '#c00', '#0a0', '#f80'][idx % 4], type: 'circle' }
-    }
-  }));
+const COLORS = ['#06c', '#c00', '#0a0', '#f80'];
+
+const makeSeries = (names: string[], pointCount = 5): VCLines<RichDataPoint> =>
+  names.map((name, idx) => {
+    const color = COLORS[idx % COLORS.length];
+    const base = new Date('2025-01-01T00:00:00Z').getTime();
+    const step = 60_000; // 1 minute between points
+    return {
+      color,
+      datapoints: Array.from({ length: pointCount }, (_, i) => ({
+        name,
+        x: new Date(base + i * step),
+        y: 10 * (idx + 1) + Math.sin(i) * 5,
+        color
+      })),
+      legendItem: {
+        name,
+        symbol: { fill: color, type: 'circle' }
+      }
+    };
+  });
 
 describe('ChartWithLegend', () => {
   it('renders legend items for each series', () => {
@@ -227,6 +246,59 @@ describe('ChartWithLegend', () => {
 
     const toggleAfterFit = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
     expect(toggleAfterFit).toBeUndefined();
+  });
+
+  it('calls onClick when data click handler receives a valid datum', () => {
+    const data = makeSeries(['Series A']);
+    const onClickSpy = jest.fn();
+    render(
+      <ChartWithLegend
+        data={data}
+        unit="ops"
+        seriesComponent={<div />}
+        fill={false}
+        stroke={true}
+        onClick={onClickSpy}
+      />
+    );
+
+    expect(lastChartEvents).toHaveLength(1);
+
+    const handler = lastChartEvents[0].eventHandlers.onClick;
+    const datum = data[0].datapoints[0];
+    handler({}, { datum });
+
+    expect(onClickSpy).toHaveBeenCalledTimes(1);
+    expect(onClickSpy).toHaveBeenCalledWith(datum);
+  });
+
+  it('does not call onClick when data click handler receives undefined datum', () => {
+    const data = makeSeries(['Series A']);
+    const onClickSpy = jest.fn();
+    render(
+      <ChartWithLegend
+        data={data}
+        unit="ops"
+        seriesComponent={<div />}
+        fill={false}
+        stroke={true}
+        onClick={onClickSpy}
+      />
+    );
+
+    const handler = lastChartEvents[0].eventHandlers.onClick;
+    handler({}, { datum: undefined });
+
+    expect(onClickSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not register click events when onClick prop is not provided', () => {
+    const data = makeSeries(['Series A']);
+    render(
+      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
+    );
+
+    expect(lastChartEvents).toHaveLength(0);
   });
 
   it('toggles legendExpanded state when toggle button is clicked', async () => {
