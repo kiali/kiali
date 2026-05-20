@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -1471,26 +1470,6 @@ func Get() (conf *Config) {
 	defer rwMutex.RUnlock()
 	copy := configuration
 	return &copy
-}
-
-// promDisabledReason holds the human-readable message surfaced to the frontend
-// when Prometheus is not yet operational (e.g. "connecting..." or "unreachable at...").
-// Empty means Prometheus is fully operational.
-var promDisabledReason atomic.Value
-
-// SetPrometheusDisabledReason sets the current Prometheus connectivity status
-// message. Pass an empty string to clear it (Prometheus connected).
-func SetPrometheusDisabledReason(reason string) {
-	promDisabledReason.Store(reason)
-}
-
-// GetPrometheusDisabledReason returns the current Prometheus disabled/connecting
-// reason, or an empty string if Prometheus is fully operational.
-func GetPrometheusDisabledReason() string {
-	if v := promDisabledReason.Load(); v != nil {
-		return v.(string)
-	}
-	return ""
 }
 
 // Set the global Config

@@ -215,7 +215,10 @@ type PrometheusPartialConfig struct {
 }
 
 func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
-	disabledReason := config.GetPrometheusDisabledReason()
+	var disabledReason string
+	if drp, ok := client.(prometheus.DisabledReasonProvider); ok {
+		disabledReason = drp.DisabledReason()
+	}
 	promConfig := PrometheusConfig{
 		DisabledReason:       disabledReason,
 		Enabled:              conf.ExternalServices.Prometheus.Enabled,
