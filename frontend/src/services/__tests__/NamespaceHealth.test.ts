@@ -39,4 +39,20 @@ describe('NamespaceHealth service', () => {
     expect(Array.from(result.keys())).toEqual(['ns0', 'ns100', 'ns200']);
     expect(result.get('ns0')?.worstStatus).toBe('NA');
   });
+
+  it('adds chunk context when a namespace health request fails', async () => {
+    const namespaces = Array.from({ length: 101 }, (_, i) => `ns${i}`);
+
+    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+      if (nsStr === 'ns100') {
+        throw new Error('request timed out');
+      }
+
+      return new Map<string, any>();
+    });
+
+    await expect(fetchClusterNamespacesHealth(namespaces, 'east', 60)).rejects.toThrow(
+      'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
+    );
+  });
 });

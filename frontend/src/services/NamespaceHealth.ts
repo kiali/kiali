@@ -14,6 +14,8 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
   return chunks;
 };
 
+const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 /**
  * Fetches namespace health for a single cluster, chunking namespace lists to avoid long URIs.
  * When cluster is undefined, this fetches health for the "default" cluster (single-cluster mode).
@@ -29,7 +31,19 @@ export const fetchClusterNamespacesHealth = async (
   }
 
   const namespaceChunks = chunkArray(namespaces, MAX_NAMESPACES_PER_CALL);
-  const healthPromises = namespaceChunks.map(chunk => API.getClustersHealth(chunk.join(','), duration, cluster));
+  const healthPromises = namespaceChunks.map(async (chunk, index) => {
+    const namespaceList = chunk.join(',');
+
+    try {
+      return await API.getClustersHealth(namespaceList, duration, cluster);
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch namespace health chunk ${index + 1}/${namespaceChunks.length} for cluster ${
+          cluster ?? 'default'
+        } (${chunk.length} namespaces: ${namespaceList}): ${errorMessage(error)}`
+      );
+    }
+  });
   const chunkedResults = await Promise.all(healthPromises);
 
   // Merge all chunk maps into a single map
