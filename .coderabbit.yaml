@@ -10,6 +10,7 @@ knowledge_base:
     - "CONTRIBUTING.md"
     - "STYLE_GUIDE.adoc"
 reviews:
+  high_level_summary: false
   review_status: false
   poem: false
   auto_review:
@@ -18,7 +19,6 @@ reviews:
   - path: "frontend/public/locales/**/translation.json"
     instructions: |
       These files contain localization resources.
-      Do not comment on missing translations, untranslated strings,
-      missing locale parity, or missing i18n keys in this path.
+      Do not comment on untranslated strings in this path.
       Only flag malformed JSON, broken structure, duplicate keys,
       or clearly invalid translation entries.
