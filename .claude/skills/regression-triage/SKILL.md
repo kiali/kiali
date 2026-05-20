@@ -27,9 +27,9 @@ https://<jenkins.url>/job/kiali/job/test-jobs/job/kiali-cypress-tests/
 
 If URL has no numeric build segment, stop and ask for a specific build URL.
 
-## Step 0 — Validate and fetch
+## Step 1 — Validate and fetch
 
-### 0a — Verify accessibility
+### 1a — Verify accessibility
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}" "<build-url>"
@@ -37,19 +37,18 @@ curl -s -o /dev/null -w "%{http_code}" "<build-url>"
 
 Non-`200` → stop, tell user URL is inaccessible.
 
-### 0b — Fetch artifact list
+### 1b — Fetch artifact list
 
 ```bash
 curl -k -s "<build-url>api/json?tree=artifacts%5BfileName%2CrelativePath%5D" | jq '.artifacts[] | .relativePath'
 ```
 
 Key artifacts:
-- `archive_dir/combined-report.xml` — pass/fail (use testReport API instead; see Step 1)
 - `archive_dir/screenshots/*.png` — filenames encode scenario + step of failure
 - `archive_dir/kiali-pod.log` — Kiali version
 - `archive_dir/ossm-env-snapshot.json` — OCP version
 
-### 0c — Auto-fetch build metadata
+### 1c — Auto-fetch build metadata
 
 Run all three in parallel:
 
@@ -65,7 +64,7 @@ curl -k -s "<build-url>api/json?tree=actions%5Bparameters%5Bname%2Cvalue%5D%5D" 
   jq -r '[.actions[] | select(.parameters?) | .parameters[] | select(.name=="ISTIO_VERSION")] | first | .value // "not specified"'
 ```
 
-## Step 1 — Extract failing scenarios
+## Step 2 — Extract failing scenarios
 
 Use Jenkins test report API — no XML parsing needed:
 
@@ -74,7 +73,7 @@ curl -k -s "<build-url>testReport/api/json?tree=suites%5Bcases%5Bname%2Cstatus%2
   jq '[.suites[].cases[] | select(.status == "FAILED" or .status == "REGRESSION") | {name, status, errorDetails}]'
 ```
 
-## Step 2 — Map to feature files
+## Step 3 — Map to feature files
 
 For each failing scenario:
 
@@ -88,7 +87,7 @@ Find its tags:
 grep -B30 "<scenario name fragment>" frontend/cypress/integration/featureFiles/<file>.feature | grep -E "^\s+@"
 ```
 
-## Step 3 — Classify each failure
+## Step 4 — Classify each failure
 
 | Signal | Classification |
 |--------|---------------|
@@ -99,14 +98,14 @@ grep -B30 "<scenario name fragment>" frontend/cypress/integration/featureFiles/<
 
 Default: **flake** if first failure, **ui-bug** if reproducible/persistent.
 
-## Step 4 — Check for known issues
+## Step 5 — Check for known issues
 
 ```bash
 git log --oneline --all --grep="<scenario fragment>" | head -5
 gh issue list --repo kiali/kiali --search "<scenario fragment>" --state open
 ```
 
-## Step 5 — Emit handoff block
+## Step 6 — Emit handoff block
 
 Emit one block per confirmed failure (ui-bug or test-bug). For flakes, note frequency recommendation instead.
 
@@ -131,7 +130,6 @@ Emit one block per confirmed failure (ui-bug or test-bug). For flakes, note freq
 
 - Pass each handoff block to `/regression-report`
 - For flakes: track frequency — 2+ occurrences in recent nightly = file as maintenance
-- For regressions: identify commit range in Jenkins build history
 
 ## Environment context
 
