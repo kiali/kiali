@@ -5,10 +5,10 @@ package istio
 const (
 	AmbientDataplaneModeLabelValue = "ambient"
 	IstioDataplaneModeLabelKey     = "istio.io/dataplane-mode"
+	KubeVersionLabel               = "app.kubernetes.io/version"
 )
 
 const (
-	kubeVersionLabel                      = "app.kubernetes.io/version"
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
 	istiodAppLabelValue                   = "istiod"
 	istiodClusterIDEnvKey                 = "CLUSTER_ID"

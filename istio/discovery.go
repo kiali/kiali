@@ -273,13 +273,13 @@ func NewDiscovery(clients map[string]kubernetes.ClientInterface, cache cache.Kia
 	if conf.RunMode == config.RunModeOffline {
 		// Offline mode function that reads version from controlPlane labels
 		getVersion = func(ctx context.Context, conf *config.Config, client kubernetes.ClientInterface, kubeCache ctrlclient.Reader, controlPlane models.ControlPlane) (*models.ExternalServiceInfo, error) {
-			if version, exists := controlPlane.Labels[kubeVersionLabel]; exists && version != "" {
+			if version, exists := controlPlane.Labels[KubeVersionLabel]; exists && version != "" {
 				return &models.ExternalServiceInfo{
 					Name:    "Istio",
 					Version: version,
 				}, nil
 			}
-			return nil, fmt.Errorf("version label %s not found or empty in controlPlane labels", kubeVersionLabel)
+			return nil, fmt.Errorf("version label %s not found or empty in controlPlane labels", KubeVersionLabel)
 		}
 	} else {
 		// Use the actual GetVersion function for non-offline modes
