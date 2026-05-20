@@ -507,6 +507,58 @@ func TestServiceListIncludesServiceEntryServices(t *testing.T) {
 	assert.True(foundSERef, "ServiceEntry reference not found in IstioReferences")
 }
 
+func TestServiceListSEExcludedWhenServiceSelectorSet(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"external-api.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "reviews",
+				Namespace: "bookinfo",
+				Labels:    map[string]string{"app": "reviews"},
+			},
+			Spec: core_v1.ServiceSpec{
+				Selector: map[string]string{"app": "reviews"},
+			},
+		},
+		se,
+	)
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	// Without ServiceSelector: both k8s service and SE-backed service appear
+	criteria := ServiceCriteria{
+		Namespace:              "bookinfo",
+		IncludeHealth:          false,
+		IncludeOnlyDefinitions: true,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	assert.Len(serviceList.Services, 2, "without selector, both k8s and SE services should appear")
+
+	// With ServiceSelector: only the matching k8s service appears
+	criteria.ServiceSelector = "app=reviews"
+	serviceList, err = svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+	require.Len(serviceList.Services, 1, "with selector, only the matching k8s service should appear")
+	assert.Equal("reviews", serviceList.Services[0].Name)
+	assert.Equal("Kubernetes", serviceList.Services[0].ServiceRegistry)
+}
+
 func TestServiceListSEMultipleHosts(t *testing.T) {
 	require := require.New(t)
 

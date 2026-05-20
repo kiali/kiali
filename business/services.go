@@ -277,9 +277,13 @@ func (in *SvcService) buildServiceList(ctx context.Context, cluster string, name
 		services[i].Cluster = cluster
 	}
 
-	// Add ServiceEntry-backed services that have no corresponding K8s Service
-	seServices := in.buildServiceEntryOverviews(ctx, istioConfigList.ServiceEntries, svcs, namespace, istioConfigList, cluster)
-	services = append(services, seServices...)
+	// Add ServiceEntry-backed services that have no corresponding K8s Service.
+	// Skip when a ServiceSelector is set because SE-backed services have no
+	// pod selector and should not appear as "related" to a specific workload.
+	if criteria.ServiceSelector == "" {
+		seServices := in.buildServiceEntryOverviews(ctx, istioConfigList.ServiceEntries, svcs, namespace, istioConfigList, cluster)
+		services = append(services, seServices...)
+	}
 	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
 }
 
