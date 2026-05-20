@@ -39,18 +39,39 @@ If response is not `200`, stop and tell the user the URL is not accessible. Do n
 
 ### 0b — Fetch artifact list (no authorization required)
 
-Jenkins exposes artifacts via:
-```
-<jenkins-job-url>api/json?tree=artifacts[fileName,relativePath]
-```
+Jenkins exposes artifacts via its API. Use `-k` (skip TLS verify) and URL-encode the brackets — bare `[`/`]` cause curl exit code 3 on some systems.
 
 ```bash
-curl -s "<jenkins-job-url>api/json?tree=artifacts[fileName,relativePath]"
+# Replace <build-url> with the full URL including trailing slash
+curl -k -s "<build-url>api/json?tree=artifacts%5BfileName%2CrelativePath%5D"
 ```
 
-Locate test result artifacts (JUnit XML or Cypress JSON). Fetch each relevant artifact:
+Real example (build 5772):
 ```bash
-curl -s "<jenkins-job-url>artifact/<relativePath>"
+curl -k -s "https://jenkins-csb-servicemesh-master.dno.corp.redhat.com/job/kiali/job/test-jobs/job/kiali-cypress-tests/5772/api/json?tree=artifacts%5BfileName%2CrelativePath%5D"
+```
+
+Typical response structure:
+```json
+{
+  "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+  "artifacts": [
+    {"fileName": "combined-report.xml",      "relativePath": "archive_dir/combined-report.xml"},
+    {"fileName": "kiali-operator-pod.log",   "relativePath": "archive_dir/kiali-operator-pod.log"},
+    {"fileName": "kiali-pod.log",            "relativePath": "archive_dir/kiali-pod.log"},
+    {"fileName": "ossm-env-snapshot.json",   "relativePath": "archive_dir/ossm-env-snapshot.json"},
+    {"fileName": "...(failed).png",          "relativePath": "archive_dir/screenshots/..."}
+  ]
+}
+```
+
+Key artifacts to fetch:
+- `combined-report.xml` — JUnit XML with all pass/fail results (primary source)
+- `screenshots/*.png` — filenames encode scenario + step of failure; present only when tests fail
+
+Fetch an artifact:
+```bash
+curl -k -s "<build-url>artifact/<relativePath>"
 ```
 
 No credentials needed — Jenkins nightly is publicly accessible.
