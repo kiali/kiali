@@ -2076,6 +2076,10 @@ func Validate(conf *Config) error {
 		log.Infof("Some validation errors will be ignored [%v]. If these errors do occur, they will still be logged. If you think the validation errors you see are incorrect, please report them to the Kiali team if you have not done so already and provide the details of your scenario. This will keep Kiali validations strong for the whole community.", conf.KialiFeatureFlags.Validations.Ignore)
 	}
 
+	if conf.ExternalServices.Prometheus.Enabled && conf.ExternalServices.Prometheus.URL == "" {
+		return fmt.Errorf("external_services.prometheus.url must be set when prometheus is enabled")
+	}
+
 	// log a info message if the user is disabling some features
 	if len(conf.KialiFeatureFlags.DisabledFeatures) > 0 {
 		log.Infof("Some features are disabled: [%v]", strings.Join(conf.KialiFeatureFlags.DisabledFeatures, ","))

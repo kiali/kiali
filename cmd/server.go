@@ -95,16 +95,11 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// When a URL is configured, connectivity is established in a background goroutine so Kiali
 	// starts serving immediately (like tracing). All consumers hold a *ClientRef; once the
 	// goroutine connects, a single Set call upgrades every caller transparently.
-	// When Prometheus is explicitly disabled or the URL is empty (misconfiguration), a plain
-	// NoopClient is used directly — no ClientRef is needed since there is no swap to perform.
+	// config.Validate() ensures that if Prometheus is enabled, a URL is always present,
+	// so the only two cases here are disabled (NoopClient) or enabled with a URL (ClientRef).
 	var prom prometheus.ClientInterface
 	if !conf.ExternalServices.Prometheus.Enabled {
 		log.Info("Prometheus is disabled")
-		prom = prometheus.NewNoopClient()
-	} else if conf.ExternalServices.Prometheus.URL == "" {
-		disabledReason := "Prometheus URL is empty; metrics features are unavailable"
-		log.Warningf("%s", disabledReason)
-		config.SetPrometheusDisabledReason(disabledReason)
 		prom = prometheus.NewNoopClient()
 	} else {
 		// Set a temporary DisabledReason so the frontend shows a "connecting" warning
