@@ -215,13 +215,14 @@ type PrometheusPartialConfig struct {
 }
 
 func getPrometheusConfig(conf *config.Config, client prometheus.ClientInterface, logger *zerolog.Logger) PrometheusConfig {
+	disabledReason := config.GetPrometheusDisabledReason()
 	promConfig := PrometheusConfig{
-		DisabledReason:       conf.ExternalServices.Prometheus.DisabledReason,
+		DisabledReason:       disabledReason,
 		Enabled:              conf.ExternalServices.Prometheus.Enabled,
 		GlobalScrapeInterval: defaultPrometheusGlobalScrapeInterval,
 		StorageTsdbRetention: defaultPrometheusGlobalStorageTSDBRetention,
 	}
-	if !conf.ExternalServices.Prometheus.Enabled || conf.ExternalServices.Prometheus.DisabledReason != "" || conf.RunMode == config.RunModeOffline {
+	if !conf.ExternalServices.Prometheus.Enabled || disabledReason != "" || conf.RunMode == config.RunModeOffline {
 		return promConfig
 	}
 	// Check if thanosProxy

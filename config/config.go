@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -339,20 +340,12 @@ type PrometheusConfig struct {
 	CacheEnabled    bool              `yaml:"cache_enabled,omitempty" json:"cacheEnabled,omitempty"`       // Enable cache for Prometheus queries
 	CacheExpiration int               `yaml:"cache_expiration,omitempty" json:"cacheExpiration,omitempty"` // Global cache expiration expressed in seconds
 	CustomHeaders   map[string]string `yaml:"custom_headers,omitempty" json:"customHeaders,omitempty"`
-	// DisabledReason is set at startup when Prometheus is enabled but unavailable (empty URL, transport
-	// failure, or unreachable endpoint). Enabled remains true so that addon status checks and the mesh
-	// page still probe Prometheus and report errors. The handlers layer surfaces DisabledReason to the
-	// frontend via the /api/config endpoint so the UI can warn the user and hide metrics features.
-	// When Enabled is true and DisabledReason is empty, Prometheus is fully operational.
-	// When Enabled is true and DisabledReason is non-empty, Prometheus was requested but is unavailable.
-	// When Enabled is false, the user explicitly disabled Prometheus.
-	DisabledReason string            `yaml:"-" json:"-"`             // in-memory only; never serialized to config files
-	Enabled        bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
-	HealthCheckUrl string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
-	IsCore         bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
-	QueryScope     map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
-	ThanosProxy    ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
-	URL            string            `yaml:"url,omitempty" json:"url,omitempty"`
+	Enabled         bool              `yaml:"enabled" json:"enabled"` // no omitempty: false must be serialized to the frontend
+	HealthCheckUrl  string            `yaml:"health_check_url,omitempty" json:"healthCheckUrl,omitempty"`
+	IsCore          bool              `yaml:"is_core,omitempty" json:"isCore,omitempty"`
+	QueryScope      map[string]string `yaml:"query_scope,omitempty" json:"queryScope,omitempty"`
+	ThanosProxy     ThanosProxy       `yaml:"thanos_proxy,omitempty" json:"thanosProxy,omitempty"`
+	URL             string            `yaml:"url,omitempty" json:"url,omitempty"`
 }
 
 // CustomDashboardsConfig describes configuration specific to Custom Dashboards
@@ -1480,15 +1473,24 @@ func Get() (conf *Config) {
 	return &copy
 }
 
-// SetPrometheusDisabledReason atomically updates only the in-memory DisabledReason
-// field of the global config without triggering a full config.Set() and its side
-// effects (e.g. AddHealthDefault appending duplicate health rate entries). Use this
-// instead of config.Get() + mutate + config.Set() whenever only DisabledReason needs
-// to change.
+// promDisabledReason holds the human-readable message surfaced to the frontend
+// when Prometheus is not yet operational (e.g. "connecting..." or "unreachable at...").
+// Empty means Prometheus is fully operational.
+var promDisabledReason atomic.Value
+
+// SetPrometheusDisabledReason sets the current Prometheus connectivity status
+// message. Pass an empty string to clear it (Prometheus connected).
 func SetPrometheusDisabledReason(reason string) {
-	rwMutex.Lock()
-	defer rwMutex.Unlock()
-	configuration.ExternalServices.Prometheus.DisabledReason = reason
+	promDisabledReason.Store(reason)
+}
+
+// GetPrometheusDisabledReason returns the current Prometheus disabled/connecting
+// reason, or an empty string if Prometheus is fully operational.
+func GetPrometheusDisabledReason() string {
+	if v := promDisabledReason.Load(); v != nil {
+		return v.(string)
+	}
+	return ""
 }
 
 // Set the global Config

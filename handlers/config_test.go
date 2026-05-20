@@ -111,7 +111,9 @@ func TestConfigHandlerPrometheusEnabledButUnreachable(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.ExternalServices.Prometheus.Enabled = true
-	conf.ExternalServices.Prometheus.DisabledReason = "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0])"
+	expectedReason := "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0])"
+	config.SetPrometheusDisabledReason(expectedReason)
+	t.Cleanup(func() { config.SetPrometheusDisabledReason("") })
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
@@ -140,7 +142,7 @@ func TestConfigHandlerPrometheusEnabledButUnreachable(t *testing.T) {
 
 	require.True(confResp.Prometheus.Enabled, "Prometheus should still be enabled (user's intent)")
 	require.NotEmpty(confResp.Prometheus.DisabledReason, "DisabledReason should be set when Prometheus is unreachable")
-	require.Equal(conf.ExternalServices.Prometheus.DisabledReason, confResp.Prometheus.DisabledReason)
+	require.Equal(expectedReason, confResp.Prometheus.DisabledReason)
 }
 
 func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {

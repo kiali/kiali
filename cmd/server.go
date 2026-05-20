@@ -102,12 +102,10 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Info("Prometheus is disabled")
 		prom = prometheus.NewNoopClient()
 	} else {
-		// Set a temporary DisabledReason so the frontend shows a "connecting" warning
-		// and the config handler short-circuits instead of calling NoopClient methods.
+		// Set a connecting status so the frontend shows a warning banner and the config
+		// handler short-circuits instead of calling NoopClient methods.
 		// The goroutine clears it once the real client is installed.
-		// SetPrometheusDisabledReason is used (not config.Set) to avoid the side effect
-		// of AddHealthDefault appending duplicate health rate entries on each call.
-		config.SetPrometheusDisabledReason("Prometheus is connecting, metrics features are temporarily unavailable")
+		config.SetPrometheusDisabledReason("Connecting to Prometheus, metrics features are temporarily unavailable")
 
 		promRef := prometheus.NewClientRef(prometheus.NewNoopClient())
 		prom = promRef
@@ -119,7 +117,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 			}
 			promRef.Set(client)
 			// Clear only after the real client is installed so no request window sees
-			// an empty DisabledReason with a still-noop client.
+			// an empty reason with a still-noop client.
 			config.SetPrometheusDisabledReason("")
 			log.Info("Prometheus connected -- metrics features restored")
 		}()
