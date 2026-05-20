@@ -11,12 +11,19 @@ Analyze Jenkins failure output → identify tests → classify → recommend nex
 
 ## What you need from the user
 
-Ask the user for the **Jenkins Cypress job URL** (must point to the specific Cypress job, not a top-level view or pipeline root).
+Ask the user for the **Jenkins Cypress build URL** — must include a specific build number. A job root URL is not acceptable.
 
-Example of a valid URL:
+**Valid (build number present):**
 ```
-https://jenkins.example.com/job/kiali-cypress/1234/
+https://<jenkins.url>/job/kiali/job/test-jobs/job/kiali-cypress-tests/5772/
 ```
+
+**Invalid (job root, no build number — reject this):**
+```
+https://<jenkins.url>/job/kiali/job/test-jobs/job/kiali-cypress-tests/
+```
+
+If the user provides a job root URL (path ends with a job name, no numeric segment), **stop immediately** and ask them to provide a specific build number URL. Do not attempt to auto-discover the last build.
 
 Also ask: **How many times has this build been run / is this the first failure?** (helps distinguish flake from consistent bug)
 
