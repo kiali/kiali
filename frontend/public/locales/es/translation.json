@@ -432,7 +432,7 @@
   "Namespace is not part of the mesh.": "El espacio de nombres no forma parte del mesh.",
   "Namespace is part of the mesh.": "El espacio de nombres forma parte del mesh.",
   "Namespace Label": "Etiqueta del espacio de nombres",
-  "Namespace not found": "Espacio de nombres no encontrado",
+  "Namespace not found": "Namespace no encontrado",
   "Namespace type": "Tipo de espacio de nombres",
   "Namespace: {{namespace}}": "Espacio de nombres: {{namespace}}",
   "Namespace: {{namespace}} is not found in cluster {{clusterName}}": "El espacio de nombres {{namespace}} no se encuentra en el clúster {{clusterName}}",
