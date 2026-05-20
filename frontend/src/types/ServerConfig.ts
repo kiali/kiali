@@ -180,7 +180,7 @@ export interface ServerConfig {
   healthConfig: HealthConfig;
   ignoreHomeCluster: boolean;
   installationTag?: string;
-  istioAPIInstalled: false;
+  istioAPIInstalled: boolean;
   istioAnnotations: IstioAnnotations;
   istioGatewayInstalled: boolean;
   istioIdentityDomain: string;
