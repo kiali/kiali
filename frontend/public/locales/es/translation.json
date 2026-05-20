@@ -714,7 +714,7 @@
   "Virtual Service / Request Routing": "Servicio virtual / Enrutamiento de solicitud",
   "VirtualService Host '*' wildcard not allowed on mesh gateway.": "El comodín '*' en VirtualService Host no está permitido en el mesh gateway.",
   "VirtualService Hosts": "Hosts de VirtualService",
-  "Visit the Mesh page": "Visite la página de Mesh",
+  "Visit the Mesh page": "Visite la página del mesh",
   "Warn": "Advertencia",
   "Warnings": "Advertencias",
   "Waypoint": "Waypoint",
