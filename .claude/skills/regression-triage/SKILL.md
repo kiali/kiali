@@ -2,7 +2,7 @@
 name: regression-triage
 description: Analyze Jenkins nightly CI failure output to identify failing Cypress/Gherkin tests, map them to feature files, classify each failure (flake / ui-bug / test-bug), and produce a triage summary ready to hand off to regression-report.
 disable-model-invocation: false
-allowed-tools: Bash(grep *), Bash(find *), Bash(cat *), Bash(git *), Bash(curl *)
+allowed-tools: Bash(grep *), Bash(find *), Bash(cat *), Bash(git *), Bash(curl *), Bash(gh *)
 ---
 
 # Regression Triage Skill
