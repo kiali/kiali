@@ -49,6 +49,32 @@ const makeWorkload = (name: string, kind: string): AppWorkload => ({
   workloadName: name
 });
 
+describe('DetailDescription empty state', () => {
+  it('shows "No related resources" when no apps, services, or workloads are provided', () => {
+    const { getByText } = render(
+      <Provider store={store as any}>
+        <MemoryRouter>
+          <DetailDescription namespace="bookinfo" />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(getByText('No related resources')).toBeTruthy();
+  });
+
+  it('shows "No related resources" when all arrays are empty', () => {
+    const { getByText } = render(
+      <Provider store={store as any}>
+        <MemoryRouter>
+          <DetailDescription namespace="bookinfo" apps={[]} services={[]} workloads={[]} />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(getByText('No related resources')).toBeTruthy();
+  });
+});
+
 describe('DetailDescription workload kioskParams', () => {
   beforeEach(() => {
     mockKioskValue = 'https://console.example.com';
