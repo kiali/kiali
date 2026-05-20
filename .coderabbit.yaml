@@ -9,6 +9,7 @@ knowledge_base:
     - "AI_POLICY.md"
     - "CONTRIBUTING.md"
     - "STYLE_GUIDE.adoc"
+tone_instructions: "Be concise and pragmatic. Prioritize feedback related to scalability and long-term maintainability."
 reviews:
   high_level_summary: false
   review_status: false
