@@ -9,7 +9,7 @@ import { KialiAppState } from 'store/Store';
 import { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
-import { sameSpans } from 'utils/tracing/TracingHelper';
+import { isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -40,6 +40,7 @@ type Props = ReduxProps &
     cluster?: string;
     externalURLProvider?: TracingUrlProvider;
     fromWaypoint: boolean; // If the traces come from a waypoint proxy
+    includeAmbient?: boolean;
     items: RichSpanData[];
     namespace: string;
     target: string;
@@ -202,9 +203,12 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   private fetchComparisonMetrics(items: RichSpanData[]): void {
-    const queries = buildQueriesFromSpans(items, false);
+    const queries = buildQueriesFromSpans(items, false, this.shouldIncludeAmbient());
     this.props.loadMetricsStats(queries, false);
   }
+
+  private shouldIncludeAmbient = (): boolean =>
+    !!this.props.includeAmbient || this.props.items.some(item => isWaypointProxySpan(item));
 
   private rows = (): IRow[] => {
     const compare = columns[this.state.sortIndex].compare;
@@ -551,8 +555,12 @@ class SpanTableComponent extends React.Component<Props, State> {
         </div>
 
         {item.type === 'envoy' &&
-          renderMetricsComparison(item, !this.isExpanded(item.spanID), this.props.metricsStats, () =>
-            this.fetchComparisonMetrics([item])
+          renderMetricsComparison(
+            item,
+            !this.isExpanded(item.spanID),
+            this.props.metricsStats,
+            this.shouldIncludeAmbient(),
+            () => this.fetchComparisonMetrics([item])
           )}
       </div>
     );

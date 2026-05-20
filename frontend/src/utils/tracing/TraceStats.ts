@@ -1,7 +1,8 @@
 import { EnvoySpanInfo, JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { MetricsStats } from 'types/Metrics';
-import { genStatsKey, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
+import { genStatsKey, getStatsReporters, MetricsStatsQuery, statsQueryToKey } from 'types/MetricsOptions';
 import { average } from '../MathUtils';
+import { isWaypointProxySpan } from './TracingHelper';
 
 export const averageSpanDuration = (trace: JaegerTrace): number | undefined => {
   const spansWithDuration = trace.spans.filter(s => s.duration && s.duration > 0);
@@ -66,8 +67,13 @@ export const compactStatsIntervals = ['60m', '3h'];
 export const statsPerPeer = false;
 export let statsCompareKind: 'app' | 'workload' = 'workload';
 
-export const buildQueriesFromSpans = (items: RichSpanData[], isCompact: boolean) => {
+export const buildQueriesFromSpans = (
+  items: RichSpanData[],
+  isCompact: boolean,
+  includeAmbient = false
+): MetricsStatsQuery[] => {
   const queryTime = Math.floor(Date.now() / 1000);
+  const shouldIncludeAmbient = includeAmbient || items.some(item => isWaypointProxySpan(item));
   // Load stats for up to 8 spans to limit the heavy loading. More stats can be loaded individually.
   const queries = items
     .filter(s => s.type === 'envoy')
@@ -94,6 +100,7 @@ export const buildQueriesFromSpans = (items: RichSpanData[], isCompact: boolean)
         peerTarget: statsPerPeer ? info.peer : undefined,
         quantiles: isCompact ? compactStatsQuantiles : statsQuantiles,
         queryTime: queryTime,
+        reporters: getStatsReporters(info.direction, shouldIncludeAmbient),
         target: {
           namespace: item.namespace,
           name: name,
@@ -106,7 +113,7 @@ export const buildQueriesFromSpans = (items: RichSpanData[], isCompact: boolean)
   return deduplicateMetricQueries(queries);
 };
 
-const deduplicateMetricQueries = (queries: MetricsStatsQuery[]) => {
+const deduplicateMetricQueries = (queries: MetricsStatsQuery[]): MetricsStatsQuery[] => {
   // Exclude redundant queries based on this keygen as a merger, + hashmap
   const dedup = new Map<string, MetricsStatsQuery>();
   queries.forEach(q => {
@@ -142,7 +149,8 @@ export const statsToMatrix = (itemStats: StatsWithIntervalIndex[], intervals: st
 export const getSpanStats = (
   item: RichSpanData,
   metricsStats: Map<string, MetricsStats>,
-  isCompact: boolean
+  isCompact: boolean,
+  includeAmbient: boolean
 ): StatsWithIntervalIndex[] => {
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
 
@@ -154,7 +162,13 @@ export const getSpanStats = (
       kind: statsCompareKind,
       cluster: item.cluster
     };
-    const key = genStatsKey(target, statsPerPeer ? info.peer : undefined, info.direction!, interval);
+    const key = genStatsKey(
+      target,
+      statsPerPeer ? info.peer : undefined,
+      info.direction!,
+      interval,
+      getStatsReporters(info.direction!, includeAmbient)
+    );
     if (key) {
       const stats = metricsStats.get(key);
       if (stats) {
@@ -169,22 +183,27 @@ export const getSpanStats = (
   });
 };
 
-export const reduceMetricsStats = (trace: JaegerTrace, allStats: Map<string, MetricsStats>, isCompact: boolean) => {
+export const reduceMetricsStats = (
+  trace: JaegerTrace,
+  allStats: Map<string, MetricsStats>,
+  isCompact: boolean,
+  includeAmbient: boolean
+): { isComplete: boolean; matrix: StatsMatrix } => {
   let isComplete = true;
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
   const quantilesWithAvg = isCompact ? compactStatsQuantilesWithAvg : statsQuantilesWithAvg;
 
   // Aggregate all spans stats, per stat name/interval, into a temporary map
-  type AggregatedStat = { name: string; intervalIndex: number; values: number[] };
+  type AggregatedStat = { intervalIndex: number; name: string; values: number[] };
   const aggregatedStats = new Map<string, AggregatedStat>();
   trace.spans
     .filter(s => s.type === 'envoy')
     .forEach(span => {
-      const spanStats = getSpanStats(span, allStats, isCompact);
+      const spanStats = getSpanStats(span, allStats, isCompact, includeAmbient);
       if (spanStats.length > 0) {
         spanStats.forEach(statsPerInterval => {
           statsPerInterval.responseTimes.forEach(stat => {
-            const aggKey = stat.name + '@' + statsPerInterval.intervalIndex;
+            const aggKey = `${stat.name}@${statsPerInterval.intervalIndex}`;
             const aggStat = aggregatedStats.get(aggKey);
             if (aggStat) {
               aggStat.values.push(stat.value);

@@ -70,6 +70,7 @@ type Target struct {
 type MetricsStatsQuery struct {
 	Target       Target
 	PeerTarget   *Target
+	Reporters    []string  `json:"reporters,omitempty"`
 	RawQueryTime int64     `json:"queryTime"`
 	QueryTime    time.Time `json:"-"`
 	RawInterval  string    `json:"interval"`
@@ -93,6 +94,9 @@ func (q *MetricsStatsQuery) Validate() *util.Errors {
 	if q.Direction != "inbound" && q.Direction != "outbound" {
 		errs.AddString("bad request: 'direction' must be either 'inbound' or 'outbound'")
 	}
+	if err := q.validateReporters(); err != nil {
+		errs.Merge(err)
+	}
 	if q.RawQueryTime == 0 {
 		errs.AddString("bad request: 'queryTime' must be defined")
 	}
@@ -103,13 +107,75 @@ func (q *MetricsStatsQuery) Validate() *util.Errors {
 	return errs.OrNil()
 }
 
-// GenKey !! HAS to mirror frontend's genStatsKey in SpanTable.tsx
+// GenKey !! HAS to mirror frontend's genStatsKey in frontend/src/types/MetricsOptions.ts
 func (q *MetricsStatsQuery) GenKey() string {
 	peer := ""
 	if q.PeerTarget != nil {
 		peer = q.PeerTarget.GenKey()
 	}
-	return strings.Join([]string{q.Target.GenKey(), peer, q.Direction, q.RawInterval}, ":")
+	return strings.Join([]string{
+		q.Target.GenKey(),
+		peer,
+		q.Direction,
+		q.RawInterval,
+		strings.Join(q.normalizedReporters(), ","),
+	}, ":")
+}
+
+func (q *MetricsStatsQuery) validateReporters() *util.Errors {
+	var errs util.Errors
+	if q.Direction != "inbound" && q.Direction != "outbound" {
+		return nil
+	}
+
+	sideReporter := q.sideReporter()
+	if len(q.Reporters) == 0 {
+		return nil
+	}
+
+	hasSideReporter := false
+	for _, reporter := range q.Reporters {
+		if reporter == sideReporter {
+			hasSideReporter = true
+			continue
+		}
+		if reporter != "waypoint" {
+			errs.AddString(fmt.Sprintf("bad request: 'reporters' can only include '%s' or 'waypoint' for direction '%s'", sideReporter, q.Direction))
+			return errs.OrNil()
+		}
+	}
+
+	if !hasSideReporter {
+		errs.AddString(fmt.Sprintf("bad request: 'reporters' must include '%s' for direction '%s'", sideReporter, q.Direction))
+	}
+	return errs.OrNil()
+}
+
+func (q *MetricsStatsQuery) normalizedReporters() []string {
+	reporters := q.Reporters
+	if len(reporters) == 0 {
+		reporters = []string{q.sideReporter()}
+	}
+
+	normalized := make([]string, 0, len(reporters))
+	seen := make(map[string]struct{}, len(reporters))
+	for _, reporter := range reporters {
+		if _, found := seen[reporter]; found {
+			continue
+		}
+		seen[reporter] = struct{}{}
+		normalized = append(normalized, reporter)
+	}
+
+	sort.Strings(normalized)
+	return normalized
+}
+
+func (q *MetricsStatsQuery) sideReporter() string {
+	if q.Direction == "outbound" {
+		return "source"
+	}
+	return "destination"
 }
 
 func (t *Target) GenKey() string {

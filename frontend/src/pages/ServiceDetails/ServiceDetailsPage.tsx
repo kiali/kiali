@@ -291,6 +291,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             target={this.props.serviceId.service}
             targetKind={'service'}
             fromWaypoint={fromWaypoint}
+            includeAmbient={fromWaypoint || !!this.state.serviceDetails?.isAmbient}
           />
         </Tab>
       );

@@ -62,3 +62,12 @@ Feature: Kiali App Details page
     When user selects a trace with at least 4 spans
     Then user sees span details
     And user can filter spans by app "details" by "waypoint"
+
+  @waypoint-tracing
+  # TODO: Switch this back to travel-agency/flights once the travels demo image is updated.
+  Scenario: See tracing tooltip heat map for reviews app in bookinfo
+    Given the tracing data is ready for the "app" "bookinfo/reviews"
+    And user is at the details page for the "app" "bookinfo/reviews" located in the "" cluster
+    And user sees trace information
+    When user hovers over a trace with at least 4 spans
+    Then user sees the tracing tooltip heat map

@@ -34,7 +34,7 @@ import {
 } from 'types/Common';
 import { timeRangeSelector } from 'store/Selectors';
 import { DisplaySettings, percentilesOptions, QuerySettings, TracesDisplayOptions } from './TracesDisplayOptions';
-import { Direction, genStatsKey, MetricsStatsQuery } from 'types/MetricsOptions';
+import { Direction, genStatsKey, getStatsReporters, MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
@@ -60,6 +60,7 @@ type ReduxProps = {
 type TracesProps = ReduxProps & {
   cluster?: string;
   fromWaypoint: boolean;
+  includeAmbient?: boolean;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   target: string;
@@ -189,6 +190,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   };
 
   private fetchPercentiles = (): Promise<Map<string, number>> => {
+    const includeAmbient = this.shouldIncludeAmbient();
     // We'll fetch percentiles on a large enough interval (unrelated to the selected interval)
     // in order to have stable values and avoid constantly fetching again
     const query: MetricsStatsQuery = {
@@ -202,10 +204,13 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       interval: '1h',
       direction: 'inbound',
       avg: false,
+      reporters: getStatsReporters('inbound', includeAmbient),
       quantiles: percentilesOptions.map(p => p.id).filter(id => id !== 'all')
     };
     const queries: MetricsStatsQuery[] =
-      this.props.targetKind === 'service' ? [query] : [query, { ...query, direction: 'outbound' }];
+      this.props.targetKind === 'service'
+        ? [query]
+        : [query, { ...query, direction: 'outbound', reporters: getStatsReporters('outbound', includeAmbient) }];
     return API.getMetricsStats(queries).then(r => this.percentilesFetched(query, r.data));
   };
 
@@ -215,7 +220,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     }
     const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
       const map = new Map<string, number>();
-      const key = genStatsKey(q.target, undefined, dir, q.interval);
+      const includeWaypoint = !!q.reporters?.includes('waypoint');
+      const key = genStatsKey(q.target, undefined, dir, q.interval, getStatsReporters(dir, includeWaypoint));
       if (key) {
         const statsForKey = r.stats[key];
         if (statsForKey) {
@@ -253,6 +259,8 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   private getUrlProvider = (): TracingUrlProvider | undefined =>
     GetTracingUrlProvider(this.props.externalServices, this.props.provider);
+
+  private shouldIncludeAmbient = (): boolean => !!this.props.includeAmbient || this.props.fromWaypoint;
 
   private getTracingUrl = (): string | undefined => {
     if (!this.urlProvider || !this.state.targetApp || !this.urlProvider.HomeUrl()) {
@@ -352,6 +360,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                 traces={this.state.traces}
                 errorFetchTraces={this.state.tracingErrors}
                 errorTraces={true}
+                includeAmbient={this.shouldIncludeAmbient()}
                 cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
               />
             </CardBody>
@@ -372,6 +381,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       targetKind={this.props.targetKind}
                       tracingURLProvider={this.urlProvider}
                       otherTraces={this.state.traces}
+                      includeAmbient={this.shouldIncludeAmbient()}
                       cluster={this.props.cluster ? this.props.cluster : ''}
                       provider={this.props.provider}
                     />
@@ -385,6 +395,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       traceID={this.props.selectedTrace.traceID}
                       cluster={this.props.cluster ? this.props.cluster : ''}
                       fromWaypoint={this.props.fromWaypoint}
+                      includeAmbient={this.shouldIncludeAmbient()}
                       waypointServiceFilter={this.props.waypointServiceFilter}
                     />
                   </Tab>

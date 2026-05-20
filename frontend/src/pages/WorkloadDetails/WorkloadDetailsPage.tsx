@@ -269,6 +269,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               target={this.props.workloadId.workload}
               targetKind="workload"
               fromWaypoint={fromWaypoint}
+              includeAmbient={fromWaypoint || !!this.state.workload?.isAmbient}
               waypointServiceFilter={this.state.waypointServiceFilter}
             />
           </Tab>

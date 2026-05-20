@@ -380,6 +380,25 @@ func TestCreateStatsMetricsLabelsBuilder(t *testing.T) {
 	assert.Equal(`{reporter="destination",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
 }
 
+func TestCreateStatsMetricsLabelsBuilderWithWaypointReporter(t *testing.T) {
+	assert := assert.New(t)
+	q := models.MetricsStatsQuery{
+		Target: models.Target{
+			Namespace: "ns3",
+			Name:      "foo",
+			Kind:      "app",
+		},
+		Reporters: []string{"destination", "waypoint"},
+		Direction: "inbound",
+		Interval:  "3h",
+		Avg:       true,
+		Quantiles: []string{"0.90", "0.5"},
+		QueryTime: time.Now(),
+	}
+	lb := createStatsMetricsLabelsBuilder(&q, config.Get())
+	assert.Equal(`{reporter=~"destination|waypoint",destination_workload_namespace="ns3",destination_canonical_service="foo"}`, lb.Build())
+}
+
 func TestCreateStatsMetricsLabelsBuilderWithPeer(t *testing.T) {
 	assert := assert.New(t)
 	q := models.MetricsStatsQuery{
@@ -418,6 +437,7 @@ func TestGetMetricsStats(t *testing.T) {
 			Name:      "foo",
 			Kind:      "app",
 		},
+		Reporters:    []string{"source", "waypoint"},
 		Direction:    "outbound",
 		Interval:     "30m",
 		RawInterval:  "30m",
@@ -435,6 +455,7 @@ func TestGetMetricsStats(t *testing.T) {
 			Name:      "w1",
 			Kind:      "workload",
 		},
+		Reporters:    []string{"destination", "waypoint"},
 		Direction:    "inbound",
 		Interval:     "3h",
 		RawInterval:  "3h",
@@ -449,8 +470,8 @@ func TestGetMetricsStats(t *testing.T) {
 	q1P95 := model.Vector{createSample(8)}
 	q2P50 := model.Vector{createSample(6.3)}
 	q2P95 := model.Vector{createSample(9.3)}
-	q1Labels := `reporter="source",source_workload_namespace="ns1",source_canonical_service="foo"`
-	q2Labels := `reporter="destination",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
+	q1Labels := `reporter=~"source|waypoint",source_workload_namespace="ns1",source_canonical_service="foo"`
+	q2Labels := `reporter=~"destination|waypoint",destination_service_name="bar",destination_service_namespace="ns2",source_workload_namespace="ns3",source_workload="w1"`
 	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q1Labels+"}[30m]", q1Avg, v0, q1P95, v0)
 	api.MockHistoValue(context.Background(), "istio_request_duration_milliseconds", "{"+q2Labels+"}[3h]", v0, q2P50, q2P95, v0)
 
@@ -459,8 +480,8 @@ func TestGetMetricsStats(t *testing.T) {
 	assert.Nil(err)
 	assert.Len(stats, 2)
 	fmt.Printf("%v\n", stats)
-	assert.Equal([]models.Stat{{Name: "0.95", Value: 8.0}, {Name: "avg", Value: 5.0}}, stats["ns1:app:foo::outbound:30m"].ResponseTimes)
-	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h"].ResponseTimes)
+	assert.Equal([]models.Stat{{Name: "0.95", Value: 8.0}, {Name: "avg", Value: 5.0}}, stats["ns1:app:foo::outbound:30m:source,waypoint"].ResponseTimes)
+	assert.Equal([]models.Stat{{Name: "0.5", Value: 6.3}, {Name: "0.95", Value: 9.3}}, stats["ns2:service:bar:ns3:workload:w1:inbound:3h:destination,waypoint"].ResponseTimes)
 }
 
 func TestGetZtunnelMetrics(t *testing.T) {

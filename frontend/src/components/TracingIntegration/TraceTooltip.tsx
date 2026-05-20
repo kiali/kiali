@@ -10,7 +10,7 @@ import { JaegerTrace } from 'types/TracingInfo';
 import { renderTraceHeatMap } from './TracingResults/StatsComparison';
 import { PFColors } from 'components/Pf/PfColors';
 import { HookedChartTooltip, HookedTooltipProps } from 'components/Charts/CustomTooltip';
-import { formatDuration } from 'utils/tracing/TracingHelper';
+import { formatDuration, isWaypointProxySpan } from 'utils/tracing/TracingHelper';
 
 const flyoutWidth = 300;
 const flyoutHeight = 100;
@@ -52,12 +52,17 @@ const rightStyle = kialiStyle({
   lineHeight: '1.6'
 });
 
-type LabelProps = ChartLabelProps & {
-  isStatsMatrixComplete: boolean;
-  provider?: string;
-  statsMatrix?: StatsMatrix;
+type TraceLabelOwnProps = {
+  includeAmbient?: boolean;
   trace: JaegerTrace;
 };
+
+type LabelProps = ChartLabelProps &
+  TraceLabelOwnProps & {
+    isStatsMatrixComplete: boolean;
+    provider?: string;
+    statsMatrix?: StatsMatrix;
+  };
 
 export class TraceLabel extends React.Component<LabelProps> {
   render(): JSX.Element {
@@ -68,12 +73,12 @@ export class TraceLabel extends React.Component<LabelProps> {
 
     return (
       <foreignObject width={innerWidth} height={innerHeight} x={left} y={top}>
-        <div className={tooltipStyle}>
+        <div className={tooltipStyle} data-test="trace-tooltip">
           <div className={titleStyle}>{this.props.trace.traceName || '(Missing root span)'}</div>
           <div className={contentStyle}>
-            <div className={leftStyle}>
+            <div className={leftStyle} data-test="trace-tooltip-heatmap-area">
               {hasStats ? (
-                renderTraceHeatMap(this.props.statsMatrix!, true)
+                <div data-test="trace-tooltip-heatmap">{renderTraceHeatMap(this.props.statsMatrix!, true)}</div>
               ) : this.props.isStatsMatrixComplete ? (
                 'n/a'
               ) : (
@@ -97,9 +102,10 @@ export class TraceLabel extends React.Component<LabelProps> {
 
 const mapStateToProps = (
   state: KialiAppState,
-  props: any
+  props: TraceLabelOwnProps
 ): { isStatsMatrixComplete: boolean; statsMatrix: StatsMatrix } => {
-  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true);
+  const includeAmbient = !!props.includeAmbient || props.trace.spans.some(span => isWaypointProxySpan(span));
+  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true, includeAmbient);
   return {
     statsMatrix: matrix,
     isStatsMatrixComplete: isComplete
@@ -110,6 +116,9 @@ const TraceLabelContainer = connect(mapStateToProps)(TraceLabel);
 
 type FlyoutOrientation = 'top' | 'bottom' | 'left' | 'right';
 type FlyoutOrientationProps = Pick<ChartLabelProps, 'x' | 'y' | 'width'>;
+type TooltipProps = HookedTooltipProps<JaegerLineInfo> & {
+  includeAmbient?: boolean;
+};
 
 export const computeFlyoutOrientation = (props: FlyoutOrientationProps): FlyoutOrientation => {
   const x = typeof props.x === 'number' ? props.x : 0;
@@ -131,7 +140,7 @@ export const computeFlyoutOrientation = (props: FlyoutOrientationProps): FlyoutO
   return 'top';
 };
 
-export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineInfo>> {
+export class TraceTooltip extends React.Component<TooltipProps> {
   // Victory passes callback args that are broader than ChartLabelProps.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getOrientation = (props: any): FlyoutOrientation => computeFlyoutOrientation(props);
@@ -147,7 +156,7 @@ export class TraceTooltip extends React.Component<HookedTooltipProps<JaegerLineI
           flyoutHeight={flyoutHeight}
           orientation={this.getOrientation}
           flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6, pointerEvents: 'none' }} />}
-          labelComponent={<TraceLabelContainer trace={trace} />}
+          labelComponent={<TraceLabelContainer trace={trace} includeAmbient={this.props.includeAmbient} />}
         />
       );
     }
