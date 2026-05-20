@@ -21,8 +21,6 @@ export default defineConfig({
   fixturesFolder: 'cypress/fixtures',
   env: {
     cookie: false,
-    filterSpecs: true,
-    omitFiltered: true,
     rootSelector: '#root'
   },
   e2e: {

@@ -1,31 +1,10 @@
 import { Before, Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { discoverOAuthOrigin } from '../../support/oauth-utils';
 
 const USERNAME = Cypress.env('USERNAME') ?? 'jenkins';
 const PASSWD = Cypress.env('PASSWD');
 const KUBEADMIN_IDP = Cypress.env('AUTH_PROVIDER');
 const auth_strategy = Cypress.env('AUTH_STRATEGY');
-
-// Cached OAuth origin discovered via /api/auth/redirect probe.
-let oauthOrigin: string | undefined;
-
-/**
- * Discovers the OAuth server origin by following redirects from Kiali's
- * auth redirect endpoint. Needed because Cypress 15 enforces strict
- * origin boundaries — interactions with cross-origin OAuth forms must
- * be wrapped in cy.origin().
- */
-function getOAuthOrigin(): Cypress.Chainable<string> {
-  if (oauthOrigin !== undefined) {
-    return cy.wrap(oauthOrigin);
-  }
-  return cy.request({ url: 'api/auth/redirect', followRedirect: true, failOnStatusCode: false }).then(resp => {
-    const lastRedirect = resp.redirects?.at(-1);
-    const redirectUrl = lastRedirect ? lastRedirect.split(' ').pop() : undefined;
-    const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
-    oauthOrigin = redirectUrl ? new URL(redirectUrl).origin : baseOrigin;
-    return oauthOrigin;
-  });
-}
 
 /**
  * Fills a login form, handling cross-origin OAuth when needed.
@@ -36,7 +15,7 @@ function fillOAuthForm(
   formAction: (args: { password: string; username: string }) => void,
   args: { password: string; username: string }
 ): void {
-  getOAuthOrigin().then(origin => {
+  discoverOAuthOrigin().then(origin => {
     const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
     if (origin !== baseOrigin) {
       // Wait for the client-side redirect to the OAuth server to complete.
@@ -79,7 +58,7 @@ Given('user clicks my_htpasswd_provider', () => {
     cy.exec('kubectl get user').then(result => {
       if (result.stderr !== 'No resources found') {
         cy.log(`Log in using auth provider: ${KUBEADMIN_IDP}`);
-        getOAuthOrigin().then(origin => {
+        discoverOAuthOrigin().then(origin => {
           const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
           if (origin !== baseOrigin) {
             const oauthHost = new URL(origin).host;
