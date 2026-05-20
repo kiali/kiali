@@ -9,3 +9,16 @@ knowledge_base:
     - "AI_POLICY.md"
     - "CONTRIBUTING.md"
     - "STYLE_GUIDE.adoc"
+reviews:
+  review_status: false
+  poem: false
+  auto_review:
+    enabled: false
+  path_instructions:
+  - path: "frontend/public/locales/**/translation.json"
+    instructions: |
+      These files contain localization resources.
+      Do not comment on missing translations, untranslated strings,
+      missing locale parity, or missing i18n keys in this path.
+      Only flag malformed JSON, broken structure, duplicate keys,
+      or clearly invalid translation entries.
