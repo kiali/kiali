@@ -161,7 +161,7 @@
   "Could not update service {{service}} {{field}}": "Could not update service {{service}} {{field}}",
   "Could not update workload {{workload}} {{field}}": "Could not update workload {{workload}} {{field}}",
   "Could not fetch Perses info. Turning off links to Perses.": "No se pudo obtener la información de Perses. Se desactivan los enlaces a Perses.",
-  "Could not update namespace {{namespace}} {{field}}": "No se pudo actualizar {{field}} del espacio de nombres {{namespace}}",
+  "Could not update namespace {{namespace}} {{field}}": "No se pudo actualizar {{field}} del namespace {{namespace}}",
   "CP": "CP",
   "CPU": "CPU",
   "Create": "Crear",
