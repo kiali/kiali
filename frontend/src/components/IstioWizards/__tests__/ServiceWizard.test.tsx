@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { serverConfig } from 'config';
 import { ServiceWizard } from '../ServiceWizard';
 import { ServiceWizardProps, WIZARD_FAULT_INJECTION } from '../WizardActions';
@@ -62,7 +62,14 @@ jest.mock('../CircuitBreaker', () => ({
 }));
 
 jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
-  IstioConfigPreview: () => null
+  IstioConfigPreview: ({ isOpen, onClose, readOnly, title }: any) =>
+    isOpen ? (
+      <div>
+        <div>{title}</div>
+        <div>{readOnly ? 'YAML Preview Read Only' : 'YAML Preview Editable'}</div>
+        <button onClick={onClose}>Close Preview</button>
+      </div>
+    ) : null
 }));
 
 const onClose = jest.fn();
@@ -97,19 +104,19 @@ describe('ServiceWizard', () => {
     onClose.mockReset();
   });
 
-  it('shows only Close in view-only mode', async () => {
+  it('shows YAML preview instead of the wizard in view-only mode', async () => {
     serverConfig.deployment.viewOnlyMode = true;
 
     const { rerender } = render(<ServiceWizard {...baseProps} />);
     rerender(<ServiceWizard {...baseProps} show={true} />);
 
     await waitFor(() => {
-      expect(getFooter()).toHaveTextContent('Close');
+      expect(screen.getByText('View Fault Injection')).toBeInTheDocument();
     });
 
-    expect(getFooter()).not.toHaveTextContent('Create');
-    expect(getFooter()).not.toHaveTextContent('Cancel');
-    expect(getFooter()?.querySelectorAll('button')).toHaveLength(1);
+    expect(screen.getByText('YAML Preview Read Only')).toBeInTheDocument();
+    expect(screen.queryByText('Fault Injection Content')).not.toBeInTheDocument();
+    expect(getFooter()).toBeNull();
   });
 
   it('shows Create and Cancel outside view-only mode', async () => {

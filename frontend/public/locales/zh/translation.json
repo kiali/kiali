@@ -639,6 +639,7 @@
   "There is currently no graph available for the selected namespaces. This usually means the namespaces do not have measurable traffic for the selected time period:": "There is currently no graph available for the selected namespaces. This usually means the namespaces do not have measurable traffic for the selected time period:",
   "There is currently no mesh information available. This may mean you do not have permission to see any mesh information or have no access to any of the mesh namespaces.": "There is currently no mesh information available. This may mean you do not have permission to see any mesh information or have no access to any of the mesh namespaces.",
   "There is currently no namespace selected, please select one using the Namespace selector.": "There is currently no namespace selected, please select one using the Namespace selector.",
+  "There is no traffic routing to view for this service": "There is no traffic routing to view for this service",
   "This chart shows cpu consumption for the {{component}} {{cpuMetricSource}}": "This chart shows cpu consumption for the {{component}} {{cpuMetricSource}}",
   "This chart shows memory consumption for the {{component}} {{memoryMetricSource}}": "This chart shows memory consumption for the {{component}} {{memoryMetricSource}}",
   "This rule is not accessible.": "该规则将无法生效。",
