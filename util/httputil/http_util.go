@@ -36,17 +36,14 @@ func HttpGet(url string, auth *config.Auth, timeout time.Duration, customHeaders
 		req.AddCookie(c)
 	}
 
-	// Hold a reference to the raw transport so we can explicitly close its idle
-	// connection after the response is consumed. HttpGet is one-shot: a fresh
-	// transport is created per call and never reused. Without this, the idle
-	// connection (socket + goroutine) lingers until the GC collects the transport,
-	// which is non-deterministic and accumulates in tight retry loops.
-	rawTransport := &http.Transport{}
-	transport, err := CreateTransport(conf, auth, rawTransport, timeout, customHeaders)
+	// DisableKeepAlives ensures the connection is closed immediately after the
+	// response is read rather than being pooled. HttpGet is one-shot — a fresh
+	// transport is created per call and never reused, so keep-alive pooling
+	// only leaks sockets until GC runs.
+	transport, err := CreateTransport(conf, auth, &http.Transport{DisableKeepAlives: true}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, nil, err
 	}
-	defer rawTransport.CloseIdleConnections()
 
 	client := http.Client{Transport: transport, Timeout: timeout}
 
@@ -66,15 +63,13 @@ func HttpPost(url string, auth *config.Auth, body io.Reader, timeout time.Durati
 		return nil, 0, nil, err
 	}
 
-	// Same one-shot transport pattern as HttpGet — hold a reference so we can
-	// immediately release the idle connection after the response is consumed
-	// rather than waiting for GC.
-	rawTransport := &http.Transport{}
-	transport, err := CreateTransport(conf, auth, rawTransport, timeout, customHeaders)
+	// Same one-shot transport pattern as HttpGet — DisableKeepAlives ensures
+	// the connection is closed immediately after the response rather than being
+	// pooled for a transport that is never reused.
+	transport, err := CreateTransport(conf, auth, &http.Transport{DisableKeepAlives: true}, timeout, customHeaders)
 	if err != nil {
 		return nil, 0, nil, err
 	}
-	defer rawTransport.CloseIdleConnections()
 
 	client := http.Client{Transport: transport, Timeout: timeout}
 
