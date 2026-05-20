@@ -54,7 +54,13 @@ const renderBasicSpireInfo = (
   if (managedIdentityMatches && managedIdentityMatches.length > 0) {
     // Loop over all matches and display each one (order is preserved from backend)
     managedIdentityMatches.forEach((match, index) => {
-      matchItems.push(renderListItem(match.matchType, <code className={codeStyle}>{match.matchValue}</code>, 'match'));
+      matchItems.push(
+        renderListItem(
+          match.matchType,
+          <code className={codeStyle}>{match.matchValue}</code>,
+          `match-${match.matchType}-${match.matchValue}-${index}`
+        )
+      );
       // Add spacing between matches, but not after the last one
       if (index < managedIdentityMatches.length - 1) {
         matchItems.push(<li key={`spacer-${index}`} style={{ marginTop: '0.25rem' }} />);

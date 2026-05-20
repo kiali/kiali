@@ -10,6 +10,7 @@ jest.mock('utils/I18nUtils', () => ({
 
 describe('ServiceWizardActionsDropdownGroup', () => {
   const origViewOnly = serverConfig.deployment.viewOnlyMode;
+  const origIstioAPIInstalled = serverConfig.istioAPIInstalled;
 
   const baseProps = {
     destinationRules: [],
@@ -27,12 +28,14 @@ describe('ServiceWizardActionsDropdownGroup', () => {
 
   afterEach(() => {
     serverConfig.deployment.viewOnlyMode = origViewOnly;
+    serverConfig.istioAPIInstalled = origIstioAPIInstalled;
     baseProps.onAction.mockReset();
     baseProps.onDelete.mockReset();
   });
 
   it('shows View and disables all actions in view-only mode when there is no traffic policy', () => {
     serverConfig.deployment.viewOnlyMode = true;
+    serverConfig.istioAPIInstalled = true;
 
     render(<ServiceWizardActionsDropdownGroup {...baseProps} />);
 
@@ -48,6 +51,7 @@ describe('ServiceWizardActionsDropdownGroup', () => {
 
   it('shows View and only enables the existing traffic policy in view-only mode', () => {
     serverConfig.deployment.viewOnlyMode = true;
+    serverConfig.istioAPIInstalled = true;
 
     render(
       <ServiceWizardActionsDropdownGroup
