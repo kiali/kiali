@@ -131,6 +131,11 @@ var checkDescriptors = map[string]IstioCheck{
 	"authorizationpolicy.source.principalremote": {
 		Code:     "KIA0107",
 		Message:  "Service Account for this principal is on remote cluster",
+		Severity: Unknown,
+	},
+	"authorizationpolicy.source.principalforeign": {
+		Code:     "KIA0108",
+		Message:  "Unable to verify principal, trust domain is not known to Kiali",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.to.wrongmethod": {

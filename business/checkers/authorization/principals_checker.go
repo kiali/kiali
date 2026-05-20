@@ -14,6 +14,7 @@ import (
 type PrincipalsChecker struct {
 	AuthorizationPolicy *security_v1.AuthorizationPolicy
 	Cluster             string
+	KnownTrustDomains   []string
 	ServiceAccounts     map[string][]string
 }
 
@@ -63,6 +64,9 @@ func (pc PrincipalsChecker) validateFromField(ruleIdx int, from []*api_security_
 				if pc.hasMatchingRemoteServiceAccount(p) {
 					validation := models.Build("authorizationpolicy.source.principalremote", path)
 					checks = append(checks, &validation)
+				} else if pc.hasForeignTrustDomain(p) {
+					validation := models.Build("authorizationpolicy.source.principalforeign", path)
+					checks = append(checks, &validation)
 				} else {
 					validation := models.Build("authorizationpolicy.source.principalnotfound", path)
 					checks = append(checks, &validation)
@@ -102,6 +106,28 @@ func (pc PrincipalsChecker) hasMatchingRemoteServiceAccount(principal string) bo
 		}
 	}
 	return false
+}
+
+// hasForeignTrustDomain returns true when the principal's trust domain (the
+// part before "/ns/") is not in the set of trust domains known to Kiali.
+// Principals with foreign trust domains cannot be validated because Kiali has
+// no visibility into the cluster that owns them. Wildcard principals are
+// skipped because a reliable trust domain cannot be extracted from them.
+func (pc PrincipalsChecker) hasForeignTrustDomain(principal string) bool {
+	if strings.Contains(principal, wildCardMatch) {
+		return false
+	}
+	idx := strings.Index(principal, "/ns/")
+	if idx <= 0 {
+		return false
+	}
+	td := principal[:idx]
+	for _, known := range pc.KnownTrustDomains {
+		if td == known {
+			return false
+		}
+	}
+	return true
 }
 
 func regexpFromPrincipal(principal string) *regexp.Regexp {
