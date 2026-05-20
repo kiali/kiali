@@ -1,4 +1,3 @@
-// import { INJECTION_LABEL_NAME, INJECTION_LABEL_REV } from 'config/ServerConfig';
 jest.mock('config', () => ({
   isMultiCluster: false,
   serverConfig: {}

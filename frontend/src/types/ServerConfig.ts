@@ -2,7 +2,7 @@ import { ChatAIConfig } from './Chatbot';
 import { DurationInSeconds } from './Common';
 import { MeshCluster } from './Mesh';
 
-export type IstioLabelKey = 'appLabelName' 
+export type IstioLabelKey = 'appLabelName'
   | 'versionLabelName';
 
 interface DeploymentConfig {

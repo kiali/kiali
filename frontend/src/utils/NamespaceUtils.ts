@@ -27,8 +27,7 @@ export const getNamespaceMode = (ns: NamespaceLike): NamespaceMode => {
     labels &&
     labels[INJECTION_LABEL_REV] !== undefined &&
     labels[INJECTION_LABEL_REV] !== ''
-  )  // INJECTION_LABEL_NAME: 'istio-injection',
-  // INJECTION_LABEL_REV: 'istio.io/rev',;
+  )
 
   if (ns.isControlPlane || injectionEnabled || revisionSet) {
     return 'sidecar';

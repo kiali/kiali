@@ -11,7 +11,7 @@ export const setControlPlaneRevisions = (revisions: Set<string>): void => {
 };
 
 export const isRevisionAvailable = (ns: NamespaceLike): boolean => {
-  const rev = ns.labels?.[INJECTION_LABEL_REV] ?? ns.labels?.['istio.io/rev'];
+  const rev = ns.labels?.[INJECTION_LABEL_REV];
   if (!rev) {
     return true;
   }
