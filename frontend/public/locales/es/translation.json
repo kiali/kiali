@@ -425,7 +425,7 @@
   "name": "nombre",
   "Name": "Nombre",
   "Namespace": "Espacio de nombres",
-  "Namespace {{namespace}} {{field}} updated": "Se actualizó {{field}} del espacio de nombres {{namespace}}",
+  "Namespace {{namespace}} {{field}} updated": "Se actualizó {{field}} del namespace {{namespace}}",
   "Namespace {{namespace}} updated": "Espacio de nombres {{namespace}} actualizado",
   "Namespace Health": "Salud del espacio de nombres",
   "Namespace health details": "Detalles de salud del espacio de nombres",
