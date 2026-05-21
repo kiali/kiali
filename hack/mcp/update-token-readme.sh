@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Updates the token consumption section in ai/mcp/README.md from a summary of
-# tests/evals/results/mcpchecker-gemini-eval-out.json (mcpchecker summary -o json).
+# tests/evals/results/mcpchecker-gemini-eval-out.json (mcpchecker result summary -o json).
 #
 set -euo pipefail
 
@@ -33,7 +33,7 @@ fi
 TOKEN_FILE="$(mktemp)"
 trap 'rm -f "${TOKEN_FILE}"' EXIT
 
-"${MCPCHECKER}" summary "${EVAL_OUT}" -o json > "${TOKEN_FILE}"
+"${MCPCHECKER}" result summary "${EVAL_OUT}" -o json > "${TOKEN_FILE}"
 
 TASKS_TOTAL=$(jq -r '.tasksTotal' "${TOKEN_FILE}")
 TASKS_PASSED=$(jq -r '.tasksPassed' "${TOKEN_FILE}")

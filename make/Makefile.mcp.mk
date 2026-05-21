@@ -117,18 +117,18 @@ mcp-eval-summary:
 	fi
 	@${GOPATH}/bin/mcpchecker result summary ${MCP_EVAL_RESULTS} --output text
 
-## mcp-eval-summary-json: Print summary JSON to stdout (same as: mcpchecker summary <eval.json> -o json)
+## mcp-eval-summary-json: Print summary JSON to stdout (same as: mcpchecker result summary <eval.json> -o json)
 mcp-eval-summary-json:
 	@if [ ! -f ${MCP_EVAL_RESULTS} ]; then \
 		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@${GOPATH}/bin/mcpchecker summary ${MCP_EVAL_RESULTS} --output json
+	@${GOPATH}/bin/mcpchecker result summary ${MCP_EVAL_RESULTS} --output json
 
 ## mcp-eval-diff: Compare two check outputs in markdown. Usage: make mcp-eval-diff MCP_DIFF_BASE=main.json MCP_DIFF_CURRENT=pr.json
 mcp-eval-diff:
 	@test -n "$${MCP_DIFF_BASE}" && test -n "$${MCP_DIFF_CURRENT}" || (echo "Usage: make mcp-eval-diff MCP_DIFF_BASE=<path> MCP_DIFF_CURRENT=<path>" >&2; exit 1)
-	@${GOPATH}/bin/mcpchecker diff --base "$${MCP_DIFF_BASE}" --current "$${MCP_DIFF_CURRENT}" --output markdown
+	@${GOPATH}/bin/mcpchecker result diff --base "$${MCP_DIFF_BASE}" --current "$${MCP_DIFF_CURRENT}" --output markdown
 
 ## mcp-clean-eval-results: Remove local mcpchecker evaluation outputs
 mcp-clean-eval-results:
@@ -136,6 +136,6 @@ mcp-clean-eval-results:
 	@rm -f mcpchecker-gemini-eval-out.json
 	@rm -f tests/evals/results/mcpchecker-gemini-eval-out.json
 
-## mcp-update-token-readme: Update the token consumption section in ai/mcp/README.md from mcpchecker summary of MCP_EVAL_RESULTS
+## mcp-update-token-readme: Update the token consumption section in ai/mcp/README.md from mcpchecker result summary of MCP_EVAL_RESULTS
 mcp-update-token-readme:
 	@${ROOTDIR}/hack/mcp/update-token-readme.sh
