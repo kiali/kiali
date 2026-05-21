@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
@@ -217,20 +218,24 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				mesh.CheckError(err)
 
 				// add edge to the managing control plane
+				// Use revision/tag as primary match, version label as tie-breaker for multi-mesh
 				for _, infraNode := range meshMap {
-					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster && infraNode.Namespace == ztunnel.Namespace {
+					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
 						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
 						tag := "default"
 						if cp.Tag != nil {
 							tag = cp.Tag.Name
 						}
-						if tag == ztunnelNode.Metadata[mesh.Version] {
-							// Validate that this control plane is actually ambient
-							if gi.KialiCache.IsControlPlaneNamespaceAmbient(ctx, ztunnel.Cluster, cp.IstiodNamespace, cp.IstiodName) {
-								infraNode.AddEdge(ztunnelNode)
-								break
-							}
+						if tag != ztunnelNode.Metadata[mesh.Version] {
+							continue
 						}
+						// Revision/tag matches; use app.kubernetes.io/version as tie-breaker
+						ztunnelVersion := ztunnel.Labels[istio.KubeVersionLabel]
+						if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
+							continue
+						}
+						infraNode.AddEdge(ztunnelNode)
+						break
 					}
 				}
 			}
