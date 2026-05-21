@@ -35,6 +35,17 @@ func (fpc *fakePromClient) GetRuntimeinfo(ctx context.Context) (prom_v1.Runtimei
 	return prom_v1.RuntimeinfoResult{}, nil
 }
 
+// fakeDisabledPromClient extends fakePromClient with a DisabledReason,
+// simulating a LazyClient that hasn't yet connected to Prometheus.
+type fakeDisabledPromClient struct {
+	fakePromClient
+	reason string
+}
+
+func (f *fakeDisabledPromClient) DisabledReason() string {
+	return f.reason
+}
+
 func TestConfigHandler(t *testing.T) {
 	require := require.New(t)
 
@@ -111,13 +122,19 @@ func TestConfigHandlerPrometheusEnabledButUnreachable(t *testing.T) {
 
 	conf := config.NewConfig()
 	conf.ExternalServices.Prometheus.Enabled = true
-	conf.ExternalServices.Prometheus.DisabledReason = "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0])"
+	expectedReason := "Prometheus unreachable at [http://prometheus:9090/-/healthy] (status [0])"
+
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := &istiotest.FakeDiscovery{}
 
-	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+	// Use a client that implements DisabledReasonProvider to simulate the LazyClient
+	// reporting a disabled reason to the config handler.
+	prom := &fakeDisabledPromClient{
+		fakePromClient: fakePromClient{PromClientMock: prometheustest.PromClientMock{}},
+		reason:         expectedReason,
+	}
 
 	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, cache, discovery, cf, prom))
 	mr := mux.NewRouter()
@@ -140,7 +157,7 @@ func TestConfigHandlerPrometheusEnabledButUnreachable(t *testing.T) {
 
 	require.True(confResp.Prometheus.Enabled, "Prometheus should still be enabled (user's intent)")
 	require.NotEmpty(confResp.Prometheus.DisabledReason, "DisabledReason should be set when Prometheus is unreachable")
-	require.Equal(conf.ExternalServices.Prometheus.DisabledReason, confResp.Prometheus.DisabledReason)
+	require.Equal(expectedReason, confResp.Prometheus.DisabledReason)
 }
 
 func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {
