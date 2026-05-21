@@ -53,9 +53,9 @@ Feature: Kiali Graph page - Context menu actions
       | request_timeouts     |
 
   @offline
-  @bookinfo-app
   Scenario Outline: Actions are disabled in context menu in offline mode when there is no traffic routing
-    And user opens the context menu of the "reviews" service node
+    When user graphs "travel-agency" namespaces
+    And user opens the context menu of the "hotels" service node
     Then user should see the "<action>" item of the context menu disabled in view-only mode
 
     Examples:
