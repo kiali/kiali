@@ -1438,3 +1438,23 @@ func TestDefaultIdentityDomainIsEmpty(t *testing.T) {
 	assert.Empty(t, conf.ExternalServices.Istio.IstioIdentityDomain,
 		"default should be empty to enable auto-detection")
 }
+
+func TestValidatePrometheusURL(t *testing.T) {
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = Credential("signingkey12345!")
+
+	// enabled with a URL is valid (default)
+	conf.ExternalServices.Prometheus.Enabled = true
+	conf.ExternalServices.Prometheus.URL = "http://prometheus:9090"
+	assert.NoError(t, Validate(conf), "enabled with URL should be valid")
+
+	// disabled with empty URL is valid
+	conf.ExternalServices.Prometheus.Enabled = false
+	conf.ExternalServices.Prometheus.URL = ""
+	assert.NoError(t, Validate(conf), "disabled with empty URL should be valid")
+
+	// enabled with empty URL is a misconfiguration and must fail
+	conf.ExternalServices.Prometheus.Enabled = true
+	conf.ExternalServices.Prometheus.URL = ""
+	assert.Error(t, Validate(conf), "enabled with empty URL should fail validation")
+}
