@@ -8,32 +8,35 @@ MCP_EVAL_CONFIG ?= tests/evals/gemini/eval.yaml
 MCP_EVAL_RESULTS ?= tests/evals/results/mcpchecker-gemini-eval-out.json
 KIALI_URL ?= $(shell kubectl get svc kiali -n istio-system -o=jsonpath='http://{.status.loadBalancer.ingress[0].ip}/kiali' 2>/dev/null)
 KUBERNETES_MCP_SERVER_REPO ?=
+GO_BIN ?= $(shell go env GOPATH)/bin
+MCPCHECKER_BIN ?= ${GO_BIN}/mcpchecker
+KUBERNETES_MCP_SERVER_BIN ?= ${GO_BIN}/kubernetes-mcp-server
 
 ## mcp-install-mcpchecker: Download and install the latest mcpchecker binary
 mcp-install-mcpchecker:
 	@echo "Installing mcpchecker..."
-	@mkdir -p "${GOPATH}/bin"
+	@mkdir -p "${GO_BIN}"
 	@MCPCHECKER_URL=$$(curl -sL https://api.github.com/repos/mcpchecker/mcpchecker/releases/latest \
 		| jq -r '.assets[] | select(.name == "mcpchecker-linux-amd64.zip") | .browser_download_url'); \
 	echo "Downloading mcpchecker from: $${MCPCHECKER_URL}"; \
 	curl -sL "$${MCPCHECKER_URL}" -o /tmp/mcpchecker.zip; \
 	unzip -o /tmp/mcpchecker.zip -d /tmp/mcpchecker; \
 	chmod +x /tmp/mcpchecker/mcpchecker; \
-	mv /tmp/mcpchecker/mcpchecker "${GOPATH}/bin/"; \
+	mv /tmp/mcpchecker/mcpchecker "${MCPCHECKER_BIN}"; \
 	rm -rf /tmp/mcpchecker.zip /tmp/mcpchecker; \
-	echo "mcpchecker installed to ${GOPATH}/bin/"
+	echo "mcpchecker installed to ${GO_BIN}/"
 
 ## mcp-install-kubernetes-mcp-server: Install kubernetes-mcp-server from release or repo#branch
 mcp-install-kubernetes-mcp-server:
 	@echo "Installing kubernetes-mcp-server..."
-	@mkdir -p "${GOPATH}/bin"
+	@mkdir -p "${GO_BIN}"
 	@if [ -z "${KUBERNETES_MCP_SERVER_REPO}" ]; then \
 		RELEASE_URL=$$(curl -sL https://api.github.com/repos/containers/kubernetes-mcp-server/releases/latest \
 			| jq -r '.assets[] | select(.name | test("linux.*amd64")) | .browser_download_url'); \
 		echo "Downloading kubernetes-mcp-server from: $${RELEASE_URL}"; \
-		curl -sL "$${RELEASE_URL}" -o "${GOPATH}/bin/kubernetes-mcp-server"; \
-		chmod +x "${GOPATH}/bin/kubernetes-mcp-server"; \
-		echo "kubernetes-mcp-server installed to ${GOPATH}/bin/"; \
+		curl -sL "$${RELEASE_URL}" -o "${KUBERNETES_MCP_SERVER_BIN}"; \
+		chmod +x "${KUBERNETES_MCP_SERVER_BIN}"; \
+		echo "kubernetes-mcp-server installed to ${GO_BIN}/"; \
 	else \
 		REPO_AND_BRANCH="${KUBERNETES_MCP_SERVER_REPO}"; \
 		REPO="$${REPO_AND_BRANCH%%#*}"; \
@@ -52,10 +55,10 @@ mcp-install-kubernetes-mcp-server:
 			echo "ERROR: build finished but binary '$${WORKDIR}/kubernetes-mcp-server' was not found"; \
 			exit 1; \
 		fi; \
-		mv -f "$${WORKDIR}/kubernetes-mcp-server" "${GOPATH}/bin/kubernetes-mcp-server"; \
-		chmod +x "${GOPATH}/bin/kubernetes-mcp-server"; \
+		mv -f "$${WORKDIR}/kubernetes-mcp-server" "${KUBERNETES_MCP_SERVER_BIN}"; \
+		chmod +x "${KUBERNETES_MCP_SERVER_BIN}"; \
 		rm -rf "$${WORKDIR}"; \
-		echo "kubernetes-mcp-server installed to ${GOPATH}/bin/ from source"; \
+		echo "kubernetes-mcp-server installed to ${GO_BIN}/ from source"; \
 	fi
 
 ## mcp-install-gemini-cli: Install the Gemini CLI via npm
@@ -77,7 +80,7 @@ mcp-start-server: mcp-resolve-kiali-url
 	@echo "Starting kubernetes-mcp-server on port ${MCP_SERVER_PORT}..."
 	@cat > ${MCP_SERVER_CONFIG} <<< $$'toolsets = ["kiali"]\nlog_level = 0\nport = "${MCP_SERVER_PORT}"\n[toolset_configs.kiali]\nurl = "${KIALI_URL}"\ninsecure = true'
 	@echo "MCP server config:"; cat ${MCP_SERVER_CONFIG}
-	@${GOPATH}/bin/kubernetes-mcp-server --config ${MCP_SERVER_CONFIG} & \
+	@${KUBERNETES_MCP_SERVER_BIN} --config ${MCP_SERVER_CONFIG} & \
 	MCP_PID=$$!; \
 	echo "$$MCP_PID" > /tmp/mcp-server.pid; \
 	echo "Waiting for kubernetes-mcp-server (pid $$MCP_PID) to be ready..."; \
@@ -103,7 +106,7 @@ mcp-stop-server:
 ## mcp-run-eval: Run the mcpchecker evaluation
 mcp-run-eval:
 	@echo "Running mcpchecker evaluation..."
-	${GOPATH}/bin/mcpchecker check ${MCP_EVAL_CONFIG} ${MCP_EVAL_ARGS}
+	${MCPCHECKER_BIN} check ${MCP_EVAL_CONFIG} ${MCP_EVAL_ARGS}
 	@if [ -f mcpchecker-gemini-eval-out.json ]; then \
 		mkdir -p $(dir ${MCP_EVAL_RESULTS}); \
 		mv -f mcpchecker-gemini-eval-out.json ${MCP_EVAL_RESULTS}; \
@@ -115,7 +118,7 @@ mcp-eval-summary:
 		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@${GOPATH}/bin/mcpchecker result summary ${MCP_EVAL_RESULTS} --output text
+	@${MCPCHECKER_BIN} result summary ${MCP_EVAL_RESULTS} --output text
 
 ## mcp-eval-summary-json: Print summary JSON to stdout (same as: mcpchecker result summary <eval.json> -o json)
 mcp-eval-summary-json:
@@ -123,12 +126,12 @@ mcp-eval-summary-json:
 		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@${GOPATH}/bin/mcpchecker result summary ${MCP_EVAL_RESULTS} --output json
+	@${MCPCHECKER_BIN} result summary ${MCP_EVAL_RESULTS} --output json
 
 ## mcp-eval-diff: Compare two check outputs in markdown. Usage: make mcp-eval-diff MCP_DIFF_BASE=main.json MCP_DIFF_CURRENT=pr.json
 mcp-eval-diff:
 	@test -n "$${MCP_DIFF_BASE}" && test -n "$${MCP_DIFF_CURRENT}" || (echo "Usage: make mcp-eval-diff MCP_DIFF_BASE=<path> MCP_DIFF_CURRENT=<path>" >&2; exit 1)
-	@${GOPATH}/bin/mcpchecker result diff --base "$${MCP_DIFF_BASE}" --current "$${MCP_DIFF_CURRENT}" --output markdown
+	@${MCPCHECKER_BIN} result diff --base "$${MCP_DIFF_BASE}" --current "$${MCP_DIFF_CURRENT}" --output markdown
 
 ## mcp-clean-eval-results: Remove local mcpchecker evaluation outputs
 mcp-clean-eval-results:

@@ -63,8 +63,7 @@ commands:
     {
       "mcpServers": {
         "${SERVER_NAME}": {
-          "url": "${MCP_URL}",
-          "transport": "http"
+          "httpUrl": "${MCP_URL}"
         }
       }
     }
@@ -80,7 +79,7 @@ commands:
     if [[ -n "${DEBUG_DIR}" ]]; then
       GEMINI_ARGS+=(-d)
       echo "Running gemini with args: ${GEMINI_ARGS[*]}" >> "${DEBUG_DIR}/debug.log"
-      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
+      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
     else
-      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
+      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
     fi
