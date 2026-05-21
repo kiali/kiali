@@ -1,11 +1,20 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Visualization } from '@patternfly/react-topology';
-import { WIZARD_TITLES, WizardAction } from 'components/IstioWizards/WizardActions';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
+const WIZARD_TITLES: Record<string, string> = {
+  request_routing: 'Request Routing',
+  fault_injection: 'Fault Injection',
+  traffic_shifting: 'Traffic Shifting',
+  tcp_traffic_shifting: 'TCP Traffic Shifting',
+  request_timeouts: 'Request Timeouts',
+  k8s_request_routing: 'K8s HTTP Routing',
+  k8s_grpc_request_routing: 'K8s GRPC Routing'
+};
+
 const assertReadOnlyYamlPreview = (wizardKey: string): void => {
-  const title = `View ${WIZARD_TITLES[wizardKey as WizardAction].title}`;
+  const title = `View ${WIZARD_TITLES[wizardKey]}`;
 
   cy.get('.pf-v6-c-modal-box')
     .last()
