@@ -38,11 +38,10 @@ Feature: Kiali Graph page - Side panel menu actions
       | request_timeouts     |
 
   @offline
-  Scenario Outline: Actions are disabled in graph side panel in offline mode when there is no traffic routing
-    Given user graphs "" namespaces
-    And user selects the "travel-agency" namespace
-    Then user sees the "travel-agency" namespace
-    And user clicks the "hotels" "service" node
+  @bookinfo-app
+  Scenario Outline: Other actions are disabled in graph side panel in offline mode when fault injection exists
+    Given user graphs "bookinfo" namespaces
+    And user clicks the "reviews" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
     Then user should see the "<action>" item of the kebab menu of the graph side panel disabled in view-only mode
@@ -52,15 +51,13 @@ Feature: Kiali Graph page - Side panel menu actions
       | traffic_shifting     |
       | tcp_traffic_shifting |
       | request_routing      |
-      | fault_injection      |
       | request_timeouts     |
 
   @offline
+  @bookinfo-app
   Scenario: Existing traffic routing action is enabled in graph side panel in offline mode
-    Given user graphs "" namespaces
-    And user selects the "travel-agency" namespace
-    Then user sees the "travel-agency" namespace
-    And user clicks the "cars" "service" node
+    Given user graphs "bookinfo" namespaces
+    And user clicks the "reviews" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
     Then user should see the "fault_injection" item of the kebab menu of the graph side panel enabled in view-only mode

@@ -53,11 +53,9 @@ Feature: Kiali Graph page - Context menu actions
       | request_timeouts     |
 
   @offline
-  Scenario Outline: Actions are disabled in context menu in offline mode when there is no traffic routing
-    When user graphs "" namespaces
-    And user selects the "travel-agency" namespace
-    Then user sees the "travel-agency" namespace
-    And user opens the context menu of the "hotels" service node
+  @bookinfo-app
+  Scenario Outline: Other actions are disabled in context menu in offline mode when fault injection exists
+    And user opens the context menu of the "reviews" service node
     Then user should see the "<action>" item of the context menu disabled in view-only mode
 
     Examples:
@@ -65,15 +63,12 @@ Feature: Kiali Graph page - Context menu actions
       | traffic_shifting     |
       | tcp_traffic_shifting |
       | request_routing      |
-      | fault_injection      |
       | request_timeouts     |
 
   @offline
+  @bookinfo-app
   Scenario: Existing traffic routing action is enabled in context menu in offline mode
-    When user graphs "" namespaces
-    And user selects the "travel-agency" namespace
-    Then user sees the "travel-agency" namespace
-    And user opens the context menu of the "cars" service node
+    And user opens the context menu of the "reviews" service node
     Then user should see the "fault_injection" item of the context menu enabled in view-only mode
     When user clicks the "fault_injection" item of the context menu
     Then user should see the read-only YAML preview for the "fault_injection" action

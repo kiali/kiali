@@ -3,7 +3,7 @@ import { Visualization } from '@patternfly/react-topology';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
-const VIEW_ONLY_TOOLTIP = 'There is no traffic routing to view for this service';
+const VIEW_ONLY_TOOLTIP = 'No user permission or Kiali in view-only mode';
 
 When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
@@ -75,7 +75,10 @@ Then(
   'user should see the {string} item of the kebab menu of the graph side panel disabled in view-only mode',
   (menuKey: string) => {
     cy.get(`#summary-node-actions [data-test="${menuKey}"]`)
+      .should('have.class', 'pf-m-disabled')
+      .find('button')
       .should('be.disabled')
+      .parent()
       .parent()
       .trigger('mouseover', { force: true })
       .trigger('mouseenter', { force: true });
@@ -87,7 +90,10 @@ Then(
 Then(
   'user should see the {string} item of the kebab menu of the graph side panel enabled in view-only mode',
   (menuKey: string) => {
-    cy.get(`#summary-node-actions [data-test="${menuKey}"]`).should('not.be.disabled');
+    cy.get(`#summary-node-actions [data-test="${menuKey}"]`)
+      .should('not.have.class', 'pf-m-disabled')
+      .find('button')
+      .should('not.be.disabled');
   }
 );
 
