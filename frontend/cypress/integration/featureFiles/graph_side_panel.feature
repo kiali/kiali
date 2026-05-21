@@ -39,7 +39,9 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @offline
   Scenario Outline: Actions are disabled in graph side panel in offline mode when there is no traffic routing
-    Given user graphs "travel-agency" namespaces
+    Given user graphs "" namespaces
+    And user selects the "travel-agency" namespace
+    Then user sees the "travel-agency" namespace
     And user clicks the "hotels" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
@@ -55,7 +57,9 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @offline
   Scenario: Existing traffic routing action is enabled in graph side panel in offline mode
-    Given user graphs "travel-agency" namespaces
+    Given user graphs "" namespaces
+    And user selects the "travel-agency" namespace
+    Then user sees the "travel-agency" namespace
     And user clicks the "cars" "service" node
     And no cluster badge for the "graph side panel" should be visible
     And user opens the kebab menu of the graph side panel
