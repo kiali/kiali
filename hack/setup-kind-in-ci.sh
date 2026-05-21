@@ -80,6 +80,9 @@ Options:
 -ec|--enable-cache <true|false>
     Whether to enable graph and health caching in Kiali.
     Default: false
+-ko|--kiali-only
+    Skip cluster and Istio setup; only deploy Kiali.
+    Requires a cluster that was previously set up with --deploy-kiali false.
 -hcd|--helm-charts-dir
     Directory where the Kiali helm charts are located.
     If one is not supplied a /tmp dir will be created and used.
@@ -134,6 +137,7 @@ while [[ $# -gt 0 ]]; do
     -ea|--enable-ai)              ENABLE_AI="$2";             shift;shift; ;;
     -ec|--enable-cache)           ENABLE_CACHE="$2";          shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
+    -ko|--kiali-only)             KIALI_ONLY="true";          shift; ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
@@ -191,6 +195,7 @@ AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
 ENABLE_CACHE="${ENABLE_CACHE:-false}"
+KIALI_ONLY="${KIALI_ONLY:-false}"
 TEMPO="${TEMPO:-false}"
 
 # Defaults the branch to master unless it is already set
@@ -301,6 +306,10 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 fi
 
+# Persist the helm charts dir so callers that invoke this script twice
+# (e.g. --deploy-kiali false followed by --kiali-only) can reuse it.
+echo "${HELM_CHARTS_DIR}" > /tmp/kiali-helm-charts-dir
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
@@ -309,6 +318,7 @@ DEPLOY_KIALI=$DEPLOY_KIALI
 DORP=$DORP
 ENABLE_AI=$ENABLE_AI
 ENABLE_CACHE=$ENABLE_CACHE
+KIALI_ONLY=$KIALI_ONLY
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -352,6 +362,10 @@ infomsg "Downloading istio"
 setup_kind_singlecluster() {
 
   local certs_dir
+  local tracing_use_waypoint_args=()
+  PERSES_ARGS=()
+
+  if [ "${KIALI_ONLY}" != "true" ]; then
 
   if [ "${AUTH_STRATEGY}" == "openid" ]; then
     echo "Auth strategy is open id"
@@ -454,6 +468,8 @@ setup_kind_singlecluster() {
         "--set" "external_services.perses.dashboards[0].variables.datasource=var-datasource"
       )
   fi
+
+  fi # KIALI_ONLY != true
 
   if [ "${DEPLOY_KIALI}" != "true" ]; then
     infomsg "Skipping Kiali deployment as requested"

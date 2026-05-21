@@ -717,10 +717,23 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_CACHING}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-cache "true"
+    # Set up the cluster and Istio but skip Kiali deployment so that demo
+    # apps are present before Kiali starts.  This lets the health cache
+    # pre-compute bookinfo health on its first refresh.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --deploy-kiali false
 
-    # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    # Install only bookinfo — the only demo app needed by @core-caching scenarios
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+
+    # Reuse the helm charts dir from the first setup invocation so we
+    # don't have to clone and build again.
+    if [ -z "${HELM_CHARTS_DIR_ARG}" ] && [ -f /tmp/kiali-helm-charts-dir ]; then
+      HELM_CHARTS_DIR_ARG="--helm-charts-dir $(cat /tmp/kiali-helm-charts-dir)"
+    fi
+
+    # Now deploy Kiali with caching enabled. We deploy after demo apps so
+    # that the health cache sees bookinfo on its initial refresh.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${HELM_CHARTS_DIR_ARG} --enable-cache "true" --kiali-only
   fi
 
   ensureKialiServerReady
