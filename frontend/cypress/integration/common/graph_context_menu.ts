@@ -13,17 +13,7 @@ const WIZARD_TITLES: Record<string, string> = {
   k8s_grpc_request_routing: 'K8s GRPC Routing'
 };
 
-const assertReadOnlyYamlPreview = (wizardKey: string): void => {
-  const title = `View ${WIZARD_TITLES[wizardKey]}`;
-
-  cy.get('.pf-v6-c-modal-box')
-    .last()
-    .within(() => {
-      cy.contains(title).should('be.visible');
-      cy.contains('button', 'Close').should('be.visible');
-      cy.contains('button', 'Cancel').should('not.exist');
-    });
-};
+const VIEW_ONLY_TOOLTIP = 'There is no traffic routing to view for this service';
 
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
@@ -95,7 +85,33 @@ Then('user should see the {string} wizard', (wizardKey: string) => {
 });
 
 Then('user should see the read-only YAML preview for the {string} action', (wizardKey: string) => {
-  assertReadOnlyYamlPreview(wizardKey);
+  const title = `View ${WIZARD_TITLES[wizardKey]}`;
+
+  cy.get('.pf-v6-c-modal-box')
+    .last()
+    .within(() => {
+      cy.contains(title).should('be.visible');
+      cy.contains('Copy').should('be.visible');
+      cy.contains('Download').should('be.visible');
+      cy.get('.ace_editor').should('exist');
+      cy.get('textarea[readonly]').should('exist');
+      cy.contains('button', 'Close').should('be.visible');
+    });
+});
+
+Then('user should see the {string} item of the context menu disabled in view-only mode', (menuKey: string) => {
+  cy.get('.pf-topology-context-menu__c-dropdown__menu')
+    .find(`[data-test="${menuKey}"]`)
+    .should('be.disabled')
+    .parent()
+    .trigger('mouseover', { force: true })
+    .trigger('mouseenter', { force: true });
+
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', VIEW_ONLY_TOOLTIP);
+});
+
+Then('user should see the {string} item of the context menu enabled in view-only mode', (menuKey: string) => {
+  cy.get('.pf-topology-context-menu__c-dropdown__menu').find(`[data-test="${menuKey}"]`).should('not.be.disabled');
 });
 
 Then('user should see the confirmation dialog to delete all traffic routing', () => {

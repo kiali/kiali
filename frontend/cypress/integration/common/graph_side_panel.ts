@@ -3,6 +3,8 @@ import { Visualization } from '@patternfly/react-topology';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
+const VIEW_ONLY_TOOLTIP = 'There is no traffic routing to view for this service';
+
 When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
   cy.waitForReact();
   cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
@@ -68,6 +70,26 @@ When('user clicks the {string} item of the kebab menu of the graph side panel', 
     cy.wrap($item).click();
   });
 });
+
+Then(
+  'user should see the {string} item of the kebab menu of the graph side panel disabled in view-only mode',
+  (menuKey: string) => {
+    cy.get(`#summary-node-actions [data-test="${menuKey}"]`)
+      .should('be.disabled')
+      .parent()
+      .trigger('mouseover', { force: true })
+      .trigger('mouseenter', { force: true });
+
+    cy.get('[role="tooltip"]').should('be.visible').and('contain', VIEW_ONLY_TOOLTIP);
+  }
+);
+
+Then(
+  'user should see the {string} item of the kebab menu of the graph side panel enabled in view-only mode',
+  (menuKey: string) => {
+    cy.get(`#summary-node-actions [data-test="${menuKey}"]`).should('not.be.disabled');
+  }
+);
 
 When('user clicks the {string} graph summary tab', (tab: string) => {
   cy.get('#graph_summary_tabs').should('be.visible').contains(tab).click();

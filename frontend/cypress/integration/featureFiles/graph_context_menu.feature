@@ -54,10 +54,9 @@ Feature: Kiali Graph page - Context menu actions
 
   @offline
   @bookinfo-app
-  Scenario Outline: Ability to launch <action> wizard from graph context menu in offline mode
+  Scenario Outline: Actions are disabled in context menu in offline mode when there is no traffic routing
     And user opens the context menu of the "reviews" service node
-    And user clicks the "<action>" item of the context menu
-    Then user should see the read-only YAML preview for the "<action>" action
+    Then user should see the "<action>" item of the context menu disabled in view-only mode
 
     Examples:
       | action               |
@@ -66,6 +65,14 @@ Feature: Kiali Graph page - Context menu actions
       | request_routing      |
       | fault_injection      |
       | request_timeouts     |
+
+  @offline
+  Scenario: Existing traffic routing action is enabled in context menu in offline mode
+    When user graphs "travel-agency" namespaces
+    And user opens the context menu of the "cars" service node
+    Then user should see the "fault_injection" item of the context menu enabled in view-only mode
+    When user clicks the "fault_injection" item of the context menu
+    Then user should see the read-only YAML preview for the "fault_injection" action
 
   @multi-cluster
   Scenario: Detail action in context menu for a service node
