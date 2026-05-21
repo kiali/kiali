@@ -1,7 +1,20 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Visualization } from '@patternfly/react-topology';
+import { WIZARD_TITLES, WizardAction } from 'components/IstioWizards/WizardActions';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
+
+const assertReadOnlyYamlPreview = (wizardKey: string): void => {
+  const title = `View ${WIZARD_TITLES[wizardKey as WizardAction].title}`;
+
+  cy.get('.pf-v6-c-modal-box')
+    .last()
+    .within(() => {
+      cy.contains(title).should('be.visible');
+      cy.contains('button', 'Close').should('be.visible');
+      cy.contains('button', 'Cancel').should('not.exist');
+    });
+};
 
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
@@ -70,6 +83,10 @@ When('user clicks the {string} item of the context menu', (menuKey: string) => {
 
 Then('user should see the {string} wizard', (wizardKey: string) => {
   cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
+});
+
+Then('user should see the read-only YAML preview for the {string} action', (wizardKey: string) => {
+  assertReadOnlyYamlPreview(wizardKey);
 });
 
 Then('user should see the confirmation dialog to delete all traffic routing', () => {

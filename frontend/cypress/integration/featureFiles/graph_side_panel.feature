@@ -21,7 +21,6 @@ Feature: Kiali Graph page - Side panel menu actions
 
   @bookinfo-app
   @core-1
-  @offline
   Scenario Outline: Ability to launch <action> wizard from graph side panel
     Given user graphs "bookinfo" namespaces
     And user clicks the "reviews" "service" node
@@ -29,6 +28,24 @@ Feature: Kiali Graph page - Side panel menu actions
     And user opens the kebab menu of the graph side panel
     When user clicks the "<action>" item of the kebab menu of the graph side panel
     Then user should see the "<action>" wizard
+
+    Examples:
+      | action               |
+      | traffic_shifting     |
+      | tcp_traffic_shifting |
+      | request_routing      |
+      | fault_injection      |
+      | request_timeouts     |
+
+  @bookinfo-app
+  @offline
+  Scenario Outline: Ability to launch <action> wizard from graph side panel in offline mode
+    Given user graphs "bookinfo" namespaces
+    And user clicks the "reviews" "service" node
+    And no cluster badge for the "graph side panel" should be visible
+    And user opens the kebab menu of the graph side panel
+    When user clicks the "<action>" item of the kebab menu of the graph side panel
+    Then user should see the read-only YAML preview for the "<action>" action
 
     Examples:
       | action               |

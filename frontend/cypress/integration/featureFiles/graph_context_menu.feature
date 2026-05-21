@@ -37,13 +37,27 @@ Feature: Kiali Graph page - Context menu actions
     And user clicks the "delete_traffic_routing" item of the context menu
     Then user should see the confirmation dialog to delete all traffic routing
 
-  @offline
   @bookinfo-app
   @core-1
   Scenario Outline: Ability to launch <action> wizard from graph context menu
     And user opens the context menu of the "reviews" service node
     And user clicks the "<action>" item of the context menu
     Then user should see the "<action>" wizard
+
+    Examples:
+      | action               |
+      | traffic_shifting     |
+      | tcp_traffic_shifting |
+      | request_routing      |
+      | fault_injection      |
+      | request_timeouts     |
+
+  @offline
+  @bookinfo-app
+  Scenario Outline: Ability to launch <action> wizard from graph context menu in offline mode
+    And user opens the context menu of the "reviews" service node
+    And user clicks the "<action>" item of the context menu
+    Then user should see the read-only YAML preview for the "<action>" action
 
     Examples:
       | action               |
