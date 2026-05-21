@@ -87,6 +87,10 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		EffectiveConfig: &models.MeshConfigSource{ConfigMap: &models.MeshConfigMap{}},
 	}
 
+	// Ensure controlPlane.Config is always assigned even if we return early due to errors.
+	// This prevents nil pointer dereferences in the frontend when accessing config fields.
+	defer func() { controlPlane.Config = *controlPlaneConf }()
+
 	// First take the shared user configmap if the env var is set.
 	// Then unmarshal the standard configmap over the shared user
 	// config since the standard one takes precedence. When you unmarshal
@@ -139,8 +143,6 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		cert := parseIstioControlPlaneCertificate(certConfigMap)
 		controlPlaneConf.Certificates = append(controlPlaneConf.Certificates, cert)
 	}
-
-	controlPlane.Config = *controlPlaneConf
 
 	return nil
 }
