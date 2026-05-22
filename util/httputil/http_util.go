@@ -116,6 +116,10 @@ func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 			}
 			encoded := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
 			req.Header.Set("Authorization", "Basic "+encoded)
+		case config.AuthTypeOAuth2:
+			// OAuth2 is handled by oauth2RoundTripper; this case should not be reached
+			// because newAuthRoundTripper returns an oauth2RoundTripper instead.
+			log.Warningf("OAuth2 auth type reached authRoundTripper.RoundTrip unexpectedly")
 		}
 	}
 	return rt.originalRT.RoundTrip(req)
@@ -130,6 +134,9 @@ func (rt *customHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 }
 
 func newAuthRoundTripper(conf *config.Config, auth *config.Auth, rt http.RoundTripper) http.RoundTripper {
+	if auth != nil && auth.Type == config.AuthTypeOAuth2 {
+		return newOAuth2RoundTripper(conf, auth, rt)
+	}
 	// Always read credentials dynamically during RoundTrip
 	return &authRoundTripper{auth: auth, conf: conf, originalRT: rt}
 }

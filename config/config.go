@@ -95,6 +95,7 @@ const (
 	AuthTypeBasic  = "basic"
 	AuthTypeBearer = "bearer"
 	AuthTypeNone   = "none"
+	AuthTypeOAuth2 = "oauth2"
 )
 
 const (
@@ -316,6 +317,7 @@ type Auth struct {
 	CertFile           Credential `yaml:"cert_file" json:"certFile"`
 	InsecureSkipVerify bool       `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
 	KeyFile            Credential `yaml:"key_file" json:"keyFile"`
+	OAuth2             OAuth2Auth `yaml:"oauth2" json:"oauth2"`
 	Password           Credential `yaml:"password" json:"password"`
 	Token              Credential `yaml:"token" json:"token"`
 	Type               string     `yaml:"type" json:"type"`
@@ -326,9 +328,20 @@ type Auth struct {
 func (a *Auth) Obfuscate() {
 	a.CertFile = "xxx"
 	a.KeyFile = "xxx"
+	a.OAuth2.ClientSecret = "xxx"
 	a.Password = "xxx"
 	a.Token = "xxx"
 	a.Username = "xxx"
+}
+
+// OAuth2Auth provides OAuth2 client_credentials configuration for external services.
+// This enables Kiali to authenticate to services like Azure Managed Prometheus/Grafana
+// that require OAuth2 tokens with specific scopes.
+type OAuth2Auth struct {
+	ClientID     Credential `yaml:"client_id" json:"clientId"`
+	ClientSecret Credential `yaml:"client_secret" json:"clientSecret"`
+	Scopes       []string   `yaml:"scopes" json:"scopes"`
+	TokenURL     string     `yaml:"token_url" json:"tokenUrl"`
 }
 
 // ThanosProxy describes configuration of the Thanos proxy component
