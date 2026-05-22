@@ -11,7 +11,7 @@ Feature: Kiali Istio Config editor page
     And user selects the "bookinfo" namespace
 
   @bookinfo-app
-  @core-1
+  @core-caching
   Scenario: Filter Istio Config editor objects by Valid configuration
     When the user filters by "Config" for "Valid"
     And user sees "bookinfo-gateway"

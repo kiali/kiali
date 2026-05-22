@@ -12,7 +12,7 @@ Feature: Kiali Workload Details page
     And user is at the details page for the "workload" "bookinfo/details-v1" located in the "" cluster
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See details for workload
     Then user sees details information for workload
@@ -24,20 +24,20 @@ Feature: Kiali Workload Details page
 
   # TODO: offline - workload health.
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See workload traffic information
     Then user sees workload inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See workload Inbound Metrics
     Then user sees workload inbound metrics information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See workload Outbound Metrics
     Then user sees workload outbound metrics information
 
@@ -92,7 +92,7 @@ Feature: Kiali Workload Details page
     Then the user can see the "More span details" span link
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
@@ -101,35 +101,35 @@ Feature: Kiali Workload Details page
   @requestTimeout(30000)
   @responseTimeout(30000)
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy listeners configuration for a workload
     When the user filters by "Destination" with value "9090" on the "Listeners" tab
     Then the user sees listeners expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy routes configuration for a workload
     When the user filters by "Domains" with value "details" on the "Routes" tab
     Then the user sees routes expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy bootstrap configuration for a workload
     When the user looks for the bootstrap tab
     Then the user sees bootstrap expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy config configuration for a workload
     When the user looks for the config tab
     Then the user sees bootstrap expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   # TODO: offline - envoy metrics support.
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
