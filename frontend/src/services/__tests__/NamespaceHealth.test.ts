@@ -55,4 +55,34 @@ describe('NamespaceHealth service', () => {
       'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
     );
   });
+
+  it('reports chunk failures without rejecting when an error callback is provided', async () => {
+    const namespaces = Array.from({ length: 101 }, (_, i) => `ns${i}`);
+    const onChunkError = jest.fn();
+
+    (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
+      if (nsStr === 'ns100') {
+        throw new Error('request timed out');
+      }
+
+      const m = new Map<string, any>();
+      m.set('ns0', {
+        appHealth: {},
+        serviceHealth: {},
+        workloadHealth: {},
+        statusApp: emptyBucket,
+        statusService: emptyBucket,
+        statusWorkload: emptyBucket,
+        worstStatus: 'NA'
+      });
+      return m;
+    });
+
+    const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60, onChunkError);
+
+    expect(onChunkError).toHaveBeenCalledWith(
+      'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
+    );
+    expect(Array.from(result.keys())).toEqual(['ns0']);
+  });
 });

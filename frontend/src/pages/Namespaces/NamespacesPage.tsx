@@ -331,7 +331,9 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       const clusterNamespaces = namespaces.filter(ns => ns.cluster === cluster);
       const healthByNamespace = await fetchClusterNamespacesHealth(
         clusterNamespaces.map(ns => ns.name),
-        cluster
+        cluster,
+        undefined,
+        message => addDanger('Could not fetch health', message)
       );
 
       clusterNamespaces.forEach(nsInfo => {

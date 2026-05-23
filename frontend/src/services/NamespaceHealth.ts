@@ -24,7 +24,8 @@ const errorMessage = (error: unknown): string => (error instanceof Error ? error
 export const fetchClusterNamespacesHealth = async (
   namespaces: string[],
   cluster?: string,
-  duration?: DurationInSeconds
+  duration?: DurationInSeconds,
+  onChunkError?: (message: string) => void
 ): Promise<Map<string, NamespaceHealth>> => {
   if (namespaces.length === 0) {
     return new Map<string, NamespaceHealth>();
@@ -37,11 +38,16 @@ export const fetchClusterNamespacesHealth = async (
     try {
       return await API.getClustersHealth(namespaceList, duration, cluster);
     } catch (error) {
-      throw new Error(
-        `Failed to fetch namespace health chunk ${index + 1}/${namespaceChunks.length} for cluster ${
-          cluster ?? 'default'
-        } (${chunk.length} namespaces: ${namespaceList}): ${errorMessage(error)}`
-      );
+      const message = `Failed to fetch namespace health chunk ${index + 1}/${namespaceChunks.length} for cluster ${
+        cluster ?? 'default'
+      } (${chunk.length} namespaces: ${namespaceList}): ${errorMessage(error)}`;
+
+      if (onChunkError) {
+        onChunkError(message);
+        return new Map<string, NamespaceHealth>();
+      }
+
+      throw new Error(message);
     }
   });
   const chunkedResults = await Promise.all(healthPromises);
