@@ -9,14 +9,14 @@ Feature: Kiali Namespaces page
     Given user is at administrator perspective
     And user is at the "namespaces" list page
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Namespace name links to namespace detail page
     Then user sees the "bookinfo" namespace in the namespaces page
     When user clicks the namespace detail link for "bookinfo"
     Then user is on the namespace detail page for "bookinfo"
 
-  @core-2
+  @core-caching
   @offline
   @lpinterop
   Scenario: Cluster column is hidden on single-cluster namespaces list
@@ -26,7 +26,7 @@ Feature: Kiali Namespaces page
       | Namespace | Type | Health | mTLS | Istio config | Labels |
     And the "Namespace" column on the "bookinfo" row has the text "bookinfo"
 
-  @core-2
+  @core-caching
   Scenario: See namespaces table with correct info
     Then user sees the "bookinfo" namespace in the namespaces page
     And user sees a table with headings
@@ -56,7 +56,7 @@ Feature: Kiali Namespaces page
     Then user sees the "istio-system" namespace in the namespaces page
     And badge for "Ambient" is visible in the namespaces page in the namespace "istio-system"
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter namespaces by name
     When user selects filter "Namespace"
@@ -64,7 +64,7 @@ Feature: Kiali Namespaces page
     Then user sees the "alpha" namespace in the namespaces page
     And table length should be 1
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter namespaces by type
     When user selects filter "Type"
@@ -72,7 +72,7 @@ Feature: Kiali Namespaces page
     Then user sees the "istio-system" namespace in the namespaces page
     And table length should be 1
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Sort namespaces by name
     When user sorts the list by column "Namespace" in "ascending" order
@@ -80,7 +80,7 @@ Feature: Kiali Namespaces page
     When user sorts the list by column "Namespace" in "descending" order
     Then the list is sorted by column "Namespace" in "descending" order
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Hide Mode column on namespaces page
     Then user sees the "bookinfo" namespace in the namespaces page
@@ -90,7 +90,7 @@ Feature: Kiali Namespaces page
     Then the "Mode" column "disappears" on namespaces page
     And user resets columns to default on namespaces page
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Column order is applied from URL on namespaces page
     Then user sees the "bookinfo" namespace in the namespaces page

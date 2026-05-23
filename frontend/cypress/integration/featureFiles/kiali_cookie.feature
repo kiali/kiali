@@ -8,7 +8,7 @@ Feature: Kiali login cookie
     Given user is at administrator perspective
 
   @smoke
-  @core-2
+  @core-caching
   Scenario: Console is visible after login
     And user visits base url
     Then user see console in URL

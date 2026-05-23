@@ -9,7 +9,7 @@ Feature: Kiali logout
     And user is at the "overview" page
 
   @smoke
-  @core-2
+  @core-caching
   Scenario: Kiali logout successfully
     And user clicks on admin
     And user logout successfully

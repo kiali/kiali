@@ -12,13 +12,13 @@ Feature: Kiali Service Details page
 
   # TODO: offline - support minigraph
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See service minigraph for details app.
     Then user sees a minigraph
 
   # TODO: offline - support minigraph
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Verify that the Graph type dropdown is disabled when changing to Show node graph
     When user sees a minigraph
     And user chooses the "Show node graph" option

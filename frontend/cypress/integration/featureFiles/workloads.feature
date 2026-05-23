@@ -10,7 +10,7 @@ Feature: Kiali Workloads page
     And user is at the "workloads" list page
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   @lpinterop
   Scenario: See workloads table with correct info
@@ -28,13 +28,13 @@ Feature: Kiali Workloads page
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See all Workloads toggles
     Then user sees all the Apps toggles
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Toggle Workloads health toggle
     When user "unchecks" toggle "health"
@@ -43,7 +43,7 @@ Feature: Kiali Workloads page
     Then the "Health" column "appears"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by Workloads Name
     When user selects the "bookinfo" namespace
@@ -53,7 +53,7 @@ Feature: Kiali Workloads page
     And table length should be 1
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by Workloads Type
     When user selects the "bookinfo" namespace
@@ -62,7 +62,7 @@ Feature: Kiali Workloads page
     Then user sees "no workloads" in workloads table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by sidecar
     When user selects the "bookinfo" namespace
@@ -71,7 +71,7 @@ Feature: Kiali Workloads page
     Then user sees "workloads" in workloads table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by Istio Config Type
     When user selects the "bookinfo" namespace
@@ -80,7 +80,7 @@ Feature: Kiali Workloads page
     Then user sees "no workloads" in workloads table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by health
     When user selects the "bookinfo" namespace
@@ -90,7 +90,7 @@ Feature: Kiali Workloads page
     And user should only see healthy workloads in workloads table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by App Label
     When user selects the "bookinfo" namespace
@@ -100,7 +100,7 @@ Feature: Kiali Workloads page
     And user should only see workloads with an app label
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by Version Label
     When user selects the "bookinfo" namespace
@@ -110,7 +110,7 @@ Feature: Kiali Workloads page
     And user should only see workloads with a version label
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: Filter workloads table by label
     When user selects the "bookinfo" namespace
@@ -120,7 +120,7 @@ Feature: Kiali Workloads page
     And table length should be 1
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: The healthy status of a workload is reported in the list of workloads
     Given a healthy workload in the cluster

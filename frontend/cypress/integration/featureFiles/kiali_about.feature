@@ -9,7 +9,7 @@ Feature: Kiali help about verify
     And user is at the "overview" page
 
   @smoke
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: Open Kiali about page
     And user clicks on Help Button
@@ -17,7 +17,7 @@ Feature: Kiali help about verify
     Then user see Kiali brand
 
   @smoke
-  @core-2
+  @core-caching
   Scenario: Verify version information is displayed correctly
     And user clicks on Help Button
     And user clicks on About Button
