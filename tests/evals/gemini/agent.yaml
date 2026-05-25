@@ -55,6 +55,7 @@ commands:
     trap 'cleanup $?' EXIT
 
     export HOME="${TMP_HOME}"
+    export GEMINI_CLI_TRUST_WORKSPACE=true
     cd "${TMP_HOME}"
 
     SERVER_NAME="kubernetes"
@@ -63,7 +64,8 @@ commands:
     {
       "mcpServers": {
         "${SERVER_NAME}": {
-          "httpUrl": "${MCP_URL}"
+          "httpUrl": "${MCP_URL}",
+          "trust": true
         }
       }
     }
