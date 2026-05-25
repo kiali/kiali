@@ -11,6 +11,7 @@ export const buildPageContext = (
   let context = '';
 
   if (!name) {
+    // List Views
     switch (kind) {
       case 'mesh':
         context = 'User is seeing the mesh Graph';
@@ -35,6 +36,7 @@ export const buildPageContext = (
       context += ` for namespaces: ${namespace}`;
     }
   } else {
+    // Details view
     if (kind === 'istio') {
       context = `User is seeing the istio object ${name} of namespace ${namespace} that is type ${istio || 'unknown'}`;
     } else {
@@ -44,7 +46,10 @@ export const buildPageContext = (
       else if (kind === 'srv' || kind === 'services') kindStr = 'service';
       else if (kind === 'namespace') kindStr = 'namespace';
 
-      context = `User is seeing the information about ${kindStr} ${name} of namespace ${namespace}`;
+      context = `User is seeing the information about ${kindStr} ${name}`;
+      if (kind !== 'namespace' && namespace) {
+        context += ` of namespace ${namespace}`;
+      }
     }
   }
 
