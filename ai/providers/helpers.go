@@ -205,9 +205,9 @@ func GetStoreConversation(
 		} else {
 			log.Debugf("Creating new conversation for conversation ID: %s", req.ConversationID)
 		}
-		if initializeConversation != nil {
-			initializeConversation(ptr, req.Query)
-		}
+	}
+	if initializeConversation != nil {
+		initializeConversation(ptr, req.Query)
 	}
 
 	return ptr, sessionID
