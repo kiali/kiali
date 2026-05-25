@@ -333,7 +333,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
         clusterNamespaces.map(ns => ns.name),
         cluster,
         undefined,
-        message => addDanger('Could not fetch health', message)
+        message => addDanger(message)
       );
 
       clusterNamespaces.forEach(nsInfo => {

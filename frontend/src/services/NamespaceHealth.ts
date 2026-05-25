@@ -16,6 +16,27 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
 
 const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
+const healthFetchErrorMessage = (
+  chunk: string[],
+  chunkIndex: number,
+  totalChunks: number,
+  cluster: string | undefined,
+  error: unknown
+): string => {
+  const namespaceList = chunk.join(',');
+  const clusterName = cluster ?? 'default';
+
+  if (totalChunks === 1) {
+    const namespaceContext =
+      chunk.length === 1 ? `namespace ${namespaceList}` : `${chunk.length} namespaces: ${namespaceList}`;
+    return `Failed to fetch namespace health for cluster ${clusterName} (${namespaceContext}): ${errorMessage(error)}`;
+  }
+
+  return `Failed to fetch namespace health chunk ${chunkIndex + 1}/${totalChunks} for cluster ${clusterName} (${
+    chunk.length
+  } namespaces: ${namespaceList}): ${errorMessage(error)}`;
+};
+
 /**
  * Fetches namespace health for a single cluster, chunking namespace lists to avoid long URIs.
  * When cluster is undefined, this fetches health for the "default" cluster (single-cluster mode).
@@ -38,9 +59,7 @@ export const fetchClusterNamespacesHealth = async (
     try {
       return await API.getClustersHealth(namespaceList, duration, cluster);
     } catch (error) {
-      const message = `Failed to fetch namespace health chunk ${index + 1}/${namespaceChunks.length} for cluster ${
-        cluster ?? 'default'
-      } (${chunk.length} namespaces: ${namespaceList}): ${errorMessage(error)}`;
+      const message = healthFetchErrorMessage(chunk, index, namespaceChunks.length, cluster, error);
 
       if (onChunkError) {
         onChunkError(message);
