@@ -1,8 +1,13 @@
 import { fetchClusterNamespacesHealth } from '../NamespaceHealth';
 import * as API from 'services/Api';
+import { addDanger } from 'utils/AlertUtils';
 
 jest.mock('services/Api', () => ({
   getClustersHealth: jest.fn()
+}));
+
+jest.mock('utils/AlertUtils', () => ({
+  addDanger: jest.fn()
 }));
 
 describe('NamespaceHealth service', () => {
@@ -13,6 +18,10 @@ describe('NamespaceHealth service', () => {
     inWarning: [],
     notAvailable: []
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('chunks namespace lists and merges results', async () => {
     const namespaces = Array.from({ length: 205 }, (_, i) => `ns${i}`);
@@ -51,22 +60,27 @@ describe('NamespaceHealth service', () => {
       return new Map<string, any>();
     });
 
-    await expect(fetchClusterNamespacesHealth(namespaces, 'east', 60)).rejects.toThrow(
+    const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60);
+
+    expect(addDanger).toHaveBeenCalledWith(
       'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
     );
+    expect(result.size).toBe(0);
   });
 
   it('keeps single request failures scoped to the namespace instead of chunk context', async () => {
     (API.getClustersHealth as jest.Mock).mockRejectedValueOnce(new Error('request timed out'));
 
-    await expect(fetchClusterNamespacesHealth(['bookinfo'], 'east', 60)).rejects.toThrow(
+    const result = await fetchClusterNamespacesHealth(['bookinfo'], 'east', 60);
+
+    expect(addDanger).toHaveBeenCalledWith(
       'Failed to fetch namespace health for cluster east (namespace bookinfo): request timed out'
     );
+    expect(result.size).toBe(0);
   });
 
-  it('reports chunk failures without rejecting when an error callback is provided', async () => {
+  it('reports chunk failures without rejecting', async () => {
     const namespaces = Array.from({ length: 101 }, (_, i) => `ns${i}`);
-    const onChunkError = jest.fn();
 
     (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
       if (nsStr === 'ns100') {
@@ -86,9 +100,9 @@ describe('NamespaceHealth service', () => {
       return m;
     });
 
-    const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60, onChunkError);
+    const result = await fetchClusterNamespacesHealth(namespaces, 'east', 60);
 
-    expect(onChunkError).toHaveBeenCalledWith(
+    expect(addDanger).toHaveBeenCalledWith(
       'Failed to fetch namespace health chunk 2/2 for cluster east (1 namespaces: ns100): request timed out'
     );
     expect(Array.from(result.keys())).toEqual(['ns0']);
@@ -96,7 +110,6 @@ describe('NamespaceHealth service', () => {
 
   it('reports each failed chunk with a unique message', async () => {
     const namespaces = Array.from({ length: 201 }, (_, i) => `ns${i}`);
-    const onChunkError = jest.fn();
 
     (API.getClustersHealth as jest.Mock).mockImplementation(async (nsStr: string) => {
       if (nsStr.startsWith('ns0') || nsStr === 'ns200') {
@@ -106,14 +119,14 @@ describe('NamespaceHealth service', () => {
       return new Map<string, any>();
     });
 
-    await fetchClusterNamespacesHealth(namespaces, 'east', 60, onChunkError);
+    await fetchClusterNamespacesHealth(namespaces, 'east', 60);
 
-    expect(onChunkError).toHaveBeenCalledTimes(2);
-    expect(onChunkError).toHaveBeenNthCalledWith(
+    expect(addDanger).toHaveBeenCalledTimes(2);
+    expect(addDanger).toHaveBeenNthCalledWith(
       1,
       expect.stringContaining('Failed to fetch namespace health chunk 1/3 for cluster east')
     );
-    expect(onChunkError).toHaveBeenNthCalledWith(
+    expect(addDanger).toHaveBeenNthCalledWith(
       2,
       'Failed to fetch namespace health chunk 3/3 for cluster east (1 namespaces: ns200): request timed out'
     );

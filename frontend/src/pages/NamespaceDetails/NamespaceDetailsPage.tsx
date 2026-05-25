@@ -7,7 +7,7 @@ import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 't
 import { NamespaceInfo } from 'types/NamespaceInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from 'services/Api';
-import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
+import { addError, addSuccess } from 'utils/AlertUtils';
 import { buildMetadataPatch } from '../PageUtils';
 import { ParameterizedTabs, activeTab } from 'components/Tab/Tabs';
 import { RenderHeader } from 'components/Nav/Page/RenderHeader';
@@ -289,9 +289,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     const name = nsInfo.name;
 
     const [healthMap, tlsResponse, validationResponse, istioAllResponse] = await Promise.all([
-      fetchClusterNamespacesHealth([name], cluster, this.props.duration, message => addDanger(message)).catch(
-        () => new Map()
-      ),
+      fetchClusterNamespacesHealth([name], cluster, this.props.duration).catch(() => new Map()),
       API.getClustersTls(name, cluster).catch(() => ({ data: [] as TLSStatus[] })),
       API.getConfigValidations(name, cluster).catch(() => ({ data: [] as ValidationStatus[] })),
       API.getIstioConfig(name, [], false, '', '', cluster).catch(() => ({

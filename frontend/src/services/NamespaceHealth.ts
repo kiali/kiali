@@ -2,6 +2,7 @@ import * as API from 'services/Api';
 
 import { DurationInSeconds } from 'types/Common';
 import { NamespaceHealth } from 'types/Health';
+import { addDanger } from 'utils/AlertUtils';
 
 // Keep aligned with Namespaces page chunking to avoid long URIs / backend overload.
 const MAX_NAMESPACES_PER_CALL = 100;
@@ -45,8 +46,7 @@ const healthFetchErrorMessage = (
 export const fetchClusterNamespacesHealth = async (
   namespaces: string[],
   cluster?: string,
-  duration?: DurationInSeconds,
-  onChunkError?: (message: string) => void
+  duration?: DurationInSeconds
 ): Promise<Map<string, NamespaceHealth>> => {
   if (namespaces.length === 0) {
     return new Map<string, NamespaceHealth>();
@@ -60,13 +60,8 @@ export const fetchClusterNamespacesHealth = async (
       return await API.getClustersHealth(namespaceList, duration, cluster);
     } catch (error) {
       const message = healthFetchErrorMessage(chunk, index, namespaceChunks.length, cluster, error);
-
-      if (onChunkError) {
-        onChunkError(message);
-        return new Map<string, NamespaceHealth>();
-      }
-
-      throw new Error(message);
+      addDanger(message);
+      return new Map<string, NamespaceHealth>();
     }
   });
   const chunkedResults = await Promise.all(healthPromises);
