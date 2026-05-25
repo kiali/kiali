@@ -58,7 +58,7 @@ export const ToolModal: React.FC = () => {
   const structuredContentFormatted = structuredContent ? JSON.stringify(structuredContent, null, 2) : undefined;
 
   return (
-    <Modal data-test="ai-tool-modal" isOpen={true} onClose={onClose}>
+    <Modal data-test="ai-tool-modal" isOpen={true} onClose={onClose} width="80%">
       <ModalHeader>
         <Icon isInline status={isDenied ? undefined : status === 'error' ? 'danger' : 'info'}>
           {isDenied ? <BanIcon color="var(--pf-t--global--icon--color--subtle)" /> : <InfoCircleIcon />}
