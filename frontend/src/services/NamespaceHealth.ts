@@ -54,10 +54,8 @@ export const fetchClusterNamespacesHealth = async (
 
   const namespaceChunks = chunkArray(namespaces, MAX_NAMESPACES_PER_CALL);
   const healthPromises = namespaceChunks.map(async (chunk, index) => {
-    const namespaceList = chunk.join(',');
-
     try {
-      return await API.getClustersHealth(namespaceList, duration, cluster);
+      return await API.getClustersHealth(chunk.join(','), duration, cluster);
     } catch (error) {
       const message = healthFetchErrorMessage(chunk, index, namespaceChunks.length, cluster, error);
       addDanger(message);
