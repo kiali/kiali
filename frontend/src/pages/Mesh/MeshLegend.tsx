@@ -94,7 +94,12 @@ export const MeshLegend: React.FC<MeshLegendProps> = (props: MeshLegendProps) =>
       <div className={headerStyle}>
         <span>{t('Legend')}</span>
         <Tooltip content={t('Close Legend')}>
-          <Button icon={<KialiIcon.Close />} id="legend_close" variant={ButtonVariant.plain} onClick={props.closeLegend} />
+          <Button
+            icon={<KialiIcon.Close />}
+            id="legend_close"
+            variant={ButtonVariant.plain}
+            onClick={props.closeLegend}
+          />
         </Tooltip>
       </div>
 

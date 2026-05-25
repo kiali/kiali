@@ -4,10 +4,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { DefaultSecondaryMasthead } from 'components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from 'components/Refresh/Refresh';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
-import { useKialiDispatch } from 'hooks/redux';
 import { useManualRefreshState } from 'hooks/refresh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
-import { setAIContext } from 'helpers/ChatAI';
 import { ClusterStats } from './ClusterStats';
 import { IstioConfigStats } from './IstioConfigStats';
 import { ControlPlaneStats } from './ControlPlaneStats';
@@ -32,12 +30,7 @@ const secondRowItemStyle = kialiStyle({
 });
 
 export const OverviewPage: React.FC = () => {
-  const dispatch = useKialiDispatch();
   const loaded = useManualRefreshState();
-
-  React.useEffect(() => {
-    setAIContext(dispatch, 'Overview page');
-  }, [dispatch]);
 
   return (
     <div className={overviewPageStyle}>

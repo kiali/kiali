@@ -6,8 +6,8 @@ import { isValid } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 
 export type DelayFaultProps = {
-  delayed: boolean;
   delay: Delay;
+  delayed: boolean;
   isValid: boolean;
   onDelay: (delayed: boolean, delay: Delay) => void;
 };
@@ -15,14 +15,13 @@ export type DelayFaultProps = {
 const fixedDelayedMsg = t('Add a fixed delay before forwarding the request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class DelayFault extends React.Component<DelayFaultProps> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add HTTP Delay')} fieldId="delaySwitch">
           <Switch
             id="delaySwitch"
             label={' '}
-            
             isChecked={this.props.delayed}
             onChange={() => this.props.onDelay(!this.props.delayed, this.props.delay)}
           />

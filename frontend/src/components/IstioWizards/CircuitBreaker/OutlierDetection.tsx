@@ -6,19 +6,18 @@ import { t } from 'utils/I18nUtils';
 
 type Props = {
   isOutlierDetection: boolean;
-  outlierDetection: OutlierDetectionProps;
   onOutlierDetection: (isOutlierDetection: boolean, outlierDetection: OutlierDetectionProps) => void;
+  outlierDetection: OutlierDetectionProps;
 };
 
 export class OutlierDetection extends React.Component<Props> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add Outlier Detection')} fieldId="odSwitch">
           <Switch
             id="odSwitch"
             label={' '}
-            
             isChecked={this.props.isOutlierDetection}
             onChange={() => this.props.onOutlierDetection(!this.props.isOutlierDetection, this.props.outlierDetection)}
           />
@@ -40,7 +39,9 @@ export class OutlierDetection extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{t('Number of errors before a host is ejected from the connection pool.')}</HelperTextItem>
+                <HelperTextItem>
+                  {t('Number of errors before a host is ejected from the connection pool.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

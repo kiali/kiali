@@ -181,7 +181,6 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
           <Switch
             id="workloadSelectorSwitch"
             label=" "
-            
             isChecked={addWorkloadSelector}
             onChange={onChangeWorkloadSelector}
           />

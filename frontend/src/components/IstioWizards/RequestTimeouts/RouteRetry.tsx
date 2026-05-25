@@ -7,22 +7,21 @@ import { t } from 'utils/I18nUtils';
 
 export type RouteRetryProps = {
   isRetry: boolean;
-  retries: HTTPRetry;
   isValidRetry: boolean;
   onRetry: (isRetry: boolean, retries: HTTPRetry) => void;
+  retries: HTTPRetry;
 };
 
 const tryTimeoutMsg = t('Timeout per retry attempt for a given request. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class RouteRetry extends React.Component<RouteRetryProps> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add HTTP Retry')} fieldId="retrySwitch">
           <Switch
             id="retrySwitch"
             label={' '}
-            
             isChecked={this.props.isRetry}
             onChange={() => this.props.onRetry(!this.props.isRetry, this.props.retries)}
           />

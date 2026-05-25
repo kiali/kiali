@@ -2,20 +2,20 @@ package providers
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 )
 
 // AIProvider exposes a minimal interface to send chat requests.
 type AIProvider interface {
-	InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest)
-	ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage
+	GetName() string
+	InitializeConversation(ptr *types.Conversation, query string)
+	ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int)
 	GetToolDefinitions() interface{}
-	TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error)
+	TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}
 	ProviderToConversation(providerMessage interface{}) types.ConversationMessage
-	SendChat(kialiInterface *mcputil.KialiInterface,
-		req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int)
+	SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore)
 }

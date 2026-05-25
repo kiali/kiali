@@ -1,0 +1,609 @@
+package anthropic_provider
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	anthropic "github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/kiali/kiali/ai/mcp"
+)
+
+// TestAllMCPToolYAMLsConvertToAnthropicSchema ensures every file in ai/mcp/tools maps to a valid schema.
+func TestAllMCPToolYAMLsConvertToAnthropicSchema(t *testing.T) {
+	toolsDir := filepath.Join("..", "..", "mcp", "tools")
+	entries, err := os.ReadDir(toolsDir)
+	require.NoError(t, err)
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".yaml" {
+			continue
+		}
+		name := e.Name()
+		t.Run(name, func(t *testing.T) {
+			tool, err := mcp.LoadToolDefinition(filepath.Join(toolsDir, name))
+			require.NoError(t, err)
+			converted := convertToolToAnthropic(tool)
+			require.NotNil(t, converted, name)
+			assert.NotNil(t, converted.OfTool)
+		})
+	}
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetActionUI(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_action_ui.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_action_ui",
+			Description: param.NewOpt("Call this tool WHENEVER the user asks to navigate, view, show, open, or get a visual representation of resources (like graphs, lists, or details). This tool automatically redirects the user's Kiali UI. You do NOT need to analyze the output of this tool; simply call it and acknowledge to the user that you are taking them to the requested view."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"namespaces": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
+					},
+					"resourceType": map[string]interface{}{
+						"type":        "string",
+						"description": "The main category of the view to open. Use 'list' for multiple resources, 'details' for a specific resource, 'graph' for topology, or 'overview' for the main dashboard.",
+						"enum":        []interface{}{"service", "workload", "app", "istio", "graph", "overview", "namespaces"},
+					},
+					"resourceName": map[string]interface{}{
+						"type":        "string",
+						"description": "The specific name of the resource (e.g., 'reviews-v1'). Leave empty if the user wants a list view.",
+					},
+					"graph": map[string]interface{}{
+						"type":        "string",
+						"description": "REQUIRED ONLY IF resourceType is 'graph'. Specifies the graph visualization type.",
+						"enum":        []interface{}{"mesh", "traffic"},
+					},
+					"graphType": map[string]interface{}{
+						"type":        "string",
+						"description": "Granularity of the graph. Default is 'versionedApp'.",
+						"enum":        []interface{}{"versionedApp", "app", "service", "workload"},
+					},
+					"tab": map[string]interface{}{
+						"type":        "string",
+						"description": "The specific tab to open when viewing resource details. Default is 'info'.",
+						"enum":        []interface{}{"info", "logs", "metrics", "in_metrics", "out_metrics", "traffic", "traces", "envoy"},
+					},
+				},
+				Required: []string{"resourceType"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetReferencedDocs(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_referenced_docs.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_referenced_docs",
+			Description: param.NewOpt("Call this tool whenever the user asks a conceptual question, asks 'how to', or needs troubleshooting documentation. This tool automatically surfaces relevant Istio/Kiali documentation links directly in the user's UI chat interface. You do not need to read the output; just call it and proceed to answer their question."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"keywords": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of core concepts or keywords extracted from the user's query.",
+					},
+					"domain": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional. The specific documentation domain to search. Default is 'all'.",
+						"enum":        []interface{}{"kiali", "istio", "all"},
+					},
+				},
+				Required: []string{"keywords"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetLogs(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_logs.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_logs",
+			Description: param.NewOpt("Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Namespace to get the Pod logs from",
+					},
+					"name": map[string]interface{}{
+						"type":        "string",
+						"description": "Name of the Pod to get the logs from. If it does not exist, it will be treated as a workload name and a running pod will be selected.",
+					},
+					"workload": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional workload name override (used when name lookup fails).",
+					},
+					"container": map[string]interface{}{
+						"type":        "string",
+						"description": "Name of the Pod container to get the logs from (Optional)",
+					},
+					"tail": map[string]interface{}{
+						"type":        "integer",
+						"description": "Number of lines to retrieve from the end of the logs (Optional, default: 50). Cannot exceed 200 lines.",
+					},
+					"severity": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional severity filter applied client-side. Accepts 'ERROR', 'WARN' or combinations like 'ERROR,WARN'.",
+					},
+					"previous": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Return previous terminated container logs (Optional)",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name. Defaults to the cluster name in the Kiali configuration.",
+					},
+					"format": map[string]interface{}{
+						"type":        "string",
+						"description": "Output formatting for chat. 'codeblock' wraps logs in ~~~ fences (recommended). 'plain' returns raw text like kubernetes-mcp-server pods_log.",
+						"enum":        []interface{}{"codeblock", "plain"},
+					},
+				},
+				Required: []string{"namespace", "name"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetMeshStatus(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_status.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_mesh_status",
+			Description: param.NewOpt("Retrieves the high-level health, topology, and environment details of the Istio service mesh. Returns multi-cluster control plane status (istiod), data plane namespace health (including ambient mesh status), observability stack health (Prometheus, Grafana...), and component connectivity. Use this tool as the first step to diagnose mesh-wide issues, verify Istio/Kiali versions, or check overall health before drilling into specific workloads."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetMeshGraph(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_traffic_graph.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_mesh_traffic_graph",
+			Description: param.NewOpt("Returns service-to-service traffic topology, dependencies, and network metrics (throughput, response time, mTLS) for the specified namespaces. Use this to diagnose routing issues, latency, or find upstream/downstream dependencies."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"namespaces": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of namespaces to map",
+					},
+					"graphType": map[string]interface{}{
+						"type":        "string",
+						"description": "Granularity of the graph. 'app' aggregates by app name, 'versionedApp' separates by versions, 'workload' maps specific pods/deployments. Default: versionedApp.",
+						"enum":        []interface{}{"versionedApp", "app", "service", "workload"},
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig).",
+					},
+				},
+				Required: []string{"namespaces"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetMetrics(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_metrics.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_metrics",
+			Description: param.NewOpt("Returns a compact JSON summary of Istio metrics (latency quantiles, traffic trends, throughput, payload sizes) for the given resource."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"resourceType": map[string]interface{}{
+						"type":        "string",
+						"description": "Type of resource to get metrics",
+						"enum":        []interface{}{"service", "workload", "app"},
+					},
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Namespace to get metrics from.",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Cluster name to get metrics from. Optional, defaults to the cluster name in the Kiali configuration (KubeConfig).",
+					},
+					"resourceName": map[string]interface{}{
+						"type":        "string",
+						"description": "Name of the resource to get metrics for.",
+					},
+					"step": map[string]interface{}{
+						"type":        "string",
+						"description": "Step between data points in seconds (e.g., '15'). Optional, defaults to 15 seconds",
+					},
+					"rateInterval": map[string]interface{}{
+						"type":        "string",
+						"description": "Rate interval for metrics (e.g., '1m', '5m'). Optional, defaults to '10m'",
+					},
+					"direction": map[string]interface{}{
+						"type":        "string",
+						"description": "Traffic direction. Optional, defaults to 'outbound'",
+						"enum":        []interface{}{"inbound", "outbound"},
+					},
+					"reporter": map[string]interface{}{
+						"type":        "string",
+						"description": "Metrics reporter: 'source', 'destination', or 'both'. Optional, defaults to 'source'",
+						"enum":        []interface{}{"source", "destination", "both"},
+					},
+					"requestProtocol": map[string]interface{}{
+						"type":        "string",
+						"description": "Desired request protocol for the telemetry: For example, 'http' or 'grpc'. Optional",
+					},
+					"quantiles": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of quantiles for histogram metrics (e.g., '0.5,0.95,0.99'). Optional. Default is 0.5,0.95,0.99,0.999.",
+					},
+					"byLabels": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of labels to group metrics by (e.g., 'source_workload,destination_service'). Optional",
+					},
+				},
+				Required: []string{"resourceType", "namespace", "resourceName"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetPodPerformance(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_pod_performance.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_pod_performance",
+			Description: param.NewOpt("Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'. IMPORTANT input constraint: provide at least one of podName, workloadName."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Kubernetes namespace of the Pod.",
+					},
+					"podName": map[string]interface{}{
+						"type":        "string",
+						"description": "Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first. At least one of these fields is required together with the others listed in this note.",
+					},
+					"workloadName": map[string]interface{}{
+						"type":        "string",
+						"description": "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName. At least one of these fields is required together with the others listed in this note.",
+					},
+					"timeRange": map[string]interface{}{
+						"type":        "string",
+						"description": "Time window used to compute CPU rate (Prometheus duration like '5m', '10m', '1h', '1d'). Defaults to '10m'.",
+					},
+					"queryTime": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional end timestamp (RFC3339) for the query. Defaults to now.",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+					},
+				},
+				Required: []string{"namespace"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_ListOrGetResources(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_or_get_resources.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "list_or_get_resources",
+			Description: param.NewOpt("Fetches a list of resources OR retrieves detailed data for a specific resource. If 'resourceName' is omitted, it returns a list. If 'resourceName' is provided, it returns details for that specific resource."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"resourceType": map[string]interface{}{
+						"type":        "string",
+						"description": "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
+						"enum":        []interface{}{"service", "workload", "app", "namespace", "argoapp"},
+					},
+					"namespaces": map[string]interface{}{
+						"type":        "string",
+						"description": "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
+					},
+					"resourceName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
+					},
+				},
+				Required: []string{"resourceType"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_ListTraces(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_traces.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "list_traces",
+			Description: param.NewOpt("Lists distributed traces for a service in a namespace. Returns a summary (namespace, service, total_found, avg_duration_ms) and a list of traces with id, duration_ms, spans_count, root_op, slowest_service, has_errors. Use get_trace_details with a trace id to get full hierarchy."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Kubernetes namespace of the service (required).",
+					},
+					"serviceName": map[string]interface{}{
+						"type":        "string",
+						"description": "Service name to search traces for (required). Returns multiple traces up to limit.",
+					},
+					"errorOnly": map[string]interface{}{
+						"type":        "boolean",
+						"description": "If true, only consider traces that contain errors. Default false.",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name. Defaults to the cluster name in the Kiali configuration.",
+					},
+					"lookbackSeconds": map[string]interface{}{
+						"type":        "integer",
+						"description": "How far back to search. Default 600 (10m).",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum number of traces to return. Default 10.",
+					},
+				},
+				Required: []string{"namespace", "serviceName"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_GetTraceDetails(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_trace_details.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "get_trace_details",
+			Description: param.NewOpt("Fetches a single distributed trace by trace_id and returns its call hierarchy (service tree with duration, status, and nested calls). Use this after list_traces to drill into a specific trace."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"traceId": map[string]interface{}{
+						"type":        "string",
+						"description": "Trace ID to fetch (required). Obtain from list_traces list response.",
+					},
+				},
+				Required: []string{"traceId"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfig(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "manage_istio_config.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "manage_istio_config",
+			Description: param.NewOpt("Create, patch, or delete Istio config. For list and get (read-only) use manage_istio_config_read."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"action": map[string]interface{}{
+						"type":        "string",
+						"description": "Action to perform (write)",
+						"enum":        []interface{}{"create", "patch", "delete"},
+					},
+					"confirmed": map[string]interface{}{
+						"type":        "boolean",
+						"description": "CRITICAL: If 'true', the destructive action (create/patch/delete) is executed. If 'false' (or omitted) for create/patch, the tool returns a YAML PREVIEW. Display it to the user and ask for confirmation before calling again with confirmed=true.",
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)",
+					},
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Namespace containing the Istio object.",
+					},
+					"group": map[string]interface{}{
+						"type":        "string",
+						"description": "API group of the Istio object.",
+						"enum":        []interface{}{"networking.istio.io", "security.istio.io"},
+					},
+					"version": map[string]interface{}{
+						"type":        "string",
+						"description": "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway.",
+					},
+					"kind": map[string]interface{}{
+						"type":        "string",
+						"description": "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule').",
+						"enum": []interface{}{
+							"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
+							"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
+							"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+						},
+					},
+					"object": map[string]interface{}{
+						"type":        "string",
+						"description": "Name of the Istio object.",
+					},
+					"data": map[string]interface{}{
+						"type":        "string",
+						"description": "Complete JSON or YAML data to apply or create the object. Required for create and patch actions. You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type. Arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element.",
+					},
+					"dataFormat": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional hint for the payload format. Usually leave as 'auto'.",
+						"enum":        []interface{}{"auto", "json", "yaml"},
+					},
+				},
+				Required: []string{"action", "confirmed", "namespace", "group", "version", "kind", "object"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "manage_istio_config_read.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "manage_istio_config_read",
+			Description: param.NewOpt("Read-only Istio config: list or get objects. For action 'list', returns an array of objects with {name, namespace, type, validation}. For create, patch, or delete use manage_istio_config."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				Properties: map[string]interface{}{
+					"action": map[string]interface{}{
+						"type":        "string",
+						"description": "Action to perform (read-only)",
+						"enum":        []interface{}{"list", "get"},
+					},
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)",
+					},
+					"namespace": map[string]interface{}{
+						"type":        "string",
+						"description": "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required.",
+					},
+					"group": map[string]interface{}{
+						"type":        "string",
+						"description": "API group of the Istio object. Required for 'get' action.",
+						"enum":        []interface{}{"networking.istio.io", "security.istio.io"},
+					},
+					"version": map[string]interface{}{
+						"type":        "string",
+						"description": "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+					},
+					"kind": map[string]interface{}{
+						"type":        "string",
+						"description": "Kind of the Istio object. Required for 'get' action.",
+						"enum": []interface{}{
+							"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
+							"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
+							"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+						},
+					},
+					"object": map[string]interface{}{
+						"type":        "string",
+						"description": "Name of the Istio object. Required for 'get' action.",
+					},
+					"serviceName": map[string]interface{}{
+						"type":        "string",
+						"description": "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action.",
+					},
+				},
+				Required: []string{"action"},
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}

@@ -8,8 +8,8 @@ import { getKialiTheme } from 'utils/ThemeUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
 type initializingScreenProps = {
-  errorMsg?: string;
   errorDetails?: string;
+  errorMsg?: string;
 };
 
 const defaultErrorStyle = kialiStyle({
@@ -60,7 +60,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     document.body.classList.add('kiosk');
   }
 
-  const theme = getKialiTheme();  
+  const theme = getKialiTheme();
   if (theme === Theme.DARK) {
     document.documentElement.classList.add(PF_THEME_DARK);
   }

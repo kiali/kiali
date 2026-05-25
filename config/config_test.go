@@ -892,6 +892,159 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "",
 		},
+		// Endpoint is optional — providers like Anthropic, OpenAI default, and
+		// Google Gemini have well-known SDK defaults so no endpoint is required
+		// in the config.  Only providers that need a custom URL (e.g. Azure) set
+		// one, and that check is enforced in getProviderOptions at runtime.
+		"endpoint is optional when both model and provider endpoint are empty": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Endpoint = ""
+				conf.ChatAI.Providers[0].Models[0].Endpoint = ""
+			},
+			expectErr: "",
+		},
+		"model endpoint overrides empty provider endpoint": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Endpoint = ""
+				conf.ChatAI.Providers[0].Models[0].Endpoint = "https://model.example.com"
+			},
+			expectErr: "",
+		},
+		"provider endpoint used when model endpoint is empty": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Endpoint = "https://provider.example.com"
+				conf.ChatAI.Providers[0].Models[0].Endpoint = ""
+			},
+			expectErr: "",
+		},
+
+		// ── LightSpeed-specific cases ──────────────────────────────────────────
+		"lightspeed valid with endpoint and no models": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+				}
+			},
+			expectErr: "",
+		},
+		"lightspeed missing endpoint errors": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:    "provider-1",
+					Type:    LightSpeedProvider,
+					Enabled: true,
+					// Endpoint intentionally absent
+				}
+			},
+			expectErr: "requires an endpoint",
+		},
+		"lightspeed config empty defaults to DefaultProviderConfigType": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+					// Config intentionally absent — should be defaulted
+				}
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+			},
+		},
+		"lightspeed invalid config type errors": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Config:   ProviderConfigType("not-supported"),
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+				}
+			},
+			expectErr: "config",
+		},
+		"lightspeed does not require default_model": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:         "provider-1",
+					Type:         LightSpeedProvider,
+					Enabled:      true,
+					Endpoint:     "https://lightspeed.example.com",
+					DefaultModel: "", // absent — should not error
+				}
+			},
+			expectErr: "",
+		},
+		"lightspeed does not require a key": {
+			// LightSpeed authenticates via the Kiali user's Kubernetes bearer
+			// token at request time, so no static API key is needed in the config.
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+					Key:      "", // no key — must not error
+				}
+			},
+			expectErr: "",
+		},
+		"lightspeed does not require provider key even with models key absent": {
+			// Even if someone defines models (which is optional), neither model
+			// nor provider key is validated for LightSpeed.
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+					Key:      "",
+					Models: []AIModel{
+						{Name: "m", Enabled: true, Key: ""},
+					},
+				}
+			},
+			expectErr: "",
+		},
+		"lightspeed does not require models list": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+					Models:   nil, // absent — should not error
+				}
+			},
+			expectErr: "",
+		},
+		"lightspeed skips per-model validations": {
+			// Models that would fail key/endpoint checks for other provider types
+			// are accepted for LightSpeed because model-level validation is skipped.
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0] = ProviderConfig{
+					Name:     "provider-1",
+					Type:     LightSpeedProvider,
+					Enabled:  true,
+					Endpoint: "https://lightspeed.example.com",
+					Key:      "",
+					Models: []AIModel{
+						{
+							Name:     "model-without-key-or-endpoint",
+							Enabled:  true,
+							Key:      "", // would normally require key or provider key
+							Endpoint: "", // would normally require endpoint or provider endpoint
+						},
+					},
+				}
+			},
+			expectErr: "",
+		},
 	}
 
 	for name, tc := range cases {

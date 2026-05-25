@@ -3,168 +3,171 @@ package anthropic_provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/providers"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/log"
 )
 
-func (p *AnthropicProvider) SendChat(kialiInterface *mcputil.KialiInterface, req types.AIRequest, aiStore types.AIStore) (*types.AIResponse, int) {
-	if req.ConversationID == "" {
-		return &types.AIResponse{Error: "conversation ID is required"}, http.StatusBadRequest
-	}
-
+func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
 	if req.Query == "" {
-		return &types.AIResponse{Error: "query is required"}, http.StatusBadRequest
+		providers.StreamError(onChunk, "query is required")
+		return
 	}
 
 	ctx := kialiInterface.Request.Context()
-	ptr, sessionID, conversation := providers.GetStoreConversation(kialiInterface.Request, req, aiStore)
-	p.InitializeConversation(&conversation, req)
+	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
+	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
+	providers.Log(p, providers.LogLevelDebug, "Conversation", "Anthropic provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
-	conversationWithContext := providers.AddContextToConversation(conversation, req)
-	modelConversation := p.ConversationToProvider(conversationWithContext).(anthropicConversation)
-	toolDefs := p.GetToolDefinitions().([]anthropic.ToolUnionParam)
-	response := &types.AIResponse{}
-
-	log.Debugf("[Chat AI] Conversation sent to Anthropic (system=%d, messages=%d):", len(modelConversation.System), len(modelConversation.Messages))
+	modelConversation := p.ConversationToProvider(ptr.Conversation).(anthropicConversation)
+	providers.Log(p, providers.LogLevelDebug, "Conversation", "Conversation sent to Anthropic (system=%d, messages=%d):", len(modelConversation.System), len(modelConversation.Messages))
 	for i, msg := range modelConversation.System {
-		contentPreview := msg.Text
-		if len(contentPreview) > 100 {
-			contentPreview = contentPreview[:100] + "..."
+		preview := msg.Text
+		if len(preview) > 100 {
+			preview = preview[:100] + "..."
 		}
-		log.Debugf("  [system %d] content=%q", i, contentPreview)
+		providers.Log(p, providers.LogLevelDebug, "Conversation", "  [system %d] content=%q", i, preview)
 	}
 	for i, msg := range modelConversation.Messages {
-		contentPreview := anthropicMessagePreview(msg)
-		if len(contentPreview) > 100 {
-			contentPreview = contentPreview[:100] + "..."
+		preview := anthropicMessagePreview(msg)
+		if len(preview) > 100 {
+			preview = preview[:100] + "..."
 		}
-		log.Debugf("  [%d] role=%s content=%q", i, msg.Role, contentPreview)
+		providers.Log(p, providers.LogLevelDebug, "Conversation", " Message =>[%d] [Role %s]  content=%q", i, msg.Role, preview)
 	}
 
-	const maxToolIterations = 5
-	for iter := 0; iter < maxToolIterations; iter++ {
-		resp, err := p.client.Messages.New(ctx, anthropic.MessageNewParams{
-			MaxTokens: defaultMaxTokens,
-			Messages:  modelConversation.Messages,
-			Model:     anthropic.Model(p.model),
-			System:    modelConversation.System,
-			Tools:     toolDefs,
-		})
-		if err != nil {
-			if err := ctx.Err(); err != nil {
-				return providers.NewContextCanceledResponse(err)
+	params := anthropic.MessageNewParams{
+		MaxTokens: defaultMaxTokens,
+		Messages:  modelConversation.Messages,
+		Model:     anthropic.Model(p.model),
+		System:    modelConversation.System,
+		Tools:     p.GetToolDefinitions().([]anthropic.ToolUnionParam),
+	}
+
+	// streamTurn executes one Anthropic streaming request.
+	// An inner loop handles StopReasonPauseTurn transparently: the model is asked
+	// to continue, and streaming resumes until a final stop reason is received.
+	// ParseMarkdownResponse is NOT applied here — the shared RunChatLoop does it.
+	streamTurn := func(ctx context.Context, onChunk func(string)) (string, []types.StreamToolCallData, error) {
+		tokenID := 0
+		for {
+			stream := p.client.Messages.NewStreaming(ctx, params)
+			message := anthropic.Message{}
+
+			for stream.Next() {
+				event := stream.Current()
+				if err := message.Accumulate(event); err != nil {
+					providers.Log(p, providers.LogLevelError, "Error", "Error in accumulate message: %v", err)
+					return "", nil, err
+				}
+				switch eventVariant := event.AsAny().(type) {
+				case anthropic.ContentBlockStartEvent:
+					if event.ContentBlock.Name != "" {
+						providers.Log(p, providers.LogLevelDebug, "Stream", "Block Start : %s", event.ContentBlock.Name)
+					}
+				case anthropic.ContentBlockStopEvent:
+					providers.Log(p, providers.LogLevelDebug, "Stream", "Block Stop")
+				case anthropic.MessageStopEvent:
+					providers.Log(p, providers.LogLevelDebug, "Stream", "Message Stop")
+				case anthropic.ContentBlockDeltaEvent:
+					if delta, ok := eventVariant.Delta.AsAny().(anthropic.TextDelta); ok {
+						providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", delta.Text)
+						providers.SendStreamEvent(onChunk, providers.LLM_TOKEN_EVENT, types.StreamTokenData{ID: tokenID, Token: delta.Text})
+						tokenID++
+					}
+				}
 			}
-			log.Debugf("[Chat AI] Anthropic provider error in send chat with tools: %v", err)
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
-		}
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
-		}
-		if len(resp.Content) == 0 {
-			return &types.AIResponse{Error: "anthropic returned no content"}, http.StatusInternalServerError
-		}
 
-		if resp.StopReason == anthropic.StopReasonPauseTurn {
-			if iter == maxToolIterations-1 {
-				log.Debugf("[Chat AI] Anthropic provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
-				return &types.AIResponse{Error: fmt.Sprintf("anthropic reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
+			params.Messages = append(params.Messages, message.ToParam())
+
+			if stream.Err() != nil {
+				if ctx.Err() == nil && (errors.Is(stream.Err(), context.Canceled) || errors.Is(stream.Err(), context.DeadlineExceeded)) {
+					providers.Log(p, providers.LogLevelDebug, "Content", "Anthropic stream completed with internal SDK context cleanup — not an error")
+				} else {
+					return "", nil, stream.Err()
+				}
 			}
-			modelConversation.Messages = append(modelConversation.Messages, resp.ToParam())
-			continue
-		}
+			if ctx.Err() != nil {
+				return "", nil, nil // outer loop detects ctx.Err()
+			}
 
-		if !anthropicHasToolUse(resp.Content) {
-			response.Answer = providers.ParseMarkdownResponse(anthropicTextContent(resp.Content))
-			break
-		}
-		if iter == maxToolIterations-1 {
-			log.Debugf("[Chat AI] Anthropic provider reached max tool iterations (%d) for conversation ID: %s", maxToolIterations, req.ConversationID)
-			return &types.AIResponse{Error: fmt.Sprintf("anthropic reached max tool iterations (%d)", maxToolIterations)}, http.StatusInternalServerError
-		}
+			if message.StopReason == anthropic.StopReasonPauseTurn {
+				continue // model paused — ask it to continue in next inner iteration
+			}
 
-		modelConversation.Messages = append(modelConversation.Messages, resp.ToParam())
+			text := anthropicTextContent(message.Content)
+			if !anthropicHasToolUse(message.Content) {
+				return text, nil, nil // no tool calls → shared loop applies ParseMarkdownResponse
+			}
+			toolCalls, _, err := p.TransformToolCallToToolsProcessor(message.Content)
+			if err != nil {
+				providers.Log(p, providers.LogLevelError, "Error", "Error transforming tool calls: %v", err)
+				return text, nil, err
+			}
+			return text, toolCalls, nil
+		}
+	}
 
-		tools, toolNames, err := p.TransformToolCallToToolsProcessor(resp.Content)
-		if err != nil {
-			return &types.AIResponse{Error: err.Error()}, http.StatusInternalServerError
+	// prepareNextTurn appends tool result blocks to params for the next iteration.
+	prepareNextTurn := func(_ context.Context, toolCalls []types.StreamToolCallData, toolResults []types.StreamToolResultData, hasNonExcluded bool, _ func(string)) (bool, string) {
+		if !hasNonExcluded {
+			return false, ""
 		}
-		log.Debugf("[Chat AI] Anthropic provider tool calls (iter=%d): %v", iter, toolNames)
-
-		toolResults := providers.ExecuteToolCallsInParallel(kialiInterface, tools)
-		if err := ctx.Err(); err != nil {
-			return providers.NewContextCanceledResponse(err)
-		}
-
-		processResult := providers.ProcessToolResults(toolResults, conversation)
-		if processResult.Response.Error != "" {
-			return processResult.Response, http.StatusInternalServerError
-		}
-		if len(processResult.Response.Actions) > 0 {
-			response.Actions = append(response.Actions, processResult.Response.Actions...)
-		}
-		if len(processResult.Response.ReferencedDocs) > 0 {
-			response.ReferencedDocs = append(response.ReferencedDocs, processResult.Response.ReferencedDocs...)
-		}
-		conversation = processResult.Conversation
-
 		toolResultBlocks := make([]anthropic.ContentBlockParamUnion, 0, len(toolResults))
-		for i, toolResult := range toolResults {
-			if toolResult.Error != nil {
-				return &types.AIResponse{Error: toolResult.Error.Error()}, http.StatusInternalServerError
-			}
-
-			content := toolResult.Message.Content
+		for i, tr := range toolResults {
+			content := tr.Content
 			if strings.TrimSpace(content) == "" {
 				content = "OK"
 			}
-
 			toolResultBlocks = append(toolResultBlocks, anthropic.ContentBlockParamUnion{
 				OfToolResult: &anthropic.ToolResultBlockParam{
-					ToolUseID: tools[i].ToolCallID,
-					Content: []anthropic.ToolResultBlockParamContentUnion{{
-						OfText: &anthropic.TextBlockParam{Text: content},
-					}},
+					ToolUseID: toolCalls[i].ID,
+					Content:   []anthropic.ToolResultBlockParamContentUnion{{OfText: &anthropic.TextBlockParam{Text: content}}},
 				},
 			})
 		}
-
 		if len(toolResultBlocks) > 0 {
-			modelConversation.Messages = append(modelConversation.Messages, anthropic.NewUserMessage(toolResultBlocks...))
+			params.Messages = append(params.Messages, anthropic.NewUserMessage(toolResultBlocks...))
 		}
+		return true, ""
 	}
 
-	if response.Answer != "" {
-		conversation = append(conversation, types.ConversationMessage{
-			Content: response.Answer,
-			Name:    "",
-			Param:   nil,
-			Role:    "assistant",
+	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
+	if aborted {
+		return
+	}
+
+	if responseContent != "" {
+		ptr.Mu.Lock()
+		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+			Content: responseContent, Name: "", Param: nil, Role: "assistant",
 		})
+		ptr.Mu.Unlock()
 	}
 
-	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req, conversation)
-	log.Debugf("[Chat AI] Response for conversation ID: %s: %+v", req.ConversationID, response)
-
-	return response, http.StatusOK
+	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
+	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
+	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
+		Actions: actions, ReferencedDocuments: referencedDocs, Truncated: false,
+	})
 }
 
-func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]mcp.ToolsProcessor, []string, error) {
+func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {
 	contentBlocks, ok := toolCall.([]anthropic.ContentBlockUnion)
 	if !ok {
-		return []mcp.ToolsProcessor{}, []string{}, nil
+		return []types.StreamToolCallData{}, []string{}, nil
 	}
 
 	toolNames := make([]string, 0)
-	tools := make([]mcp.ToolsProcessor, 0)
+	tools := make([]types.StreamToolCallData, 0)
 	for _, block := range contentBlocks {
 		toolUse, ok := block.AsAny().(anthropic.ToolUseBlock)
 		if !ok {
@@ -176,23 +179,25 @@ func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]m
 		if err := json.Unmarshal(toolUse.Input, &args); err != nil {
 			return nil, nil, fmt.Errorf("invalid arguments for tool %q: %w", toolUse.Name, err)
 		}
-		tools = append(tools, mcp.ToolsProcessor{
-			Args:       args,
-			Name:       toolUse.Name,
-			ToolCallID: toolUse.ID,
+		tools = append(tools, types.StreamToolCallData{
+			Args: args,
+			Name: toolUse.Name,
+			ID:   toolUse.ID,
+			Type: "tool_call",
 		})
 	}
 
 	return tools, toolNames, nil
 }
 
-func (p *AnthropicProvider) InitializeConversation(conversation *[]types.ConversationMessage, req types.AIRequest) {
-	if conversation == nil {
+func (p *AnthropicProvider) InitializeConversation(ptr *types.Conversation, query string) {
+	if ptr == nil {
 		return
 	}
+	isNewConversation := len(ptr.Conversation) == 0
 
-	if len(*conversation) == 0 {
-		*conversation = []types.ConversationMessage{{
+	if isNewConversation {
+		ptr.Conversation = []types.ConversationMessage{{
 			Content: types.SystemInstruction,
 			Name:    "",
 			Param:   nil,
@@ -200,8 +205,8 @@ func (p *AnthropicProvider) InitializeConversation(conversation *[]types.Convers
 		}}
 	}
 
-	*conversation = append(*conversation, types.ConversationMessage{
-		Content: req.Query,
+	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
+		Content: query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",
@@ -254,13 +259,13 @@ func (p *AnthropicProvider) ProviderToConversation(providerMessage interface{}) 
 	}
 }
 
-func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation []types.ConversationMessage, reduceThreshold int) []types.ConversationMessage {
-	if len(conversation) < reduceThreshold {
-		return conversation
+func (p *AnthropicProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
+	if len(ptr.Conversation) < reduceThreshold {
+		return
 	}
 
 	anchorIndex := 0
-	for i, msg := range conversation {
+	for i, msg := range ptr.Conversation {
 		if i < 2 && msg.Role == "system" {
 			anchorIndex = i
 		} else {
@@ -269,14 +274,14 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 	}
 
 	keepCount := 4
-	if len(conversation)-anchorIndex <= keepCount {
-		return conversation
+	if len(ptr.Conversation)-anchorIndex <= keepCount {
+		return
 	}
 
-	splitPoint := len(conversation) - keepCount
-	instructions := conversation[:anchorIndex+1]
-	toSummarize := conversation[anchorIndex+1 : splitPoint]
-	recentMessages := conversation[splitPoint:]
+	splitPoint := len(ptr.Conversation) - keepCount
+	instructions := ptr.Conversation[:anchorIndex+1]
+	toSummarize := ptr.Conversation[anchorIndex+1 : splitPoint]
+	recentMessages := ptr.Conversation[splitPoint:]
 
 	resp, err := p.client.Messages.New(ctx, anthropic.MessageNewParams{
 		MaxTokens: reduceConversationMaxTokens,
@@ -290,12 +295,12 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 	})
 	if err != nil {
 		log.Warningf("[Chat AI] Failed to reduce conversation: %v", err)
-		return conversation
+		return
 	}
 
 	summary := anthropicTextContent(resp.Content)
 	if summary == "" {
-		return conversation
+		return
 	}
 
 	reduced := append([]types.ConversationMessage{}, instructions...)
@@ -306,7 +311,9 @@ func (p *AnthropicProvider) ReduceConversation(ctx context.Context, conversation
 		Role:    "system",
 	})
 	reduced = append(reduced, recentMessages...)
-	return reduced
+	ptr.Mu.Lock()
+	ptr.Conversation = reduced
+	ptr.Mu.Unlock()
 }
 
 func anthropicHasToolUse(content []anthropic.ContentBlockUnion) bool {

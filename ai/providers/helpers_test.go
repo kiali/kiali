@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
@@ -36,6 +36,10 @@ func (f *fakeStore) ReduceWithAI() bool {
 
 func (f *fakeStore) ReduceThreshold() int {
 	return f.reduceThresh
+}
+
+func (f *fakeStore) GenerateConversationID() string {
+	return "generated-conv-id"
 }
 
 func (f *fakeStore) GetConversation(sessionID string, conversationID string) (*types.Conversation, bool) {
@@ -67,18 +71,27 @@ type fakeProvider struct {
 	reduceCalled bool
 }
 
-func (f *fakeProvider) InitializeConversation(_ *[]types.ConversationMessage, _ types.AIRequest) {}
+func (f *fakeProvider) InitializeConversation(_ *types.Conversation, _ string) {}
 
-func (f *fakeProvider) ReduceConversation(_ context.Context, _ []types.ConversationMessage, _ int) []types.ConversationMessage {
+func (f *fakeProvider) ReduceConversation(_ context.Context, ptr *types.Conversation, reduceThreshold int) {
 	f.reduceCalled = true
-	return []types.ConversationMessage{{Content: "reduced", Role: "system"}}
+	if ptr == nil {
+		return
+	}
+	_, _, _, ok := SplitConversationForReduction(ptr.Conversation, reduceThreshold, 4)
+	if !ok {
+		return
+	}
+	ptr.Mu.Lock()
+	ptr.Conversation = []types.ConversationMessage{{Content: "reduced", Role: "system"}}
+	ptr.Mu.Unlock()
 }
 
 func (f *fakeProvider) GetToolDefinitions() interface{} {
 	return nil
 }
 
-func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]mcp.ToolsProcessor, []string, error) {
+func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]types.StreamToolCallData, []string, error) {
 	return nil, nil, nil
 }
 
@@ -90,9 +103,10 @@ func (f *fakeProvider) ProviderToConversation(_ interface{}) types.ConversationM
 	return types.ConversationMessage{}
 }
 
-func (f *fakeProvider) SendChat(_ *mcputil.KialiInterface, _ types.AIRequest, _ types.AIStore) (*types.AIResponse, int) {
-	return nil, 0
+func (f *fakeProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
 }
+
+func (f *fakeProvider) GetName() string { return "fake" }
 
 func TestParseMarkdownResponse(t *testing.T) {
 	input := "Here is code:\n```go\nfmt.Println(\"hi\")\n```"
@@ -100,32 +114,20 @@ func TestParseMarkdownResponse(t *testing.T) {
 	assert.Equal(t, expected, ParseMarkdownResponse(input))
 }
 
-func TestNewContextCanceledResponse(t *testing.T) {
-	resp, code := NewContextCanceledResponse(context.Canceled)
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, context.Canceled.Error(), resp.Error)
-
-	resp, code = NewContextCanceledResponse(context.DeadlineExceeded)
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, context.DeadlineExceeded.Error(), resp.Error)
-
-	resp, code = NewContextCanceledResponse(fmt.Errorf("other error"))
-	assert.Equal(t, http.StatusRequestTimeout, code)
-	assert.Equal(t, "request cancelled", resp.Error)
-}
-
 func TestCleanConversation_RemovesExcludedTools(t *testing.T) {
-	conversation := []types.ConversationMessage{
-		{Role: "user", Content: "hello"},
-		{Role: "tool", Name: "get_action_ui", Content: "actions"},
-		{Role: "tool", Name: "custom_tool", Content: "custom"},
+	conversation := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "hello"},
+			{Role: "tool", Name: "get_action_ui", Content: "actions"},
+			{Role: "tool", Name: "custom_tool", Content: "custom"},
+		},
 	}
 
-	CleanConversation(&conversation)
+	CleanConversation(conversation)
 
-	require.Len(t, conversation, 2)
-	assert.Equal(t, "user", conversation[0].Role)
-	assert.Equal(t, "custom_tool", conversation[1].Name)
+	require.Len(t, conversation.Conversation, 2)
+	assert.Equal(t, "user", conversation.Conversation[0].Role)
+	assert.Equal(t, "custom_tool", conversation.Conversation[1].Name)
 }
 
 func TestFormatToolContent(t *testing.T) {
@@ -192,12 +194,13 @@ func TestGetStoreConversation(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
 	req = req.WithContext(authentication.SetSessionIDContext(req.Context(), sessionID))
-	ptr, gotSessionID, conversation := GetStoreConversation(req, types.AIRequest{ConversationID: conversationID}, store)
+	aiReq := types.AIRequest{ConversationID: conversationID}
+	ptr, gotSessionID := GetStoreConversation(req, &aiReq, store, nil)
 
 	require.NotNil(t, ptr)
 	assert.Equal(t, sessionID, gotSessionID)
-	require.Len(t, conversation, 1)
-	assert.Equal(t, "hi", conversation[0].Content)
+	require.Len(t, ptr.Conversation, 1)
+	assert.Equal(t, "hi", ptr.Conversation[0].Content)
 }
 
 func TestStoreConversation_CleansAndStores(t *testing.T) {
@@ -207,10 +210,10 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 		{Role: "tool", Name: "get_referenced_docs", Content: "referenced_docs"},
 		{Role: "tool", Name: "custom_tool", Content: "custom"},
 	}
-	ptr := &types.Conversation{}
+	ptr := &types.Conversation{Conversation: append([]types.ConversationMessage(nil), conversation...)}
 	req := types.AIRequest{ConversationID: "conv-1"}
 
-	StoreConversation(&fakeProvider{}, context.Background(), store, ptr, "session-1", req, conversation)
+	StoreConversation(&fakeProvider{}, context.Background(), store, ptr, "session-1", req)
 
 	require.Equal(t, 1, store.setCalls)
 	stored := store.conversations["session-1:conv-1"]
@@ -220,12 +223,21 @@ func TestStoreConversation_CleansAndStores(t *testing.T) {
 }
 
 func TestStoreConversation_ReduceWithAI(t *testing.T) {
-	store := &fakeStore{enabled: true, reduceWithAI: true, reduceThresh: 1}
+	store := &fakeStore{enabled: true, reduceWithAI: true, reduceThresh: 6}
 	provider := &fakeProvider{}
-	ptr := &types.Conversation{}
+	ptr := &types.Conversation{Conversation: []types.ConversationMessage{
+		{Role: "system", Content: "base"},
+		{Role: "system", Content: "ctx"},
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+		{Role: "user", Content: "u2"},
+		{Role: "assistant", Content: "a2"},
+		{Role: "user", Content: "u3"},
+		{Role: "assistant", Content: "a3"},
+	}}
 	req := types.AIRequest{ConversationID: "conv-1"}
 
-	StoreConversation(provider, context.Background(), store, ptr, "session-1", req, []types.ConversationMessage{{Role: "user", Content: "hi"}})
+	StoreConversation(provider, context.Background(), store, ptr, "session-1", req)
 
 	require.True(t, provider.reduceCalled)
 	stored := store.conversations["session-1:conv-1"]
@@ -241,10 +253,147 @@ func TestStoreConversation_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	StoreConversation(&fakeProvider{}, ctx, store, ptr, "session-1", req, []types.ConversationMessage{{Role: "user", Content: "hi"}})
+	StoreConversation(&fakeProvider{}, ctx, store, ptr, "session-1", req)
 
 	assert.Equal(t, 0, store.setCalls)
 }
+
+// --- Log level coverage ---
+
+func TestLog_AllLevels(t *testing.T) {
+	p := &fakeProvider{}
+	// These should not panic; they exercise the Info/Warn/Error branches in Log().
+	Log(p, LogLevelInfo, "Category", "info message %s", "arg")
+	Log(p, LogLevelWarn, "Category", "warn message %d", 42)
+	Log(p, LogLevelError, "Category", "error message")
+}
+
+// --- NewContextCanceledResponse ---
+
+func TestNewContextCanceledResponse_ContextCanceled(t *testing.T) {
+	var chunks []string
+	onChunk := func(c string) { chunks = append(chunks, c) }
+
+	NewContextCanceledResponse(onChunk, context.Canceled)
+
+	require.Len(t, chunks, 1)
+	assert.Contains(t, chunks[0], context.Canceled.Error())
+}
+
+func TestNewContextCanceledResponse_DeadlineExceeded(t *testing.T) {
+	var chunks []string
+	onChunk := func(c string) { chunks = append(chunks, c) }
+
+	NewContextCanceledResponse(onChunk, context.DeadlineExceeded)
+
+	require.Len(t, chunks, 1)
+	assert.Contains(t, chunks[0], context.DeadlineExceeded.Error())
+}
+
+func TestNewContextCanceledResponse_GenericError(t *testing.T) {
+	var chunks []string
+	onChunk := func(c string) { chunks = append(chunks, c) }
+
+	// A generic error (not context.Canceled / context.DeadlineExceeded) should
+	// produce a "request cancelled" message instead of the error text.
+	NewContextCanceledResponse(onChunk, fmt.Errorf("some network error"))
+
+	require.Len(t, chunks, 1)
+	assert.Contains(t, chunks[0], "request cancelled")
+}
+
+// --- CleanConversation edge cases ---
+
+func TestCleanConversation_RemovesGetLogsToolMessages(t *testing.T) {
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "show me logs"},
+			{Role: "tool", Name: "get_logs", Content: "2024-01-01 some log output"},
+			{Role: "assistant", Content: "Here are your logs"},
+		},
+	}
+	CleanConversation(conv)
+
+	// get_logs tool message should be removed
+	require.Len(t, conv.Conversation, 2)
+	assert.Equal(t, "user", conv.Conversation[0].Role)
+	assert.Equal(t, "assistant", conv.Conversation[1].Role)
+}
+
+func TestCleanConversation_RemovesLargeLogLikeToolMessages(t *testing.T) {
+	// Unnamed tool message that looks like a log dump (fenced block + date stamps + large)
+	logContent := "~~~\n" + fmt.Sprintf("%s\n", strings.Repeat("2024-01-01 some log line here\n", 60)) + "~~~\n"
+	require.Greater(t, len(logContent), 1500, "test content must exceed the 1500-byte heuristic threshold")
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "check logs"},
+			{Role: "tool", Name: "", Content: logContent},
+		},
+	}
+	CleanConversation(conv)
+
+	require.Len(t, conv.Conversation, 1)
+	assert.Equal(t, "user", conv.Conversation[0].Role)
+}
+
+func TestCleanConversation_RemovesLargeLogLikeAssistantMessages(t *testing.T) {
+	// Assistant message that looks like a huge log dump should be filtered out
+	logContent := "~~~\n" + fmt.Sprintf("%s\n", strings.Repeat("2024-01-01 some assistant log line\n", 120)) + "~~~\n"
+	require.Greater(t, len(logContent), 4000, "test content must exceed the 4000-byte heuristic threshold")
+
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "show logs"},
+			{Role: "assistant", Content: logContent},
+		},
+	}
+	CleanConversation(conv)
+
+	require.Len(t, conv.Conversation, 1)
+	assert.Equal(t, "user", conv.Conversation[0].Role)
+}
+
+func TestCleanConversation_KeepsNormalAssistantMessages(t *testing.T) {
+	conv := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "user", Content: "hello"},
+			{Role: "assistant", Content: "Hello! How can I help you today?"},
+		},
+	}
+	CleanConversation(conv)
+
+	require.Len(t, conv.Conversation, 2)
+}
+
+func TestCleanConversation_NilPointer(t *testing.T) {
+	// Should not panic
+	CleanConversation(nil)
+}
+
+// --- StoreConversation context-canceled-mid-reduce ---
+
+func TestStoreConversation_ContextCanceledBeforeReduce(t *testing.T) {
+	store := &fakeStore{enabled: true, reduceWithAI: true, reduceThresh: 2}
+	provider := &fakeProvider{}
+	ptr := &types.Conversation{Conversation: []types.ConversationMessage{
+		{Role: "system", Content: "base"},
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+	}}
+	req := types.AIRequest{ConversationID: "conv-1"}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel before calling StoreConversation
+
+	StoreConversation(provider, ctx, store, ptr, "session-1", req)
+
+	// With a canceled context, StoreConversation should bail out without calling SetConversation
+	assert.Equal(t, 0, store.setCalls, "SetConversation must not be called when context is canceled")
+	assert.False(t, provider.reduceCalled, "ReduceConversation must not be called when context is canceled")
+}
+
+// --- ResolveProviderKey ---
 
 func TestResolveProviderKey_NilConfig(t *testing.T) {
 	_, err := ResolveProviderKey(nil, &config.ProviderConfig{}, &config.AIModel{})

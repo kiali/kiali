@@ -5,20 +5,19 @@ import { CONNECTION_POOL_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
-  isConnectionPool: boolean;
   connectionPool: ConnectionPoolSettings;
+  isConnectionPool: boolean;
   onConnectionPool: (isConnectionPool: boolean, connectionPool: ConnectionPoolSettings) => void;
 };
 
 export class ConnectionPool extends React.Component<Props> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add Connection Pool')} fieldId="cpSwitch">
           <Switch
             id="cpSwitch"
             label={' '}
-            
             isChecked={this.props.isConnectionPool}
             onChange={() => this.props.onConnectionPool(!this.props.isConnectionPool, this.props.connectionPool)}
           />

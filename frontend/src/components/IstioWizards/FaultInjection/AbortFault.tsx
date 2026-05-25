@@ -6,8 +6,8 @@ import { isValid } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
-  aborted: boolean;
   abort: Abort;
+  aborted: boolean;
   isValid: boolean;
   onAbort: (aborted: boolean, abort: Abort) => void;
 };
@@ -15,14 +15,13 @@ type Props = {
 const httpStatusMsg = t('HTTP status code to use to abort the Http request.');
 
 export class AbortFault extends React.Component<Props> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add HTTP Abort')} fieldId="abortSwitch">
           <Switch
             id="abortSwitch"
             label={' '}
-            
             isChecked={this.props.aborted}
             onChange={() => this.props.onAbort(!this.props.aborted, this.props.abort)}
           />
@@ -48,7 +47,9 @@ export class AbortFault extends React.Component<Props> {
             />
             <FormHelperText>
               <HelperText>
-                <HelperTextItem>{t('Percentage of requests to be aborted with the error code provided.')}</HelperTextItem>
+                <HelperTextItem>
+                  {t('Percentage of requests to be aborted with the error code provided.')}
+                </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>

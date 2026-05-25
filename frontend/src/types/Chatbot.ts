@@ -1,15 +1,13 @@
 import { MessageProps } from '@patternfly/chatbot';
+import { Map as ImmutableMap } from 'immutable';
 
-export const CHATBOT_CONVERSATION_ALWAYS_NAVIGATE = 'chatbot_conversation_always_navigate';
-
-export type ContextRequest = {
-  page_description: string;
-  page_namespaces: string[];
-  page_url: string;
+export type ErrorType = {
+  message?: string;
+  moreInfo?: string;
+  response?: Response;
 };
 
 type LLMRequest = {
-  context: ContextRequest;
   conversation_id?: string | null;
   media_type?: 'text/plain' | 'application/json';
   query: string;
@@ -35,6 +33,7 @@ export type Action = {
 type LLMResponse = {
   actions: Action[];
   answer: string;
+  conversation_id: string;
   error?: string;
   referenced_docs: ReferencedDoc[];
   truncated?: boolean;
@@ -91,3 +90,41 @@ export type ChatAIConfig = {
   enabled: boolean;
   providers: ProviderAI[];
 };
+
+export type Tool = {
+  approvalID?: string;
+  args: { [key: string]: unknown };
+  content: string;
+  description?: string;
+  isApproved?: boolean;
+  isDenied?: boolean;
+  isRunning?: boolean;
+  isUserApproval?: boolean;
+  name: string;
+  olsToolUiID?: string;
+  serverName?: string;
+  status?: 'error' | 'success' | 'truncated';
+  structuredContent?: Record<string, unknown>;
+  uiResourceUri?: string;
+};
+
+type ChatEntryUser = {
+  hidden?: boolean;
+  text: string;
+  who: 'user';
+};
+
+type ChatEntryAI = {
+  actions?: Array<Action>;
+  error?: ErrorType;
+  id: string;
+  isCancelled: boolean;
+  isStreaming: boolean;
+  isTruncated: boolean;
+  references?: Array<ReferencedDoc>;
+  text?: string;
+  tools?: ImmutableMap<string, Tool>;
+  who: 'ai';
+};
+
+export type ChatEntry = ChatEntryAI | ChatEntryUser;

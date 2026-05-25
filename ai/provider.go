@@ -7,6 +7,7 @@ import (
 	"github.com/kiali/kiali/ai/providers"
 	anthropicProvider "github.com/kiali/kiali/ai/providers/anthropic"
 	googleProvider "github.com/kiali/kiali/ai/providers/google"
+	lightspeedProvider "github.com/kiali/kiali/ai/providers/lightspeed"
 	openaiProvider "github.com/kiali/kiali/ai/providers/openai"
 	"github.com/kiali/kiali/config"
 )
@@ -20,6 +21,7 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	if err != nil {
 		return nil, err
 	}
+
 	model, err := getModel(*provider, modelName)
 	if err != nil {
 		return nil, err
@@ -31,6 +33,8 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 		return anthropicProvider.NewAnthropicProvider(conf, provider, model)
 	case config.GoogleProvider:
 		return googleProvider.NewGoogleAIProvider(conf, provider, model)
+	case config.LightSpeedProvider:
+		return lightspeedProvider.NewLightSpeedProvider(conf, provider, model)
 	default:
 		return nil, fmt.Errorf("unsupported provider type %q", provider.Type)
 	}

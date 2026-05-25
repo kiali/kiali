@@ -19,25 +19,25 @@ import { isValid } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
-  serviceName: string;
-  hasGateway: boolean;
   gateway: string;
-  isMesh: boolean;
   gateways: string[];
-  vsHosts: string[];
+  hasGateway: boolean;
+  isMesh: boolean;
   onGatewayChange: (valid: boolean, gateway: GatewaySelectorState) => void;
+  serviceName: string;
+  vsHosts: string[];
 };
 
 export type GatewaySelectorState = {
   addGateway: boolean;
+  addMesh: boolean;
+  gatewayClass: string;
   gwHosts: string;
   gwHostsValid: boolean;
-  newGateway: boolean;
-  selectedGateway: string;
-  gatewayClass: string;
-  addMesh: boolean;
-  port: number;
   isOpen: boolean;
+  newGateway: boolean;
+  port: number;
+  selectedGateway: string;
 };
 
 enum GatewayForm {
@@ -61,20 +61,20 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
       gatewayClass: '',
       addMesh: props.isMesh,
       port: 80,
-      isOpen: false,
+      isOpen: false
     };
   }
 
-  onToggleClick = () => {
-    this.setState((prevState) => ({ isOpen: !prevState.isOpen }));
+  onToggleClick = (): void => {
+    this.setState(prevState => ({ isOpen: !prevState.isOpen }));
   };
 
-  toggle = (toggleRef: React.Ref<any>) => (
+  toggle = (toggleRef: React.Ref<any>): React.ReactNode => (
     <MenuToggle
       ref={toggleRef}
       onClick={this.onToggleClick}
-      isExpanded={this.state.isOpen} 
-      isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0} 
+      isExpanded={this.state.isOpen}
+      isDisabled={!this.state.addGateway || this.state.newGateway || this.props.gateways.length === 0}
     >
       {this.state.selectedGateway ?? this.props.gateways[0]}
     </MenuToggle>
@@ -93,7 +93,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
     return true;
   };
 
-  onFormChange = (component: GatewayForm, value: string) => {
+  onFormChange = (component: GatewayForm, value: string): void => {
     switch (component) {
       case GatewayForm.SWITCH:
         this.setState(
@@ -136,7 +136,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
         this.setState(
           {
             selectedGateway: value,
-            isOpen: false,
+            isOpen: false
           },
           () => this.props.onGatewayChange(this.isGatewayValid(), this.state)
         );
@@ -182,14 +182,13 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
     return this.isMeshGatewayValid() && this.state.gwHostsValid;
   };
 
-  render() {
+  render(): React.ReactNode {
     return (
       <Form isHorizontal={true}>
         <FormGroup label={t('Add Gateway')} fieldId="gatewaySwitch">
           <Switch
             id="advanced-gwSwitch"
             label={' '}
-            
             isChecked={this.state.addGateway}
             onChange={() => this.onFormChange(GatewayForm.SWITCH, '')}
           />
@@ -200,11 +199,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
             <FormGroup fieldId="includeMesh">
               <Checkbox
                 id="includeMesh"
-                label={
-                  <>
-                  {t('Include mesh gateway')}
-                  </>
-                }
+                label={<>{t('Include mesh gateway')}</>}
                 isDisabled={!this.state.addGateway}
                 isChecked={this.state.addMesh}
                 onChange={() => this.onFormChange(GatewayForm.MESH, '')}
@@ -237,29 +232,29 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
             </FormGroup>
             {!this.state.newGateway && (
               <FormGroup fieldId="selectGateway" label={t('Gateway')}>
-              {this.props.gateways.length > 0 && (
-                <Select
-                  id="selectGateway"
-                  isOpen={this.state.isOpen}
-                  selected={this.state.selectedGateway}
-                  onSelect={(_event, gw) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw as string)}
-                  onOpenChange={(isOpen: boolean) => {
-                    this.setState({ isOpen });
-                  }}
-                  toggle={this.toggle}
-                  shouldFocusToggleOnSelect
-                >
-                  <SelectList>
-                    {this.props.gateways.map(gw => (
-                      <SelectOption key={gw} value={gw}>
-                        {gw}
-                      </SelectOption>
-                    ))}
-                  </SelectList>
-                </Select>
-              )}
-              {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
-            </FormGroup>
+                {this.props.gateways.length > 0 && (
+                  <Select
+                    id="selectGateway"
+                    isOpen={this.state.isOpen}
+                    selected={this.state.selectedGateway}
+                    onSelect={(_event, gw) => this.onFormChange(GatewayForm.GATEWAY_SELECTED, gw as string)}
+                    onOpenChange={(isOpen: boolean) => {
+                      this.setState({ isOpen });
+                    }}
+                    toggle={this.toggle}
+                    shouldFocusToggleOnSelect
+                  >
+                    <SelectList>
+                      {this.props.gateways.map(gw => (
+                        <SelectOption key={gw} value={gw}>
+                          {gw}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                )}
+                {this.props.gateways.length === 0 && <>There are no gateways to select.</>}
+              </FormGroup>
             )}
             {this.state.newGateway && (
               <>
@@ -286,8 +281,10 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
                     <HelperText>
                       <HelperTextItem>
                         {isValid(this.state.gwHostsValid)
-                          ? t('One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.')
-                          : t('Gateway hosts should be specified using FQDN format or \'*\' wildcard.')}
+                          ? t(
+                              'One or more hosts exposed by this gateway. Enter one or multiple hosts separated by comma.'
+                            )
+                          : t("Gateway hosts should be specified using FQDN format or '*' wildcard.")}
                       </HelperTextItem>
                     </HelperText>
                   </FormHelperText>

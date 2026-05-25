@@ -5,22 +5,21 @@ import { t } from 'utils/I18nUtils';
 
 export type RouteTimeoutProps = {
   isTimeout: boolean;
-  timeout: string;
   isValid: boolean;
   onTimeout: (isTimeout: boolean, timeout: string) => void;
+  timeout: string;
 };
 
 const timeoutMsg = t('Timeout for HTTP requests. Format: 1h/1m/1s/1ms. MUST be >=1ms.');
 
 export class RouteTimeout extends React.Component<RouteTimeoutProps> {
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         <FormGroup label={t('Add HTTP Timeout')} fieldId="timeoutSwitch">
           <Switch
             id="timeoutSwitch"
             label={' '}
-            
             isChecked={this.props.isTimeout}
             onChange={() => this.props.onTimeout(!this.props.isTimeout, this.props.timeout)}
           />
