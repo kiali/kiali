@@ -142,6 +142,34 @@ jobs:
           SUMMARY_OUTPUT="$(mktemp)"
           trap 'rm -f "${SUMMARY_OUTPUT}"' EXIT
           "${MCPCHECKER}" result summary "${RESULTS_JSON}" -o json > "${SUMMARY_OUTPUT}"
+          jq 'if type == "array" then
+                def extract_total_tokens:
+                  try ((.taskOutput // "")
+                    | capture("(?s).*\"total_tokens\":(?<n>[0-9]+).*").n
+                    | tonumber)
+                  catch 0;
+                def assertion_count:
+                  (.assertionResults // {}) | to_entries | length;
+                def passed_assertion_count:
+                  (.assertionResults // {}) | to_entries | map(select(.value.passed == true)) | length;
+                {
+                  tasksTotal: length,
+                  tasksPassed: (map(select(.taskPassed == true)) | length),
+                  assertionsTotal: (map(assertion_count) | add // 0),
+                  assertionsPassed: (map(passed_assertion_count) | add // 0),
+                  totalTokensEstimate: (map(extract_total_tokens) | add // 0),
+                  totalMcpSchemaTokens: (map(.tokenEstimate.mcpSchemaTokens // 0) | add // 0),
+                  tasks: map({
+                    name: (.taskName // .taskPath // "unknown"),
+                    taskPassed: (.taskPassed // false),
+                    tokensEstimated: extract_total_tokens,
+                    mcpSchemaTokens: (.tokenEstimate.mcpSchemaTokens // 0)
+                  })
+                }
+                | .taskPassRate = if .tasksTotal == 0 then 0 else (.tasksPassed / .tasksTotal) end
+                | .assertionPassRate = if .assertionsTotal == 0 then 0 else (.assertionsPassed / .assertionsTotal) end
+              else . end' "${SUMMARY_OUTPUT}" > "${SUMMARY_OUTPUT}.normalized"
+          mv "${SUMMARY_OUTPUT}.normalized" "${SUMMARY_OUTPUT}"
           TASKS_TOTAL="$(jq -r '.tasksTotal' "${SUMMARY_OUTPUT}")"
           TASKS_PASSED="$(jq -r '.tasksPassed' "${SUMMARY_OUTPUT}")"
           ASSERTIONS_TOTAL="$(jq -r '.assertionsTotal' "${SUMMARY_OUTPUT}")"
@@ -289,7 +317,9 @@ jobs:
 
         make mcp-update-token-readme
         echo "Updated baseline summary:"
-        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json | head -c 2000
+        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json \
+          | jq 'if type == "array" then def extract_total_tokens: try ((.taskOutput // "") | capture("(?s).*\"total_tokens\":(?<n>[0-9]+).*").n | tonumber) catch 0; def assertion_count: (.assertionResults // {}) | to_entries | length; def passed_assertion_count: (.assertionResults // {}) | to_entries | map(select(.value.passed == true)) | length; { tasksTotal: length, tasksPassed: (map(select(.taskPassed == true)) | length), assertionsTotal: (map(assertion_count) | add // 0), assertionsPassed: (map(passed_assertion_count) | add // 0), totalTokensEstimate: (map(extract_total_tokens) | add // 0), totalMcpSchemaTokens: (map(.tokenEstimate.mcpSchemaTokens // 0) | add // 0), tasks: map({ name: (.taskName // .taskPath // "unknown"), taskPassed: (.taskPassed // false), tokensEstimated: extract_total_tokens, mcpSchemaTokens: (.tokenEstimate.mcpSchemaTokens // 0) }) } | .taskPassRate = if .tasksTotal == 0 then 0 else (.tasksPassed / .tasksTotal) end | .assertionPassRate = if .assertionsTotal == 0 then 0 else (.assertionsPassed / .assertionsTotal) end else . end' \
+          | head -c 2000
         echo
 
     - name: Create PR with updated baseline

@@ -122,11 +122,11 @@ mcp-eval-summary:
 
 ## mcp-eval-summary-json: Print summary JSON to stdout (same as: mcpchecker result summary <eval.json> -o json)
 mcp-eval-summary-json:
-	@if [ ! -f ${MCP_EVAL_RESULTS} ]; then \
-		echo "No results file found at ${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
+	@if [ ! -f ${ROOTDIR}/${MCP_EVAL_RESULTS} ]; then \
+		echo "No results file found at ${ROOTDIR}/${MCP_EVAL_RESULTS}. Run 'make mcp-run-eval' first."; \
 		exit 1; \
 	fi
-	@${MCPCHECKER_BIN} result summary ${MCP_EVAL_RESULTS} --output json
+	@${MCPCHECKER_BIN} result summary ${ROOTDIR}/${MCP_EVAL_RESULTS} --output json | jq 'if type == "array" then def extract_total_tokens: try ((.taskOutput // "") | capture("(?s).*\"total_tokens\":(?<n>[0-9]+).*").n | tonumber) catch 0; def assertion_count: (.assertionResults // {}) | to_entries | length; def passed_assertion_count: (.assertionResults // {}) | to_entries | map(select(.value.passed == true)) | length; { tasksTotal: length, tasksPassed: (map(select(.taskPassed == true)) | length), assertionsTotal: (map(assertion_count) | add // 0), assertionsPassed: (map(passed_assertion_count) | add // 0), totalTokensEstimate: (map(extract_total_tokens) | add // 0), totalMcpSchemaTokens: (map(.tokenEstimate.mcpSchemaTokens // 0) | add // 0), tasks: map({ name: (.taskName // .taskPath // "unknown"), taskPassed: (.taskPassed // false), tokensEstimated: extract_total_tokens, mcpSchemaTokens: (.tokenEstimate.mcpSchemaTokens // 0) }) } | .taskPassRate = if .tasksTotal == 0 then 0 else (.tasksPassed / .tasksTotal) end | .assertionPassRate = if .assertionsTotal == 0 then 0 else (.assertionsPassed / .assertionsTotal) end else . end'
 
 ## mcp-eval-diff: Compare two check outputs in markdown. Usage: make mcp-eval-diff MCP_DIFF_BASE=main.json MCP_DIFF_CURRENT=pr.json
 mcp-eval-diff:

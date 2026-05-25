@@ -34,6 +34,34 @@ TOKEN_FILE="$(mktemp)"
 trap 'rm -f "${TOKEN_FILE}"' EXIT
 
 "${MCPCHECKER}" result summary "${EVAL_OUT}" -o json > "${TOKEN_FILE}"
+jq 'if type == "array" then
+      def extract_total_tokens:
+        try ((.taskOutput // "")
+          | capture("(?s).*\"total_tokens\":(?<n>[0-9]+).*").n
+          | tonumber)
+        catch 0;
+      def assertion_count:
+        (.assertionResults // {}) | to_entries | length;
+      def passed_assertion_count:
+        (.assertionResults // {}) | to_entries | map(select(.value.passed == true)) | length;
+      {
+        tasksTotal: length,
+        tasksPassed: (map(select(.taskPassed == true)) | length),
+        assertionsTotal: (map(assertion_count) | add // 0),
+        assertionsPassed: (map(passed_assertion_count) | add // 0),
+        totalTokensEstimate: (map(extract_total_tokens) | add // 0),
+        totalMcpSchemaTokens: (map(.tokenEstimate.mcpSchemaTokens // 0) | add // 0),
+        tasks: map({
+          name: (.taskName // .taskPath // "unknown"),
+          taskPassed: (.taskPassed // false),
+          tokensEstimated: extract_total_tokens,
+          mcpSchemaTokens: (.tokenEstimate.mcpSchemaTokens // 0)
+        })
+      }
+      | .taskPassRate = if .tasksTotal == 0 then 0 else (.tasksPassed / .tasksTotal) end
+      | .assertionPassRate = if .assertionsTotal == 0 then 0 else (.assertionsPassed / .assertionsTotal) end
+    else . end' "${TOKEN_FILE}" > "${TOKEN_FILE}.normalized"
+mv "${TOKEN_FILE}.normalized" "${TOKEN_FILE}"
 
 TASKS_TOTAL=$(jq -r '.tasksTotal' "${TOKEN_FILE}")
 TASKS_PASSED=$(jq -r '.tasksPassed' "${TOKEN_FILE}")
