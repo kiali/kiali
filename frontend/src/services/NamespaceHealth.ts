@@ -25,7 +25,6 @@ const healthFetchErrorMessage = (
   error: unknown
 ): string => {
   const namespaceList = chunk.join(',');
-  const clusterName = cluster ?? 'default';
 
   if (totalChunks === 1) {
     const namespaceContext =
