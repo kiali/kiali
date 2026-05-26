@@ -18,8 +18,6 @@ on:
         required: false
         type: string
         default: "main"
-  issue_comment:
-    types: [created]
   push:
     paths:
     - 'routing/routes.go'
@@ -54,70 +52,21 @@ on:
         type: string
         default: "main"
 
-permissions:
-  contents: read
-  pull-requests: read
-
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'issue_comment' && format('pr-{0}', github.event.issue.number) || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
+  KUBERNETES_MCP_SERVER_REF: ${{ inputs.kubernetes_mcp_server_ref || 'main' }}
+  ISTIO_VERSION: ${{ inputs.istio_version || '' }}
+
 jobs:
-  check-trigger:
-    name: Check trigger
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.pull_request &&
-       contains(github.event.comment.body, '/mcp-contract-tests'))
-    outputs:
-      should-run: ${{ steps.check.outputs.should_run }}
-      target_branch: ${{ steps.check.outputs.target_branch }}
-      build_branch: ${{ steps.check.outputs.build_branch }}
-      kubernetes_mcp_server_ref: ${{ steps.check.outputs.kubernetes_mcp_server_ref }}
-      istio_version: ${{ steps.check.outputs.istio_version }}
-    steps:
-    - name: Resolve trigger context
-      id: check
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-          PERMISSION=$(gh api "repos/${{ github.repository }}/collaborators/${{ github.event.comment.user.login }}/permission" --jq '.permission')
-
-          if [[ "$PERMISSION" != "admin" && "$PERMISSION" != "write" ]]; then
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "User ${{ github.event.comment.user.login }} does not have permission to trigger MCP contract tests"
-            exit 0
-          fi
-
-          PR_NUMBER="${{ github.event.issue.number }}"
-          PR_SHA=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json headRefOid --jq '.headRefOid')
-          BASE_REF=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json baseRefName --jq '.baseRefName')
-
-          echo "should_run=true" >> "$GITHUB_OUTPUT"
-          echo "target_branch=${BASE_REF}" >> "$GITHUB_OUTPUT"
-          echo "build_branch=${PR_SHA}" >> "$GITHUB_OUTPUT"
-          echo "kubernetes_mcp_server_ref=main" >> "$GITHUB_OUTPUT"
-          echo "istio_version=" >> "$GITHUB_OUTPUT"
-          echo "Pinned to PR SHA: ${PR_SHA}"
-        else
-          echo "should_run=true" >> "$GITHUB_OUTPUT"
-          echo "target_branch=${{ inputs.target_branch || github.base_ref || github.ref_name }}" >> "$GITHUB_OUTPUT"
-          echo "build_branch=${{ inputs.build_branch || inputs.target_branch || github.ref_name }}" >> "$GITHUB_OUTPUT"
-          echo "kubernetes_mcp_server_ref=${{ inputs.kubernetes_mcp_server_ref || 'main' }}" >> "$GITHUB_OUTPUT"
-          echo "istio_version=${{ inputs.istio_version || '' }}" >> "$GITHUB_OUTPUT"
-        fi
-
   mcp_contract_tests:
     name: MCP Contract Tests
-    needs: [check-trigger]
-    if: needs.check-trigger.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     env:
-      TARGET_BRANCH: ${{ needs.check-trigger.outputs.target_branch }}
-      BUILD_BRANCH: ${{ needs.check-trigger.outputs.build_branch }}
-      ISTIO_VERSION: ${{ needs.check-trigger.outputs.istio_version }}
       CI: 1
       TERM: xterm
     steps:
@@ -131,13 +80,9 @@ jobs:
       with:
         version: 'v3.18.4'
 
-    # Corepack must be enabled before setup-node so that setup-node's
-    # cache: yarn correctly detects the Yarn 4 cache directory.
     - name: Enable corepack
       run: corepack enable
 
-    # This caches the yarn deps but does not touch node_modules so it's still necessary
-    # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
       uses: actions/setup-node@v6
       with:
@@ -181,11 +126,9 @@ jobs:
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
       run: |
-        # Wait for Kiali LoadBalancer to get an external IP
         echo "Waiting for Kiali LoadBalancer to get external IP..."
         kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=300s
 
-        # Get the external IP from MetalLB
         KIALI_IP=$(kubectl get svc kiali -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         if [ -z "$KIALI_IP" ]; then
           echo "ERROR: Failed to get Kiali LoadBalancer IP"
@@ -193,12 +136,10 @@ jobs:
           exit 1
         fi
 
-        # Kiali service uses port 80, so the URL is http://IP/kiali
         KIALI_URL="http://${KIALI_IP}/kiali"
         echo "Kiali URL: $KIALI_URL"
         echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
 
-        # Verify Kiali is accessible
         echo "Verifying Kiali is accessible at ${KIALI_URL}..."
         for i in {1..30}; do
           CURL_OUTPUT=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${KIALI_URL}/api/status" 2>&1)
@@ -230,7 +171,7 @@ jobs:
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
-        ref: ${{ needs.check-trigger.outputs.kubernetes_mcp_server_ref }}
+        ref: ${{ env.KUBERNETES_MCP_SERVER_REF }}
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@v6
