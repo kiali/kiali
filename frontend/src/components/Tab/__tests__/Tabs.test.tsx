@@ -19,15 +19,8 @@ jest.mock('config/ServerConfig', () => ({
   serverConfig: { ambientEnabled: false }
 }));
 
-jest.mock('../../../utils/SearchParamUtils', () => ({
-  isKioskMode: jest.fn(() => false)
-}));
-
 import { store } from '../../../store/ConfigStore';
 import { ParameterizedTabs } from '../Tabs';
-import { isKioskMode } from '../../../utils/SearchParamUtils';
-
-const mockedIsKioskMode = isKioskMode as jest.Mock;
 
 const defaultProps = {
   activeTab: 'info',
@@ -48,30 +41,14 @@ const renderTabs = (actionsToolbar?: React.ReactNode): ReturnType<typeof render>
   );
 };
 
-afterEach(() => {
-  mockedIsKioskMode.mockReturnValue(false);
-});
-
-describe('ParameterizedTabs actionsToolbar visibility', () => {
-  it('renders actionsToolbar when not in kiosk mode', () => {
-    mockedIsKioskMode.mockReturnValue(false);
-
+describe('ParameterizedTabs actionsToolbar rendering', () => {
+  it('renders actionsToolbar when prop is provided', () => {
     const { container } = renderTabs(<span data-testid="toolbar-action">Action</span>);
 
     expect(container.querySelector('[data-testid="toolbar-action"]')).toBeTruthy();
   });
 
-  it('hides actionsToolbar when in kiosk mode', () => {
-    mockedIsKioskMode.mockReturnValue(true);
-
-    const { queryByTestId } = renderTabs(<span data-testid="toolbar-action">Action</span>);
-
-    expect(queryByTestId('toolbar-action')).toBeNull();
-  });
-
-  it('renders without actionsToolbar when prop is not provided', () => {
-    mockedIsKioskMode.mockReturnValue(false);
-
+  it('does not render actionsToolbar when prop is not provided', () => {
     const { queryByTestId } = renderTabs();
 
     expect(queryByTestId('toolbar-action')).toBeNull();
