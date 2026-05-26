@@ -42,7 +42,7 @@ on:
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
 
 jobs:
   mcp_contract_tests:
