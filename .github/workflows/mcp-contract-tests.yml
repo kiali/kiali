@@ -34,33 +34,15 @@ on:
     - 'v*.*'
   workflow_dispatch:
     inputs:
-      target_branch:
-        required: false
-        type: string
-        default: ""
-      build_branch:
-        required: false
-        type: string
-        default: ""
-      istio_version:
-        required: false
-        type: string
-        default: ""
       kubernetes_mcp_server_ref:
         description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
         required: false
         type: string
         default: "main"
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
-  KUBERNETES_MCP_SERVER_REF: ${{ inputs.kubernetes_mcp_server_ref || 'main' }}
-  ISTIO_VERSION: ${{ inputs.istio_version || '' }}
 
 jobs:
   mcp_contract_tests:
@@ -80,26 +62,25 @@ jobs:
       with:
         version: 'v3.18.4'
 
+    # Corepack must be enabled before setup-node so that setup-node's
+    # cache: yarn correctly detects the Yarn 4 cache directory.
     - name: Enable corepack
       run: corepack enable
 
+    # This caches the yarn deps but does not touch node_modules so it's still necessary
+    # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
       uses: actions/setup-node@v6
       with:
         node-version: "24"
         cache: yarn
         cache-dependency-path: frontend/yarn.lock
-
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
         cache: true
         cache-dependency-path: go.sum
-
-    - name: Install frontend dependencies
-      working-directory: ./frontend
-      run: yarn install --immutable
 
     - name: Download go binary
       if: github.event_name == 'workflow_call'
@@ -108,27 +89,30 @@ jobs:
         name: kiali
         path: ~/go/bin/
 
-    - name: Build Kiali binary for standalone triggers
-      if: github.event_name != 'workflow_call'
-      run: make build-ui clean build
-
     - name: Ensure kiali binary is executable
+      if: github.event_name == 'workflow_call'
       run: chmod +x ~/go/bin/kiali
 
+    - name: Build Kiali binary for direct workflow runs
+      if: github.event_name != 'workflow_call'
+      run: make clean-all build-ui build
+
+    - name: Install frontend dependencies
+      if: github.event_name == 'workflow_call'
+      working-directory: ./frontend
+      run: yarn install --immutable
+
     - name: Setup KinD cluster with Istio and Kiali
-      run: |
-        ISTIO_VERSION_ARG=""
-        if [ -n "${ISTIO_VERSION}" ]; then
-          ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
-        fi
-        hack/run-integration-tests.sh --test-suite backend --setup-only true ${ISTIO_VERSION_ARG}
+      run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
       run: |
+        # Wait for Kiali LoadBalancer to get an external IP
         echo "Waiting for Kiali LoadBalancer to get external IP..."
         kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=300s
 
+        # Get the external IP from MetalLB
         KIALI_IP=$(kubectl get svc kiali -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         if [ -z "$KIALI_IP" ]; then
           echo "ERROR: Failed to get Kiali LoadBalancer IP"
@@ -136,10 +120,12 @@ jobs:
           exit 1
         fi
 
+        # Kiali service uses port 80, so the URL is http://IP/kiali
         KIALI_URL="http://${KIALI_IP}/kiali"
         echo "Kiali URL: $KIALI_URL"
         echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
 
+        # Verify Kiali is accessible
         echo "Verifying Kiali is accessible at ${KIALI_URL}..."
         for i in {1..30}; do
           CURL_OUTPUT=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${KIALI_URL}/api/status" 2>&1)
@@ -171,7 +157,7 @@ jobs:
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
-        ref: ${{ env.KUBERNETES_MCP_SERVER_REF }}
+        ref: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@v6
@@ -201,3 +187,4 @@ jobs:
       with:
         name: debug-info-mcp-contract-tests
         path: debug-output
+
