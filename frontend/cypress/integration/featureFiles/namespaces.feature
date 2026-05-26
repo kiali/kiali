@@ -60,8 +60,8 @@ Feature: Kiali Namespaces page
   @offline
   Scenario: Filter namespaces by name
     When user selects filter "Namespace"
-    And user filters for name "alpha"
-    Then user sees the "alpha" namespace in the namespaces page
+    And user filters for name "bookinfo"
+    Then user sees the "bookinfo" namespace in the namespaces page
     And table length should be 1
 
   @core-caching
