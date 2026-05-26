@@ -83,15 +83,22 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download go binary
+      if: github.event_name == 'workflow_call'
       uses: actions/download-artifact@v8
       with:
         name: kiali
         path: ~/go/bin/
 
     - name: Ensure kiali binary is executable
+      if: github.event_name == 'workflow_call'
       run: chmod +x ~/go/bin/kiali
 
+    - name: Build Kiali binary for manual dispatch
+      if: github.event_name == 'workflow_dispatch'
+      run: make clean-all build-ui build
+
     - name: Install frontend dependencies
+      if: github.event_name == 'workflow_call'
       working-directory: ./frontend
       run: yarn install --immutable
 
