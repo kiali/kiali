@@ -32,7 +32,7 @@ const healthFetchErrorMessage = (
     return `Failed to fetch namespace health for cluster ${clusterName} (${namespaceContext}): ${errorMessage(error)}`;
   }
 
-  return `Failed to fetch namespace health chunk ${chunkIndex + 1}/${totalChunks} for cluster ${clusterName} (${
+  return `Failed to fetch namespace health chunk ${chunkIndex + 1}/${totalChunks} for cluster ${cluster} (${
     chunk.length
   } namespaces: ${namespaceList}): ${errorMessage(error)}`;
 };
