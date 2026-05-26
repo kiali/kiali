@@ -215,22 +215,17 @@ func GetStoreConversation(
 
 func StoreConversation(aiProvider AIProvider, ctx context.Context, aiStore types.AIStore, ptr *types.Conversation, sessionID string, req types.AIRequest) {
 	if aiStore.Enabled() {
-		if err := ctx.Err(); err != nil {
-			log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
-			return
-		}
 		// Clean conversation by removing tool messages that are not useful for storage
 		CleanConversation(ptr)
 		if aiStore.ReduceWithAI() {
 			if err := ctx.Err(); err != nil {
-				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
-				return
-			}
-			// Reduce the conversation with AI
-			aiProvider.ReduceConversation(ctx, ptr, aiStore.ReduceThreshold())
-			if err := ctx.Err(); err != nil {
-				log.Errorf("[Chat AI] Failed to store conversation for session ID: %s and conversation ID: %s: %v", sessionID, req.ConversationID, err)
-				return
+				log.Warningf("[Chat AI] Skipping conversation reduction for session ID: %s and conversation ID: %s due to canceled context: %v", sessionID, req.ConversationID, err)
+			} else {
+				// Reduce the conversation with AI
+				aiProvider.ReduceConversation(ctx, ptr, aiStore.ReduceThreshold())
+				if err := ctx.Err(); err != nil {
+					log.Warningf("[Chat AI] Storing unreduced conversation for session ID: %s and conversation ID: %s due to canceled context after reduction: %v", sessionID, req.ConversationID, err)
+				}
 			}
 		}
 		err := aiStore.SetConversation(sessionID, req.ConversationID, ptr)

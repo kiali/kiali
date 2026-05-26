@@ -33,14 +33,14 @@ func getBearerToken(r *http.Request, conf *config.Config) string {
 	return info.Token
 }
 
-func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
 	bearerToken := getBearerToken(r, kialiInterface.Conf)
 	p.client.SetAuthToken(bearerToken)
 	authorizedResponse, code, err := p.client.Authorized(r.Context(), "")
 	if err != nil {
 		providers.Log(p, providers.LogLevelError, "Error", "Error authorizing user: %v", err)
 		providers.StreamError(onChunk, handleErrorCodeAuthorized(code))
-		return
+		return types.TokenUsage{}
 	}
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "The user %s is logged-in and authorized to access OLS", authorizedResponse.Username)
 	request := &client.LLMRequest{
@@ -54,6 +54,7 @@ func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Reques
 		providers.Log(p, providers.LogLevelError, "Error", "Error querying OLS: %v", err)
 		providers.StreamError(onChunk, fmt.Sprintf("[%s] %s", handleErrorCodeQuery(code), err.Error()))
 	}
+	return types.TokenUsage{}
 }
 
 func handleErrorCodeQuery(code int) string {

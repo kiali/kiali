@@ -99,6 +99,9 @@ export interface ChatbotAI {
     }[];
     name: string;
   }[];
+  store?: {
+    enabled?: boolean;
+  };
 }
 // Scenario definitions
 const scenarios: Record<MockScenario, ScenarioConfig> = {

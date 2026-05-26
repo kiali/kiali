@@ -50,6 +50,10 @@ func (s *openaiTestStore) SetConversation(sessionID, conversationID string, c *t
 
 func (s *openaiTestStore) GetConversationIDs(_ string) []string           { return nil }
 func (s *openaiTestStore) DeleteConversations(_ string, _ []string) error { return nil }
+func (s *openaiTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+	return nil
+}
+func (s *openaiTestStore) GetUsageMetrics(_ string) []types.UsageMetric { return nil }
 
 // --- fake OpenAI HTTP server ---
 
@@ -235,7 +239,7 @@ func TestOpenAI_SendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.
 	kialiInterface := newOpenAITestKialiInterface("session-1")
 
 	var chunks []string
-	provider.SendChat(
+	usage := provider.SendChat(
 		func(chunk string) { chunks = append(chunks, chunk) },
 		kialiInterface.Request,
 		types.AIRequest{ConversationID: "conv-1", Query: "hello"},
@@ -252,6 +256,7 @@ func TestOpenAI_SendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.
 	assert.Equal(t, "user", stored.Conversation[1].Role)
 	assert.Equal(t, "assistant", stored.Conversation[2].Role)
 	assert.Equal(t, "Hello from OpenAI", stored.Conversation[2].Content)
+	assert.Equal(t, types.NewTokenUsage(10, 5, 15), usage)
 }
 
 func TestOpenAI_SendChat_MultiTurnPreservesHistory(t *testing.T) {

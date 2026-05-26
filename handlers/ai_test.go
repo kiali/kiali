@@ -754,6 +754,89 @@ func TestChatAI_FullStreamingResponse(t *testing.T) {
 	assert.Contains(t, respStr, "Hello from the AI")
 }
 
+func TestChatAI_RecordsUsageFromStreamingEndEvent(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	handler, _, aiStore := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	mr.Handle("/api/chat/session/usage", WithFakeAuthInfo(conf, ChatSessionUsage(conf, aiStore)))
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	_, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	metrics := aiStore.GetUsageMetrics("anonymous")
+	require.Len(t, metrics, 1)
+	assert.Equal(t, "openai", metrics[0].Provider)
+	assert.Equal(t, "gpt-4o", metrics[0].Model)
+	assert.Equal(t, int64(5), metrics[0].PromptTokens)
+	assert.Equal(t, int64(5), metrics[0].CompletionTokens)
+	assert.Equal(t, int64(10), metrics[0].TotalTokens)
+	assert.Equal(t, []string{"c1"}, aiStore.GetConversationIDs(""))
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/chat/session/usage", nil)
+	require.NoError(t, err)
+	usageResp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer usageResp.Body.Close()
+	assert.Equal(t, http.StatusOK, usageResp.StatusCode)
+
+	var got []aiTypes.UsageMetric
+	require.NoError(t, json.NewDecoder(usageResp.Body).Decode(&got))
+	require.Len(t, got, 1)
+	assert.Equal(t, int64(10), got[0].TotalTokens)
+}
+
+func TestChatAI_ReturnsConversationIDsForSameAnonymousChatSession(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	handler, _, aiStore := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	mr.Handle("/api/chat/conversations", WithFakeAuthInfo(conf, ChatConversations(conf, aiStore)))
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	_, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/chat/conversations", nil)
+	require.NoError(t, err)
+
+	conversationsResp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer conversationsResp.Body.Close()
+	assert.Equal(t, http.StatusOK, conversationsResp.StatusCode)
+
+	var got []string
+	require.NoError(t, json.NewDecoder(conversationsResp.Body).Decode(&got))
+	assert.Equal(t, []string{"c1"}, got)
+}
+
 // noFlushWriter is an http.ResponseWriter that intentionally does NOT implement
 // http.Flusher, triggering the "Streaming unsupported" error path in ChatAI.
 type noFlushWriter struct {

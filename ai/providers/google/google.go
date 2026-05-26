@@ -16,10 +16,21 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func usageFromGenerateContentResponse(resp *genai.GenerateContentResponse) types.TokenUsage {
+	if resp == nil || resp.UsageMetadata == nil {
+		return types.TokenUsage{}
+	}
+
+	promptTokens := int64(resp.UsageMetadata.PromptTokenCount + resp.UsageMetadata.ToolUsePromptTokenCount)
+	completionTokens := int64(resp.UsageMetadata.CandidatesTokenCount + resp.UsageMetadata.ThoughtsTokenCount)
+
+	return types.NewTokenUsage(promptTokens, completionTokens, int64(resp.UsageMetadata.TotalTokenCount))
+}
+
+func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
 	if req.Query == "" {
 		providers.StreamError(onChunk, "query is required")
-		return
+		return types.TokenUsage{}
 	}
 
 	ctx := kialiInterface.Request.Context()
@@ -27,13 +38,14 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		client, err := genai.NewClient(ctx, &p.config)
 		if err != nil {
 			providers.StreamError(onChunk, err.Error())
-			return
+			return types.TokenUsage{}
 		}
 		p.client = client
 	}
 	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
 	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
+	usage := types.TokenUsage{}
 
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
@@ -68,7 +80,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	if err != nil {
 		providers.Log(p, providers.LogLevelError, "Error", "Error creating chat: %v", err)
 		providers.StreamError(onChunk, err.Error())
-		return
+		return types.TokenUsage{}
 	}
 
 	// nextParts and lastFunctionCalls are shared between streamTurn and prepareNextTurn
@@ -83,6 +95,8 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		var functionCalls []*genai.FunctionCall
 		text := ""
 		tokenID := 0
+		turnUsage := types.TokenUsage{}
+		sawTurnUsage := false
 
 		for chunk, err := range chat.SendMessageStream(ctx, nextParts...) {
 			if err != nil {
@@ -93,12 +107,19 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				return text, nil, err
 			}
 			functionCalls = append(functionCalls, chunk.FunctionCalls()...)
+			if chunk.UsageMetadata != nil {
+				turnUsage = usageFromGenerateContentResponse(chunk)
+				sawTurnUsage = turnUsage.HasTokens()
+			}
 			if t := chunk.Text(); t != "" {
 				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", t)
 				providers.SendStreamEvent(onChunk, providers.LLM_TOKEN_EVENT, types.StreamTokenData{ID: tokenID, Token: t})
 				text += t
 				tokenID++
 			}
+		}
+		if sawTurnUsage {
+			usage.Add(turnUsage)
 		}
 
 		if len(functionCalls) == 0 {
@@ -166,11 +187,17 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 
 		extraText := ""
 		tokenID := 0
+		extraUsage := types.TokenUsage{}
+		sawExtraUsage := false
 		for chunk, err := range chat.SendMessageStream(ctx, parts...) {
 			if err != nil {
 				providers.Log(p, providers.LogLevelError, "Error", "Error sending final message for excluded tools: %v", err)
 				providers.StreamError(onChunk, err.Error())
 				return false, extraText
+			}
+			if chunk.UsageMetadata != nil {
+				extraUsage = usageFromGenerateContentResponse(chunk)
+				sawExtraUsage = extraUsage.HasTokens()
 			}
 			if t := chunk.Text(); t != "" {
 				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", t)
@@ -179,12 +206,15 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				tokenID++
 			}
 		}
+		if sawExtraUsage {
+			usage.Add(extraUsage)
+		}
 		return false, extraText
 	}
 
 	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
 	if aborted {
-		return
+		return types.TokenUsage{}
 	}
 
 	if responseContent != "" {
@@ -198,8 +228,13 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
-		Actions: actions, ReferencedDocuments: referencedDocs, Truncated: false,
+		Actions:             actions,
+		InputTokens:         usage.PromptTokens,
+		OutputTokens:        usage.CompletionTokens,
+		ReferencedDocuments: referencedDocs,
+		Truncated:           false,
 	})
+	return usage
 }
 
 func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {

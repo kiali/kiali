@@ -89,6 +89,9 @@ export type ChatAIConfig = {
   defaultProvider: string;
   enabled: boolean;
   providers: ProviderAI[];
+  store: {
+    enabled: boolean;
+  };
 };
 
 export type Tool = {
@@ -128,3 +131,15 @@ type ChatEntryAI = {
 };
 
 export type ChatEntry = ChatEntryAI | ChatEntryUser;
+
+export type ChatSessionUsageMetric = {
+  completion_tokens: number;
+  last_updated: string;
+  model: string;
+  prompt_tokens: number;
+  provider: string;
+  request_count: number;
+  since: string;
+  total_tokens: number;
+  user_id: string;
+};
