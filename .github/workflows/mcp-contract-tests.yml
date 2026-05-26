@@ -93,8 +93,8 @@ jobs:
       if: github.event_name == 'workflow_call'
       run: chmod +x ~/go/bin/kiali
 
-    - name: Build Kiali binary for manual dispatch
-      if: github.event_name == 'workflow_dispatch'
+    - name: Build Kiali binary for direct workflow runs
+      if: github.event_name != 'workflow_call'
       run: make clean-all build-ui build
 
     - name: Install frontend dependencies
