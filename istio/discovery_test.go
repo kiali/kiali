@@ -1737,7 +1737,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				}
 			},
 			expectedNamespacesByRev: map[clusterRevisionKey][]string{
-				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
 			},
 		},
 		"bookinfo with default tag should manage one namespace": {
@@ -2154,6 +2154,16 @@ func TestDiscoverWithTags(t *testing.T) {
 			for _, cp := range mesh.ControlPlanes {
 				require.NotNil(cp.Tag)
 				require.Equal(cp.Revision, cp.Tag.Revision)
+				t.Logf("[DEBUG] Revision=%s  ManagedNamespaces=%v\n",
+				cp.Revision,
+				func() []string {
+					names := []string{}
+					for _, ns := range cp.ManagedNamespaces {
+						names = append(names, ns.Name)
+					}
+					return names
+				}(),)
+
 			}
 			for clusterRev, expectedNamespaces := range tc.expectedNamespacesByRev {
 				controlPlane := slicetest.FindOrFail(t, mesh.ControlPlanes, func(cp models.ControlPlane) bool {
