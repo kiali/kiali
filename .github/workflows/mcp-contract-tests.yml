@@ -171,7 +171,12 @@ jobs:
       run: chmod +x ~/go/bin/kiali
 
     - name: Setup KinD cluster with Istio and Kiali
-      run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${ISTIO_VERSION}" ]; then echo "--istio-version ${ISTIO_VERSION}"; fi)
+      run: |
+        ISTIO_VERSION_ARG=""
+        if [ -n "${ISTIO_VERSION}" ]; then
+          ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+        fi
+        hack/run-integration-tests.sh --test-suite backend --setup-only true ${ISTIO_VERSION_ARG}
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
