@@ -1883,6 +1883,5 @@ func NewRoutes(
 			true,
 		},
 	}
-
 	return
 }
