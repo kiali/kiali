@@ -19,13 +19,6 @@ func (p *OpenAIProvider) GetName() string {
 	return "OpenAI"
 }
 
-func usageFromChatCompletion(resp *openai.ChatCompletion) types.TokenUsage {
-	if resp == nil {
-		return types.TokenUsage{}
-	}
-	return types.NewTokenUsage(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
-}
-
 func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
 	if req.Query == "" {
 		providers.StreamError(onChunk, "query is required")
