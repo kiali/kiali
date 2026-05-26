@@ -7,7 +7,7 @@
 | Kubernetes Client Layer | 100 | 0 | 85 | — | pending (review needed) | [kubernetes-client.md](kubernetes-client.md) |
 | Graph Engine | 100 | 9 | 83 | — | PASS_WITH_ANNOTATIONS | [graph-engine.md](graph-engine.md) |
 | Observability Integrations and AI | 92 | 0 | 90 | — | PASS_WITH_ANNOTATIONS | [observability-and-ai.md](observability-and-ai.md) |
-| Authentication and Security | 100 | 18 | 86 | — | pending (review needed) | [auth-and-security.md](auth-and-security.md) |
+| Authentication and Security | 100 | 24 | 90 | — | PASS_WITH_ANNOTATIONS | [auth-and-security.md](auth-and-security.md) |
 | Frontend Architecture | 100 | 9 | 91 | — | pending (review needed) | [frontend-architecture.md](frontend-architecture.md) |
 | Build System and Dev Conventions | 100 | 0 | 78 | — | PASS | [build-and-dev-conventions.md](build-and-dev-conventions.md) |
 
@@ -30,4 +30,4 @@ No active stale flags.
 None detected across topics.
 
 ---
-*Updated by codebase-scribe — 2026-05-19. Scan SHA: 5b5a2d914858e50b0072a7b3fbf6c92e564908c1. Focus run: business-logic enriched with HealthMonitor pre-compute details. 1 topic remains drifted (backend-architecture). Run `/codebase-scribe` again to continue.*
+*Updated by codebase-scribe — 2026-05-26. Scan SHA: e762c602fed1704d53eee77d820fcfd130952a70. Focus run: auth-and-security enriched with CredentialManager/token rotation, Istio certificate info, and external service credentials sections. Review: PASS_WITH_ANNOTATIONS (2 minor xref annotations remaining). 1 topic remains drifted (backend-architecture). Run `/codebase-scribe` again to continue.*

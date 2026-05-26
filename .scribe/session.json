@@ -1,10 +1,10 @@
 {
   "version": "1.0",
   "branch": "claude-scribe-docs",
-  "last_active_sha": "5b5a2d914858e50b0072a7b3fbf6c92e564908c1",
-  "last_active_time": "2026-05-19T00:00:00Z",
+  "last_active_sha": "e762c602fed1704d53eee77d820fcfd130952a70",
+  "last_active_time": "2026-05-26T00:00:00Z",
   "current_phase": "focus-enrich",
-  "total_files_read": 288,
+  "total_files_read": 302,
   "topics": {
     "backend-architecture": {
       "phase_status": "drifted",
@@ -36,8 +36,8 @@
     },
     "auth-and-security": {
       "phase_status": "complete",
-      "files_read": 40,
-      "completeness": 86,
+      "files_read": 54,
+      "completeness": 88,
       "review": "pending"
     },
     "frontend-architecture": {

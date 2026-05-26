@@ -1,12 +1,12 @@
 ---
 scribe:
   title: "Authentication and Security"
-  description: "How Kiali authenticates users — five strategies, cookie-based session persistence, TLS policy resolution, and the JWT utility package."
-  watch_paths: [handlers/authentication/, jwt/, tlspolicy/]
-  scan: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+  description: "How Kiali authenticates users — five strategies, cookie-based session persistence, TLS policy resolution, the JWT utility package, and the CredentialManager for automatic token and CA bundle rotation."
+  watch_paths: [handlers/authentication/, jwt/, tlspolicy/, config/credentials.go, config/security/, models/mesh.go, istio/discovery.go]
+  scan: "e762c602fed1704d53eee77d820fcfd130952a70"
   freshness: 100
-  human_input: 18
-  completeness: 86
+  human_input: 24
+  completeness: 88
   inferred_sections:
     - {id: "overview", heading: "Overview"}
     - {id: "auth-controller-interface", heading: "The AuthController Interface"}
@@ -17,12 +17,14 @@ scribe:
     - {id: "context-propagation", heading: "Auth Context Propagation"}
     - {id: "jwt-package", heading: "JWT Package"}
     - {id: "tls-policy", heading: "TLS Policy Resolution"}
+    - {id: "external-service-credentials-configsecurity", heading: "External Service Credentials"}
+    - {id: "istio-cert-info", heading: "Istio Certificate Info"}
   stale_flags: []
 ---
 
 # Authentication and Security
 
-> TL;DR: Kiali supports five authentication strategies selected at startup. Each is backed by an `AuthController` implementation. Sessions are stored entirely client-side in AES-GCM encrypted cookies. The `tlspolicy` package resolves TLS settings from either explicit config or the OpenShift cluster profile.
+> TL;DR: Kiali supports five authentication strategies selected at startup. Each is backed by an `AuthController` implementation. Sessions are stored entirely client-side in AES-GCM encrypted cookies. The `tlspolicy` package resolves TLS settings from either explicit config or the OpenShift cluster profile. The `CredentialManager` (in `config/credentials.go`) handles automatic rotation of tokens and CA bundles by watching Kubernetes secret mount directories without requiring pod restarts.
 
 ## Overview
 
@@ -187,6 +189,8 @@ In-house validation (`validateOpenIdTokenInHouse`) currently requires RS256 algo
 - `auth.openid.http_proxy` / `https_proxy` — proxy for IdP connections.
 - Custom CA: via `kiali-cabundle` ConfigMap (`openid-server-ca.crt` or `additional-ca-bundle.pem`).
 
+**OIDC client secret rotation**: The client secret field (`auth.openid.client_secret`) uses the `Credential` type, so if it's mounted from a Kubernetes Secret at `/kiali-secret/oidc-secret`, the `CredentialManager` watches for changes and picks up the rotated secret automatically (`requestOpenIdToken` calls `conf.GetCredential(cfg.ClientSecret)` on each token exchange).
+
 ## Session Persistence
 
 ### CookieSessionPersistor
@@ -293,3 +297,127 @@ The profile's cipher names are in OpenSSL format; the resolver translates them t
 The `TLSPolicy` struct (`config.TLSPolicy`) is then applied to the server's `tls.Config` via an `ApplyTo` method. Both cipher resolution and default cipher list construction are done lazily with `sync.Once` guards.
 
 > Note: `tlspolicy` deals only with Kiali's own HTTPS listener TLS settings. Istio mTLS enforcement (mesh-wide, namespace, or workload-level) is handled by a separate business layer (`business/tls.go` and related types) that reads `PeerAuthentication` and `DestinationRule` resources from the cluster.
+
+## External Service Credentials (`config/security/`)
+
+`config/security/config_security.go` defines the in-memory credential types used when Kiali calls external services (Prometheus, Grafana, tracing, etc.):
+
+- **`security.Credentials`** — username/passphrase or bearer token for a single external endpoint. `ValidateCredentials()` enforces mutual exclusivity (username+passphrase XOR token). `GetHTTPAuthHeader()` returns the appropriate `Authorization` header value (`Bearer <token>` or `Basic <base64>`).
+- **`security.Identity`** — client TLS identity: `cert_file` + `private_key_file` paths for mTLS to external services.
+- **`security.TLS`** — `skip_certificate_validation` flag to disable server certificate verification for a specific external service connection.
+
+These types appear in `config.Auth` (under each external service block, e.g. `ExternalServices.Prometheus.Auth`). The `Token` field on `security.Credentials` is a plain `string`, not a `config.Credential` — token rotation for external-service auth is handled by the `CredentialManager` one level up (via `conf.GetCredential(auth.Token)` in `util/httputil`), not by `security.Credentials` itself.
+
+## CredentialManager and Token Rotation
+
+`config/credentials.go` implements `CredentialManager` — a singleton (one per `Config` instance) that handles file-backed credentials with automatic rotation. It is initialized in `config.Unmarshal()` and lives on `conf.Credentials`.
+
+### The Credential type
+
+`config.Credential` (a `string` typedef) is used for any config field that might be a file path. The convention is:
+
+- Values **starting with `/`** are treated as file paths; the manager reads content from disk and caches it.
+- All other values are returned as literals (backward compatibility with inline token strings).
+
+Fields using `Credential` include: `Auth.Token`, `Auth.Password`, `Auth.CertFile`, `Auth.KeyFile`, `LoginToken.SigningKey`, `Auth.OpenId.ClientSecret`, etc.
+
+To resolve a credential, callers use `conf.GetCredential(field)` rather than accessing the field directly. This indirection is what enables automatic rotation — the returned value is always the current on-disk content.
+
+### Initialization
+
+`config.Unmarshal()` calls `NewCredentialManager(caBundles)` where `caBundles` is determined by `getCABundlePaths(conf.Auth.Strategy)`:
+
+| Auth strategy | CA bundle paths loaded |
+|---|---|
+| `openshift` | `additional-ca-bundle.pem`, `oauth-server-ca.crt`, `service-ca.crt`, `/var/run/secrets/.../service-ca.crt` |
+| `openid` | `additional-ca-bundle.pem`, `openid-server-ca.crt` |
+| all others | `additional-ca-bundle.pem` |
+
+All paths are under `/kiali-cabundle/` (a projected volume that Kiali mounts from the `kiali-cabundle` ConfigMap). Files that don't exist are silently skipped — non-existence is expected when the operator hasn't configured that particular CA. The OpenShift service CA (`service-ca.crt`) is only loaded when strategy is `openshift` by design — it's specifically relevant to OpenShift OAuth TLS verification and shouldn't be in the trust store for other deployments.
+
+`NewCredentialManager` starts a background `watchFiles()` goroutine immediately and builds the initial cert pool by calling `rebuildCertPool()`. If the initial pool build fails, startup continues with system CAs only (no fatal exit) so file watching remains active for auto-recovery when valid certs are deployed.
+
+### How Kubernetes secret rotation is detected
+
+Kubernetes mounts secrets as a symlink indirection structure:
+
+```
+/secret-mount-path/
+├── ..data -> ..2024_01_15_10_30_00.123456   # Symlink to timestamped directory
+├── ..2024_01_15_10_30_00.123456/            # Directory with actual file content
+│   ├── token
+│   └── ca-bundle.crt
+├── token -> ..data/token                    # Per-file symlink through ..data
+└── ca-bundle.crt -> ..data/ca-bundle.crt
+```
+
+When a Secret is updated, Kubernetes atomically swaps `..data` to a new timestamped directory. The per-file symlinks (`token`, `ca-bundle.crt`) don't change — only `..data` does.
+
+This is why the `CredentialManager` watches for `..data` events rather than watching the individual credential files: the per-file symlinks (`/secret/token → ..data/token`) never change their symlink target, so an `fsnotify` watch on `/secret/token` would never fire on rotation. Only the `..data` symlink itself changes, producing a directory-level event. When a `..data` event fires, `handleEvent` calls `refreshDir(filepath.Dir(event.Name))`, which re-reads every credential file cached from that directory. Because the per-file symlinks now resolve through the new `..data` target, `os.ReadFile(path)` automatically returns the rotated content.
+
+For non-Kubernetes environments (direct file writes), `refreshCachedFile` guards against transient empty reads: if a re-read returns an empty string, the existing cached value is retained and the next event will trigger another attempt.
+
+### Cert pool management
+
+`rebuildCertPool()` combines system CAs with each configured CA bundle using a best-effort strategy: invalid or missing bundles are logged and skipped, but don't block valid bundles from loading. The pool is stored as an `*x509.CertPool` pointer under the write lock and swapped atomically on rotation — no in-place mutation.
+
+`GetCertPool()` returns the current pool pointer without cloning. Callers **must treat it as read-only** — cloning an `x509.CertPool` in every HTTP request handler is prohibitively expensive in hot paths like request-scoped TLS config creation, so the pool is shared and swapped atomically on rotation instead. When a CA bundle rotates, the old pool pointer remains valid for any in-flight TLS handshakes until GC collects it.
+
+`conf.CertPool()` is the public entry point (delegates to `Credentials.GetCertPool()`). It is used by `util/httputil` when constructing HTTP transports for external service connections (Prometheus, tracing, Grafana).
+
+`conf.CertPoolWithAdditionalPEM(additionalCA []byte)` clones the pool and appends additional PEM data — used for OpenShift OAuth server CA injection without mutating the shared pool.
+
+### Certificate validation on load
+
+`validateCertificate` enforces security minimums before appending to the pool:
+- Must be a CA certificate (`IsCA == true`)
+- Not expired (pre-staged not-yet-valid certs are allowed with a warning)
+- Key strength: RSA ≥ 2048 bits, ECDSA ≥ 256 bits, Ed25519 (always 256 bits), DSA rejected
+- If `KeyUsage` extension is present, `CertSign` must be set
+
+### Service-account token rotation
+
+The Kiali service-account token (used when `auth.use_kiali_token = true`) is handled via `kubernetes.GetServiceAccountTokenCredential()` (`kubernetes/token.go`): if the client config has a `BearerTokenFile` path, that path string is stored as the token value. When `conf.GetCredential` resolves it, the `CredentialManager` reads the file content and watches the directory for rotation by the kubelet. This is set up in `cmd/server.go`:
+
+```go
+homeClient := clientFactory.GetSAHomeClusterClient()
+kialiToken := kubernetes.GetServiceAccountTokenCredential(homeClient)
+business.SetKialiSAToken(kialiToken)
+```
+
+`business.SetKialiSAToken` stores the token (or path) in a package-level variable used when constructing custom-dashboards Prometheus clients with `auth.use_kiali_token = true`.
+
+### Audit logging
+
+`auditRotation(rotationType, path, success, errorMsg)` emits structured log events when `conf.Server.AuditLog` is enabled. Rotation events are gated behind `AuditLog` because credential changes are security events, not routine operational noise — they belong in the audit trail rather than always-on logging. The log group is `"credential-rotation"` with fields `operation` (`ROTATE` or `ROTATE_FAILED`), `type` (`"credential"` or `"ca_bundle"`), and `path`. Rotation events log at `Info` level on success and `Error` on failure.
+
+### Shutdown
+
+`conf.Close()` delegates to `cm.Close()`, which closes the `done` channel and the `fsnotify.Watcher`. The `watchFiles` goroutine exits when `cm.watcher.Events` is closed (channel close propagates from `watcher.Close()`). `closeOnce` ensures idempotent shutdown.
+
+## Istio Certificate Info
+
+Kiali surfaces the Istio CA root certificate as part of the mesh overview shown in the Mesh page control-plane target panel.
+
+### Data flow
+
+1. `istio/discovery.go:setControlPlaneConfig()` fetches the `istio-ca-root-cert` ConfigMap from the Istiod namespace using the Kiali SA client.
+2. `parseIstioControlPlaneCertificate(certConfigMap)` reads `certConfigMap.Data["root-cert.pem"]`, calls `models.Certificate.Parse()`, and sets `cert.ConfigMapName = "istio-ca-root-cert"`.
+3. The parsed `models.Certificate` is appended to `controlPlaneConf.Certificates`, which is embedded in `models.ControlPlaneConfiguration` (on the `controlPlane.Config` field).
+4. The `ControlPlaneConfiguration` struct is serialized as JSON in the Mesh API response (`infraData.config.certificates`).
+5. The React frontend component `IstioCertsInfo` (`frontend/src/components/IstioCertsInfo/IstioCertsInfo.tsx`) renders issuer, validity window, and DNS names from the certificate list inside `TargetPanelControlPlane`.
+
+### The Certificate type
+
+`models.Certificate` (`models/mesh.go`) is the active certificate type used for the Mesh page. It has a `Parse([]byte)` method that decodes PEM, parses x509, extracts issuer/validity, and sets `Accessible = true` on success or populates `Error` on failure.
+
+### Error handling
+
+If the `istio-ca-root-cert` ConfigMap is inaccessible (e.g., RBAC restriction), `setControlPlaneConfig` logs a warning and skips appending the certificate — the `Certificates` slice remains empty rather than causing a fatal error. The frontend `IstioCertsInfo` component handles an empty list gracefully (renders nothing).
+
+### ConfigMap constants
+
+```go
+certificatesConfigMapName = "istio-ca-root-cert"   // istio/constants.go
+certificateName            = "root-cert.pem"         // istio/constants.go
+```
