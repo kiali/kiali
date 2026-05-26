@@ -1737,7 +1737,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				}
 			},
 			expectedNamespacesByRev: map[clusterRevisionKey][]string{
-				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: nil,
+				{Cluster: conf.KubernetesConfig.ClusterName, ControlPlaneRevision: "default"}: {"bookinfo"},
 			},
 		},
 		"bookinfo with default tag should manage one namespace": {

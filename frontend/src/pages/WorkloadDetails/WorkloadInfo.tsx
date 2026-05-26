@@ -23,7 +23,7 @@ import { activeTab } from '../../components/Tab/Tabs';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import { DurationInSeconds } from 'types/Common';
-import { isIstioNamespace, serverConfig, getAppLabelName } from '../../config/ServerConfig';
+import { isIstioNamespace, serverConfig, getAppLabelName, AMBIENT_WAYPOINT_GATEWAY_LABEL } from '../../config/ServerConfig';
 import {
   gvkType,
   IstioConfigList,
@@ -561,7 +561,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     const istioConfigItems = skipUnrelatedK8sGateways(
       this.state.workloadIstioConfig ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '') : [],
-      this.props.workload?.labels[serverConfig.istioLabels.ambientWaypointGatewayLabel]
+      this.props.workload?.labels[AMBIENT_WAYPOINT_GATEWAY_LABEL]
     );
 
     const miniGraphSpan = 8;

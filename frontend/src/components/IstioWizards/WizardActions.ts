@@ -47,6 +47,12 @@ import {
   WorkloadMatchSelector
 } from '../../types/IstioObjects';
 import { serverConfig } from '../../config';
+import {
+  INJECTION_LABEL_NAME,
+  INJECTION_LABEL_REV,
+  AMBIENT_NAMESPACE_LABEL,
+  AMBIENT_NAMESPACE_LABEL_VALUE
+} from 'config/ServerConfig';
 import { GatewaySelectorState } from './GatewaySelector';
 import { K8sGatewaySelectorState } from './K8sGatewaySelector';
 import { ConsistentHashType, MUTUAL, TrafficPolicyState, UNSET } from './TrafficPolicy';
@@ -2388,11 +2394,11 @@ export const buildSidecar = (
 export const buildNamespaceInjectionPatch = (enable: boolean, remove: boolean, revision: string | null): string => {
   const labels = {};
   if (revision) {
-    labels[serverConfig.istioLabels.injectionLabelName] = null;
-    labels[serverConfig.istioLabels.injectionLabelRev] = revision;
+    labels[INJECTION_LABEL_NAME] = null;
+    labels[INJECTION_LABEL_REV] = revision;
   } else {
-    labels[serverConfig.istioLabels.injectionLabelName] = remove ? null : enable ? 'enabled' : 'disabled';
-    labels[serverConfig.istioLabels.injectionLabelRev] = null;
+    labels[INJECTION_LABEL_NAME] = remove ? null : enable ? 'enabled' : 'disabled';
+    labels[INJECTION_LABEL_REV] = null;
   }
   const patch = {
     metadata: {
@@ -2406,13 +2412,13 @@ export const buildNamespaceAmbientPatch = (opTarget: string): string => {
   const labels = {};
   switch (opTarget) {
     case 'enable':
-      labels[serverConfig.istioLabels.ambientNamespaceLabel] = serverConfig.istioLabels.ambientNamespaceLabelValue;
+      labels[AMBIENT_NAMESPACE_LABEL] = AMBIENT_NAMESPACE_LABEL_VALUE;
       break;
     case 'remove':
-      labels[serverConfig.istioLabels.ambientNamespaceLabel] = null;
+      labels[AMBIENT_NAMESPACE_LABEL] = null;
       break;
     case 'disable':
-      labels[serverConfig.istioLabels.ambientNamespaceLabel] = 'none';
+      labels[AMBIENT_NAMESPACE_LABEL] = 'none';
       break;
   }
 

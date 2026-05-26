@@ -432,7 +432,7 @@ func FilterWorkloadReferences(conf *config.Config, wLabels map[string]string, is
 			wkdReferences = append(wkdReferences, &ref)
 		}
 	}
-	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[conf.IstioLabels.AmbientWaypointGatewayLabel])
+	k8sGwFiltered := kubernetes.FilterK8sGatewaysByLabel(istioConfigList.K8sGateways, wLabels[config.GatewayLabel])
 	for _, g := range k8sGwFiltered {
 		ref := models.BuildKey(kubernetes.K8sGateways, g.Name, g.Namespace, cluster)
 		exist := false
@@ -2613,7 +2613,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster,
 		}
 		for _, wk := range workloadList {
 			// This annotation disables other labels (Like the ns one)
-			if wk.Labels[in.conf.IstioLabels.AmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
+			if wk.Labels[config.IstioAmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
 				workloadslist = append(workloadslist, models.WorkloadReferenceInfo{Name: wk.Name, Namespace: wk.Namespace, Labels: wk.Labels, LabelType: labelType, Cluster: wk.Cluster})
 			} else {
 				excludedWorkloads[wk.Name] = true

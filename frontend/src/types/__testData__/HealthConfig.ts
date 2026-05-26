@@ -96,14 +96,7 @@ export const healthConfig = {
   istioIdentityDomain: 'svc.cluster.local',
   istioNamespace: 'istio-system',
   istioLabels: {
-    ambientNamespaceLabel: 'istio.io/dataplane-mode',
-    ambientNamespaceLabelValue: 'ambient',
-    ambientWaypointGatewayLabel: 'gateway.networking.k8s.io/gateway-name',
-    ambientWaypointLabel: 'gateway.istio.io/managed',
-    ambientWaypointLabelValue: 'istio.io-mesh-controller',
     appLabelName: 'app',
-    injectionLabelName: 'istio-injection',
-    injectionLabelRev: 'istio.io/rev',
     versionLabelName: 'version'
   },
   prometheus: {

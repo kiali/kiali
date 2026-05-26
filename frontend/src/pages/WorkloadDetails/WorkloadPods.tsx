@@ -27,7 +27,7 @@ import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
-import { serverConfig } from '../../config';
+import { INJECTION_LABEL_REV } from 'config/ServerConfig';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -98,8 +98,8 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
     const columnKeys = ['name', 'revision', 'status'];
     const key = columnKeys[sortIndex];
 
-    const aValue = key === 'revision' ? a.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? '' : a[key];
-    const bValue = key === 'revision' ? b.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? '' : b[key];
+    const aValue = key === 'revision' ? a.annotations?.[INJECTION_LABEL_REV] ?? '' : a[key];
+    const bValue = key === 'revision' ? b.annotations?.[INJECTION_LABEL_REV] ?? '' : b[key];
 
     if (aValue < bValue) return sortDirection === SortByDirection.asc ? -1 : 1;
     if (aValue > bValue) return sortDirection === SortByDirection.asc ? 1 : -1;
@@ -195,10 +195,10 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
         </span>,
 
         <Tooltip
-          content={pod.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? 'N/A'}
+          content={pod.annotations?.[INJECTION_LABEL_REV] ?? 'N/A'}
           position={TooltipPosition.top}
-        >
-          <span className={podNameStyle}>{pod.annotations?.[serverConfig.istioLabels.injectionLabelRev] ?? 'N/A'}</span>
+          >
+          <span className={podNameStyle}>{pod.annotations?.[INJECTION_LABEL_REV] ?? 'N/A'}</span>
         </Tooltip>,
 
         <PodStatus proxyStatus={pod.proxyStatus} checks={validation.checks} />

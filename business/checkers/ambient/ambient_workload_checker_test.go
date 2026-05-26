@@ -30,7 +30,7 @@ func TestValidAmbientWorkloads(t *testing.T) {
 	workload.IstioSidecar = false
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientNamespaceLabel: conf.IstioLabels.AmbientNamespaceLabelValue,
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}
 
 	vals, valid = NewAmbientWorkloadChecker(
@@ -53,10 +53,10 @@ func TestWorkloadBothSidecarAndAmbientLabels(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientNamespaceLabel: conf.IstioLabels.AmbientNamespaceLabelValue,
-		conf.IstioLabels.InjectionLabelName:    "enabled",
-		conf.IstioLabels.InjectionLabelRev:     "latest",
-		config.IstioInjectionAnnotation:        "enabled",
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+		config.IstioInjectionLabelName:    "enabled",
+		config.IstioRevisionLabel:         "latest",
+		config.IstioInjectionAnnotation:   "enabled",
 	}
 
 	// Test workload with both sidecar and ambient annotation
@@ -83,7 +83,7 @@ func TestWorkloadWaypointAndNotAmbient(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientWaypointUseLabel: "true",
+		config.WaypointUseLabel: "true",
 	}
 
 	// Test workload with waypoint annotation and isAmbient
@@ -112,7 +112,7 @@ func TestWorkloadReferencesNonExistentWaypoint(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientWaypointUseLabel: "true",
+		config.WaypointUseLabel: "true",
 	}
 
 	// Test workload with waypoint annotation and empty Waypoints
@@ -142,9 +142,9 @@ func TestWorkloadPodWithSidecarLabelAndAmbientRedirection(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.InjectionLabelName: "enabled",
-		conf.IstioLabels.InjectionLabelRev:  "latest",
-		config.IstioInjectionAnnotation:     "enabled",
+		config.IstioInjectionLabelName:  "enabled",
+		config.IstioRevisionLabel:       "latest",
+		config.IstioInjectionAnnotation: "enabled",
 	}
 
 	// Test workload with sidecar labels and ambient pod
@@ -172,7 +172,7 @@ func TestWorkloadPodWithSidecarInjectAndAmbientLabel(t *testing.T) {
 	assert := assert.New(t)
 
 	labels := map[string]string{
-		conf.IstioLabels.AmbientNamespaceLabel: conf.IstioLabels.AmbientNamespaceLabelValue,
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
 	}
 
 	// Test workload with ambient labels and ambient pod

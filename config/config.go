@@ -113,33 +113,38 @@ const (
 )
 
 const (
-	AmbientAnnotation             = "ambient.istio.io/redirection"
-	AmbientAnnotationEnabled      = "enabled"
-	GatewayLabel                  = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
-	IstioAppLabel                 = "app"                                    // we can assume istio components are labeled with "app"
-	IstioInjectionAnnotation      = "sidecar.istio.io/inject"                // the standard annotation for sidecar injection
-	IstioRevisionLabel            = "istio.io/rev"                           // the standard label key used to identify the istio revision.
-	IstioSidecarAnnotation        = "sidecar.istio.io/status"                // the standard annotation for sidecar status
-	IstioVersionLabel             = "version"                                // we can assume istio components are labeled with "version", if versioned
-	KubernetesAppLabel            = "app.kubernetes.io/name"
-	SpireComponentLabel           = "app.kubernetes.io/instance"
-	SpireManagedIdentityLabel     = "spiffe.io/spire-managed-identity" // SPIRE label indicating workload is managed by SPIRE
-	SpireManagedIdentityValue     = "true"                             // Value for SPIRE managed identity label
-	SpireComponentValue           = "spire"
-	SpireInjectionAnnotation      = "inject.istio.io/templates" // SPIRE annotation indicating workload is managed by SPIRE
-	SpireInjectionAnnotationValue = "spire"                     // SPIRE annotation value workload is managed by SPIRE
-	Waypoint                      = "waypoint"
-	WaypointFor                   = "istio.io/waypoint-for"
-	WaypointForAll                = "all"
-	WaypointForNone               = "none"
-	WaypointForService            = "service"
-	WaypointForWorkload           = "workload"
-	WaypointLabel                 = "gateway.istio.io/managed" // only identifies istio waypoint
-	WaypointLabelValue            = "istio.io-mesh-controller" // only identifies istio waypoint
-	WaypointUseLabel              = "istio.io/use-waypoint"
-	WaypointNone                  = "none"
-	WaypointUseNamespaceLabel     = "istio.io/use-waypoint-namespace"
-	Ztunnel                       = "ztunnel"
+	AmbientAnnotation               = "ambient.istio.io/redirection"
+	AmbientAnnotationEnabled        = "enabled"
+	GatewayLabel                    = "gateway.networking.k8s.io/gateway-name" // On any k8s GW API gateway
+	IstioAmbientNamespaceLabel      = "istio.io/dataplane-mode"
+	IstioAmbientNamespaceLabelValue = "ambient"
+	IstioAppLabel                   = "app"                     // we can assume istio components are labeled with "app"
+	IstioInjectionAnnotation        = "sidecar.istio.io/inject" // the standard annotation for sidecar injection
+	IstioInjectionLabelName         = "istio-injection"
+	IstioRevisionLabel              = "istio.io/rev" // the standard label key used to identify the istio revision.
+	IstioServiceCanonicalName       = "service.istio.io/canonical-name"
+	IstioServiceCanonicalRevision   = "service.istio.io/canonical-revision"
+	IstioSidecarAnnotation          = "sidecar.istio.io/status" // the standard annotation for sidecar status
+	IstioVersionLabel               = "version"                 // we can assume istio components are labeled with "version", if versioned
+	KubernetesAppLabel              = "app.kubernetes.io/name"
+	SpireComponentLabel             = "app.kubernetes.io/instance"
+	SpireManagedIdentityLabel       = "spiffe.io/spire-managed-identity" // SPIRE label indicating workload is managed by SPIRE
+	SpireManagedIdentityValue       = "true"                             // Value for SPIRE managed identity label
+	SpireComponentValue             = "spire"
+	SpireInjectionAnnotation        = "inject.istio.io/templates" // SPIRE annotation indicating workload is managed by SPIRE
+	SpireInjectionAnnotationValue   = "spire"                     // SPIRE annotation value workload is managed by SPIRE
+	Waypoint                        = "waypoint"
+	WaypointFor                     = "istio.io/waypoint-for"
+	WaypointForAll                  = "all"
+	WaypointForNone                 = "none"
+	WaypointForService              = "service"
+	WaypointForWorkload             = "workload"
+	WaypointLabel                   = "gateway.istio.io/managed" // only identifies istio waypoint
+	WaypointLabelValue              = "istio.io-mesh-controller" // only identifies istio waypoint
+	WaypointUseLabel                = "istio.io/use-waypoint"
+	WaypointNone                    = "none"
+	WaypointUseNamespaceLabel       = "istio.io/use-waypoint-namespace"
+	Ztunnel                         = "ztunnel"
 )
 
 // CA bundle file paths used by CredentialManager.
@@ -501,18 +506,8 @@ func (lt *LoginToken) Obfuscate() {
 
 // IstioLabels holds configuration about the labels required by Istio
 type IstioLabels struct {
-	AmbientNamespaceLabel       string `yaml:"ambient_namespace_label,omitempty" json:"ambientNamespaceLabel"`
-	AmbientNamespaceLabelValue  string `yaml:"ambient_namespace_label_value,omitempty" json:"ambientNamespaceLabelValue"`
-	AmbientWaypointGatewayLabel string `yaml:"ambient_waypoint_gateway_label,omitempty" json:"ambientWaypointGatewayLabel"`
-	AmbientWaypointLabel        string `yaml:"ambient_waypoint_label,omitempty" json:"ambientWaypointLabel"`
-	AmbientWaypointLabelValue   string `yaml:"ambient_waypoint_label_value,omitempty" json:"ambientWaypointLabelValue"`
-	AmbientWaypointUseLabel     string `yaml:"ambient_waypoint_use_label,omitempty" json:"ambientWaypointUseLabel"`
-	AppLabelName                string `yaml:"app_label_name,omitempty" json:"appLabelName"`
-	InjectionLabelName          string `yaml:"injection_label_name,omitempty" json:"injectionLabelName"`
-	InjectionLabelRev           string `yaml:"injection_label_rev,omitempty" json:"injectionLabelRev"`
-	ServiceCanonicalName        string `yaml:"service_canonical_name,omitempty" json:"serviceCanonicalName"`
-	ServiceCanonicalRevision    string `yaml:"service_canonical_revision,omitempty" json:"serviceCanonicalRevision"`
-	VersionLabelName            string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
+	AppLabelName     string `yaml:"app_label_name,omitempty" json:"appLabelName"`
+	VersionLabelName string `yaml:"version_label_name,omitempty" json:"versionLabelName"`
 }
 
 // AdditionalDisplayItem holds some display-related configuration, like which annotations are to be displayed
@@ -1144,16 +1139,8 @@ func NewConfig() (c *Config) {
 			},
 		},
 		IstioLabels: IstioLabels{
-			AmbientNamespaceLabel:       "istio.io/dataplane-mode",
-			AmbientNamespaceLabelValue:  "ambient",
-			AmbientWaypointGatewayLabel: GatewayLabel,
-			AmbientWaypointUseLabel:     WaypointUseLabel,
-			AppLabelName:                "",
-			InjectionLabelName:          "istio-injection",
-			InjectionLabelRev:           IstioRevisionLabel,
-			ServiceCanonicalName:        "service.istio.io/canonical-name",
-			ServiceCanonicalRevision:    "service.istio.io/canonical-revision",
-			VersionLabelName:            "",
+			AppLabelName:     "",
+			VersionLabelName: "",
 		},
 		KialiFeatureFlags: KialiFeatureFlags{
 			Authz: FeatureFlagAuthz{
@@ -1538,8 +1525,8 @@ func Set(conf *Config) {
 			appLabelNames = []string{conf.IstioLabels.AppLabelName}
 			versionLabelNames = []string{conf.IstioLabels.VersionLabelName}
 		} else {
-			appLabelNames = []string{conf.IstioLabels.ServiceCanonicalName, "app.kubernetes.io/name", "app"}
-			versionLabelNames = []string{conf.IstioLabels.ServiceCanonicalRevision, "app.kubernetes.io/version", "version"}
+			appLabelNames = []string{IstioServiceCanonicalName, "app.kubernetes.io/name", "app"}
+			versionLabelNames = []string{IstioServiceCanonicalRevision, "app.kubernetes.io/version", "version"}
 		}
 	}
 }

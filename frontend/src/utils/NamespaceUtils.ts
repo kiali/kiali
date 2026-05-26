@@ -1,4 +1,4 @@
-import { isMultiCluster, serverConfig } from 'config';
+import { isMultiCluster, INJECTION_LABEL_NAME, INJECTION_LABEL_REV } from 'config/ServerConfig';
 
 type NamespaceLike = {
   isAmbient?: boolean;
@@ -22,12 +22,12 @@ export const getNamespaceMode = (ns: NamespaceLike): NamespaceMode => {
   }
 
   const labels = ns.labels;
-  const injectionEnabled = !!(labels && labels[serverConfig.istioLabels.injectionLabelName] === 'enabled');
+  const injectionEnabled = !!(labels && labels[INJECTION_LABEL_NAME] === 'enabled');
   const revisionSet = !!(
     labels &&
-    labels[serverConfig.istioLabels.injectionLabelRev] !== undefined &&
-    labels[serverConfig.istioLabels.injectionLabelRev] !== ''
-  );
+    labels[INJECTION_LABEL_REV] !== undefined &&
+    labels[INJECTION_LABEL_REV] !== ''
+  )
 
   if (ns.isControlPlane || injectionEnabled || revisionSet) {
     return 'sidecar';
