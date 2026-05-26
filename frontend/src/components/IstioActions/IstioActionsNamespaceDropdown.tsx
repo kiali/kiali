@@ -8,7 +8,8 @@ import {
   DropdownItem,
   DropdownList,
   MenuToggle,
-  MenuToggleElement
+  MenuToggleElement,
+  TooltipPosition
 } from '@patternfly/react-core';
 import { useKialiSelector } from 'hooks/redux';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
@@ -16,6 +17,7 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { GroupVersionKind } from '../../types/IstioObjects';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 
 type ActionItem = {
   action: React.ReactElement;
@@ -26,6 +28,7 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
   const kiosk = useKialiSelector(state => state.globalState.kiosk);
   const { t } = useKialiTranslation();
   const navigate = useNavigate();
+  const viewOnly = serverConfig.deployment.viewOnlyMode;
 
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 
@@ -62,18 +65,28 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
   const dropdownItemsRaw = NEW_ISTIO_RESOURCE.map(
     (r): ActionItem => {
       const label = kindToStringIncludeK8s(r.value.Group, r.value.Kind);
+      const isActionDisabled = isDisabled(label, r.disabled);
+      const createAction = (
+        <DropdownItem
+          key={`createIstioConfig_${label}`}
+          isDisabled={isActionDisabled || viewOnly}
+          onClick={() => onClickCreate(r.value)}
+          data-test={`create_${label}`}
+        >
+          {label}
+        </DropdownItem>
+      );
       return {
         name: label,
-        action: (
-          <DropdownItem
-            key={`createIstioConfig_${label}`}
-            isDisabled={isDisabled(label, r.disabled)}
-            onClick={() => onClickCreate(r.value)}
-            data-test={`create_${label}`}
-          >
-            {label}
-          </DropdownItem>
-        )
+        action:
+          viewOnly && !isActionDisabled
+            ? renderDisabledDropdownOption(
+                `createIstioConfig_${label}`,
+                TooltipPosition.left,
+                t('No user permission or Kiali in view-only mode'),
+                createAction
+              )
+            : createAction
       };
     }
   );
