@@ -743,14 +743,28 @@ const TopologyContent: React.FC<{
 
   return isMiniGraph ? (
     <>
-      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <ReactResizeDetector
+        refreshMode="debounce"
+        refreshRate={100}
+        handleWidth={true}
+        handleHeight={true}
+        skipOnMount={true}
+        onResize={handleResize}
+      />
       <TopologyView data-test="topology-view-pf">
         <VisualizationSurface data-test="visualization-surface" state={{}} />
       </TopologyView>
     </>
   ) : (
     <>
-      <ReactResizeDetector handleWidth={true} handleHeight={true} skipOnMount={true} onResize={handleResize} />
+      <ReactResizeDetector
+        refreshMode="debounce"
+        refreshRate={100}
+        handleWidth={true}
+        handleHeight={true}
+        skipOnMount={true}
+        onResize={handleResize}
+      />
       <TopologyView
         data-test="topology-view-pf"
         controlBar={
