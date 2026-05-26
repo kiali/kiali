@@ -29,7 +29,7 @@ const healthFetchErrorMessage = (
   if (totalChunks === 1) {
     const namespaceContext =
       chunk.length === 1 ? `namespace ${namespaceList}` : `${chunk.length} namespaces: ${namespaceList}`;
-    return `Failed to fetch namespace health for cluster ${clusterName} (${namespaceContext}): ${errorMessage(error)}`;
+    return `Failed to fetch namespace health for cluster ${cluster} (${namespaceContext}): ${errorMessage(error)}`;
   }
 
   return `Failed to fetch namespace health chunk ${chunkIndex + 1}/${totalChunks} for cluster ${cluster} (${
