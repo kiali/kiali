@@ -1872,7 +1872,7 @@ func NewRoutes(
 		//      500: internalError
 		//      404: notFoundError
 		//      400: badRequestError
-		//      200: noContent
+		//      200: noConten
 		//
 		{
 			"ChatMCP",
