@@ -21,12 +21,14 @@ on:
   push:
     paths:
     - 'routing/routes.go'
+    - 'ai/mcp/**'
     branches:
     - master
     - 'v*.*'
   pull_request:
     paths:
     - 'routing/routes.go'
+    - 'ai/mcp/**'
     branches:
     - master
     - 'v*.*'
@@ -40,17 +42,14 @@ on:
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
 
 jobs:
   mcp_contract_tests:
-    name: MCP Contract Tests (kubernetes-mcp-server)
+    name: MCP Contract Tests
     runs-on: ubuntu-latest
     env:
-      # Copied from: https://github.com/bahmutov/cypress-gh-action-split-install/blob/ca3916d4e7240ebdc337825d2d78eb354855464b/.github/workflows/tests.yml#L7-L11
-      # prevents extra Cypress installation progress messages
       CI: 1
-      # avoid warnings like "tput: No value for $TERM and no -T specified"
       TERM: xterm
     steps:
     - name: Check out Kiali code
@@ -76,17 +75,30 @@ jobs:
         node-version: "24"
         cache: yarn
         cache-dependency-path: frontend/yarn.lock
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        cache: true
+        cache-dependency-path: go.sum
 
     - name: Download go binary
+      if: github.event_name == 'workflow_call'
       uses: actions/download-artifact@v8
       with:
         name: kiali
         path: ~/go/bin/
 
     - name: Ensure kiali binary is executable
+      if: github.event_name == 'workflow_call'
       run: chmod +x ~/go/bin/kiali
 
+    - name: Build Kiali binary for direct workflow runs
+      if: github.event_name != 'workflow_call'
+      run: make clean-all build-ui build
+
     - name: Install frontend dependencies
+      if: github.event_name == 'workflow_call'
       working-directory: ./frontend
       run: yarn install --immutable
 
@@ -155,21 +167,22 @@ jobs:
         cache-dependency-path: kubernetes-mcp-server/go.sum
 
     - name: Run MCP contract tests
+      id: contractTests
       working-directory: kubernetes-mcp-server
       env:
         KIALI_URL: ${{ env.KIALI_URL }}
       run: |
         cd pkg/kiali/tests/backend
-        go test api_backend_test.go -v
+        go test -tags kiali_contract -v ./...
 
     - name: Get debug info when tests fail
-      if: failure()
+      if: ${{ failure() && steps.contractTests.conclusion == 'failure' }}
       run: |
         mkdir -p debug-output
         hack/ci-get-debug-info.sh --output-directory debug-output || true
 
     - name: Upload debug info artifact
-      if: failure()
+      if: ${{ failure() && steps.contractTests.conclusion == 'failure' }}
       uses: actions/upload-artifact@v7
       with:
         name: debug-info-mcp-contract-tests

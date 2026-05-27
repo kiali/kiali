@@ -112,3 +112,48 @@ func TestAllMCPEndpointsExist(t *testing.T) {
 		})
 	}
 }
+
+// KubernetesMCPServerEndpoints lists the tool names that containers/kubernetes-mcp-server
+// delegates to Kiali via POST /api/chat/mcp/<tool>. Keep in sync with
+// https://github.com/containers/kubernetes-mcp-server/blob/main/pkg/toolsets/kiali/tools/endpoints.go
+var KubernetesMCPServerEndpoints = []string{
+	"get_mesh_traffic_graph",
+	"get_mesh_status",
+	"get_metrics",
+	"list_or_get_resources",
+	"list_traces",
+	"get_trace_details",
+	"get_logs",
+	"manage_istio_config",
+	"manage_istio_config_read",
+	"get_pod_performance",
+}
+
+// TestKubernetesMCPServerEndpointsCovered verifies that every tool endpoint used by
+// containers/kubernetes-mcp-server has a matching YAML tool definition in Kiali.
+// If kubernetes-mcp-server adds a new endpoint, this test will fail until the
+// corresponding tool is added in ai/mcp/tools/.
+func TestKubernetesMCPServerEndpointsCovered(t *testing.T) {
+	toolsDir := filepath.Join("..", "..", "..", "ai", "mcp", "tools")
+	entries, err := os.ReadDir(toolsDir)
+	require.NoError(t, err)
+
+	kialiTools := make(map[string]bool)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml") {
+			toolName := strings.TrimSuffix(strings.TrimSuffix(name, ".yaml"), ".yml")
+			kialiTools[toolName] = true
+		}
+	}
+
+	for _, endpoint := range KubernetesMCPServerEndpoints {
+		t.Run(endpoint, func(t *testing.T) {
+			assert.True(t, kialiTools[endpoint],
+				"kubernetes-mcp-server uses endpoint /api/chat/mcp/%s but no matching tool definition found in ai/mcp/tools/", endpoint)
+		})
+	}
+}
