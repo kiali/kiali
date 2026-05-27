@@ -156,25 +156,20 @@ Before({ tags: '@loggers-app' }, () => {
 
 Before({ tags: '@core-caching' }, () => {
   if (Cypress.env('CACHING_ENABLED')) {
-    cy.log('@core-caching: caching already confirmed enabled, skipping check');
     return;
   }
 
-  cy.log('@core-caching: checking if caching is enabled via kubectl...');
   cy.exec(
     `kubectl get configmap -n istio-system -l app.kubernetes.io/name=kiali -o jsonpath="{.items[0].data.config\\.yaml}"`,
     { failOnNonZeroExit: false }
   ).then(result => {
     if (result.code === 0 && /graph_cache:[\s\S]*?enabled:\s*true/.test(result.stdout)) {
-      cy.log('@core-caching: caching is already enabled in ConfigMap');
       Cypress.env('CACHING_ENABLED', true);
       return;
     }
 
-    cy.log('@core-caching: caching not enabled, enabling now...');
     enableKialiCaching();
     waitForKialiApiReady();
-    cy.log('@core-caching: caching enabled successfully');
     Cypress.env('CACHING_ENABLED', true);
   });
 });
