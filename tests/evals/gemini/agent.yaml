@@ -55,6 +55,7 @@ commands:
     trap 'cleanup $?' EXIT
 
     export HOME="${TMP_HOME}"
+    export GEMINI_CLI_TRUST_WORKSPACE=true
     cd "${TMP_HOME}"
 
     SERVER_NAME="kubernetes"
@@ -63,8 +64,8 @@ commands:
     {
       "mcpServers": {
         "${SERVER_NAME}": {
-          "url": "${MCP_URL}",
-          "transport": "http"
+          "httpUrl": "${MCP_URL}",
+          "trust": true
         }
       }
     }
@@ -74,13 +75,13 @@ commands:
 
     GEMINI_ARGS=("--approval-mode" "yolo" "--output-format" "stream-json")
 
-    GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-pro-preview}"
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-pro}"
     GEMINI_ARGS+=("--model" "${GEMINI_MODEL}")
 
     if [[ -n "${DEBUG_DIR}" ]]; then
       GEMINI_ARGS+=(-d)
       echo "Running gemini with args: ${GEMINI_ARGS[*]}" >> "${DEBUG_DIR}/debug.log"
-      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
+      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
     else
-      gemini "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
+      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
     fi

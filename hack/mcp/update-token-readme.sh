@@ -60,6 +60,11 @@ MARKDOWN+="| Task | Tokens Estimate | MCP Schema Tokens | Passed |\n"
 MARKDOWN+="|------|----------------:|------------------:|--------|\n"
 
 TASK_COUNT=$(jq '.tasks | length' "${TOKEN_FILE}")
+if (( TASK_COUNT <= 0 )); then
+  echo "Error: mcpchecker result summary returned no tasks" >&2
+  exit 1
+fi
+
 for i in $(seq 0 $((TASK_COUNT - 1))); do
   NAME=$(jq -r ".tasks[${i}].name" "${TOKEN_FILE}")
   TOKENS=$(jq -r ".tasks[${i}].tokensEstimated" "${TOKEN_FILE}")

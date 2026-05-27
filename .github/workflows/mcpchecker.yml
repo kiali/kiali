@@ -133,32 +133,31 @@ jobs:
     - name: Run mcpchecker evaluation
       id: mcpchecker
       run: |
+        MCPCHECKER="$(go env GOPATH)/bin/mcpchecker"
         MCP_EVAL_ARGS="${{ github.event.inputs.verbose == 'true' && '-v' || '' }}"
         make mcp-run-eval MCP_EVAL_ARGS="${MCP_EVAL_ARGS}"
 
         RESULTS_JSON="tests/evals/results/mcpchecker-gemini-eval-out.json"
         if [ -f "${RESULTS_JSON}" ]; then
-          TASKS_TOTAL=$(jq 'length' "${RESULTS_JSON}")
-          TASKS_PASSED=$(jq '[.[] | select(.taskPassed == true)] | length' "${RESULTS_JSON}")
-          ASSERTIONS_TOTAL=$(jq '[.[] | .assertionResults | to_entries | length] | add // 0' "${RESULTS_JSON}")
-          ASSERTIONS_PASSED=$(jq '[.[] | .assertionResults | to_entries[] | select(.value.passed == true)] | length' "${RESULTS_JSON}")
-
-          if [ "$TASKS_TOTAL" -gt 0 ]; then
-            TASK_PASS_RATE=$(awk "BEGIN {printf \"%.2f\", $TASKS_PASSED / $TASKS_TOTAL}")
-          else
-            TASK_PASS_RATE="0"
-          fi
+          SUMMARY_OUTPUT="$(mktemp)"
+          trap 'rm -f "${SUMMARY_OUTPUT}"' EXIT
+          "${MCPCHECKER}" result summary "${RESULTS_JSON}" -o json > "${SUMMARY_OUTPUT}"
+          TASKS_TOTAL="$(jq -r '.tasksTotal' "${SUMMARY_OUTPUT}")"
+          TASKS_PASSED="$(jq -r '.tasksPassed' "${SUMMARY_OUTPUT}")"
+          ASSERTIONS_TOTAL="$(jq -r '.assertionsTotal' "${SUMMARY_OUTPUT}")"
+          ASSERTIONS_PASSED="$(jq -r '.assertionsPassed' "${SUMMARY_OUTPUT}")"
+          TASK_PASS_RATE="$(jq -r '.taskPassRate // 0' "${SUMMARY_OUTPUT}")"
 
           PASSED="false"
           if awk "BEGIN {exit !($TASK_PASS_RATE >= 0.8)}"; then
             PASSED="true"
           fi
 
-          echo "tasks-passed=$TASKS_PASSED" >> $GITHUB_OUTPUT
-          echo "tasks-total=$TASKS_TOTAL" >> $GITHUB_OUTPUT
-          echo "task-pass-rate=$TASK_PASS_RATE" >> $GITHUB_OUTPUT
-          echo "assertions-passed=$ASSERTIONS_PASSED" >> $GITHUB_OUTPUT
-          echo "assertions-total=$ASSERTIONS_TOTAL" >> $GITHUB_OUTPUT
+          echo "tasks-passed=${TASKS_PASSED}" >> "$GITHUB_OUTPUT"
+          echo "tasks-total=${TASKS_TOTAL}" >> "$GITHUB_OUTPUT"
+          echo "task-pass-rate=${TASK_PASS_RATE}" >> "$GITHUB_OUTPUT"
+          echo "assertions-passed=${ASSERTIONS_PASSED}" >> "$GITHUB_OUTPUT"
+          echo "assertions-total=${ASSERTIONS_TOTAL}" >> "$GITHUB_OUTPUT"
           echo "passed=$PASSED" >> $GITHUB_OUTPUT
         fi
       env:
@@ -290,7 +289,8 @@ jobs:
 
         make mcp-update-token-readme
         echo "Updated baseline summary:"
-        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json | head -c 2000
+        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json \
+          | head -c 2000
         echo
 
     - name: Create PR with updated baseline
