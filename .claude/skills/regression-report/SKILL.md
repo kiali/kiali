@@ -73,6 +73,8 @@ Examples:
 | `ui-bug` | `bug` |
 | `test-bug` | `maintenance` |
 
+Apply labels exactly as the table specifies. `test-bug` does **not** get `bug`; `ui-bug` does **not** get `maintenance`.
+
 ### Reproduce command
 
 Always include. User must first tag the failing scenario with `@selected` in the `.feature` file, then:
@@ -90,11 +92,19 @@ Environment-specific notes:
 - **kind**: `CYPRESS_USERNAME=admin`, `CYPRESS_ALLOW_INSECURE_KIALI_API=true`
 - **Minikube**: `CYPRESS_BASE_URL=http://localhost:3000`, typically no credentials needed
 
+## Flake filing threshold
+
+Do **not** file a flake issue unless 2+ nightly failures occurred within 7 days — unless the user explicitly requests it. For a first-occurrence flake, tell the user: "Classified as flake; will not file until 2+ occurrences in 7 days. Note it for tracking."
+
 ## Execution steps
 
 1. Parse handoff block or collect manual input.
-2. Construct issue body from template below.
-3. Run:
+2. Before creating the issue, verify:
+   - Title follows `[Test] <Scenario> — <feature-file-basename> / <environment>` exactly. Do **not** use `[Flake]`, `[Bug]`, or other prefixes.
+   - Labels match the classification table exactly.
+   - `Failing step` and `Confidence` are present in the body (or state "not available" if triage didn't provide them).
+3. Construct issue body from template below.
+4. Run:
    ```bash
    gh issue create \
      --repo kiali/kiali \
@@ -105,7 +115,7 @@ Environment-specific notes:
    BODY
    )"
    ```
-4. Output created issue URL to user.
+5. Output created issue URL to user.
 
 ## Issue body template
 
@@ -118,6 +128,8 @@ Cypress test failure observed on <environment>.
 **Feature file:** `frontend/cypress/integration/featureFiles/<feature-file>`
 **Tag(s):** `<cypress-tags>`
 **Classification:** <flake | ui-bug | test-bug>
+**Failing step:** `<Given/When/Then/And step text>`
+**Confidence:** <high | medium | low>
 
 <error message or screenshot description>
 

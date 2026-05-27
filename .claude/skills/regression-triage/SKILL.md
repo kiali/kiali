@@ -2,7 +2,7 @@
 name: regression-triage
 description: Analyze Jenkins nightly CI failure output to identify failing Cypress/Gherkin tests, map them to feature files, classify each failure (flake / ui-bug / test-bug), and produce a triage summary ready to hand off to regression-report.
 disable-model-invocation: false
-allowed-tools: Bash(grep *), Bash(find *), Bash(cat *), Bash(git *), Bash(curl *), Bash(gh *), Bash(jq *)
+allowed-tools: Bash(awk *), Bash(grep *), Bash(find *), Bash(cat *), Bash(git *), Bash(curl *), Bash(gh *), Bash(jq *)
 ---
 
 # Regression Triage Skill
@@ -35,7 +35,16 @@ If URL has no numeric build segment, stop and ask for a specific build URL.
 curl -s -o /dev/null -w "%{http_code}" "<build-url>"
 ```
 
-Non-`200` → stop, tell user URL is inaccessible.
+Non-`200` or HTTP 000 (DNS failure / connection refused) → the Jenkins instance is not accesible on public network and requires VPN.
+
+**Fallback when Jenkins is unreachable:**
+
+1. Ask the user to connect to VPN and retry, **or**
+2. Ask the user to paste one of the following manually:
+   - The Jenkins console log output (copy from the browser while on VPN), **or**
+   - The exported `testReport` JSON (`<build-url>testReport/api/json?...` → Save As)
+
+Resume from Step 2 with the pasted content — skip further `curl` calls for that build.
 
 ### 1b — Fetch artifact list
 
@@ -81,11 +90,27 @@ For each failing scenario:
 grep -rl "<scenario name fragment>" frontend/cypress/integration/featureFiles/
 ```
 
-Find its tags:
+Find its tags — scope to the target scenario only (avoid picking up tags from preceding scenarios):
 
 ```bash
-grep -B30 "<scenario name fragment>" frontend/cypress/integration/featureFiles/<file>.feature | grep -E "^\s+@"
+awk '/^\s+@/ { buf=buf" "$0; next } /Scenario.*<scenario name fragment>/ { print buf; exit } { buf="" }' \
+  frontend/cypress/integration/featureFiles/<file>.feature
 ```
+
+This accumulates `@` lines, resets on any non-`@` line, and prints only when the target `Scenario:` line is reached.
+
+## Step 3a — Extract failing step from screenshot filenames (optional)
+
+Screenshot filenames encode the scenario name and the failing step. List them:
+
+```bash
+curl -k -s "<build-url>api/json?tree=artifacts%5BrelativePath%5D" | \
+  jq -r '.artifacts[] | .relativePath | select(test("screenshots/.+\\.png"))'
+```
+
+Filename pattern: `<feature-file>/<Scenario name> -- <step text> (failed).png`
+
+Extract the step text from the filename and use it as the `Failing step` field in the handoff block. This is more reliable than inferring from the error message alone and also signals whether the failure is in a `Given`/`When`/`Then` step.
 
 ## Step 4 — Classify each failure
 
@@ -93,8 +118,8 @@ grep -B30 "<scenario name fragment>" frontend/cypress/integration/featureFiles/<
 |--------|---------------|
 | `TimeoutError`, `element not found`, passes on retry, intermittent across builds | **flake** |
 | Assertion failure on specific value/text, consistently fails, app shows wrong data | **ui-bug** |
+| New test, passes on `main` but not feature branch | **ui-bug** |
 | `Cannot read properties of undefined`, bad selector, stale text, test logic error | **test-bug** |
-| New test, passes on `main` but not feature branch | **regression** (sub-type of ui-bug) |
 
 Default: **flake** if first failure, **ui-bug** if reproducible/persistent.
 

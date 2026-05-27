@@ -13,7 +13,12 @@ Read a GitHub issue filed by `/regression-report` → investigate root cause →
 
 ## Prerequisites — cluster and Kiali must be running
 
-Before implementing or testing any fix, verify the environment is ready:
+**Check the issue Environment section first.** If `Environment: Jenkins nightly` or `Kubernetes impl: OpenShift`, local kind verification is **not equivalent** — the failure may be OCP-specific (cluster auth, ResizeObserver, ingress). In that case:
+- Implement the fix locally.
+- State in the summary: "Local kind cluster used for static verification; OCP-specific repro requires VPN + `oc login <cluster-url>` + cluster access."
+- Do not claim the fix is verified unless run against an equivalent environment.
+
+For kind-based failures, verify the environment is ready:
 
 ```bash
 # 1. Cluster running?
@@ -66,6 +71,8 @@ Extract from issue body:
 - **Feature file** from `**Feature file:** \`<path>\``
 - **Tag(s)** from `**Tag(s):** \`<tags>\``
 - **Classification** from `**Classification:** <flake | ui-bug | test-bug>`
+- **Failing step** from `**Failing step:** \`<step>\`` — use this to jump directly to the right step definition in Step 2b
+- **Confidence** from `**Confidence:** <high | medium | low>` — low confidence = spend more time in Step 3 before implementing
 - **Error** from prose after classification line
 - **Environment** from the Environment section (Kiali version, Istio version, OCP version, build URL)
 
@@ -211,9 +218,13 @@ List affected scenarios. Verify the fix does not break their semantics.
 
 ### 5c — Type check (if `.ts` files changed)
 
+On a fresh clone, run `yarn install` in `frontend/` first. Cypress types ship with the `cypress` package; `cypress/tsconfig.json` sets `typeRoots` so they resolve correctly.
+
 ```bash
 cd frontend && npx tsc --noEmit --project cypress/tsconfig.json 2>&1 | head -30
 ```
+
+Focus on errors in files you changed; pre-existing errors elsewhere can be ignored.
 
 ---
 
@@ -307,11 +318,25 @@ grep -n "@selected" frontend/cypress/integration/featureFiles/<file>.feature
 
 ---
 
-## Step 7 — Summary and commit
+## Step 7 — Issue lifecycle (optional)
 
-Output: what changed, why, which scenarios are affected, confirmation that the test passed locally.
+After confirming the test passes, offer to update the GitHub issue:
 
-Commit only after the test passes in step 6e.
+```bash
+# Add a comment with fix summary
+gh issue comment <number> --repo kiali/kiali --body "Fixed in <branch>. Root cause: <one-line>. Verified locally with Cypress."
+
+# Close only if user requests and fix is merged or ready to merge
+gh issue close <number> --repo kiali/kiali --comment "Closing — fix merged."
+```
+
+Do not close the issue without user confirmation.
+
+## Step 8 — Summary and optional commit
+
+Output: what changed, why, which scenarios are affected, confirmation that the test passed locally (or note environment limitations if OCP-specific).
+
+Prepare a commit message but **do not commit** — wait for the user to explicitly request it.
 
 ---
 
@@ -344,3 +369,5 @@ Non-obvious and frequently relevant to fixes:
 6. **No code fixes for infrastructure failures.** Backend 500s, cluster instability, missing CRDs — state "no fix needed" and explain.
 7. **Always check all consumers** of modified shared step definitions before committing.
 8. **Never commit without a passing local run.** Step 6 is not optional.
+9. **ui-bug: do not weaken test assertions without a product fix.** If classification is `ui-bug`, changing test expectations to match broken UI without implementing the product fix is forbidden — it masks the bug.
+10. **`@offline` tag means the scenario uses must-gather/snapshot data instead of a live cluster.** Hooks in `hooks.ts` gate on this tag — the test does not issue real API calls. OCP-specific failures tagged `@offline` may still pass locally against kind (different data source). Note this mismatch in the fix summary.
