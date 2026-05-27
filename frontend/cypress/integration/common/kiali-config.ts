@@ -222,6 +222,48 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
   });
 };
 
+/**
+ * Enables both graph and health caching in a single ConfigMap/CR patch
+ * with one Kiali restart. Supports both operator (Kiali CR) and Helm
+ * (ConfigMap) installations.
+ */
+export const enableKialiCaching = (): void => {
+  discoverKialiRuntimeInfo().then(info => {
+    const doRestart = (): void => {
+      restartKiali(info.deploymentName, info.namespace);
+    };
+
+    cy.exec(
+      `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+      { failOnNonZeroExit: false }
+    ).then(result => {
+      const primaryResource = result.stdout.trim();
+
+      if (primaryResource) {
+        const parts = primaryResource.split('/');
+        const patchJson = JSON.stringify({
+          spec: { kiali_internal: { graph_cache: { enabled: true }, health_cache: { enabled: true } } }
+        });
+        cy.exec(`kubectl patch kiali ${parts[1]} -n ${parts[0]} --type merge -p '${patchJson}'`).then(() =>
+          doRestart()
+        );
+        return;
+      }
+
+      // Helm installation - set both via yq in one pass
+      cy.exec(
+        `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
+      );
+      cy.exec(
+        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true' /tmp/kiali-config.yaml`
+      );
+      cy.exec(
+        `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
+      ).then(() => doRestart());
+    });
+  });
+};
+
 // Pre-defined feature configurations
 export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
   configPath: '.external_services.tracing.use_waypoint_name',

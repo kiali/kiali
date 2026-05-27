@@ -1,6 +1,6 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-
-import { waitForResourceDeletion } from './transition';
+import { enableKialiCaching } from './kiali-config';
+import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -152,6 +152,23 @@ Before({ tags: '@sleep-app' }, () => {
 
 Before({ tags: '@loggers-app' }, () => {
   install_demoapp('loggers');
+});
+
+Before({ tags: '@core-caching' }, () => {
+  if (Cypress.env('CACHING_ENABLED')) {
+    return;
+  }
+
+  cy.request({ url: 'api/test/metrics/graph/cache', failOnStatusCode: false }).then(resp => {
+    if (resp.status === 200) {
+      Cypress.env('CACHING_ENABLED', true);
+      return;
+    }
+
+    enableKialiCaching();
+    waitForKialiApiReady();
+    Cypress.env('CACHING_ENABLED', true);
+  });
 });
 
 Before({ tags: '@remote-istio-crds' }, () => {
