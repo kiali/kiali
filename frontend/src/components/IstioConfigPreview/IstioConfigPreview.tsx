@@ -67,6 +67,7 @@ interface Props {
   onConfirm: (items: ConfigPreviewItem[]) => void;
   onKeyPress?: (e: any) => void;
   opTarget: string;
+  readOnly?: boolean;
   title: string;
 }
 
@@ -183,6 +184,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
               : propItems) as IstioConfigItem[]
           }
           isIstioNew={this.state.newIstioPage}
+          readOnly={this.props.readOnly}
           onChange={(obj, index) => this.editorChange(obj, index, item.title)}
         />
       </Tab>
@@ -213,6 +215,12 @@ export class IstioConfigPreview extends React.Component<Props, State> {
         actions={
           this.props.actions
             ? this.props.actions
+            : this.props.readOnly
+            ? [
+                <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
+                  {t('Close')}
+                </Button>
+              ]
             : [
                 <Button
                   key={this.props.opTarget}
@@ -279,7 +287,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
             {(this.state.newIstioPage ? this.groupItems() : this.state.items).map(item => this.addResource(item))}
           </Tabs>
         )}
-        {this.props.disableAction && (
+        {this.props.disableAction && !this.props.readOnly && (
           <div className={kialiStyle({ color: PFColors.Danger })}>
             {t('No user permission or Kiali in view-only mode')}
           </div>

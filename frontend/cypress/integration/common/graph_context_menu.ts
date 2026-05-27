@@ -3,6 +3,18 @@ import { Visualization } from '@patternfly/react-topology';
 import { elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
+const WIZARD_TITLES: Record<string, string> = {
+  request_routing: 'Request Routing',
+  fault_injection: 'Fault Injection',
+  traffic_shifting: 'Traffic Shifting',
+  tcp_traffic_shifting: 'TCP Traffic Shifting',
+  request_timeouts: 'Request Timeouts',
+  k8s_request_routing: 'K8s HTTP Routing',
+  k8s_grpc_request_routing: 'K8s GRPC Routing'
+};
+
+const VIEW_ONLY_TOOLTIP = 'No user permission or Kiali in view-only mode';
+
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
   cy.waitForReact();
@@ -70,6 +82,43 @@ When('user clicks the {string} item of the context menu', (menuKey: string) => {
 
 Then('user should see the {string} wizard', (wizardKey: string) => {
   cy.get(`[data-test=${wizardKey}_modal]`).should('exist');
+});
+
+Then('user should see the read-only YAML preview for the {string} action', (wizardKey: string) => {
+  const title = `View ${WIZARD_TITLES[wizardKey]}`;
+
+  cy.get('.pf-v6-c-modal-box')
+    .last()
+    .within(() => {
+      cy.contains(title).should('be.visible');
+      cy.contains('Copy').should('be.visible');
+      cy.contains('Download').should('be.visible');
+      cy.get('.ace_editor').should('exist');
+      cy.get('textarea[readonly]').should('exist');
+      cy.contains('button', 'Close').should('be.visible');
+    });
+});
+
+Then('user should see the {string} item of the context menu disabled in view-only mode', (menuKey: string) => {
+  cy.get('.pf-topology-context-menu__c-dropdown__menu')
+    .find(`[data-test="${menuKey}"]`)
+    .should('have.class', 'pf-m-disabled')
+    .find('button')
+    .should('be.disabled')
+    .parent()
+    .parent()
+    .trigger('mouseover', { force: true })
+    .trigger('mouseenter', { force: true });
+
+  cy.get('[role="tooltip"]').should('be.visible').and('contain', VIEW_ONLY_TOOLTIP);
+});
+
+Then('user should see the {string} item of the context menu enabled in view-only mode', (menuKey: string) => {
+  cy.get('.pf-topology-context-menu__c-dropdown__menu')
+    .find(`[data-test="${menuKey}"]`)
+    .should('not.have.class', 'pf-m-disabled')
+    .find('button')
+    .should('not.be.disabled');
 });
 
 Then('user should see the confirmation dialog to delete all traffic routing', () => {

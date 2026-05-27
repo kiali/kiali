@@ -18,6 +18,7 @@ type ReduxProps = {
 
 type Props = ReduxProps & {
   onChange: (obj: PolicyItem) => void;
+  readOnly?: boolean;
   yaml: string;
 };
 
@@ -73,6 +74,7 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
       mode="yaml"
       theme={props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
       onChange={value => onChange(value)}
+      readOnly={props.readOnly}
       height={'275px'}
       width={'100%'}
       className={istioAceEditorStyle}

@@ -11,6 +11,7 @@ interface Props {
   items: IstioConfigItem[];
   onChange: (obj: PolicyItem, index: number) => void;
   orig: IstioConfigItem[];
+  readOnly?: boolean;
 }
 
 export const EditResources: React.FC<Props> = (props: Props) => {
@@ -43,7 +44,11 @@ export const EditResources: React.FC<Props> = (props: Props) => {
                 </>
               }
             >
-              <EditorPreview yaml={dump(item, yamlDumpOptions)} onChange={obj => props.onChange(obj, i)} />
+              <EditorPreview
+                yaml={dump(item, yamlDumpOptions)}
+                readOnly={props.readOnly}
+                onChange={obj => props.onChange(obj, i)}
+              />
             </Tab>
           );
         })}

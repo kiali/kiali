@@ -66,6 +66,7 @@ import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
+import { canDelete as canDeletePermission, canUpdate as canUpdatePermission } from 'types/Permissions';
 
 const editorDrawer = kialiStyle({
   display: 'flex',
@@ -309,11 +310,11 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   canDelete = (): boolean => {
-    return this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.delete;
+    return canDeletePermission(this.state.istioObjectDetails?.permissions);
   };
 
   canUpdate = (): boolean => {
-    return this.state.istioObjectDetails !== undefined && this.state.istioObjectDetails.permissions.update;
+    return canUpdatePermission(this.state.istioObjectDetails?.permissions);
   };
 
   onCancel = (): void => {
@@ -650,10 +651,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   renderActions = (): React.ReactNode => {
-    const canDelete =
-      this.state.istioObjectDetails !== undefined &&
-      this.state.istioObjectDetails.permissions.delete &&
-      !this.state.isRemoved;
+    const canDelete = this.canDelete() && !this.state.isRemoved;
 
     const istioObject = getIstioObject(this.state.istioObjectDetails);
 
@@ -748,4 +746,5 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   theme: state.globalState.theme
 });
 
+export { IstioConfigDetailsPageComponent };
 export const IstioConfigDetailsPage = connect(mapStateToProps)(IstioConfigDetailsPageComponent);

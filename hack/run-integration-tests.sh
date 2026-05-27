@@ -43,8 +43,16 @@ TESTS_ONLY="false"
 WAYPOINT="false"
 WITH_VIDEO="false"
 KIALI_PID=""
+OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
+
+cleanup_offline_seeded_traffic_routing() {
+  if [ -n "${OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET}" ]; then
+    kubectl delete -n bookinfo -f "${OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET}" --ignore-not-found=true >/dev/null 2>&1 || true
+  fi
+}
 
 cleanup_kiali() {
+  cleanup_offline_seeded_traffic_routing
   if [ -n "${KIALI_PID}" ]; then
     kill "${KIALI_PID}" 2>/dev/null || true
   fi
@@ -1042,6 +1050,10 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
     exit 0
   fi
   
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET="${SCRIPT_DIR}/../tests/integration/assets/bookinfo-offline-fault-injection-reviews.yaml"
+  infomsg "Seeding offline fault injection config for reviews"
+  kubectl apply -n bookinfo -f "${OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET}"
+
   # Make a temp dir for the must-gather data
   MUST_GATHER_DIR=$(mktemp -d)
 
@@ -1050,6 +1062,8 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
 
   "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
+  cleanup_offline_seeded_traffic_routing
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
 
   # No longer need the kind cluster after we've gathered the data.
   # kind delete clusters -A

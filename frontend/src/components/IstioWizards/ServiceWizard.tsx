@@ -174,6 +174,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
   componentDidUpdate(prevProps: ServiceWizardProps): void {
     if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+      const isViewOnly = serverConfig.deployment.viewOnlyMode;
       let isMainWizardValid: boolean;
 
       switch (this.props.type) {
@@ -304,12 +305,9 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         k8sGateway.selectedGateway = gatewaySelected;
       }
 
-      this.setState({
+      const nextState: ServiceWizardState = {
+        ...emptyServiceWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)),
         showWizard: this.props.show,
-        showPreview: false,
-        workloads: [],
-        rules: [],
-        k8sRules: [],
         valid: {
           mainWizard: isMainWizardValid,
           vsHosts: true,
@@ -331,7 +329,54 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         trafficPolicy: trafficPolicy,
         gateway: gateway,
         k8sGateway: k8sGateway
-      });
+      };
+
+      if (this.props.show && isViewOnly && this.props.type.length > 0) {
+        switch (this.props.type) {
+          case WIZARD_TRAFFIC_SHIFTING:
+          case WIZARD_TCP_TRAFFIC_SHIFTING:
+            nextState.workloads = getInitWeights(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            );
+            break;
+          case WIZARD_REQUEST_ROUTING:
+            nextState.rules = getInitRules(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            );
+            break;
+          case WIZARD_K8S_REQUEST_ROUTING:
+            nextState.k8sRules = getInitK8sRules(this.props.k8sHTTPRoutes);
+            break;
+          case WIZARD_K8S_GRPC_REQUEST_ROUTING:
+            nextState.k8sRules = getInitK8sGRPCRules(this.props.k8sGRPCRoutes);
+            break;
+          case WIZARD_FAULT_INJECTION:
+            nextState.faultInjectionRoute = getInitFaultInjectionRoute(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            );
+            break;
+          case WIZARD_REQUEST_TIMEOUTS:
+            nextState.timeoutRetryRoute = getInitTimeoutRetryRoute(
+              this.props.workloads,
+              this.props.virtualServices,
+              this.props.destinationRules
+            );
+            break;
+          default:
+        }
+
+        nextState.previews = buildIstioConfig(this.props, nextState);
+        nextState.showPreview = true;
+        nextState.showWizard = false;
+      }
+
+      this.setState(nextState);
     }
   }
 
@@ -849,17 +894,22 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   render(): React.ReactNode {
     const [gatewaySelected, isMesh] = getInitGateway(this.props.virtualServices);
     const k8sGatewaySelected = getInitK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes);
+    const isViewOnly = serverConfig.deployment.viewOnlyMode;
 
     const titleAction =
       this.props.type.length > 0
-        ? this.props.update
+        ? isViewOnly
+          ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].title)}`
+          : this.props.update
           ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
           : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
       this.props.type.length > 0
-        ? this.props.update
+        ? isViewOnly
+          ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+          : this.props.update
           ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
           : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
@@ -908,38 +958,33 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
           onKeyDown={e => {
-            if (e.key === 'Enter' && this.isValid(this.state)) {
+            if (!isViewOnly && e.key === 'Enter' && this.isValid(this.state)) {
               this.onPreview();
             }
           }}
-          actions={[
-            <Button
-              isDisabled={!(this.isValid(this.state) || this.isK8sAPIValid(this.state))}
-              key="confirm"
-              variant={ButtonVariant.primary}
-              onClick={this.onPreview}
-              data-test="preview"
-            >
-              {t('Create')}
-            </Button>,
-            <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
-              {t('Cancel')}
-            </Button>
-          ]}
+          actions={
+            isViewOnly
+              ? [
+                  <Button key="close" variant={ButtonVariant.primary} onClick={() => this.onClose(false)}>
+                    {t('Close')}
+                  </Button>
+                ]
+              : [
+                  <Button
+                    isDisabled={!(this.isValid(this.state) || this.isK8sAPIValid(this.state))}
+                    key="confirm"
+                    variant={ButtonVariant.primary}
+                    onClick={this.onPreview}
+                    data-test="preview"
+                  >
+                    {this.props.update ? t('Update') : t('Create')}
+                  </Button>,
+                  <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
+                    {t('Cancel')}
+                  </Button>
+                ]
+          }
         >
-          <IstioConfigPreview
-            isOpen={this.state.showPreview}
-            title={titleAction}
-            downloadPrefix={this.props.type}
-            ns={this.props.namespace}
-            opTarget={this.props.update ? 'update' : 'create'}
-            disableAction={!this.props.createOrUpdate}
-            items={this.getItems()}
-            onClose={() => this.setState({ showPreview: false })}
-            onConfirm={(items: ConfigPreviewItem[]) => {
-              this.onConfirmPreview(items);
-            }}
-          />
           {this.props.type === WIZARD_REQUEST_ROUTING && (
             <RequestRouting
               serviceName={this.props.serviceName}
@@ -1136,6 +1181,21 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             </ExpandableSection>
           )}
         </Modal>
+
+        <IstioConfigPreview
+          isOpen={this.state.showPreview}
+          title={titleAction}
+          downloadPrefix={this.props.type}
+          ns={this.props.namespace}
+          opTarget={isViewOnly ? 'view' : this.props.update ? 'update' : 'create'}
+          readOnly={isViewOnly}
+          disableAction={!this.props.createOrUpdate}
+          items={this.getItems()}
+          onClose={() => (isViewOnly ? this.onClose(false) : this.setState({ showPreview: false }))}
+          onConfirm={(items: ConfigPreviewItem[]) => {
+            this.onConfirmPreview(items);
+          }}
+        />
       </>
     );
   }
