@@ -1,4 +1,4 @@
-import { Label, Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Labels } from 'components/Label/Labels';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { LocalTime } from 'components/Time/LocalTime';
@@ -27,18 +27,13 @@ import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
 import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
 import { IstioStatusMessageList } from './IstioStatusMessageList';
-import { KioskElement } from '../../../components/Kiosk/KioskElement';
-import { PFColors } from '../../../components/Pf/PfColors';
-import { GetIstioObjectUrl } from '../../../components/Link/IstioObjectLink';
-import { homeCluster, isMultiCluster, serverConfig } from '../../../config';
-import { CLUSTER_DEFAULT } from 'types/Graph';
+import { isMultiCluster } from '../../../config';
 import { infoStyle } from 'styles/IconStyle';
 
 interface IstioConfigOverviewProps {
   helpMessages?: HelpMessage[];
   istioObjectDetails: IstioConfigDetails;
   istioValidations?: ObjectValidation;
-  kiosk: string;
   namespace: string;
   objectReferences: ObjectReference[];
   selectedLine?: string;
@@ -63,12 +58,6 @@ const resourceListStyle = kialiStyle({
       fontWeight: 700
     }
   }
-});
-
-const linkStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  fontSize: '85%',
-  color: PFColors.Link
 });
 
 export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: IstioConfigOverviewProps) => {
@@ -109,24 +98,6 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
       </ul>
     </div>
   );
-
-  let urlInKiali = '';
-
-  if (istioObject !== undefined && istioObject.metadata.namespace !== undefined && istioObject.kind !== undefined) {
-    const clusterInfo = serverConfig.clusters[cluster ?? homeCluster?.name ?? CLUSTER_DEFAULT];
-    const kialiInstance = clusterInfo?.kialiInstances?.find(instance => instance.url.length !== 0);
-
-    // Set the kiali url from kialiInstance info (here a "/console" is required as external link is used)
-    const kialiUrl = `${kialiInstance?.url ?? ''}/console`;
-    urlInKiali =
-      kialiUrl +
-      GetIstioObjectUrl(
-        istioObject.metadata.name,
-        istioObject.metadata.namespace,
-        getIstioObjectGVK(istioObject.apiVersion, istioObject.kind),
-        cluster
-      );
-  }
 
   return (
     <Stack hasGutter={true}>
@@ -213,23 +184,6 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
           <IstioConfigHelp helpMessages={props.helpMessages} selectedLine={props.selectedLine}></IstioConfigHelp>
         </StackItem>
       )}
-
-      <KioskElement>
-        <StackItem>
-          <Tooltip
-            content="This is a Read only view of the YAML including Validations. It is possible to edit directly in Kiali "
-            position={TooltipPosition.top}
-          >
-            <Label color="green" isCompact>
-              Read only mode
-            </Label>
-          </Tooltip>
-
-          <a href={urlInKiali} className={linkStyle} target="_blank" rel="noreferrer">
-            Edit in Kiali
-          </a>
-        </StackItem>
-      </KioskElement>
     </Stack>
   );
 };
