@@ -36,7 +36,7 @@ func nonDefaultTrustDomainMeshConfig() *models.MeshConfig {
 }
 
 var (
-	injectionEnabledLabel          = map[string]string{IstioInjectionLabel: "enabled"}
+	injectionEnabledLabel          = map[string]string{config.IstioInjectionLabelName: "enabled"}
 	meshConfigWithAutomTLSDisabled = meshConfig(false)
 	meshConfigWithAutomTLSEnabled  = meshConfig(true)
 )

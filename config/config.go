@@ -127,6 +127,7 @@ const (
 	IstioSidecarAnnotation          = "sidecar.istio.io/status" // the standard annotation for sidecar status
 	IstioVersionLabel               = "version"                 // we can assume istio components are labeled with "version", if versioned
 	KubernetesAppLabel              = "app.kubernetes.io/name"
+	KubernetesVersionLabel          = "app.kubernetes.io/version"
 	SpireComponentLabel             = "app.kubernetes.io/instance"
 	SpireManagedIdentityLabel       = "spiffe.io/spire-managed-identity" // SPIRE label indicating workload is managed by SPIRE
 	SpireManagedIdentityValue       = "true"                             // Value for SPIRE managed identity label

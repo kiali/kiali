@@ -1727,7 +1727,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{istio.IstioDataplaneModeLabelKey: istio.AmbientDataplaneModeLabelValue}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -1761,7 +1761,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioInjectionLabel: "enabled"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioInjectionLabelName: "enabled"}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},

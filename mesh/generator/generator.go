@@ -15,7 +15,6 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/mesh"
@@ -230,7 +229,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 							continue
 						}
 						// Revision/tag matches; use app.kubernetes.io/version as tie-breaker
-						ztunnelVersion := ztunnel.Labels[istio.KubeVersionLabel]
+						ztunnelVersion := ztunnel.Labels[config.KubernetesVersionLabel]
 						if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
 							continue
 						}

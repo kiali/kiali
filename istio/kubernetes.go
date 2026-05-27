@@ -94,7 +94,7 @@ func GetRevision(namespace models.Namespace) string {
 		}
 	}
 	rev, hasRevLabel := namespace.Labels[config.IstioRevisionLabel]
-	injectionEnabled := namespace.Labels[models.IstioInjectionLabel] == models.IstioInjectionEnabledLabelValue
+	injectionEnabled := namespace.Labels[config.IstioInjectionLabelName] == models.IstioInjectionEnabledLabelValue
 	// Injection label takes precedence over revision label.
 	// Or if there's no rev label and ambient is enabled then set to default.
 	// TODO: Factor in exclude namespaces for cni for ambient.

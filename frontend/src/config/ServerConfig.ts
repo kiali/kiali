@@ -10,12 +10,10 @@ export type ComputedServerConfig = ServerConfig & {
 };
 
 // Exported default label name candidates and key constants
-
+// note: these constants are also declared server-side in config/config.go
 export const AMBIENT_NAMESPACE_LABEL = 'istio.io/dataplane-mode';
 export const AMBIENT_NAMESPACE_LABEL_VALUE = 'ambient';
 export const AMBIENT_WAYPOINT_GATEWAY_LABEL = 'gateway.networking.k8s.io/gateway-name';
-export const AMBIENT_WAYPOINT_LABEL = 'gateway.istio.io/managed';
-export const AMBIENT_WAYPOINT_LABEL_VALUE = 'istio.io-mesh-controller';
 export const INJECTION_LABEL_NAME = 'istio-injection';
 export const INJECTION_LABEL_REV = 'istio.io/rev';
 

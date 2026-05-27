@@ -42,7 +42,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
       !(
         serverConfig.ambientEnabled &&
         nsInfo.labels &&
-           nsInfo.labels[AMBIENT_NAMESPACE_LABEL] === AMBIENT_NAMESPACE_LABEL_VALUE
+        nsInfo.labels[AMBIENT_NAMESPACE_LABEL] === AMBIENT_NAMESPACE_LABEL_VALUE
       ) &&
       serverConfig.kialiFeatureFlags.istioInjectionAction &&
       !serverConfig.kialiFeatureFlags.istioUpgradeAction
@@ -94,17 +94,17 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
           })
       };
 
-        if (
-          nsInfo.labels &&
-          ((nsInfo.labels[INJECTION_LABEL_NAME] && nsInfo.labels[INJECTION_LABEL_NAME] === 'enabled') ||
-           nsInfo.labels[INJECTION_LABEL_REV])
-        ) {
+      if (
+        nsInfo.labels &&
+        ((nsInfo.labels[INJECTION_LABEL_NAME] && nsInfo.labels[INJECTION_LABEL_NAME] === 'enabled') ||
+          nsInfo.labels[INJECTION_LABEL_REV])
+      ) {
         namespaceActions.push(disableAction);
         namespaceActions.push(removeAction);
       } else if (
         nsInfo.labels &&
-       nsInfo.labels[INJECTION_LABEL_NAME] &&
-       nsInfo.labels[INJECTION_LABEL_NAME] === 'disabled'
+        nsInfo.labels[INJECTION_LABEL_NAME] &&
+        nsInfo.labels[INJECTION_LABEL_NAME] === 'disabled'
       ) {
         namespaceActions.push(enableAction);
         namespaceActions.push(removeAction);
@@ -159,11 +159,7 @@ export const buildNamespaceRowActions = (p: NamespaceRowActionsParams): Namespac
           })
       };
 
-      if (
-        nsInfo.labels &&
-        !nsInfo.labels[INJECTION_LABEL_NAME] &&
-        !nsInfo.labels[INJECTION_LABEL_REV]
-      ) {
+      if (nsInfo.labels && !nsInfo.labels[INJECTION_LABEL_NAME] && !nsInfo.labels[INJECTION_LABEL_REV]) {
         if (nsInfo.isAmbient) {
           pushSeparator(namespaceActions);
           namespaceActions.push(disableAmbientAction);

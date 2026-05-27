@@ -17,8 +17,6 @@ const (
 	IstioTagLabel = "istio.io/tag"
 	// DefaultRevisionLabel is the value for the default revision.
 	DefaultRevisionLabel = "default"
-	// IstioInjectionLabel is the key for the istio injection label on a namespace.
-	IstioInjectionLabel = "istio-injection"
 	// IstioInjectionDisabledLabelValue is the value for the istio injection label when it is disabled.
 	IstioInjectionDisabledLabelValue = "disabled"
 	// IstioInjectionEnabledLabelValue is the value for the istio injection label when it is enabled.

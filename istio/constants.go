@@ -1,13 +1,5 @@
 package istio
 
-// These are used across files in this package and elsewhere.
-
-const (
-	AmbientDataplaneModeLabelValue = "ambient"
-	IstioDataplaneModeLabelKey     = "istio.io/dataplane-mode"
-	KubeVersionLabel               = "app.kubernetes.io/version"
-)
-
 const (
 	istioControlPlaneClustersLabel        = "topology.istio.io/controlPlaneClusters"
 	istiodAppLabelValue                   = "istiod"

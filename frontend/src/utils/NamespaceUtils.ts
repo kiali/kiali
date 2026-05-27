@@ -23,11 +23,7 @@ export const getNamespaceMode = (ns: NamespaceLike): NamespaceMode => {
 
   const labels = ns.labels;
   const injectionEnabled = !!(labels && labels[INJECTION_LABEL_NAME] === 'enabled');
-  const revisionSet = !!(
-    labels &&
-    labels[INJECTION_LABEL_REV] !== undefined &&
-    labels[INJECTION_LABEL_REV] !== ''
-  )
+  const revisionSet = !!(labels && labels[INJECTION_LABEL_REV] !== undefined && labels[INJECTION_LABEL_REV] !== '');
 
   if (ns.isControlPlane || injectionEnabled || revisionSet) {
     return 'sidecar';
