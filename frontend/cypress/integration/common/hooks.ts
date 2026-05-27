@@ -156,17 +156,22 @@ Before({ tags: '@loggers-app' }, () => {
 
 Before({ tags: '@core-caching' }, () => {
   if (Cypress.env('CACHING_ENABLED')) {
+    cy.log('@core-caching: caching already confirmed enabled, skipping check');
     return;
   }
 
+  cy.log('@core-caching: checking if caching is enabled...');
   cy.request({ url: 'api/test/metrics/graph/cache', failOnStatusCode: false }).then(resp => {
     if (resp.status === 200) {
+      cy.log('@core-caching: caching is already enabled (cache metrics endpoint returned 200)');
       Cypress.env('CACHING_ENABLED', true);
       return;
     }
 
+    cy.log(`@core-caching: caching not enabled (status=${resp.status}), enabling now...`);
     enableKialiCaching();
     waitForKialiApiReady();
+    cy.log('@core-caching: caching enabled successfully');
     Cypress.env('CACHING_ENABLED', true);
   });
 });
