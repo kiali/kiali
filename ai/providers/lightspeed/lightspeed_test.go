@@ -209,10 +209,10 @@ func buildSSEServer(t *testing.T, opts sseServerOpts) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func collectChunks(p *LightSpeedProvider, r *http.Request, ki *mcputil.KialiInterface) []string {
+func collectChunks(p *LightSpeedProvider, r *http.Request, ki *mcputil.KialiInterface) ([]string, types.TokenUsage) {
 	var chunks []string
-	p.SendChat(func(chunk string) { chunks = append(chunks, chunk) }, r, types.AIRequest{Query: "hello"}, ki, nil)
-	return chunks
+	usage := p.SendChat(func(chunk string) { chunks = append(chunks, chunk) }, r, types.AIRequest{Query: "hello"}, ki, nil)
+	return chunks, usage
 }
 
 func TestSendChat_AuthorizationFails_StreamsError(t *testing.T) {
@@ -223,10 +223,11 @@ func TestSendChat_AuthorizationFails_StreamsError(t *testing.T) {
 	ki := kialiConf("test-cluster")
 	req := makeRequestWithToken(t, "test-cluster", "bad-token")
 
-	chunks := collectChunks(p, req, ki)
+	chunks, usage := collectChunks(p, req, ki)
 
 	require.Len(t, chunks, 1)
 	assert.True(t, strings.Contains(chunks[0], "error"), "expected error event, got: %s", chunks[0])
+	assert.False(t, usage.HasTokens())
 }
 
 func TestSendChat_AuthorizationForbidden_StreamsError(t *testing.T) {
@@ -237,10 +238,11 @@ func TestSendChat_AuthorizationForbidden_StreamsError(t *testing.T) {
 	ki := kialiConf("test-cluster")
 	req := makeRequestWithToken(t, "test-cluster", "some-token")
 
-	chunks := collectChunks(p, req, ki)
+	chunks, usage := collectChunks(p, req, ki)
 
 	require.Len(t, chunks, 1)
 	assert.Contains(t, chunks[0], "error")
+	assert.False(t, usage.HasTokens())
 }
 
 func TestSendChat_SuccessfulStream_ForwardsAllChunks(t *testing.T) {
@@ -248,7 +250,7 @@ func TestSendChat_SuccessfulStream_ForwardsAllChunks(t *testing.T) {
 		`{"event":"start","data":{"conversation_id":"c-1"}}`,
 		`{"event":"token","data":{"id":0,"token":"Hello"}}`,
 		`{"event":"token","data":{"id":1,"token":" world"}}`,
-		`{"event":"end","data":{"referenced_documents":[]}}`,
+		`{"event":"end","data":{"referenced_documents":[],"input_tokens":7,"output_tokens":3,"reasoning_tokens":2}}`,
 	}
 	srv := buildSSEServer(t, sseServerOpts{
 		authorizedStatus: http.StatusOK,
@@ -260,12 +262,14 @@ func TestSendChat_SuccessfulStream_ForwardsAllChunks(t *testing.T) {
 	ki := kialiConf("test-cluster")
 	req := makeRequestWithToken(t, "test-cluster", "valid-token")
 
-	chunks := collectChunks(p, req, ki)
+	chunks, usage := collectChunks(p, req, ki)
 
 	require.Len(t, chunks, len(events))
-	for i, ev := range events {
-		assert.Equal(t, ev, chunks[i])
-	}
+	assert.Equal(t, events[0], chunks[0])
+	assert.Equal(t, events[1], chunks[1])
+	assert.Equal(t, events[2], chunks[2])
+	assert.JSONEq(t, `{"event":"end","data":{"referenced_documents":[]}}`, chunks[3])
+	assert.Equal(t, types.NewTokenUsage(7, 3, 10), usage)
 }
 
 func TestSendChat_StreamReturnsError_StreamsError(t *testing.T) {
@@ -279,10 +283,11 @@ func TestSendChat_StreamReturnsError_StreamsError(t *testing.T) {
 	ki := kialiConf("test-cluster")
 	req := makeRequestWithToken(t, "test-cluster", "valid-token")
 
-	chunks := collectChunks(p, req, ki)
+	chunks, usage := collectChunks(p, req, ki)
 
 	require.Len(t, chunks, 1)
 	assert.Contains(t, chunks[0], "error")
+	assert.False(t, usage.HasTokens())
 }
 
 func TestSendChat_TokenExtractedFromContext(t *testing.T) {
@@ -303,7 +308,8 @@ func TestSendChat_TokenExtractedFromContext(t *testing.T) {
 	ki := kialiConf("my-cluster")
 	req := makeRequestWithToken(t, "my-cluster", "cluster-token")
 
-	collectChunks(p, req, ki)
+	_, usage := collectChunks(p, req, ki)
 
 	assert.Equal(t, "Bearer cluster-token", gotAuth)
+	assert.False(t, usage.HasTokens())
 }

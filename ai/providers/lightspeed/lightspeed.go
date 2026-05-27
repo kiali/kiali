@@ -2,6 +2,7 @@ package lightspeed_provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,6 +15,12 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
 )
+
+type lightSpeedEndUsage struct {
+	InputTokens     int64 `json:"input_tokens"`
+	OutputTokens    int64 `json:"output_tokens"`
+	ReasoningTokens int64 `json:"reasoning_tokens"`
+}
 
 // getBearerToken returns the Kubernetes Bearer token for the user logged in to Kiali from the request context.
 // The token is set by the authentication middleware after session validation. Returns empty string if not found.
@@ -43,18 +50,56 @@ func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Reques
 		return types.TokenUsage{}
 	}
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "The user %s is logged-in and authorized to access OLS", authorizedResponse.Username)
+	usage := types.TokenUsage{}
+	sanitizedOnChunk := func(chunk string) {
+		sanitizedChunk, chunkUsage := sanitizeLightSpeedChunk(chunk)
+		usage.Add(chunkUsage)
+		onChunk(sanitizedChunk)
+	}
 	request := &client.LLMRequest{
 		Query:          req.Query,
 		MediaType:      "application/json",
 		Mode:           "ask",
 		ConversationID: req.ConversationID,
 	}
-	code, err = p.client.StreamingQuery(r.Context(), request, authorizedResponse.UserID, onChunk)
+	code, err = p.client.StreamingQuery(r.Context(), request, authorizedResponse.UserID, sanitizedOnChunk)
 	if err != nil {
 		providers.Log(p, providers.LogLevelError, "Error", "Error querying OLS: %v", err)
 		providers.StreamError(onChunk, fmt.Sprintf("[%s] %s", handleErrorCodeQuery(code), err.Error()))
 	}
-	return types.TokenUsage{}
+	return usage
+}
+
+func sanitizeLightSpeedChunk(chunk string) (string, types.TokenUsage) {
+	var event types.StreamEvent
+	if err := json.Unmarshal([]byte(chunk), &event); err != nil || event.Event != providers.LLM_END_EVENT {
+		return chunk, types.TokenUsage{}
+	}
+
+	var usagePayload lightSpeedEndUsage
+	_ = json.Unmarshal(event.Data, &usagePayload)
+	usage := types.NewTokenUsage(usagePayload.InputTokens, usagePayload.OutputTokens, 0)
+
+	var endData map[string]json.RawMessage
+	if err := json.Unmarshal(event.Data, &endData); err != nil {
+		return `{"event":"end","data":{}}`, usage
+	}
+
+	delete(endData, "input_tokens")
+	delete(endData, "output_tokens")
+	delete(endData, "reasoning_tokens")
+
+	sanitizedData, err := json.Marshal(endData)
+	if err != nil {
+		return `{"event":"end","data":{}}`, usage
+	}
+	event.Data = sanitizedData
+
+	sanitizedChunk, err := json.Marshal(event)
+	if err != nil {
+		return `{"event":"end","data":{}}`, usage
+	}
+	return string(sanitizedChunk), usage
 }
 
 func handleErrorCodeQuery(code int) string {

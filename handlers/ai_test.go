@@ -752,9 +752,11 @@ func TestChatAI_FullStreamingResponse(t *testing.T) {
 
 	assert.Contains(t, respStr, `"event":"start"`)
 	assert.Contains(t, respStr, "Hello from the AI")
+	assert.NotContains(t, respStr, `"input_tokens"`)
+	assert.NotContains(t, respStr, `"output_tokens"`)
 }
 
-func TestChatAI_RecordsUsageFromStreamingEndEvent(t *testing.T) {
+func TestChatAI_RecordsUsageWithoutStreamingTokenPayload(t *testing.T) {
 	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "text/event-stream")

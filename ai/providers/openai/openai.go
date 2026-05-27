@@ -186,8 +186,6 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
 		Actions:             actions,
-		InputTokens:         usage.PromptTokens,
-		OutputTokens:        usage.CompletionTokens,
 		ReferencedDocuments: referencedDocs,
 		Truncated:           false,
 	})

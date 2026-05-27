@@ -50,8 +50,6 @@ type StreamTokenData struct {
 // StreamEndData is the payload for event "end".
 type StreamEndData struct {
 	AvailableQuotas     map[string]any         `json:"available_quotas,omitempty"`
-	InputTokens         int64                  `json:"input_tokens"`
-	OutputTokens        int64                  `json:"output_tokens"`
 	ReferencedDocuments []ReferencedDoc        `json:"referenced_documents,omitempty"`
 	Actions             []get_action_ui.Action `json:"actions,omitempty"`
 	Truncated           bool                   `json:"truncated"`

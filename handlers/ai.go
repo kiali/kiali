@@ -11,7 +11,6 @@ import (
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
-	"github.com/kiali/kiali/ai/providers"
 	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -216,14 +215,7 @@ func ChatAI(
 			}
 		}
 
-		usageRecorded := false
 		onChunk := func(chunk string) {
-			if !usageRecorded {
-				if usage, ok := usageFromStreamChunk(chunk); ok {
-					recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
-					usageRecorded = true
-				}
-			}
 			fmt.Fprintf(w, "data: %s\n\n", chunk)
 			flusher.Flush()
 
@@ -239,28 +231,8 @@ func ChatAI(
 			}
 		}
 		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
-		if !usageRecorded {
-			recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
-		}
+		recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
 	}
-}
-
-func usageFromStreamChunk(chunk string) (aiTypes.TokenUsage, bool) {
-	var event aiTypes.StreamEvent
-	if err := json.Unmarshal([]byte(chunk), &event); err != nil {
-		return aiTypes.TokenUsage{}, false
-	}
-	if event.Event != providers.LLM_END_EVENT {
-		return aiTypes.TokenUsage{}, false
-	}
-
-	var endData aiTypes.StreamEndData
-	if err := json.Unmarshal(event.Data, &endData); err != nil {
-		return aiTypes.TokenUsage{}, false
-	}
-
-	usage := aiTypes.NewTokenUsage(endData.InputTokens, endData.OutputTokens, 0)
-	return usage, usage.HasTokens()
 }
 
 func resolveChatAIUsageUserID(r *http.Request, conf *config.Config, fallbackUserID string) string {
