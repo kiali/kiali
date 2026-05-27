@@ -53,4 +53,14 @@ describe('ParameterizedTabs actionsToolbar rendering', () => {
 
     expect(queryByTestId('toolbar-action')).toBeNull();
   });
+
+  it('hides actionsToolbar in kiosk mode', () => {
+    (store.getState as jest.Mock) = jest.fn(() => ({ globalState: { kiosk: 'https://parent.example.com' } }));
+
+    const { queryByTestId } = renderTabs(<span data-testid="toolbar-action">Action</span>);
+
+    expect(queryByTestId('toolbar-action')).toBeNull();
+
+    (store.getState as jest.Mock) = jest.fn(() => ({ globalState: { kiosk: '' } }));
+  });
 });
