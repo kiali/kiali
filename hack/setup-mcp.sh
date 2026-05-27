@@ -402,6 +402,9 @@ uninstall_mcp() {
   ${CLIENT_EXE} delete clusterrole        "${MCP_PROVIDER}-mcp-server" --ignore-not-found
   ${CLIENT_EXE} delete serviceaccount     "${MCP_PROVIDER}-mcp-server" -n "${ns}" --ignore-not-found
 
+  infomsg "Deleting namespace [${ns}]..."
+  ${CLIENT_EXE} delete namespace "${ns}" --ignore-not-found
+
   infomsg "MCP server removed from [${ns}]."
 }
 

@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-labeled-namespaces-to-lightspeed
+  namespace: ${LIGHTSPEED_NAMESPACE}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: lightspeed-service-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              allow-lightspeed: "true"
+      ports:
+        - protocol: TCP
+          port: 8443
