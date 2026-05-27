@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -57,7 +56,6 @@ func (rt *oauth2RoundTripper) roundTrip(req *http.Request, isRetry bool) (*http.
 			return resp, nil
 		}
 
-		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 
 		if req.GetBody != nil {

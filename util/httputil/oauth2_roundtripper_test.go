@@ -21,7 +21,7 @@ import (
 func TestOAuth2RoundTripper_InjectsBearer(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "test-token-123",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -62,7 +62,7 @@ func TestOAuth2RoundTripper_CachesToken(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "cached-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -102,7 +102,7 @@ func TestOAuth2RoundTripper_RefreshesExpiredToken(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "token",
 			"expires_in":   1,
 			"token_type":   "Bearer",
@@ -145,7 +145,7 @@ func TestOAuth2RoundTripper_RefreshesExpiredToken(t *testing.T) {
 func TestOAuth2RoundTripper_TokenEndpointError(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error":"invalid_client"}`))
+		_, _ = w.Write([]byte(`{"error":"invalid_client"}`))
 	}))
 	defer tokenServer.Close()
 
@@ -173,7 +173,7 @@ func TestOAuth2RoundTripper_ConcurrentSafety(t *testing.T) {
 		atomic.AddInt32(&tokenRequests, 1)
 		time.Sleep(50 * time.Millisecond)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "concurrent-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -234,7 +234,7 @@ func TestOAuth2RoundTripper_ContextCancellation(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(5 * time.Second)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "slow-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -268,7 +268,7 @@ func TestOAuth2RoundTripper_401RetryInvalidatesToken(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "refreshed-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -308,10 +308,10 @@ func TestOAuth2RoundTripper_401RetryInvalidatesToken(t *testing.T) {
 
 func TestOAuth2RoundTripper_AudienceParam(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		_ = r.ParseForm()
 		assert.Equal(t, "https://prometheus.azure.com", r.FormValue("audience"))
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "aud-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
@@ -374,24 +374,24 @@ func TestMapAuthStyle(t *testing.T) {
 
 func TestOAuth2RoundTripper_SecretRotationOn401(t *testing.T) {
 	secretFile := t.TempDir() + "/client-secret"
-	os.WriteFile(secretFile, []byte("old-secret"), 0600)
+	_ = os.WriteFile(secretFile, []byte("old-secret"), 0600)
 
 	var tokenCalls atomic.Int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		_ = r.ParseForm()
 		secret := r.Form.Get("client_secret")
 		call := tokenCalls.Add(1)
 		if call == 1 {
 			assert.Equal(t, "old-secret", secret)
 			// Simulate secret rotation between first and retry attempt
-			os.WriteFile(secretFile, []byte("new-secret"), 0600)
+			_ = os.WriteFile(secretFile, []byte("new-secret"), 0600)
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid_client"})
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid_client"})
 			return
 		}
 		assert.Equal(t, "new-secret", secret)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"access_token": "rotated-token",
 			"expires_in":   3600,
 			"token_type":   "Bearer",
