@@ -81,7 +81,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	if ns.Labels != nil {
 		// Injection label takes precedence.
 		// See rules at: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
-		if injectionLabel := ns.Labels[IstioInjectionLabel]; injectionLabel == IstioInjectionDisabledLabelValue {
+		if injectionLabel := ns.Labels[config.IstioInjectionLabelName]; injectionLabel == IstioInjectionDisabledLabelValue {
 			namespace.Revision = ""
 		} else if injectionLabel == IstioInjectionEnabledLabelValue {
 			namespace.Revision = DefaultRevisionLabel

@@ -14,7 +14,6 @@ const (
 	IstiodClusterIDEnvKey          = "CLUSTER_ID"
 	IstiodExternalEnvKey           = "EXTERNAL_ISTIOD"
 	IstiodScopeGatewayEnvKey       = "PILOT_SCOPE_GATEWAY_TO_NAMESPACE"
-	IstioInjectionLabel            = "istio-injection"
 	IstioControlPlaneClustersLabel = "topology.istio.io/controlPlaneClusters"
 )
 

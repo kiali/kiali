@@ -127,8 +127,8 @@ func TestGetClustersResolvesTheKialiCluster(t *testing.T) {
 					"kiali.io/external-url":         "http://kiali.url.local",
 				},
 				Labels: map[string]string{
-					"app.kubernetes.io/part-of": "kiali",
-					"app.kubernetes.io/version": "v1.25",
+					"app.kubernetes.io/part-of":   "kiali",
+					config.KubernetesVersionLabel: "v1.25",
 				},
 				Name:      "kiali-service",
 				Namespace: "foo",
@@ -193,8 +193,8 @@ func TestGetClustersResolvesRemoteClusters(t *testing.T) {
 				"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
 			},
 			Labels: map[string]string{
-				"app.kubernetes.io/version": "v1.25",
-				"app.kubernetes.io/part-of": "kiali",
+				config.KubernetesVersionLabel: "v1.25",
+				"app.kubernetes.io/part-of":   "kiali",
 			},
 			Name:      "kiali-service",
 			Namespace: config.IstioNamespaceDefault,
@@ -299,8 +299,8 @@ func TestResolveKialiControlPlaneClusterIsCached(t *testing.T) {
 				"operator-sdk/primary-resource": "kiali-operator/myKialiCR",
 			},
 			Labels: map[string]string{
-				"app.kubernetes.io/version": "v1.25",
-				"app.kubernetes.io/part-of": "kiali",
+				config.KubernetesVersionLabel: "v1.25",
+				"app.kubernetes.io/part-of":   "kiali",
 			},
 			Name:      "kiali-service",
 			Namespace: "foo",
@@ -1727,7 +1727,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{istio.IstioDataplaneModeLabelKey: istio.AmbientDataplaneModeLabelValue}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -1761,7 +1761,7 @@ func TestDiscoverWithTags(t *testing.T) {
 			setup: func() map[string][]runtime.Object {
 				return map[string][]runtime.Object{
 					conf.KubernetesConfig.ClusterName: {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{models.IstioInjectionLabel: "enabled"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioInjectionLabelName: models.IstioInjectionEnabledLabelValue}}},
 						defaultWebhook,
 						defaultIstiod,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system"}},
@@ -2331,7 +2331,7 @@ func TestDiscoverWithMaistra(t *testing.T) {
 	maistraIstiod := defaultIstiod.DeepCopy()
 	maistraIstiod.Name = "istiod-basic"
 	maistraIstiod.Labels["maistra.io/owner"] = "basic"
-	maistraIstiod.Labels["istio.io/rev"] = "basic"
+	maistraIstiod.Labels[config.IstioRevisionLabel] = "basic"
 
 	cases := map[string]struct {
 		BookinfoLabels            map[string]string
@@ -2339,18 +2339,18 @@ func TestDiscoverWithMaistra(t *testing.T) {
 		ExpectedIstioNamespaces   []string
 	}{
 		"maistra manages bookinfo": {
-			BookinfoLabels:            map[string]string{"maistra.io/member-of": "istio-system", "istio.io/rev": "default"},
+			BookinfoLabels:            map[string]string{"maistra.io/member-of": "istio-system", config.IstioRevisionLabel: "default"},
 			ExpectedMaistraNamespaces: []string{"bookinfo"},
 		},
 		"istiod manages bookinfo": {
-			BookinfoLabels:          map[string]string{"istio.io/rev": "default"},
+			BookinfoLabels:          map[string]string{config.IstioRevisionLabel: "default"},
 			ExpectedIstioNamespaces: []string{"bookinfo"},
 		},
 		"maistra ignore label - istiod manages bookinfo": {
 			BookinfoLabels: map[string]string{
 				"maistra.io/member-of":        "istio-system",
 				"maistra.io/ignore-namespace": "true",
-				"istio.io/rev":                "default",
+				config.IstioRevisionLabel:     "default",
 			},
 			ExpectedIstioNamespaces: []string{"bookinfo"},
 		},

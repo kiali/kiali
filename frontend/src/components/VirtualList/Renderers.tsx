@@ -530,8 +530,6 @@ export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
   if (ns.labels) {
     if (ns.labels[INJECTION_LABEL_REV]) {
       revision = ns.labels[INJECTION_LABEL_REV];
-    } else if (ns.labels['istio.io/rev']) {
-      revision = ns.labels['istio.io/rev'];
     }
   }
   if (!revision || revision === '') {
@@ -619,7 +617,7 @@ export const nsHealth: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const nsTls: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   const isControlPlane = !!ns.isControlPlane;
-    const isDataPlane =
+  const isDataPlane =
     !isControlPlane &&
     !!ns.labels &&
     (ns.labels[INJECTION_LABEL_NAME] === 'enabled' ||

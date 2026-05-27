@@ -81,7 +81,7 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 
 	// Look for enabled if rev label isn't set: https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy
 	namespacesForRevision := sliceutil.Filter(namespaces, func(ns models.Namespace) bool {
-		return ns.Labels[config.IstioRevisionLabel] == revision || ns.Labels[models.IstioInjectionLabel] == "enabled"
+		return ns.Labels[config.IstioRevisionLabel] == revision || ns.Labels[config.IstioInjectionLabelName] == "enabled"
 	})
 	namespaceNames := sliceutil.Map(namespacesForRevision, func(ns models.Namespace) string {
 		return ns.Name

@@ -84,6 +84,7 @@ When('user unchecks column {string} in manage columns', (columnTitle: string) =>
 
 When('user saves manage columns', () => {
   cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
 });
 
 When('user resets columns to default on namespaces page', () => {

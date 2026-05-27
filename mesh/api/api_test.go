@@ -191,7 +191,7 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 		},
 	}
 
-	defaultInjection := map[string]string{models.IstioInjectionLabel: models.IstioInjectionEnabledLabelValue}
+	defaultInjection := map[string]string{config.IstioInjectionLabelName: models.IstioInjectionEnabledLabelValue}
 	revLabel := map[string]string{config.IstioRevisionLabel: "default"}
 	primaryClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
