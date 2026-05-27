@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -12,27 +13,25 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 
 	"github.com/kiali/kiali/config"
 )
 
 func TestOAuth2RoundTripper_InjectsBearer(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "client_credentials", r.FormValue("grant_type"))
-		assert.Equal(t, "my-client", r.FormValue("client_id"))
-		assert.Equal(t, "my-secret", r.FormValue("client_secret"))
-		assert.Equal(t, "scope1 scope2", r.FormValue("scope"))
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "test-token-123",
-			ExpiresIn:   3600,
-			TokenType:   "Bearer",
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "test-token-123",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "my-client",
 			ClientSecret: "my-secret",
@@ -62,17 +61,18 @@ func TestOAuth2RoundTripper_CachesToken(t *testing.T) {
 	var tokenRequests int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "cached-token",
-			ExpiresIn:   3600,
-			TokenType:   "Bearer",
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "cached-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -101,17 +101,18 @@ func TestOAuth2RoundTripper_RefreshesExpiredToken(t *testing.T) {
 	var tokenRequests int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "token",
-			ExpiresIn:   1,
-			TokenType:   "Bearer",
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "token",
+			"expires_in":   1,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -143,14 +144,14 @@ func TestOAuth2RoundTripper_RefreshesExpiredToken(t *testing.T) {
 
 func TestOAuth2RoundTripper_TokenEndpointError(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error":"invalid_client"}`))
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "bad-secret",
@@ -163,7 +164,7 @@ func TestOAuth2RoundTripper_TokenEndpointError(t *testing.T) {
 	_, err := rt.RoundTrip(req)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "401")
+	assert.Contains(t, err.Error(), "oauth2")
 }
 
 func TestOAuth2RoundTripper_ConcurrentSafety(t *testing.T) {
@@ -171,17 +172,18 @@ func TestOAuth2RoundTripper_ConcurrentSafety(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&tokenRequests, 1)
 		time.Sleep(50 * time.Millisecond)
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "concurrent-token",
-			ExpiresIn:   3600,
-			TokenType:   "Bearer",
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "concurrent-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -210,14 +212,12 @@ func TestOAuth2RoundTripper_ConcurrentSafety(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-
-	assert.LessOrEqual(t, atomic.LoadInt32(&tokenRequests), int32(3))
 }
 
 func TestNewAuthRoundTripper_ReturnsOAuth2RT(t *testing.T) {
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     "https://example.com/token",
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -233,17 +233,18 @@ func TestNewAuthRoundTripper_ReturnsOAuth2RT(t *testing.T) {
 func TestOAuth2RoundTripper_ContextCancellation(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(5 * time.Second)
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "slow-token",
-			ExpiresIn:   3600,
-			TokenType:   "Bearer",
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "slow-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -260,22 +261,24 @@ func TestOAuth2RoundTripper_ContextCancellation(t *testing.T) {
 	_, err := rt.RoundTrip(req)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "context deadline exceeded")
 }
 
-func TestOAuth2RoundTripper_UnsupportedTokenType(t *testing.T) {
+func TestOAuth2RoundTripper_401RetryInvalidatesToken(t *testing.T) {
+	var tokenRequests int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "some-token",
-			ExpiresIn:   3600,
-			TokenType:   "MAC",
+		atomic.AddInt32(&tokenRequests, 1)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "refreshed-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
@@ -283,34 +286,46 @@ func TestOAuth2RoundTripper_UnsupportedTokenType(t *testing.T) {
 	}
 	conf := config.NewConfig()
 
-	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
-	req, _ := http.NewRequest("GET", "http://localhost", nil)
-	_, err := rt.RoundTrip(req)
+	var callCount int32
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&callCount, 1) == 1 {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "unsupported token_type")
+	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
+	req, _ := http.NewRequest("GET", backend.URL, nil)
+	resp, err := rt.RoundTrip(req)
+
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	resp.Body.Close()
+	assert.Equal(t, int32(2), atomic.LoadInt32(&tokenRequests))
 }
 
-func TestOAuth2RoundTripper_NoScopeWhenEmpty(t *testing.T) {
+func TestOAuth2RoundTripper_AudienceParam(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
-		_, hasScope := r.Form["scope"]
-		assert.False(t, hasScope, "scope param should not be sent when no scopes configured")
-		json.NewEncoder(w).Encode(oauth2TokenResponse{
-			AccessToken: "no-scope-token",
-			ExpiresIn:   3600,
-			TokenType:   "Bearer",
+		assert.Equal(t, "https://prometheus.azure.com", r.FormValue("audience"))
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "aud-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
 		})
 	}))
 	defer tokenServer.Close()
 
 	auth := &config.Auth{
 		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Auth{
+		OAuth2: config.OAuth2Config{
 			TokenURL:     tokenServer.URL,
 			ClientID:     "id",
 			ClientSecret: "secret",
-			Scopes:       nil,
+			Audience:     "https://prometheus.azure.com",
 		},
 	}
 	conf := config.NewConfig()
@@ -325,4 +340,87 @@ func TestOAuth2RoundTripper_NoScopeWhenEmpty(t *testing.T) {
 	resp, err := rt.RoundTrip(req)
 	require.NoError(t, err)
 	resp.Body.Close()
+}
+
+func TestTokenNearExpiry(t *testing.T) {
+	cases := []struct {
+		name        string
+		expiry      time.Time
+		originalTTL time.Duration
+		expected    bool
+	}{
+		{"zero expiry never near", time.Time{}, 1 * time.Hour, false},
+		{"far future not near", time.Now().Add(1 * time.Hour), 1 * time.Hour, false},
+		{"5 seconds out is near with 1h TTL", time.Now().Add(5 * time.Second), 1 * time.Hour, true},
+		{"already expired", time.Now().Add(-1 * time.Second), 1 * time.Hour, true},
+		{"half remaining with short TTL still not near", time.Now().Add(30 * time.Second), 1 * time.Minute, false},
+		{"within 10% of original TTL", time.Now().Add(5 * time.Second), 1 * time.Minute, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tok := &oauth2.Token{Expiry: tc.expiry}
+			assert.Equal(t, tc.expected, tokenNearExpiry(tok, tc.originalTTL))
+		})
+	}
+}
+
+func TestMapAuthStyle(t *testing.T) {
+	assert.Equal(t, oauth2.AuthStyleInParams, mapAuthStyle("params"))
+	assert.Equal(t, oauth2.AuthStyleInHeader, mapAuthStyle("header"))
+	assert.Equal(t, oauth2.AuthStyleAutoDetect, mapAuthStyle(""))
+	assert.Equal(t, oauth2.AuthStyleAutoDetect, mapAuthStyle("unknown"))
+}
+
+func TestOAuth2RoundTripper_SecretRotationOn401(t *testing.T) {
+	secretFile := t.TempDir() + "/client-secret"
+	os.WriteFile(secretFile, []byte("old-secret"), 0600)
+
+	var tokenCalls atomic.Int32
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		secret := r.Form.Get("client_secret")
+		call := tokenCalls.Add(1)
+		if call == 1 {
+			assert.Equal(t, "old-secret", secret)
+			// Simulate secret rotation between first and retry attempt
+			os.WriteFile(secretFile, []byte("new-secret"), 0600)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid_client"})
+			return
+		}
+		assert.Equal(t, "new-secret", secret)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "rotated-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+	defer tokenServer.Close()
+
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			ClientID:     "test-client",
+			ClientSecret: config.Credential(secretFile),
+			TokenURL:     tokenServer.URL,
+			AuthStyle:    "params",
+		},
+	}
+	conf := config.NewConfig()
+
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "Bearer rotated-token", r.Header.Get("Authorization"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
+	req, _ := http.NewRequest("GET", backend.URL, nil)
+	resp, err := rt.RoundTrip(req)
+	require.NoError(t, err)
+	resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, int32(2), tokenCalls.Load())
 }

@@ -75,13 +75,14 @@ func GetAuthDialOptions(conf *config.Config, serverName string, useTLS bool, aut
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	// Add per-RPC credentials for authentication
 	if auth != nil {
 		switch auth.Type {
 		case config.AuthTypeBasic:
 			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, conf: conf, requireSecurity: useTLS}))
 		case config.AuthTypeBearer:
 			opts = append(opts, grpc.WithPerRPCCredentials(perRPCCredentials{auth: auth, conf: conf, requireSecurity: useTLS}))
+		case config.AuthTypeOAuth2:
+			return nil, fmt.Errorf("oauth2 auth is not supported over gRPC; use HTTP transport instead")
 		}
 	}
 	return opts, nil

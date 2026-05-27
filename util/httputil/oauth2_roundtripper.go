@@ -2,159 +2,217 @@ package httputil
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 )
 
 const (
-	// oauth2TokenFetchTimeout is the maximum time allowed for a token endpoint request.
 	oauth2TokenFetchTimeout = 30 * time.Second
-
-	// oauth2MaxErrorBodyBytes caps error response bodies to prevent leaking secrets in logs.
-	oauth2MaxErrorBodyBytes = 256
 )
 
-type oauth2TokenResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-	TokenType   string `json:"token_type"`
-}
-
 type oauth2RoundTripper struct {
-	auth       *config.Auth
-	delegate   http.RoundTripper
-	tokenHTTP  *http.Client
+	auth     *config.Auth
+	conf     *config.Config
+	delegate http.RoundTripper
+	tokenRT  http.RoundTripper
 
 	mu          sync.RWMutex
-	accessToken string
-	expiry      time.Time
+	cachedTok   *oauth2.Token
+	originalTTL time.Duration // TTL at issuance, for stable expiry buffer calculation
 }
 
 func (rt *oauth2RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	token, err := rt.getToken(req.Context())
+	return rt.roundTrip(req, false)
+}
+
+func (rt *oauth2RoundTripper) roundTrip(req *http.Request, isRetry bool) (*http.Response, error) {
+	tok, err := rt.ensureToken(req.Context())
 	if err != nil {
 		return nil, fmt.Errorf("oauth2: failed to obtain token: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	return rt.delegate.RoundTrip(req)
+
+	outReq := req.Clone(req.Context())
+	outReq.Header.Set("Authorization", "Bearer "+tok.AccessToken)
+
+	resp, err := rt.delegate.RoundTrip(outReq)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized && !isRetry {
+		if req.Body != nil && req.GetBody == nil {
+			return resp, nil
+		}
+
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+
+		if req.GetBody != nil {
+			req.Body, _ = req.GetBody()
+		}
+
+		rt.mu.Lock()
+		rt.cachedTok = nil
+		rt.mu.Unlock()
+
+		return rt.roundTrip(req, true)
+	}
+
+	return resp, nil
 }
 
-func (rt *oauth2RoundTripper) getToken(ctx context.Context) (string, error) {
+func (rt *oauth2RoundTripper) ensureToken(ctx context.Context) (*oauth2.Token, error) {
 	rt.mu.RLock()
-	if rt.accessToken != "" && time.Now().Before(rt.expiry) {
-		token := rt.accessToken
-		rt.mu.RUnlock()
-		return token, nil
-	}
+	tok := rt.cachedTok
 	rt.mu.RUnlock()
+
+	if tok != nil && !tokenNearExpiry(tok, rt.originalTTL) {
+		return tok, nil
+	}
 
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
-	// Double-check after acquiring write lock
-	if rt.accessToken != "" && time.Now().Before(rt.expiry) {
-		return rt.accessToken, nil
+	if rt.cachedTok != nil && !tokenNearExpiry(rt.cachedTok, rt.originalTTL) {
+		return rt.cachedTok, nil
 	}
 
 	return rt.refreshToken(ctx)
 }
 
-func (rt *oauth2RoundTripper) refreshToken(ctx context.Context) (string, error) {
-	cfg := config.Get()
-
-	clientID, err := cfg.GetCredential(rt.auth.OAuth2.ClientID)
+func (rt *oauth2RoundTripper) refreshToken(ctx context.Context) (*oauth2.Token, error) {
+	clientSecret, err := rt.conf.GetCredential(rt.auth.OAuth2.ClientSecret)
 	if err != nil {
-		return "", fmt.Errorf("oauth2: failed to read client_id: %w", err)
+		return nil, fmt.Errorf("oauth2: failed to read client_secret: %w", err)
 	}
 
-	clientSecret, err := cfg.GetCredential(rt.auth.OAuth2.ClientSecret)
-	if err != nil {
-		return "", fmt.Errorf("oauth2: failed to read client_secret: %w", err)
+	var endpointParams url.Values
+	if rt.auth.OAuth2.Audience != "" {
+		endpointParams = url.Values{"audience": {rt.auth.OAuth2.Audience}}
 	}
 
-	data := url.Values{
-		"grant_type":    {"client_credentials"},
-		"client_id":     {clientID},
-		"client_secret": {clientSecret},
-	}
-	if len(rt.auth.OAuth2.Scopes) > 0 {
-		data.Set("scope", strings.Join(rt.auth.OAuth2.Scopes, " "))
+	ccConfig := clientcredentials.Config{
+		AuthStyle:      mapAuthStyle(rt.auth.OAuth2.AuthStyle),
+		ClientID:       rt.auth.OAuth2.ClientID,
+		ClientSecret:   clientSecret,
+		EndpointParams: endpointParams,
+		Scopes:         rt.auth.OAuth2.Scopes,
+		TokenURL:       rt.auth.OAuth2.TokenURL,
 	}
 
-	// Use context with timeout for cancellation and deadline propagation.
 	fetchCtx, cancel := context.WithTimeout(ctx, oauth2TokenFetchTimeout)
 	defer cancel()
 
-	tokenReq, err := http.NewRequestWithContext(fetchCtx, http.MethodPost, rt.auth.OAuth2.TokenURL, strings.NewReader(data.Encode()))
-	if err != nil {
-		return "", fmt.Errorf("oauth2: failed to build token request: %w", err)
-	}
-	tokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	tokenClient := &http.Client{Transport: rt.tokenRT}
+	fetchCtx = context.WithValue(fetchCtx, oauth2.HTTPClient, tokenClient)
 
-	resp, err := rt.tokenHTTP.Do(tokenReq)
+	tok, err := ccConfig.TokenSource(fetchCtx).Token()
 	if err != nil {
-		return "", fmt.Errorf("oauth2: token request failed: %w", err)
-	}
-	defer resp.Body.Close()
+		var rErr *oauth2.RetrieveError
+		if errors.As(err, &rErr) && rErr.Response != nil && rErr.Response.StatusCode == http.StatusUnauthorized {
+			rt.cachedTok = nil
+			freshSecret, sErr := rt.conf.GetCredential(rt.auth.OAuth2.ClientSecret)
+			if sErr != nil {
+				return nil, fmt.Errorf("oauth2: failed to re-read client_secret after 401: %w", sErr)
+			}
+			retryCfg := clientcredentials.Config{
+				AuthStyle:      mapAuthStyle(rt.auth.OAuth2.AuthStyle),
+				ClientID:       rt.auth.OAuth2.ClientID,
+				ClientSecret:   freshSecret,
+				EndpointParams: endpointParams,
+				Scopes:         rt.auth.OAuth2.Scopes,
+				TokenURL:       rt.auth.OAuth2.TokenURL,
+			}
+			retryCtx, retryCancel := context.WithTimeout(ctx, oauth2TokenFetchTimeout)
+			defer retryCancel()
+			retryCtx = context.WithValue(retryCtx, oauth2.HTTPClient, tokenClient)
 
-	// Read body with a size cap to avoid logging secrets from large error responses.
-	body, err := io.ReadAll(io.LimitReader(resp.Body, oauth2MaxErrorBodyBytes+1))
-	if err != nil {
-		return "", fmt.Errorf("oauth2: failed to read token response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		truncated := string(body)
-		if len(truncated) > oauth2MaxErrorBodyBytes {
-			truncated = truncated[:oauth2MaxErrorBodyBytes] + "...(truncated)"
+			tok, err = retryCfg.TokenSource(retryCtx).Token()
+			if err != nil {
+				return nil, fmt.Errorf("oauth2: token acquisition failed after secret re-read: %w", err)
+			}
+			rt.cachedTok = tok
+			rt.originalTTL = time.Until(tok.Expiry)
+			log.Debugf("oauth2: obtained token after secret rotation (expires at %v)", tok.Expiry)
+			return tok, nil
 		}
-		return "", fmt.Errorf("oauth2: token endpoint returned %d: %s", resp.StatusCode, truncated)
+		return nil, fmt.Errorf("oauth2: token acquisition failed: %w", err)
 	}
 
-	var tokenResp oauth2TokenResponse
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", fmt.Errorf("oauth2: failed to parse token response: %w", err)
-	}
-
-	if tokenResp.AccessToken == "" {
-		return "", fmt.Errorf("oauth2: token endpoint returned empty access_token")
-	}
-
-	if !strings.EqualFold(tokenResp.TokenType, "bearer") && tokenResp.TokenType != "" {
-		return "", fmt.Errorf("oauth2: unsupported token_type %q (expected Bearer)", tokenResp.TokenType)
-	}
-
-	// Cache with 10% safety margin on expiry
-	expiresIn := time.Duration(tokenResp.ExpiresIn) * time.Second
-	if expiresIn <= 0 {
-		expiresIn = 5 * time.Minute
-	}
-	rt.accessToken = tokenResp.AccessToken
-	rt.expiry = time.Now().Add(expiresIn * 9 / 10)
-
-	log.Debugf("oauth2: obtained token (expires in %v)", expiresIn)
-	return rt.accessToken, nil
+	rt.cachedTok = tok
+	rt.originalTTL = time.Until(tok.Expiry)
+	log.Debugf("oauth2: obtained token (expires at %v)", tok.Expiry)
+	return tok, nil
 }
 
-func newOAuth2RoundTripper(_ *config.Config, auth *config.Auth, delegate http.RoundTripper) http.RoundTripper {
-	// Use the delegate transport for token requests so that user-configured
-	// proxy, TLS, and CA settings are respected.
-	tokenClient := &http.Client{
-		Transport: delegate,
-		Timeout:   oauth2TokenFetchTimeout,
+// tokenNearExpiry checks if the token is within its expiry buffer (10% of original TTL clamped to [10s, 5min]).
+func tokenNearExpiry(tok *oauth2.Token, originalTTL time.Duration) bool {
+	if tok.Expiry.IsZero() {
+		return false
 	}
+	buffer := originalTTL / 10
+	if buffer < 10*time.Second {
+		buffer = 10 * time.Second
+	}
+	if buffer > 5*time.Minute {
+		buffer = 5 * time.Minute
+	}
+	return time.Now().Add(buffer).After(tok.Expiry)
+}
+
+func mapAuthStyle(style string) oauth2.AuthStyle {
+	switch style {
+	case "params":
+		return oauth2.AuthStyleInParams
+	case "header":
+		return oauth2.AuthStyleInHeader
+	default:
+		return oauth2.AuthStyleAutoDetect
+	}
+}
+
+func newOAuth2RoundTripper(conf *config.Config, auth *config.Auth, delegate http.RoundTripper) http.RoundTripper {
+	tokenTransport := &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).DialContext,
+		TLSClientConfig:     buildTokenTLSConfig(conf),
+		MaxIdleConns:        10,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
 	return &oauth2RoundTripper{
-		auth:      auth,
-		delegate:  delegate,
-		tokenHTTP: tokenClient,
+		auth:     auth,
+		conf:     conf,
+		delegate: delegate,
+		tokenRT:  tokenTransport,
 	}
+}
+
+// buildTokenTLSConfig creates a TLS config for the token endpoint that always verifies
+// server certificates regardless of the service auth's InsecureSkipVerify setting.
+func buildTokenTLSConfig(conf *config.Config) *tls.Config {
+	cfg := &tls.Config{
+		InsecureSkipVerify: true,
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			roots := conf.CertPool()
+			return verifyServerCertificate(cs, roots)
+		},
+	}
+	conf.ResolvedTLSPolicy.ApplyTo(cfg)
+	return cfg
 }
