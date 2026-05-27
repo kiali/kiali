@@ -71,10 +71,21 @@ while IFS= read -r f; do
 done < <(git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\.yml|\.yaml' | grep -v istio-crds | grep -v hack/offline/must-gather-test-data)
 
 if [ "${#yaml_files[@]}" -gt 0 ]; then
-  yaml_unformatted=()
-  while IFS= read -r f; do
-    yaml_unformatted+=("$f")
-  done < <(yamlfmt -dry -quiet "${yaml_files[@]}" 2>&1 | sed 's/^.*://')
+  # Exclude MCP config files that intentionally use TOML syntax with a .yaml extension.
+  filtered_yaml_files=()
+  for f in "${yaml_files[@]}"; do
+    if [ "$f" != "hack/mcp/kubernetes-mcp-config.yaml" ]; then
+      filtered_yaml_files+=("$f")
+    fi
+  done
+  yaml_files=("${filtered_yaml_files[@]}")
+
+  if [ "${#yaml_files[@]}" -gt 0 ]; then
+    yaml_unformatted=()
+    while IFS= read -r f; do
+      yaml_unformatted+=("$f")
+    done < <(yamlfmt -dry -quiet "${yaml_files[@]}" 2>&1 | sed 's/^.*://')
+  fi
 fi
 
 if [ "${#yaml_unformatted[@]}" -gt 0 ]; then
