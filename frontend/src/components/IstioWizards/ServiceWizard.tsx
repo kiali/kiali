@@ -977,7 +977,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                     onClick={this.onPreview}
                     data-test="preview"
                   >
-                    {t('Create')}
+                    {this.props.update ? t('Update') : t('Create')}
                   </Button>,
                   <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
                     {t('Cancel')}
