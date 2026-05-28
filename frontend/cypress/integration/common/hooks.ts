@@ -154,6 +154,10 @@ Before({ tags: '@loggers-app' }, () => {
   install_demoapp('loggers');
 });
 
+// This hook enables Kiali caching when it isn't already on. Because the
+// enable path leaves caching turned on (no teardown), @core-caching must
+// be the LAST tag group in composite cypress:run / cypress:run:junit
+// scripts in package.json to avoid affecting other suites.
 Before({ tags: '@core-caching' }, () => {
   if (Cypress.env('CACHING_ENABLED')) {
     return;
@@ -168,6 +172,17 @@ Before({ tags: '@core-caching' }, () => {
     return;
   }
 
+  // Detect both caches enabled. Operator path returns JSON, Helm returns YAML.
+  const bothCachesEnabled = (text: string, json: boolean): boolean => {
+    if (json) {
+      return (
+        /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
+        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+      );
+    }
+    return /graph_cache:[\s\S]*?enabled:\s*true/.test(text) && /health_cache:[\s\S]*?enabled:\s*true/.test(text);
+  };
+
   discoverKialiRuntimeInfo().then(info => {
     cy.exec(
       `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
@@ -175,15 +190,17 @@ Before({ tags: '@core-caching' }, () => {
     ).then(result => {
       const primaryResource = result.stdout.trim();
 
-      const checkDone = (configYaml: string): void => {
-        if (/graph_cache:[\s\S]*?enabled:\s*true/.test(configYaml)) {
+      const checkDone = (configText: string, isJson: boolean): void => {
+        if (bothCachesEnabled(configText, isJson)) {
           Cypress.env('CACHING_ENABLED', true);
           return;
         }
 
-        enableKialiCaching();
+        enableKialiCaching(info);
         waitForKialiApiReady();
-        Cypress.env('CACHING_ENABLED', true);
+        cy.then(() => {
+          Cypress.env('CACHING_ENABLED', true);
+        });
       };
 
       if (primaryResource) {
@@ -191,14 +208,14 @@ Before({ tags: '@core-caching' }, () => {
         cy.exec(`kubectl get kiali ${parts[1]} -n ${parts[0]} -o jsonpath="{.spec}"`, {
           failOnNonZeroExit: false
         }).then(crResult => {
-          checkDone(crResult.stdout);
+          checkDone(crResult.stdout, true);
         });
       } else {
         cy.exec(
           `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}"`,
           { failOnNonZeroExit: false }
         ).then(cmResult => {
-          checkDone(cmResult.stdout);
+          checkDone(cmResult.stdout, false);
         });
       }
     });
