@@ -26,10 +26,11 @@ type googleTestStore struct {
 	conversations map[string]*types.Conversation
 }
 
-func (s *googleTestStore) GenerateConversationID() string { return "test-conv-id" }
-func (s *googleTestStore) Enabled() bool                  { return s.enabled }
-func (s *googleTestStore) ReduceWithAI() bool             { return false }
-func (s *googleTestStore) ReduceThreshold() int           { return 0 }
+func (s *googleTestStore) GenerateConversationID() string                 { return "test-conv-id" }
+func (s *googleTestStore) DeleteConversations(_ string, _ []string) error { return nil }
+func (s *googleTestStore) Enabled() bool                                  { return s.enabled }
+func (s *googleTestStore) ReduceWithAI() bool                             { return false }
+func (s *googleTestStore) ReduceThreshold() int                           { return 0 }
 
 func (s *googleTestStore) GetConversation(sessionID, conversationID string) (*types.Conversation, bool) {
 	if s.conversations == nil {
