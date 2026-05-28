@@ -47,8 +47,6 @@ func (s *googleTestStore) SetConversation(sessionID, conversationID string, c *t
 	return nil
 }
 
-func (s *googleTestStore) GetConversationIDs(_ string) []string           { return nil }
-func (s *googleTestStore) DeleteConversations(_ string, _ []string) error { return nil }
 func (s *googleTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }

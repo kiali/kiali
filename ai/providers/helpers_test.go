@@ -59,14 +59,6 @@ func (f *fakeStore) SetConversation(sessionID string, conversationID string, con
 	return nil
 }
 
-func (f *fakeStore) GetConversationIDs(_ string) []string {
-	return nil
-}
-
-func (f *fakeStore) DeleteConversations(_ string, _ []string) error {
-	return nil
-}
-
 func (f *fakeStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }

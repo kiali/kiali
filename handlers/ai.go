@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -287,47 +286,5 @@ func ChatSessionUsage(
 		}
 
 		RespondWithJSON(w, http.StatusOK, aiStore.GetUsageMetrics(userID))
-	}
-}
-
-func ChatConversations(
-	conf *config.Config,
-	aiStore aiTypes.AIStore,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
-			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
-			return
-		}
-
-		sessionID := authentication.GetSessionIDContext(r.Context())
-		RespondWithJSON(w, http.StatusOK, aiStore.GetConversationIDs(sessionID))
-	}
-}
-
-func DeleteChatConversations(
-	conf *config.Config,
-	aiStore aiTypes.AIStore,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
-			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
-			return
-		}
-
-		sessionID := authentication.GetSessionIDContext(r.Context())
-		conversationIDsParam := r.URL.Query().Get("conversationIDs")
-		if conversationIDsParam == "" {
-			RespondWithError(w, http.StatusBadRequest, "conversationIDs query parameter is required")
-			return
-		}
-
-		conversationIDs := strings.Split(conversationIDsParam, ",")
-		if err := aiStore.DeleteConversations(sessionID, conversationIDs); err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Failed to delete conversations: "+err.Error())
-			return
-		}
-
-		RespondWithJSON(w, http.StatusOK, "Conversations deleted successfully")
 	}
 }

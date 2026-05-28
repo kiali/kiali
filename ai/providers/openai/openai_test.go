@@ -48,8 +48,6 @@ func (s *openaiTestStore) SetConversation(sessionID, conversationID string, c *t
 	return nil
 }
 
-func (s *openaiTestStore) GetConversationIDs(_ string) []string           { return nil }
-func (s *openaiTestStore) DeleteConversations(_ string, _ []string) error { return nil }
 func (s *openaiTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }

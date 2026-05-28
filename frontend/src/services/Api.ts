@@ -1566,17 +1566,8 @@ export const postChatAI = (
   });
 };
 
-export const getChatConversations = (): Promise<ApiResponse<string[]>> => {
-  return newRequest<string[]>(HTTP_VERBS.GET, urls.chatConversations, {}, {});
-};
-
 export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
   return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
-};
-
-export const deleteChatConversations = (conversationIDs: string[]): Promise<ApiResponse<void>> => {
-  const conversationIDsParam = conversationIDs.join(',');
-  return newRequest<void>(HTTP_VERBS.DELETE, urls.chatConversations, { conversationIDs: conversationIDsParam }, {});
 };
 
 export const getOverviewAppRates = (): Promise<

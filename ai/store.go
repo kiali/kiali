@@ -3,8 +3,6 @@ package ai
 import (
 	"context"
 	"fmt"
-	"maps"
-	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -350,49 +348,6 @@ func (s *AIStoreImpl) totalConversationsLocked() int {
 		total += len(sessionConversations.Conversation)
 	}
 	return total
-}
-
-// GetSessionIDs returns the list of session IDs
-func (s *AIStoreImpl) GetConversationIDs(sessionID string) []string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	sessionConversation, exists := s.conversations[sessionID]
-	if !exists {
-		log.Debugf("Returned empty list for session [%s]: no session found", sessionID)
-		return []string{}
-	}
-	sessionConversation.mu.Lock()
-	defer sessionConversation.mu.Unlock()
-	sessionConversation.LastAccessed = time.Now()
-	return slices.Collect(maps.Keys(sessionConversation.Conversation))
-}
-
-// DeleteConversation deletes a conversation by sessionID and conversationID
-func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	sessionConversation, exists := s.conversations[sessionID]
-	if !exists {
-		log.Debugf("No session found for sessionID [%s]", sessionID)
-		return nil
-	}
-	sessionConversation.mu.Lock()
-	defer sessionConversation.mu.Unlock()
-	sessionConversation.LastAccessed = time.Now()
-
-	for _, conversationID := range conversationIDs {
-		if _, exists := sessionConversation.Conversation[conversationID]; exists {
-			delete(sessionConversation.Conversation, conversationID)
-			log.Debugf("Deleted conversation [%s] for session [%s]", conversationID, sessionID)
-		} else {
-			log.Debugf("Conversation [%s] not found for session [%s]", conversationID, sessionID)
-		}
-	}
-	if len(sessionConversation.Conversation) == 0 && len(sessionConversation.UsageMetrics) == 0 {
-		delete(s.conversations, sessionID)
-	}
-	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
-	return nil
 }
 
 // LoadAIStoreConfig loads AI store configuration from Kiali config

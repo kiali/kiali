@@ -1882,29 +1882,6 @@ func NewRoutes(
 			handlers.ChatMCP(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
-		// swagger:route GET /chat/conversations chat aiChatConversations
-		// ---
-		// Endpoint to get the list of conversations for the user
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      500: internalError
-		//      404: notFoundError
-		//      400: badRequestError
-		//      200: noContent
-		//
-		{
-			"ChatConversations",
-			log.ChatAILogName,
-			"GET",
-			"/api/chat/conversations",
-			handlers.ChatConversations(conf, aiStore),
-			true,
-		},
 		// swagger:route GET /chat/session/usage chat aiChatSessionUsage
 		// ---
 		// Endpoint to get token usage statistics for the current user session
@@ -1925,28 +1902,6 @@ func NewRoutes(
 			"GET",
 			"/api/chat/session/usage",
 			handlers.ChatSessionUsage(conf, aiStore),
-			true,
-		},
-		// swagger:route DELETE /chat/conversations chat aiChatDeleteConversations
-		// ---
-		// Endpoint to delete conversations for the user
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      500: internalError
-		//      400: badRequestError
-		//      200: noContent
-		//
-		{
-			"DeleteChatConversations",
-			log.ChatAILogName,
-			"DELETE",
-			"/api/chat/conversations",
-			handlers.DeleteChatConversations(conf, aiStore),
 			true,
 		},
 	}
