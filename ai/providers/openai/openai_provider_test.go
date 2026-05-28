@@ -210,7 +210,7 @@ func TestGetProviderOptions_AzureConfig_WithEndpoint(t *testing.T) {
 func TestGetToolDefinitions_ReturnsToolList(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
-	p := &OpenAIProvider{tracingEnabled: true}
+	p := &OpenAIProvider{conf: config.NewConfig()}
 	result := p.GetToolDefinitions()
 	tools, ok := result.([]openai.ChatCompletionToolUnionParam)
 	require.True(t, ok)
@@ -220,13 +220,55 @@ func TestGetToolDefinitions_ReturnsToolList(t *testing.T) {
 func TestGetToolDefinitions_FiltersTraceToolsWhenDisabled(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
-	pWith := &OpenAIProvider{tracingEnabled: true}
-	pWithout := &OpenAIProvider{tracingEnabled: false}
+	confWith := config.NewConfig()
+	confWith.ExternalServices.Tracing.Enabled = true
+	confWithout := config.NewConfig()
+	confWithout.ExternalServices.Tracing.Enabled = false
+
+	pWith := &OpenAIProvider{conf: confWith}
+	pWithout := &OpenAIProvider{conf: confWithout}
 
 	withTracing := pWith.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
 	withoutTracing := pWithout.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
 
 	assert.Less(t, len(withoutTracing), len(withTracing))
+}
+
+func TestGetToolDefinitions_FiltersMetricToolsWhenPrometheusDisabled(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	confWith := config.NewConfig()
+	confWith.ExternalServices.Prometheus.Enabled = true
+	confWithout := config.NewConfig()
+	confWithout.ExternalServices.Prometheus.Enabled = false
+
+	pWith := &OpenAIProvider{conf: confWith}
+	pWithout := &OpenAIProvider{conf: confWithout}
+
+	withMetrics := pWith.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+	withoutMetrics := pWithout.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+
+	assert.Less(t, len(withoutMetrics), len(withMetrics))
+}
+
+func TestGetToolDefinitions_AppliesGlobalAndProviderToolFilters(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	conf := config.NewConfig()
+	conf.ChatAI.Tools.Include = []string{"get_logs", "get_metrics"}
+	conf.ChatAI.Providers = []config.ProviderConfig{
+		{
+			Name:  "test-openai",
+			Tools: config.ToolFilterConfig{Exclude: []string{"get_metrics"}},
+		},
+	}
+
+	p := &OpenAIProvider{conf: conf, providerName: "test-openai"}
+	tools := p.GetToolDefinitions().([]openai.ChatCompletionToolUnionParam)
+
+	require.Len(t, tools, 1)
+	require.NotNil(t, tools[0].OfFunction)
+	assert.Equal(t, "get_logs", tools[0].OfFunction.Function.Name)
 }
 
 func TestTransformToolCallToToolsProcessor_InvalidJSON(t *testing.T) {

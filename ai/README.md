@@ -30,6 +30,7 @@ AI is configured under `chat_ai` in `config/config.go`. Key fields:
 
 - `enabled`: Enables/disables the AI assistant.
 - `default_provider`: The provider name to use by default.
+- `tools`: Optional global include/exclude filter for the default chat toolset.
 - `providers`: List of providers, each with type/config, models, and keys.
 - `store_config`: Optional conversation storage settings.
 
@@ -41,6 +42,9 @@ Example configuration:
 chat_ai:
   enabled: true
   default_provider: "openai"
+  tools:
+    exclude:
+      - "manage_istio_config"
   providers:
     - name: "openai"
       enabled: true
@@ -48,6 +52,10 @@ chat_ai:
       type: "openai"
       config: "default"
       default_model: "gemini"
+      tools:
+        include:
+          - "get_logs"
+          - "get_mesh_status"
       models:
         - name: "gemini"
           enabled: true
@@ -73,6 +81,7 @@ Reference for every configuration key under `chat_ai`, with type, allowed values
 |-----|------|---------|-------------|
 | `enabled` | boolean | `false` | Turns the AI assistant on or off. When `true`, `default_provider` is required. |
 | `default_provider` | string | `""` | Name of the provider to use when the UI does not specify one. Must match a provider `name` and that provider must be enabled. |
+| `tools` | object | `{}` | Optional global filter for the chat toolset. `include` restricts the exposed set to the listed tool names; `exclude` removes listed tool names from the resulting set. Empty means "use the default Kiali selection". |
 | `providers` | array | `[]` | List of provider definitions. Each entry has the keys described in [Provider keys](#provider-keys-providers). |
 | `store_config` | object | (see below) | Optional conversation storage settings. Keys are described in [Store config keys](#store-config-keys-store_config). |
 
@@ -86,6 +95,7 @@ Reference for every configuration key under `chat_ai`, with type, allowed values
 | `enabled` | boolean | no | Enable or disable this provider. Defaults to `true`. Disabled providers are ignored. |
 | `default_model` | string | yes | Name of the default model for this provider. Must match a model `name` in `models` and that model must be enabled. |
 | `description` | string | no | Human-readable description of the provider (e.g. for UI). |
+| `tools` | object | no | Optional provider-specific include/exclude filter applied after the global `chat_ai.tools` filter. It can further restrict the tools exposed to this provider, but it cannot re-enable a tool already filtered out globally or by feature availability. |
 | `key` | string | conditional | API key for all models in this provider. Inline value or `secret:<secret-name>:<key-in-secret>`. Required if no model has a `key`. |
 | `models` | array | yes | List of models. Each entry has the keys described in [Model keys](#model-keys-providersmodels). |
 

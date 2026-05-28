@@ -22,13 +22,19 @@ import (
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
-type dummyProvider struct{}
+type dummyProvider struct {
+	conf         *config.Config
+	providerName string
+}
 
 func (d dummyProvider) GetName() string                                              { return "dummy" }
 func (d dummyProvider) InitializeConversation(ptr *types.Conversation, query string) {}
 func (d dummyProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
 }
 func (d dummyProvider) GetToolDefinitions() interface{} { return nil }
+func (d dummyProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return LookupFilteredDefaultTool(d.conf, d.providerName, toolName)
+}
 func (d dummyProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {
 	return nil, nil, nil
 }
@@ -77,6 +83,27 @@ func TestExecuteToolCallsInParallel_UnknownToolHandler(t *testing.T) {
 	require.Equal(t, "error", results[0].Status)
 	assert.Contains(t, results[0].Content, "tool handler not found")
 
+}
+
+func TestExecuteToolCallsInParallel_FilteredToolIsRejected(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	ki := newTestKialiInterface(t)
+	ki.Conf.ChatAI.Providers = []config.ProviderConfig{
+		{
+			Name:  "provider-1",
+			Tools: config.ToolFilterConfig{Exclude: []string{"get_referenced_docs"}},
+		},
+	}
+	toolCalls := []types.StreamToolCallData{
+		{Name: "get_referenced_docs", Args: map[string]any{"keywords": "test"}, ID: "tc-1"},
+	}
+
+	results, _, _ := ExecuteToolCallsInParallel(dummyProvider{conf: ki.Conf, providerName: "provider-1"}, func(chunk string) {}, ki, toolCalls)
+
+	require.Len(t, results, 1)
+	require.Equal(t, "error", results[0].Status)
+	assert.Contains(t, results[0].Content, "is not exposed for this AI provider")
 }
 
 func TestExecuteToolCallsInParallel_ContextCanceledBefore(t *testing.T) {

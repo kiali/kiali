@@ -131,8 +131,8 @@ func newAnthropicTestProvider(serverURL string) *AnthropicProvider {
 			option.WithAPIKey("test-key"),
 			option.WithMaxRetries(0),
 		),
-		model:          "claude-sonnet-4-5",
-		tracingEnabled: true,
+		conf:  config.NewConfig(),
+		model: "claude-sonnet-4-5",
 	}
 }
 

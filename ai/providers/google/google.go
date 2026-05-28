@@ -254,11 +254,9 @@ func (p *GoogleAIProvider) InitializeConversation(ptr *types.Conversation, query
 }
 
 func (p *GoogleAIProvider) GetToolDefinitions() interface{} {
-	tools := make([]*genai.FunctionDeclaration, 0, len(mcp.DefaultToolHandlers))
-	for _, tool := range mcp.DefaultToolHandlers {
-		if !p.tracingEnabled && mcp.IsTraceTool(tool.Name) {
-			continue
-		}
+	filtered := providers.FilteredDefaultTools(p.conf, p.providerName)
+	tools := make([]*genai.FunctionDeclaration, 0, len(filtered))
+	for _, tool := range filtered {
 		tools = append(tools, &genai.FunctionDeclaration{
 			Name:        tool.GetName(),
 			Description: tool.GetDescription(),
@@ -268,6 +266,10 @@ func (p *GoogleAIProvider) GetToolDefinitions() interface{} {
 	return []*genai.Tool{{
 		FunctionDeclarations: tools,
 	}}
+}
+
+func (p *GoogleAIProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return providers.LookupFilteredDefaultTool(p.conf, p.providerName, toolName)
 }
 
 func (p *GoogleAIProvider) ConversationToProvider(conversation []types.ConversationMessage) interface{} {

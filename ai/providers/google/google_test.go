@@ -202,7 +202,7 @@ func TestGoogle_TransformToolCallToToolsProcessor_EmptySlice(t *testing.T) {
 func TestGoogle_GetToolDefinitions_ReturnsToolList(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
-	p := &GoogleAIProvider{tracingEnabled: true}
+	p := &GoogleAIProvider{conf: config.NewConfig()}
 	result := p.GetToolDefinitions()
 
 	toolList, ok := result.([]*genai.Tool)
@@ -214,8 +214,13 @@ func TestGoogle_GetToolDefinitions_ReturnsToolList(t *testing.T) {
 func TestGoogle_GetToolDefinitions_FiltersTraceToolsWhenDisabled(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
-	pWithTracing := &GoogleAIProvider{tracingEnabled: true}
-	pWithoutTracing := &GoogleAIProvider{tracingEnabled: false}
+	confWithTracing := config.NewConfig()
+	confWithTracing.ExternalServices.Tracing.Enabled = true
+	confWithoutTracing := config.NewConfig()
+	confWithoutTracing.ExternalServices.Tracing.Enabled = false
+
+	pWithTracing := &GoogleAIProvider{conf: confWithTracing}
+	pWithoutTracing := &GoogleAIProvider{conf: confWithoutTracing}
 
 	withTracing := pWithTracing.GetToolDefinitions().([]*genai.Tool)[0].FunctionDeclarations
 	withoutTracing := pWithoutTracing.GetToolDefinitions().([]*genai.Tool)[0].FunctionDeclarations
@@ -380,9 +385,9 @@ func TestGoogle_SendChat_TextResponse(t *testing.T) {
 	defer server.Close()
 
 	p := &GoogleAIProvider{
-		client:         newGoogleTestClientForServer(t, server.URL),
-		model:          "gemini-1.5-pro",
-		tracingEnabled: true,
+		client: newGoogleTestClientForServer(t, server.URL),
+		conf:   config.NewConfig(),
+		model:  "gemini-1.5-pro",
 	}
 	store := &googleTestStore{enabled: true}
 	ki := newGoogleTestKialiInterface("session-1")
@@ -408,9 +413,9 @@ func TestGoogle_SendChat_StoresConversation(t *testing.T) {
 	defer server.Close()
 
 	p := &GoogleAIProvider{
-		client:         newGoogleTestClientForServer(t, server.URL),
-		model:          "gemini-1.5-pro",
-		tracingEnabled: true,
+		client: newGoogleTestClientForServer(t, server.URL),
+		conf:   config.NewConfig(),
+		model:  "gemini-1.5-pro",
 	}
 	store := &googleTestStore{enabled: true}
 	ki := newGoogleTestKialiInterface("session-1")

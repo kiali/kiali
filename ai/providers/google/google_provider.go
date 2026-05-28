@@ -11,10 +11,11 @@ import (
 
 // GoogleGenAIProvider implements AIProvider using google-go.
 type GoogleAIProvider struct {
-	client         *google.Client
-	config         google.ClientConfig
-	model          string
-	tracingEnabled bool
+	client       *google.Client
+	conf         *config.Config
+	config       google.ClientConfig
+	model        string
+	providerName string
 }
 
 func (p *GoogleAIProvider) GetName() string {
@@ -26,12 +27,15 @@ func NewGoogleAIProvider(conf *config.Config, provider *config.ProviderConfig, m
 	if err != nil {
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
-	return &GoogleAIProvider{
-		client:         nil,
-		config:         opts,
-		model:          model.Model,
-		tracingEnabled: conf.ExternalServices.Tracing.Enabled,
-	}, nil
+	p := &GoogleAIProvider{
+		client:       nil,
+		conf:         conf,
+		config:       opts,
+		model:        model.Model,
+		providerName: provider.Name,
+	}
+	providers.LogFilteredDefaultTools(p.GetName(), conf, provider.Name)
+	return p, nil
 }
 
 func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) (google.ClientConfig, error) {
