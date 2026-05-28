@@ -6,8 +6,12 @@ on:
     types:
     - completed
 
+permissions: read-all
+
 jobs:
   merge-reports:
+    permissions:
+      contents: read
     name: Merge frontend test reports
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
@@ -41,6 +45,8 @@ jobs:
         retention-days: 1
 
   report-tests:
+    permissions:
+      contents: read
     name: Report tests to ReportPortal
     runs-on: ubuntu-latest
     needs: [merge-reports]

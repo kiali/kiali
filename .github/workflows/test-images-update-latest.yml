@@ -12,6 +12,8 @@ on:
     - 'deploy/docker/Dockerfile-cypress'
     - 'tests/integration/**'
 
+permissions: read-all
+
 jobs:
   determine_change:
     name: Determine which images are affected by the change

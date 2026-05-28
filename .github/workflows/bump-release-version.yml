@@ -15,8 +15,12 @@ on:
         required: true
         default: v1.73,v2.4,v2.11,v2.17,v2.22
         type: string
+permissions: read-all
+
 jobs:
   initialize:
+    permissions:
+      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -43,6 +47,8 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   bump_version:
+    permissions:
+      contents: write
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:

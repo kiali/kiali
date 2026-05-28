@@ -44,8 +44,12 @@ env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
 
+permissions: read-all
+
 jobs:
   mcp_contract_tests:
+    permissions:
+      contents: read
     name: MCP Contract Tests
     runs-on: ubuntu-latest
     env:

@@ -38,8 +38,12 @@ on:
         required: false
         type: number
         default: 0
+permissions: read-all
+
 jobs:
   molecules:
+    permissions:
+      contents: read
     name: Molecule tests
     runs-on: ubuntu-latest
     steps:

@@ -30,8 +30,12 @@ on:
         default: ""
         type: string
 
+permissions: read-all
+
 jobs:
   initialize:
+    permissions:
+      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:

@@ -53,6 +53,8 @@ on:
         required: true
 
 
+permissions: read-all
+
 jobs:
   build_and_push_integration_tests:
     name: Generate and push integration test docker images
@@ -85,6 +87,8 @@ jobs:
         make container-build-int-tests container-push-int-tests-quay
 
   build_and_push_cypress_tests:
+    permissions:
+      contents: read
     name: Generate and push cypress test docker images
     if: ${{ inputs.build_mode == 'cypress' || inputs.build_mode == 'both' }}
     runs-on: ubuntu-latest

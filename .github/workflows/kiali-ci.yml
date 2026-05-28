@@ -16,8 +16,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
   initialize:
+    permissions:
+      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -198,6 +202,8 @@ jobs:
       istio_version: ""
 
   store_pr_metadata:
+    permissions:
+      contents: read
     name: Store PR metadata
     runs-on: ubuntu-latest
     needs: [initialize]

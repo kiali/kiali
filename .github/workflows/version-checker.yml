@@ -12,6 +12,8 @@ on:
     paths:
     - 'frontend/package.json'
     - 'Makefile'
+permissions: read-all
+
 jobs:
   version:
     name: Check version
