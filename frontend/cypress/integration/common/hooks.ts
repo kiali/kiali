@@ -1,5 +1,5 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-import { enableKialiCaching } from './kiali-config';
+import { discoverKialiRuntimeInfo, enableKialiCaching } from './kiali-config';
 import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
@@ -159,18 +159,40 @@ Before({ tags: '@core-caching' }, () => {
     return;
   }
 
-  cy.exec(
-    `kubectl get configmap -n istio-system -l app.kubernetes.io/name=kiali -o jsonpath="{.items[0].data.config\\.yaml}"`,
-    { failOnNonZeroExit: false }
-  ).then(result => {
-    if (result.code === 0 && /graph_cache:[\s\S]*?enabled:\s*true/.test(result.stdout)) {
-      Cypress.env('CACHING_ENABLED', true);
-      return;
-    }
+  discoverKialiRuntimeInfo().then(info => {
+    cy.exec(
+      `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+      { failOnNonZeroExit: false }
+    ).then(result => {
+      const primaryResource = result.stdout.trim();
 
-    enableKialiCaching();
-    waitForKialiApiReady();
-    Cypress.env('CACHING_ENABLED', true);
+      const checkDone = (configYaml: string): void => {
+        if (/graph_cache:[\s\S]*?enabled:\s*true/.test(configYaml)) {
+          Cypress.env('CACHING_ENABLED', true);
+          return;
+        }
+
+        enableKialiCaching();
+        waitForKialiApiReady();
+        Cypress.env('CACHING_ENABLED', true);
+      };
+
+      if (primaryResource) {
+        const parts = primaryResource.split('/');
+        cy.exec(`kubectl get kiali ${parts[1]} -n ${parts[0]} -o jsonpath="{.spec}"`, {
+          failOnNonZeroExit: false
+        }).then(crResult => {
+          checkDone(crResult.stdout);
+        });
+      } else {
+        cy.exec(
+          `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}"`,
+          { failOnNonZeroExit: false }
+        ).then(cmResult => {
+          checkDone(cmResult.stdout);
+        });
+      }
+    });
   });
 });
 
