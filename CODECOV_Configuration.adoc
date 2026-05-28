@@ -2,6 +2,11 @@
 
 This repository uploads merged Go coverage from GitHub Actions to Codecov (see `.github/workflows/kiali-ci.yml`, job `codecov_merge_upload`).
 
+The workflow runs on:
+
+* Pull requests targeting `master` or release branches (`v*.*`)
+* Pushes to `master` or release branches (to keep base branch coverage up-to-date)
+
 
 == What CI uploads
 
