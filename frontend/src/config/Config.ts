@@ -141,7 +141,6 @@ const conf = {
       disabledFeatures: 'api/config/disabled',
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
-      istioCertsInfo: () => 'api/istio/certs',
       istioConfigCreate: (namespace: string, group: string, version: string, kind: string) =>
         `api/namespaces/${namespace}/istio/${group}/${version}/${kind}`,
       istioConfigDetail: (namespace: string, group: string, version: string, kind: string, object: string) =>

@@ -400,16 +400,11 @@ export const healthHandlers = [
   }),
 
   // Istiod resource thresholds
-  http.get('*/api/istiod/resource_thresholds', () => {
+  http.get('*/api/mesh/resources/thresholds', () => {
     return HttpResponse.json({
       memory: 1073741824, // 1GB
       cpu: 1000 // 1 core
     });
-  }),
-
-  // Certs info
-  http.get('*/api/istio/certs', () => {
-    return HttpResponse.json([]);
   }),
 
   // Control plane metrics (for istiod)

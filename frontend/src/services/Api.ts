@@ -79,7 +79,6 @@ import {
   WorkloadQuery,
   WorkloadUpdateQuery
 } from '../types/Workload';
-import { CertsInfo } from 'types/CertsInfo';
 import { ApiError, ApiResponse } from 'types/Api';
 import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
@@ -322,10 +321,6 @@ export const getOutboundTrafficPolicyMode = (): Promise<ApiResponse<OutboundTraf
 
 export const getIstioStatus = (): Promise<ApiResponse<ComponentStatus[]>> => {
   return newRequest<ComponentStatus[]>(HTTP_VERBS.GET, urls.istioStatus(), {}, {});
-};
-
-export const getIstioCertsInfo = (): Promise<ApiResponse<CertsInfo[]>> => {
-  return newRequest<CertsInfo[]>(HTTP_VERBS.GET, urls.istioCertsInfo(), {}, {});
 };
 
 export const getIstiodResourceThresholds = (): Promise<ApiResponse<IstiodResourceThresholds>> => {

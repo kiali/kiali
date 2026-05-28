@@ -29,7 +29,6 @@ import { TourInfo } from 'components/Tour/TourStop';
 import { ComponentStatus } from '../types/IstioStatus';
 import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
-import { CertsInfo } from 'types/CertsInfo';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 import { ProviderAI } from 'types/Chatbot';
@@ -207,7 +206,6 @@ export interface KialiAppState {
   clusters: ClusterState;
   globalState: GlobalState;
   graph: GraphState;
-  istioCertsInfo: CertsInfo[];
   istioStatus: { [cluster: string]: ComponentStatus[] };
   mesh: MeshState;
   /** Tracing Settings */
