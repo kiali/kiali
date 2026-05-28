@@ -203,7 +203,7 @@ jobs:
     needs: [initialize]
     steps:
     - name: Check out code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Store PR number, target branch, and Kiali version
       run: |
@@ -221,7 +221,7 @@ jobs:
     # don't have access to PR information in github.event.workflow_run.pull_requests
     # See: https://github.com/orgs/community/discussions/25220
     - name: Upload PR metadata
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: pr-metadata
         path: pr-metadata/
@@ -240,25 +240,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     # -------------------------------
     # Download artifacts
     # -------------------------------
     - name: Download backend coverage
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: coverage-backend
         path: coverage
 
     - name: Download multicluster coverage
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: coverage-multicluster
         path: coverage
 
     - name: Download unit coverage
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: coverage-unit
         path: coverage
@@ -277,7 +277,7 @@ jobs:
     # Upload to Codecov
     # -------------------------------
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
       with:
         fail_ci_if_error: false
         files: coverage.out

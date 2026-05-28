@@ -45,7 +45,7 @@ jobs:
     steps:
     - name: Checkout the hack script that runs the tests
       id: checkout-source
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         sparse-checkout: |
           hack/ci-kind-molecule-tests.sh
@@ -57,7 +57,7 @@ jobs:
           hack/ory-hydra/manifests/postgresql.yaml
           hack/ory-hydra/manifests/hydra-ui-simple.yaml
     - name: Install Helm
-      uses: Azure/setup-helm@v5.0.0
+      uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       with:
         version: 'v3.18.4'
     - name: Free Disk Space
