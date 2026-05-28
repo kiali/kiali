@@ -143,14 +143,67 @@ When triage encounters a potential flake (especially with `jenkins-regression` s
 
 User answer feeds classification: yes with evidence → `flake`, no/unsure → classify from error shape (default `ui-bug`).
 
-## Step 5 — Check for known issues
+## Step 5 — Group by root cause
+
+After classifying all failures, check if multiple failures share the same root cause — same error message pattern, same underlying component, or same code path.
+
+### When to group
+
+- **Same error string** (modulo scenario-specific names): e.g. all fail with `TimeoutError: cy.intercept() timed out`
+- **Same failing step pattern**: e.g. all fail on a `Given` step that sets up the same precondition
+- **Same component**: e.g. all failures trace back to the same selector or API endpoint
+
+### What to do
+
+If ≥2 failures share root cause:
+
+1. Present the grouping to the user:
+
+```
+Root cause group: <short description>
+Affected scenarios:
+  - <scenario 1>
+  - <scenario 2>
+  - ...
+Error pattern: <common error>
+Classification: <shared classification>
+```
+
+2. Ask: "These N failures share the same root cause. Create one combined handoff block / issue, or separate ones?"
+
+3. If user picks combined → emit a **grouped handoff block** (see below). If separate → emit individual blocks as normal.
+
+### Grouped handoff block format
+
+```
+## Handoff Block — Group: <root cause summary>
+
+- Scenarios:
+  - <scenario 1> (feature: <file1>.feature, tags: @tag1)
+  - <scenario 2> (feature: <file2>.feature, tags: @tag2)
+- Common error: <shared error pattern>
+- Signal: <if shared>
+- Classification: <shared classification>
+- Confidence: <high | medium | low>
+- Environment: Jenkins nightly
+- Build URL: <full build URL with trailing slash>
+- Kiali version: <version>
+- OCP version: <version>
+- Istio version: <version or "not specified">
+```
+
+### No grouping
+
+If all failures have distinct root causes, skip this step — emit individual handoff blocks.
+
+## Step 6 — Check for known issues
 
 ```bash
 git log --oneline --all --grep="<scenario fragment>" | head -5
 gh issue list --repo kiali/kiali --search "<scenario fragment>" --state open
 ```
 
-## Step 6 — Emit handoff block
+## Step 7 — Emit handoff block
 
 Emit one block per confirmed failure. No automated flake filing threshold — user decides when to file.
 
