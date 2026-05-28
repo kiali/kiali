@@ -1085,3 +1085,97 @@ func TestDeleteConversations_SessionScoping(t *testing.T) {
 	_, found = aiStore.GetConversation("session-B", "conv-1")
 	assert.True(t, found, "session-B conv-1 should NOT be affected")
 }
+
+// ========================================================================
+// ChatPrompts handler tests
+// ========================================================================
+
+func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	handler := ChatPrompts(conf)
+
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var prompts []map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&prompts)
+	require.NoError(t, err)
+	assert.Greater(t, len(prompts), 0, "should return at least one prompt")
+
+	for _, p := range prompts {
+		assert.NotEmpty(t, p["name"], "prompt name should not be empty")
+		assert.NotEmpty(t, p["title"], "prompt title should not be empty")
+		assert.NotEmpty(t, p["category"], "prompt category should not be empty")
+		assert.NotEmpty(t, p["query"], "prompt query should not be empty")
+	}
+}
+
+func TestChatPrompts_FilterByCategory(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	handler := ChatPrompts(conf)
+
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "?category=overview")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var prompts []map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&prompts)
+	require.NoError(t, err)
+	assert.Greater(t, len(prompts), 0, "should return prompts for overview category")
+
+	for _, p := range prompts {
+		assert.Equal(t, "overview", p["category"], "all prompts should be in the overview category")
+	}
+}
+
+func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+
+	handler := ChatPrompts(conf)
+
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "?category=nonexistent")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var prompts []map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&prompts)
+	require.NoError(t, err)
+	assert.Empty(t, prompts, "should return empty array for unknown category")
+}
+
+func TestChatPrompts_DisabledWhenChatAIOff(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+
+	handler := ChatPrompts(conf)
+
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+}

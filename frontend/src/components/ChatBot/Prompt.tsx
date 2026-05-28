@@ -34,6 +34,18 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+  // MessageBar manages its own internal state and only uses `value` as
+  // initial state, so we need to sync the textarea when Redux query
+  // changes externally (e.g. welcome prompt click).
+  React.useEffect(() => {
+    if (textareaRef.current && textareaRef.current.value !== query) {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')
+        ?.set;
+      nativeInputValueSetter?.call(textareaRef.current, query);
+      textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, [query]);
+
   const [kind, name, namespace, istio] = useLocationContext();
   const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio), [
     kind,
@@ -162,10 +174,11 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
             } else if (json.event === 'end') {
               dispatchTokens(responseText);
               dispatchTokens.flush();
+              const actions = json.data.actions ?? [];
               dispatch(
                 ChatAIActions.setChatHistoryUpdateById({
                   entry: {
-                    actions: json.data.actions,
+                    actions,
                     isStreaming: false,
                     isTruncated: json.data.truncated === true,
                     references: json.data.referenced_documents
@@ -174,9 +187,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
                 })
               );
               if (alwaysNavigate) {
-                const navigationAction = json.data.actions.find(
-                  (action: { kind: string }) => action.kind === 'navigation'
-                );
+                const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
                 if (navigationAction) {
                   router.navigate(navigationAction.payload);
                 }
