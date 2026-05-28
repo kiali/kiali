@@ -428,7 +428,7 @@ func TestOAuth2RoundTripper_SecretRotationOn401(t *testing.T) {
 func TestOAuth2RoundTripper_MalformedResponse(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`not json`))
+		_, _ = w.Write([]byte(`not json`))
 	}))
 	defer tokenServer.Close()
 
@@ -505,7 +505,7 @@ func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 func TestOAuth2RoundTripper_ScopesPropagation(t *testing.T) {
 	var capturedBody string
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		_ = r.ParseForm()
 		capturedBody = r.Form.Get("scope")
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
@@ -575,12 +575,12 @@ func TestOAuth2RoundTripper_ClientSecretFileNotFound(t *testing.T) {
 
 func TestOAuth2RoundTripper_ClientSecretRotation(t *testing.T) {
 	secretFile := t.TempDir() + "/client-secret"
-	os.WriteFile(secretFile, []byte("old-secret"), 0600)
+	_ = os.WriteFile(secretFile, []byte("old-secret"), 0600)
 
 	var tokenCalls atomic.Int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenCalls.Add(1)
-		r.ParseForm()
+		_ = r.ParseForm()
 		secret := r.Form.Get("client_secret")
 		if secret == "" {
 			user, pass, _ := r.BasicAuth()
@@ -596,7 +596,7 @@ func TestOAuth2RoundTripper_ClientSecretRotation(t *testing.T) {
 			})
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(`{"error":"invalid_client"}`))
+			_, _ = w.Write([]byte(`{"error":"invalid_client"}`))
 		}
 	}))
 	defer tokenServer.Close()
@@ -631,7 +631,7 @@ func TestOAuth2RoundTripper_ClientSecretRotation(t *testing.T) {
 	rt.mu.Unlock()
 
 	// Rotate the secret
-	os.WriteFile(secretFile, []byte("new-secret"), 0600)
+	_ = os.WriteFile(secretFile, []byte("new-secret"), 0600)
 
 	req, _ = http.NewRequest("GET", backend.URL, nil)
 	resp, err = rt.RoundTrip(req)
