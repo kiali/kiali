@@ -85,7 +85,7 @@ func TestHealthStatusMetricsHandlerWithData(t *testing.T) {
 	gaugeVec.Reset()
 
 	// Add test data
-	gaugeVec.WithLabelValues("test-cluster", "test-namespace", "app", "test-app").Set(0) // Healthy
+	gaugeVec.WithLabelValues("test-cluster", "test-namespace", "app", "test-app").Set(0)    // Healthy
 	gaugeVec.WithLabelValues("test-cluster", "test-namespace", "app", "failing-app").Set(3) // Failure
 
 	// Create a test HTTP request
