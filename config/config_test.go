@@ -1639,3 +1639,101 @@ func TestValidatePrometheusURL(t *testing.T) {
 	conf.ExternalServices.Prometheus.URL = ""
 	assert.Error(t, Validate(conf), "enabled with empty URL should fail validation")
 }
+
+func newValidOAuth2Config() *Config {
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = Credential("signingkey12345!")
+	conf.ExternalServices.Prometheus.Auth.Type = AuthTypeOAuth2
+	conf.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "https://idp.example.com/token"
+	conf.ExternalServices.Prometheus.Auth.OAuth2.ClientID = "my-client"
+	conf.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret = "my-secret"
+	return conf
+}
+
+func TestValidateOAuth2_ValidConfig(t *testing.T) {
+	conf := newValidOAuth2Config()
+	assert.NoError(t, Validate(conf))
+}
+
+func TestValidateOAuth2_RequiredFields(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*Config)
+	}{
+		{"missing token_url", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "" }},
+		{"missing client_id", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientID = "" }},
+		{"missing client_secret", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret = "" }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := newValidOAuth2Config()
+			tc.mutate(conf)
+			err := Validate(conf)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "prometheus")
+		})
+	}
+}
+
+func TestValidateOAuth2_HTTPTokenURL_Rejected(t *testing.T) {
+	conf := newValidOAuth2Config()
+	conf.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "http://idp.example.com/token"
+	conf.ExternalServices.Prometheus.Auth.InsecureSkipVerify = false
+	err := Validate(conf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "HTTPS")
+}
+
+func TestValidateOAuth2_HTTPTokenURL_WarningWithInsecureSkip(t *testing.T) {
+	conf := newValidOAuth2Config()
+	conf.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "http://idp.example.com/token"
+	conf.ExternalServices.Prometheus.Auth.InsecureSkipVerify = true
+	assert.NoError(t, Validate(conf))
+}
+
+func TestValidateOAuth2_UseGRPC_Rejected(t *testing.T) {
+	conf := newValidOAuth2Config()
+	conf.ExternalServices.Tracing.Auth.Type = AuthTypeOAuth2
+	conf.ExternalServices.Tracing.Auth.OAuth2.TokenURL = "https://idp.example.com/token"
+	conf.ExternalServices.Tracing.Auth.OAuth2.ClientID = "my-client"
+	conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret = "my-secret"
+	conf.ExternalServices.Tracing.UseGRPC = true
+	err := Validate(conf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "use_grpc")
+}
+
+func TestValidateOAuth2_UseKialiToken_Rejected(t *testing.T) {
+	conf := newValidOAuth2Config()
+	conf.ExternalServices.Prometheus.Auth.UseKialiToken = true
+	err := Validate(conf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "use_kiali_token")
+}
+
+func TestValidateOAuth2_PersesIncluded(t *testing.T) {
+	conf := NewConfig()
+	conf.LoginToken.SigningKey = Credential("signingkey12345!")
+	conf.ExternalServices.Perses.Auth.Type = AuthTypeOAuth2
+	conf.ExternalServices.Perses.Auth.OAuth2.TokenURL = "https://idp.example.com/token"
+	conf.ExternalServices.Perses.Auth.OAuth2.ClientID = "my-client"
+	conf.ExternalServices.Perses.Auth.OAuth2.ClientSecret = ""
+	err := Validate(conf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "perses")
+}
+
+func TestObfuscate_OAuth2ClientSecret(t *testing.T) {
+	conf := NewConfig()
+	conf.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret = "super-secret-value"
+	conf.ExternalServices.Grafana.Auth.OAuth2.ClientSecret = "another-secret"
+	conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret = "tracing-secret"
+	conf.ExternalServices.Perses.Auth.OAuth2.ClientSecret = "perses-secret"
+	conf.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret = "cd-secret"
+	obfuscated := conf.Obfuscate()
+	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret))
+	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Grafana.Auth.OAuth2.ClientSecret))
+	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Tracing.Auth.OAuth2.ClientSecret))
+	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Perses.Auth.OAuth2.ClientSecret))
+	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret))
+}

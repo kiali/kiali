@@ -1815,6 +1815,27 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.ExternalServices.Perses.Auth.Username,
 			fileName:    SecretFilePersesUsername,
 		},
+		// OAuth2 client secrets
+		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePrometheusOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileGrafanaOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileTracingOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePersesOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileCustomDashboardsPrometheusOAuth2ClientSecret,
+		},
 		// Custom Dashboards Prometheus credentials and certificates
 		{
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile,
@@ -2176,10 +2197,11 @@ func Validate(conf *Config) error {
 	}
 
 	oauth2Services := map[string]*Auth{
-		"prometheus":        &conf.ExternalServices.Prometheus.Auth,
-		"grafana":           &conf.ExternalServices.Grafana.Auth,
-		"tracing":           &conf.ExternalServices.Tracing.Auth,
 		"custom_dashboards": &conf.ExternalServices.CustomDashboards.Prometheus.Auth,
+		"grafana":           &conf.ExternalServices.Grafana.Auth,
+		"perses":            &conf.ExternalServices.Perses.Auth,
+		"prometheus":        &conf.ExternalServices.Prometheus.Auth,
+		"tracing":           &conf.ExternalServices.Tracing.Auth,
 	}
 	for svcName, svcAuth := range oauth2Services {
 		if svcAuth.Type == AuthTypeOAuth2 {
@@ -2192,8 +2214,11 @@ func Validate(conf *Config) error {
 			if svcAuth.OAuth2.ClientSecret == "" {
 				return fmt.Errorf("%s: oauth2.client_secret is required when auth type is oauth2", svcName)
 			}
-			if !strings.HasPrefix(svcAuth.OAuth2.TokenURL, "https://") && !svcAuth.InsecureSkipVerify {
-				return fmt.Errorf("%s: oauth2.token_url must use HTTPS (or set insecure_skip_verify for dev/test)", svcName)
+			if !strings.HasPrefix(svcAuth.OAuth2.TokenURL, "https://") {
+				if !svcAuth.InsecureSkipVerify {
+					return fmt.Errorf("%s: oauth2.token_url must use HTTPS (or set insecure_skip_verify for dev/test)", svcName)
+				}
+				log.Warningf("%s: oauth2.token_url uses HTTP; this is insecure and should only be used for dev/test", svcName)
 			}
 			if svcAuth.UseKialiToken {
 				return fmt.Errorf("%s: use_kiali_token and oauth2 auth type are mutually exclusive", svcName)
