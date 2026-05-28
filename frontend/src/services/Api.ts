@@ -7,6 +7,7 @@ import { AuthInfo, getCSRFToken } from '../types/Auth';
 import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
 import { DashboardModel } from 'types/Dashboards';
 import { GrafanaInfo } from '../types/GrafanaInfo';
+import { ChatSessionUsageMetric } from '../types/Chatbot';
 import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '../types/Graph';
 import {
   AppHealth,
@@ -159,7 +160,8 @@ const newRequest = <P>(
     url: apiProxy ? `${apiProxy}/${url}` : url,
     data: requestData,
     headers: getHeaders(method, false) as AxiosHeaders,
-    params: queryParams
+    params: queryParams,
+    withCredentials: true
   });
 };
 
@@ -1559,8 +1561,13 @@ export const postChatAI = (
     method: HTTP_VERBS.POST,
     headers: headers as HeadersInit,
     body: JSON.stringify(chatRequest),
-    signal: signal
+    signal: signal,
+    credentials: 'include'
   });
+};
+
+export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
+  return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
 };
 
 export const getOverviewAppRates = (): Promise<

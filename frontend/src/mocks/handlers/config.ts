@@ -67,7 +67,10 @@ const generateChatAIConfig = (): ChatAIConfig => {
     return {
       enabled: false,
       providers: [],
-      defaultProvider: ''
+      defaultProvider: '',
+      store: {
+        enabled: false
+      }
     };
   }
   return {
@@ -84,7 +87,10 @@ const generateChatAIConfig = (): ChatAIConfig => {
             model: model.model ?? ''
           })) ?? []
       })) ?? [],
-    defaultProvider: scenarioConfig.chatAI.defaultProvider ?? ''
+    defaultProvider: scenarioConfig.chatAI.defaultProvider ?? '',
+    store: {
+      enabled: scenarioConfig.chatAI.store?.enabled ?? scenarioConfig.chatAI.enabled ?? false
+    }
   };
 };
 

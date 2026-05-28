@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
-import { config } from '../../../config';
-import { isMultiCluster } from '../../../config';
+import { config, isMultiCluster, serverConfig } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import { Timer } from 'globals';
 import { KialiAppState, LoginSession } from '../../../store/Store';
@@ -14,6 +13,7 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { namespacesPerClusterSelector } from 'store/Selectors';
+import { ChatSessionUsageModal } from 'components/ChatSessionUsage/ChatSessionUsageModal';
 import {
   Divider,
   Dropdown,
@@ -41,6 +41,7 @@ type UserState = {
   checkSessionTimerId?: Timer;
   isDropdownOpen: boolean;
   isSessionTimeoutDismissed: boolean;
+  isSessionTokenStatsOpen: boolean;
   showSessionTimeOut: boolean;
   timeCountDownSeconds: number;
   timeLeftTimerId?: Timer;
@@ -58,7 +59,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       showSessionTimeOut: false,
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
-      isDropdownOpen: false
+      isDropdownOpen: false,
+      isSessionTokenStatsOpen: false
     };
   }
 
@@ -136,8 +138,22 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     });
   };
 
+  openSessionTokenStats = (): void => {
+    this.setState({
+      isDropdownOpen: false,
+      isSessionTokenStatsOpen: true
+    });
+  };
+
+  closeSessionTokenStats = (): void => {
+    this.setState({
+      isSessionTokenStatsOpen: false
+    });
+  };
+
   render(): React.ReactNode {
-    const { isDropdownOpen } = this.state;
+    const { isDropdownOpen, isSessionTokenStatsOpen } = this.state;
+    const showSessionTokenStats = serverConfig.chatAI.enabled && serverConfig.chatAI.store.enabled;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
       this.props.session?.clusterInfo?.[cluster] !== undefined;
@@ -159,6 +175,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           : loggedOutClusters.push({ cluster: cluster, endpoint: endpoint });
       });
     }
+    const hasDropdownActions =
+      showSessionTokenStats || canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
 
     return (
       <>
@@ -170,9 +188,11 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           timeOutCountDown={this.state.timeCountDownSeconds}
         />
 
-        {this.props.session && !canLogout && <span className={dropdownStyle}>{this.props.session.username}</span>}
+        {this.props.session && !hasDropdownActions && (
+          <span className={dropdownStyle}>{this.props.session.username}</span>
+        )}
 
-        {this.props.session && canLogout && (
+        {this.props.session && hasDropdownActions && (
           <Dropdown
             toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
               <MenuToggle
@@ -224,11 +244,21 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
               </>
             )}
 
-            <DropdownItem key={'user_logout_option'} onClick={this.handleLogout} isDisabled={!canLogout}>
-              {t('Logout')}
-            </DropdownItem>
+            {showSessionTokenStats && (
+              <DropdownItem key={'session_token_stats_option'} onClick={this.openSessionTokenStats}>
+                {t('Session Token Stats')}
+              </DropdownItem>
+            )}
+            {showSessionTokenStats && canLogout && <Divider component="li" />}
+            {canLogout && (
+              <DropdownItem key={'user_logout_option'} onClick={this.handleLogout}>
+                {t('Logout')}
+              </DropdownItem>
+            )}
           </Dropdown>
         )}
+
+        <ChatSessionUsageModal isOpen={isSessionTokenStatsOpen} onClose={this.closeSessionTokenStats} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">

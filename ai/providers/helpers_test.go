@@ -59,11 +59,11 @@ func (f *fakeStore) SetConversation(sessionID string, conversationID string, con
 	return nil
 }
 
-func (f *fakeStore) GetConversationIDs(_ string) []string {
+func (f *fakeStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 
-func (f *fakeStore) DeleteConversations(_ string, _ []string) error {
+func (f *fakeStore) GetUsageMetrics(_ string) []types.UsageMetric {
 	return nil
 }
 
@@ -103,7 +103,8 @@ func (f *fakeProvider) ProviderToConversation(_ interface{}) types.ConversationM
 	return types.ConversationMessage{}
 }
 
-func (f *fakeProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func (f *fakeProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
+	return types.TokenUsage{}
 }
 
 func (f *fakeProvider) GetName() string { return "fake" }
@@ -248,14 +249,18 @@ func TestStoreConversation_ReduceWithAI(t *testing.T) {
 
 func TestStoreConversation_ContextCanceled(t *testing.T) {
 	store := &fakeStore{enabled: true}
-	ptr := &types.Conversation{}
+	ptr := &types.Conversation{Conversation: []types.ConversationMessage{{Role: "user", Content: "hello"}}}
 	req := types.AIRequest{ConversationID: "conv-1"}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	StoreConversation(&fakeProvider{}, ctx, store, ptr, "session-1", req)
 
-	assert.Equal(t, 0, store.setCalls)
+	assert.Equal(t, 1, store.setCalls)
+	stored := store.conversations["session-1:conv-1"]
+	require.NotNil(t, stored)
+	require.Len(t, stored.Conversation, 1)
+	assert.Equal(t, "hello", stored.Conversation[0].Content)
 }
 
 // --- Log level coverage ---
@@ -388,9 +393,13 @@ func TestStoreConversation_ContextCanceledBeforeReduce(t *testing.T) {
 
 	StoreConversation(provider, ctx, store, ptr, "session-1", req)
 
-	// With a canceled context, StoreConversation should bail out without calling SetConversation
-	assert.Equal(t, 0, store.setCalls, "SetConversation must not be called when context is canceled")
+	// With a canceled context, StoreConversation should still persist the conversation,
+	// but it must skip reduction because the reduction path needs a live context.
+	assert.Equal(t, 1, store.setCalls, "SetConversation should still be called when context is canceled")
 	assert.False(t, provider.reduceCalled, "ReduceConversation must not be called when context is canceled")
+	stored := store.conversations["session-1:conv-1"]
+	require.NotNil(t, stored)
+	require.Len(t, stored.Conversation, 3)
 }
 
 // --- ResolveProviderKey ---

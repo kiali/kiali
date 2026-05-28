@@ -19,10 +19,10 @@ func (p *OpenAIProvider) GetName() string {
 	return "OpenAI"
 }
 
-func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
 	if req.Query == "" {
 		providers.StreamError(onChunk, "query is required")
-		return
+		return types.TokenUsage{}
 	}
 
 	ctx := kialiInterface.Request.Context()
@@ -40,6 +40,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 
 	// We keep OpenAI-native messages for the iterative tool loop.
 	// The persisted conversation will include only the user prompts and final assistant answer.
+	usage := types.TokenUsage{}
 	params := openai.ChatCompletionNewParams{
 		Model:    p.model,
 		Messages: p.ConversationToProvider(ptr.Conversation).([]openai.ChatCompletionMessageParamUnion),
@@ -63,9 +64,15 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 		indexToID := map[int64]string{}
 		text := ""
 		tokenID := 0
+		turnUsage := types.TokenUsage{}
+		sawTurnUsage := false
 
 		for stream.Next() {
 			chunk := stream.Current()
+			if chunk.Usage.TotalTokens > 0 || chunk.Usage.PromptTokens > 0 || chunk.Usage.CompletionTokens > 0 {
+				turnUsage = types.NewTokenUsage(chunk.Usage.PromptTokens, chunk.Usage.CompletionTokens, chunk.Usage.TotalTokens)
+				sawTurnUsage = turnUsage.HasTokens()
+			}
 			if len(chunk.Choices) == 0 {
 				continue
 			}
@@ -98,6 +105,9 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			} else {
 				return text, nil, err
 			}
+		}
+		if sawTurnUsage {
+			usage.Add(turnUsage)
 		}
 
 		// Build sorted tool-call slice and append the assistant message to params.
@@ -161,7 +171,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 
 	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
 	if aborted {
-		return
+		return types.TokenUsage{}
 	}
 
 	if responseContent != "" {
@@ -175,8 +185,11 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
-		Actions: actions, ReferencedDocuments: referencedDocs, Truncated: false,
+		Actions:             actions,
+		ReferencedDocuments: referencedDocs,
+		Truncated:           false,
 	})
+	return usage
 }
 
 func (p *OpenAIProvider) InitializeConversation(ptr *types.Conversation, query string) {

@@ -52,10 +52,15 @@ type ProviderConfig struct {
 	Models       []AIModel `json:"models"`
 }
 
+type ChatAIStoreConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 type ChatAIConfig struct {
-	Enabled         bool             `json:"enabled"`
-	DefaultProvider string           `json:"defaultProvider"`
-	Providers       []ProviderConfig `json:"providers"`
+	Enabled         bool              `json:"enabled"`
+	DefaultProvider string            `json:"defaultProvider"`
+	Providers       []ProviderConfig  `json:"providers"`
+	Store           ChatAIStoreConfig `json:"store"`
 }
 
 type AIModel struct {
@@ -122,6 +127,9 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				Enabled:         conf.ChatAI.Enabled,
 				DefaultProvider: conf.ChatAI.DefaultProvider,
 				Providers:       []ProviderConfig{},
+				Store: ChatAIStoreConfig{
+					Enabled: conf.ChatAI.Enabled && conf.ChatAI.StoreConfig.Enabled,
+				},
 			},
 			Clusters:          make(map[string]models.KubeCluster),
 			ClusterWideAccess: conf.Deployment.ClusterWideAccess,

@@ -75,7 +75,10 @@ const defaultServerConfig: ComputedServerConfig = {
   chatAI: {
     enabled: false,
     providers: [],
-    defaultProvider: ''
+    defaultProvider: '',
+    store: {
+      enabled: false
+    }
   },
   clusters: {},
   clusterWideAccess: true,

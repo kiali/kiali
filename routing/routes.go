@@ -1882,6 +1882,28 @@ func NewRoutes(
 			handlers.ChatMCP(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
+		// swagger:route GET /chat/session/usage chat aiChatSessionUsage
+		// ---
+		// Endpoint to get token usage statistics for the current user session
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatSessionUsage",
+			log.ChatAILogName,
+			"GET",
+			"/api/chat/session/usage",
+			handlers.ChatSessionUsage(conf, aiStore),
+			true,
+		},
 	}
 	return
 }

@@ -60,11 +60,11 @@ func (s *anthropicTestStore) SetConversation(sessionID string, conversationID st
 	return nil
 }
 
-func (s *anthropicTestStore) GetConversationIDs(_ string) []string {
+func (s *anthropicTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 
-func (s *anthropicTestStore) DeleteConversations(_ string, _ []string) error {
+func (s *anthropicTestStore) GetUsageMetrics(_ string) []types.UsageMetric {
 	return nil
 }
 
@@ -206,7 +206,7 @@ func TestSendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.T) {
 	onChunk := func(chunk string) {
 		chunks = append(chunks, chunk)
 	}
-	provider.SendChat(onChunk, kialiInterface.Request, types.AIRequest{
+	usage := provider.SendChat(onChunk, kialiInterface.Request, types.AIRequest{
 		ConversationID: "conv-1",
 		Query:          "hello",
 	}, kialiInterface, store)
@@ -221,6 +221,7 @@ func TestSendChat_ReturnsAssistantAnswerAndStoresConversation(t *testing.T) {
 	assert.Equal(t, "hello", stored.Conversation[1].Content)
 	assert.Equal(t, "assistant", stored.Conversation[2].Role)
 	assert.Equal(t, "Hello from Claude", stored.Conversation[2].Content)
+	assert.Equal(t, types.NewTokenUsage(1, 0, 1), usage)
 }
 
 func TestSendChat_ExecutesToolCallsAndReturnsReferencedDocs(t *testing.T) {

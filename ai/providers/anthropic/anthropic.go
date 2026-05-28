@@ -16,16 +16,24 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
-func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func usageFromAnthropicMessage(resp *anthropic.Message) types.TokenUsage {
+	if resp == nil {
+		return types.TokenUsage{}
+	}
+	return types.NewTokenUsage(resp.Usage.InputTokens, resp.Usage.OutputTokens, 0)
+}
+
+func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
 	if req.Query == "" {
 		providers.StreamError(onChunk, "query is required")
-		return
+		return types.TokenUsage{}
 	}
 
 	ctx := kialiInterface.Request.Context()
 	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
 	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Anthropic provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
+	usage := types.TokenUsage{}
 
 	modelConversation := p.ConversationToProvider(ptr.Conversation).(anthropicConversation)
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Conversation sent to Anthropic (system=%d, messages=%d):", len(modelConversation.System), len(modelConversation.Messages))
@@ -86,6 +94,7 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 				}
 			}
 
+			usage.Add(usageFromAnthropicMessage(&message))
 			params.Messages = append(params.Messages, message.ToParam())
 
 			if stream.Err() != nil {
@@ -142,7 +151,7 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 
 	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
 	if aborted {
-		return
+		return types.TokenUsage{}
 	}
 
 	if responseContent != "" {
@@ -156,8 +165,11 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 	providers.StoreConversation(p, ctx, aiStore, ptr, sessionID, req)
 	providers.Log(p, providers.LogLevelDebug, "Response", "Response for conversation ID: %s", req.ConversationID)
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
-		Actions: actions, ReferencedDocuments: referencedDocs, Truncated: false,
+		Actions:             actions,
+		ReferencedDocuments: referencedDocs,
+		Truncated:           false,
 	})
+	return usage
 }
 
 func (p *AnthropicProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {

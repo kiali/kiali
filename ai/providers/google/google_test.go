@@ -47,8 +47,10 @@ func (s *googleTestStore) SetConversation(sessionID, conversationID string, c *t
 	return nil
 }
 
-func (s *googleTestStore) GetConversationIDs(_ string) []string           { return nil }
-func (s *googleTestStore) DeleteConversations(_ string, _ []string) error { return nil }
+func (s *googleTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+	return nil
+}
+func (s *googleTestStore) GetUsageMetrics(_ string) []types.UsageMetric { return nil }
 
 func newGoogleTestKialiInterface(sessionID string) *mcputil.KialiInterface {
 	req := httptest.NewRequest(http.MethodPost, "/api/chat/google/gemini-pro/ai", nil)
@@ -388,7 +390,7 @@ func TestGoogle_SendChat_TextResponse(t *testing.T) {
 	ki := newGoogleTestKialiInterface("session-1")
 
 	var chunks []string
-	p.SendChat(
+	usage := p.SendChat(
 		func(chunk string) { chunks = append(chunks, chunk) },
 		ki.Request,
 		types.AIRequest{ConversationID: "conv-1", Query: "hello"},
@@ -399,6 +401,7 @@ func TestGoogle_SendChat_TextResponse(t *testing.T) {
 	assert.Contains(t, allChunks, `"event":"start"`)
 	assert.Contains(t, allChunks, "Hello from Gemini")
 	assert.Contains(t, allChunks, `"event":"end"`)
+	assert.Equal(t, types.NewTokenUsage(5, 1, 6), usage)
 }
 
 func TestGoogle_SendChat_StoresConversation(t *testing.T) {

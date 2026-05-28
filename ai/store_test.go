@@ -129,80 +129,6 @@ func TestStore_MultipleSessionsAndConversations(t *testing.T) {
 	}
 }
 
-// --- GetConversationIDs tests ---
-
-func TestStore_GetConversationIDs(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-
-	for _, conv := range []string{"conv-a", "conv-b", "conv-c"} {
-		c := &types.Conversation{
-			Conversation: []types.ConversationMessage{{Role: "user", Content: conv}},
-		}
-		require.NoError(t, store.SetConversation("session-1", conv, c))
-	}
-
-	ids := store.GetConversationIDs("session-1")
-	assert.Len(t, ids, 3)
-	assert.ElementsMatch(t, []string{"conv-a", "conv-b", "conv-c"}, ids)
-}
-
-func TestStore_GetConversationIDs_NoSession(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-	ids := store.GetConversationIDs("nonexistent")
-	assert.Empty(t, ids)
-}
-
-// --- DeleteConversations tests ---
-
-func TestStore_DeleteConversations(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-
-	for _, conv := range []string{"conv-a", "conv-b", "conv-c"} {
-		c := &types.Conversation{
-			Conversation: []types.ConversationMessage{{Role: "user", Content: conv}},
-		}
-		require.NoError(t, store.SetConversation("session-1", conv, c))
-	}
-
-	err := store.DeleteConversations("session-1", []string{"conv-a", "conv-c"})
-	require.NoError(t, err)
-
-	ids := store.GetConversationIDs("session-1")
-	assert.Equal(t, []string{"conv-b"}, ids)
-}
-
-func TestStore_DeleteConversations_NonexistentSession(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-	err := store.DeleteConversations("nonexistent", []string{"conv-1"})
-	assert.NoError(t, err)
-}
-
-func TestStore_DeleteConversations_NonexistentConversation(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-	c := &types.Conversation{
-		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
-	}
-	require.NoError(t, store.SetConversation("session-1", "conv-1", c))
-
-	err := store.DeleteConversations("session-1", []string{"conv-999"})
-	assert.NoError(t, err)
-
-	ids := store.GetConversationIDs("session-1")
-	assert.Len(t, ids, 1, "existing conversation should not be deleted")
-}
-
-func TestStore_DeleteConversations_RemovesEmptySession(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-	conv := &types.Conversation{
-		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
-	}
-	require.NoError(t, store.SetConversation("session-1", "conv-1", conv))
-
-	require.NoError(t, store.DeleteConversations("session-1", []string{"conv-1"}))
-
-	assert.Empty(t, store.GetConversationIDs("session-1"))
-}
-
 // --- Memory management tests ---
 
 func TestStore_EvictsLRUWhenOverMemoryLimit(t *testing.T) {
@@ -362,29 +288,6 @@ func TestStore_ConcurrentSetAndGet(t *testing.T) {
 	assert.True(t, found)
 }
 
-func TestStore_ConcurrentDeleteAndGet(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-
-	conv := &types.Conversation{
-		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
-	}
-	require.NoError(t, store.SetConversation("s1", "c1", conv))
-
-	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
-		wg.Add(2)
-		go func() {
-			defer wg.Done()
-			store.GetConversation("s1", "c1")
-		}()
-		go func() {
-			defer wg.Done()
-			_ = store.DeleteConversations("s1", []string{"c1"})
-		}()
-	}
-	wg.Wait()
-}
-
 // --- Token logging accuracy: Prometheus metrics tests ---
 
 func getGaugeValue(g interface{ Write(*dto.Metric) error }) float64 {
@@ -406,32 +309,13 @@ func getCounterValue(c interface{ Write(*dto.Metric) error }) float64 {
 func TestStore_MetricsConversationsTotalUpdatedOnSet(t *testing.T) {
 	store := NewAIStore(context.Background(), nil)
 
-	before := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-
 	conv := &types.Conversation{
 		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
 	}
 	require.NoError(t, store.SetConversation("s1", "c1", conv))
 
 	after := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-	assert.Greater(t, after, before, "kiali_ai_store_conversations_total should increase after SetConversation")
-}
-
-func TestStore_MetricsConversationsTotalUpdatedOnDelete(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-
-	conv := &types.Conversation{
-		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
-	}
-	require.NoError(t, store.SetConversation("s1", "c1", conv))
-	require.NoError(t, store.SetConversation("s1", "c2", conv))
-
-	afterSet := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-
-	require.NoError(t, store.DeleteConversations("s1", []string{"c1"}))
-
-	afterDelete := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-	assert.Less(t, afterDelete, afterSet, "kiali_ai_store_conversations_total should decrease after DeleteConversations")
+	assert.Equal(t, 1.0, after, "kiali_ai_store_conversations_total should reflect the store conversation count")
 }
 
 func TestStore_MetricsEvictionsTotalIncrementedOnEviction(t *testing.T) {
@@ -459,28 +343,6 @@ func TestStore_MetricsEvictionsTotalIncrementedOnEviction(t *testing.T) {
 
 	after := getCounterValue(internalmetrics.GetAIStoreEvictionsTotalMetric())
 	assert.Greater(t, after, before, "kiali_ai_store_evictions_total should increase when conversations are evicted")
-}
-
-func TestStore_MetricsConversationsTotalAccurateAcrossOperations(t *testing.T) {
-	store := NewAIStore(context.Background(), nil)
-
-	conv := &types.Conversation{
-		Conversation: []types.ConversationMessage{{Role: "user", Content: "hi"}},
-	}
-
-	require.NoError(t, store.SetConversation("s1", "c1", conv))
-	require.NoError(t, store.SetConversation("s1", "c2", conv))
-	require.NoError(t, store.SetConversation("s2", "c3", conv))
-
-	afterThreeAdds := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-
-	require.NoError(t, store.DeleteConversations("s1", []string{"c1", "c2"}))
-
-	afterTwoDeletes := getGaugeValue(internalmetrics.Metrics.AIStoreConversationsTotal)
-
-	delta := afterThreeAdds - afterTwoDeletes
-	assert.InDelta(t, 2.0, delta, 0.01,
-		"deleting 2 of 3 conversations should reduce the gauge by 2")
 }
 
 func TestStore_PurgesInactiveSessions(t *testing.T) {

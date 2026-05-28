@@ -1,1 +1,7 @@
-toolsets = ["kiali"] log_level = 0 port = "8081" [toolset_configs.kiali] url = "http://localhost:20001/" insecure = true
+toolsets = ["kiali"]
+log_level = 0
+port = "8081"
+
+[toolset_configs.kiali]
+url = "http://localhost:20001/kiali/"
+insecure = true

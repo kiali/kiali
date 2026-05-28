@@ -2,9 +2,6 @@ import { http, HttpResponse } from 'msw';
 import { ChatRequest, ChatResponse } from '../../../types/Chatbot';
 import { conversationEntries } from './conversations';
 
-const conversationEntryIds = Array.from(conversationEntries.keys());
-const conversationIdStore = new Set<string>(conversationEntryIds);
-
 const buildDefaultResponse = (chatRequest: ChatRequest, provider: string, model: string): ChatResponse => {
   const query = chatRequest.query.trim();
 
@@ -55,30 +52,9 @@ const buildChatResponse = (chatRequest: ChatRequest, provider: string, model: st
 export const chatbotHandlers = [
   http.post('*/api/chat/:provider/:model/ai', async ({ params, request }) => {
     const body = (await request.json()) as ChatRequest;
-    if (body.conversation_id) {
-      conversationIdStore.add(body.conversation_id);
-    }
-
     const provider = String(params.provider ?? 'mock');
     const model = String(params.model ?? 'mock-model');
 
     return HttpResponse.json(buildChatResponse(body, provider, model));
-  }),
-
-  http.get('*/api/chat/conversations', () => {
-    return HttpResponse.json(Array.from(conversationIdStore));
-  }),
-
-  http.delete('*/api/chat/conversations', ({ request }) => {
-    const url = new URL(request.url);
-    const idsParam = url.searchParams.get('conversationIDs');
-    if (idsParam) {
-      idsParam
-        .split(',')
-        .map(id => id.trim())
-        .filter(Boolean)
-        .forEach(id => conversationIdStore.delete(id));
-    }
-    return HttpResponse.json({});
   })
 ];

@@ -15,8 +15,10 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
@@ -143,6 +145,7 @@ func ChatAI(
 			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
+		fallbackUserID := ""
 		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 			authInfo, err := getAuthInfo(r)
 			if err != nil {
@@ -154,12 +157,26 @@ func ChatAI(
 				RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("AI initialization error: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName))
 				return
 			}
+			fallbackUserID = clusterAuth.Username
+		} else {
+			fallbackUserID = "anonymous"
 		}
+		userID := resolveChatAIUsageUserID(r, conf, fallbackUserID)
 
 		provider, err := ai.NewAIProvider(conf, providerName, modelName)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 			return
+		}
+		usageProviderName := providerName
+		usageModelName := modelName
+		if usageMetadata, err := ai.ResolveUsageMetadata(conf, providerName, modelName); err == nil && usageMetadata != nil {
+			if usageMetadata.Provider != "" {
+				usageProviderName = usageMetadata.Provider
+			}
+			if usageMetadata.Model != "" {
+				usageModelName = usageMetadata.Model
+			}
 		}
 
 		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
@@ -212,6 +229,62 @@ func ChatAI(
 				}
 			}
 		}
-		provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
+		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
+		recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
+	}
+}
+
+func resolveChatAIUsageUserID(r *http.Request, conf *config.Config, fallbackUserID string) string {
+	sessionID := authentication.GetSessionIDContext(r.Context())
+	if sessionID != "" {
+		return sessionID
+	}
+	if fallbackUserID != "" {
+		return fallbackUserID
+	}
+	if conf != nil && conf.Auth.Strategy == config.AuthStrategyAnonymous {
+		return "anonymous"
+	}
+
+	authInfo, err := getAuthInfo(r)
+	if err != nil {
+		return ""
+	}
+	clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
+	if !ok || clusterAuth == nil {
+		return ""
+	}
+	return clusterAuth.Username
+}
+
+func recordChatAIUsage(aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
+	if aiStore == nil || !aiStore.Enabled() || !usage.HasTokens() {
+		return
+	}
+	if userID == "" {
+		userID = "unknown"
+	}
+	if err := aiStore.RecordUsage(userID, provider, model, usage); err != nil {
+		log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", userID, provider, model, err)
+	}
+}
+
+func ChatSessionUsage(
+	conf *config.Config,
+	aiStore aiTypes.AIStore,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !conf.ChatAI.Enabled {
+			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
+			return
+		}
+
+		userID := resolveChatAIUsageUserID(r, conf, "")
+		if userID == "" {
+			RespondWithError(w, http.StatusBadRequest, "Unable to determine session usage scope")
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, aiStore.GetUsageMetrics(userID))
 	}
 }

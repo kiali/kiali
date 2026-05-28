@@ -38,7 +38,8 @@ func (d dummyProvider) ConversationToProvider(conversation []types.ConversationM
 func (d dummyProvider) ProviderToConversation(providerMessage interface{}) types.ConversationMessage {
 	return types.ConversationMessage{}
 }
-func (d dummyProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) {
+func (d dummyProvider) SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage {
+	return types.TokenUsage{}
 }
 
 func newTestKialiInterface(t *testing.T) *mcputil.KialiInterface {

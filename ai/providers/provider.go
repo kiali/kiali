@@ -17,5 +17,5 @@ type AIProvider interface {
 	TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}
 	ProviderToConversation(providerMessage interface{}) types.ConversationMessage
-	SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore)
+	SendChat(onChunk func(chunk string), r *http.Request, req types.AIRequest, kialiInterface *mcputil.KialiInterface, aiStore types.AIStore) types.TokenUsage
 }
