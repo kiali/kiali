@@ -789,8 +789,8 @@ type AIModel struct {
 }
 
 type ToolFilterConfig struct {
-	Include []string `yaml:"include,omitempty" json:"include,omitempty"`
-	Exclude []string `yaml:"exclude,omitempty" json:"exclude,omitempty"`
+	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
+	DisabledTools []string `yaml:"disabled_tools,omitempty" json:"disabled_tools,omitempty"`
 }
 
 type ProviderType string
@@ -1479,33 +1479,30 @@ func normalizeAndValidateToolFilter(path string, filter *ToolFilterConfig) error
 		return nil
 	}
 
-	includeSet := make(map[string]struct{}, len(filter.Include))
-	for i, name := range filter.Include {
+	enabledSet := make(map[string]struct{}, len(filter.EnabledTools))
+	for i, name := range filter.EnabledTools {
 		trimmed := strings.TrimSpace(name)
 		if trimmed == "" {
-			return fmt.Errorf("%s.include[%d] must not be empty", path, i)
+			return fmt.Errorf("%s.enabled_tools[%d] must not be empty", path, i)
 		}
-		if _, exists := includeSet[trimmed]; exists {
-			return fmt.Errorf("%s.include contains duplicate name %q", path, trimmed)
+		if _, exists := enabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.enabled_tools contains duplicate name %q", path, trimmed)
 		}
-		includeSet[trimmed] = struct{}{}
-		filter.Include[i] = trimmed
+		enabledSet[trimmed] = struct{}{}
+		filter.EnabledTools[i] = trimmed
 	}
 
-	excludeSet := make(map[string]struct{}, len(filter.Exclude))
-	for i, name := range filter.Exclude {
+	disabledSet := make(map[string]struct{}, len(filter.DisabledTools))
+	for i, name := range filter.DisabledTools {
 		trimmed := strings.TrimSpace(name)
 		if trimmed == "" {
-			return fmt.Errorf("%s.exclude[%d] must not be empty", path, i)
+			return fmt.Errorf("%s.disabled_tools[%d] must not be empty", path, i)
 		}
-		if _, exists := excludeSet[trimmed]; exists {
-			return fmt.Errorf("%s.exclude contains duplicate name %q", path, trimmed)
+		if _, exists := disabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.disabled_tools contains duplicate name %q", path, trimmed)
 		}
-		if _, exists := includeSet[trimmed]; exists {
-			return fmt.Errorf("%s contains %q in both include and exclude", path, trimmed)
-		}
-		excludeSet[trimmed] = struct{}{}
-		filter.Exclude[i] = trimmed
+		disabledSet[trimmed] = struct{}{}
+		filter.DisabledTools[i] = trimmed
 	}
 
 	return nil

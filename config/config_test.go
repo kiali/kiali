@@ -651,33 +651,33 @@ func TestValidateAI(t *testing.T) {
 			mutate:    nil,
 			expectErr: "",
 		},
-		"global tool filter duplicate include": {
+		"global tool filter duplicate enabled_tools": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Tools.Include = []string{"get_logs", "get_logs"}
+				conf.ChatAI.Tools.EnabledTools = []string{"get_logs", "get_logs"}
 			},
-			expectErr: "chat_ai.tools.include contains duplicate name",
+			expectErr: "chat_ai.tools.enabled_tools contains duplicate name",
 		},
-		"global tool filter include exclude overlap": {
+		"global tool filter overlap is allowed and disabled wins": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Tools.Include = []string{"get_logs"}
-				conf.ChatAI.Tools.Exclude = []string{"get_logs"}
+				conf.ChatAI.Tools.EnabledTools = []string{"get_logs"}
+				conf.ChatAI.Tools.DisabledTools = []string{"get_logs"}
 			},
-			expectErr: "chat_ai.tools contains \"get_logs\" in both include and exclude",
+			expectErr: "",
 		},
 		"provider tool filter trims whitespace": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Tools.Include = []string{" get_logs "}
+				conf.ChatAI.Providers[0].Tools.EnabledTools = []string{" get_logs "}
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, []string{"get_logs"}, conf.ChatAI.Providers[0].Tools.Include)
+				assert.Equal(t, []string{"get_logs"}, conf.ChatAI.Providers[0].Tools.EnabledTools)
 			},
 		},
-		"provider tool filter duplicate exclude": {
+		"provider tool filter duplicate disabled_tools": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Tools.Exclude = []string{"get_logs", "get_logs"}
+				conf.ChatAI.Providers[0].Tools.DisabledTools = []string{"get_logs", "get_logs"}
 			},
-			expectErr: "chat_ai.providers[\"provider-1\"].tools.exclude contains duplicate name",
+			expectErr: "chat_ai.providers[\"provider-1\"].tools.disabled_tools contains duplicate name",
 		},
 		"default provider disabled": {
 			mutate: func(conf *Config) {

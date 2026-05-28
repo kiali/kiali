@@ -255,11 +255,11 @@ func TestGetToolDefinitions_AppliesGlobalAndProviderToolFilters(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
 	conf := config.NewConfig()
-	conf.ChatAI.Tools.Include = []string{"get_logs", "get_metrics"}
+	conf.ChatAI.Tools.EnabledTools = []string{"get_logs", "get_metrics"}
 	conf.ChatAI.Providers = []config.ProviderConfig{
 		{
 			Name:  "test-openai",
-			Tools: config.ToolFilterConfig{Exclude: []string{"get_metrics"}},
+			Tools: config.ToolFilterConfig{DisabledTools: []string{"get_metrics"}},
 		},
 	}
 

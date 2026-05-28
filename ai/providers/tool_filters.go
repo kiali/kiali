@@ -86,10 +86,10 @@ func LogFilteredDefaultTools(displayName string, conf *config.Config, providerNa
 }
 
 func toolAllowedByFilter(toolName string, filter config.ToolFilterConfig) bool {
-	if len(filter.Include) > 0 {
+	if len(filter.EnabledTools) > 0 {
 		allowed := false
-		for _, included := range filter.Include {
-			if included == toolName {
+		for _, enabled := range filter.EnabledTools {
+			if enabled == toolName {
 				allowed = true
 				break
 			}
@@ -99,8 +99,8 @@ func toolAllowedByFilter(toolName string, filter config.ToolFilterConfig) bool {
 		}
 	}
 
-	for _, excluded := range filter.Exclude {
-		if excluded == toolName {
+	for _, disabled := range filter.DisabledTools {
+		if disabled == toolName {
 			return false
 		}
 	}

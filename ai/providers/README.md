@@ -25,7 +25,7 @@ These fields apply to all OpenAI config modes:
 - `providers[].name`: Unique provider name (also used in secrets mount names).
 - `providers[].enabled`: Enable/disable the provider.
 - `providers[].default_model`: Name of the default model for this provider.
-- `providers[].tools`: Optional include/exclude filter to further restrict which chat tools this provider can use.
+- `providers[].tools`: Optional `enabled_tools`/`disabled_tools` filter to further restrict which chat tools this provider can use.
 - `providers[].key`: API key for all models, unless a model overrides it.
 - `providers[].models[]`:
   - `name`: Model alias used in requests.

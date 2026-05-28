@@ -92,7 +92,7 @@ func TestExecuteToolCallsInParallel_FilteredToolIsRejected(t *testing.T) {
 	ki.Conf.ChatAI.Providers = []config.ProviderConfig{
 		{
 			Name:  "provider-1",
-			Tools: config.ToolFilterConfig{Exclude: []string{"get_referenced_docs"}},
+			Tools: config.ToolFilterConfig{DisabledTools: []string{"get_referenced_docs"}},
 		},
 	}
 	toolCalls := []types.StreamToolCallData{
