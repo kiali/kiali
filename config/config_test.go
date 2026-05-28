@@ -657,7 +657,7 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "chat_ai.tools.enabled_tools contains duplicate name",
 		},
-		"global tool filter overlap is allowed and disabled wins": {
+		"global tool filter overlap is allowed": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Tools.EnabledTools = []string{"get_logs"}
 				conf.ChatAI.Tools.DisabledTools = []string{"get_logs"}

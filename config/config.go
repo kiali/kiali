@@ -789,8 +789,8 @@ type AIModel struct {
 }
 
 type ToolFilterConfig struct {
-	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
 	DisabledTools []string `yaml:"disabled_tools,omitempty" json:"disabled_tools,omitempty"`
+	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
 }
 
 type ProviderType string
