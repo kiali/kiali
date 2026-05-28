@@ -26,6 +26,29 @@ import (
 
 var invalidLabelCharRE = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 
+// skipPromCacheKey is a context key that, when present and true, instructs
+// the Prometheus Client methods to bypass the Kiali promCache for both reads and
+// writes. This can be used by callers that are sure that the queries being performed
+// will not benefit from the caching. For example, the health monitor's batch refresh
+// to avoid filling the cache with hundreds of namespace query results that will never
+// be reused — each namespace is queried exactly once per refresh cycle, so caching the
+// results just wastes memory (potentially hundreds of MB at scale).
+type skipPromCacheKeyType struct{}
+
+var skipPromCacheKey = skipPromCacheKeyType{}
+
+// ContextWithSkipCache returns a child context that signals the Prometheus
+// client to skip its result cache for all queries made with this context.
+func ContextWithSkipCache(ctx context.Context) context.Context {
+	return context.WithValue(ctx, skipPromCacheKey, true)
+}
+
+// shouldSkipCache returns true if the context carries the skip-cache signal.
+func shouldSkipCache(ctx context.Context) bool {
+	v, _ := ctx.Value(skipPromCacheKey).(bool)
+	return v
+}
+
 // QueryRecorder embeds prom_v1.API and records all Query calls to a file
 type QueryRecorder struct {
 	prom_v1.API
@@ -423,7 +446,7 @@ func (in *Client) GetAllRequestRates(ctx context.Context, namespace, cluster str
 	var result model.Vector
 	var err error
 
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		if isCached, cachedResult := promCache.GetAllRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			result = cachedResult
 		}
@@ -431,7 +454,7 @@ func (in *Client) GetAllRequestRates(ctx context.Context, namespace, cluster str
 
 	if result == nil {
 		result, err = getAllRequestRates(ctx, in.api, namespace, cluster, queryTime, ratesInterval)
-		if err == nil && promCache != nil {
+		if err == nil && promCache != nil && !shouldSkipCache(ctx) {
 			promCache.SetAllRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 		}
 	}
@@ -460,7 +483,7 @@ func (in *Client) GetNamespaceServicesRequestRates(ctx context.Context, namespac
 
 	log.FromContext(ctx).Trace().Msgf("GetNamespaceServicesRequestRates [namespace: %s] [ratesInterval: %s] [queryTime: %s]", namespace, ratesInterval, queryTime.String())
 
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		if isCached, result := promCache.GetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
@@ -469,7 +492,7 @@ func (in *Client) GetNamespaceServicesRequestRates(ctx context.Context, namespac
 	if err != nil {
 		return result, err
 	}
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		promCache.SetNamespaceServicesRequestRates(namespace, cluster, ratesInterval, queryTime, result)
 	}
 	return result, nil
@@ -497,7 +520,7 @@ func (in *Client) GetServiceRequestRates(ctx context.Context, namespace, cluster
 
 	log.FromContext(ctx).Trace().Msgf("GetServiceRequestRates [namespace: %s] [service: %s] [ratesInterval: %s] [queryTime: %s]", namespace, service, ratesInterval, queryTime.String())
 
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		if isCached, result := promCache.GetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime); isCached {
 			return result, nil
 		}
@@ -506,7 +529,7 @@ func (in *Client) GetServiceRequestRates(ctx context.Context, namespace, cluster
 	if err != nil {
 		return result, err
 	}
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		promCache.SetServiceRequestRates(namespace, cluster, service, ratesInterval, queryTime, result)
 	}
 	return result, nil
@@ -534,7 +557,7 @@ func (in *Client) GetAppRequestRates(ctx context.Context, namespace, cluster, ap
 
 	log.FromContext(ctx).Trace().Msgf("GetAppRequestRates [namespace: %s] [cluster: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, app, ratesInterval, queryTime.String())
 
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		if isCached, inResult, outResult := promCache.GetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
 		}
@@ -543,7 +566,7 @@ func (in *Client) GetAppRequestRates(ctx context.Context, namespace, cluster, ap
 	if err != nil {
 		return inResult, outResult, err
 	}
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		promCache.SetAppRequestRates(namespace, cluster, app, ratesInterval, queryTime, inResult, outResult)
 	}
 	return inResult, outResult, nil
@@ -571,7 +594,7 @@ func (in *Client) GetWorkloadRequestRates(ctx context.Context, namespace, cluste
 
 	log.FromContext(ctx).Trace().Msgf("GetWorkloadRequestRates [namespace: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, workload, ratesInterval, queryTime.String())
 
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		if isCached, inResult, outResult := promCache.GetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime); isCached {
 			return inResult, outResult, nil
 		}
@@ -580,7 +603,7 @@ func (in *Client) GetWorkloadRequestRates(ctx context.Context, namespace, cluste
 	if err != nil {
 		return inResult, outResult, err
 	}
-	if promCache != nil {
+	if promCache != nil && !shouldSkipCache(ctx) {
 		promCache.SetWorkloadRequestRates(namespace, cluster, workload, ratesInterval, queryTime, inResult, outResult)
 	}
 	return inResult, outResult, nil
