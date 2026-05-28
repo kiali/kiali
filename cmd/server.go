@@ -48,6 +48,7 @@ import (
 	"github.com/kiali/kiali/server"
 	"github.com/kiali/kiali/tlspolicy"
 	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/util"
 )
 
 func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFactory kubernetes.ClientFactory) <-chan struct{} {
@@ -358,7 +359,11 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 				return mgr.GetCache()
 			}, homeClusterClient),
 			DefaultTransform: ctrlcache.TransformStripManagedFields(),
-			ByObject:         cacheTransforms(),
+			// Kiali only reads K8s objects from the cache (parsing into its own model structs).
+			// It never mutates cached objects, so skipping the deep copy on List/Get is safe
+			// and significantly reduces transient memory allocations for large clusters.
+			DefaultUnsafeDisableDeepCopy: util.AsPtr(true),
+			ByObject:                     cacheTransforms(),
 		},
 		Metrics: metricsserver.Options{BindAddress: "0"},
 		Scheme:  scheme,
@@ -377,6 +382,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
 				o.Scheme = scheme
 				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
+				o.Cache.DefaultUnsafeDisableDeepCopy = util.AsPtr(true)
 				o.Cache.ByObject = cacheTransforms()
 				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
 					func() ctrlcache.Cache {
