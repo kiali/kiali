@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -638,4 +639,243 @@ func TestOAuth2RoundTripper_ClientSecretRotation(t *testing.T) {
 	require.NoError(t, err)
 	resp.Body.Close()
 	assert.GreaterOrEqual(t, tokenCalls.Load(), int32(2))
+}
+
+func TestOAuth2RoundTripper_TokenEndpointFailure(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+	}{
+		{"400 Bad Request", http.StatusBadRequest},
+		{"403 Forbidden", http.StatusForbidden},
+		{"500 Internal Server Error", http.StatusInternalServerError},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.statusCode)
+				_, _ = w.Write([]byte(`{"error":"server_error","error_description":"something went wrong"}`))
+			}))
+			defer tokenServer.Close()
+
+			auth := &config.Auth{
+				Type: config.AuthTypeOAuth2,
+				OAuth2: config.OAuth2Config{
+					AuthStyle:    "params",
+					ClientID:     "c",
+					ClientSecret: "s",
+					TokenURL:     tokenServer.URL,
+				},
+			}
+			conf := config.NewConfig()
+			rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
+
+			req, _ := http.NewRequest("GET", "http://example.com", nil)
+			_, err := rt.RoundTrip(req)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "oauth2: token acquisition failed")
+		})
+	}
+}
+
+func TestOAuth2RoundTripper_NoSecretLeakInLogs(t *testing.T) {
+	// When the token endpoint returns an error, the wrapped error message
+	// must not contain the client_secret value.
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_request"}`))
+	}))
+	defer tokenServer.Close()
+
+	secretValue := "super-secret-value-12345"
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			AuthStyle:    "params",
+			ClientID:     "c",
+			ClientSecret: config.Credential(secretValue),
+			TokenURL:     tokenServer.URL,
+		},
+	}
+	conf := config.NewConfig()
+	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
+
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	_, err := rt.RoundTrip(req)
+	require.Error(t, err)
+	// The error message must not contain the raw secret
+	assert.NotContains(t, err.Error(), secretValue)
+}
+
+func TestOAuth2RoundTripper_ClientSecretRotation_MidFlight(t *testing.T) {
+	// Verify that concurrent requests during a secret rotation all succeed.
+	secretFile := t.TempDir() + "/client-secret"
+	_ = os.WriteFile(secretFile, []byte("initial-secret"), 0600)
+
+	var tokenCalls atomic.Int32
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenCalls.Add(1)
+		// Small delay to increase chance of concurrency overlap
+		time.Sleep(5 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "tok",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+	defer tokenServer.Close()
+
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			AuthStyle:    "params",
+			ClientID:     "c",
+			ClientSecret: config.Credential(secretFile),
+			TokenURL:     tokenServer.URL,
+		},
+	}
+	conf := config.NewConfig()
+	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport).(*oauth2RoundTripper)
+
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	// Get initial token
+	req, _ := http.NewRequest("GET", backend.URL, nil)
+	resp, err := rt.RoundTrip(req)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	// Expire the token to force refresh on next calls
+	rt.mu.Lock()
+	rt.cachedTok.Expiry = time.Now().Add(-time.Hour)
+	rt.originalTTL = time.Second
+	rt.mu.Unlock()
+
+	// Rotate the secret mid-flight
+	_ = os.WriteFile(secretFile, []byte("rotated-secret"), 0600)
+
+	// Fire concurrent requests
+	var wg sync.WaitGroup
+	errors := make([]error, 10)
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			r, _ := http.NewRequest("GET", backend.URL, nil)
+			res, e := rt.RoundTrip(r)
+			if e != nil {
+				errors[idx] = e
+				return
+			}
+			res.Body.Close()
+		}(i)
+	}
+	wg.Wait()
+
+	for i, e := range errors {
+		assert.NoError(t, e, "goroutine %d failed", i)
+	}
+}
+
+func TestOAuth2RoundTripper_CreateTransport_Integration(t *testing.T) {
+	// End-to-end: CreateTransport with auth.Type = AuthTypeOAuth2 returns an oauth2RoundTripper
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "integration-tok",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+	defer tokenServer.Close()
+
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			AuthStyle:    "params",
+			ClientID:     "c",
+			ClientSecret: "s",
+			TokenURL:     tokenServer.URL,
+		},
+	}
+	conf := config.NewConfig()
+	transport, err := CreateTransport(conf, auth, &http.Transport{}, 30*time.Second, nil)
+	require.NoError(t, err)
+
+	// The returned transport should be an oauth2RoundTripper (or wrap one)
+	_, isOAuth2 := transport.(*oauth2RoundTripper)
+	assert.True(t, isOAuth2, "CreateTransport with OAuth2 auth type should return an oauth2RoundTripper")
+
+	// Make a real request through it
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "Bearer integration-tok", r.Header.Get("Authorization"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	req, _ := http.NewRequest("GET", backend.URL, nil)
+	resp, err := transport.RoundTrip(req)
+	require.NoError(t, err)
+	resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestOAuth2RoundTripper_TokenEndpointUsesTokenRT_NoClientCert(t *testing.T) {
+	// Verify that the tokenRT does NOT forward any client TLS certificate
+	// (the service delegate may have mTLS configured, but the token endpoint should not receive it).
+	var tokenReqTLS *tls.ConnectionState
+	tokenServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenReqTLS = r.TLS
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "tok",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+	defer tokenServer.Close()
+
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			AuthStyle:    "params",
+			ClientID:     "c",
+			ClientSecret: "s",
+			TokenURL:     tokenServer.URL,
+		},
+	}
+	conf := config.NewConfig()
+
+	// Use an insecure token transport to connect to the test TLS server
+	tokenTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	rt := &oauth2RoundTripper{
+		auth:     auth,
+		conf:     conf,
+		delegate: http.DefaultTransport,
+		tokenRT:  tokenTransport,
+	}
+
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	req, _ := http.NewRequest("GET", backend.URL, nil)
+	resp, err := rt.RoundTrip(req)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	// The token endpoint should have received no client certificate
+	require.NotNil(t, tokenReqTLS)
+	assert.Empty(t, tokenReqTLS.PeerCertificates, "token endpoint should not receive client certificates from the service mTLS config")
 }

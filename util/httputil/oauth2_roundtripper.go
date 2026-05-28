@@ -187,9 +187,10 @@ func newOAuth2RoundTripper(conf *config.Config, auth *config.Auth, delegate http
 		DialContext: (&net.Dialer{
 			Timeout: 30 * time.Second,
 		}).DialContext,
-		TLSClientConfig:     buildTokenTLSConfig(conf),
-		MaxIdleConns:        10,
 		IdleConnTimeout:     90 * time.Second,
+		MaxIdleConns:        10,
+		Proxy:               http.ProxyFromEnvironment,
+		TLSClientConfig:     buildTokenTLSConfig(conf),
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 

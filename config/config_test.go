@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
+	zerolog_log "github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1685,10 +1688,16 @@ func TestValidateOAuth2_HTTPTokenURL_Rejected(t *testing.T) {
 }
 
 func TestValidateOAuth2_HTTPTokenURL_WarningWithInsecureSkip(t *testing.T) {
+	var buf bytes.Buffer
+	origLogger := zerolog_log.Logger
+	zerolog_log.Logger = zerolog.New(&buf)
+	defer func() { zerolog_log.Logger = origLogger }()
+
 	conf := newValidOAuth2Config()
 	conf.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "http://idp.example.com/token"
 	conf.ExternalServices.Prometheus.Auth.InsecureSkipVerify = true
 	assert.NoError(t, Validate(conf))
+	assert.Contains(t, buf.String(), "oauth2.token_url uses HTTP")
 }
 
 func TestValidateOAuth2_UseGRPC_Rejected(t *testing.T) {
