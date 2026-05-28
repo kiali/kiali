@@ -15,8 +15,12 @@ on:
         required: true
         default: v1.73,v2.4,v2.11,v2.17,v2.22
         type: string
+permissions: read-all
+
 jobs:
   initialize:
+    permissions:
+      contents: read
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
@@ -43,6 +47,8 @@ jobs:
         echo "branches=$BRANCHES" >> $GITHUB_ENV
 
   bump_version:
+    permissions:
+      contents: write
     needs: [initialize]
     runs-on: ubuntu-latest
     strategy:
@@ -52,7 +58,7 @@ jobs:
         branch: ${{fromJson(needs.initialize.outputs.branches)}}
     steps:
     - name: Checkout branch
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         ref: ${{matrix.branch}}
         # We need to fetch the full history to determine the latest tag

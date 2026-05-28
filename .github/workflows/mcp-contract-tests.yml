@@ -44,8 +44,12 @@ env:
   TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
 
+permissions: read-all
+
 jobs:
   mcp_contract_tests:
+    permissions:
+      contents: read
     name: MCP Contract Tests
     runs-on: ubuntu-latest
     env:
@@ -53,12 +57,12 @@ jobs:
       TERM: xterm
     steps:
     - name: Check out Kiali code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         ref: ${{ env.BUILD_BRANCH }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@v5.0.0
+      uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       with:
         version: 'v3.18.4'
 
@@ -70,13 +74,13 @@ jobs:
     # This caches the yarn deps but does not touch node_modules so it's still necessary
     # to run 'yarn install' later to link these into node_modules.
     - name: Setup node
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
       with:
         node-version: "24"
         cache: yarn
         cache-dependency-path: frontend/yarn.lock
     - name: Set up Go
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
       with:
         go-version-file: go.mod
         cache: true
@@ -84,7 +88,7 @@ jobs:
 
     - name: Download go binary
       if: github.event_name == 'workflow_call'
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: kiali
         path: ~/go/bin/
@@ -153,14 +157,14 @@ jobs:
         done
 
     - name: Check out kubernetes-mcp-server
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
         ref: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
     - name: Set up Go for kubernetes-mcp-server
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
       with:
         go-version-file: kubernetes-mcp-server/go.mod
         cache: true
@@ -183,7 +187,7 @@ jobs:
 
     - name: Upload debug info artifact
       if: ${{ failure() && steps.contractTests.conclusion == 'failure' }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: debug-info-mcp-contract-tests
         path: debug-output
