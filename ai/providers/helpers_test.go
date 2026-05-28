@@ -26,6 +26,10 @@ type fakeStore struct {
 	conversations map[string]*types.Conversation
 }
 
+func (f *fakeStore) DeleteConversations(_ string, _ []string) error {
+	return nil
+}
+
 func (f *fakeStore) Enabled() bool {
 	return f.enabled
 }
