@@ -159,6 +159,15 @@ Before({ tags: '@core-caching' }, () => {
     return;
   }
 
+  // Only attempt caching setup when @core-caching is explicitly part of the
+  // requested tag filter. Otherwise this scenario was matched by another tag
+  // (e.g. @smoke) and caching infrastructure isn't relevant.
+  const tags = (Cypress.env('TAGS') ?? '') as string;
+  if (!tags.includes('@core-caching')) {
+    Cypress.env('CACHING_ENABLED', true);
+    return;
+  }
+
   discoverKialiRuntimeInfo().then(info => {
     cy.exec(
       `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
