@@ -1566,6 +1566,10 @@ export const postChatAI = (
   });
 };
 
+export const deleteChatConversations = (conversationIDs: string): Promise<ApiResponse<Record<string, string>>> => {
+  return newRequest<Record<string, string>>(HTTP_VERBS.DELETE, urls.chatDeleteConversations, { conversationIDs }, {});
+};
+
 export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
   return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
 };

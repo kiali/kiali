@@ -79,6 +79,28 @@ func (s *AIStoreImpl) Enabled() bool {
 	return s.config.Enabled
 }
 
+// DeleteConversations removes the given conversations from a session but
+// preserves the session's UsageMetrics so token accounting is not lost.
+func (s *AIStoreImpl) DeleteConversations(sessionID string, conversationIDs []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	sessionConversation, exists := s.conversations[sessionID]
+	if !exists {
+		return nil
+	}
+
+	sessionConversation.mu.Lock()
+	defer sessionConversation.mu.Unlock()
+
+	for _, id := range conversationIDs {
+		delete(sessionConversation.Conversation, id)
+	}
+
+	internalmetrics.SetAIStoreConversationsTotal(s.totalConversationsLocked())
+	return nil
+}
+
 // GetConversation retrieves a conversation by sessionID
 func (s *AIStoreImpl) GetConversation(sessionID string, conversationID string) (*types.Conversation, bool) {
 	s.mu.RLock()
