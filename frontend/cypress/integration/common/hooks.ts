@@ -1,5 +1,10 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
+import {
+  restoreKialiFeature,
+  GRAPH_CACHE_CONFIG,
+  HEALTH_CACHE_CONFIG,
+  HEALTH_STATUS_METRIC_CONFIG
+} from './kiali-config';
 import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
@@ -292,5 +297,10 @@ After({ tags: '@graph-cache-metrics' }, () => {
 });
 
 After({ tags: '@health-cache-metrics' }, () => {
+  restoreKialiFeature(HEALTH_CACHE_CONFIG);
+});
+
+After({ tags: '@health-status-metrics' }, () => {
+  restoreKialiFeature(HEALTH_STATUS_METRIC_CONFIG);
   restoreKialiFeature(HEALTH_CACHE_CONFIG);
 });

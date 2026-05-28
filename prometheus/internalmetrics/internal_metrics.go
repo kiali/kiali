@@ -587,6 +587,11 @@ func GetHealthCacheMissesTotalMetric() *prometheus.CounterVec {
 	return Metrics.HealthCacheMissesTotal
 }
 
+// GetHealthStatusMetric returns the health status gauge vec.
+func GetHealthStatusMetric() *prometheus.GaugeVec {
+	return Metrics.HealthStatus
+}
+
 // GetTracingProcessingTimePrometheusTimer returns a timer that can be used to store
 // a value for the Tracing query processing time metric. The timer is ticking immediately
 // when this function returns.

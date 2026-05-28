@@ -307,3 +307,9 @@ export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
   crSpecPath: 'external_services.tracing.use_waypoint_name',
   envKeyPrev: 'USE_WAYPOINT_NAME_PREV'
 };
+
+export const HEALTH_STATUS_METRIC_CONFIG: KialiFeatureConfig = {
+  configPath: '.server.observability.metrics.health_status.enabled',
+  crSpecPath: 'server.observability.metrics.health_status.enabled',
+  envKeyPrev: 'HEALTH_STATUS_METRIC_PREV'
+};

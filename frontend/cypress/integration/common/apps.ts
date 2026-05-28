@@ -14,7 +14,7 @@ import {
 } from './table';
 import { hasAtLeastOneClass, linkSelector } from './utils';
 import { openTab, waitForKialiApiReady } from './transition';
-import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
+import { enableKialiFeature, HEALTH_CACHE_CONFIG, HEALTH_STATUS_METRIC_CONFIG } from './kiali-config';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -374,5 +374,96 @@ Then('health cache metrics should show at least {int} hit', (minHits: number) =>
 
       expect(after.healthCacheHits).to.be.at.least(before.healthCacheHits + minHits);
     });
+  });
+});
+
+// Health status metric test steps
+interface HealthStatusMetricItem {
+  cluster: string;
+  namespace: string;
+  healthType: string;
+  name: string;
+  value: number;
+}
+
+interface HealthStatusMetrics {
+  metrics: HealthStatusMetricItem[];
+}
+
+// Helper to convert health status numeric value to status string
+const healthStatusValueToString = (value: number): string => {
+  switch (value) {
+    case 0:
+      return 'Healthy';
+    case 1:
+      return 'Not Ready';
+    case 2:
+      return 'Degraded';
+    case 3:
+      return 'Failure';
+    default:
+      return 'Unknown';
+  }
+};
+
+Given('health status metric is enabled', () => {
+  // Health status metric requires health cache to be enabled
+  enableKialiFeature(HEALTH_CACHE_CONFIG);
+  enableKialiFeature(HEALTH_STATUS_METRIC_CONFIG);
+  waitForKialiApiReady();
+});
+
+When('user waits for health status metrics to be available', () => {
+  // Wait a bit for health cache to populate and metrics to be exported
+  // Health cache refresh runs every few seconds
+  cy.wait(15000);
+});
+
+Then('health status metric for {string} app {string} in {string} namespace should be {string}', function (
+  appName: string,
+  healthStatus: string,
+  namespace: string
+) {
+  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
+    expect(resp.status).to.eq(200);
+    const data = resp.body as HealthStatusMetrics;
+
+    cy.log(`Health status metrics: ${JSON.stringify(data.metrics, null, 2)}`);
+
+    // Find the metric for this specific app
+    const appMetric = data.metrics.find(
+      m => m.healthType === 'app' && m.name === appName && m.namespace === namespace
+    );
+
+    expect(appMetric, `Metric for app ${appName} in namespace ${namespace} should exist`).to.not.be.undefined;
+
+    if (appMetric) {
+      const actualStatus = healthStatusValueToString(appMetric.value);
+      cy.log(`App ${appName} health status metric value: ${appMetric.value} (${actualStatus})`);
+      expect(actualStatus).to.eq(healthStatus);
+    }
+  });
+});
+
+Then('health status metrics should contain at least {int} metric', (minMetrics: number) => {
+  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
+    expect(resp.status).to.eq(200);
+    const data = resp.body as HealthStatusMetrics;
+
+    cy.log(`Health status metrics count: ${data.metrics.length}`);
+    cy.log(`Health status metrics: ${JSON.stringify(data.metrics, null, 2)}`);
+
+    expect(data.metrics.length).to.be.at.least(minMetrics);
+  });
+});
+
+Then('health status metrics should not be empty', () => {
+  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
+    expect(resp.status).to.eq(200);
+    const data = resp.body as HealthStatusMetrics;
+
+    cy.log(`Health status metrics count: ${data.metrics.length}`);
+
+    expect(data.metrics.length).to.be.greaterThan(0);
   });
 });
