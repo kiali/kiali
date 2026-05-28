@@ -9,6 +9,8 @@ allowed-tools: Bash(gh *), Bash(oc *), Bash(kubectl *), Bash(grep *), Bash(curl 
 
 Create a GitHub issue for a confirmed Cypress test failure on kiali/kiali.
 
+> Field contract and vocabulary: `.claude/docs/regression-contract.md`
+
 ## Primary input — handoff block from `/regression-triage`
 
 If the user pastes a handoff block, extract all fields from it directly. Do not re-ask for fields already present.
@@ -22,6 +24,7 @@ Handoff block format:
 - Tag(s): @<tag1>, @<tag2>
 - Failing step: <step text>
 - Error: <error message>
+- Signal: <optional — jenkins-regression | first-occurrence>
 - Classification: <flake | ui-bug | test-bug>
 - Confidence: <high | medium | low>
 - Environment: <Jenkins nightly | Remote OCP | kind | Minikube>
@@ -92,10 +95,6 @@ Environment-specific notes:
 - **kind**: `CYPRESS_USERNAME=admin`, `CYPRESS_ALLOW_INSECURE_KIALI_API=true`
 - **Minikube**: `CYPRESS_BASE_URL=http://localhost:3000`, typically no credentials needed
 
-## Flake filing threshold
-
-Do **not** file a flake issue unless 2+ nightly failures occurred within 7 days — unless the user explicitly requests it. For a first-occurrence flake, tell the user: "Classified as flake; will not file until 2+ occurrences in 7 days. Note it for tracking."
-
 ## Execution steps
 
 1. Parse handoff block or collect manual input.
@@ -128,6 +127,7 @@ Cypress test failure observed on <environment>.
 **Feature file:** `frontend/cypress/integration/featureFiles/<feature-file>`
 **Tag(s):** `<cypress-tags>`
 **Classification:** <flake | ui-bug | test-bug>
+**Signal:** <jenkins-regression | first-occurrence | omit if not provided>
 **Failing step:** `<Given/When/Then/And step text>`
 **Confidence:** <high | medium | low>
 

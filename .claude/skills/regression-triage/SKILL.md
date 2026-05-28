@@ -9,11 +9,12 @@ allowed-tools: Bash(awk *), Bash(grep *), Bash(find *), Bash(cat *), Bash(git *)
 
 Analyze Jenkins failure output → identify tests → classify → emit handoff block for `/regression-report`.
 
+> Field contract and vocabulary: `.claude/docs/regression-contract.md`
+
 ## What you need from the user
 
 Ask for:
 1. **Jenkins Cypress build URL** — must include a specific build number. Job root URL is not acceptable.
-2. **First failure or persistent?** — helps distinguish flake from consistent bug.
 
 **Valid (build number present):**
 ```
@@ -114,14 +115,33 @@ Extract the step text from the filename and use it as the `Failing step` field i
 
 ## Step 4 — Classify each failure
 
-| Signal | Classification |
-|--------|---------------|
-| `TimeoutError`, `element not found`, passes on retry, intermittent across builds | **flake** |
-| Assertion failure on specific value/text, consistently fails, app shows wrong data | **ui-bug** |
-| New test, passes on `main` but not feature branch | **ui-bug** |
-| `Cannot read properties of undefined`, bad selector, stale text, test logic error | **test-bug** |
+> Canonical rubric and vocabulary contract: `.claude/docs/regression-contract.md`
 
-Default: **flake** if first failure, **ui-bug** if reproducible/persistent.
+### Signal vs Classification
+
+`REGRESSION` from Jenkins `testReport` = detection signal (`jenkins-regression`). It means the test passed last run and failed now — it does **not** determine classification. Triage still assigns `flake | ui-bug | test-bug` from error shape + user input.
+
+Record `Signal: jenkins-regression` in the handoff block when the case status is `REGRESSION`. This is metadata only — no agent logic branches on it.
+
+### Classification rubric (single-build evidence only)
+
+Agents should not fetch or reason over Jenkins builds other than the one the user provided.
+
+| Evidence | Suggested classification | Notes |
+|----------|-------------------------|-------|
+| `TimeoutError`, element not found, typical timing/selector flake | `flake` | Default when root cause unclear and user confirms intermittent history |
+| Assertion on wrong value/text, app shows wrong data, stable repro | `ui-bug` | Product state is wrong |
+| `Cannot read properties of undefined`, bad selector, stale assertion | `test-bug` | Test/code mismatch |
+| Case status `REGRESSION` in this build's `testReport` | Investigate → any classification | Record signal `jenkins-regression`; ask user if flake suspected |
+| Cause unclear after ruling out obvious `test-bug` | `ui-bug` (default) | Prefer product investigation over test-only workaround |
+
+### Flake suspicion prompt
+
+When triage encounters a potential flake (especially with `jenkins-regression` signal), ask the user:
+
+> "Do you suspect this is a flake? If yes, share evidence (Report Portal link, past occurrences). If unsure, say so — agent will classify from error evidence."
+
+User answer feeds classification: yes with evidence → `flake`, no/unsure → classify from error shape (default `ui-bug`).
 
 ## Step 5 — Check for known issues
 
@@ -132,7 +152,7 @@ gh issue list --repo kiali/kiali --search "<scenario fragment>" --state open
 
 ## Step 6 — Emit handoff block
 
-Emit one block per confirmed failure (ui-bug or test-bug). For flakes, note frequency recommendation instead.
+Emit one block per confirmed failure. No automated flake filing threshold — user decides when to file.
 
 ```
 ## Handoff Block — Failure N
@@ -142,6 +162,7 @@ Emit one block per confirmed failure (ui-bug or test-bug). For flakes, note freq
 - Tag(s): @<tag1>, @<tag2>
 - Failing step: <Given/When/Then/And step text>
 - Error: <error message, one line>
+- Signal: <optional — jenkins-regression | first-occurrence>
 - Classification: <flake | ui-bug | test-bug>
 - Confidence: <high | medium | low>
 - Environment: Jenkins nightly
@@ -154,7 +175,6 @@ Emit one block per confirmed failure (ui-bug or test-bug). For flakes, note freq
 ## After triage
 
 - Pass each handoff block to `/regression-report`
-- For flakes: track frequency — 2+ occurrences in recent nightly = file as maintenance
 
 ## Environment context
 

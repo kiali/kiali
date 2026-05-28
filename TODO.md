@@ -12,7 +12,7 @@ todolist how to improve skills located in .claude/skills/regression*
 
 ## Classification unification
 
-Core problem: three overlapping terms used without a single contract — Jenkins `REGRESSION` (test passed last run, failed now), handoff `Classification` (flake/ui-bug/test-bug), and issue title prefix (`[Test]`). Goal: separate **how failure was detected** (Signal) from **what to fix** (Classification).
+All items below have been implemented. Canonical contract lives in `.claude/docs/regression-contract.md`.
 
 ### Vocabulary contract
 
@@ -70,34 +70,34 @@ User answer feeds classification: yes with evidence → `flake`, no/unsure → c
 - Istio version: <version or "not specified">
 ```
 
-Note: handoff block is a format example. Canonical field contract lives in `docs/regression-contract.md`.
+Note: handoff block is a format example. Canonical field contract lives in `.claude/docs/regression-contract.md`.
 
 ---
 
 ### regression-triage
 
-- [ ] **Replace "First failure or persistent?" prompt** — replace with flake suspicion prompt: "Do you suspect this is a flake? If yes, share evidence (Report Portal link, past occurrences). If unsure, say so — agent will classify from error evidence."
-- [ ] **Remove multi-build rubric rows** — drop "intermittent across builds", "passes on `main` but not feature branch", defaults tied to "reproducible/persistent". Replace with single-build evidence rubric above.
-- [ ] **Add Signal field to handoff block** — optional `Signal: jenkins-regression | first-occurrence`. Metadata only — no agent logic branches on it.
-- [ ] **Document Jenkins REGRESSION vs Classification in Step 2** — `REGRESSION` from `testReport` = signal (`jenkins-regression`); triage still assigns `flake | ui-bug | test-bug` from error shape + user input.
-- [ ] **Remove flake handoff policy "2+ occurrences in recent nightly"** — user decides when to file. No threshold logic.
-- [ ] **Step 5 scope** — keep `git log`/`gh issue` for duplicate issues only, not build-history pattern analysis. Already correct, verify on changes.
-- [ ] **Soften scope rule** — change "must not" to "should not" for fetching other Jenkins builds.
+- [x] **Replace "First failure or persistent?" prompt** — replaced with flake suspicion prompt
+- [x] **Remove multi-build rubric rows** — replaced with single-build evidence rubric
+- [x] **Add Signal field to handoff block** — optional `Signal: jenkins-regression | first-occurrence`
+- [x] **Document Jenkins REGRESSION vs Classification in Step 2** — added "Signal vs Classification" section in Step 4
+- [x] **Remove flake handoff policy "2+ occurrences in recent nightly"** — removed from After triage section
+- [x] **Step 5 scope** — verified: `git log`/`gh issue` for duplicate issues only, not build-history pattern analysis
+- [x] **Soften scope rule** — changed to "should not" in rubric section
 
 ### regression-report
 
-- [ ] **Add optional Signal line in issue template** — `**Signal:** <value>` when triage provides it. Metadata only.
-- [ ] **Remove flake filing threshold** — no "2+ nightly failures in 7 days" check. File when user requests.
+- [x] **Add optional Signal line in issue template** — added to handoff block format and issue body template
+- [x] **Remove flake filing threshold** — removed "2+ nightly failures in 7 days" section
 
 ### regression-fix
 
-- [ ] **Parse optional Signal field** — Step 1 should extract `Signal` from issue body when present. No behavior change based on it.
+- [x] **Parse optional Signal field** — added to Step 1 extraction list, no behavior change
 
 ### Cross-skill
 
-- [ ] **Extract contract matrix to standalone file** — create `docs/regression-contract.md` with the canonical field contract (who emits, who consumes). Each skill SKILL.md references it. Prevents field drift across skills.
+- [x] **Extract contract matrix to standalone file** — created `.claude/docs/regression-contract.md` with canonical field contract. Each skill SKILL.md references it.
 
-### Contract matrix (current state — canonical version will live in `docs/regression-contract.md`):
+### Contract matrix (canonical version lives in `.claude/docs/regression-contract.md`):
 
 | Field | Triage emits | Report consumes | Issue preserves | Fix parses |
 |-------|:---:|:---:|:---:|:---:|
@@ -106,7 +106,7 @@ Note: handoff block is a format example. Canonical field contract lives in `docs
 | Tag(s) | yes | yes | yes | yes |
 | Failing step | yes | yes | yes | yes |
 | Error | yes | yes | yes | yes |
-| Signal | **no (TODO)** | **no (TODO)** | **no (TODO)** | **no (TODO)** |
+| Signal | yes | yes | yes | yes |
 | Classification | yes | yes | yes | yes |
 | Confidence | yes | yes | yes | yes |
 | Environment | yes | yes | yes | yes |
