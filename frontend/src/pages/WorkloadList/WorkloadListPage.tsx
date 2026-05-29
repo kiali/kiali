@@ -16,7 +16,7 @@ import { addError } from '../../utils/AlertUtils';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
 import { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector, refreshIntervalSelector } from '../../store/Selectors';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { Refresh } from '../../components/Refresh/Refresh';
@@ -27,20 +27,38 @@ import { isMultiCluster, serverConfig } from 'config';
 import { validationKey } from '../../types/IstioConfigList';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
-import { HistoryManager } from 'app/History';
+import { HistoryManager, URLParam } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
+import { arrayEquals } from '../../utils/Common';
+import {
+  ColumnManagementModalColumn,
+  ListColumnManagementModal
+} from '../../components/Filters/ListColumnManagementModal';
+import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
+import { WorkloadsListActions } from '../../actions/WorkloadsListActions';
+import { config as virtualListConfig } from '../../components/VirtualList/Config';
+import { t } from 'utils/I18nUtils';
+import { KialiDispatch } from 'types/Redux';
+import { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 
 type WorkloadListPageState = FilterComponent.State<WorkloadListItem> & {
   loaded: boolean;
+  showColumnManagement: boolean;
 };
 
 type ReduxProps = {
   activeNamespaces: Namespace[];
+  columnOrder: string[];
+  hiddenColumnIds: string[];
   refreshInterval: IntervalInMilliseconds;
 };
 
+type ReduxDispatchProps = {
+  dispatch: KialiDispatch;
+};
+
 type WorkloadListPageProps = ReduxProps &
-  DispatchProp & {
+  ReduxDispatchProps & {
     lastRefreshAt: TimeInMilliseconds; // redux by way of ConnectRefresh
   };
 
@@ -49,6 +67,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   WorkloadListPageState,
   WorkloadListItem
 > {
+  private sFStatefulFilters: StatefulFiltersRef = React.createRef();
   private promises = new PromisesRegistry();
   private initialToggles = WorkloadListFilters.getAvailableToggles();
 
@@ -61,11 +80,13 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       currentSortField: prevCurrentSortField,
       isSortAscending: prevIsSortAscending,
       listItems: [],
-      loaded: false
+      loaded: false,
+      showColumnManagement: false
     };
   }
 
   componentDidMount(): void {
+    this.syncColumnsFromURL();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.updateListItems();
     }
@@ -97,6 +118,92 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   componentWillUnmount(): void {
     this.promises.cancelAll();
   }
+
+  private syncColumnsFromURL = (): void => {
+    const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
+    const validIds = defaultIds.filter(id => id !== 'workload');
+
+    const urlParam = HistoryManager.getParam(URLParam.WORKLOADS_HIDDEN_COLUMNS);
+    if (urlParam !== undefined) {
+      const ids = urlParam
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      const filtered = ids.filter(id => validIds.includes(id));
+      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
+        this.props.dispatch(WorkloadsListActions.setHiddenColumns(filtered));
+      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
+        this.props.dispatch(WorkloadsListActions.setHiddenColumns([]));
+      }
+    } else if (this.props.hiddenColumnIds.length > 0) {
+      HistoryManager.setParam(URLParam.WORKLOADS_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
+    }
+
+    const orderParam = HistoryManager.getParam(URLParam.WORKLOADS_COLUMN_ORDER);
+    if (orderParam !== undefined) {
+      const orderIds = orderParam
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      const validOrder = orderIds.filter(id => defaultIds.includes(id));
+      if (validOrder.length > 0 && !arrayEquals(validOrder, this.props.columnOrder, (a, b) => a === b)) {
+        this.props.dispatch(WorkloadsListActions.setColumnOrder(validOrder));
+      } else if (validOrder.length === 0 && this.props.columnOrder.length > 0) {
+        this.props.dispatch(WorkloadsListActions.setColumnOrder([]));
+      }
+    } else if (this.props.columnOrder.length > 0) {
+      HistoryManager.setParam(URLParam.WORKLOADS_COLUMN_ORDER, this.props.columnOrder.join(','));
+    }
+  };
+
+  private getDefaultManagedColumns = (): ManagedColumn[] => {
+    return virtualListConfig.workloads.columns
+      .filter(c => c.title && c.title.trim().length > 0)
+      .map(c => {
+        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
+        return {
+          id,
+          title: c.title,
+          isShown: true,
+          isDisabled: id === 'workload'
+        } as ManagedColumn;
+      });
+  };
+
+  private getManagedColumns = (): ManagedColumn[] => {
+    const defaultCols = this.getDefaultManagedColumns();
+    const hiddenSet = new Set(this.props.hiddenColumnIds);
+    let ordered = defaultCols;
+    if (this.props.columnOrder && this.props.columnOrder.length > 0) {
+      const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
+      ordered = [...defaultCols].sort((a, b) => {
+        const ai = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+    }
+    return ordered.map(c => ({
+      ...c,
+      isShown: !hiddenSet.has(c.id)
+    }));
+  };
+
+  private resetWorkloadsColumnsToDefault = (): void => {
+    this.props.dispatch(WorkloadsListActions.setColumnOrder([]));
+    this.props.dispatch(WorkloadsListActions.setHiddenColumns([]));
+    HistoryManager.deleteParam(URLParam.WORKLOADS_COLUMN_ORDER);
+    HistoryManager.deleteParam(URLParam.WORKLOADS_HIDDEN_COLUMNS);
+  };
+
+  private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
+    return this.getManagedColumns().map(c => ({
+      key: c.id,
+      title: c.title,
+      isShownByDefault: true,
+      isShown: c.isShown,
+      isUntoggleable: c.id === 'workload'
+    }));
+  };
 
   onSort = (): void => {
     // force list update on sorting
@@ -222,6 +329,9 @@ class WorkloadListPageComponent extends FilterComponent.Component<
       }
     });
 
+    const userHidden = this.props.hiddenColumnIds;
+    const allHiddenColumns = hiddenColumns.concat(userHidden);
+
     return (
       <>
         <DefaultSecondaryMasthead
@@ -236,18 +346,53 @@ class WorkloadListPageComponent extends FilterComponent.Component<
             loaded={this.state.loaded}
             refreshInterval={this.props.refreshInterval}
             rows={this.state.listItems}
-            hiddenColumns={hiddenColumns}
+            columnOrder={this.props.columnOrder}
+            hiddenColumns={allHiddenColumns}
             sort={this.onSort}
+            statefulProps={this.sFStatefulFilters}
             type="workloads"
           >
             <StatefulFilters
+              columnManagement={true}
+              columnManagementButtonTestId="workloads-manage-columns"
               initialFilters={WorkloadListFilters.availableFilters}
               initialToggles={this.initialToggles}
+              onColumnManagementClick={() => this.setState({ showColumnManagement: true })}
               onFilterChange={this.onFilterChange}
               onToggleChange={this.onFilterChange}
+              ref={this.sFStatefulFilters}
             />
           </VirtualList>
         </RenderContent>
+
+        <ListColumnManagementModal
+          appliedColumns={this.getAppliedColumnsForModal()}
+          applyColumns={newColumns => {
+            const hiddenIds = newColumns.filter(c => !c.isShown).map(c => c.key);
+            const orderedIds = newColumns.map(c => c.key);
+            this.props.dispatch(WorkloadsListActions.setColumnOrder(orderedIds));
+            if (orderedIds.length > 0) {
+              HistoryManager.setParam(URLParam.WORKLOADS_COLUMN_ORDER, orderedIds.join(','));
+            } else {
+              HistoryManager.deleteParam(URLParam.WORKLOADS_COLUMN_ORDER);
+            }
+
+            this.props.dispatch(WorkloadsListActions.setHiddenColumns(hiddenIds));
+            if (hiddenIds.length > 0) {
+              HistoryManager.setParam(URLParam.WORKLOADS_HIDDEN_COLUMNS, hiddenIds.join(','));
+            } else {
+              HistoryManager.deleteParam(URLParam.WORKLOADS_HIDDEN_COLUMNS);
+            }
+
+            this.setState({ showColumnManagement: false });
+          }}
+          description={t('Selected categories will be displayed in the table. Drag and drop to reorder columns.')}
+          enableDragDrop={true}
+          isOpen={this.state.showColumnManagement}
+          onClose={() => this.setState({ showColumnManagement: false })}
+          onResetToDefault={this.resetWorkloadsColumnsToDefault}
+          title={t('Manage columns')}
+        />
       </>
     );
   }
@@ -255,6 +400,8 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   activeNamespaces: activeNamespacesSelector(state),
+  columnOrder: state.workloadsList.columnOrder,
+  hiddenColumnIds: state.workloadsList.hiddenColumnIds,
   refreshInterval: refreshIntervalSelector(state)
 });
 
