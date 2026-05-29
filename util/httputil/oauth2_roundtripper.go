@@ -60,11 +60,11 @@ func (rt *oauth2RoundTripper) roundTrip(req *http.Request, isRetry bool) (*http.
 		resp.Body.Close()
 
 		if req.GetBody != nil {
-			body, err := req.GetBody()
+			freshBody, err := req.GetBody()
 			if err != nil {
-				return resp, nil
+				return nil, fmt.Errorf("oauth2: failed to replay request body for 401 retry: %w", err)
 			}
-			req.Body = body
+			req.Body = freshBody
 		}
 
 		rt.mu.Lock()
