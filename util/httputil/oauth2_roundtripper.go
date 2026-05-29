@@ -3,6 +3,7 @@ package httputil
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
@@ -59,7 +60,11 @@ func (rt *oauth2RoundTripper) roundTrip(req *http.Request, isRetry bool) (*http.
 		resp.Body.Close()
 
 		if req.GetBody != nil {
-			req.Body, _ = req.GetBody()
+			body, err := req.GetBody()
+			if err != nil {
+				return resp, nil
+			}
+			req.Body = body
 		}
 
 		rt.mu.Lock()
@@ -147,13 +152,21 @@ func (rt *oauth2RoundTripper) refreshToken(ctx context.Context) (*oauth2.Token, 
 			log.Debugf("oauth2: obtained token after secret rotation (expires at %v)", tok.Expiry)
 			return tok, nil
 		}
-		return nil, fmt.Errorf("oauth2: token acquisition failed: %w", err)
+		return nil, wrapTokenTLSError(fmt.Errorf("oauth2: token acquisition failed: %w", err))
 	}
 
 	rt.cachedTok = tok
 	rt.originalTTL = time.Until(tok.Expiry)
 	log.Debugf("oauth2: obtained token (expires at %v)", tok.Expiry)
 	return tok, nil
+}
+
+func wrapTokenTLSError(err error) error {
+	var unknownAuthErr x509.UnknownAuthorityError
+	if errors.As(err, &unknownAuthErr) {
+		return fmt.Errorf("%w (hint: ensure the token endpoint CA is in the kiali-cabundle configmap)", err)
+	}
+	return err
 }
 
 // tokenNearExpiry checks if the token is within its expiry buffer (10% of original TTL clamped to [10s, 5min]).
@@ -173,12 +186,14 @@ func tokenNearExpiry(tok *oauth2.Token, originalTTL time.Duration) bool {
 
 func mapAuthStyle(style string) oauth2.AuthStyle {
 	switch style {
-	case "params":
-		return oauth2.AuthStyleInParams
 	case "header":
 		return oauth2.AuthStyleInHeader
+	case "params":
+		return oauth2.AuthStyleInParams
 	default:
-		return oauth2.AuthStyleAutoDetect
+		// Default to header style which is the safest option (no credential leakage in URL params).
+		// Validation should reject invalid/empty values before reaching here.
+		return oauth2.AuthStyleInHeader
 	}
 }
 

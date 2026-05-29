@@ -1659,16 +1659,15 @@ func TestValidateOAuth2_ValidConfig(t *testing.T) {
 }
 
 func TestValidateOAuth2_RequiredFields(t *testing.T) {
-	cases := []struct {
-		name   string
+	cases := map[string]struct {
 		mutate func(*Config)
 	}{
-		{"missing token_url", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "" }},
-		{"missing client_id", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientID = "" }},
-		{"missing client_secret", func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret = "" }},
+		"missing client_id":     {func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientID = "" }},
+		"missing client_secret": {func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret = "" }},
+		"missing token_url":     {func(c *Config) { c.ExternalServices.Prometheus.Auth.OAuth2.TokenURL = "" }},
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
 			conf := newValidOAuth2Config()
 			tc.mutate(conf)
 			err := Validate(conf)
@@ -1730,6 +1729,14 @@ func TestValidateOAuth2_PersesIncluded(t *testing.T) {
 	err := Validate(conf)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "perses")
+}
+
+func TestValidateOAuth2_InvalidAuthStyle_Rejected(t *testing.T) {
+	conf := newValidOAuth2Config()
+	conf.ExternalServices.Prometheus.Auth.OAuth2.AuthStyle = "autodetect"
+	err := Validate(conf)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "auth_style")
 }
 
 func TestObfuscate_OAuth2ClientSecret(t *testing.T) {

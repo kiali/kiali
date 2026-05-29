@@ -140,15 +140,15 @@ func newClient(ctx context.Context, conf *config.Config, token string) (*Client,
 	// Just for internal URL, the external URL can be exposed on a different URL, hidden internal path
 	tempo.ConstructTempoTenantURL(u, &cfgTracing, isInternalURL)
 
-	opts, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &auth)
-	if err != nil {
-		zl.Error().Msgf("Error while building GRPC dial options: %v", err)
-		return nil, err
-	}
 	address := host + ":" + port
-	zl.Trace().Msgf("[%s] GRPC client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
+	zl.Trace().Msgf("[%s] client info: address=[%s], auth.type=[%s]", cfgTracing.Provider, address, auth.Type)
 
 	if cfgTracing.UseGRPC && cfgTracing.Provider != config.TempoProvider {
+		opts, err := grpcutil.GetAuthDialOptions(conf, host, u.Scheme == "https", &auth)
+		if err != nil {
+			zl.Error().Msgf("Error while building GRPC dial options: %v", err)
+			return nil, err
+		}
 
 		var client GRPCClientInterface
 		// Note: jaeger-query does not have built-in secured communication, at the moment it is only achieved through reverse proxies (cf https://github.com/jaegertracing/jaeger/issues/1718).

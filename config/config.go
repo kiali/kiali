@@ -2203,7 +2203,13 @@ func Validate(conf *Config) error {
 		"prometheus":        &conf.ExternalServices.Prometheus.Auth,
 		"tracing":           &conf.ExternalServices.Tracing.Auth,
 	}
-	for svcName, svcAuth := range oauth2Services {
+	oauth2ServiceNames := make([]string, 0, len(oauth2Services))
+	for name := range oauth2Services {
+		oauth2ServiceNames = append(oauth2ServiceNames, name)
+	}
+	sort.Strings(oauth2ServiceNames)
+	for _, svcName := range oauth2ServiceNames {
+		svcAuth := oauth2Services[svcName]
 		if svcAuth.Type == AuthTypeOAuth2 {
 			if svcAuth.OAuth2.TokenURL == "" {
 				return fmt.Errorf("%s: oauth2.token_url is required when auth type is oauth2", svcName)
@@ -2219,6 +2225,9 @@ func Validate(conf *Config) error {
 					return fmt.Errorf("%s: oauth2.token_url must use HTTPS (or set insecure_skip_verify for dev/test)", svcName)
 				}
 				log.Warningf("%s: oauth2.token_url uses HTTP; this is insecure and should only be used for dev/test", svcName)
+			}
+			if svcAuth.OAuth2.AuthStyle != "" && svcAuth.OAuth2.AuthStyle != "header" && svcAuth.OAuth2.AuthStyle != "params" {
+				return fmt.Errorf("%s: oauth2.auth_style must be 'header' or 'params' (got %q)", svcName, svcAuth.OAuth2.AuthStyle)
 			}
 			if svcAuth.UseKialiToken {
 				return fmt.Errorf("%s: use_kiali_token and oauth2 auth type are mutually exclusive", svcName)

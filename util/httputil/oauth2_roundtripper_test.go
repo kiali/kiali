@@ -344,22 +344,21 @@ func TestOAuth2RoundTripper_AudienceParam(t *testing.T) {
 }
 
 func TestTokenNearExpiry(t *testing.T) {
-	cases := []struct {
-		name        string
+	cases := map[string]struct {
 		expiry      time.Time
 		originalTTL time.Duration
 		expected    bool
 	}{
-		{"zero expiry never near", time.Time{}, 1 * time.Hour, false},
-		{"far future not near", time.Now().Add(1 * time.Hour), 1 * time.Hour, false},
-		{"5 seconds out is near with 1h TTL", time.Now().Add(5 * time.Second), 1 * time.Hour, true},
-		{"already expired", time.Now().Add(-1 * time.Second), 1 * time.Hour, true},
-		{"half remaining with short TTL still not near", time.Now().Add(30 * time.Second), 1 * time.Minute, false},
-		{"within 10% of original TTL", time.Now().Add(5 * time.Second), 1 * time.Minute, true},
+		"already expired":                          {time.Now().Add(-1 * time.Second), 1 * time.Hour, true},
+		"far future not near":                      {time.Now().Add(1 * time.Hour), 1 * time.Hour, false},
+		"5 seconds out is near with 1h TTL":        {time.Now().Add(5 * time.Second), 1 * time.Hour, true},
+		"half remaining with short TTL still safe": {time.Now().Add(30 * time.Second), 1 * time.Minute, false},
+		"within 10% of original TTL":               {time.Now().Add(5 * time.Second), 1 * time.Minute, true},
+		"zero expiry never near":                   {time.Time{}, 1 * time.Hour, false},
 	}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
 			tok := &oauth2.Token{Expiry: tc.expiry}
 			assert.Equal(t, tc.expected, tokenNearExpiry(tok, tc.originalTTL))
 		})
@@ -367,10 +366,10 @@ func TestTokenNearExpiry(t *testing.T) {
 }
 
 func TestMapAuthStyle(t *testing.T) {
-	assert.Equal(t, oauth2.AuthStyleInParams, mapAuthStyle("params"))
 	assert.Equal(t, oauth2.AuthStyleInHeader, mapAuthStyle("header"))
-	assert.Equal(t, oauth2.AuthStyleAutoDetect, mapAuthStyle(""))
-	assert.Equal(t, oauth2.AuthStyleAutoDetect, mapAuthStyle("unknown"))
+	assert.Equal(t, oauth2.AuthStyleInParams, mapAuthStyle("params"))
+	assert.Equal(t, oauth2.AuthStyleInHeader, mapAuthStyle(""))
+	assert.Equal(t, oauth2.AuthStyleInHeader, mapAuthStyle("unknown"))
 }
 
 func TestOAuth2RoundTripper_SecretRotationOn401(t *testing.T) {
@@ -566,12 +565,10 @@ func TestOAuth2RoundTripper_ClientSecretFileNotFound(t *testing.T) {
 	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
 
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	_, err := rt.RoundTrip(req)
-	// If secrets dir doesn't exist, GetCredential returns the raw value as-is
-	// which means it won't error — this tests the passthrough behavior
-	if err != nil {
-		assert.Contains(t, err.Error(), "oauth2")
-	}
+	resp, err := rt.RoundTrip(req)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "client_secret")
+	assert.Nil(t, resp)
 }
 
 func TestOAuth2RoundTripper_ClientSecretRotation(t *testing.T) {
@@ -878,4 +875,36 @@ func TestOAuth2RoundTripper_TokenEndpointUsesTokenRT_NoClientCert(t *testing.T) 
 	// The token endpoint should have received no client certificate
 	require.NotNil(t, tokenReqTLS)
 	assert.Empty(t, tokenReqTLS.PeerCertificates, "token endpoint should not receive client certificates from the service mTLS config")
+}
+
+// newTestRT creates a standard OAuth2 round tripper backed by a test token server that returns
+// static tokens. Returns the round tripper and a cleanup function. The token server responds
+// with the provided accessToken (or "test-token" if empty) with a 1h expiry.
+func newTestRT(t *testing.T, accessToken string) (http.RoundTripper, func()) {
+	t.Helper()
+	if accessToken == "" {
+		accessToken = "test-token"
+	}
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": accessToken,
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+
+	auth := &config.Auth{
+		Type: config.AuthTypeOAuth2,
+		OAuth2: config.OAuth2Config{
+			AuthStyle:    "header",
+			ClientID:     "test-client",
+			ClientSecret: "test-secret",
+			TokenURL:     tokenServer.URL,
+		},
+	}
+	conf := config.NewConfig()
+
+	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
+	return rt, tokenServer.Close
 }
