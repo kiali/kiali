@@ -88,9 +88,9 @@ if [ -z "${ISTIO_VERSION}" ]; then
       RESPONSE_BODY_FILE=$(mktemp)
       RESPONSE_HEADERS_FILE=$(mktemp)
       if [ -n "${AUTH_HEADER}" ]; then
-        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       else
-        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       fi
       RESPONSE_BODY=$(cat "${RESPONSE_BODY_FILE}")
       rm -f "${RESPONSE_BODY_FILE}"
@@ -194,9 +194,9 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
       RESPONSE_BODY_FILE=$(mktemp)
       RESPONSE_HEADERS_FILE=$(mktemp)
       if [ -n "${AUTH_HEADER}" ]; then
-        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       else
-        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       fi
       RESPONSE_BODY=$(cat "${RESPONSE_BODY_FILE}")
       rm -f "${RESPONSE_BODY_FILE}"
