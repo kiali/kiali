@@ -80,9 +80,10 @@ func (rt *oauth2RoundTripper) roundTrip(req *http.Request, isRetry bool) (*http.
 func (rt *oauth2RoundTripper) ensureToken(ctx context.Context) (*oauth2.Token, error) {
 	rt.mu.RLock()
 	tok := rt.cachedTok
+	ttl := rt.originalTTL
 	rt.mu.RUnlock()
 
-	if tok != nil && !tokenNearExpiry(tok, rt.originalTTL) {
+	if tok != nil && !tokenNearExpiry(tok, ttl) {
 		return tok, nil
 	}
 
