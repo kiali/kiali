@@ -225,18 +225,20 @@ func (c *OfflineClient) GetConfigDump(namespace, podName string) (*kialikube.Con
 // status code (e.g. "200\n") via `pilot-agent request GET /config_dump`.
 func parseConfigDump(data []byte) (*kialikube.ConfigDump, error) {
 	var configDump kialikube.ConfigDump
-	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&configDump); err == nil {
+	firstErr := json.NewDecoder(bytes.NewReader(data)).Decode(&configDump)
+	if firstErr == nil {
 		return &configDump, nil
 	}
 
 	idx := bytes.IndexByte(data, '{')
 	if idx <= 0 {
-		return nil, fmt.Errorf("no JSON object found in config dump data")
+		return nil, fmt.Errorf("no JSON object found in config dump data: %w", firstErr)
 	}
 
-	if err := json.NewDecoder(bytes.NewReader(data[idx:])).Decode(&configDump); err != nil {
-		return nil, fmt.Errorf("failed to parse config dump JSON starting at offset %d: %w", idx, err)
+	var fallbackDump kialikube.ConfigDump
+	if fallbackErr := json.NewDecoder(bytes.NewReader(data[idx:])).Decode(&fallbackDump); fallbackErr != nil {
+		return nil, fmt.Errorf("failed to parse config dump JSON at offset %d (%w); initial attempt: %w", idx, fallbackErr, firstErr)
 	}
 
-	return &configDump, nil
+	return &fallbackDump, nil
 }
