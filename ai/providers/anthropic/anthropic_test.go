@@ -32,6 +32,10 @@ func (s *anthropicTestStore) GenerateConversationID() string {
 	return "test-id"
 }
 
+func (s *anthropicTestStore) DeleteConversations(_ string, _ []string) error {
+	return nil
+}
+
 func (s *anthropicTestStore) Enabled() bool {
 	return s.enabled
 }

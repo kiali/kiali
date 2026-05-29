@@ -27,10 +27,11 @@ type openaiTestStore struct {
 	conversations map[string]*types.Conversation
 }
 
-func (s *openaiTestStore) GenerateConversationID() string { return "test-conv-id" }
-func (s *openaiTestStore) Enabled() bool                  { return s.enabled }
-func (s *openaiTestStore) ReduceWithAI() bool             { return false }
-func (s *openaiTestStore) ReduceThreshold() int           { return 0 }
+func (s *openaiTestStore) GenerateConversationID() string                 { return "test-conv-id" }
+func (s *openaiTestStore) DeleteConversations(_ string, _ []string) error { return nil }
+func (s *openaiTestStore) Enabled() bool                                  { return s.enabled }
+func (s *openaiTestStore) ReduceWithAI() bool                             { return false }
+func (s *openaiTestStore) ReduceThreshold() int                           { return 0 }
 
 func (s *openaiTestStore) GetConversation(sessionID, conversationID string) (*types.Conversation, bool) {
 	if s.conversations == nil {

@@ -16,6 +16,7 @@ import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-li
 import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-darkbkg.svg';
 import { defer } from 'lodash-es';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import * as API from 'services/Api';
 
 const conversationList: { [key: string]: Conversation[] } = {};
 conversationList[CHAT_HISTORY_HEADER] = [];
@@ -114,9 +115,14 @@ export const ChatBot: React.FC = () => {
   };
 
   const clearChat = React.useCallback(() => {
+    if (conversationID !== '') {
+      // Fire-and-forget: the result is irrelevant because the UI has already
+      // moved to a fresh conversation and there is nowhere to surface the error.
+      API.deleteChatConversations(conversationID).catch(() => {});
+    }
     dispatch(ChatAIActions.setConversationID({ id: undefined }));
     dispatch(ChatAIActions.setChatHistoryClear());
-  }, [dispatch]);
+  }, [dispatch, conversationID]);
 
   const onConfirm = React.useCallback(() => {
     if (newProvider !== '') {
