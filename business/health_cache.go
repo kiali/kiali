@@ -303,12 +303,19 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 	}
 
 	// Remove health cache entries for namespaces that no longer exist in this cluster.
+	// Use the authoritative namespace list rather than visitedNamespaces, because
+	// visitedNamespaces excludes namespaces where refresh failed transiently —
+	// we don't want a temporary error to evict valid cached health data.
+	existingNamespaces := make(map[string]bool, len(namespaces))
+	for _, ns := range namespaces {
+		existingNamespaces[ns.Name] = true
+	}
 	for _, key := range m.cache.HealthKeys() {
 		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
 		if !ok || keyCluster != cluster {
 			continue
 		}
-		if !visitedNamespaces[keyNs] {
+		if !existingNamespaces[keyNs] {
 			m.logger.Debug().Str("cluster", cluster).Str("namespace", keyNs).Msg("Reaping stale health cache entry for removed namespace")
 			m.cache.RemoveHealth(cluster, keyNs)
 		}
