@@ -1,6 +1,7 @@
 package offline
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -210,7 +211,7 @@ func (c *OfflineClient) GetConfigDump(namespace, podName string) (*kialikube.Con
 	log.Debugf("Successfully read config dump file: %s", configDumpPath)
 
 	var configDump kialikube.ConfigDump
-	if err := json.Unmarshal(data, &configDump); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&configDump); err != nil {
 		log.Debugf("Failed to unmarshal config dump file %s: %s", configDumpPath, err)
 		// Return empty config dump when JSON is invalid
 		return &kialikube.ConfigDump{

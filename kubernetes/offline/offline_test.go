@@ -370,6 +370,61 @@ metadata:
 	}
 }
 
+func TestGetConfigDump_TrailingContent(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	namespace := "test-namespace"
+	podName := "test-pod"
+
+	namespacesDir := filepath.Join(tmpDir, "namespaces")
+	mkdirAll(t, namespacesDir)
+
+	testYAML := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ` + namespace + `
+`
+	filetest.WriteFile(t, filepath.Join(tmpDir, "test.yaml"), []byte(testYAML))
+
+	configDumpDir := filepath.Join(namespacesDir, namespace, "pods", podName)
+	mkdirAll(t, configDumpDir)
+
+	validJSONWithTrailingContent := `{
+  "configs": [
+    {
+      "@type": "type.googleapis.com/envoy.admin.v3.ClustersConfigDump",
+      "dynamic_active_clusters": [
+        {
+          "cluster": {
+            "name": "test-cluster",
+            "type": "EDS"
+          }
+        }
+      ]
+    }
+  ]
+}
+// trailing comment that must-gather may append
+/some/path/info
+`
+	configDumpFile := filepath.Join(configDumpDir, "config_dump_proxy.json")
+	filetest.WriteFile(t, configDumpFile, []byte(validJSONWithTrailingContent))
+
+	client, err := NewOfflineClient(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create offline client: %v", err)
+	}
+
+	configDump, err := client.GetConfigDump(namespace, podName)
+	if err != nil {
+		t.Fatalf("Failed to get config dump: %v", err)
+	}
+
+	if len(configDump.Configs) != 1 {
+		t.Errorf("Expected 1 config in dump (trailing content should be ignored), got %d", len(configDump.Configs))
+	}
+}
+
 func TestStreamPodLogs(t *testing.T) {
 	tmpDir := t.TempDir()
 
