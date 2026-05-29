@@ -16,4 +16,4 @@ spec:
               allow-lightspeed: "true"
       ports:
         - protocol: TCP
-          port: 8443
+          port: ${LIGHTSPEED_PORT}
