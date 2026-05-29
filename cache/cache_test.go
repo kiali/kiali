@@ -813,3 +813,39 @@ func TestUpdateHealthIsConcurrentSafe(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestRemoveHealth(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	seedHealthCache(t, c, "east", "bookinfo")
+	seedHealthCache(t, c, "east", "default")
+
+	_, found := c.GetHealth("east", "bookinfo", "app")
+	require.True(found)
+
+	c.RemoveHealth("east", "bookinfo")
+
+	_, found = c.GetHealth("east", "bookinfo", "app")
+	require.False(found, "entry should be removed after RemoveHealth")
+
+	_, found = c.GetHealth("east", "default", "app")
+	require.True(found, "other entries should be unaffected")
+}
+
+func TestHealthKeys(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	seedHealthCache(t, c, "east", "bookinfo")
+	seedHealthCache(t, c, "west", "default")
+
+	keys := c.HealthKeys()
+	require.Len(keys, 2)
+	require.ElementsMatch(keys, []string{"health:east:bookinfo", "health:west:default"})
+}
+
+func TestRemoveHealthNonexistent(t *testing.T) {
+	c := newHealthTestCache(t)
+	c.RemoveHealth("missing", "ns")
+}
