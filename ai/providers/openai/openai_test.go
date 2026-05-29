@@ -94,8 +94,8 @@ func newOpenAITestProvider(serverURL string) *OpenAIProvider {
 			option.WithBaseURL(serverURL),
 			option.WithMaxRetries(0),
 		),
-		model:          "gpt-4o",
-		tracingEnabled: true,
+		conf:  config.NewConfig(),
+		model: "gpt-4o",
 	}
 }
 

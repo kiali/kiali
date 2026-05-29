@@ -16,9 +16,10 @@ import (
 
 // OpenAIProvider implements AIProvider using openai-go.
 type OpenAIProvider struct {
-	client         openai.Client
-	model          string
-	tracingEnabled bool
+	client       openai.Client
+	conf         *config.Config
+	model        string
+	providerName string
 }
 
 type BaseURL string
@@ -35,11 +36,14 @@ func NewOpenAIProvider(conf *config.Config, provider *config.ProviderConfig, mod
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
 
-	return &OpenAIProvider{
-		client:         openai.NewClient(opts...),
-		model:          model.Model,
-		tracingEnabled: conf.ExternalServices.Tracing.Enabled,
-	}, nil
+	p := &OpenAIProvider{
+		client:       openai.NewClient(opts...),
+		conf:         conf,
+		model:        model.Model,
+		providerName: provider.Name,
+	}
+	providers.LogFilteredDefaultTools(p.GetName(), conf, provider.Name)
+	return p, nil
 }
 
 func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) ([]option.RequestOption, error) {
@@ -91,14 +95,16 @@ func convertToolToOpenAI(tool mcp.ToolDef) openai.ChatCompletionToolUnionParam {
 	}
 }
 func (p *OpenAIProvider) GetToolDefinitions() interface{} {
-	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(mcp.DefaultToolHandlers))
-	for _, handler := range mcp.DefaultToolHandlers {
-		if !p.tracingEnabled && mcp.IsTraceTool(handler.Name) {
-			continue
-		}
+	filtered := providers.FilteredDefaultTools(p.conf, p.providerName)
+	tools := make([]openai.ChatCompletionToolUnionParam, 0, len(filtered))
+	for _, handler := range filtered {
 		tools = append(tools, convertToolToOpenAI(handler))
 	}
 	return tools
+}
+
+func (p *OpenAIProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return providers.LookupFilteredDefaultTool(p.conf, p.providerName, toolName)
 }
 
 func (p *OpenAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {

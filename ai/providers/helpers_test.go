@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/config"
@@ -93,6 +94,10 @@ func (f *fakeProvider) ReduceConversation(_ context.Context, ptr *types.Conversa
 
 func (f *fakeProvider) GetToolDefinitions() interface{} {
 	return nil
+}
+
+func (f *fakeProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return mcp.ToolDef{}, false
 }
 
 func (f *fakeProvider) TransformToolCallToToolsProcessor(_ any) ([]types.StreamToolCallData, []string, error) {

@@ -58,37 +58,46 @@ func ExecuteToolCallsInParallel(
 				return
 			}
 
-			handler, ok := mcp.DefaultToolHandlers[call.Name]
+			handler, ok := p.LookupToolHandler(call.Name)
 			if !ok {
+				if !kialiInterface.Conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(call.Name) {
+					toolResult := types.StreamToolResultData{
+						Content: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name).Error(),
+						ID:      call.ID,
+						Round:   1,
+						Status:  "error",
+						Type:    "tool_result",
+					}
+					results[index] = toolResult
+					SendStreamEvent(safeOnChunk, LLM_TOOL_RESULT_EVENT, toolResult)
+					return
+				}
+				if !kialiInterface.Conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(call.Name) {
+					toolResult := types.StreamToolResultData{
+						Content: fmt.Errorf("metrics are unavailable because Prometheus is disabled").Error(),
+						ID:      call.ID,
+						Round:   1,
+						Status:  "error",
+						Type:    "tool_result",
+					}
+					results[index] = toolResult
+					SendStreamEvent(safeOnChunk, LLM_TOOL_RESULT_EVENT, toolResult)
+					return
+				}
+				if _, exists := mcp.DefaultToolHandlers[call.Name]; exists {
+					toolResult := types.StreamToolResultData{
+						Content: fmt.Errorf("tool %s is not exposed for this AI provider", call.Name).Error(),
+						ID:      call.ID,
+						Round:   1,
+						Status:  "error",
+						Type:    "tool_result",
+					}
+					results[index] = toolResult
+					SendStreamEvent(safeOnChunk, LLM_TOOL_RESULT_EVENT, toolResult)
+					return
+				}
 				toolResult := types.StreamToolResultData{
 					Content: fmt.Errorf("tool handler not found: %s", call.Name).Error(),
-					ID:      call.ID,
-					Round:   1,
-					Status:  "error",
-					Type:    "tool_result",
-				}
-				results[index] = toolResult
-				SendStreamEvent(safeOnChunk, LLM_TOOL_RESULT_EVENT, toolResult)
-				return
-			}
-
-			if !kialiInterface.Conf.ExternalServices.Tracing.Enabled && mcp.IsTraceTool(call.Name) {
-				toolResult := types.StreamToolResultData{
-					Content: fmt.Errorf("tool %s is not available when tracing is disabled", call.Name).Error(),
-					ID:      call.ID,
-					Round:   1,
-					Status:  "error",
-					Type:    "tool_result",
-				}
-				results[index] = toolResult
-				SendStreamEvent(safeOnChunk, LLM_TOOL_RESULT_EVENT, toolResult)
-				return
-			}
-
-			// 404 mirrors the tracing gate convention above
-			if !kialiInterface.Conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(call.Name) {
-				toolResult := types.StreamToolResultData{
-					Content: fmt.Errorf("metrics are unavailable because Prometheus is disabled").Error(),
 					ID:      call.ID,
 					Round:   1,
 					Status:  "error",

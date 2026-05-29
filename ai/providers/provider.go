@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/types"
 )
@@ -14,6 +15,7 @@ type AIProvider interface {
 	InitializeConversation(ptr *types.Conversation, query string)
 	ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int)
 	GetToolDefinitions() interface{}
+	LookupToolHandler(toolName string) (mcp.ToolDef, bool)
 	TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error)
 	ConversationToProvider(conversation []types.ConversationMessage) interface{}
 	ProviderToConversation(providerMessage interface{}) types.ConversationMessage
