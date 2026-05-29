@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 )
 
@@ -34,4 +35,18 @@ type CachedHealthData struct {
 // HealthCacheKey generates the cache key for health data
 func HealthCacheKey(cluster, namespace string) string {
 	return "health:" + cluster + ":" + namespace
+}
+
+// ParseHealthCacheKey extracts the cluster and namespace from a health cache key.
+// Returns ok=false if the key does not have the expected "health:cluster:namespace" format.
+func ParseHealthCacheKey(key string) (cluster, namespace string, ok bool) {
+	after, found := strings.CutPrefix(key, "health:")
+	if !found {
+		return "", "", false
+	}
+	cluster, namespace, ok = strings.Cut(after, ":")
+	if !ok || cluster == "" || namespace == "" {
+		return "", "", false
+	}
+	return cluster, namespace, true
 }

@@ -179,6 +179,18 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 		totalErrors += errCount
 	}
 
+	// Remove health cache entries for clusters that are no longer known.
+	for _, key := range m.cache.HealthKeys() {
+		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
+		if !ok {
+			continue
+		}
+		if !knownClusters[keyCluster] {
+			m.logger.Debug().Str("cluster", keyCluster).Str("namespace", keyNs).Msg("Reaping stale health cache entry for removed cluster")
+			m.cache.RemoveHealth(keyCluster, keyNs)
+		}
+	}
+
 	m.lastRun = startTime
 	elapsed := time.Since(startTime)
 
@@ -288,6 +300,18 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 
 	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		m.healthStatusExp.ReconcileDroppedNamespacesForCluster(cluster, visitedNamespaces)
+	}
+
+	// Remove health cache entries for namespaces that no longer exist in this cluster.
+	for _, key := range m.cache.HealthKeys() {
+		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
+		if !ok || keyCluster != cluster {
+			continue
+		}
+		if !visitedNamespaces[keyNs] {
+			m.logger.Debug().Str("cluster", cluster).Str("namespace", keyNs).Msg("Reaping stale health cache entry for removed namespace")
+			m.cache.RemoveHealth(cluster, keyNs)
+		}
 	}
 
 	return len(namespaces), errorCount
