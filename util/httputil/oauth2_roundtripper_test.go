@@ -876,35 +876,3 @@ func TestOAuth2RoundTripper_TokenEndpointUsesTokenRT_NoClientCert(t *testing.T) 
 	require.NotNil(t, tokenReqTLS)
 	assert.Empty(t, tokenReqTLS.PeerCertificates, "token endpoint should not receive client certificates from the service mTLS config")
 }
-
-// newTestRT creates a standard OAuth2 round tripper backed by a test token server that returns
-// static tokens. Returns the round tripper and a cleanup function. The token server responds
-// with the provided accessToken (or "test-token" if empty) with a 1h expiry.
-func newTestRT(t *testing.T, accessToken string) (http.RoundTripper, func()) {
-	t.Helper()
-	if accessToken == "" {
-		accessToken = "test-token"
-	}
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
-			"access_token": accessToken,
-			"expires_in":   3600,
-			"token_type":   "Bearer",
-		})
-	}))
-
-	auth := &config.Auth{
-		Type: config.AuthTypeOAuth2,
-		OAuth2: config.OAuth2Config{
-			AuthStyle:    "header",
-			ClientID:     "test-client",
-			ClientSecret: "test-secret",
-			TokenURL:     tokenServer.URL,
-		},
-	}
-	conf := config.NewConfig()
-
-	rt := newOAuth2RoundTripper(conf, auth, http.DefaultTransport)
-	return rt, tokenServer.Close
-}
