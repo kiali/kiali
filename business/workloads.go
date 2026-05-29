@@ -997,31 +997,63 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	}
 	selectorOpt := ctrlclient.MatchingLabelsSelector{Selector: sel}
 
-	podList := &core_v1.PodList{}
-	if err := kubeCache.List(ctx, podList, selectorOpt); err != nil {
-		return nil, fmt.Errorf("Error fetching cluster [%s] Pods : %s", cluster, err)
+	// When fetching for a single namespace, use namespace-scoped listing to leverage
+	// the informer's namespace index (O(1) lookup) instead of listing all objects
+	// cluster-wide and filtering. This is the common path for user-facing API requests.
+	// TODO(perf): Extend this optimization for small N namespaces (e.g., waypoint lookups)
+	// by iterating namespaces and concatenating results.
+	singleNamespace := len(namespaces) == 1
+	var nsOpt ctrlclient.ListOption
+	if singleNamespace {
+		nsOpt = ctrlclient.InNamespace(namespaces[0])
 	}
-	pods = sliceutil.Filter(podList.Items, func(pod core_v1.Pod) bool {
-		return slices.Contains(namespaces, pod.Namespace)
-	})
+
+	podList := &core_v1.PodList{}
+	if singleNamespace {
+		if err := kubeCache.List(ctx, podList, selectorOpt, nsOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] Pods : %s", cluster, err)
+		}
+		pods = podList.Items
+	} else {
+		if err := kubeCache.List(ctx, podList, selectorOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] Pods : %s", cluster, err)
+		}
+		pods = sliceutil.Filter(podList.Items, func(pod core_v1.Pod) bool {
+			return slices.Contains(namespaces, pod.Namespace)
+		})
+	}
 	podList = nil
 
 	depList := &apps_v1.DeploymentList{}
-	if err := kubeCache.List(ctx, depList); err != nil {
-		return nil, fmt.Errorf("Error fetching cluster [%s] Deployments : %s", cluster, err)
+	if singleNamespace {
+		if err := kubeCache.List(ctx, depList, nsOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] Deployments : %s", cluster, err)
+		}
+		dep = depList.Items
+	} else {
+		if err := kubeCache.List(ctx, depList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] Deployments : %s", cluster, err)
+		}
+		dep = sliceutil.Filter(depList.Items, func(dep apps_v1.Deployment) bool {
+			return slices.Contains(namespaces, dep.Namespace)
+		})
 	}
-	dep = sliceutil.Filter(depList.Items, func(dep apps_v1.Deployment) bool {
-		return slices.Contains(namespaces, dep.Namespace)
-	})
 	depList = nil
 
 	repList := &apps_v1.ReplicaSetList{}
-	if err := kubeCache.List(ctx, repList); err != nil {
-		return nil, fmt.Errorf("Error fetching cluster [%s] ReplicaSets: %s", cluster, err)
+	if singleNamespace {
+		if err := kubeCache.List(ctx, repList, nsOpt); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] ReplicaSets: %s", cluster, err)
+		}
+		repset = repList.Items
+	} else {
+		if err := kubeCache.List(ctx, repList); err != nil {
+			return nil, fmt.Errorf("Error fetching cluster [%s] ReplicaSets: %s", cluster, err)
+		}
+		repset = sliceutil.Filter(repList.Items, func(rs apps_v1.ReplicaSet) bool {
+			return slices.Contains(namespaces, rs.Namespace)
+		})
 	}
-	repset = sliceutil.Filter(repList.Items, func(rs apps_v1.ReplicaSet) bool {
-		return slices.Contains(namespaces, rs.Namespace)
-	})
 	repList = nil
 
 	// ReplicaControllers are fetched only when included
@@ -1065,12 +1097,19 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	// StatefulSets are fetched only when included
 	if in.isWorkloadIncluded(kubernetes.StatefulSetType) {
 		setList := &apps_v1.StatefulSetList{}
-		if err := kubeCache.List(ctx, setList); err != nil {
-			return nil, fmt.Errorf("Error fetching cluster [%s] StatefulSets: %s", cluster, err)
+		if singleNamespace {
+			if err := kubeCache.List(ctx, setList, nsOpt); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] StatefulSets: %s", cluster, err)
+			}
+			fulset = setList.Items
+		} else {
+			if err := kubeCache.List(ctx, setList); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] StatefulSets: %s", cluster, err)
+			}
+			fulset = sliceutil.Filter(setList.Items, func(ss apps_v1.StatefulSet) bool {
+				return slices.Contains(namespaces, ss.Namespace)
+			})
 		}
-		fulset = sliceutil.Filter(setList.Items, func(ss apps_v1.StatefulSet) bool {
-			return slices.Contains(namespaces, ss.Namespace)
-		})
 		setList = nil
 	}
 
@@ -1115,48 +1154,76 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 	// DaemonSets are fetched only when included
 	if in.isWorkloadIncluded(kubernetes.DaemonSetType) {
 		daeList := &apps_v1.DaemonSetList{}
-		if err := kubeCache.List(ctx, daeList); err != nil {
-			return nil, fmt.Errorf("Error fetching cluster [%s] DaemonSets: %s", cluster, err)
+		if singleNamespace {
+			if err := kubeCache.List(ctx, daeList, nsOpt); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] DaemonSets: %s", cluster, err)
+			}
+			daeset = daeList.Items
+		} else {
+			if err := kubeCache.List(ctx, daeList); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] DaemonSets: %s", cluster, err)
+			}
+			daeset = sliceutil.Filter(daeList.Items, func(ds apps_v1.DaemonSet) bool {
+				return slices.Contains(namespaces, ds.Namespace)
+			})
 		}
-		daeset = sliceutil.Filter(daeList.Items, func(ds apps_v1.DaemonSet) bool {
-			return slices.Contains(namespaces, ds.Namespace)
-		})
 		daeList = nil
 	}
 
 	// WorkloadGroups are fetched only when included
 	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadGroupType) {
 		wgroupList := &networking_v1.WorkloadGroupList{}
-		if err := kubeCache.List(ctx, wgroupList); err != nil {
-			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadGroups: %s", cluster, err)
+		if singleNamespace {
+			if err := kubeCache.List(ctx, wgroupList, nsOpt); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadGroups: %s", cluster, err)
+			}
+			wgroups = wgroupList.Items
+		} else {
+			if err := kubeCache.List(ctx, wgroupList); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadGroups: %s", cluster, err)
+			}
+			wgroups = sliceutil.Filter(wgroupList.Items, func(wg *networking_v1.WorkloadGroup) bool {
+				return slices.Contains(namespaces, wg.Namespace)
+			})
 		}
-		wgroups = sliceutil.Filter(wgroupList.Items, func(wg *networking_v1.WorkloadGroup) bool {
-			return slices.Contains(namespaces, wg.Namespace)
-		})
 		wgroupList = nil
 	}
 
 	// WorkloadEntries are fetched only when included
 	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.WorkloadEntryType) {
 		wentryList := &networking_v1.WorkloadEntryList{}
-		if err := kubeCache.List(ctx, wentryList); err != nil {
-			return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadEntries : %s", cluster, err)
+		if singleNamespace {
+			if err := kubeCache.List(ctx, wentryList, nsOpt); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadEntries : %s", cluster, err)
+			}
+			wentries = wentryList.Items
+		} else {
+			if err := kubeCache.List(ctx, wentryList); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] WorkloadEntries : %s", cluster, err)
+			}
+			wentries = sliceutil.Filter(wentryList.Items, func(we *networking_v1.WorkloadEntry) bool {
+				return slices.Contains(namespaces, we.Namespace)
+			})
 		}
-		wentries = sliceutil.Filter(wentryList.Items, func(we *networking_v1.WorkloadEntry) bool {
-			return slices.Contains(namespaces, we.Namespace)
-		})
 		wentryList = nil
 	}
 
 	// Sidecars are fetched only when included
 	if client.IsIstioAPI() && includeIstioWorkloads && in.isWorkloadIncluded(kubernetes.SidecarType) {
 		sidecarList := &networking_v1.SidecarList{}
-		if err := kubeCache.List(ctx, sidecarList); err != nil {
-			return nil, fmt.Errorf("Error fetching cluster [%s] Sidecars: %s", cluster, err)
+		if singleNamespace {
+			if err := kubeCache.List(ctx, sidecarList, nsOpt); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] Sidecars: %s", cluster, err)
+			}
+			sidecars = sidecarList.Items
+		} else {
+			if err := kubeCache.List(ctx, sidecarList); err != nil {
+				return nil, fmt.Errorf("Error fetching cluster [%s] Sidecars: %s", cluster, err)
+			}
+			sidecars = sliceutil.Filter(sidecarList.Items, func(sc *networking_v1.Sidecar) bool {
+				return slices.Contains(namespaces, sc.Namespace)
+			})
 		}
-		sidecars = sliceutil.Filter(sidecarList.Items, func(sc *networking_v1.Sidecar) bool {
-			return slices.Contains(namespaces, sc.Namespace)
-		})
 		sidecarList = nil
 	}
 
