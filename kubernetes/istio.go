@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -122,9 +123,9 @@ func (in *K8SClient) GetConfigDump(namespace, podName string) (*ConfigDump, erro
 	}
 
 	cd := &ConfigDump{}
-	err = json.Unmarshal(resp, cd)
+	err = json.NewDecoder(bytes.NewReader(resp)).Decode(cd)
 	if err != nil {
-		log.Errorf("Error Unmarshalling the config_dump: %v", err)
+		log.Errorf("Error decoding the config_dump: %v", err)
 	}
 
 	return cd, err
