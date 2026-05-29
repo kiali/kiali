@@ -92,7 +92,7 @@ Feature: Kiali Workload Details page
     Then the user can see the "More span details" span link
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy clusters configuration for a workload
     When the user filters by "Port" with value "9080" on the "Clusters" tab
@@ -101,28 +101,28 @@ Feature: Kiali Workload Details page
   @requestTimeout(30000)
   @responseTimeout(30000)
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy listeners configuration for a workload
     When the user filters by "Destination" with value "9090" on the "Listeners" tab
     Then the user sees listeners expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy routes configuration for a workload
     When the user filters by "Domains" with value "details" on the "Routes" tab
     Then the user sees routes expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy bootstrap configuration for a workload
     When the user looks for the bootstrap tab
     Then the user sees bootstrap expected information
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See Envoy config configuration for a workload
     When the user looks for the config tab
