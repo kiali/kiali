@@ -235,6 +235,8 @@ jobs:
         path: pr-metadata/
         retention-days: 1
 
+  # This job runs on both push to master and pull requests to establish
+  # coverage baseline (master branch) and PR coverage for comparison.
   codecov_merge_upload:
     if: ${{ success() }}
     name: Merge & Upload Coverage to Codecov
@@ -284,6 +286,7 @@ jobs:
     # -------------------------------
     # Upload to Codecov
     # -------------------------------
+    # Upload coverage for both PRs and main/master branch to establish baseline
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v6
       with:
