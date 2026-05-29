@@ -41,10 +41,7 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		return
 	}
 
-	if globalInfo.Vendor.WorkloadMap == nil {
-		globalInfo.Vendor.WorkloadMap = make(map[graph.NodeKey]*graph.Node)
-		populateWorkloadMap(ctx, globalInfo.Business, globalInfo, trafficMap)
-	}
+	gwWorkloads, workloadMap := populateWorkloadMap(ctx, globalInfo.Business, globalInfo.Clusters, trafficMap)
 
 	// Fetch cluster-wide service lists once per cluster for use by addLabels.
 	for _, cluster := range globalInfo.Clusters {
@@ -73,7 +70,7 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 
 		applyCircuitBreakers(trafficMap, istioConfig.DestinationRules, identityDomain)
 		applyVirtualServices(trafficMap, istioConfig.VirtualServices, identityDomain)
-		decorateGateways(ctx, cluster.Name, globalInfo, istioConfig.Gateways, istioConfig.K8sGateways)
+		decorateGateways(ctx, gwWorkloads[cluster.Name], workloadMap, istioConfig.Gateways, istioConfig.K8sGateways)
 	}
 
 	addLabels(ctx, trafficMap, globalInfo, globalInfo.Vendor.ClusterServiceLists)
@@ -363,12 +360,9 @@ func addLabels(ctx context.Context, trafficMap graph.TrafficMap, gi *GlobalInfo,
 	}
 }
 
-// decorateGateways decorates workload nodes with gateway metadata. It uses the
-// pre-cached AllWorkloads to filter locally by label selector instead of calling
-// GetAllWorkloads/GetWorkloadList per gateway.
-func decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInfo, gateways []*networkingv1.Gateway, k8sGateways []*k8s_networking_v1.Gateway) {
-	allWorkloads := globalInfo.Vendor.AllWorkloads[cluster]
-
+// decorateGateways decorates workload nodes with gateway metadata by matching
+// gateway selectors against the lightweight workload labels.
+func decorateGateways(ctx context.Context, gwWorkloads []gatewayWorkload, workloadMap map[graph.NodeKey]*graph.Node, gateways []*networkingv1.Gateway, k8sGateways []*k8s_networking_v1.Gateway) {
 	for _, gw := range gateways {
 		selector := labels.Set(gw.Spec.Selector).AsSelector()
 
@@ -377,11 +371,12 @@ func decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInf
 			hostnames = append(hostnames, gwServer.Hosts...)
 		}
 
-		for _, w := range allWorkloads {
+		for i := range gwWorkloads {
+			w := &gwWorkloads[i]
 			if !selector.Matches(labels.Set(w.Labels)) {
 				continue
 			}
-			node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
+			node := workloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
 			if node != nil {
 				// TODO: This doesn't work for the generic gateway chart.
 				switch w.Labels["operator.istio.io/component"] {
@@ -401,10 +396,11 @@ func decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInf
 	for _, gw := range k8sGateways {
 		sel := k8sGwSelector(gw.Name)
 
-		var matched []*models.Workload
-		for _, w := range allWorkloads {
+		var matched []gatewayWorkload
+		for i := range gwWorkloads {
+			w := &gwWorkloads[i]
 			if sel.Matches(labels.Set(w.Labels)) {
-				matched = append(matched, w)
+				matched = append(matched, *w)
 			}
 		}
 
@@ -415,7 +411,7 @@ func decorateGateways(ctx context.Context, cluster string, globalInfo *GlobalInf
 		}
 
 		workload := matched[0]
-		node := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
+		node := workloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
 		if node != nil {
 			var hostnames []string
 			for _, gwListener := range gw.Spec.Listeners {

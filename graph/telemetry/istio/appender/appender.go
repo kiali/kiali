@@ -15,7 +15,6 @@ import (
 
 func NewGlobalIstioInfo() *GlobalIstioInfo {
 	return &GlobalIstioInfo{
-		AllWorkloads:        make(map[string]models.Workloads),
 		AmbientWaypoints:    make(map[graph.NodeKey]bool),
 		AppsMap:             make(map[string]map[string]*models.AppListItem),
 		ClusterServiceLists: make(map[string]*models.ServiceList),
@@ -27,9 +26,6 @@ func NewGlobalIstioInfo() *GlobalIstioInfo {
 
 // GlobalIstioInfo contains structured information for Istio telemetry vendor
 type GlobalIstioInfo struct {
-	// AllWorkloads caches full workload models by cluster name, populated by populateWorkloadMap.
-	// Used by decorateGateways to filter locally instead of re-fetching per gateway.
-	AllWorkloads map[string]models.Workloads
 	// AmbientWaypoints maps waypoint keys to their availability status
 	AmbientWaypoints any
 	// AppsMap contains application list items keyed by cluster:namespace
@@ -42,9 +38,14 @@ type GlobalIstioInfo struct {
 	ServiceLists map[string]*models.ServiceList
 	// WorkloadLists caches workload lists by cluster:namespace key
 	WorkloadLists map[string]*models.WorkloadList
-	// WorkloadMap maps workloads to their nodes on the map. Only available to finalizers
-	// since the full graph hasn't been generated until all appenders have run.
-	WorkloadMap map[graph.NodeKey]*graph.Node
+}
+
+// gatewayWorkload holds the minimal workload info needed for gateway decoration.
+type gatewayWorkload struct {
+	Cluster   string
+	Namespace string
+	Name      string
+	Labels    map[string]string
 }
 
 type (
@@ -503,27 +504,42 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *Globa
 	return filteredClusterNames
 }
 
-// populateWorkloadMap populates the globalInfo.WorkloadMap with the workloads from the trafficMap.
-// It also caches the full workload models in AllWorkloads so that decorateGateways can
-// filter locally by label selector instead of re-fetching workloads per gateway.
-func populateWorkloadMap(ctx context.Context, business *business.Layer, globalInfo *GlobalInfo, trafficMap graph.TrafficMap) {
-	for _, cluster := range globalInfo.Clusters {
-		workloads, err := business.Workload.GetAllWorkloads(ctx, cluster.Name, "")
+// populateWorkloadMap fetches all workloads per cluster and returns:
+//   - a map of cluster name to lightweight gatewayWorkload slices (for gateway decoration)
+//   - a workloadMap linking known workloads to their graph nodes (nil if not in trafficMap)
+//
+// The full models.Workloads from GetAllWorkloads are not retained; only the fields
+// needed for gateway label-selector matching are extracted.
+func populateWorkloadMap(ctx context.Context, biz *business.Layer, clusters []models.KubeCluster, trafficMap graph.TrafficMap) (map[string][]gatewayWorkload, map[graph.NodeKey]*graph.Node) {
+	gwWorkloads := make(map[string][]gatewayWorkload, len(clusters))
+	workloadMap := make(map[graph.NodeKey]*graph.Node)
+
+	for _, cluster := range clusters {
+		workloads, err := biz.Workload.GetAllWorkloads(ctx, cluster.Name, "")
 		if err != nil {
 			log.FromContext(ctx).Warn().Msgf("Error fetching workloads for cluster [%s], gateway decoration may be incomplete: %s", cluster.Name, err.Error())
 			continue
 		}
 
-		globalInfo.Vendor.AllWorkloads[cluster.Name] = workloads
-
-		for _, workload := range workloads {
-			globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}] = nil
+		slim := make([]gatewayWorkload, 0, len(workloads))
+		for _, w := range workloads {
+			slim = append(slim, gatewayWorkload{
+				Cluster:   w.Cluster,
+				Namespace: w.Namespace,
+				Name:      w.Name,
+				Labels:    w.Labels,
+			})
+			workloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}] = nil
 		}
+		gwWorkloads[cluster.Name] = slim
 	}
 
 	for _, node := range trafficMap {
-		if _, ok := globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}]; ok {
-			globalInfo.Vendor.WorkloadMap[graph.NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}] = node
+		key := graph.NodeKey{Cluster: node.Cluster, Namespace: node.Namespace, Name: node.Workload}
+		if _, ok := workloadMap[key]; ok {
+			workloadMap[key] = node
 		}
 	}
+
+	return gwWorkloads, workloadMap
 }
