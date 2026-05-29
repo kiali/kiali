@@ -72,11 +72,11 @@ Examples:
 
 | Classification | Labels |
 |---------------|--------|
-| `flake` | `bug`, `maintenance` |
+| `flake` | `bug`, `flake` |
 | `ui-bug` | `bug` |
-| `test-bug` | `maintenance` |
+| `test-bug` | `test-bug` |
 
-Apply labels exactly as the table specifies. `test-bug` does **not** get `bug`; `ui-bug` does **not** get `maintenance`.
+Apply labels exactly as the table specifies. `test-bug` does **not** get `bug`; `ui-bug` does **not** get `flake` or `test-bug`.
 
 ### Reproduce command
 
