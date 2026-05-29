@@ -9,7 +9,7 @@ Feature: Kiali alerts verify
     And user is at the "overview" page
 
   @smoke
-  @core-2
+  @core-caching
   Scenario: Open Kiali notifications
     Then user should see no Istio Components Status
 

@@ -12,7 +12,7 @@ Feature: Kiali Service Details page
 
   # TODO: offline - no tracing details yet
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See details for productpage
     Then sd::user sees a list with content "Overview"
@@ -23,7 +23,7 @@ Feature: Kiali Service Details page
 
   # TODO: offline - no "Hostname" found but this doesn't exist in regular runs either?
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See details for service
     Then sd::user sees "productpage" details information for service "v1"
@@ -34,13 +34,13 @@ Feature: Kiali Service Details page
     Then sd::user sees Annotations card
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See service Traffic information
     Then sd::user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See Inbound Metrics for productpage service details
     Then sd::user sees "Request volume" graph
     Then sd::user sees "Request duration" graph
@@ -56,7 +56,7 @@ Feature: Kiali Service Details page
     Then sd::user sees "TCP sent" graph
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See Graph data for productpage service details Inbound Metrics graphs
     Then sd::user does not see No data message in the "Request volume" graph
 

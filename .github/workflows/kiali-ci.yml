@@ -110,6 +110,14 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  integration_tests_frontend_core_caching:
+    name: Run frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-caching.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_frontend_core_optional:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-optional.yml

@@ -11,20 +11,20 @@ Feature: Kiali Mesh page
 
 # NOTE: Mesh Find/Hide has its own feature file
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Open mesh Tour
     When user opens mesh tour
     Then user "sees" mesh tour
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Close mesh Tour
     When user opens mesh tour
     And user closes mesh tour
     Then user "does not see" mesh tour
 
-  @core-2
+  @core-caching
   @multi-mesh
   @lpinterop
   # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
@@ -32,14 +32,14 @@ Feature: Kiali Mesh page
     When user sees mesh side panel
     Then user sees expected mesh infra
 
-  @core-2
+  @core-caching
   @lpinterop
   # TODO: offline - no metrics for side panel yet.
   Scenario: Test istiod
     When user selects mesh node with label "istiod"
     Then user sees control plane side panel
 
-  @core-2
+  @core-caching
   @lpinterop
   # TODO: offline - no grafana.
   Scenario: Grafana Infra
@@ -51,19 +51,19 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "Perses"
     Then user sees "Perses" node side panel
 
-  @core-2
+  @core-caching
   # TODO: offline - no tracing.
   Scenario: Tracing Infra
     When user selects tracing mesh node
     Then user sees tracing node side panel
 
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: Prometheus Infra
     When user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
-  @core-2
+  @core-caching
   @offline
   @lpinterop
   Scenario: Test DataPlane
@@ -72,13 +72,13 @@ Feature: Kiali Mesh page
     When user expands namespace
     Then user sees config validation info
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Test Cluster
     When user selects cluster mesh node
     Then user sees cluster side panel
 
-  @core-2
+  @core-caching
   @offline
   Scenario: Test istio-system
     When user selects mesh node with label "istio-system"
@@ -87,7 +87,7 @@ Feature: Kiali Mesh page
 
   # TODO: offline - must gather does not collect gateway-api resources which are what the integration tests use to create gateways.
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: User enables gateways
     When user "opens" display menu
     And user "enables" mesh display option "gateways"
@@ -110,13 +110,13 @@ Feature: Kiali Mesh page
     Then user sees "ztunnel" node side panel
 
   @skip-ossmc
-  @core-2
+  @core-caching
   @offline
   Scenario: See the Mesh menu link
     Then user see the "mesh" menu
 
   @skip-ossmc
-  @core-2
+  @core-caching
   @offline
   Scenario: See the Mesh link in the about
     And user clicks on Help Button
@@ -166,7 +166,7 @@ Feature: Kiali Mesh page
     And user sees "mode: REGISTRY_ONLY" in the "shared" configuration tab
     And user does not see "mode: REGISTRY_ONLY" in the "standard" configuration tab
 
-  @core-2
+  @core-caching
   # TODO: offline - no tracing
   Scenario: User opens and interacts with the Trace Configuration modal
     When user selects tracing mesh node

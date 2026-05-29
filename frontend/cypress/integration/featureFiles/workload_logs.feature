@@ -11,7 +11,7 @@ Feature: Workload logs tab
     Given user is at administrator perspective
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   @lpinterop
   Scenario: The logs tab should show the logs of a pod
@@ -58,7 +58,7 @@ Feature: Workload logs tab
     And I should see certain values on the parsed object
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: The log pane of the logs tab should limit the number of log lines that are fetched
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace
@@ -66,7 +66,7 @@ Feature: Workload logs tab
     Then the log pane should show at most 100 lines of logs of each selected container
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: The log pane of the logs tab should only show logs for the selected container
     Given I am on the logs tab of the "ratings-v1" workload detail page of the "bookinfo" namespace

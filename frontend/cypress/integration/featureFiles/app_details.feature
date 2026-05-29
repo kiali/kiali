@@ -14,7 +14,7 @@ Feature: Kiali App Details page
     And user is at the details page for the "app" "bookinfo/details" located in the "" cluster
 
   @bookinfo-app
-  @core-1
+  @core-caching
   @offline
   @lpinterop
   Scenario: See details for app.
@@ -22,20 +22,20 @@ Feature: Kiali App Details page
     Then user sees app Resources card
 
   @bookinfo-app
-  @core-1
+  @core-caching
   @lpinterop
   Scenario: See app Traffic information
     Then user sees inbound and outbound traffic information
     And the "Cluster" column "disappears"
 
   @bookinfo-app
-  @core-1
+  @core-caching
   @offline
   Scenario: See Inbound Metrics
     Then user sees inbound metrics information
 
   @bookinfo-app
-  @core-1
+  @core-caching
   @offline
   Scenario: See Outbound Metrics
     Then user sees outbound metrics information

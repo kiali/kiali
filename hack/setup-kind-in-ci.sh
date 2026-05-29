@@ -77,6 +77,12 @@ Options:
 -ea|--enable-ai <true|false>
     Whether to enable AI chatbot integration tests.
     Default: false
+-ec|--enable-cache <true|false>
+    Whether to enable graph and health caching in Kiali.
+    Default: false
+-ko|--kiali-only
+    Skip cluster and Istio setup; only deploy Kiali.
+    Requires a cluster that was previously set up with --deploy-kiali false.
 -hcd|--helm-charts-dir
     Directory where the Kiali helm charts are located.
     If one is not supplied a /tmp dir will be created and used.
@@ -129,7 +135,9 @@ while [[ $# -gt 0 ]]; do
     -dk|--deploy-kiali)           DEPLOY_KIALI="$2";          shift;shift; ;;
     -dorp|--docker-or-podman)     DORP="$2";                  shift;shift; ;;
     -ea|--enable-ai)              ENABLE_AI="$2";             shift;shift; ;;
+    -ec|--enable-cache)           ENABLE_CACHE="$2";          shift;shift; ;;
     -h|--help)                    helpmsg;                    exit 1       ;;
+    -ko|--kiali-only)             KIALI_ONLY="true";          shift; ;;
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
@@ -186,6 +194,8 @@ install_istio() {
 AUTH_STRATEGY="${AUTH_STRATEGY:-anonymous}"
 DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
+ENABLE_CACHE="${ENABLE_CACHE:-false}"
+KIALI_ONLY="${KIALI_ONLY:-false}"
 TEMPO="${TEMPO:-false}"
 
 # Defaults the branch to master unless it is already set
@@ -296,6 +306,10 @@ if [ -z "${HELM_CHARTS_DIR}" ]; then
   make -C "${HELM_CHARTS_DIR}" build-helm-charts
 fi
 
+# Persist the helm charts dir so callers that invoke this script twice
+# (e.g. --deploy-kiali false followed by --kiali-only) can reuse it.
+echo "${HELM_CHARTS_DIR}" > /tmp/kiali-helm-charts-dir
+
 # print out our settings for debug purposes
 cat <<EOM
 === SETTINGS ===
@@ -303,6 +317,8 @@ AUTH_STRATEGY=$AUTH_STRATEGY
 DEPLOY_KIALI=$DEPLOY_KIALI
 DORP=$DORP
 ENABLE_AI=$ENABLE_AI
+ENABLE_CACHE=$ENABLE_CACHE
+KIALI_ONLY=$KIALI_ONLY
 HELM_CHARTS_DIR=$HELM_CHARTS_DIR
 ISTIO_VERSION=$ISTIO_VERSION
 KEYCLOAK_LIMIT_MEMORY=$KEYCLOAK_LIMIT_MEMORY
@@ -346,6 +362,10 @@ infomsg "Downloading istio"
 setup_kind_singlecluster() {
 
   local certs_dir
+  local tracing_use_waypoint_args=()
+  PERSES_ARGS=()
+
+  if [ "${KIALI_ONLY}" != "true" ]; then
 
   if [ "${AUTH_STRATEGY}" == "openid" ]; then
     echo "Auth strategy is open id"
@@ -449,6 +469,8 @@ setup_kind_singlecluster() {
       )
   fi
 
+  fi # KIALI_ONLY != true
+
   if [ "${DEPLOY_KIALI}" != "true" ]; then
     infomsg "Skipping Kiali deployment as requested"
     return
@@ -524,8 +546,8 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
-    --set kiali_internal.graph_cache.enabled="false" \
-    --set kiali_internal.health_cache.enabled="false" \
+    --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
+    --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -629,8 +651,8 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.istio_status="0" \
     --set kiali_internal.cache_expiration.mesh="10s" \
     --set kiali_internal.cache_expiration.waypoint="2m" \
-    --set kiali_internal.graph_cache.enabled="false" \
-    --set kiali_internal.health_cache.enabled="false" \
+    --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
+    --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
