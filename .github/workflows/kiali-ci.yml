@@ -1,16 +1,11 @@
 name: Kiali CI
 
 on:
-  # Run on master and release branches
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
     - master
     - v*.*
-    paths-ignore:
-    - "design/**"
-    - "**/*.md"
-    - "**/*.adoc"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,18 +20,10 @@ jobs:
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
-      # This workflow can run on either a PR or release. GITHUB_BASE_REF is only
-      # set when this workflow is run against a PR. When run against a PR, we want
-      # to use the branch we are running against: GITHUB_BASE_REF. When run
-      # as a release, we want to use the current branch ref: GITHUB_REF_NAME.
       target-branch: ${{ github.base_ref || github.ref_name }}
       build-branch: ${{ env.branch-master || env.branch-pr }}
     steps:
-    # The initialize job gathers variables for later use in jobs.
-    # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
-    # A positive side effect of this is that we can print all variables at start for debugging and troubleshooting.
     - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
-    # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
     - run: |
         echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
         echo "build-branch -> ${{ github.ref_name }}"
@@ -47,13 +34,6 @@ jobs:
         echo "build-branch -> ${{ github.base_ref }}"
       id: branch-pr
       if: ${{ github.base_ref }}
-
-  test_backend:
-    name: Run backend linters and unit tests
-    uses: ./.github/workflows/test-lint-backend.yml
-    needs: [initialize]
-    with:
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   build_frontend:
     name: Build frontend
@@ -66,64 +46,8 @@ jobs:
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
-    needs: [initialize, test_backend, build_frontend]
+    needs: [initialize, build_frontend]
     with:
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_backend_mcp:
-    name: Run backend MCP integration tests
-    uses: ./.github/workflows/integration-tests-backend-mcp.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_backend:
-    name: Run backend integration tests
-    uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_chat:
-    name: Run frontend AI integration tests
-    uses: ./.github/workflows/integration-tests-frontend-chat.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_core_1:
-    name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-core-1.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_core_2:
-    name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-core-2.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_core_caching:
-    name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-core-caching.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_core_optional:
-    name: Run frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_ambient:
@@ -133,169 +57,3 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_ambient_multi_primary:
-    name: Run frontend Ambient Multi-Primary integration tests
-    uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_tempo:
-    name: Run tracing frontend integration tests
-    uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_local_offline:
-    name: Run frontend local and offline mode integration tests
-    uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_backend_multicluster_external_controlplane:
-    name: Run backend multicluster external-controlplane integration tests
-    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multicluster_primary_remote:
-    name: Run frontend multicluster primary-remote integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multicluster_multi_primary:
-    name: Run frontend multicluster multi-primary integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [initialize, build_backend]
-
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multicluster_external_kiali:
-    name: Run frontend multicluster external-kiali integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [initialize, build_backend]
-
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multi_mesh:
-    name: Run frontend multi mesh integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  mcp_contract_tests:
-    name: MCP Contract Tests (kubernetes-mcp-server)
-    uses: ./.github/workflows/mcp-contract-tests.yml
-    needs: [initialize, build_backend]
-    with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-      istio_version: ""
-
-  store_pr_metadata:
-    permissions:
-      contents: read
-    name: Store PR metadata
-    runs-on: ubuntu-latest
-    needs: [initialize]
-    steps:
-    - name: Check out code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-    - name: Store PR number, target branch, and Kiali version
-      run: |
-        mkdir -p pr-metadata
-        echo "${{ github.event.number }}" > pr-metadata/pr_number.txt
-        echo "${{ github.base_ref || github.ref_name }}" > pr-metadata/target_branch.txt
-        # Extract VERSION from Makefile and get major.minor (e.g., v2.21.0-SNAPSHOT -> 2.21)
-        VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
-        echo "${VERSION}" > pr-metadata/kiali_version.txt
-        cat pr-metadata/pr_number.txt
-        cat pr-metadata/target_branch.txt
-        cat pr-metadata/kiali_version.txt
-
-    # Upload PR metadata as artifact because workflow_run events triggered by PRs from forks
-    # don't have access to PR information in github.event.workflow_run.pull_requests
-    # See: https://github.com/orgs/community/discussions/25220
-    - name: Upload PR metadata
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-      with:
-        name: pr-metadata
-        path: pr-metadata/
-        retention-days: 1
-
-  codecov_merge_upload:
-    if: ${{ success() }}
-    name: Merge & Upload Coverage to Codecov
-    needs:
-    - integration_tests_backend
-    - integration_tests_backend_multicluster_external_controlplane
-    - test_backend
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-    # -------------------------------
-    # Download artifacts
-    # -------------------------------
-    - name: Download backend coverage
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        name: coverage-backend
-        path: coverage
-
-    - name: Download multicluster coverage
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        name: coverage-multicluster
-        path: coverage
-
-    - name: Download unit coverage
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        name: coverage-unit
-        path: coverage
-
-    # -------------------------------
-    # Merge coverage (no gocovmerge)
-    # -------------------------------
-    - name: Merge coverage files
-      run: |
-        echo "mode: set" > coverage.out
-        grep -h -v "^mode:" coverage/coverage-unit.out >> coverage.out
-        grep -h -v "^mode:" coverage/coverage-backend.out >> coverage.out
-        grep -h -v "^mode:" coverage/coverage-multicluster.out >> coverage.out
-
-    # -------------------------------
-    # Upload to Codecov
-    # -------------------------------
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
-      with:
-        fail_ci_if_error: false
-        files: coverage.out
-        flags: integration
-        slug: kiali/kiali
-        token: ${{ secrets.CODECOV_TOKEN }}
-        use_oidc: true

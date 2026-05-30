@@ -50,7 +50,11 @@ context_flag=""
 [ -n "${KUBECTL_CONTEXT}" ] && context_flag="--context ${KUBECTL_CONTEXT}"
 
 # Get debug info and write to a separate file.
-kubectl ${context_flag} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system > "${OUTPUT_DIRECTORY}/kiali_logs.txt" || rm "${OUTPUT_DIRECTORY}/kiali_logs.txt"
+kubectl ${context_flag} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system > "${OUTPUT_DIRECTORY}/kiali_logs.txt" 2>&1 || rm "${OUTPUT_DIRECTORY}/kiali_logs.txt"
+# Also pick up race trace saved by detectRaceConditions if it exists
+if [ -f debug-output/kiali_race_trace.txt ]; then
+  cp debug-output/kiali_race_trace.txt "${OUTPUT_DIRECTORY}/kiali_race_trace.txt"
+fi
 kubectl ${context_flag} describe nodes > "${OUTPUT_DIRECTORY}/describe_nodes.txt" || rm "${OUTPUT_DIRECTORY}/describe_nodes.txt"
 kubectl ${context_flag} get pods -l app.kubernetes.io/name=kiali -n istio-system -o yaml > "${OUTPUT_DIRECTORY}/kiali_pods.yaml" || rm "${OUTPUT_DIRECTORY}/kiali_pods.yaml"
 kubectl ${context_flag} describe pods -n metallb-system > "${OUTPUT_DIRECTORY}/describe_metallb_pods.txt" || rm "${OUTPUT_DIRECTORY}/describe_metallb_pods.txt"

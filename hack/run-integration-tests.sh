@@ -367,18 +367,30 @@ detectRaceConditions() {
   local kubecontext=$1
 
   local context_arg=${kubecontext:+--context ${kubecontext}}
-  if ! kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"; then
+  local logfile
+  logfile=$(mktemp /tmp/kiali-race-check.XXXXXX)
+
+  kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system > "$logfile" 2>&1
+
+  if grep -q "WARNING: DATA RACE" "$logfile"; then
     echo "ERROR: Data race detected in Kiali logs!"
-    echo "Showing a preview of Kiali logs with data race warnings:"
     echo "=========================================="
-    kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -A5 -B5 "WARNING: DATA RACE" || true
+    echo "Full data race report from Kiali logs:"
     echo "=========================================="
+    grep -A 30 "WARNING: DATA RACE" "$logfile"
+    echo "=========================================="
+
+    mkdir -p debug-output
+    cp "$logfile" debug-output/kiali_race_trace.txt
+    rm -f "$logfile"
+
     echo "Integration tests failed due to a data race in Kiali."
-    echo "Download and review the Kiali server logs for more details."
+    echo "The full race trace has been saved to debug-output/kiali_race_trace.txt"
     exit 1
-  else
-    echo "No data race conditions detected in Kiali logs"
   fi
+
+  rm -f "$logfile"
+  echo "No data race conditions detected in Kiali logs"
 }
 
 ensureCypressReady() {
