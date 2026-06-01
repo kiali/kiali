@@ -235,25 +235,6 @@ func NewRoutes(
 			handlers.HealthCacheMetricsHandler(),
 			true,
 		},
-		// swagger:route GET /api/test/metrics/health/status testMetrics testHealthStatusMetrics
-		// ---
-		// Endpoint to get Kiali's health status metrics for testing purposes
-		//
-		//     Produces:
-		//     - application/json
-		//
-		//     Schemes: http, https
-		//
-		// responses:
-		//      200: healthStatusMetricsResponse
-		{
-			"TestHealthStatusMetrics",
-			log.StatusLogName,
-			"GET",
-			"/api/test/metrics/health/status",
-			handlers.HealthStatusMetricsHandler(),
-			true,
-		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
 		// ---
 		// Endpoint to get a diagnose for the tracing endpoint

@@ -386,10 +386,6 @@ interface HealthStatusMetricItem {
   value: number;
 }
 
-interface HealthStatusMetrics {
-  metrics: HealthStatusMetricItem[];
-}
-
 // Helper to convert health status numeric value to status string
 const healthStatusValueToString = (value: number): string => {
   switch (value) {
@@ -404,6 +400,69 @@ const healthStatusValueToString = (value: number): string => {
     default:
       return 'Unknown';
   }
+};
+
+// Parse Prometheus text format and extract kiali_health_status metrics
+const parseHealthStatusMetrics = (prometheusText: string): HealthStatusMetricItem[] => {
+  const metrics: HealthStatusMetricItem[] = [];
+  const lines = prometheusText.split('\n');
+
+  for (const line of lines) {
+    // Skip comments and empty lines
+    if (line.startsWith('#') || line.trim() === '') {
+      continue;
+    }
+
+    // Match kiali_health_status metric lines
+    // Example: kiali_health_status{cluster="Kubernetes",namespace="bookinfo",health_type="app",name="details"} 0
+    const match = line.match(/^kiali_health_status\{([^}]+)\}\s+(.+)$/);
+    if (match) {
+      const labelsStr = match[1];
+      const value = parseFloat(match[2]);
+
+      // Parse labels
+      const labels: { [key: string]: string } = {};
+      const labelMatches = labelsStr.matchAll(/(\w+)="([^"]+)"/g);
+      for (const labelMatch of labelMatches) {
+        labels[labelMatch[1]] = labelMatch[2];
+      }
+
+      metrics.push({
+        cluster: labels.cluster || '',
+        namespace: labels.namespace || '',
+        healthType: labels.health_type || '',
+        name: labels.name || '',
+        value: value
+      });
+    }
+  }
+
+  return metrics;
+};
+
+// Fetch health status metrics from the real Prometheus /metrics endpoint
+const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]> => {
+  // The metrics endpoint is on port 9090 by default (configured in server.observability.metrics.port)
+  // We need to use the same host but different port
+  return cy.location('origin').then(origin => {
+    const url = new URL(origin);
+    const metricsUrl = `${url.protocol}//${url.hostname}:9090/metrics`;
+
+    return cy
+      .request({
+        url: metricsUrl,
+        failOnStatusCode: false
+      })
+      .then(resp => {
+        if (resp.status !== 200) {
+          cy.log(`Warning: Failed to fetch metrics from ${metricsUrl}, status: ${resp.status}`);
+          return [];
+        }
+        const metrics = parseHealthStatusMetrics(resp.body);
+        cy.log(`Parsed ${metrics.length} kiali_health_status metrics from ${metricsUrl}`);
+        return metrics;
+      });
+  });
 };
 
 Given('health status metric is enabled', () => {
@@ -424,16 +483,11 @@ Then('health status metric for {string} app {string} in {string} namespace shoul
   healthStatus: string,
   namespace: string
 ) {
-  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
-    expect(resp.status).to.eq(200);
-    const data = resp.body as HealthStatusMetrics;
-
-    cy.log(`Health status metrics: ${JSON.stringify(data.metrics, null, 2)}`);
+  fetchHealthStatusMetrics().then(metrics => {
+    cy.log(`Health status metrics: ${JSON.stringify(metrics, null, 2)}`);
 
     // Find the metric for this specific app
-    const appMetric = data.metrics.find(
-      m => m.healthType === 'app' && m.name === appName && m.namespace === namespace
-    );
+    const appMetric = metrics.find(m => m.healthType === 'app' && m.name === appName && m.namespace === namespace);
 
     expect(appMetric, `Metric for app ${appName} in namespace ${namespace} should exist`).to.not.be.undefined;
 
@@ -446,24 +500,18 @@ Then('health status metric for {string} app {string} in {string} namespace shoul
 });
 
 Then('health status metrics should contain at least {int} metric', (minMetrics: number) => {
-  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
-    expect(resp.status).to.eq(200);
-    const data = resp.body as HealthStatusMetrics;
+  fetchHealthStatusMetrics().then(metrics => {
+    cy.log(`Health status metrics count: ${metrics.length}`);
+    cy.log(`Health status metrics: ${JSON.stringify(metrics, null, 2)}`);
 
-    cy.log(`Health status metrics count: ${data.metrics.length}`);
-    cy.log(`Health status metrics: ${JSON.stringify(data.metrics, null, 2)}`);
-
-    expect(data.metrics.length).to.be.at.least(minMetrics);
+    expect(metrics.length).to.be.at.least(minMetrics);
   });
 });
 
 Then('health status metrics should not be empty', () => {
-  cy.request({ url: 'api/test/metrics/health/status' }).then(resp => {
-    expect(resp.status).to.eq(200);
-    const data = resp.body as HealthStatusMetrics;
+  fetchHealthStatusMetrics().then(metrics => {
+    cy.log(`Health status metrics count: ${metrics.length}`);
 
-    cy.log(`Health status metrics count: ${data.metrics.length}`);
-
-    expect(data.metrics.length).to.be.greaterThan(0);
+    expect(metrics.length).to.be.greaterThan(0);
   });
 });
