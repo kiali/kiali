@@ -13,11 +13,14 @@ import (
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/require"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
+	apps_v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/istio/istiotest"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -286,4 +289,60 @@ func TestConfigHandlerMeshErrorFallsBackToDefault(t *testing.T) {
 	var confResp handlers.PublicConfig
 	require.NoError(json.Unmarshal(actual, &confResp))
 	require.Equal("svc.cluster.local", confResp.IstioIdentityDomain)
+}
+
+func TestConfigHandlerAmbientEnabledChecksAllClusters(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "mgmt-cluster"
+	conf.Clustering.IgnoreHomeCluster = true
+
+	// Home cluster: no ztunnel (management cluster).
+	homeClient := kubetest.NewFakeK8sClient()
+	// Remote cluster: has a ztunnel DaemonSet (ambient enabled).
+	remoteClient := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		&apps_v1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ztunnel",
+				Namespace: "istio-system",
+				Labels:    map[string]string{"app.kubernetes.io/name": "ztunnel"},
+			},
+			Spec: apps_v1.DaemonSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"app": "ztunnel"},
+				},
+			},
+		},
+	)
+
+	clients := map[string]kubernetes.UserClientInterface{
+		"mgmt-cluster": homeClient,
+		"member-1":     remoteClient,
+	}
+	cf := kubetest.NewFakeClientFactory(conf, clients)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+	require.True(confResp.AmbientEnabled, "ambientEnabled should be true when a remote cluster has ztunnel")
 }
