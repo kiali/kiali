@@ -35,10 +35,11 @@ The `codecov_merge_upload` job:
 - Uploads to Codecov with the `integration` flag
 
 ### Key Points
-- ✅ Baseline coverage is established by running on **master branch** after every merge
+- ✅ Baseline coverage is established by running on **master branch** after every merge (`push` trigger)
 - ✅ PR coverage is generated for every pull request
-- ✅ Codecov can compare PR coverage against the master baseline
-- ✅ Uses OIDC authentication for secure uploads
+- ✅ PRs use Codecov `pr-base-picking` with `base_sha` = target branch head so the base is current, not a stale commit
+- ✅ Checkout uses `fetch-depth: 0` for accurate git metadata
+- ✅ Upload uses `CODECOV_TOKEN` (same pattern as sail-operator)
 - ✅ Set to `fail_ci_if_error: false` to make coverage informational
 
 ## What Happens Next

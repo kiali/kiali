@@ -246,11 +246,14 @@ jobs:
     - test_backend
     permissions:
       contents: read
-      id-token: write
     runs-on: ubuntu-latest
     steps:
+    # Full history is required for Codecov PR base selection and accurate comparisons.
     - name: Checkout repo
       uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
     # -------------------------------
     # Download artifacts
@@ -286,13 +289,26 @@ jobs:
     # -------------------------------
     # Upload to Codecov
     # -------------------------------
-    # Upload coverage for both PRs and main/master branch to establish baseline
+    # Select the PR base report from the target branch head (not a stale default-branch upload).
+    - name: Select Codecov PR base commit
+      if: github.event_name == 'pull_request'
+      uses: codecov/codecov-action@v6
+      with:
+        base_sha: ${{ github.event.pull_request.base.sha }}
+        run_command: pr-base-picking
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    # Upload on PRs and on push to master/release branches (sail-operator pattern: push + pull_request).
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v6
       with:
+        disable_search: true
         fail_ci_if_error: false
         files: coverage.out
         flags: integration
+        override_branch: ${{ github.head_ref || github.ref_name }}
+        override_commit: ${{ github.event.pull_request.head.sha || github.sha }}
+        override_pr: ${{ github.event.pull_request.number }}
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
-        use_oidc: true

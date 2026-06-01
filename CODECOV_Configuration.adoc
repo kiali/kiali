@@ -5,7 +5,15 @@ This repository uploads merged Go coverage from GitHub Actions to Codecov (see `
 The workflow runs on:
 
 * Pull requests targeting `master` or release branches (`v*.*`)
-* Pushes to `master` or release branches (to keep base branch coverage up-to-date)
+* Pushes to `master` or release branches (to keep the Codecov default-branch baseline current)
+
+Without push uploads, Codecov reports fall behind (for example, "Report is N commits behind head on master") because only PR uploads exist and the default-branch baseline never advances after merges.
+
+=== PR base selection
+
+For pull requests, the `codecov_merge_upload` job runs Codecov's `pr-base-picking` command with `base_sha` set to the PR target branch head (`github.event.pull_request.base.sha`). That compares the PR against the latest target-branch coverage instead of a stale upload from an old default-branch commit.
+
+Checkout uses `fetch-depth: 0` so git metadata is available for base selection (same requirement as https://github.com/codecov/codecov-action[codecov-action]).
 
 
 == What CI uploads
