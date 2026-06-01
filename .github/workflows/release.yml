@@ -310,7 +310,7 @@ jobs:
       contents: write
       pull-requests: write
     name: Release
-    if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') && (needs.run_molecule_tests.result == 'success' || needs.run_molecule_tests.result == 'skipped') }}
+    if: ${{ !failure() && !cancelled() && needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
     runs-on: ubuntu-latest
     needs: [initialize, build_frontend, build_backend, run_molecule_tests, build_cross_platform_binaries, test_cross_platform_binaries]
     env:
