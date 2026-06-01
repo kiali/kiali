@@ -97,6 +97,11 @@
             "certFile" : "xxx",
             "insecureSkipVerify" : false,
             "keyFile" : "xxx",
+            "oauth2" : {
+              "clientId" : "",
+              "clientSecret" : "xxx",
+              "tokenUrl" : ""
+            },
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -126,6 +131,11 @@
             "certFile" : "xxx",
             "insecureSkipVerify" : false,
             "keyFile" : "xxx",
+            "oauth2" : {
+              "clientId" : "",
+              "clientSecret" : "xxx",
+              "tokenUrl" : ""
+            },
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",
@@ -160,6 +170,11 @@
             "certFile" : "xxx",
             "insecureSkipVerify" : false,
             "keyFile" : "xxx",
+            "oauth2" : {
+              "clientId" : "",
+              "clientSecret" : "xxx",
+              "tokenUrl" : ""
+            },
             "password" : "xxx",
             "token" : "xxx",
             "type" : "none",

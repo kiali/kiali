@@ -55,6 +55,13 @@ const (
 	SecretFileCustomDashboardsPrometheusCert = "customdashboards-prometheus-cert"
 	SecretFileCustomDashboardsPrometheusKey  = "customdashboards-prometheus-key"
 
+	// External services OAuth2 client secrets
+	SecretFilePrometheusOAuth2ClientSecret                 = "prometheus-oauth2-client-secret"
+	SecretFileGrafanaOAuth2ClientSecret                    = "grafana-oauth2-client-secret"
+	SecretFileTracingOAuth2ClientSecret                    = "tracing-oauth2-client-secret"
+	SecretFilePersesOAuth2ClientSecret                     = "perses-oauth2-client-secret"
+	SecretFileCustomDashboardsPrometheusOAuth2ClientSecret = "customdashboards-prometheus-oauth2-client-secret"
+
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
 
@@ -95,6 +102,7 @@ const (
 	AuthTypeBasic  = "basic"
 	AuthTypeBearer = "bearer"
 	AuthTypeNone   = "none"
+	AuthTypeOAuth2 = "oauth2"
 )
 
 const (
@@ -312,23 +320,37 @@ func (c Credential) String() string {
 
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string     `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
-	CertFile           Credential `yaml:"cert_file" json:"certFile"`
-	InsecureSkipVerify bool       `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
-	KeyFile            Credential `yaml:"key_file" json:"keyFile"`
-	Password           Credential `yaml:"password" json:"password"`
-	Token              Credential `yaml:"token" json:"token"`
-	Type               string     `yaml:"type" json:"type"`
-	UseKialiToken      bool       `yaml:"use_kiali_token" json:"useKialiToken"`
-	Username           Credential `yaml:"username" json:"username"`
+	CAFile             string       `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
+	CertFile           Credential   `yaml:"cert_file" json:"certFile"`
+	InsecureSkipVerify bool         `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	KeyFile            Credential   `yaml:"key_file" json:"keyFile"`
+	OAuth2             OAuth2Config `yaml:"oauth2,omitempty" json:"oauth2,omitempty"`
+	Password           Credential   `yaml:"password" json:"password"`
+	Token              Credential   `yaml:"token" json:"token"`
+	Type               string       `yaml:"type" json:"type"`
+	UseKialiToken      bool         `yaml:"use_kiali_token" json:"useKialiToken"`
+	Username           Credential   `yaml:"username" json:"username"`
 }
 
 func (a *Auth) Obfuscate() {
 	a.CertFile = "xxx"
 	a.KeyFile = "xxx"
+	a.OAuth2.ClientSecret = "xxx"
 	a.Password = "xxx"
 	a.Token = "xxx"
 	a.Username = "xxx"
+}
+
+// OAuth2Config provides OAuth2 client_credentials configuration for external services.
+// This enables Kiali to authenticate to services like Azure Managed Prometheus/Grafana
+// that require OAuth2 tokens with specific scopes.
+type OAuth2Config struct {
+	Audience     string     `yaml:"audience,omitempty" json:"audience,omitempty"`
+	AuthStyle    string     `yaml:"auth_style,omitempty" json:"authStyle,omitempty"`
+	ClientID     string     `yaml:"client_id" json:"clientId"`
+	ClientSecret Credential `yaml:"client_secret" json:"clientSecret"`
+	Scopes       []string   `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+	TokenURL     string     `yaml:"token_url" json:"tokenUrl"`
 }
 
 // ThanosProxy describes configuration of the Thanos proxy component
@@ -1793,6 +1815,27 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			configValue: &conf.ExternalServices.Perses.Auth.Username,
 			fileName:    SecretFilePersesUsername,
 		},
+		// OAuth2 client secrets
+		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePrometheusOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileGrafanaOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileTracingOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePersesOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileCustomDashboardsPrometheusOAuth2ClientSecret,
+		},
 		// Custom Dashboards Prometheus credentials and certificates
 		{
 			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.CertFile,
@@ -2151,6 +2194,48 @@ func Validate(conf *Config) error {
 			log.Warningf("health_config.compute.duration [%s] is less than the minimum of 1m. Setting to 1m.", conf.HealthConfig.Compute.Duration)
 		}
 		conf.HealthConfig.Compute.Duration = "1m"
+	}
+
+	oauth2Services := map[string]*Auth{
+		"custom_dashboards": &conf.ExternalServices.CustomDashboards.Prometheus.Auth,
+		"grafana":           &conf.ExternalServices.Grafana.Auth,
+		"perses":            &conf.ExternalServices.Perses.Auth,
+		"prometheus":        &conf.ExternalServices.Prometheus.Auth,
+		"tracing":           &conf.ExternalServices.Tracing.Auth,
+	}
+	oauth2ServiceNames := make([]string, 0, len(oauth2Services))
+	for name := range oauth2Services {
+		oauth2ServiceNames = append(oauth2ServiceNames, name)
+	}
+	sort.Strings(oauth2ServiceNames)
+	for _, svcName := range oauth2ServiceNames {
+		svcAuth := oauth2Services[svcName]
+		if svcAuth.Type == AuthTypeOAuth2 {
+			if svcAuth.OAuth2.TokenURL == "" {
+				return fmt.Errorf("%s: oauth2.token_url is required when auth type is oauth2", svcName)
+			}
+			if svcAuth.OAuth2.ClientID == "" {
+				return fmt.Errorf("%s: oauth2.client_id is required when auth type is oauth2", svcName)
+			}
+			if svcAuth.OAuth2.ClientSecret == "" {
+				return fmt.Errorf("%s: oauth2.client_secret is required when auth type is oauth2", svcName)
+			}
+			if !strings.HasPrefix(svcAuth.OAuth2.TokenURL, "https://") {
+				if !svcAuth.InsecureSkipVerify {
+					return fmt.Errorf("%s: oauth2.token_url must use HTTPS (or set insecure_skip_verify for dev/test)", svcName)
+				}
+				log.Warningf("%s: oauth2.token_url uses HTTP; this is insecure and should only be used for dev/test", svcName)
+			}
+			if svcAuth.OAuth2.AuthStyle != "" && svcAuth.OAuth2.AuthStyle != "header" && svcAuth.OAuth2.AuthStyle != "params" {
+				return fmt.Errorf("%s: oauth2.auth_style must be 'header' or 'params' (got %q)", svcName, svcAuth.OAuth2.AuthStyle)
+			}
+			if svcAuth.UseKialiToken {
+				return fmt.Errorf("%s: use_kiali_token and oauth2 auth type are mutually exclusive", svcName)
+			}
+		}
+	}
+	if conf.ExternalServices.Tracing.Auth.Type == AuthTypeOAuth2 && conf.ExternalServices.Tracing.UseGRPC {
+		return fmt.Errorf("tracing: oauth2 auth type is not supported with use_grpc=true; set use_grpc: false")
 	}
 
 	return nil
