@@ -40,7 +40,7 @@ external_services:
 
   tracing:
     enabled: ${TRACING_ENABLED}
-    provider: "${TRACING_APP}"
+    provider: "${TRACING_PROVIDER}"
     internal_url: "${TRACING_URL}"
     external_url: "${TRACING_URL}"
     use_grpc: false

@@ -92,6 +92,7 @@ DEFAULT_LOG_LEVEL="info"
 DEFAULT_REBOOTABLE="true"
 DEFAULT_TMP_ROOT_DIR="${HOME}/tmp"
 DEFAULT_TRACING_APP="jaeger"
+DEFAULT_TRACING_PROVIDER=""
 DEFAULT_TRACING_SERVICE="tracing"
 
 # Process command line options
@@ -128,6 +129,7 @@ while [[ $# -gt 0 ]]; do
     -r|--rebootable)             REBOOTABLE="$2";                    shift;shift ;;
     -trd|--tmp-root-dir)         TMP_ROOT_DIR="$2";                  shift;shift ;;
     -tr|--tracing-app)           TRACING_APP="$2";                   shift;shift ;;
+    -tp|--tracing-provider)      TRACING_PROVIDER="$2";              shift;shift ;;
     -ts|--tracing-service)       TRACING_SERVICE="$2";               shift;shift ;;
     -tn|--tracing-namespace)     TRACING_NAMESPACE="$2";             shift;shift ;;
     -tu|--tracing-url)           TRACING_URL="$2";                   shift;shift ;;
@@ -272,6 +274,10 @@ Valid options:
   -tr|--tracing-app)
       Tracing backend. Jaeger, tempo-query-frontend
       Default: ${DEFAULT_TRACING_APP}
+  -tp|--tracing-provider)
+      Tracing provider configured in Kiali. Usually "jaeger" or "tempo".
+      If omitted, this will be inferred from the tracing app/service values.
+      Default: <auto-discovered>
   -ts|--tracing-service)
       Tracing service. tracing, tempo-query-frontend, ...
       Default: ${DEFAULT_TRACING_SERVICE}
@@ -316,8 +322,67 @@ LOG_LEVEL="${LOG_LEVEL:-${DEFAULT_LOG_LEVEL}}"
 REBOOTABLE="${REBOOTABLE:-${DEFAULT_REBOOTABLE}}"
 TMP_ROOT_DIR="${TMP_ROOT_DIR:-${DEFAULT_TMP_ROOT_DIR}}"
 TRACING_APP="${TRACING_APP:-${DEFAULT_TRACING_APP}}"
+TRACING_PROVIDER="${TRACING_PROVIDER:-${DEFAULT_TRACING_PROVIDER}}"
 TRACING_SERVICE="${TRACING_SERVICE:-${DEFAULT_TRACING_SERVICE}}"
 TRACING_NAMESPACE="${TRACING_NAMESPACE:-${ISTIO_NAMESPACE}}"
+
+normalize_tracing_settings() {
+  if [ "${TRACING_APP}" == "tempo3" ] && [ "${TRACING_SERVICE}" == "${DEFAULT_TRACING_SERVICE}" ]; then
+    TRACING_SERVICE="tempo-cr"
+  fi
+
+  if [ -z "${TRACING_PROVIDER}" ]; then
+    case "${TRACING_APP}" in
+      jaeger)
+        TRACING_PROVIDER="jaeger"
+        ;;
+      tempo|tempo3)
+        TRACING_PROVIDER="tempo"
+        ;;
+      *)
+        if [[ "${TRACING_APP}" == *"tempo"* ]] || [[ "${TRACING_SERVICE}" == *"tempo"* ]]; then
+          TRACING_PROVIDER="tempo"
+        else
+          TRACING_PROVIDER="${TRACING_APP}"
+        fi
+        ;;
+    esac
+  fi
+}
+
+resolve_tracing_deployment() {
+  local deployment=""
+
+  deployment="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name 2>/dev/null)"
+  if [ -z "${deployment}" ] && [ "${TRACING_SERVICE}" != "${TRACING_APP}" ]; then
+    deployment="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o name 2>/dev/null)"
+  fi
+
+  echo "${deployment}"
+}
+
+discover_tracing_remote_port() {
+  local ports_text
+  local port
+
+  ports_text="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{range .spec.ports[*]}{.name}:{.port}:{.targetPort}{\"\n\"}{end}' 2>/dev/null)"
+  if [ -z "${ports_text}" ]; then
+    return 1
+  fi
+
+  if [ "${TRACING_PROVIDER}" == "tempo" ]; then
+    port="$(echo "${ports_text}" | awk -F: '$2 == 3200 {print $2; exit}')"
+    [ -z "${port}" ] && port="$(echo "${ports_text}" | awk -F: '$3 == 3200 {print $3; exit}')"
+    [ -z "${port}" ] && port="$(echo "${ports_text}" | awk -F: '$1 == "http" {print $2; exit}')"
+  else
+    port="$(echo "${ports_text}" | awk -F: 'NR == 1 {print $3; exit}')"
+  fi
+
+  [ -z "${port}" ] && port="$(echo "${ports_text}" | awk -F: 'NR == 1 {print $2; exit}')"
+  [ -n "${port}" ] && echo "${port}"
+}
+
+normalize_tracing_settings
 
 # these are the env vars required by the Kiali server itself
 KUBERNETES_SERVICE_HOST="${API_PROXY_HOST}"
@@ -519,20 +584,20 @@ elif [ -z "${TRACING_URL:-}" ]; then
       trac_host="$(${CLIENT_EXE} get route -n ${TRACING_NAMESPACE} ${TRACING_APP} -o jsonpath='{.spec.host}')"
     fi
     if [ "$?" != "0" ] || [ -z "${trac_host}" ]; then
-      PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
+      PORT_FORWARD_DEPLOYMENT_TRACING="$(resolve_tracing_deployment)"
       if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
         errormsg "Cannot auto-discover Tracing on OpenShift. You must specify the Tracing URL via --tracing-url"
         exit 1
       else
         warnmsg "Cannot auto-discover Tracing on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
-        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
+        trac_remote_port="$(discover_tracing_remote_port)"
         if [ "$?" != "0" ] || [ -z "${trac_remote_port}" ]; then
           warnmsg "Cannot auto-discover Tracing port on OpenShift. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
         else
           trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
           LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
         fi
-        [ ${TRACING_APP} == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
+        [ "${TRACING_PROVIDER}" == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
         TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)${TRACING_PREFIX}"
       fi
     else
@@ -540,24 +605,20 @@ elif [ -z "${TRACING_URL:-}" ]; then
       TRACING_URL="http://${trac_host}"
     fi
   else
-    PORT_FORWARD_DEPLOYMENT_TRACING="$(${CLIENT_EXE} get deployment -n ${TRACING_NAMESPACE} ${TRACING_APP} -o name)"
+    PORT_FORWARD_DEPLOYMENT_TRACING="$(resolve_tracing_deployment)"
     if [ "$?" != "0" ] || [ -z "${PORT_FORWARD_DEPLOYMENT_TRACING}" ]; then
       errormsg "Cannot auto-discover Tracing on Kubernetes. You must specify the Tracing URL via --tracing-url"
       exit 1
     else
       warnmsg "Cannot auto-discover Tracing on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
-      if [[ "$TRACING_SERVICE" == *"tempo"* ]]; then
-        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[3].port}')"
-      else
-        trac_remote_port="$(${CLIENT_EXE} get service -n ${TRACING_NAMESPACE} ${TRACING_SERVICE} -o jsonpath='{.spec.ports[0].targetPort}')"
-      fi
+      trac_remote_port="$(discover_tracing_remote_port)"
       if [ "$?" != "0" ] || [ -z "${trac_remote_port}" ]; then
         warnmsg "Cannot auto-discover Tracing port on Kubernetes. If you exposed it, you can specify the Tracing URL via --tracing-url. For now, this session will attempt to port-forward to it."
       else
         trac_local_port="$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)"
         LOCAL_REMOTE_PORTS_TRACING="${trac_local_port}:${trac_remote_port}"
       fi
-      [ ${TRACING_APP} == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
+      [ "${TRACING_PROVIDER}" == 'jaeger' ] && TRACING_PREFIX="/jaeger" || TRACING_PREFIX=""
       TRACING_URL="http://127.0.0.1:$(echo ${LOCAL_REMOTE_PORTS_TRACING} | cut -d ':' -f 1)${TRACING_PREFIX}"
     fi
   fi
@@ -620,6 +681,7 @@ echo "PROMETHEUS_URL=$PROMETHEUS_URL"
 echo "REBOOTABLE=$REBOOTABLE"
 echo "TMP_ROOT_DIR=$TMP_ROOT_DIR"
 echo "TRACING_APP=$TRACING_APP"
+echo "TRACING_PROVIDER=$TRACING_PROVIDER"
 echo "TRACING_SERVICE=$TRACING_SERVICE"
 echo "TRACING_NAMESPACE=$TRACING_NAMESPACE"
 echo "TRACING_URL=$TRACING_URL"
@@ -652,7 +714,7 @@ cat ${KIALI_CONFIG_TEMPLATE_FILE} | \
   PROMETHEUS_URL=${PROMETHEUS_URL} \
   GRAFANA_URL=${GRAFANA_URL} \
   GRAFANA_ENABLED=${GRAFANA_ENABLED} \
-  TRACING_APP=${TRACING_APP} \
+  TRACING_PROVIDER=${TRACING_PROVIDER} \
   TRACING_URL=${TRACING_URL} \
   TRACING_ENABLED=${TRACING_ENABLED} \
   IGNORE_HOME_CLUSTER=${IGNORE_HOME_CLUSTER} \
