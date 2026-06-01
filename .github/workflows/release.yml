@@ -24,6 +24,11 @@ on:
         type: string
         default: quay.io/kiali/kiali
         required: true
+      skip_molecule_tests:
+        description: Skip molecule tests (useful for faster manual releases)
+        type: boolean
+        default: false
+        required: false
 
 permissions: read-all
 
@@ -205,7 +210,7 @@ jobs:
 
   run_molecule_tests:
     name: Molecule tests
-    if: ${{ needs.initialize.outputs.release_type != 'skip' }}
+    if: ${{ needs.initialize.outputs.release_type != 'skip' && !inputs.skip_molecule_tests }}
     uses: ./.github/workflows/molecules.yml
     needs: [initialize]
     with:
@@ -305,7 +310,7 @@ jobs:
       contents: write
       pull-requests: write
     name: Release
-    if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') }}
+    if: ${{ needs.initialize.outputs.release_type != 'skip' && ((github.event_name == 'schedule' && github.repository == 'kiali/kiali') || github.event_name != 'schedule') && (needs.run_molecule_tests.result == 'success' || needs.run_molecule_tests.result == 'skipped') }}
     runs-on: ubuntu-latest
     needs: [initialize, build_frontend, build_backend, run_molecule_tests, build_cross_platform_binaries, test_cross_platform_binaries]
     env:
