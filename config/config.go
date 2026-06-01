@@ -788,6 +788,11 @@ type AIModel struct {
 	Key         Credential `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
+type ToolFilterConfig struct {
+	DisabledTools []string `yaml:"disabled_tools,omitempty" json:"disabled_tools,omitempty"`
+	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
+}
+
 type ProviderType string
 
 const (
@@ -816,6 +821,7 @@ type ProviderConfig struct {
 	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
 	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
 	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
+	Tools        ToolFilterConfig   `yaml:"tools,omitempty" json:"tools,omitempty"`
 }
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
@@ -824,6 +830,7 @@ type ChatAIConfig struct {
 	Enabled         bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 	Providers       []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
 	StoreConfig     AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
+	Tools           ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
 }
 
 // Clustering defines configuration around multi-cluster functionality.
@@ -1350,6 +1357,10 @@ func (conf *Config) ValidateAI() error {
 		return nil
 	}
 
+	if err := normalizeAndValidateToolFilter("chat_ai.tools", &conf.ChatAI.Tools); err != nil {
+		return err
+	}
+
 	if conf.ChatAI.DefaultProvider == "" {
 		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
 	}
@@ -1368,6 +1379,9 @@ func (conf *Config) ValidateAI() error {
 		p := &conf.ChatAI.Providers[i]
 		if !p.Enabled {
 			continue
+		}
+		if err := normalizeAndValidateToolFilter(fmt.Sprintf("chat_ai.providers[%q].tools", p.Name), &p.Tools); err != nil {
+			return err
 		}
 		if _, exists := seenNames[p.Name]; exists {
 			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
@@ -1455,6 +1469,40 @@ func (conf *Config) ValidateAI() error {
 
 	if !defaultProviderFound {
 		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
+	}
+
+	return nil
+}
+
+func normalizeAndValidateToolFilter(path string, filter *ToolFilterConfig) error {
+	if filter == nil {
+		return nil
+	}
+
+	enabledSet := make(map[string]struct{}, len(filter.EnabledTools))
+	for i, name := range filter.EnabledTools {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			return fmt.Errorf("%s.enabled_tools[%d] must not be empty", path, i)
+		}
+		if _, exists := enabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.enabled_tools contains duplicate name %q", path, trimmed)
+		}
+		enabledSet[trimmed] = struct{}{}
+		filter.EnabledTools[i] = trimmed
+	}
+
+	disabledSet := make(map[string]struct{}, len(filter.DisabledTools))
+	for i, name := range filter.DisabledTools {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			return fmt.Errorf("%s.disabled_tools[%d] must not be empty", path, i)
+		}
+		if _, exists := disabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.disabled_tools contains duplicate name %q", path, trimmed)
+		}
+		disabledSet[trimmed] = struct{}{}
+		filter.DisabledTools[i] = trimmed
 	}
 
 	return nil

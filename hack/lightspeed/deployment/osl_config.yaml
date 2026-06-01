@@ -1,0 +1,29 @@
+apiVersion: ols.openshift.io/v1alpha1
+kind: OLSConfig
+metadata:
+  name: cluster
+spec:
+  featureGates:
+  - MCPServer
+  llm:
+    providers:
+    - name: openAI
+      type: openai
+      credentialsSecretRef:
+        name: credentials
+      url: https://api.openai.com/v1
+      models:
+      - name: gpt-5.4-nano
+      - name: gpt-5.4
+  mcpServers:
+  - name: ${MCP_PROVIDER}-mcp    
+    headers:
+      - name: kubernetes-authorization
+        valueFrom:
+          type: kubernetes
+    url: 'http://${MCP_PROVIDER}-mcp-server.${MCP_PROVIDER}-mcp:8080/mcp'
+    timeout: 30   
+  ols:
+    defaultModel: gpt-5.4-nano
+    defaultProvider: openAI
+    logLevel: DEBUG

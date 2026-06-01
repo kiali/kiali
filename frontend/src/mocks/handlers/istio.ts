@@ -470,19 +470,6 @@ const mockIstiodThresholds = {
   memory: 80
 };
 
-const mockCertsInfo = [
-  {
-    configMapName: 'istio-ca-root-cert',
-    secretName: '',
-    secretNamespace: 'istio-system',
-    dnsNames: [],
-    issuer: 'O=cluster.local',
-    notAfter: '2036-01-18T07:43:00Z',
-    notBefore: '2026-01-20T07:43:00Z',
-    error: ''
-  }
-];
-
 export const istioHandlers = [
   // Istio status (used by clusters card)
   http.get('*/api/istio/status', async () => {
@@ -652,11 +639,6 @@ export const istioHandlers = [
   // Istiod resource thresholds
   http.get('*/api/mesh/resources/thresholds', () => {
     return HttpResponse.json(mockIstiodThresholds);
-  }),
-
-  // Certs info
-  http.get('*/api/istio/certs', () => {
-    return HttpResponse.json(mockCertsInfo);
   }),
 
   // Istio config detail

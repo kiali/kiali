@@ -651,6 +651,34 @@ func TestValidateAI(t *testing.T) {
 			mutate:    nil,
 			expectErr: "",
 		},
+		"global tool filter duplicate enabled_tools": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Tools.EnabledTools = []string{"get_logs", "get_logs"}
+			},
+			expectErr: "chat_ai.tools.enabled_tools contains duplicate name",
+		},
+		"global tool filter overlap is allowed": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Tools.EnabledTools = []string{"get_logs"}
+				conf.ChatAI.Tools.DisabledTools = []string{"get_logs"}
+			},
+			expectErr: "",
+		},
+		"provider tool filter trims whitespace": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Tools.EnabledTools = []string{" get_logs "}
+			},
+			expectErr: "",
+			postValidate: func(t *testing.T, conf *Config) {
+				assert.Equal(t, []string{"get_logs"}, conf.ChatAI.Providers[0].Tools.EnabledTools)
+			},
+		},
+		"provider tool filter duplicate disabled_tools": {
+			mutate: func(conf *Config) {
+				conf.ChatAI.Providers[0].Tools.DisabledTools = []string{"get_logs", "get_logs"}
+			},
+			expectErr: "chat_ai.providers[\"provider-1\"].tools.disabled_tools contains duplicate name",
+		},
 		"default provider disabled": {
 			mutate: func(conf *Config) {
 				conf.ChatAI.Providers[0].Enabled = false

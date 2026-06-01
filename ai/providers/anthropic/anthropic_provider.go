@@ -19,9 +19,10 @@ const (
 )
 
 type AnthropicProvider struct {
-	client         anthropic.Client
-	model          string
-	tracingEnabled bool
+	client       anthropic.Client
+	conf         *config.Config
+	model        string
+	providerName string
 }
 
 type anthropicConversation struct {
@@ -39,11 +40,14 @@ func NewAnthropicProvider(conf *config.Config, provider *config.ProviderConfig, 
 		return nil, fmt.Errorf("get provider config: %w", err)
 	}
 
-	return &AnthropicProvider{
-		client:         anthropic.NewClient(opts...),
-		model:          model.Model,
-		tracingEnabled: conf.ExternalServices.Tracing.Enabled,
-	}, nil
+	p := &AnthropicProvider{
+		client:       anthropic.NewClient(opts...),
+		conf:         conf,
+		model:        model.Model,
+		providerName: provider.Name,
+	}
+	providers.LogFilteredDefaultTools(p.GetName(), conf, provider.Name)
+	return p, nil
 }
 
 func getProviderOptions(conf *config.Config, provider *config.ProviderConfig, model *config.AIModel) ([]option.RequestOption, error) {
@@ -285,12 +289,14 @@ func appendConstraintNoteToProperties(schema map[string]interface{}, fieldNames 
 }
 
 func (p *AnthropicProvider) GetToolDefinitions() interface{} {
-	tools := make([]anthropic.ToolUnionParam, 0, len(mcp.DefaultToolHandlers))
-	for _, tool := range mcp.DefaultToolHandlers {
-		if !p.tracingEnabled && mcp.IsTraceTool(tool.Name) {
-			continue
-		}
+	filtered := providers.FilteredDefaultTools(p.conf, p.providerName)
+	tools := make([]anthropic.ToolUnionParam, 0, len(filtered))
+	for _, tool := range filtered {
 		tools = append(tools, convertToolToAnthropic(tool))
 	}
 	return tools
+}
+
+func (p *AnthropicProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return providers.LookupFilteredDefaultTool(p.conf, p.providerName, toolName)
 }

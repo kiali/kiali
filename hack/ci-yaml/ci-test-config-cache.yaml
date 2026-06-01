@@ -1,0 +1,5 @@
+kiali_internal:
+  graph_cache:
+    enabled: true
+  health_cache:
+    enabled: true

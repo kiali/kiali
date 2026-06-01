@@ -1,6 +1,6 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
-import { restoreKialiFeature, GRAPH_CACHE_CONFIG, HEALTH_CACHE_CONFIG } from './kiali-config';
-import { waitForResourceDeletion } from './transition';
+import { discoverKialiRuntimeInfo, enableKialiCaching } from './kiali-config';
+import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -154,6 +154,74 @@ Before({ tags: '@loggers-app' }, () => {
   install_demoapp('loggers');
 });
 
+// This hook enables Kiali caching when it isn't already on. Because the
+// enable path leaves caching turned on (no teardown), @core-caching must
+// be the LAST tag group in composite cypress:run / cypress:run:junit
+// scripts in package.json to avoid affecting other suites.
+Before({ tags: '@core-caching' }, () => {
+  if (Cypress.env('CACHING_ENABLED')) {
+    return;
+  }
+
+  // Only attempt caching setup when @core-caching is explicitly part of the
+  // requested tag filter. Otherwise this scenario was matched by another tag
+  // (e.g. @smoke) and caching infrastructure isn't relevant.
+  const tags = (Cypress.env('TAGS') ?? '') as string;
+  if (!tags.includes('@core-caching')) {
+    Cypress.env('CACHING_ENABLED', true);
+    return;
+  }
+
+  // Detect both caches enabled. Operator path returns JSON, Helm returns YAML.
+  const bothCachesEnabled = (text: string, json: boolean): boolean => {
+    if (json) {
+      return (
+        /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
+        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+      );
+    }
+    return /graph_cache:[\s\S]*?enabled:\s*true/.test(text) && /health_cache:[\s\S]*?enabled:\s*true/.test(text);
+  };
+
+  discoverKialiRuntimeInfo().then(info => {
+    cy.exec(
+      `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+      { failOnNonZeroExit: false }
+    ).then(result => {
+      const primaryResource = result.stdout.trim();
+
+      const checkDone = (configText: string, isJson: boolean): void => {
+        if (bothCachesEnabled(configText, isJson)) {
+          Cypress.env('CACHING_ENABLED', true);
+          return;
+        }
+
+        enableKialiCaching(info);
+        waitForKialiApiReady();
+        cy.then(() => {
+          Cypress.env('CACHING_ENABLED', true);
+        });
+      };
+
+      if (primaryResource) {
+        const parts = primaryResource.split('/');
+        cy.exec(`kubectl get kiali ${parts[1]} -n ${parts[0]} -o jsonpath="{.spec}"`, {
+          failOnNonZeroExit: false
+        }).then(crResult => {
+          checkDone(crResult.stdout, true);
+        });
+      } else {
+        cy.exec(
+          `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}"`,
+          { failOnNonZeroExit: false }
+        ).then(cmResult => {
+          checkDone(cmResult.stdout, false);
+        });
+      }
+    });
+  });
+});
+
 Before({ tags: '@remote-istio-crds' }, () => {
   cy.exec(
     `kubectl get crd --context ${CLUSTER2_CONTEXT} -o=custom-columns=NAME:.metadata.name |  grep -E -i '.(istio|k8s).io$'`,
@@ -285,12 +353,4 @@ After(() => {
       }
     });
   }
-});
-
-After({ tags: '@graph-cache-metrics' }, () => {
-  restoreKialiFeature(GRAPH_CACHE_CONFIG);
-});
-
-After({ tags: '@health-cache-metrics' }, () => {
-  restoreKialiFeature(HEALTH_CACHE_CONFIG);
 });

@@ -1,0 +1,8 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: my-operator-group
+  namespace: ${LIGHTSPEED_NAMESPACE}
+spec:
+  targetNamespaces:
+  - ${LIGHTSPEED_NAMESPACE}

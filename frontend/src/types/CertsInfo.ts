@@ -6,5 +6,4 @@ export interface CertsInfo {
   issuer: string;
   notAfter: string;
   notBefore: string;
-  subject: string;
 }

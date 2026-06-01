@@ -125,6 +125,7 @@ const conf = {
       authenticate: 'api/authenticate',
       authInfo: 'api/auth/info',
       chatAI: (provider: string, model: string) => `api/chat/${provider}/${model}/ai`,
+      chatDeleteConversations: 'api/chat/conversations',
       chatSessionUsage: `api/chat/session/usage`,
       clustersApps: () => `api/clusters/apps`,
       clustersHealth: () => `api/clusters/health`,
@@ -141,7 +142,6 @@ const conf = {
       disabledFeatures: 'api/config/disabled',
       grafana: 'api/grafana',
       istioConfig: (namespace: string) => `api/namespaces/${namespace}/istio`,
-      istioCertsInfo: () => 'api/istio/certs',
       istioConfigCreate: (namespace: string, group: string, version: string, kind: string) =>
         `api/namespaces/${namespace}/istio/${group}/${version}/${kind}`,
       istioConfigDetail: (namespace: string, group: string, version: string, kind: string, object: string) =>

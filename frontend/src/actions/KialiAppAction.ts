@@ -13,7 +13,6 @@ import { MeshTlsAction } from './MeshTlsActions';
 import { TourAction } from './TourActions';
 import { IstioStatusAction } from './IstioStatusActions';
 import { MetricsStatsAction } from './MetricsStatsActions';
-import { IstioCertsInfoAction } from './IstioCertsInfoActions';
 import { MeshAction } from './MeshActions';
 import { MeshToolbarAction } from './MeshToolbarActions';
 import { ChatAIAction } from './ChatAIActions';
@@ -25,7 +24,6 @@ export type KialiAppAction =
   | GraphAction
   | GraphToolbarAction
   | HelpDropdownAction
-  | IstioCertsInfoAction
   | IstioStatusAction
   | TracingAction
   | LoginAction

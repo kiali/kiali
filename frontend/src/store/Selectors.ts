@@ -5,7 +5,6 @@ import { Namespace } from '../types/Namespace';
 import { MeshCluster } from '../types/Mesh';
 import { EdgeLabelMode, EdgeMode, GraphType, RankMode, TrafficRate } from '../types/Graph';
 import { ComponentStatus } from '../types/IstioStatus';
-import { CertsInfo } from '../types/CertsInfo';
 // These memoized selectors are from Redux Reselect package
 
 type Selector<T> = (state: KialiAppState) => T;
@@ -118,10 +117,6 @@ export const meshWideMTLSEnabledSelector = createIdentitySelector(meshwideMTLSEn
 const istioStatus = (state: KialiAppState): { [cluster: string]: ComponentStatus[] } => state.istioStatus;
 
 export const istioStatusSelector = createIdentitySelector(istioStatus);
-
-const istioCertsInfo = (state: KialiAppState): CertsInfo[] => state.istioCertsInfo;
-
-export const istioCertsInfoSelector = createIdentitySelector(istioCertsInfo);
 
 const language = (state: KialiAppState): string => state.globalState.language;
 

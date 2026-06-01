@@ -1,8 +1,7 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading, waitForKialiApiReady } from './transition';
+import { ensureKialiFinishedLoading } from './transition';
 import { assertGraphReady, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
-import { enableKialiFeature, GRAPH_CACHE_CONFIG } from './kiali-config';
 
 When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
@@ -491,9 +490,13 @@ type GraphCacheMetrics = {
   graphCacheMisses: number;
 };
 
+// The @core-caching suite starts Kiali with caching pre-enabled so no
+// config change or restart is needed. Verify the cache metrics endpoint
+// is reachable which confirms the graph cache is active.
 Given('graph cache is enabled', () => {
-  enableKialiFeature(GRAPH_CACHE_CONFIG);
-  waitForKialiApiReady();
+  cy.request({ url: 'api/test/metrics/graph/cache' }).then(resp => {
+    expect(resp.status).to.eq(200);
+  });
 });
 
 Given('graph cache metrics are recorded', () => {

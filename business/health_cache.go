@@ -132,6 +132,12 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 	startTime := time.Now()
 	m.logger.Debug().Msg("Starting health refresh")
 
+	// Bypass the Prometheus result cache for the entire refresh cycle. The batch
+	// refresh iterates all namespaces sequentially — each namespace's query results
+	// are consumed immediately and never reused, so caching them only wastes memory
+	// (potentially hundreds of MB at scale with many namespaces).
+	ctx = prometheus.ContextWithSkipCache(ctx)
+
 	// Calculate rate interval
 	healthDuration := m.calculateDuration()
 
@@ -171,6 +177,18 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 		nsCount, errCount := m.refreshClusterHealth(ctx, layer, cluster.Name, healthDuration)
 		totalNamespaces += nsCount
 		totalErrors += errCount
+	}
+
+	// Remove health cache entries for clusters that are no longer known.
+	for _, key := range m.cache.HealthKeys() {
+		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
+		if !ok {
+			continue
+		}
+		if !knownClusters[keyCluster] {
+			m.logger.Debug().Str("cluster", keyCluster).Str("namespace", keyNs).Msg("Reaping stale health cache entry for removed cluster")
+			m.cache.RemoveHealth(keyCluster, keyNs)
+		}
 	}
 
 	m.lastRun = startTime
@@ -268,16 +286,39 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration, workloadsByNamespace[ns.Name]); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
-			continue
+		} else {
+			// Only namespaces that completed refresh (including partial health + export) count as
+			// visited. Total computation failure skips export/reconcile; leaving the name out lets
+			// ReconcileDroppedNamespacesForCluster age kiali_health_status series for that namespace.
+			visitedNamespaces[ns.Name] = true
 		}
-		// Only namespaces that completed refresh (including partial health + export) count as
-		// visited. Total computation failure skips export/reconcile; leaving the name out lets
-		// ReconcileDroppedNamespacesForCluster age kiali_health_status series for that namespace.
-		visitedNamespaces[ns.Name] = true
+		// Release this namespace's workloads for GC — they are no longer needed
+		// after health computation. This bounds live memory to roughly one
+		// namespace's workloads rather than all namespaces' simultaneously.
+		delete(workloadsByNamespace, ns.Name)
 	}
 
 	if m.conf.Server.Observability.Metrics.HealthStatus.Enabled {
 		m.healthStatusExp.ReconcileDroppedNamespacesForCluster(cluster, visitedNamespaces)
+	}
+
+	// Remove health cache entries for namespaces that no longer exist in this cluster.
+	// Use the authoritative namespace list rather than visitedNamespaces, because
+	// visitedNamespaces excludes namespaces where refresh failed transiently —
+	// we don't want a temporary error to evict valid cached health data.
+	existingNamespaces := make(map[string]bool, len(namespaces))
+	for _, ns := range namespaces {
+		existingNamespaces[ns.Name] = true
+	}
+	for _, key := range m.cache.HealthKeys() {
+		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
+		if !ok || keyCluster != cluster {
+			continue
+		}
+		if !existingNamespaces[keyNs] {
+			m.logger.Debug().Str("cluster", cluster).Str("namespace", keyNs).Msg("Reaping stale health cache entry for removed namespace")
+			m.cache.RemoveHealth(cluster, keyNs)
+		}
 	}
 
 	return len(namespaces), errorCount

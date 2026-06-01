@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -286,5 +287,40 @@ func ChatSessionUsage(
 		}
 
 		RespondWithJSON(w, http.StatusOK, aiStore.GetUsageMetrics(userID))
+	}
+}
+
+func DeleteConversations(conf *config.Config, aiStore aiTypes.AIStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if aiStore == nil || !aiStore.Enabled() {
+			RespondWithJSON(w, http.StatusOK, map[string]string{"message": "AI store is not enabled"})
+			return
+		}
+
+		idsParam := r.URL.Query().Get("conversationIDs")
+		if idsParam == "" {
+			RespondWithError(w, http.StatusBadRequest, "Missing required query parameter: conversationIDs")
+			return
+		}
+
+		var ids []string
+		for _, id := range strings.Split(idsParam, ",") {
+			trimmed := strings.TrimSpace(id)
+			if trimmed != "" {
+				ids = append(ids, trimmed)
+			}
+		}
+		if len(ids) == 0 {
+			RespondWithError(w, http.StatusBadRequest, "No valid conversation IDs provided")
+			return
+		}
+
+		sessionID := authentication.GetSessionIDContext(r.Context())
+		if err := aiStore.DeleteConversations(sessionID, ids); err != nil {
+			RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to delete conversations: %v", err))
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, map[string]string{"message": "Conversations deleted"})
 	}
 }

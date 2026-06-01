@@ -1882,6 +1882,28 @@ func NewRoutes(
 			handlers.ChatMCP(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
+		// swagger:route DELETE /chat/conversations ChatConversations
+		// ---
+		// Endpoint to delete AI chat conversations
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"DeleteConversations",
+			log.ChatAILogName,
+			"DELETE",
+			"/api/chat/conversations",
+			handlers.DeleteConversations(conf, aiStore),
+			true,
+		},
 		// swagger:route GET /chat/session/usage chat aiChatSessionUsage
 		// ---
 		// Endpoint to get token usage statistics for the current user session

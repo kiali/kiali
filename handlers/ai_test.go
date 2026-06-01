@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/perses"
@@ -849,4 +850,238 @@ func TestChatAI_StreamingNotSupported(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, w.code)
 	assert.Contains(t, w.body.String(), "Streaming unsupported")
+}
+
+// ========================================================================
+// DeleteConversations handler tests
+// ========================================================================
+
+func withSessionID(sessionID string, hf http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := authentication.SetSessionIDContext(r.Context(), sessionID)
+		hf(w, r.WithContext(ctx))
+	}
+}
+
+func TestDeleteConversations_Success(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	conv := &aiTypes.Conversation{
+		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hello"}},
+	}
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-1", conv))
+
+	_, found := aiStore.GetConversation("test-session", "conv-1")
+	require.True(t, found, "conversation should exist before delete")
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	_, found = aiStore.GetConversation("test-session", "conv-1")
+	assert.False(t, found, "conversation should be deleted")
+}
+
+func TestDeleteConversations_MultipleIDs(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	for _, id := range []string{"conv-1", "conv-2", "conv-3"} {
+		conv := &aiTypes.Conversation{
+			Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: id}},
+		}
+		require.NoError(t, aiStore.SetConversation("test-session", id, conv))
+	}
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1,conv-3", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	_, found := aiStore.GetConversation("test-session", "conv-1")
+	assert.False(t, found, "conv-1 should be deleted")
+
+	_, found = aiStore.GetConversation("test-session", "conv-2")
+	assert.True(t, found, "conv-2 should remain")
+
+	_, found = aiStore.GetConversation("test-session", "conv-3")
+	assert.False(t, found, "conv-3 should be deleted")
+}
+
+func TestDeleteConversations_MissingParam(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestDeleteConversations_StoreDisabled(t *testing.T) {
+	conf := config.NewConfig()
+	aiStore := ai.NewAIStore(context.Background(), &ai.AiStoreConfig{Enabled: false})
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "disabled store should return 200 (no-op)")
+}
+
+func TestDeleteConversations_NilStore(t *testing.T) {
+	conf := config.NewConfig()
+
+	handler := withSessionID("test-session", DeleteConversations(conf, nil))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "nil store should return 200 (no-op)")
+}
+
+func TestDeleteConversations_NonexistentID(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=nonexistent", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "deleting nonexistent ID should succeed (idempotent)")
+}
+
+func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	conv := &aiTypes.Conversation{
+		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hello"}},
+	}
+	require.NoError(t, aiStore.SetConversation("test-session", "conv-1", conv))
+	require.NoError(t, aiStore.RecordUsage("test-session", "openai", "gpt-4o", aiTypes.NewTokenUsage(10, 20, 30)))
+
+	metricsBefore := aiStore.GetUsageMetrics("test-session")
+	require.Len(t, metricsBefore, 1, "should have usage metrics before deletion")
+	assert.Equal(t, int64(30), metricsBefore[0].TotalTokens)
+
+	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	_, found := aiStore.GetConversation("test-session", "conv-1")
+	assert.False(t, found, "conversation should be deleted")
+
+	metricsAfter := aiStore.GetUsageMetrics("test-session")
+	require.Len(t, metricsAfter, 1, "token usage metrics must be preserved after conversation deletion")
+	assert.Equal(t, int64(30), metricsAfter[0].TotalTokens, "token counts must remain unchanged")
+	assert.Equal(t, "openai", metricsAfter[0].Provider)
+	assert.Equal(t, "gpt-4o", metricsAfter[0].Model)
+}
+
+func TestDeleteConversations_SessionScoping(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	aiStore := ai.NewAIStore(context.Background(), nil)
+
+	conv := &aiTypes.Conversation{
+		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hello"}},
+	}
+	require.NoError(t, aiStore.SetConversation("session-A", "conv-1", conv))
+	require.NoError(t, aiStore.SetConversation("session-B", "conv-1", conv))
+
+	handler := withSessionID("session-A", DeleteConversations(conf, aiStore))
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/conversations", handler).Methods("DELETE")
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/api/chat/conversations?conversationIDs=conv-1", nil)
+	require.NoError(t, err)
+	resp, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	_, found := aiStore.GetConversation("session-A", "conv-1")
+	assert.False(t, found, "session-A conv-1 should be deleted")
+
+	_, found = aiStore.GetConversation("session-B", "conv-1")
+	assert.True(t, found, "session-B conv-1 should NOT be affected")
 }

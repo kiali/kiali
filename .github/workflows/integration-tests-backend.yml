@@ -30,17 +30,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         ref: ${{ inputs.build_branch }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@v5.0.0
+      uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       with:
         version: "v3.18.4"
 
     - name: Set up Go
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
       with:
         go-version-file: go.mod
         # The builtin cache feature ensures that installing golangci-lint
@@ -49,7 +49,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download go binary
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: kiali
         path: ~/go/bin/
@@ -72,14 +72,14 @@ jobs:
 
     - name: Upload debug info artifact
       if: ${{ failure() && steps.intTests.conclusion == 'failure' }}
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: debug-info-${{ github.job }}
         path: debug-output
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: junit-rest-report
         path: tests/integration/junit-rest-report.xml
@@ -93,13 +93,13 @@ jobs:
 
     - name: Upload test metadata
       if: always()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: backend-test-metadata
         path: test-metadata/
 
     - name: Upload backend coverage artifact
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: coverage-backend
         path: tests/integration/tests/coverage-backend.out
