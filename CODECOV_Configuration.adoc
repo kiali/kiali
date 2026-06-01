@@ -11,9 +11,17 @@ Without push uploads, Codecov reports fall behind (for example, "Report is N com
 
 === PR base selection
 
-For pull requests, the `codecov_merge_upload` job runs Codecov's `pr-base-picking` command with `base_sha` set to the PR target branch head (`github.event.pull_request.base.sha`). That compares the PR against the latest target-branch coverage instead of a stale upload from an old default-branch commit.
+Codecov only compares against uploads that already exist for a commit. `pr-base-picking` cannot fix a stale base if `master` has no recent uploads (the "N commits behind head on master" warning).
 
-Checkout uses `fetch-depth: 0` so git metadata is available for base selection (same requirement as https://github.com/codecov/codecov-action[codecov-action]).
+For pull requests, `codecov_merge_upload` therefore:
+
+. Checks out `github.event.pull_request.base.sha`, runs unit tests, and uploads coverage for that commit (no `override_pr`).
+. Runs `pr-base-picking` with `base_sha` set to the same commit.
+. Uploads merged PR head coverage with `override_pr` set.
+
+After merge, `.github/workflows/codecov-master-baseline.yml` uploads unit coverage on every push to `master` so the default-branch baseline stays current. Full merged coverage is uploaded by `codecov_merge_upload` when Kiali CI completes on `push`.
+
+Checkout uses `fetch-depth: 0` on the PR head so git metadata is available for base selection.
 
 
 == What CI uploads
