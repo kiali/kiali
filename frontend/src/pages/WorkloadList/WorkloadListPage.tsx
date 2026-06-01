@@ -196,13 +196,15 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   };
 
   private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns().map(c => ({
-      key: c.id,
-      title: c.title,
-      isShownByDefault: true,
-      isShown: c.isShown,
-      isUntoggleable: c.id === 'workload'
-    }));
+    return this.getManagedColumns()
+      .filter(c => isMultiCluster || c.id !== 'cluster')
+      .map(c => ({
+        key: c.id,
+        title: c.title,
+        isShownByDefault: true,
+        isShown: c.isShown,
+        isUntoggleable: c.id === 'workload'
+      }));
   };
 
   onSort = (): void => {

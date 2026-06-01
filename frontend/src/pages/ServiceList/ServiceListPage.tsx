@@ -197,13 +197,15 @@ class ServiceListPageComponent extends FilterComponent.Component<
   };
 
   private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns().map(c => ({
-      key: c.id,
-      title: c.title,
-      isShownByDefault: true,
-      isShown: c.isShown,
-      isUntoggleable: c.id === 'service'
-    }));
+    return this.getManagedColumns()
+      .filter(c => isMultiCluster || c.id !== 'cluster')
+      .map(c => ({
+        key: c.id,
+        title: c.title,
+        isShownByDefault: true,
+        isShown: c.isShown,
+        isUntoggleable: c.id === 'service'
+      }));
   };
 
   onSort = (): void => {

@@ -195,13 +195,15 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   };
 
   private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns().map(c => ({
-      key: c.id,
-      title: c.title,
-      isShownByDefault: true,
-      isShown: c.isShown,
-      isUntoggleable: c.id === 'app'
-    }));
+    return this.getManagedColumns()
+      .filter(c => isMultiCluster || c.id !== 'cluster')
+      .map(c => ({
+        key: c.id,
+        title: c.title,
+        isShownByDefault: true,
+        isShown: c.isShown,
+        isUntoggleable: c.id === 'app'
+      }));
   };
 
   onSort = (): void => {
