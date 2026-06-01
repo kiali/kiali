@@ -34,10 +34,10 @@ conversation. It must be running on port **8081** before starting LightSpeed.
 From the root of the Kiali repository, run in a dedicated terminal:
 
 ```bash
-npx kubernetes-mcp-server@latest --config ./hack/mcp/kubernetes-mcp-config.yaml
+npx kubernetes-mcp-server@latest --config ./hack/mcp/kubernetes-mcp-config.toml
 ```
 
-The configuration file (`hack/mcp/kubernetes-mcp-config.yaml`) points the MCP server at your
+The configuration file (`hack/mcp/kubernetes-mcp-config.toml`) points the MCP server at your
 local Kiali instance:
 
 ```toml
