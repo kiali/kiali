@@ -901,7 +901,6 @@ emailAddress=not@mail
 
   else
     echo -e "Installing Tempo with Helm Charts \n"
-    TEMPO_PORT="3100"
     helm repo add grafana https://grafana.github.io/helm-charts
     helm repo update
     local helm_cmd=(helm upgrade --install tempo-cr grafana/tempo-distributed -n "${TEMPO_NS}" --create-namespace -f "${SCRIPT_DIR}/resources/helm.yaml" --wait --timeout 10m)
@@ -916,14 +915,8 @@ emailAddress=not@mail
   fi
 
   if [ "${TEMPO3_TEST}" != "true" ] && [ "${MULTI_TENANT}" != "true" ]; then
-    if [ "${METHOD}" == "operator" ]; then
-      tempo_query_service="tempo-cr-query-frontend"
-      tempo_zipkin_service="tempo-cr-distributor"
-    else
-      tempo_query_service="tempo-cr-query-frontend"
-      tempo_zipkin_service="tempo-cr-distributor"
-      TEMPO_PORT="3200"
-    fi
+    tempo_query_service="tempo-cr-query-frontend"
+    tempo_zipkin_service="tempo-cr-distributor"
   fi
 
   export TEMPO_QUERY_SERVICE="${tempo_query_service}"
