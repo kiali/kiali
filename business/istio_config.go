@@ -137,35 +137,9 @@ var newSecurityConfigTypes = []schema.GroupVersionKind{
 	kubernetes.RequestAuthentications,
 }
 
-// GetIstioConfigMap returns a map of Istio config objects list per cluster
-// @TODO this method should replace GetIstioConfigList
-func (in *IstioConfigService) GetIstioConfigMap(ctx context.Context, namespace string, criteria IstioConfigCriteria) (models.IstioConfigMap, error) {
-	istioConfigMap := models.IstioConfigMap{}
-	for cluster := range in.userClients {
-		var (
-			singleClusterConfigList *models.IstioConfigList
-			err                     error
-		)
-		if namespace == meta_v1.NamespaceAll {
-			singleClusterConfigList, err = in.GetIstioConfigList(ctx, cluster, criteria)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			singleClusterConfigList, err = in.GetIstioConfigListForNamespace(ctx, cluster, namespace, criteria)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		istioConfigMap[cluster] = *singleClusterConfigList
-	}
-
-	return istioConfigMap, nil
-}
-
-// GetIstioConfigMap returns a map of Istio config objects list per cluster
-// @TODO this method should replace GetIstioConfigList
+// GetIstioConfigListForCluster returns Istio configuration objects for a single cluster.
+// When namespace is empty, the call is cluster-wide; otherwise it is scoped to the
+// given namespace.
 func (in *IstioConfigService) GetIstioConfigListForCluster(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	if namespace == meta_v1.NamespaceAll {
 		return in.GetIstioConfigList(ctx, cluster, criteria)
@@ -176,13 +150,8 @@ func (in *IstioConfigService) GetIstioConfigListForCluster(ctx context.Context, 
 
 func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context, cluster, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
-	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
+	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces).
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
-		// Check if the namespace exists on the cluster in multi-cluster mode.
-		// TODO: Remove this once other business methods stop looping over all clusters.
-		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err)) && len(in.userClients) > 1 {
-			return &models.IstioConfigList{}, nil
-		}
 		return nil, err
 	}
 

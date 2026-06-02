@@ -247,12 +247,25 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 
 	var err error
 	var allApps []namespaceApps
+	istioConfigByCluster := map[string]*models.IstioConfigList{}
+
+	icCriteria := IstioConfigCriteria{
+		IncludeAuthorizationPolicies:  true,
+		IncludeDestinationRules:       true,
+		IncludeEnvoyFilters:           true,
+		IncludeGateways:               true,
+		IncludePeerAuthentications:    true,
+		IncludeRequestAuthentications: true,
+		IncludeSidecars:               true,
+		IncludeVirtualServices:        true,
+	}
 
 	wg := &sync.WaitGroup{}
 	type result struct {
-		cluster string
-		nsApps  namespaceApps
-		err     error
+		cluster         string
+		nsApps          namespaceApps
+		istioConfigList *models.IstioConfigList
+		err             error
 	}
 	resultsCh := make(chan result)
 
@@ -265,9 +278,17 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				nsApps, error2 := in.fetchNamespaceApps(ctx, criteria.Namespace, c, "")
 				if error2 != nil {
 					resultsCh <- result{cluster: c, nsApps: nil, err: error2}
-				} else {
-					resultsCh <- result{cluster: c, nsApps: nsApps, err: nil}
+					return
 				}
+				var icList *models.IstioConfigList
+				if criteria.IncludeIstioResources {
+					icList, error2 = in.businessLayer.IstioConfig.GetIstioConfigListForCluster(ctx, c, criteria.Namespace, icCriteria)
+					if error2 != nil {
+						resultsCh <- result{cluster: c, nsApps: nil, err: error2}
+						return
+					}
+				}
+				resultsCh <- result{cluster: c, nsApps: nsApps, istioConfigList: icList, err: nil}
 			}(cluster)
 		}
 		wg.Wait()
@@ -286,26 +307,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			}
 		}
 		allApps = append(allApps, resultCh.nsApps)
-	}
-
-	icCriteria := IstioConfigCriteria{
-		IncludeAuthorizationPolicies:  true,
-		IncludeDestinationRules:       true,
-		IncludeEnvoyFilters:           true,
-		IncludeGateways:               true,
-		IncludePeerAuthentications:    true,
-		IncludeRequestAuthentications: true,
-		IncludeSidecars:               true,
-		IncludeVirtualServices:        true,
-	}
-	var istioConfigMap models.IstioConfigMap
-
-	// TODO: MC
-	if criteria.IncludeIstioResources {
-		istioConfigMap, err = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, icCriteria)
-		if err != nil {
-			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
-			return models.AppList{}, err
+		if resultCh.istioConfigList != nil {
+			istioConfigByCluster[resultCh.cluster] = resultCh.istioConfigList
 		}
 	}
 
@@ -334,8 +337,8 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				Health:       models.EmptyAppHealth(),
 			}
 			istioConfigList := models.IstioConfigList{}
-			if _, ok := istioConfigMap[valueApp.cluster]; ok {
-				istioConfigList = istioConfigMap[valueApp.cluster]
+			if ic, ok := istioConfigByCluster[valueApp.cluster]; ok && ic != nil {
+				istioConfigList = *ic
 			}
 			applabels := make(map[string][]string)
 			svcReferences := make([]*models.IstioValidationKey, 0)

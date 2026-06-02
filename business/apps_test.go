@@ -380,3 +380,47 @@ func TestJoinMap(t *testing.T) {
 	assert.Equal("val2", labels["key2"])
 	assert.Equal("al4,val4", labels["key3"])
 }
+
+// TestGetAppListSkipsClustersMissingNamespace mirrors the workloads regression
+// covered in kiali#9790 for the GetAppList code path. With ignore_home_cluster
+// topologies the home cluster does not have every namespace the user might
+// select; fetching apps for that namespace must succeed by skipping clusters
+// that do not have it instead of failing the whole list.
+func TestGetAppListSkipsClustersMissingNamespace(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "mgmt"
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	// mgmt cluster: no "default" namespace.
+	mgmt := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+
+	// member cluster: has "default" namespace and a Deployment in it.
+	memberObjs := []runtime.Object{kubetest.FakeNamespace("default")}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		o.Namespace = "default"
+		memberObjs = append(memberObjs, &o)
+	}
+	member := kubetest.NewFakeK8sClient(memberObjs...)
+	member.OpenShift = true
+	member.Token = "token"
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{
+		"mgmt":   mgmt,
+		"member": member,
+	})
+
+	// IncludeIstioResources=true exercises the path that used to call
+	// GetIstioConfigMap and surface the other cluster's
+	// AccessibleNamespaceError.
+	criteria := AppCriteria{Namespace: "default", IncludeIstioResources: true}
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
+	require.NotEmpty(appList.Apps)
+	for _, a := range appList.Apps {
+		require.Equal("member", a.Cluster, "apps must come only from clusters that have the namespace")
+	}
+}

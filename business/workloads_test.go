@@ -1871,3 +1871,46 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	assert.Equal("custom-controller-123", workloads[0].Name)
 	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 }
+
+// TestGetWorkloadListReturnsRequestedClusterOnly covers the regression filed as
+// kiali#9790: when one cluster does not have the requested namespace
+// (the management cluster in an ignore_home_cluster=true topology),
+// GetWorkloadList for the cluster that DOES have it must succeed without
+// surfacing the other cluster's "namespace not accessible" error.
+func TestGetWorkloadListReturnsRequestedClusterOnly(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "mgmt"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	// mgmt cluster: no "default" namespace, mirroring discovery_selectors filtering.
+	mgmtObjs := []runtime.Object{kubetest.FakeNamespace("istio-system")}
+	mgmt := kubetest.NewFakeK8sClient(mgmtObjs...)
+
+	// member cluster: has "default" namespace and one Deployment in it.
+	memberObjs := []runtime.Object{kubetest.FakeNamespace("default")}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		o.Namespace = "default"
+		memberObjs = append(memberObjs, &o)
+	}
+	member := kubetest.NewFakeK8sClient(memberObjs...)
+
+	prom := new(prometheustest.PromClientMock)
+	prom.MockMetricsForLabels(context.Background(), []string{})
+	layer := NewLayerBuilder(t, conf).WithClients(map[string]kubernetes.UserClientInterface{
+		"mgmt":   mgmt,
+		"member": member,
+	}).WithProm(prom).Build()
+
+	// IncludeIstioResources=true is the UI default and the path that triggered
+	// the original failure via GetIstioConfigMap looping all clusters.
+	criteria := WorkloadCriteria{Cluster: "member", Namespace: "default", IncludeIstioResources: true}
+	workloadList, err := layer.Workload.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
+	require.NotEmpty(workloadList.Workloads)
+	for _, w := range workloadList.Workloads {
+		require.Equal("member", w.Cluster)
+	}
+}

@@ -293,10 +293,12 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				IncludeGateways:    true,
 				IncludeK8sGateways: true,
 			}
-			configMap, err := gi.Business.IstioConfig.GetIstioConfigMap(ctx, "", criteria)
-			mesh.CheckError(err)
-
-			for cluster, conf := range configMap {
+			for cluster := range clusterMap {
+				conf, err := gi.Business.IstioConfig.GetIstioConfigListForCluster(ctx, cluster, "", criteria)
+				if err != nil {
+					log.Errorf("Error fetching Istio gateway config for cluster [%s]: %s", cluster, err)
+					continue
+				}
 				gwNodes := []*mesh.Node{}
 				for _, gw := range conf.Gateways {
 					version := models.DefaultRevisionLabel
