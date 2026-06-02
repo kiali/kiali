@@ -2,6 +2,14 @@ name: Kiali CI
 
 on:
   # Run on master and release branches
+  push:
+    branches:
+    - master
+    - v*.*
+    paths-ignore:
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -241,20 +249,65 @@ jobs:
         path: pr-metadata/
         retention-days: 1
 
+  # Separate job: make test writes _output binaries that break a second checkout in the same workspace.
+  codecov_upload_pr_base:
+    if: github.event_name == 'pull_request'
+    name: Upload PR base coverage to Codecov
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout PR base commit
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        ref: ${{ github.event.pull_request.base.sha }}
+
+    - name: Set up Go
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      with:
+        cache: true
+        cache-dependency-path: go.sum
+        go-version-file: go.mod
+
+    - name: Run unit tests with coverage
+      run: make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
+
+    - name: Upload PR base coverage to Codecov
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage-unit.out
+        flags: integration
+        override_branch: ${{ github.event.pull_request.base.ref }}
+        override_commit: ${{ github.event.pull_request.base.sha }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+
   codecov_merge_upload:
-    if: ${{ success() }}
+    if: |
+      always() &&
+      needs.integration_tests_backend.result == 'success' &&
+      needs.integration_tests_backend_multicluster_external_controlplane.result == 'success' &&
+      needs.test_backend.result == 'success' &&
+      (needs.codecov_upload_pr_base.result == 'success' || needs.codecov_upload_pr_base.result == 'skipped')
     name: Merge & Upload Coverage to Codecov
     needs:
+    - codecov_upload_pr_base
     - integration_tests_backend
     - integration_tests_backend_multicluster_external_controlplane
     - test_backend
     permissions:
       contents: read
-      id-token: write
     runs-on: ubuntu-latest
     steps:
+    # Full history is required for Codecov PR base selection and accurate comparisons.
     - name: Checkout repo
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
     # -------------------------------
     # Download artifacts
@@ -290,12 +343,40 @@ jobs:
     # -------------------------------
     # Upload to Codecov
     # -------------------------------
-    - name: Upload coverage to Codecov
+    # Select the PR base report from the target branch head (not a stale default-branch upload).
+    - name: Select Codecov PR base commit
+      if: github.event_name == 'pull_request'
       uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       with:
-        fail_ci_if_error: false
-        files: coverage.out
-        flags: integration
+        base_sha: ${{ github.event.pull_request.base.sha }}
+        run_command: pr-base-picking
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
-        use_oidc: true
+
+    # Upload on PRs and on push to master/release branches (sail-operator pattern: push + pull_request).
+    - name: Upload coverage to Codecov (pull request)
+      if: github.event_name == 'pull_request'
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage.out
+        flags: integration
+        override_branch: ${{ github.head_ref }}
+        override_commit: ${{ github.event.pull_request.head.sha }}
+        override_pr: ${{ github.event.pull_request.number }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload coverage to Codecov (push)
+      if: github.event_name == 'push'
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage.out
+        flags: integration
+        override_branch: ${{ github.ref_name }}
+        override_commit: ${{ github.sha }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}

@@ -2,6 +2,26 @@
 
 This repository uploads merged Go coverage from GitHub Actions to Codecov (see `.github/workflows/kiali-ci.yml`, job `codecov_merge_upload`).
 
+The workflow runs on:
+
+* Pull requests targeting `master` or release branches (`v*.*`)
+* Pushes to `master` or release branches (to keep the Codecov default-branch baseline current)
+
+Without push uploads, Codecov reports fall behind (for example, "Report is N commits behind head on master") because only PR uploads exist and the default-branch baseline never advances after merges.
+
+=== PR base selection
+
+Codecov only compares against uploads that already exist for a commit. `pr-base-picking` cannot fix a stale base if `master` has no recent uploads (the "N commits behind head on master" warning).
+
+For pull requests:
+
+. Job `codecov_upload_pr_base` checks out `github.event.pull_request.base.sha`, runs unit tests, and uploads coverage (no `override_pr`). It runs in its own job so `make test` output under `_output/` does not block the merge job checkout.
+. Job `codecov_merge_upload` runs `pr-base-picking` with `base_sha` set to that commit, then uploads merged PR head coverage with `override_pr` set.
+
+After merge, `.github/workflows/codecov-master-baseline.yml` uploads unit coverage on every push to `master` so the default-branch baseline stays current. Full merged coverage is uploaded by `codecov_merge_upload` when Kiali CI completes on `push`.
+
+Checkout uses `fetch-depth: 0` on the PR head so git metadata is available for base selection.
+
 
 == What CI uploads
 
