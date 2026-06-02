@@ -173,11 +173,11 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// daemonset. The home cluster alone is not sufficient: with
 		// ignore_home_cluster=true the management cluster has no mesh
 		// workloads and ambient lives on the remote member clusters.
-		ambientClusters := make([]string, 0, len(userClients))
+		accessibleClusters := make([]string, 0, len(userClients))
 		for clusterName := range userClients {
-			ambientClusters = append(ambientClusters, clusterName)
+			accessibleClusters = append(accessibleClusters, clusterName)
 		}
-		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(ambientClusters)
+		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(accessibleClusters)
 		publicConfig.GatewayAPIClasses = cache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
 
 		// Fetch the list of all clusters in the mesh
