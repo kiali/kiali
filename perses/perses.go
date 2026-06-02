@@ -53,7 +53,7 @@ func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterf
 	}
 
 	auth := conf.ExternalServices.Perses.Auth
-	if auth.Type == config.AuthTypeOAuth2 {
+	if conf.ExternalServices.Perses.Enabled && auth.Type == config.AuthTypeOAuth2 {
 		roundTripper := &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
@@ -79,7 +79,7 @@ func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterf
 	return s, nil
 }
 
-// SetDashboardSupplier allows overriding the dashboard supplier function (used for test injection).
+// SetDashboardSupplier exists for test injection; production code always uses the supplier set by NewService.
 // Note: this only overrides the non-OpenShift path. The OpenShift branch always uses checkDashboardOpenShift.
 func (s *Service) SetDashboardSupplier(supplier DashboardSupplierFunc) {
 	s.dashboardSupplier = supplier

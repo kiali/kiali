@@ -66,7 +66,7 @@ func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterf
 	return s, nil
 }
 
-// SetDashboardSupplier allows overriding the dashboard supplier function (used for test injection).
+// SetDashboardSupplier exists for test injection; production code always uses the supplier set by NewService.
 func (s *Service) SetDashboardSupplier(supplier DashboardSupplierFunc) {
 	s.dashboardSupplier = supplier
 }

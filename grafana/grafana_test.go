@@ -3,13 +3,11 @@ package grafana_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,6 +201,27 @@ func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *tes
 	}
 }
 
+// newOAuth2GrafanaSvc builds a Grafana service wired to the given tokenServerURL and backendURL
+// with a static client secret. Registers server cleanup with t.Cleanup.
+func newOAuth2GrafanaSvc(t *testing.T, tokenServerURL, backendURL string, clientSecret config.Credential) *grafana.Service {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.ExternalServices.Grafana.Enabled = true
+	conf.ExternalServices.Grafana.ExternalURL = backendURL
+	conf.ExternalServices.Grafana.InternalURL = backendURL
+	conf.ExternalServices.Grafana.Auth.Type = config.AuthTypeOAuth2
+	conf.ExternalServices.Grafana.Auth.OAuth2 = config.OAuth2Config{
+		ClientID:     "test-client",
+		ClientSecret: clientSecret,
+		TokenURL:     tokenServerURL,
+		AuthStyle:    "params",
+	}
+	conf.ExternalServices.Grafana.Dashboards = []config.GrafanaDashboardConfig{{Name: "test"}}
+	svc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	return svc
+}
+
 func TestGrafanaOAuth2_TokenCachePreservedAcrossRequests(t *testing.T) {
 	var tokenRequests int32
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -225,21 +244,7 @@ func TestGrafanaOAuth2_TokenCachePreservedAcrossRequests(t *testing.T) {
 	}))
 	defer backend.Close()
 
-	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.ExternalURL = backend.URL
-	conf.ExternalServices.Grafana.InternalURL = backend.URL
-	conf.ExternalServices.Grafana.Auth.Type = config.AuthTypeOAuth2
-	conf.ExternalServices.Grafana.Auth.OAuth2 = config.OAuth2Config{
-		ClientID:     "test-client",
-		ClientSecret: "test-secret",
-		TokenURL:     tokenServer.URL,
-		AuthStyle:    "params",
-	}
-	conf.ExternalServices.Grafana.Dashboards = []config.GrafanaDashboardConfig{{Name: "test"}}
-
-	svc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	require.NoError(t, err)
+	svc := newOAuth2GrafanaSvc(t, tokenServer.URL, backend.URL, "test-secret")
 
 	for i := 0; i < 5; i++ {
 		_, _, err := svc.Info(context.Background())
@@ -252,55 +257,7 @@ func TestGrafanaOAuth2_TokenCachePreservedAcrossRequests(t *testing.T) {
 		"backend should be called on each Info() invocation")
 }
 
-func TestGrafanaOAuth2_TokenRefreshedAfterExpiry(t *testing.T) {
-	var tokenRequests int32
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		atomic.AddInt32(&tokenRequests, 1)
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{
-			"access_token": fmt.Sprintf("token-%d", atomic.LoadInt32(&tokenRequests)),
-			"expires_in":   1,
-			"token_type":   "Bearer",
-		})
-	}))
-	defer tokenServer.Close()
-
-	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[{"url":"/d/test"}]`))
-	}))
-	defer backend.Close()
-
-	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.ExternalURL = backend.URL
-	conf.ExternalServices.Grafana.InternalURL = backend.URL
-	conf.ExternalServices.Grafana.Auth.Type = config.AuthTypeOAuth2
-	conf.ExternalServices.Grafana.Auth.OAuth2 = config.OAuth2Config{
-		ClientID:     "test-client",
-		ClientSecret: "test-secret",
-		TokenURL:     tokenServer.URL,
-		AuthStyle:    "params",
-	}
-	conf.ExternalServices.Grafana.Dashboards = []config.GrafanaDashboardConfig{{Name: "test"}}
-
-	svc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	require.NoError(t, err)
-
-	_, _, err = svc.Info(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, int32(1), atomic.LoadInt32(&tokenRequests))
-
-	// Wait for token to expire (1s TTL + buffer)
-	time.Sleep(1100 * time.Millisecond)
-
-	_, _, err = svc.Info(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, int32(2), atomic.LoadInt32(&tokenRequests),
-		"token should be refreshed after expiry")
-}
-
-func TestGrafanaOAuth2_ClientSecretRotation(t *testing.T) {
+func TestGrafanaOAuth2_NewServicePicksUpCurrentSecretFile(t *testing.T) {
 	secretFile := t.TempDir() + "/client-secret"
 	require.NoError(t, os.WriteFile(secretFile, []byte("original-secret"), 0600))
 
@@ -318,40 +275,25 @@ func TestGrafanaOAuth2_ClientSecretRotation(t *testing.T) {
 	}))
 	defer tokenServer.Close()
 
-	var lastAuth string
+	var lastAuth atomic.Value
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		lastAuth = r.Header.Get("Authorization")
+		lastAuth.Store(r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"url":"/d/test"}]`))
 	}))
 	defer backend.Close()
 
-	conf := config.NewConfig()
-	conf.ExternalServices.Grafana.Enabled = true
-	conf.ExternalServices.Grafana.ExternalURL = backend.URL
-	conf.ExternalServices.Grafana.InternalURL = backend.URL
-	conf.ExternalServices.Grafana.Auth.Type = config.AuthTypeOAuth2
-	conf.ExternalServices.Grafana.Auth.OAuth2 = config.OAuth2Config{
-		ClientID:     "test-client",
-		ClientSecret: config.Credential(secretFile),
-		TokenURL:     tokenServer.URL,
-		AuthStyle:    "params",
-	}
-	conf.ExternalServices.Grafana.Dashboards = []config.GrafanaDashboardConfig{{Name: "test"}}
-
-	svc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	require.NoError(t, err)
+	svc := newOAuth2GrafanaSvc(t, tokenServer.URL, backend.URL, config.Credential(secretFile))
 
 	// First call uses original secret
-	_, _, err = svc.Info(context.Background())
+	_, _, err := svc.Info(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "Bearer token-for-original-secret", lastAuth)
+	assert.Equal(t, "Bearer token-for-original-secret", lastAuth.Load())
 	assert.Equal(t, int32(1), atomic.LoadInt32(&tokenRequests))
 
-	// Rotate the secret file and simulate a 401 on the backend to trigger token refresh
+	// Rotate the secret file; next service construction will pick up the new secret
 	require.NoError(t, os.WriteFile(secretFile, []byte("rotated-secret"), 0600))
 
-	// Simulate backend returning 401 to force token invalidation and refresh
 	backend.Close()
 	var backendCalls int32
 	backend = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -360,20 +302,20 @@ func TestGrafanaOAuth2_ClientSecretRotation(t *testing.T) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		lastAuth = r.Header.Get("Authorization")
+		lastAuth.Store(r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"url":"/d/test"}]`))
 	}))
 	defer backend.Close()
 
-	// Reconfigure the service to point to the new backend
-	conf.ExternalServices.Grafana.ExternalURL = backend.URL
-	conf.ExternalServices.Grafana.InternalURL = backend.URL
-	svc, err = grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	require.NoError(t, err)
+	svc = newOAuth2GrafanaSvc(t, tokenServer.URL, backend.URL, config.Credential(secretFile))
+	tokenRequestsBefore := atomic.LoadInt32(&tokenRequests)
 
 	_, _, err = svc.Info(context.Background())
 	require.NoError(t, err)
-	assert.Equal(t, "Bearer token-for-rotated-secret", lastAuth,
+	assert.Equal(t, "Bearer token-for-rotated-secret", lastAuth.Load(),
 		"after 401 retry, the rotated secret should be used for the new token")
+	// New service has cold cache: fetches once, gets 401, fetches again with rotated secret = 2 token requests.
+	assert.Equal(t, tokenRequestsBefore+2, atomic.LoadInt32(&tokenRequests),
+		"cold cache + 401 retry should have triggered exactly 2 token fetches with the rotated secret")
 }

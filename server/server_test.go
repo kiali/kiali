@@ -26,12 +26,20 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/config/security"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 	"github.com/kiali/kiali/util"
 	"github.com/kiali/kiali/util/filetest"
 )
+
+func newTestGrafanaService(t *testing.T, conf *config.Config) *grafana.Service {
+	t.Helper()
+	svc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	return svc
+}
 
 const (
 	testHostname = "127.0.0.1"
@@ -62,7 +70,7 @@ func TestRootContextPath(t *testing.T) {
 	cf := kubernetes.NewTestingClientFactory(t, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, nil, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, newTestGrafanaService(t, conf), nil, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -126,7 +134,7 @@ func TestAnonymousMode(t *testing.T) {
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
 
-	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, newTestGrafanaService(t, conf), &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {
@@ -219,7 +227,7 @@ func TestSecureComm(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, err := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, err := NewServer(t.Context(), cpm, cf, cache, conf, newTestGrafanaService(t, conf), &prom, nil, nil, filetest.StaticAssetDir(t))
 	require.NoError(err)
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
@@ -333,7 +341,7 @@ func TestTracingConfigured(t *testing.T) {
 	cpm := &business.FakeControlPlaneMonitor{}
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	prom := prometheustest.FakeClient{}
-	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, &prom, nil, nil, filetest.StaticAssetDir(t))
+	server, _ := NewServer(t.Context(), cpm, cf, cache, conf, newTestGrafanaService(t, conf), &prom, nil, nil, filetest.StaticAssetDir(t))
 	server.Start()
 	t.Logf("Started test http server: %v", serverURL)
 	defer func() {

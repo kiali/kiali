@@ -18,16 +18,15 @@ import (
 	pmock "github.com/kiali/kiali/prometheus/prometheustest"
 )
 
-func setupService(conf *config.Config, namespace string, dashboards []dashboards.MonitoringDashboard) (*DashboardsService, *pmock.PromClientMock) {
+func setupService(t testing.TB, conf *config.Config, namespace string, dashboards []dashboards.MonitoringDashboard) (*DashboardsService, *pmock.PromClientMock) {
+	t.Helper()
 	for _, d := range dashboards {
 		conf.CustomDashboards = append(conf.CustomDashboards, d)
 	}
 	prom := new(pmock.PromClientMock)
 	ns := models.Namespace{Name: namespace}
 	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	if err != nil {
-		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
-	}
+	require.NoError(t, err)
 	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, nil)
 	return service, prom
 }
@@ -36,7 +35,7 @@ func TestGetDashboard(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup mocks
-	service, prom := setupService(config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
+	service, prom := setupService(t, config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
 	service.promConfig.QueryScope = map[string]string{"mesh_id": "mesh1"}
 
 	expectedLabels := `{namespace="my-namespace",APP="my-app",mesh_id="mesh1"}`
@@ -84,7 +83,7 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 	kubernetes.NewTestingClientFactory(t, conf)
 
 	// Setup mocks
-	service, prom := setupService(conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
+	service, prom := setupService(t, conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1")})
 
 	expectedLabels := "{namespace=\"my-namespace\",APP=\"my-app\"}"
 	namespace := models.Namespace{
@@ -113,7 +112,7 @@ func TestGetComposedDashboard(t *testing.T) {
 	composed.Items = append(composed.Items, dashboards.MonitoringDashboardItem{Include: "dashboard1"})
 
 	// Setup mocks
-	service, _ := setupService(config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *composed})
+	service, _ := setupService(t, config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *composed})
 
 	d, err := service.loadAndResolveDashboardResource("dashboard2", map[string]bool{})
 	assert.Nil(err)
@@ -132,7 +131,7 @@ func TestGetComposedDashboardSingleChart(t *testing.T) {
 	composed.Items = append(composed.Items, dashboards.MonitoringDashboardItem{Include: "dashboard1$My chart 1_2"})
 
 	// Setup mocks
-	service, _ := setupService(config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *composed})
+	service, _ := setupService(t, config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *composed})
 
 	d, err := service.loadAndResolveDashboardResource("dashboard2", map[string]bool{})
 	assert.Nil(err)
@@ -150,7 +149,7 @@ func TestCircularDependency(t *testing.T) {
 	composed.Items = append(composed.Items, dashboards.MonitoringDashboardItem{Include: "dashboard2"})
 
 	// Setup mocks
-	service, _ := setupService(config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("2"), *composed})
+	service, _ := setupService(t, config.NewConfig(), "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("2"), *composed})
 
 	_, err := service.loadAndResolveDashboardResource("dashboard2", map[string]bool{})
 	assert.Contains(err.Error(), "circular dependency detected")
@@ -222,7 +221,7 @@ func TestGetCustomDashboardRefs(t *testing.T) {
 	conf.IstioLabels.VersionLabelName = "version"
 
 	// Setup mocks
-	service, prom := setupService(conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *fakeDashboard("2")})
+	service, prom := setupService(t, conf, "my-namespace", []dashboards.MonitoringDashboard{*fakeDashboard("1"), *fakeDashboard("2")})
 
 	prom.MockMetricsForLabels(context.Background(), []string{"my_metric_1_1", "request_count", "tcp_received", "tcp_sent"})
 	pods := []*models.Pod{}
@@ -278,9 +277,7 @@ func TestBuildIstioDashboard(t *testing.T) {
 	conf := config.NewConfig()
 	ns := models.Namespace{Name: "my-namespace"}
 	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	if err != nil {
-		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
-	}
+	require.NoError(t, err)
 	prom := new(pmock.PromClientMock)
 	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, nil)
 
@@ -377,9 +374,7 @@ func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
 
 	ns := models.Namespace{Name: "my-namespace"}
 	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	if err != nil {
-		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
-	}
+	require.NoError(t, err)
 	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
 
 	expectedLabels := `{namespace="my-namespace",APP="my-app"}`
@@ -435,9 +430,7 @@ func TestCustomDashboardsPromClientFallbackOnFactoryError(t *testing.T) {
 
 	ns := models.Namespace{Name: "my-namespace"}
 	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	if err != nil {
-		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
-	}
+	require.NoError(t, err)
 	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
 
 	expectedLabels := `{namespace="my-namespace",APP="my-app"}`

@@ -198,7 +198,7 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	}
 
 	// Start listening to requests
-	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, prom, tracingLoader, discovery, staticAssetFS)
+	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, grafanaSvc, prom, tracingLoader, discovery, staticAssetFS)
 	if err != nil {
 		log.Fatal(err)
 	}

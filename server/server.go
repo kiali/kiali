@@ -41,15 +41,12 @@ func NewServer(ctx context.Context,
 	clientFactory kubernetes.ClientFactory,
 	cache cache.KialiCache,
 	conf *config.Config,
+	grafanaSvc *grafana.Service,
 	prom prometheus.ClientInterface,
 	traceClientLoader func() tracing.ClientInterface,
 	discovery *istio.Discovery,
 	staticAssetFS fs.FS,
 ) (*Server, error) {
-	grafanaSvc, err := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Grafana service: %w", err)
-	}
 	persesSvc, err := perses.NewService(conf, clientFactory.GetSAHomeClusterClient())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Perses service: %w", err)
