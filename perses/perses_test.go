@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -50,12 +51,11 @@ func TestGetPersesInfoDisabled(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ExternalServices.Perses.Enabled = false
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("istio"), 200, "whatever", t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, "whatever", t),
-	)
+	info, code, err := svc.Info(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusNoContent, code)
 	assert.Nil(t, info)
@@ -68,12 +68,11 @@ func TestGetPersesInfoExternal(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("istio"), 200, PERSES_URL, t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, PERSES_URL, t),
-	)
+	info, code, err := svc.Info(context.Background())
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -89,12 +88,11 @@ func TestGetPersesInfoGetError(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(anError, 401, PERSES_URL, t))
 
-	_, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(anError, 401, PERSES_URL, t),
-	)
+	_, code, err := svc.Info(context.Background())
 
 	assert.Equal(t, "error from Perses (401): unauthorized", err.Error())
 	assert.Equal(t, 503, code)
@@ -107,12 +105,11 @@ func TestGetPersesInfoInvalidDashboard(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier("unexpected response", 200, PERSES_URL, t))
 
-	_, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier("unexpected response", 200, PERSES_URL, t),
-	)
+	_, code, err := svc.Info(context.Background())
 
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "json: cannot unmarshal")
@@ -126,12 +123,11 @@ func TestGetPersesInfoWithoutLeadingSlashPath(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = PERSES_URL
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("some_path"), 200, PERSES_URL, t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("some_path"), 200, PERSES_URL, t),
-	)
+	info, code, err := svc.Info(context.Background())
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -146,12 +142,11 @@ func TestGetPersesInfoWithTrailingSlashURL(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = "http://perses-external:4001"
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("istio"), 200, "http://perses-external:4001", t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, "http://perses-external:4001", t),
-	)
+	info, code, err := svc.Info(context.Background())
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -167,12 +162,11 @@ func TestGetPersesInfoWithQueryParams(t *testing.T) {
 	conf.ExternalServices.Perses.ExternalURL = fmt.Sprintf("%s/?orgId=1", PERSES_URL)
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("istio"), 200, fmt.Sprintf("%s/?orgId=1", PERSES_URL), t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, fmt.Sprintf("%s/?orgId=1", PERSES_URL), t),
-	)
+	info, code, err := svc.Info(context.Background())
 
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
@@ -188,12 +182,11 @@ func TestGetPersesInfoWithAbsoluteDashboardURL(t *testing.T) {
 	conf.ExternalServices.Perses.Dashboards = dashboardsConfig
 	conf.ExternalServices.Perses.InternalURL = PERSES_URL
 
-	perses := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	svc.SetDashboardSupplier(buildDashboardSupplier(genDashboard("istio"), 200, "/system/perses/", t))
 
-	info, code, err := perses.Info(
-		context.Background(),
-		buildDashboardSupplier(genDashboard("istio"), 200, "/system/perses/", t),
-	)
+	info, code, err := svc.Info(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, http.StatusOK, code)
 	assert.Len(t, info.ExternalLinks, 1)
@@ -213,7 +206,8 @@ func TestGetAuthUseKialiTokenPrefersTokenFile(t *testing.T) {
 	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
 	conf.ExternalServices.Perses.Auth.UseKialiToken = true
 
-	svc := perses.NewService(conf, fakeClient)
+	svc, err := perses.NewService(conf, fakeClient)
+	require.NoError(t, err)
 	auth := svc.GetAuth(context.Background())
 
 	assert.Equal(t, config.Credential(tokenFile), auth.Token,
@@ -232,7 +226,8 @@ func TestGetAuthUseKialiTokenFallsBackToStaticToken(t *testing.T) {
 	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
 	conf.ExternalServices.Perses.Auth.UseKialiToken = true
 
-	svc := perses.NewService(conf, fakeClient)
+	svc, err := perses.NewService(conf, fakeClient)
+	require.NoError(t, err)
 	auth := svc.GetAuth(context.Background())
 
 	assert.Equal(t, config.Credential("static-snapshot-token"), auth.Token,
@@ -249,7 +244,8 @@ func TestGetAuthUseKialiTokenNilClientConfig(t *testing.T) {
 	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeBearer
 	conf.ExternalServices.Perses.Auth.UseKialiToken = true
 
-	svc := perses.NewService(conf, fakeClient)
+	svc, err := perses.NewService(conf, fakeClient)
+	require.NoError(t, err)
 	auth := svc.GetAuth(context.Background())
 
 	assert.Equal(t, config.Credential("static-snapshot-token"), auth.Token,

@@ -39,8 +39,10 @@ func setupMocks(t *testing.T) *mcputil.KialiInterface {
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 	prom := &prometheustest.PromClientMock{}
-	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
 	req, _ := http.NewRequestWithContext(context.TODO(), "POST", "/", nil)
 

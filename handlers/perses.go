@@ -19,7 +19,7 @@ func GetPersesInfo(conf *config.Config, persesService *perses.Service) http.Hand
 			return
 		}
 
-		info, code, err := persesService.Info(r.Context(), perses.DashboardSupplier)
+		info, code, err := persesService.Info(r.Context())
 		if err != nil {
 			log.Error(err)
 			RespondWithError(w, code, err.Error())

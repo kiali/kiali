@@ -46,10 +46,16 @@ func NewServer(ctx context.Context,
 	discovery *istio.Discovery,
 	staticAssetFS fs.FS,
 ) (*Server, error) {
-	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
-	perses := perses.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Grafana service: %w", err)
+	}
+	persesSvc, err := perses.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Perses service: %w", err)
+	}
 	// create a router that will route all incoming API server requests to different handlers
-	router, err := routing.NewRouter(ctx, conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafana, perses, discovery, staticAssetFS)
+	router, err := routing.NewRouter(ctx, conf, cache, clientFactory, prom, traceClientLoader, controlPlaneMonitor, grafanaSvc, persesSvc, discovery, staticAssetFS)
 	if err != nil {
 		return nil, err
 	}

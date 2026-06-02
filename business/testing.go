@@ -6,6 +6,7 @@ package business
 */
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kiali/kiali/cache"
@@ -107,7 +108,11 @@ func (lb *layerBuilder) Build() *Layer {
 		lb.discovery = istio.NewDiscovery(lb.kialiSAClients, lb.cache, lb.conf)
 	}
 	if lb.grafana == nil {
-		lb.grafana = grafana.NewService(lb.conf, lb.userClients[lb.conf.KubernetesConfig.ClusterName])
+		grafanaSvc, err := grafana.NewService(lb.conf, lb.userClients[lb.conf.KubernetesConfig.ClusterName])
+		if err != nil {
+			panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+		}
+		lb.grafana = grafanaSvc
 	}
 	return newLayer(lb.userClients, lb.kialiSAClients, lb.prom, lb.tracingLoader(), lb.cache, lb.conf, lb.grafana, lb.discovery, lb.cpm)
 }

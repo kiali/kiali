@@ -41,8 +41,10 @@ func SetupChatMCPHandlerForTest(t *testing.T) (http.Handler, *config.Config) {
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 	prom := &prometheustest.PromClientMock{}
-	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := &tracingtest.TracingClientMock{}
@@ -328,8 +330,10 @@ func TestChatMCP_ResponseFormatDiffersByMCPMode(t *testing.T) {
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 	prom := &prometheustest.PromClientMock{}
-	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(err)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := &tracingtest.TracingClientMock{}
 
@@ -439,8 +443,10 @@ func setupChatAIHandlerForTest(t *testing.T, conf *config.Config) (http.Handler,
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 	prom := &prometheustest.PromClientMock{}
-	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := &tracingtest.TracingClientMock{}
@@ -544,8 +550,10 @@ func TestChatAI_AuthInfoMissingClusterName(t *testing.T) {
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 	prom := &prometheustest.PromClientMock{}
-	grafanaSvc := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	persesSvc := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := &tracingtest.TracingClientMock{}
 	aiStore := ai.NewAIStore(context.Background(), nil)

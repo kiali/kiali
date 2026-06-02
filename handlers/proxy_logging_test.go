@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -35,9 +36,10 @@ func setupTestLoggingServer(t *testing.T, namespace, pod string) *httptest.Serve
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
-	handler := handlers.WithFakeAuthInfo(conf, handlers.LoggingUpdate(conf, cache, cf, cpm, prom, traceLoader, grafana, discovery))
+	handler := handlers.WithFakeAuthInfo(conf, handlers.LoggingUpdate(conf, cache, cf, cpm, prom, traceLoader, grafanaSvc, discovery))
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/namespaces/{namespace}/pods/{pod}/logging", handler)
 

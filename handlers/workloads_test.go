@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
@@ -28,9 +29,10 @@ func setupWorkloadList(t *testing.T, k8s *kubetest.FakeK8sClient, conf *config.C
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
 	cpm := &business.FakeControlPlaneMonitor{}
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafana := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
-	handler := WithFakeAuthInfo(conf, ClusterWorkloads(conf, cache, cf, cpm, prom, traceLoader, grafana, discovery))
+	handler := WithFakeAuthInfo(conf, ClusterWorkloads(conf, cache, cf, cpm, prom, traceLoader, grafanaSvc, discovery))
 	mr := mux.NewRouter()
 	mr.HandleFunc("/api/clusters/workloads", handler)
 

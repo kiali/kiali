@@ -125,12 +125,15 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Debug("Tracing is disabled")
 	}
 
-	grafana := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	grafanaSvc, err := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+	if err != nil {
+		log.Fatalf("Error creating Grafana service: %v", err)
+	}
 
 	// Needs to be started after the server so that the cache is started because the controllers use the cache.
 	// Passing nil here because the tracing client is not used for validations and that is all this layer is used for.
 	// Passing the `tracingClient` above would be a race condition since it gets set in a goroutine.
-	layer, err := business.NewLayerWithSAClients(conf, cache, prom, nil, cpm, grafana, discovery, clientFactory.GetSAClientsAsUserClientInterfaces())
+	layer, err := business.NewLayerWithSAClients(conf, cache, prom, nil, cpm, grafanaSvc, discovery, clientFactory.GetSAClientsAsUserClientInterfaces())
 	if err != nil {
 		log.Fatalf("Error creating business layer: %s", err)
 	}

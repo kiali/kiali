@@ -24,8 +24,11 @@ func setupService(conf *config.Config, namespace string, dashboards []dashboards
 	}
 	prom := new(pmock.PromClientMock)
 	ns := models.Namespace{Name: namespace}
-	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
-	service := NewDashboardsService(conf, grafana, prom, &ns, nil)
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	if err != nil {
+		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+	}
+	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, nil)
 	return service, prom
 }
 
@@ -274,9 +277,12 @@ func TestBuildIstioDashboard(t *testing.T) {
 	// Setup mocks
 	conf := config.NewConfig()
 	ns := models.Namespace{Name: "my-namespace"}
-	grafana := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	if err != nil {
+		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+	}
 	prom := new(pmock.PromClientMock)
-	service := NewDashboardsService(conf, grafana, prom, &ns, nil)
+	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, nil)
 
 	dashboard := service.BuildIstioDashboard(fakeMetrics(), "inbound")
 
@@ -370,7 +376,10 @@ func TestGetDashboardUsesCustomDashboardsPromClient(t *testing.T) {
 	mainProm := new(pmock.PromClientMock)
 
 	ns := models.Namespace{Name: "my-namespace"}
-	grafanaSvc := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	if err != nil {
+		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+	}
 	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
 
 	expectedLabels := `{namespace="my-namespace",APP="my-app"}`
@@ -425,7 +434,10 @@ func TestCustomDashboardsPromClientFallbackOnFactoryError(t *testing.T) {
 	mainProm := new(pmock.PromClientMock)
 
 	ns := models.Namespace{Name: "my-namespace"}
-	grafanaSvc := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	if err != nil {
+		panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+	}
 	service := NewDashboardsService(conf, grafanaSvc, mainProm, &ns, nil)
 
 	expectedLabels := `{namespace="my-namespace",APP="my-app"}`

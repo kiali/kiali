@@ -86,9 +86,11 @@ func TestGetMeshGraph(t *testing.T) {
 	}
 	cf := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	grafana := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	grafanaSvc, err := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	require.NoError(err)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	persesSvc := perses.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	persesSvc, err := perses.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	require.NoError(err)
 
 	xapi := new(prometheustest.PromAPIMock)
 	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
@@ -106,7 +108,7 @@ func TestGetMeshGraph(t *testing.T) {
 	traceLoader := func() tracing.ClientInterface { return nil }
 
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
-	handler := handlers.MeshGraph(conf, cf, cache, grafana, persesSvc, prom, traceLoader, discovery, cpm)
+	handler := handlers.MeshGraph(conf, cf, cache, grafanaSvc, persesSvc, prom, traceLoader, discovery, cpm)
 	server := httptest.NewServer(handlers.WithAuthInfo(authInfo, handler))
 	t.Cleanup(server.Close)
 
@@ -137,7 +139,8 @@ func TestControlPlanes(t *testing.T) {
 	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	grafanaSvc, err := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	require.NoError(err)
 
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
 	handler := handlers.WithAuthInfo(authInfo, handlers.ControlPlanes(cache, cf, conf, discovery, cpm, prom, traceLoader, grafanaSvc))
@@ -179,7 +182,8 @@ func TestControlPlanesUnauthorized(t *testing.T) {
 	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
 	require.NoError(err)
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafanaSvc := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	grafanaSvc, err := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	require.NoError(err)
 
 	handler := handlers.ControlPlanes(cache, cf, conf, discovery, cpm, prom, traceLoader, grafanaSvc)
 	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
