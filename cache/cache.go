@@ -110,6 +110,12 @@ type KialiCache interface {
 	// by checking if the ztunnel daemonset exists on the cluster.
 	IsAmbientEnabled(cluster string) bool
 
+	// IsAmbientEnabledInAnyCluster returns true when at least one of the
+	// supplied clusters has the istio Ambient profile enabled. Short-circuits
+	// on the first match. Reuses the per-cluster cache populated by
+	// IsAmbientEnabled, so repeated calls are cheap.
+	IsAmbientEnabledInAnyCluster(clusters []string) bool
+
 	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
 	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
 
@@ -333,6 +339,19 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	}
 
 	return check
+}
+
+// IsAmbientEnabledInAnyCluster returns true when at least one cluster in the
+// supplied slice has the istio Ambient profile enabled. The check delegates
+// to IsAmbientEnabled, so per-cluster results are reused from the existing
+// ambientChecksPerCluster cache.
+func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(clusters []string) bool {
+	for _, cluster := range clusters {
+		if in.IsAmbientEnabled(cluster) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset

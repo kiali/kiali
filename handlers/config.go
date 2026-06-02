@@ -169,18 +169,15 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			publicConfig.IstioGatewayInstalled = client.IsIstioGateway()
 			publicConfig.IstioAPIInstalled = client.IsIstioAPI()
 		}
-		// Check all clusters for ambient, not just the home cluster.
-		// This is needed when the home cluster is a management cluster
-		// with no mesh workloads (ignore_home_cluster=true).
-		publicConfig.AmbientEnabled = cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
-		if !publicConfig.AmbientEnabled {
-			for clusterName := range userClients {
-				if cache.IsAmbientEnabled(clusterName) {
-					publicConfig.AmbientEnabled = true
-					break
-				}
-			}
+		// Ambient is enabled when any accessible cluster has a ztunnel
+		// daemonset. The home cluster alone is not sufficient: with
+		// ignore_home_cluster=true the management cluster has no mesh
+		// workloads and ambient lives on the remote member clusters.
+		ambientClusters := make([]string, 0, len(userClients))
+		for clusterName := range userClients {
+			ambientClusters = append(ambientClusters, clusterName)
 		}
+		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(ambientClusters)
 		publicConfig.GatewayAPIClasses = cache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
 
 		// Fetch the list of all clusters in the mesh

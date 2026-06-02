@@ -175,6 +175,31 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 	require.False(cache.IsAmbientEnabled("west"))
 }
 
+func TestIsAmbientEnabledInAnyCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "mgmt"
+	mgmt := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+	)
+	member := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		ztunnelDaemonSet(),
+	)
+	clientFactory := kubetest.NewK8SClientFactoryMock(nil)
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"mgmt":   mgmt,
+		"member": member,
+	})
+	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
+
+	require.True(cache.IsAmbientEnabledInAnyCluster([]string{"mgmt", "member"}), "ambient on member should be detected")
+	require.True(cache.IsAmbientEnabledInAnyCluster([]string{"member"}), "single ambient-enabled cluster")
+	require.False(cache.IsAmbientEnabledInAnyCluster([]string{"mgmt"}), "no ambient on mgmt alone")
+	require.False(cache.IsAmbientEnabledInAnyCluster(nil), "nil slice")
+	require.False(cache.IsAmbientEnabledInAnyCluster([]string{}), "empty slice")
+}
+
 // This test only tests anything when the '-race' flag is passed to 'go test'.
 func TestIsAmbientIsThreadSafe(t *testing.T) {
 	conf := config.NewConfig()
