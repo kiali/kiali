@@ -15,10 +15,10 @@ func Catalog() []Prompt {
 	return []Prompt{
 		{
 			Category:    "applications",
-			Description: "List applications in the selected namespaces",
+			Description: "Report applications that may need attention, including health issues or missing sidecars",
 			Name:        "app-health",
-			Query:       "List applications in the selected namespaces",
-			Title:       "List Applications",
+			Query:       "Analyze the applications currently shown and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.",
+			Title:       "Application Health Analysis",
 		},
 		{
 			Category:    "graph",
@@ -29,17 +29,17 @@ func Catalog() []Prompt {
 		},
 		{
 			Category:    "istio",
-			Description: "List Istio configuration in the selected namespaces",
-			Name:        "istio-config-list",
-			Query:       "List Istio configuration in the selected namespaces",
-			Title:       "List Istio Config",
+			Description: "Highlight Istio objects that may be misconfigured or likely to impact traffic",
+			Name:        "istio-config-review",
+			Query:       "Review the Istio configuration currently shown and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.",
+			Title:       "Istio Config Review",
 		},
 		{
 			Category:    "mesh",
-			Description: "Inspect the mesh topology including control plane components, data plane status, and cluster connectivity",
-			Name:        "mesh-topology",
-			Query:       "Show the mesh topology and report on control plane components and cluster connectivity",
-			Title:       "Mesh Topology Overview",
+			Description: "Summarize mesh health with control plane status, cluster connectivity, and any warnings",
+			Name:        "mesh-health-summary",
+			Query:       "Summarize the current mesh health. Include control plane status, cluster connectivity, and only the most important warnings or unhealthy components.",
+			Title:       "Mesh Health Summary",
 		},
 		{
 			Category:    "namespaces",
@@ -57,10 +57,10 @@ func Catalog() []Prompt {
 		},
 		{
 			Category:    "services",
-			Description: "List services in the selected namespaces",
-			Name:        "service-list",
-			Query:       "List services in the selected namespaces",
-			Title:       "List Services",
+			Description: "Highlight services with unhealthy behavior, unusual traffic patterns, or configuration issues",
+			Name:        "service-health",
+			Query:       "Review the services currently shown and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.",
+			Title:       "Service Health Analysis",
 		},
 		{
 			Category:    "services",
@@ -71,10 +71,10 @@ func Catalog() []Prompt {
 		},
 		{
 			Category:    "workloads",
-			Description: "List workloads in the selected namespaces",
-			Name:        "workload-list",
-			Query:       "List workloads in the selected namespaces",
-			Title:       "List Workloads",
+			Description: "Report degraded workloads, missing sidecars, or other issues that may need troubleshooting",
+			Name:        "workload-health",
+			Query:       "Check the workloads currently shown and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.",
+			Title:       "Workload Health Analysis",
 		},
 	}
 }
