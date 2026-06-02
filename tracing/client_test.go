@@ -117,3 +117,21 @@ func TestTempoURLConstructionWithTenantAndCompleteURL(t *testing.T) {
 
 	assert.Equal(t, "http://tempo-server:8080/api/traces/v1/my-tenant/tempo", client.baseURL.String())
 }
+
+func TestCreateTempoHTTPClient_OAuth2(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+	conf.ExternalServices.Tracing.Provider = "tempo"
+	conf.ExternalServices.Tracing.UseGRPC = false
+	conf.ExternalServices.Tracing.InternalURL = "http://tempo-server:8080"
+	conf.ExternalServices.Tracing.Auth.Type = config.AuthTypeOAuth2
+	conf.ExternalServices.Tracing.Auth.OAuth2.TokenURL = "https://idp.example.com/token"
+	conf.ExternalServices.Tracing.Auth.OAuth2.ClientID = "my-client"
+	conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret = "my-secret"
+	conf.ExternalServices.Tracing.Auth.OAuth2.AuthStyle = "header"
+
+	tracingClient, err := NewClient(context.Background(), conf, token, false)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, tracingClient)
+}

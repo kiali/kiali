@@ -227,6 +227,13 @@ func (s *Service) GetAuth(ctx context.Context) *config.Auth {
 		return &newAuth
 	}
 
+	if auth.Type == config.AuthTypeOAuth2 {
+		newAuth.Type = config.AuthTypeOAuth2
+		newAuth.OAuth2 = auth.OAuth2
+		newAuth.InsecureSkipVerify = auth.InsecureSkipVerify
+		return &newAuth
+	}
+
 	log.Errorf("Auth type not supported %s", auth.Type)
 	return &newAuth
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"net"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -711,5 +712,18 @@ func TestGetAuthDialOptions_EnforcesTLSVersion(t *testing.T) {
 	defer cancel()
 	if _, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{}); err != nil {
 		t.Fatalf("expected health check to succeed with TLS1.3 policy: %v", err)
+	}
+}
+
+func TestGetAuthDialOptions_OAuth2_ReturnsError(t *testing.T) {
+	auth := config.Auth{
+		Type: config.AuthTypeOAuth2,
+	}
+	_, err := grpcutil.GetAuthDialOptions(&config.Config{}, "localhost", false, &auth)
+	if err == nil {
+		t.Fatal("expected error for oauth2 over gRPC")
+	}
+	if !strings.Contains(err.Error(), "oauth2") || !strings.Contains(err.Error(), "gRPC") {
+		t.Fatalf("unexpected error message: %v", err)
 	}
 }
