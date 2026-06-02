@@ -21,7 +21,7 @@ const GraphResetComponent: React.FC<GraphResetProps> = (props: GraphResetProps) 
   };
 
   return (
-    <Tooltip key="factory_reset_settings" position="bottom" content="Reset to factory settings">
+    <Tooltip key="factory_reset_settings" position="bottom" content="Reset to graph defaults">
       <Button
         icon={<KialiIcon.ResetSettings />}
         id="graph-factory-reset"

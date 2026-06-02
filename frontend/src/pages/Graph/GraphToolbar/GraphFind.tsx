@@ -395,22 +395,20 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               <GraphHelpFind onClose={this.toggleFindHelp}>
                 <Button
                   data-test="graph-find-hide-help-button"
-                  icon={<KialiIcon.Info />}
+                  icon={<KialiIcon.Help />}
                   variant={ButtonVariant.link}
                   className={findHideHelpStyle}
                   onClick={this.toggleFindHelp}
                 />
               </GraphHelpFind>
             ) : (
-              <Tooltip key={'ot_graph_find_help'} position="top" content="Click to open Find/Hide help">
-                <Button
-                  data-test="graph-find-hide-help-button"
-                  icon={<KialiIcon.Info />}
-                  variant={ButtonVariant.link}
-                  className={findHideHelpStyle}
-                  onClick={this.toggleFindHelp}
-                />
-              </Tooltip>
+              <Button
+                data-test="graph-find-hide-help-button"
+                icon={<KialiIcon.Help />}
+                variant={ButtonVariant.link}
+                className={findHideHelpStyle}
+                onClick={this.toggleFindHelp}
+              />
             )}
           </Grid>
         </Form>

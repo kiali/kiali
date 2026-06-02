@@ -223,18 +223,16 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
             </ToolbarItem>
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-              <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content="Shortcuts and tips...">
-                <TourStop info={GraphTourStops.Shortcuts}>
-                  <Button
-                    id="graph-tour"
-                    icon={<KialiIcon.Help />}
-                    variant={ButtonVariant.link}
-                    onClick={this.props.onToggleHelp}
-                  >
-                    <span>Help</span>
-                  </Button>
-                </TourStop>
-              </Tooltip>
+              <TourStop info={GraphTourStops.Shortcuts}>
+                <Button
+                  id="graph-tour"
+                  icon={<KialiIcon.Help />}
+                  variant={ButtonVariant.link}
+                  onClick={this.props.onToggleHelp}
+                >
+                  <span>Help</span>
+                </Button>
+              </TourStop>
               <GraphReset />
             </ToolbarItem>
           </ToolbarGroup>
