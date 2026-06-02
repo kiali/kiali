@@ -338,6 +338,29 @@ For Cursor users, the review pipeline is activated by typing `/code-reviewer:rev
 
 For Claude Code users, the code-reviewer plugin must be installed separately from link:https://github.com/openshift-service-mesh/ci-utils/tree/main/plugins/code-reviewer[openshift-service-mesh/ci-utils]. Once installed, run `/code-reviewer:review` to review your branch changes.
 
+=== MCP Server and LightSpeed (AI Chat Integration)
+
+Kiali's AI Chat feature relies on two additional services that must be deployed before the chatbot is functional:
+
+* **MCP server** — exposes Kiali's API as tools that AI assistants can call to inspect the service mesh. Two variants are available: `kubernetes` (default) and `openshift`. Any running Kubernetes or OpenShift cluster with Istio and Kiali is sufficient.
+* **OpenShift LightSpeed** — the AI backend that receives chat queries, calls the configured LLM, and uses the MCP server for tool calling. Requires an OpenShift cluster (CRC recommended for local development) with cluster monitoring enabled.
+
+Both services are managed by convenience scripts under `hack/`:
+
+[source,shell]
+----
+# 1. Install the MCP server (kubernetes provider by default)
+./hack/setup-mcp.sh install-mcp
+
+# 2. Install the LightSpeed service (OpenShift/CRC only)
+./hack/setup-osl.sh --openai-token sk-... install-lightspeed
+----
+
+For full documentation, options, and deployment manifest details see:
+
+* link:./hack/mcp/README.md[hack/mcp/README.md] — MCP server setup guide
+* link:./hack/lightspeed/README.md[hack/lightspeed/README.md] — LightSpeed setup guide
+
 === Debugging Server Backend
 
 ==== VisualStudio Code

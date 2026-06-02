@@ -32,6 +32,10 @@ func (s *anthropicTestStore) GenerateConversationID() string {
 	return "test-id"
 }
 
+func (s *anthropicTestStore) DeleteConversations(_ string, _ []string) error {
+	return nil
+}
+
 func (s *anthropicTestStore) Enabled() bool {
 	return s.enabled
 }
@@ -131,8 +135,8 @@ func newAnthropicTestProvider(serverURL string) *AnthropicProvider {
 			option.WithAPIKey("test-key"),
 			option.WithMaxRetries(0),
 		),
-		model:          "claude-sonnet-4-5",
-		tracingEnabled: true,
+		conf:  config.NewConfig(),
+		model: "claude-sonnet-4-5",
 	}
 }
 

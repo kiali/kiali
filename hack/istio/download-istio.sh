@@ -18,8 +18,9 @@
 
 # The version used by the getLatestIstio script - if empty, gets the latest version
 ISTIO_VERSION=
-# GitHub token for authenticated API requests (to avoid rate limiting)
-GITHUB_TOKEN=
+# GitHub token for authenticated API requests (to avoid rate limiting).
+# Falls back to the GITHUB_TOKEN environment variable automatically provided by GitHub Actions.
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 
 # process command line args
 while [ $# -gt 0 ]; do
@@ -81,21 +82,24 @@ if [ -z "${ISTIO_VERSION}" ]; then
     echo "Getting the latest Istio version from GitHub..."
 
     for attempt in $(seq 1 120); do
-    # Get both response body, HTTP status code, and headers
+      # Write the response body and headers to temp files so that HTTP_CODE is captured
+      # cleanly by curl's -w flag. The old approach using %{header_json} was broken because
+      # %{header_json} outputs multi-line JSON, making tail-based line counting unreliable.
+      RESPONSE_BODY_FILE=$(mktemp)
+      RESPONSE_HEADERS_FILE=$(mktemp)
       if [ -n "${AUTH_HEADER}" ]; then
-        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       else
-        RESPONSE=$(curl -L -s -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       fi
+      RESPONSE_BODY=$(cat "${RESPONSE_BODY_FILE}")
+      rm -f "${RESPONSE_BODY_FILE}"
 
-      HTTP_CODE=$(echo "$RESPONSE" | tail -n2 | head -n1)
-      HEADERS=$(echo "$RESPONSE" | tail -n1)
-      RESPONSE_BODY=$(echo "$RESPONSE" | sed -e '$d' -e '$d')
-
-      # Extract rate limit headers
-      RETRY_AFTER=$(echo "$HEADERS" | jq -r '.["retry-after"] // empty' 2>/dev/null)
-      RATELIMIT_REMAINING=$(echo "$HEADERS" | jq -r '.["x-ratelimit-remaining"] // empty' 2>/dev/null)
-      RATELIMIT_RESET=$(echo "$HEADERS" | jq -r '.["x-ratelimit-reset"] // empty' 2>/dev/null)
+      # Extract rate limit headers from the response headers file
+      RETRY_AFTER=$(grep -i "^retry-after:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      RATELIMIT_REMAINING=$(grep -i "^x-ratelimit-remaining:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      RATELIMIT_RESET=$(grep -i "^x-ratelimit-reset:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      rm -f "${RESPONSE_HEADERS_FILE}"
 
       # Check for rate limiting (403 or 429) - implement retry with exponential backoff
       if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
@@ -143,10 +147,10 @@ if [ -z "${ISTIO_VERSION}" ]; then
       fi
 
       VERSION_WE_WANT=$(echo "$RESPONSE_BODY" | \
-            grep tag_name | sed -e 's/.*://' -e 's/ *"//' -e 's/",//' | \
+            jq -r '.[].tag_name' 2>/dev/null | \
             grep -v -E "(snapshot|alpha|beta|rc)\.[0-9]$" | sort -t"." -k 1.2g,1 -k 2g,2 -k 3g | tail -n 1)
 
-      if [ -n "${VERSION_WE_WANT}" ] && [ "${VERSION_WE_WANT}" != "null" ]; then
+      if [[ "${VERSION_WE_WANT}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "Successfully retrieved the latest Istio version: [$VERSION_WE_WANT]"
         break
       elif [ ${attempt} -eq 120 ]; then
@@ -187,21 +191,21 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
     VERSION_TO_MATCH="${major}.${minor}"
     echo "Getting the latest patch version for [${VERSION_TO_MATCH}]..."
     for attempt in $(seq 1 120); do
-      # Get both response body, HTTP status code, and headers
+      RESPONSE_BODY_FILE=$(mktemp)
+      RESPONSE_HEADERS_FILE=$(mktemp)
       if [ -n "${AUTH_HEADER}" ]; then
-        RESPONSE=$(curl -L -s -H "${AUTH_HEADER}" -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -H "${AUTH_HEADER}" -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       else
-        RESPONSE=$(curl -L -s -w "\n%{http_code}\n%{header_json}" https://api.github.com/repos/istio/istio/releases 2>/dev/null)
+        HTTP_CODE=$(curl -L -s -w "%{http_code}" -o "${RESPONSE_BODY_FILE}" -D "${RESPONSE_HEADERS_FILE}" "https://api.github.com/repos/istio/istio/releases?per_page=100" 2>/dev/null)
       fi
+      RESPONSE_BODY=$(cat "${RESPONSE_BODY_FILE}")
+      rm -f "${RESPONSE_BODY_FILE}"
 
-      HTTP_CODE=$(echo "$RESPONSE" | tail -n2 | head -n1)
-      HEADERS=$(echo "$RESPONSE" | tail -n1)
-      RESPONSE_BODY=$(echo "$RESPONSE" | sed -e '$d' -e '$d')
-
-      # Extract rate limit headers
-      RETRY_AFTER=$(echo "$HEADERS" | jq -r '.["retry-after"] // empty' 2>/dev/null)
-      RATELIMIT_REMAINING=$(echo "$HEADERS" | jq -r '.["x-ratelimit-remaining"] // empty' 2>/dev/null)
-      RATELIMIT_RESET=$(echo "$HEADERS" | jq -r '.["x-ratelimit-reset"] // empty' 2>/dev/null)
+      # Extract rate limit headers from the response headers file
+      RETRY_AFTER=$(grep -i "^retry-after:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      RATELIMIT_REMAINING=$(grep -i "^x-ratelimit-remaining:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      RATELIMIT_RESET=$(grep -i "^x-ratelimit-reset:" "${RESPONSE_HEADERS_FILE}" | sed 's/[^:]*: *//' | tr -d '\r' | head -n1)
+      rm -f "${RESPONSE_HEADERS_FILE}"
 
       # Check for rate limiting (403 or 429) - implement retry with exponential backoff
       if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
@@ -252,7 +256,7 @@ if [ ! -d "./istio-${VERSION_WE_WANT}" ]; then
        jq -r --arg VERSION_TO_MATCH "$VERSION_TO_MATCH" '.[] | select(.tag_name | startswith($VERSION_TO_MATCH)) | .tag_name' \
        | sort -V \
        | tail -n 1)
-      if [ -n "${LATEST}" ] && [ "${LATEST}" != "null" ]; then
+      if [[ "${LATEST}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo "Successfully retrieved the latest patch version [${LATEST}]"
         break
       elif [ ${attempt} -eq 120 ]; then

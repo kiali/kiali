@@ -30,7 +30,6 @@ import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
 import { t } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
-import { CertsInfo } from 'types/CertsInfo';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
@@ -48,7 +47,6 @@ type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
 };
 
 type TargetPanelControlPlaneState = {
-  certificates?: CertsInfo[];
   controlPlaneMetrics?: ControlPlaneMetricsMap;
   controlPlaneNode?: Node<NodeModel, IstiodNodeData>;
   loading: boolean;
@@ -58,7 +56,6 @@ type TargetPanelControlPlaneState = {
 };
 
 const defaultState: TargetPanelControlPlaneState = {
-  certificates: undefined,
   controlPlaneMetrics: undefined,
   controlPlaneNode: undefined,
   loading: false,

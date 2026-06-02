@@ -10,7 +10,7 @@ Feature: Kiali Services page
 
   # TODO: offline - no bookinfo VirtualService?
   @bookinfo-app
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See services table with correct info
     And user is at the "services" page
@@ -31,14 +31,14 @@ Feature: Kiali Services page
     And the "Cluster" column "disappears"
 
   @smoke
-  @core-2
+  @core-caching
   @lpinterop
   Scenario: See all Services toggles
     And user is at the "services" list page
     Then user sees all the Services toggles
 
   @smoke
-  @core-2
+  @core-caching
   Scenario: Toggle Services configuration toggle
     And user is at the "services" list page
     When user "unchecks" toggle "configuration"
@@ -47,7 +47,7 @@ Feature: Kiali Services page
     Then the "Configuration" column "appears"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by Service Name
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -57,7 +57,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by Service Type
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -66,7 +66,7 @@ Feature: Kiali Services page
     Then user sees "nothing" in the table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by sidecar
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -76,7 +76,7 @@ Feature: Kiali Services page
 
   # TODO: offline - no bookinfo VirtualService?
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by Istio Config Type
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -87,7 +87,7 @@ Feature: Kiali Services page
 
   # TODO: offline - no service health
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by health
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -97,7 +97,7 @@ Feature: Kiali Services page
     And user should only see healthy services in the table
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by label
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -107,7 +107,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter services table by label click
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -116,7 +116,7 @@ Feature: Kiali Services page
     And table length should be 1
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: Filter and unfilter services table by label click
     And user is at the "services" page
     When user selects the "bookinfo" namespace
@@ -126,7 +126,7 @@ Feature: Kiali Services page
 
   # TODO: offline - no service health
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: The healthy status of a service is reported in the list of services
     And user is at the "services" page
     Given a service in the cluster with a healthy amount of traffic

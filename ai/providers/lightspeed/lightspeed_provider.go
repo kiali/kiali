@@ -1,6 +1,7 @@
 package lightspeed_provider
 
 import (
+	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers/lightspeed/client"
 	"github.com/kiali/kiali/config"
 )
@@ -24,4 +25,8 @@ func (p *LightSpeedProvider) GetName() string {
 
 func (p *LightSpeedProvider) GetToolDefinitions() interface{} {
 	return nil
+}
+
+func (p *LightSpeedProvider) LookupToolHandler(toolName string) (mcp.ToolDef, bool) {
+	return mcp.ToolDef{}, false
 }

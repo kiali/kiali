@@ -1,6 +1,7 @@
 package offline
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -201,7 +202,6 @@ func (c *OfflineClient) GetConfigDump(namespace, podName string) (*kialikube.Con
 	data, err := os.ReadFile(configDumpPath)
 	if err != nil {
 		log.Debugf("Unable to read config dump file %s: %s", configDumpPath, err)
-		// Return empty config dump when file not found
 		return &kialikube.ConfigDump{
 			Configs: []interface{}{},
 		}, nil
@@ -209,14 +209,36 @@ func (c *OfflineClient) GetConfigDump(namespace, podName string) (*kialikube.Con
 
 	log.Debugf("Successfully read config dump file: %s", configDumpPath)
 
-	var configDump kialikube.ConfigDump
-	if err := json.Unmarshal(data, &configDump); err != nil {
+	configDump, err := parseConfigDump(data)
+	if err != nil {
 		log.Debugf("Failed to unmarshal config dump file %s: %s", configDumpPath, err)
-		// Return empty config dump when JSON is invalid
 		return &kialikube.ConfigDump{
 			Configs: []interface{}{},
 		}, nil
 	}
 
-	return &configDump, nil
+	return configDump, nil
+}
+
+// parseConfigDump attempts to parse Envoy config dump JSON from data that may
+// be prefixed with non-JSON content. Must-gather tools often prepend an HTTP
+// status code (e.g. "200\n") via `pilot-agent request GET /config_dump`.
+func parseConfigDump(data []byte) (*kialikube.ConfigDump, error) {
+	var configDump kialikube.ConfigDump
+	firstErr := json.NewDecoder(bytes.NewReader(data)).Decode(&configDump)
+	if firstErr == nil {
+		return &configDump, nil
+	}
+
+	idx := bytes.IndexByte(data, '{')
+	if idx <= 0 {
+		return nil, fmt.Errorf("no JSON object found in config dump data: %w", firstErr)
+	}
+
+	var fallbackDump kialikube.ConfigDump
+	if fallbackErr := json.NewDecoder(bytes.NewReader(data[idx:])).Decode(&fallbackDump); fallbackErr != nil {
+		return nil, fmt.Errorf("failed to parse config dump JSON at offset %d (%w); initial attempt: %w", idx, fallbackErr, firstErr)
+	}
+
+	return &fallbackDump, nil
 }

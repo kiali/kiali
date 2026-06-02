@@ -55,6 +55,13 @@ const (
 	SecretFileCustomDashboardsPrometheusCert = "customdashboards-prometheus-cert"
 	SecretFileCustomDashboardsPrometheusKey  = "customdashboards-prometheus-key"
 
+	// External services OAuth2 client secrets
+	SecretFilePrometheusOAuth2ClientSecret                 = "prometheus-oauth2-client-secret"
+	SecretFileGrafanaOAuth2ClientSecret                    = "grafana-oauth2-client-secret"
+	SecretFileTracingOAuth2ClientSecret                    = "tracing-oauth2-client-secret"
+	SecretFilePersesOAuth2ClientSecret                     = "perses-oauth2-client-secret"
+	SecretFileCustomDashboardsPrometheusOAuth2ClientSecret = "customdashboards-prometheus-oauth2-client-secret"
+
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
 
@@ -95,6 +102,7 @@ const (
 	AuthTypeBasic  = "basic"
 	AuthTypeBearer = "bearer"
 	AuthTypeNone   = "none"
+	AuthTypeOAuth2 = "oauth2"
 )
 
 const (
@@ -312,23 +320,37 @@ func (c Credential) String() string {
 
 // Auth provides authentication data for external services
 type Auth struct {
-	CAFile             string     `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
-	CertFile           Credential `yaml:"cert_file" json:"certFile"`
-	InsecureSkipVerify bool       `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
-	KeyFile            Credential `yaml:"key_file" json:"keyFile"`
-	Password           Credential `yaml:"password" json:"password"`
-	Token              Credential `yaml:"token" json:"token"`
-	Type               string     `yaml:"type" json:"type"`
-	UseKialiToken      bool       `yaml:"use_kiali_token" json:"useKialiToken"`
-	Username           Credential `yaml:"username" json:"username"`
+	CAFile             string       `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
+	CertFile           Credential   `yaml:"cert_file" json:"certFile"`
+	InsecureSkipVerify bool         `yaml:"insecure_skip_verify" json:"insecureSkipVerify"` // When auth.type is oauth2, this applies only to the backend service, not the token endpoint. Add the token endpoint CA to kiali-cabundle instead.
+	KeyFile            Credential   `yaml:"key_file" json:"keyFile"`
+	OAuth2             OAuth2Config `yaml:"oauth2,omitempty" json:"oauth2,omitempty"`
+	Password           Credential   `yaml:"password" json:"password"`
+	Token              Credential   `yaml:"token" json:"token"`
+	Type               string       `yaml:"type" json:"type"`
+	UseKialiToken      bool         `yaml:"use_kiali_token" json:"useKialiToken"`
+	Username           Credential   `yaml:"username" json:"username"`
 }
 
 func (a *Auth) Obfuscate() {
 	a.CertFile = "xxx"
 	a.KeyFile = "xxx"
+	a.OAuth2.ClientSecret = "xxx"
 	a.Password = "xxx"
 	a.Token = "xxx"
 	a.Username = "xxx"
+}
+
+// OAuth2Config provides OAuth2 client_credentials configuration for external services.
+// This enables Kiali to authenticate to services like Azure Managed Prometheus/Grafana
+// that require OAuth2 tokens with specific scopes.
+type OAuth2Config struct {
+	Audience     string     `yaml:"audience,omitempty" json:"audience,omitempty"`
+	AuthStyle    string     `yaml:"auth_style,omitempty" json:"authStyle,omitempty"`
+	ClientID     string     `yaml:"client_id" json:"clientId"`
+	ClientSecret Credential `yaml:"client_secret" json:"clientSecret"`
+	Scopes       []string   `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+	TokenURL     string     `yaml:"token_url" json:"tokenUrl"`
 }
 
 // ThanosProxy describes configuration of the Thanos proxy component
@@ -788,6 +810,11 @@ type AIModel struct {
 	Key         Credential `yaml:"key,omitempty" json:"key,omitempty"`
 }
 
+type ToolFilterConfig struct {
+	DisabledTools []string `yaml:"disabled_tools,omitempty" json:"disabled_tools,omitempty"`
+	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
+}
+
 type ProviderType string
 
 const (
@@ -816,6 +843,7 @@ type ProviderConfig struct {
 	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
 	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
 	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
+	Tools        ToolFilterConfig   `yaml:"tools,omitempty" json:"tools,omitempty"`
 }
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
@@ -824,6 +852,7 @@ type ChatAIConfig struct {
 	Enabled         bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 	Providers       []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
 	StoreConfig     AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
+	Tools           ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
 }
 
 // Clustering defines configuration around multi-cluster functionality.
@@ -1350,6 +1379,10 @@ func (conf *Config) ValidateAI() error {
 		return nil
 	}
 
+	if err := normalizeAndValidateToolFilter("chat_ai.tools", &conf.ChatAI.Tools); err != nil {
+		return err
+	}
+
 	if conf.ChatAI.DefaultProvider == "" {
 		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
 	}
@@ -1368,6 +1401,9 @@ func (conf *Config) ValidateAI() error {
 		p := &conf.ChatAI.Providers[i]
 		if !p.Enabled {
 			continue
+		}
+		if err := normalizeAndValidateToolFilter(fmt.Sprintf("chat_ai.providers[%q].tools", p.Name), &p.Tools); err != nil {
+			return err
 		}
 		if _, exists := seenNames[p.Name]; exists {
 			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
@@ -1455,6 +1491,40 @@ func (conf *Config) ValidateAI() error {
 
 	if !defaultProviderFound {
 		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
+	}
+
+	return nil
+}
+
+func normalizeAndValidateToolFilter(path string, filter *ToolFilterConfig) error {
+	if filter == nil {
+		return nil
+	}
+
+	enabledSet := make(map[string]struct{}, len(filter.EnabledTools))
+	for i, name := range filter.EnabledTools {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			return fmt.Errorf("%s.enabled_tools[%d] must not be empty", path, i)
+		}
+		if _, exists := enabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.enabled_tools contains duplicate name %q", path, trimmed)
+		}
+		enabledSet[trimmed] = struct{}{}
+		filter.EnabledTools[i] = trimmed
+	}
+
+	disabledSet := make(map[string]struct{}, len(filter.DisabledTools))
+	for i, name := range filter.DisabledTools {
+		trimmed := strings.TrimSpace(name)
+		if trimmed == "" {
+			return fmt.Errorf("%s.disabled_tools[%d] must not be empty", path, i)
+		}
+		if _, exists := disabledSet[trimmed]; exists {
+			return fmt.Errorf("%s.disabled_tools contains duplicate name %q", path, trimmed)
+		}
+		disabledSet[trimmed] = struct{}{}
+		filter.DisabledTools[i] = trimmed
 	}
 
 	return nil
@@ -1744,6 +1814,27 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		{
 			configValue: &conf.ExternalServices.Perses.Auth.Username,
 			fileName:    SecretFilePersesUsername,
+		},
+		// OAuth2 client secrets
+		{
+			configValue: &conf.ExternalServices.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePrometheusOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Grafana.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileGrafanaOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Tracing.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileTracingOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.Perses.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFilePersesOAuth2ClientSecret,
+		},
+		{
+			configValue: &conf.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret,
+			fileName:    SecretFileCustomDashboardsPrometheusOAuth2ClientSecret,
 		},
 		// Custom Dashboards Prometheus credentials and certificates
 		{
@@ -2103,6 +2194,48 @@ func Validate(conf *Config) error {
 			log.Warningf("health_config.compute.duration [%s] is less than the minimum of 1m. Setting to 1m.", conf.HealthConfig.Compute.Duration)
 		}
 		conf.HealthConfig.Compute.Duration = "1m"
+	}
+
+	oauth2Services := map[string]*Auth{
+		"custom_dashboards": &conf.ExternalServices.CustomDashboards.Prometheus.Auth,
+		"grafana":           &conf.ExternalServices.Grafana.Auth,
+		"perses":            &conf.ExternalServices.Perses.Auth,
+		"prometheus":        &conf.ExternalServices.Prometheus.Auth,
+		"tracing":           &conf.ExternalServices.Tracing.Auth,
+	}
+	oauth2ServiceNames := make([]string, 0, len(oauth2Services))
+	for name := range oauth2Services {
+		oauth2ServiceNames = append(oauth2ServiceNames, name)
+	}
+	sort.Strings(oauth2ServiceNames)
+	for _, svcName := range oauth2ServiceNames {
+		svcAuth := oauth2Services[svcName]
+		if svcAuth.Type == AuthTypeOAuth2 {
+			if svcAuth.OAuth2.TokenURL == "" {
+				return fmt.Errorf("%s: oauth2.token_url is required when auth type is oauth2", svcName)
+			}
+			if svcAuth.OAuth2.ClientID == "" {
+				return fmt.Errorf("%s: oauth2.client_id is required when auth type is oauth2", svcName)
+			}
+			if svcAuth.OAuth2.ClientSecret == "" {
+				return fmt.Errorf("%s: oauth2.client_secret is required when auth type is oauth2", svcName)
+			}
+			if !strings.HasPrefix(svcAuth.OAuth2.TokenURL, "https://") {
+				if !svcAuth.InsecureSkipVerify {
+					return fmt.Errorf("%s: oauth2.token_url must use HTTPS (or set insecure_skip_verify for dev/test)", svcName)
+				}
+				log.Warningf("%s: oauth2.token_url uses HTTP; this is insecure and should only be used for dev/test", svcName)
+			}
+			if svcAuth.OAuth2.AuthStyle != "" && svcAuth.OAuth2.AuthStyle != "header" && svcAuth.OAuth2.AuthStyle != "params" {
+				return fmt.Errorf("%s: oauth2.auth_style must be 'header' or 'params' (got %q)", svcName, svcAuth.OAuth2.AuthStyle)
+			}
+			if svcAuth.UseKialiToken {
+				return fmt.Errorf("%s: use_kiali_token and oauth2 auth type are mutually exclusive", svcName)
+			}
+		}
+	}
+	if conf.ExternalServices.Tracing.Auth.Type == AuthTypeOAuth2 && conf.ExternalServices.Tracing.UseGRPC {
+		return fmt.Errorf("tracing: oauth2 token injection is not implemented for gRPC transport; set use_grpc: false")
 	}
 
 	return nil

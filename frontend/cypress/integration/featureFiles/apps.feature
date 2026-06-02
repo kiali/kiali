@@ -138,8 +138,7 @@ Feature: Kiali Apps List page
     Then the list is sorted by column "Cluster" in "descending" order
 
   @bookinfo-app
-  @core-1
-  @health-cache-metrics
+  @core-caching
   Scenario: Health cache metrics increase when visiting apps list page
     Given health cache is enabled
     And health cache metrics are recorded

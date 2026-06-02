@@ -12,14 +12,14 @@ Feature: Kiali Namespace Details page
     And user is at the details page for the "bookinfo" namespace
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See namespace detail overview
     Then user sees the namespace detail overview for "bookinfo"
     And user sees the title "bookinfo" in the namespace detail page
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See namespace details card attributes
     Then the details card has a "Status" entry
@@ -27,7 +27,7 @@ Feature: Kiali Namespace Details page
     And the details card has a "Mode" entry
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See namespace resources card
     Then user sees the "Resources" card
@@ -37,18 +37,18 @@ Feature: Kiali Namespace Details page
     And user sees resource links for "Istio config"
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See namespace labels card
     Then user sees the "Labels" card
 
   @bookinfo-app
-  @core-2
+  @core-caching
   @offline
   Scenario: See namespace annotations card
     Then user sees the "Annotations" card
 
   @bookinfo-app
-  @core-2
+  @core-caching
   Scenario: See namespace minigraph
     Then user sees a minigraph

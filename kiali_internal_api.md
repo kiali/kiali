@@ -7004,32 +7004,6 @@ on the containing object.
 
 
 
-### <span id="cert-info"></span> CertInfo
-
-
-> CertInfo contains the information for a given certificate
-  
-
-
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| Accessible | boolean| `bool` |  | |  |  |
-| ClusterName | string| `string` |  | |  |  |
-| ConfigMapName | string| `string` |  | |  |  |
-| ConfigMapNamespace | string| `string` |  | |  |  |
-| DNSNames | []string| `[]string` |  | |  |  |
-| Error | string| `string` |  | |  |  |
-| Issuer | string| `string` |  | |  |  |
-| NotAfter | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
-| NotBefore | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
-
-
-
 ### <span id="certificate"></span> Certificate
 
 

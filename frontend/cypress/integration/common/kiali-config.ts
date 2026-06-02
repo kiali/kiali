@@ -223,85 +223,52 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
 };
 
 /**
- * Restores a Kiali feature to its previous value after a test.
- * Call this in an After hook.
+ * Single-restart helper so callers that already know the install type
+ * (operator vs Helm) don't have to re-discover deployment info.
  */
-export const restoreKialiFeature = (featureConfig: KialiFeatureConfig): void => {
-  const primaryResource = (Cypress.env('KIALI_PRIMARY_RESOURCE') as string | undefined) ?? '';
-  const prev = (Cypress.env(featureConfig.envKeyPrev) as string | undefined) ?? '';
-  const prevBool = prev === 'true';
+export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
+  const doPatch = (info: KialiRuntimeInfo): void => {
+    const doRestart = (): void => {
+      restartKiali(info.deploymentName, info.namespace);
+    };
 
-  const kialiDeploymentName = (Cypress.env('KIALI_DEPLOYMENT_NAME') as string | undefined) ?? 'kiali';
-  const kialiDeploymentNamespace = (Cypress.env('KIALI_DEPLOYMENT_NAMESPACE') as string | undefined) ?? 'istio-system';
-  const kialiConfigMapName = (Cypress.env('KIALI_CONFIGMAP_NAME') as string | undefined) ?? 'kiali';
-
-  const doRestart = (): void => {
     cy.exec(
-      `kubectl rollout restart deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} && kubectl rollout status deployment/${kialiDeploymentName} -n ${kialiDeploymentNamespace} --timeout=240s`,
-      { timeout: 300000, failOnNonZeroExit: false }
-    );
+      `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+      { failOnNonZeroExit: false }
+    ).then(result => {
+      const primaryResource = result.stdout.trim();
+
+      if (primaryResource) {
+        const parts = primaryResource.split('/');
+        const patchJson = JSON.stringify({
+          spec: { kiali_internal: { graph_cache: { enabled: true }, health_cache: { enabled: true } } }
+        });
+        cy.exec(`kubectl patch kiali ${parts[1]} -n ${parts[0]} --type merge -p '${patchJson}'`).then(() =>
+          doRestart()
+        );
+        return;
+      }
+
+      cy.exec(
+        `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
+      );
+      cy.exec(
+        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true' /tmp/kiali-config.yaml`
+      );
+      cy.exec(
+        `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
+      ).then(() => doRestart());
+    });
   };
 
-  if (primaryResource) {
-    // Operator installation - patch the Kiali CR
-    const parts = primaryResource.split('/');
-    const crNamespace = parts[0];
-    const crName = parts[1];
-
-    // Build the patch JSON dynamically using the last path segment as the key
-    const pathParts = featureConfig.crSpecPath.split('.');
-    const leafKey = pathParts[pathParts.length - 1];
-    let patchObj: Record<string, unknown> = { [leafKey]: prevBool };
-    for (let i = pathParts.length - 2; i >= 0; i--) {
-      patchObj = { [pathParts[i]]: patchObj };
-    }
-    const patchJson = JSON.stringify({ spec: patchObj });
-
-    cy.exec(`kubectl patch kiali ${crName} -n ${crNamespace} --type merge -p '${patchJson}'`, {
-      failOnNonZeroExit: false
-    }).then(() => doRestart());
-    return;
+  if (existingInfo) {
+    doPatch(existingInfo);
+  } else {
+    discoverKialiRuntimeInfo().then(info => doPatch(info));
   }
-
-  // Helm installation - restore via ConfigMap
-  cy.exec(
-    `kubectl get configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`,
-    { failOnNonZeroExit: false }
-  ).then(() => {
-    if (prev === '' || prev === 'null') {
-      cy.exec(`yq -i 'del(${featureConfig.configPath})' /tmp/kiali-config.yaml`, { failOnNonZeroExit: false });
-    } else {
-      cy.exec(`yq -i '${featureConfig.configPath} = ${prevBool}' /tmp/kiali-config.yaml`, {
-        failOnNonZeroExit: false
-      });
-    }
-
-    cy.exec(
-      `kubectl create configmap ${kialiConfigMapName} -n ${kialiDeploymentNamespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`,
-      { failOnNonZeroExit: false }
-    ).then(() => doRestart());
-  });
 };
 
 // Pre-defined feature configurations
-export const GRAPH_CACHE_CONFIG: KialiFeatureConfig = {
-  configPath: '.kiali_internal.graph_cache.enabled',
-  crSpecPath: 'kiali_internal.graph_cache.enabled',
-  envKeyPrev: 'GRAPH_CACHE_PREV'
-};
-
-export const HEALTH_CACHE_CONFIG: KialiFeatureConfig = {
-  configPath: '.kiali_internal.health_cache.enabled',
-  crSpecPath: 'kiali_internal.health_cache.enabled',
-  envKeyPrev: 'HEALTH_CACHE_PREV'
-};
-
-export const PROMETHEUS_DISABLED_CONFIG: KialiFeatureConfig = {
-  configPath: '.external_services.prometheus.enabled',
-  crSpecPath: 'external_services.prometheus.enabled',
-  envKeyPrev: 'PROMETHEUS_ENABLED_PREV'
-};
-
 export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
   configPath: '.external_services.tracing.use_waypoint_name',
   crSpecPath: 'external_services.tracing.use_waypoint_name',

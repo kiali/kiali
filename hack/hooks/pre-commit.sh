@@ -83,7 +83,7 @@ if [ "${#yaml_files[@]}" -gt 0 ]; then
   if [ "${#yaml_files[@]}" -gt 0 ]; then
     yaml_unformatted=()
     while IFS= read -r f; do
-      yaml_unformatted+=("$f")
+      [[ -n "$f" ]] && yaml_unformatted+=("$f")
     done < <(yamlfmt -dry -quiet "${yaml_files[@]}" 2>&1 | sed 's/^.*://')
   fi
 fi

@@ -148,3 +148,42 @@ func mockConfig(api *PromAPIMock, ret prom_v1.ConfigResult) {
 func mockRuntimeinfoResult(api *PromAPIMock, ret prom_v1.RuntimeinfoResult) {
 	api.On("Runtimeinfo", mock.Anything).Return(ret, nil)
 }
+
+// TestSkipCacheContextBypassesPromCache verifies that when ContextWithSkipCache
+// is used, repeated identical queries always hit the Prometheus API (never served
+// from cache).
+func TestSkipCacheContextBypassesPromCache(t *testing.T) {
+	client, api, err := setupMocked()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	queryTime := time.Date(2017, 0o1, 15, 0, 0, 0, 0, time.UTC)
+
+	vector := model.Vector{
+		&model.Sample{
+			Timestamp: model.Now(),
+			Value:     model.SampleValue(1),
+			Metric:    model.Metric{"foo": "bar"},
+		},
+	}
+	api.OnQueryTime(`rate(istio_requests_total{destination_service_namespace="ns",source_workload_namespace!="ns",destination_cluster="east"}[5m]) > 0`, &queryTime, vector)
+	api.OnQueryTime(`rate(istio_requests_total{source_workload_namespace="ns",source_cluster="east"}[5m]) > 0`, &queryTime, vector)
+
+	ctx := prometheus.ContextWithSkipCache(context.Background())
+
+	// First call
+	rates1, err1 := client.GetAllRequestRates(ctx, "ns", "east", "5m", queryTime)
+	assert.NoError(t, err1)
+	assert.Equal(t, 2, rates1.Len())
+
+	// Second call with same parameters — should NOT be served from cache
+	rates2, err2 := client.GetAllRequestRates(ctx, "ns", "east", "5m", queryTime)
+	assert.NoError(t, err2)
+	assert.Equal(t, 2, rates2.Len())
+
+	// Verify the mock Query was called 4 times total (2 queries x 2 calls),
+	// not 2 times (which would indicate the second call hit the cache).
+	api.AssertNumberOfCalls(t, "Query", 4)
+}

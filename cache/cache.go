@@ -58,6 +58,12 @@ type KialiCache interface {
 	// The healthType parameter is used for metrics tracking (app, service, or workload).
 	GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool)
 
+	// HealthKeys returns all keys currently in the health cache.
+	HealthKeys() []string
+
+	// RemoveHealth removes the cached health entry for the given cluster/namespace.
+	RemoveHealth(cluster, namespace string)
+
 	// SetHealth stores health data in cache.
 	// Can be called by background job OR by individual handlers
 	// to update specific entries independently.
@@ -453,6 +459,16 @@ func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType interna
 	}
 
 	return data, found
+}
+
+// HealthKeys returns all keys currently in the health cache.
+func (c *kialiCacheImpl) HealthKeys() []string {
+	return c.healthStore.Keys()
+}
+
+// RemoveHealth removes the cached health entry for the given cluster/namespace.
+func (c *kialiCacheImpl) RemoveHealth(cluster, namespace string) {
+	c.healthStore.Remove(models.HealthCacheKey(cluster, namespace))
 }
 
 // SetHealth stores health data in cache.
