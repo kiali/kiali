@@ -322,7 +322,7 @@ func (c Credential) String() string {
 type Auth struct {
 	CAFile             string       `yaml:"ca_file" json:"-"` // Deprecated: CAFile is ignored. Use kiali-cabundle ConfigMap instead.
 	CertFile           Credential   `yaml:"cert_file" json:"certFile"`
-	InsecureSkipVerify bool         `yaml:"insecure_skip_verify" json:"insecureSkipVerify"`
+	InsecureSkipVerify bool         `yaml:"insecure_skip_verify" json:"insecureSkipVerify"` // When auth.type is oauth2, this applies only to the backend service, not the token endpoint. Add the token endpoint CA to kiali-cabundle instead.
 	KeyFile            Credential   `yaml:"key_file" json:"keyFile"`
 	OAuth2             OAuth2Config `yaml:"oauth2,omitempty" json:"oauth2,omitempty"`
 	Password           Credential   `yaml:"password" json:"password"`
@@ -2235,7 +2235,7 @@ func Validate(conf *Config) error {
 		}
 	}
 	if conf.ExternalServices.Tracing.Auth.Type == AuthTypeOAuth2 && conf.ExternalServices.Tracing.UseGRPC {
-		return fmt.Errorf("tracing: oauth2 auth type is not supported with use_grpc=true; set use_grpc: false")
+		return fmt.Errorf("tracing: oauth2 token injection is not implemented for gRPC transport; set use_grpc: false")
 	}
 
 	return nil

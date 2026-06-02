@@ -220,6 +220,9 @@ func newOAuth2RoundTripper(conf *config.Config, auth *config.Auth, delegate http
 
 // buildTokenTLSConfig creates a TLS config for the token endpoint that always verifies
 // server certificates regardless of the service auth's InsecureSkipVerify setting.
+// Note: auth.insecure_skip_verify intentionally does NOT apply to the token endpoint — only
+// to the backend service connection. Users who need to trust a private CA for the token
+// endpoint must add it to the kiali-cabundle ConfigMap, not use insecure_skip_verify.
 func buildTokenTLSConfig(conf *config.Config) *tls.Config {
 	cfg := &tls.Config{
 		InsecureSkipVerify: true,
