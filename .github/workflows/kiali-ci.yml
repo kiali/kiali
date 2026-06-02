@@ -251,7 +251,7 @@ jobs:
 
   # Separate job: make test writes _output binaries that break a second checkout in the same workspace.
   codecov_upload_pr_base:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     name: Upload PR base coverage to Codecov
     runs-on: ubuntu-latest
     permissions:
@@ -345,7 +345,7 @@ jobs:
     # -------------------------------
     # Select the PR base report from the target branch head (not a stale default-branch upload).
     - name: Select Codecov PR base commit
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       with:
         base_sha: ${{ github.event.pull_request.base.sha }}
@@ -355,7 +355,7 @@ jobs:
 
     # Upload on PRs and on push to master/release branches (sail-operator pattern: push + pull_request).
     - name: Upload coverage to Codecov (pull request)
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
       uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       with:
         disable_search: true
