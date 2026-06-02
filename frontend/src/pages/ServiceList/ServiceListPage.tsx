@@ -122,7 +122,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
 
   private syncColumnsFromURL = (): void => {
     const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'service');
+    const validIds = defaultIds.filter(id => id !== 'name');
 
     const urlParam = HistoryManager.getParam(URLParam.SERVICES_HIDDEN_COLUMNS);
     if (urlParam !== undefined) {
@@ -166,7 +166,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
           id,
           title: c.title,
           isShown: true,
-          isDisabled: id === 'service'
+          isDisabled: id === 'name'
         } as ManagedColumn;
       });
   };
@@ -204,7 +204,7 @@ class ServiceListPageComponent extends FilterComponent.Component<
         title: c.title,
         isShownByDefault: true,
         isShown: c.isShown,
-        isUntoggleable: c.id === 'service'
+        isUntoggleable: c.id === 'name'
       }));
   };
 

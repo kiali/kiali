@@ -120,7 +120,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
 
   private syncColumnsFromURL = (): void => {
     const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'app');
+    const validIds = defaultIds.filter(id => id !== 'name');
 
     const urlParam = HistoryManager.getParam(URLParam.APPS_HIDDEN_COLUMNS);
     if (urlParam !== undefined) {
@@ -164,7 +164,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           id,
           title: c.title,
           isShown: true,
-          isDisabled: id === 'app'
+          isDisabled: id === 'name'
         } as ManagedColumn;
       });
   };
@@ -202,7 +202,7 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
         title: c.title,
         isShownByDefault: true,
         isShown: c.isShown,
-        isUntoggleable: c.id === 'app'
+        isUntoggleable: c.id === 'name'
       }));
   };
 

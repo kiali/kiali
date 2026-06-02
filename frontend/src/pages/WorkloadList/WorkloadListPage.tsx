@@ -121,7 +121,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
 
   private syncColumnsFromURL = (): void => {
     const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'workload');
+    const validIds = defaultIds.filter(id => id !== 'name');
 
     const urlParam = HistoryManager.getParam(URLParam.WORKLOADS_HIDDEN_COLUMNS);
     if (urlParam !== undefined) {
@@ -165,7 +165,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
           id,
           title: c.title,
           isShown: true,
-          isDisabled: id === 'workload'
+          isDisabled: id === 'name'
         } as ManagedColumn;
       });
   };
@@ -203,7 +203,7 @@ class WorkloadListPageComponent extends FilterComponent.Component<
         title: c.title,
         isShownByDefault: true,
         isShown: c.isShown,
-        isUntoggleable: c.id === 'workload'
+        isUntoggleable: c.id === 'name'
       }));
   };
 
