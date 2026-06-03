@@ -21,6 +21,13 @@ func Catalog() []Prompt {
 			Title:       "Application Health Analysis",
 		},
 		{
+			Category:    "application-details",
+			Description: "Analyze the current application for health issues, traffic anomalies, and missing sidecars",
+			Name:        "app-details-troubleshooting",
+			Query:       "Analyze the current application and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.",
+			Title:       "Application Troubleshooting",
+		},
+		{
 			Category:    "graph",
 			Description: "Analyze the traffic topology showing service dependencies and traffic flow",
 			Name:        "traffic-topology",
@@ -33,6 +40,13 @@ func Catalog() []Prompt {
 			Name:        "istio-config-review",
 			Query:       "Review the Istio configuration currently shown and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.",
 			Title:       "Istio Config Review",
+		},
+		{
+			Category:    "istio-details",
+			Description: "Review the current Istio object for misconfiguration, ineffective rules, or traffic impact",
+			Name:        "istio-object-review",
+			Query:       "Analyze the current Istio configuration object and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.",
+			Title:       "Istio Object Review",
 		},
 		{
 			Category:    "mesh",
@@ -49,6 +63,13 @@ func Catalog() []Prompt {
 			Title:       "Namespace Overview",
 		},
 		{
+			Category:    "namespace-details",
+			Description: "Analyze the current namespace for health issues, injection problems, and Istio config issues",
+			Name:        "namespace-troubleshooting",
+			Query:       "Analyze the current namespace and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.",
+			Title:       "Namespace Troubleshooting",
+		},
+		{
 			Category:    "overview",
 			Description: "Check the health of your service mesh including control plane and data plane status",
 			Name:        "mesh-health-check",
@@ -63,6 +84,13 @@ func Catalog() []Prompt {
 			Title:       "Service Health Analysis",
 		},
 		{
+			Category:    "service-details",
+			Description: "Analyze the current service for health issues, unusual traffic, and related workload problems",
+			Name:        "service-troubleshooting",
+			Query:       "Analyze the current service and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.",
+			Title:       "Service Troubleshooting",
+		},
+		{
 			Category:    "services",
 			Description: "Show the traffic topology for services in the selected namespaces",
 			Name:        "service-traffic",
@@ -75,6 +103,13 @@ func Catalog() []Prompt {
 			Name:        "workload-health",
 			Query:       "Check the workloads currently shown and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.",
 			Title:       "Workload Health Analysis",
+		},
+		{
+			Category:    "workload-details",
+			Description: "Analyze the current workload for degraded status, traffic anomalies, and sidecar issues",
+			Name:        "workload-troubleshooting",
+			Query:       "Analyze the current workload and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
+			Title:       "Workload Troubleshooting",
 		},
 	}
 }
