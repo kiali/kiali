@@ -17,10 +17,11 @@
 # 4. Create cluster1 collectors:
 #    - otel (local cluster1 tracing -> Tempo gateway)
 #    - otel-remote-<cluster2-name> (remote tracing -> Tempo gateway)
-# 5. Expose the remote receiver collector in cluster1 via Route
-# 6. Create the remote collector in cluster2 and point it to the Route
-# 7. Patch the Istio mesh config in both clusters to use the local collector
-# 8. Apply mesh-level Telemetry and optional namespace-level Telemetry
+# 5. Expose the remote receiver collector in cluster1 via passthrough Route
+# 6. Issue mTLS certificates for remote -> central collector traffic
+# 7. Create the remote collector in cluster2 and point it to the Route
+# 8. Patch the Istio mesh config in both clusters to use the local collector
+# 9. Apply mesh-level Telemetry and optional namespace-level Telemetry
 ##############################################################################
 
 set -euo pipefail
@@ -64,7 +65,8 @@ Usage:
     [--tracing-namespaces <csv>] \
     [--create-tracing-ui-route <true|false>] \
     [--restart-waypoints <true|false>] \
-    [--configure-kiali <true|false>]
+    [--configure-kiali <true|false>] \
+    [--install-cert-manager <true|false>]
 
 Required:
   --cluster1-context         Kube context of the central cluster (Tempo lives here)
@@ -85,6 +87,7 @@ Optional:
   --create-tracing-ui-route  Create a tracing-ui Route to the Jaeger UI in cluster1 (default: true)
   --restart-waypoints        Restart a waypoint deployment in tracing namespaces if present (default: false)
   --configure-kiali          Patch Kiali in cluster1 to point tracing to Tempo (default: true)
+  --install-cert-manager     Install the OpenShift cert-manager operator in cluster1 if missing (default: true)
 
 Example:
   ./hack/istio/multicluster/install-tempo-tracing-multicluster-openshift.sh \
@@ -109,8 +112,10 @@ TEMPO_OPERATOR_NAMESPACE="openshift-tempo-operator"
 TRACING_NAMESPACES_CSV="bookinfo"
 CREATE_TRACING_UI_ROUTE="true"
 RESTART_WAYPOINTS="false"
-REMOTE_ROUTE_CA_CONFIGMAP_NAME="cluster1-route-ca"
 CONFIGURE_KIALI="true"
+INSTALL_CERT_MANAGER="true"
+CERT_MANAGER_OPERATOR_NAMESPACE="cert-manager-operator"
+CERT_MANAGER_OPERATOR_CHANNEL="stable-v1"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -129,6 +134,7 @@ while [[ $# -gt 0 ]]; do
     --create-tracing-ui-route) CREATE_TRACING_UI_ROUTE="$2"; shift 2 ;;
     --restart-waypoints) RESTART_WAYPOINTS="$2"; shift 2 ;;
     --configure-kiali) CONFIGURE_KIALI="$2"; shift 2 ;;
+    --install-cert-manager) INSTALL_CERT_MANAGER="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) error "Unknown option: $1 (use --help)" ;;
   esac
@@ -147,6 +153,10 @@ fi
 
 if [[ "${CONFIGURE_KIALI}" != "true" && "${CONFIGURE_KIALI}" != "false" ]]; then
   error "--configure-kiali must be true or false"
+fi
+
+if [[ "${INSTALL_CERT_MANAGER}" != "true" && "${INSTALL_CERT_MANAGER}" != "false" ]]; then
+  error "--install-cert-manager must be true or false"
 fi
 
 require_bin oc
@@ -236,6 +246,25 @@ wait_for_service() {
   error "Timed out waiting for Service [${namespace}/${service}] on context [${context}]"
 }
 
+wait_for_certificate() {
+  local context="$1"
+  local namespace="$2"
+  local certificate="$3"
+  local attempts="${4:-90}"
+  local sleep_s="${5:-5}"
+  local ready=""
+
+  for _ in $(seq 1 "${attempts}"); do
+    ready="$(oc --context "${context}" -n "${namespace}" get certificate "${certificate}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || true)"
+    if [[ "${ready}" == "True" ]]; then
+      return 0
+    fi
+    sleep "${sleep_s}"
+  done
+
+  error "Timed out waiting for Certificate [${namespace}/${certificate}] on context [${context}]"
+}
+
 wait_for_route_host() {
   local context="$1"
   local namespace="$2"
@@ -294,6 +323,53 @@ spec:
   upgradeStrategy: Default
 EOF
 )"
+}
+
+install_cert_manager_operator_cluster1() {
+  local context="$1"
+
+  if oc --context "${context}" get crd certificates.cert-manager.io &>/dev/null; then
+    info "cert-manager is already installed on cluster1"
+    return 0
+  fi
+
+  if [[ "${INSTALL_CERT_MANAGER}" != "true" ]]; then
+    error "cert-manager is required for mTLS between collectors, but it is not installed on cluster1 and --install-cert-manager=false"
+  fi
+
+  info "Installing cert-manager Operator for Red Hat OpenShift on cluster1"
+  ensure_namespace "${context}" "${CERT_MANAGER_OPERATOR_NAMESPACE}"
+  apply_yaml "${context}" "$(cat <<EOF
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-cert-manager-operator
+  namespace: ${CERT_MANAGER_OPERATOR_NAMESPACE}
+spec:
+  targetNamespaces:
+  - ${CERT_MANAGER_OPERATOR_NAMESPACE}
+EOF
+)"
+
+  apply_yaml "${context}" "$(cat <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openshift-cert-manager-operator
+  namespace: ${CERT_MANAGER_OPERATOR_NAMESPACE}
+spec:
+  channel: ${CERT_MANAGER_OPERATOR_CHANNEL}
+  installPlanApproval: Automatic
+  name: openshift-cert-manager-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+)"
+
+  wait_for_crd "${context}" "certificates.cert-manager.io" 120 5
+  wait_for_crd "${context}" "issuers.cert-manager.io" 120 5
+  wait_for_any_deployment_in_namespace "${context}" "${CERT_MANAGER_OPERATOR_NAMESPACE}" 120 5
+  wait_for_any_deployment_in_namespace "${context}" "cert-manager" 120 5
 }
 
 install_tempo_operator_cluster1() {
@@ -504,14 +580,30 @@ metadata:
 spec:
   mode: deployment
   replicas: 1
+  volumeMounts:
+  - name: otel-remote-server-certs
+    mountPath: /etc/otel/server
+    readOnly: true
+  - name: otel-remote-ca
+    mountPath: /etc/otel/ca
+    readOnly: true
+  volumes:
+  - name: otel-remote-server-certs
+    secret:
+      secretName: ${REMOTE_MTLS_SERVER_SECRET_NAME}
+  - name: otel-remote-ca
+    secret:
+      secretName: ${REMOTE_MTLS_CA_SECRET_NAME}
   config:
     receivers:
       otlp:
         protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+            tls:
+              cert_file: /etc/otel/server/tls.crt
+              key_file: /etc/otel/server/tls.key
+              client_ca_file: /etc/otel/ca/tls.crt
     processors:
       batch: {}
       resource:
@@ -558,7 +650,6 @@ spec:
 EOF
 )"
 
-  wait_for_deployment "${context}" "${ISTIO_NAMESPACE}" "${collector_name}-collector"
   wait_for_service "${context}" "${ISTIO_NAMESPACE}" "${collector_name}-collector"
 }
 
@@ -582,11 +673,96 @@ spec:
   port:
     targetPort: otlp-http
   tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
+    termination: passthrough
   wildcardPolicy: None
 EOF
 )"
+}
+
+issue_remote_collector_mtls_certs_cluster1() {
+  local context="$1"
+  local collector_name="$2"
+  local collector_service_name="$3"
+  local route_host="$4"
+
+  info "Issuing mTLS certificates for remote collector traffic on cluster1"
+  apply_yaml "${context}" "$(cat <<EOF
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ${collector_name}-selfsigned-issuer
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${collector_name}-ca
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  isCA: true
+  commonName: ${collector_name}-ca
+  secretName: ${REMOTE_MTLS_CA_SECRET_NAME}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: ${collector_name}-selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ${collector_name}-ca-issuer
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  ca:
+    secretName: ${REMOTE_MTLS_CA_SECRET_NAME}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${collector_name}-server
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  secretName: ${REMOTE_MTLS_SERVER_SECRET_NAME}
+  isCA: false
+  usages:
+  - server auth
+  dnsNames:
+  - ${collector_service_name}
+  - ${collector_service_name}.${ISTIO_NAMESPACE}.svc
+  - ${collector_service_name}.${ISTIO_NAMESPACE}.svc.cluster.local
+  - ${route_host}
+  issuerRef:
+    name: ${collector_name}-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ${collector_name}-client
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  secretName: ${REMOTE_MTLS_CLIENT_SECRET_NAME}
+  isCA: false
+  usages:
+  - client auth
+  dnsNames:
+  - ${collector_name}-client.${ISTIO_NAMESPACE}.svc.cluster.local
+  issuerRef:
+    name: ${collector_name}-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+EOF
+)"
+
+  wait_for_certificate "${context}" "${ISTIO_NAMESPACE}" "${collector_name}-ca" 120 5
+  wait_for_certificate "${context}" "${ISTIO_NAMESPACE}" "${collector_name}-server" 120 5
+  wait_for_certificate "${context}" "${ISTIO_NAMESPACE}" "${collector_name}-client" 120 5
 }
 
 apply_cluster1_tracing_ui_route() {
@@ -728,27 +904,38 @@ EOF
 )"
 }
 
-sync_cluster1_router_ca_to_cluster2() {
+sync_cluster1_remote_certs_to_cluster2() {
   local context_cluster1="$1"
   local context_cluster2="$2"
   local ca_bundle=""
+  local client_crt=""
+  local client_key=""
 
-  info "Syncing cluster1 router CA into cluster2 for secure Route TLS validation"
-  ca_bundle="$(kubectl --context "${context_cluster1}" -n openshift-config-managed get configmap router-ca -o jsonpath='{.data.ca-bundle\.crt}' 2>/dev/null || true)"
+  info "Syncing remote collector mTLS client materials from cluster1 to cluster2"
+  ca_bundle="$(oc --context "${context_cluster1}" -n "${ISTIO_NAMESPACE}" get secret "${REMOTE_MTLS_CA_SECRET_NAME}" -o jsonpath='{.data.tls\.crt}' 2>/dev/null | base64 -d || true)"
+  client_crt="$(oc --context "${context_cluster1}" -n "${ISTIO_NAMESPACE}" get secret "${REMOTE_MTLS_CLIENT_SECRET_NAME}" -o jsonpath='{.data.tls\.crt}' 2>/dev/null | base64 -d || true)"
+  client_key="$(oc --context "${context_cluster1}" -n "${ISTIO_NAMESPACE}" get secret "${REMOTE_MTLS_CLIENT_SECRET_NAME}" -o jsonpath='{.data.tls\.key}' 2>/dev/null | base64 -d || true)"
 
   if [[ -z "${ca_bundle}" ]]; then
-    error "Could not read [openshift-config-managed/router-ca] from cluster1. A CA bundle for the Route is required to avoid insecure_skip_verify."
+    error "Could not read CA certificate from Secret [${ISTIO_NAMESPACE}/${REMOTE_MTLS_CA_SECRET_NAME}] on cluster1"
   fi
+  [[ -n "${client_crt}" ]] || error "Could not read client certificate from Secret [${ISTIO_NAMESPACE}/${REMOTE_MTLS_CLIENT_SECRET_NAME}] on cluster1"
+  [[ -n "${client_key}" ]] || error "Could not read client key from Secret [${ISTIO_NAMESPACE}/${REMOTE_MTLS_CLIENT_SECRET_NAME}] on cluster1"
 
   apply_yaml "${context_cluster2}" "$(cat <<EOF
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
-  name: ${REMOTE_ROUTE_CA_CONFIGMAP_NAME}
+  name: ${REMOTE_MTLS_CLIENT_BUNDLE_SECRET_NAME}
   namespace: ${ISTIO_NAMESPACE}
-data:
-  ca-bundle.crt: |
+type: Opaque
+stringData:
+  ca.crt: |
 $(printf '%s\n' "${ca_bundle}" | indent_text 4)
+  tls.crt: |
+$(printf '%s\n' "${client_crt}" | indent_text 4)
+  tls.key: |
+$(printf '%s\n' "${client_key}" | indent_text 4)
 EOF
 )"
 }
@@ -769,13 +956,13 @@ spec:
   mode: deployment
   replicas: 1
   volumeMounts:
-  - name: cluster1-route-ca
-    mountPath: /etc/pki/cluster1-route
+  - name: otel-remote-client-bundle
+    mountPath: /etc/otel/mtls
     readOnly: true
   volumes:
-  - name: cluster1-route-ca
-    configMap:
-      name: ${REMOTE_ROUTE_CA_CONFIGMAP_NAME}
+  - name: otel-remote-client-bundle
+    secret:
+      secretName: ${REMOTE_MTLS_CLIENT_BUNDLE_SECRET_NAME}
   config:
     receivers:
       otlp:
@@ -795,7 +982,10 @@ spec:
       otlp_http/central:
         endpoint: https://${central_route_host}
         tls:
-          ca_file: /etc/pki/cluster1-route/ca-bundle.crt
+          insecure: false
+          cert_file: /etc/otel/mtls/tls.crt
+          key_file: /etc/otel/mtls/tls.key
+          ca_file: /etc/otel/mtls/ca.crt
     service:
       pipelines:
         traces:
@@ -826,6 +1016,10 @@ ensure_openshift_context "${CTX_CLUSTER2}"
 REMOTE_COLLECTOR_NAME="otel-remote-${CLUSTER2_NAME}"
 REMOTE_COLLECTOR_ROUTE_NAME="${REMOTE_COLLECTOR_NAME}"
 REMOTE_COLLECTOR_SERVICE_NAME="${REMOTE_COLLECTOR_NAME}-collector"
+REMOTE_MTLS_CA_SECRET_NAME="${REMOTE_COLLECTOR_NAME}-ca"
+REMOTE_MTLS_SERVER_SECRET_NAME="${REMOTE_COLLECTOR_NAME}-server-tls"
+REMOTE_MTLS_CLIENT_SECRET_NAME="${REMOTE_COLLECTOR_NAME}-client-tls"
+REMOTE_MTLS_CLIENT_BUNDLE_SECRET_NAME="${REMOTE_COLLECTOR_NAME}-client-bundle"
 
 info "=== SETTINGS ==="
 info "CTX_CLUSTER1=${CTX_CLUSTER1}"
@@ -843,8 +1037,10 @@ info "TRACING_NAMESPACES=${TRACING_NAMESPACES_CSV}"
 info "CREATE_TRACING_UI_ROUTE=${CREATE_TRACING_UI_ROUTE}"
 info "RESTART_WAYPOINTS=${RESTART_WAYPOINTS}"
 info "CONFIGURE_KIALI=${CONFIGURE_KIALI}"
+info "INSTALL_CERT_MANAGER=${INSTALL_CERT_MANAGER}"
 
 info "=== Step 1: Install operators ==="
+install_cert_manager_operator_cluster1 "${CTX_CLUSTER1}"
 install_tempo_operator_cluster1 "${CTX_CLUSTER1}"
 install_opentelemetry_operator "${CTX_CLUSTER1}"
 install_opentelemetry_operator "${CTX_CLUSTER2}"
@@ -862,13 +1058,15 @@ info "=== Step 4: Expose the dedicated remote receiver on cluster1 ==="
 apply_cluster1_remote_route "${CTX_CLUSTER1}" "${REMOTE_COLLECTOR_ROUTE_NAME}" "${REMOTE_COLLECTOR_SERVICE_NAME}"
 REMOTE_COLLECTOR_ROUTE_HOST="$(wait_for_route_host "${CTX_CLUSTER1}" "${ISTIO_NAMESPACE}" "${REMOTE_COLLECTOR_ROUTE_NAME}")"
 info "Remote collector Route host: ${REMOTE_COLLECTOR_ROUTE_HOST}"
+issue_remote_collector_mtls_certs_cluster1 "${CTX_CLUSTER1}" "${REMOTE_COLLECTOR_NAME}" "${REMOTE_COLLECTOR_SERVICE_NAME}" "${REMOTE_COLLECTOR_ROUTE_HOST}"
+wait_for_deployment "${CTX_CLUSTER1}" "${ISTIO_NAMESPACE}" "${REMOTE_COLLECTOR_NAME}-collector"
 
 if [[ "${CREATE_TRACING_UI_ROUTE}" == "true" ]]; then
   apply_cluster1_tracing_ui_route "${CTX_CLUSTER1}"
 fi
 
 info "=== Step 5: Configure the remote collector on cluster2 ==="
-sync_cluster1_router_ca_to_cluster2 "${CTX_CLUSTER1}" "${CTX_CLUSTER2}"
+sync_cluster1_remote_certs_to_cluster2 "${CTX_CLUSTER1}" "${CTX_CLUSTER2}"
 apply_cluster2_remote_collector "${CTX_CLUSTER2}" "${REMOTE_COLLECTOR_ROUTE_HOST}"
 
 info "=== Step 6: Patch mesh config and apply Telemetry on both clusters ==="
