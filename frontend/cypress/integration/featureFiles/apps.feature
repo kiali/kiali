@@ -148,22 +148,26 @@ Feature: Kiali Apps List page
   @bookinfo-app
   @core-caching
   Scenario: Health status metric exports health values for apps
+    When user visits the apps list page for "bookinfo" namespace
     Then health status metrics should not be empty
 
   @bookinfo-app
   @core-caching
   Scenario: Health status metric shows healthy apps correctly
     Given a healthy application in the cluster
+    When user visits the apps list page for "bookinfo" namespace
     Then health status metric for "details" app "Healthy" in "bookinfo" namespace should be "Healthy"
 
   @bookinfo-app
   @core-caching
   Scenario: Health status metric shows failing apps correctly
     Given a failing application in the mesh
+    When user visits the apps list page for "alpha" namespace
     Then health status metric for "v-server" app "Failure" in "alpha" namespace should be "Failure"
 
   @bookinfo-app
   @core-caching
   Scenario: Health status metric shows degraded apps correctly
     Given a degraded application in the mesh
+    When user visits the apps list page for "alpha" namespace
     Then health status metric for "b-client" app "Degraded" in "alpha" namespace should be "Degraded"
