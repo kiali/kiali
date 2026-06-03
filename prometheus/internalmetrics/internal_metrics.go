@@ -687,7 +687,3 @@ func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType,
 	})
 }
 
-// GetHealthStatusMetric returns the health status gauge vec.
-func GetHealthStatusMetric() *prometheus.GaugeVec {
-	return Metrics.HealthStatus
-}
