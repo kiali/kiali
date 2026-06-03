@@ -14,7 +14,6 @@ import {
 } from './table';
 import { hasAtLeastOneClass, linkSelector } from './utils';
 import { openTab, waitForKialiApiReady } from './transition';
-import { enableKialiFeature, HEALTH_CACHE_CONFIG, HEALTH_STATUS_METRIC_CONFIG } from './kiali-config';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -470,9 +469,8 @@ const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]>
 };
 
 Given('health status metric is enabled', () => {
-  // Health status metric requires health cache to be enabled
-  enableKialiFeature(HEALTH_CACHE_CONFIG);
-  enableKialiFeature(HEALTH_STATUS_METRIC_CONFIG);
+  // Health cache is already enabled by @core-caching infrastructure
+  // No additional setup needed
   waitForKialiApiReady();
 });
 

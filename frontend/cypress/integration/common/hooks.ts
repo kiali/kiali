@@ -4,8 +4,7 @@ import {
   discoverKialiRuntimeInfo,
   enableKialiCaching,
   GRAPH_CACHE_CONFIG,
-  HEALTH_CACHE_CONFIG,
-  HEALTH_STATUS_METRIC_CONFIG
+  HEALTH_CACHE_CONFIG
 } from './kiali-config';
 import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
 
@@ -367,10 +366,5 @@ After({ tags: '@graph-cache-metrics' }, () => {
 });
 
 After({ tags: '@health-cache-metrics' }, () => {
-  restoreKialiFeature(HEALTH_CACHE_CONFIG);
-});
-
-After({ tags: '@health-status-metrics' }, () => {
-  restoreKialiFeature(HEALTH_STATUS_METRIC_CONFIG);
   restoreKialiFeature(HEALTH_CACHE_CONFIG);
 });

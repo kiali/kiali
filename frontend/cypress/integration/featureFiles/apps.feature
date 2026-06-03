@@ -146,16 +146,14 @@ Feature: Kiali Apps List page
     Then health cache metrics should show at least 1 hit
 
   @bookinfo-app
-  @core-1
-  @health-status-metrics
+  @core-caching
   Scenario: Health status metric exports health values for apps
     Given health status metric is enabled
     When user waits for health status metrics to be available
     Then health status metrics should not be empty
 
   @bookinfo-app
-  @core-1
-  @health-status-metrics
+  @core-caching
   Scenario: Health status metric shows healthy apps correctly
     Given health status metric is enabled
     And a healthy application in the cluster
@@ -163,9 +161,7 @@ Feature: Kiali Apps List page
     Then health status metric for "details" app "Healthy" in "bookinfo" namespace should be "Healthy"
 
   @bookinfo-app
-  @error-rates-app
-  @core-1
-  @health-status-metrics
+  @core-caching
   Scenario: Health status metric shows failing apps correctly
     Given health status metric is enabled
     And a failing application in the mesh
@@ -173,9 +169,7 @@ Feature: Kiali Apps List page
     Then health status metric for "v-server" app "Failure" in "alpha" namespace should be "Failure"
 
   @bookinfo-app
-  @error-rates-app
-  @core-1
-  @health-status-metrics
+  @core-caching
   Scenario: Health status metric shows degraded apps correctly
     Given health status metric is enabled
     And a degraded application in the mesh
