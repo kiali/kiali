@@ -468,18 +468,6 @@ const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]>
   });
 };
 
-Given('health status metric is enabled', () => {
-  // Health cache is already enabled by @core-caching infrastructure
-  // No additional setup needed
-  waitForKialiApiReady();
-});
-
-When('user waits for health status metrics to be available', () => {
-  // Wait a bit for health cache to populate and metrics to be exported
-  // Health cache refresh runs every few seconds
-  cy.wait(15000);
-});
-
 Then('health status metric for {string} app {string} in {string} namespace should be {string}', function (
   appName: string,
   healthStatus: string,
