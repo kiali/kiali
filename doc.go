@@ -51,6 +51,33 @@ type AppVersionParam struct {
 	Name string `json:"version"`
 }
 
+// swagger:parameters aiChatAI
+type ChatProviderParam struct {
+	// The AI provider name.
+	//
+	// in: path
+	// required: true
+	Name string `json:"provider"`
+}
+
+// swagger:parameters aiChatAI
+type ChatModelParam struct {
+	// The AI model name.
+	//
+	// in: path
+	// required: true
+	Name string `json:"model"`
+}
+
+// swagger:parameters MCPTools
+type ChatToolNameParam struct {
+	// The MCP tool name.
+	//
+	// in: path
+	// required: true
+	Name string `json:"tool_name"`
+}
+
 // swagger:parameters graphAggregate graphAggregateByService graphApp graphAppVersion graphService graphWorkload
 type ClusterParam struct {
 	// The cluster name. If not supplied queries/results will not be constrained by cluster.
@@ -386,7 +413,6 @@ type ByLabelsParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"byLabels[]"`
 }
 
@@ -416,7 +442,6 @@ type FiltersParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"filters[]"`
 }
 
@@ -436,7 +461,6 @@ type QuantilesParam struct {
 	//
 	// in: query
 	// required: false
-	// default: []
 	Name []string `json:"quantiles[]"`
 }
 
