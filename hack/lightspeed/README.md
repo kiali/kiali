@@ -1,6 +1,6 @@
 # OpenShift LightSpeed Setup
 
-This directory contains the deployment manifests and the [`setup-osl.sh`](../setup-osl.sh) script for installing the **OpenShift LightSpeed service API** into a CRC (CodeReady Containers) or OpenShift cluster that already has an MCP server running.
+This directory contains the deployment manifests and the [`setup-osl.sh`](./setup-osl.sh) script for installing the **OpenShift LightSpeed service API** into a CRC (CodeReady Containers) or OpenShift cluster that already has an MCP server running.
 
 The LightSpeed service acts as the AI backend: it receives queries from Kiali, calls the configured LLM, and uses the MCP server for tool calling to inspect the live service mesh.
 
@@ -24,7 +24,7 @@ The LightSpeed service acts as the AI backend: it receives queries from Kiali, c
 ## Prerequisites
 
 - An **OpenShift** cluster (CRC recommended for local development):
-  - Cluster monitoring (`openshift-monitoring` pods running) is required for the operator-managed install
+  - Cluster monitoring (`openshift-monitoring` pods running) is required
   - `oc` CLI available and logged in with `cluster-admin`
 - An **MCP server** already running — install one with [`hack/setup-mcp.sh`](../setup-mcp.sh)
 - An **OpenAI or OpenAI-compatible API key**
@@ -43,7 +43,7 @@ The LightSpeed service acts as the AI backend: it receives queries from Kiali, c
 
 ## Script: setup-osl.sh
 
-**Location:** [`hack/setup-osl.sh`](../setup-osl.sh)
+**Location:** [`hack/lightspeed/setup-osl.sh`](./setup-osl.sh)
 
 The script auto-detects which MCP variant is running (`kubernetes-mcp` or `openshift-mcp`) and refuses to proceed if no healthy MCP pod is found.
 
@@ -62,7 +62,6 @@ The script auto-detects which MCP variant is running (`kubernetes-mcp` or `opens
 | `-ot \| --openai-token` | *(required)* | OpenAI or OpenAI-compatible API token. Can also be set via `OPENAI_TOKEN` env var |
 | `--llm-url` | `https://api.openai.com/v1` | Base URL of the OpenAI-compatible LLM provider |
 | `--llm-model` | `gpt-5.4-nano` | Default model configured in LightSpeed |
-| `--api` | `false` | API-only mode: skip cluster monitoring and deploy the LightSpeed service directly |
 | `-n \| --namespace` | `openshift-lightspeed` | Namespace to install LightSpeed into |
 | `-i \| --image` | `quay.io/openshift-lightspeed/lightspeed-service-api:latest` | Container image to deploy |
 | `-in \| --istio-namespace` | `istio-system` | Namespace where Istio and Kiali are installed |
@@ -74,27 +73,24 @@ The script auto-detects which MCP variant is running (`kubernetes-mcp` or `opens
 
 ```bash
 # Install (auto-detects running MCP)
-./hack/setup-osl.sh --openai-token sk-... install-lightspeed
+./hack/lightspeed/setup-osl.sh --openai-token sk-... install-lightspeed
 
 # Install with a custom image
-./hack/setup-osl.sh --openai-token sk-... \
+./hack/lightspeed/setup-osl.sh --openai-token sk-... \
   --image quay.io/openshift-lightspeed/lightspeed-service-api:v0.2.0 \
   install-lightspeed
 
 # Install using Gemini's OpenAI-compatible endpoint
-./hack/setup-osl.sh --openai-token <gemini-token> \
+./hack/lightspeed/setup-osl.sh --openai-token <gemini-token> \
   --llm-url https://generativelanguage.googleapis.com/v1beta/openai \
   --llm-model gemini-2.5-pro \
   install-lightspeed
 
-# Install API-only mode when openshift-monitoring is unavailable
-./hack/setup-osl.sh --openai-token <token> --api install-lightspeed
-
 # Check full status
-./hack/setup-osl.sh status-lightspeed
+./hack/lightspeed/setup-osl.sh status-lightspeed
 
 # Uninstall
-./hack/setup-osl.sh uninstall-lightspeed
+./hack/lightspeed/setup-osl.sh uninstall-lightspeed
 ```
 
 ---
@@ -109,7 +105,7 @@ The script auto-detects which MCP variant is running (`kubernetes-mcp` or `opens
 4. **Create secret** `credentials` with the provider API token
 5. **Create ConfigMap / OLSConfig** with the selected provider, model, MCP endpoint, and mounted credentials
 6. **Create Deployment** `lightspeed-app-server` running the LightSpeed service API image
-7. **Create NetworkPolicy** allowing only labelled namespaces to reach the service port (`8443` for operator mode, `8080` for API-only mode)
+7. **Create NetworkPolicy** allowing only labelled namespaces to reach the service on port 8443
 8. **Label** `istio-system` with `allow-lightspeed=true` so Kiali (running there) can connect
 
 `uninstall-lightspeed` reverses all of the above and deletes the namespace.
@@ -122,9 +118,7 @@ All templates live in [`hack/lightspeed/deployment/`](deployment/) and use `${VA
 
 | File | Placeholders | Description |
 |---|---|---|
-| [`deployment_api.yaml`](deployment/deployment_api.yaml) | `${LIGHTSPEED_NAMESPACE}` `${LIGHTSPEED_IMAGE}` | `Deployment` for the LightSpeed service |
-| [`olsconfig_api.yaml`](deployment/olsconfig_api.yaml) | `${LIGHTSPEED_NAMESPACE}` `${MCP_PROVIDER}` `${LLM_PROVIDER_URL}` `${LLM_MODEL}` | `ConfigMap` with the OLS service configuration for API-only mode |
-| [`allow-policy.yaml`](deployment/allow-policy.yaml) | `${LIGHTSPEED_NAMESPACE}` `${LIGHTSPEED_PORT}` | `NetworkPolicy` restricting ingress to labelled namespaces |
+| [`allow-policy.yaml`](deployment/allow-policy.yaml) | `${LIGHTSPEED_NAMESPACE}` | `NetworkPolicy` restricting ingress to labelled namespaces |
 | [`osl_config.yaml`](deployment/osl_config.yaml) | `${MCP_PROVIDER}` `${LLM_PROVIDER_URL}` `${LLM_MODEL}` | `OLSConfig` CR for the selected OpenAI-compatible provider |
 
 ---

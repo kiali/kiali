@@ -1,0 +1,52 @@
+auth:
+  strategy: "token"
+
+chat_ai:
+  enabled: true
+  default_provider: "LightSpeed"
+  providers:
+  - name: "LightSpeed"
+    description: "OpenShift LightSpeed"
+    type: "lightspeed"
+    endpoint: "https://lightspeed-app-server.openshift-lightspeed.svc:8443/"
+    enabled: true
+    insecure_skip_verify: true
+  store_config:
+    enabled: true
+    max_cache_memory_mb: 1024
+    reduce_threshold: 15
+    reduce_with_ai: false
+
+clustering:
+  ignore_home_cluster: false
+
+deployment:
+  cluster_wide_access: true
+
+kiali_internal:
+  url_service_version: "http://127.0.0.1:15014/version"
+
+external_services:
+  custom_dashboards:
+    enabled: false
+  grafana:
+    enabled: false
+    internal_url: ""
+    external_url: ""
+  prometheus:
+    url: "http://127.0.0.1:9091"
+  tracing:
+    enabled: false
+    provider: ""
+    internal_url: ""
+    external_url: ""
+    use_grpc: false
+
+kubernetes_config:
+  cluster_name: "Kubernetes"
+
+auth:
+  strategy: "anonymous"
+
+login_token:
+  signing_key: "0123456789abcdef"

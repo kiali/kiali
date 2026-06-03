@@ -353,7 +353,7 @@ Both services are managed by convenience scripts under `hack/`:
 ./hack/setup-mcp.sh install-mcp
 
 # 2. Install the LightSpeed service (OpenShift/CRC only)
-./hack/setup-osl.sh --openai-token sk-... install-lightspeed
+./hack/lightspeed/setup-osl.sh --openai-token sk-... install-lightspeed
 ----
 
 For full documentation, options, and deployment manifest details see:

@@ -37,7 +37,6 @@ DEFAULT_TIMEOUT="300"
 DEFAULT_OPENAI_TOKEN="<OPENAI_TOKEN>"
 DEFAULT_LLM_PROVIDER_URL="https://api.openai.com/v1"
 DEFAULT_LLM_MODEL="gpt-5.4-nano"
-DEFAULT_API_ONLY_MODE="false"
 
 # Runtime variables
 _VERBOSE="false"
@@ -81,7 +80,6 @@ ensure_openshift_monitoring() {
   if ! ${CLIENT_EXE} get namespace "${monitoring_ns}" &>/dev/null; then
     errormsg "Namespace [${monitoring_ns}] not found."
     errormsg "OpenShift cluster monitoring is required for a full LightSpeed installation."
-    errormsg "If you only need the LightSpeed API (no cluster observability), pass --api."
     return 1
   fi
 
@@ -94,7 +92,6 @@ ensure_openshift_monitoring() {
   if [ "${running_pods}" -eq 0 ]; then
     errormsg "Namespace [${monitoring_ns}] exists but no Running pods were found."
     errormsg "Please ensure OpenShift cluster monitoring is healthy before proceeding."
-    errormsg "If you only need the LightSpeed API (no cluster observability), pass --api."
     return 1
   fi
 
@@ -216,8 +213,8 @@ discover_mcp() {
   errormsg "No running MCP server found."
   errormsg "LightSpeed requires a running MCP server to function."
   errormsg "Please install one first with:"
-  errormsg "  ${SCRIPT_DIR}/setup-mcp.sh install-mcp"
-  errormsg "  ${SCRIPT_DIR}/setup-mcp.sh --provider openshift install-mcp"
+  errormsg "  ${SCRIPT_DIR}/../setup-mcp.sh install-mcp"
+  errormsg "  ${SCRIPT_DIR}/../setup-mcp.sh --provider openshift install-mcp"
   return 1
 }
 
@@ -240,7 +237,7 @@ create_lightspeed_credentials() {
 
 create_lightspeed_operator_group() {
   local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/operator_lightspped_group.yaml"
+  local template="${SCRIPT_DIR}/deployment/operator_lightspped_group.yaml"
 
   if [ ! -f "${template}" ]; then
     errormsg "OperatorGroup template not found: ${template}"
@@ -263,7 +260,7 @@ create_lightspeed_operator_group() {
 
 create_lightspeed_subscription() {
   local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/subscription_lightspeed.yaml"
+  local template="${SCRIPT_DIR}/deployment/subscription_lightspeed.yaml"
 
   if [ ! -f "${template}" ]; then
     errormsg "Subscription template not found: ${template}"
@@ -287,7 +284,7 @@ create_lightspeed_subscription() {
 
 create_osl_config() {
   local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/osl_config.yaml"
+  local template="${SCRIPT_DIR}/deployment/osl_config.yaml"
 
   if [ ! -f "${template}" ]; then
     errormsg "OLSConfig template not found: ${template}"
@@ -310,68 +307,9 @@ create_osl_config() {
   infomsg "OLSConfig [cluster] created/updated in namespace [${ns}]."
 }
 
-create_olsconfig_api() {
-  local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/olsconfig_api.yaml"
-
-  if [ ! -f "${template}" ]; then
-    errormsg "OLS config API template not found: ${template}"
-    return 1
-  fi
-
-  infomsg "Creating OLS ConfigMap for API mode (mcp=${_MCP_PROVIDER}, llm=${LLM_PROVIDER_URL}, model=${LLM_MODEL}) in namespace [${ns}]..."
-
-  local tmp_cfg
-  tmp_cfg="$(mktemp /tmp/osl-api-config.XXXXXX.yaml)"
-  trap 'rm -f "${tmp_cfg}"' RETURN
-
-  export LIGHTSPEED_NAMESPACE
-  export MCP_PROVIDER="${_MCP_PROVIDER}"
-  export LLM_PROVIDER_URL
-  export LLM_MODEL
-  envsubst '${LIGHTSPEED_NAMESPACE} ${MCP_PROVIDER} ${LLM_PROVIDER_URL} ${LLM_MODEL}' < "${template}" > "${tmp_cfg}"
-
-  ${CLIENT_EXE} apply -f "${tmp_cfg}" -n "${ns}"
-
-  infomsg "ConfigMap [olsconfig] created/updated in namespace [${ns}]."
-}
-
-create_lightspeed_api_deployment() {
-  local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/deployment_api.yaml"
-
-  if [ ! -f "${template}" ]; then
-    errormsg "API deployment template not found: ${template}"
-    return 1
-  fi
-
-  infomsg "Creating LightSpeed API deployment (image=${LIGHTSPEED_IMAGE}) in namespace [${ns}]..."
-
-  local tmp_deploy
-  tmp_deploy="$(mktemp /tmp/osl-api-deployment.XXXXXX.yaml)"
-  trap 'rm -f "${tmp_deploy}"' RETURN
-
-  export LIGHTSPEED_NAMESPACE
-  export LIGHTSPEED_IMAGE
-  export LIGHTSPEED_PORT="8080"
-  envsubst '${LIGHTSPEED_NAMESPACE} ${LIGHTSPEED_IMAGE} ${LIGHTSPEED_PORT}' < "${template}" > "${tmp_deploy}"
-
-  ${CLIENT_EXE} apply -f "${tmp_deploy}" -n "${ns}"
-
-  infomsg "Deployment [lightspeed-app-server] created/updated in namespace [${ns}]."
-}
-
-wait_for_lightspeed_api_deployment() {
-  local ns="${LIGHTSPEED_NAMESPACE}"
-
-  infomsg "Waiting for API-only LightSpeed deployment to become ready..."
-  ${CLIENT_EXE} rollout status deployment/lightspeed-app-server -n "${ns}" --timeout="${TIMEOUT}s"
-  infomsg "API-only LightSpeed deployment is ready."
-}
-
 create_lightspeed_network_policy() {
   local ns="${LIGHTSPEED_NAMESPACE}"
-  local template="${SCRIPT_DIR}/lightspeed/deployment/allow-policy.yaml"
+  local template="${SCRIPT_DIR}/deployment/allow-policy.yaml"
 
   if [ ! -f "${template}" ]; then
     errormsg "NetworkPolicy template not found: ${template}"
@@ -385,11 +323,7 @@ create_lightspeed_network_policy() {
   trap 'rm -f "${tmp_np}"' RETURN
 
   export LIGHTSPEED_NAMESPACE
-  if [ "${API_ONLY_MODE}" == "true" ]; then
-    export LIGHTSPEED_PORT="8080"
-  else
-    export LIGHTSPEED_PORT="8443"
-  fi
+  export LIGHTSPEED_PORT="8443"
   envsubst '${LIGHTSPEED_NAMESPACE} ${LIGHTSPEED_PORT}' < "${template}" > "${tmp_np}"
 
   ${CLIENT_EXE} apply -f "${tmp_np}" -n "${ns}"
@@ -445,10 +379,7 @@ install_lightspeed() {
   validate_openai_token || exit 1
   validate_llm_settings || exit 1
   discover_mcp || exit 1  # MCP server discovery
-
-  if [ "${API_ONLY_MODE}" != "true" ]; then
-    ensure_openshift_monitoring || exit 1
-  fi
+  ensure_openshift_monitoring || exit 1
 
   local ns="${LIGHTSPEED_NAMESPACE}"
 
@@ -458,23 +389,16 @@ install_lightspeed() {
   infomsg "  Image      : ${LIGHTSPEED_IMAGE}"
   infomsg "  LLM URL    : ${LLM_PROVIDER_URL}"
   infomsg "  LLM Model  : ${LLM_MODEL}"
-  infomsg "  API Only   : ${API_ONLY_MODE}"
   infomsg "  MCP        : ${_MCP_PROVIDER} @ ${_MCP_ENDPOINT}"
   infomsg "========================================================"
 
   ensure_lightspeed_ns
   create_lightspeed_credentials
 
-  if [ "${API_ONLY_MODE}" == "true" ]; then
-    create_olsconfig_api
-    create_lightspeed_api_deployment
-    wait_for_lightspeed_api_deployment
-  else
-    create_lightspeed_operator_group
-    create_lightspeed_subscription
-    wait_for_lightspeed_operator
-    create_osl_config
-  fi
+  create_lightspeed_operator_group
+  create_lightspeed_subscription
+  wait_for_lightspeed_operator
+  create_osl_config
   create_lightspeed_network_policy
   label_istio_namespace
 
@@ -491,8 +415,6 @@ uninstall_lightspeed() {
   fi
 
   ${CLIENT_EXE} delete deployment lightspeed-app-server                                    -n "${ns}" --ignore-not-found
-  ${CLIENT_EXE} delete service lightspeed-app-server                                       -n "${ns}" --ignore-not-found
-  ${CLIENT_EXE} delete route lightspeed-app-server                                         -n "${ns}" --ignore-not-found
   ${CLIENT_EXE} delete configmap  olsconfig                                                -n "${ns}" --ignore-not-found
   ${CLIENT_EXE} delete olsconfig  cluster                                                  -n "${ns}" --ignore-not-found
   ${CLIENT_EXE} delete networkpolicy allow-labeled-namespaces-to-lightspeed               -n "${ns}" --ignore-not-found
@@ -566,8 +488,6 @@ while [ "$#" -gt 0 ]; do
       LIGHTSPEED_IMAGE="$2"; shift; shift ;;
     -ot|--openai-token)
       OPENAI_TOKEN="$2"; shift; shift ;;
-    --api)
-      API_ONLY_MODE="true"; shift ;;
     --llm-url)
       LLM_PROVIDER_URL="$2"; shift; shift ;;
     --llm-model)
@@ -617,10 +537,6 @@ Valid options:
   -in|--istio-namespace <namespace>
       The namespace where Istio and Kiali are installed.
       Default: ${DEFAULT_ISTIO_NAMESPACE}
-  --api
-      Enable API-only mode. Skips the OpenShift cluster monitoring check and
-      deploys the LightSpeed service directly instead of relying on the operator.
-      Default: ${DEFAULT_API_ONLY_MODE}
   -t|--timeout <seconds>
       Timeout in seconds for waiting on resources.
       Default: ${DEFAULT_TIMEOUT}
@@ -675,7 +591,6 @@ done
 : "${OPENAI_TOKEN:=${DEFAULT_OPENAI_TOKEN}}"
 : "${LLM_PROVIDER_URL:=${DEFAULT_LLM_PROVIDER_URL}}"
 : "${LLM_MODEL:=${DEFAULT_LLM_MODEL}}"
-: "${API_ONLY_MODE:=${DEFAULT_API_ONLY_MODE}}"
 : "${TIMEOUT:=${DEFAULT_TIMEOUT}}"
 
 ##############################################################################
@@ -700,7 +615,6 @@ debug "LIGHTSPEED_VERSION=${LIGHTSPEED_VERSION}"
 debug "OPENAI_TOKEN length=${#OPENAI_TOKEN}"
 debug "LLM_PROVIDER_URL=${LLM_PROVIDER_URL}"
 debug "LLM_MODEL=${LLM_MODEL}"
-debug "API_ONLY_MODE=${API_ONLY_MODE}"
 debug "TIMEOUT=${TIMEOUT}"
 
 ##############################################################################
