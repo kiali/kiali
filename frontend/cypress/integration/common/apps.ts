@@ -405,67 +405,22 @@ const healthStatusValueToString = (value: number): string => {
   }
 };
 
-// Parse Prometheus text format and extract kiali_health_status metrics
-const parseHealthStatusMetrics = (prometheusText: string): HealthStatusMetricItem[] => {
-  const metrics: HealthStatusMetricItem[] = [];
-  const lines = prometheusText.split('\n');
-
-  for (const line of lines) {
-    // Skip comments and empty lines
-    if (line.startsWith('#') || line.trim() === '') {
-      continue;
-    }
-
-    // Match kiali_health_status metric lines
-    // Example: kiali_health_status{cluster="Kubernetes",namespace="bookinfo",health_type="app",name="details"} 0
-    const match = line.match(/^kiali_health_status\{([^}]+)\}\s+(.+)$/);
-    if (match) {
-      const labelsStr = match[1];
-      const value = parseFloat(match[2]);
-
-      // Parse labels
-      const labels: { [key: string]: string } = {};
-      const labelMatches = labelsStr.matchAll(/(\w+)="([^"]+)"/g);
-      for (const labelMatch of labelMatches) {
-        labels[labelMatch[1]] = labelMatch[2];
-      }
-
-      metrics.push({
-        cluster: labels.cluster || '',
-        namespace: labels.namespace || '',
-        healthType: labels.health_type || '',
-        name: labels.name || '',
-        value: value
-      });
-    }
-  }
-
-  return metrics;
-};
-
-// Fetch health status metrics from the real Prometheus /metrics endpoint
+// Fetch health status metrics from Kiali's test API endpoint
 const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]> => {
-  // The metrics endpoint is on port 9090 by default (configured in server.observability.metrics.port)
-  // We need to use the same host but different port
-  return cy.location('origin').then(origin => {
-    const url = new URL(origin);
-    const metricsUrl = `${url.protocol}//${url.hostname}:9090/metrics`;
-
-    return cy
-      .request({
-        url: metricsUrl,
-        failOnStatusCode: false
-      })
-      .then(resp => {
-        if (resp.status !== 200) {
-          Cypress.log({ message: `Warning: Failed to fetch metrics from ${metricsUrl}, status: ${resp.status}` });
-          return [];
-        }
-        const metrics = parseHealthStatusMetrics(resp.body);
-        Cypress.log({ message: `Parsed ${metrics.length} kiali_health_status metrics from ${metricsUrl}` });
-        return metrics;
-      });
-  });
+  return cy
+    .request({
+      url: '/api/test/metrics/health/status',
+      failOnStatusCode: false
+    })
+    .then(resp => {
+      if (resp.status !== 200) {
+        Cypress.log({ message: `Warning: Failed to fetch health status metrics, status: ${resp.status}` });
+        return [];
+      }
+      const metrics = resp.body.metrics || [];
+      Cypress.log({ message: `Fetched ${metrics.length} health status metrics from API` });
+      return metrics;
+    });
 };
 
 Then('health status metric for {string} app {string} in {string} namespace should be {string}', function (
