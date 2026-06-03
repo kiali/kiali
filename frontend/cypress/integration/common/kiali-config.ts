@@ -241,7 +241,13 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
       if (primaryResource) {
         const parts = primaryResource.split('/');
         const patchJson = JSON.stringify({
-          spec: { kiali_internal: { graph_cache: { enabled: true }, health_cache: { enabled: true } } }
+          spec: {
+            kiali_internal: {
+              graph_cache: { enabled: true },
+              health_cache: { enabled: true },
+              health_status_metric: { enabled: true }
+            }
+          }
         });
         cy.exec(`kubectl patch kiali ${parts[1]} -n ${parts[0]} --type merge -p '${patchJson}'`).then(() =>
           doRestart()
@@ -253,7 +259,7 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
         `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
       );
       cy.exec(
-        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true' /tmp/kiali-config.yaml`
+        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true | .kiali_internal.health_status_metric.enabled = true' /tmp/kiali-config.yaml`
       );
       cy.exec(
         `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`

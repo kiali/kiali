@@ -686,4 +686,3 @@ func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType,
 		labelName:       name,
 	})
 }
-
