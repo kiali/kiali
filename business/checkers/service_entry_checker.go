@@ -19,13 +19,21 @@ type ServiceEntryChecker struct {
 func (s ServiceEntryChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
+	validations.MergeValidations(s.runGroupChecks())
 
+	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
 	for _, se := range s.ServiceEntries {
 		validations.MergeValidations(s.runSingleChecks(se, weMap))
 	}
 
 	return validations
+}
+
+func (s ServiceEntryChecker) runGroupChecks() models.IstioValidations {
+	return serviceentries.MultiMatchChecker{
+		Cluster:        s.Cluster,
+		ServiceEntries: s.ServiceEntries,
+	}.Check()
 }
 
 func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
