@@ -607,7 +607,6 @@
   "Set display options for the mesh.": "Set display options for the mesh.",
   "Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.": "Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.",
   "Shortcuts": "Shortcuts",
-  "Shortcuts and tips...": "Shortcuts and tips...",
   "Show": "Show",
   "Show Detail": "Show Detail",
   "Show Edge Labels": "Show Edge Labels",

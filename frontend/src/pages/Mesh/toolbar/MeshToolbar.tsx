@@ -1,13 +1,5 @@
 import * as React from 'react';
-import {
-  Button,
-  ButtonVariant,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import { Button, ButtonVariant, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../../store/Store';
 import { TourStop } from 'components/Tour/TourStop';
@@ -50,18 +42,16 @@ export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshTool
           </ToolbarItem>
 
           <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
-            <Tooltip key={'mesh-tour-help-ot'} position={TooltipPosition.bottom} content={t('Shortcuts and tips...')}>
-              <TourStop info={MeshTourStops.Shortcuts}>
-                <Button
-                  id="mesh-tour"
-                  icon={<KialiIcon.Help />}
-                  variant={ButtonVariant.link}
-                  onClick={props.onToggleHelp}
-                >
-                  <span>{t('Help')}</span>
-                </Button>
-              </TourStop>
-            </Tooltip>
+            <TourStop info={MeshTourStops.Shortcuts}>
+              <Button
+                id="mesh-tour"
+                icon={<KialiIcon.Help />}
+                variant={ButtonVariant.link}
+                onClick={props.onToggleHelp}
+              >
+                <span>{t('Help')}</span>
+              </Button>
+            </TourStop>
             <MeshReset />
           </ToolbarItem>
           <ToolbarItem>

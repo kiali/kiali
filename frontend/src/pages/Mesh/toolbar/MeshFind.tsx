@@ -42,7 +42,6 @@ import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { layoutMesh } from '../Mesh';
-import { infoStyle } from 'styles/IconStyle';
 import { MeshLayoutType, MeshLayout } from '../layouts/LayoutFactory';
 
 type ReduxStateProps = {
@@ -87,8 +86,7 @@ const buttonClearStyle = kialiStyle({
 });
 
 const findHideHelpStyle = kialiStyle({
-  paddingLeft: '0',
-  paddingRight: '0'
+  marginLeft: '0.125rem'
 });
 
 const gridStyle = kialiStyle({
@@ -330,32 +328,28 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                 )}
               </FormGroup>
             </GridItem>
+
+            {this.props.showFindHelp ? (
+              <MeshHelpFind onClose={this.toggleFindHelp}>
+                <Button
+                  data-test="mesh-find-hide-help-button"
+                  icon={<KialiIcon.Help />}
+                  variant={ButtonVariant.link}
+                  className={findHideHelpStyle}
+                  onClick={this.toggleFindHelp}
+                />
+              </MeshHelpFind>
+            ) : (
+              <Button
+                data-test="mesh-find-hide-help-button"
+                icon={<KialiIcon.Help />}
+                variant={ButtonVariant.link}
+                className={findHideHelpStyle}
+                onClick={this.toggleFindHelp}
+              />
+            )}
           </Grid>
         </Form>
-
-        {this.props.showFindHelp ? (
-          <MeshHelpFind onClose={this.toggleFindHelp}>
-            <Button
-              data-test="mesh-find-hide-help-button"
-              variant={ButtonVariant.link}
-              className={findHideHelpStyle}
-              onClick={this.toggleFindHelp}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Button>
-          </MeshHelpFind>
-        ) : (
-          <Tooltip key={'ot_mesh_find_help'} position="top" content="Click to open Find/Hide help">
-            <Button
-              data-test="mesh-find-hide-help-button"
-              variant={ButtonVariant.link}
-              className={findHideHelpStyle}
-              onClick={this.toggleFindHelp}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Button>
-          </Tooltip>
-        )}
       </TourStop>
     );
   }

@@ -616,7 +616,6 @@
   "Set display options for the mesh.": "Establecer opciones de visualización para el mesh.",
   "Set edge labeling, node badging, and various display options. Response-time edge labeling, security badging, and traffic animation may affect performance. Response-times reflect the 95th percentile.": "Establezca el etiquetado de conexiones, las insignias de nodos y varias opciones de visualización. El etiquetado del tiempo de respuesta, las insignias de seguridad y la animación del tráfico pueden afectar al rendimiento. Los tiempos de respuesta reflejan el percentil 95.",
   "Shortcuts": "Atajos",
-  "Shortcuts and tips...": "Atajos y consejos...",
   "Show": "Mostrar",
   "Show Detail": "Mostrar detalle",
   "Show Edge Labels": "Mostrar etiquetas de las conexiones",

@@ -8,7 +8,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
 
 export interface MeshHelpFindProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   onClose: () => void;
 }
@@ -39,6 +39,7 @@ const prefaceStyle = kialiStyle({
   backgroundColor: PFColors.Blue600,
   width: contentWidth,
   height: '4rem',
+  marginTop: '0.25rem',
   padding: '0.25rem',
   resize: 'none',
   overflowY: 'hidden'
