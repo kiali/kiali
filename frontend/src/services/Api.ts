@@ -83,7 +83,7 @@ import { ApiError, ApiResponse } from 'types/Api';
 import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
 import { PersesInfo } from '../types/PersesInfo';
-import { ChatRequest } from 'types/Chatbot';
+import { ChatRequest, Prompt } from 'types/Chatbot';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -1538,6 +1538,14 @@ export const checkTracingConfig = (config: string, cluster?: string): Promise<Ap
     queryParams.clusterName = cluster;
   }
   return newRequest<ConfigurationValidation>(HTTP_VERBS.POST, urls.tracingTestConfig, queryParams, config);
+};
+
+export const getChatPrompts = (category?: string): Promise<ApiResponse<Prompt[]>> => {
+  const params: { [key: string]: string } = {};
+  if (category) {
+    params.category = category;
+  }
+  return newRequest<Prompt[]>(HTTP_VERBS.GET, urls.chatPrompts, params, {});
 };
 
 export const postChatAI = (

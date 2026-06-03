@@ -6,13 +6,19 @@ import * as API from '../../services/Api';
 import { throttle, uniqueId } from 'lodash-es';
 import { Map as ImmutableMap } from 'immutable';
 import { useDispatch } from 'react-redux';
-import { ChatRequest } from 'types/Chatbot';
+import { ChatRequest, Prompt as ChatPrompt } from 'types/Chatbot';
 import { getFetchErrorMessage } from './error';
 import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
 import { buildPageContext } from './PageContext';
 import { router } from 'app/History';
+import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
+import { HelpIcon } from '@patternfly/react-icons';
+import { t } from 'utils/I18nUtils';
+import { DataPrompts } from './DataPrompts';
+import { useLocation } from 'react-router-dom-v5-compat';
+import { derivePromptCategory } from './promptCategory';
 
 type PromptProps = {
   scrollIntoView: () => void;
@@ -28,11 +34,44 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const selectedProvider: string = useSelector((s: KialiAppState) => s.aiChat.selectedProvider);
   const selectedModel: string = useSelector((s: KialiAppState) => s.aiChat.selectedModel);
   const alwaysNavigate = useSelector((s: KialiAppState) => s.aiChat.alwaysNavigate);
+  const { pathname } = useLocation();
+  const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
   const [streamController, setStreamController] = React.useState(new AbortController());
+  const [promptData, setPromptData] = React.useState<ChatPrompt[]>([]);
   const isStreaming = !!chatHistory.last()?.get('isStreaming');
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // MessageBar manages its own internal state and only uses `value` as
+  // initial state, so we need to sync the textarea when Redux query
+  // changes externally (e.g. welcome prompt click).
+  React.useEffect(() => {
+    if (textareaRef.current && textareaRef.current.value !== query) {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')
+        ?.set;
+      nativeInputValueSetter?.call(textareaRef.current, query);
+      textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, [query]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    API.getChatPrompts(category)
+      .then(response => {
+        if (!cancelled) {
+          setPromptData(response.data.length > 0 ? response.data : DataPrompts[category] || []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPromptData(DataPrompts[category] || []);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [category]);
 
   const [kind, name, namespace, istio] = useLocationContext();
   const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio), [
@@ -47,6 +86,14 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
         setValidated('default');
       }
       dispatch(ChatAIActions.setQuery(value));
+    },
+    [dispatch]
+  );
+
+  const onPromptSelect = React.useCallback(
+    (promptQuery: string) => {
+      dispatch(ChatAIActions.setQuery(promptQuery));
+      textareaRef.current?.focus();
     },
     [dispatch]
   );
@@ -162,10 +209,11 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
             } else if (json.event === 'end') {
               dispatchTokens(responseText);
               dispatchTokens.flush();
+              const actions = json.data.actions ?? [];
               dispatch(
                 ChatAIActions.setChatHistoryUpdateById({
                   entry: {
-                    actions: json.data.actions,
+                    actions,
                     isStreaming: false,
                     isTruncated: json.data.truncated === true,
                     references: json.data.referenced_documents
@@ -174,9 +222,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
                 })
               );
               if (alwaysNavigate) {
-                const navigationAction = json.data.actions.find(
-                  (action: { kind: string }) => action.kind === 'navigation'
-                );
+                const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
                 if (navigationAction) {
                   router.navigate(navigationAction.payload);
                 }
@@ -271,6 +317,37 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   );
   return (
     <div>
+      {promptData.length > 0 && query.trim().length === 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+            paddingBottom: '0.5rem'
+          }}
+        >
+          <Tooltip content={t('Suggested prompts for this page')}>
+            <Button
+              aria-label={t('Suggested prompts for this page')}
+              variant={ButtonVariant.plain}
+              icon={<HelpIcon />}
+              style={{ flex: '0 0 auto' }}
+            />
+          </Tooltip>
+          {promptData.map(prompt => (
+            <Button
+              key={`${category}-${prompt.title}`}
+              variant={ButtonVariant.secondary}
+              size="sm"
+              style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
+              onClick={() => onPromptSelect(prompt.query)}
+            >
+              {prompt.title}
+            </Button>
+          ))}
+        </div>
+      )}
       <MessageBar
         alwayShowSendButton
         data-testid="chatbot-message-bar-input"

@@ -67,7 +67,10 @@ export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
 };
 
 export type Prompt = {
+  category?: string;
+  description?: string;
   message: string;
+  name?: string;
   query: string;
   title: string;
 };

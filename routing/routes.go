@@ -1836,6 +1836,27 @@ func NewRoutes(
 			HandlerFunc:   handlers.OverviewAppRates(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
 			Authenticated: true,
 		},
+		// swagger:route GET /chat/prompts chat chatPrompts
+		// ---
+		// Endpoint to list built-in chatbot prompt suggestions
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      200
+		//
+		{
+			"ChatPrompts",
+			log.ChatAILogName,
+			"GET",
+			"/api/chat/prompts",
+			handlers.ChatPrompts(conf),
+			true,
+		},
 		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI
 		// ---
 		// Endpoint to chat with AI

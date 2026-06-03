@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/ai/prompts"
 	aiTypes "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -117,6 +118,27 @@ func ChatMCP(
 			return
 		}
 		RespondWithJSON(w, code, mcpResult)
+	}
+}
+
+func ChatPrompts(conf *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !conf.ChatAI.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
+			return
+		}
+		category := r.URL.Query().Get("category")
+		catalog := prompts.Catalog()
+		if category != "" {
+			filtered := make([]prompts.Prompt, 0, len(catalog))
+			for _, p := range catalog {
+				if p.Category == category {
+					filtered = append(filtered, p)
+				}
+			}
+			catalog = filtered
+		}
+		RespondWithJSON(w, http.StatusOK, catalog)
 	}
 }
 
