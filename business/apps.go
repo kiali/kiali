@@ -298,11 +298,11 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		IncludeSidecars:               true,
 		IncludeVirtualServices:        true,
 	}
-	var istioConfigMap models.IstioConfigMap
+	istioConfigList := &models.IstioConfigList{}
 
 	// TODO: MC
 	if criteria.IncludeIstioResources {
-		istioConfigMap, err = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, icCriteria)
+		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForCluster(ctx, criteria.Cluster, criteria.Namespace, icCriteria)
 		if err != nil {
 			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
 			return models.AppList{}, err
@@ -333,10 +333,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				IstioSidecar: true,
 				Health:       models.EmptyAppHealth(),
 			}
-			istioConfigList := models.IstioConfigList{}
-			if _, ok := istioConfigMap[valueApp.cluster]; ok {
-				istioConfigList = istioConfigMap[valueApp.cluster]
-			}
+
 			applabels := make(map[string][]string)
 			svcReferences := make([]*models.IstioValidationKey, 0)
 			for _, srv := range valueApp.Services {
@@ -366,7 +363,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, wrk := range valueApp.Workloads {
 				joinMap(applabels, wrk.Labels)
 				if criteria.IncludeIstioResources {
-					wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, istioConfigList, criteria.Cluster)...)
+					wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, *istioConfigList, criteria.Cluster)...)
 				}
 			}
 			appItem.Labels = buildFinalLabels(applabels)
