@@ -464,6 +464,7 @@ install_tempo_single_attempt() {
   local kiali_namespace="${1:-istio-system}"
   local tempo_query_service="tempo-cr-query-frontend"
   local tempo_zipkin_service="tempo-cr-distributor"
+  TEMPO_PORT="3200"
 
   # Install Tempo operator only when using the operator method.
   if [ "${METHOD}" == "operator" ]; then
