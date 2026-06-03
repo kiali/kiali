@@ -459,11 +459,11 @@ const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]>
       })
       .then(resp => {
         if (resp.status !== 200) {
-          cy.log(`Warning: Failed to fetch metrics from ${metricsUrl}, status: ${resp.status}`);
+          Cypress.log({ message: `Warning: Failed to fetch metrics from ${metricsUrl}, status: ${resp.status}` });
           return [];
         }
         const metrics = parseHealthStatusMetrics(resp.body);
-        cy.log(`Parsed ${metrics.length} kiali_health_status metrics from ${metricsUrl}`);
+        Cypress.log({ message: `Parsed ${metrics.length} kiali_health_status metrics from ${metricsUrl}` });
         return metrics;
       });
   });
@@ -488,7 +488,7 @@ Then('health status metric for {string} app {string} in {string} namespace shoul
   namespace: string
 ) {
   fetchHealthStatusMetrics().then(metrics => {
-    cy.log(`Health status metrics: ${JSON.stringify(metrics, null, 2)}`);
+    Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
 
     // Find the metric for this specific app
     const appMetric = metrics.find(m => m.healthType === 'app' && m.name === appName && m.namespace === namespace);
@@ -497,7 +497,7 @@ Then('health status metric for {string} app {string} in {string} namespace shoul
 
     if (appMetric) {
       const actualStatus = healthStatusValueToString(appMetric.value);
-      cy.log(`App ${appName} health status metric value: ${appMetric.value} (${actualStatus})`);
+      Cypress.log({ message: `App ${appName} health status metric value: ${appMetric.value} (${actualStatus})` });
       expect(actualStatus).to.eq(healthStatus);
     }
   });
@@ -505,17 +505,15 @@ Then('health status metric for {string} app {string} in {string} namespace shoul
 
 Then('health status metrics should contain at least {int} metric', (minMetrics: number) => {
   fetchHealthStatusMetrics().then(metrics => {
-    cy.log(`Health status metrics count: ${metrics.length}`);
-    cy.log(`Health status metrics: ${JSON.stringify(metrics, null, 2)}`);
-
+    Cypress.log({ message: `Health status metrics count: ${metrics.length}` });
+    Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
     expect(metrics.length).to.be.at.least(minMetrics);
   });
 });
 
 Then('health status metrics should not be empty', () => {
   fetchHealthStatusMetrics().then(metrics => {
-    cy.log(`Health status metrics count: ${metrics.length}`);
-
+    Cypress.log({ message: `Health status metrics count: ${metrics.length}` });
     expect(metrics.length).to.be.greaterThan(0);
   });
 });
