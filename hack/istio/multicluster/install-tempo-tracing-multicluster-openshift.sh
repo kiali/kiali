@@ -782,6 +782,9 @@ spec:
     weight: 100
   port:
     targetPort: jaeger-ui
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
   wildcardPolicy: None
 EOF
 )"
@@ -789,6 +792,9 @@ EOF
 
 patch_mesh_config_for_tracing() {
   local context="$1"
+  local provider_index=""
+  local provider_name=""
+  local providers_listing=""
 
   info "Patching Istio meshConfig tracing provider on context: ${context}"
   if ! oc --context "${context}" -n "${ISTIO_NAMESPACE}" get istio "${ISTIO_CR_NAME}" &>/dev/null; then
@@ -800,6 +806,58 @@ spec:
   values:
     meshConfig:
       enableTracing: true
+EOF
+)"
+
+  providers_listing="$(oc --context "${context}" -n "${ISTIO_NAMESPACE}" get istio "${ISTIO_CR_NAME}" -o go-template='{{with .spec.values.meshConfig.extensionProviders}}{{range $i, $e := .}}{{printf "%d=%s\n" $i $e.name}}{{end}}{{end}}')"
+
+  while IFS='=' read -r provider_index provider_name; do
+    [[ -n "${provider_index}" ]] || continue
+    if [[ "${provider_name}" == "otel-tracing" ]]; then
+      oc --context "${context}" -n "${ISTIO_NAMESPACE}" patch istio "${ISTIO_CR_NAME}" --type json -p "$(cat <<EOF
+[
+  {
+    "op": "replace",
+    "path": "/spec/values/meshConfig/extensionProviders/${provider_index}",
+    "value": {
+      "name": "otel-tracing",
+      "opentelemetry": {
+        "service": "otel-collector.${ISTIO_NAMESPACE}.svc.cluster.local",
+        "port": 4317
+      }
+    }
+  }
+]
+EOF
+)"
+      return
+    fi
+  done <<< "${providers_listing}"
+
+  if [[ -n "${providers_listing}" ]]; then
+    oc --context "${context}" -n "${ISTIO_NAMESPACE}" patch istio "${ISTIO_CR_NAME}" --type json -p "$(cat <<EOF
+[
+  {
+    "op": "add",
+    "path": "/spec/values/meshConfig/extensionProviders/-",
+    "value": {
+      "name": "otel-tracing",
+      "opentelemetry": {
+        "service": "otel-collector.${ISTIO_NAMESPACE}.svc.cluster.local",
+        "port": 4317
+      }
+    }
+  }
+]
+EOF
+)"
+    return
+  fi
+
+  oc --context "${context}" -n "${ISTIO_NAMESPACE}" patch istio "${ISTIO_CR_NAME}" --type merge -p "$(cat <<EOF
+spec:
+  values:
+    meshConfig:
       extensionProviders:
       - name: otel-tracing
         opentelemetry:
