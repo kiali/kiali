@@ -405,13 +405,15 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
-	// @TODO multi cluster validations
-	authpolicies := istioConfigList.AuthorizationPolicies
-	allWorkloads := map[string]models.Workloads{}
-	allWorkloads[namespace] = ws
-	validations := in.getWorkloadValidations(ctx, authpolicies, allWorkloads, cluster)
-	validations.StripIgnoredChecks(in.conf)
-	workloadList.Validations = workloadList.Validations.MergeValidations(validations)
+	if criteria.IncludeIstioResources {
+		// @TODO multi cluster validations
+		authPolicies := istioConfigList.AuthorizationPolicies
+		allWorkloads := map[string]models.Workloads{}
+		allWorkloads[namespace] = ws
+		validations := in.getWorkloadValidations(ctx, authPolicies, allWorkloads, cluster)
+		validations.StripIgnoredChecks(in.conf)
+		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
+	}
 
 	return *workloadList, nil
 }
