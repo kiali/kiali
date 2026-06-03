@@ -5,7 +5,7 @@ import { Refresh } from 'components/Refresh/Refresh';
 import { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';
 import { DurationInSeconds } from 'types/Common';
-import { Tooltip, TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
+import { TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { KialiDispatch } from 'types/Redux';
@@ -45,23 +45,21 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
     props.toggleReplayActive();
   };
 
-  const durationTooltip = props.replayActive ? t('Traffic metrics per frame') : t('Traffic metrics per refresh');
+  const durationTooltip = props.replayActive ? t('Metric time period per frame') : t('Metric time period per refresh');
   const [prefix, suffix] = props.replayActive ? [undefined, t('Traffic')] : [t('Last'), undefined];
 
   return (
     <div className={timeDurationStyle}>
       {props.supportsReplay && !props.replayActive && (
-        <Tooltip key={'time_range_replay'} position={TooltipPosition.left} content={t('Replay...')}>
-          <Button
-            data-test="graph-replay-button"
-            variant={ButtonVariant.link}
-            style={{ marginRight: '0.5rem' }}
-            onClick={onToggleReplay}
-          >
-            <KialiIcon.History />
-            <span style={{ marginLeft: '0.5rem' }}>{t('Replay')}</span>
-          </Button>
-        </Tooltip>
+        <Button
+          data-test="graph-replay-button"
+          variant={ButtonVariant.link}
+          style={{ marginRight: '0.5rem' }}
+          onClick={onToggleReplay}
+        >
+          <KialiIcon.History />
+          <span style={{ marginLeft: '0.5rem' }}>{t('Replay')}</span>
+        </Button>
       )}
 
       <DurationDropdown
