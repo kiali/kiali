@@ -151,7 +151,8 @@ Given('user visits the page with URL param {string}', (urlParam: string) => {
     const newParams = new URLSearchParams(urlParam);
     newParams.forEach((value, key) => params.set(key, value));
     params.set('refresh', '0');
-    const newUrl = `${url.pathname}?${params.toString()}`;
+    // Use full URL to avoid path duplication issues
+    const newUrl = `${url.origin}${url.pathname}?${params.toString()}`;
     cy.visit(newUrl);
     cy.get('#filter-selection', { timeout: 15000 }).should('exist');
   });
