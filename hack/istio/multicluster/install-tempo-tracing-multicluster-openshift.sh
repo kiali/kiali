@@ -85,7 +85,7 @@ Optional:
   --tracing-namespaces       CSV namespaces where namespace-scoped Telemetry will be created if present
                              in the cluster (default: bookinfo)
   --create-tracing-ui-route  Create a tracing-ui Route to the Jaeger UI in cluster1 (default: true)
-  --restart-waypoints        Restart a waypoint deployment in tracing namespaces if present (default: false)
+  --restart-waypoints        Restart a waypoint deployment in tracing namespaces if present (default: true)
   --configure-kiali          Patch Kiali in cluster1 to point tracing to Tempo (default: true)
   --install-cert-manager     Install the OpenShift cert-manager operator in cluster1 if missing (default: true)
 
@@ -111,7 +111,7 @@ TEMPO_TENANT="north"
 TEMPO_OPERATOR_NAMESPACE="openshift-tempo-operator"
 TRACING_NAMESPACES_CSV="bookinfo"
 CREATE_TRACING_UI_ROUTE="true"
-RESTART_WAYPOINTS="false"
+RESTART_WAYPOINTS="true"
 CONFIGURE_KIALI="true"
 INSTALL_CERT_MANAGER="true"
 CERT_MANAGER_OPERATOR_NAMESPACE="cert-manager-operator"
@@ -479,6 +479,29 @@ EOF
 
   wait_for_service "${context}" "${TEMPO_NAMESPACE}" "tempo-${TEMPO_STACK_NAME}-gateway"
   wait_for_service "${context}" "${TEMPO_NAMESPACE}" "tempo-${TEMPO_STACK_NAME}-query-frontend"
+}
+
+apply_tempo_writer_role_cluster1() {
+  local context="$1"
+
+  info "Ensuring Tempo gateway write ClusterRole exists for tenant [${TEMPO_TENANT}]"
+  apply_yaml "${context}" "$(cat <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-write
+rules:
+- apiGroups:
+  - tempo.grafana.com
+  resources:
+  - ${TEMPO_TENANT}
+  resourceNames:
+  - traces
+  verbs:
+  - create
+EOF
+)"
+
   wait_for_clusterrole "${context}" "tempostack-traces-write"
 }
 
@@ -505,6 +528,43 @@ subjects:
   namespace: ${ISTIO_NAMESPACE}
 EOF
 )"
+}
+
+apply_tempo_reader_rbac_cluster1() {
+  local context="$1"
+
+  info "Ensuring Tempo gateway read RBAC exists for tenant [${TEMPO_TENANT}]"
+  apply_yaml "${context}" "$(cat <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-reader-${TEMPO_TENANT}
+rules:
+- apiGroups:
+  - tempo.grafana.com
+  resources:
+  - ${TEMPO_TENANT}
+  resourceNames:
+  - traces
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces-reader-${TEMPO_TENANT}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-reader-${TEMPO_TENANT}
+subjects:
+- kind: Group
+  apiGroup: rbac.authorization.k8s.io
+  name: system:authenticated
+EOF
+)"
+
+  wait_for_clusterrole "${context}" "tempostack-traces-reader-${TEMPO_TENANT}"
 }
 
 apply_cluster1_local_collector() {
@@ -768,23 +828,23 @@ EOF
 apply_cluster1_tracing_ui_route() {
   local context="$1"
 
-  info "Creating Tempo Jaeger UI Route on cluster1"
+  info "Creating Tempo tracing UI Route on cluster1"
   apply_yaml "${context}" "$(cat <<EOF
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: tracing-ui
+  name: tracing
   namespace: ${TEMPO_NAMESPACE}
 spec:
   to:
     kind: Service
-    name: tempo-${TEMPO_STACK_NAME}-query-frontend
+    name: tempo-${TEMPO_STACK_NAME}-gateway
     weight: 100
   port:
-    targetPort: jaeger-ui
+    targetPort: public
   tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
+    termination: reencrypt
+    insecureEdgeTerminationPolicy: Allow
   wildcardPolicy: None
 EOF
 )"
@@ -1110,7 +1170,9 @@ install_tempo_stack_cluster1 "${CTX_CLUSTER1}"
 info "=== Step 3: Install collectors and gateway RBAC on cluster1 ==="
 apply_cluster1_local_collector "${CTX_CLUSTER1}"
 apply_cluster1_remote_collector "${CTX_CLUSTER1}" "${REMOTE_COLLECTOR_NAME}"
+apply_tempo_writer_role_cluster1 "${CTX_CLUSTER1}"
 apply_tempo_writer_binding_cluster1 "${CTX_CLUSTER1}" "${REMOTE_COLLECTOR_NAME}"
+apply_tempo_reader_rbac_cluster1 "${CTX_CLUSTER1}"
 
 info "=== Step 4: Expose the dedicated remote receiver on cluster1 ==="
 apply_cluster1_remote_route "${CTX_CLUSTER1}" "${REMOTE_COLLECTOR_ROUTE_NAME}" "${REMOTE_COLLECTOR_SERVICE_NAME}"
@@ -1143,8 +1205,8 @@ for ns in "${tracing_namespaces[@]}"; do
 done
 
 TRACING_UI_HOST=""
-if oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing-ui &>/dev/null; then
-  TRACING_UI_HOST="$(oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing-ui -o jsonpath='{.spec.host}' 2>/dev/null || true)"
+if oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing &>/dev/null; then
+  TRACING_UI_HOST="$(oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing -o jsonpath='{.spec.host}' 2>/dev/null || true)"
 fi
 configure_kiali_tracing_cluster1 "${CTX_CLUSTER1}" "${TRACING_UI_HOST}"
 
@@ -1155,6 +1217,6 @@ info "Cluster1 local collector: ${ISTIO_NAMESPACE}/otel"
 info "Cluster1 remote receiver collector: ${ISTIO_NAMESPACE}/${REMOTE_COLLECTOR_NAME}"
 info "Cluster1 remote receiver route: https://${REMOTE_COLLECTOR_ROUTE_HOST}"
 if [[ "${CREATE_TRACING_UI_ROUTE}" == "true" ]]; then
-  TRACING_UI_HOST="$(oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing-ui -o jsonpath='{.spec.host}' 2>/dev/null || true)"
+  TRACING_UI_HOST="$(oc --context "${CTX_CLUSTER1}" -n "${TEMPO_NAMESPACE}" get route tracing -o jsonpath='{.spec.host}' 2>/dev/null || true)"
   [[ -n "${TRACING_UI_HOST}" ]] && info "Tempo Jaeger UI: https://${TRACING_UI_HOST}"
 fi
