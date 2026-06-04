@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -48,13 +49,19 @@ func TestWithHTTPClient_SetsCustomClient(t *testing.T) {
 	assert.Equal(t, custom, c.httpClient)
 }
 
-func TestWithInsecureSkipTLS_True_ReplacesTransport(t *testing.T) {
-	c := New("https://ols.example.com", WithInsecureSkipTLS(true))
+func TestWithTLSConfig_AppliesConfig(t *testing.T) {
+	cfg := &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS13}
+	c := New("https://ols.example.com", WithTLSConfig(cfg))
 	assert.NotEqual(t, http.DefaultClient, c.httpClient)
+
+	transport, ok := c.httpClient.Transport.(*http.Transport)
+	require.True(t, ok)
+	assert.True(t, transport.TLSClientConfig.InsecureSkipVerify)
+	assert.Equal(t, uint16(tls.VersionTLS13), transport.TLSClientConfig.MinVersion)
 }
 
-func TestWithInsecureSkipTLS_False_KeepsDefault(t *testing.T) {
-	c := New("https://ols.example.com", WithInsecureSkipTLS(false))
+func TestWithTLSConfig_Nil_KeepsDefault(t *testing.T) {
+	c := New("https://ols.example.com", WithTLSConfig(nil))
 	assert.Equal(t, http.DefaultClient, c.httpClient)
 }
 

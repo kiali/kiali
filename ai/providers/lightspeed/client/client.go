@@ -37,19 +37,21 @@ func WithHTTPClient(c *http.Client) Option {
 	}
 }
 
-// WithInsecureSkipTLS configures the client to skip TLS certificate verification (e.g. for CRC or self-signed OLS).
-func WithInsecureSkipTLS(skip bool) Option {
+// WithTLSConfig sets a pre-built TLS configuration on the client's transport.
+func WithTLSConfig(cfg *tls.Config) Option {
 	return func(c *Client) {
-		if !skip {
+		if cfg == nil {
 			return
 		}
 		transport := http.DefaultTransport.(*http.Transport).Clone()
-		if transport.TLSClientConfig == nil {
-			transport.TLSClientConfig = &tls.Config{}
-		}
-		transport.TLSClientConfig.InsecureSkipVerify = true
+		transport.TLSClientConfig = cfg
 		c.httpClient = &http.Client{Transport: transport}
 	}
+}
+
+// HttpClient returns the underlying HTTP client for inspection (e.g. in tests).
+func (c *Client) HttpClient() *http.Client {
+	return c.httpClient
 }
 
 // SetAuthToken sets the Bearer token on the client (e.g. per-request token from Kiali auth).
