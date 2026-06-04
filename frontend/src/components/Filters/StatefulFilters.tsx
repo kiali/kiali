@@ -689,6 +689,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                     <Button
                       variant="plain"
                       aria-label={t('Manage columns')}
+                      data-test={this.props.columnManagementButtonTestId ?? 'manage-columns-toolbar'}
                       data-test-id={this.props.columnManagementButtonTestId ?? 'manage-columns-toolbar'}
                       onClick={this.props.onColumnManagementClick}
                     >

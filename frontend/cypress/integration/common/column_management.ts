@@ -1,22 +1,29 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 // Selectors
-const COLUMN_MANAGEMENT_MODAL = '[role="dialog"][aria-label="Manage columns"]';
-const COLUMN_MANAGEMENT_BUTTON = '[data-test-id$="-manage-columns"]';
+// The modal doesn't have aria-label, it uses aria-labelledby pointing to the title
+// So we match by role="dialog" and check for the title inside
+const COLUMN_MANAGEMENT_MODAL = '[role="dialog"]';
 const MODAL_TITLE = `${COLUMN_MANAGEMENT_MODAL} h1`;
-const MODAL_CHECKBOX = (columnName: string) =>
-  `${COLUMN_MANAGEMENT_MODAL} input[type="checkbox"][id*="${columnName.toLowerCase()}"]`;
-const MODAL_APPLY_BUTTON = `${COLUMN_MANAGEMENT_MODAL} button:contains("Apply")`;
 const MODAL_CLOSE_BUTTON = `${COLUMN_MANAGEMENT_MODAL} button[aria-label="Close"]`;
-const MODAL_RESET_BUTTON = `${COLUMN_MANAGEMENT_MODAL} button:contains("Reset to default")`;
-const TABLE_HEADER = (columnName: string) => `th:contains("${columnName}")`;
 
 When('user clicks the {string} button with test id {string}', (buttonText: string, testId: string) => {
-  cy.get(`[data-test-id="${testId}"]`).click();
+  // Wait for the toolbar to be fully loaded
+  cy.get('#filter-selection', { timeout: 10000 }).should('be.visible');
+
+  // Wait for the button to be visible and clickable
+  cy.get(`[data-test-id="${testId}"]`, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
+
+  // Wait a moment for the modal to start opening
+  cy.wait(500);
 });
 
 Then('the column management modal should be visible', () => {
-  cy.get(COLUMN_MANAGEMENT_MODAL).should('be.visible');
+  // Wait for modal to appear and check it has the correct title
+  cy.get(COLUMN_MANAGEMENT_MODAL, { timeout: 10000 })
+    .should('be.visible')
+    .find('h1')
+    .should('contain.text', 'Manage columns');
 });
 
 Then('the modal title should be {string}', (expectedTitle: string) => {
@@ -27,19 +34,13 @@ Then('the {string} column checkbox should be disabled in the modal', (columnName
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
     // Find the checkbox associated with the Name column
     // The checkbox might be in a list item or table row
-    cy.contains(columnName)
-      .closest('li, tr, div[role="row"]')
-      .find('input[type="checkbox"]')
-      .should('be.disabled');
+    cy.contains(columnName).closest('li, tr, div[role="row"]').find('input[type="checkbox"]').should('be.disabled');
   });
 });
 
 Then('the {string} column should be checked in the modal', (columnName: string) => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains(columnName)
-      .closest('li, tr, div[role="row"]')
-      .find('input[type="checkbox"]')
-      .should('be.checked');
+    cy.contains(columnName).closest('li, tr, div[role="row"]').find('input[type="checkbox"]').should('be.checked');
   });
 });
 
@@ -71,7 +72,8 @@ When('user checks the {string} column in the modal', (columnName: string) => {
 
 When('user applies the column changes', () => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains('button', 'Apply').click();
+    // PatternFly ListManager uses "Save" button, not "Apply"
+    cy.contains('button', 'Save').click();
   });
   // Wait for modal to close
   cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
@@ -85,7 +87,11 @@ When('user closes the column management modal', () => {
 When('user resets columns to default', () => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
     cy.contains('button', 'Reset to default').click();
+    // After reset, save the changes
+    cy.contains('button', 'Save').click();
   });
+  // Wait for modal to close
+  cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
 });
 
 Then('the {string} column should not be visible in the table', (columnName: string) => {
@@ -117,6 +123,9 @@ Then('the columns should be in the new order', () => {
 });
 
 Then('all default columns should be visible', () => {
+  // Wait for table to be visible (loading overlay gone)
+  cy.get('table thead', { timeout: 10000 }).should('be.visible');
+
   // Default columns for Apps: Name, Health, Namespace, Labels, Details
   const defaultColumns = ['Name', 'Health', 'Namespace', 'Labels', 'Details'];
   cy.get('table thead').within(() => {
@@ -134,20 +143,28 @@ Given('user is at the {string} list page with URL param {string}', (listType: st
   };
 
   const basePath = pageMap[listType] || `/console/${listType}`;
-  cy.visit(`${basePath}?${urlParam}`);
+  // Add refresh=0 to pause auto-refresh and wait for page to load
+  cy.visit(`${basePath}?refresh=0&${urlParam}`);
+  cy.get('#filter-selection', { timeout: 15000 }).should('exist');
 });
 
 Given('user visits the page with URL param {string}', (urlParam: string) => {
   cy.url().then(currentUrl => {
     const url = new URL(currentUrl);
-    const newUrl = `${url.pathname}?${urlParam}`;
+    // Preserve existing query params like namespaces
+    const params = new URLSearchParams(url.search);
+    const newParams = new URLSearchParams(urlParam);
+    newParams.forEach((value, key) => params.set(key, value));
+    params.set('refresh', '0');
+    const newUrl = `${url.pathname}?${params.toString()}`;
     cy.visit(newUrl);
+    cy.get('#filter-selection', { timeout: 15000 }).should('exist');
+    // Wait for table to render with URL params applied
+    cy.wait(1000);
   });
 });
 
-Then('the URL should contain {string}', (paramName: string) => {
-  cy.url().should('include', paramName);
-});
+// Note: 'the URL should contain {string}' is already defined in ai_chatbot.ts
 
 When('user refreshes the page', () => {
   cy.reload();

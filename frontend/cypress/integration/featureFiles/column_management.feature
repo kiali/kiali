@@ -77,7 +77,7 @@ Feature: Column Management in List Pages
   @core-1
   @offline
   Scenario: Apps list - Name column cannot be hidden via URL
-    Given user is at the "applications" list page with URL param "apps_hidden_columns=name,health,labels"
+    Given user is at the "applications" list page with URL param "apphide=name,health,labels"
     And user selects the "bookinfo" namespace
     Then the "Name" column should be visible in the table
     And the "Health" column should not be visible in the table
@@ -92,7 +92,7 @@ Feature: Column Management in List Pages
     When user clicks the "Manage columns" button with test id "apps-manage-columns"
     And user unchecks the "Namespace" column in the modal
     And user applies the column changes
-    Then the URL should contain "apps_hidden_columns"
+    Then the URL should contain "apphide"
     And the URL should contain "namespace"
     When user refreshes the page
     Then the "Namespace" column should not be visible in the table
@@ -106,7 +106,7 @@ Feature: Column Management in List Pages
     When user clicks the "Manage columns" button with test id "services-manage-columns"
     Then the "Name" column checkbox should be disabled in the modal
     When user closes the column management modal
-    And user visits the page with URL param "services_hidden_columns=name,health"
+    And user visits the page with URL param "svchide=name,health"
     Then the "Name" column should be visible in the table
     And the "Health" column should not be visible in the table
 
@@ -119,7 +119,7 @@ Feature: Column Management in List Pages
     When user clicks the "Manage columns" button with test id "workloads-manage-columns"
     Then the "Name" column checkbox should be disabled in the modal
     When user closes the column management modal
-    And user visits the page with URL param "workloads_hidden_columns=name,health"
+    And user visits the page with URL param "wlhide=name,health"
     Then the "Name" column should be visible in the table
     And the "Health" column should not be visible in the table
 
@@ -132,6 +132,6 @@ Feature: Column Management in List Pages
     When user clicks the "Manage columns" button with test id "apps-manage-columns"
     And user reorders columns in the modal
     And user applies the column changes
-    Then the URL should contain "apps_column_order"
+    Then the URL should contain "apporder"
     When user refreshes the page
     Then the columns should maintain the custom order
