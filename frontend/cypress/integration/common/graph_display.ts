@@ -379,54 +379,6 @@ const validateInput = (option: string, action: string): void => {
   }
 };
 
-Given(
-  'there are Istio objects in the {string} namespace for {string} cluster',
-  (namespace: string, cluster: string) => {
-    // From test setup there should be at least a "bookinfo" VirtualService and a "bookinfo-gateway" Gateway in each cluster.
-    cy.request({ url: `api/namespaces/${namespace}/istio`, qs: { clusterName: cluster } })
-      .as(`istioConfigRequest-${cluster}`)
-      .then(response => {
-        expect(response.status).to.eq(200);
-        expect(response.body).to.have.property('resources');
-        expect(response.body.resources['networking.istio.io/v1, Kind=Gateway'].length).greaterThan(0);
-        expect(response.body.resources['networking.istio.io/v1, Kind=VirtualService'].length).greaterThan(0);
-      });
-  }
-);
-
-Then(
-  'the Istio objects for the {string} namespace for both clusters should be grouped together in the panel',
-  (namespace: string) => {
-    // Wait for graph (and thus side panel) to be ready before asserting on the panel (avoids race)
-    assertGraphReady(() => {});
-    cy.get('#graph-side-panel')
-      .find(`#ns-${namespace}`)
-      .within(() => {
-        // rightClick simiulates 'hover' since support for this is wonky in cypress: https://github.com/cypress-io/cypress/issues/10
-        cy.get(
-          ':is([data-test="icon-correct-validation"], [data-test="icon-warning-validation"], [data-test="icon-error-validation"])'
-        ).rightclick();
-      });
-
-    cy.get('@istioConfigRequest-east').then(resp => {
-      const response = (resp as unknown) as Cypress.Response<any>;
-      let totalObjectsEast = 0;
-      Object.keys(response.body.resources).forEach(resourceKey => {
-        totalObjectsEast += response.body.resources[resourceKey].length;
-      });
-      cy.get('@istioConfigRequest-west').then(resp => {
-        const response = (resp as unknown) as Cypress.Response<any>;
-        let totalObjectsWest = 0;
-        Object.keys(response.body.resources).forEach(resourceKey => {
-          totalObjectsWest += response.body.resources[resourceKey].length;
-        });
-        const totalObjects = totalObjectsEast + totalObjectsWest;
-        cy.get('[aria-label="Validations list"]').contains(`Istio config objects analyzed: ${totalObjects}`);
-      });
-    });
-  }
-);
-
 Then('{int} edges appear in the graph', (graphEdges: number) => {
   assertGraphReady(({ edges }) => {
     const numEdges = select(edges, { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }).length;

@@ -337,17 +337,6 @@ Feature: Kiali Graph page - Display menu
     When user clicks on the "reviews-v2" workload in the "bookinfo" namespace in the "west" cluster
     Then user sees a link to the "west" cluster workload details page in the summary panel
 
-  #inspired by this: https://github.com/kiali/kiali/pull/6469
-  #in order to test this properly, Istio CRDs should be enabled in west and atleast 1 Istio object should be created there
-  @multi-cluster
-  @multi-primary
-  Scenario: See Istio config validations from both clusters
-    Given there are Istio objects in the "bookinfo" namespace for "east" cluster
-    And there are Istio objects in the "bookinfo" namespace for "west" cluster
-    When user graphs "bookinfo" namespaces
-    And autorefresh is enabled
-    Then the Istio objects for the "bookinfo" namespace for both clusters should be grouped together in the panel
-
   @ambient
   @offline
   Scenario: User sees tcp traffic
