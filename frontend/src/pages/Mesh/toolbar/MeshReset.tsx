@@ -21,7 +21,7 @@ const MeshResetComponent: React.FC<MeshResetProps> = (props: MeshResetProps) => 
   };
 
   return (
-    <Tooltip key="factory_reset_settings" position="bottom" content="Reset to mesh defaults">
+    <Tooltip key="factory_reset_settings" position="bottom" content={t('Reset to mesh defaults')}>
       <Button
         id="mesh-factory-reset"
         icon={<KialiIcon.ResetSettings />}

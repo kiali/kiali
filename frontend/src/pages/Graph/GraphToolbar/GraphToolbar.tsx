@@ -38,6 +38,7 @@ import { GraphReset } from './GraphReset';
 import { GraphFind } from './GraphFind';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { GraphElement } from '@patternfly/react-topology';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   activeNamespaces: Namespace[];
@@ -204,7 +205,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
             {this.props.node && (
               <ToolbarItem style={{ margin: 0 }}>
-                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={'Back to full graph'}>
+                <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={t('Back to full graph')}>
                   <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>
                     <KialiIcon.Back />
                   </Button>
@@ -230,7 +231,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
                   variant={ButtonVariant.link}
                   onClick={this.props.onToggleHelp}
                 >
-                  <span>Help</span>
+                  <span>{t('Help')}</span>
                 </Button>
               </TourStop>
               <GraphReset />
