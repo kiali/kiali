@@ -33,7 +33,7 @@ The [README for the server](./README.adoc#building) and the [README for the UI](
 
 ### Internationalization
 
-If you want to add a new language or improve an existing one, you can check the internationalization section of the [README for UI](./frontend/README.adoc#internationalization-i18n)
+If you want to add a new language or improve an existing one, you can check the internationalization section of the [README for UI](./frontend/README.adoc#internationalization-i18n) and the shared [i18n conventions guide](./I18N-AGENTS.md) for Spanish and Chinese glossary/style rules.
 
 ### Code Style Guide
 
