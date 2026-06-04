@@ -178,13 +178,13 @@ Before({ tags: '@core-caching' }, () => {
       return (
         /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
         /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
-        /"health_status_metric"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+        /"health_status"[\s\S]*?"enabled"\s*:\s*true/.test(text)
       );
     }
     return (
       /graph_cache:[\s\S]*?enabled:\s*true/.test(text) &&
       /health_cache:[\s\S]*?enabled:\s*true/.test(text) &&
-      /health_status_metric:[\s\S]*?enabled:\s*true/.test(text)
+      /health_status:[\s\S]*?enabled:\s*true/.test(text)
     );
   };
 

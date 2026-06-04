@@ -244,8 +244,14 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
           spec: {
             kiali_internal: {
               graph_cache: { enabled: true },
-              health_cache: { enabled: true },
-              health_status_metric: { enabled: true }
+              health_cache: { enabled: true }
+            },
+            server: {
+              observability: {
+                metrics: {
+                  health_status: { enabled: true }
+                }
+              }
             }
           }
         });
@@ -259,7 +265,7 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
         `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
       );
       cy.exec(
-        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true | .kiali_internal.health_status_metric.enabled = true' /tmp/kiali-config.yaml`
+        `yq -i '.kiali_internal.graph_cache.enabled = true | .kiali_internal.health_cache.enabled = true | .server.observability.metrics.health_status.enabled = true' /tmp/kiali-config.yaml`
       );
       cy.exec(
         `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
