@@ -834,16 +834,17 @@ const (
 )
 
 type ProviderConfig struct {
-	Name         string             `yaml:"name" json:"name"`
-	Description  string             `yaml:"description,omitempty" json:"description,omitempty"`
-	Type         ProviderType       `yaml:"type" json:"type"`
-	Config       ProviderConfigType `yaml:"config" json:"config"`
-	Enabled      bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Endpoint     string             `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
-	DefaultModel string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
-	Models       []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
-	Key          Credential         `yaml:"key,omitempty" json:"key,omitempty"`
-	Tools        ToolFilterConfig   `yaml:"tools,omitempty" json:"tools,omitempty"`
+	Config             ProviderConfigType `yaml:"config" json:"config"`
+	DefaultModel       string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
+	Description        string             `yaml:"description,omitempty" json:"description,omitempty"`
+	Enabled            bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Endpoint           string             `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	InsecureSkipVerify bool               `yaml:"insecure_skip_verify,omitempty" json:"insecureSkipVerify,omitempty"`
+	Key                Credential         `yaml:"key,omitempty" json:"key,omitempty"`
+	Models             []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
+	Name               string             `yaml:"name" json:"name"`
+	Tools              ToolFilterConfig   `yaml:"tools,omitempty" json:"tools,omitempty"`
+	Type               ProviderType       `yaml:"type" json:"type"`
 }
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
