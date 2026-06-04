@@ -248,44 +248,54 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 	var err error
 	var allApps []namespaceApps
 
-	wg := &sync.WaitGroup{}
-	type result struct {
-		cluster string
-		nsApps  namespaceApps
-		err     error
-	}
-	resultsCh := make(chan result)
-
-	// TODO: Use a context to define a timeout. The context should be passed to the k8s client
-	go func() {
-		for cluster := range in.userClients {
-			wg.Add(1)
-			go func(c string) {
-				defer wg.Done()
-				nsApps, error2 := in.fetchNamespaceApps(ctx, criteria.Namespace, c, "")
-				if error2 != nil {
-					resultsCh <- result{cluster: c, nsApps: nil, err: error2}
-				} else {
-					resultsCh <- result{cluster: c, nsApps: nsApps, err: nil}
-				}
-			}(cluster)
+	// Avoid cross-cluster fan-out and redundant Istio config fetches when the caller
+	// already knows which cluster it wants.
+	if criteria.Cluster != "" {
+		if _, ok := in.userClients[criteria.Cluster]; !ok {
+			return *appList, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", criteria.Cluster)
 		}
-		wg.Wait()
-		close(resultsCh)
-	}()
+		nsApps, err2 := in.fetchNamespaceApps(ctx, criteria.Namespace, criteria.Cluster, "")
+		if err2 != nil {
+			return models.AppList{}, err2
+		}
+		allApps = append(allApps, nsApps)
+	} else {
+		wg := &sync.WaitGroup{}
+		type result struct {
+			cluster string
+			nsApps  namespaceApps
+			err     error
+		}
+		resultsCh := make(chan result)
 
-	// Combine namespace data
-	for resultCh := range resultsCh {
-		if resultCh.err != nil {
-			// Return failure if we are in single cluster
-			if resultCh.cluster == in.conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
-				log.Errorf("Error fetching Applications for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
-				return models.AppList{}, resultCh.err
-			} else {
-				log.Infof("Error fetching Applications for cluster [%s]: %s", resultCh.cluster, resultCh.err)
+		go func() {
+			for cluster := range in.userClients {
+				wg.Add(1)
+				go func(c string) {
+					defer wg.Done()
+					nsApps, error2 := in.fetchNamespaceApps(ctx, criteria.Namespace, c, "")
+					if error2 != nil {
+						resultsCh <- result{cluster: c, nsApps: nil, err: error2}
+					} else {
+						resultsCh <- result{cluster: c, nsApps: nsApps, err: nil}
+					}
+				}(cluster)
 			}
+			wg.Wait()
+			close(resultsCh)
+		}()
+
+		for resultCh := range resultsCh {
+			if resultCh.err != nil {
+				if resultCh.cluster == in.conf.KubernetesConfig.ClusterName && len(in.userClients) == 1 {
+					log.Errorf("Error fetching Applications for local cluster [%s]: %s", resultCh.cluster, resultCh.err)
+					return models.AppList{}, resultCh.err
+				} else {
+					log.Infof("Error fetching Applications for cluster [%s]: %s", resultCh.cluster, resultCh.err)
+				}
+			}
+			allApps = append(allApps, resultCh.nsApps)
 		}
-		allApps = append(allApps, resultCh.nsApps)
 	}
 
 	icCriteria := IstioConfigCriteria{
@@ -297,15 +307,26 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 		IncludeRequestAuthentications: true,
 		IncludeSidecars:               true,
 		IncludeVirtualServices:        true,
+		IncludeWorkloadGroups:         true,
 	}
-	istioConfigList := &models.IstioConfigList{}
 
-	// TODO: MC
+	var istioConfigMap models.IstioConfigMap
 	if criteria.IncludeIstioResources {
-		istioConfigList, err = in.businessLayer.IstioConfig.GetIstioConfigListForCluster(ctx, criteria.Cluster, criteria.Namespace, icCriteria)
-		if err != nil {
-			log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
-			return models.AppList{}, err
+		if criteria.Cluster != "" {
+			icl, err2 := in.businessLayer.IstioConfig.GetIstioConfigListForCluster(ctx, criteria.Cluster, criteria.Namespace, icCriteria)
+			if err2 != nil {
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err2)
+				return models.AppList{}, err2
+			}
+			istioConfigMap = models.IstioConfigMap{criteria.Cluster: *icl}
+		} else {
+			// TODO: MC - when multi-cluster validations are implemented, this path
+			// should also scope Istio config per-cluster for validation purposes.
+			istioConfigMap, err = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, criteria.Namespace, icCriteria)
+			if err != nil {
+				log.Errorf("Error fetching Istio Config per namespace %s: %s", criteria.Namespace, err)
+				return models.AppList{}, err
+			}
 		}
 	}
 
@@ -334,6 +355,13 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				Health:       models.EmptyAppHealth(),
 			}
 
+			istioConfigList := models.IstioConfigList{}
+			if criteria.IncludeIstioResources {
+				if icl, ok := istioConfigMap[valueApp.cluster]; ok {
+					istioConfigList = icl
+				}
+			}
+
 			applabels := make(map[string][]string)
 			svcReferences := make([]*models.IstioValidationKey, 0)
 			for _, srv := range valueApp.Services {
@@ -341,17 +369,17 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 				if criteria.IncludeIstioResources {
 					vsFiltered := kubernetes.FilterVirtualServicesByService(istioConfigList.VirtualServices, srv.Namespace, srv.Name, clusterIdentityDomain)
 					for _, v := range vsFiltered {
-						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.VirtualServices, v.Name, v.Namespace, valueApp.cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 					drFiltered := kubernetes.FilterDestinationRulesByService(istioConfigList.DestinationRules, srv.Namespace, srv.Name, clusterIdentityDomain)
 					for _, d := range drFiltered {
-						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.DestinationRules, d.Name, d.Namespace, valueApp.cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 					gwFiltered := kubernetes.FilterGatewaysByVirtualServices(istioConfigList.Gateways, istioConfigList.VirtualServices)
 					for _, g := range gwFiltered {
-						ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, criteria.Cluster)
+						ref := models.BuildKey(kubernetes.Gateways, g.Name, g.Namespace, valueApp.cluster)
 						svcReferences = append(svcReferences, &ref)
 					}
 
@@ -363,7 +391,7 @@ func (in *AppService) GetAppList(ctx context.Context, criteria AppCriteria) (mod
 			for _, wrk := range valueApp.Workloads {
 				joinMap(applabels, wrk.Labels)
 				if criteria.IncludeIstioResources {
-					wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, *istioConfigList, criteria.Cluster)...)
+					wkdReferences = append(wkdReferences, FilterWorkloadReferences(in.conf, wrk.Labels, istioConfigList, valueApp.cluster)...)
 				}
 			}
 			appItem.Labels = buildFinalLabels(applabels)
