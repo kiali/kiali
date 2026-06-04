@@ -75,7 +75,7 @@ commands:
 
     GEMINI_ARGS=("--approval-mode" "yolo" "--output-format" "stream-json")
 
-    GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-pro}"
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-flash-lite}"
     GEMINI_ARGS+=("--model" "${GEMINI_MODEL}")
 
     if [[ -n "${DEBUG_DIR}" ]]; then
