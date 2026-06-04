@@ -1,6 +1,3 @@
-auth:
-  strategy: "token"
-
 chat_ai:
   enabled: true
   default_provider: "LightSpeed"
@@ -46,7 +43,7 @@ kubernetes_config:
   cluster_name: "Kubernetes"
 
 auth:
-  strategy: "anonymous"
+  strategy: "token"
 
 login_token:
   signing_key: "0123456789abcdef"
