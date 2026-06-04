@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
+import { t } from 'utils/I18nUtils';
 
 type RefreshButtonProps = {
   disabled?: boolean;
@@ -28,7 +29,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = (props: RefreshButton
       data-test="refresh-button"
       onClick={handleRefresh}
       isDisabled={props.disabled ?? false}
-      aria-label="Action"
+      aria-label={t('Refresh')}
       variant={ButtonVariant.stateful}
       state="unread"
     ></Button>
