@@ -86,7 +86,6 @@ export interface GraphToolbarState {
   graphType: GraphType;
   hideValue: string;
   rankBy: RankMode[];
-  showFindHelp: boolean;
   showIdleEdges: boolean;
   showIdleNodes: boolean;
   showLegend: boolean;
@@ -142,7 +141,6 @@ export interface MeshToolbarState {
   // find props
   findValue: string;
   hideValue: string;
-  showFindHelp: boolean;
   showGateways: boolean;
   showLegend: boolean;
   showWaypoints: boolean;

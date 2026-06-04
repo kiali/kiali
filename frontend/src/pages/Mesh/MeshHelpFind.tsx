@@ -10,6 +10,7 @@ import { SimpleTable } from 'components/Table/SimpleTable';
 export interface MeshHelpFindProps {
   children?: React.ReactNode;
   className?: string;
+  isVisible: boolean;
   onClose: () => void;
 }
 
@@ -161,48 +162,52 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
         onResize={onResize}
       />
 
-      <Popover
-        data-test="mesh-find-hide-help"
-        className={popoverStyle}
-        position={PopoverPosition.auto}
-        isVisible={true}
-        hideOnOutsideClick={false}
-        shouldClose={props.onClose}
-        headerContent={
-          <div>
-            <span>Mesh Find/Hide</span>
-          </div>
-        }
-        bodyContent={
-          <>
-            <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
+      {props.isVisible ? (
+        <Popover
+          data-test="mesh-find-hide-help"
+          className={popoverStyle}
+          position={PopoverPosition.auto}
+          isVisible={props.isVisible}
+          hideOnOutsideClick={false}
+          shouldClose={props.onClose}
+          headerContent={
+            <div>
+              <span>Mesh Find/Hide</span>
+            </div>
+          }
+          bodyContent={
+            <>
+              <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
 
-            <SimpleTabs id="mesh_find_help_tabs" defaultTab={0} style={{ width: contentWidth }}>
-              <Tab style={tabFont} eventKey={0} title="Examples">
-                {exampleTable}
-              </Tab>
+              <SimpleTabs id="mesh_find_help_tabs" defaultTab={0} style={{ width: contentWidth }}>
+                <Tab style={tabFont} eventKey={0} title="Examples">
+                  {exampleTable}
+                </Tab>
 
-              <Tab style={tabFont} eventKey={1} title="Nodes">
-                {nodeTable}
-              </Tab>
+                <Tab style={tabFont} eventKey={1} title="Nodes">
+                  {nodeTable}
+                </Tab>
 
-              <Tab style={tabFont} eventKey={2} title="Edges">
-                {edgeTable}
-              </Tab>
+                <Tab style={tabFont} eventKey={2} title="Edges">
+                  {edgeTable}
+                </Tab>
 
-              <Tab style={tabFont} eventKey={3} title="Operators">
-                {operatorTable}
-              </Tab>
+                <Tab style={tabFont} eventKey={3} title="Operators">
+                  {operatorTable}
+                </Tab>
 
-              <Tab style={tabFont} eventKey={4} title="Usage Notes">
-                {noteTable}
-              </Tab>
-            </SimpleTabs>
-          </>
-        }
-      >
+                <Tab style={tabFont} eventKey={4} title="Usage Notes">
+                  {noteTable}
+                </Tab>
+              </SimpleTabs>
+            </>
+          }
+        >
+          <>{props.children}</>
+        </Popover>
+      ) : (
         <>{props.children}</>
-      </Popover>
+      )}
     </>
   );
 };

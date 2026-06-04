@@ -43,7 +43,6 @@ type ReduxStateProps = {
   findValue: string;
   hideValue: string;
   rankBy: RankMode[];
-  showFindHelp: boolean;
   showIdleNodes: boolean;
   showRank: boolean;
   showSecurity: boolean;
@@ -55,7 +54,6 @@ type ReduxDispatchProps = {
   setFindValue: (val: string) => void;
   setHideValue: (val: string) => void;
   setRankBy: (rankBy: RankMode[]) => void;
-  toggleFindHelp: () => void;
   toggleGraphSecurity: () => void;
   toggleGraphVirtualServices: () => void;
   toggleIdleNodes: () => void;
@@ -73,6 +71,7 @@ type GraphFindState = {
   findInputValue: string;
   hideError?: string;
   hideInputValue: string;
+  showFindHelp: boolean;
 };
 
 type ParsedExpression = {
@@ -88,10 +87,6 @@ const buttonClearStyle = kialiStyle({
   marginLeft: '0.125rem',
   paddingLeft: '0.75rem',
   paddingRight: '0.75rem'
-});
-
-const findHideHelpStyle = kialiStyle({
-  marginLeft: '0.125rem'
 });
 
 const gridStyle = kialiStyle({
@@ -210,11 +205,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
       HistoryManager.setParam(URLParam.GRAPH_HIDE, hideValue);
     }
 
-    this.state = { findInputValue: findValue, hideInputValue: hideValue };
-
-    if (props.showFindHelp) {
-      props.toggleFindHelp();
-    }
+    this.state = { findInputValue: findValue, hideInputValue: hideValue, showFindHelp: false };
   }
 
   // We only update on a change to the find/hide values, or a graph change.  We may use other props
@@ -226,7 +217,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
-    const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
+    const showFindHelpChanged = this.state.showFindHelp !== nextState.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
 
@@ -391,33 +382,28 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               </FormGroup>
             </GridItem>
 
-            {this.props.showFindHelp ? (
-              <GraphHelpFind onClose={this.toggleFindHelp}>
+            <GraphHelpFind onClose={this.hideFindHelp} isVisible={this.state.showFindHelp}>
+              <span>
                 <Button
                   data-test="graph-find-hide-help-button"
                   icon={<KialiIcon.Help />}
                   variant={ButtonVariant.link}
-                  className={findHideHelpStyle}
                   onClick={this.toggleFindHelp}
                 />
-              </GraphHelpFind>
-            ) : (
-              <Button
-                data-test="graph-find-hide-help-button"
-                icon={<KialiIcon.Help />}
-                variant={ButtonVariant.link}
-                className={findHideHelpStyle}
-                onClick={this.toggleFindHelp}
-              />
-            )}
+              </span>
+            </GraphHelpFind>
           </Grid>
         </Form>
       </TourStop>
     );
   }
 
+  private hideFindHelp = (): void => {
+    this.setState({ showFindHelp: false });
+  };
+
   private toggleFindHelp = (): void => {
-    this.props.toggleFindHelp();
+    this.setState({ showFindHelp: !this.state.showFindHelp });
   };
 
   private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
@@ -1243,7 +1229,6 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: findValueSelector(state),
   hideValue: hideValueSelector(state),
   rankBy: state.graph.toolbarState.rankBy,
-  showFindHelp: state.graph.toolbarState.showFindHelp,
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,
@@ -1256,7 +1241,6 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
     setFindValue: bindActionCreators(GraphToolbarActions.setFindValue, dispatch),
     setHideValue: bindActionCreators(GraphToolbarActions.setHideValue, dispatch),
     setRankBy: bindActionCreators(GraphToolbarActions.setRankBy, dispatch),
-    toggleFindHelp: bindActionCreators(GraphToolbarActions.toggleFindHelp, dispatch),
     toggleGraphSecurity: bindActionCreators(GraphToolbarActions.toggleGraphSecurity, dispatch),
     toggleIdleNodes: bindActionCreators(GraphToolbarActions.toggleIdleNodes, dispatch),
     toggleRank: bindActionCreators(GraphToolbarActions.toggleRank, dispatch),

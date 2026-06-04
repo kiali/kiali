@@ -48,13 +48,11 @@ type ReduxStateProps = {
   findValue: string;
   hideValue: string;
   layout: MeshLayout;
-  showFindHelp: boolean;
 };
 
 type ReduxDispatchProps = {
   setFindValue: (val: string) => void;
   setHideValue: (val: string) => void;
-  toggleFindHelp: () => void;
 };
 
 type MeshFindProps = ReduxStateProps &
@@ -68,6 +66,7 @@ type MeshFindState = {
   findInputValue: string;
   hideError?: string;
   hideInputValue: string;
+  showFindHelp: boolean;
 };
 
 type ParsedExpression = {
@@ -83,10 +82,6 @@ const buttonClearStyle = kialiStyle({
   marginLeft: '0.125rem',
   paddingLeft: '0.75rem',
   paddingRight: '0.75rem'
-});
-
-const findHideHelpStyle = kialiStyle({
-  marginLeft: '0.125rem'
 });
 
 const gridStyle = kialiStyle({
@@ -157,11 +152,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       HistoryManager.setParam(URLParam.MESH_HIDE, hideValue);
     }
 
-    this.state = { findInputValue: findValue, hideInputValue: hideValue };
-
-    if (props.showFindHelp) {
-      props.toggleFindHelp();
-    }
+    this.state = { findInputValue: findValue, hideInputValue: hideValue, showFindHelp: false };
   }
 
   // We only update on a change to the find/hide values, or a mesh change.  Although we use other props
@@ -172,7 +163,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
-    const showFindHelpChanged = this.props.showFindHelp !== nextProps.showFindHelp;
+    const showFindHelpChanged = this.state.showFindHelp !== nextState.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
 
@@ -329,33 +320,28 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               </FormGroup>
             </GridItem>
 
-            {this.props.showFindHelp ? (
-              <MeshHelpFind onClose={this.toggleFindHelp}>
+            <MeshHelpFind onClose={this.hideFindHelp} isVisible={this.state.showFindHelp}>
+              <span>
                 <Button
                   data-test="mesh-find-hide-help-button"
                   icon={<KialiIcon.Help />}
                   variant={ButtonVariant.link}
-                  className={findHideHelpStyle}
                   onClick={this.toggleFindHelp}
                 />
-              </MeshHelpFind>
-            ) : (
-              <Button
-                data-test="mesh-find-hide-help-button"
-                icon={<KialiIcon.Help />}
-                variant={ButtonVariant.link}
-                className={findHideHelpStyle}
-                onClick={this.toggleFindHelp}
-              />
-            )}
+              </span>
+            </MeshHelpFind>
           </Grid>
         </Form>
       </TourStop>
     );
   }
 
+  private hideFindHelp = (): void => {
+    this.setState({ showFindHelp: false });
+  };
+
   private toggleFindHelp = (): void => {
-    this.props.toggleFindHelp();
+    this.setState({ showFindHelp: !this.state.showFindHelp });
   };
 
   private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
@@ -901,15 +887,13 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: meshFindValueSelector(state),
   hideValue: meshHideValueSelector(state),
-  layout: state.mesh.layout,
-  showFindHelp: state.mesh.toolbarState.showFindHelp
+  layout: state.mesh.layout
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     setFindValue: bindActionCreators(MeshToolbarActions.setFindValue, dispatch),
-    setHideValue: bindActionCreators(MeshToolbarActions.setHideValue, dispatch),
-    toggleFindHelp: bindActionCreators(MeshToolbarActions.toggleFindHelp, dispatch)
+    setHideValue: bindActionCreators(MeshToolbarActions.setHideValue, dispatch)
   };
 };
 
