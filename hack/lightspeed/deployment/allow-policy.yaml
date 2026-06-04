@@ -8,12 +8,12 @@ spec:
     matchLabels:
       app.kubernetes.io/name: lightspeed-service-api
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              allow-lightspeed: "true"
-      ports:
-        - protocol: TCP
-          port: 8443
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          allow-lightspeed: "true"
+    ports:
+    - protocol: TCP
+      port: 8443

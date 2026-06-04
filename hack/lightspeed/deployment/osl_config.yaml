@@ -7,14 +7,13 @@ spec:
   - MCPServer
   llm:
     providers:
-    - name: openAI
+    - name: openAICompatible
       type: openai
       credentialsSecretRef:
         name: credentials
-      url: https://api.openai.com/v1
+      url: ${LLM_PROVIDER_URL}
       models:
-      - name: gpt-5.4-nano
-      - name: gpt-5.4
+      - name: ${LLM_MODEL}
   mcpServers:
   - name: ${MCP_PROVIDER}-mcp    
     headers:
@@ -24,6 +23,6 @@ spec:
     url: 'http://${MCP_PROVIDER}-mcp-server.${MCP_PROVIDER}-mcp:8080/mcp'
     timeout: 30   
   ols:
-    defaultModel: gpt-5.4-nano
-    defaultProvider: openAI
+    defaultModel: ${LLM_MODEL}
+    defaultProvider: openAICompatible
     logLevel: DEBUG
