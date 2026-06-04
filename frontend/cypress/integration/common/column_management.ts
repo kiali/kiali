@@ -4,8 +4,6 @@ import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 // The modal doesn't have aria-label, it uses aria-labelledby pointing to the title
 // So we match by role="dialog" and check for the title inside
 const COLUMN_MANAGEMENT_MODAL = '[role="dialog"]';
-const MODAL_TITLE = `${COLUMN_MANAGEMENT_MODAL} h1`;
-const MODAL_CLOSE_BUTTON = `${COLUMN_MANAGEMENT_MODAL} button[aria-label="Close"]`;
 
 When('user clicks the {string} button with test id {string}', (buttonText: string, testId: string) => {
   // Wait for the toolbar to be fully loaded
@@ -13,9 +11,6 @@ When('user clicks the {string} button with test id {string}', (buttonText: strin
 
   // Wait for the button to be visible and clickable
   cy.get(`[data-test-id="${testId}"]`, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
-
-  // Wait a moment for the modal to start opening
-  cy.wait(500);
 });
 
 Then('the column management modal should be visible', () => {
@@ -27,7 +22,7 @@ Then('the column management modal should be visible', () => {
 });
 
 Then('the modal title should be {string}', (expectedTitle: string) => {
-  cy.get(MODAL_TITLE).should('contain.text', expectedTitle);
+  cy.get(COLUMN_MANAGEMENT_MODAL).find('h1').should('contain.text', expectedTitle);
 });
 
 Then('the {string} column checkbox should be disabled in the modal', (columnName: string) => {
@@ -80,7 +75,7 @@ When('user applies the column changes', () => {
 });
 
 When('user closes the column management modal', () => {
-  cy.get(MODAL_CLOSE_BUTTON).click();
+  cy.get(`${COLUMN_MANAGEMENT_MODAL} button[aria-label="Close"]`).click();
   cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
 });
 
@@ -159,8 +154,6 @@ Given('user visits the page with URL param {string}', (urlParam: string) => {
     const newUrl = `${url.pathname}?${params.toString()}`;
     cy.visit(newUrl);
     cy.get('#filter-selection', { timeout: 15000 }).should('exist');
-    // Wait for table to render with URL params applied
-    cy.wait(1000);
   });
 });
 
