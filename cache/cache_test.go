@@ -645,6 +645,44 @@ func TestGatewayAPIClasses(t *testing.T) {
 		require.Equal("istio-waypoint", result[2].Name)
 	})
 
+	// Waypoint included when only a remote cluster has ambient
+	t.Run("DefaultValuesWithAmbientOnRemoteCluster", func(t *testing.T) {
+		conf := config.NewConfig()
+		config.Set(conf)
+		mgmt := kubetest.NewFakeK8sClient()
+		mgmt.GatewayAPIEnabled = true
+		member := kubetest.NewFakeK8sClient(
+			kubetest.FakeNamespace("istio-system"),
+			ztunnelDaemonSet(),
+		)
+		member.GatewayAPIEnabled = true
+		saClients := map[string]kubernetes.ClientInterface{
+			"mgmt":   mgmt,
+			"member": member,
+		}
+		readers := map[string]ctrlclient.Reader{
+			"mgmt":   mgmt,
+			"member": member,
+		}
+
+		conf.Deployment.ClusterWideAccess = true
+		conf.KubernetesConfig.ClusterName = "mgmt"
+		conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{}
+
+		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
+		require.NoError(err)
+
+		result := kialiCache.GatewayAPIClasses("mgmt")
+		var hasWaypoint bool
+		for _, gwClass := range result {
+			if gwClass.ClassName == "istio-waypoint" {
+				hasWaypoint = true
+				break
+			}
+		}
+		require.True(hasWaypoint, "istio-waypoint should be included when a remote cluster has ambient enabled")
+	})
+
 	// Bad label selector
 	t.Run("BadLabelSelector", func(t *testing.T) {
 		conf := config.NewConfig()
