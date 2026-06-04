@@ -5,7 +5,6 @@ import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
 import ReactResizeDetector from 'react-resize-detector';
-import { KialiIcon } from 'config/KialiIcon';
 import { TourActions } from 'actions/TourActions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -104,7 +103,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
 
     return (
       <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => this.setStop(stop!)}>
-        <KialiIcon.AngleLeft /> {t('Back')}
+        {t('Back')}
       </Button>
     );
   };
@@ -122,7 +121,7 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
 
     return (
       <Button variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
-        {t('Next')} <KialiIcon.AngleRight />
+        {t('Next')}
       </Button>
     );
   };
