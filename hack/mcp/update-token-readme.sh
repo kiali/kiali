@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Updates the token consumption section in ai/mcp/README.md from a summary of
-# tests/evals/results/mcpchecker-gemini-eval-out.json (mcpchecker result summary -o json).
+# Updates the token consumption section in ai/mcp/README.md from the raw
+# tests/evals/results/mcpchecker-gemini-eval-out.json results.
 #
 set -euo pipefail
 
@@ -21,74 +21,75 @@ if [[ ! -f "${README_FILE}" ]]; then
   exit 1
 fi
 
-MCPCHECKER="$(command -v mcpchecker 2>/dev/null || true)"
-if [[ -z "${MCPCHECKER}" ]]; then
-  MCPCHECKER="${GOPATH:-$(go env GOPATH)}/bin/mcpchecker"
-fi
-if [[ ! -x "${MCPCHECKER}" ]]; then
-  echo "Error: mcpchecker not found (install: make mcp-install-mcpchecker)" >&2
-  exit 1
-fi
+python3 - "${EVAL_OUT}" "${README_FILE}" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
 
-TOKEN_FILE="$(mktemp)"
-trap 'rm -f "${TOKEN_FILE}"' EXIT
+eval_path = Path(sys.argv[1])
+readme_path = Path(sys.argv[2])
 
-"${MCPCHECKER}" result summary "${EVAL_OUT}" -o json > "${TOKEN_FILE}"
+results = json.loads(eval_path.read_text(encoding="utf-8"))
+if not isinstance(results, list) or not results:
+    raise SystemExit(f"Error: {eval_path} does not contain any task results")
 
-TASKS_TOTAL=$(jq -r '.tasksTotal' "${TOKEN_FILE}")
-TASKS_PASSED=$(jq -r '.tasksPassed' "${TOKEN_FILE}")
-TOTAL_TOKENS=$(jq -r '.totalTokensEstimate' "${TOKEN_FILE}")
-MCP_SCHEMA_TOKENS=$(jq -r '.totalMcpSchemaTokens' "${TOKEN_FILE}")
-TASK_PASS_RATE=$(jq -r '.taskPassRate' "${TOKEN_FILE}")
-ASSERTION_PASS_RATE=$(jq -r '.assertionPassRate' "${TOKEN_FILE}")
 
-PASS_PCT=$(awk "BEGIN {printf \"%.0f\", ${TASK_PASS_RATE} * 100}")
-ASSERT_PCT=$(awk "BEGIN {printf \"%.0f\", ${ASSERTION_PASS_RATE} * 100}")
+def to_int(value: object) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return int(value)
+    return 0
 
-MARKDOWN="### Evaluation Summary\n"
-MARKDOWN+="\n"
-MARKDOWN+="| Metric | Value |\n"
-MARKDOWN+="|--------|-------|\n"
-MARKDOWN+="| Tasks Passed | ${TASKS_PASSED}/${TASKS_TOTAL} (${PASS_PCT}%) |\n"
-MARKDOWN+="| Assertions Pass Rate | ${ASSERT_PCT}% |\n"
-MARKDOWN+="| Total Tokens Estimate | ${TOTAL_TOKENS} |\n"
-MARKDOWN+="| MCP Schema Tokens | ${MCP_SCHEMA_TOKENS} |\n"
-MARKDOWN+="\n"
-MARKDOWN+="### Per-Task Breakdown\n"
-MARKDOWN+="\n"
-MARKDOWN+="| Task | Tokens Estimate | MCP Schema Tokens | Passed |\n"
-MARKDOWN+="|------|----------------:|------------------:|--------|\n"
 
-TASK_COUNT=$(jq '.tasks | length' "${TOKEN_FILE}")
-if (( TASK_COUNT <= 0 )); then
-  echo "Error: mcpchecker result summary returned no tasks" >&2
-  exit 1
-fi
+tasks_total = len(results)
+tasks_passed = sum(1 for task in results if task.get("taskPassed") is True)
+assertion_tasks = [task for task in results if task.get("allAssertionsPassed") is not None]
+assertions_total = len(assertion_tasks)
+assertions_passed = sum(1 for task in assertion_tasks if task.get("allAssertionsPassed") is True)
+total_tokens = sum(to_int((task.get("tokenEstimate") or {}).get("totalTokens")) for task in results)
+mcp_schema_tokens = sum(to_int((task.get("tokenEstimate") or {}).get("mcpSchemaTokens")) for task in results)
 
-for i in $(seq 0 $((TASK_COUNT - 1))); do
-  NAME=$(jq -r ".tasks[${i}].name" "${TOKEN_FILE}")
-  TOKENS=$(jq -r ".tasks[${i}].tokensEstimated" "${TOKEN_FILE}")
-  SCHEMA=$(jq -r ".tasks[${i}].mcpSchemaTokens" "${TOKEN_FILE}")
-  PASSED=$(jq -r ".tasks[${i}].taskPassed" "${TOKEN_FILE}")
-  if [[ "${PASSED}" == "true" ]]; then
-    STATUS="✅"
-  else
-    STATUS="❌"
-  fi
-  MARKDOWN+="| ${NAME} | ${TOKENS} | ${SCHEMA} | ${STATUS} |\n"
-done
+pass_pct = round((tasks_passed / tasks_total) * 100) if tasks_total else 0
+assert_pct = round((assertions_passed / assertions_total) * 100) if assertions_total else 0
 
-START_MARKER="<!-- TOKENS-CONSUMPTION-START -->"
-END_MARKER="<!-- TOKENS-CONSUMPTION-END -->"
+lines = [
+    "### Evaluation Summary",
+    "",
+    "| Metric | Value |",
+    "|--------|-------|",
+    f"| Tasks Passed | {tasks_passed}/{tasks_total} ({pass_pct}%) |",
+    f"| Assertions Pass Rate | {assert_pct}% |",
+    f"| Total Tokens Estimate | {total_tokens} |",
+    f"| MCP Schema Tokens | {mcp_schema_tokens} |",
+    "",
+    "### Per-Task Breakdown",
+    "",
+    "| Task | Tokens Estimate | MCP Schema Tokens | Passed |",
+    "|------|----------------:|------------------:|--------|",
+]
 
-REPLACEMENT="${START_MARKER}\n\n$(echo -e "${MARKDOWN}")\n${END_MARKER}"
+for task in results:
+    token_estimate = task.get("tokenEstimate") or {}
+    task_name = str(task.get("taskName") or "unknown-task").replace("|", "\\|")
+    tokens = to_int(token_estimate.get("totalTokens"))
+    schema_tokens = to_int(token_estimate.get("mcpSchemaTokens"))
+    status = "✅" if task.get("taskPassed") is True else "❌"
+    lines.append(f"| {task_name} | {tokens} | {schema_tokens} | {status} |")
 
-awk -v start="${START_MARKER}" -v end="${END_MARKER}" -v replacement="${REPLACEMENT}" '
-  $0 ~ start { print replacement; skip=1; next }
-  $0 ~ end { skip=0; next }
-  !skip { print }
-' "${README_FILE}" > "${README_FILE}.tmp"
+markdown = "\n".join(lines)
+start_marker = "<!-- TOKENS-CONSUMPTION-START -->"
+end_marker = "<!-- TOKENS-CONSUMPTION-END -->"
+replacement = f"{start_marker}\n\n{markdown}\n{end_marker}"
 
-mv "${README_FILE}.tmp" "${README_FILE}"
+readme = readme_path.read_text(encoding="utf-8")
+pattern = re.compile(re.escape(start_marker) + r".*?" + re.escape(end_marker), re.S)
+updated_readme, replacements = pattern.subn(replacement, readme, count=1)
+if replacements != 1:
+    raise SystemExit(f"Error: could not replace token section in {readme_path}")
+
+readme_path.write_text(updated_readme, encoding="utf-8")
+PY
 
 echo "Updated token consumption section in ${README_FILE}"
