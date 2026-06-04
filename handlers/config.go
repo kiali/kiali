@@ -164,21 +164,37 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			return
 		}
 
-		if client := userClients[conf.KubernetesConfig.ClusterName]; client != nil {
-			publicConfig.GatewayAPIEnabled = client.IsGatewayAPI()
-			publicConfig.IstioGatewayInstalled = client.IsIstioGateway()
-			publicConfig.IstioAPIInstalled = client.IsIstioAPI()
-		}
-		// Ambient is enabled when any accessible cluster has a ztunnel
-		// daemonset. The home cluster alone is not sufficient: with
-		// ignore_home_cluster=true the management cluster has no mesh
-		// workloads and ambient lives on the remote member clusters.
+		// Aggregate mesh-wide capability flags across all clusters this user can
+		// reach (home cluster is empty under ignore_home_cluster=true).
 		accessibleClusters := make([]string, 0, len(userClients))
 		for clusterName := range userClients {
 			accessibleClusters = append(accessibleClusters, clusterName)
 		}
+
+		for _, cluster := range accessibleClusters {
+			if client := userClients[cluster]; client != nil {
+				if client.IsGatewayAPI() {
+					publicConfig.GatewayAPIEnabled = true
+				}
+				if client.IsIstioGateway() {
+					publicConfig.IstioGatewayInstalled = true
+				}
+				if client.IsIstioAPI() {
+					publicConfig.IstioAPIInstalled = true
+				}
+			}
+		}
 		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(accessibleClusters)
-		publicConfig.GatewayAPIClasses = cache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		// Dedupe gateway API classes by ClassName across clusters.
+		seenClasses := make(map[string]bool)
+		for _, cluster := range accessibleClusters {
+			for _, gwClass := range cache.GatewayAPIClasses(cluster) {
+				if !seenClasses[gwClass.ClassName] {
+					seenClasses[gwClass.ClassName] = true
+					publicConfig.GatewayAPIClasses = append(publicConfig.GatewayAPIClasses, gwClass)
+				}
+			}
+		}
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.

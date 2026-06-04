@@ -298,9 +298,14 @@ func TestConfigHandlerAmbientEnabledChecksAllClusters(t *testing.T) {
 	conf.KubernetesConfig.ClusterName = "mgmt-cluster"
 	conf.Clustering.IgnoreHomeCluster = true
 
-	// Home cluster: no ztunnel (management cluster).
+	// Home cluster: bare management cluster (no ztunnel, no Gateway API,
+	// no Istio CRDs).
 	homeClient := kubetest.NewFakeK8sClient()
-	// Remote cluster: has a ztunnel DaemonSet (ambient enabled).
+	homeClient.GatewayAPIEnabled = false
+	homeClient.IstioGatewayInstalled = false
+	homeClient.IstioAPIInstalled = false
+	// Remote cluster: has a ztunnel DaemonSet (ambient enabled), Gateway API,
+	// and Istio CRDs.
 	remoteClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("istio-system"),
 		&apps_v1.DaemonSet{
@@ -316,6 +321,9 @@ func TestConfigHandlerAmbientEnabledChecksAllClusters(t *testing.T) {
 			},
 		},
 	)
+	remoteClient.GatewayAPIEnabled = true
+	remoteClient.IstioGatewayInstalled = true
+	remoteClient.IstioAPIInstalled = true
 
 	clients := map[string]kubernetes.UserClientInterface{
 		"mgmt-cluster": homeClient,
@@ -345,4 +353,16 @@ func TestConfigHandlerAmbientEnabledChecksAllClusters(t *testing.T) {
 	var confResp handlers.PublicConfig
 	require.NoError(json.Unmarshal(actual, &confResp))
 	require.True(confResp.AmbientEnabled, "ambientEnabled should be true when a remote cluster has ztunnel")
+	require.True(confResp.GatewayAPIEnabled, "gatewayAPIEnabled should be true when a remote cluster has Gateway API CRDs")
+	require.True(confResp.IstioGatewayInstalled, "istioGatewayInstalled should be true when a remote cluster has Istio Gateway CRD")
+	require.True(confResp.IstioAPIInstalled, "istioAPIInstalled should be true when a remote cluster has Istio API CRDs")
+
+	var hasWaypoint bool
+	for _, gwClass := range confResp.GatewayAPIClasses {
+		if gwClass.ClassName == "istio-waypoint" {
+			hasWaypoint = true
+			break
+		}
+	}
+	require.True(hasWaypoint, "GatewayAPIClasses should include istio-waypoint when a remote cluster has ztunnel")
 }
