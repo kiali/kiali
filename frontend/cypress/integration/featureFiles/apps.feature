@@ -156,4 +156,4 @@ Feature: Kiali Apps List page
   Scenario: Health status metric shows healthy apps correctly
     Given a healthy application in the cluster
     When user visits the apps list page for "bookinfo" namespace
-    Then health status metric for "details" app "Healthy" in "bookinfo" namespace should be "Healthy"
+    Then health status metric for "details" app in "bookinfo" namespace should be "Healthy"

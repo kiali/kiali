@@ -13,7 +13,7 @@ import {
   getColWithRowText
 } from './table';
 import { hasAtLeastOneClass, linkSelector } from './utils';
-import { openTab, waitForKialiApiReady } from './transition';
+import { openTab } from './transition';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -383,13 +383,12 @@ Then('health cache metrics should show at least {int} hit', (minHits: number) =>
 // Health status metric test steps
 interface HealthStatusMetricItem {
   cluster: string;
-  namespace: string;
   healthType: string;
   name: string;
+  namespace: string;
   value: number;
 }
 
-// Helper to convert health status numeric value to status string
 const healthStatusValueToString = (value: number): string => {
   switch (value) {
     case 0:
@@ -405,7 +404,6 @@ const healthStatusValueToString = (value: number): string => {
   }
 };
 
-// Fetch health status metrics from Kiali's test API endpoint
 const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]> => {
   return cy
     .request({
@@ -423,34 +421,22 @@ const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]>
     });
 };
 
-Then('health status metric for {string} app {string} in {string} namespace should be {string}', function (
-  appName: string,
-  healthStatus: string,
-  namespace: string
-) {
-  fetchHealthStatusMetrics().then(metrics => {
-    Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
+Then(
+  'health status metric for {string} app in {string} namespace should be {string}',
+  (appName: string, namespace: string, healthStatus: string) => {
+    fetchHealthStatusMetrics().then(metrics => {
+      Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
 
-    // Find the metric for this specific app
-    const appMetric = metrics.find(m => m.healthType === 'app' && m.name === appName && m.namespace === namespace);
+      const appMetric = metrics.find(m => m.healthType === 'app' && m.name === appName && m.namespace === namespace);
 
-    expect(appMetric, `Metric for app ${appName} in namespace ${namespace} should exist`).to.not.be.undefined;
+      assert.isDefined(appMetric, `Metric for app ${appName} in namespace ${namespace} should exist`);
 
-    if (appMetric) {
-      const actualStatus = healthStatusValueToString(appMetric.value);
-      Cypress.log({ message: `App ${appName} health status metric value: ${appMetric.value} (${actualStatus})` });
+      const actualStatus = healthStatusValueToString(appMetric!.value);
+      Cypress.log({ message: `App ${appName} health status metric value: ${appMetric!.value} (${actualStatus})` });
       expect(actualStatus).to.eq(healthStatus);
-    }
-  });
-});
-
-Then('health status metrics should contain at least {int} metric', (minMetrics: number) => {
-  fetchHealthStatusMetrics().then(metrics => {
-    Cypress.log({ message: `Health status metrics count: ${metrics.length}` });
-    Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
-    expect(metrics.length).to.be.at.least(minMetrics);
-  });
-});
+    });
+  }
+);
 
 Then('health status metrics should not be empty', () => {
   fetchHealthStatusMetrics().then(metrics => {

@@ -126,7 +126,6 @@ func HealthCacheMetricsHandler() http.HandlerFunc {
 	}
 }
 
-// HealthStatusMetricItem represents a single health status metric with its labels.
 type HealthStatusMetricItem struct {
 	Cluster    string  `json:"cluster"`
 	Namespace  string  `json:"namespace"`
@@ -135,12 +134,10 @@ type HealthStatusMetricItem struct {
 	Value      float64 `json:"value"`
 }
 
-// HealthStatusMetrics holds health status metrics that can be exposed via the API.
 type HealthStatusMetrics struct {
 	Metrics []HealthStatusMetricItem `json:"metrics"`
 }
 
-// getGaugeVecValues extracts all label/value combinations from a GaugeVec.
 func getGaugeVecValues(gaugeVec *prometheus.GaugeVec) []HealthStatusMetricItem {
 	ch := make(chan prometheus.Metric, 1000)
 	go func() {
