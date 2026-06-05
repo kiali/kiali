@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -250,6 +252,70 @@ func TestGetAuthUseKialiTokenNilClientConfig(t *testing.T) {
 
 	assert.Equal(t, config.Credential("static-snapshot-token"), auth.Token,
 		"Should fall back to GetToken() when ClientConfig is nil")
+}
+
+// TestPersesOAuth2_TokenCachePreservedAcrossRequests verifies that the cached http.Client
+// created by NewService when OAuth2 auth is configured reuses the same token across multiple
+// Info() calls rather than fetching a new token on every request.
+//
+// What this test covers:
+//   - The s.httpClient != nil branch in checkDashboard is reached when OAuth2 is configured.
+//   - The oauth2RoundTripper inside that client caches the token and does not call the token
+//     endpoint more than once for a long-lived token (expires_in=3600).
+//
+// What this test does NOT cover (already covered at the oauth2RoundTripper unit level in
+// util/httputil/oauth2_roundtripper_test.go):
+//   - Token refresh after expiry.
+//   - Token invalidation and re-fetch after a 401 from the backend.
+//   - Client secret rotation (reading an updated credential file).
+func TestPersesOAuth2_TokenCachePreservedAcrossRequests(t *testing.T) {
+	var tokenRequests int32
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&tokenRequests, 1)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"access_token": "perses-token",
+			"expires_in":   3600,
+			"token_type":   "Bearer",
+		})
+	}))
+	defer tokenServer.Close()
+
+	var backendRequests int32
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&backendRequests, 1)
+		assert.Equal(t, "Bearer perses-token", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(genDashboard("test-project"))
+	}))
+	defer backend.Close()
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Perses.Enabled = true
+	conf.ExternalServices.Perses.ExternalURL = backend.URL
+	conf.ExternalServices.Perses.InternalURL = backend.URL
+	conf.ExternalServices.Perses.Project = "test-project"
+	conf.ExternalServices.Perses.Auth.Type = config.AuthTypeOAuth2
+	conf.ExternalServices.Perses.Auth.OAuth2 = config.OAuth2Config{
+		ClientID:     "test-client",
+		ClientSecret: "test-secret",
+		TokenURL:     tokenServer.URL,
+		AuthStyle:    "params",
+	}
+	conf.ExternalServices.Perses.Dashboards = []config.GrafanaDashboardConfig{{Name: "test"}}
+
+	svc, err := perses.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+
+	for i := 0; i < 5; i++ {
+		_, _, err := svc.Info(context.Background())
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, int32(1), atomic.LoadInt32(&tokenRequests),
+		"token should be fetched only once and cached across multiple Info() calls")
+	assert.Equal(t, int32(5), atomic.LoadInt32(&backendRequests),
+		"backend should be called on each Info() invocation")
 }
 
 func buildDashboardSupplier(jsonData interface{}, code int, expectURL string, t *testing.T) perses.DashboardSupplierFunc {
