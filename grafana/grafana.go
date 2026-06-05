@@ -26,9 +26,12 @@ type Service struct {
 	conf                *config.Config
 	dashboardSupplier   DashboardSupplierFunc
 	homeClusterSAClient kubernetes.ClientInterface
-	httpClient          *http.Client
-	routeLock           sync.RWMutex
-	routeURL            *string
+	// httpClient is non-nil only when Grafana is enabled and auth type is OAuth2. It holds a
+	// long-lived client whose transport wraps an oauth2RoundTripper, caching the bearer token
+	// across requests. All other auth types use the per-request httputil.HttpGet path instead.
+	httpClient *http.Client
+	routeLock  sync.RWMutex
+	routeURL   *string
 }
 
 // NewService creates a new Grafana service.
