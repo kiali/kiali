@@ -105,6 +105,37 @@ func TestGetAppListFromWorkloadGroups(t *testing.T) {
 	}
 }
 
+func TestGetAppListWithClusterAndIstioResources(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	k8s.Token = "token"
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+
+	criteria := AppCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false}
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal(1, len(appList.Apps))
+	assert.Equal("httpbin", appList.Apps[0].Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace)
+}
+
 func TestGetAppFromDeployments(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -229,6 +260,113 @@ func TestGetAppFromWorkloadGroups(t *testing.T) {
 	assert.Equal(1, len(appDetails.Workloads))
 	assert.Equal("ratings-vm", appDetails.Workloads[0].WorkloadName)
 	assert.Equal(0, len(appDetails.ServiceNames))
+}
+
+func TestGetAppListWithoutClusterFromDeployments(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	k8s.Token = "token"
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+
+	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal(1, len(appList.Apps))
+	assert.Equal("httpbin", appList.Apps[0].Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace)
+}
+
+func TestGetAppListWithoutClusterMultiCluster(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	homeObjects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		homeObjects = append(homeObjects, &o)
+	}
+	homeClient := kubetest.NewFakeK8sClient(homeObjects...)
+	homeClient.OpenShift = true
+	homeClient.Token = "token"
+
+	remoteObjects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+	}
+	for _, obj := range FakeReplicaSets(*conf) {
+		o := obj
+		remoteObjects = append(remoteObjects, &o)
+	}
+	remoteClient := kubetest.NewFakeK8sClient(remoteObjects...)
+	remoteClient.OpenShift = true
+	remoteClient.Token = "token"
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: homeClient,
+		"west":                            remoteClient,
+	})
+
+	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal(2, len(appList.Apps))
+	appNames := []string{appList.Apps[0].Name, appList.Apps[1].Name}
+	assert.Contains(appNames, "httpbin")
+	assert.Equal(2, len(appNames))
+}
+
+func TestGetAppListWithoutClusterWithIstioResources(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("Namespace"),
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		objects = append(objects, &o)
+	}
+
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.OpenShift = true
+	k8s.Token = "token"
+
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+
+	criteria := AppCriteria{Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false}
+	appList, err := svc.GetAppList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal(1, len(appList.Apps))
+	assert.Equal("httpbin", appList.Apps[0].Name)
+	assert.Equal("Namespace", appList.Apps[0].Namespace)
 }
 
 func TestGetAppListFromReplicaSets(t *testing.T) {

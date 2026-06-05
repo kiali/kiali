@@ -131,6 +131,36 @@ func TestGetWorkloadListFromDeploymentsNoAppVerLabelNames(t *testing.T) {
 	assert.Equal("Deployment", workloads[2].WorkloadGVK.Kind)
 }
 
+func TestGetWorkloadListFromDeploymentsWithIstioResources(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	kubeObjs := []runtime.Object{
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range FakeDeployments(*conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	svc := setupWorkloadService(t, k8s, conf)
+
+	criteria := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", IncludeIstioResources: true, IncludeHealth: false}
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal("Namespace", workloadList.Namespace)
+	require.Equal(3, len(workloadList.Workloads))
+	assert.Equal("httpbin-v1", workloadList.Workloads[0].Name)
+	assert.Equal("Deployment", workloadList.Workloads[0].WorkloadGVK.Kind)
+}
+
 func TestGetWorkloadListFromWorkloadGroups(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
