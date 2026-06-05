@@ -1,6 +1,6 @@
 module github.com/kiali/kiali
 
-go 1.25.9
+go 1.26.4
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
