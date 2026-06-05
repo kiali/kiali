@@ -356,7 +356,11 @@ func getDashboardPath(ctx context.Context, name string, conn grafanaConnectionIn
 		return "", nil
 	}
 
-	fullPath := dashPath.(string)
+	fullPath, ok := dashPath.(string)
+	if !ok {
+		zl.Warn().Msgf("URL field in Grafana dashboard is not a string for search pattern '%s'", name)
+		return "", nil
+	}
 	if fullPath != "" {
 		// Dashboard path might be an absolute URL (hence starting with cfg.URL) or a relative one, depending on grafana's "GF_SERVER_SERVE_FROM_SUB_PATH"
 		if !strings.HasPrefix(fullPath, conn.baseExternalURL) {

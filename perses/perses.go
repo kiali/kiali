@@ -178,7 +178,7 @@ func (s *Service) getToken(ctx context.Context) (token string, err error) {
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		log.Errorf("Failed to read response: %v", err)
+		log.Errorf("Failed to read response: status %d", resp.StatusCode)
 		return "", fmt.Errorf("failed to read response: %d", resp.StatusCode)
 	}
 

@@ -201,8 +201,9 @@ func buildDashboardSupplier(jSon interface{}, code int, expectURL string, t *tes
 	}
 }
 
-// newOAuth2GrafanaSvc builds a Grafana service wired to the given tokenServerURL and backendURL
-// with a static client secret. Registers server cleanup with t.Cleanup.
+// newOAuth2GrafanaSvc creates a Grafana service with OAuth2 auth configured, shared by tests
+// that verify token caching and secret rotation behavior. Caller is responsible for closing
+// the token and backend servers.
 func newOAuth2GrafanaSvc(t *testing.T, tokenServerURL, backendURL string, clientSecret config.Credential) *grafana.Service {
 	t.Helper()
 	conf := config.NewConfig()
@@ -315,7 +316,8 @@ func TestGrafanaOAuth2_NewServicePicksUpCurrentSecretFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Bearer token-for-rotated-secret", lastAuth.Load(),
 		"after 401 retry, the rotated secret should be used for the new token")
-	// New service has cold cache: fetches once, gets 401, fetches again with rotated secret = 2 token requests.
+	// New service cold-fetches a token (1), sends request, backend returns 401, round-tripper
+	// invalidates the cached token and re-fetches with the rotated secret (2).
 	assert.Equal(t, tokenRequestsBefore+2, atomic.LoadInt32(&tokenRequests),
-		"cold cache + 401 retry should have triggered exactly 2 token fetches with the rotated secret")
+		"cold cache + backend 401 should trigger exactly 2 token fetches using the rotated secret")
 }

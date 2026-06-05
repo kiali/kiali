@@ -6,7 +6,6 @@ package business
 */
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/kiali/kiali/cache"
@@ -110,7 +109,7 @@ func (lb *layerBuilder) Build() *Layer {
 	if lb.grafana == nil {
 		grafanaSvc, err := grafana.NewService(lb.conf, lb.userClients[lb.conf.KubernetesConfig.ClusterName])
 		if err != nil {
-			panic(fmt.Sprintf("test setup: failed to create Grafana service: %v", err))
+			lb.t.Fatalf("test setup: failed to create Grafana service: %v", err)
 		}
 		lb.grafana = grafanaSvc
 	}
