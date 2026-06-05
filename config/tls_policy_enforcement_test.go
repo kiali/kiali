@@ -660,3 +660,163 @@ func TestTLSPolicyEnforcement_ConcurrentAccess(t *testing.T) {
 		<-done
 	}
 }
+
+func TestTLSPolicyApplyTo_GroupsSet(t *testing.T) {
+	policy := TLSPolicy{
+		MinVersion: tls.VersionTLS12,
+		Groups:     []tls.CurveID{tls.X25519, tls.CurveP256},
+		Source:     TLSConfigSourceConfig,
+	}
+
+	cfg := &tls.Config{}
+	policy.ApplyTo(cfg)
+
+	if len(cfg.CurvePreferences) != 2 {
+		t.Fatalf("expected 2 CurvePreferences, got %d", len(cfg.CurvePreferences))
+	}
+	if cfg.CurvePreferences[0] != tls.X25519 || cfg.CurvePreferences[1] != tls.CurveP256 {
+		t.Errorf("unexpected CurvePreferences: %v", cfg.CurvePreferences)
+	}
+}
+
+func TestTLSPolicyApplyTo_GroupsEmpty(t *testing.T) {
+	policy := TLSPolicy{
+		MinVersion: tls.VersionTLS12,
+		Source:     TLSConfigSourceConfig,
+	}
+
+	cfg := &tls.Config{}
+	policy.ApplyTo(cfg)
+
+	if cfg.CurvePreferences != nil {
+		t.Fatalf("expected nil CurvePreferences when groups are empty, got %v", cfg.CurvePreferences)
+	}
+}
+
+func TestTLSPolicyApplyTo_GroupsWithTLS13(t *testing.T) {
+	policy := TLSPolicy{
+		MinVersion: tls.VersionTLS13,
+		MaxVersion: tls.VersionTLS13,
+		Groups:     []tls.CurveID{tls.X25519MLKEM768, tls.X25519},
+		Source:     TLSConfigSourceConfig,
+	}
+
+	cfg := &tls.Config{}
+	policy.ApplyTo(cfg)
+
+	// Groups should be applied even in TLS 1.3-only mode
+	if len(cfg.CurvePreferences) != 2 {
+		t.Fatalf("expected 2 CurvePreferences in TLS1.3 mode, got %d", len(cfg.CurvePreferences))
+	}
+	// Cipher suites should be nil in TLS 1.3 mode
+	if cfg.CipherSuites != nil {
+		t.Fatalf("expected nil CipherSuites in TLS1.3 mode, got %v", cfg.CipherSuites)
+	}
+}
+
+// TestTLSPolicyEnforcement_GroupConstraints verifies that the TLS policy correctly
+// enforces group constraints. A server restricted to specific groups should reject
+// clients that only offer excluded groups.
+func TestTLSPolicyEnforcement_GroupConstraints(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
+	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
+	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
+	if err != nil {
+		t.Fatalf("load server keypair: %v", err)
+	}
+
+	caFile := tmpDir + "/ca.pem"
+	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
+		t.Fatalf("write ca: %v", err)
+	}
+
+	tests := []struct {
+		name          string
+		serverGroups  []tls.CurveID
+		clientGroups  []tls.CurveID
+		shouldConnect bool
+	}{
+		{
+			name:          "matching groups connect successfully",
+			serverGroups:  []tls.CurveID{tls.X25519, tls.CurveP256},
+			clientGroups:  []tls.CurveID{tls.X25519, tls.CurveP256},
+			shouldConnect: true,
+		},
+		{
+			name:          "overlapping groups connect successfully",
+			serverGroups:  []tls.CurveID{tls.X25519, tls.CurveP256},
+			clientGroups:  []tls.CurveID{tls.CurveP256, tls.CurveP384},
+			shouldConnect: true,
+		},
+		{
+			name:          "non-overlapping groups fail to connect",
+			serverGroups:  []tls.CurveID{tls.CurveP384},
+			clientGroups:  []tls.CurveID{tls.CurveP521},
+			shouldConnect: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			serverTLSConfig := &tls.Config{
+				Certificates:     []tls.Certificate{pair},
+				MinVersion:       tls.VersionTLS12,
+				CurvePreferences: tc.serverGroups,
+			}
+			ln, err := tls.Listen("tcp", "127.0.0.1:0", serverTLSConfig)
+			if err != nil {
+				t.Fatalf("listen: %v", err)
+			}
+			defer ln.Close()
+
+			go func() {
+				for {
+					conn, err := ln.Accept()
+					if err != nil {
+						return
+					}
+					go func(c net.Conn) {
+						defer c.Close()
+						buf := make([]byte, 1)
+						_, _ = c.Read(buf)
+					}(conn)
+				}
+			}()
+
+			conf := NewConfig()
+			conf.Credentials, err = NewCredentialManager([]string{caFile})
+			if err != nil {
+				t.Fatalf("credential manager: %v", err)
+			}
+			t.Cleanup(conf.Close)
+
+			conf.ResolvedTLSPolicy = TLSPolicy{
+				MinVersion: tls.VersionTLS12,
+				Groups:     tc.clientGroups,
+				Source:     TLSConfigSourceConfig,
+			}
+
+			clientTLSConfig := &tls.Config{
+				RootCAs: conf.CertPool(),
+			}
+			conf.ResolvedTLSPolicy.ApplyTo(clientTLSConfig)
+
+			dialer := &net.Dialer{Timeout: 2 * time.Second}
+			conn, err := tls.DialWithDialer(dialer, "tcp", ln.Addr().String(), clientTLSConfig)
+			if tc.shouldConnect {
+				if err != nil {
+					t.Fatalf("expected connection to succeed: %v", err)
+				}
+				_, _ = conn.Write([]byte("x"))
+				conn.Close()
+			} else {
+				if err == nil {
+					conn.Close()
+					t.Fatal("expected connection to fail due to group mismatch")
+				}
+			}
+		})
+	}
+}

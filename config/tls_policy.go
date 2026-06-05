@@ -9,6 +9,7 @@ import (
 // TLSPolicy is the resolved TLS policy for the Kiali server and outbound clients.
 type TLSPolicy struct {
 	CipherSuites []uint16
+	Groups       []tls.CurveID
 	MaxVersion   uint16
 	MinVersion   uint16
 	Source       TLSConfigSource
@@ -72,6 +73,10 @@ func (p TLSPolicy) ApplyTo(cfg *tls.Config) {
 	}
 	if p.MaxVersion != 0 {
 		cfg.MaxVersion = p.MaxVersion
+	}
+
+	if len(p.Groups) > 0 {
+		cfg.CurvePreferences = p.Groups
 	}
 
 	// TLS 1.3-only mode: Clear cipher suites to allow Go to manage them.

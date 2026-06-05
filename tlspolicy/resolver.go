@@ -139,11 +139,17 @@ func policyFromConfig(cfg config.DeploymentTLSConfig) (config.TLSPolicy, error) 
 		return config.TLSPolicy{}, fmt.Errorf("deployment.tls_config.max_version [%s] is lower than min_version [%s]", cfg.MaxVersion, cfg.MinVersion)
 	}
 
+	groups, err := parseGroups(cfg.Groups)
+	if err != nil {
+		return config.TLSPolicy{}, err
+	}
+
 	// When minVersion is explicitly set to TLS 1.3, we enforce TLS 1.3-only mode.
 	// This ensures cipher suites are managed by Go (TLS 1.3 cipher suites are not configurable).
 	// If the user wants a range (e.g., TLS 1.2 to TLS 1.3), they should set min < TLS 1.3.
 	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
+			Groups:     groups,
 			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
 			Source:     config.TLSConfigSourceConfig,
@@ -161,9 +167,10 @@ func policyFromConfig(cfg config.DeploymentTLSConfig) (config.TLSPolicy, error) 
 	}
 
 	return config.TLSPolicy{
-		MinVersion:   minVersion,
-		MaxVersion:   maxVersion,
 		CipherSuites: ciphers,
+		Groups:       groups,
+		MaxVersion:   maxVersion,
+		MinVersion:   minVersion,
 		Source:       config.TLSConfigSourceConfig,
 	}, nil
 }
@@ -225,8 +232,18 @@ func policyFromProfile(spec *configv1.TLSProfileSpec, source config.TLSConfigSou
 		return config.TLSPolicy{}, fmt.Errorf("OpenShift TLSSecurityProfile has invalid version constraints: max_version [%x] is lower than min_version [%x]", maxVersion, minVersion)
 	}
 
+	groupNames := make([]string, len(spec.Groups))
+	for i, g := range spec.Groups {
+		groupNames[i] = string(g)
+	}
+	groups, err := parseGroups(groupNames)
+	if err != nil {
+		return config.TLSPolicy{}, err
+	}
+
 	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
+			Groups:     groups,
 			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
 			Source:     source,
@@ -246,9 +263,10 @@ func policyFromProfile(spec *configv1.TLSProfileSpec, source config.TLSConfigSou
 	}
 
 	return config.TLSPolicy{
-		MinVersion:   minVersion,
-		MaxVersion:   maxVersion,
 		CipherSuites: ciphers,
+		Groups:       groups,
+		MaxVersion:   maxVersion,
+		MinVersion:   minVersion,
 		Source:       source,
 	}, nil
 }
@@ -314,6 +332,49 @@ func parseCipherSuites(names []string) ([]uint16, error) {
 	}
 	if len(unsupported) > 0 {
 		log.Warningf("Skipping unsupported TLS cipher suites (not available in Go stdlib): [%v]", unsupported)
+	}
+	return result, nil
+}
+
+// groupMap maps OpenShift TLS group names to Go CurveID values.
+// Unlike cipher suites (where tls.CipherSuites() enables dynamic discovery),
+// Go's crypto/tls provides no API to enumerate supported groups at runtime.
+// This map must be maintained statically and updated when the Go version adds
+// new key exchange mechanisms.
+var groupMap = map[string]tls.CurveID{
+	"X25519":         tls.X25519,
+	"secp256r1":      tls.CurveP256,
+	"secp384r1":      tls.CurveP384,
+	"secp521r1":      tls.CurveP521,
+	"X25519MLKEM768": tls.X25519MLKEM768,
+	// TODO: Uncomment when Go is upgraded to 1.26+ (see https://github.com/kiali/kiali/issues/9812)
+	// "SecP256r1MLKEM768":  tls.SecP256r1MLKEM768,
+	// "SecP384r1MLKEM1024": tls.SecP384r1MLKEM1024,
+}
+
+// parseGroups converts TLS group names to Go's crypto/tls CurveID values.
+// Unsupported groups (e.g., those requiring a newer Go version) are logged and skipped.
+func parseGroups(names []string) ([]tls.CurveID, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+
+	unsupported := make([]string, 0)
+	result := make([]tls.CurveID, 0, len(names))
+	for _, name := range names {
+		trimmed := strings.TrimSpace(name)
+		id, found := groupMap[trimmed]
+		if !found {
+			unsupported = append(unsupported, name)
+			continue
+		}
+		result = append(result, id)
+	}
+	if len(result) == 0 && len(unsupported) > 0 {
+		return nil, fmt.Errorf("no supported TLS groups found from list: [%v]", unsupported)
+	}
+	if len(unsupported) > 0 {
+		log.Warningf("Skipping unsupported TLS groups (not available in Go stdlib): [%v]", unsupported)
 	}
 	return result, nil
 }

@@ -150,11 +150,11 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	istioClient := istiofake.NewSimpleClientset(istioObjects...)
 	gatewayAPIClient := gatewayapifake.NewSimpleClientset(gatewayapiObjects...) //nolint:staticcheck // SA1019
 	inferenceAPIClient := inferenceapifake.NewSimpleClientset(inferenceapiObjects...)
-	osAppsClient := osappsfake.NewSimpleClientset(osAppsObjects...)
-	projectClient := projectfake.NewSimpleClientset(projectObjects...)
-	routeClient := routefake.NewSimpleClientset(routeObjects...)
-	userClient := userfake.NewSimpleClientset(userObjects...)
-	oAuthClient := oauthfake.NewSimpleClientset(oAuthObjects...)
+	osAppsClient := osappsfake.NewSimpleClientset(osAppsObjects...)    //nolint:staticcheck // SA1019
+	projectClient := projectfake.NewSimpleClientset(projectObjects...) //nolint:staticcheck // SA1019
+	routeClient := routefake.NewSimpleClientset(routeObjects...)       //nolint:staticcheck // SA1019
+	userClient := userfake.NewSimpleClientset(userObjects...)          //nolint:staticcheck // SA1019
+	oAuthClient := oauthfake.NewSimpleClientset(oAuthObjects...)       //nolint:staticcheck // SA1019
 
 	// These are created separately because the fake clientset guesses the resource name based on the Kind.
 	for _, gw := range istioGateways {

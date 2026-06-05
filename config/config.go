@@ -643,6 +643,7 @@ type DeploymentConfig struct {
 // the OpenShift TLSSecurityProfile will be used on OpenShift clusters.
 type DeploymentTLSConfig struct {
 	CipherSuites []string        `yaml:"cipher_suites,omitempty" json:"cipherSuites,omitempty"`
+	Groups       []string        `yaml:"groups,omitempty" json:"groups,omitempty"`
 	MaxVersion   string          `yaml:"max_version,omitempty" json:"maxVersion,omitempty"`
 	MinVersion   string          `yaml:"min_version,omitempty" json:"minVersion,omitempty"`
 	Source       TLSConfigSource `yaml:"source,omitempty" json:"source,omitempty"`
