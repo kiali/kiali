@@ -10,25 +10,34 @@ import (
 	"github.com/kiali/kiali/util/certtest"
 )
 
-// TestTLSPolicyEnforcement_VersionConstraints verifies that the TLS policy correctly
-// enforces version constraints. A TLS1.3-only server should reject TLS1.2-only clients
-// and vice versa.
-func TestTLSPolicyEnforcement_VersionConstraints(t *testing.T) {
-	tmpDir := t.TempDir()
+type tlsTestFixture struct {
+	caFile string
+	pair   tls.Certificate
+}
 
-	// Create CA and server certificate
+func mustSetupTLSTestFixture(t *testing.T) tlsTestFixture {
+	t.Helper()
+	tmpDir := t.TempDir()
 	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
 	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
 	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
 	if err != nil {
 		t.Fatalf("load server keypair: %v", err)
 	}
-
 	// Write CA to file for CredentialManager
 	caFile := tmpDir + "/ca.pem"
 	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
 		t.Fatalf("write ca: %v", err)
 	}
+	return tlsTestFixture{caFile: caFile, pair: pair}
+}
+
+// TestTLSPolicyEnforcement_VersionConstraints verifies that the TLS policy correctly
+// enforces version constraints. A TLS1.3-only server should reject TLS1.2-only clients
+// and vice versa.
+func TestTLSPolicyEnforcement_VersionConstraints(t *testing.T) {
+	fx := mustSetupTLSTestFixture(t)
+	pair, caFile := fx.pair, fx.caFile
 
 	tests := []struct {
 		name          string
@@ -154,21 +163,8 @@ func TestTLSPolicyEnforcement_VersionConstraints(t *testing.T) {
 // enforces cipher suite constraints. A server requiring a specific cipher should
 // reject clients that don't offer it.
 func TestTLSPolicyEnforcement_CipherConstraints(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create CA and server certificate
-	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
-	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
-	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
-	if err != nil {
-		t.Fatalf("load server keypair: %v", err)
-	}
-
-	// Write CA to file
-	caFile := tmpDir + "/ca.pem"
-	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
-		t.Fatalf("write ca: %v", err)
-	}
+	fx := mustSetupTLSTestFixture(t)
+	pair, caFile := fx.pair, fx.caFile
 
 	// Use TLS 1.2 for cipher suite tests (TLS 1.3 ciphers are not configurable in Go)
 	serverCiphers := []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256}
@@ -264,22 +260,8 @@ func TestTLSPolicyEnforcement_CipherConstraints(t *testing.T) {
 // InsecureSkipVerify only skips certificate verification but does NOT bypass
 // TLS version or cipher suite enforcement.
 func TestTLSPolicyEnforcement_SkipVerifyDoesNotBypassVersionCiphers(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create CA and server certificate
-	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
-	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
-	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
-	if err != nil {
-		t.Fatalf("load server keypair: %v", err)
-	}
-
-	// Write CA to file (not actually needed since we're skipping verify, but setup anyway)
-	caFile := tmpDir + "/ca.pem"
-	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
-		t.Fatalf("write ca: %v", err)
-	}
-	_ = caFile // silence unused warning
+	fx := mustSetupTLSTestFixture(t)
+	pair := fx.pair
 
 	t.Run("skip-verify still enforces TLS version", func(t *testing.T) {
 		// TLS 1.3-only server
@@ -495,17 +477,19 @@ func TestTLSPolicyEnforcement_EmptyPolicyDefaultsToTLS12(t *testing.T) {
 // always overrides any pre-existing values in the tls.Config.
 func TestTLSPolicyEnforcement_PolicyOverridesCfgValues(t *testing.T) {
 	policy := TLSPolicy{
-		MinVersion:   tls.VersionTLS12,
-		MaxVersion:   tls.VersionTLS12,
 		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+		Groups:       []tls.CurveID{tls.X25519},
+		MaxVersion:   tls.VersionTLS12,
+		MinVersion:   tls.VersionTLS12,
 		Source:       TLSConfigSourceConfig,
 	}
 
 	// Pre-set cfg with different values
 	cfg := &tls.Config{
-		MinVersion:   tls.VersionTLS13,
-		MaxVersion:   tls.VersionTLS13,
-		CipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384},
+		CipherSuites:     []uint16{tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384},
+		CurvePreferences: []tls.CurveID{tls.CurveP521},
+		MaxVersion:       tls.VersionTLS13,
+		MinVersion:       tls.VersionTLS13,
 	}
 
 	policy.ApplyTo(cfg)
@@ -519,6 +503,9 @@ func TestTLSPolicyEnforcement_PolicyOverridesCfgValues(t *testing.T) {
 	}
 	if len(cfg.CipherSuites) != 1 || cfg.CipherSuites[0] != tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 {
 		t.Fatalf("policy should override cfg.CipherSuites, got [%v]", cfg.CipherSuites)
+	}
+	if len(cfg.CurvePreferences) != 1 || cfg.CurvePreferences[0] != tls.X25519 {
+		t.Fatalf("policy should override cfg.CurvePreferences, got [%v]", cfg.CurvePreferences)
 	}
 }
 
@@ -718,19 +705,8 @@ func TestTLSPolicyApplyTo_GroupsWithTLS13(t *testing.T) {
 // enforces group constraints. A server restricted to specific groups should reject
 // clients that only offer excluded groups.
 func TestTLSPolicyEnforcement_GroupConstraints(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	ca, caPEM, caKey := certtest.MustGenCA(t, "TestCA")
-	serverCertPEM, serverKeyPEM := certtest.MustServerCertWithIPSignedByCA(t, ca, caKey, []net.IP{net.ParseIP("127.0.0.1")})
-	pair, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
-	if err != nil {
-		t.Fatalf("load server keypair: %v", err)
-	}
-
-	caFile := tmpDir + "/ca.pem"
-	if err := os.WriteFile(caFile, caPEM, 0o600); err != nil {
-		t.Fatalf("write ca: %v", err)
-	}
+	fx := mustSetupTLSTestFixture(t)
+	pair, caFile := fx.pair, fx.caFile
 
 	tests := []struct {
 		name          string

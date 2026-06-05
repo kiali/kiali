@@ -164,76 +164,63 @@ func TestResolveRejectsMaxLessThanMin(t *testing.T) {
 	}
 }
 
-func TestParseGroupsValidNames(t *testing.T) {
-	names := []string{"X25519", "secp256r1", "secp384r1", "secp521r1", "X25519MLKEM768"}
-	groups, err := parseGroups(names)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+func TestParseGroups(t *testing.T) {
+	tests := map[string]struct {
+		names    []string
+		expected []tls.CurveID
+		wantErr  bool
+	}{
+		"all valid names": {
+			names:    []string{"X25519", "secp256r1", "secp384r1", "secp521r1", "X25519MLKEM768"},
+			expected: []tls.CurveID{tls.X25519, tls.CurveP256, tls.CurveP384, tls.CurveP521, tls.X25519MLKEM768},
+		},
+		"nil input": {
+			names:    nil,
+			expected: nil,
+		},
+		"empty input": {
+			names:    []string{},
+			expected: nil,
+		},
+		"mixed valid and invalid skips invalid": {
+			names:    []string{"X25519", "BOGUS_GROUP", "secp256r1"},
+			expected: []tls.CurveID{tls.X25519, tls.CurveP256},
+		},
+		"all invalid returns error": {
+			names:   []string{"FAKE_GROUP", "ANOTHER_FAKE"},
+			wantErr: true,
+		},
+		"whitespace-only returns error": {
+			names:   []string{"  "},
+			wantErr: true,
+		},
+		"matching is case-sensitive": {
+			names:    []string{"x25519", "SECP256R1", "X25519"},
+			expected: []tls.CurveID{tls.X25519},
+		},
 	}
-	if len(groups) != 5 {
-		t.Fatalf("expected 5 groups, got %d", len(groups))
-	}
-	expected := []tls.CurveID{tls.X25519, tls.CurveP256, tls.CurveP384, tls.CurveP521, tls.X25519MLKEM768}
-	for i, g := range groups {
-		if g != expected[i] {
-			t.Errorf("group[%d]: expected %d, got %d", i, expected[i], g)
-		}
-	}
-}
 
-func TestParseGroupsEmpty(t *testing.T) {
-	groups, err := parseGroups(nil)
-	if err != nil {
-		t.Fatalf("unexpected error for nil input: %v", err)
-	}
-	if groups != nil {
-		t.Fatalf("expected nil for nil input, got %v", groups)
-	}
-
-	groups, err = parseGroups([]string{})
-	if err != nil {
-		t.Fatalf("unexpected error for empty input: %v", err)
-	}
-	if groups != nil {
-		t.Fatalf("expected nil for empty input, got %v", groups)
-	}
-}
-
-func TestParseGroupsMixedValidInvalid(t *testing.T) {
-	names := []string{"X25519", "BOGUS_GROUP", "secp256r1"}
-	groups, err := parseGroups(names)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(groups) != 2 {
-		t.Fatalf("expected 2 groups (skipping invalid), got %d", len(groups))
-	}
-	if groups[0] != tls.X25519 || groups[1] != tls.CurveP256 {
-		t.Errorf("unexpected group values: %v", groups)
-	}
-}
-
-func TestParseGroupsAllInvalid(t *testing.T) {
-	names := []string{"FAKE_GROUP", "ANOTHER_FAKE"}
-	_, err := parseGroups(names)
-	if err == nil {
-		t.Fatalf("expected error when all groups are unsupported")
-	}
-}
-
-func TestParseGroupsCaseSensitive(t *testing.T) {
-	// Group names are case-sensitive per the OpenShift API
-	names := []string{"x25519", "SECP256R1", "X25519"}
-	groups, err := parseGroups(names)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	// Only "X25519" should match (exact case); "x25519" and "SECP256R1" should be skipped
-	if len(groups) != 1 {
-		t.Fatalf("expected 1 group (case-sensitive matching), got %d", len(groups))
-	}
-	if groups[0] != tls.X25519 {
-		t.Errorf("expected X25519, got %d", groups[0])
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			groups, err := parseGroups(tc.names)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(groups) != len(tc.expected) {
+				t.Fatalf("expected %d groups, got %d: %v", len(tc.expected), len(groups), groups)
+			}
+			for i, g := range groups {
+				if g != tc.expected[i] {
+					t.Errorf("group[%d]: expected %d, got %d", i, tc.expected[i], g)
+				}
+			}
+		})
 	}
 }
 

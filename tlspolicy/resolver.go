@@ -150,8 +150,8 @@ func policyFromConfig(cfg config.DeploymentTLSConfig) (config.TLSPolicy, error) 
 	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
 			Groups:     groups,
-			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
+			MinVersion: tls.VersionTLS13,
 			Source:     config.TLSConfigSourceConfig,
 		}, nil
 	}
@@ -244,8 +244,8 @@ func policyFromProfile(spec *configv1.TLSProfileSpec, source config.TLSConfigSou
 	if minVersion == tls.VersionTLS13 {
 		return config.TLSPolicy{
 			Groups:     groups,
-			MinVersion: tls.VersionTLS13,
 			MaxVersion: tls.VersionTLS13,
+			MinVersion: tls.VersionTLS13,
 			Source:     source,
 		}, nil
 	}
@@ -365,12 +365,12 @@ func parseGroups(names []string) ([]tls.CurveID, error) {
 		trimmed := strings.TrimSpace(name)
 		id, found := groupMap[trimmed]
 		if !found {
-			unsupported = append(unsupported, name)
+			unsupported = append(unsupported, trimmed)
 			continue
 		}
 		result = append(result, id)
 	}
-	if len(result) == 0 && len(unsupported) > 0 {
+	if len(result) == 0 {
 		return nil, fmt.Errorf("no supported TLS groups found from list: [%v]", unsupported)
 	}
 	if len(unsupported) > 0 {
