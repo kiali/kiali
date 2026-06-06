@@ -13,7 +13,6 @@ export const INITIAL_MESH_STATE: MeshState = {
   toolbarState: {
     findValue: '',
     hideValue: '',
-    showFindHelp: false,
     showGateways: false,
     showLegend: false,
     showWaypoints: false
@@ -56,12 +55,6 @@ export const MeshDataStateReducer = (state: MeshState = INITIAL_MESH_STATE, acti
     case getType(MeshToolbarActions.resetSettings):
       return updateState(state, {
         toolbarState: INITIAL_MESH_STATE.toolbarState
-      });
-    case getType(MeshToolbarActions.toggleFindHelp):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showFindHelp: !state.toolbarState.showFindHelp
-        })
       });
     case getType(MeshToolbarActions.toggleGateways):
       return updateState(state, {

@@ -57,7 +57,7 @@ type ReduxDispatchProps = {
 
 type GraphSettingsProps = ReduxStateProps &
   ReduxDispatchProps &
-  Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'showFindHelp' | 'trafficRates'> & {
+  Omit<GraphToolbarState, 'findValue' | 'hideValue' | 'showLegend' | 'trafficRates'> & {
     disabled: boolean;
   };
 

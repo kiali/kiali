@@ -41,16 +41,6 @@ Given('user is at the {string} page with manual refresh', (page: string) => {
   }
 });
 
-Given('autorefresh is enabled', () => {
-  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.url().then(currentURL => {
-    const url = new URL(currentURL);
-    const tenSecondsInMiliSeconds = '10000';
-    url.searchParams.set('refresh', tenSecondsInMiliSeconds);
-    cy.visit({ url: url.toString() });
-  });
-});
-
 Given(
   'user is at the details page for the {string} {string} located in the {string} cluster',
   (detail: DetailType, namespacedNamed: string, cluster: string) => {

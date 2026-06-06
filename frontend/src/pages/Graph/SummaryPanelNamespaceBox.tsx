@@ -29,9 +29,6 @@ import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
-import { ValidationStatus } from 'types/IstioObjects';
-import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
@@ -64,7 +61,6 @@ type SummaryPanelNamespaceBoxState = SummaryPanelNamespaceBoxMetricsState & {
   loading: boolean;
   metricsLoadError: string | null;
   namespaceBox: any;
-  validation: ValidationStatus | undefined;
 };
 
 type SummaryPanelNamespaceBoxTraffic = {
@@ -103,7 +99,6 @@ const defaultState: SummaryPanelNamespaceBoxState = {
   loading: false,
   metricsLoadError: null,
   namespaceBox: null,
-  validation: undefined,
   ...defaultMetricsState
 };
 
@@ -129,7 +124,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
   private boxTraffic?: SummaryPanelNamespaceBoxTraffic;
   private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
-  private validationPromise?: CancelablePromise<ApiResponse<ValidationStatus>>;
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -151,23 +145,18 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   componentDidMount(): void {
     this.boxTraffic = this.getBoxTraffic();
     this.updateCharts();
-    this.updateValidation();
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType): void {
     if (shouldRefreshData(prevProps, this.props)) {
       this.boxTraffic = this.getBoxTraffic();
       this.updateCharts();
-      this.updateValidation();
     }
   }
 
   componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
-    }
-    if (this.validationPromise) {
-      this.validationPromise.cancel();
     }
   }
 
@@ -401,30 +390,10 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
   };
 
   private renderNamespace = (ns: string, cluster?: string): React.ReactNode => {
-    const validation = this.state.validation;
-
     return (
       <div key={ns} className={namespaceStyle}>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
         <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster })}>{ns}</KialiLink>
-        {!!validation && (
-          <div style={{ marginLeft: '0.25rem' }}>
-            <ValidationSummaryLink
-              namespace={ns}
-              objectCount={validation.objectCount}
-              errors={validation.errors}
-              warnings={validation.warnings}
-            >
-              <ValidationSummary
-                id={`ns-val-${ns}`}
-                errors={validation.errors}
-                warnings={validation.warnings}
-                objectCount={validation.objectCount}
-                type="istio"
-              />
-            </ValidationSummaryLink>
-          </div>
-        )}
       </div>
     );
   };
@@ -687,21 +656,5 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       });
 
     this.setState({ loading: true, metricsLoadError: null });
-  };
-
-  private updateValidation = (): void => {
-    const elem = this.props.data.summaryTarget as GraphElement;
-    const namespace = elem.getData()[NodeAttr.namespace];
-    this.validationPromise = makeCancelablePromise(API.getNamespaceValidations(namespace));
-
-    this.validationPromise.promise
-      .then(rs => {
-        this.setState({ validation: rs.data });
-      })
-      .catch(err => {
-        if (!err.isCanceled) {
-          console.info(`SummaryPanelNamespaceBox: Error fetching validation status: ${API.getErrorString(err)}`);
-        }
-      });
   };
 }

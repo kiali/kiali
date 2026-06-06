@@ -19,7 +19,6 @@ export const GraphToolbarActions = {
   toggleGraphVirtualServices: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_GRAPH_VIRTUAL_SERVICES),
   toggleGraphMissingSidecars: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_GRAPH_MISSING_SIDECARS),
   toggleGraphSecurity: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_GRAPH_SECURITY),
-  toggleFindHelp: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_FIND_HELP),
   toggleIdleEdges: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_IDLE_EDGES),
   toggleIdleNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_IDLE_NODES),
   toggleOperationNodes: createAction(ActionKeys.GRAPH_TOOLBAR_TOGGLE_OPERATION_NODES),

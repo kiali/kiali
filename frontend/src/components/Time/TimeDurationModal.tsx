@@ -179,7 +179,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
               duration={duration}
               prefix={t('Last')}
               setDuration={handleSetDuration}
-              tooltip={t('Traffic metrics per refresh')}
+              tooltip={t('Metric time period per refresh')}
               tooltipPosition={TooltipPosition.top}
             />
           </FormGroup>

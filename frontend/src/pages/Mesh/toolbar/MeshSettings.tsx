@@ -28,7 +28,7 @@ type ReduxDispatchProps = {
 
 type MeshSettingsProps = ReduxStateProps &
   ReduxDispatchProps &
-  Omit<MeshToolbarState, 'findValue' | 'hideValue' | 'showFindHelp' | 'showLegend'> & {
+  Omit<MeshToolbarState, 'findValue' | 'hideValue' | 'showLegend'> & {
     disabled: boolean;
   };
 

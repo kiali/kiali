@@ -9,7 +9,6 @@ const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Provider store={store}>{children}</Provider>
 );
 
-const testHandler = (): undefined => undefined;
 const testSetter = (_val: string): undefined => undefined;
 const layout = MeshLayout.Dagre;
 
@@ -27,8 +26,6 @@ describe('Parse find value test', () => {
         layout={layout}
         setFindValue={testSetter}
         setHideValue={testSetter}
-        showFindHelp={false}
-        toggleFindHelp={testHandler}
       />,
       { wrapper: Wrapper }
     );

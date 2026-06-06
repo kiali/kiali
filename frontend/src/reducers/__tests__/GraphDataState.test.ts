@@ -23,7 +23,6 @@ describe('GraphDataState', () => {
         graphType: GraphType.VERSIONED_APP,
         hideValue: '',
         rankBy: [],
-        showFindHelp: false,
         showLegend: false,
         showIdleEdges: false,
         showIdleNodes: false,

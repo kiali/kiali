@@ -26,12 +26,9 @@ import {
   summaryPanelWidth
 } from './SummaryPanelCommon';
 import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise, PromisesRegistry } from '../../utils/CancelablePromises';
+import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { serverConfig } from '../../config/ServerConfig';
-import { ValidationStatus } from 'types/IstioObjects';
-import { ValidationSummary } from 'components/Validations/ValidationSummary';
-import { ValidationSummaryLink } from '../../components/Link/ValidationSummaryLink';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { NodeData } from 'pages/Graph/GraphElems';
@@ -39,8 +36,6 @@ import { edgesIn, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
-import { store } from '../../store/ConfigStore';
-import { namespacesForCluster } from '../../utils/Common';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelGraphMetricsState = {
@@ -62,14 +57,10 @@ type SummaryPanelGraphMetricsState = {
   tcpSentOut: Datapoint[];
 };
 
-// TODO replace with real type
-type ValidationsMap = Map<string, ValidationStatus>;
-
 type SummaryPanelGraphState = SummaryPanelGraphMetricsState & {
   graph: any;
   loading: boolean;
   metricsLoadError: string | null;
-  validationsMap: ValidationsMap;
 };
 
 type SummaryPanelGraphTraffic = {
@@ -108,7 +99,6 @@ const defaultState: SummaryPanelGraphState = {
   graph: null,
   loading: false,
   metricsLoadError: null,
-  validationsMap: new Map<string, ValidationStatus>(),
   ...defaultMetricsState
 };
 
@@ -133,7 +123,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
   private graphTraffic?: SummaryPanelGraphTraffic;
   private metricsPromise?: CancelablePromise<ApiResponse<IstioMetricsMap>[]>;
-  private validationSummaryPromises: PromisesRegistry = new PromisesRegistry();
 
   constructor(props: SummaryPanelPropType) {
     super(props);
@@ -157,7 +146,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       this.graphTraffic = this.getGraphTraffic();
       this.updateCharts();
     }
-    this.updateValidations();
   }
 
   componentDidUpdate(prevProps: SummaryPanelPropType): void {
@@ -166,16 +154,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         this.graphTraffic = this.getGraphTraffic();
         this.updateCharts();
       }
-      this.updateValidations();
     }
   }
 
   componentWillUnmount(): void {
     if (this.metricsPromise) {
       this.metricsPromise.cancel();
-    }
-    if (this.validationSummaryPromises) {
-      this.validationSummaryPromises.cancelAll();
     }
   }
 
@@ -444,37 +428,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     );
   };
 
-  private renderValidations = (ns: string): React.ReactNode => {
-    const validation = this.state.validationsMap.get(ns);
-    if (validation === undefined) {
-      return undefined;
-    }
-
-    return (
-      <div style={{ marginLeft: '0.25rem' }}>
-        <ValidationSummaryLink
-          namespace={ns}
-          objectCount={validation.objectCount}
-          errors={validation.errors}
-          warnings={validation.warnings}
-        >
-          <ValidationSummary
-            id={`ns-val-${ns}`}
-            errors={validation.errors}
-            warnings={validation.warnings}
-            objectCount={validation.objectCount}
-            type="istio"
-          />
-        </ValidationSummaryLink>
-      </div>
-    );
-  };
-
   private renderNamespace = (ns: string, cluster?: string): React.ReactNode => {
     return (
       <div key={`rf-${ns}`} id={`ns-${ns}`} className={namespaceStyle}>
         <PFBadge badge={PFBadges.Namespace} size="sm" />
-        <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster })}>{ns}</KialiLink> {this.renderValidations(ns)}
+        <KialiLink to={getNamespaceDetailUrl({ name: ns, cluster })}>{ns}</KialiLink>
       </div>
     );
   };
@@ -727,47 +685,5 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
       });
 
     this.setState({ loading: true, metricsLoadError: null });
-  };
-
-  private updateValidations = (): void => {
-    const promises = Object.keys(serverConfig.clusters).map(cluster =>
-      API.getConfigValidations(
-        namespacesForCluster(this.props.namespaces, store.getState().namespaces.items, cluster).join(','),
-        cluster
-      )
-    );
-    this.validationSummaryPromises
-      .registerAll('validationSummary', promises)
-      .then(responses => {
-        const validationsMap = new Map<string, ValidationStatus>();
-        responses.forEach((response: ApiResponse<ValidationStatus[]>) => {
-          response.data.forEach(validationSummary => {
-            // Merge validations across clusters for the same namespace.
-            if (!validationSummary.namespace) {
-              return;
-            }
-
-            const currentValidation = validationsMap.get(validationSummary.namespace);
-            if (currentValidation) {
-              validationSummary.errors += currentValidation.errors;
-              validationSummary.warnings += currentValidation.warnings;
-              if (currentValidation.objectCount !== undefined && validationSummary.objectCount !== undefined) {
-                validationSummary.objectCount += currentValidation.objectCount;
-              } else if (validationSummary.objectCount !== undefined) {
-                validationSummary.objectCount = currentValidation.objectCount;
-              }
-            }
-
-            validationsMap.set(validationSummary.namespace, validationSummary);
-          });
-        });
-        this.setState({ validationsMap });
-      })
-
-      .catch(err => {
-        if (!err.isCanceled) {
-          console.info(`SummaryPanelGraph: Error fetching validation status: ${API.getErrorString(err)}`);
-        }
-      });
   };
 }

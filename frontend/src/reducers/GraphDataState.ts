@@ -24,7 +24,6 @@ export const INITIAL_GRAPH_STATE: GraphState = {
     graphType: GraphType.VERSIONED_APP,
     hideValue: '',
     rankBy: [],
-    showFindHelp: false,
     showIdleEdges: false,
     showIdleNodes: false,
     showLegend: false,
@@ -139,12 +138,6 @@ export const GraphDataStateReducer = (state: GraphState = INITIAL_GRAPH_STATE, a
       return updateState(state, {
         toolbarState: updateState(state.toolbarState, {
           boxByNamespace: !state.toolbarState.boxByNamespace
-        })
-      });
-    case getType(GraphToolbarActions.toggleFindHelp):
-      return updateState(state, {
-        toolbarState: updateState(state.toolbarState, {
-          showFindHelp: !state.toolbarState.showFindHelp
         })
       });
     case getType(GraphToolbarActions.toggleGraphVirtualServices):
