@@ -335,7 +335,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		})
 	}(ctx)
 
-	var istioConfigMap models.IstioConfigMap
+	istioConfigList := &models.IstioConfigList{}
 
 	if criteria.IncludeIstioResources {
 		istioConfigCriteria := IstioConfigCriteria{
@@ -353,7 +353,7 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		go func(ctx context.Context) {
 			defer wg.Done()
 			var err2 error
-			istioConfigMap, err2 = in.businessLayer.IstioConfig.GetIstioConfigMap(ctx, namespace, istioConfigCriteria)
+			istioConfigList, err2 = in.businessLayer.IstioConfig.GetIstioConfigListForCluster(ctx, cluster, namespace, istioConfigCriteria)
 			if err2 != nil {
 				log.Errorf("Error fetching Istio Config per namespace %s: %s", namespace, err2)
 				errChan <- err2
@@ -376,8 +376,8 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	for _, w := range ws {
 		wItem := &models.WorkloadListItem{Health: *models.EmptyWorkloadHealth()}
 		wItem.ParseWorkload(w, in.conf)
-		if istioConfigList, ok := istioConfigMap[cluster]; ok && criteria.IncludeIstioResources {
-			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, istioConfigList, cluster))
+		if criteria.IncludeIstioResources {
+			wItem.IstioReferences = FilterUniqueIstioReferences(FilterWorkloadReferences(in.conf, wItem.Labels, *istioConfigList, cluster))
 		}
 		if criteria.IncludeHealth {
 			// Try cache first, fall back to on-demand calculation
@@ -405,12 +405,12 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 		workloadList.Workloads = append(workloadList.Workloads, *wItem)
 	}
 
-	for _, istioConfigList := range istioConfigMap {
+	if criteria.IncludeIstioResources {
 		// @TODO multi cluster validations
-		authpolicies := istioConfigList.AuthorizationPolicies
+		authPolicies := istioConfigList.AuthorizationPolicies
 		allWorkloads := map[string]models.Workloads{}
 		allWorkloads[namespace] = ws
-		validations := in.getWorkloadValidations(ctx, authpolicies, allWorkloads, cluster)
+		validations := in.getWorkloadValidations(ctx, authPolicies, allWorkloads, cluster)
 		validations.StripIgnoredChecks(in.conf)
 		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
 	}
