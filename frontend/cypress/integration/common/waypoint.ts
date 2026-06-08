@@ -597,7 +597,7 @@ Then('the user sees the waypoint attribute', () => {
 });
 
 Then('the proxy status is {string}', (status: string) => {
-  cy.get('[data-test=workload-description-card]').find(`span[class*="icon-${status}"]`).should('be.visible');
+  cy.get('[data-test=workload-details-card]').find(`span[class*="icon-${status}"]`).should('be.visible');
 });
 
 Then(
