@@ -98,8 +98,14 @@ Then('the {string} column should be visible in the table', (columnName: string) 
 
 When('user reorders columns in the modal', () => {
   // Use URL-based approach similar to namespaces.ts (line 105)
-  // Instead of drag-and-drop, set column order via URL param
+  // Instead of drag-and-drop, close the modal first and set column order via URL param
   // This is a more reliable and testable approach
+
+  // First close the modal
+  cy.get(`${COLUMN_MANAGEMENT_MODAL} button[aria-label="Close"]`).click();
+  cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
+
+  // Then navigate with the custom column order via URL
   cy.url().then(currentUrl => {
     const url = new URL(currentUrl);
     const listType = url.pathname.includes('applications') ? 'app' : url.pathname.includes('services') ? 'svc' : 'wl';

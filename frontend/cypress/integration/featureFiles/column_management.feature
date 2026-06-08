@@ -55,7 +55,6 @@ Feature: Column Management in List Pages
     And user selects the "bookinfo" namespace
     When user clicks the "Manage columns" button with test id "apps-manage-columns"
     And user reorders columns in the modal
-    And user applies the column changes
     Then the columns should be in the new order
 
   @bookinfo-app
@@ -129,7 +128,6 @@ Feature: Column Management in List Pages
     And user selects the "bookinfo" namespace
     When user clicks the "Manage columns" button with test id "apps-manage-columns"
     And user reorders columns in the modal
-    And user applies the column changes
     Then the URL should contain "apporder"
     When user refreshes the page
     Then the columns should maintain the custom order
