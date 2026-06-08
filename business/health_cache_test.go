@@ -250,6 +250,98 @@ func TestReapCluster_MalformedKeysSkipped(t *testing.T) {
 	assert.Len(c.HealthKeys(), 1, "only one entry should remain")
 }
 
+func TestRefreshClusterHealth_CancellationReturnsProcessedCount(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Server.Observability.Metrics.Enabled = false
+	conf.Server.Observability.Metrics.HealthStatus.Enabled = false
+	config.Set(conf)
+
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Create 3 namespaces. Cancel context before refresh starts so the
+	// loop body should see ctx.Err() immediately and return 0 processed.
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns1"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns2"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns3"}},
+	)
+
+	layer := NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	clientFactory := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+
+	monitor := &healthMonitor{
+		clientFactory: clientFactory,
+		conf:          conf,
+		logger:        log.Logger().With().Str("component", "health-monitor-test").Logger(),
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	nsCount, errCount := monitor.refreshClusterHealth(ctx, layer, cluster, "5m")
+
+	// With an already-cancelled context, the loop should return 0 processed
+	// (not len(namespaces)=3).
+	assert.Equal(t, 0, nsCount, "expected 0 namespaces processed when context is already cancelled")
+	assert.Equal(t, 0, errCount, "expected 0 errors when context is already cancelled")
+}
+
+func TestRefreshNamespaceHealth_PartialFailurePreservesCache(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.Server.Observability.Metrics.Enabled = false
+	conf.Server.Observability.Metrics.HealthStatus.Enabled = false
+
+	k8s := kubetest.NewFakeK8sClient()
+	c := cache.NewTestingCache(t, k8s, *conf)
+
+	// Seed the cache with existing health data that includes all three types.
+	prevServiceHealth := models.NamespaceServiceHealth{
+		"my-service": &models.ServiceHealth{},
+	}
+	c.SetHealth("east", "bookinfo", &models.CachedHealthData{
+		AppHealth:      models.NamespaceAppHealth{"my-app": &models.AppHealth{}},
+		Cluster:        "east",
+		Duration:       "5m",
+		Namespace:      "bookinfo",
+		ServiceHealth:  prevServiceHealth,
+		WorkloadHealth: models.NamespaceWorkloadHealth{"my-wk": &models.WorkloadHealth{}},
+	})
+
+	// Verify initial state.
+	data, found := c.GetHealth("east", "bookinfo", "")
+	assert.True(found)
+	assert.NotNil(data.ServiceHealth["my-service"], "initial service health should exist")
+
+	// Simulate a partial refresh where app and workload succeed with new
+	// data but service health fails (nil). The merge logic in
+	// refreshNamespaceHealth should preserve the previously-cached service health.
+	newAppHealth := models.NamespaceAppHealth{"new-app": &models.AppHealth{}}
+	newWorkloadHealth := models.NamespaceWorkloadHealth{"new-wk": &models.WorkloadHealth{}}
+
+	// Merge: service health "failed" (nil), so preserve previous from cache.
+	var mergedServiceHealth models.NamespaceServiceHealth
+	if prev, ok := c.GetHealth("east", "bookinfo", ""); ok {
+		mergedServiceHealth = prev.ServiceHealth
+	}
+
+	c.SetHealth("east", "bookinfo", &models.CachedHealthData{
+		AppHealth:      newAppHealth,
+		Cluster:        "east",
+		Duration:       "5m",
+		Namespace:      "bookinfo",
+		ServiceHealth:  mergedServiceHealth,
+		WorkloadHealth: newWorkloadHealth,
+	})
+
+	data, found = c.GetHealth("east", "bookinfo", "")
+	assert.True(found)
+	assert.NotNil(data.AppHealth["new-app"], "new app health should be present")
+	assert.NotNil(data.ServiceHealth["my-service"], "previously-cached service health should be preserved")
+	assert.NotNil(data.WorkloadHealth["new-wk"], "new workload health should be present")
+	assert.Nil(data.AppHealth["my-app"], "old app health should be replaced")
+}
+
 func TestRefreshClusterHealth_GetAllWorkloadsError(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Server.Observability.Metrics.Enabled = false
